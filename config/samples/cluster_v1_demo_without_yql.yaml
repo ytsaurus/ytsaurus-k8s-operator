@@ -6,6 +6,9 @@ spec:
   coreImage: ytsaurus/ytsaurus:0.1.2-nadya73-without-yql
   uiImage: ytsaurus/ui:stable
 
+  adminCredentials:
+    name: ytadminsec
+
   cellTag: 1
 
   discovery:

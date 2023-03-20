@@ -1,11 +1,18 @@
 # yt-k8s-operator
-This operator helps you to deploy YTsaurus using Kubernetes.
 
 YTsaurus is a distributed storage and processing platform for big data with support for MapReduce model, a distributed file system and a NoSQL key-value database.
+
+This operator helps you to deploy YTsaurus using Kubernetes.
+
+## Description
+Currently available in alpha-version and is capable to deploy a new YTsaurus cluster from scratch, primarily for testing pusposes. Automated cluster updates will be available shortly.
+
 
 ## Getting Started
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
 **Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
+
+You can install pre-built versions of operator via [helm chart](https://hub.docker.com/repository/docker/ytsaurus/ytop-chart/general).
 
 ### Running on the cluster
 1. Install Instances of Custom Resources:
