@@ -1,0 +1,16 @@
+domain: ytsaurus.tech
+layout:
+- go.kubebuilder.io/v3
+projectName: yt-k8s-operator
+repo: github.com/YTsaurus/yt-k8s-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: ytsaurus.tech
+  group: cluster
+  kind: YTsaurus
+  path: github.com/YTsaurus/yt-k8s-operator/api/v1
+  version: v1
+version: "3"

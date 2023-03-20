@@ -1,0 +1,24 @@
+# permissions for end users to edit ytsaurus.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ytsaurus-editor-role
+rules:
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - ytsaurus
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - ytsaurus/status
+  verbs:
+  - get

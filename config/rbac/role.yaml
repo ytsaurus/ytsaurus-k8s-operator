@@ -1,0 +1,54 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - ytsaurus
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - ytsaurus/finalizers
+  verbs: ["update"]
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - ytsaurus/status
+  verbs: ["get", "patch", "update"]
+- apiGroups:
+    - apps
+  resources:
+    - statefulsets
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+- apiGroups: [ "" ]
+  resources:
+    - secrets
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+- apiGroups: [ "" ]
+  resources:
+    - configmaps
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+- apiGroups: [ "" ]
+  resources:
+    - pods
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+- apiGroups: [ "" ]
+  resources:
+    - services
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+- apiGroups: [ "" ]
+  resources:
+    - events
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+- apiGroups: [ "apps" ]
+  resources:
+    - deployments
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+- apiGroups: [ "batch" ]
+  resources:
+    - jobs
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]

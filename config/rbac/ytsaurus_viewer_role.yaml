@@ -1,0 +1,20 @@
+# permissions for end users to view ytsaurus.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ytsaurus-viewer-role
+rules:
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - ytsaurus
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - ytsaurus/status
+  verbs:
+  - get
