@@ -2,6 +2,8 @@ package components
 
 import (
 	"context"
+	"path"
+
 	ytv1 "github.com/YTsaurus/yt-k8s-operator/api/v1"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
@@ -11,7 +13,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"path"
 )
 
 // Server represents a typical YT cluster server component, like master or scheduler.
@@ -132,7 +133,7 @@ func (s *Server) BuildStatefulSet() *appsv1.StatefulSet {
 		Volumes: createVolumes(s.instanceSpec.Volumes, s.labeller.GetMainConfigMapName()),
 	}
 
-	if s.enableAntiAffinity {
+	if s.enableAntiAffinity || s.instanceSpec.EnableAntiAffinity {
 		affinity := corev1.Affinity{
 			PodAntiAffinity: &corev1.PodAntiAffinity{
 				RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{

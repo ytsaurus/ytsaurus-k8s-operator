@@ -92,6 +92,9 @@ spec:
                   instanceGroup:
                     description: label filter (for daemonset)
                     properties:
+                      enableAntiAffinity:
+                        description: Enables pod anti affinity
+                        type: boolean
                       instanceCount:
                         format: int32
                         type: integer
@@ -2030,6 +2033,9 @@ spec:
                   instanceGroup:
                     description: label filter (for daemonset) use host network
                     properties:
+                      enableAntiAffinity:
+                        description: Enables pod anti affinity
+                        type: boolean
                       instanceCount:
                         format: int32
                         type: integer
@@ -3966,6 +3972,9 @@ spec:
                   instanceGroup:
                     description: label filter (for daemonset)
                     properties:
+                      enableAntiAffinity:
+                        description: Enables pod anti affinity
+                        type: boolean
                       instanceCount:
                         format: int32
                         type: integer
@@ -5902,6 +5911,9 @@ spec:
                   instanceGroup:
                     description: label filter (for daemonset)
                     properties:
+                      enableAntiAffinity:
+                        description: Enables pod anti affinity
+                        type: boolean
                       instanceCount:
                         format: int32
                         type: integer
@@ -7841,6 +7853,9 @@ spec:
                 properties:
                   instanceGroup:
                     properties:
+                      enableAntiAffinity:
+                        description: Enables pod anti affinity
+                        type: boolean
                       instanceCount:
                         format: int32
                         type: integer
@@ -9793,6 +9808,9 @@ spec:
                 properties:
                   instanceGroup:
                     properties:
+                      enableAntiAffinity:
+                        description: Enables pod anti affinity
+                        type: boolean
                       instanceCount:
                         format: int32
                         type: integer
@@ -11729,6 +11747,9 @@ spec:
                   instanceGroup:
                     description: label filter (for daemonset)
                     properties:
+                      enableAntiAffinity:
+                        description: Enables pod anti affinity
+                        type: boolean
                       instanceCount:
                         format: int32
                         type: integer
@@ -13665,6 +13686,9 @@ spec:
                   instanceGroup:
                     description: label filter (for daemonset)
                     properties:
+                      enableAntiAffinity:
+                        description: Enables pod anti affinity
+                        type: boolean
                       instanceCount:
                         format: int32
                         type: integer
