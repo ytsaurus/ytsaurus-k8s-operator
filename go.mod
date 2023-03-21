@@ -6,11 +6,11 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.18.1
+	go.ytsaurus.tech/yt/go v0.0.2
 	k8s.io/api v0.24.2
 	k8s.io/apimachinery v0.24.2
 	k8s.io/client-go v0.24.2
 	sigs.k8s.io/controller-runtime v0.12.2
-	ytsaurus.tech v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -59,6 +59,9 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.23.0 // indirect
+	go.ytsaurus.tech/library/go/core/xerrors v0.0.2 // indirect
+	go.ytsaurus.tech/library/go/x/xreflect v0.0.1 // indirect
+	go.ytsaurus.tech/library/go/x/xruntime v0.0.3 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
