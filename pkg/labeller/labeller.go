@@ -2,12 +2,13 @@ package labeller
 
 import (
 	"fmt"
+	"strings"
+
 	ytv1 "github.com/YTsaurus/yt-k8s-operator/api/v1"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 type FetchableObject struct {
@@ -16,7 +17,7 @@ type FetchableObject struct {
 }
 
 type Labeller struct {
-	ApiProxy       *apiproxy.ApiProxy
+	APIProxy       *apiproxy.APIProxy
 	Ytsaurus       *ytv1.Ytsaurus
 	ComponentLabel consts.YTComponentLabel
 	ComponentName  string

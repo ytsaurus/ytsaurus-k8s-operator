@@ -3,17 +3,18 @@ package components
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
 	corev1 "k8s.io/api/core/v1"
-	"strings"
 )
 
 type master struct {
-	apiProxy *apiproxy.ApiProxy
+	apiProxy *apiproxy.APIProxy
 
 	labeller *labeller.Labeller
 	server   *Server
@@ -23,11 +24,11 @@ type master struct {
 	adminCredentials corev1.Secret
 }
 
-func NewMaster(cfgen *ytconfig.Generator, apiProxy *apiproxy.ApiProxy) Component {
+func NewMaster(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
-		ApiProxy:       apiProxy,
+		APIProxy:       apiProxy,
 		ComponentLabel: "yt-master",
 		ComponentName:  "Master",
 	}

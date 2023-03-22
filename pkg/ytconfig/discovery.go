@@ -19,7 +19,7 @@ type DiscoveryServer struct {
 func getDiscoveryServerCarcass(spec ytv1.DiscoverySpec) DiscoveryServer {
 	var c DiscoveryServer
 	c.MonitoringPort = consts.DiscoveryMonitoringPort
-	c.RpcPort = consts.DiscoveryRpcPort
+	c.RPCPort = consts.DiscoveryRPCPort
 
 	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "master")
 	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().logging

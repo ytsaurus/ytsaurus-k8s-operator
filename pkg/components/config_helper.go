@@ -3,18 +3,19 @@ package components
 import (
 	"context"
 	"fmt"
+	"reflect"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
 	"go.ytsaurus.tech/yt/go/yson"
 	corev1 "k8s.io/api/core/v1"
-	"reflect"
 )
 
 type ConfigHelper struct {
 	labeller *labeller.Labeller
-	apiProxy *apiproxy.ApiProxy
+	apiProxy *apiproxy.APIProxy
 
 	generator ytconfig.GeneratorFunc
 
@@ -26,7 +27,7 @@ type ConfigHelper struct {
 
 func NewConfigHelper(
 	labeller *labeller.Labeller,
-	apiProxy *apiproxy.ApiProxy,
+	apiProxy *apiproxy.APIProxy,
 	name, fileName string,
 	generator ytconfig.GeneratorFunc) *ConfigHelper {
 	return &ConfigHelper{

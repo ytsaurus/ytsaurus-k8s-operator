@@ -99,13 +99,13 @@ type MastersSpec struct {
 	InstanceGroup InstanceSpec `json:"instanceGroup,omitempty"`
 }
 
-type HttpProxiesSpec struct {
+type HTTPProxiesSpec struct {
 	//+kubebuilder:default:=NodePort
 	ServiceType   corev1.ServiceType `json:"serviceType,omitempty"`
 	InstanceGroup InstanceSpec       `json:"instanceGroup,omitempty"`
 }
 
-type RpcProxiesSpec struct {
+type RPCProxiesSpec struct {
 	InstanceGroup InstanceSpec `json:"instanceGroup,omitempty"`
 }
 
@@ -140,7 +140,7 @@ type DiscoverySpec struct {
 	InstanceGroup InstanceSpec `json:"instanceGroup,omitempty"`
 }
 
-type UiSpec struct {
+type UISpec struct {
 	//+kubebuilder:default:=NodePort
 	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
 	//+kubebuilder:default:=false
@@ -164,7 +164,7 @@ type SpytSpec struct {
 	SpytVersion  string `json:"spytVersion,omitempty"`
 }
 
-type YqlAgentSpec struct {
+type YQLAgentSpec struct {
 	InstanceGroup InstanceSpec `json:"instanceGroup,omitempty"`
 }
 
@@ -190,8 +190,8 @@ type YtsaurusSpec struct {
 
 	Discovery        DiscoverySpec         `json:"discovery,omitempty"`
 	Masters          MastersSpec           `json:"masters,omitempty"`
-	HttpProxies      HttpProxiesSpec       `json:"httpProxies,omitempty"`
-	RpcProxies       *RpcProxiesSpec       `json:"rpcProxies,omitempty"`
+	HTTPProxies      HTTPProxiesSpec       `json:"httpProxies,omitempty"`
+	RPCProxies       *RPCProxiesSpec       `json:"rpcProxies,omitempty"`
 	DataNodes        DataNodesSpec         `json:"dataNodes,omitempty"`
 	ExecNodes        *ExecNodesSpec        `json:"execNodes,omitempty"`
 	Schedulers       *SchedulersSpec       `json:"schedulers,omitempty"`
@@ -200,9 +200,9 @@ type YtsaurusSpec struct {
 	Chyt             *ChytSpec             `json:"chyt,omitempty"`
 	QueryTrackers    *QueryTrackerSpec     `json:"queryTrackers,omitempty"`
 	Spyt             *SpytSpec             `json:"spyt,omitempty"`
-	YqlAgents        *YqlAgentSpec         `json:"yqlAgents,omitempty"`
+	YQLAgents        *YQLAgentSpec         `json:"yqlAgents,omitempty"`
 
-	UI *UiSpec `json:"ui,omitempty"`
+	UI *UISpec `json:"ui,omitempty"`
 }
 
 type ClusterState string

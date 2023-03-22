@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
@@ -14,11 +15,11 @@ type node struct {
 	labeller *labeller.Labeller
 }
 
-func NewDataNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.ApiProxy, master Component) Component {
+func NewDataNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
-		ApiProxy:       apiProxy,
+		APIProxy:       apiProxy,
 		ComponentLabel: "yt-data-node",
 		ComponentName:  "DataNode",
 	}
@@ -42,11 +43,11 @@ func NewDataNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.ApiProxy, master 
 	}
 }
 
-func NewExecNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.ApiProxy, master Component) Component {
+func NewExecNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
-		ApiProxy:       apiProxy,
+		APIProxy:       apiProxy,
 		ComponentLabel: "yt-exec-node",
 		ComponentName:  "DataNode",
 	}

@@ -13,7 +13,7 @@ type QueryTrackerServer struct {
 
 func getQueryTrackerServerCarcass(spec ytv1.QueryTrackerSpec) (QueryTrackerServer, error) {
 	var c QueryTrackerServer
-	c.RpcPort = consts.QueryTrackerRpcPort
+	c.RPCPort = consts.QueryTrackerRPCPort
 	c.MonitoringPort = consts.QueryTrackerMonitoringPort
 
 	c.User = "query_tracker"

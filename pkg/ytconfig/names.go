@@ -18,7 +18,7 @@ func (g *Generator) GetDiscoveryStatefulSetName() string {
 	return g.getName("ds")
 }
 
-func (g *Generator) GetYqlAgentStatefulSetName() string {
+func (g *Generator) GetYQLAgentStatefulSetName() string {
 	return g.getName("yqla")
 }
 
@@ -30,7 +30,7 @@ func (g *Generator) GetDiscoveryServiceName() string {
 	return g.getName("discovery")
 }
 
-func (g *Generator) GetYqlAgentServiceName() string {
+func (g *Generator) GetYQLAgentServiceName() string {
 	return g.getName("yql-agents")
 }
 
@@ -52,18 +52,18 @@ func (g *Generator) GetDiscoveryPodNames() []string {
 	return podNames
 }
 
-func (g *Generator) GetYqlAgentPodNames() []string {
-	podNames := make([]string, 0, g.ytsaurus.Spec.YqlAgents.InstanceGroup.InstanceCount)
-	for i := 0; i < int(g.ytsaurus.Spec.YqlAgents.InstanceGroup.InstanceCount); i++ {
-		podNames = append(podNames, fmt.Sprintf("%s-%d", g.GetYqlAgentStatefulSetName(), i))
+func (g *Generator) GetYQLAgentPodNames() []string {
+	podNames := make([]string, 0, g.ytsaurus.Spec.YQLAgents.InstanceGroup.InstanceCount)
+	for i := 0; i < int(g.ytsaurus.Spec.YQLAgents.InstanceGroup.InstanceCount); i++ {
+		podNames = append(podNames, fmt.Sprintf("%s-%d", g.GetYQLAgentStatefulSetName(), i))
 	}
 
 	return podNames
 }
 
-func (g *Generator) GetHttpProxiesServiceAddress() string {
+func (g *Generator) GetHTTPProxiesServiceAddress() string {
 	return fmt.Sprintf("%s.%s.svc.%s",
-		g.GetHttpProxiesHeadlessServiceName(),
+		g.GetHTTPProxiesHeadlessServiceName(),
 		g.ytsaurus.Namespace,
 		g.clusterDomain)
 }
@@ -79,21 +79,21 @@ func (g *Generator) GetChytControllerHeadlessServiceName() string {
 	return g.getName("chyt")
 }
 
-func (g *Generator) GetHttpProxiesServiceName() string {
+func (g *Generator) GetHTTPProxiesServiceName() string {
 	return g.getName("http-proxies-lb")
 }
 
-func (g *Generator) GetHttpProxiesHeadlessServiceName() string {
+func (g *Generator) GetHTTPProxiesHeadlessServiceName() string {
 	return g.getName("http-proxies")
 }
 
-func (g *Generator) GetHttpProxiesStatefulSetName() string {
+func (g *Generator) GetHTTPProxiesStatefulSetName() string {
 	return g.getName("hp")
 }
 
-func (g *Generator) GetHttpProxiesAddress() string {
+func (g *Generator) GetHTTPProxiesAddress() string {
 	return fmt.Sprintf("%s.%s.svc.%s",
-		g.GetHttpProxiesServiceName(),
+		g.GetHTTPProxiesServiceName(),
 		g.ytsaurus.Namespace,
 		g.clusterDomain)
 }
@@ -106,11 +106,11 @@ func (g *Generator) GetSchedulerServiceName() string {
 	return g.getName("schedulers")
 }
 
-func (g *Generator) GetRpcProxiesStatefulSetName() string {
+func (g *Generator) GetRPCProxiesStatefulSetName() string {
 	return g.getName("rp")
 }
 
-func (g *Generator) GetRpcProxiesServiceName() string {
+func (g *Generator) GetRPCProxiesServiceName() string {
 	return g.getName("rpc-proxies")
 }
 

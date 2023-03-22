@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	corev1 "k8s.io/api/core/v1"
@@ -11,13 +12,13 @@ import (
 type StringSecret struct {
 	name       string
 	reconciler *labeller.Labeller
-	apiProxy   *apiproxy.ApiProxy
+	apiProxy   *apiproxy.APIProxy
 
 	oldObject corev1.Secret
 	newObject corev1.Secret
 }
 
-func NewStringSecret(name string, reconciler *labeller.Labeller, apiProxy *apiproxy.ApiProxy) *StringSecret {
+func NewStringSecret(name string, reconciler *labeller.Labeller, apiProxy *apiproxy.APIProxy) *StringSecret {
 	return &StringSecret{
 		name:       name,
 		reconciler: reconciler,

@@ -3,13 +3,14 @@ package components
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
 	corev1 "k8s.io/api/core/v1"
-	"strings"
 )
 
 type scheduler struct {
@@ -24,11 +25,11 @@ type scheduler struct {
 	labeller      *labeller.Labeller
 }
 
-func NewScheduler(cfgen *ytconfig.Generator, apiProxy *apiproxy.ApiProxy, master, execNodes, tabletNodes Component) Component {
+func NewScheduler(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master, execNodes, tabletNodes Component) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
-		ApiProxy:       apiProxy,
+		APIProxy:       apiProxy,
 		ComponentLabel: "yt-scheduler",
 		ComponentName:  "Scheduler",
 	}
@@ -86,7 +87,7 @@ func (s *scheduler) prepareInitOperationArchive() {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		fmt.Sprintf("/usr/bin/init_operation_archive --force --latest --proxy %s",
-			s.cfgen.GetHttpProxiesServiceAddress()),
+			s.cfgen.GetHTTPProxiesServiceAddress()),
 		"/usr/bin/yt set //sys/cluster_nodes/@config '{\"%true\" = {job_agent={enable_job_reporter=%true}}}'",
 	}
 

@@ -3,14 +3,15 @@ package components
 import (
 	"context"
 	"fmt"
+	"path"
+	"strings"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
 	corev1 "k8s.io/api/core/v1"
-	"path"
-	"strings"
 )
 
 type chytController struct {
@@ -32,13 +33,13 @@ const ChytInitClusterJobConfigFileName = "chyt-init-cluster.yson"
 
 func NewChytController(
 	cfgen *ytconfig.Generator,
-	apiProxy *apiproxy.ApiProxy,
+	apiProxy *apiproxy.APIProxy,
 	master Component,
 	dataNode Component) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
-		ApiProxy:       apiProxy,
+		APIProxy:       apiProxy,
 		ComponentLabel: "yt-chyt-controller",
 		ComponentName:  "ChytController",
 	}
@@ -125,7 +126,7 @@ func (c *chytController) createInitUserScript() string {
 func (c *chytController) createInitChPublicScript() string {
 	script := []string{
 		initJobPrologue,
-		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v", c.cfgen.GetHttpProxiesAddress(), c.cfgen.GetChytControllerServiceAddress()),
+		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v", c.cfgen.GetHTTPProxiesAddress(), c.cfgen.GetChytControllerServiceAddress()),
 		"yt clickhouse ctl create ch_public || true",
 		"yt clickhouse ctl set-option --alias ch_public enable_geodata '%false'",
 		"yt clickhouse ctl set-option --alias ch_public instance_cpu 2",

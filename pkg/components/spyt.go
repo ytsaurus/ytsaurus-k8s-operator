@@ -3,12 +3,13 @@ package components
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
-	"strings"
 )
 
 type spyt struct {
@@ -25,14 +26,14 @@ type spyt struct {
 
 func NewSpyt(
 	cfgen *ytconfig.Generator,
-	apiProxy *apiproxy.ApiProxy,
+	apiProxy *apiproxy.APIProxy,
 	master Component,
 	execNode Component) Component {
 
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
-		ApiProxy:       apiProxy,
+		APIProxy:       apiProxy,
 		ComponentLabel: "yt-spyt",
 		ComponentName:  "SPYT",
 	}
@@ -109,11 +110,10 @@ func (s *spyt) getSparkLaunchConf() string {
 }
 
 func (s *spyt) createInitScript(sparkVersion string, spytVersion string) string {
-
 	metricsPath := fmt.Sprintf("//home/spark/conf/releases/%s/metrics.properties", sparkVersion)
 	sparkLaunchConfPath := fmt.Sprintf("//home/spark/conf/releases/%s/spark-launch-conf", sparkVersion)
 	sparkPath := fmt.Sprintf("//home/spark/spark/releases/3.2.2-fork-%s/spark.tgz", sparkVersion)
-	sparkYtDataSoursePath := fmt.Sprintf("//home/spark/spyt/releases/%s/spark-yt-data-source.jar", spytVersion)
+	sparkYtDataSourcePath := fmt.Sprintf("//home/spark/spyt/releases/%s/spark-yt-data-source.jar", spytVersion)
 	spytPath := fmt.Sprintf("//home/spark/spyt/releases/%s/spyt.zip", spytVersion)
 	sparkYtLauncherPath := fmt.Sprintf("//home/spark/bin/releases/%s/spark-yt-launcher.jar", sparkVersion)
 	solomonAgentPath := fmt.Sprintf("//home/spark/conf/releases/%s/solomon-agent.template.conf", sparkVersion)
@@ -152,9 +152,9 @@ func (s *spyt) createInitScript(sparkVersion string, spytVersion string) string 
 		"/usr/bin/yt set " + sparkPath + "/@replication_factor 1",
 		"cat /usr/bin/spark.tgz | /usr/bin/yt write-file " + sparkPath,
 
-		"/usr/bin/yt create file " + sparkYtDataSoursePath + " --ignore-existing -r",
-		"/usr/bin/yt set " + sparkYtDataSoursePath + "/@replication_factor 1",
-		"cat /usr/bin/spark-yt-data-source.jar | /usr/bin/yt upload " + sparkYtDataSoursePath,
+		"/usr/bin/yt create file " + sparkYtDataSourcePath + " --ignore-existing -r",
+		"/usr/bin/yt set " + sparkYtDataSourcePath + "/@replication_factor 1",
+		"cat /usr/bin/spark-yt-data-source.jar | /usr/bin/yt upload " + sparkYtDataSourcePath,
 
 		"/usr/bin/yt create file " + spytPath + " --ignore-existing",
 		"/usr/bin/yt set " + spytPath + "/@replication_factor 1",

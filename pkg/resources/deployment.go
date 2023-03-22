@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	labeller2 "github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	appsv1 "k8s.io/api/apps/v1"
@@ -13,7 +14,7 @@ import (
 type Deployment struct {
 	name     string
 	labeller *labeller2.Labeller
-	apiProxy *apiproxy.ApiProxy
+	apiProxy *apiproxy.APIProxy
 
 	oldObject appsv1.Deployment
 	newObject appsv1.Deployment
@@ -23,7 +24,7 @@ type Deployment struct {
 func NewDeployment(
 	name string,
 	labeller *labeller2.Labeller,
-	apiProxy *apiproxy.ApiProxy) *Deployment {
+	apiProxy *apiproxy.APIProxy) *Deployment {
 	return &Deployment{
 		name:     name,
 		labeller: labeller,

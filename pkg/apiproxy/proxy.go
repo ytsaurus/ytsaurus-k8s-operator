@@ -3,6 +3,7 @@ package apiproxy
 import (
 	"context"
 	"fmt"
+
 	ytv1 "github.com/YTsaurus/yt-k8s-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -16,37 +17,37 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-type ApiProxy struct {
+type APIProxy struct {
 	ytsaurus *ytv1.Ytsaurus
 	client   client.Client
 	recorder record.EventRecorder
 	scheme   *runtime.Scheme
 }
 
-func NewApiProxy(
+func NewAPIProxy(
 	ytsaurus *ytv1.Ytsaurus,
 	client client.Client,
 	recorder record.EventRecorder,
-	scheme *runtime.Scheme) *ApiProxy {
-	return &ApiProxy{
+	scheme *runtime.Scheme) *APIProxy {
+	return &APIProxy{
 		ytsaurus: ytsaurus,
 		client:   client,
 		recorder: recorder,
 		scheme:   scheme}
 }
 
-func (c *ApiProxy) GetObjectKey(name string) types.NamespacedName {
+func (c *APIProxy) GetObjectKey(name string) types.NamespacedName {
 	return types.NamespacedName{
 		Name:      name,
 		Namespace: c.ytsaurus.Namespace,
 	}
 }
 
-func (c *ApiProxy) Ytsaurus() *ytv1.Ytsaurus {
+func (c *APIProxy) Ytsaurus() *ytv1.Ytsaurus {
 	return c.ytsaurus
 }
 
-func (c *ApiProxy) FetchObject(ctx context.Context, name string, obj client.Object) error {
+func (c *APIProxy) FetchObject(ctx context.Context, name string, obj client.Object) error {
 	err := c.client.Get(ctx, c.GetObjectKey(name), obj)
 	if err == nil || !errors.IsNotFound(err) {
 		return err
@@ -55,12 +56,12 @@ func (c *ApiProxy) FetchObject(ctx context.Context, name string, obj client.Obje
 	return nil
 }
 
-func (c *ApiProxy) ListObjects(ctx context.Context, objList client.ObjectList, opts ...client.ListOption) error {
+func (c *APIProxy) ListObjects(ctx context.Context, objList client.ObjectList, opts ...client.ListOption) error {
 	err := c.client.List(ctx, objList, opts...)
 	return err
 }
 
-func (c *ApiProxy) RecordWarning(reason, message string) {
+func (c *APIProxy) RecordWarning(reason, message string) {
 	c.recorder.Event(
 		c.ytsaurus,
 		corev1.EventTypeWarning,
@@ -68,7 +69,7 @@ func (c *ApiProxy) RecordWarning(reason, message string) {
 		message)
 }
 
-func (c *ApiProxy) RecordNormal(reason, message string) {
+func (c *APIProxy) RecordNormal(reason, message string) {
 	c.recorder.Event(
 		c.ytsaurus,
 		corev1.EventTypeNormal,
@@ -76,16 +77,16 @@ func (c *ApiProxy) RecordNormal(reason, message string) {
 		message)
 }
 
-func (c *ApiProxy) IsStatusConditionTrue(condition string) bool {
+func (c *APIProxy) IsStatusConditionTrue(condition string) bool {
 	return meta.IsStatusConditionTrue(c.ytsaurus.Status.Conditions, condition)
 }
 
-func (c *ApiProxy) SetStatusCondition(ctx context.Context, condition metav1.Condition) error {
+func (c *APIProxy) SetStatusCondition(ctx context.Context, condition metav1.Condition) error {
 	meta.SetStatusCondition(&c.ytsaurus.Status.Conditions, condition)
 	return c.UpdateStatus(ctx)
 }
 
-func (c *ApiProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object) error {
+func (c *APIProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object) error {
 	var err error
 	if newObj.GetName() == "" {
 		return fmt.Errorf("Cannot sync uninitialized object, object type %T", oldObj)
@@ -100,7 +101,7 @@ func (c *ApiProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object)
 	return err
 }
 
-func (c *ApiProxy) updateObject(ctx context.Context, obj client.Object) error {
+func (c *APIProxy) updateObject(ctx context.Context, obj client.Object) error {
 	logger := log.FromContext(ctx)
 
 	if err := c.client.Update(ctx, obj); err != nil {
@@ -119,7 +120,7 @@ func (c *ApiProxy) updateObject(ctx context.Context, obj client.Object) error {
 	return nil
 }
 
-func (c *ApiProxy) createAndReferenceObject(ctx context.Context, obj client.Object) error {
+func (c *APIProxy) createAndReferenceObject(ctx context.Context, obj client.Object) error {
 	logger := log.FromContext(ctx)
 
 	if err := ctrl.SetControllerReference(c.ytsaurus, obj, c.scheme); err != nil {
@@ -142,6 +143,6 @@ func (c *ApiProxy) createAndReferenceObject(ctx context.Context, obj client.Obje
 	return nil
 }
 
-func (c *ApiProxy) UpdateStatus(ctx context.Context) error {
+func (c *APIProxy) UpdateStatus(ctx context.Context) error {
 	return c.client.Status().Update(ctx, c.ytsaurus)
 }

@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	labeller2 "github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	corev1 "k8s.io/api/core/v1"
@@ -11,13 +12,13 @@ import (
 type HeadlessService struct {
 	name     string
 	labeller *labeller2.Labeller
-	apiProxy *apiproxy.ApiProxy
+	apiProxy *apiproxy.APIProxy
 
 	oldObject corev1.Service
 	newObject corev1.Service
 }
 
-func NewHeadlessService(name string, labeller *labeller2.Labeller, apiProxy *apiproxy.ApiProxy) *HeadlessService {
+func NewHeadlessService(name string, labeller *labeller2.Labeller, apiProxy *apiproxy.APIProxy) *HeadlessService {
 	return &HeadlessService{
 		name:     name,
 		labeller: labeller,

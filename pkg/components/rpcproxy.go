@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
@@ -14,14 +15,14 @@ type rpcProxy struct {
 	master   Component
 }
 
-func NewRpcProxy(
+func NewRPCProxy(
 	cfgen *ytconfig.Generator,
-	apiProxy *apiproxy.ApiProxy,
+	apiProxy *apiproxy.APIProxy,
 	masterReconciler Component) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
-		ApiProxy:       apiProxy,
+		APIProxy:       apiProxy,
 		ComponentLabel: "yt-rpc-proxy",
 		ComponentName:  "RpcProxy",
 	}
@@ -29,13 +30,13 @@ func NewRpcProxy(
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.HttpProxies.InstanceGroup,
+		&ytsaurus.Spec.HTTPProxies.InstanceGroup,
 		"/usr/bin/ytserver-proxy",
 		"ytserver-rpc-proxy.yson",
-		cfgen.GetRpcProxiesStatefulSetName(),
-		cfgen.GetRpcProxiesServiceName(),
+		cfgen.GetRPCProxiesStatefulSetName(),
+		cfgen.GetRPCProxiesServiceName(),
 		false,
-		cfgen.GetRpcProxyConfig,
+		cfgen.GetRPCProxyConfig,
 	)
 
 	return &rpcProxy{

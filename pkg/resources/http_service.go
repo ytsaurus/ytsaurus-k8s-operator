@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
 	labeller2 "github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
@@ -10,44 +11,44 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type HttpService struct {
+type HTTPService struct {
 	name     string
 	labeller *labeller2.Labeller
-	apiProxy *apiproxy.ApiProxy
+	apiProxy *apiproxy.APIProxy
 
 	oldObject corev1.Service
 	newObject corev1.Service
 }
 
-func NewHttpService(name string, labeller *labeller2.Labeller, apiProxy *apiproxy.ApiProxy) *HttpService {
-	return &HttpService{
+func NewHTTPService(name string, labeller *labeller2.Labeller, apiProxy *apiproxy.APIProxy) *HTTPService {
+	return &HTTPService{
 		name:     name,
 		labeller: labeller,
 		apiProxy: apiProxy,
 	}
 }
 
-func (s *HttpService) OldObject() client.Object {
+func (s *HTTPService) OldObject() client.Object {
 	return &s.oldObject
 }
 
-func (s *HttpService) Name() string {
+func (s *HTTPService) Name() string {
 	return s.name
 }
 
-func (s *HttpService) Sync(ctx context.Context) error {
+func (s *HTTPService) Sync(ctx context.Context) error {
 	return s.apiProxy.SyncObject(ctx, &s.oldObject, &s.newObject)
 }
 
-func (s *HttpService) Build() *corev1.Service {
+func (s *HTTPService) Build() *corev1.Service {
 	s.newObject.ObjectMeta = s.labeller.GetObjectMeta(s.name)
 	s.newObject.Spec = corev1.ServiceSpec{
 		Selector: s.labeller.GetSelectorLabelMap(),
 		Ports: []corev1.ServicePort{
 			{
 				Name:       "http",
-				Port:       consts.HttpProxyHttpPort,
-				TargetPort: intstr.IntOrString{IntVal: consts.HttpProxyHttpPort},
+				Port:       consts.HTTPProxyHTTPPort,
+				TargetPort: intstr.IntOrString{IntVal: consts.HTTPProxyHTTPPort},
 			},
 		},
 	}
@@ -55,6 +56,6 @@ func (s *HttpService) Build() *corev1.Service {
 	return &s.newObject
 }
 
-func (s *HttpService) Fetch(ctx context.Context) error {
+func (s *HTTPService) Fetch(ctx context.Context) error {
 	return s.apiProxy.FetchObject(ctx, s.name, &s.oldObject)
 }

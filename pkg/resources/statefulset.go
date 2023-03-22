@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	labeller2 "github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	appsv1 "k8s.io/api/apps/v1"
@@ -14,7 +15,7 @@ import (
 type StatefulSet struct {
 	name     string
 	labeller *labeller2.Labeller
-	apiProxy *apiproxy.ApiProxy
+	apiProxy *apiproxy.APIProxy
 
 	oldObject appsv1.StatefulSet
 	newObject appsv1.StatefulSet
@@ -24,7 +25,7 @@ type StatefulSet struct {
 func NewStatefulSet(
 	name string,
 	labeller *labeller2.Labeller,
-	apiProxy *apiproxy.ApiProxy) *StatefulSet {
+	apiProxy *apiproxy.APIProxy) *StatefulSet {
 	return &StatefulSet{
 		name:     name,
 		labeller: labeller,
