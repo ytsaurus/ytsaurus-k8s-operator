@@ -18,7 +18,7 @@ You can install pre-built versions of operator via [helm chart](https://hub.dock
 1. Install Instances of Custom Resources:
 
 ```sh
-kubectl apply -f config/samples/
+kubectl create -f config/crd/bases/cluster.ytsaurus.tech_ytsaurus.yaml
 ```
 
 2. Build and push your image to the location specified by `IMG`:
