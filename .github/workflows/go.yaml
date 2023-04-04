@@ -8,7 +8,7 @@ on:
 jobs:
   start-vm:
     name: Start VM
-    runs-on: trampoline
+    runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.start-yc-runner.outputs.label }}
       instance-id: ${{ steps.start-yc-runner.outputs.instance-id }}
@@ -46,9 +46,6 @@ jobs:
     runs-on: ${{ needs.start-vm.outputs.label }}
     env:
       HOME: /root
-    strategy:
-      matrix:
-        module: ["yt/go", "library/go/core/log", "library/go/x/xreflect", "library/go/blockcodecs"]
     steps:
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -56,29 +53,26 @@ jobs:
           go-version: 1.19
 
       - name: Build
-        working-directory: ${{ matrix.module }}
         shell: bash
         run: |
-          go build -v -mod=readonly ./...
+          go build -v -mod=readonly ./
 
       - name: Run tests
-        working-directory: ${{ matrix.module }}
         shell: bash
         run: |
-          go test -v -mod=readonly ./...
+          go test -v -mod=readonly ./
 
       - name: Run tests with race detector
-        working-directory: ${{ matrix.module }}
         shell: bash
         run: |
-          go test -v -mod=readonly -race ./...
+          go test -v -mod=readonly -race ./
 
   stop-vm:
     name: Stop VM
     needs:
       - start-vm
       - check
-    runs-on: trampoline
+    runs-on: ubuntu-latest
     if: ${{ always() }}
     steps:
       - name: Stop YC runner
