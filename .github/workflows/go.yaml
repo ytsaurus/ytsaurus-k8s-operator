@@ -55,17 +55,17 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          go build -v -mod=readonly ./
+          go build -v -mod=readonly ./...
 
       - name: Run tests
         shell: bash
         run: |
-          go test -v -mod=readonly ./
+          go test -v -mod=readonly ./...
 
       - name: Run tests with race detector
         shell: bash
         run: |
-          go test -v -mod=readonly -race ./
+          go test -v -mod=readonly -race ./...
 
   stop-vm:
     name: Stop VM
