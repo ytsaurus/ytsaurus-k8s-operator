@@ -11,7 +11,6 @@ COPY go.sum go.sum
 # and so that source changes don't invalidate our downloaded layer
 
 RUN mkdir -p /home/psushin/work/
-COPY ./ytsaurus.tech ./ytsaurus.tech
 
 RUN go mod download
 
