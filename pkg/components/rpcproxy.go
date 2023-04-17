@@ -29,7 +29,7 @@ func NewRpcProxy(
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.HttpProxies.InstanceGroup,
+		&ytsaurus.Spec.RpcProxies.InstanceGroup,
 		"/usr/bin/ytserver-proxy",
 		"ytserver-rpc-proxy.yson",
 		cfgen.GetRpcProxiesStatefulSetName(),
