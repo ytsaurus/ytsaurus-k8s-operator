@@ -2,12 +2,13 @@ package components
 
 import (
 	"context"
+	"strings"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
-	"strings"
 )
 
 type queryTracker struct {
@@ -17,11 +18,11 @@ type queryTracker struct {
 	labeller        *labeller.Labeller
 }
 
-func NewQueryTracker(cfgen *ytconfig.Generator, apiProxy *apiproxy.ApiProxy, master Component) Component {
+func NewQueryTracker(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
-		ApiProxy:       apiProxy,
+		APIProxy:       apiProxy,
 		ComponentLabel: "yt-query-tracker",
 		ComponentName:  "QueryTracker",
 	}

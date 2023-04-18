@@ -3,25 +3,26 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"time"
+
 	ytv1 "github.com/YTsaurus/yt-k8s-operator/api/v1"
 	apiProxy "github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/components"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"time"
 )
 
 func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Ytsaurus) []components.Component {
 	logger := log.FromContext(ctx)
 
 	cfgen := ytconfig.NewGenerator(ytsaurus, getClusterDomain(r.Client))
-	proxy := apiProxy.NewApiProxy(ytsaurus, r.Client, r.Recorder, r.Scheme)
+	proxy := apiProxy.NewAPIProxy(ytsaurus, r.Client, r.Recorder, r.Scheme)
 
 	d := components.NewDiscovery(cfgen, proxy)
 	m := components.NewMaster(cfgen, proxy)
-	ui := components.NewUi(cfgen, proxy, m)
-	hp := components.NewHttpProxy(cfgen, proxy, m)
+	ui := components.NewUI(cfgen, proxy, m)
+	hp := components.NewHTTPProxy(cfgen, proxy, m)
 	dn := components.NewDataNode(cfgen, proxy, m)
 
 	var en, tn components.Component
@@ -30,8 +31,8 @@ func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Y
 		d, m, ui, hp, dn,
 	}
 
-	if ytsaurus.Spec.RpcProxies != nil {
-		rp := components.NewRpcProxy(cfgen, proxy, m)
+	if ytsaurus.Spec.RPCProxies != nil {
+		rp := components.NewRPCProxy(cfgen, proxy, m)
 		result = append(result, rp)
 	}
 
@@ -60,8 +61,8 @@ func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Y
 		result = append(result, q)
 	}
 
-	if ytsaurus.Spec.YqlAgents != nil {
-		yqla := components.NewYqlAgent(cfgen, proxy, m)
+	if ytsaurus.Spec.YQLAgents != nil {
+		yqla := components.NewYQLAgent(cfgen, proxy, m)
 		result = append(result, yqla)
 	}
 

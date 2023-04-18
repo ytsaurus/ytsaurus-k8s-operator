@@ -3,6 +3,9 @@ package components
 import (
 	"context"
 	"fmt"
+	"path"
+	"strings"
+
 	ytv1 "github.com/YTsaurus/yt-k8s-operator/api/v1"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
@@ -11,11 +14,9 @@ import (
 	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"path"
-	"strings"
 )
 
-type Ui struct {
+type UI struct {
 	labeller     *labeller.Labeller
 	ytsaurus     *ytv1.Ytsaurus
 	microservice *Microservice
@@ -24,13 +25,13 @@ type Ui struct {
 	secret       *resources.StringSecret
 }
 
-const UiConfigFileName = "clusters-config.json"
+const UIConfigFileName = "clusters-config.json"
 
-func NewUi(cfgen *ytconfig.Generator, apiProxy *apiproxy.ApiProxy, master Component) Component {
+func NewUI(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
-		ApiProxy:       apiProxy,
+		APIProxy:       apiProxy,
 		ComponentLabel: "yt-ui",
 		ComponentName:  "UI",
 	}
@@ -40,12 +41,12 @@ func NewUi(cfgen *ytconfig.Generator, apiProxy *apiproxy.ApiProxy, master Compon
 		apiProxy,
 		ytsaurus.Spec.UIImage,
 		ytsaurus.Spec.UI.InstanceCount,
-		cfgen.GetWebUiConfig,
-		UiConfigFileName,
+		cfgen.GetWebUIConfig,
+		UIConfigFileName,
 		"ytsaurus-ui-deployment",
 		"ytsaurus-ui")
 
-	return &Ui{
+	return &UI{
 		microservice: microservice,
 		initJob: NewInitJob(
 			&labeller,
@@ -63,7 +64,7 @@ func NewUi(cfgen *ytconfig.Generator, apiProxy *apiproxy.ApiProxy, master Compon
 	}
 }
 
-func (u *Ui) Fetch(ctx context.Context) error {
+func (u *UI) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, []resources.Fetchable{
 		u.microservice,
 		u.initJob,
@@ -71,13 +72,13 @@ func (u *Ui) Fetch(ctx context.Context) error {
 	})
 }
 
-func (u *Ui) initUser() string {
+func (u *UI) initUser() string {
 	token, _ := u.secret.GetValue(consts.TokenSecretKey)
 	commands := createUserCommand(consts.UIUserName, "", token, false)
 	return strings.Join(commands, "\n")
 }
 
-func (u *Ui) createInitScript() string {
+func (u *UI) createInitScript() string {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		u.initUser(),
@@ -86,25 +87,25 @@ func (u *Ui) createInitScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (u *Ui) syncComponents(ctx context.Context) (err error) {
+func (u *UI) syncComponents(ctx context.Context) (err error) {
 	service := u.microservice.BuildService()
 	service.Spec.Type = u.labeller.Ytsaurus.Spec.UI.ServiceType
 
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      consts.ConfigVolumeName,
-			MountPath: path.Join(consts.UiConfigMountPoint, UiConfigFileName),
-			SubPath:   UiConfigFileName,
+			MountPath: path.Join(consts.UIConfigMountPoint, UIConfigFileName),
+			SubPath:   UIConfigFileName,
 			ReadOnly:  true,
 		},
 		{
-			Name:      consts.UiVaultVolumeName,
-			MountPath: consts.UiVaultMountPoint,
+			Name:      consts.UIVaultVolumeName,
+			MountPath: consts.UIVaultMountPoint,
 			ReadOnly:  true,
 		},
 		{
-			Name:      consts.UiSecretsVolumeName,
-			MountPath: consts.UiSecretsMountPoint,
+			Name:      consts.UISecretsVolumeName,
+			MountPath: consts.UISecretsMountPoint,
 			ReadOnly:  false,
 		},
 	}
@@ -150,8 +151,8 @@ func (u *Ui) syncComponents(ctx context.Context) (err error) {
 				"bash",
 				"-c",
 				fmt.Sprintf("cp %s %s",
-					path.Join(consts.UiVaultMountPoint, consts.UISecretFileName),
-					consts.UiSecretsMountPoint),
+					path.Join(consts.UIVaultMountPoint, consts.UISecretFileName),
+					consts.UISecretsMountPoint),
 			},
 			VolumeMounts: volumeMounts,
 		},
@@ -179,7 +180,7 @@ func (u *Ui) syncComponents(ctx context.Context) (err error) {
 			},
 		},
 		{
-			Name: consts.UiVaultVolumeName,
+			Name: consts.UIVaultVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: u.secret.Name(),
@@ -187,7 +188,7 @@ func (u *Ui) syncComponents(ctx context.Context) (err error) {
 			},
 		},
 		{
-			Name: consts.UiSecretsVolumeName,
+			Name: consts.UISecretsVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				EmptyDir: &corev1.EmptyDirVolumeSource{
 					SizeLimit: &secretsVolumeSize,
@@ -199,7 +200,7 @@ func (u *Ui) syncComponents(ctx context.Context) (err error) {
 	return u.microservice.Sync(ctx)
 }
 
-func (u *Ui) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+func (u *UI) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
 	if u.master.Status(ctx) != SyncStatusReady {
@@ -237,7 +238,7 @@ func (u *Ui) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	return SyncStatusReady, err
 }
 
-func (u *Ui) Status(ctx context.Context) SyncStatus {
+func (u *UI) Status(ctx context.Context) SyncStatus {
 	status, err := u.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -246,7 +247,7 @@ func (u *Ui) Status(ctx context.Context) SyncStatus {
 	return status
 }
 
-func (u *Ui) Sync(ctx context.Context) error {
+func (u *UI) Sync(ctx context.Context) error {
 	_, err := u.doSync(ctx, false)
 	return err
 }

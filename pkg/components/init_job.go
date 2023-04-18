@@ -3,6 +3,9 @@ package components
 import (
 	"context"
 	"fmt"
+	"path"
+	"strings"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
@@ -11,8 +14,6 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"path"
-	"strings"
 )
 
 const initJobPrologue = `
@@ -30,7 +31,7 @@ func initJobWithNativeDriverPrologue() string {
 
 type InitJob struct {
 	labeller *labeller.Labeller
-	apiProxy *apiproxy.ApiProxy
+	apiProxy *apiproxy.APIProxy
 
 	initJob *resources.Job
 
@@ -42,7 +43,7 @@ type InitJob struct {
 
 func NewInitJob(
 	labeller *labeller.Labeller,
-	apiProxy *apiproxy.ApiProxy,
+	apiProxy *apiproxy.APIProxy,
 	name, configFileName string,
 	generator ytconfig.GeneratorFunc) *InitJob {
 	return &InitJob{

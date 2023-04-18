@@ -20,7 +20,7 @@ type Auth struct {
 	RequireAuthentication     bool                      `yson:"require_authentication"`
 }
 
-type HttpProxyServer struct {
+type HTTPProxyServer struct {
 	CommonServer
 	Port        int         `yson:"port"`
 	Auth        Auth        `yson:"auth"`
@@ -34,21 +34,21 @@ type NativeClient struct {
 	Driver          Driver          `yson:"driver"`
 }
 
-type RpcProxyServer struct {
+type RPCProxyServer struct {
 	CommonServer
 	CypressTokenAuthenticator CypressTokenAuthenticator `yson:"cypress_token_authenticator"`
 }
 
-func getHttpProxyServerCarcass(spec ytv1.HttpProxiesSpec) (HttpProxyServer, error) {
-	var c HttpProxyServer
+func getHTTPProxyServerCarcass(spec ytv1.HTTPProxiesSpec) (HTTPProxyServer, error) {
+	var c HTTPProxyServer
 
 	c.Auth.RequireAuthentication = true
 	c.Auth.CypressTokenAuthenticator.Secure = true
 	c.Coordinator.Enable = true
 
-	c.RpcPort = consts.HttpProxyRpcPort
-	c.MonitoringPort = consts.HttpProxyMonitoringPort
-	c.Port = consts.HttpProxyHttpPort
+	c.RPCPort = consts.HTTPProxyRPCPort
+	c.MonitoringPort = consts.HTTPProxyMonitoringPort
+	c.Port = consts.HTTPProxyHTTPPort
 
 	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "http-proxy")
 	c.Logging = loggingBuilder.addDefaultDebug().addDefaultStderr().logging
@@ -56,13 +56,13 @@ func getHttpProxyServerCarcass(spec ytv1.HttpProxiesSpec) (HttpProxyServer, erro
 	return c, nil
 }
 
-func getRpcProxyServerCarcass(spec ytv1.RpcProxiesSpec) (RpcProxyServer, error) {
-	var c RpcProxyServer
+func getRPCProxyServerCarcass(spec ytv1.RPCProxiesSpec) (RPCProxyServer, error) {
+	var c RPCProxyServer
 
 	c.CypressTokenAuthenticator.Secure = true
 
-	c.RpcPort = consts.RpcProxyRpcPort
-	c.MonitoringPort = consts.RpcProxyMonitoringPort
+	c.RPCPort = consts.RPCProxyRPCPort
+	c.MonitoringPort = consts.RPCProxyMonitoringPort
 
 	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "rpc-proxy")
 	c.Logging = loggingBuilder.addDefaultDebug().addDefaultStderr().logging

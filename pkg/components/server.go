@@ -2,6 +2,8 @@ package components
 
 import (
 	"context"
+	"path"
+
 	ytv1 "github.com/YTsaurus/yt-k8s-operator/api/v1"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
@@ -11,13 +13,12 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"path"
 )
 
 // Server represents a typical YT cluster server component, like master or scheduler.
 type Server struct {
 	labeller *labeller.Labeller
-	apiProxy *apiproxy.ApiProxy
+	apiProxy *apiproxy.APIProxy
 
 	binaryPath         string
 	enableAntiAffinity bool
@@ -33,7 +34,7 @@ type Server struct {
 
 func NewServer(
 	labeller *labeller.Labeller,
-	apiProxy *apiproxy.ApiProxy,
+	apiProxy *apiproxy.APIProxy,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
 	enableAntiAffinity bool,
@@ -108,10 +109,10 @@ func (s *Server) BuildStatefulSet() *appsv1.StatefulSet {
 	statefulSet.Spec.ServiceName = s.headlessService.Name()
 	statefulSet.Spec.VolumeClaimTemplates = createVolumeClaims(s.instanceSpec.VolumeClaimTemplates)
 
-	setHostameAsFQDN := true
+	setHostnameAsFQDN := true
 	statefulSet.Spec.Template.Spec = corev1.PodSpec{
 		ImagePullSecrets:  s.apiProxy.Ytsaurus().Spec.ImagePullSecrets,
-		SetHostnameAsFQDN: &setHostameAsFQDN,
+		SetHostnameAsFQDN: &setHostnameAsFQDN,
 		Containers: []corev1.Container{
 			corev1.Container{
 				Image:        s.apiProxy.Ytsaurus().Spec.CoreImage,

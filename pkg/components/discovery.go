@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
@@ -9,17 +10,17 @@ import (
 )
 
 type discovery struct {
-	apiProxy *apiproxy.ApiProxy
+	apiProxy *apiproxy.APIProxy
 
 	labeller *labeller.Labeller
 	server   *Server
 }
 
-func NewDiscovery(cfgen *ytconfig.Generator, apiProxy *apiproxy.ApiProxy) Component {
+func NewDiscovery(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
-		ApiProxy:       apiProxy,
+		APIProxy:       apiProxy,
 		ComponentLabel: "yt-discovery",
 		ComponentName:  "Discovery",
 	}

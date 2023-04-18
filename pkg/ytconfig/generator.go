@@ -3,6 +3,7 @@ package ytconfig
 import (
 	"encoding/json"
 	"fmt"
+
 	v1 "github.com/YTsaurus/yt-k8s-operator/api/v1"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
 	"go.ytsaurus.tech/yt/go/yson"
@@ -30,7 +31,7 @@ func (g *Generator) getMasterAddresses() []string {
 			g.GetMastersServiceName(),
 			g.ytsaurus.Namespace,
 			g.clusterDomain,
-			consts.MasterRpcPort))
+			consts.MasterRPCPort))
 	}
 	return names
 }
@@ -43,20 +44,20 @@ func (g *Generator) getDiscoveryAddresses() []string {
 			g.GetDiscoveryServiceName(),
 			g.ytsaurus.Namespace,
 			g.clusterDomain,
-			consts.DiscoveryRpcPort))
+			consts.DiscoveryRPCPort))
 	}
 	return names
 }
 
-func (g *Generator) GetYqlAgentAddresses() []string {
-	names := make([]string, 0, g.ytsaurus.Spec.YqlAgents.InstanceGroup.InstanceCount)
-	for _, podName := range g.GetYqlAgentPodNames() {
+func (g *Generator) GetYQLAgentAddresses() []string {
+	names := make([]string, 0, g.ytsaurus.Spec.YQLAgents.InstanceGroup.InstanceCount)
+	for _, podName := range g.GetYQLAgentPodNames() {
 		names = append(names, fmt.Sprintf("%s.%s.%s.svc.%s:%d",
 			podName,
-			g.GetYqlAgentServiceName(),
+			g.GetYQLAgentServiceName(),
 			g.ytsaurus.Namespace,
 			g.clusterDomain,
-			consts.YqlAgentRpcPort))
+			consts.YQLAgentRPCPort))
 	}
 	return names
 }
@@ -65,7 +66,7 @@ func (g *Generator) fillDriver(c *Driver) {
 	c.TimestampProviders.Addresses = g.getMasterAddresses()
 
 	c.PrimaryMaster.Addresses = g.getMasterAddresses()
-	c.PrimaryMaster.CellId = generateCellId(g.ytsaurus.Spec.CellTag)
+	c.PrimaryMaster.CellID = generateCellID(g.ytsaurus.Spec.CellTag)
 
 	c.MasterCache.enableMasterCacheDiscover = true
 	g.fillPrimaryMaster(&c.MasterCache.MasterCell)
@@ -81,7 +82,7 @@ func (g *Generator) fillAddressResolver(c *AddressResolver) {
 
 func (g *Generator) fillPrimaryMaster(c *MasterCell) {
 	c.Addresses = g.getMasterAddresses()
-	c.CellId = generateCellId(g.ytsaurus.Spec.CellTag)
+	c.CellID = generateCellID(g.ytsaurus.Spec.CellTag)
 }
 
 func (g *Generator) fillClusterConnection(c *ClusterConnection) {
@@ -105,7 +106,7 @@ func marshallYsonConfig(c interface{}) ([]byte, error) {
 	return result, nil
 }
 
-func marshallJsonConfig(c interface{}) ([]byte, error) {
+func marshallJSONConfig(c interface{}) ([]byte, error) {
 	result, err := json.Marshal(c)
 	if err != nil {
 		return nil, err
@@ -122,14 +123,14 @@ func (g *Generator) GetClusterConnection() ([]byte, error) {
 func (g *Generator) GetChytControllerConfig() ([]byte, error) {
 	c := getChytController()
 	c.LocationProxies = []string{
-		g.GetHttpProxiesAddress(),
+		g.GetHTTPProxiesAddress(),
 	}
 	return marshallYsonConfig(c)
 }
 
 func (g *Generator) GetChytInitClusterConfig() ([]byte, error) {
 	c := getChytInitCluster()
-	c.Proxy = g.GetHttpProxiesAddress()
+	c.Proxy = g.GetHTTPProxiesAddress()
 	return marshallYsonConfig(c)
 }
 
@@ -152,7 +153,7 @@ func (g *Generator) GetNativeClientConfig() ([]byte, error) {
 
 	g.fillDriver(&c.Driver)
 	g.fillAddressResolver(&c.AddressResolver)
-	c.Driver.ApiVersion = 4
+	c.Driver.APIVersion = 4
 
 	return marshallYsonConfig(c)
 }
@@ -174,12 +175,12 @@ func (g *Generator) GetSchedulerConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) GetRpcProxyConfig() ([]byte, error) {
+func (g *Generator) GetRPCProxyConfig() ([]byte, error) {
 	if g.ytsaurus.Spec.Schedulers == nil {
 		return []byte{}, nil
 	}
 
-	c, err := getRpcProxyServerCarcass(*g.ytsaurus.Spec.RpcProxies)
+	c, err := getRPCProxyServerCarcass(*g.ytsaurus.Spec.RPCProxies)
 	if err != nil {
 		return nil, err
 	}
@@ -246,8 +247,8 @@ func (g *Generator) GetTabletNodeConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) GetHttpProxyConfig() ([]byte, error) {
-	c, err := getHttpProxyServerCarcass(g.ytsaurus.Spec.HttpProxies)
+func (g *Generator) GetHTTPProxyConfig() ([]byte, error) {
+	c, err := getHTTPProxyServerCarcass(g.ytsaurus.Spec.HTTPProxies)
 	if err != nil {
 		return nil, err
 	}
@@ -273,32 +274,32 @@ func (g *Generator) GetQueryTrackerConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) GetYqlAgentConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.YqlAgents == nil {
+func (g *Generator) GetYQLAgentConfig() ([]byte, error) {
+	if g.ytsaurus.Spec.YQLAgents == nil {
 		return []byte{}, nil
 	}
-	c, err := getYqlAgentServerCarcass(*g.ytsaurus.Spec.YqlAgents)
+	c, err := getYQLAgentServerCarcass(*g.ytsaurus.Spec.YQLAgents)
 	if err != nil {
 		return nil, err
 	}
 	g.fillCommonService(&c.CommonServer)
-	c.YqlAgent.AdditionalClusters = map[string]string{"yt": g.GetHttpProxiesServiceAddress()}
+	c.YQLAgent.AdditionalClusters = map[string]string{"yt": g.GetHTTPProxiesServiceAddress()}
 
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) GetWebUiConfig() ([]byte, error) {
+func (g *Generator) GetWebUIConfig() ([]byte, error) {
 	if g.ytsaurus.Spec.UI == nil {
 		return []byte{}, nil
 	}
 
-	c := getUiClusterCarcass()
-	c.Id = g.ytsaurus.Name
+	c := getUIClusterCarcass()
+	c.ID = g.ytsaurus.Name
 	c.Name = g.ytsaurus.Name
-	c.Proxy = g.GetHttpProxiesAddress()
+	c.Proxy = g.GetHTTPProxiesAddress()
 	c.PrimaryMaster.CellTag = g.ytsaurus.Spec.CellTag
 
-	return marshallJsonConfig(WebUi{Clusters: []UiCluster{c}})
+	return marshallJSONConfig(WebUI{Clusters: []UICluster{c}})
 }
 
 func (g *Generator) GetDiscoveryConfig() ([]byte, error) {

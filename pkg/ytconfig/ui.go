@@ -1,34 +1,34 @@
 package ytconfig
 
-type UiAuthenticationType string
+type UIAuthenticationType string
 
 const (
-	uiAuthenticationBasic UiAuthenticationType = "basic"
+	uiAuthenticationBasic UIAuthenticationType = "basic"
 )
 
-type UiPrimaryMaster struct {
+type UIPrimaryMaster struct {
 	CellTag int16 `json:"cellTag"`
 }
 
-type UiCluster struct {
-	Id             string               `json:"id"`
+type UICluster struct {
+	ID             string               `json:"id"`
 	Name           string               `json:"name"`
 	Proxy          string               `json:"proxy"`
 	Secure         bool                 `json:"secure"`
-	Authentication UiAuthenticationType `json:"authentication"`
+	Authentication UIAuthenticationType `json:"authentication"`
 	Group          string               `json:"group"`
 	Theme          string               `json:"theme"`
 	Environment    string               `json:"environment"`
 	Description    string               `json:"description"`
-	PrimaryMaster  UiPrimaryMaster      `json:"primaryMaster"`
+	PrimaryMaster  UIPrimaryMaster      `json:"primaryMaster"`
 }
 
-type WebUi struct {
-	Clusters []UiCluster `json:"clusters"`
+type WebUI struct {
+	Clusters []UICluster `json:"clusters"`
 }
 
-func getUiClusterCarcass() UiCluster {
-	return UiCluster{
+func getUIClusterCarcass() UICluster {
+	return UICluster{
 		Secure:         false,
 		Authentication: uiAuthenticationBasic,
 		Group:          "My Ytsaurus clusters",

@@ -3,13 +3,14 @@ package components
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
 	corev1 "k8s.io/api/core/v1"
-	"strings"
 )
 
 type yqlAgent struct {
@@ -21,11 +22,11 @@ type yqlAgent struct {
 	secret          *resources.StringSecret
 }
 
-func NewYqlAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.ApiProxy, master Component) Component {
+func NewYQLAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
-		ApiProxy:       apiProxy,
+		APIProxy:       apiProxy,
 		ComponentLabel: "yt-yql-agent",
 		ComponentName:  "YqlAgent",
 	}
@@ -33,13 +34,13 @@ func NewYqlAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.ApiProxy, master 
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.YqlAgents.InstanceGroup,
+		&ytsaurus.Spec.YQLAgents.InstanceGroup,
 		"/usr/bin/ytserver-yql-agent",
 		"ytserver-yql-agent.yson",
-		cfgen.GetYqlAgentStatefulSetName(),
-		cfgen.GetYqlAgentServiceName(),
+		cfgen.GetYQLAgentStatefulSetName(),
+		cfgen.GetYQLAgentServiceName(),
 		false,
-		cfgen.GetYqlAgentConfig,
+		cfgen.GetYQLAgentConfig,
 	)
 
 	return &yqlAgent{
@@ -78,7 +79,7 @@ func (yqla *yqlAgent) initUsers() string {
 func (yqla *yqlAgent) createInitScript() string {
 	var sb strings.Builder
 	sb.WriteString("[")
-	for _, addr := range yqla.cfgen.GetYqlAgentAddresses() {
+	for _, addr := range yqla.cfgen.GetYQLAgentAddresses() {
 		sb.WriteString("\"")
 		sb.WriteString(addr)
 		sb.WriteString("\";")

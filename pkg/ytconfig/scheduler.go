@@ -31,7 +31,7 @@ type ControllerAgentServer struct {
 
 func getSchedulerServerCarcass(spec ytv1.SchedulersSpec) (SchedulerServer, error) {
 	var c SchedulerServer
-	c.RpcPort = consts.SchedulerRpcPort
+	c.RPCPort = consts.SchedulerRPCPort
 	c.MonitoringPort = consts.SchedulerMonitoringPort
 
 	c.Scheduler.OperationsCleaner.EnableOperationArchivation = false
@@ -46,7 +46,7 @@ func getSchedulerServerCarcass(spec ytv1.SchedulersSpec) (SchedulerServer, error
 
 func getControllerAgentServerCarcass(spec ytv1.ControllerAgentsSpec) (ControllerAgentServer, error) {
 	var c ControllerAgentServer
-	c.RpcPort = consts.ControllerAgentRpcPort
+	c.RPCPort = consts.ControllerAgentRPCPort
 	c.MonitoringPort = consts.ControllerAgentMonitoringPort
 
 	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "controller-agent")

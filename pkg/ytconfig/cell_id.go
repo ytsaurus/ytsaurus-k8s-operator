@@ -2,17 +2,18 @@ package ytconfig
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"math/rand"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
-func generateCellId(cellTag int16) string {
-	cellId, err := uuid.NewRandomFromReader(strings.NewReader("ytsaurus-kubernetes-operator"))
+func generateCellID(cellTag int16) string {
+	cellID, err := uuid.NewRandomFromReader(strings.NewReader("ytsaurus-kubernetes-operator"))
 	if err != nil {
 		panic(err)
 	}
-	uuidBytes, err := cellId.MarshalBinary()
+	uuidBytes, err := cellID.MarshalBinary()
 	if err != nil {
 		panic(err)
 	}
@@ -24,7 +25,7 @@ func generateCellId(cellTag int16) string {
 	uuidBytes[6] = byte(masterCellType >> 8)
 	uuidBytes[7] = byte(masterCellType & 0xff)
 
-	getGuidPart := func(data []byte) string {
+	getGUIDPart := func(data []byte) string {
 		format := strings.Repeat("%02x", len(data))
 		args := make([]any, 0, len(data))
 		for _, value := range data {
@@ -34,7 +35,7 @@ func generateCellId(cellTag int16) string {
 		part := fmt.Sprintf(format, args...)
 		return strings.TrimLeft(part, "0")
 	}
-	return fmt.Sprintf("%s-%s-%s-%s", getGuidPart(uuidBytes[12:]), getGuidPart(uuidBytes[8:12]), getGuidPart(uuidBytes[4:8]), getGuidPart(uuidBytes[:4]))
+	return fmt.Sprintf("%s-%s-%s-%s", getGUIDPart(uuidBytes[12:]), getGUIDPart(uuidBytes[8:12]), getGUIDPart(uuidBytes[4:8]), getGUIDPart(uuidBytes[:4]))
 }
 
 func RandString(n int) string {

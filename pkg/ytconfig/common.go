@@ -6,7 +6,7 @@ type AddressList struct {
 
 type MasterCell struct {
 	AddressList
-	CellId string `yson:"cell_id"`
+	CellID string `yson:"cell_id"`
 }
 
 type TimestampProviders struct {
@@ -26,7 +26,7 @@ type Driver struct {
 	MasterCache        MasterCache        `yson:"master_cache,omitempty"`
 	TimestampProviders TimestampProviders `yson:"timestamp_provider,omitempty"`
 	PrimaryMaster      MasterCell         `yson:"primary_master,omitempty"`
-	ApiVersion         int                `yson:"api_version,omitempty"`
+	APIVersion         int                `yson:"api_version,omitempty"`
 }
 
 type ClusterConnection struct {
@@ -46,7 +46,7 @@ type BasicServer struct {
 	AddressResolver AddressResolver `yson:"address_resolver"`
 	Logging         Logging         `yson:"logging"`
 	MonitoringPort  int32           `yson:"monitoring_port"`
-	RpcPort         int32           `yson:"rpc_port"`
+	RPCPort         int32           `yson:"rpc_port"`
 }
 
 type CommonServer struct {

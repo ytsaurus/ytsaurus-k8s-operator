@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
@@ -20,7 +21,7 @@ type Microservice struct {
 	image         string
 	instanceCount int32
 
-	service      *resources.HttpService
+	service      *resources.HTTPService
 	deployment   *resources.Deployment
 	configHelper *ConfigHelper
 
@@ -31,7 +32,7 @@ type Microservice struct {
 
 func NewMicroservice(
 	labeller *labeller.Labeller,
-	apiProxy *apiproxy.ApiProxy,
+	apiProxy *apiproxy.APIProxy,
 	image string,
 	instanceCount int32,
 	configGenerator ytconfig.GeneratorFunc,
@@ -40,7 +41,7 @@ func NewMicroservice(
 		labeller:      labeller,
 		image:         image,
 		instanceCount: instanceCount,
-		service: resources.NewHttpService(
+		service: resources.NewHTTPService(
 			serviceName,
 			labeller,
 			apiProxy),

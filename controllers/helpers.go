@@ -3,8 +3,9 @@ package controllers
 import (
 	"net"
 	"os"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func getClusterDomain(client client.Client) string {

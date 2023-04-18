@@ -2,9 +2,9 @@ package consts
 
 const (
 	ConfigMountPoint    = "/config"
-	UiConfigMountPoint  = "/opt/app/"
-	UiSecretsMountPoint = "/opt/app/secrets"
-	UiVaultMountPoint   = "/vault"
+	UIConfigMountPoint  = "/opt/app/"
+	UISecretsMountPoint = "/opt/app/secrets"
+	UIVaultMountPoint   = "/vault"
 )
 
 const (
@@ -27,6 +27,6 @@ const (
 const (
 	ConfigVolumeName     = "config"
 	InitScriptVolumeName = "init-script"
-	UiVaultVolumeName    = "vault"
-	UiSecretsVolumeName  = "secrets"
+	UIVaultVolumeName    = "vault"
+	UISecretsVolumeName  = "secrets"
 )

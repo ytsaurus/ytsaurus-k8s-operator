@@ -5,31 +5,31 @@ import (
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
 )
 
-type YqlEmbedded struct {
+type YQLEmbedded struct {
 	MRJobBinary  string `yson:"mr_job_binary"`
-	UdfDirectory string `yson:"udf_directory"`
+	UDFDirectory string `yson:"udf_directory"`
 }
 
-type YqlAgent struct {
-	YqlEmbedded
+type YQLAgent struct {
+	YQLEmbedded
 	AdditionalClusters map[string]string `yson:"additional_clusters"`
 }
 
-type YqlAgentServer struct {
+type YQLAgentServer struct {
 	CommonServer
 	User     string   `yson:"user"`
-	YqlAgent YqlAgent `yson:"yql_agent"`
+	YQLAgent YQLAgent `yson:"yql_agent"`
 }
 
-func getYqlAgentServerCarcass(spec ytv1.YqlAgentSpec) (YqlAgentServer, error) {
-	var c YqlAgentServer
-	c.RpcPort = consts.YqlAgentRpcPort
-	c.MonitoringPort = consts.YqlAgentMonitoringPort
+func getYQLAgentServerCarcass(spec ytv1.YQLAgentSpec) (YQLAgentServer, error) {
+	var c YQLAgentServer
+	c.RPCPort = consts.YQLAgentRPCPort
+	c.MonitoringPort = consts.YQLAgentMonitoringPort
 
 	c.User = "yql_agent"
 
-	c.YqlAgent.UdfDirectory = "/usr/lib/yql"
-	c.YqlAgent.MRJobBinary = "/usr/bin/mrjob"
+	c.YQLAgent.UDFDirectory = "/usr/lib/yql"
+	c.YQLAgent.MRJobBinary = "/usr/bin/mrjob"
 
 	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "yql-agent")
 	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().addDefaultDebug().logging

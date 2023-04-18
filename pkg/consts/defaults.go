@@ -10,4 +10,4 @@ const AdminTokenSecret = "token"
 const UIUserName = "robot-ui"
 const ChytUserName = "robot-chyt-controller"
 
-const StartUid = 19500
+const StartUID = 19500

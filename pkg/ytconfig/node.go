@@ -2,11 +2,12 @@ package ytconfig
 
 import (
 	"fmt"
+	"math"
+	"strings"
+
 	ytv1 "github.com/YTsaurus/yt-k8s-operator/api/v1"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
 	v1 "k8s.io/api/core/v1"
-	"math"
-	"strings"
 )
 
 type NodeFlavor string
@@ -54,7 +55,7 @@ const (
 
 type JobEnvironment struct {
 	Type     JobEnvironmentType `yson:"type,omitempty"`
-	StartUid int                `yson:"start_uid,omitempty"`
+	StartUID int                `yson:"start_uid,omitempty"`
 }
 
 type SlotManager struct {
@@ -167,7 +168,7 @@ func findQuotaForPath(locationPath string, spec ytv1.DataNodesSpec) *int64 {
 }
 
 func fillCommonNodeServerCarcass(n *NodeServer) {
-	n.RpcPort = consts.NodeRpcPort
+	n.RPCPort = consts.NodeRPCPort
 	n.MonitoringPort = consts.NodeMonitoringPort
 }
 
@@ -265,7 +266,7 @@ func getExecNodeServerCarcass(spec ytv1.ExecNodesSpec, usePorto bool) (ExecNodeS
 		c.ExecAgent.JobController.ResourceLimits.UserSlots = int(5 * *c.ResourceLimits.TotalCpu)
 	}
 
-	c.ExecAgent.SlotManager.JobEnvironment.StartUid = consts.StartUid
+	c.ExecAgent.SlotManager.JobEnvironment.StartUID = consts.StartUID
 	if usePorto {
 		c.ExecAgent.SlotManager.JobEnvironment.Type = JobEnvironmentTypePorto
 		// ToDo(psushin): volume locations, root fs binds, etc.

@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
@@ -15,17 +16,17 @@ type httpProxy struct {
 	serviceType v1.ServiceType
 
 	master           Component
-	balancingService *resources.HttpService
+	balancingService *resources.HTTPService
 }
 
-func NewHttpProxy(
+func NewHTTPProxy(
 	cfgen *ytconfig.Generator,
-	apiProxy *apiproxy.ApiProxy,
+	apiProxy *apiproxy.APIProxy,
 	masterReconciler Component) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
-		ApiProxy:       apiProxy,
+		APIProxy:       apiProxy,
 		ComponentLabel: "yt-http-proxy",
 		ComponentName:  "HttpProxy",
 	}
@@ -33,22 +34,22 @@ func NewHttpProxy(
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.HttpProxies.InstanceGroup,
+		&ytsaurus.Spec.HTTPProxies.InstanceGroup,
 		"/usr/bin/ytserver-http-proxy",
 		"ytserver-http-proxy.yson",
-		cfgen.GetHttpProxiesStatefulSetName(),
-		cfgen.GetHttpProxiesHeadlessServiceName(),
+		cfgen.GetHTTPProxiesStatefulSetName(),
+		cfgen.GetHTTPProxiesHeadlessServiceName(),
 		false,
-		cfgen.GetHttpProxyConfig,
+		cfgen.GetHTTPProxyConfig,
 	)
 
 	return &httpProxy{
 		server:      server,
 		labeller:    &labeller,
 		master:      masterReconciler,
-		serviceType: ytsaurus.Spec.HttpProxies.ServiceType,
-		balancingService: resources.NewHttpService(
-			cfgen.GetHttpProxiesServiceName(),
+		serviceType: ytsaurus.Spec.HTTPProxies.ServiceType,
+		balancingService: resources.NewHTTPService(
+			cfgen.GetHTTPProxiesServiceName(),
 			&labeller,
 			apiProxy),
 	}

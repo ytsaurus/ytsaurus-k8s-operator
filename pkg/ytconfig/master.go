@@ -2,6 +2,7 @@ package ytconfig
 
 import (
 	"fmt"
+
 	ytv1 "github.com/YTsaurus/yt-k8s-operator/api/v1"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
 )
@@ -32,7 +33,7 @@ type MasterServer struct {
 func getMasterServerCarcass(spec ytv1.MastersSpec) (MasterServer, error) {
 	var c MasterServer
 	c.UseNewHydra = true
-	c.RpcPort = consts.MasterRpcPort
+	c.RPCPort = consts.MasterRPCPort
 	c.MonitoringPort = consts.MasterMonitoringPort
 	c.Hydra.MaxSnapshotCountToKeep = 2
 	c.Hydra.MaxChangelogCountToKeep = 2

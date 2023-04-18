@@ -2,12 +2,13 @@ package components
 
 import (
 	"context"
+	"strings"
+
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
-	"strings"
 )
 
 type tabletNode struct {
@@ -18,11 +19,11 @@ type tabletNode struct {
 	cfgen       *ytconfig.Generator
 }
 
-func NewTabletNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.ApiProxy, master Component) Component {
+func NewTabletNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
-		ApiProxy:       apiProxy,
+		APIProxy:       apiProxy,
 		ComponentLabel: "yt-tablet-node",
 		ComponentName:  "TabletNode",
 	}
