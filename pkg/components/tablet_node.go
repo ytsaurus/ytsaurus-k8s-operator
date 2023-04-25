@@ -24,7 +24,7 @@ func NewTabletNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, maste
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
 		APIProxy:       apiProxy,
-		ComponentLabel: "yt-tablet-node",
+		ComponentLabel: consts.YTComponentLabelTabletNode,
 		ComponentName:  "TabletNode",
 	}
 

@@ -30,7 +30,7 @@ func NewScheduler(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
 		APIProxy:       apiProxy,
-		ComponentLabel: "yt-scheduler",
+		ComponentLabel: consts.YTComponentLabelScheduler,
 		ComponentName:  "Scheduler",
 	}
 

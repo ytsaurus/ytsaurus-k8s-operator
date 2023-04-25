@@ -295,7 +295,7 @@ func getTabletNodeServerCarcass(spec ytv1.TabletNodesSpec) (TabletNodeServer, er
 
 	c.Flavors = []NodeFlavor{NodeFlavorTablet}
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "exec-node")
+	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "tablet-node")
 	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().logging
 
 	return c, nil

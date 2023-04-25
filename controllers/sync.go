@@ -14,21 +14,23 @@ import (
 )
 
 func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Ytsaurus) []components.Component {
-	logger := log.FromContext(ctx)
-
 	cfgen := ytconfig.NewGenerator(ytsaurus, getClusterDomain(r.Client))
 	proxy := apiProxy.NewAPIProxy(ytsaurus, r.Client, r.Recorder, r.Scheme)
 
 	d := components.NewDiscovery(cfgen, proxy)
 	m := components.NewMaster(cfgen, proxy)
-	ui := components.NewUI(cfgen, proxy, m)
 	hp := components.NewHTTPProxy(cfgen, proxy, m)
 	dn := components.NewDataNode(cfgen, proxy, m)
 
 	var en, tn components.Component
 
 	result := []components.Component{
-		d, m, ui, hp, dn,
+		d, m, hp, dn,
+	}
+
+	if ytsaurus.Spec.UI != nil {
+		ui := components.NewUI(cfgen, proxy, m)
+		result = append(result, ui)
 	}
 
 	if ytsaurus.Spec.RPCProxies != nil {
@@ -72,11 +74,8 @@ func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Y
 	}
 
 	if ytsaurus.Spec.Spyt != nil && en != nil {
-		logger.Info("getComponents - SPYT will be run")
 		spyt := components.NewSpyt(cfgen, proxy, m, en)
 		result = append(result, spyt)
-	} else {
-		logger.Info("getComponents - no SPYT")
 	}
 
 	return result
@@ -85,8 +84,8 @@ func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Y
 func (r *YtsaurusReconciler) updateClusterState(ctx context.Context, ytsaurus *ytv1.Ytsaurus, clusterState ytv1.ClusterState) error {
 	ytsaurus.Status.State = clusterState
 	if err := r.Status().Update(ctx, ytsaurus); err != nil {
-		log := log.FromContext(ctx)
-		log.Error(err, "unable to update YT cluster status")
+		logger := log.FromContext(ctx)
+		logger.Error(err, "unable to update YT cluster status")
 		return err
 	}
 	return nil
@@ -107,7 +106,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) 
 		status := c.Status(ctx)
 		if status != components.SyncStatusReady {
 			logger.Info("component is not ready", "component", fmt.Sprintf("%T", c), "syncStatus", status)
-			needSync = needSync || true
+			needSync = true
 		}
 	}
 

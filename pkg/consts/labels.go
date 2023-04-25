@@ -5,6 +5,7 @@ const YTComponentLabelName = "yt_component"
 type YTComponentLabel string
 
 const (
+	YTComponentLabelDiscovery       YTComponentLabel = "yt-discovery"
 	YTComponentLabelMaster          YTComponentLabel = "yt-master"
 	YTComponentLabelScheduler       YTComponentLabel = "yt-scheduler"
 	YTComponentLabelControllerAgent YTComponentLabel = "yt-controller-agent"
@@ -12,6 +13,7 @@ const (
 	YTComponentLabelExecNode        YTComponentLabel = "yt-exec-node"
 	YTComponentLabelTabletNode      YTComponentLabel = "yt-tablet-node"
 	YTComponentLabelHTTPProxy       YTComponentLabel = "yt-http-proxy"
+	YTComponentLabelRPCProxy        YTComponentLabel = "yt-rpc-proxy"
 	YTComponentLabelUI              YTComponentLabel = "yt-ui"
 )
 

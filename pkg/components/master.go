@@ -29,7 +29,7 @@ func NewMaster(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Component
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
 		APIProxy:       apiProxy,
-		ComponentLabel: "yt-master",
+		ComponentLabel: consts.YTComponentLabelMaster,
 		ComponentName:  "Master",
 	}
 

@@ -3,7 +3,7 @@ kind: Ytsaurus
 metadata:
   name: ytdemo
 spec:
-  coreImage: ytsaurus/ytsaurus:latest-yql
+  coreImage: ytsaurus/ytsaurus:unstable-0.0.1
   uiImage: ytsaurus/ui:stable
 
   adminCredentials:
@@ -27,20 +27,23 @@ spec:
   masters:
     instanceGroup:
       instanceCount: 3
+      volumeMounts:
+        - name: master-data
+          mountPath: /yt/master-data
       locations:
         - locationType: MasterChangelogs
           path: /yt/master-data/master-changelogs
         - locationType: MasterSnapshots
           path: /yt/master-data/master-snapshots
 
-      volumes:
-        - name: master-data
-          emptyDir:
-            sizeLimit: 20Gi
-
-      volumeMounts:
-        - name: master-data
-          mountPath: /yt/master-data
+      volumeClaimTemplates:
+        - metadata:
+            name: master-data
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: 1Gi
 
   httpProxies:
     serviceType: NodePort
@@ -59,14 +62,18 @@ spec:
         - name: node-data
           mountPath: /yt/node-data
 
-      volumes:
-        - name: node-data
-          emptyDir:
-            sizeLimit: 50Gi
-
       locations:
         - locationType: ChunkStore
           path: /yt/node-data/chunk-store
+
+      volumeClaimTemplates:
+        - metadata:
+            name: node-data
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: 50Gi
 
   execNodes:
     instanceGroup:
@@ -94,7 +101,7 @@ spec:
 
   tabletNodes:
     instanceGroup:
-      instanceCount: 1
+      instanceCount: 3
 
   queryTrackers:
     instanceGroup:

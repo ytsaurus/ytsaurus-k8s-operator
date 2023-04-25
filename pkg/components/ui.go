@@ -32,7 +32,7 @@ func NewUI(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Compon
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
 		APIProxy:       apiProxy,
-		ComponentLabel: "yt-ui",
+		ComponentLabel: consts.YTComponentLabelUI,
 		ComponentName:  "UI",
 	}
 

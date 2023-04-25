@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
+	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
@@ -27,7 +28,7 @@ func NewRPCProxy(
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
 		APIProxy:       apiProxy,
-		ComponentLabel: "yt-rpc-proxy",
+		ComponentLabel: consts.YTComponentLabelRPCProxy,
 		ComponentName:  "RpcProxy",
 	}
 
