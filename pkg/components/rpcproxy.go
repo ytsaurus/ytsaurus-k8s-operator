@@ -2,17 +2,21 @@ package components
 
 import (
 	"context"
-
 	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
+	v1 "k8s.io/api/core/v1"
 )
 
 type rpcProxy struct {
 	labeller *labeller.Labeller
 	server   *Server
-	master   Component
+
+	master Component
+
+	serviceType      *v1.ServiceType
+	balancingService *resources.RPCService
 }
 
 func NewRPCProxy(
@@ -34,22 +38,36 @@ func NewRPCProxy(
 		"/usr/bin/ytserver-proxy",
 		"ytserver-rpc-proxy.yson",
 		cfgen.GetRPCProxiesStatefulSetName(),
-		cfgen.GetRPCProxiesServiceName(),
+		cfgen.GetRPCProxiesHeadlessServiceName(),
 		false,
 		cfgen.GetRPCProxyConfig,
 	)
 
+	var balancingService *resources.RPCService = nil
+	if ytsaurus.Spec.RPCProxies.ServiceType != nil {
+		balancingService = resources.NewRPCService(
+			cfgen.GetRPCProxiesServiceName(),
+			&labeller,
+			apiProxy)
+	}
+
 	return &rpcProxy{
-		server:   server,
-		labeller: &labeller,
-		master:   masterReconciler,
+		server:           server,
+		labeller:         &labeller,
+		master:           masterReconciler,
+		serviceType:      ytsaurus.Spec.RPCProxies.ServiceType,
+		balancingService: balancingService,
 	}
 }
 
 func (r *rpcProxy) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
+	fetchable := []resources.Fetchable{
 		r.server,
-	})
+	}
+	if r.balancingService != nil {
+		fetchable = append(fetchable, r.balancingService)
+	}
+	return resources.Fetch(ctx, fetchable)
 }
 
 func (r *rpcProxy) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
@@ -61,6 +79,15 @@ func (r *rpcProxy) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	if !r.server.IsInSync() {
 		if !dry {
 			err = r.server.Sync(ctx)
+		}
+		return SyncStatusPending, err
+	}
+
+	if r.balancingService != nil && !resources.Exists(r.balancingService) {
+		if !dry {
+			s := r.balancingService.Build()
+			s.Spec.Type = *r.serviceType
+			err = r.balancingService.Sync(ctx)
 		}
 		return SyncStatusPending, err
 	}

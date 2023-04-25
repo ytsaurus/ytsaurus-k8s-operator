@@ -15929,6 +15929,10 @@ spec:
                           type: object
                         type: array
                     type: object
+                  serviceType:
+                    description: Service Type string describes ingress methods for
+                      a service
+                    type: string
                 type: object
               schedulers:
                 properties:

@@ -3,7 +3,6 @@ package apiproxy
 import (
 	"context"
 	"fmt"
-
 	ytv1 "github.com/YTsaurus/yt-k8s-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -33,7 +32,8 @@ func NewAPIProxy(
 		ytsaurus: ytsaurus,
 		client:   client,
 		recorder: recorder,
-		scheme:   scheme}
+		scheme:   scheme,
+	}
 }
 
 func (c *APIProxy) GetObjectKey(name string) types.NamespacedName {

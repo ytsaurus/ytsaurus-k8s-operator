@@ -111,6 +111,10 @@ func (g *Generator) GetRPCProxiesStatefulSetName() string {
 }
 
 func (g *Generator) GetRPCProxiesServiceName() string {
+	return g.getName("rpc-proxies-lb")
+}
+
+func (g *Generator) GetRPCProxiesHeadlessServiceName() string {
 	return g.getName("rpc-proxies")
 }
 

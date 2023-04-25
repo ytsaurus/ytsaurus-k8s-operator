@@ -106,7 +106,8 @@ type HTTPProxiesSpec struct {
 }
 
 type RPCProxiesSpec struct {
-	InstanceGroup InstanceSpec `json:"instanceGroup,omitempty"`
+	ServiceType   *corev1.ServiceType `json:"serviceType,omitempty"`
+	InstanceGroup InstanceSpec        `json:"instanceGroup,omitempty"`
 }
 
 type DataNodesSpec struct {
