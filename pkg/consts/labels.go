@@ -15,6 +15,7 @@ const (
 	YTComponentLabelHTTPProxy       YTComponentLabel = "yt-http-proxy"
 	YTComponentLabelRPCProxy        YTComponentLabel = "yt-rpc-proxy"
 	YTComponentLabelUI              YTComponentLabel = "yt-ui"
+	YTComponentLabelYqlAgent        YTComponentLabel = "yt-yql-agent"
 )
 
 func GetYTComponentLabels(value YTComponentLabel) map[string]string {

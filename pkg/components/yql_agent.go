@@ -27,7 +27,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
 		APIProxy:       apiProxy,
-		ComponentLabel: "yt-yql-agent",
+		ComponentLabel: consts.YTComponentLabelYqlAgent,
 		ComponentName:  "YqlAgent",
 	}
 
@@ -71,7 +71,7 @@ func (yqla *yqlAgent) Fetch(ctx context.Context) error {
 
 func (yqla *yqlAgent) initUsers() string {
 	token, _ := yqla.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand(consts.ChytUserName, "", token, true)
+	commands := createUserCommand(consts.YqlUserName, "", token, true)
 	commands = append(commands, createUserCommand("yql_agent", "", "", true)...)
 	return strings.Join(commands, "\n")
 }
