@@ -1,5 +1,10 @@
 controllerManager:
   kubeRbacProxy:
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
     image:
       repository: gcr.io/kubebuilder/kube-rbac-proxy
       tag: v0.13.0
@@ -11,9 +16,14 @@ controllerManager:
         cpu: 5m
         memory: 64Mi
   manager:
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
     image:
       repository: ytsaurus/k8s-operator
-      tag: 0.0.18
+      tag: 0.0.19
     resources:
       limits:
         cpu: 500m
@@ -24,16 +34,28 @@ controllerManager:
   replicas: 1
 kubernetesClusterDomain: cluster.local
 managerConfig:
-  controllerManagerConfigYaml:
+  controllerManagerConfigYaml: |-
+    apiVersion: controller-runtime.sigs.k8s.io/v1alpha1
+    kind: ControllerManagerConfig
     health:
       healthProbeBindAddress: :8081
-    leaderElection:
-      leaderElect: true
-      resourceName: 6ab077f0.ytsaurus.tech
     metrics:
       bindAddress: 127.0.0.1:8080
     webhook:
       port: 9443
+    leaderElection:
+      leaderElect: true
+      resourceName: 6ab077f0.ytsaurus.tech
+    # leaderElectionReleaseOnCancel defines if the leader should step down volume
+    # when the Manager ends. This requires the binary to immediately end when the
+    # Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
+    # speeds up voluntary leader transitions as the new leader don't have to wait
+    # LeaseDuration time first.
+    # In the default scaffold provided, the program ends immediately after
+    # the manager stops, so would be fine to enable this option. However,
+    # if you are doing or is intended to do any operation such as perform cleanups
+    # after the manager stops then its usage might be unsafe.
+    # leaderElectionReleaseOnCancel: true
 metricsService:
   ports:
   - name: https

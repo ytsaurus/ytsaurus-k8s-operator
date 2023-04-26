@@ -51,6 +51,7 @@ spec:
       instanceCount: 3
 
   rpcProxies:
+    serviceType: LoadBalancer
     instanceGroup:
       instanceCount: 3
 
