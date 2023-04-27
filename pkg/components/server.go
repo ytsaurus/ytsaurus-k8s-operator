@@ -133,7 +133,7 @@ func (s *Server) BuildStatefulSet() *appsv1.StatefulSet {
 		Volumes: createVolumes(s.instanceSpec.Volumes, s.labeller.GetMainConfigMapName()),
 	}
 
-	if s.enableAntiAffinity {
+	if s.enableAntiAffinity || s.instanceSpec.EnableAntiAffinity {
 		affinity := corev1.Affinity{
 			PodAntiAffinity: &corev1.PodAntiAffinity{
 				RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{

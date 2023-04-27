@@ -93,6 +93,8 @@ type InstanceSpec struct {
 	InstanceCount        int32                           `json:"instanceCount,omitempty"`
 	Locations            []LocationSpec                  `json:"locations,omitempty"`
 	VolumeClaimTemplates []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
+	// Enables pod anti affinity
+	EnableAntiAffinity bool `json:"enableAntiAffinity,omitempty"`
 }
 
 type MastersSpec struct {
