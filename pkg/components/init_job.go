@@ -6,11 +6,11 @@ import (
 	"path"
 	"strings"
 
-	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,7 +18,7 @@ import (
 
 const initJobPrologue = `
 set -e
-set -x 
+set -x
 `
 
 func initJobWithNativeDriverPrologue() string {

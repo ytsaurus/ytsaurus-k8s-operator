@@ -4,11 +4,11 @@ import (
 	"context"
 	"strings"
 
-	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
 type tabletNode struct {
@@ -36,7 +36,6 @@ func NewTabletNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, maste
 		"ytserver-tablet-node.yson",
 		"tnd",
 		"tablet-nodes",
-		false,
 		cfgen.GetTabletNodeConfig,
 	)
 

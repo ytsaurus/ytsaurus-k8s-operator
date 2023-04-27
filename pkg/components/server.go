@@ -4,12 +4,12 @@ import (
 	"context"
 	"path"
 
-	ytv1 "github.com/YTsaurus/yt-k8s-operator/api/v1"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,8 +20,7 @@ type Server struct {
 	labeller *labeller.Labeller
 	apiProxy *apiproxy.APIProxy
 
-	binaryPath         string
-	enableAntiAffinity bool
+	binaryPath string
 
 	instanceSpec *ytv1.InstanceSpec
 
@@ -37,14 +36,12 @@ func NewServer(
 	apiProxy *apiproxy.APIProxy,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
-	enableAntiAffinity bool,
 	generator ytconfig.GeneratorFunc) *Server {
 	return &Server{
-		labeller:           labeller,
-		apiProxy:           apiProxy,
-		instanceSpec:       instanceSpec,
-		binaryPath:         binaryPath,
-		enableAntiAffinity: enableAntiAffinity,
+		labeller:     labeller,
+		apiProxy:     apiProxy,
+		instanceSpec: instanceSpec,
+		binaryPath:   binaryPath,
 		statefulSet: resources.NewStatefulSet(
 			statefulSetName,
 			labeller,
@@ -133,7 +130,7 @@ func (s *Server) BuildStatefulSet() *appsv1.StatefulSet {
 		Volumes: createVolumes(s.instanceSpec.Volumes, s.labeller.GetMainConfigMapName()),
 	}
 
-	if s.enableAntiAffinity || s.instanceSpec.EnableAntiAffinity {
+	if s.instanceSpec.EnableAntiAffinity != nil && *s.instanceSpec.EnableAntiAffinity {
 		affinity := corev1.Affinity{
 			PodAntiAffinity: &corev1.PodAntiAffinity{
 				RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{

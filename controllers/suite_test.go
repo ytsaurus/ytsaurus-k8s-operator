@@ -31,7 +31,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	clusterv1 "github.com/YTsaurus/yt-k8s-operator/api/v1"
+	clusterv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	//+kubebuilder:scaffold:imports
 )
 

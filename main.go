@@ -18,8 +18,9 @@ package main
 
 import (
 	"flag"
-	"github.com/YTsaurus/yt-k8s-operator/controllers"
 	"os"
+
+	"github.com/ytsaurus/yt-k8s-operator/controllers"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -32,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	clusterv1 "github.com/YTsaurus/yt-k8s-operator/api/v1"
+	clusterv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -95,6 +96,10 @@ func main() {
 		Recorder: mgr.GetEventRecorderFor("ytsaurus-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Ytsaurus")
+		os.Exit(1)
+	}
+	if err = (&clusterv1.Ytsaurus{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "Ytsaurus")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	v1 "github.com/YTsaurus/yt-k8s-operator/api/v1"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
+	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"go.ytsaurus.tech/yt/go/yson"
 )
 

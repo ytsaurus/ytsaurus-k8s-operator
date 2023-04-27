@@ -2,12 +2,12 @@ package components
 
 import (
 	"context"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 
-	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
 type node struct {
@@ -33,7 +33,6 @@ func NewDataNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 		"ytserver-data-node.yson",
 		"dnd",
 		"data-nodes",
-		false,
 		cfgen.GetDataNodeConfig,
 	)
 
@@ -61,7 +60,6 @@ func NewExecNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 		"ytserver-exec-node.yson",
 		"end",
 		"exec-nodes",
-		false,
 		cfgen.GetExecNodeConfig,
 	)
 

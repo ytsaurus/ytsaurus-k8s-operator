@@ -2,12 +2,12 @@ package components
 
 import (
 	"context"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 
-	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
 type discovery struct {
@@ -34,7 +34,6 @@ func NewDiscovery(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Compon
 		"ytserver-discovery.yson",
 		cfgen.GetDiscoveryStatefulSetName(),
 		cfgen.GetDiscoveryServiceName(),
-		false,
 		cfgen.GetDiscoveryConfig,
 	)
 

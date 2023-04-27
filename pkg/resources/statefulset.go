@@ -3,8 +3,8 @@ package resources
 import (
 	"context"
 
-	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
-	labeller2 "github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	labeller2 "github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

@@ -3,8 +3,8 @@ package ytconfig
 import (
 	"fmt"
 
-	ytv1 "github.com/YTsaurus/yt-k8s-operator/api/v1"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 )
 
 type MasterChangelogs struct {

@@ -1,0 +1,29 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ include "ytop-chart.fullname" . }}-validating-webhook-configuration
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "ytop-chart.fullname" . }}-serving-cert
+  labels:
+  {{- include "ytop-chart.labels" . | nindent 4 }}
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: '{{ include "ytop-chart.fullname" . }}-webhook-service'
+      namespace: '{{ .Release.Namespace }}'
+      path: /validate-cluster-ytsaurus-tech-v1-ytsaurus
+  failurePolicy: Fail
+  name: vytsaurus.kb.io
+  rules:
+  - apiGroups:
+    - cluster.ytsaurus.tech
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - ytsaurus
+  sideEffects: None

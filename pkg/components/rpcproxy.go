@@ -2,11 +2,11 @@ package components
 
 import (
 	"context"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/apiproxy"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/labeller"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/resources"
-	"github.com/YTsaurus/yt-k8s-operator/pkg/ytconfig"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -40,7 +40,6 @@ func NewRPCProxy(
 		"ytserver-rpc-proxy.yson",
 		cfgen.GetRPCProxiesStatefulSetName(),
 		cfgen.GetRPCProxiesHeadlessServiceName(),
-		false,
 		cfgen.GetRPCProxyConfig,
 	)
 

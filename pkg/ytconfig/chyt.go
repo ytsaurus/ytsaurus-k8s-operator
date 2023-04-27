@@ -1,7 +1,7 @@
 package ytconfig
 
 import (
-	"github.com/YTsaurus/yt-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"go.ytsaurus.tech/yt/go/yson"
 )
 
