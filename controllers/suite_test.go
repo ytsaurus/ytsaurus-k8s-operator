@@ -59,6 +59,11 @@ var _ = BeforeSuite(func() {
 		ErrorIfCRDPathMissing: true,
 	}
 
+	// psushin: this may be required for ipv6-only hosts (like Sandbox CI).
+	apiServer := envtest.APIServer{}
+	apiServer.Configure().Append("bind-address", "127.0.0.1")
+	testEnv.ControlPlane.APIServer = &apiServer
+
 	var err error
 	// cfg is defined in this file globally.
 	cfg, err = testEnv.Start()
