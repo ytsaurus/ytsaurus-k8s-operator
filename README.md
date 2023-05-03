@@ -12,7 +12,7 @@ Currently available in alpha-version and is capable to deploy a new YTsaurus clu
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
 **Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
 
-You can install pre-built versions of operator via [helm chart](https://hub.docker.com/repository/docker/ytsaurus/ytop-chart/general).
+You can install pre-built versions of operator via [helm chart](https://hub.docker.com/r/ytsaurus/ytop-chart).
 
 ### Running on the cluster
 1. Install Instances of Custom Resources:
