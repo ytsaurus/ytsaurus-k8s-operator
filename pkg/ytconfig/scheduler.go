@@ -6,13 +6,11 @@ import (
 )
 
 type OperationsCleaner struct {
-	EnableOperationArchivation bool  `yson:"enable_operation_archivation"`
-	CleanDelay                 int64 `yson:"clean_delay"`
+	EnableOperationArchivation *bool `yson:"enable_operation_archivation,omitempty"`
 }
 
 type Scheduler struct {
-	OperationsCleaner          OperationsCleaner `yson:"operations_cleaner"`
-	SendRegisteredAgentsToNode bool              `yson:"send_registered_agents_to_node"`
+	OperationsCleaner OperationsCleaner `yson:"operations_cleaner"`
 }
 
 type SchedulerServer struct {
@@ -33,10 +31,6 @@ func getSchedulerServerCarcass(spec ytv1.SchedulersSpec) (SchedulerServer, error
 	var c SchedulerServer
 	c.RPCPort = consts.SchedulerRPCPort
 	c.MonitoringPort = consts.SchedulerMonitoringPort
-
-	c.Scheduler.OperationsCleaner.EnableOperationArchivation = false
-	c.Scheduler.OperationsCleaner.CleanDelay = 24 * 60 * 60 * 1000
-	c.Scheduler.SendRegisteredAgentsToNode = true
 
 	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "scheduler")
 	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().logging

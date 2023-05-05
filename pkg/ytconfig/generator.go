@@ -7,6 +7,7 @@ import (
 	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"go.ytsaurus.tech/yt/go/yson"
+	ptr "k8s.io/utils/pointer"
 )
 
 type GeneratorFunc func() ([]byte, error)
@@ -168,8 +169,8 @@ func (g *Generator) GetSchedulerConfig() ([]byte, error) {
 		return nil, err
 	}
 
-	if g.ytsaurus.Spec.TabletNodes != nil {
-		c.Scheduler.OperationsCleaner.EnableOperationArchivation = true
+	if g.ytsaurus.Spec.TabletNodes == nil {
+		c.Scheduler.OperationsCleaner.EnableOperationArchivation = ptr.Bool(false)
 	}
 	g.fillCommonService(&c.CommonServer)
 	return marshallYsonConfig(c)
