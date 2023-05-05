@@ -11,8 +11,8 @@ import (
 )
 
 type rpcProxy struct {
-	labeller *labeller.Labeller
-	server   *Server
+	ComponentBase
+	server *Server
 
 	master Component
 
@@ -52,8 +52,12 @@ func NewRPCProxy(
 	}
 
 	return &rpcProxy{
+		ComponentBase: ComponentBase{
+			labeller: &labeller,
+			apiProxy: apiProxy,
+			cfgen:    cfgen,
+		},
 		server:           server,
-		labeller:         &labeller,
 		master:           masterReconciler,
 		serviceType:      ytsaurus.Spec.RPCProxies.ServiceType,
 		balancingService: balancingService,

@@ -2,22 +2,24 @@ package components
 
 import (
 	"context"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
-
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
+	"go.ytsaurus.tech/yt/go/yt"
 	v1 "k8s.io/api/core/v1"
 )
 
 type httpProxy struct {
-	labeller    *labeller.Labeller
+	ComponentBase
 	server      *Server
 	serviceType v1.ServiceType
 
 	master           Component
 	balancingService *resources.HTTPService
+
+	ytClient yt.Client
 }
 
 func NewHTTPProxy(
@@ -44,8 +46,12 @@ func NewHTTPProxy(
 	)
 
 	return &httpProxy{
+		ComponentBase: ComponentBase{
+			labeller: &labeller,
+			apiProxy: apiProxy,
+			cfgen:    cfgen,
+		},
 		server:      server,
-		labeller:    &labeller,
 		master:      masterReconciler,
 		serviceType: ytsaurus.Spec.HTTPProxies.ServiceType,
 		balancingService: resources.NewHTTPService(

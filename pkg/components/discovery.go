@@ -11,10 +11,8 @@ import (
 )
 
 type discovery struct {
-	apiProxy *apiproxy.APIProxy
-
-	labeller *labeller.Labeller
-	server   *Server
+	ComponentBase
+	server *Server
 }
 
 func NewDiscovery(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Component {
@@ -38,9 +36,12 @@ func NewDiscovery(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Compon
 	)
 
 	return &discovery{
-		server:   server,
-		apiProxy: apiProxy,
-		labeller: &labeller,
+		ComponentBase: ComponentBase{
+			labeller: &labeller,
+			apiProxy: apiProxy,
+			cfgen:    cfgen,
+		},
+		server: server,
 	}
 }
 

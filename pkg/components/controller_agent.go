@@ -11,9 +11,9 @@ import (
 )
 
 type controllerAgent struct {
-	server   *Server
-	master   Component
-	labeller *labeller.Labeller
+	ComponentBase
+	server *Server
+	master Component
 }
 
 func NewControllerAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
@@ -37,9 +37,13 @@ func NewControllerAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, 
 	)
 
 	return &controllerAgent{
-		server:   server,
-		master:   master,
-		labeller: &labeller,
+		ComponentBase: ComponentBase{
+			labeller: &labeller,
+			apiProxy: apiProxy,
+			cfgen:    cfgen,
+		},
+		server: server,
+		master: master,
 	}
 }
 

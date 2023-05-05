@@ -2,24 +2,28 @@ package components
 
 import (
 	"context"
-	"strings"
-
+	"fmt"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
+	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type tabletNode struct {
-	server      *Server
-	initBundles *InitJob
-	master      Component
-	labeller    *labeller.Labeller
-	cfgen       *ytconfig.Generator
+	ComponentBase
+	server *Server
+
+	ytsaurusClient YtsaurusClient
+
+	initBundlesCondition string
 }
 
-func NewTabletNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
+func NewTabletNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, yc YtsaurusClient) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
@@ -40,33 +44,22 @@ func NewTabletNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, maste
 	)
 
 	return &tabletNode{
-		server: server,
-		initBundles: NewInitJob(
-			&labeller,
-			apiProxy,
-			"bundles",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig),
-		master:   master,
-		labeller: &labeller,
-		cfgen:    cfgen,
+		ComponentBase: ComponentBase{
+			labeller: &labeller,
+			apiProxy: apiProxy,
+			cfgen:    cfgen,
+		},
+		server:               server,
+		initBundlesCondition: fmt.Sprintf("%s%sInitCompleted", "bundles", labeller.ComponentName),
+		ytsaurusClient:       yc,
 	}
-}
-
-func (r *tabletNode) createInitScript() string {
-	script := []string{
-		initJobWithNativeDriverPrologue(),
-		"if [[ `/usr/bin/yt exists //sys/tablet_cell_bundles/sys` == 'false' ]]; then /usr/bin/yt create tablet_cell_bundle --attributes '{name=sys; options={changelog_account=sys; snapshot_account=sys}}'; fi",
-		"if [[ `/usr/bin/yt get //sys/tablet_cell_bundles/default/@tablet_cell_count --format dsv` -eq 0 ]]; then /usr/bin/yt create tablet_cell --attributes '{tablet_cell_bundle=default}'; fi\n",
-		"if [[ `/usr/bin/yt get //sys/tablet_cell_bundles/sys/@tablet_cell_count --format dsv` -eq 0 ]]; then /usr/bin/yt create tablet_cell --attributes '{tablet_cell_bundle=sys}'; fi\n",
-	}
-
-	return strings.Join(script, "\n")
 }
 
 func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+	logger := log.FromContext(ctx)
+
 	var err error
-	if r.master.Status(ctx) != SyncStatusReady {
+	if r.ytsaurusClient.Status(ctx) != SyncStatusReady {
 		return SyncStatusBlocked, err
 	}
 
@@ -82,11 +75,72 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		return SyncStatusBlocked, err
 	}
 
-	if !dry {
-		r.initBundles.SetInitScript(r.createInitScript())
+	if r.apiProxy.IsStatusConditionTrue(r.initBundlesCondition) {
+		return SyncStatusReady, err
 	}
 
-	return r.initBundles.Sync(ctx, dry)
+	ytClient := r.ytsaurusClient.ytClient
+
+	if !dry {
+		if exists, err := ytClient.NodeExists(ctx, ypath.Path("//sys/tablet_cell_bundles/sys"), nil); err == nil {
+			if !exists {
+				_, err = ytClient.CreateObject(ctx, yt.NodeTabletCellBundle, &yt.CreateObjectOptions{
+					Attributes: map[string]interface{}{
+						"name": "sys",
+						"options": map[string]string{
+							"changelog_account": "sys",
+							"snapshot_account":  "sys",
+						},
+					},
+				})
+
+				if err != nil {
+					logger.Info(fmt.Sprintf("Creating tablet_cell_bundle failed: %s", err.Error()))
+					return SyncStatusPending, err
+				}
+			}
+		} else {
+
+			logger.Info(fmt.Sprintf("ERR == nil: %v, %s", (err == nil), err))
+			message := err.Error()
+			logger.Info(fmt.Sprintf("Checking if exists failed: %s", message))
+			return SyncStatusPending, err
+		}
+
+		for _, bundle := range []string{"default", "sys"} {
+			var tabletCellCount int
+			if err := ytClient.GetNode(
+				ctx,
+				ypath.Path(fmt.Sprintf("//sys/tablet_cell_bundles/%s/@tablet_cell_count", bundle)),
+				&tabletCellCount,
+				nil); err == nil {
+				if tabletCellCount == 0 {
+					_, err = ytClient.CreateObject(ctx, "tablet_cell", &yt.CreateObjectOptions{
+						Attributes: map[string]interface{}{
+							"tablet_cell_bundle": bundle,
+						},
+					})
+
+					if err != nil {
+						logger.Info(fmt.Sprintf("Creating tablet_cell failed: %s", err.Error()))
+						return SyncStatusPending, err
+					}
+				}
+			} else {
+				logger.Info(fmt.Sprintf("Getting table_cell_count failed: %s", err.Error()))
+				return SyncStatusPending, err
+			}
+		}
+
+		err = r.apiProxy.SetStatusCondition(ctx, metav1.Condition{
+			Type:    r.initBundlesCondition,
+			Status:  metav1.ConditionTrue,
+			Reason:  "InitBundlesCompleted",
+			Message: "Init bundles successfully completed",
+		})
+	}
+
+	return SyncStatusPending, err
 }
 
 func (r *tabletNode) Status(ctx context.Context) SyncStatus {
@@ -106,6 +160,5 @@ func (r *tabletNode) Sync(ctx context.Context) error {
 func (r *tabletNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, []resources.Fetchable{
 		r.server,
-		r.initBundles,
 	})
 }

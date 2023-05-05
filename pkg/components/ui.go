@@ -17,7 +17,7 @@ import (
 )
 
 type UI struct {
-	labeller     *labeller.Labeller
+	ComponentBase
 	ytsaurus     *ytv1.Ytsaurus
 	microservice *Microservice
 	initJob      *InitJob
@@ -47,6 +47,11 @@ func NewUI(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Compon
 		"ytsaurus-ui")
 
 	return &UI{
+		ComponentBase: ComponentBase{
+			labeller: &labeller,
+			apiProxy: apiProxy,
+			cfgen:    cfgen,
+		},
 		microservice: microservice,
 		initJob: NewInitJob(
 			&labeller,
@@ -60,7 +65,6 @@ func NewUI(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Compon
 			apiProxy),
 		ytsaurus: ytsaurus,
 		master:   master,
-		labeller: &labeller,
 	}
 }
 

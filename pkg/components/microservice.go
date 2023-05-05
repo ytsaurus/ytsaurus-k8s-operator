@@ -16,8 +16,7 @@ import (
 // Examples are YT UI and CHYT controller.
 
 type Microservice struct {
-	labeller *labeller.Labeller
-
+	labeller      *labeller.Labeller
 	image         string
 	instanceCount int32
 

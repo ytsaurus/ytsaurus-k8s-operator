@@ -23,7 +23,7 @@ controllerManager:
         - ALL
     image:
       repository: ytsaurus/k8s-operator
-      tag: 0.0.19
+      tag: 0.0.20
     resources:
       limits:
         cpu: 500m

@@ -14,12 +14,10 @@ import (
 )
 
 type master struct {
-	apiProxy *apiproxy.APIProxy
+	ComponentBase
 
-	labeller *labeller.Labeller
-	server   *Server
-	initJob  *InitJob
-	cfgen    *ytconfig.Generator
+	server  *Server
+	initJob *InitJob
 
 	adminCredentials corev1.Secret
 }
@@ -52,11 +50,13 @@ func NewMaster(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Component
 		cfgen.GetNativeClientConfig)
 
 	return &master{
-		server:   server,
-		initJob:  initJob,
-		apiProxy: apiProxy,
-		cfgen:    cfgen,
-		labeller: &labeller,
+		ComponentBase: ComponentBase{
+			labeller: &labeller,
+			apiProxy: apiProxy,
+			cfgen:    cfgen,
+		},
+		server:  server,
+		initJob: initJob,
 	}
 }
 

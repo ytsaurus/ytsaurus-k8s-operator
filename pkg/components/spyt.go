@@ -13,7 +13,7 @@ import (
 )
 
 type spyt struct {
-	cfgen *ytconfig.Generator
+	ComponentBase
 
 	initEnvironment *InitJob
 
@@ -39,7 +39,11 @@ func NewSpyt(
 	}
 
 	return &spyt{
-		cfgen:    cfgen,
+		ComponentBase: ComponentBase{
+			labeller: &labeller,
+			apiProxy: apiProxy,
+			cfgen:    cfgen,
+		},
 		master:   master,
 		execNode: execNode,
 

@@ -14,15 +14,14 @@ import (
 )
 
 type scheduler struct {
+	ComponentBase
 	server        *Server
-	cfgen         *ytconfig.Generator
 	master        Component
 	execNodes     Component
 	tabletNodes   Component
 	initUser      *InitJob
 	initOpArchive *InitJob
 	secret        *resources.StringSecret
-	labeller      *labeller.Labeller
 }
 
 func NewScheduler(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master, execNodes, tabletNodes Component) Component {
@@ -46,12 +45,15 @@ func NewScheduler(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master
 	)
 
 	return &scheduler{
+		ComponentBase: ComponentBase{
+			labeller: &labeller,
+			apiProxy: apiProxy,
+			cfgen:    cfgen,
+		},
 		server:      server,
 		master:      master,
 		execNodes:   execNodes,
 		tabletNodes: tabletNodes,
-		labeller:    &labeller,
-		cfgen:       cfgen,
 		initUser: NewInitJob(
 			&labeller,
 			apiProxy,

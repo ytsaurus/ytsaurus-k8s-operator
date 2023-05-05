@@ -15,14 +15,12 @@ import (
 )
 
 type chytController struct {
-	labeller        *labeller.Labeller
+	ComponentBase
 	microservice    *Microservice
 	initUserJob     *InitJob
 	initClusterJob  *InitJob
 	initChPublicJob *InitJob
 	secret          *resources.StringSecret
-
-	cfgen *ytconfig.Generator
 
 	master   Component
 	dataNode Component
@@ -55,6 +53,11 @@ func NewChytController(
 		"chyt")
 
 	return &chytController{
+		ComponentBase: ComponentBase{
+			labeller: &labeller,
+			apiProxy: apiProxy,
+			cfgen:    cfgen,
+		},
 		microservice: microservice,
 		initUserJob: NewInitJob(
 			&labeller,
@@ -80,8 +83,6 @@ func NewChytController(
 			apiProxy),
 		master:   master,
 		dataNode: dataNode,
-		cfgen:    cfgen,
-		labeller: &labeller,
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"strings"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -30,7 +31,7 @@ func initJobWithNativeDriverPrologue() string {
 }
 
 type InitJob struct {
-	labeller *labeller.Labeller
+	ComponentBase
 	apiProxy *apiproxy.APIProxy
 
 	initJob *resources.Job
@@ -47,7 +48,9 @@ func NewInitJob(
 	name, configFileName string,
 	generator ytconfig.GeneratorFunc) *InitJob {
 	return &InitJob{
-		labeller:  labeller,
+		ComponentBase: ComponentBase{
+			labeller: labeller,
+		},
 		apiProxy:  apiProxy,
 		condition: fmt.Sprintf("%s%sInitJobCompleted", name, labeller.ComponentName),
 		initJob: resources.NewJob(
@@ -108,6 +111,8 @@ func (j *InitJob) Fetch(ctx context.Context) error {
 }
 
 func (j *InitJob) Sync(ctx context.Context, dry bool) (SyncStatus, error) {
+	logger := log.FromContext(ctx)
+
 	var err error
 	if j.apiProxy.IsStatusConditionTrue(j.condition) {
 		return SyncStatusReady, err
@@ -126,13 +131,14 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (SyncStatus, error) {
 	}
 
 	if !j.initJob.Completed() {
+		logger.Info("Init job isn't completed for " + j.labeller.ComponentName)
 		return SyncStatusBlocked, err
 	}
 
 	if !dry {
 		err = j.apiProxy.SetStatusCondition(ctx, metav1.Condition{
 			Type:    j.condition,
-			Status:  "True",
+			Status:  metav1.ConditionTrue,
 			Reason:  "InitJobCompleted",
 			Message: "Init job successfully completed",
 		})

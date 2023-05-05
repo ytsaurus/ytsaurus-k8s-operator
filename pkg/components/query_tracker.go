@@ -12,10 +12,10 @@ import (
 )
 
 type queryTracker struct {
+	ComponentBase
 	server          *Server
 	master          Component
 	initEnvironment *InitJob
-	labeller        *labeller.Labeller
 }
 
 func NewQueryTracker(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
@@ -39,6 +39,11 @@ func NewQueryTracker(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, mas
 	)
 
 	return &queryTracker{
+		ComponentBase: ComponentBase{
+			labeller: &labeller,
+			apiProxy: apiProxy,
+			cfgen:    cfgen,
+		},
 		server: server,
 		master: master,
 		initEnvironment: NewInitJob(
@@ -47,7 +52,6 @@ func NewQueryTracker(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, mas
 			"qt-environment",
 			consts.ClientConfigFileName,
 			cfgen.GetNativeClientConfig),
-		labeller: &labeller,
 	}
 }
 

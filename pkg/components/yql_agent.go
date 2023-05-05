@@ -14,11 +14,10 @@ import (
 )
 
 type yqlAgent struct {
+	ComponentBase
 	server          *Server
 	master          Component
 	initEnvironment *InitJob
-	labeller        *labeller.Labeller
-	cfgen           *ytconfig.Generator
 	secret          *resources.StringSecret
 }
 
@@ -43,21 +42,28 @@ func NewYQLAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 	)
 
 	return &yqlAgent{
+		ComponentBase: ComponentBase{
+			labeller: &labeller,
+			apiProxy: apiProxy,
+			cfgen:    cfgen,
+		},
 		server: server,
 		master: master,
-		cfgen:  cfgen,
 		initEnvironment: NewInitJob(
 			&labeller,
 			apiProxy,
 			"yql-agent-environment",
 			consts.ClientConfigFileName,
 			cfgen.GetNativeClientConfig),
-		labeller: &labeller,
 		secret: resources.NewStringSecret(
 			labeller.GetSecretName(),
 			&labeller,
 			apiProxy),
 	}
+}
+
+func (yqla *yqlAgent) GetName() string {
+	return yqla.labeller.ComponentName
 }
 
 func (yqla *yqlAgent) Fetch(ctx context.Context) error {

@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -20,12 +19,14 @@ func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Y
 	d := components.NewDiscovery(cfgen, proxy)
 	m := components.NewMaster(cfgen, proxy)
 	hp := components.NewHTTPProxy(cfgen, proxy, m)
+	yc := components.NewYtsaurusClient(cfgen, proxy, hp)
+
 	dn := components.NewDataNode(cfgen, proxy, m)
 
 	var en, tn components.Component
 
 	result := []components.Component{
-		d, m, hp, dn,
+		d, m, hp, dn, yc,
 	}
 
 	if ytsaurus.Spec.UI != nil {
@@ -44,7 +45,7 @@ func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Y
 	}
 
 	if ytsaurus.Spec.TabletNodes != nil {
-		tn = components.NewTabletNode(cfgen, proxy, m)
+		tn = components.NewTabletNode(cfgen, proxy, *yc)
 		result = append(result, tn)
 	}
 
@@ -94,21 +95,29 @@ func (r *YtsaurusReconciler) updateClusterState(ctx context.Context, ytsaurus *y
 func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
+	readyComponents := []string{}
+	notReadyComponents := []string{}
+
 	cmps := r.getComponents(ctx, ytsaurus)
 	needSync := false
 	for _, c := range cmps {
 		err := c.Fetch(ctx)
 		if err != nil {
-			logger.Error(err, "failed to fetch status for controller", "component", fmt.Sprintf("%T", c))
+			logger.Error(err, "failed to fetch status for controller", "component", c.GetName())
 			return ctrl.Result{Requeue: true}, err
 		}
 
 		status := c.Status(ctx)
 		if status != components.SyncStatusReady {
-			logger.Info("component is not ready", "component", fmt.Sprintf("%T", c), "syncStatus", status)
+			logger.Info("component is not ready", "component", c.GetName(), "syncStatus", status)
+			notReadyComponents = append(notReadyComponents, c.GetName())
 			needSync = true
+		} else {
+			readyComponents = append(readyComponents, c.GetName())
 		}
 	}
+
+	logger.Info("Ytsaurus sync status", "notReadyComponents", notReadyComponents, "readyComponents", readyComponents)
 
 	if ytsaurus.Status.State == ytv1.ClusterStateRunning && !needSync {
 		logger.V(1).Info("Ytsaurus is running and happy")
@@ -139,6 +148,8 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) 
 		if c.Status(ctx) == components.SyncStatusPending {
 			hasPending = true
 			if err := c.Sync(ctx); err != nil {
+
+				logger.Error(err, "component sync failed", "component", c.GetName())
 				return ctrl.Result{Requeue: true}, err
 			}
 		}

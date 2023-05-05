@@ -11,9 +11,9 @@ import (
 )
 
 type node struct {
-	server   *Server
-	master   Component
-	labeller *labeller.Labeller
+	ComponentBase
+	server *Server
+	master Component
 }
 
 func NewDataNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
@@ -37,9 +37,13 @@ func NewDataNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 	)
 
 	return &node{
-		server:   server,
-		master:   master,
-		labeller: &labeller,
+		ComponentBase: ComponentBase{
+			labeller: &labeller,
+			apiProxy: apiProxy,
+			cfgen:    cfgen,
+		},
+		server: server,
+		master: master,
 	}
 }
 
@@ -64,9 +68,13 @@ func NewExecNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 	)
 
 	return &node{
-		server:   server,
-		master:   master,
-		labeller: &labeller,
+		ComponentBase: ComponentBase{
+			labeller: &labeller,
+			apiProxy: apiProxy,
+			cfgen:    cfgen,
+		},
+		server: server,
+		master: master,
 	}
 }
 
