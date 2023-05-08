@@ -18,8 +18,7 @@ var _ = Describe("Basic test for YTsaurus controller", func() {
 		ytsaurusName = "test-ytsaurus"
 		namespace    = "default"
 
-		timeout = time.Second * 10
-		// duration = time.Second * 10
+		timeout  = time.Second * 10
 		interval = time.Millisecond * 250
 	)
 
@@ -125,7 +124,6 @@ var _ = Describe("Basic test for YTsaurus controller", func() {
 				}
 				return true
 			}, timeout, interval).Should(BeTrue())
-
 		})
 	})
 

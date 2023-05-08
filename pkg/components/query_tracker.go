@@ -13,7 +13,7 @@ import (
 
 type queryTracker struct {
 	ComponentBase
-	server          *Server
+	server          Server
 	master          Component
 	initEnvironment *InitJob
 }

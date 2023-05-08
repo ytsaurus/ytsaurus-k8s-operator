@@ -12,7 +12,12 @@ import (
 	"strings"
 )
 
-type YtsaurusClient struct {
+type YtsaurusClient interface {
+	Component
+	GetYtClient() yt.Client
+}
+
+type ytsaurusClient struct {
 	ComponentBase
 	httpProxy Component
 
@@ -26,7 +31,7 @@ func NewYtsaurusClient(
 	cfgen *ytconfig.Generator,
 	apiProxy *apiproxy.APIProxy,
 	httpProxy Component,
-) *YtsaurusClient {
+) YtsaurusClient {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
@@ -35,7 +40,7 @@ func NewYtsaurusClient(
 		ComponentName:  "YTsaurusClient",
 	}
 
-	return &YtsaurusClient{
+	return &ytsaurusClient{
 		ComponentBase: ComponentBase{
 			labeller: &labeller,
 			apiProxy: apiProxy,
@@ -55,20 +60,20 @@ func NewYtsaurusClient(
 	}
 }
 
-func (yc *YtsaurusClient) Fetch(ctx context.Context) error {
+func (yc *ytsaurusClient) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, []resources.Fetchable{
 		yc.secret,
 		yc.initUserJob,
 	})
 }
 
-func (yc *YtsaurusClient) createInitUserScript() string {
+func (yc *ytsaurusClient) createInitUserScript() string {
 	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
 	initJob := initJobWithNativeDriverPrologue()
 	return initJob + "\n" + strings.Join(createUserCommand(consts.YtsaurusOperatorUserName, "", token, true), "\n")
 }
 
-func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 	if !(yc.httpProxy.Status(ctx) == SyncStatusReady) {
 		return SyncStatusBlocked, err
@@ -93,20 +98,22 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (SyncStatus, err
 		return status, err
 	}
 
-	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
-	yc.ytClient, err = ythttp.NewClient(&yt.Config{
-		Proxy: yc.cfgen.GetHTTPProxiesAddress(),
-		Token: token,
-	})
+	if yc.ytClient == nil {
+		token, _ := yc.secret.GetValue(consts.TokenSecretKey)
+		yc.ytClient, err = ythttp.NewClient(&yt.Config{
+			Proxy: yc.cfgen.GetHTTPProxiesAddress(),
+			Token: token,
+		})
 
-	if err != nil {
-		return SyncStatusPending, err
+		if err != nil {
+			return SyncStatusPending, err
+		}
 	}
 
 	return SyncStatusReady, err
 }
 
-func (yc *YtsaurusClient) Status(ctx context.Context) SyncStatus {
+func (yc *ytsaurusClient) Status(ctx context.Context) SyncStatus {
 	status, err := yc.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -115,7 +122,11 @@ func (yc *YtsaurusClient) Status(ctx context.Context) SyncStatus {
 	return status
 }
 
-func (yc *YtsaurusClient) Sync(ctx context.Context) error {
+func (yc *ytsaurusClient) Sync(ctx context.Context) error {
 	_, err := yc.doSync(ctx, false)
 	return err
+}
+
+func (yc *ytsaurusClient) GetYtClient() yt.Client {
+	return yc.ytClient
 }

@@ -16,7 +16,7 @@ import (
 
 type tabletNode struct {
 	ComponentBase
-	server *Server
+	server Server
 
 	ytsaurusClient YtsaurusClient
 
@@ -68,6 +68,7 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = r.server.Sync(ctx)
 		}
+
 		return SyncStatusPending, err
 	}
 
@@ -79,7 +80,7 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		return SyncStatusReady, err
 	}
 
-	ytClient := r.ytsaurusClient.ytClient
+	ytClient := r.ytsaurusClient.GetYtClient()
 
 	if !dry {
 		if exists, err := ytClient.NodeExists(ctx, ypath.Path("//sys/tablet_cell_bundles/sys"), nil); err == nil {
@@ -100,10 +101,6 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 				}
 			}
 		} else {
-
-			logger.Info(fmt.Sprintf("ERR == nil: %v, %s", (err == nil), err))
-			message := err.Error()
-			logger.Info(fmt.Sprintf("Checking if exists failed: %s", message))
 			return SyncStatusPending, err
 		}
 

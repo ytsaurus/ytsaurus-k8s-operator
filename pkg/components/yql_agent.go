@@ -15,7 +15,7 @@ import (
 
 type yqlAgent struct {
 	ComponentBase
-	server          *Server
+	server          Server
 	master          Component
 	initEnvironment *InitJob
 	secret          *resources.StringSecret

@@ -16,9 +16,8 @@ import (
 type master struct {
 	ComponentBase
 
-	server  *Server
-	initJob *InitJob
-
+	server           Server
+	initJob          *InitJob
 	adminCredentials corev1.Secret
 }
 

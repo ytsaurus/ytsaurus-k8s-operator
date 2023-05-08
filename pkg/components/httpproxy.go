@@ -13,7 +13,7 @@ import (
 
 type httpProxy struct {
 	ComponentBase
-	server      *Server
+	server      Server
 	serviceType v1.ServiceType
 
 	master           Component

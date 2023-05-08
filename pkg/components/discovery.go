@@ -12,7 +12,7 @@ import (
 
 type discovery struct {
 	ComponentBase
-	server *Server
+	server Server
 }
 
 func NewDiscovery(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Component {

@@ -15,8 +15,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type Server interface {
+	Fetch(ctx context.Context) error
+	IsInSync() bool
+	ArePodsReady(ctx context.Context) bool
+	Sync(ctx context.Context) error
+	BuildStatefulSet() *appsv1.StatefulSet
+}
+
 // Server represents a typical YT cluster server component, like master or scheduler.
-type Server struct {
+type server struct {
 	labeller *labeller.Labeller
 	apiProxy *apiproxy.APIProxy
 
@@ -36,8 +44,8 @@ func NewServer(
 	apiProxy *apiproxy.APIProxy,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
-	generator ytconfig.GeneratorFunc) *Server {
-	return &Server{
+	generator ytconfig.GeneratorFunc) Server {
+	return &server{
 		labeller:     labeller,
 		apiProxy:     apiProxy,
 		instanceSpec: instanceSpec,
@@ -59,7 +67,7 @@ func NewServer(
 	}
 }
 
-func (s *Server) Fetch(ctx context.Context) error {
+func (s *server) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, []resources.Fetchable{
 		s.statefulSet,
 		s.configHelper,
@@ -67,7 +75,7 @@ func (s *Server) Fetch(ctx context.Context) error {
 	})
 }
 
-func (s *Server) IsInSync() bool {
+func (s *server) IsInSync() bool {
 	if s.configHelper.NeedSync() || !resources.Exists(s.statefulSet) || !resources.Exists(s.headlessService) {
 		return false
 	}
@@ -77,11 +85,11 @@ func (s *Server) IsInSync() bool {
 		s.apiProxy.Ytsaurus().Spec.CoreImage)
 }
 
-func (s *Server) ArePodsReady(ctx context.Context) bool {
+func (s *server) ArePodsReady(ctx context.Context) bool {
 	return s.statefulSet.CheckPodsReady(ctx)
 }
 
-func (s *Server) Sync(ctx context.Context) (err error) {
+func (s *server) Sync(ctx context.Context) (err error) {
 	_ = s.configHelper.Build()
 	_ = s.headlessService.Build()
 	_ = s.BuildStatefulSet()
@@ -93,7 +101,7 @@ func (s *Server) Sync(ctx context.Context) (err error) {
 	})
 }
 
-func (s *Server) BuildStatefulSet() *appsv1.StatefulSet {
+func (s *server) BuildStatefulSet() *appsv1.StatefulSet {
 	if s.builtStatefulSet != nil {
 		return s.builtStatefulSet
 	}
@@ -111,7 +119,7 @@ func (s *Server) BuildStatefulSet() *appsv1.StatefulSet {
 		ImagePullSecrets:  s.apiProxy.Ytsaurus().Spec.ImagePullSecrets,
 		SetHostnameAsFQDN: &setHostnameAsFQDN,
 		Containers: []corev1.Container{
-			corev1.Container{
+			{
 				Image:        s.apiProxy.Ytsaurus().Spec.CoreImage,
 				Name:         consts.YTServerContainerName,
 				Command:      []string{s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, s.configHelper.GetFileName())},

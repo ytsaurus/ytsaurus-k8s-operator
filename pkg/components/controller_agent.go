@@ -12,7 +12,7 @@ import (
 
 type controllerAgent struct {
 	ComponentBase
-	server *Server
+	server Server
 	master Component
 }
 

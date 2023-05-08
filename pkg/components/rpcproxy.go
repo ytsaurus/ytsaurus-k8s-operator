@@ -12,7 +12,7 @@ import (
 
 type rpcProxy struct {
 	ComponentBase
-	server *Server
+	server Server
 
 	master Component
 

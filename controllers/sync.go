@@ -45,7 +45,7 @@ func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Y
 	}
 
 	if ytsaurus.Spec.TabletNodes != nil {
-		tn = components.NewTabletNode(cfgen, proxy, *yc)
+		tn = components.NewTabletNode(cfgen, proxy, yc)
 		result = append(result, tn)
 	}
 

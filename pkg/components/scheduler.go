@@ -15,7 +15,7 @@ import (
 
 type scheduler struct {
 	ComponentBase
-	server        *Server
+	server        Server
 	master        Component
 	execNodes     Component
 	tabletNodes   Component

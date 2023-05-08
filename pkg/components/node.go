@@ -12,7 +12,7 @@ import (
 
 type node struct {
 	ComponentBase
-	server *Server
+	server Server
 	master Component
 }
 
