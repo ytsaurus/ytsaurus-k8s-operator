@@ -19,8 +19,9 @@ package controllers
 import (
 	"context"
 	"path/filepath"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"testing"
+
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -65,8 +66,9 @@ var _ = BeforeSuite(func() {
 	}
 
 	// psushin: this may be required for ipv6-only hosts (like Sandbox CI).
+	// https://github.com/kubernetes/kubernetes/issues/111671#issuecomment-1206562634
 	apiServer := envtest.APIServer{}
-	apiServer.Configure().Append("bind-address", "127.0.0.1")
+	apiServer.Configure().Append("advertise-address", "127.0.0.1")
 	testEnv.ControlPlane.APIServer = &apiServer
 
 	var err error
