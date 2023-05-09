@@ -1,4 +1,4 @@
-name: Go CI
+name: YTsaurus k8s operator CI
 
 on:
   push:
@@ -55,17 +55,12 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          go build -v -mod=readonly ./...
+          make build
 
       - name: Run tests
         shell: bash
         run: |
-          go test -v -mod=readonly ./...
-
-      - name: Run tests with race detector
-        shell: bash
-        run: |
-          go test -v -mod=readonly -race ./...
+          make test
 
   stop-vm:
     name: Stop VM
