@@ -116,7 +116,7 @@ func (s *spyt) getSparkLaunchConf() string {
 func (s *spyt) createInitScript(sparkVersion string, spytVersion string) string {
 	metricsPath := fmt.Sprintf("//home/spark/conf/releases/%s/metrics.properties", sparkVersion)
 	sparkLaunchConfPath := fmt.Sprintf("//home/spark/conf/releases/%s/spark-launch-conf", sparkVersion)
-	sparkPath := fmt.Sprintf("//home/spark/spark/releases/3.2.2-fork-%s/spark.tgz", sparkVersion)
+	sparkPath := fmt.Sprintf("//home/spark/spark/releases/%s/spark.tgz", sparkVersion)
 	sparkYtDataSourcePath := fmt.Sprintf("//home/spark/spyt/releases/%s/spark-yt-data-source.jar", spytVersion)
 	spytPath := fmt.Sprintf("//home/spark/spyt/releases/%s/spyt.zip", spytVersion)
 	sparkYtLauncherPath := fmt.Sprintf("//home/spark/bin/releases/%s/spark-yt-launcher.jar", sparkVersion)
@@ -170,16 +170,13 @@ func (s *spyt) createInitScript(sparkVersion string, spytVersion string) string 
 		"/usr/bin/yt set " + sparkYtLauncherPath + "/@replication_factor 1",
 		"cat /usr/bin/spark-yt-launcher.jar | /usr/bin/yt upload " + sparkYtLauncherPath,
 
-		fmt.Sprintf("/usr/bin/yt link //home/spark/spark/releases/3.2.2-fork-%s/spark.tgz //home/spark/bin/releases/%s/spark.tgz -f",
+		fmt.Sprintf("/usr/bin/yt link //home/spark/spark/releases/%s/spark.tgz //home/spark/bin/releases/%s/spark.tgz -f",
 			sparkVersion,
 			sparkVersion),
 
 		// TODO: remove this after updating ytsaurus-spyt package
 		"/usr/bin/yt link //home //sys/spark",
 		"/usr/bin/yt set //home/spark/conf/global/ytserver_proxy_path '\"//sys/spark\"'",
-
-		// TODO: remove this after updating ytsaurus-spyt package
-		"sed -i  's/\\\"27099\\\"/\\\"27099\\\"\\n    environment[\\\"SPARK_YT_SOLOMON_ENABLED\\\"] = \\\"false\\\"/' /opt/conda/lib/python3.7/site-packages/spyt/standalone.py",
 	}
 
 	return strings.Join(script, "\n")
