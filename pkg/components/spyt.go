@@ -164,8 +164,6 @@ func (s *spyt) createInitScript(sparkVersion string, spytVersion string) string 
 		"/usr/bin/yt set " + spytPath + "/@replication_factor 1",
 		"cat /usr/bin/spyt.zip | /usr/bin/yt upload " + spytPath,
 
-		"/usr/bin/yt create map_node //home/spark/bin/releases/1.67.0 --ignore-existing -r",
-
 		"/usr/bin/yt create file " + sparkYtLauncherPath + " --ignore-existing -r",
 		"/usr/bin/yt set " + sparkYtLauncherPath + "/@replication_factor 1",
 		"cat /usr/bin/spark-yt-launcher.jar | /usr/bin/yt upload " + sparkYtLauncherPath,

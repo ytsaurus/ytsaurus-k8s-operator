@@ -3,7 +3,7 @@ kind: Ytsaurus
 metadata:
   name: ytdemo
 spec:
-  coreImage: ytsaurus/ytsaurus:unstable-0.0.1
+  coreImage: ytsaurus/ytsaurus:unstable-0.0.2
   uiImage: ytsaurus/ui:stable
 
   adminCredentials:
@@ -21,8 +21,8 @@ spec:
         memory: 100Mi
 
   spyt:
-    sparkVersion: '1.67.0'
-    spytVersion: '1.67.3'
+    sparkVersion: '1.69.0'
+    spytVersion: '1.69.3'
 
   masters:
     instanceGroup:
