@@ -18,9 +18,8 @@ package main
 
 import (
 	"flag"
-	"os"
-
 	"github.com/ytsaurus/yt-k8s-operator/controllers"
+	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -98,6 +97,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Ytsaurus")
 		os.Exit(1)
 	}
+
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err = (&clusterv1.Ytsaurus{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Ytsaurus")

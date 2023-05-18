@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
+	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"strings"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -14,9 +15,8 @@ import (
 )
 
 type master struct {
-	ComponentBase
+	ServerComponentBase
 
-	server           Server
 	initJob          *InitJob
 	adminCredentials corev1.Secret
 }
@@ -49,12 +49,14 @@ func NewMaster(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Component
 		cfgen.GetNativeClientConfig)
 
 	return &master{
-		ComponentBase: ComponentBase{
-			labeller: &labeller,
-			apiProxy: apiProxy,
-			cfgen:    cfgen,
+		ServerComponentBase: ServerComponentBase{
+			ComponentBase: ComponentBase{
+				labeller: &labeller,
+				apiProxy: apiProxy,
+				cfgen:    cfgen,
+			},
+			server: server,
 		},
-		server:  server,
 		initJob: initJob,
 	}
 }
@@ -122,10 +124,19 @@ func (m *master) createInitScript() string {
 
 func (m *master) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
+
+	if m.apiProxy.GetClusterState() == v1.ClusterStateRunning && m.server.NeedUpdate() {
+		return SyncStatusNeedUpdate, err
+	}
+
+	if m.apiProxy.GetClusterState() == v1.ClusterStateUpdating {
+		if m.apiProxy.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
+			return SyncStatusUpdating, m.removePods(ctx, dry)
+		}
+	}
+
 	if !m.server.IsInSync() {
 		if !dry {
-			// TODO(psushin): there should be me more
-			// sophisticated logic for multistage cluster updates.
 			err = m.server.Sync(ctx)
 		}
 		return SyncStatusPending, err

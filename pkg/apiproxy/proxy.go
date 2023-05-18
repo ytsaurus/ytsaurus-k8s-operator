@@ -77,12 +77,34 @@ func (c *APIProxy) RecordNormal(reason, message string) {
 		message)
 }
 
+func (c *APIProxy) GetClusterState() ytv1.ClusterState {
+	return c.ytsaurus.Status.State
+}
+
+func (c *APIProxy) GetUpdateState() ytv1.UpdateState {
+	return c.ytsaurus.Status.UpdateState
+}
+
 func (c *APIProxy) IsStatusConditionTrue(condition string) bool {
 	return meta.IsStatusConditionTrue(c.ytsaurus.Status.Conditions, condition)
 }
 
+func (c *APIProxy) IsUpdateStatusConditionTrue(condition string) bool {
+	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateConditions, condition)
+}
+
 func (c *APIProxy) SetStatusCondition(ctx context.Context, condition metav1.Condition) error {
 	meta.SetStatusCondition(&c.ytsaurus.Status.Conditions, condition)
+	return c.UpdateStatus(ctx)
+}
+
+func (c *APIProxy) SetUpdateStatusCondition(ctx context.Context, condition metav1.Condition) error {
+	meta.SetStatusCondition(&c.ytsaurus.Status.UpdateConditions, condition)
+	return c.UpdateStatus(ctx)
+}
+
+func (c *APIProxy) ClearUpdateStatusConditions(ctx context.Context) error {
+	c.ytsaurus.Status.UpdateConditions = make([]metav1.Condition, 0)
 	return c.UpdateStatus(ctx)
 }
 
@@ -103,6 +125,11 @@ func (c *APIProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object)
 
 func (c *APIProxy) updateObject(ctx context.Context, obj client.Object) error {
 	logger := log.FromContext(ctx)
+
+	if err := ctrl.SetControllerReference(c.ytsaurus, obj, c.scheme); err != nil {
+		logger.Error(err, "unable to set controller reference", "object_name", obj.GetName())
+		return err
+	}
 
 	if err := c.client.Update(ctx, obj); err != nil {
 		// ToDo(psushin): take to the status.

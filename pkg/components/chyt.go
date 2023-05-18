@@ -211,6 +211,9 @@ func (c *chytController) syncComponents(ctx context.Context) (err error) {
 
 func (c *chytController) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
+
+	// TODO: add update logic.
+
 	if c.master.Status(ctx) != SyncStatusReady {
 		return SyncStatusBlocked, err
 	}

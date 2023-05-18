@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"strings"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -12,8 +13,7 @@ import (
 )
 
 type queryTracker struct {
-	ComponentBase
-	server          Server
+	ServerComponentBase
 	master          Component
 	initEnvironment *InitJob
 }
@@ -39,12 +39,14 @@ func NewQueryTracker(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, mas
 	)
 
 	return &queryTracker{
-		ComponentBase: ComponentBase{
-			labeller: &labeller,
-			apiProxy: apiProxy,
-			cfgen:    cfgen,
+		ServerComponentBase: ServerComponentBase{
+			ComponentBase: ComponentBase{
+				labeller: &labeller,
+				apiProxy: apiProxy,
+				cfgen:    cfgen,
+			},
+			server: server,
 		},
-		server: server,
 		master: master,
 		initEnvironment: NewInitJob(
 			&labeller,
@@ -77,6 +79,13 @@ func (qt *queryTracker) createInitScript() string {
 
 func (qt *queryTracker) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
+
+	if qt.apiProxy.GetClusterState() == ytv1.ClusterStateUpdating {
+		if qt.apiProxy.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			return SyncStatusUpdating, qt.removePods(ctx, dry)
+		}
+	}
+
 	if qt.master.Status(ctx) != SyncStatusReady {
 		return SyncStatusBlocked, err
 	}

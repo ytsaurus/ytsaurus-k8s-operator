@@ -2,17 +2,16 @@ package components
 
 import (
 	"context"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
-
+	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
 type discovery struct {
-	ComponentBase
-	server Server
+	ServerComponentBase
 }
 
 func NewDiscovery(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Component {
@@ -36,12 +35,14 @@ func NewDiscovery(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Compon
 	)
 
 	return &discovery{
-		ComponentBase: ComponentBase{
-			labeller: &labeller,
-			apiProxy: apiProxy,
-			cfgen:    cfgen,
+		ServerComponentBase: ServerComponentBase{
+			ComponentBase: ComponentBase{
+				labeller: &labeller,
+				apiProxy: apiProxy,
+				cfgen:    cfgen,
+			},
+			server: server,
 		},
-		server: server,
 	}
 }
 
@@ -53,6 +54,13 @@ func (d *discovery) Fetch(ctx context.Context) error {
 
 func (d *discovery) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
+
+	if d.apiProxy.GetClusterState() == v1.ClusterStateUpdating {
+		if d.apiProxy.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
+			return SyncStatusUpdating, d.removePods(ctx, dry)
+		}
+	}
+
 	if !d.server.IsInSync() {
 		if !dry {
 			err = d.server.Sync(ctx)

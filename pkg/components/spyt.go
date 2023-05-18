@@ -182,6 +182,9 @@ func (s *spyt) createInitScript(sparkVersion string, spytVersion string) string 
 
 func (s *spyt) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
+
+	// TODO: add update logic.
+
 	if s.master.Status(ctx) != SyncStatusReady {
 		return SyncStatusBlocked, err
 	}

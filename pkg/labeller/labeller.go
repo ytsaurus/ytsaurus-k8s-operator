@@ -35,6 +35,14 @@ func (r *Labeller) GetInitJobName(name string) string {
 	return fmt.Sprintf("%s-init-job-%s", r.ComponentLabel, strings.ToLower(name))
 }
 
+func (r *Labeller) GetPodsRemovingStartedCondition() string {
+	return fmt.Sprintf("%sPodsRemovingStarted", r.ComponentLabel)
+}
+
+func (r *Labeller) GetPodsRemovedCondition() string {
+	return fmt.Sprintf("%sPodsRemoved", r.ComponentLabel)
+}
+
 func (r *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Name:      name,

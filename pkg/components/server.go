@@ -18,9 +18,12 @@ import (
 type Server interface {
 	Fetch(ctx context.Context) error
 	IsInSync() bool
+	ArePodsRemoved() bool
 	ArePodsReady(ctx context.Context) bool
 	Sync(ctx context.Context) error
 	BuildStatefulSet() *appsv1.StatefulSet
+	RebuildStatefulSet() *appsv1.StatefulSet
+	NeedUpdate() bool
 }
 
 // Server represents a typical YT cluster server component, like master or scheduler.
@@ -80,9 +83,21 @@ func (s *server) IsInSync() bool {
 		return false
 	}
 
-	return s.statefulSet.NeedSync(
-		s.instanceSpec.InstanceCount,
-		s.apiProxy.Ytsaurus().Spec.CoreImage)
+	return s.statefulSet.NeedSync(s.instanceSpec.InstanceCount)
+}
+
+func (s *server) ArePodsRemoved() bool {
+	if s.configHelper.NeedSync() || !resources.Exists(s.statefulSet) || !resources.Exists(s.headlessService) {
+		return false
+	}
+
+	return s.statefulSet.NeedSync(0)
+}
+
+func (s *server) NeedUpdate() bool {
+	oldImage := s.statefulSet.OldObject().(*appsv1.StatefulSet).Spec.Template.Spec.Containers[0].Image
+	newImage := s.apiProxy.Ytsaurus().Spec.CoreImage
+	return oldImage != newImage
 }
 
 func (s *server) ArePodsReady(ctx context.Context) bool {
@@ -106,6 +121,10 @@ func (s *server) BuildStatefulSet() *appsv1.StatefulSet {
 		return s.builtStatefulSet
 	}
 
+	return s.RebuildStatefulSet()
+}
+
+func (s *server) RebuildStatefulSet() *appsv1.StatefulSet {
 	locationCreationCommand := getLocationInitCommand(s.instanceSpec.Locations)
 	volumeMounts := createVolumeMounts(s.instanceSpec.VolumeMounts)
 

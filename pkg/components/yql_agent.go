@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"strings"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -14,8 +15,7 @@ import (
 )
 
 type yqlAgent struct {
-	ComponentBase
-	server          Server
+	ServerComponentBase
 	master          Component
 	initEnvironment *InitJob
 	secret          *resources.StringSecret
@@ -42,12 +42,14 @@ func NewYQLAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 	)
 
 	return &yqlAgent{
-		ComponentBase: ComponentBase{
-			labeller: &labeller,
-			apiProxy: apiProxy,
-			cfgen:    cfgen,
+		ServerComponentBase: ServerComponentBase{
+			ComponentBase: ComponentBase{
+				labeller: &labeller,
+				apiProxy: apiProxy,
+				cfgen:    cfgen,
+			},
+			server: server,
 		},
-		server: server,
 		master: master,
 		initEnvironment: NewInitJob(
 			&labeller,
@@ -105,6 +107,13 @@ func (yqla *yqlAgent) createInitScript() string {
 
 func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
+
+	if yqla.apiProxy.GetClusterState() == ytv1.ClusterStateUpdating {
+		if yqla.apiProxy.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			return SyncStatusUpdating, yqla.removePods(ctx, dry)
+		}
+	}
+
 	if yqla.master.Status(ctx) != SyncStatusReady {
 		return SyncStatusBlocked, err
 	}

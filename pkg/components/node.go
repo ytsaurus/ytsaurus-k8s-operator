@@ -2,17 +2,16 @@ package components
 
 import (
 	"context"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
-
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
 type node struct {
-	ComponentBase
-	server Server
+	ServerComponentBase
 	master Component
 }
 
@@ -37,12 +36,14 @@ func NewDataNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 	)
 
 	return &node{
-		ComponentBase: ComponentBase{
-			labeller: &labeller,
-			apiProxy: apiProxy,
-			cfgen:    cfgen,
+		ServerComponentBase: ServerComponentBase{
+			ComponentBase: ComponentBase{
+				labeller: &labeller,
+				apiProxy: apiProxy,
+				cfgen:    cfgen,
+			},
+			server: server,
 		},
-		server: server,
 		master: master,
 	}
 }
@@ -68,12 +69,14 @@ func NewExecNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 	)
 
 	return &node{
-		ComponentBase: ComponentBase{
-			labeller: &labeller,
-			apiProxy: apiProxy,
-			cfgen:    cfgen,
+		ServerComponentBase: ServerComponentBase{
+			ComponentBase: ComponentBase{
+				labeller: &labeller,
+				apiProxy: apiProxy,
+				cfgen:    cfgen,
+			},
+			server: server,
 		},
-		server: server,
 		master: master,
 	}
 }
@@ -86,6 +89,13 @@ func (n *node) Fetch(ctx context.Context) error {
 
 func (n *node) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
+
+	if n.apiProxy.GetClusterState() == ytv1.ClusterStateUpdating {
+		if n.apiProxy.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			return SyncStatusUpdating, n.removePods(ctx, dry)
+		}
+	}
+
 	if !(n.master.Status(ctx) == SyncStatusReady) {
 		return SyncStatusBlocked, err
 	}

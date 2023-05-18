@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"time"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -12,9 +14,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Ytsaurus) []components.Component {
+func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Ytsaurus, proxy *apiProxy.APIProxy) []components.Component {
 	cfgen := ytconfig.NewGenerator(ytsaurus, getClusterDomain(r.Client))
-	proxy := apiProxy.NewAPIProxy(ytsaurus, r.Client, r.Recorder, r.Scheme)
 
 	d := components.NewDiscovery(cfgen, proxy)
 	m := components.NewMaster(cfgen, proxy)
@@ -82,24 +83,141 @@ func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Y
 	return result
 }
 
-func (r *YtsaurusReconciler) updateClusterState(ctx context.Context, ytsaurus *ytv1.Ytsaurus, clusterState ytv1.ClusterState) error {
+func (r *YtsaurusReconciler) saveClusterState(ctx context.Context, ytsaurus *ytv1.Ytsaurus, clusterState ytv1.ClusterState) error {
+	logger := log.FromContext(ctx)
 	ytsaurus.Status.State = clusterState
 	if err := r.Status().Update(ctx, ytsaurus); err != nil {
-		logger := log.FromContext(ctx)
 		logger.Error(err, "unable to update YT cluster status")
+		return err
+	}
+
+	return nil
+}
+
+func (r *YtsaurusReconciler) saveUpdateState(ctx context.Context, ytsaurus *ytv1.Ytsaurus, updateState ytv1.UpdateState) error {
+	logger := log.FromContext(ctx)
+	ytsaurus.Status.UpdateState = updateState
+	if err := r.Status().Update(ctx, ytsaurus); err != nil {
+		logger.Error(err, "unable to update YTsaurus update state")
 		return err
 	}
 	return nil
 }
 
+func (r *YtsaurusReconciler) logUpdate(ctx context.Context, proxy *apiProxy.APIProxy, message string) {
+	logger := log.FromContext(ctx)
+	proxy.RecordNormal("Update", message)
+	logger.Info(fmt.Sprintf("Ytsaurus update: %s", message))
+}
+
+func (r *YtsaurusReconciler) arePodsRemoved(proxy *apiProxy.APIProxy, cmps []components.Component) bool {
+	for _, cmp := range cmps {
+		if scmp, ok := cmp.(components.ServerComponent); ok {
+			if !proxy.IsUpdateStatusConditionTrue(scmp.GetPodsRemovedCondition()) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (r *YtsaurusReconciler) handleUpdateStatus(
+	ctx context.Context,
+	proxy *apiProxy.APIProxy,
+	ytsaurus *ytv1.Ytsaurus,
+	cmps []components.Component,
+	allReadyOrUpdating bool,
+) (*ctrl.Result, error) {
+	if ytsaurus.Status.UpdateState == ytv1.UpdateStateNone {
+		r.logUpdate(ctx, proxy, "Waiting for safe mode enabled")
+		err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForSafeModeEnabled)
+		return &ctrl.Result{Requeue: true}, err
+	}
+
+	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForSafeModeEnabled {
+		if proxy.IsUpdateStatusConditionTrue(consts.ConditionSafeModeEnabled) {
+			r.logUpdate(ctx, proxy, "Waiting for tablet cells saving")
+			err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForTabletCellsSaving)
+			return &ctrl.Result{Requeue: true}, err
+		}
+	}
+
+	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForTabletCellsSaving {
+		if proxy.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsSaved) {
+			r.logUpdate(ctx, proxy, "Waiting for tablet cells removing to start")
+			err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForTabletCellsRemovingStart)
+			return &ctrl.Result{Requeue: true}, err
+		}
+	}
+
+	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForTabletCellsRemovingStart {
+		if proxy.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemovingStarted) {
+			r.logUpdate(ctx, proxy, "Waiting for tablet cells removing to finish")
+			err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForTabletCellsRemoved)
+			return &ctrl.Result{Requeue: true}, err
+		}
+	}
+
+	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForTabletCellsRemoved {
+		if proxy.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemoved) {
+			r.logUpdate(ctx, proxy, "Waiting for snapshots")
+			err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForSnapshots)
+			return &ctrl.Result{Requeue: true}, err
+		}
+	}
+
+	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForSnapshots {
+		if proxy.IsUpdateStatusConditionTrue(consts.ConditionSnaphotsSaved) {
+			r.logUpdate(ctx, proxy, "Waiting for pods removal")
+			err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForPodsRemoval)
+			return &ctrl.Result{Requeue: true}, err
+		}
+	}
+
+	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForPodsRemoval {
+		if r.arePodsRemoved(proxy, cmps) {
+			r.logUpdate(ctx, proxy, "Waiting for pods creation")
+			err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForPodsCreation)
+			return &ctrl.Result{Requeue: true}, err
+		}
+	}
+
+	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForPodsCreation && allReadyOrUpdating {
+		r.logUpdate(ctx, proxy, "All components were recreated")
+		err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForTabletCellsRecovery)
+		return &ctrl.Result{Requeue: true}, err
+	}
+
+	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForTabletCellsRecovery {
+		if proxy.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRecovered) {
+			r.logUpdate(ctx, proxy, "Waiting for safe move disabled")
+			err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForSafeModeDisabled)
+			return &ctrl.Result{Requeue: true}, err
+		}
+	}
+
+	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForSafeModeDisabled {
+		if proxy.IsUpdateStatusConditionTrue(consts.ConditionSafeModeDisabled) {
+			r.logUpdate(ctx, proxy, "Finishing")
+			err := r.saveClusterState(ctx, ytsaurus, ytv1.ClusterStateUpdateFinishing)
+			return &ctrl.Result{Requeue: true}, err
+		}
+	}
+	return nil, nil
+}
+
 func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	readyComponents := []string{}
-	notReadyComponents := []string{}
+	var readyComponents []string
+	var notReadyComponents []string
 
-	cmps := r.getComponents(ctx, ytsaurus)
+	proxy := apiProxy.NewAPIProxy(ytsaurus, r.Client, r.Recorder, r.Scheme)
+	cmps := r.getComponents(ctx, ytsaurus, proxy)
 	needSync := false
+	needUpdate := false
+	allReadyOrUpdating := true
+
 	for _, c := range cmps {
 		err := c.Fetch(ctx)
 		if err != nil {
@@ -108,6 +226,15 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) 
 		}
 
 		status := c.Status(ctx)
+
+		if status == components.SyncStatusNeedUpdate {
+			needUpdate = true
+		}
+
+		if status != components.SyncStatusReady && status != components.SyncStatusUpdating {
+			allReadyOrUpdating = false
+		}
+
 		if status != components.SyncStatusReady {
 			logger.Info("component is not ready", "component", c.GetName(), "syncStatus", status)
 			notReadyComponents = append(notReadyComponents, c.GetName())
@@ -117,38 +244,79 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) 
 		}
 	}
 
-	logger.Info("Ytsaurus sync status", "notReadyComponents", notReadyComponents, "readyComponents", readyComponents)
+	logger.Info("Ytsaurus sync status",
+		"notReadyComponents", notReadyComponents,
+		"readyComponents", readyComponents,
+		"updateState", ytsaurus.Status.UpdateState,
+		"clusterState", ytsaurus.Status.State)
+
+	if ytsaurus.Status.State == ytv1.ClusterStateCreated {
+		logger.Info("Ytsaurus is just created and needs initialization")
+		err := r.saveClusterState(ctx, ytsaurus, ytv1.ClusterStateInitializing)
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	// Ytsaurus has finished initializing, and is running now.
+	if ytsaurus.Status.State == ytv1.ClusterStateInitializing && !needSync {
+		logger.Info("Ytsaurus has synced and is running now")
+		err := r.saveClusterState(ctx, ytsaurus, ytv1.ClusterStateRunning)
+		return ctrl.Result{}, err
+	}
 
 	if ytsaurus.Status.State == ytv1.ClusterStateRunning && !needSync {
-		logger.V(1).Info("Ytsaurus is running and happy")
+		logger.Info("Ytsaurus is running and happy")
 		return ctrl.Result{}, nil
 	}
 
+	if ytsaurus.Status.State == ytv1.ClusterStateRunning && needUpdate {
+		logger.Info("Ytsaurus needs update")
+		err := r.saveClusterState(ctx, ytsaurus, ytv1.ClusterStateUpdating)
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	if ytsaurus.Status.State == ytv1.ClusterStateUpdating {
+		result, err := r.handleUpdateStatus(ctx, proxy, ytsaurus, cmps, allReadyOrUpdating)
+		if result != nil {
+			return *result, err
+		}
+	}
+
+	if ytsaurus.Status.State == ytv1.ClusterStateUpdateFinishing {
+		err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateNone)
+
+		if err != nil {
+			return ctrl.Result{Requeue: true}, err
+		}
+
+		err = proxy.ClearUpdateStatusConditions(ctx)
+		if err != nil {
+			return ctrl.Result{Requeue: true}, err
+		}
+
+		logger.Info("Ytsaurus update was finished and Ytsaurus is running now")
+		err = r.saveClusterState(ctx, ytsaurus, ytv1.ClusterStateRunning)
+		return ctrl.Result{}, err
+	}
+
 	if ytsaurus.Status.State == ytv1.ClusterStateRunning && needSync {
-		logger.V(1).Info("Ytsaurus needs reconfiguration")
-		err := r.updateClusterState(ctx, ytsaurus, ytv1.ClusterStateReconfiguration)
+		logger.Info("Ytsaurus needs reconfiguration")
+		err := r.saveClusterState(ctx, ytsaurus, ytv1.ClusterStateReconfiguration)
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if ytsaurus.Status.State == ytv1.ClusterStateCreated {
-		logger.V(1).Info("Ytsaurus is just crated and needs initialization")
-		err := r.updateClusterState(ctx, ytsaurus, ytv1.ClusterStateInitializing)
-		return ctrl.Result{Requeue: true}, err
-	}
-
-	// Ytsaurus has finished initializing or reconfiguring, and is now running.
-	if !needSync {
-		logger.V(1).Info("Ytsaurus has synced and is now running")
-		err := r.updateClusterState(ctx, ytsaurus, ytv1.ClusterStateRunning)
+	if ytsaurus.Status.State == ytv1.ClusterStateReconfiguration && !needSync {
+		logger.Info("Ytsaurus has reconfigured and is running now")
+		err := r.saveClusterState(ctx, ytsaurus, ytv1.ClusterStateRunning)
 		return ctrl.Result{}, err
 	}
 
 	hasPending := false
 	for _, c := range cmps {
-		if c.Status(ctx) == components.SyncStatusPending {
+		status := c.Status(ctx)
+
+		if status == components.SyncStatusPending || status == components.SyncStatusUpdating {
 			hasPending = true
 			if err := c.Sync(ctx); err != nil {
-
 				logger.Error(err, "component sync failed", "component", c.GetName())
 				return ctrl.Result{Requeue: true}, err
 			}
@@ -160,5 +328,5 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) 
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
-	return ctrl.Result{Requeue: true}, nil
+	return ctrl.Result{RequeueAfter: time.Second}, nil
 }

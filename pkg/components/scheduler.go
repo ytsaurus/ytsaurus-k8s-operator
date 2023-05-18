@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
+	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"strings"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -14,8 +15,7 @@ import (
 )
 
 type scheduler struct {
-	ComponentBase
-	server        Server
+	ServerComponentBase
 	master        Component
 	execNodes     Component
 	tabletNodes   Component
@@ -45,12 +45,14 @@ func NewScheduler(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master
 	)
 
 	return &scheduler{
-		ComponentBase: ComponentBase{
-			labeller: &labeller,
-			apiProxy: apiProxy,
-			cfgen:    cfgen,
+		ServerComponentBase: ServerComponentBase{
+			ComponentBase: ComponentBase{
+				labeller: &labeller,
+				apiProxy: apiProxy,
+				cfgen:    cfgen,
+			},
+			server: server,
 		},
-		server:      server,
 		master:      master,
 		execNodes:   execNodes,
 		tabletNodes: tabletNodes,
@@ -109,6 +111,13 @@ func (s *scheduler) Fetch(ctx context.Context) error {
 
 func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
+
+	if s.apiProxy.GetClusterState() == v1.ClusterStateUpdating {
+		if s.apiProxy.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
+			return SyncStatusUpdating, s.removePods(ctx, dry)
+		}
+	}
+
 	if s.master.Status(ctx) != SyncStatusReady {
 		return SyncStatusBlocked, err
 	}
@@ -141,17 +150,17 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		return SyncStatusBlocked, err
 	}
 
+	if s.tabletNodes == nil {
+		// Don't initialize operations archive.
+		return SyncStatusReady, err
+	}
+
 	if !dry {
 		s.initUser.SetInitScript(s.createInitScript())
 	}
 
 	status, err := s.initUser.Sync(ctx, dry)
 	if status != SyncStatusReady {
-		return status, err
-	}
-
-	if s.tabletNodes == nil {
-		// Don't initialize operations archive.
 		return status, err
 	}
 

@@ -215,13 +215,40 @@ const (
 	ClusterStateInitializing    ClusterState = "Initializing"
 	ClusterStateRunning         ClusterState = "Running"
 	ClusterStateReconfiguration ClusterState = "Reconfiguration"
+	ClusterStateUpdating        ClusterState = "Updating"
+	ClusterStateUpdateFinishing ClusterState = "UpdateFinishing"
 )
+
+type UpdateState string
+
+const (
+	UpdateStateNone                               UpdateState = "None"
+	UpdateStateWaitingForSafeModeEnabled          UpdateState = "WaitingForSafeModeEnabled"
+	UpdateStateWaitingForTabletCellsSaving        UpdateState = "WaitingForTabletCellsSaving"
+	UpdateStateWaitingForTabletCellsRemovingStart UpdateState = "WaitingForTabletCellsRemovingStart"
+	UpdateStateWaitingForTabletCellsRemoved       UpdateState = "WaitingForTabletCellsRemoved"
+	UpdateStateWaitingForSnapshots                UpdateState = "WaitingForSnapshots"
+	UpdateStateWaitingForPodsRemoval              UpdateState = "WaitingForPodsRemoval"
+	UpdateStateWaitingForPodsCreation             UpdateState = "WaitingForPodsCreation"
+	UpdateStateWaitingForTabletCellsRecovery      UpdateState = "WaitingForTabletCellsRecovery"
+	UpdateStateWaitingForSafeModeDisabled         UpdateState = "WaitingForSafeModeDisabled"
+)
+
+type TabletCellBundleInfo struct {
+	Name            string `yson:",value" json:"name"`
+	TabletCellCount int    `yson:"tablet_cell_count,attr" json:"tabletCellCount"`
+}
 
 // YtsaurusStatus defines the observed state of Ytsaurus
 type YtsaurusStatus struct {
 	//+kubebuilder:default:=Created
-	State      ClusterState       `json:"state"`
+	State      ClusterState       `json:"state,omitempty"`
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	//+kubebuilder:default:=None
+	UpdateState            UpdateState            `json:"updateState,omitempty"`
+	UpdateConditions       []metav1.Condition     `json:"updateConditions,omitempty"`
+	SavedTabletCellBundles []TabletCellBundleInfo `json:"savedTabletCellBundles,omitempty"`
 }
 
 //+kubebuilder:object:root=true

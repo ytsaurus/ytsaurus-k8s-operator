@@ -65,7 +65,15 @@ func (fs *FakeServer) Fetch(ctx context.Context) error {
 	return nil
 }
 
+func (fs *FakeServer) NeedUpdate() bool {
+	return false
+}
+
 func (fs *FakeServer) IsInSync() bool {
+	return true
+}
+
+func (fs *FakeServer) ArePodsRemoved() bool {
 	return true
 }
 
@@ -78,6 +86,10 @@ func (fs *FakeServer) Sync(ctx context.Context) error {
 }
 
 func (fs *FakeServer) BuildStatefulSet() *appsv1.StatefulSet {
+	return nil
+}
+
+func (fs *FakeServer) RebuildStatefulSet() *appsv1.StatefulSet {
 	return nil
 }
 

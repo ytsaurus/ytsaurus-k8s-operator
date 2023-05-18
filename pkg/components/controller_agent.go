@@ -2,17 +2,16 @@ package components
 
 import (
 	"context"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
-
+	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
 type controllerAgent struct {
-	ComponentBase
-	server Server
+	ServerComponentBase
 	master Component
 }
 
@@ -37,12 +36,14 @@ func NewControllerAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, 
 	)
 
 	return &controllerAgent{
-		ComponentBase: ComponentBase{
-			labeller: &labeller,
-			apiProxy: apiProxy,
-			cfgen:    cfgen,
+		ServerComponentBase: ServerComponentBase{
+			server: server,
+			ComponentBase: ComponentBase{
+				labeller: &labeller,
+				apiProxy: apiProxy,
+				cfgen:    cfgen,
+			},
 		},
-		server: server,
 		master: master,
 	}
 }
@@ -55,6 +56,12 @@ func (ca *controllerAgent) Fetch(ctx context.Context) error {
 
 func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
+	if ca.apiProxy.GetClusterState() == v1.ClusterStateUpdating {
+		if ca.apiProxy.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
+			return SyncStatusUpdating, ca.removePods(ctx, dry)
+		}
+	}
+
 	if ca.master.Status(ctx) != SyncStatusReady {
 		return SyncStatusBlocked, err
 	}

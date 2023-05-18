@@ -90,7 +90,7 @@ func (s *StatefulSet) CheckPodsReady(ctx context.Context) bool {
 	return true
 }
 
-func (s *StatefulSet) NeedSync(replicas int32, image string) bool {
+func (s *StatefulSet) NeedSync(replicas int32) bool {
 	if s.oldObject.Spec.Replicas == nil {
 		return false
 	}
@@ -100,10 +100,6 @@ func (s *StatefulSet) NeedSync(replicas int32, image string) bool {
 	}
 
 	if len(s.oldObject.Spec.Template.Spec.Containers) != 1 {
-		return false
-	}
-
-	if s.oldObject.Spec.Template.Spec.Containers[0].Image != image {
 		return false
 	}
 

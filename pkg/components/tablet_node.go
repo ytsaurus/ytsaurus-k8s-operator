@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
@@ -15,8 +16,7 @@ import (
 )
 
 type tabletNode struct {
-	ComponentBase
-	server Server
+	ServerComponentBase
 
 	ytsaurusClient YtsaurusClient
 
@@ -44,21 +44,29 @@ func NewTabletNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, yc Yt
 	)
 
 	return &tabletNode{
-		ComponentBase: ComponentBase{
-			labeller: &labeller,
-			apiProxy: apiProxy,
-			cfgen:    cfgen,
+		ServerComponentBase: ServerComponentBase{
+			ComponentBase: ComponentBase{
+				labeller: &labeller,
+				apiProxy: apiProxy,
+				cfgen:    cfgen,
+			},
+			server: server,
 		},
-		server:               server,
 		initBundlesCondition: fmt.Sprintf("%s%sInitCompleted", "bundles", labeller.ComponentName),
 		ytsaurusClient:       yc,
 	}
 }
 
 func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+	var err error
 	logger := log.FromContext(ctx)
 
-	var err error
+	if r.apiProxy.GetClusterState() == ytv1.ClusterStateUpdating {
+		if r.apiProxy.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			return SyncStatusUpdating, r.removePods(ctx, dry)
+		}
+	}
+
 	if r.ytsaurusClient.Status(ctx) != SyncStatusReady {
 		return SyncStatusBlocked, err
 	}
