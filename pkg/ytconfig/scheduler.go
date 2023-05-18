@@ -32,7 +32,7 @@ func getSchedulerServerCarcass(spec ytv1.SchedulersSpec) (SchedulerServer, error
 	c.RPCPort = consts.SchedulerRPCPort
 	c.MonitoringPort = consts.SchedulerMonitoringPort
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "scheduler")
+	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), "scheduler")
 	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().logging
 
 	return c, nil
@@ -43,7 +43,7 @@ func getControllerAgentServerCarcass(spec ytv1.ControllerAgentsSpec) (Controller
 	c.RPCPort = consts.ControllerAgentRPCPort
 	c.MonitoringPort = consts.ControllerAgentMonitoringPort
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "controller-agent")
+	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), "controller-agent")
 	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().logging
 
 	return c, nil

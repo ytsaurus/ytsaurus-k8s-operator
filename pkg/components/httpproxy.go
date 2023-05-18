@@ -37,7 +37,7 @@ func NewHTTPProxy(
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.HTTPProxies.InstanceGroup,
+		&ytsaurus.Spec.HTTPProxies[0].InstanceSpec,
 		"/usr/bin/ytserver-http-proxy",
 		"ytserver-http-proxy.yson",
 		cfgen.GetHTTPProxiesStatefulSetName(),
@@ -55,7 +55,7 @@ func NewHTTPProxy(
 			server: server,
 		},
 		master:      masterReconciler,
-		serviceType: ytsaurus.Spec.HTTPProxies.ServiceType,
+		serviceType: ytsaurus.Spec.HTTPProxies[0].ServiceType,
 		balancingService: resources.NewHTTPService(
 			cfgen.GetHTTPProxiesServiceName(),
 			&labeller,

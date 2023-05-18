@@ -33,7 +33,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.YQLAgents.InstanceGroup,
+		&ytsaurus.Spec.YQLAgents.InstanceSpec,
 		"/usr/bin/ytserver-yql-agent",
 		"ytserver-yql-agent.yson",
 		cfgen.GetYQLAgentStatefulSetName(),

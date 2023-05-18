@@ -25,7 +25,7 @@ func NewGenerator(ytsaurus *v1.Ytsaurus, clusterDomain string) *Generator {
 }
 
 func (g *Generator) getMasterAddresses() []string {
-	names := make([]string, 0, g.ytsaurus.Spec.Masters.InstanceGroup.InstanceCount)
+	names := make([]string, 0, g.ytsaurus.Spec.PrimaryMasters.InstanceCount)
 	for _, podName := range g.GetMasterPodNames() {
 		names = append(names, fmt.Sprintf("%s.%s.%s.svc.%s:%d",
 			podName,
@@ -38,7 +38,7 @@ func (g *Generator) getMasterAddresses() []string {
 }
 
 func (g *Generator) getDiscoveryAddresses() []string {
-	names := make([]string, 0, g.ytsaurus.Spec.Discovery.InstanceGroup.InstanceCount)
+	names := make([]string, 0, g.ytsaurus.Spec.Discovery.InstanceCount)
 	for _, podName := range g.GetDiscoveryPodNames() {
 		names = append(names, fmt.Sprintf("%s.%s.%s.svc.%s:%d",
 			podName,
@@ -51,7 +51,7 @@ func (g *Generator) getDiscoveryAddresses() []string {
 }
 
 func (g *Generator) GetYQLAgentAddresses() []string {
-	names := make([]string, 0, g.ytsaurus.Spec.YQLAgents.InstanceGroup.InstanceCount)
+	names := make([]string, 0, g.ytsaurus.Spec.YQLAgents.InstanceCount)
 	for _, podName := range g.GetYQLAgentPodNames() {
 		names = append(names, fmt.Sprintf("%s.%s.%s.svc.%s:%d",
 			podName,
@@ -67,7 +67,7 @@ func (g *Generator) fillDriver(c *Driver) {
 	c.TimestampProviders.Addresses = g.getMasterAddresses()
 
 	c.PrimaryMaster.Addresses = g.getMasterAddresses()
-	c.PrimaryMaster.CellID = generateCellID(g.ytsaurus.Spec.CellTag)
+	c.PrimaryMaster.CellID = generateCellID(g.ytsaurus.Spec.PrimaryMasters.CellTag)
 
 	c.MasterCache.enableMasterCacheDiscover = true
 	g.fillPrimaryMaster(&c.MasterCache.MasterCell)
@@ -83,7 +83,7 @@ func (g *Generator) fillAddressResolver(c *AddressResolver) {
 
 func (g *Generator) fillPrimaryMaster(c *MasterCell) {
 	c.Addresses = g.getMasterAddresses()
-	c.CellID = generateCellID(g.ytsaurus.Spec.CellTag)
+	c.CellID = generateCellID(g.ytsaurus.Spec.PrimaryMasters.CellTag)
 }
 
 func (g *Generator) fillClusterConnection(c *ClusterConnection) {
@@ -136,7 +136,7 @@ func (g *Generator) GetChytInitClusterConfig() ([]byte, error) {
 }
 
 func (g *Generator) GetMasterConfig() ([]byte, error) {
-	c, err := getMasterServerCarcass(g.ytsaurus.Spec.Masters)
+	c, err := getMasterServerCarcass(g.ytsaurus.Spec.PrimaryMasters)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func (g *Generator) GetRPCProxyConfig() ([]byte, error) {
 		return []byte{}, nil
 	}
 
-	c, err := getRPCProxyServerCarcass(*g.ytsaurus.Spec.RPCProxies)
+	c, err := getRPCProxyServerCarcass(g.ytsaurus.Spec.RPCProxies[0])
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +206,7 @@ func (g *Generator) GetControllerAgentConfig() ([]byte, error) {
 }
 
 func (g *Generator) GetDataNodeConfig() ([]byte, error) {
-	c, err := getDataNodeServerCarcass(g.ytsaurus.Spec.DataNodes)
+	c, err := getDataNodeServerCarcass(g.ytsaurus.Spec.DataNodes[0])
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +222,7 @@ func (g *Generator) GetExecNodeConfig() ([]byte, error) {
 	}
 
 	c, err := getExecNodeServerCarcass(
-		*g.ytsaurus.Spec.ExecNodes,
+		g.ytsaurus.Spec.ExecNodes[0],
 		g.ytsaurus.Spec.UsePorto)
 	if err != nil {
 		return nil, err
@@ -238,7 +238,7 @@ func (g *Generator) GetTabletNodeConfig() ([]byte, error) {
 		return []byte{}, nil
 	}
 
-	c, err := getTabletNodeServerCarcass(*g.ytsaurus.Spec.TabletNodes)
+	c, err := getTabletNodeServerCarcass(g.ytsaurus.Spec.TabletNodes[0])
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +249,7 @@ func (g *Generator) GetTabletNodeConfig() ([]byte, error) {
 }
 
 func (g *Generator) GetHTTPProxyConfig() ([]byte, error) {
-	c, err := getHTTPProxyServerCarcass(g.ytsaurus.Spec.HTTPProxies)
+	c, err := getHTTPProxyServerCarcass(g.ytsaurus.Spec.HTTPProxies[0])
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +298,7 @@ func (g *Generator) GetWebUIConfig() ([]byte, error) {
 	c.ID = g.ytsaurus.Name
 	c.Name = g.ytsaurus.Name
 	c.Proxy = g.GetHTTPProxiesAddress()
-	c.PrimaryMaster.CellTag = g.ytsaurus.Spec.CellTag
+	c.PrimaryMaster.CellTag = g.ytsaurus.Spec.PrimaryMasters.CellTag
 
 	return marshallJSONConfig(WebUI{Clusters: []UICluster{c}})
 }

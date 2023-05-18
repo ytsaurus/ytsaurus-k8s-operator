@@ -35,8 +35,8 @@ func (g *Generator) GetYQLAgentServiceName() string {
 }
 
 func (g *Generator) GetMasterPodNames() []string {
-	podNames := make([]string, 0, g.ytsaurus.Spec.Masters.InstanceGroup.InstanceCount)
-	for i := 0; i < int(g.ytsaurus.Spec.Masters.InstanceGroup.InstanceCount); i++ {
+	podNames := make([]string, 0, g.ytsaurus.Spec.PrimaryMasters.InstanceSpec.InstanceCount)
+	for i := 0; i < int(g.ytsaurus.Spec.PrimaryMasters.InstanceSpec.InstanceCount); i++ {
 		podNames = append(podNames, fmt.Sprintf("%s-%d", g.GetMastersStatefulSetName(), i))
 	}
 
@@ -44,8 +44,8 @@ func (g *Generator) GetMasterPodNames() []string {
 }
 
 func (g *Generator) GetDiscoveryPodNames() []string {
-	podNames := make([]string, 0, g.ytsaurus.Spec.Discovery.InstanceGroup.InstanceCount)
-	for i := 0; i < int(g.ytsaurus.Spec.Discovery.InstanceGroup.InstanceCount); i++ {
+	podNames := make([]string, 0, g.ytsaurus.Spec.Discovery.InstanceSpec.InstanceCount)
+	for i := 0; i < int(g.ytsaurus.Spec.Discovery.InstanceSpec.InstanceCount); i++ {
 		podNames = append(podNames, fmt.Sprintf("%s-%d", g.GetDiscoveryStatefulSetName(), i))
 	}
 
@@ -53,8 +53,8 @@ func (g *Generator) GetDiscoveryPodNames() []string {
 }
 
 func (g *Generator) GetYQLAgentPodNames() []string {
-	podNames := make([]string, 0, g.ytsaurus.Spec.YQLAgents.InstanceGroup.InstanceCount)
-	for i := 0; i < int(g.ytsaurus.Spec.YQLAgents.InstanceGroup.InstanceCount); i++ {
+	podNames := make([]string, 0, g.ytsaurus.Spec.YQLAgents.InstanceSpec.InstanceCount)
+	for i := 0; i < int(g.ytsaurus.Spec.YQLAgents.InstanceSpec.InstanceCount); i++ {
 		podNames = append(podNames, fmt.Sprintf("%s-%d", g.GetYQLAgentStatefulSetName(), i))
 	}
 

@@ -35,7 +35,7 @@ func NewRPCProxy(
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.RPCProxies.InstanceGroup,
+		&ytsaurus.Spec.RPCProxies[0].InstanceSpec,
 		"/usr/bin/ytserver-proxy",
 		"ytserver-rpc-proxy.yson",
 		cfgen.GetRPCProxiesStatefulSetName(),
@@ -44,7 +44,7 @@ func NewRPCProxy(
 	)
 
 	var balancingService *resources.RPCService = nil
-	if ytsaurus.Spec.RPCProxies.ServiceType != nil {
+	if ytsaurus.Spec.RPCProxies[0].ServiceType != nil {
 		balancingService = resources.NewRPCService(
 			cfgen.GetRPCProxiesServiceName(),
 			&labeller,
@@ -61,7 +61,7 @@ func NewRPCProxy(
 			server: server,
 		},
 		master:           masterReconciler,
-		serviceType:      ytsaurus.Spec.RPCProxies.ServiceType,
+		serviceType:      ytsaurus.Spec.RPCProxies[0].ServiceType,
 		balancingService: balancingService,
 	}
 }

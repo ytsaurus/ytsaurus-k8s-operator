@@ -36,7 +36,7 @@ func NewScheduler(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.Schedulers.InstanceGroup,
+		&ytsaurus.Spec.Schedulers.InstanceSpec,
 		"/usr/bin/ytserver-scheduler",
 		"ytserver-scheduler.yson",
 		cfgen.GetSchedulerStatefulSetName(),

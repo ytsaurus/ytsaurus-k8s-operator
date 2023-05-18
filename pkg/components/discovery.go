@@ -26,7 +26,7 @@ func NewDiscovery(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Compon
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.Discovery.InstanceGroup,
+		&ytsaurus.Spec.Discovery.InstanceSpec,
 		"/usr/bin/ytserver-discovery",
 		"ytserver-discovery.yson",
 		cfgen.GetDiscoveryStatefulSetName(),

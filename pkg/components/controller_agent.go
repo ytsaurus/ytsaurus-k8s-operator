@@ -27,7 +27,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, 
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.ControllerAgents.InstanceGroup,
+		&ytsaurus.Spec.ControllerAgents.InstanceSpec,
 		"/usr/bin/ytserver-controller-agent",
 		"ytserver-controller-agent.yson",
 		"ca",

@@ -98,49 +98,50 @@ type InstanceSpec struct {
 }
 
 type MastersSpec struct {
-	InstanceGroup InstanceSpec `json:"instanceGroup,omitempty"`
+	InstanceSpec `json:",inline"`
+	CellTag      int16 `json:"cellTag"`
 }
 
 type HTTPProxiesSpec struct {
+	InstanceSpec `json:",inline"`
 	//+kubebuilder:default:=NodePort
-	ServiceType   corev1.ServiceType `json:"serviceType,omitempty"`
-	InstanceGroup InstanceSpec       `json:"instanceGroup,omitempty"`
+	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
 }
 
 type RPCProxiesSpec struct {
-	ServiceType   *corev1.ServiceType `json:"serviceType,omitempty"`
-	InstanceGroup InstanceSpec        `json:"instanceGroup,omitempty"`
+	InstanceSpec `json:",inline"`
+	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
 }
 
 type DataNodesSpec struct {
 	// label filter (for daemonset)
 	// use host network
-	InstanceGroup InstanceSpec `json:"instanceGroup,omitempty"`
+	InstanceSpec `json:",inline"`
 }
 
 type ExecNodesSpec struct {
 	// label filter (for daemonset)
-	InstanceGroup InstanceSpec `json:"instanceGroup,omitempty"`
+	InstanceSpec `json:",inline"`
 }
 
 type TabletNodesSpec struct {
 	// label filter (for daemonset)
-	InstanceGroup InstanceSpec `json:"instanceGroup,omitempty"`
+	InstanceSpec `json:",inline"`
 }
 
 type SchedulersSpec struct {
 	// label filter (for daemonset)
-	InstanceGroup InstanceSpec `json:"instanceGroup,omitempty"`
+	InstanceSpec `json:",inline"`
 }
 
 type ControllerAgentsSpec struct {
 	// label filter (for daemonset)
-	InstanceGroup InstanceSpec `json:"instanceGroup,omitempty"`
+	InstanceSpec `json:",inline"`
 }
 
 type DiscoverySpec struct {
 	// label filter (for daemonset)
-	InstanceGroup InstanceSpec `json:"instanceGroup,omitempty"`
+	InstanceSpec `json:",inline"`
 }
 
 type UISpec struct {
@@ -155,7 +156,7 @@ type UISpec struct {
 }
 
 type QueryTrackerSpec struct {
-	InstanceGroup InstanceSpec `json:"instanceGroup,omitempty"`
+	InstanceSpec `json:",inline"`
 }
 
 type ChytSpec struct {
@@ -168,7 +169,7 @@ type SpytSpec struct {
 }
 
 type YQLAgentSpec struct {
-	InstanceGroup InstanceSpec `json:"instanceGroup,omitempty"`
+	InstanceSpec `json:",inline"`
 }
 
 // YtsaurusSpec defines the desired state of Ytsaurus
@@ -189,21 +190,23 @@ type YtsaurusSpec struct {
 
 	ExtraPodAnnotations map[string]string `json:"extraPodAnnotations,omitempty"`
 
-	CellTag int16 `json:"cellTag"`
-
-	Discovery        DiscoverySpec         `json:"discovery,omitempty"`
-	Masters          MastersSpec           `json:"masters,omitempty"`
-	HTTPProxies      HTTPProxiesSpec       `json:"httpProxies,omitempty"`
-	RPCProxies       *RPCProxiesSpec       `json:"rpcProxies,omitempty"`
-	DataNodes        DataNodesSpec         `json:"dataNodes,omitempty"`
-	ExecNodes        *ExecNodesSpec        `json:"execNodes,omitempty"`
+	Discovery        DiscoverySpec `json:"discovery,omitempty"`
+	PrimaryMasters   MastersSpec   `json:"primaryMasters,omitempty"`
+	SecondaryMasters []MastersSpec `json:"secondaryMasters,omitempty"`
+	// +kubebuilder:validation:MinItems:=1
+	HTTPProxies []HTTPProxiesSpec `json:"httpProxies,omitempty"`
+	RPCProxies  []RPCProxiesSpec  `json:"rpcProxies,omitempty"`
+	// +kubebuilder:validation:MinItems:=1
+	DataNodes        []DataNodesSpec       `json:"dataNodes,omitempty"`
+	ExecNodes        []ExecNodesSpec       `json:"execNodes,omitempty"`
 	Schedulers       *SchedulersSpec       `json:"schedulers,omitempty"`
 	ControllerAgents *ControllerAgentsSpec `json:"controllerAgents,omitempty"`
-	TabletNodes      *TabletNodesSpec      `json:"tabletNodes,omitempty"`
-	Chyt             *ChytSpec             `json:"chyt,omitempty"`
-	QueryTrackers    *QueryTrackerSpec     `json:"queryTrackers,omitempty"`
-	Spyt             *SpytSpec             `json:"spyt,omitempty"`
-	YQLAgents        *YQLAgentSpec         `json:"yqlAgents,omitempty"`
+	TabletNodes      []TabletNodesSpec     `json:"tabletNodes,omitempty"`
+
+	Chyt          *ChytSpec         `json:"chyt,omitempty"`
+	QueryTrackers *QueryTrackerSpec `json:"queryTrackers,omitempty"`
+	Spyt          *SpytSpec         `json:"spyt,omitempty"`
+	YQLAgents     *YQLAgentSpec     `json:"yqlAgents,omitempty"`
 
 	UI *UISpec `json:"ui,omitempty"`
 }

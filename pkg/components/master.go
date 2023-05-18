@@ -33,7 +33,7 @@ func NewMaster(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Component
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.Masters.InstanceGroup,
+		&ytsaurus.Spec.PrimaryMasters.InstanceSpec,
 		"/usr/bin/ytserver-master",
 		"ytserver-master.yson",
 		cfgen.GetMastersStatefulSetName(),

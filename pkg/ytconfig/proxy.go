@@ -50,7 +50,7 @@ func getHTTPProxyServerCarcass(spec ytv1.HTTPProxiesSpec) (HTTPProxyServer, erro
 	c.MonitoringPort = consts.HTTPProxyMonitoringPort
 	c.Port = consts.HTTPProxyHTTPPort
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "http-proxy")
+	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), "http-proxy")
 	c.Logging = loggingBuilder.addDefaultDebug().addDefaultStderr().logging
 
 	return c, nil
@@ -64,7 +64,7 @@ func getRPCProxyServerCarcass(spec ytv1.RPCProxiesSpec) (RPCProxyServer, error) 
 	c.RPCPort = consts.RPCProxyRPCPort
 	c.MonitoringPort = consts.RPCProxyMonitoringPort
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "rpc-proxy")
+	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), "rpc-proxy")
 	c.Logging = loggingBuilder.addDefaultDebug().addDefaultStderr().logging
 
 	return c, nil

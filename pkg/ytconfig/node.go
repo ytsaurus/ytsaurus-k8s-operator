@@ -115,7 +115,7 @@ type TabletNodeServer struct {
 }
 
 func findVolumeMountForPath(locationPath string, spec ytv1.DataNodesSpec) *v1.VolumeMount {
-	for _, mount := range spec.InstanceGroup.VolumeMounts {
+	for _, mount := range spec.VolumeMounts {
 		if strings.HasPrefix(locationPath, mount.MountPath) {
 			return &mount
 		}
@@ -124,7 +124,7 @@ func findVolumeMountForPath(locationPath string, spec ytv1.DataNodesSpec) *v1.Vo
 }
 
 func findVolumeClaimTemplate(volumeName string, spec ytv1.DataNodesSpec) *ytv1.EmbeddedPersistentVolumeClaim {
-	for _, claim := range spec.InstanceGroup.VolumeClaimTemplates {
+	for _, claim := range spec.VolumeClaimTemplates {
 		if claim.Name == volumeName {
 			return &claim
 		}
@@ -133,7 +133,7 @@ func findVolumeClaimTemplate(volumeName string, spec ytv1.DataNodesSpec) *ytv1.E
 }
 
 func findVolume(volumeName string, spec ytv1.DataNodesSpec) *v1.Volume {
-	for _, volume := range spec.InstanceGroup.Volumes {
+	for _, volume := range spec.Volumes {
 		if volume.Name == volumeName {
 			return &volume
 		}
@@ -180,13 +180,13 @@ func getDataNodeServerCarcass(spec ytv1.DataNodesSpec) (DataNodeServer, error) {
 	c.ResourceLimits.NodeDedicatedCpu = &cpu
 	c.ResourceLimits.TotalCpu = &cpu
 
-	memory := spec.InstanceGroup.Resources.Requests.Memory()
+	memory := spec.Resources.Requests.Memory()
 	if memory != nil {
 		c.ResourceLimits.TotalMemory = memory.Value()
 	}
 
 	c.Flavors = []NodeFlavor{NodeFlavorData}
-	for _, location := range ytv1.FindAllLocations(spec.InstanceGroup.Locations, ytv1.LocationTypeChunkStore) {
+	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkStore) {
 		quota := findQuotaForPath(location.Path, spec)
 		storeLocation := StoreLocation{
 			Medium: location.Medium,
@@ -208,7 +208,7 @@ func getDataNodeServerCarcass(spec ytv1.DataNodesSpec) (DataNodeServer, error) {
 		return c, fmt.Errorf("error creating data node config: no storage locations provided")
 	}
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "data-node")
+	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), "data-node")
 	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().logging
 
 	return c, nil
@@ -221,8 +221,8 @@ func getExecNodeServerCarcass(spec ytv1.ExecNodesSpec, usePorto bool) (ExecNodeS
 	var dedicatedCpu float32 = 0
 	c.ResourceLimits.NodeDedicatedCpu = &dedicatedCpu
 
-	cpuLimit := spec.InstanceGroup.Resources.Limits.Cpu()
-	cpuRequest := spec.InstanceGroup.Resources.Requests.Cpu()
+	cpuLimit := spec.Resources.Limits.Cpu()
+	cpuRequest := spec.Resources.Requests.Cpu()
 
 	if cpuLimit != nil {
 		value := float32(cpuLimit.Value())
@@ -232,8 +232,8 @@ func getExecNodeServerCarcass(spec ytv1.ExecNodesSpec, usePorto bool) (ExecNodeS
 		c.ResourceLimits.TotalCpu = &value
 	}
 
-	memoryRequest := spec.InstanceGroup.Resources.Requests.Memory()
-	memoryLimit := spec.InstanceGroup.Resources.Limits.Memory()
+	memoryRequest := spec.Resources.Requests.Memory()
+	memoryLimit := spec.Resources.Limits.Memory()
 	if memoryLimit != nil {
 		c.ResourceLimits.TotalMemory = memoryLimit.Value()
 	} else if memoryRequest != nil {
@@ -241,7 +241,7 @@ func getExecNodeServerCarcass(spec ytv1.ExecNodesSpec, usePorto bool) (ExecNodeS
 	}
 
 	c.Flavors = []NodeFlavor{NodeFlavorExec}
-	for _, location := range ytv1.FindAllLocations(spec.InstanceGroup.Locations, ytv1.LocationTypeChunkCache) {
+	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
 		c.DataNode.CacheLocations = append(c.DataNode.CacheLocations, DiskLocation{
 			Path: location.Path,
 		})
@@ -251,7 +251,7 @@ func getExecNodeServerCarcass(spec ytv1.ExecNodesSpec, usePorto bool) (ExecNodeS
 		return c, fmt.Errorf("error creating exec node config: no cache locations provided")
 	}
 
-	for _, location := range ytv1.FindAllLocations(spec.InstanceGroup.Locations, ytv1.LocationTypeSlots) {
+	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeSlots) {
 		c.ExecAgent.SlotManager.Locations = append(c.ExecAgent.SlotManager.Locations, DiskLocation{
 			Path: location.Path,
 		})
@@ -274,7 +274,7 @@ func getExecNodeServerCarcass(spec ytv1.ExecNodesSpec, usePorto bool) (ExecNodeS
 		c.ExecAgent.SlotManager.JobEnvironment.Type = JobEnvironmentTypeSimple
 	}
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "exec-node")
+	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), "exec-node")
 	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().logging
 
 	return c, nil
@@ -288,14 +288,14 @@ func getTabletNodeServerCarcass(spec ytv1.TabletNodesSpec) (TabletNodeServer, er
 	c.ResourceLimits.NodeDedicatedCpu = &cpu
 	c.ResourceLimits.TotalCpu = &cpu
 
-	memory := spec.InstanceGroup.Resources.Requests.Memory()
+	memory := spec.Resources.Requests.Memory()
 	if memory != nil {
 		c.ResourceLimits.TotalMemory = memory.Value()
 	}
 
 	c.Flavors = []NodeFlavor{NodeFlavorTablet}
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "tablet-node")
+	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), "tablet-node")
 	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().logging
 
 	return c, nil

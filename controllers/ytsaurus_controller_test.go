@@ -36,14 +36,14 @@ var _ = Describe("Basic test for YTsaurus controller", func() {
 				},
 				Spec: v1.YtsaurusSpec{
 					CoreImage: "ytsaurus/ytsaurus:latest",
-					CellTag:   1,
 					Discovery: v1.DiscoverySpec{
-						InstanceGroup: v1.InstanceSpec{
+						InstanceSpec: v1.InstanceSpec{
 							InstanceCount: 1,
 						},
 					},
-					Masters: v1.MastersSpec{
-						InstanceGroup: v1.InstanceSpec{
+					PrimaryMasters: v1.MastersSpec{
+						CellTag: 1,
+						InstanceSpec: v1.InstanceSpec{
 							InstanceCount: 1,
 							Locations: []v1.LocationSpec{
 								{
@@ -73,38 +73,42 @@ var _ = Describe("Basic test for YTsaurus controller", func() {
 							},
 						},
 					},
-					HTTPProxies: v1.HTTPProxiesSpec{
-						ServiceType: "NodePort",
-						InstanceGroup: v1.InstanceSpec{
-							InstanceCount: 1,
+					HTTPProxies: []v1.HTTPProxiesSpec{
+						{
+							ServiceType: "NodePort",
+							InstanceSpec: v1.InstanceSpec{
+								InstanceCount: 1,
+							},
 						},
 					},
 					UI: &v1.UISpec{
 						InstanceCount: 1,
 					},
-					DataNodes: v1.DataNodesSpec{
-						InstanceGroup: v1.InstanceSpec{
-							InstanceCount: 1,
-							Locations: []v1.LocationSpec{
-								{
-									LocationType: "ChunkStore",
-									Path:         "/yt/node-data/chunk-store",
+					DataNodes: []v1.DataNodesSpec{
+						{
+							InstanceSpec: v1.InstanceSpec{
+								InstanceCount: 1,
+								Locations: []v1.LocationSpec{
+									{
+										LocationType: "ChunkStore",
+										Path:         "/yt/node-data/chunk-store",
+									},
 								},
-							},
-							Volumes: []corev1.Volume{
-								{
-									Name: "node-data",
-									VolumeSource: corev1.VolumeSource{
-										EmptyDir: &corev1.EmptyDirVolumeSource{
-											SizeLimit: &masterVolumeSize,
+								Volumes: []corev1.Volume{
+									{
+										Name: "node-data",
+										VolumeSource: corev1.VolumeSource{
+											EmptyDir: &corev1.EmptyDirVolumeSource{
+												SizeLimit: &masterVolumeSize,
+											},
 										},
 									},
 								},
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "node-data",
-									MountPath: "/yt/node-data",
+								VolumeMounts: []corev1.VolumeMount{
+									{
+										Name:      "node-data",
+										MountPath: "/yt/node-data",
+									},
 								},
 							},
 						},

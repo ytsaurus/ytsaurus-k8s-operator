@@ -35,7 +35,7 @@ func NewTabletNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, yc Yt
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.TabletNodes.InstanceGroup,
+		&ytsaurus.Spec.TabletNodes[0].InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-tablet-node.yson",
 		"tnd",

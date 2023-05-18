@@ -39,19 +39,19 @@ func getMasterServerCarcass(spec ytv1.MastersSpec) (MasterServer, error) {
 	c.Hydra.MaxChangelogCountToKeep = 2
 	c.SecondaryMasters = make([]MasterCell, 0)
 
-	if location := ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeMasterChangelogs); location != nil {
+	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeMasterChangelogs); location != nil {
 		c.Changelogs.Path = location.Path
 	} else {
 		return c, fmt.Errorf("error creating master config: changelog location not found")
 	}
 
-	if location := ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeMasterSnapshots); location != nil {
+	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeMasterSnapshots); location != nil {
 		c.Snapshots.Path = location.Path
 	} else {
 		return c, fmt.Errorf("error creating master config: snapshot location not found")
 	}
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.InstanceGroup.Locations, ytv1.LocationTypeLogs), "master")
+	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), "master")
 	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().logging
 
 	return c, nil

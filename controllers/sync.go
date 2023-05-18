@@ -35,17 +35,17 @@ func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Y
 		result = append(result, ui)
 	}
 
-	if ytsaurus.Spec.RPCProxies != nil {
+	if ytsaurus.Spec.RPCProxies != nil && len(ytsaurus.Spec.RPCProxies) > 0 {
 		rp := components.NewRPCProxy(cfgen, proxy, m)
 		result = append(result, rp)
 	}
 
-	if ytsaurus.Spec.ExecNodes != nil {
+	if ytsaurus.Spec.ExecNodes != nil && len(ytsaurus.Spec.ExecNodes) > 0 {
 		en = components.NewExecNode(cfgen, proxy, m)
 		result = append(result, en)
 	}
 
-	if ytsaurus.Spec.TabletNodes != nil {
+	if ytsaurus.Spec.TabletNodes != nil && len(ytsaurus.Spec.TabletNodes) > 0 {
 		tn = components.NewTabletNode(cfgen, proxy, yc)
 		result = append(result, tn)
 	}

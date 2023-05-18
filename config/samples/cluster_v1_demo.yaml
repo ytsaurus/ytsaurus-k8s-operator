@@ -9,11 +9,8 @@ spec:
   adminCredentials:
     name: ytadminsec
 
-  cellTag: 1
-
   discovery:
-    instanceGroup:
-      instanceCount: 1
+    instanceCount: 1
 
   chyt:
     resources:
@@ -24,41 +21,37 @@ spec:
     sparkVersion: '1.69.0'
     spytVersion: '1.69.3'
 
-  masters:
-    instanceGroup:
-      instanceCount: 3
-      volumeMounts:
-        - name: master-data
-          mountPath: /yt/master-data
-      locations:
-        - locationType: MasterChangelogs
-          path: /yt/master-data/master-changelogs
-        - locationType: MasterSnapshots
-          path: /yt/master-data/master-snapshots
+  primaryMasters:
+    instanceCount: 3
+    cellTag: 1
+    volumeMounts:
+      - name: master-data
+        mountPath: /yt/master-data
+    locations:
+      - locationType: MasterChangelogs
+        path: /yt/master-data/master-changelogs
+      - locationType: MasterSnapshots
+        path: /yt/master-data/master-snapshots
 
-      volumeClaimTemplates:
-        - metadata:
-            name: master-data
-          spec:
-            accessModes: [ "ReadWriteOnce" ]
-            resources:
-              requests:
-                storage: 20Gi
+    volumeClaimTemplates:
+      - metadata:
+          name: master-data
+        spec:
+          accessModes: [ "ReadWriteOnce" ]
+          resources:
+            requests:
+              storage: 20Gi
 
   httpProxies:
-    serviceType: NodePort
-    instanceGroup:
+    - serviceType: NodePort
       instanceCount: 3
 
   rpcProxies:
-    serviceType: LoadBalancer
-    instanceGroup:
+    - serviceType: LoadBalancer
       instanceCount: 3
 
   dataNodes:
-    instanceGroup:
-      instanceCount: 3
-
+    - instanceCount: 3
       volumeMounts:
         - name: node-data
           mountPath: /yt/node-data
@@ -77,9 +70,7 @@ spec:
                 storage: 50Gi
 
   execNodes:
-    instanceGroup:
-      instanceCount: 3
-
+    - instanceCount: 3
       resources:
         limits:
           cpu: 3
@@ -101,24 +92,19 @@ spec:
           path: /yt/node-data/slots
 
   tabletNodes:
-    instanceGroup:
-      instanceCount: 3
+    - instanceCount: 3
 
   queryTrackers:
-    instanceGroup:
-      instanceCount: 1
+    instanceCount: 1
 
   yqlAgents:
-    instanceGroup:
-      instanceCount: 1
+    instanceCount: 1
 
   schedulers:
-    instanceGroup:
-      instanceCount: 1
+    instanceCount: 1
 
   controllerAgents:
-    instanceGroup:
-      instanceCount: 1
+    instanceCount: 1
 
   ui:
     serviceType: NodePort

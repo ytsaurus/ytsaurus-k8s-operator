@@ -30,7 +30,7 @@ func NewQueryTracker(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, mas
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.QueryTrackers.InstanceGroup,
+		&ytsaurus.Spec.QueryTrackers.InstanceSpec,
 		"/usr/bin/ytserver-query-tracker",
 		"ytserver-query-tracker.yson",
 		cfgen.GetQueryTrackerStatefulSetName(),

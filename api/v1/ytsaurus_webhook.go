@@ -42,9 +42,9 @@ var _ webhook.Defaulter = &Ytsaurus{}
 func (r *Ytsaurus) Default() {
 	ytsauruslog.Info("default", "name", r.Name)
 
-	if r.Spec.Masters.InstanceGroup.EnableAntiAffinity == nil {
-		r.Spec.Masters.InstanceGroup.EnableAntiAffinity = new(bool)
-		*r.Spec.Masters.InstanceGroup.EnableAntiAffinity = true
+	if r.Spec.PrimaryMasters.EnableAntiAffinity == nil {
+		r.Spec.PrimaryMasters.EnableAntiAffinity = new(bool)
+		*r.Spec.PrimaryMasters.EnableAntiAffinity = true
 	}
 }
 

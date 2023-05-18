@@ -27,7 +27,7 @@ func NewDataNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.DataNodes.InstanceGroup,
+		&ytsaurus.Spec.DataNodes[0].InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-data-node.yson",
 		"dnd",
@@ -60,7 +60,7 @@ func NewExecNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.ExecNodes.InstanceGroup,
+		&ytsaurus.Spec.ExecNodes[0].InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-exec-node.yson",
 		"end",
