@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -21,6 +22,7 @@ func NewDiscovery(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Compon
 		APIProxy:       apiProxy,
 		ComponentLabel: consts.YTComponentLabelDiscovery,
 		ComponentName:  "Discovery",
+		MonitoringPort: consts.DiscoveryMonitoringPort,
 	}
 
 	server := NewServer(

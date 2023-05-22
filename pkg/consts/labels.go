@@ -1,6 +1,7 @@
 package consts
 
 const YTComponentLabelName = "yt_component"
+const YTMetricsLabelName = "yt_metrics"
 
 type YTComponentLabel string
 

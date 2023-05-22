@@ -3,8 +3,9 @@ package components
 import (
 	"context"
 	"fmt"
-	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"strings"
+
+	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -31,6 +32,7 @@ func NewScheduler(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master
 		APIProxy:       apiProxy,
 		ComponentLabel: consts.YTComponentLabelScheduler,
 		ComponentName:  "Scheduler",
+		MonitoringPort: consts.SchedulerMonitoringPort,
 	}
 
 	server := NewServer(

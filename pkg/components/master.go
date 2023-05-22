@@ -3,8 +3,9 @@ package components
 import (
 	"context"
 	"fmt"
-	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"strings"
+
+	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -28,6 +29,7 @@ func NewMaster(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Component
 		APIProxy:       apiProxy,
 		ComponentLabel: consts.YTComponentLabelMaster,
 		ComponentName:  "Master",
+		MonitoringPort: consts.MasterMonitoringPort,
 	}
 
 	server := NewServer(

@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -30,6 +31,7 @@ func NewTabletNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, yc Yt
 		APIProxy:       apiProxy,
 		ComponentLabel: consts.YTComponentLabelTabletNode,
 		ComponentName:  "TabletNode",
+		MonitoringPort: consts.NodeMonitoringPort,
 	}
 
 	server := NewServer(

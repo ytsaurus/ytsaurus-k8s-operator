@@ -1,5 +1,8 @@
 package consts
 
+const YTMonitoringPortName = "ytsaurus-metrics"
+const YTMonitoringPort = 10000
+
 const (
 	DiscoveryRPCPort        = 9020
 	DiscoveryMonitoringPort = 10020

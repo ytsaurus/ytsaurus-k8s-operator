@@ -35,9 +35,10 @@ type server struct {
 
 	instanceSpec *ytv1.InstanceSpec
 
-	statefulSet      *resources.StatefulSet
-	headlessService  *resources.HeadlessService
-	builtStatefulSet *appsv1.StatefulSet
+	statefulSet       *resources.StatefulSet
+	headlessService   *resources.HeadlessService
+	monitoringService *resources.MonitoringService
+	builtStatefulSet  *appsv1.StatefulSet
 
 	configHelper *ConfigHelper
 }
@@ -61,6 +62,10 @@ func NewServer(
 			serviceName,
 			labeller,
 			apiProxy),
+		monitoringService: resources.NewMonitoringService(
+			serviceName,
+			labeller,
+			apiProxy),
 		configHelper: NewConfigHelper(
 			labeller,
 			apiProxy,
@@ -75,11 +80,12 @@ func (s *server) Fetch(ctx context.Context) error {
 		s.statefulSet,
 		s.configHelper,
 		s.headlessService,
+		s.monitoringService,
 	})
 }
 
 func (s *server) IsInSync() bool {
-	if s.configHelper.NeedSync() || !resources.Exists(s.statefulSet) || !resources.Exists(s.headlessService) {
+	if s.configHelper.NeedSync() || !resources.Exists(s.statefulSet) || !resources.Exists(s.headlessService) || !resources.Exists(s.monitoringService) {
 		return false
 	}
 
@@ -107,12 +113,14 @@ func (s *server) ArePodsReady(ctx context.Context) bool {
 func (s *server) Sync(ctx context.Context) (err error) {
 	_ = s.configHelper.Build()
 	_ = s.headlessService.Build()
+	_ = s.monitoringService.Build()
 	_ = s.BuildStatefulSet()
 
 	return resources.Sync(ctx, []resources.Syncable{
 		s.statefulSet,
 		s.configHelper,
 		s.headlessService,
+		s.monitoringService,
 	})
 }
 

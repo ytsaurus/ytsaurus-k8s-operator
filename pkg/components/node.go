@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -22,6 +23,7 @@ func NewDataNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 		APIProxy:       apiProxy,
 		ComponentLabel: consts.YTComponentLabelDataNode,
 		ComponentName:  "DataNode",
+		MonitoringPort: consts.NodeMonitoringPort,
 	}
 
 	server := NewServer(
@@ -55,6 +57,7 @@ func NewExecNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 		APIProxy:       apiProxy,
 		ComponentLabel: consts.YTComponentLabelExecNode,
 		ComponentName:  "ExecNode",
+		MonitoringPort: consts.NodeMonitoringPort,
 	}
 
 	server := NewServer(

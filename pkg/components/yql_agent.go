@@ -3,8 +3,9 @@ package components
 import (
 	"context"
 	"fmt"
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"strings"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -28,6 +29,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 		APIProxy:       apiProxy,
 		ComponentLabel: consts.YTComponentLabelYqlAgent,
 		ComponentName:  "YqlAgent",
+		MonitoringPort: consts.YQLAgentMonitoringPort,
 	}
 
 	server := NewServer(

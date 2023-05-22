@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -30,6 +31,7 @@ func NewRPCProxy(
 		APIProxy:       apiProxy,
 		ComponentLabel: consts.YTComponentLabelRPCProxy,
 		ComponentName:  "RpcProxy",
+		MonitoringPort: consts.RPCProxyMonitoringPort,
 	}
 
 	server := NewServer(

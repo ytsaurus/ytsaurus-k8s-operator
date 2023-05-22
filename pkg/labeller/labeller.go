@@ -21,6 +21,7 @@ type Labeller struct {
 	Ytsaurus       *ytv1.Ytsaurus
 	ComponentLabel consts.YTComponentLabel
 	ComponentName  string
+	MonitoringPort int32
 }
 
 func (r *Labeller) GetSecretName() string {
@@ -76,4 +77,12 @@ func (r *Labeller) GetMetaLabelMap() map[string]string {
 		"app.kubernetes.io/managed-by": "Ytsaurus-k8s-operator",
 		consts.YTComponentLabelName:    r.GetYTLabelValue(),
 	}
+}
+
+func (r *Labeller) GetMonitoringMetaLabelMap() map[string]string {
+	labels := r.GetMetaLabelMap()
+
+	labels[consts.YTMetricsLabelName] = "true"
+
+	return labels
 }

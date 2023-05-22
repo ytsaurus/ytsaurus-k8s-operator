@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -22,6 +23,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, 
 		APIProxy:       apiProxy,
 		ComponentLabel: consts.YTComponentLabelControllerAgent,
 		ComponentName:  "ControllerAgent",
+		MonitoringPort: consts.ControllerAgentMonitoringPort,
 	}
 
 	server := NewServer(

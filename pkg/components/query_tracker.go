@@ -2,8 +2,9 @@ package components
 
 import (
 	"context"
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"strings"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -25,6 +26,7 @@ func NewQueryTracker(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, mas
 		APIProxy:       apiProxy,
 		ComponentLabel: "yt-query-tracker",
 		ComponentName:  "QueryTracker",
+		MonitoringPort: consts.QueryTrackerMonitoringPort,
 	}
 
 	server := NewServer(
