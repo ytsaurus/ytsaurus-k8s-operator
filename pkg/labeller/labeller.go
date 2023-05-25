@@ -24,58 +24,62 @@ type Labeller struct {
 	MonitoringPort int32
 }
 
-func (r *Labeller) GetSecretName() string {
-	return fmt.Sprintf("%s-secret", r.ComponentLabel)
+func (l *Labeller) GetClusterName() string {
+	return l.Ytsaurus.Name
 }
 
-func (r *Labeller) GetMainConfigMapName() string {
-	return fmt.Sprintf("%s-config", r.ComponentLabel)
+func (l *Labeller) GetSecretName() string {
+	return fmt.Sprintf("%s-secret", l.ComponentLabel)
 }
 
-func (r *Labeller) GetInitJobName(name string) string {
-	return fmt.Sprintf("%s-init-job-%s", r.ComponentLabel, strings.ToLower(name))
+func (l *Labeller) GetMainConfigMapName() string {
+	return fmt.Sprintf("%s-config", l.ComponentLabel)
 }
 
-func (r *Labeller) GetPodsRemovingStartedCondition() string {
-	return fmt.Sprintf("%sPodsRemovingStarted", r.ComponentLabel)
+func (l *Labeller) GetInitJobName(name string) string {
+	return fmt.Sprintf("%s-init-job-%s", l.ComponentLabel, strings.ToLower(name))
 }
 
-func (r *Labeller) GetPodsRemovedCondition() string {
-	return fmt.Sprintf("%sPodsRemoved", r.ComponentLabel)
+func (l *Labeller) GetPodsRemovingStartedCondition() string {
+	return fmt.Sprintf("%sPodsRemovingStarted", l.ComponentLabel)
 }
 
-func (r *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
+func (l *Labeller) GetPodsRemovedCondition() string {
+	return fmt.Sprintf("%sPodsRemoved", l.ComponentLabel)
+}
+
+func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Name:      name,
-		Namespace: r.Ytsaurus.Namespace,
-		Labels:    r.GetMetaLabelMap(),
+		Namespace: l.Ytsaurus.Namespace,
+		Labels:    l.GetMetaLabelMap(),
 	}
 }
 
-func (r *Labeller) GetYTLabelValue() string {
-	return fmt.Sprintf("%s-%s", r.Ytsaurus.Name, r.ComponentLabel)
+func (l *Labeller) GetYTLabelValue() string {
+	return fmt.Sprintf("%s-%s", l.Ytsaurus.Name, l.ComponentLabel)
 }
 
-func (r *Labeller) GetSelectorLabelMap() map[string]string {
+func (l *Labeller) GetSelectorLabelMap() map[string]string {
 	return map[string]string{
-		consts.YTComponentLabelName: r.GetYTLabelValue(),
+		consts.YTComponentLabelName: l.GetYTLabelValue(),
 	}
 }
 
-func (r *Labeller) GetListOptions() []client.ListOption {
+func (l *Labeller) GetListOptions() []client.ListOption {
 	return []client.ListOption{
-		client.InNamespace(r.Ytsaurus.Namespace),
-		client.MatchingLabels(r.GetSelectorLabelMap()),
+		client.InNamespace(l.Ytsaurus.Namespace),
+		client.MatchingLabels(l.GetSelectorLabelMap()),
 	}
 }
 
-func (r *Labeller) GetMetaLabelMap() map[string]string {
+func (l *Labeller) GetMetaLabelMap() map[string]string {
 	return map[string]string{
 		"app.kubernetes.io/name":       "Ytsaurus",
-		"app.kubernetes.io/instance":   r.Ytsaurus.Name,
-		"app.kubernetes.io/component":  string(r.ComponentLabel),
+		"app.kubernetes.io/instance":   l.Ytsaurus.Name,
+		"app.kubernetes.io/component":  string(l.ComponentLabel),
 		"app.kubernetes.io/managed-by": "Ytsaurus-k8s-operator",
-		consts.YTComponentLabelName:    r.GetYTLabelValue(),
+		consts.YTComponentLabelName:    l.GetYTLabelValue(),
 	}
 }
 

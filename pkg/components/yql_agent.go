@@ -101,7 +101,7 @@ func (yqla *yqlAgent) createInitScript() string {
 		"/usr/bin/yt add-member --member yql_agent --group superusers || true",
 		"/usr/bin/yt create document //sys/yql_agent/config --attributes '{}' --recursive --ignore-existing",
 		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent '{stages={production={channel={addresses=%v}}}}'", yqlAgentAddrs),
-		"/usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/yt",
+		fmt.Sprintf("/usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/%s", yqla.labeller.GetClusterName()),
 	}
 
 	return strings.Join(script, "\n")

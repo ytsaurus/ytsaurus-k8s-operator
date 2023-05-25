@@ -2,10 +2,10 @@ package components
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
-
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
@@ -71,9 +71,9 @@ func (qt *queryTracker) createInitScript() string {
 		initJobWithNativeDriverPrologue(),
 		"/usr/bin/yt create user --attributes '{name=query_tracker}' --ignore-existing",
 		"/usr/bin/yt add-member --member query_tracker --group superusers || true",
-		"/usr/bin/yt create document //sys/query_tracker/config --attributes '{value={query_tracker={ql_engine={default_cluster=yt}; chyt_engine={default_cluster=yt}}}}' --recursive --ignore-existing",
+		fmt.Sprintf("/usr/bin/yt create document //sys/query_tracker/config --attributes '{value={query_tracker={ql_engine={default_cluster=\"%s\"}; chyt_engine={default_cluster=\"%s\"}}}}' --recursive --ignore-existing", qt.labeller.GetClusterName(), qt.labeller.GetClusterName()),
 		"/usr/bin/yt set //sys/@cluster_connection/query_tracker '{stages={production={root=\"//sys/query_tracker\"; user=query_tracker}}}'",
-		"/usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/yt",
+		fmt.Sprintf("/usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/%s", qt.labeller.GetClusterName()),
 	}
 
 	return strings.Join(script, "\n")

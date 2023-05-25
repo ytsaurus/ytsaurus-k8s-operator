@@ -24,7 +24,7 @@ func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Y
 
 	dn := components.NewDataNode(cfgen, proxy, m)
 
-	var en, tn components.Component
+	var en, tn, s components.Component
 
 	result := []components.Component{
 		d, m, hp, dn, yc,
@@ -51,7 +51,7 @@ func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Y
 	}
 
 	if ytsaurus.Spec.Schedulers != nil {
-		s := components.NewScheduler(cfgen, proxy, m, en, tn)
+		s = components.NewScheduler(cfgen, proxy, m, en, tn)
 		result = append(result, s)
 	}
 
@@ -76,7 +76,7 @@ func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Y
 	}
 
 	if ytsaurus.Spec.Spyt != nil && en != nil {
-		spyt := components.NewSpyt(cfgen, proxy, m, en)
+		spyt := components.NewSpyt(cfgen, proxy, m, en, s, dn)
 		result = append(result, spyt)
 	}
 

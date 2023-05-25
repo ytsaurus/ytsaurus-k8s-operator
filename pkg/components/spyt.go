@@ -17,8 +17,10 @@ type spyt struct {
 
 	initEnvironment *InitJob
 
-	master   Component
-	execNode Component
+	master    Component
+	execNode  Component
+	scheduler Component
+	dataNode  Component
 
 	spytVersion  string
 	sparkVersion string
@@ -27,8 +29,7 @@ type spyt struct {
 func NewSpyt(
 	cfgen *ytconfig.Generator,
 	apiProxy *apiproxy.APIProxy,
-	master Component,
-	execNode Component) Component {
+	master, execNode, scheduler, dataNode Component) Component {
 
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
@@ -44,8 +45,10 @@ func NewSpyt(
 			apiProxy: apiProxy,
 			cfgen:    cfgen,
 		},
-		master:   master,
-		execNode: execNode,
+		master:    master,
+		execNode:  execNode,
+		scheduler: scheduler,
+		dataNode:  dataNode,
 
 		sparkVersion: ytsaurus.Spec.Spyt.SparkVersion,
 		spytVersion:  ytsaurus.Spec.Spyt.SpytVersion,
@@ -108,7 +111,7 @@ func (s *spyt) getSparkLaunchConf() string {
 		"enablers" = {
 			"enable_byop" = %%false;
 			"enable_arrow" = %%true;
-			"enable_mtn" = %%true;
+			"enable_mtn" = %%false;
 		};
 	}`, s.sparkVersion, s.sparkVersion, s.sparkVersion, s.sparkVersion, s.sparkVersion, s.sparkVersion, s.sparkVersion)
 }
@@ -132,19 +135,15 @@ func (s *spyt) createInitScript(sparkVersion string, spytVersion string) string 
 		fmt.Sprintf("/usr/bin/yt set //home/spark/conf/global '%s'", s.getSpytGlobalConf()),
 
 		"/usr/bin/yt create file " + metricsPath + " --ignore-existing -r",
-		"/usr/bin/yt set " + metricsPath + "/@replication_factor 1",
 		"cat /usr/bin/metrics.properties | /usr/bin/yt write-file " + metricsPath,
 
 		"/usr/bin/yt create file " + solomonAgentPath + " --ignore-existing",
-		"/usr/bin/yt set " + solomonAgentPath + "/@replication_factor 1",
 		"cat /usr/bin/solomon-agent.template.conf | /usr/bin/yt upload " + solomonAgentPath,
 
 		"/usr/bin/yt create file " + solomonServiceMasterPath + " --ignore-existing",
-		"/usr/bin/yt set " + solomonServiceMasterPath + "/@replication_factor 1",
 		"cat /usr/bin/solomon-service-master.template.conf | /usr/bin/yt upload " + solomonServiceMasterPath,
 
 		"/usr/bin/yt create file " + solomonServiceWorkerPath + " --ignore-existing",
-		"/usr/bin/yt set " + solomonServiceWorkerPath + "/@replication_factor 1",
 		"cat /usr/bin/solomon-service-worker.template.conf | /usr/bin/yt upload " + solomonServiceWorkerPath,
 
 		"/usr/bin/yt create document " + sparkLaunchConfPath + " --ignore-existing",
@@ -153,19 +152,15 @@ func (s *spyt) createInitScript(sparkVersion string, spytVersion string) string 
 		// spark and spyt jars.
 
 		"/usr/bin/yt create file " + sparkPath + " --ignore-existing -r",
-		"/usr/bin/yt set " + sparkPath + "/@replication_factor 1",
 		"cat /usr/bin/spark.tgz | /usr/bin/yt write-file " + sparkPath,
 
 		"/usr/bin/yt create file " + sparkYtDataSourcePath + " --ignore-existing -r",
-		"/usr/bin/yt set " + sparkYtDataSourcePath + "/@replication_factor 1",
 		"cat /usr/bin/spark-yt-data-source.jar | /usr/bin/yt upload " + sparkYtDataSourcePath,
 
 		"/usr/bin/yt create file " + spytPath + " --ignore-existing",
-		"/usr/bin/yt set " + spytPath + "/@replication_factor 1",
 		"cat /usr/bin/spyt.zip | /usr/bin/yt upload " + spytPath,
 
 		"/usr/bin/yt create file " + sparkYtLauncherPath + " --ignore-existing -r",
-		"/usr/bin/yt set " + sparkYtLauncherPath + "/@replication_factor 1",
 		"cat /usr/bin/spark-yt-launcher.jar | /usr/bin/yt upload " + sparkYtLauncherPath,
 
 		fmt.Sprintf("/usr/bin/yt link //home/spark/spark/releases/%s/spark.tgz //home/spark/bin/releases/%s/spark.tgz -f",
@@ -173,7 +168,7 @@ func (s *spyt) createInitScript(sparkVersion string, spytVersion string) string 
 			sparkVersion),
 
 		// TODO: remove this after updating ytsaurus-spyt package
-		"/usr/bin/yt link //home //sys/spark",
+		"/usr/bin/yt link //home //sys/spark --force",
 		"/usr/bin/yt set //home/spark/conf/global/ytserver_proxy_path '\"//sys/spark\"'",
 	}
 
@@ -184,8 +179,10 @@ func (s *spyt) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
 	// TODO: add update logic.
-
-	if s.master.Status(ctx) != SyncStatusReady {
+	if s.master.Status(ctx) != SyncStatusReady ||
+		s.execNode.Status(ctx) != SyncStatusReady ||
+		s.scheduler.Status(ctx) != SyncStatusReady ||
+		s.dataNode.Status(ctx) != SyncStatusReady {
 		return SyncStatusBlocked, err
 	}
 

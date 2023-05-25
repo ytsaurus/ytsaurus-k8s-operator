@@ -20,12 +20,21 @@ type Hydra struct {
 	MaxSnapshotCountToKeep  int `yson:"max_snapshot_count_to_keep"`
 }
 
+type CypressManager struct {
+	DefaultTableReplicationFactor   int `yson:"default_table_replication_factor,omitempty"`
+	DefaultFileReplicationFactor    int `yson:"default_file_replication_factor,omitempty"`
+	DefaultJournalReplicationFactor int `yson:"default_journal_replication_factor,omitempty"`
+	DefaultJournalReadQuorum        int `yson:"default_journal_read_quorum,omitempty"`
+	DefaultJournalWriteQuorum       int `yson:"default_journal_write_quorum,omitempty"`
+}
+
 type MasterServer struct {
 	CommonServer
 	Snapshots        MasterSnapshots  `yson:"snapshots"`
 	Changelogs       MasterChangelogs `yson:"changelogs"`
 	UseNewHydra      bool             `yson:"use_new_hydra"`
 	Hydra            Hydra            `yson:"hydra"`
+	CypressManager   CypressManager   `yson:"cypress_manager"`
 	PrimaryMaster    MasterCell       `yson:"primary_master"`
 	SecondaryMasters []MasterCell     `yson:"secondary_masters"`
 }
