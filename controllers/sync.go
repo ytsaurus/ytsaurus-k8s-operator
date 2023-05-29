@@ -209,6 +209,11 @@ func (r *YtsaurusReconciler) handleUpdateStatus(
 func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
+	if !ytsaurus.Spec.IsManaged {
+		logger.Info("Ytsaurus cluster isn't managed by controller, do nothing")
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	}
+
 	var readyComponents []string
 	var notReadyComponents []string
 

@@ -181,6 +181,9 @@ type YtsaurusSpec struct {
 	AdminCredentials *corev1.LocalObjectReference `json:"adminCredentials,omitempty"`
 	ConfigOverrides  *corev1.LocalObjectReference `json:"configOverrides,omitempty"`
 
+	//+kubebuilder:default:=true
+	IsManaged bool `json:"isManaged,omitempty"`
+
 	//+kubebuilder:default:=false
 	UseIPv6 bool `json:"useIpv6,omitempty"`
 	//+kubebuilder:default:=true

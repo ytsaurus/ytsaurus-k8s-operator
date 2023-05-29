@@ -9697,6 +9697,9 @@ spec:
                   type: object
                   x-kubernetes-map-type: atomic
                 type: array
+              isManaged:
+                default: true
+                type: boolean
               primaryMasters:
                 properties:
                   cellTag:
