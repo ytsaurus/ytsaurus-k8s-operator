@@ -118,6 +118,7 @@ func (m *master) createInitScript() string {
 		"/usr/bin/yt create scheduler_pool --attributes '{name=research; pool_tree=default}' --ignore-existing",
 		"/usr/bin/yt create map_node //home --ignore-existing",
 		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection '%s'", string(clusterConnection)),
+		"/usr/bin/yt set //sys/controller_agents/config/operation_options/spec_template '{enable_partitioned_data_balancing=%false}' -r",
 		m.initAdminUser(),
 	}
 
