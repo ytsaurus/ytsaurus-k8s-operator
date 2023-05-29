@@ -34,7 +34,7 @@ type ResourceLimits struct {
 }
 
 type DiskLocation struct {
-	Path string `yson:"path"`
+	Path string `yson:"loggingDirectory"`
 }
 
 type DataNode struct {
@@ -208,8 +208,7 @@ func getDataNodeServerCarcass(spec ytv1.DataNodesSpec) (DataNodeServer, error) {
 		return c, fmt.Errorf("error creating data node config: no storage locations provided")
 	}
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), "data-node")
-	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().logging
+	c.Logging = createLogging(&spec.InstanceSpec, "data-node", []ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 
 	return c, nil
 }
@@ -274,8 +273,7 @@ func getExecNodeServerCarcass(spec ytv1.ExecNodesSpec, usePorto bool) (ExecNodeS
 		c.ExecAgent.SlotManager.JobEnvironment.Type = JobEnvironmentTypeSimple
 	}
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), "exec-node")
-	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().logging
+	c.Logging = createLogging(&spec.InstanceSpec, "exec-node", []ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 
 	return c, nil
 }
@@ -295,8 +293,7 @@ func getTabletNodeServerCarcass(spec ytv1.TabletNodesSpec) (TabletNodeServer, er
 
 	c.Flavors = []NodeFlavor{NodeFlavorTablet}
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), "tablet-node")
-	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().logging
+	c.Logging = createLogging(&spec.InstanceSpec, "tablet-node", []ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 
 	return c, nil
 }

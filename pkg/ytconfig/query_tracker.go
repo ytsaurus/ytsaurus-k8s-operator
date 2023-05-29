@@ -19,8 +19,7 @@ func getQueryTrackerServerCarcass(spec ytv1.QueryTrackerSpec) (QueryTrackerServe
 	c.User = "query_tracker"
 	c.CreateStateTablesOnStartup = true
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), "query-tracker")
-	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().logging
+	c.Logging = createLogging(&spec.InstanceSpec, "query-tracker", []ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 
 	return c, nil
 }

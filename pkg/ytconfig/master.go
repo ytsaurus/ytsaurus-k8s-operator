@@ -60,8 +60,7 @@ func getMasterServerCarcass(spec ytv1.MastersSpec) (MasterServer, error) {
 		return c, fmt.Errorf("error creating master config: snapshot location not found")
 	}
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), "master")
-	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().logging
+	c.Logging = createLogging(&spec.InstanceSpec, "master", []ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 
 	return c, nil
 }

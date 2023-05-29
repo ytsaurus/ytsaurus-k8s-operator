@@ -86,6 +86,34 @@ type LocationSpec struct {
 	Medium string `json:"medium,omitempty"`
 }
 
+// LogLevel string describes possible YTsaurus logging level.
+// +enum
+type LogLevel string
+
+const (
+	LogLevelTrace LogLevel = "trace"
+	LogLevelDebug LogLevel = "debug"
+	LogLevelInfo  LogLevel = "info"
+	LogLevelError LogLevel = "error"
+)
+
+// LogWriterType string describes types of possible log writers.
+// +enum
+type LogWriterType string
+
+const (
+	LogWriterTypeFile   LogWriterType = "file"
+	LogWriterTypeStderr LogWriterType = "stderr"
+)
+
+type LoggerSpec struct {
+	Name string `json:"name,omitempty"`
+	//+kubebuilder:validation:Enum=file;stderr
+	WriterType LogWriterType `json:"writerType,omitempty"`
+	//+kubebuilder:validation:Enum=trace;debug;info;error
+	MinLogLevel LogLevel `json:"minLogLevel,omitempty"`
+}
+
 type InstanceSpec struct {
 	Volumes              []corev1.Volume                 `json:"volumes,omitempty"`
 	VolumeMounts         []corev1.VolumeMount            `json:"volumeMounts,omitempty"`
@@ -94,7 +122,8 @@ type InstanceSpec struct {
 	Locations            []LocationSpec                  `json:"locations,omitempty"`
 	VolumeClaimTemplates []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
 	// Enables pod anti affinity
-	EnableAntiAffinity *bool `json:"enableAntiAffinity,omitempty"`
+	EnableAntiAffinity *bool        `json:"enableAntiAffinity,omitempty"`
+	Loggers            []LoggerSpec `json:"loggers,omitempty"`
 }
 
 type MastersSpec struct {

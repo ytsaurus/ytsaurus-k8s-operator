@@ -31,8 +31,7 @@ func getYQLAgentServerCarcass(spec ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	c.YQLAgent.UDFDirectory = "/usr/lib/yql"
 	c.YQLAgent.MRJobBinary = "/usr/bin/mrjob"
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), "yql-agent")
-	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().addDefaultDebug().logging
+	c.Logging = createLogging(&spec.InstanceSpec, "yql-agent", []ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultDebugLoggerSpec(), defaultStderrLoggerSpec()})
 
 	return c, nil
 }

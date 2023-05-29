@@ -107,6 +107,21 @@ spec:
                           type: string
                       type: object
                     type: array
+                  loggers:
+                    items:
+                      properties:
+                        minLogLevel:
+                          description: LogLevel string describes possible YTsaurus
+                            logging level.
+                          type: string
+                        name:
+                          type: string
+                        writerType:
+                          description: LogWriterType string describes types of possible
+                            log writers.
+                          type: string
+                      type: object
+                    type: array
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -1995,6 +2010,21 @@ spec:
                             default: default
                             type: string
                           path:
+                            type: string
+                        type: object
+                      type: array
+                    loggers:
+                      items:
+                        properties:
+                          minLogLevel:
+                            description: LogLevel string describes possible YTsaurus
+                              logging level.
+                            type: string
+                          name:
+                            type: string
+                          writerType:
+                            description: LogWriterType string describes types of possible
+                              log writers.
                             type: string
                         type: object
                       type: array
@@ -3935,6 +3965,21 @@ spec:
                           type: string
                       type: object
                     type: array
+                  loggers:
+                    items:
+                      properties:
+                        minLogLevel:
+                          description: LogLevel string describes possible YTsaurus
+                            logging level.
+                          type: string
+                        name:
+                          type: string
+                        writerType:
+                          description: LogWriterType string describes types of possible
+                            log writers.
+                          type: string
+                      type: object
+                    type: array
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -5821,6 +5866,21 @@ spec:
                             default: default
                             type: string
                           path:
+                            type: string
+                        type: object
+                      type: array
+                    loggers:
+                      items:
+                        properties:
+                          minLogLevel:
+                            description: LogLevel string describes possible YTsaurus
+                              logging level.
+                            type: string
+                          name:
+                            type: string
+                          writerType:
+                            description: LogWriterType string describes types of possible
+                              log writers.
                             type: string
                         type: object
                       type: array
@@ -7762,6 +7822,21 @@ spec:
                             default: default
                             type: string
                           path:
+                            type: string
+                        type: object
+                      type: array
+                    loggers:
+                      items:
+                        properties:
+                          minLogLevel:
+                            description: LogLevel string describes possible YTsaurus
+                              logging level.
+                            type: string
+                          name:
+                            type: string
+                          writerType:
+                            description: LogWriterType string describes types of possible
+                              log writers.
                             type: string
                         type: object
                       type: array
@@ -9724,6 +9799,21 @@ spec:
                           type: string
                       type: object
                     type: array
+                  loggers:
+                    items:
+                      properties:
+                        minLogLevel:
+                          description: LogLevel string describes possible YTsaurus
+                            logging level.
+                          type: string
+                        name:
+                          type: string
+                        writerType:
+                          description: LogWriterType string describes types of possible
+                            log writers.
+                          type: string
+                      type: object
+                    type: array
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -11614,6 +11704,21 @@ spec:
                           type: string
                       type: object
                     type: array
+                  loggers:
+                    items:
+                      properties:
+                        minLogLevel:
+                          description: LogLevel string describes possible YTsaurus
+                            logging level.
+                          type: string
+                        name:
+                          type: string
+                        writerType:
+                          description: LogWriterType string describes types of possible
+                            log writers.
+                          type: string
+                      type: object
+                    type: array
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -13500,6 +13605,21 @@ spec:
                             default: default
                             type: string
                           path:
+                            type: string
+                        type: object
+                      type: array
+                    loggers:
+                      items:
+                        properties:
+                          minLogLevel:
+                            description: LogLevel string describes possible YTsaurus
+                              logging level.
+                            type: string
+                          name:
+                            type: string
+                          writerType:
+                            description: LogWriterType string describes types of possible
+                              log writers.
                             type: string
                         type: object
                       type: array
@@ -15443,6 +15563,21 @@ spec:
                           type: string
                       type: object
                     type: array
+                  loggers:
+                    items:
+                      properties:
+                        minLogLevel:
+                          description: LogLevel string describes possible YTsaurus
+                            logging level.
+                          type: string
+                        name:
+                          type: string
+                        writerType:
+                          description: LogWriterType string describes types of possible
+                            log writers.
+                          type: string
+                      type: object
+                    type: array
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -17331,6 +17466,21 @@ spec:
                             default: default
                             type: string
                           path:
+                            type: string
+                        type: object
+                      type: array
+                    loggers:
+                      items:
+                        properties:
+                          minLogLevel:
+                            description: LogLevel string describes possible YTsaurus
+                              logging level.
+                            type: string
+                          name:
+                            type: string
+                          writerType:
+                            description: LogWriterType string describes types of possible
+                              log writers.
                             type: string
                         type: object
                       type: array
@@ -19277,6 +19427,21 @@ spec:
                             default: default
                             type: string
                           path:
+                            type: string
+                        type: object
+                      type: array
+                    loggers:
+                      items:
+                        properties:
+                          minLogLevel:
+                            description: LogLevel string describes possible YTsaurus
+                              logging level.
+                            type: string
+                          name:
+                            type: string
+                          writerType:
+                            description: LogWriterType string describes types of possible
+                              log writers.
                             type: string
                         type: object
                       type: array
@@ -21268,6 +21433,21 @@ spec:
                           default: default
                           type: string
                         path:
+                          type: string
+                      type: object
+                    type: array
+                  loggers:
+                    items:
+                      properties:
+                        minLogLevel:
+                          description: LogLevel string describes possible YTsaurus
+                            logging level.
+                          type: string
+                        name:
+                          type: string
+                        writerType:
+                          description: LogWriterType string describes types of possible
+                            log writers.
                           type: string
                       type: object
                     type: array

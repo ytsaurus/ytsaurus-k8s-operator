@@ -3,7 +3,7 @@ kind: Ytsaurus
 metadata:
   name: minisaurus
 spec:
-  coreImage: ytsaurus/ytsaurus:23.1-latest
+  coreImage: ytsaurus/ytsaurus:unstable-0.0.2
   uiImage: ytsaurus/ui:stable
 
   discovery:
@@ -26,6 +26,11 @@ spec:
     volumeMounts:
       - name: master-data
         mountPath: /yt/master-data
+
+    loggers:
+      - name: stderr
+        minLogLevel: infof
+        writerType: stderr
 
   httpProxies:
     - serviceType: NodePort

@@ -6,30 +6,38 @@ import (
 	"path"
 )
 
-type LogLevel string
+func defaultStderrLoggerSpec() ytv1.LoggerSpec {
+	return ytv1.LoggerSpec{
+		Name:        "stderr",
+		MinLogLevel: ytv1.LogLevelError,
+		WriterType:  ytv1.LogWriterTypeStderr,
+	}
+}
 
-const (
-	LogLevelTrace LogLevel = "trace"
-	LogLevelDebug LogLevel = "debug"
-	LogLevelInfo  LogLevel = "info"
-	LogLevelError LogLevel = "error"
-)
+func defaultDebugLoggerSpec() ytv1.LoggerSpec {
+	return ytv1.LoggerSpec{
+		Name:        "debug",
+		MinLogLevel: ytv1.LogLevelDebug,
+		WriterType:  ytv1.LogWriterTypeFile,
+	}
+}
 
-type LogWriterType string
-
-const (
-	LogWriterTypeFile   LogWriterType = "file"
-	LogWriterTypeStderr LogWriterType = "stderr"
-)
+func defaultInfoLoggerSpec() ytv1.LoggerSpec {
+	return ytv1.LoggerSpec{
+		Name:        "info",
+		MinLogLevel: ytv1.LogLevelInfo,
+		WriterType:  ytv1.LogWriterTypeFile,
+	}
+}
 
 type LoggingRule struct {
-	MinLevel LogLevel `yson:"min_level,omitempty"`
-	Writers  []string `yson:"writers,omitempty"`
+	MinLevel ytv1.LogLevel `yson:"min_level,omitempty"`
+	Writers  []string      `yson:"writers,omitempty"`
 }
 
 type LoggingWriter struct {
-	WriterType LogWriterType `yson:"type,omitempty"`
-	FileName   string        `yson:"file_name,omitempty"`
+	WriterType ytv1.LogWriterType `yson:"type,omitempty"`
+	FileName   string             `yson:"file_name,omitempty"`
 }
 
 type Logging struct {
@@ -38,20 +46,20 @@ type Logging struct {
 }
 
 type loggingBuilder struct {
-	path          string
-	componentName string
-	logging       Logging
+	loggingDirectory string
+	componentName    string
+	logging          Logging
 }
 
 func newLoggingBuilder(location *ytv1.LocationSpec, componentName string) loggingBuilder {
-	path := "/var/log"
+	loggingDirectory := "/var/log"
 	if location != nil {
-		path = location.Path
+		loggingDirectory = location.Path
 	}
 
 	return loggingBuilder{
-		path:          path,
-		componentName: componentName,
+		loggingDirectory: loggingDirectory,
+		componentName:    componentName,
 		logging: Logging{
 			Rules:   make([]LoggingRule, 0),
 			Writers: make(map[string]LoggingWriter),
@@ -59,46 +67,21 @@ func newLoggingBuilder(location *ytv1.LocationSpec, componentName string) loggin
 	}
 }
 
-func (b *loggingBuilder) addDefaultStderr() *loggingBuilder {
-	writerName := "error"
+func (b *loggingBuilder) addLogger(loggerSpec ytv1.LoggerSpec) *loggingBuilder {
 	b.logging.Rules = append(b.logging.Rules, LoggingRule{
-		MinLevel: LogLevelError,
-		Writers:  []string{writerName},
+		MinLevel: loggerSpec.MinLogLevel,
+		Writers:  []string{loggerSpec.Name},
 	})
 
-	b.logging.Writers[writerName] = LoggingWriter{
-		WriterType: LogWriterTypeStderr,
+	writer := LoggingWriter{
+		WriterType: loggerSpec.WriterType,
 	}
 
-	return b
-}
-
-func (b *loggingBuilder) addDefaultDebug() *loggingBuilder {
-	writerName := "debug"
-	b.logging.Rules = append(b.logging.Rules, LoggingRule{
-		MinLevel: LogLevelDebug,
-		Writers:  []string{writerName},
-	})
-
-	b.logging.Writers[writerName] = LoggingWriter{
-		WriterType: LogWriterTypeFile,
-		FileName:   path.Join(b.path, fmt.Sprintf("%s.debug.log", b.componentName)),
+	if writer.WriterType == ytv1.LogWriterTypeFile {
+		writer.FileName = path.Join(b.loggingDirectory, fmt.Sprintf("%s.%s.log", b.componentName, loggerSpec.Name))
 	}
 
-	return b
-}
-
-func (b *loggingBuilder) addDefaultInfo() *loggingBuilder {
-	writerName := "info"
-	b.logging.Rules = append(b.logging.Rules, LoggingRule{
-		MinLevel: LogLevelInfo,
-		Writers:  []string{writerName},
-	})
-
-	b.logging.Writers[writerName] = LoggingWriter{
-		WriterType: LogWriterTypeFile,
-		FileName:   path.Join(b.path, fmt.Sprintf("%s.log", b.componentName)),
-	}
+	b.logging.Writers[loggerSpec.Name] = writer
 
 	return b
 }

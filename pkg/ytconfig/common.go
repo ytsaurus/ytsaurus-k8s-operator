@@ -1,5 +1,7 @@
 package ytconfig
 
+import ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+
 type AddressList struct {
 	Addresses []string `yson:"addresses"`
 }
@@ -53,4 +55,18 @@ type CommonServer struct {
 	BasicServer
 	TimestampProviders TimestampProviders `yson:"timestamp_provider"`
 	ClusterConnection  ClusterConnection  `yson:"cluster_connection"`
+}
+
+func createLogging(spec *ytv1.InstanceSpec, componentName string, defaultLoggerSpecs []ytv1.LoggerSpec) Logging {
+	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), componentName)
+	if spec.Loggers != nil && len(spec.Loggers) > 0 {
+		for _, loggerSpec := range spec.Loggers {
+			loggingBuilder.addLogger(loggerSpec)
+		}
+	} else {
+		for _, defaultLoggerSpec := range defaultLoggerSpecs {
+			loggingBuilder.addLogger(defaultLoggerSpec)
+		}
+	}
+	return loggingBuilder.logging
 }

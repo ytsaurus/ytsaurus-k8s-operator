@@ -21,8 +21,7 @@ func getDiscoveryServerCarcass(spec ytv1.DiscoverySpec) DiscoveryServer {
 	c.MonitoringPort = consts.DiscoveryMonitoringPort
 	c.RPCPort = consts.DiscoveryRPCPort
 
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), "master")
-	c.Logging = loggingBuilder.addDefaultInfo().addDefaultStderr().logging
+	c.Logging = createLogging(&spec.InstanceSpec, "discovery", []ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 
 	return c
 }
