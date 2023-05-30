@@ -27,11 +27,7 @@ spec:
         kubectl.kubernetes.io/default-container: manager
     spec:
       containers:
-      - args:
-        - --secure-listen-address=0.0.0.0:8443
-        - --upstream=http://127.0.0.1:8080/
-        - --logtostderr=true
-        - --v=0
+      - args: {{- toYaml .Values.controllerManager.kubeRbacProxy.args | nindent 8 }}
         env:
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}
@@ -46,10 +42,7 @@ spec:
           10 }}
         securityContext: {{- toYaml .Values.controllerManager.kubeRbacProxy.containerSecurityContext
           | nindent 10 }}
-      - args:
-        - --health-probe-bind-address=:8081
-        - --metrics-bind-address=127.0.0.1:8080
-        - --leader-elect
+      - args: {{- toYaml .Values.controllerManager.manager.args | nindent 8 }}
         command:
         - /manager
         env:

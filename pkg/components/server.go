@@ -165,21 +165,25 @@ func (s *server) RebuildStatefulSet() *appsv1.StatefulSet {
 		Volumes: createVolumes(s.instanceSpec.Volumes, s.labeller.GetMainConfigMapName()),
 	}
 
+	affinity := s.instanceSpec.Affinity
 	if s.instanceSpec.EnableAntiAffinity != nil && *s.instanceSpec.EnableAntiAffinity {
-		affinity := corev1.Affinity{
-			PodAntiAffinity: &corev1.PodAntiAffinity{
-				RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
-					{
-						LabelSelector: &metav1.LabelSelector{
-							MatchLabels: s.labeller.GetSelectorLabelMap(),
-						},
-						TopologyKey: "kubernetes.io/hostname",
+		if affinity == nil {
+			affinity = &corev1.Affinity{}
+		}
+
+		affinity.PodAntiAffinity = &corev1.PodAntiAffinity{
+			RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+				{
+					LabelSelector: &metav1.LabelSelector{
+						MatchLabels: s.labeller.GetSelectorLabelMap(),
 					},
+					TopologyKey: "kubernetes.io/hostname",
 				},
 			},
 		}
-		statefulSet.Spec.Template.Spec.Affinity = &affinity
 	}
+	statefulSet.Spec.Template.Spec.Affinity = affinity
+
 	s.builtStatefulSet = statefulSet
 	return statefulSet
 }
