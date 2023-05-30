@@ -171,16 +171,19 @@ func (s *server) RebuildStatefulSet() *appsv1.StatefulSet {
 			affinity = &corev1.Affinity{}
 		}
 
-		affinity.PodAntiAffinity = &corev1.PodAntiAffinity{
-			RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
-				{
-					LabelSelector: &metav1.LabelSelector{
-						MatchLabels: s.labeller.GetSelectorLabelMap(),
-					},
-					TopologyKey: "kubernetes.io/hostname",
-				},
-			},
+		if affinity.PodAntiAffinity == nil {
+			affinity.PodAntiAffinity = &corev1.PodAntiAffinity{}
 		}
+
+		podAffinityTerm := corev1.PodAffinityTerm{
+			LabelSelector: &metav1.LabelSelector{
+				MatchLabels: s.labeller.GetSelectorLabelMap(),
+			},
+			TopologyKey: "kubernetes.io/hostname",
+		}
+
+		affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution =
+			append(affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution, podAffinityTerm)
 	}
 	statefulSet.Spec.Template.Spec.Affinity = affinity
 
