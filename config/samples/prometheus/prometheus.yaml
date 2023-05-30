@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prometheus
+spec:
+  serviceAccountName: prometheus
+  resources:
+    requests:
+      memory: 400Mi
+  enableAdminAPI: true
+
+  serviceMonitorSelector:
+    matchLabels:
+      yt_metrics: "true"
+

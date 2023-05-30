@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ytsaurus-metrics
+  labels:
+    yt_metrics: "true"
+spec:
+  namespaceSelector:
+    any: false
+  selector:
+    matchLabels:
+      yt_metrics: "true"
+  endpoints:
+  - port: ytsaurus-metrics
+    path: /solomon/all
+    metricRelabelings:
+      - targetLabel: service
+        sourceLabels: 
+        - service
+        regex: (.*)-monitoring
+        replacement: ${1}
