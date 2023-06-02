@@ -103,11 +103,6 @@ func (c *APIProxy) SetUpdateStatusCondition(ctx context.Context, condition metav
 	return c.UpdateStatus(ctx)
 }
 
-func (c *APIProxy) ClearUpdateStatusConditions(ctx context.Context) error {
-	c.ytsaurus.Status.UpdateConditions = make([]metav1.Condition, 0)
-	return c.UpdateStatus(ctx)
-}
-
 func (c *APIProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object) error {
 	var err error
 	if newObj.GetName() == "" {

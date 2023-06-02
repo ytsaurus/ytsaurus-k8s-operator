@@ -13,6 +13,7 @@ import (
 	"go.ytsaurus.tech/yt/go/yt"
 	"go.ytsaurus.tech/yt/go/yt/ythttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ptr "k8s.io/utils/pointer"
 	"strings"
 )
 
@@ -75,6 +76,77 @@ func (yc *ytsaurusClient) createInitUserScript() string {
 	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
 	initJob := initJobWithNativeDriverPrologue()
 	return initJob + "\n" + strings.Join(createUserCommand(consts.YtsaurusOperatorUserName, "", token, true), "\n")
+}
+
+type MasterInfo struct {
+	CellID    string   `yson:"cell_id" json:"cellId"`
+	Addresses []string `yson:"addresses" json:"addresses"`
+}
+
+func getReadOnlyGetOptions() *yt.GetNodeOptions {
+	return &yt.GetNodeOptions{
+		TransactionOptions: &yt.TransactionOptions{
+			SuppressUpstreamSync:               true,
+			SuppressTransactionCoordinatorSync: true,
+		},
+	}
+}
+
+type MasterHydra struct {
+	ReadOnly             bool `yson:"read_only"`
+	LastSnapshotReadOnly bool `yson:"last_snapshot_read_only"`
+}
+
+func (yc *ytsaurusClient) getAllMasters(ctx context.Context) ([]MasterInfo, error) {
+	var primaryMaster MasterInfo
+	err := yc.ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection/primary_master"), &primaryMaster, getReadOnlyGetOptions())
+	if err != nil {
+		return nil, err
+	}
+
+	var secondaryMasters []MasterInfo
+	if len(yc.apiProxy.Ytsaurus().Spec.SecondaryMasters) > 0 {
+		err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection/secondary_masters"), &secondaryMasters, getReadOnlyGetOptions())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return append(secondaryMasters, primaryMaster), nil
+}
+
+func (yc *ytsaurusClient) getMasterHydra(ctx context.Context, path string) (MasterHydra, error) {
+	var masterHydra MasterHydra
+	err := yc.ytClient.GetNode(ctx, ypath.Path(path), &masterHydra, getReadOnlyGetOptions())
+	return masterHydra, err
+}
+
+func (yc *ytsaurusClient) startBuildMasterSnapshots(ctx context.Context) error {
+	var err error
+
+	allMastersReadOnly := true
+	for _, monitoringPath := range yc.apiProxy.Ytsaurus().Status.MasterMonitoringPaths {
+		masterHydra, err := yc.getMasterHydra(ctx, monitoringPath)
+		if err != nil {
+			return err
+		}
+		if !masterHydra.ReadOnly {
+			allMastersReadOnly = false
+			break
+		}
+	}
+
+	if allMastersReadOnly {
+		// build_master_snapshot was called before, do nothing.
+		return nil
+	}
+
+	_, err = yc.ytClient.BuildMasterSnapshots(ctx, &yt.BuildMasterSnapshotsOptions{
+		WaitForSnapshotCompletion: ptr.Bool(false),
+		SetReadOnly:               ptr.Bool(true),
+	})
+
+	return err
 }
 
 func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
@@ -230,7 +302,60 @@ func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (SyncStatus, err
 		if yc.apiProxy.GetUpdateState() == v1.UpdateStateWaitingForSnapshots &&
 			!yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionSnaphotsSaved) {
 
-			// TODO: call BuildMasterSnapshots and wait until finished
+			if !yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionSnapshotsMonitoringInfoSaved) {
+
+				var monitoringPaths []string
+				mastersInfo, err := yc.getAllMasters(ctx)
+				if err != nil {
+					return SyncStatusUpdating, err
+				}
+
+				for _, masterInfo := range mastersInfo {
+					for _, address := range masterInfo.Addresses {
+						monitoringPath := fmt.Sprintf("//sys/cluster_masters/%s/orchid/monitoring/hydra", address)
+						monitoringPaths = append(monitoringPaths, monitoringPath)
+					}
+				}
+
+				yc.apiProxy.Ytsaurus().Status.MasterMonitoringPaths = monitoringPaths
+				err = yc.apiProxy.UpdateStatus(ctx)
+
+				if err != nil {
+					return SyncStatusUpdating, err
+				}
+
+				err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+					Type:    consts.ConditionSnapshotsMonitoringInfoSaved,
+					Status:  metav1.ConditionTrue,
+					Reason:  "Update",
+					Message: "Snapshots monitoring info saved",
+				})
+			}
+
+			if !yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionSnapshotsBuildingStarted) {
+				if err = yc.startBuildMasterSnapshots(ctx); err != nil {
+					return SyncStatusUpdating, err
+				}
+
+				err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+					Type:    consts.ConditionSnapshotsBuildingStarted,
+					Status:  metav1.ConditionTrue,
+					Reason:  "Update",
+					Message: "Snapshots building started",
+				})
+			}
+
+			for _, monitoringPath := range yc.apiProxy.Ytsaurus().Status.MasterMonitoringPaths {
+				var masterHydra MasterHydra
+				err = yc.ytClient.GetNode(ctx, ypath.Path(monitoringPath), &masterHydra, getReadOnlyGetOptions())
+				if err != nil {
+					return SyncStatusUpdating, err
+				}
+
+				if !masterHydra.LastSnapshotReadOnly {
+					return SyncStatusUpdating, err
+				}
+			}
 
 			err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionSnaphotsSaved,
@@ -244,7 +369,12 @@ func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (SyncStatus, err
 		if yc.apiProxy.GetUpdateState() == v1.UpdateStateWaitingForTabletCellsRecovery &&
 			!yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRecovered) {
 
-			// TODO: recreate tablet cells
+			for _, bundle := range yc.apiProxy.Ytsaurus().Status.SavedTabletCellBundles {
+				err = CreateTabletCells(ctx, yc.ytClient, bundle.Name, bundle.TabletCellCount)
+				if err != nil {
+					return SyncStatusUpdating, err
+				}
+			}
 
 			err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionTabletCellsRecovered,

@@ -34,7 +34,7 @@ type ResourceLimits struct {
 }
 
 type DiskLocation struct {
-	Path string `yson:"loggingDirectory"`
+	Path string `yson:"path"`
 }
 
 type DataNode struct {

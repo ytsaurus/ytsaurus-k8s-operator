@@ -113,12 +113,20 @@ spec:
                         minLogLevel:
                           description: LogLevel string describes possible YTsaurus
                             logging level.
+                          enum:
+                          - trace
+                          - debug
+                          - info
+                          - error
                           type: string
                         name:
                           type: string
                         writerType:
                           description: LogWriterType string describes types of possible
                             log writers.
+                          enum:
+                          - file
+                          - stderr
                           type: string
                       type: object
                     type: array
@@ -2019,12 +2027,20 @@ spec:
                           minLogLevel:
                             description: LogLevel string describes possible YTsaurus
                               logging level.
+                            enum:
+                            - trace
+                            - debug
+                            - info
+                            - error
                             type: string
                           name:
                             type: string
                           writerType:
                             description: LogWriterType string describes types of possible
                               log writers.
+                            enum:
+                            - file
+                            - stderr
                             type: string
                         type: object
                       type: array
@@ -3971,12 +3987,20 @@ spec:
                         minLogLevel:
                           description: LogLevel string describes possible YTsaurus
                             logging level.
+                          enum:
+                          - trace
+                          - debug
+                          - info
+                          - error
                           type: string
                         name:
                           type: string
                         writerType:
                           description: LogWriterType string describes types of possible
                             log writers.
+                          enum:
+                          - file
+                          - stderr
                           type: string
                       type: object
                     type: array
@@ -5875,12 +5899,20 @@ spec:
                           minLogLevel:
                             description: LogLevel string describes possible YTsaurus
                               logging level.
+                            enum:
+                            - trace
+                            - debug
+                            - info
+                            - error
                             type: string
                           name:
                             type: string
                           writerType:
                             description: LogWriterType string describes types of possible
                               log writers.
+                            enum:
+                            - file
+                            - stderr
                             type: string
                         type: object
                       type: array
@@ -7831,12 +7863,20 @@ spec:
                           minLogLevel:
                             description: LogLevel string describes possible YTsaurus
                               logging level.
+                            enum:
+                            - trace
+                            - debug
+                            - info
+                            - error
                             type: string
                           name:
                             type: string
                           writerType:
                             description: LogWriterType string describes types of possible
                               log writers.
+                            enum:
+                            - file
+                            - stderr
                             type: string
                         type: object
                       type: array
@@ -9805,12 +9845,20 @@ spec:
                         minLogLevel:
                           description: LogLevel string describes possible YTsaurus
                             logging level.
+                          enum:
+                          - trace
+                          - debug
+                          - info
+                          - error
                           type: string
                         name:
                           type: string
                         writerType:
                           description: LogWriterType string describes types of possible
                             log writers.
+                          enum:
+                          - file
+                          - stderr
                           type: string
                       type: object
                     type: array
@@ -11710,12 +11758,20 @@ spec:
                         minLogLevel:
                           description: LogLevel string describes possible YTsaurus
                             logging level.
+                          enum:
+                          - trace
+                          - debug
+                          - info
+                          - error
                           type: string
                         name:
                           type: string
                         writerType:
                           description: LogWriterType string describes types of possible
                             log writers.
+                          enum:
+                          - file
+                          - stderr
                           type: string
                       type: object
                     type: array
@@ -13614,12 +13670,20 @@ spec:
                           minLogLevel:
                             description: LogLevel string describes possible YTsaurus
                               logging level.
+                            enum:
+                            - trace
+                            - debug
+                            - info
+                            - error
                             type: string
                           name:
                             type: string
                           writerType:
                             description: LogWriterType string describes types of possible
                               log writers.
+                            enum:
+                            - file
+                            - stderr
                             type: string
                         type: object
                       type: array
@@ -15569,12 +15633,20 @@ spec:
                         minLogLevel:
                           description: LogLevel string describes possible YTsaurus
                             logging level.
+                          enum:
+                          - trace
+                          - debug
+                          - info
+                          - error
                           type: string
                         name:
                           type: string
                         writerType:
                           description: LogWriterType string describes types of possible
                             log writers.
+                          enum:
+                          - file
+                          - stderr
                           type: string
                       type: object
                     type: array
@@ -17475,12 +17547,20 @@ spec:
                           minLogLevel:
                             description: LogLevel string describes possible YTsaurus
                               logging level.
+                            enum:
+                            - trace
+                            - debug
+                            - info
+                            - error
                             type: string
                           name:
                             type: string
                           writerType:
                             description: LogWriterType string describes types of possible
                               log writers.
+                            enum:
+                            - file
+                            - stderr
                             type: string
                         type: object
                       type: array
@@ -19436,12 +19516,20 @@ spec:
                           minLogLevel:
                             description: LogLevel string describes possible YTsaurus
                               logging level.
+                            enum:
+                            - trace
+                            - debug
+                            - info
+                            - error
                             type: string
                           name:
                             type: string
                           writerType:
                             description: LogWriterType string describes types of possible
                               log writers.
+                            enum:
+                            - file
+                            - stderr
                             type: string
                         type: object
                       type: array
@@ -21442,12 +21530,20 @@ spec:
                         minLogLevel:
                           description: LogLevel string describes possible YTsaurus
                             logging level.
+                          enum:
+                          - trace
+                          - debug
+                          - info
+                          - error
                           type: string
                         name:
                           type: string
                         writerType:
                           description: LogWriterType string describes types of possible
                             log writers.
+                          enum:
+                          - file
+                          - stderr
                           type: string
                       type: object
                     type: array
@@ -23388,6 +23484,10 @@ spec:
                   - status
                   - type
                   type: object
+                type: array
+              masterMonitoringPaths:
+                items:
+                  type: string
                 type: array
               savedTabletCellBundles:
                 items:

@@ -672,6 +672,36 @@ func (mr *MockAdminClientMockRecorder) AddMember(ctx, group, member, options int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMember", reflect.TypeOf((*MockAdminClient)(nil).AddMember), ctx, group, member, options)
 }
 
+// BuildMasterSnapshots mocks base method.
+func (m *MockAdminClient) BuildMasterSnapshots(ctx context.Context, options *yt.BuildMasterSnapshotsOptions) (*yt.BuildMasterSnapshotsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BuildMasterSnapshots", ctx, options)
+	ret0, _ := ret[0].(*yt.BuildMasterSnapshotsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BuildMasterSnapshots indicates an expected call of BuildMasterSnapshots.
+func (mr *MockAdminClientMockRecorder) BuildMasterSnapshots(ctx, options interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildMasterSnapshots", reflect.TypeOf((*MockAdminClient)(nil).BuildMasterSnapshots), ctx, options)
+}
+
+// BuildSnapshot mocks base method.
+func (m *MockAdminClient) BuildSnapshot(ctx context.Context, options *yt.BuildSnapshotOptions) (*yt.BuildSnapshotResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BuildSnapshot", ctx, options)
+	ret0, _ := ret[0].(*yt.BuildSnapshotResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BuildSnapshot indicates an expected call of BuildSnapshot.
+func (mr *MockAdminClientMockRecorder) BuildSnapshot(ctx, options interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildSnapshot", reflect.TypeOf((*MockAdminClient)(nil).BuildSnapshot), ctx, options)
+}
+
 // CheckPermission mocks base method.
 func (m *MockAdminClient) CheckPermission(ctx context.Context, user string, permission yt.Permission, path ypath.YPath, options *yt.CheckPermissionOptions) (*yt.CheckPermissionResponse, error) {
 	m.ctrl.T.Helper()
@@ -1730,6 +1760,36 @@ func (m *MockClient) BeginTx(ctx context.Context, options *yt.StartTxOptions) (y
 func (mr *MockClientMockRecorder) BeginTx(ctx, options interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginTx", reflect.TypeOf((*MockClient)(nil).BeginTx), ctx, options)
+}
+
+// BuildMasterSnapshots mocks base method.
+func (m *MockClient) BuildMasterSnapshots(ctx context.Context, options *yt.BuildMasterSnapshotsOptions) (*yt.BuildMasterSnapshotsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BuildMasterSnapshots", ctx, options)
+	ret0, _ := ret[0].(*yt.BuildMasterSnapshotsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BuildMasterSnapshots indicates an expected call of BuildMasterSnapshots.
+func (mr *MockClientMockRecorder) BuildMasterSnapshots(ctx, options interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildMasterSnapshots", reflect.TypeOf((*MockClient)(nil).BuildMasterSnapshots), ctx, options)
+}
+
+// BuildSnapshot mocks base method.
+func (m *MockClient) BuildSnapshot(ctx context.Context, options *yt.BuildSnapshotOptions) (*yt.BuildSnapshotResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BuildSnapshot", ctx, options)
+	ret0, _ := ret[0].(*yt.BuildSnapshotResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BuildSnapshot indicates an expected call of BuildSnapshot.
+func (mr *MockClientMockRecorder) BuildSnapshot(ctx, options interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildSnapshot", reflect.TypeOf((*MockClient)(nil).BuildSnapshot), ctx, options)
 }
 
 // CheckPermission mocks base method.

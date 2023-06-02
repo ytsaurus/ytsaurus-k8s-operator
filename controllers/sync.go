@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -206,6 +207,13 @@ func (r *YtsaurusReconciler) handleUpdateStatus(
 	return nil, nil
 }
 
+func (r *YtsaurusReconciler) ClearUpdateStatus(ctx context.Context, proxy *apiProxy.APIProxy, ytsaurus *ytv1.Ytsaurus) error {
+	ytsaurus.Status.UpdateConditions = make([]metav1.Condition, 0)
+	ytsaurus.Status.SavedTabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
+	ytsaurus.Status.MasterMonitoringPaths = make([]string, 0)
+	return proxy.UpdateStatus(ctx)
+}
+
 func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
@@ -287,19 +295,16 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) 
 	}
 
 	if ytsaurus.Status.State == ytv1.ClusterStateUpdateFinishing {
-		err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateNone)
-
-		if err != nil {
+		if err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateNone); err != nil {
 			return ctrl.Result{Requeue: true}, err
 		}
 
-		err = proxy.ClearUpdateStatusConditions(ctx)
-		if err != nil {
+		if err := r.ClearUpdateStatus(ctx, proxy, ytsaurus); err != nil {
 			return ctrl.Result{Requeue: true}, err
 		}
 
 		logger.Info("Ytsaurus update was finished and Ytsaurus is running now")
-		err = r.saveClusterState(ctx, ytsaurus, ytv1.ClusterStateRunning)
+		err := r.saveClusterState(ctx, ytsaurus, ytv1.ClusterStateRunning)
 		return ctrl.Result{}, err
 	}
 

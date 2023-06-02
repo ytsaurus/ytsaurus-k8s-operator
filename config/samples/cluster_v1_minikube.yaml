@@ -3,7 +3,7 @@ kind: Ytsaurus
 metadata:
   name: minisaurus
 spec:
-  coreImage: ytsaurus/ytsaurus:unstable-0.0.2
+  coreImage: ytsaurus/ytsaurus:23.1-latest
   uiImage: ytsaurus/ui:stable
 
   discovery:
@@ -18,19 +18,18 @@ spec:
       - locationType: MasterSnapshots
         path: /yt/master-data/master-snapshots
 
-    volumes:
-      - name: master-data
-        emptyDir:
-          sizeLimit: 5Gi
-
     volumeMounts:
       - name: master-data
         mountPath: /yt/master-data
 
-    loggers:
-      - name: stderr
-        minLogLevel: infof
-        writerType: stderr
+    volumeClaimTemplates:
+      - metadata:
+          name: master-data
+        spec:
+          accessModes: [ "ReadWriteOnce" ]
+          resources:
+            requests:
+              storage: 5Gi
 
   httpProxies:
     - serviceType: NodePort
@@ -46,22 +45,26 @@ spec:
         - name: node-data
           mountPath: /yt/node-data
 
-      volumes:
-        - name: node-data
-          emptyDir:
-            sizeLimit: 25Gi
-
       locations:
         - locationType: ChunkStore
           path: /yt/node-data/chunk-store
+
+      volumeClaimTemplates:
+        - metadata:
+            name: node-data
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: 5Gi
 
   execNodes:
     - instanceCount: 1
 
       resources:
         limits:
-          cpu: 3
-          memory: 4Gi
+          cpu: 1
+          memory: 2Gi
 
       volumeMounts:
         - name: node-data
@@ -70,7 +73,7 @@ spec:
       volumes:
         - name: node-data
           emptyDir:
-            sizeLimit: 20Gi
+            sizeLimit: 5Gi
 
       locations:
         - locationType: ChunkCache

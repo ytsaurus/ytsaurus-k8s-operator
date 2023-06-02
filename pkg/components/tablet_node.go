@@ -69,10 +69,6 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		}
 	}
 
-	if r.ytsaurusClient.Status(ctx) != SyncStatusReady {
-		return SyncStatusBlocked, err
-	}
-
 	if !r.server.IsInSync() {
 		if !dry {
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
@@ -88,6 +84,10 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 
 	if r.apiProxy.IsStatusConditionTrue(r.initBundlesCondition) {
 		return SyncStatusReady, err
+	}
+
+	if r.ytsaurusClient.Status(ctx) != SyncStatusReady {
+		return SyncStatusBlocked, err
 	}
 
 	ytClient := r.ytsaurusClient.GetYtClient()
@@ -106,7 +106,7 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 				})
 
 				if err != nil {
-					logger.Info(fmt.Sprintf("Creating tablet_cell_bundle failed: %s", err.Error()))
+					logger.Error(err, "Creating tablet_cell_bundle failed")
 					return SyncStatusPending, err
 				}
 			}
@@ -115,26 +115,8 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		}
 
 		for _, bundle := range []string{"default", "sys"} {
-			var tabletCellCount int
-			if err := ytClient.GetNode(
-				ctx,
-				ypath.Path(fmt.Sprintf("//sys/tablet_cell_bundles/%s/@tablet_cell_count", bundle)),
-				&tabletCellCount,
-				nil); err == nil {
-				if tabletCellCount == 0 {
-					_, err = ytClient.CreateObject(ctx, "tablet_cell", &yt.CreateObjectOptions{
-						Attributes: map[string]interface{}{
-							"tablet_cell_bundle": bundle,
-						},
-					})
-
-					if err != nil {
-						logger.Info(fmt.Sprintf("Creating tablet_cell failed: %s", err.Error()))
-						return SyncStatusPending, err
-					}
-				}
-			} else {
-				logger.Info(fmt.Sprintf("Getting table_cell_count failed: %s", err.Error()))
+			err = CreateTabletCells(ctx, ytClient, bundle, 1)
+			if err != nil {
 				return SyncStatusPending, err
 			}
 		}

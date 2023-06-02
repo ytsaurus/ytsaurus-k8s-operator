@@ -284,6 +284,7 @@ type YtsaurusStatus struct {
 	UpdateState            UpdateState            `json:"updateState,omitempty"`
 	UpdateConditions       []metav1.Condition     `json:"updateConditions,omitempty"`
 	SavedTabletCellBundles []TabletCellBundleInfo `json:"savedTabletCellBundles,omitempty"`
+	MasterMonitoringPaths  []string               `json:"masterMonitoringPaths,omitempty"`
 }
 
 //+kubebuilder:object:root=true
