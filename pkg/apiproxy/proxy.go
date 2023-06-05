@@ -82,7 +82,7 @@ func (c *APIProxy) GetClusterState() ytv1.ClusterState {
 }
 
 func (c *APIProxy) GetUpdateState() ytv1.UpdateState {
-	return c.ytsaurus.Status.UpdateState
+	return c.ytsaurus.Status.UpdateStatus.State
 }
 
 func (c *APIProxy) IsStatusConditionTrue(condition string) bool {
@@ -90,7 +90,7 @@ func (c *APIProxy) IsStatusConditionTrue(condition string) bool {
 }
 
 func (c *APIProxy) IsUpdateStatusConditionTrue(condition string) bool {
-	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateConditions, condition)
+	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
 }
 
 func (c *APIProxy) SetStatusCondition(ctx context.Context, condition metav1.Condition) error {
@@ -99,7 +99,7 @@ func (c *APIProxy) SetStatusCondition(ctx context.Context, condition metav1.Cond
 }
 
 func (c *APIProxy) SetUpdateStatusCondition(ctx context.Context, condition metav1.Condition) error {
-	meta.SetStatusCondition(&c.ytsaurus.Status.UpdateConditions, condition)
+	meta.SetStatusCondition(&c.ytsaurus.Status.UpdateStatus.Conditions, condition)
 	return c.UpdateStatus(ctx)
 }
 

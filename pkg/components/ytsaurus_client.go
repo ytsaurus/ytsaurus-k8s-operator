@@ -125,7 +125,7 @@ func (yc *ytsaurusClient) startBuildMasterSnapshots(ctx context.Context) error {
 	var err error
 
 	allMastersReadOnly := true
-	for _, monitoringPath := range yc.apiProxy.Ytsaurus().Status.MasterMonitoringPaths {
+	for _, monitoringPath := range yc.apiProxy.Ytsaurus().Status.UpdateStatus.MasterMonitoringPaths {
 		masterHydra, err := yc.getMasterHydra(ctx, monitoringPath)
 		if err != nil {
 			return err
@@ -223,7 +223,7 @@ func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (SyncStatus, err
 				return SyncStatusUpdating, err
 			}
 
-			yc.apiProxy.Ytsaurus().Status.SavedTabletCellBundles = tabletCellBundles
+			yc.apiProxy.Ytsaurus().Status.UpdateStatus.TabletCellBundles = tabletCellBundles
 			err = yc.apiProxy.UpdateStatus(ctx)
 
 			if err != nil {
@@ -317,7 +317,7 @@ func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (SyncStatus, err
 					}
 				}
 
-				yc.apiProxy.Ytsaurus().Status.MasterMonitoringPaths = monitoringPaths
+				yc.apiProxy.Ytsaurus().Status.UpdateStatus.MasterMonitoringPaths = monitoringPaths
 				err = yc.apiProxy.UpdateStatus(ctx)
 
 				if err != nil {
@@ -345,7 +345,7 @@ func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (SyncStatus, err
 				})
 			}
 
-			for _, monitoringPath := range yc.apiProxy.Ytsaurus().Status.MasterMonitoringPaths {
+			for _, monitoringPath := range yc.apiProxy.Ytsaurus().Status.UpdateStatus.MasterMonitoringPaths {
 				var masterHydra MasterHydra
 				err = yc.ytClient.GetNode(ctx, ypath.Path(monitoringPath), &masterHydra, getReadOnlyGetOptions())
 				if err != nil {
@@ -369,7 +369,7 @@ func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (SyncStatus, err
 		if yc.apiProxy.GetUpdateState() == v1.UpdateStateWaitingForTabletCellsRecovery &&
 			!yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRecovered) {
 
-			for _, bundle := range yc.apiProxy.Ytsaurus().Status.SavedTabletCellBundles {
+			for _, bundle := range yc.apiProxy.Ytsaurus().Status.UpdateStatus.TabletCellBundles {
 				err = CreateTabletCells(ctx, yc.ytClient, bundle.Name, bundle.TabletCellCount)
 				if err != nil {
 					return SyncStatusUpdating, err

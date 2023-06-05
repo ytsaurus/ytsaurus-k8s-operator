@@ -274,17 +274,21 @@ type TabletCellBundleInfo struct {
 	TabletCellCount int    `yson:"tablet_cell_count,attr" json:"tabletCellCount"`
 }
 
+type UpdateStatus struct {
+	//+kubebuilder:default:=None
+	State                 UpdateState            `json:"state,omitempty"`
+	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
+	TabletCellBundles     []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
+	MasterMonitoringPaths []string               `json:"masterMonitoringPaths,omitempty"`
+}
+
 // YtsaurusStatus defines the observed state of Ytsaurus
 type YtsaurusStatus struct {
 	//+kubebuilder:default:=Created
 	State      ClusterState       `json:"state,omitempty"`
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 
-	//+kubebuilder:default:=None
-	UpdateState            UpdateState            `json:"updateState,omitempty"`
-	UpdateConditions       []metav1.Condition     `json:"updateConditions,omitempty"`
-	SavedTabletCellBundles []TabletCellBundleInfo `json:"savedTabletCellBundles,omitempty"`
-	MasterMonitoringPaths  []string               `json:"masterMonitoringPaths,omitempty"`
+	UpdateStatus UpdateStatus `json:"updateStatus,omitempty"`
 }
 
 //+kubebuilder:object:root=true

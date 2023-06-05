@@ -97,7 +97,7 @@ func (r *YtsaurusReconciler) saveClusterState(ctx context.Context, ytsaurus *ytv
 
 func (r *YtsaurusReconciler) saveUpdateState(ctx context.Context, ytsaurus *ytv1.Ytsaurus, updateState ytv1.UpdateState) error {
 	logger := log.FromContext(ctx)
-	ytsaurus.Status.UpdateState = updateState
+	ytsaurus.Status.UpdateStatus.State = updateState
 	if err := r.Status().Update(ctx, ytsaurus); err != nil {
 		logger.Error(err, "unable to update YTsaurus update state")
 		return err
@@ -129,13 +129,13 @@ func (r *YtsaurusReconciler) handleUpdateStatus(
 	cmps []components.Component,
 	allReadyOrUpdating bool,
 ) (*ctrl.Result, error) {
-	if ytsaurus.Status.UpdateState == ytv1.UpdateStateNone {
+	if ytsaurus.Status.UpdateStatus.State == ytv1.UpdateStateNone {
 		r.logUpdate(ctx, proxy, "Waiting for safe mode enabled")
 		err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForSafeModeEnabled)
 		return &ctrl.Result{Requeue: true}, err
 	}
 
-	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForSafeModeEnabled {
+	if ytsaurus.Status.UpdateStatus.State == ytv1.UpdateStateWaitingForSafeModeEnabled {
 		if proxy.IsUpdateStatusConditionTrue(consts.ConditionSafeModeEnabled) {
 			r.logUpdate(ctx, proxy, "Waiting for tablet cells saving")
 			err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForTabletCellsSaving)
@@ -143,7 +143,7 @@ func (r *YtsaurusReconciler) handleUpdateStatus(
 		}
 	}
 
-	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForTabletCellsSaving {
+	if ytsaurus.Status.UpdateStatus.State == ytv1.UpdateStateWaitingForTabletCellsSaving {
 		if proxy.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsSaved) {
 			r.logUpdate(ctx, proxy, "Waiting for tablet cells removing to start")
 			err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForTabletCellsRemovingStart)
@@ -151,7 +151,7 @@ func (r *YtsaurusReconciler) handleUpdateStatus(
 		}
 	}
 
-	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForTabletCellsRemovingStart {
+	if ytsaurus.Status.UpdateStatus.State == ytv1.UpdateStateWaitingForTabletCellsRemovingStart {
 		if proxy.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemovingStarted) {
 			r.logUpdate(ctx, proxy, "Waiting for tablet cells removing to finish")
 			err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForTabletCellsRemoved)
@@ -159,7 +159,7 @@ func (r *YtsaurusReconciler) handleUpdateStatus(
 		}
 	}
 
-	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForTabletCellsRemoved {
+	if ytsaurus.Status.UpdateStatus.State == ytv1.UpdateStateWaitingForTabletCellsRemoved {
 		if proxy.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemoved) {
 			r.logUpdate(ctx, proxy, "Waiting for snapshots")
 			err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForSnapshots)
@@ -167,7 +167,7 @@ func (r *YtsaurusReconciler) handleUpdateStatus(
 		}
 	}
 
-	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForSnapshots {
+	if ytsaurus.Status.UpdateStatus.State == ytv1.UpdateStateWaitingForSnapshots {
 		if proxy.IsUpdateStatusConditionTrue(consts.ConditionSnaphotsSaved) {
 			r.logUpdate(ctx, proxy, "Waiting for pods removal")
 			err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForPodsRemoval)
@@ -175,7 +175,7 @@ func (r *YtsaurusReconciler) handleUpdateStatus(
 		}
 	}
 
-	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForPodsRemoval {
+	if ytsaurus.Status.UpdateStatus.State == ytv1.UpdateStateWaitingForPodsRemoval {
 		if r.arePodsRemoved(proxy, cmps) {
 			r.logUpdate(ctx, proxy, "Waiting for pods creation")
 			err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForPodsCreation)
@@ -183,13 +183,13 @@ func (r *YtsaurusReconciler) handleUpdateStatus(
 		}
 	}
 
-	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForPodsCreation && allReadyOrUpdating {
+	if ytsaurus.Status.UpdateStatus.State == ytv1.UpdateStateWaitingForPodsCreation && allReadyOrUpdating {
 		r.logUpdate(ctx, proxy, "All components were recreated")
 		err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForTabletCellsRecovery)
 		return &ctrl.Result{Requeue: true}, err
 	}
 
-	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForTabletCellsRecovery {
+	if ytsaurus.Status.UpdateStatus.State == ytv1.UpdateStateWaitingForTabletCellsRecovery {
 		if proxy.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRecovered) {
 			r.logUpdate(ctx, proxy, "Waiting for safe move disabled")
 			err := r.saveUpdateState(ctx, ytsaurus, ytv1.UpdateStateWaitingForSafeModeDisabled)
@@ -197,7 +197,7 @@ func (r *YtsaurusReconciler) handleUpdateStatus(
 		}
 	}
 
-	if ytsaurus.Status.UpdateState == ytv1.UpdateStateWaitingForSafeModeDisabled {
+	if ytsaurus.Status.UpdateStatus.State == ytv1.UpdateStateWaitingForSafeModeDisabled {
 		if proxy.IsUpdateStatusConditionTrue(consts.ConditionSafeModeDisabled) {
 			r.logUpdate(ctx, proxy, "Finishing")
 			err := r.saveClusterState(ctx, ytsaurus, ytv1.ClusterStateUpdateFinishing)
@@ -208,9 +208,9 @@ func (r *YtsaurusReconciler) handleUpdateStatus(
 }
 
 func (r *YtsaurusReconciler) ClearUpdateStatus(ctx context.Context, proxy *apiProxy.APIProxy, ytsaurus *ytv1.Ytsaurus) error {
-	ytsaurus.Status.UpdateConditions = make([]metav1.Condition, 0)
-	ytsaurus.Status.SavedTabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
-	ytsaurus.Status.MasterMonitoringPaths = make([]string, 0)
+	ytsaurus.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
+	ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
+	ytsaurus.Status.UpdateStatus.MasterMonitoringPaths = make([]string, 0)
 	return proxy.UpdateStatus(ctx)
 }
 
@@ -260,7 +260,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) 
 	logger.Info("Ytsaurus sync status",
 		"notReadyComponents", notReadyComponents,
 		"readyComponents", readyComponents,
-		"updateState", ytsaurus.Status.UpdateState,
+		"updateState", ytsaurus.Status.UpdateStatus.State,
 		"clusterState", ytsaurus.Status.State)
 
 	if ytsaurus.Status.State == ytv1.ClusterStateCreated {
