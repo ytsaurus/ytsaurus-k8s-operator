@@ -3,6 +3,8 @@ package components
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -14,7 +16,6 @@ import (
 	"go.ytsaurus.tech/yt/go/yt/ythttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ptr "k8s.io/utils/pointer"
-	"strings"
 )
 
 type YtsaurusClient interface {

@@ -3,14 +3,14 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )

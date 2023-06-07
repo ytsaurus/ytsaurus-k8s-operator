@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"strings"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -15,6 +14,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const initJobPrologue = `

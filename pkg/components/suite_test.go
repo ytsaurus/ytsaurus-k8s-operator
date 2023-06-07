@@ -2,16 +2,17 @@ package components
 
 import (
 	"context"
+	"os"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	mock_yt "github.com/ytsaurus/yt-k8s-operator/pkg/mock"
 	"go.ytsaurus.tech/yt/go/yt"
 	appsv1 "k8s.io/api/apps/v1"
-	"os"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"testing"
 )
 
 var ctrl *gomock.Controller

@@ -2,8 +2,9 @@ package ytconfig
 
 import (
 	"fmt"
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"path"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
 func defaultStderrLoggerSpec() ytv1.LoggerSpec {
