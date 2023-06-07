@@ -219,6 +219,7 @@ func (g *Generator) GetControllerAgentConfig() ([]byte, error) {
 	}
 
 	c.ControllerAgent.EnableTmpfs = g.ytsaurus.Spec.UsePorto
+	c.ControllerAgent.UseColumnarStatisticsDefault = true
 
 	g.fillCommonService(&c.CommonServer)
 	return marshallYsonConfig(c)
