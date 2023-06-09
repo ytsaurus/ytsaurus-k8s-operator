@@ -55,7 +55,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v1
         with:
-          version: v3.5.2
+          version: v3.11.2
 
       - name: Build
         shell: bash
