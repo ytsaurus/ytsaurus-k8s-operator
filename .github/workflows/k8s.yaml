@@ -1,4 +1,4 @@
-name: Build and test k8s operator CI
+name: Build and Test CI
 
 on:
   push:
