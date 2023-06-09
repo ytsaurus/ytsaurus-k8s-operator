@@ -1,9 +1,9 @@
-name: Release
+name: Release CI
 
 on:
   push:
     tags:
-      - 'release/0.2.[0-9]+*'
+      - 'release/*'
 
 jobs:
   start-vm:
