@@ -69,6 +69,7 @@ func (yc *ytsaurusClient) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, []resources.Fetchable{
 		yc.secret,
 		yc.initUserJob,
+		yc.httpProxy,
 	})
 }
 
@@ -177,7 +178,7 @@ func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (SyncStatus, err
 	if yc.ytClient == nil {
 		token, _ := yc.secret.GetValue(consts.TokenSecretKey)
 		yc.ytClient, err = ythttp.NewClient(&yt.Config{
-			Proxy: yc.cfgen.GetHTTPProxiesAddress(),
+			Proxy: yc.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
 			Token: token,
 		})
 

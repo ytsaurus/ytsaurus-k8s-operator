@@ -127,7 +127,7 @@ func (c *chytController) createInitUserScript() string {
 func (c *chytController) createInitChPublicScript() string {
 	script := []string{
 		initJobPrologue,
-		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v", c.cfgen.GetHTTPProxiesAddress(), c.cfgen.GetChytControllerServiceAddress()),
+		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v", c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole), c.cfgen.GetChytControllerServiceAddress()),
 		"yt clickhouse ctl create ch_public || true",
 		"yt clickhouse ctl set-option --alias ch_public enable_geodata '%false'",
 		"yt clickhouse ctl set-option --alias ch_public instance_cpu 2",

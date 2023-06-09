@@ -17,7 +17,12 @@ limitations under the License.
 package v1
 
 import (
+	"fmt"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -53,19 +58,64 @@ func (r *Ytsaurus) Default() {
 
 var _ webhook.Validator = &Ytsaurus{}
 
+func (r *Ytsaurus) validateProxies(spec YtsaurusSpec) field.ErrorList {
+	var allErrs field.ErrorList
+
+	var httpRoles map[string]bool
+	var rpcRoles map[string]bool
+	hasDefaultHTTPProxy := false
+	for _, hp := range spec.HTTPProxies {
+		if _, exists := httpRoles[hp.Role]; exists {
+			allErrs = append(allErrs, field.Duplicate(field.NewPath("spec").Child("httpProxies").Child("role"), hp.Role))
+		}
+		if hp.Role == consts.DefaultHTTPProxyRole {
+			hasDefaultHTTPProxy = true
+		}
+		httpRoles[hp.Role] = true
+	}
+
+	if !hasDefaultHTTPProxy {
+		allErrs = append(allErrs, field.Required(
+			field.NewPath("spec").Child("httpProxies").Child("role"),
+			fmt.Sprintf("HTTP proxy with `%s` role should exist", consts.DefaultHTTPProxyRole)))
+	}
+
+	for _, rp := range spec.RPCProxies {
+		if _, exists := httpRoles[rp.Role]; exists {
+			allErrs = append(allErrs, field.Duplicate(field.NewPath("spec").Child("rpcProxies").Child("role"), rp.Role))
+		}
+		rpcRoles[rp.Role] = true
+	}
+
+	return allErrs
+}
+
+func (r *Ytsaurus) validateYtsaurus() error {
+	var allErrs field.ErrorList
+
+	allErrs = append(allErrs, r.validateProxies(r.Spec)...)
+	if len(allErrs) == 0 {
+		return nil
+	}
+
+	return apierrors.NewInvalid(
+		schema.GroupKind{Group: "cluster.ytsaurus.tech", Kind: "Ytsaurus"},
+		r.Name,
+		allErrs)
+}
+
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Ytsaurus) ValidateCreate() error {
 	ytsauruslog.Info("validate create", "name", r.Name)
 
-	return nil
+	return r.validateYtsaurus()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Ytsaurus) ValidateUpdate(old runtime.Object) error {
 	ytsauruslog.Info("validate update", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object update.
-	return nil
+	return r.validateYtsaurus()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type

@@ -34,9 +34,16 @@ spec:
   httpProxies:
     - serviceType: NodePort
       instanceCount: 1
+      role: default
+    - serviceType: NodePort
+      instanceCount: 1
+      role: control
 
   rpcProxies:
     - instanceCount: 1
+      role: default
+    - instanceCount: 1
+      role: heavy
 
   dataNodes:
     - instanceCount: 1

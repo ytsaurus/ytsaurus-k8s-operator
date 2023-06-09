@@ -124,14 +124,14 @@ func (g *Generator) GetClusterConnection() ([]byte, error) {
 func (g *Generator) GetChytControllerConfig() ([]byte, error) {
 	c := getChytController()
 	c.LocationProxies = []string{
-		g.GetHTTPProxiesAddress(),
+		g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
 	}
 	return marshallYsonConfig(c)
 }
 
 func (g *Generator) GetChytInitClusterConfig() ([]byte, error) {
 	c := getChytInitCluster()
-	c.Proxy = g.GetHTTPProxiesAddress()
+	c.Proxy = g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 	return marshallYsonConfig(c)
 }
 
@@ -195,12 +195,12 @@ func (g *Generator) GetSchedulerConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) GetRPCProxyConfig() ([]byte, error) {
+func (g *Generator) GetRPCProxyConfig(spec v1.RPCProxiesSpec) ([]byte, error) {
 	if g.ytsaurus.Spec.Schedulers == nil {
 		return []byte{}, nil
 	}
 
-	c, err := getRPCProxyServerCarcass(g.ytsaurus.Spec.RPCProxies[0])
+	c, err := getRPCProxyServerCarcass(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -268,8 +268,8 @@ func (g *Generator) GetTabletNodeConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) GetHTTPProxyConfig() ([]byte, error) {
-	c, err := getHTTPProxyServerCarcass(g.ytsaurus.Spec.HTTPProxies[0])
+func (g *Generator) GetHTTPProxyConfig(spec v1.HTTPProxiesSpec) ([]byte, error) {
+	c, err := getHTTPProxyServerCarcass(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -305,7 +305,7 @@ func (g *Generator) GetYQLAgentConfig() ([]byte, error) {
 	}
 	g.fillCommonService(&c.CommonServer)
 	c.YQLAgent.AdditionalClusters = map[string]string{
-		g.ytsaurus.Name: g.GetHTTPProxiesServiceAddress(),
+		g.ytsaurus.Name: g.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole),
 	}
 
 	return marshallYsonConfig(c)
@@ -319,7 +319,7 @@ func (g *Generator) GetWebUIConfig() ([]byte, error) {
 	c := getUIClusterCarcass()
 	c.ID = g.ytsaurus.Name
 	c.Name = g.ytsaurus.Name
-	c.Proxy = g.GetHTTPProxiesAddress()
+	c.Proxy = g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 	c.PrimaryMaster.CellTag = g.ytsaurus.Spec.PrimaryMasters.CellTag
 
 	return marshallJSONConfig(WebUI{Clusters: []UICluster{c}})

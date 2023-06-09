@@ -11,7 +11,8 @@ type CypressTokenAuthenticator struct {
 }
 
 type Coordinator struct {
-	Enable bool `yson:"enable"`
+	Enable            bool   `yson:"enable"`
+	DefaultRoleFilter string `yson:"default_role_filter"`
 }
 
 type Auth struct {
@@ -26,6 +27,7 @@ type HTTPProxyServer struct {
 	Auth        Auth        `yson:"auth"`
 	Coordinator Coordinator `yson:"coordinator"`
 	Driver      Driver      `yson:"driver"`
+	Role        string      `yson:"role"`
 }
 
 type NativeClient struct {
@@ -37,6 +39,7 @@ type NativeClient struct {
 type RPCProxyServer struct {
 	CommonServer
 	CypressTokenAuthenticator CypressTokenAuthenticator `yson:"cypress_token_authenticator"`
+	Role                      string                    `yson:"role"`
 }
 
 func getHTTPProxyServerCarcass(spec ytv1.HTTPProxiesSpec) (HTTPProxyServer, error) {
@@ -45,10 +48,13 @@ func getHTTPProxyServerCarcass(spec ytv1.HTTPProxiesSpec) (HTTPProxyServer, erro
 	c.Auth.RequireAuthentication = true
 	c.Auth.CypressTokenAuthenticator.Secure = true
 	c.Coordinator.Enable = true
+	c.Coordinator.DefaultRoleFilter = consts.DefaultHTTPProxyRole
 
 	c.RPCPort = consts.HTTPProxyRPCPort
 	c.MonitoringPort = consts.HTTPProxyMonitoringPort
 	c.Port = consts.HTTPProxyHTTPPort
+
+	c.Role = spec.Role
 
 	c.Logging = createLogging(&spec.InstanceSpec, "http-proxy", []ytv1.LoggerSpec{defaultDebugLoggerSpec(), defaultStderrLoggerSpec()})
 
@@ -62,6 +68,8 @@ func getRPCProxyServerCarcass(spec ytv1.RPCProxiesSpec) (RPCProxyServer, error) 
 
 	c.RPCPort = consts.RPCProxyRPCPort
 	c.MonitoringPort = consts.RPCProxyMonitoringPort
+
+	c.Role = spec.Role
 
 	c.Logging = createLogging(&spec.InstanceSpec, "rpc-proxy", []ytv1.LoggerSpec{defaultDebugLoggerSpec(), defaultStderrLoggerSpec()})
 
