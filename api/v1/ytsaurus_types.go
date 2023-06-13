@@ -135,7 +135,7 @@ type HTTPProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	//+kubebuilder:default:=NodePort
 	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
-	//+kubebuilder:default:=data
+	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`
 }
