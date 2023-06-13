@@ -129,7 +129,7 @@ func (r *YtsaurusReconciler) arePodsRemoved(proxy *apiProxy.APIProxy, cmps []com
 	return true
 }
 
-func (r *YtsaurusReconciler) handleUpdateStatus(
+func (r *YtsaurusReconciler) handleUpdatingState(
 	ctx context.Context,
 	proxy *apiProxy.APIProxy,
 	ytsaurus *ytv1.Ytsaurus,
@@ -295,7 +295,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) 
 	}
 
 	if ytsaurus.Status.State == ytv1.ClusterStateUpdating {
-		result, err := r.handleUpdateStatus(ctx, proxy, ytsaurus, cmps, allReadyOrUpdating)
+		result, err := r.handleUpdatingState(ctx, proxy, ytsaurus, cmps, allReadyOrUpdating)
 		if result != nil {
 			return *result, err
 		}
