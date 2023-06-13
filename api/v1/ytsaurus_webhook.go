@@ -61,8 +61,8 @@ var _ webhook.Validator = &Ytsaurus{}
 func (r *Ytsaurus) validateProxies(spec YtsaurusSpec) field.ErrorList {
 	var allErrs field.ErrorList
 
-	var httpRoles map[string]bool
-	var rpcRoles map[string]bool
+	httpRoles := map[string]bool{}
+	rpcRoles := map[string]bool{}
 	hasDefaultHTTPProxy := false
 	for _, hp := range spec.HTTPProxies {
 		if _, exists := httpRoles[hp.Role]; exists {
