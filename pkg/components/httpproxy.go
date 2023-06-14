@@ -2,7 +2,7 @@ package components
 
 import (
 	"context"
-
+	"fmt"
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -20,31 +20,37 @@ type httpProxy struct {
 	master           Component
 	balancingService *resources.HTTPService
 
+	role string
+
 	ytClient yt.Client
 }
 
 func NewHTTPProxy(
 	cfgen *ytconfig.Generator,
 	apiProxy *apiproxy.APIProxy,
-	masterReconciler Component) Component {
+	masterReconciler Component,
+	spec ytv1.HTTPProxiesSpec) Component {
+
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
 		APIProxy:       apiProxy,
-		ComponentLabel: consts.YTComponentLabelHTTPProxy,
-		ComponentName:  "HttpProxy",
+		ComponentLabel: fmt.Sprintf("%s-%s", consts.YTComponentLabelHTTPProxy, spec.Role),
+		ComponentName:  fmt.Sprintf("HttpProxy-%s", spec.Role),
 		MonitoringPort: consts.HTTPProxyMonitoringPort,
 	}
 
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.HTTPProxies[0].InstanceSpec,
+		&spec.InstanceSpec,
 		"/usr/bin/ytserver-http-proxy",
 		"ytserver-http-proxy.yson",
-		cfgen.GetHTTPProxiesStatefulSetName(),
-		cfgen.GetHTTPProxiesHeadlessServiceName(),
-		cfgen.GetHTTPProxyConfig,
+		cfgen.GetHTTPProxiesStatefulSetName(spec.Role),
+		cfgen.GetHTTPProxiesHeadlessServiceName(spec.Role),
+		func() ([]byte, error) {
+			return cfgen.GetHTTPProxyConfig(spec)
+		},
 	)
 
 	return &httpProxy{
@@ -57,9 +63,10 @@ func NewHTTPProxy(
 			server: server,
 		},
 		master:      masterReconciler,
-		serviceType: ytsaurus.Spec.HTTPProxies[0].ServiceType,
+		serviceType: spec.ServiceType,
+		role:        spec.Role,
 		balancingService: resources.NewHTTPService(
-			cfgen.GetHTTPProxiesServiceName(),
+			cfgen.GetHTTPProxiesServiceName(spec.Role),
 			&labeller,
 			apiProxy),
 	}

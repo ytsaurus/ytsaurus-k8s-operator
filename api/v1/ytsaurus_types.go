@@ -135,11 +135,17 @@ type HTTPProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	//+kubebuilder:default:=NodePort
 	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
+	//+kubebuilder:default:=default
+	//+kubebuilder:validation:MinLength:=1
+	Role string `json:"role,omitempty"`
 }
 
 type RPCProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
+	//+kubebuilder:default:=default
+	//+kubebuilder:validation:MinLength:=1
+	Role string `json:"role,omitempty"`
 }
 
 type DataNodesSpec struct {

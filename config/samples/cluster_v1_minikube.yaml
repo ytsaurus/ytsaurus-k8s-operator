@@ -3,7 +3,7 @@ kind: Ytsaurus
 metadata:
   name: minisaurus
 spec:
-  coreImage: ytsaurus/ytsaurus:23.1-latest
+  coreImage: ytsaurus/ytsaurus:unstable-0.0.4
   uiImage: ytsaurus/ui:stable
 
   discovery:
@@ -34,9 +34,16 @@ spec:
   httpProxies:
     - serviceType: NodePort
       instanceCount: 1
+      role: default
+    - serviceType: NodePort
+      instanceCount: 1
+      role: control
 
   rpcProxies:
     - instanceCount: 1
+      role: default
+    - instanceCount: 1
+      role: heavy
 
   dataNodes:
     - instanceCount: 1
