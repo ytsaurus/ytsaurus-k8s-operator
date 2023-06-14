@@ -2,7 +2,7 @@ package components
 
 import (
 	"context"
-
+	"fmt"
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -19,36 +19,41 @@ type rpcProxy struct {
 
 	serviceType      *v1.ServiceType
 	balancingService *resources.RPCService
+
+	role string
 }
 
 func NewRPCProxy(
 	cfgen *ytconfig.Generator,
 	apiProxy *apiproxy.APIProxy,
-	masterReconciler Component) Component {
+	masterReconciler Component,
+	spec ytv1.RPCProxiesSpec) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
 		APIProxy:       apiProxy,
-		ComponentLabel: consts.YTComponentLabelRPCProxy,
-		ComponentName:  "RpcProxy",
+		ComponentLabel: fmt.Sprintf("%s-%s", consts.YTComponentLabelRPCProxy, spec.Role),
+		ComponentName:  fmt.Sprintf("RpcProxy-%s", spec.Role),
 		MonitoringPort: consts.RPCProxyMonitoringPort,
 	}
 
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.RPCProxies[0].InstanceSpec,
+		&spec.InstanceSpec,
 		"/usr/bin/ytserver-proxy",
 		"ytserver-rpc-proxy.yson",
-		cfgen.GetRPCProxiesStatefulSetName(),
-		cfgen.GetRPCProxiesHeadlessServiceName(),
-		cfgen.GetRPCProxyConfig,
+		cfgen.GetRPCProxiesStatefulSetName(spec.Role),
+		cfgen.GetRPCProxiesHeadlessServiceName(spec.Role),
+		func() ([]byte, error) {
+			return cfgen.GetRPCProxyConfig(spec)
+		},
 	)
 
 	var balancingService *resources.RPCService = nil
-	if ytsaurus.Spec.RPCProxies[0].ServiceType != nil {
+	if spec.ServiceType != nil {
 		balancingService = resources.NewRPCService(
-			cfgen.GetRPCProxiesServiceName(),
+			cfgen.GetRPCProxiesServiceName(spec.Role),
 			&labeller,
 			apiProxy)
 	}
@@ -63,8 +68,9 @@ func NewRPCProxy(
 			server: server,
 		},
 		master:           masterReconciler,
-		serviceType:      ytsaurus.Spec.RPCProxies[0].ServiceType,
+		serviceType:      spec.ServiceType,
 		balancingService: balancingService,
+		role:             spec.Role,
 	}
 }
 

@@ -7749,6 +7749,10 @@ spec:
                             to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                           type: object
                       type: object
+                    role:
+                      default: default
+                      minLength: 1
+                      type: string
                     serviceType:
                       default: NodePort
                       description: Service Type string describes ingress methods for
@@ -13433,6 +13437,10 @@ spec:
                             to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                           type: object
                       type: object
+                    role:
+                      default: default
+                      minLength: 1
+                      type: string
                     serviceType:
                       description: Service Type string describes ingress methods for
                         a service

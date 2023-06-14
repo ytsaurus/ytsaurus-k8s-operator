@@ -19,7 +19,7 @@ type FetchableObject struct {
 type Labeller struct {
 	APIProxy       *apiproxy.APIProxy
 	Ytsaurus       *ytv1.Ytsaurus
-	ComponentLabel consts.YTComponentLabel
+	ComponentLabel string
 	ComponentName  string
 	MonitoringPort int32
 }
@@ -77,7 +77,7 @@ func (l *Labeller) GetMetaLabelMap() map[string]string {
 	return map[string]string{
 		"app.kubernetes.io/name":       "Ytsaurus",
 		"app.kubernetes.io/instance":   l.Ytsaurus.Name,
-		"app.kubernetes.io/component":  string(l.ComponentLabel),
+		"app.kubernetes.io/component":  l.ComponentLabel,
 		"app.kubernetes.io/managed-by": "Ytsaurus-k8s-operator",
 		consts.YTComponentLabelName:    l.GetYTLabelValue(),
 	}

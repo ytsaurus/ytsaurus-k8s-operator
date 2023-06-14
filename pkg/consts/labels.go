@@ -3,25 +3,17 @@ package consts
 const YTComponentLabelName = "yt_component"
 const YTMetricsLabelName = "yt_metrics"
 
-type YTComponentLabel string
-
 const (
-	YTComponentLabelDiscovery       YTComponentLabel = "yt-discovery"
-	YTComponentLabelMaster          YTComponentLabel = "yt-master"
-	YTComponentLabelScheduler       YTComponentLabel = "yt-scheduler"
-	YTComponentLabelControllerAgent YTComponentLabel = "yt-controller-agent"
-	YTComponentLabelDataNode        YTComponentLabel = "yt-data-node"
-	YTComponentLabelExecNode        YTComponentLabel = "yt-exec-node"
-	YTComponentLabelTabletNode      YTComponentLabel = "yt-tablet-node"
-	YTComponentLabelHTTPProxy       YTComponentLabel = "yt-http-proxy"
-	YTComponentLabelRPCProxy        YTComponentLabel = "yt-rpc-proxy"
-	YTComponentLabelUI              YTComponentLabel = "yt-ui"
-	YTComponentLabelYqlAgent        YTComponentLabel = "yt-yql-agent"
-	YTComponentLabelClient          YTComponentLabel = "yt-client"
+	YTComponentLabelDiscovery       string = "yt-discovery"
+	YTComponentLabelMaster          string = "yt-master"
+	YTComponentLabelScheduler       string = "yt-scheduler"
+	YTComponentLabelControllerAgent string = "yt-controller-agent"
+	YTComponentLabelDataNode        string = "yt-data-node"
+	YTComponentLabelExecNode        string = "yt-exec-node"
+	YTComponentLabelTabletNode      string = "yt-tablet-node"
+	YTComponentLabelHTTPProxy       string = "yt-http-proxy"
+	YTComponentLabelRPCProxy        string = "yt-rpc-proxy"
+	YTComponentLabelUI              string = "yt-ui"
+	YTComponentLabelYqlAgent        string = "yt-yql-agent"
+	YTComponentLabelClient          string = "yt-client"
 )
-
-func GetYTComponentLabels(value YTComponentLabel) map[string]string {
-	return map[string]string{
-		YTComponentLabelName: string(value),
-	}
-}

@@ -61,9 +61,9 @@ func (g *Generator) GetYQLAgentPodNames() []string {
 	return podNames
 }
 
-func (g *Generator) GetHTTPProxiesServiceAddress() string {
+func (g *Generator) GetHTTPProxiesServiceAddress(role string) string {
 	return fmt.Sprintf("%s.%s.svc.%s",
-		g.GetHTTPProxiesHeadlessServiceName(),
+		g.GetHTTPProxiesHeadlessServiceName(role),
 		g.ytsaurus.Namespace,
 		g.clusterDomain)
 }
@@ -79,21 +79,21 @@ func (g *Generator) GetChytControllerHeadlessServiceName() string {
 	return g.getName("chyt")
 }
 
-func (g *Generator) GetHTTPProxiesServiceName() string {
-	return g.getName("http-proxies-lb")
+func (g *Generator) GetHTTPProxiesServiceName(role string) string {
+	return g.getName(fmt.Sprintf("http-proxies-%s-lb", role))
 }
 
-func (g *Generator) GetHTTPProxiesHeadlessServiceName() string {
-	return g.getName("http-proxies")
+func (g *Generator) GetHTTPProxiesHeadlessServiceName(role string) string {
+	return g.getName(fmt.Sprintf("http-proxies-%s", role))
 }
 
-func (g *Generator) GetHTTPProxiesStatefulSetName() string {
-	return g.getName("hp")
+func (g *Generator) GetHTTPProxiesStatefulSetName(role string) string {
+	return g.getName(fmt.Sprintf("hp-%s", role))
 }
 
-func (g *Generator) GetHTTPProxiesAddress() string {
+func (g *Generator) GetHTTPProxiesAddress(role string) string {
 	return fmt.Sprintf("%s.%s.svc.%s",
-		g.GetHTTPProxiesServiceName(),
+		g.GetHTTPProxiesServiceName(role),
 		g.ytsaurus.Namespace,
 		g.clusterDomain)
 }
@@ -106,16 +106,16 @@ func (g *Generator) GetSchedulerServiceName() string {
 	return g.getName("schedulers")
 }
 
-func (g *Generator) GetRPCProxiesStatefulSetName() string {
-	return g.getName("rp")
+func (g *Generator) GetRPCProxiesStatefulSetName(role string) string {
+	return g.getName(fmt.Sprintf("rp-%s", role))
 }
 
-func (g *Generator) GetRPCProxiesServiceName() string {
-	return g.getName("rpc-proxies-lb")
+func (g *Generator) GetRPCProxiesServiceName(role string) string {
+	return g.getName(fmt.Sprintf("rpc-proxies-%s-lb", role))
 }
 
-func (g *Generator) GetRPCProxiesHeadlessServiceName() string {
-	return g.getName("rpc-proxies")
+func (g *Generator) GetRPCProxiesHeadlessServiceName(role string) string {
+	return g.getName(fmt.Sprintf("rpc-proxies-%s", role))
 }
 
 func (g *Generator) GetQueryTrackerStatefulSetName() string {

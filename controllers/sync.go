@@ -15,69 +15,76 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Ytsaurus, proxy *apiProxy.APIProxy) []components.Component {
+func (r *YtsaurusReconciler) getComponents(ctx context.Context, ytsaurus *ytv1.Ytsaurus, apiProxy *apiProxy.APIProxy) []components.Component {
 	cfgen := ytconfig.NewGenerator(ytsaurus, getClusterDomain(r.Client))
 
-	d := components.NewDiscovery(cfgen, proxy)
-	m := components.NewMaster(cfgen, proxy)
-	hp := components.NewHTTPProxy(cfgen, proxy, m)
-	yc := components.NewYtsaurusClient(cfgen, proxy, hp)
+	d := components.NewDiscovery(cfgen, apiProxy)
+	m := components.NewMaster(cfgen, apiProxy)
+	var hps []components.Component
+	for _, hpSpec := range apiProxy.Ytsaurus().Spec.HTTPProxies {
+		hps = append(hps, components.NewHTTPProxy(cfgen, apiProxy, m, hpSpec))
+	}
+	yc := components.NewYtsaurusClient(cfgen, apiProxy, hps[0])
 
-	dn := components.NewDataNode(cfgen, proxy, m)
+	dn := components.NewDataNode(cfgen, apiProxy, m)
 
 	var en, tn, s components.Component
 
 	result := []components.Component{
-		d, m, hp, dn, yc,
+		d, m, dn, yc,
 	}
+	result = append(result, hps...)
 
 	if ytsaurus.Spec.UI != nil {
-		ui := components.NewUI(cfgen, proxy, m)
+		ui := components.NewUI(cfgen, apiProxy, m)
 		result = append(result, ui)
 	}
 
 	if ytsaurus.Spec.RPCProxies != nil && len(ytsaurus.Spec.RPCProxies) > 0 {
-		rp := components.NewRPCProxy(cfgen, proxy, m)
-		result = append(result, rp)
+		var rps []components.Component
+		for _, rpSpec := range apiProxy.Ytsaurus().Spec.RPCProxies {
+			rps = append(rps, components.NewRPCProxy(cfgen, apiProxy, m, rpSpec))
+		}
+		result = append(result, rps...)
 	}
 
 	if ytsaurus.Spec.ExecNodes != nil && len(ytsaurus.Spec.ExecNodes) > 0 {
-		en = components.NewExecNode(cfgen, proxy, m)
+		en = components.NewExecNode(cfgen, apiProxy, m)
 		result = append(result, en)
 	}
 
 	if ytsaurus.Spec.TabletNodes != nil && len(ytsaurus.Spec.TabletNodes) > 0 {
-		tn = components.NewTabletNode(cfgen, proxy, yc)
+		tn = components.NewTabletNode(cfgen, apiProxy, yc)
 		result = append(result, tn)
 	}
 
 	if ytsaurus.Spec.Schedulers != nil {
-		s = components.NewScheduler(cfgen, proxy, m, en, tn)
+		s = components.NewScheduler(cfgen, apiProxy, m, en, tn)
 		result = append(result, s)
 	}
 
 	if ytsaurus.Spec.ControllerAgents != nil {
-		ca := components.NewControllerAgent(cfgen, proxy, m)
+		ca := components.NewControllerAgent(cfgen, apiProxy, m)
 		result = append(result, ca)
 	}
 
 	if ytsaurus.Spec.QueryTrackers != nil {
-		q := components.NewQueryTracker(cfgen, proxy, m)
+		q := components.NewQueryTracker(cfgen, apiProxy, m)
 		result = append(result, q)
 	}
 
 	if ytsaurus.Spec.YQLAgents != nil {
-		yqla := components.NewYQLAgent(cfgen, proxy, m)
+		yqla := components.NewYQLAgent(cfgen, apiProxy, m)
 		result = append(result, yqla)
 	}
 
 	if ytsaurus.Spec.Chyt != nil {
-		chyt := components.NewChytController(cfgen, proxy, m, dn)
+		chyt := components.NewChytController(cfgen, apiProxy, m, dn)
 		result = append(result, chyt)
 	}
 
 	if ytsaurus.Spec.Spyt != nil && en != nil {
-		spyt := components.NewSpyt(cfgen, proxy, m, en, s, dn)
+		spyt := components.NewSpyt(cfgen, apiProxy, m, en, s, dn)
 		result = append(result, spyt)
 	}
 
@@ -122,7 +129,7 @@ func (r *YtsaurusReconciler) arePodsRemoved(proxy *apiProxy.APIProxy, cmps []com
 	return true
 }
 
-func (r *YtsaurusReconciler) handleUpdateStatus(
+func (r *YtsaurusReconciler) handleUpdatingState(
 	ctx context.Context,
 	proxy *apiProxy.APIProxy,
 	ytsaurus *ytv1.Ytsaurus,
@@ -288,7 +295,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) 
 	}
 
 	if ytsaurus.Status.State == ytv1.ClusterStateUpdating {
-		result, err := r.handleUpdateStatus(ctx, proxy, ytsaurus, cmps, allReadyOrUpdating)
+		result, err := r.handleUpdatingState(ctx, proxy, ytsaurus, cmps, allReadyOrUpdating)
 		if result != nil {
 			return *result, err
 		}
