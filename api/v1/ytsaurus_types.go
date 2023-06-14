@@ -121,9 +121,10 @@ type InstanceSpec struct {
 	InstanceCount        int32                           `json:"instanceCount,omitempty"`
 	Locations            []LocationSpec                  `json:"locations,omitempty"`
 	VolumeClaimTemplates []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
-	// Enables pod anti affinity
-	EnableAntiAffinity *bool        `json:"enableAntiAffinity,omitempty"`
-	Loggers            []LoggerSpec `json:"loggers,omitempty"`
+	// Deprecated. Use Affinity.PodAntiAffinity instead
+	EnableAntiAffinity *bool            `json:"enableAntiAffinity,omitempty"`
+	Loggers            []LoggerSpec     `json:"loggers,omitempty"`
+	Affinity           *corev1.Affinity `json:"affinity,omitempty"`
 }
 
 type MastersSpec struct {

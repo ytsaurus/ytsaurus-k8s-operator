@@ -76,6 +76,10 @@ docker-build: test ## Build docker image with the manager.
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
 
+.PHONY: helm
+helm: manifests kustomize helmify ## Generate helm chart
+	$(KUSTOMIZE) build config/default | $(HELMIFY) ytop-chart
+
 ##@ Deployment
 
 ifndef ignore-not-found
@@ -141,9 +145,6 @@ HELMIFY ?= $(LOCALBIN)/helmify
 helmify: $(HELMIFY) ## Download helmify locally if necessary.
 $(HELMIFY): $(LOCALBIN)
 	test -s $(LOCALBIN)/helmify || GOBIN=$(LOCALBIN) go install github.com/arttor/helmify/cmd/helmify@latest
-
-helm: manifests kustomize helmify
-	$(KUSTOMIZE) build config/default | $(HELMIFY) ytop-chart
 
 OPERATOR_IMAGE=ytsaurus/k8s-operator
 

@@ -18,8 +18,11 @@ package v1
 
 import (
 	"fmt"
+
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -47,9 +50,23 @@ var _ webhook.Defaulter = &Ytsaurus{}
 func (r *Ytsaurus) Default() {
 	ytsauruslog.Info("default", "name", r.Name)
 
-	if r.Spec.PrimaryMasters.EnableAntiAffinity == nil {
-		r.Spec.PrimaryMasters.EnableAntiAffinity = new(bool)
-		*r.Spec.PrimaryMasters.EnableAntiAffinity = true
+	// Set anti affinity for masters
+	if r.Spec.PrimaryMasters.Affinity == nil {
+		r.Spec.PrimaryMasters.Affinity = &corev1.Affinity{}
+	}
+	if r.Spec.PrimaryMasters.Affinity.PodAntiAffinity == nil {
+		r.Spec.PrimaryMasters.Affinity.PodAntiAffinity = &corev1.PodAntiAffinity{
+			RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+				{
+					LabelSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							consts.YTComponentLabelName: fmt.Sprintf("%s-%s", r.Name, "yt-master"),
+						},
+					},
+					TopologyKey: "kubernetes.io/hostname",
+				},
+			},
+		}
 	}
 }
 
