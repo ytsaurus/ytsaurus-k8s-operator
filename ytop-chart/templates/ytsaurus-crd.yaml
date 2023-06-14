@@ -7750,7 +7750,7 @@ spec:
                           type: object
                       type: object
                     role:
-                      default: data
+                      default: default
                       minLength: 1
                       type: string
                     serviceType:
