@@ -81,7 +81,7 @@ jobs:
     name: Stop VM
     needs:
       - start-vm
-      - check
+      - release
     runs-on: ubuntu-latest
     if: ${{ always() }}
     steps:
@@ -93,6 +93,7 @@ jobs:
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
           label: ${{ needs.start-vm.outputs.label }}
           instance-id: ${{ needs.start-vm.outputs.instance-id }}
+
   send-notifications:
     name: Send notifications
     needs:
