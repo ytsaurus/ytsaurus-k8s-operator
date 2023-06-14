@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'release/0\.2\.[0-9]+*'
+      - 'release/0\.2\.[0-9]+'
 
 jobs:
   start-vm:
@@ -21,7 +21,7 @@ jobs:
           yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
           folder-id: b1gcvl619mdunf1cqqbv
-          image-id: fd8ddda1ka78hnn4iiel
+          image-id: fd8ref8pd2uefi7o6kh3
           zone-id: 'ru-central1-b'
           subnet-id: e2lno1rkqo63l729dlo7
           cores: 4
@@ -66,6 +66,11 @@ jobs:
         shell: bash
         run: |
           make test
+
+      - name: Docker Hub login
+        shell: bash
+        run: |
+          echo '${{ secrets.DOCKER_HUB_PASSWORD }}' | docker login --username ${{ secrets.DOCKER_HUB_LOGIN}} --password-stdin
 
       - name: Parse tag
         id: tag
@@ -113,3 +118,4 @@ jobs:
             ```
             ${{github.event.head_commit.message}}
             ```
+
