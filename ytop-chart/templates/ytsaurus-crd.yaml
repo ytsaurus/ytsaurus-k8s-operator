@@ -942,7 +942,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead
+                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
                   instanceCount:
                     format: int32
@@ -3686,7 +3686,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead
+                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
                     instanceCount:
                       format: int32
@@ -6441,7 +6441,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead
+                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
                   instanceCount:
                     format: int32
@@ -9183,7 +9183,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead
+                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
                     instanceCount:
                       format: int32
@@ -11968,7 +11968,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead
+                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
                     instanceCount:
                       format: int32
@@ -14749,7 +14749,7 @@ spec:
                   cellTag:
                     type: integer
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead
+                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
                   instanceCount:
                     format: int32
@@ -17466,7 +17466,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead
+                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
                   instanceCount:
                     format: int32
@@ -20208,7 +20208,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead
+                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
                     instanceCount:
                       format: int32
@@ -22970,7 +22970,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead
+                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
                   instanceCount:
                     format: int32
@@ -25714,7 +25714,7 @@ spec:
                     cellTag:
                       type: integer
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead
+                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
                     instanceCount:
                       format: int32
@@ -28504,7 +28504,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead
+                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
                     instanceCount:
                       format: int32
@@ -31313,7 +31313,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead
+                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
                   instanceCount:
                     format: int32
