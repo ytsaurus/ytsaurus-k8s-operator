@@ -281,11 +281,11 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) 
 
 	case ytv1.ClusterStateRunning:
 		switch {
-		case needSync:
+		case !needSync:
 			logger.Info("Ytsaurus is running and happy")
 			return ctrl.Result{}, nil
 
-		case !needSync:
+		case needSync:
 			logger.Info("Ytsaurus needs reconfiguration")
 			err := r.saveClusterState(ctx, ytsaurus, ytv1.ClusterStateReconfiguration)
 			return ctrl.Result{Requeue: true}, err
