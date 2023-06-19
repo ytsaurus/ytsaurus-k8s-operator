@@ -297,7 +297,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) 
 		}
 
 	case ytv1.ClusterStateUpdating:
-		result, err := r.handleUpdateStatus(ctx, proxy, ytsaurus, cmps, allReadyOrUpdating)
+		result, err := r.handleUpdatingState(ctx, proxy, ytsaurus, cmps, allReadyOrUpdating)
 		if result != nil {
 			return *result, err
 		}
