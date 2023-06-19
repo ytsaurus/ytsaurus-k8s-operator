@@ -18,6 +18,7 @@ package v1
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	corev1 "k8s.io/api/core/v1"
@@ -107,10 +108,64 @@ func (r *Ytsaurus) validateProxies(spec YtsaurusSpec) field.ErrorList {
 	return allErrs
 }
 
+func (r *Ytsaurus) checkInstanceSpec(value reflect.Value, path *field.Path) field.ErrorList {
+	var allErrors field.ErrorList
+	_, ok := value.Type().FieldByName("InstanceSpec")
+	if ok {
+		antiAffinity := value.FieldByName("EnableAntiAffinity")
+		if !antiAffinity.IsNil() {
+			allErrors = append(allErrors, field.Invalid(path.Child("EnableAntiAffinity"), antiAffinity.Interface(), "EnableAntiAffinity is deprecated, use Affinity instead"))
+		}
+	}
+	return allErrors
+}
+
+func (r *Ytsaurus) checkEnableAntiAffinity(value reflect.Value, path *field.Path) field.ErrorList {
+	var allErrors field.ErrorList
+
+	if value.Kind() == reflect.Slice {
+		for i := 0; i < value.Len(); i++ {
+			elem := value.Index(i)
+			if elem.Kind() == reflect.Ptr && !elem.IsNil() {
+				elem = elem.Elem()
+			}
+			allErrors = append(allErrors, r.checkInstanceSpec(elem, path.Index(i))...)
+		}
+	} else if value.Kind() == reflect.Struct {
+		allErrors = append(allErrors, r.checkInstanceSpec(value, path)...)
+	}
+
+	return allErrors
+}
+
+func (r *Ytsaurus) validateInstanceSpecs() field.ErrorList {
+	var allErrors field.ErrorList
+	v := reflect.ValueOf(r.Spec)
+
+	if v.Kind() == reflect.Ptr && !v.IsNil() {
+		v = v.Elem()
+	}
+
+	for i := 0; i < v.NumField(); i++ {
+		fieldValue := v.Field(i)
+		fieldType := v.Type().Field(i)
+
+		if fieldValue.Kind() == reflect.Ptr && !fieldValue.IsNil() {
+			fieldValue = fieldValue.Elem()
+		}
+
+		allErrors = append(allErrors, r.checkEnableAntiAffinity(fieldValue, field.NewPath(fieldType.Name))...)
+	}
+
+	return allErrors
+
+}
+
 func (r *Ytsaurus) validateYtsaurus() error {
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, r.validateProxies(r.Spec)...)
+	allErrs = append(allErrs, r.validateInstanceSpecs()...)
 	if len(allErrs) == 0 {
 		return nil
 	}

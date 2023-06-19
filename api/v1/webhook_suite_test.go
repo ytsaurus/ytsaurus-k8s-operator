@@ -31,6 +31,7 @@ import (
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	//+kubebuilder:scaffold:imports
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -129,4 +130,44 @@ var _ = AfterSuite(func() {
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
+})
+
+var _ = Describe("EnableAntiAffinity", func() {
+	Describe("Test EnableAntiAffinity", func() {
+		trueEnableAntiAffinity := true
+		falseEnableAntiAffinity := false
+		ytsaurus := Ytsaurus{
+			Spec: YtsaurusSpec{
+				DataNodes: []DataNodesSpec{
+					{
+						InstanceSpec: InstanceSpec{
+							EnableAntiAffinity: &trueEnableAntiAffinity,
+						},
+					},
+					{
+						InstanceSpec: InstanceSpec{
+							EnableAntiAffinity: &falseEnableAntiAffinity,
+						},
+					},
+				},
+				ControllerAgents: &ControllerAgentsSpec{
+					InstanceSpec: InstanceSpec{
+						EnableAntiAffinity: &trueEnableAntiAffinity,
+					},
+				},
+				PrimaryMasters: MastersSpec{
+					InstanceSpec: InstanceSpec{
+						EnableAntiAffinity: &trueEnableAntiAffinity,
+					},
+				},
+			},
+		}
+		errList := ytsaurus.validateInstanceSpecs()
+		Expect(errList).NotTo(BeEmpty())
+		Expect(len(errList)).To(Equal(4))
+		for _, err := range errList {
+			Expect(err.Type).To(Equal(field.ErrorTypeInvalid))
+			Expect(err.Detail).To(Equal("EnableAntiAffinity is deprecated, use Affinity instead"))
+		}
+	})
 })
