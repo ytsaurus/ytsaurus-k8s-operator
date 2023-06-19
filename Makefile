@@ -152,8 +152,13 @@ release: manifests kustomize helmify
 	docker push $(OPERATOR_IMAGE):${RELEASE_VERSION}
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(OPERATOR_IMAGE):${RELEASE_VERSION}
 	$(KUSTOMIZE) build config/default | $(HELMIFY) ytop-chart
-	sed -iE "s/appVersion:/appVersion: \"${RELEASE_VERSION}\"/" ytop-chart/Chart.yaml
-	sed -iE "s/version:/version: ${RELEASE_VERSION}/" ytop-chart/Chart.yaml
+	sed -iE "s/appVersion: \".*\"/appVersion: \"${RELEASE_VERSION}\"/" ytop-chart/Chart.yaml
+	sed -iE "s/version:.*\$/version: ${RELEASE_VERSION}/" ytop-chart/Chart.yaml
 	helm package ytop-chart
 	helm push ytop-chart-${RELEASE_VERSION}.tgz oci://registry-1.docker.io/ytsaurus
+
+kind-tests-env: manifests kustomize helm
+	docker build -t ${OPERATOR_IMAGE}:0.0.0-alpha .
+	kind load docker-image ytsaurus/k8s-operator:0.0.0-alpha
+	helm install ytsaurus ytop-chart/
 

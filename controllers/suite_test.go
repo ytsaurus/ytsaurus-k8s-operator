@@ -18,10 +18,10 @@ package controllers
 
 import (
 	"context"
+	ptr "k8s.io/utils/pointer"
+	"os"
 	"path/filepath"
 	"testing"
-
-	ctrl "sigs.k8s.io/controller-runtime"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -48,6 +48,10 @@ var ctx context.Context
 var cancel context.CancelFunc
 
 func TestAPIs(t *testing.T) {
+	if os.Getenv("YTSAURUS_ENABLE_KIND_TESTS") != "true" {
+		return
+	}
+
 	RegisterFailHandler(Fail)
 
 	RunSpecsWithDefaultAndCustomReporters(t,
@@ -63,13 +67,8 @@ var _ = BeforeSuite(func() {
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd", "bases")},
 		ErrorIfCRDPathMissing: true,
+		UseExistingCluster:    ptr.Bool(true),
 	}
-
-	// psushin: this may be required for ipv6-only hosts (like Sandbox CI).
-	// https://github.com/kubernetes/kubernetes/issues/111671#issuecomment-1206562634
-	apiServer := envtest.APIServer{}
-	apiServer.Configure().Append("advertise-address", "127.0.0.1")
-	testEnv.ControlPlane.APIServer = &apiServer
 
 	var err error
 	// cfg is defined in this file globally.
@@ -85,25 +84,6 @@ var _ = BeforeSuite(func() {
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
-
-	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme: scheme.Scheme,
-	})
-	Expect(err).ToNot(HaveOccurred())
-
-	err = (&YtsaurusReconciler{
-		Client:   k8sManager.GetClient(),
-		Scheme:   k8sManager.GetScheme(),
-		Recorder: k8sManager.GetEventRecorderFor("ytsaurus-controller"),
-	}).SetupWithManager(k8sManager)
-	Expect(err).NotTo(HaveOccurred())
-
-	go func() {
-		defer GinkgoRecover()
-		err = k8sManager.Start(ctx)
-		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
-	}()
-
 }, 60)
 
 var _ = AfterSuite(func() {

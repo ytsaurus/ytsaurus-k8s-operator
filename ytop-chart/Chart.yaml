@@ -2,5 +2,6 @@ apiVersion: v2
 name: ytop-chart
 description: A Helm chart for Kubernetes
 type: application
-version: 
-appVersion: 
+  # Don't change `version` and `appVersion` manually
+version: 0.0.0-alpha
+appVersion: "0.0.0-alpha"
