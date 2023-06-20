@@ -12,7 +12,6 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Server interface {
@@ -162,24 +161,9 @@ func (s *server) RebuildStatefulSet() *appsv1.StatefulSet {
 				VolumeMounts: volumeMounts,
 			},
 		},
-		Volumes: createVolumes(s.instanceSpec.Volumes, s.labeller.GetMainConfigMapName()),
+		Volumes:  createVolumes(s.instanceSpec.Volumes, s.labeller.GetMainConfigMapName()),
+		Affinity: s.instanceSpec.Affinity,
 	}
 
-	if s.instanceSpec.EnableAntiAffinity != nil && *s.instanceSpec.EnableAntiAffinity {
-		affinity := corev1.Affinity{
-			PodAntiAffinity: &corev1.PodAntiAffinity{
-				RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
-					{
-						LabelSelector: &metav1.LabelSelector{
-							MatchLabels: s.labeller.GetSelectorLabelMap(),
-						},
-						TopologyKey: "kubernetes.io/hostname",
-					},
-				},
-			},
-		}
-		statefulSet.Spec.Template.Spec.Affinity = &affinity
-	}
-	s.builtStatefulSet = statefulSet
 	return statefulSet
 }

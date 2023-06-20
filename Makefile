@@ -58,6 +58,17 @@ vet: ## Run go vet against code.
 test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ATTACH_CONTROL_PLANE_OUTPUT="true" KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -v ./... -coverprofile cover.out
 
+.PHONY: kind-tests-env
+kind-tests-env: manifests kustomize helm ## Load kind tests env.
+	docker build -t ${OPERATOR_IMAGE}:0.0.0-alpha .
+	kind load docker-image ytsaurus/k8s-operator:0.0.0-alpha
+	helm install ytsaurus ytop-chart/
+
+.PHONY: kind-tests-env-uninstall
+kind-tests-env-uninstall: ## Uninstal kind tests env.
+	helm uninstall ytsaurus
+
+
 ##@ Build
 
 .PHONY: build
@@ -75,6 +86,10 @@ docker-build: test ## Build docker image with the manager.
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
+
+.PHONY: helm
+helm: manifests kustomize helmify ## Generate helm chart.
+	$(KUSTOMIZE) build config/default | $(HELMIFY) ytop-chart
 
 ##@ Deployment
 
@@ -102,6 +117,18 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+
+OPERATOR_IMAGE=ytsaurus/k8s-operator
+
+release: manifests kustomize helmify ## Release operator docker imager and helm chart.
+	docker build -t $(OPERATOR_IMAGE):${RELEASE_VERSION} .
+	docker push $(OPERATOR_IMAGE):${RELEASE_VERSION}
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(OPERATOR_IMAGE):${RELEASE_VERSION}
+	$(KUSTOMIZE) build config/default | $(HELMIFY) ytop-chart
+	sed -iE "s/appVersion: \".*\"/appVersion: \"${RELEASE_VERSION}\"/" ytop-chart/Chart.yaml
+	sed -iE "s/version:.*\$/version: ${RELEASE_VERSION}/" ytop-chart/Chart.yaml
+	helm package ytop-chart
+	helm push ytop-chart-${RELEASE_VERSION}.tgz oci://registry-1.docker.io/ytsaurus
 
 ##@ Build Dependencies
 
@@ -141,26 +168,3 @@ HELMIFY ?= $(LOCALBIN)/helmify
 helmify: $(HELMIFY) ## Download helmify locally if necessary.
 $(HELMIFY): $(LOCALBIN)
 	test -s $(LOCALBIN)/helmify || GOBIN=$(LOCALBIN) go install github.com/arttor/helmify/cmd/helmify@latest
-
-helm: manifests kustomize helmify
-	$(KUSTOMIZE) build config/default | $(HELMIFY) ytop-chart
-
-OPERATOR_IMAGE=ytsaurus/k8s-operator
-
-release: manifests kustomize helmify
-	docker build -t $(OPERATOR_IMAGE):${RELEASE_VERSION} .
-	docker push $(OPERATOR_IMAGE):${RELEASE_VERSION}
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(OPERATOR_IMAGE):${RELEASE_VERSION}
-	$(KUSTOMIZE) build config/default | $(HELMIFY) ytop-chart
-	sed -iE "s/appVersion: \".*\"/appVersion: \"${RELEASE_VERSION}\"/" ytop-chart/Chart.yaml
-	sed -iE "s/version:.*\$/version: ${RELEASE_VERSION}/" ytop-chart/Chart.yaml
-	helm package ytop-chart
-	helm push ytop-chart-${RELEASE_VERSION}.tgz oci://registry-1.docker.io/ytsaurus
-
-kind-tests-env: manifests kustomize helm
-	docker build -t ${OPERATOR_IMAGE}:0.0.0-alpha .
-	kind load docker-image ytsaurus/k8s-operator:0.0.0-alpha
-	helm install ytsaurus ytop-chart/
-
-kind-tests-env-uninstall:
-	helm uninstall ytsaurus
