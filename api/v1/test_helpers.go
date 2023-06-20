@@ -1,7 +1,6 @@
-package controllers
+package v1
 
 import (
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,29 +10,29 @@ const (
 	YtsaurusName = "test-ytsaurus"
 )
 
-func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
-	masterVolumeSize, _ := resource.ParseQuantity("1Gi")
-	execNodeVolumeSize, _ := resource.ParseQuantity("1Gi")
+func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
+	masterVolumeSize, _ := resource.ParseQuantity("5Gi")
+	execNodeVolumeSize, _ := resource.ParseQuantity("3Gi")
 	execNodeCPU, _ := resource.ParseQuantity("1")
-	execNodeMemory, _ := resource.ParseQuantity("1Gi")
+	execNodeMemory, _ := resource.ParseQuantity("2Gi")
 
-	return &ytv1.Ytsaurus{
+	return &Ytsaurus{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      YtsaurusName,
 			Namespace: namespace,
 		},
-		Spec: ytv1.YtsaurusSpec{
+		Spec: YtsaurusSpec{
 			CoreImage: "ytsaurus/ytsaurus:unstable-0.0.4",
-			Discovery: ytv1.DiscoverySpec{
-				InstanceSpec: ytv1.InstanceSpec{
+			Discovery: DiscoverySpec{
+				InstanceSpec: InstanceSpec{
 					InstanceCount: 1,
 				},
 			},
-			PrimaryMasters: ytv1.MastersSpec{
+			PrimaryMasters: MastersSpec{
 				CellTag: 1,
-				InstanceSpec: ytv1.InstanceSpec{
+				InstanceSpec: InstanceSpec{
 					InstanceCount: 1,
-					Locations: []ytv1.LocationSpec{
+					Locations: []LocationSpec{
 						{
 							LocationType: "MasterChangelogs",
 							Path:         "/yt/master-data/master-changelogs",
@@ -43,9 +42,9 @@ func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 							Path:         "/yt/master-data/master-snapshots",
 						},
 					},
-					VolumeClaimTemplates: []ytv1.EmbeddedPersistentVolumeClaim{
+					VolumeClaimTemplates: []EmbeddedPersistentVolumeClaim{
 						{
-							EmbeddedObjectMetadata: ytv1.EmbeddedObjectMetadata{
+							EmbeddedObjectMetadata: EmbeddedObjectMetadata{
 								Name: "master-data",
 							},
 							Spec: corev1.PersistentVolumeClaimSpec{
@@ -64,21 +63,28 @@ func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 							MountPath: "/yt/master-data",
 						},
 					},
+					Loggers: []LoggerSpec{
+						{
+							Name:        "debug",
+							WriterType:  "file",
+							MinLogLevel: "debug",
+						},
+					},
 				},
 			},
-			HTTPProxies: []ytv1.HTTPProxiesSpec{
+			HTTPProxies: []HTTPProxiesSpec{
 				{
 					ServiceType: "NodePort",
-					InstanceSpec: ytv1.InstanceSpec{
+					InstanceSpec: InstanceSpec{
 						InstanceCount: 1,
 					},
 				},
 			},
-			DataNodes: []ytv1.DataNodesSpec{
+			DataNodes: []DataNodesSpec{
 				{
-					InstanceSpec: ytv1.InstanceSpec{
+					InstanceSpec: InstanceSpec{
 						InstanceCount: 1,
-						Locations: []ytv1.LocationSpec{
+						Locations: []LocationSpec{
 							{
 								LocationType: "ChunkStore",
 								Path:         "/yt/node-data/chunk-store",
@@ -103,9 +109,9 @@ func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 					},
 				},
 			},
-			ExecNodes: []ytv1.ExecNodesSpec{
+			ExecNodes: []ExecNodesSpec{
 				{
-					InstanceSpec: ytv1.InstanceSpec{
+					InstanceSpec: InstanceSpec{
 						InstanceCount: 1,
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
@@ -113,7 +119,7 @@ func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 								corev1.ResourceMemory: execNodeMemory,
 							},
 						},
-						Locations: []ytv1.LocationSpec{
+						Locations: []LocationSpec{
 							{
 								LocationType: "ChunkCache",
 								Path:         "/yt/node-data/chunk-cache",

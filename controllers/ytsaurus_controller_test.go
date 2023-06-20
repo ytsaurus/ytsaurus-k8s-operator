@@ -28,7 +28,7 @@ var _ = Describe("Basic test for YTsaurus controller", func() {
 
 			logger := log.FromContext(ctx)
 
-			ytsaurus := CreateBaseYtsaurusResource(namespace)
+			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
 
 			defer func() {
 				if err := k8sClient.Delete(ctx, ytsaurus); err != nil {
@@ -49,7 +49,7 @@ var _ = Describe("Basic test for YTsaurus controller", func() {
 
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
 
-			ytsaurusLookupKey := types.NamespacedName{Name: YtsaurusName, Namespace: namespace}
+			ytsaurusLookupKey := types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}
 
 			Eventually(func() bool {
 				createdYtsaurus := &ytv1.Ytsaurus{}
@@ -75,7 +75,7 @@ var _ = Describe("Basic test for YTsaurus controller", func() {
 			By("Check ytsaurus state equal to `Running`")
 			Eventually(func() bool {
 				ytsaurus := &ytv1.Ytsaurus{}
-				err := k8sClient.Get(ctx, types.NamespacedName{Name: YtsaurusName, Namespace: namespace}, ytsaurus)
+				err := k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)
 				if err != nil {
 					return false
 				}

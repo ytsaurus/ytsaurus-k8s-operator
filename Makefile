@@ -162,3 +162,5 @@ kind-tests-env: manifests kustomize helm
 	kind load docker-image ytsaurus/k8s-operator:0.0.0-alpha
 	helm install ytsaurus ytop-chart/
 
+kind-tests-env-uninstall:
+	helm uninstall ytsaurus

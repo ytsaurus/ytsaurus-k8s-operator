@@ -25,7 +25,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
@@ -48,7 +48,7 @@ var testEnv *envtest.Environment
 var ctx context.Context
 var cancel context.CancelFunc
 
-func TestAPIs(t *testing.T) {
+func TestWebhooks(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	RunSpecs(t, "Webhook Suite")
@@ -67,6 +67,12 @@ var _ = BeforeSuite(func() {
 			Paths: []string{filepath.Join("..", "..", "config", "webhook")},
 		},
 	}
+
+	// psushin: this may be required for ipv6-only hosts (like Sandbox CI).
+	// https://github.com/kubernetes/kubernetes/issues/111671#issuecomment-1206562634
+	apiServer := envtest.APIServer{}
+	apiServer.Configure().Append("advertise-address", "127.0.0.1")
+	testEnv.ControlPlane.APIServer = &apiServer
 
 	var err error
 	// cfg is defined in this file globally.
