@@ -164,6 +164,6 @@ func (s *server) RebuildStatefulSet() *appsv1.StatefulSet {
 		Volumes:  createVolumes(s.instanceSpec.Volumes, s.labeller.GetMainConfigMapName()),
 		Affinity: s.instanceSpec.Affinity,
 	}
-
+	s.builtStatefulSet = statefulSet
 	return statefulSet
 }

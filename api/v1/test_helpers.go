@@ -22,7 +22,7 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 			Namespace: namespace,
 		},
 		Spec: YtsaurusSpec{
-			CoreImage: "ytsaurus/ytsaurus:unstable-0.0.4",
+			CoreImage: "ytsaurus/ytsaurus:23.1-latest",
 			Discovery: DiscoverySpec{
 				InstanceSpec: InstanceSpec{
 					InstanceCount: 1,

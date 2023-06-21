@@ -81,6 +81,30 @@ var _ = Describe("Basic test for YTsaurus controller", func() {
 				}
 				return ytsaurus.Status.State == ytv1.ClusterStateRunning
 			}, timeout*2, interval).Should(BeTrue())
+
+			By("Run cluster update")
+
+			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)).Should(Succeed())
+			ytsaurus.Spec.CoreImage = "ytsaurus/ytsaurus:dev"
+			Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+
+			Eventually(func() bool {
+				ytsaurus := &ytv1.Ytsaurus{}
+				err := k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)
+				if err != nil {
+					return false
+				}
+				return ytsaurus.Status.State == ytv1.ClusterStateUpdating
+			}, timeout, interval).Should(BeTrue())
+
+			Eventually(func() bool {
+				ytsaurus := &ytv1.Ytsaurus{}
+				err := k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)
+				if err != nil {
+					return false
+				}
+				return ytsaurus.Status.State == ytv1.ClusterStateRunning
+			}, timeout, interval).Should(BeTrue())
 		})
 	})
 
