@@ -12,7 +12,8 @@ type YQLEmbedded struct {
 
 type YQLAgent struct {
 	YQLEmbedded
-	AdditionalClusters map[string]string `yson:"additional_clusters"`
+	Clusters       map[string]string `yson:"clusters"`
+	DefaultCluster string            `yson:"default_cluster"`
 }
 
 type YQLAgentServer struct {
