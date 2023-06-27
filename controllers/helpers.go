@@ -8,6 +8,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	defaultClusterDomain = "cluster.local"
+)
+
 func getClusterDomain(client client.Client) string {
 	domain, exists := os.LookupEnv("K8S_CLUSTER_DOMAIN")
 	if exists {
@@ -17,7 +21,6 @@ func getClusterDomain(client client.Client) string {
 
 	cname, err := net.LookupCNAME(apiSvc)
 	if err != nil {
-		defaultClusterDomain := "cluster.local"
 		return defaultClusterDomain
 	}
 
