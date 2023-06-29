@@ -979,7 +979,7 @@ spec:
                     items:
                       properties:
                         minLogLevel:
-                          description: LogLevel string describes possible YTsaurus
+                          description: LogLevel string describes possible Ytsaurus
                             logging level.
                           enum:
                           - trace
@@ -3774,7 +3774,7 @@ spec:
                       items:
                         properties:
                           minLogLevel:
-                            description: LogLevel string describes possible YTsaurus
+                            description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
                             - trace
@@ -6602,7 +6602,7 @@ spec:
                     items:
                       properties:
                         minLogLevel:
-                          description: LogLevel string describes possible YTsaurus
+                          description: LogLevel string describes possible Ytsaurus
                             logging level.
                           enum:
                           - trace
@@ -9395,7 +9395,7 @@ spec:
                       items:
                         properties:
                           minLogLevel:
-                            description: LogLevel string describes possible YTsaurus
+                            description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
                             - trace
@@ -12240,7 +12240,7 @@ spec:
                       items:
                         properties:
                           minLogLevel:
-                            description: LogLevel string describes possible YTsaurus
+                            description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
                             - trace
@@ -15094,7 +15094,7 @@ spec:
                     items:
                       properties:
                         minLogLevel:
-                          description: LogLevel string describes possible YTsaurus
+                          description: LogLevel string describes possible Ytsaurus
                             logging level.
                           enum:
                           - trace
@@ -17875,7 +17875,7 @@ spec:
                     items:
                       properties:
                         minLogLevel:
-                          description: LogLevel string describes possible YTsaurus
+                          description: LogLevel string describes possible Ytsaurus
                             logging level.
                           enum:
                           - trace
@@ -20668,7 +20668,7 @@ spec:
                       items:
                         properties:
                           minLogLevel:
-                            description: LogLevel string describes possible YTsaurus
+                            description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
                             - trace
@@ -23503,7 +23503,7 @@ spec:
                     items:
                       properties:
                         minLogLevel:
-                          description: LogLevel string describes possible YTsaurus
+                          description: LogLevel string describes possible Ytsaurus
                             logging level.
                           enum:
                           - trace
@@ -26298,7 +26298,7 @@ spec:
                       items:
                         properties:
                           minLogLevel:
-                            description: LogLevel string describes possible YTsaurus
+                            description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
                             - trace
@@ -29148,7 +29148,7 @@ spec:
                       items:
                         properties:
                           minLogLevel:
-                            description: LogLevel string describes possible YTsaurus
+                            description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
                             - trace
@@ -32030,7 +32030,7 @@ spec:
                     items:
                       properties:
                         minLogLevel:
-                          description: LogLevel string describes possible YTsaurus
+                          description: LogLevel string describes possible Ytsaurus
                             logging level.
                           enum:
                           - trace

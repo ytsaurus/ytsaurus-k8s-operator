@@ -41,11 +41,11 @@ func (l *Labeller) GetInitJobName(name string) string {
 }
 
 func (l *Labeller) GetPodsRemovingStartedCondition() string {
-	return fmt.Sprintf("%sPodsRemovingStarted", l.ComponentLabel)
+	return fmt.Sprintf("%sPodsRemovingStarted", l.ComponentName)
 }
 
 func (l *Labeller) GetPodsRemovedCondition() string {
-	return fmt.Sprintf("%sPodsRemoved", l.ComponentLabel)
+	return fmt.Sprintf("%sPodsRemoved", l.ComponentName)
 }
 
 func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {

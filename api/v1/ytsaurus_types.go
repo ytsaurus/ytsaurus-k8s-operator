@@ -86,7 +86,7 @@ type LocationSpec struct {
 	Medium string `json:"medium,omitempty"`
 }
 
-// LogLevel string describes possible YTsaurus logging level.
+// LogLevel string describes possible Ytsaurus logging level.
 // +enum
 type LogLevel string
 
@@ -259,12 +259,15 @@ const (
 	ClusterStateReconfiguration ClusterState = "Reconfiguration"
 	ClusterStateUpdating        ClusterState = "Updating"
 	ClusterStateUpdateFinishing ClusterState = "UpdateFinishing"
+	ClusterStateCancelUpdate    ClusterState = "CancelUpdate"
 )
 
 type UpdateState string
 
 const (
 	UpdateStateNone                               UpdateState = "None"
+	UpdateStatePossibilityCheck                   UpdateState = "PossibilityCheck"
+	UpdateStateImpossibleToStart                  UpdateState = "ImpossibleToStart"
 	UpdateStateWaitingForSafeModeEnabled          UpdateState = "WaitingForSafeModeEnabled"
 	UpdateStateWaitingForTabletCellsSaving        UpdateState = "WaitingForTabletCellsSaving"
 	UpdateStateWaitingForTabletCellsRemovingStart UpdateState = "WaitingForTabletCellsRemovingStart"

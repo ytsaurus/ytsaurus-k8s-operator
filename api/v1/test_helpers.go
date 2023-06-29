@@ -65,9 +65,9 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 					},
 					Loggers: []LoggerSpec{
 						{
+							MinLogLevel: LogLevelDebug,
+							WriterType:  LogWriterTypeFile,
 							Name:        "debug",
-							WriterType:  "file",
-							MinLogLevel: "debug",
 						},
 					},
 				},
@@ -83,7 +83,7 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 			DataNodes: []DataNodesSpec{
 				{
 					InstanceSpec: InstanceSpec{
-						InstanceCount: 1,
+						InstanceCount: 3,
 						Locations: []LocationSpec{
 							{
 								LocationType: "ChunkStore",
@@ -109,6 +109,20 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 					},
 				},
 			},
+			TabletNodes: []TabletNodesSpec{
+				{
+					InstanceSpec: InstanceSpec{
+						InstanceCount: 3,
+						Loggers: []LoggerSpec{
+							{
+								MinLogLevel: LogLevelDebug,
+								WriterType:  LogWriterTypeFile,
+								Name:        "debug",
+							},
+						},
+					},
+				},
+			},
 			ExecNodes: []ExecNodesSpec{
 				{
 					InstanceSpec: InstanceSpec{
@@ -117,6 +131,13 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 							Requests: corev1.ResourceList{
 								corev1.ResourceCPU:    execNodeCPU,
 								corev1.ResourceMemory: execNodeMemory,
+							},
+						},
+						Loggers: []LoggerSpec{
+							{
+								MinLogLevel: LogLevelDebug,
+								WriterType:  LogWriterTypeFile,
+								Name:        "debug",
 							},
 						},
 						Locations: []LocationSpec{

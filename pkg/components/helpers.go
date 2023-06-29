@@ -12,6 +12,7 @@ func CreateTabletCells(ctx context.Context, ytClient yt.Client, bundle string, t
 	logger := log.FromContext(ctx)
 
 	var initTabletCellCount int
+
 	if err := ytClient.GetNode(
 		ctx,
 		ypath.Path(fmt.Sprintf("//sys/tablet_cell_bundles/%s/@tablet_cell_count", bundle)),
@@ -35,4 +36,26 @@ func CreateTabletCells(ctx context.Context, ytClient yt.Client, bundle string, t
 		}
 	}
 	return nil
+}
+
+func GetNotGoodTabletCellBundles(ctx context.Context, ytClient yt.Client) ([]string, error) {
+	var tabletCellBundles []TabletCellBundleHealth
+	err := ytClient.ListNode(
+		ctx,
+		ypath.Path("//sys/tablet_cell_bundles"),
+		&tabletCellBundles,
+		&yt.ListNodeOptions{Attributes: []string{"health"}})
+
+	if err != nil {
+		return nil, err
+	}
+
+	notGoodBundles := make([]string, 0)
+	for _, bundle := range tabletCellBundles {
+		if bundle.Health != "good" {
+			notGoodBundles = append(notGoodBundles, bundle.Name)
+		}
+	}
+
+	return notGoodBundles, err
 }

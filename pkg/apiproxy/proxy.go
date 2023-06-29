@@ -47,6 +47,10 @@ func (c *APIProxy) Ytsaurus() *ytv1.Ytsaurus {
 	return c.ytsaurus
 }
 
+func (c *APIProxy) Client() client.Client {
+	return c.client
+}
+
 func (c *APIProxy) FetchObject(ctx context.Context, name string, obj client.Object) error {
 	err := c.client.Get(ctx, c.GetObjectKey(name), obj)
 	if err == nil || !errors.IsNotFound(err) {
@@ -106,7 +110,7 @@ func (c *APIProxy) SetUpdateStatusCondition(ctx context.Context, condition metav
 func (c *APIProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object) error {
 	var err error
 	if newObj.GetName() == "" {
-		return fmt.Errorf("Cannot sync uninitialized object, object type %T", oldObj)
+		return fmt.Errorf("cannot sync uninitialized object, object type %T", oldObj)
 	}
 	if oldObj.GetResourceVersion() == "" {
 		err = c.createAndReferenceObject(ctx, newObj)
@@ -167,4 +171,37 @@ func (c *APIProxy) createAndReferenceObject(ctx context.Context, obj client.Obje
 
 func (c *APIProxy) UpdateStatus(ctx context.Context) error {
 	return c.client.Status().Update(ctx, c.ytsaurus)
+}
+
+func (c *APIProxy) ClearUpdateStatus(ctx context.Context) error {
+	c.ytsaurus.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
+	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
+	c.ytsaurus.Status.UpdateStatus.MasterMonitoringPaths = make([]string, 0)
+	return c.UpdateStatus(ctx)
+}
+func (c *APIProxy) LogUpdate(ctx context.Context, message string) {
+	logger := log.FromContext(ctx)
+	c.RecordNormal("Update", message)
+	logger.Info(fmt.Sprintf("Ytsaurus update: %s", message))
+}
+
+func (c *APIProxy) SaveClusterState(ctx context.Context, clusterState ytv1.ClusterState) error {
+	logger := log.FromContext(ctx)
+	c.ytsaurus.Status.State = clusterState
+	if err := c.UpdateStatus(ctx); err != nil {
+		logger.Error(err, "unable to update Ytsaurus cluster status")
+		return err
+	}
+
+	return nil
+}
+
+func (c *APIProxy) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateState) error {
+	logger := log.FromContext(ctx)
+	c.ytsaurus.Status.UpdateStatus.State = updateState
+	if err := c.UpdateStatus(ctx); err != nil {
+		logger.Error(err, "unable to update Ytsaurus update state")
+		return err
+	}
+	return nil
 }

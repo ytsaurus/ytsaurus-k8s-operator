@@ -23,6 +23,7 @@ type Server interface {
 	BuildStatefulSet() *appsv1.StatefulSet
 	RebuildStatefulSet() *appsv1.StatefulSet
 	NeedUpdate() bool
+	isImageEqualTo(expectedImage string) bool
 }
 
 // Server represents a typical YT cluster server component, like master or scheduler.
@@ -99,10 +100,12 @@ func (s *server) ArePodsRemoved() bool {
 	return s.statefulSet.NeedSync(0)
 }
 
+func (s *server) isImageEqualTo(expectedImage string) bool {
+	return s.statefulSet.OldObject().(*appsv1.StatefulSet).Spec.Template.Spec.Containers[0].Image == expectedImage
+}
+
 func (s *server) NeedUpdate() bool {
-	oldImage := s.statefulSet.OldObject().(*appsv1.StatefulSet).Spec.Template.Spec.Containers[0].Image
-	newImage := s.apiProxy.Ytsaurus().Spec.CoreImage
-	return oldImage != newImage
+	return !s.isImageEqualTo(s.apiProxy.Ytsaurus().Spec.CoreImage)
 }
 
 func (s *server) ArePodsReady(ctx context.Context) bool {

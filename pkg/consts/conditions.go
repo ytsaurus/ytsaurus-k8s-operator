@@ -1,5 +1,7 @@
 package consts
 
+const ConditionHasPossibility = "HasPossibility"
+const ConditionNoPossibility = "NoPossibility"
 const ConditionSafeModeEnabled = "SafeModeEnabled"
 const ConditionTabletCellsSaved = "TabletCellsSaved"
 const ConditionTabletCellsRemovingStarted = "TabletCellsRemovingStarted"

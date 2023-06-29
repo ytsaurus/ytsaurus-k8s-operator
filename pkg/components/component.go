@@ -22,6 +22,7 @@ const (
 type ServerComponent interface {
 	Component
 	GetPodsRemovedCondition() string
+	IsImageEqualTo(expectedImage string) bool
 }
 
 type ServerComponentBase struct {
@@ -31,6 +32,10 @@ type ServerComponentBase struct {
 
 func (c *ServerComponentBase) GetPodsRemovedCondition() string {
 	return c.labeller.GetPodsRemovedCondition()
+}
+
+func (c *ServerComponentBase) IsImageEqualTo(expectedImage string) bool {
+	return c.server.isImageEqualTo(expectedImage)
 }
 
 func (c *ServerComponentBase) removePods(ctx context.Context, dry bool) error {
@@ -76,6 +81,7 @@ type Component interface {
 	Sync(ctx context.Context) error
 	Status(ctx context.Context) SyncStatus
 	GetName() string
+	GetLabel() string
 }
 
 type ComponentBase struct {
@@ -86,4 +92,8 @@ type ComponentBase struct {
 
 func (c *ComponentBase) GetName() string {
 	return c.labeller.ComponentName
+}
+
+func (c *ComponentBase) GetLabel() string {
+	return c.labeller.ComponentLabel
 }

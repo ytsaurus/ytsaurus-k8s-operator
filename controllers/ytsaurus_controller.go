@@ -59,7 +59,7 @@ func (r *YtsaurusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		// on deleted requests.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	logger.V(1).Info("found YTsaurus cluster")
+	logger.V(1).Info("found Ytsaurus cluster")
 
 	return r.Sync(ctx, &ytsaurus)
 }

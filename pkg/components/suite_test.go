@@ -53,6 +53,10 @@ func (fc *FakeComponent) GetName() string {
 	return fc.name
 }
 
+func (fc *FakeComponent) GetLabel() string {
+	return fc.name
+}
+
 type FakeServer struct {
 	arePodsReady bool
 }
@@ -67,6 +71,10 @@ func (fs *FakeServer) Fetch(ctx context.Context) error {
 
 func (fs *FakeServer) NeedUpdate() bool {
 	return false
+}
+
+func (fs *FakeServer) isImageEqualTo(expectedImage string) bool {
+	return true
 }
 
 func (fs *FakeServer) IsInSync() bool {

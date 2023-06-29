@@ -22,7 +22,7 @@ type master struct {
 	adminCredentials corev1.Secret
 }
 
-func NewMaster(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Component {
+func NewMaster(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) ServerComponent {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
