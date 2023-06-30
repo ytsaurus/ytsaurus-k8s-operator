@@ -119,7 +119,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, ytsaurus *ytv1.Ytsaurus) 
 	logger := log.FromContext(ctx)
 
 	if !ytsaurus.Spec.IsManaged {
-		logger.Info("Ytsaurus cluster isn't managed by controller, do nothing")
+		logger.Info("Ytsaurus cluster is not managed by controller, do nothing")
 		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 

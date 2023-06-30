@@ -99,9 +99,18 @@ func getReadOnlyGetOptions() *yt.GetNodeOptions {
 	}
 }
 
+type MasterState string
+
+const (
+	MasterStateLeading   MasterState = "leading"
+	MasterStateFollowing MasterState = "following"
+)
+
 type MasterHydra struct {
-	ReadOnly             bool `yson:"read_only"`
-	LastSnapshotReadOnly bool `yson:"last_snapshot_read_only"`
+	ReadOnly             bool        `yson:"read_only"`
+	LastSnapshotReadOnly bool        `yson:"last_snapshot_read_only"`
+	Active               bool        `yson:"active"`
+	State                MasterState `yson:"state"`
 }
 
 func (yc *ytsaurusClient) getAllMasters(ctx context.Context) ([]MasterInfo, error) {
@@ -164,6 +173,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 		if !yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionHasPossibility) &&
 			!yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
 
+			// Check tablet cell bundles.
 			notGoodBundles, err := GetNotGoodTabletCellBundles(ctx, yc.ytClient)
 
 			if err != nil {
@@ -176,6 +186,89 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
 					Message: fmt.Sprintf("Tablet cell bundles (%v) aren't in 'good' health", notGoodBundles),
+				})
+				return SyncStatusUpdating, err
+			}
+
+			// Check LVC.
+			lvcCount := 0
+			err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/lost_vital_chunks/@count"), &lvcCount, nil)
+			if err != nil {
+				return SyncStatusUpdating, err
+			}
+
+			if lvcCount > 0 {
+				err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+					Type:    consts.ConditionNoPossibility,
+					Status:  metav1.ConditionTrue,
+					Reason:  "Update",
+					Message: fmt.Sprintf("There are lost vital chunks: %v", lvcCount),
+				})
+				return SyncStatusUpdating, err
+			}
+
+			// Check QMC.
+			qmcCount := 0
+			err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/quorum_missing_chunks/@count"), &qmcCount, nil)
+			if err != nil {
+				return SyncStatusUpdating, err
+			}
+
+			if qmcCount > 0 {
+				err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+					Type:    consts.ConditionNoPossibility,
+					Status:  metav1.ConditionTrue,
+					Reason:  "Update",
+					Message: fmt.Sprintf("There are quorum missing chunks: %v", qmcCount),
+				})
+				return SyncStatusUpdating, err
+			}
+
+			// Check masters.
+			primaryMasterAddresses := make([]string, 0)
+			err = yc.ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &primaryMasterAddresses, nil)
+			if err != nil {
+				return SyncStatusUpdating, err
+			}
+
+			leadingPrimaryMasterCount := 0
+			followingPrimaryMasterCount := 0
+
+			for _, primaryMasterAddress := range primaryMasterAddresses {
+				var hydra MasterHydra
+				err := yc.ytClient.GetNode(
+					ctx,
+					ypath.Path(fmt.Sprintf("//sys/primary_masters/%v/orchid/monitoring/hydra", primaryMasterAddress)),
+					&hydra,
+					nil)
+				if err != nil {
+					return SyncStatusUpdating, err
+				}
+
+				if !hydra.Active {
+					err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+						Type:    consts.ConditionNoPossibility,
+						Status:  metav1.ConditionTrue,
+						Reason:  "Update",
+						Message: fmt.Sprintf("There is a non-active master: %v", primaryMasterAddresses),
+					})
+					return SyncStatusUpdating, err
+				}
+
+				switch hydra.State {
+				case MasterStateLeading:
+					leadingPrimaryMasterCount += 1
+				case MasterStateFollowing:
+					followingPrimaryMasterCount += 1
+				}
+			}
+
+			if !(leadingPrimaryMasterCount == 1 && followingPrimaryMasterCount+1 == len(primaryMasterAddresses)) {
+				err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+					Type:    consts.ConditionNoPossibility,
+					Status:  metav1.ConditionTrue,
+					Reason:  "Update",
+					Message: fmt.Sprintf("There is no leader or some peer is not active"),
 				})
 				return SyncStatusUpdating, err
 			}
