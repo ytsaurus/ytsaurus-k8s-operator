@@ -19,8 +19,6 @@ type rpcProxy struct {
 
 	serviceType      *v1.ServiceType
 	balancingService *resources.RPCService
-
-	role string
 }
 
 func NewRPCProxy(
@@ -70,7 +68,6 @@ func NewRPCProxy(
 		master:           masterReconciler,
 		serviceType:      spec.ServiceType,
 		balancingService: balancingService,
-		role:             spec.Role,
 	}
 }
 

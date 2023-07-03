@@ -18,9 +18,9 @@ type spyt struct {
 	initEnvironment *InitJob
 
 	master    Component
-	execNode  Component
 	scheduler Component
-	dataNode  Component
+	execNodes []Component
+	dataNodes []Component
 
 	spytVersion  string
 	sparkVersion string
@@ -29,7 +29,8 @@ type spyt struct {
 func NewSpyt(
 	cfgen *ytconfig.Generator,
 	apiProxy *apiproxy.APIProxy,
-	master, execNode, scheduler, dataNode Component) Component {
+	master, scheduler Component,
+	execNodes, dataNodes []Component) Component {
 
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
@@ -46,9 +47,9 @@ func NewSpyt(
 			cfgen:    cfgen,
 		},
 		master:    master,
-		execNode:  execNode,
+		execNodes: execNodes,
 		scheduler: scheduler,
-		dataNode:  dataNode,
+		dataNodes: dataNodes,
 
 		sparkVersion: ytsaurus.Spec.Spyt.SparkVersion,
 		spytVersion:  ytsaurus.Spec.Spyt.SpytVersion,
@@ -180,14 +181,20 @@ func (s *spyt) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 
 	// TODO: add update logic.
 	if s.master.Status(ctx) != SyncStatusReady ||
-		s.execNode.Status(ctx) != SyncStatusReady ||
-		s.scheduler.Status(ctx) != SyncStatusReady ||
-		s.dataNode.Status(ctx) != SyncStatusReady {
+		s.scheduler.Status(ctx) != SyncStatusReady {
 		return SyncStatusBlocked, err
 	}
 
-	if s.execNode.Status(ctx) != SyncStatusReady {
-		return SyncStatusBlocked, err
+	for _, end := range s.execNodes {
+		if end.Status(ctx) != SyncStatusReady {
+			return SyncStatusBlocked, err
+		}
+	}
+
+	for _, dnd := range s.dataNodes {
+		if dnd.Status(ctx) != SyncStatusReady {
+			return SyncStatusBlocked, err
+		}
 	}
 
 	if !dry {

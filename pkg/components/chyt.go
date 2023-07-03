@@ -22,8 +22,8 @@ type chytController struct {
 	initChPublicJob *InitJob
 	secret          *resources.StringSecret
 
-	master   Component
-	dataNode Component
+	master    Component
+	dataNodes []Component
 }
 
 const ChytControllerConfigFileName = "chyt-controller.yson"
@@ -33,7 +33,7 @@ func NewChytController(
 	cfgen *ytconfig.Generator,
 	apiProxy *apiproxy.APIProxy,
 	master Component,
-	dataNode Component) Component {
+	dataNodes []Component) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
@@ -81,8 +81,8 @@ func NewChytController(
 			labeller.GetSecretName(),
 			&labeller,
 			apiProxy),
-		master:   master,
-		dataNode: dataNode,
+		master:    master,
+		dataNodes: dataNodes,
 	}
 }
 
@@ -218,8 +218,10 @@ func (c *chytController) doSync(ctx context.Context, dry bool) (SyncStatus, erro
 		return SyncStatusBlocked, err
 	}
 
-	if c.dataNode.Status(ctx) != SyncStatusReady {
-		return SyncStatusBlocked, err
+	for _, dataNode := range c.dataNodes {
+		if dataNode.Status(ctx) != SyncStatusReady {
+			return SyncStatusBlocked, err
+		}
 	}
 
 	if c.secret.NeedSync(consts.TokenSecretKey, "") {

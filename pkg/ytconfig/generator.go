@@ -225,8 +225,8 @@ func (g *Generator) GetControllerAgentConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) GetDataNodeConfig() ([]byte, error) {
-	c, err := getDataNodeServerCarcass(g.ytsaurus.Spec.DataNodes[0])
+func (g *Generator) GetDataNodeConfig(spec v1.DataNodesSpec) ([]byte, error) {
+	c, err := getDataNodeServerCarcass(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -236,13 +236,9 @@ func (g *Generator) GetDataNodeConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) GetExecNodeConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.ExecNodes == nil {
-		return []byte{}, nil
-	}
-
+func (g *Generator) GetExecNodeConfig(spec v1.ExecNodesSpec) ([]byte, error) {
 	c, err := getExecNodeServerCarcass(
-		g.ytsaurus.Spec.ExecNodes[0],
+		spec,
 		g.ytsaurus.Spec.UsePorto)
 	if err != nil {
 		return nil, err
@@ -253,12 +249,8 @@ func (g *Generator) GetExecNodeConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) GetTabletNodeConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.TabletNodes == nil {
-		return []byte{}, nil
-	}
-
-	c, err := getTabletNodeServerCarcass(g.ytsaurus.Spec.TabletNodes[0])
+func (g *Generator) GetTabletNodeConfig(spec v1.TabletNodesSpec) ([]byte, error) {
+	c, err := getTabletNodeServerCarcass(spec)
 	if err != nil {
 		return nil, err
 	}

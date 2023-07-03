@@ -64,6 +64,45 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.httpProxies[1].role: Duplicate value: \"default\"")))
 		})
 
+		It("Should not accept a Ytsaurus resource with the same node names", func() {
+			ytsaurus := CreateBaseYtsaurusResource(namespace)
+
+			ytsaurus.Spec.DataNodes = []DataNodesSpec{
+				{
+					InstanceSpec: InstanceSpec{InstanceCount: 1},
+				},
+				{
+					InstanceSpec: InstanceSpec{InstanceCount: 1},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.dataNodes[1].name: Duplicate value: \"default\"")))
+
+			ytsaurus = CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.TabletNodes = []TabletNodesSpec{
+				{
+					InstanceSpec: InstanceSpec{InstanceCount: 1},
+				},
+				{
+					InstanceSpec: InstanceSpec{InstanceCount: 1},
+				},
+			}
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.tabletNodes[1].name: Duplicate value: \"default\"")))
+
+			ytsaurus = CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.ExecNodes = []ExecNodesSpec{
+				{
+					InstanceSpec: InstanceSpec{InstanceCount: 1},
+				},
+				{
+					InstanceSpec: InstanceSpec{InstanceCount: 1},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.execNodes[1].name: Duplicate value: \"default\"")))
+
+		})
+
 		It("Should not accept a Ytsaurus resource with EnableAntiAffinity flag set in different spec fields", func() {
 			ytsaurus := CreateBaseYtsaurusResource(namespace)
 
@@ -75,11 +114,13 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 					InstanceSpec: InstanceSpec{
 						EnableAntiAffinity: &trueEnableAntiAffinity,
 					},
+					Name: "default",
 				},
 				{
 					InstanceSpec: InstanceSpec{
 						EnableAntiAffinity: &falseEnableAntiAffinity,
 					},
+					Name: "other",
 				},
 			}
 			ytsaurus.Spec.ControllerAgents = &ControllerAgentsSpec{

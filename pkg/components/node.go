@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"fmt"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -16,25 +17,32 @@ type node struct {
 	master Component
 }
 
-func NewDataNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
+func NewDataNode(
+	cfgen *ytconfig.Generator,
+	apiProxy *apiproxy.APIProxy,
+	master Component,
+	spec ytv1.DataNodesSpec,
+) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
 		APIProxy:       apiProxy,
-		ComponentLabel: consts.YTComponentLabelDataNode,
-		ComponentName:  "DataNode",
+		ComponentLabel: fmt.Sprintf("%s-%s", consts.YTComponentLabelDataNode, spec.Name),
+		ComponentName:  fmt.Sprintf("DataNode-%s", spec.Name),
 		MonitoringPort: consts.NodeMonitoringPort,
 	}
 
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.DataNodes[0].InstanceSpec,
+		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-data-node.yson",
-		"dnd",
-		"data-nodes",
-		cfgen.GetDataNodeConfig,
+		cfgen.GetDataNodesStatefulSetName(spec.Name),
+		cfgen.GetDataNodesServiceName(spec.Name),
+		func() ([]byte, error) {
+			return cfgen.GetDataNodeConfig(spec)
+		},
 	)
 
 	return &node{
@@ -50,25 +58,32 @@ func NewDataNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 	}
 }
 
-func NewExecNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
+func NewExecNode(
+	cfgen *ytconfig.Generator,
+	apiProxy *apiproxy.APIProxy,
+	master Component,
+	spec ytv1.ExecNodesSpec,
+) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
 		APIProxy:       apiProxy,
-		ComponentLabel: consts.YTComponentLabelExecNode,
-		ComponentName:  "ExecNode",
+		ComponentLabel: fmt.Sprintf("%s-%s", consts.YTComponentLabelExecNode, spec.Name),
+		ComponentName:  fmt.Sprintf("ExecNode-%v", spec.Name),
 		MonitoringPort: consts.NodeMonitoringPort,
 	}
 
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.ExecNodes[0].InstanceSpec,
+		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-exec-node.yson",
-		"end",
-		"exec-nodes",
-		cfgen.GetExecNodeConfig,
+		cfgen.GetExecNodesStatefulSetName(spec.Name),
+		cfgen.GetExecNodesServiceName(spec.Name),
+		func() ([]byte, error) {
+			return cfgen.GetExecNodeConfig(spec)
+		},
 	)
 
 	return &node{

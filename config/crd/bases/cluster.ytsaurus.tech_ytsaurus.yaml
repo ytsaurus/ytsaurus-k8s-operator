@@ -3793,6 +3793,10 @@ spec:
                             type: string
                         type: object
                       type: array
+                    name:
+                      default: default
+                      minLength: 1
+                      type: string
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -9414,6 +9418,10 @@ spec:
                             type: string
                         type: object
                       type: array
+                    name:
+                      default: default
+                      minLength: 1
+                      type: string
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -29167,6 +29175,10 @@ spec:
                             type: string
                         type: object
                       type: array
+                    name:
+                      default: default
+                      minLength: 1
+                      type: string
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.

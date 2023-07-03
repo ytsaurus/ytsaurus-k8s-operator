@@ -18,14 +18,18 @@ import (
 type scheduler struct {
 	ServerComponentBase
 	master        Component
-	execNodes     Component
-	tabletNodes   Component
+	execNodes     []Component
+	tabletNodes   []Component
 	initUser      *InitJob
 	initOpArchive *InitJob
 	secret        *resources.StringSecret
 }
 
-func NewScheduler(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master, execNodes, tabletNodes Component) Component {
+func NewScheduler(
+	cfgen *ytconfig.Generator,
+	apiProxy *apiproxy.APIProxy,
+	master Component,
+	execNodes, tabletNodes []Component) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
@@ -124,9 +128,13 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		return SyncStatusBlocked, err
 	}
 
-	if s.execNodes == nil || s.execNodes.Status(ctx) != SyncStatusReady {
-		// It makes no sense to start scheduler without exec nodes.
-		return SyncStatusBlocked, err
+	if s.execNodes == nil || len(s.execNodes) > 0 {
+		for _, end := range s.execNodes {
+			if end.Status(ctx) != SyncStatusReady {
+				// It makes no sense to start scheduler without exec nodes.
+				return SyncStatusBlocked, err
+			}
+		}
 	}
 
 	if s.secret.NeedSync(consts.TokenSecretKey, "") {
@@ -152,7 +160,7 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		return SyncStatusBlocked, err
 	}
 
-	if s.tabletNodes == nil {
+	if s.tabletNodes == nil || len(s.tabletNodes) == 0 {
 		// Don't initialize operations archive.
 		return SyncStatusReady, err
 	}
@@ -166,9 +174,11 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		return status, err
 	}
 
-	if s.tabletNodes.Status(ctx) != SyncStatusReady {
-		// Wait for tablet nodes to proceed with operations archive init.
-		return SyncStatusBlocked, err
+	for _, tnd := range s.tabletNodes {
+		if tnd.Status(ctx) != SyncStatusReady {
+			// Wait for tablet nodes to proceed with operations archive init.
+			return SyncStatusBlocked, err
+		}
 	}
 
 	if !dry {

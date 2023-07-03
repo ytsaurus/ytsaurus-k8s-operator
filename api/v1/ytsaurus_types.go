@@ -153,16 +153,25 @@ type DataNodesSpec struct {
 	// label filter (for daemonset)
 	// use host network
 	InstanceSpec `json:",inline"`
+	//+kubebuilder:default:=default
+	//+kubebuilder:validation:MinLength:=1
+	Name string `json:"name,omitempty"`
 }
 
 type ExecNodesSpec struct {
 	// label filter (for daemonset)
 	InstanceSpec `json:",inline"`
+	//+kubebuilder:default:=default
+	//+kubebuilder:validation:MinLength:=1
+	Name string `json:"name,omitempty"`
 }
 
 type TabletNodesSpec struct {
 	// label filter (for daemonset)
 	InstanceSpec `json:",inline"`
+	//+kubebuilder:default:=default
+	//+kubebuilder:validation:MinLength:=1
+	Name string `json:"name,omitempty"`
 }
 
 type SchedulersSpec struct {

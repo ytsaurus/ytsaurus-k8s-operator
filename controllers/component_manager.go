@@ -34,13 +34,19 @@ func NewComponentManager(
 	}
 	yc := components.NewYtsaurusClient(cfgen, apiProxy, hps[0])
 
-	dn := components.NewDataNode(cfgen, apiProxy, m)
+	var dnds []components.Component
+	if ytsaurus.Spec.DataNodes != nil && len(ytsaurus.Spec.DataNodes) > 0 {
+		for _, dndSpec := range apiProxy.Ytsaurus().Spec.DataNodes {
+			dnds = append(dnds, components.NewDataNode(cfgen, apiProxy, m, dndSpec))
+		}
+	}
 
-	var en, tn, s components.Component
+	var s components.Component
 
 	allComponents := []components.Component{
-		d, m, dn, yc,
+		d, m, yc,
 	}
+	allComponents = append(allComponents, dnds...)
 	allComponents = append(allComponents, hps...)
 
 	if ytsaurus.Spec.UI != nil {
@@ -56,18 +62,24 @@ func NewComponentManager(
 		allComponents = append(allComponents, rps...)
 	}
 
+	var ends []components.Component
 	if ytsaurus.Spec.ExecNodes != nil && len(ytsaurus.Spec.ExecNodes) > 0 {
-		en = components.NewExecNode(cfgen, apiProxy, m)
-		allComponents = append(allComponents, en)
+		for _, endSpec := range apiProxy.Ytsaurus().Spec.ExecNodes {
+			ends = append(ends, components.NewExecNode(cfgen, apiProxy, m, endSpec))
+		}
 	}
+	allComponents = append(allComponents, ends...)
 
+	var tnds []components.Component
 	if ytsaurus.Spec.TabletNodes != nil && len(ytsaurus.Spec.TabletNodes) > 0 {
-		tn = components.NewTabletNode(cfgen, apiProxy, yc)
-		allComponents = append(allComponents, tn)
+		for idx, tndSpec := range apiProxy.Ytsaurus().Spec.TabletNodes {
+			tnds = append(tnds, components.NewTabletNode(cfgen, apiProxy, yc, tndSpec, idx == 0))
+		}
 	}
+	allComponents = append(allComponents, tnds...)
 
 	if ytsaurus.Spec.Schedulers != nil {
-		s = components.NewScheduler(cfgen, apiProxy, m, en, tn)
+		s = components.NewScheduler(cfgen, apiProxy, m, ends, tnds)
 		allComponents = append(allComponents, s)
 	}
 
@@ -87,12 +99,12 @@ func NewComponentManager(
 	}
 
 	if ytsaurus.Spec.Chyt != nil {
-		chyt := components.NewChytController(cfgen, apiProxy, m, dn)
+		chyt := components.NewChytController(cfgen, apiProxy, m, dnds)
 		allComponents = append(allComponents, chyt)
 	}
 
-	if ytsaurus.Spec.Spyt != nil && en != nil {
-		spyt := components.NewSpyt(cfgen, apiProxy, m, en, s, dn)
+	if ytsaurus.Spec.Spyt != nil && len(ends) > 0 {
+		spyt := components.NewSpyt(cfgen, apiProxy, m, s, ends, dnds)
 		allComponents = append(allComponents, spyt)
 	}
 

@@ -151,8 +151,15 @@ func (r *Ytsaurus) validateRPCProxies() field.ErrorList {
 func (r *Ytsaurus) validateDataNodes() field.ErrorList {
 	var allErrors field.ErrorList
 
+	names := make(map[string]bool)
 	for i, dn := range r.Spec.DataNodes {
 		path := field.NewPath("spec").Child("dataNodes").Index(i)
+
+		if _, exists := names[dn.Name]; exists {
+			allErrors = append(allErrors, field.Duplicate(path.Child("name"), dn.Name))
+		}
+		names[dn.Name] = true
+
 		allErrors = append(allErrors, r.validateInstanceSpec(dn.InstanceSpec, path)...)
 	}
 
@@ -162,8 +169,15 @@ func (r *Ytsaurus) validateDataNodes() field.ErrorList {
 func (r *Ytsaurus) validateExecNodes() field.ErrorList {
 	var allErrors field.ErrorList
 
+	names := make(map[string]bool)
 	for i, en := range r.Spec.ExecNodes {
 		path := field.NewPath("spec").Child("execNodes").Index(i)
+
+		if _, exists := names[en.Name]; exists {
+			allErrors = append(allErrors, field.Duplicate(path.Child("name"), en.Name))
+		}
+		names[en.Name] = true
+
 		allErrors = append(allErrors, r.validateInstanceSpec(en.InstanceSpec, path)...)
 	}
 
@@ -195,8 +209,15 @@ func (r *Ytsaurus) validateControllerAgents() field.ErrorList {
 func (r *Ytsaurus) validateTabletNodes() field.ErrorList {
 	var allErrors field.ErrorList
 
+	names := make(map[string]bool)
 	for i, tn := range r.Spec.TabletNodes {
 		path := field.NewPath("spec").Child("tabletNodes").Index(i)
+
+		if _, exists := names[tn.Name]; exists {
+			allErrors = append(allErrors, field.Duplicate(path.Child("name"), tn.Name))
+		}
+		names[tn.Name] = true
+
 		allErrors = append(allErrors, r.validateInstanceSpec(tn.InstanceSpec, path)...)
 	}
 

@@ -22,27 +22,37 @@ type tabletNode struct {
 	ytsaurusClient YtsaurusClient
 
 	initBundlesCondition string
+	spec                 ytv1.TabletNodesSpec
+	doInitialization     bool
 }
 
-func NewTabletNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, yc YtsaurusClient) Component {
+func NewTabletNode(
+	cfgen *ytconfig.Generator,
+	apiProxy *apiproxy.APIProxy,
+	yc YtsaurusClient,
+	spec ytv1.TabletNodesSpec,
+	doInitiailization bool,
+) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
 		APIProxy:       apiProxy,
-		ComponentLabel: consts.YTComponentLabelTabletNode,
-		ComponentName:  "TabletNode",
+		ComponentLabel: fmt.Sprintf("%s-%s", consts.YTComponentLabelTabletNode, spec.Name),
+		ComponentName:  fmt.Sprintf("TabletNode-%s", spec.Name),
 		MonitoringPort: consts.NodeMonitoringPort,
 	}
 
 	server := NewServer(
 		&labeller,
 		apiProxy,
-		&ytsaurus.Spec.TabletNodes[0].InstanceSpec,
+		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-tablet-node.yson",
-		"tnd",
-		"tablet-nodes",
-		cfgen.GetTabletNodeConfig,
+		cfgen.GetTabletNodesStatefulSetName(spec.Name),
+		cfgen.GetTabletNodesServiceName(spec.Name),
+		func() ([]byte, error) {
+			return cfgen.GetTabletNodeConfig(spec)
+		},
 	)
 
 	return &tabletNode{
@@ -54,8 +64,10 @@ func NewTabletNode(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, yc Yt
 			},
 			server: server,
 		},
-		initBundlesCondition: fmt.Sprintf("%s%sInitCompleted", "bundles", labeller.ComponentName),
+		initBundlesCondition: "bundlesTabletNodeInitCompleted",
 		ytsaurusClient:       yc,
+		spec:                 spec,
+		doInitialization:     doInitiailization,
 	}
 }
 
@@ -82,7 +94,7 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		return SyncStatusBlocked, err
 	}
 
-	if r.apiProxy.IsStatusConditionTrue(r.initBundlesCondition) {
+	if !r.doInitialization || r.apiProxy.IsStatusConditionTrue(r.initBundlesCondition) {
 		return SyncStatusReady, err
 	}
 
@@ -93,40 +105,43 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	ytClient := r.ytsaurusClient.GetYtClient()
 
 	if !dry {
-		if exists, err := ytClient.NodeExists(ctx, ypath.Path("//sys/tablet_cell_bundles/sys"), nil); err == nil {
-			if !exists {
-				_, err = ytClient.CreateObject(ctx, yt.NodeTabletCellBundle, &yt.CreateObjectOptions{
-					Attributes: map[string]interface{}{
-						"name": "sys",
-						"options": map[string]string{
-							"changelog_account": "sys",
-							"snapshot_account":  "sys",
+		// TODO: refactor it
+		if r.doInitialization {
+			if exists, err := ytClient.NodeExists(ctx, ypath.Path("//sys/tablet_cell_bundles/sys"), nil); err == nil {
+				if !exists {
+					_, err = ytClient.CreateObject(ctx, yt.NodeTabletCellBundle, &yt.CreateObjectOptions{
+						Attributes: map[string]interface{}{
+							"name": "sys",
+							"options": map[string]string{
+								"changelog_account": "sys",
+								"snapshot_account":  "sys",
+							},
 						},
-					},
-				})
+					})
 
+					if err != nil {
+						logger.Error(err, "Creating tablet_cell_bundle failed")
+						return SyncStatusPending, err
+					}
+				}
+			} else {
+				return SyncStatusPending, err
+			}
+
+			for _, bundle := range []string{"default", "sys"} {
+				err = CreateTabletCells(ctx, ytClient, bundle, 1)
 				if err != nil {
-					logger.Error(err, "Creating tablet_cell_bundle failed")
 					return SyncStatusPending, err
 				}
 			}
-		} else {
-			return SyncStatusPending, err
-		}
 
-		for _, bundle := range []string{"default", "sys"} {
-			err = CreateTabletCells(ctx, ytClient, bundle, 1)
-			if err != nil {
-				return SyncStatusPending, err
-			}
+			err = r.apiProxy.SetStatusCondition(ctx, metav1.Condition{
+				Type:    r.initBundlesCondition,
+				Status:  metav1.ConditionTrue,
+				Reason:  "InitBundlesCompleted",
+				Message: "Init bundles successfully completed",
+			})
 		}
-
-		err = r.apiProxy.SetStatusCondition(ctx, metav1.Condition{
-			Type:    r.initBundlesCondition,
-			Status:  metav1.ConditionTrue,
-			Reason:  "InitBundlesCompleted",
-			Message: "Init bundles successfully completed",
-		})
 	}
 
 	return SyncStatusPending, err

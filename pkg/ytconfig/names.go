@@ -125,3 +125,27 @@ func (g *Generator) GetQueryTrackerStatefulSetName() string {
 func (g *Generator) GetQueryTrackerServiceName() string {
 	return g.getName("query-trackers")
 }
+
+func (g *Generator) GetDataNodesStatefulSetName(name string) string {
+	return g.getName(fmt.Sprintf("dnd-%s", name))
+}
+
+func (g *Generator) GetDataNodesServiceName(name string) string {
+	return g.getName(fmt.Sprintf("data-nodes-%s", name))
+}
+
+func (g *Generator) GetExecNodesStatefulSetName(name string) string {
+	return g.getName(fmt.Sprintf("end-%s", name))
+}
+
+func (g *Generator) GetExecNodesServiceName(name string) string {
+	return g.getName(fmt.Sprintf("exec-nodes-%s", name))
+}
+
+func (g *Generator) GetTabletNodesStatefulSetName(name string) string {
+	return g.getName(fmt.Sprintf("tnd-%s", name))
+}
+
+func (g *Generator) GetTabletNodesServiceName(name string) string {
+	return g.getName(fmt.Sprintf("tablet-nodes-%s", name))
+}
