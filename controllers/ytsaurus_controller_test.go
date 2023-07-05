@@ -117,7 +117,7 @@ func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client)
 
 	By("Run cluster update")
 	Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)).Should(Succeed())
-	ytsaurus.Spec.CoreImage = "ytsaurus/ytsaurus:dev"
+	ytsaurus.Spec.CoreImage = ytv1.CoreImageSecond
 	Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
 
 	Eventually(func() bool {
@@ -132,7 +132,7 @@ func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client)
 
 	By("Set previous core image")
 	Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)).Should(Succeed())
-	ytsaurus.Spec.CoreImage = "ytsaurus/ytsaurus:23.1-latest"
+	ytsaurus.Spec.CoreImage = ytv1.CoreImageFirst
 	Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
 
 	By("Wait for running")
@@ -190,7 +190,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			By("Run cluster update")
 
 			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)).Should(Succeed())
-			ytsaurus.Spec.CoreImage = "ytsaurus/ytsaurus:dev"
+			ytsaurus.Spec.CoreImage = ytv1.CoreImageSecond
 			Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
 
 			Eventually(func() bool {

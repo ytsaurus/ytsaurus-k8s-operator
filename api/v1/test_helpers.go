@@ -7,7 +7,9 @@ import (
 )
 
 const (
-	YtsaurusName = "test-ytsaurus"
+	YtsaurusName    = "test-ytsaurus"
+	CoreImageFirst  = "dev-864e613b6261e2458fbee05f1a440d4b277c9ee6"
+	CoreImageSecond = "dev-4526e114f0d15afdd3b7448f65e49abdfb084de9"
 )
 
 func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
@@ -22,7 +24,7 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 			Namespace: namespace,
 		},
 		Spec: YtsaurusSpec{
-			CoreImage: "ytsaurus/ytsaurus:23.1-latest",
+			CoreImage: CoreImageFirst,
 			Discovery: DiscoverySpec{
 				InstanceSpec: InstanceSpec{
 					InstanceCount: 1,
