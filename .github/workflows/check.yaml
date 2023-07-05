@@ -65,6 +65,7 @@ jobs:
       - name: Run tests with kind
         shell: bash
         run: |
+          kind create cluster
           make kind-tests-env
           make test YTSAURUS_ENABLE_KIND_TESTS=true
 
