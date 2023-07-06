@@ -77,6 +77,7 @@ func deleteYtsaurus(ctx context.Context, ytsaurus *ytv1.Ytsaurus) {
 }
 
 func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
+	logger := log.FromContext(ctx)
 	Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
 
 	ytsaurusLookupKey := types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}
@@ -98,6 +99,7 @@ func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
 			if err != nil {
 				return false
 			}
+            logger.Info("POD STATUS", "podName", podName, "phase", pod.Status.Phase)
 			return pod.Status.Phase == corev1.PodRunning
 		}, timeout*5, interval).Should(BeTrue())
 	}

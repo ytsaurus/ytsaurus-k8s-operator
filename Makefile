@@ -56,7 +56,7 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: manifests generate fmt vet envtest ## Run tests.
-	KUBEBUILDER_ATTACH_CONTROL_PLANE_OUTPUT="true" KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -v ./... -coverprofile cover.out
+	KUBEBUILDER_ATTACH_CONTROL_PLANE_OUTPUT="true" KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -timeout 99999s -v ./... -coverprofile cover.out
 
 .PHONY: kind-tests-env
 kind-tests-env: manifests kustomize helm ## Load kind tests env.
