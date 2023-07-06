@@ -66,6 +66,7 @@ jobs:
         shell: bash
         run: |
           kind create cluster
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
           make kind-tests-env
           make test YTSAURUS_ENABLE_KIND_TESTS=true
 
