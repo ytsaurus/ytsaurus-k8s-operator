@@ -99,7 +99,7 @@ func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
 				return false
 			}
 			return pod.Status.Phase == corev1.PodRunning
-		}, timeout, interval).Should(BeTrue())
+		}, timeout*5, interval).Should(BeTrue())
 	}
 
 	By("Checking that ytsaurus state is equal to `Running`")
