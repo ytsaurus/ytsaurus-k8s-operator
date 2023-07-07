@@ -3,7 +3,7 @@ kind: Ytsaurus
 metadata:
   name: ytdemo
 spec:
-  coreImage: ytsaurus/ytsaurus:unstable-0.0.4
+  coreImage: ytsaurus/ytsaurus-nightly:dev-23.1-7afd6fa605c54f147038c0a24dbe0b605ba1bf58
   uiImage: ytsaurus/ui:stable
 
   adminCredentials:
