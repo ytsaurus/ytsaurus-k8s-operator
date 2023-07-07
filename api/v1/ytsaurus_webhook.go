@@ -77,7 +77,7 @@ var _ webhook.Validator = &Ytsaurus{}
 
 //////////////////////////////////////////////////
 
-func (r *Ytsaurus) validateDiscovery() field.ErrorList {
+func (r *Ytsaurus) validateDiscovery(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
 	allErrors = append(allErrors, r.validateInstanceSpec(r.Spec.Discovery.InstanceSpec, field.NewPath("spec").Child("discovery"))...)
@@ -85,15 +85,33 @@ func (r *Ytsaurus) validateDiscovery() field.ErrorList {
 	return allErrors
 }
 
-func (r *Ytsaurus) validatePrimaryMasters() field.ErrorList {
+func (r *Ytsaurus) validatePrimaryMasters(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
 	allErrors = append(allErrors, r.validateInstanceSpec(r.Spec.PrimaryMasters.InstanceSpec, field.NewPath("spec").Child("primaryMasters"))...)
 
+	path := field.NewPath("spec").Child("primaryMasters")
+
+	if FindFirstLocation(r.Spec.PrimaryMasters.Locations, LocationTypeMasterChangelogs) == nil {
+		allErrors = append(allErrors, field.NotFound(path.Child("locations"), LocationTypeMasterChangelogs))
+	}
+
+	if FindFirstLocation(r.Spec.PrimaryMasters.Locations, LocationTypeMasterSnapshots) == nil {
+		allErrors = append(allErrors, field.NotFound(path.Child("locations"), LocationTypeMasterSnapshots))
+	}
+
+	if old != nil {
+		oldYtsaurus := (*old).(*Ytsaurus)
+
+		if oldYtsaurus.Spec.PrimaryMasters.CellTag != r.Spec.PrimaryMasters.CellTag {
+			allErrors = append(allErrors, field.Invalid(path.Child("cellTag"), r.Spec.PrimaryMasters.CellTag, "Could not be changed"))
+		}
+	}
+
 	return allErrors
 }
 
-func (r *Ytsaurus) validateSecondaryMasters() field.ErrorList {
+func (r *Ytsaurus) validateSecondaryMasters(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
 	for i, sm := range r.Spec.SecondaryMasters {
@@ -104,7 +122,7 @@ func (r *Ytsaurus) validateSecondaryMasters() field.ErrorList {
 	return allErrors
 }
 
-func (r *Ytsaurus) validateHTTPProxies() field.ErrorList {
+func (r *Ytsaurus) validateHTTPProxies(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
 	httpRoles := make(map[string]bool)
@@ -131,7 +149,7 @@ func (r *Ytsaurus) validateHTTPProxies() field.ErrorList {
 	return allErrors
 }
 
-func (r *Ytsaurus) validateRPCProxies() field.ErrorList {
+func (r *Ytsaurus) validateRPCProxies(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
 	rpcRoles := make(map[string]bool)
@@ -148,7 +166,7 @@ func (r *Ytsaurus) validateRPCProxies() field.ErrorList {
 	return allErrors
 }
 
-func (r *Ytsaurus) validateDataNodes() field.ErrorList {
+func (r *Ytsaurus) validateDataNodes(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
 	names := make(map[string]bool)
@@ -161,12 +179,16 @@ func (r *Ytsaurus) validateDataNodes() field.ErrorList {
 		names[dn.Name] = true
 
 		allErrors = append(allErrors, r.validateInstanceSpec(dn.InstanceSpec, path)...)
+
+		if FindFirstLocation(dn.Locations, LocationTypeChunkStore) == nil {
+			allErrors = append(allErrors, field.NotFound(path.Child("locations"), LocationTypeChunkStore))
+		}
 	}
 
 	return allErrors
 }
 
-func (r *Ytsaurus) validateExecNodes() field.ErrorList {
+func (r *Ytsaurus) validateExecNodes(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
 	names := make(map[string]bool)
@@ -179,12 +201,20 @@ func (r *Ytsaurus) validateExecNodes() field.ErrorList {
 		names[en.Name] = true
 
 		allErrors = append(allErrors, r.validateInstanceSpec(en.InstanceSpec, path)...)
+
+		if FindFirstLocation(en.Locations, LocationTypeChunkCache) == nil {
+			allErrors = append(allErrors, field.NotFound(path.Child("locations"), LocationTypeChunkCache))
+		}
+
+		if FindFirstLocation(en.Locations, LocationTypeSlots) == nil {
+			allErrors = append(allErrors, field.NotFound(path.Child("locations"), LocationTypeSlots))
+		}
 	}
 
 	return allErrors
 }
 
-func (r *Ytsaurus) validateSchedulers() field.ErrorList {
+func (r *Ytsaurus) validateSchedulers(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
 	if r.Spec.Schedulers != nil {
@@ -195,7 +225,7 @@ func (r *Ytsaurus) validateSchedulers() field.ErrorList {
 	return allErrors
 }
 
-func (r *Ytsaurus) validateControllerAgents() field.ErrorList {
+func (r *Ytsaurus) validateControllerAgents(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
 	if r.Spec.ControllerAgents != nil {
@@ -206,7 +236,7 @@ func (r *Ytsaurus) validateControllerAgents() field.ErrorList {
 	return allErrors
 }
 
-func (r *Ytsaurus) validateTabletNodes() field.ErrorList {
+func (r *Ytsaurus) validateTabletNodes(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
 	names := make(map[string]bool)
@@ -224,12 +254,12 @@ func (r *Ytsaurus) validateTabletNodes() field.ErrorList {
 	return allErrors
 }
 
-func (r *Ytsaurus) validateChyt() field.ErrorList {
+func (r *Ytsaurus) validateChyt(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 	return allErrors
 }
 
-func (r *Ytsaurus) validateQueryTrackers() field.ErrorList {
+func (r *Ytsaurus) validateQueryTrackers(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
 	if r.Spec.QueryTrackers != nil {
@@ -240,12 +270,12 @@ func (r *Ytsaurus) validateQueryTrackers() field.ErrorList {
 	return allErrors
 }
 
-func (r *Ytsaurus) validateSpyt() field.ErrorList {
+func (r *Ytsaurus) validateSpyt(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 	return allErrors
 }
 
-func (r *Ytsaurus) validateYQLAgents() field.ErrorList {
+func (r *Ytsaurus) validateYQLAgents(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
 	if r.Spec.YQLAgents != nil {
@@ -268,29 +298,29 @@ func (r *Ytsaurus) validateInstanceSpec(instanceSpec InstanceSpec, path *field.P
 	return allErrors
 }
 
-func (r *Ytsaurus) validateYtsaurus() field.ErrorList {
+func (r *Ytsaurus) validateYtsaurus(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
-	allErrors = append(allErrors, r.validateDiscovery()...)
-	allErrors = append(allErrors, r.validatePrimaryMasters()...)
-	allErrors = append(allErrors, r.validateSecondaryMasters()...)
-	allErrors = append(allErrors, r.validateHTTPProxies()...)
-	allErrors = append(allErrors, r.validateRPCProxies()...)
-	allErrors = append(allErrors, r.validateDataNodes()...)
-	allErrors = append(allErrors, r.validateExecNodes()...)
-	allErrors = append(allErrors, r.validateSchedulers()...)
-	allErrors = append(allErrors, r.validateControllerAgents()...)
-	allErrors = append(allErrors, r.validateTabletNodes()...)
-	allErrors = append(allErrors, r.validateChyt()...)
-	allErrors = append(allErrors, r.validateQueryTrackers()...)
-	allErrors = append(allErrors, r.validateSpyt()...)
-	allErrors = append(allErrors, r.validateYQLAgents()...)
+	allErrors = append(allErrors, r.validateDiscovery(old)...)
+	allErrors = append(allErrors, r.validatePrimaryMasters(old)...)
+	allErrors = append(allErrors, r.validateSecondaryMasters(old)...)
+	allErrors = append(allErrors, r.validateHTTPProxies(old)...)
+	allErrors = append(allErrors, r.validateRPCProxies(old)...)
+	allErrors = append(allErrors, r.validateDataNodes(old)...)
+	allErrors = append(allErrors, r.validateExecNodes(old)...)
+	allErrors = append(allErrors, r.validateSchedulers(old)...)
+	allErrors = append(allErrors, r.validateControllerAgents(old)...)
+	allErrors = append(allErrors, r.validateTabletNodes(old)...)
+	allErrors = append(allErrors, r.validateChyt(old)...)
+	allErrors = append(allErrors, r.validateQueryTrackers(old)...)
+	allErrors = append(allErrors, r.validateSpyt(old)...)
+	allErrors = append(allErrors, r.validateYQLAgents(old)...)
 
 	return allErrors
 }
 
-func (r *Ytsaurus) evaluateYtsaurusValidation() error {
-	allErrors := r.validateYtsaurus()
+func (r *Ytsaurus) evaluateYtsaurusValidation(old *runtime.Object) error {
+	allErrors := r.validateYtsaurus(old)
 	if len(allErrors) == 0 {
 		return nil
 	}
@@ -305,14 +335,14 @@ func (r *Ytsaurus) evaluateYtsaurusValidation() error {
 func (r *Ytsaurus) ValidateCreate() error {
 	ytsauruslog.Info("validate create", "name", r.Name)
 
-	return r.evaluateYtsaurusValidation()
+	return r.evaluateYtsaurusValidation(nil)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Ytsaurus) ValidateUpdate(old runtime.Object) error {
 	ytsauruslog.Info("validate update", "name", r.Name)
 
-	return r.evaluateYtsaurusValidation()
+	return r.evaluateYtsaurusValidation(&old)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type

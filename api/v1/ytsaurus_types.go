@@ -80,7 +80,8 @@ const (
 
 type LocationSpec struct {
 	LocationType LocationType `json:"locationType,omitempty"`
-	Path         string       `json:"path,omitempty"`
+	//+kubebuilder:validation:MinLength:=1
+	Path string `json:"path,omitempty"`
 
 	//+kubebuilder:default:=default
 	Medium string `json:"medium,omitempty"`
@@ -107,6 +108,7 @@ const (
 )
 
 type LoggerSpec struct {
+	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name,omitempty"`
 	//+kubebuilder:validation:Enum=file;stderr
 	WriterType LogWriterType `json:"writerType,omitempty"`

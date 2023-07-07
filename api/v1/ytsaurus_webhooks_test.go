@@ -5,6 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 var _ = Describe("Test for Ytsaurus webhooks", func() {
@@ -100,7 +101,31 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			}
 
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.execNodes[1].name: Duplicate value: \"default\"")))
+		})
 
+		It("Should not accept a cell tag update", func() {
+			ytsaurus := CreateBaseYtsaurusResource(namespace)
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+			Expect(k8sClient.Get(ctx, types.NamespacedName{
+				Name:      YtsaurusName,
+				Namespace: namespace,
+			}, ytsaurus)).Should(Succeed())
+
+			ytsaurus.Spec.PrimaryMasters.CellTag = 123
+
+			Expect(k8sClient.Update(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.primaryMasters.cellTag")))
+		})
+
+		It("Should not accept data nodes without chunk locations", func() {
+			ytsaurus := CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.DataNodes = []DataNodesSpec{
+				{
+					InstanceSpec: InstanceSpec{InstanceCount: 1},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.dataNodes[0].locations")))
 		})
 
 		It("Should not accept a Ytsaurus resource with EnableAntiAffinity flag set in different spec fields", func() {
@@ -113,12 +138,24 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 				{
 					InstanceSpec: InstanceSpec{
 						EnableAntiAffinity: &trueEnableAntiAffinity,
+						Locations: []LocationSpec{
+							{
+								LocationType: LocationTypeChunkStore,
+								Path:         "/yt/chunk-store",
+							},
+						},
 					},
 					Name: "default",
 				},
 				{
 					InstanceSpec: InstanceSpec{
 						EnableAntiAffinity: &falseEnableAntiAffinity,
+						Locations: []LocationSpec{
+							{
+								LocationType: LocationTypeChunkStore,
+								Path:         "/yt/chunk-store",
+							},
+						},
 					},
 					Name: "other",
 				},
@@ -131,6 +168,16 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			ytsaurus.Spec.PrimaryMasters = MastersSpec{
 				InstanceSpec: InstanceSpec{
 					EnableAntiAffinity: &trueEnableAntiAffinity,
+					Locations: []LocationSpec{
+						{
+							LocationType: LocationTypeMasterSnapshots,
+							Path:         "/yt/master-snapshots",
+						},
+						{
+							LocationType: LocationTypeMasterChangelogs,
+							Path:         "/yt/master-changelogs",
+						},
+					},
 				},
 			}
 

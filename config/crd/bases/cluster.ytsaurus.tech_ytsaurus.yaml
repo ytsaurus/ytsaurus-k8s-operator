@@ -972,6 +972,7 @@ spec:
                           default: default
                           type: string
                         path:
+                          minLength: 1
                           type: string
                       type: object
                     type: array
@@ -988,6 +989,7 @@ spec:
                           - error
                           type: string
                         name:
+                          minLength: 1
                           type: string
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -3767,6 +3769,7 @@ spec:
                             default: default
                             type: string
                           path:
+                            minLength: 1
                             type: string
                         type: object
                       type: array
@@ -3783,6 +3786,7 @@ spec:
                             - error
                             type: string
                           name:
+                            minLength: 1
                             type: string
                           writerType:
                             description: LogWriterType string describes types of possible
@@ -6599,6 +6603,7 @@ spec:
                           default: default
                           type: string
                         path:
+                          minLength: 1
                           type: string
                       type: object
                     type: array
@@ -6615,6 +6620,7 @@ spec:
                           - error
                           type: string
                         name:
+                          minLength: 1
                           type: string
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -9392,6 +9398,7 @@ spec:
                             default: default
                             type: string
                           path:
+                            minLength: 1
                             type: string
                         type: object
                       type: array
@@ -9408,6 +9415,7 @@ spec:
                             - error
                             type: string
                           name:
+                            minLength: 1
                             type: string
                           writerType:
                             description: LogWriterType string describes types of possible
@@ -12241,6 +12249,7 @@ spec:
                             default: default
                             type: string
                           path:
+                            minLength: 1
                             type: string
                         type: object
                       type: array
@@ -12257,6 +12266,7 @@ spec:
                             - error
                             type: string
                           name:
+                            minLength: 1
                             type: string
                           writerType:
                             description: LogWriterType string describes types of possible
@@ -15095,6 +15105,7 @@ spec:
                           default: default
                           type: string
                         path:
+                          minLength: 1
                           type: string
                       type: object
                     type: array
@@ -15111,6 +15122,7 @@ spec:
                           - error
                           type: string
                         name:
+                          minLength: 1
                           type: string
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -17876,6 +17888,7 @@ spec:
                           default: default
                           type: string
                         path:
+                          minLength: 1
                           type: string
                       type: object
                     type: array
@@ -17892,6 +17905,7 @@ spec:
                           - error
                           type: string
                         name:
+                          minLength: 1
                           type: string
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -20669,6 +20683,7 @@ spec:
                             default: default
                             type: string
                           path:
+                            minLength: 1
                             type: string
                         type: object
                       type: array
@@ -20685,6 +20700,7 @@ spec:
                             - error
                             type: string
                           name:
+                            minLength: 1
                             type: string
                           writerType:
                             description: LogWriterType string describes types of possible
@@ -23504,6 +23520,7 @@ spec:
                           default: default
                           type: string
                         path:
+                          minLength: 1
                           type: string
                       type: object
                     type: array
@@ -23520,6 +23537,7 @@ spec:
                           - error
                           type: string
                         name:
+                          minLength: 1
                           type: string
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -26299,6 +26317,7 @@ spec:
                             default: default
                             type: string
                           path:
+                            minLength: 1
                             type: string
                         type: object
                       type: array
@@ -26315,6 +26334,7 @@ spec:
                             - error
                             type: string
                           name:
+                            minLength: 1
                             type: string
                           writerType:
                             description: LogWriterType string describes types of possible
@@ -29149,6 +29169,7 @@ spec:
                             default: default
                             type: string
                           path:
+                            minLength: 1
                             type: string
                         type: object
                       type: array
@@ -29165,6 +29186,7 @@ spec:
                             - error
                             type: string
                           name:
+                            minLength: 1
                             type: string
                           writerType:
                             description: LogWriterType string describes types of possible
@@ -32035,6 +32057,7 @@ spec:
                           default: default
                           type: string
                         path:
+                          minLength: 1
                           type: string
                       type: object
                     type: array
@@ -32051,6 +32074,7 @@ spec:
                           - error
                           type: string
                         name:
+                          minLength: 1
                           type: string
                         writerType:
                           description: LogWriterType string describes types of possible
