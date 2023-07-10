@@ -12,7 +12,7 @@ type Discovery struct {
 }
 
 type DiscoveryServer struct {
-	BasicServer
+	CommonServer
 	DiscoveryServer Discovery `yson:"discovery_server"`
 }
 

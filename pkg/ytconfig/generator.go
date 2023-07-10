@@ -143,24 +143,7 @@ func (g *Generator) GetMasterConfig() ([]byte, error) {
 
 	g.fillCommonService(&c.CommonServer)
 	g.fillPrimaryMaster(&c.PrimaryMaster)
-
-	// Special replication policies for small clusters with few data nodes.
-	if g.ytsaurus.Spec.DataNodes[0].InstanceCount <= 1 {
-		c.CypressManager.DefaultJournalReadQuorum = 1
-		c.CypressManager.DefaultJournalWriteQuorum = 1
-		c.CypressManager.DefaultTableReplicationFactor = 1
-		c.CypressManager.DefaultFileReplicationFactor = 1
-		c.CypressManager.DefaultJournalReplicationFactor = 1
-	} else if g.ytsaurus.Spec.DataNodes[0].InstanceCount == 2 {
-		c.CypressManager.DefaultTableReplicationFactor = 2
-		c.CypressManager.DefaultFileReplicationFactor = 2
-		c.CypressManager.DefaultJournalReplicationFactor = 2
-	} else if g.ytsaurus.Spec.DataNodes[0].InstanceCount >= 5 {
-		// More robust journal replication factor for big clusters.
-		c.CypressManager.DefaultJournalReadQuorum = 3
-		c.CypressManager.DefaultJournalWriteQuorum = 3
-		c.CypressManager.DefaultJournalReplicationFactor = 5
-	}
+	configureMasterServerCypressManager(g.ytsaurus.Spec, &c.CypressManager)
 
 	return marshallYsonConfig(c)
 }
@@ -320,6 +303,8 @@ func (g *Generator) GetWebUIConfig() ([]byte, error) {
 
 func (g *Generator) GetDiscoveryConfig() ([]byte, error) {
 	c := getDiscoveryServerCarcass(g.ytsaurus.Spec.Discovery)
+
+	g.fillCommonService(&c.CommonServer)
 	c.DiscoveryServer.Addresses = g.getDiscoveryAddresses()
 
 	return marshallYsonConfig(c)
