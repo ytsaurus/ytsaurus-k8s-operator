@@ -85,8 +85,8 @@ func configureMasterServerCypressManager(spec ytv1.YtsaurusSpec, c *CypressManag
 		c.DefaultFileReplicationFactor = 2
 		c.DefaultJournalReplicationFactor = 2
 	case instanceCount >= 3 && instanceCount < 5:
-		c.DefaultJournalReadQuorum = 3
-		c.DefaultJournalWriteQuorum = 3
+		c.DefaultJournalReadQuorum = 2
+		c.DefaultJournalWriteQuorum = 2
 		c.DefaultTableReplicationFactor = 3
 		c.DefaultFileReplicationFactor = 3
 		c.DefaultJournalReplicationFactor = 3
