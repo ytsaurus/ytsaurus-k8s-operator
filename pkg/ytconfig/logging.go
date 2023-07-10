@@ -2,8 +2,9 @@ package ytconfig
 
 import (
 	"fmt"
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"path"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
 func defaultStderrLoggerSpec() ytv1.LoggerSpec {
@@ -31,8 +32,9 @@ func defaultInfoLoggerSpec() ytv1.LoggerSpec {
 }
 
 type LoggingRule struct {
-	MinLevel ytv1.LogLevel `yson:"min_level,omitempty"`
-	Writers  []string      `yson:"writers,omitempty"`
+	ExcludeCategories []string      `yson:"exclude_categories,omitempty"`
+	MinLevel          ytv1.LogLevel `yson:"min_level,omitempty"`
+	Writers           []string      `yson:"writers,omitempty"`
 }
 
 type LoggingWriter struct {
