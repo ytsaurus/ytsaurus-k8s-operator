@@ -20,7 +20,7 @@ const (
 
 type StoreLocation struct {
 	Path                   string `yson:"path"`
-	Medium                 string `yson:"medium"`
+	MediumName             string `yson:"medium_name"`
 	Quota                  int64  `yson:"quota"`
 	HighWatermark          int64  `yson:"high_watermark"`
 	LowWatermark           int64  `yson:"low_watermark"`
@@ -189,8 +189,8 @@ func getDataNodeServerCarcass(spec ytv1.DataNodesSpec) (DataNodeServer, error) {
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkStore) {
 		quota := findQuotaForPath(location.Path, spec)
 		storeLocation := StoreLocation{
-			Medium: location.Medium,
-			Path:   location.Path,
+			MediumName: location.Medium,
+			Path:       location.Path,
 		}
 		if quota != nil {
 			storeLocation.Quota = *quota
