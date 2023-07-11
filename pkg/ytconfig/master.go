@@ -15,7 +15,7 @@ type MasterSnapshots struct {
 	Path string `yson:"path"`
 }
 
-type Hydra struct {
+type HydraManager struct {
 	MaxChangelogCountToKeep int `yson:"max_changelog_count_to_keep"`
 	MaxSnapshotCountToKeep  int `yson:"max_snapshot_count_to_keep"`
 }
@@ -33,7 +33,7 @@ type MasterServer struct {
 	Snapshots        MasterSnapshots  `yson:"snapshots"`
 	Changelogs       MasterChangelogs `yson:"changelogs"`
 	UseNewHydra      bool             `yson:"use_new_hydra"`
-	Hydra            Hydra            `yson:"hydra"`
+	HydraManager     HydraManager     `yson:"hydra_manager"`
 	CypressManager   CypressManager   `yson:"cypress_manager"`
 	PrimaryMaster    MasterCell       `yson:"primary_master"`
 	SecondaryMasters []MasterCell     `yson:"secondary_masters"`
@@ -44,8 +44,8 @@ func getMasterServerCarcass(spec ytv1.MastersSpec) (MasterServer, error) {
 	c.UseNewHydra = true
 	c.RPCPort = consts.MasterRPCPort
 	c.MonitoringPort = consts.MasterMonitoringPort
-	c.Hydra.MaxSnapshotCountToKeep = 2
-	c.Hydra.MaxChangelogCountToKeep = 2
+	c.HydraManager.MaxSnapshotCountToKeep = 2
+	c.HydraManager.MaxChangelogCountToKeep = 2
 	c.SecondaryMasters = make([]MasterCell, 0)
 
 	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeMasterChangelogs); location != nil {
