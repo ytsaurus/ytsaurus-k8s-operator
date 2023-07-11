@@ -9,7 +9,7 @@ const AdminTokenSecret = "token"
 
 const UIUserName = "robot-ui"
 const ChytUserName = "robot-chyt-controller"
-const YqlUserName = "robot-yql"
+const YqlUserName = "yql_agent"
 const YtsaurusOperatorUserName = "robot-yt-k8s-operator"
 
 const StartUID = 19500
