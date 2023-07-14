@@ -15,3 +15,4 @@ const YtsaurusOperatorUserName = "robot-yt-k8s-operator"
 const StartUID = 19500
 
 const DefaultHTTPProxyRole = "default"
+const DefaultName = "default"

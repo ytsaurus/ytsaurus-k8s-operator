@@ -1,6 +1,9 @@
 package ytconfig
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+)
 
 func (g *Generator) getName(shortName string) string {
 	if g.ytsaurus.Spec.UseShortNames {
@@ -127,25 +130,43 @@ func (g *Generator) GetQueryTrackerServiceName() string {
 }
 
 func (g *Generator) GetDataNodesStatefulSetName(name string) string {
+	if name == consts.DefaultName {
+		return g.getName("dnd")
+	}
 	return g.getName(fmt.Sprintf("dnd-%s", name))
 }
 
 func (g *Generator) GetDataNodesServiceName(name string) string {
+	if name == consts.DefaultName {
+		return g.getName("data-nodes")
+	}
 	return g.getName(fmt.Sprintf("data-nodes-%s", name))
 }
 
 func (g *Generator) GetExecNodesStatefulSetName(name string) string {
+	if name == consts.DefaultName {
+		return g.getName("end")
+	}
 	return g.getName(fmt.Sprintf("end-%s", name))
 }
 
 func (g *Generator) GetExecNodesServiceName(name string) string {
+	if name == consts.DefaultName {
+		return g.getName("exec-nodes")
+	}
 	return g.getName(fmt.Sprintf("exec-nodes-%s", name))
 }
 
 func (g *Generator) GetTabletNodesStatefulSetName(name string) string {
+	if name == consts.DefaultName {
+		return g.getName("tnd")
+	}
 	return g.getName(fmt.Sprintf("tnd-%s", name))
 }
 
 func (g *Generator) GetTabletNodesServiceName(name string) string {
+	if name == consts.DefaultName {
+		return g.getName("tablet-nodes")
+	}
 	return g.getName(fmt.Sprintf("tablet-nodes-%s", name))
 }
