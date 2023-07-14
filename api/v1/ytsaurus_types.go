@@ -107,13 +107,30 @@ const (
 	LogWriterTypeStderr LogWriterType = "stderr"
 )
 
+// CategoriesFilterType string describes types of possible log CategoriesFilter.
+// +enum
+type CategoriesFilterType string
+
+const (
+	CategoriesFilterTypeExclude CategoriesFilterType = "exclude"
+	CategoriesFilterTypeInclude CategoriesFilterType = "include"
+)
+
+type CategoriesFilter struct {
+	//+kubebuilder:validation:Enum=exclude;include
+	Type CategoriesFilterType `json:"type,omitempty"`
+	//+kubebuilder:validation:MinItems=1
+	Values []string `json:"values,omitempty"`
+}
+
 type LoggerSpec struct {
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name,omitempty"`
 	//+kubebuilder:validation:Enum=file;stderr
 	WriterType LogWriterType `json:"writerType,omitempty"`
 	//+kubebuilder:validation:Enum=trace;debug;info;error
-	MinLogLevel LogLevel `json:"minLogLevel,omitempty"`
+	MinLogLevel      LogLevel          `json:"minLogLevel,omitempty"`
+	CategoriesFilter *CategoriesFilter `json:"categoriesFilter,omitempty"`
 }
 
 type InstanceSpec struct {

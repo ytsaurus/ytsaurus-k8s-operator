@@ -33,6 +33,7 @@ func defaultInfoLoggerSpec() ytv1.LoggerSpec {
 
 type LoggingRule struct {
 	ExcludeCategories []string      `yson:"exclude_categories,omitempty"`
+	IncludeCategories []string      `yson:"include_categories,omitempty"`
 	MinLevel          ytv1.LogLevel `yson:"min_level,omitempty"`
 	Writers           []string      `yson:"writers,omitempty"`
 }
@@ -69,21 +70,39 @@ func newLoggingBuilder(location *ytv1.LocationSpec, componentName string) loggin
 	}
 }
 
-func (b *loggingBuilder) addLogger(loggerSpec ytv1.LoggerSpec) *loggingBuilder {
-	b.logging.Rules = append(b.logging.Rules, LoggingRule{
-		MinLevel: loggerSpec.MinLogLevel,
-		Writers:  []string{loggerSpec.Name},
-	})
+func createLoggingRule(spec ytv1.LoggerSpec) LoggingRule {
+	loggingRule := LoggingRule{
+		MinLevel: spec.MinLogLevel,
+		Writers:  []string{spec.Name},
+	}
 
-	writer := LoggingWriter{
+	if spec.CategoriesFilter != nil {
+		switch spec.CategoriesFilter.Type {
+		case ytv1.CategoriesFilterTypeExclude:
+			loggingRule.ExcludeCategories = append(loggingRule.ExcludeCategories, spec.CategoriesFilter.Values...)
+
+		case ytv1.CategoriesFilterTypeInclude:
+			loggingRule.IncludeCategories = append(loggingRule.IncludeCategories, spec.CategoriesFilter.Values...)
+		}
+	}
+	return loggingRule
+}
+
+func createLoggingWriter(componentName string, loggingDirectory string, loggerSpec ytv1.LoggerSpec) LoggingWriter {
+	loggingWriter := LoggingWriter{
 		WriterType: loggerSpec.WriterType,
 	}
 
-	if writer.WriterType == ytv1.LogWriterTypeFile {
-		writer.FileName = path.Join(b.loggingDirectory, fmt.Sprintf("%s.%s.log", b.componentName, loggerSpec.Name))
+	if loggingWriter.WriterType == ytv1.LogWriterTypeFile {
+		loggingWriter.FileName = path.Join(loggingDirectory, fmt.Sprintf("%s.%s.log", componentName, loggerSpec.Name))
 	}
 
-	b.logging.Writers[loggerSpec.Name] = writer
+	return loggingWriter
+}
+
+func (b *loggingBuilder) addLogger(loggerSpec ytv1.LoggerSpec) *loggingBuilder {
+	b.logging.Rules = append(b.logging.Rules, createLoggingRule(loggerSpec))
+	b.logging.Writers[loggerSpec.Name] = createLoggingWriter(b.componentName, b.loggingDirectory, loggerSpec)
 
 	return b
 }

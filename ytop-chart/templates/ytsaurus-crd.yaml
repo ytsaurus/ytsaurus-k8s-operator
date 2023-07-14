@@ -965,6 +965,21 @@ spec:
                   loggers:
                     items:
                       properties:
+                        categoriesFilter:
+                          properties:
+                            type:
+                              description: CategoriesFilterType string describes types
+                                of possible log CategoriesFilter.
+                              enum:
+                              - exclude
+                              - include
+                              type: string
+                            values:
+                              items:
+                                type: string
+                              minItems: 1
+                              type: array
+                          type: object
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
@@ -3711,6 +3726,21 @@ spec:
                     loggers:
                       items:
                         properties:
+                          categoriesFilter:
+                            properties:
+                              type:
+                                description: CategoriesFilterType string describes types
+                                  of possible log CategoriesFilter.
+                                enum:
+                                - exclude
+                                - include
+                                type: string
+                              values:
+                                items:
+                                  type: string
+                                minItems: 1
+                                type: array
+                            type: object
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -6472,6 +6502,21 @@ spec:
                   loggers:
                     items:
                       properties:
+                        categoriesFilter:
+                          properties:
+                            type:
+                              description: CategoriesFilterType string describes types
+                                of possible log CategoriesFilter.
+                              enum:
+                              - exclude
+                              - include
+                              type: string
+                            values:
+                              items:
+                                type: string
+                              minItems: 1
+                              type: array
+                          type: object
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
@@ -9216,6 +9261,21 @@ spec:
                     loggers:
                       items:
                         properties:
+                          categoriesFilter:
+                            properties:
+                              type:
+                                description: CategoriesFilterType string describes types
+                                  of possible log CategoriesFilter.
+                                enum:
+                                - exclude
+                                - include
+                                type: string
+                              values:
+                                items:
+                                  type: string
+                                minItems: 1
+                                type: array
+                            type: object
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -12007,6 +12067,21 @@ spec:
                     loggers:
                       items:
                         properties:
+                          categoriesFilter:
+                            properties:
+                              type:
+                                description: CategoriesFilterType string describes types
+                                  of possible log CategoriesFilter.
+                                enum:
+                                - exclude
+                                - include
+                                type: string
+                              values:
+                                items:
+                                  type: string
+                                minItems: 1
+                                type: array
+                            type: object
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -14790,6 +14865,21 @@ spec:
                   loggers:
                     items:
                       properties:
+                        categoriesFilter:
+                          properties:
+                            type:
+                              description: CategoriesFilterType string describes types
+                                of possible log CategoriesFilter.
+                              enum:
+                              - exclude
+                              - include
+                              type: string
+                            values:
+                              items:
+                                type: string
+                              minItems: 1
+                              type: array
+                          type: object
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
@@ -17509,6 +17599,21 @@ spec:
                   loggers:
                     items:
                       properties:
+                        categoriesFilter:
+                          properties:
+                            type:
+                              description: CategoriesFilterType string describes types
+                                of possible log CategoriesFilter.
+                              enum:
+                              - exclude
+                              - include
+                              type: string
+                            values:
+                              items:
+                                type: string
+                              minItems: 1
+                              type: array
+                          type: object
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
@@ -20253,6 +20358,21 @@ spec:
                     loggers:
                       items:
                         properties:
+                          categoriesFilter:
+                            properties:
+                              type:
+                                description: CategoriesFilterType string describes types
+                                  of possible log CategoriesFilter.
+                                enum:
+                                - exclude
+                                - include
+                                type: string
+                              values:
+                                items:
+                                  type: string
+                                minItems: 1
+                                type: array
+                            type: object
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -23017,6 +23137,21 @@ spec:
                   loggers:
                     items:
                       properties:
+                        categoriesFilter:
+                          properties:
+                            type:
+                              description: CategoriesFilterType string describes types
+                                of possible log CategoriesFilter.
+                              enum:
+                              - exclude
+                              - include
+                              type: string
+                            values:
+                              items:
+                                type: string
+                              minItems: 1
+                              type: array
+                          type: object
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
@@ -25763,6 +25898,21 @@ spec:
                     loggers:
                       items:
                         properties:
+                          categoriesFilter:
+                            properties:
+                              type:
+                                description: CategoriesFilterType string describes types
+                                  of possible log CategoriesFilter.
+                                enum:
+                                - exclude
+                                - include
+                                type: string
+                              values:
+                                items:
+                                  type: string
+                                minItems: 1
+                                type: array
+                            type: object
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -28555,6 +28705,21 @@ spec:
                     loggers:
                       items:
                         properties:
+                          categoriesFilter:
+                            properties:
+                              type:
+                                description: CategoriesFilterType string describes types
+                                  of possible log CategoriesFilter.
+                                enum:
+                                - exclude
+                                - include
+                                type: string
+                              values:
+                                items:
+                                  type: string
+                                minItems: 1
+                                type: array
+                            type: object
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -31370,6 +31535,21 @@ spec:
                   loggers:
                     items:
                       properties:
+                        categoriesFilter:
+                          properties:
+                            type:
+                              description: CategoriesFilterType string describes types
+                                of possible log CategoriesFilter.
+                              enum:
+                              - exclude
+                              - include
+                              type: string
+                            values:
+                              items:
+                                type: string
+                              minItems: 1
+                              type: array
+                          type: object
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
