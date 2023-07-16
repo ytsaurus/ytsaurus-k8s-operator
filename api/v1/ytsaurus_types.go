@@ -98,6 +98,16 @@ const (
 	LogLevelError LogLevel = "error"
 )
 
+// LogFormat string describes possible Ytsaurus logging formats.
+// +enum
+type LogFormat string
+
+const (
+	LogFormatPlainText LogFormat = "plaintext"
+	LogFormatJSON      LogFormat = "json"
+	LogFormatYSON      LogFormat = "yson"
+)
+
 // LogWriterType string describes types of possible log writers.
 // +enum
 type LogWriterType string
@@ -131,6 +141,8 @@ type LoggerSpec struct {
 	//+kubebuilder:validation:Enum=trace;debug;info;error
 	MinLogLevel      LogLevel          `json:"minLogLevel,omitempty"`
 	CategoriesFilter *CategoriesFilter `json:"categoriesFilter,omitempty"`
+	//+kubebuilder:validation:Enum=plaintext;json;yson
+	Format LogFormat `json:"format,omitempty"`
 }
 
 type InstanceSpec struct {

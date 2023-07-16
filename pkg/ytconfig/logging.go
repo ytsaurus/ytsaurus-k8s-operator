@@ -41,6 +41,7 @@ type LoggingRule struct {
 type LoggingWriter struct {
 	WriterType ytv1.LogWriterType `yson:"type,omitempty"`
 	FileName   string             `yson:"file_name,omitempty"`
+	Format     ytv1.LogFormat     `yson:"format,omitempty"`
 }
 
 type Logging struct {
@@ -91,6 +92,7 @@ func createLoggingRule(spec ytv1.LoggerSpec) LoggingRule {
 func createLoggingWriter(componentName string, loggingDirectory string, loggerSpec ytv1.LoggerSpec) LoggingWriter {
 	loggingWriter := LoggingWriter{
 		WriterType: loggerSpec.WriterType,
+		Format:     loggerSpec.Format,
 	}
 
 	if loggingWriter.WriterType == ytv1.LogWriterTypeFile {
