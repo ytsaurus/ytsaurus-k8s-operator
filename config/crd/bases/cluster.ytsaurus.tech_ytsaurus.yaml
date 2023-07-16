@@ -994,6 +994,14 @@ spec:
                               minItems: 1
                               type: array
                           type: object
+                        format:
+                          description: LogFormat string describes possible Ytsaurus
+                            logging formats.
+                          enum:
+                          - plaintext
+                          - json
+                          - yson
+                          type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus
                             logging level.
@@ -3806,6 +3814,14 @@ spec:
                                 minItems: 1
                                 type: array
                             type: object
+                          format:
+                            description: LogFormat string describes possible Ytsaurus
+                              logging formats.
+                            enum:
+                            - plaintext
+                            - json
+                            - yson
+                            type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -6655,6 +6671,14 @@ spec:
                               minItems: 1
                               type: array
                           type: object
+                        format:
+                          description: LogFormat string describes possible Ytsaurus
+                            logging formats.
+                          enum:
+                          - plaintext
+                          - json
+                          - yson
+                          type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus
                             logging level.
@@ -9465,6 +9489,14 @@ spec:
                                 minItems: 1
                                 type: array
                             type: object
+                          format:
+                            description: LogFormat string describes possible Ytsaurus
+                              logging formats.
+                            enum:
+                            - plaintext
+                            - json
+                            - yson
+                            type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -12331,6 +12363,14 @@ spec:
                                 minItems: 1
                                 type: array
                             type: object
+                          format:
+                            description: LogFormat string describes possible Ytsaurus
+                              logging formats.
+                            enum:
+                            - plaintext
+                            - json
+                            - yson
+                            type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -15202,6 +15242,14 @@ spec:
                               minItems: 1
                               type: array
                           type: object
+                        format:
+                          description: LogFormat string describes possible Ytsaurus
+                            logging formats.
+                          enum:
+                          - plaintext
+                          - json
+                          - yson
+                          type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus
                             logging level.
@@ -18000,6 +18048,14 @@ spec:
                               minItems: 1
                               type: array
                           type: object
+                        format:
+                          description: LogFormat string describes possible Ytsaurus
+                            logging formats.
+                          enum:
+                          - plaintext
+                          - json
+                          - yson
+                          type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus
                             logging level.
@@ -20810,6 +20866,14 @@ spec:
                                 minItems: 1
                                 type: array
                             type: object
+                          format:
+                            description: LogFormat string describes possible Ytsaurus
+                              logging formats.
+                            enum:
+                            - plaintext
+                            - json
+                            - yson
+                            type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -23662,6 +23726,14 @@ spec:
                               minItems: 1
                               type: array
                           type: object
+                        format:
+                          description: LogFormat string describes possible Ytsaurus
+                            logging formats.
+                          enum:
+                          - plaintext
+                          - json
+                          - yson
+                          type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus
                             logging level.
@@ -26474,6 +26546,14 @@ spec:
                                 minItems: 1
                                 type: array
                             type: object
+                          format:
+                            description: LogFormat string describes possible Ytsaurus
+                              logging formats.
+                            enum:
+                            - plaintext
+                            - json
+                            - yson
+                            type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -29341,6 +29421,14 @@ spec:
                                 minItems: 1
                                 type: array
                             type: object
+                          format:
+                            description: LogFormat string describes possible Ytsaurus
+                              logging formats.
+                            enum:
+                            - plaintext
+                            - json
+                            - yson
+                            type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -32244,6 +32332,14 @@ spec:
                               minItems: 1
                               type: array
                           type: object
+                        format:
+                          description: LogFormat string describes possible Ytsaurus
+                            logging formats.
+                          enum:
+                          - plaintext
+                          - json
+                          - yson
+                          type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus
                             logging level.
