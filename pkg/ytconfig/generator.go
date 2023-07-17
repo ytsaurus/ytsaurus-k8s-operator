@@ -279,7 +279,7 @@ func (g *Generator) GetYQLAgentConfig() ([]byte, error) {
 		return nil, err
 	}
 	g.fillCommonService(&c.CommonServer)
-	c.YQLAgent.Clusters = map[string]string{
+	c.YQLAgent.AdditionalClusters = map[string]string{
 		g.ytsaurus.Name: g.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole),
 	}
 	c.YQLAgent.DefaultCluster = g.ytsaurus.Name
