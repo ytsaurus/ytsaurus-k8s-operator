@@ -96,7 +96,7 @@ docker-push: ## Push docker image with the manager.
 
 .PHONY: helm
 helm: manifests kustomize helmify ## Generate helm chart.
-	$(KUSTOMIZE) build config/default | $(HELMIFY) ytop-chart
+	$(KUSTOMIZE) build config/default | $(HELMIFY) -cert-manager-as-subchart ytop-chart
 
 ##@ Deployment
 

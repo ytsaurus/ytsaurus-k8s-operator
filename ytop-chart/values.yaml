@@ -1,3 +1,6 @@
+certmanager:
+  enabled: true
+  installCRDs: true
 controllerManager:
   kubeRbacProxy:
     args:
