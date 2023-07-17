@@ -98,12 +98,12 @@ func NewComponentManager(
 		allComponents = append(allComponents, yqla)
 	}
 
-	if ytsaurus.Spec.Chyt != nil {
-		chyt := components.NewChytController(cfgen, apiProxy, m, dnds)
+	if ytsaurus.Spec.Chyt != nil && ytsaurus.Spec.Schedulers != nil {
+		chyt := components.NewChytController(cfgen, apiProxy, m, s, dnds)
 		allComponents = append(allComponents, chyt)
 	}
 
-	if ytsaurus.Spec.Spyt != nil && len(ends) > 0 {
+	if ytsaurus.Spec.Spyt != nil && len(ends) > 0 && ytsaurus.Spec.Schedulers != nil {
 		spyt := components.NewSpyt(cfgen, apiProxy, m, s, ends, dnds)
 		allComponents = append(allComponents, spyt)
 	}

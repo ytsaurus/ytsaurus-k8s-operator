@@ -23,6 +23,7 @@ type chytController struct {
 	secret          *resources.StringSecret
 
 	master    Component
+	scheduler Component
 	dataNodes []Component
 }
 
@@ -33,6 +34,7 @@ func NewChytController(
 	cfgen *ytconfig.Generator,
 	apiProxy *apiproxy.APIProxy,
 	master Component,
+	scheduler Component,
 	dataNodes []Component) Component {
 	ytsaurus := apiProxy.Ytsaurus()
 	labeller := labeller.Labeller{
@@ -82,6 +84,7 @@ func NewChytController(
 			&labeller,
 			apiProxy),
 		master:    master,
+		scheduler: scheduler,
 		dataNodes: dataNodes,
 	}
 }
@@ -214,7 +217,7 @@ func (c *chytController) doSync(ctx context.Context, dry bool) (SyncStatus, erro
 
 	// TODO: add update logic.
 
-	if c.master.Status(ctx) != SyncStatusReady {
+	if c.master.Status(ctx) != SyncStatusReady || c.scheduler.Status(ctx) != SyncStatusReady {
 		return SyncStatusBlocked, err
 	}
 
