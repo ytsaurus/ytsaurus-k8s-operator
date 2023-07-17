@@ -130,43 +130,32 @@ func (g *Generator) GetQueryTrackerServiceName() string {
 }
 
 func (g *Generator) GetDataNodesStatefulSetName(name string) string {
-	if name == consts.DefaultName {
-		return g.getName("dnd")
-	}
-	return g.getName(fmt.Sprintf("dnd-%s", name))
+	return g.getName(g.FormatComponentStringWithDefault("dnd", name))
 }
 
 func (g *Generator) GetDataNodesServiceName(name string) string {
-	if name == consts.DefaultName {
-		return g.getName("data-nodes")
-	}
-	return g.getName(fmt.Sprintf("data-nodes-%s", name))
+	return g.getName(g.FormatComponentStringWithDefault("data-nodes", name))
 }
 
 func (g *Generator) GetExecNodesStatefulSetName(name string) string {
-	if name == consts.DefaultName {
-		return g.getName("end")
-	}
-	return g.getName(fmt.Sprintf("end-%s", name))
+	return g.getName(g.FormatComponentStringWithDefault("end", name))
 }
 
 func (g *Generator) GetExecNodesServiceName(name string) string {
-	if name == consts.DefaultName {
-		return g.getName("exec-nodes")
-	}
-	return g.getName(fmt.Sprintf("exec-nodes-%s", name))
+	return g.getName(g.FormatComponentStringWithDefault("exec-nodes", name))
 }
 
 func (g *Generator) GetTabletNodesStatefulSetName(name string) string {
-	if name == consts.DefaultName {
-		return g.getName("tnd")
-	}
-	return g.getName(fmt.Sprintf("tnd-%s", name))
+	return g.getName(g.FormatComponentStringWithDefault("tnd", name))
 }
 
 func (g *Generator) GetTabletNodesServiceName(name string) string {
-	if name == consts.DefaultName {
-		return g.getName("tablet-nodes")
+	return g.getName(g.FormatComponentStringWithDefault("tablet-nodes", name))
+}
+
+func (g *Generator) FormatComponentStringWithDefault(base string, name string) string {
+	if name != consts.DefaultName {
+		return fmt.Sprintf("%s-%s", base, name)
 	}
-	return g.getName(fmt.Sprintf("tablet-nodes-%s", name))
+	return base
 }

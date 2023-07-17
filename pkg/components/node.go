@@ -2,8 +2,6 @@ package components
 
 import (
 	"context"
-	"fmt"
-
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -27,8 +25,8 @@ func NewDataNode(
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
 		APIProxy:       apiProxy,
-		ComponentLabel: fmt.Sprintf("%s-%s", consts.YTComponentLabelDataNode, spec.Name),
-		ComponentName:  fmt.Sprintf("DataNode-%s", spec.Name),
+		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelDataNode, spec.Name),
+		ComponentName:  cfgen.FormatComponentStringWithDefault("DataNode", spec.Name),
 		MonitoringPort: consts.NodeMonitoringPort,
 	}
 
@@ -68,8 +66,8 @@ func NewExecNode(
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
 		APIProxy:       apiProxy,
-		ComponentLabel: fmt.Sprintf("%s-%s", consts.YTComponentLabelExecNode, spec.Name),
-		ComponentName:  fmt.Sprintf("ExecNode-%v", spec.Name),
+		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelExecNode, spec.Name),
+		ComponentName:  cfgen.FormatComponentStringWithDefault("ExecNode", spec.Name),
 		MonitoringPort: consts.NodeMonitoringPort,
 	}
 

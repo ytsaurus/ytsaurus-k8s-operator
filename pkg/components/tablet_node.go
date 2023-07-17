@@ -2,8 +2,6 @@ package components
 
 import (
 	"context"
-	"fmt"
-
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -37,8 +35,8 @@ func NewTabletNode(
 	labeller := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
 		APIProxy:       apiProxy,
-		ComponentLabel: fmt.Sprintf("%s-%s", consts.YTComponentLabelTabletNode, spec.Name),
-		ComponentName:  fmt.Sprintf("TabletNode-%s", spec.Name),
+		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelTabletNode, spec.Name),
+		ComponentName:  cfgen.FormatComponentStringWithDefault("TabletNode", spec.Name),
 		MonitoringPort: consts.NodeMonitoringPort,
 	}
 
