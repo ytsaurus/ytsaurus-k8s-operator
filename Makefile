@@ -4,6 +4,9 @@ IMG ?= controller:latest
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.24.2
 
+OPERATOR_IMAGE=ytsaurus/k8s-operator
+OPERATOR_TAG=0.0.0-alpha
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -58,16 +61,20 @@ vet: ## Run go vet against code.
 test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ATTACH_CONTROL_PLANE_OUTPUT="true" KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -v ./... -coverprofile cover.out
 
-.PHONY: kind-tests-env
-kind-tests-env: manifests kustomize helm ## Load kind tests env.
-	docker build -t ${OPERATOR_IMAGE}:0.0.0-alpha .
-	kind load docker-image ytsaurus/k8s-operator:0.0.0-alpha
+.PHONY: helm-kind-install
+helm-kind-install: manifests kustomize helm ## Install helm chart from sources in kind.
+	docker build -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
+	kind load docker-image ${OPERATOR_IMAGE}:${OPERATOR_TAG}
 	helm install ytsaurus ytop-chart/
 
-.PHONY: kind-tests-env-uninstall
-kind-tests-env-uninstall: ## Uninstal kind tests env.
-	helm uninstall ytsaurus
+.PHONY: helm-minikube-install
+helm-minikube-install: manifests kustomize helm ## Install helm chart from sources in minikube.
+	docker build -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
+	helm install ytsaurus ytop-chart/
 
+.PHONY: helm-uninstall
+helm-uninstall: ## Uninstal kind tests env.
+	helm uninstall ytsaurus
 
 ##@ Build
 
@@ -117,8 +124,6 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
-
-OPERATOR_IMAGE=ytsaurus/k8s-operator
 
 release: manifests kustomize helmify ## Release operator docker imager and helm chart.
 	docker build -t $(OPERATOR_IMAGE):${RELEASE_VERSION} .
