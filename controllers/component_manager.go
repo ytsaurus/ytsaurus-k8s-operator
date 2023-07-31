@@ -89,7 +89,7 @@ func NewComponentManager(
 	}
 
 	if ytsaurus.Spec.QueryTrackers != nil {
-		q := components.NewQueryTracker(cfgen, apiProxy, m)
+		q := components.NewQueryTracker(cfgen, apiProxy, yc)
 		allComponents = append(allComponents, q)
 	}
 

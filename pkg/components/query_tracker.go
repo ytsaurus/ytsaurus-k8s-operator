@@ -3,25 +3,32 @@ package components
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
+	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type queryTracker struct {
 	ServerComponentBase
-	master          Component
-	initEnvironment *InitJob
+
+	ytsaurusClient YtsaurusClient
+	initCondition  string
 }
 
-func NewQueryTracker(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
+func NewQueryTracker(
+	cfgen *ytconfig.Generator,
+	apiProxy *apiproxy.APIProxy,
+	yc YtsaurusClient,
+) Component {
 	ytsaurus := apiProxy.Ytsaurus()
-	labeller := labeller.Labeller{
+	l := labeller.Labeller{
 		Ytsaurus:       ytsaurus,
 		APIProxy:       apiProxy,
 		ComponentLabel: "yt-query-tracker",
@@ -30,7 +37,7 @@ func NewQueryTracker(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, mas
 	}
 
 	server := NewServer(
-		&labeller,
+		&l,
 		apiProxy,
 		&ytsaurus.Spec.QueryTrackers.InstanceSpec,
 		"/usr/bin/ytserver-query-tracker",
@@ -43,40 +50,21 @@ func NewQueryTracker(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, mas
 	return &queryTracker{
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
-				labeller: &labeller,
+				labeller: &l,
 				apiProxy: apiProxy,
 				cfgen:    cfgen,
 			},
 			server: server,
 		},
-		master: master,
-		initEnvironment: NewInitJob(
-			&labeller,
-			apiProxy,
-			"qt-environment",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig),
+		initCondition:  "queryTrackerInitCompleted",
+		ytsaurusClient: yc,
 	}
 }
 
 func (qt *queryTracker) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, []resources.Fetchable{
 		qt.server,
-		qt.initEnvironment,
 	})
-}
-
-func (qt *queryTracker) createInitScript() string {
-	script := []string{
-		initJobWithNativeDriverPrologue(),
-		"/usr/bin/yt create user --attributes '{name=query_tracker}' --ignore-existing",
-		"/usr/bin/yt add-member --member query_tracker --group superusers || true",
-		fmt.Sprintf("/usr/bin/yt create document //sys/query_tracker/config --attributes '{value={query_tracker={ql_engine={default_cluster=\"%s\"}; chyt_engine={default_cluster=\"%s\"}}}}' --recursive --ignore-existing", qt.labeller.GetClusterName(), qt.labeller.GetClusterName()),
-		"/usr/bin/yt set //sys/@cluster_connection/query_tracker '{stages={production={root=\"//sys/query_tracker\"; user=query_tracker}}}'",
-		fmt.Sprintf("/usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/%s", qt.labeller.GetClusterName()),
-	}
-
-	return strings.Join(script, "\n")
 }
 
 func (qt *queryTracker) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
@@ -88,15 +76,12 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (SyncStatus, error
 		}
 	}
 
-	if qt.master.Status(ctx) != SyncStatusReady {
-		return SyncStatusBlocked, err
-	}
-
 	if !qt.server.IsInSync() {
 		if !dry {
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = qt.server.Sync(ctx)
 		}
+
 		return SyncStatusPending, err
 	}
 
@@ -104,11 +89,115 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (SyncStatus, error
 		return SyncStatusBlocked, err
 	}
 
-	if !dry {
-		qt.initEnvironment.SetInitScript(qt.createInitScript())
+	if qt.apiProxy.IsStatusConditionTrue(qt.initCondition) {
+		return SyncStatusReady, err
 	}
 
-	return qt.initEnvironment.Sync(ctx, dry)
+	if qt.ytsaurusClient.Status(ctx) != SyncStatusReady {
+		return SyncStatusBlocked, err
+	}
+
+	ytClient := qt.ytsaurusClient.GetYtClient()
+
+	if !dry {
+		err = qt.init(ctx, ytClient)
+		if err != nil {
+			return SyncStatusPending, err
+		}
+
+		err = qt.apiProxy.SetStatusCondition(ctx, metav1.Condition{
+			Type:    qt.initCondition,
+			Status:  metav1.ConditionTrue,
+			Reason:  "InitQueryTrackerCompleted",
+			Message: "Init query tracker successfully completed",
+		})
+	}
+
+	return SyncStatusPending, err
+}
+
+func (qt *queryTracker) init(ctx context.Context, ytClient yt.Client) (err error) {
+	logger := log.FromContext(ctx)
+
+	_, err = ytClient.CreateObject(
+		ctx,
+		yt.NodeUser,
+		&yt.CreateObjectOptions{
+			Attributes: map[string]interface{}{
+				"name": "query_tracker",
+			},
+			IgnoreExisting: true,
+		},
+	)
+	if err != nil {
+		logger.Error(err, "Creating user 'query_tracker' failed")
+		return
+	}
+
+	_ = ytClient.AddMember(ctx, "superusers", "query_tracker", nil)
+
+	_, err = ytClient.CreateNode(
+		ctx,
+		ypath.Path("//sys/query_tracker/config"),
+		yt.NodeDocument,
+		&yt.CreateNodeOptions{
+			Attributes: map[string]interface{}{
+				"value": map[string]interface{}{
+					"query_tracker": map[string]interface{}{
+						"ql_engine": map[string]interface{}{
+							"default_cluster": qt.labeller.GetClusterName(),
+						},
+						"chyt_engine": map[string]interface{}{
+							"default_cluster": qt.labeller.GetClusterName(),
+						},
+					},
+				},
+			},
+			Recursive:      true,
+			IgnoreExisting: true,
+		},
+	)
+	if err != nil {
+		logger.Error(err, "Creating document '//sys/query_tracker/config' failed")
+		return
+	}
+
+	err = ytClient.SetNode(
+		ctx,
+		ypath.Path("//sys/@cluster_connection/query_tracker"),
+		map[string]interface{}{
+			"stages": map[string]interface{}{
+				"production": map[string]interface{}{
+					"root": "//sys/query_tracker",
+					"user": "query_tracker",
+				},
+			},
+		},
+		nil,
+	)
+	if err != nil {
+		logger.Error(err, "Setting '//sys/@cluster_connection/query_tracker' failed")
+		return
+	}
+
+	clusterConnectionAttr := make(map[string]interface{})
+	err = ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection"), &clusterConnectionAttr, nil)
+	if err != nil {
+		logger.Error(err, "Getting '//sys/@cluster_connection' failed")
+		return
+	}
+
+	err = ytClient.SetNode(
+		ctx,
+		ypath.Path(fmt.Sprintf("//sys/clusters/%s", qt.labeller.GetClusterName())),
+		clusterConnectionAttr,
+		nil,
+	)
+	if err != nil {
+		logger.Error(err, fmt.Sprintf("Setting '//sys/clusters/%s' failed", qt.labeller.GetClusterName()))
+		return
+	}
+	return
 }
 
 func (qt *queryTracker) Status(ctx context.Context) SyncStatus {
