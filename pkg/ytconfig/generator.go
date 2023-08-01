@@ -480,3 +480,25 @@ func (g *Generator) GetDiscoveryConfig() ([]byte, error) {
 	}
 	return marshallYsonConfig(c)
 }
+
+func (g *Generator) GetExtraMedia() []v1.Medium {
+	mediaMap := make(map[string]v1.Medium)
+
+	for _, d := range g.ytsaurus.Spec.DataNodes {
+		for _, l := range d.Locations {
+			if l.Medium == "default" {
+				continue
+			}
+			mediaMap[l.Medium] = v1.Medium{
+				Name: l.Medium,
+			}
+		}
+	}
+
+	mediaSlice := make([]v1.Medium, 0, len(mediaMap))
+	for _, v := range mediaMap {
+		mediaSlice = append(mediaSlice, v)
+	}
+
+	return mediaSlice
+}

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	"go.ytsaurus.tech/yt/go/yson"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -108,6 +109,18 @@ func (m *master) initAdminUser() string {
 	return strings.Join(commands, "\n")
 }
 
+func (m *master) initMedia() string {
+	commands := []string{}
+	for _, medium := range m.cfgen.GetExtraMedia() {
+		attr, err := yson.MarshalFormat(medium, yson.FormatText)
+		if err != nil {
+			panic(err)
+		}
+		commands = append(commands, fmt.Sprintf("/usr/bin/yt get //sys/media/%s/@name || /usr/bin/yt create medium --attr '%s'", medium.Name, string(attr)))
+	}
+	return strings.Join(commands, "\n")
+}
+
 func (m *master) createInitScript() string {
 	clusterConnection, err := m.cfgen.GetClusterConnection()
 	if err != nil {
@@ -124,6 +137,7 @@ func (m *master) createInitScript() string {
 		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection '%s'", string(clusterConnection)),
 		"/usr/bin/yt set //sys/controller_agents/config/operation_options/spec_template '{enable_partitioned_data_balancing=%false}' -r -f",
 		m.initAdminUser(),
+		m.initMedia(),
 	}
 
 	return strings.Join(script, "\n")

@@ -260,11 +260,14 @@ type DeprecatedSpytSpec struct {
 	SpytVersion  string `json:"spytVersion,omitempty"`
 }
 
+type Medium struct {
+	Name string `yson:"name"`
+}
+
 // YtsaurusSpec defines the desired state of Ytsaurus
 type YtsaurusSpec struct {
-	CoreImage string `json:"coreImage,omitempty"`
-	UIImage   string `json:"uiImage,omitempty"`
-
+	CoreImage        string                        `json:"coreImage,omitempty"`
+	UIImage          string                        `json:"uiImage,omitempty"`
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 	ConfigOverrides  *corev1.LocalObjectReference  `json:"configOverrides,omitempty"`
 	AdminCredentials *corev1.LocalObjectReference  `json:"adminCredentials,omitempty"`
