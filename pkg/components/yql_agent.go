@@ -22,11 +22,11 @@ type yqlAgent struct {
 	secret          *resources.StringSecret
 }
 
-func NewYQLAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
-	ytsaurus := apiProxy.Ytsaurus()
+func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) Component {
+	resource := ytsaurus.GetResource()
 	labeller := labeller.Labeller{
-		Ytsaurus:       ytsaurus,
-		APIProxy:       apiProxy,
+		ObjectMeta:     &resource.ObjectMeta,
+		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelYqlAgent,
 		ComponentName:  "YqlAgent",
 		MonitoringPort: consts.YQLAgentMonitoringPort,
@@ -34,8 +34,8 @@ func NewYQLAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 
 	server := NewServer(
 		&labeller,
-		apiProxy,
-		&ytsaurus.Spec.YQLAgents.InstanceSpec,
+		ytsaurus,
+		&resource.Spec.YQLAgents.InstanceSpec,
 		"/usr/bin/ytserver-yql-agent",
 		"ytserver-yql-agent.yson",
 		cfgen.GetYQLAgentStatefulSetName(),
@@ -47,7 +47,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
 				labeller: &labeller,
-				apiProxy: apiProxy,
+				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
 			server: server,
@@ -55,14 +55,17 @@ func NewYQLAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master 
 		master: master,
 		initEnvironment: NewInitJob(
 			&labeller,
-			apiProxy,
+			ytsaurus.APIProxy(),
+			ytsaurus,
+			resource.Spec.ImagePullSecrets,
 			"yql-agent-environment",
 			consts.ClientConfigFileName,
+			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			labeller.GetSecretName(),
 			&labeller,
-			apiProxy),
+			ytsaurus.APIProxy()),
 	}
 }
 
@@ -110,8 +113,8 @@ func (yqla *yqlAgent) createInitScript() string {
 func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
-	if yqla.apiProxy.GetClusterState() == ytv1.ClusterStateUpdating {
-		if yqla.apiProxy.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, yqla.removePods(ctx, dry)
 		}
 	}

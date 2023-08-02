@@ -16,11 +16,11 @@ type controllerAgent struct {
 	master Component
 }
 
-func NewControllerAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
-	ytsaurus := apiProxy.Ytsaurus()
+func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) Component {
+	resource := ytsaurus.GetResource()
 	labeller := labeller.Labeller{
-		Ytsaurus:       ytsaurus,
-		APIProxy:       apiProxy,
+		ObjectMeta:     &resource.ObjectMeta,
+		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelControllerAgent,
 		ComponentName:  "ControllerAgent",
 		MonitoringPort: consts.ControllerAgentMonitoringPort,
@@ -28,8 +28,8 @@ func NewControllerAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, 
 
 	server := NewServer(
 		&labeller,
-		apiProxy,
-		&ytsaurus.Spec.ControllerAgents.InstanceSpec,
+		ytsaurus,
+		&resource.Spec.ControllerAgents.InstanceSpec,
 		"/usr/bin/ytserver-controller-agent",
 		"ytserver-controller-agent.yson",
 		"ca",
@@ -42,7 +42,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, 
 			server: server,
 			ComponentBase: ComponentBase{
 				labeller: &labeller,
-				apiProxy: apiProxy,
+				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
 		},
@@ -58,8 +58,8 @@ func (ca *controllerAgent) Fetch(ctx context.Context) error {
 
 func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
-	if ca.apiProxy.GetClusterState() == v1.ClusterStateUpdating {
-		if ca.apiProxy.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
+	if ca.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
+		if ca.ytsaurus.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, ca.removePods(ctx, dry)
 		}
 	}

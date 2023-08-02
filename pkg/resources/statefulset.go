@@ -15,7 +15,7 @@ import (
 type StatefulSet struct {
 	name     string
 	labeller *labeller2.Labeller
-	apiProxy *apiproxy.APIProxy
+	ytsaurus *apiproxy.Ytsaurus
 
 	oldObject appsv1.StatefulSet
 	newObject appsv1.StatefulSet
@@ -25,11 +25,11 @@ type StatefulSet struct {
 func NewStatefulSet(
 	name string,
 	labeller *labeller2.Labeller,
-	apiProxy *apiproxy.APIProxy) *StatefulSet {
+	ytsaurus *apiproxy.Ytsaurus) *StatefulSet {
 	return &StatefulSet{
 		name:     name,
 		labeller: labeller,
-		apiProxy: apiProxy,
+		ytsaurus: ytsaurus,
 	}
 }
 
@@ -42,7 +42,7 @@ func (s *StatefulSet) Name() string {
 }
 
 func (s *StatefulSet) Sync(ctx context.Context) error {
-	return s.apiProxy.SyncObject(ctx, &s.oldObject, &s.newObject)
+	return s.ytsaurus.APIProxy().SyncObject(ctx, &s.oldObject, &s.newObject)
 }
 
 func (s *StatefulSet) Build() *appsv1.StatefulSet {
@@ -56,7 +56,7 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      s.labeller.GetMetaLabelMap(),
-					Annotations: s.apiProxy.Ytsaurus().Spec.ExtraPodAnnotations,
+					Annotations: s.ytsaurus.GetResource().Spec.ExtraPodAnnotations,
 				},
 			},
 		}
@@ -69,7 +69,7 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 func (s *StatefulSet) CheckPodsReady(ctx context.Context) bool {
 	logger := log.FromContext(ctx)
 	podList := &corev1.PodList{}
-	err := s.apiProxy.ListObjects(ctx, podList, s.labeller.GetListOptions()...)
+	err := s.ytsaurus.APIProxy().ListObjects(ctx, podList, s.labeller.GetListOptions()...)
 	if err != nil {
 		logger.Error(err, "unable to list pods for component", "component", s.labeller.ComponentName)
 		return false
@@ -107,5 +107,5 @@ func (s *StatefulSet) NeedSync(replicas int32) bool {
 }
 
 func (s *StatefulSet) Fetch(ctx context.Context) error {
-	return s.apiProxy.FetchObject(ctx, s.name, &s.oldObject)
+	return s.ytsaurus.APIProxy().FetchObject(ctx, s.name, &s.oldObject)
 }

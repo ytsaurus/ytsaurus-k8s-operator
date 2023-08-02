@@ -23,13 +23,13 @@ type rpcProxy struct {
 
 func NewRPCProxy(
 	cfgen *ytconfig.Generator,
-	apiProxy *apiproxy.APIProxy,
+	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
 	spec ytv1.RPCProxiesSpec) Component {
-	ytsaurus := apiProxy.Ytsaurus()
+	resource := ytsaurus.GetResource()
 	labeller := labeller.Labeller{
-		Ytsaurus:       ytsaurus,
-		APIProxy:       apiProxy,
+		ObjectMeta:     &resource.ObjectMeta,
+		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: fmt.Sprintf("%s-%s", consts.YTComponentLabelRPCProxy, spec.Role),
 		ComponentName:  fmt.Sprintf("RpcProxy-%s", spec.Role),
 		MonitoringPort: consts.RPCProxyMonitoringPort,
@@ -37,7 +37,7 @@ func NewRPCProxy(
 
 	server := NewServer(
 		&labeller,
-		apiProxy,
+		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-proxy",
 		"ytserver-rpc-proxy.yson",
@@ -53,14 +53,14 @@ func NewRPCProxy(
 		balancingService = resources.NewRPCService(
 			cfgen.GetRPCProxiesServiceName(spec.Role),
 			&labeller,
-			apiProxy)
+			ytsaurus.APIProxy())
 	}
 
 	return &rpcProxy{
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
 				labeller: &labeller,
-				apiProxy: apiProxy,
+				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
 			server: server,
@@ -84,8 +84,8 @@ func (r *rpcProxy) Fetch(ctx context.Context) error {
 func (r *rpcProxy) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
-	if r.apiProxy.GetClusterState() == ytv1.ClusterStateUpdating {
-		if r.apiProxy.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if r.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, r.removePods(ctx, dry)
 		}
 	}

@@ -27,20 +27,20 @@ type UI struct {
 
 const UIConfigFileName = "clusters-config.json"
 
-func NewUI(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Component) Component {
-	ytsaurus := apiProxy.Ytsaurus()
+func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) Component {
+	resource := ytsaurus.GetResource()
 	labeller := labeller.Labeller{
-		Ytsaurus:       ytsaurus,
-		APIProxy:       apiProxy,
+		ObjectMeta:     &resource.ObjectMeta,
+		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelUI,
 		ComponentName:  "UI",
 	}
 
 	microservice := NewMicroservice(
 		&labeller,
-		apiProxy,
-		ytsaurus.Spec.UIImage,
-		ytsaurus.Spec.UI.InstanceCount,
+		ytsaurus,
+		resource.Spec.UIImage,
+		resource.Spec.UI.InstanceCount,
 		cfgen.GetWebUIConfig,
 		UIConfigFileName,
 		"ytsaurus-ui-deployment",
@@ -49,21 +49,24 @@ func NewUI(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy, master Compon
 	return &UI{
 		ComponentBase: ComponentBase{
 			labeller: &labeller,
-			apiProxy: apiProxy,
+			ytsaurus: ytsaurus,
 			cfgen:    cfgen,
 		},
 		microservice: microservice,
 		initJob: NewInitJob(
 			&labeller,
-			apiProxy,
+			ytsaurus.APIProxy(),
+			ytsaurus,
+			resource.Spec.ImagePullSecrets,
 			"default",
 			consts.ClientConfigFileName,
+			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			labeller.GetSecretName(),
 			&labeller,
-			apiProxy),
-		ytsaurus: ytsaurus,
+			ytsaurus.APIProxy()),
+		ytsaurus: resource,
 		master:   master,
 	}
 }
@@ -93,7 +96,7 @@ func (u *UI) createInitScript() string {
 
 func (u *UI) syncComponents(ctx context.Context) (err error) {
 	service := u.microservice.BuildService()
-	service.Spec.Type = u.labeller.Ytsaurus.Spec.UI.ServiceType
+	service.Spec.Type = u.ytsaurus.Spec.UI.ServiceType
 
 	volumeMounts := []corev1.VolumeMount{
 		{

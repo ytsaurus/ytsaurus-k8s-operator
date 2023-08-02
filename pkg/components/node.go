@@ -17,14 +17,14 @@ type node struct {
 
 func NewDataNode(
 	cfgen *ytconfig.Generator,
-	apiProxy *apiproxy.APIProxy,
+	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	spec ytv1.DataNodesSpec,
 ) Component {
-	ytsaurus := apiProxy.Ytsaurus()
+	resource := ytsaurus.GetResource()
 	labeller := labeller.Labeller{
-		Ytsaurus:       ytsaurus,
-		APIProxy:       apiProxy,
+		ObjectMeta:     &resource.ObjectMeta,
+		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelDataNode, spec.Name),
 		ComponentName:  cfgen.FormatComponentStringWithDefault("DataNode", spec.Name),
 		MonitoringPort: consts.NodeMonitoringPort,
@@ -32,7 +32,7 @@ func NewDataNode(
 
 	server := NewServer(
 		&labeller,
-		apiProxy,
+		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-data-node.yson",
@@ -47,7 +47,7 @@ func NewDataNode(
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
 				labeller: &labeller,
-				apiProxy: apiProxy,
+				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
 			server: server,
@@ -58,14 +58,14 @@ func NewDataNode(
 
 func NewExecNode(
 	cfgen *ytconfig.Generator,
-	apiProxy *apiproxy.APIProxy,
+	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	spec ytv1.ExecNodesSpec,
 ) Component {
-	ytsaurus := apiProxy.Ytsaurus()
+	resource := ytsaurus.GetResource()
 	labeller := labeller.Labeller{
-		Ytsaurus:       ytsaurus,
-		APIProxy:       apiProxy,
+		ObjectMeta:     &resource.ObjectMeta,
+		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelExecNode, spec.Name),
 		ComponentName:  cfgen.FormatComponentStringWithDefault("ExecNode", spec.Name),
 		MonitoringPort: consts.NodeMonitoringPort,
@@ -73,7 +73,7 @@ func NewExecNode(
 
 	server := NewServer(
 		&labeller,
-		apiProxy,
+		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-exec-node.yson",
@@ -88,7 +88,7 @@ func NewExecNode(
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
 				labeller: &labeller,
-				apiProxy: apiProxy,
+				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
 			server: server,
@@ -106,8 +106,8 @@ func (n *node) Fetch(ctx context.Context) error {
 func (n *node) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
-	if n.apiProxy.GetClusterState() == ytv1.ClusterStateUpdating {
-		if n.apiProxy.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if n.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, n.removePods(ctx, dry)
 		}
 	}

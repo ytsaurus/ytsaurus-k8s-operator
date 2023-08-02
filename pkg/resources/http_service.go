@@ -14,13 +14,13 @@ import (
 type HTTPService struct {
 	name     string
 	labeller *labeller2.Labeller
-	apiProxy *apiproxy.APIProxy
+	apiProxy apiproxy.APIProxy
 
 	oldObject corev1.Service
 	newObject corev1.Service
 }
 
-func NewHTTPService(name string, labeller *labeller2.Labeller, apiProxy *apiproxy.APIProxy) *HTTPService {
+func NewHTTPService(name string, labeller *labeller2.Labeller, apiProxy apiproxy.APIProxy) *HTTPService {
 	return &HTTPService{
 		name:     name,
 		labeller: labeller,

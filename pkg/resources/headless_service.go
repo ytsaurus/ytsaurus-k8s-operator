@@ -12,13 +12,13 @@ import (
 type HeadlessService struct {
 	name     string
 	labeller *labeller2.Labeller
-	apiProxy *apiproxy.APIProxy
+	apiProxy apiproxy.APIProxy
 
 	oldObject corev1.Service
 	newObject corev1.Service
 }
 
-func NewHeadlessService(name string, labeller *labeller2.Labeller, apiProxy *apiproxy.APIProxy) *HeadlessService {
+func NewHeadlessService(name string, labeller *labeller2.Labeller, apiProxy apiproxy.APIProxy) *HeadlessService {
 	return &HeadlessService{
 		name:     name,
 		labeller: labeller,

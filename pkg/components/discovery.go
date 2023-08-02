@@ -15,11 +15,11 @@ type discovery struct {
 	ServerComponentBase
 }
 
-func NewDiscovery(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Component {
-	ytsaurus := apiProxy.Ytsaurus()
+func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component {
+	resource := ytsaurus.GetResource()
 	labeller := labeller.Labeller{
-		Ytsaurus:       ytsaurus,
-		APIProxy:       apiProxy,
+		ObjectMeta:     &resource.ObjectMeta,
+		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelDiscovery,
 		ComponentName:  "Discovery",
 		MonitoringPort: consts.DiscoveryMonitoringPort,
@@ -27,8 +27,8 @@ func NewDiscovery(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Compon
 
 	server := NewServer(
 		&labeller,
-		apiProxy,
-		&ytsaurus.Spec.Discovery.InstanceSpec,
+		ytsaurus,
+		&resource.Spec.Discovery.InstanceSpec,
 		"/usr/bin/ytserver-discovery",
 		"ytserver-discovery.yson",
 		cfgen.GetDiscoveryStatefulSetName(),
@@ -40,7 +40,7 @@ func NewDiscovery(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) Compon
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
 				labeller: &labeller,
-				apiProxy: apiProxy,
+				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
 			server: server,
@@ -57,8 +57,8 @@ func (d *discovery) Fetch(ctx context.Context) error {
 func (d *discovery) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
-	if d.apiProxy.GetClusterState() == v1.ClusterStateUpdating {
-		if d.apiProxy.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
+	if d.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
+		if d.ytsaurus.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, d.removePods(ctx, dry)
 		}
 	}

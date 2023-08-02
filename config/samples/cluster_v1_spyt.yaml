@@ -1,0 +1,16 @@
+apiVersion: cluster.ytsaurus.tech/v1
+kind: Spyt
+metadata:
+  labels:
+    app.kubernetes.io/name: spyt
+    app.kubernetes.io/instance: spyt-sample
+    app.kubernetes.io/part-of: yt-k8s-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: yt-k8s-operator
+  name: spyt-sample
+spec:
+  name: myspyt
+  ytsaurus:
+    name:
+      minisaurus
+  image: ytsaurus/spyt:1.69.0

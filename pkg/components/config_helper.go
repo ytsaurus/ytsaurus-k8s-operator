@@ -15,27 +15,30 @@ import (
 
 type ConfigHelper struct {
 	labeller *labeller.Labeller
-	apiProxy *apiproxy.APIProxy
+	apiProxy apiproxy.APIProxy
 
 	generator ytconfig.GeneratorFunc
 
-	overridesMap corev1.ConfigMap
-	fileName     string
+	configOverrides *corev1.LocalObjectReference
+	overridesMap    corev1.ConfigMap
+	fileName        string
 
 	configMap *resources.ConfigMap
 }
 
 func NewConfigHelper(
 	labeller *labeller.Labeller,
-	apiProxy *apiproxy.APIProxy,
+	apiProxy apiproxy.APIProxy,
 	name, fileName string,
+	configOverrides *corev1.LocalObjectReference,
 	generator ytconfig.GeneratorFunc) *ConfigHelper {
 	return &ConfigHelper{
-		labeller:  labeller,
-		apiProxy:  apiProxy,
-		generator: generator,
-		fileName:  fileName,
-		configMap: resources.NewConfigMap(name, labeller, apiProxy),
+		labeller:        labeller,
+		apiProxy:        apiProxy,
+		generator:       generator,
+		configOverrides: configOverrides,
+		fileName:        fileName,
+		configMap:       resources.NewConfigMap(name, labeller, apiProxy),
 	}
 }
 
@@ -140,8 +143,8 @@ func (h *ConfigHelper) Sync(ctx context.Context) error {
 }
 
 func (h *ConfigHelper) Fetch(ctx context.Context) error {
-	if h.apiProxy.Ytsaurus().Spec.ConfigOverrides != nil {
-		name := h.apiProxy.Ytsaurus().Spec.ConfigOverrides.Name
+	if h.configOverrides != nil {
+		name := h.configOverrides.Name
 		err := h.apiProxy.FetchObject(ctx, name, &h.overridesMap)
 		if err != nil {
 			return err

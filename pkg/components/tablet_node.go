@@ -26,15 +26,15 @@ type tabletNode struct {
 
 func NewTabletNode(
 	cfgen *ytconfig.Generator,
-	apiProxy *apiproxy.APIProxy,
-	yc YtsaurusClient,
+	ytsaurus *apiproxy.Ytsaurus,
+	ytsaurusClient YtsaurusClient,
 	spec ytv1.TabletNodesSpec,
 	doInitiailization bool,
 ) Component {
-	ytsaurus := apiProxy.Ytsaurus()
+	resource := ytsaurus.GetResource()
 	labeller := labeller.Labeller{
-		Ytsaurus:       ytsaurus,
-		APIProxy:       apiProxy,
+		ObjectMeta:     &resource.ObjectMeta,
+		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelTabletNode, spec.Name),
 		ComponentName:  cfgen.FormatComponentStringWithDefault("TabletNode", spec.Name),
 		MonitoringPort: consts.NodeMonitoringPort,
@@ -42,7 +42,7 @@ func NewTabletNode(
 
 	server := NewServer(
 		&labeller,
-		apiProxy,
+		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-tablet-node.yson",
@@ -57,13 +57,13 @@ func NewTabletNode(
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
 				labeller: &labeller,
-				apiProxy: apiProxy,
+				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
 			server: server,
 		},
 		initBundlesCondition: "bundlesTabletNodeInitCompleted",
-		ytsaurusClient:       yc,
+		ytsaurusClient:       ytsaurusClient,
 		spec:                 spec,
 		doInitialization:     doInitiailization,
 	}
@@ -73,8 +73,8 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 	logger := log.FromContext(ctx)
 
-	if r.apiProxy.GetClusterState() == ytv1.ClusterStateUpdating {
-		if r.apiProxy.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if r.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, r.removePods(ctx, dry)
 		}
 	}
@@ -92,7 +92,7 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		return SyncStatusBlocked, err
 	}
 
-	if !r.doInitialization || r.apiProxy.IsStatusConditionTrue(r.initBundlesCondition) {
+	if !r.doInitialization || r.ytsaurus.IsStatusConditionTrue(r.initBundlesCondition) {
 		return SyncStatusReady, err
 	}
 
@@ -133,7 +133,7 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 				}
 			}
 
-			err = r.apiProxy.SetStatusCondition(ctx, metav1.Condition{
+			err = r.ytsaurus.SetStatusCondition(ctx, metav1.Condition{
 				Type:    r.initBundlesCondition,
 				Status:  metav1.ConditionTrue,
 				Reason:  "InitBundlesCompleted",

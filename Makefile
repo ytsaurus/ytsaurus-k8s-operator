@@ -62,14 +62,14 @@ test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ATTACH_CONTROL_PLANE_OUTPUT="true" KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -v ./... -coverprofile cover.out
 
 .PHONY: helm-kind-install
-helm-kind-install: manifests kustomize helm ## Install helm chart from sources in kind.
+helm-kind-install: ## Install helm chart from sources in kind.
 	docker build -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
 	kind load docker-image ${OPERATOR_IMAGE}:${OPERATOR_TAG}
 	helm install ytsaurus ytop-chart/
 
 .PHONY: helm-minikube-install
-helm-minikube-install: manifests kustomize helm ## Install helm chart from sources in minikube.
-	docker build -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
+helm-minikube-install: ## Install helm chart from sources in minikube.
+	eval $(minikube docker-env) && docker build -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
 	helm install ytsaurus ytop-chart/
 
 .PHONY: helm-uninstall

@@ -3,10 +3,8 @@ package apiproxy
 import (
 	"context"
 	"fmt"
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -16,43 +14,55 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-type APIProxy struct {
-	ytsaurus *ytv1.Ytsaurus
-	client   client.Client
-	recorder record.EventRecorder
-	scheme   *runtime.Scheme
+type APIProxy interface {
+	Client() client.Client
+	FetchObject(ctx context.Context, name string, obj client.Object) error
+	ListObjects(ctx context.Context, objList client.ObjectList, opts ...client.ListOption) error
+	RecordWarning(reason, message string)
+	RecordNormal(reason, message string)
+	SyncObject(ctx context.Context, oldObj, newObj client.Object) error
+
+	UpdateStatus(ctx context.Context) error
+}
+
+type ConditionManager interface {
+	SetStatusCondition(ctx context.Context, condition metav1.Condition) error
+	IsStatusConditionTrue(condition string) bool
 }
 
 func NewAPIProxy(
-	ytsaurus *ytv1.Ytsaurus,
+	object client.Object,
 	client client.Client,
 	recorder record.EventRecorder,
-	scheme *runtime.Scheme) *APIProxy {
-	return &APIProxy{
-		ytsaurus: ytsaurus,
+	scheme *runtime.Scheme) APIProxy {
+	return &apiProxy{
+		object:   object,
 		client:   client,
 		recorder: recorder,
 		scheme:   scheme,
 	}
 }
 
-func (c *APIProxy) GetObjectKey(name string) types.NamespacedName {
+type apiProxy struct {
+	object   client.Object
+	client   client.Client
+	recorder record.EventRecorder
+	scheme   *runtime.Scheme
+}
+
+func (c *apiProxy) getObjectKey(name string) types.NamespacedName {
 	return types.NamespacedName{
 		Name:      name,
-		Namespace: c.ytsaurus.Namespace,
+		Namespace: c.object.GetNamespace(),
 	}
 }
 
-func (c *APIProxy) Ytsaurus() *ytv1.Ytsaurus {
-	return c.ytsaurus
-}
-
-func (c *APIProxy) Client() client.Client {
+func (c *apiProxy) Client() client.Client {
 	return c.client
 }
 
-func (c *APIProxy) FetchObject(ctx context.Context, name string, obj client.Object) error {
-	err := c.client.Get(ctx, c.GetObjectKey(name), obj)
+func (c *apiProxy) FetchObject(ctx context.Context, name string, obj client.Object) error {
+	err := c.client.Get(ctx, c.getObjectKey(name), obj)
 	if err == nil || !errors.IsNotFound(err) {
 		return err
 	}
@@ -60,54 +70,28 @@ func (c *APIProxy) FetchObject(ctx context.Context, name string, obj client.Obje
 	return nil
 }
 
-func (c *APIProxy) ListObjects(ctx context.Context, objList client.ObjectList, opts ...client.ListOption) error {
+func (c *apiProxy) ListObjects(ctx context.Context, objList client.ObjectList, opts ...client.ListOption) error {
 	err := c.client.List(ctx, objList, opts...)
 	return err
 }
 
-func (c *APIProxy) RecordWarning(reason, message string) {
+func (c *apiProxy) RecordWarning(reason, message string) {
 	c.recorder.Event(
-		c.ytsaurus,
+		c.object,
 		corev1.EventTypeWarning,
 		reason,
 		message)
 }
 
-func (c *APIProxy) RecordNormal(reason, message string) {
+func (c *apiProxy) RecordNormal(reason, message string) {
 	c.recorder.Event(
-		c.ytsaurus,
+		c.object,
 		corev1.EventTypeNormal,
 		reason,
 		message)
 }
 
-func (c *APIProxy) GetClusterState() ytv1.ClusterState {
-	return c.ytsaurus.Status.State
-}
-
-func (c *APIProxy) GetUpdateState() ytv1.UpdateState {
-	return c.ytsaurus.Status.UpdateStatus.State
-}
-
-func (c *APIProxy) IsStatusConditionTrue(condition string) bool {
-	return meta.IsStatusConditionTrue(c.ytsaurus.Status.Conditions, condition)
-}
-
-func (c *APIProxy) IsUpdateStatusConditionTrue(condition string) bool {
-	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
-}
-
-func (c *APIProxy) SetStatusCondition(ctx context.Context, condition metav1.Condition) error {
-	meta.SetStatusCondition(&c.ytsaurus.Status.Conditions, condition)
-	return c.UpdateStatus(ctx)
-}
-
-func (c *APIProxy) SetUpdateStatusCondition(ctx context.Context, condition metav1.Condition) error {
-	meta.SetStatusCondition(&c.ytsaurus.Status.UpdateStatus.Conditions, condition)
-	return c.UpdateStatus(ctx)
-}
-
-func (c *APIProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object) error {
+func (c *apiProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object) error {
 	var err error
 	if newObj.GetName() == "" {
 		return fmt.Errorf("cannot sync uninitialized object, object type %T", oldObj)
@@ -122,10 +106,10 @@ func (c *APIProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object)
 	return err
 }
 
-func (c *APIProxy) updateObject(ctx context.Context, obj client.Object) error {
+func (c *apiProxy) updateObject(ctx context.Context, obj client.Object) error {
 	logger := log.FromContext(ctx)
 
-	if err := ctrl.SetControllerReference(c.ytsaurus, obj, c.scheme); err != nil {
+	if err := ctrl.SetControllerReference(c.object, obj, c.scheme); err != nil {
 		logger.Error(err, "unable to set controller reference", "object_name", obj.GetName())
 		return err
 	}
@@ -146,10 +130,10 @@ func (c *APIProxy) updateObject(ctx context.Context, obj client.Object) error {
 	return nil
 }
 
-func (c *APIProxy) createAndReferenceObject(ctx context.Context, obj client.Object) error {
+func (c *apiProxy) createAndReferenceObject(ctx context.Context, obj client.Object) error {
 	logger := log.FromContext(ctx)
 
-	if err := ctrl.SetControllerReference(c.ytsaurus, obj, c.scheme); err != nil {
+	if err := ctrl.SetControllerReference(c.object, obj, c.scheme); err != nil {
 		logger.Error(err, "unable to set controller reference", "object_name", obj.GetName())
 		return err
 	}
@@ -169,39 +153,6 @@ func (c *APIProxy) createAndReferenceObject(ctx context.Context, obj client.Obje
 	return nil
 }
 
-func (c *APIProxy) UpdateStatus(ctx context.Context) error {
-	return c.client.Status().Update(ctx, c.ytsaurus)
-}
-
-func (c *APIProxy) ClearUpdateStatus(ctx context.Context) error {
-	c.ytsaurus.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
-	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
-	c.ytsaurus.Status.UpdateStatus.MasterMonitoringPaths = make([]string, 0)
-	return c.UpdateStatus(ctx)
-}
-func (c *APIProxy) LogUpdate(ctx context.Context, message string) {
-	logger := log.FromContext(ctx)
-	c.RecordNormal("Update", message)
-	logger.Info(fmt.Sprintf("Ytsaurus update: %s", message))
-}
-
-func (c *APIProxy) SaveClusterState(ctx context.Context, clusterState ytv1.ClusterState) error {
-	logger := log.FromContext(ctx)
-	c.ytsaurus.Status.State = clusterState
-	if err := c.UpdateStatus(ctx); err != nil {
-		logger.Error(err, "unable to update Ytsaurus cluster status")
-		return err
-	}
-
-	return nil
-}
-
-func (c *APIProxy) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateState) error {
-	logger := log.FromContext(ctx)
-	c.ytsaurus.Status.UpdateStatus.State = updateState
-	if err := c.UpdateStatus(ctx); err != nil {
-		logger.Error(err, "unable to update Ytsaurus update state")
-		return err
-	}
-	return nil
+func (c *apiProxy) UpdateStatus(ctx context.Context) error {
+	return c.client.Status().Update(ctx, c.object)
 }

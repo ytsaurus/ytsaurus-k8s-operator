@@ -227,23 +227,23 @@ type ChytSpec struct {
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
-type SpytSpec struct {
-	SparkVersion string `json:"sparkVersion,omitempty"`
-	SpytVersion  string `json:"spytVersion,omitempty"`
-}
-
 type YQLAgentSpec struct {
 	InstanceSpec `json:",inline"`
 }
 
+type DeprecatedSpytSpec struct {
+	SparkVersion string `json:"sparkVersion,omitempty"`
+	SpytVersion  string `json:"spytVersion,omitempty"`
+}
+
 // YtsaurusSpec defines the desired state of Ytsaurus
 type YtsaurusSpec struct {
-	CoreImage        string                        `json:"coreImage,omitempty"`
-	UIImage          string                        `json:"uiImage,omitempty"`
-	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+	CoreImage string `json:"coreImage,omitempty"`
+	UIImage   string `json:"uiImage,omitempty"`
 
-	AdminCredentials *corev1.LocalObjectReference `json:"adminCredentials,omitempty"`
-	ConfigOverrides  *corev1.LocalObjectReference `json:"configOverrides,omitempty"`
+	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+	ConfigOverrides  *corev1.LocalObjectReference  `json:"configOverrides,omitempty"`
+	AdminCredentials *corev1.LocalObjectReference  `json:"adminCredentials,omitempty"`
 
 	//+kubebuilder:default:=true
 	IsManaged bool `json:"isManaged,omitempty"`
@@ -270,10 +270,10 @@ type YtsaurusSpec struct {
 	ControllerAgents *ControllerAgentsSpec `json:"controllerAgents,omitempty"`
 	TabletNodes      []TabletNodesSpec     `json:"tabletNodes,omitempty"`
 
-	Chyt          *ChytSpec         `json:"chyt,omitempty"`
-	QueryTrackers *QueryTrackerSpec `json:"queryTrackers,omitempty"`
-	Spyt          *SpytSpec         `json:"spyt,omitempty"`
-	YQLAgents     *YQLAgentSpec     `json:"yqlAgents,omitempty"`
+	Chyt          *ChytSpec           `json:"chyt,omitempty"`
+	QueryTrackers *QueryTrackerSpec   `json:"queryTrackers,omitempty"`
+	Spyt          *DeprecatedSpytSpec `json:"spyt,omitempty"`
+	YQLAgents     *YQLAgentSpec       `json:"yqlAgents,omitempty"`
 
 	UI *UISpec `json:"ui,omitempty"`
 }
@@ -329,16 +329,17 @@ type YtsaurusStatus struct {
 	UpdateStatus UpdateStatus `json:"updateStatus,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:printcolumn:name="ClusterState",type="string",JSONPath=".status.state",description="State of Ytsaurus cluster"
+// +kubebuilder:printcolumn:name="UpdateState",type="string",JSONPath=".status.updateStatus.state",description="Update state of Ytsaurus cluster"
+// +kubebuilder:subresource:status
 
 // Ytsaurus is the Schema for the ytsaurus API
 type Ytsaurus struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   YtsaurusSpec   `json:"spec,omitempty"`
-	Status YtsaurusStatus `json:"status,omitempty"`
+	Spec              YtsaurusSpec   `json:"spec,omitempty"`
+	Status            YtsaurusStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true

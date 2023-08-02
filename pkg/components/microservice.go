@@ -31,7 +31,7 @@ type Microservice struct {
 
 func NewMicroservice(
 	labeller *labeller.Labeller,
-	apiProxy *apiproxy.APIProxy,
+	ytsaurus *apiproxy.Ytsaurus,
 	image string,
 	instanceCount int32,
 	configGenerator ytconfig.GeneratorFunc,
@@ -43,16 +43,17 @@ func NewMicroservice(
 		service: resources.NewHTTPService(
 			serviceName,
 			labeller,
-			apiProxy),
+			ytsaurus.APIProxy()),
 		deployment: resources.NewDeployment(
 			deploymentName,
 			labeller,
-			apiProxy),
+			ytsaurus),
 		configHelper: NewConfigHelper(
 			labeller,
-			apiProxy,
+			ytsaurus.APIProxy(),
 			labeller.GetMainConfigMapName(),
 			configFileName,
+			ytsaurus.GetResource().Spec.ConfigOverrides,
 			configGenerator),
 	}
 }

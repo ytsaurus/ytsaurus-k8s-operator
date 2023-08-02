@@ -27,13 +27,13 @@ type scheduler struct {
 
 func NewScheduler(
 	cfgen *ytconfig.Generator,
-	apiProxy *apiproxy.APIProxy,
+	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	execNodes, tabletNodes []Component) Component {
-	ytsaurus := apiProxy.Ytsaurus()
+	resource := ytsaurus.GetResource()
 	labeller := labeller.Labeller{
-		Ytsaurus:       ytsaurus,
-		APIProxy:       apiProxy,
+		ObjectMeta:     &resource.ObjectMeta,
+		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelScheduler,
 		ComponentName:  "Scheduler",
 		MonitoringPort: consts.SchedulerMonitoringPort,
@@ -41,8 +41,8 @@ func NewScheduler(
 
 	server := NewServer(
 		&labeller,
-		apiProxy,
-		&ytsaurus.Spec.Schedulers.InstanceSpec,
+		ytsaurus,
+		&resource.Spec.Schedulers.InstanceSpec,
 		"/usr/bin/ytserver-scheduler",
 		"ytserver-scheduler.yson",
 		cfgen.GetSchedulerStatefulSetName(),
@@ -54,7 +54,7 @@ func NewScheduler(
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
 				labeller: &labeller,
-				apiProxy: apiProxy,
+				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
 			server: server,
@@ -64,20 +64,26 @@ func NewScheduler(
 		tabletNodes: tabletNodes,
 		initUser: NewInitJob(
 			&labeller,
-			apiProxy,
+			ytsaurus.APIProxy(),
+			ytsaurus,
+			resource.Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,
+			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig),
 		initOpArchive: NewInitJob(
 			&labeller,
-			apiProxy,
+			ytsaurus.APIProxy(),
+			ytsaurus,
+			resource.Spec.ImagePullSecrets,
 			"op-archive",
 			consts.ClientConfigFileName,
+			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			labeller.GetSecretName(),
 			&labeller,
-			apiProxy),
+			ytsaurus.APIProxy()),
 	}
 }
 
@@ -118,8 +124,8 @@ func (s *scheduler) Fetch(ctx context.Context) error {
 func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
-	if s.apiProxy.GetClusterState() == v1.ClusterStateUpdating {
-		if s.apiProxy.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
+	if s.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
+		if s.ytsaurus.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, s.removePods(ctx, dry)
 		}
 	}

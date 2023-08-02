@@ -14,7 +14,7 @@ import (
 type Deployment struct {
 	name     string
 	labeller *labeller2.Labeller
-	apiProxy *apiproxy.APIProxy
+	ytsaurus *apiproxy.Ytsaurus
 
 	oldObject appsv1.Deployment
 	newObject appsv1.Deployment
@@ -24,11 +24,11 @@ type Deployment struct {
 func NewDeployment(
 	name string,
 	labeller *labeller2.Labeller,
-	apiProxy *apiproxy.APIProxy) *Deployment {
+	ytsaurus *apiproxy.Ytsaurus) *Deployment {
 	return &Deployment{
 		name:     name,
 		labeller: labeller,
-		apiProxy: apiProxy,
+		ytsaurus: ytsaurus,
 	}
 }
 
@@ -41,7 +41,7 @@ func (d *Deployment) Name() string {
 }
 
 func (d *Deployment) Sync(ctx context.Context) error {
-	return d.apiProxy.SyncObject(ctx, &d.oldObject, &d.newObject)
+	return d.ytsaurus.APIProxy().SyncObject(ctx, &d.oldObject, &d.newObject)
 }
 
 func (d *Deployment) Build() *appsv1.Deployment {
@@ -54,10 +54,10 @@ func (d *Deployment) Build() *appsv1.Deployment {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      d.labeller.GetMetaLabelMap(),
-					Annotations: d.apiProxy.Ytsaurus().Spec.ExtraPodAnnotations,
+					Annotations: d.ytsaurus.GetResource().Spec.ExtraPodAnnotations,
 				},
 				Spec: corev1.PodSpec{
-					ImagePullSecrets: d.apiProxy.Ytsaurus().Spec.ImagePullSecrets,
+					ImagePullSecrets: d.ytsaurus.GetResource().Spec.ImagePullSecrets,
 				},
 			},
 		}
@@ -88,5 +88,5 @@ func (d *Deployment) NeedSync(replicas int32, image string) bool {
 }
 
 func (d *Deployment) Fetch(ctx context.Context) error {
-	return d.apiProxy.FetchObject(ctx, d.name, &d.oldObject)
+	return d.ytsaurus.APIProxy().FetchObject(ctx, d.name, &d.oldObject)
 }

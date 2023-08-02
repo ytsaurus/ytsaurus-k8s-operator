@@ -40,7 +40,7 @@ func (c *ServerComponentBase) IsImageEqualTo(expectedImage string) bool {
 
 func (c *ServerComponentBase) removePods(ctx context.Context, dry bool) error {
 	var err error
-	if !c.apiProxy.IsUpdateStatusConditionTrue(c.labeller.GetPodsRemovingStartedCondition()) {
+	if !c.ytsaurus.IsUpdateStatusConditionTrue(c.labeller.GetPodsRemovingStartedCondition()) {
 		if !dry {
 			ss := c.server.RebuildStatefulSet()
 			ss.Spec.Replicas = ptr.Int32(0)
@@ -50,7 +50,7 @@ func (c *ServerComponentBase) removePods(ctx context.Context, dry bool) error {
 				return err
 			}
 
-			err = c.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+			err = c.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    c.labeller.GetPodsRemovingStartedCondition(),
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -65,7 +65,7 @@ func (c *ServerComponentBase) removePods(ctx context.Context, dry bool) error {
 	}
 
 	if !dry {
-		err = c.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+		err = c.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 			Type:    c.labeller.GetPodsRemovedCondition(),
 			Status:  metav1.ConditionTrue,
 			Reason:  "Update",
@@ -86,7 +86,7 @@ type Component interface {
 
 type ComponentBase struct {
 	labeller *labeller.Labeller
-	apiProxy *apiproxy.APIProxy
+	ytsaurus *apiproxy.Ytsaurus
 	cfgen    *ytconfig.Generator
 }
 

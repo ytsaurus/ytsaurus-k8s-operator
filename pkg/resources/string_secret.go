@@ -12,13 +12,13 @@ import (
 type StringSecret struct {
 	name       string
 	reconciler *labeller.Labeller
-	apiProxy   *apiproxy.APIProxy
+	apiProxy   apiproxy.APIProxy
 
 	oldObject corev1.Secret
 	newObject corev1.Secret
 }
 
-func NewStringSecret(name string, reconciler *labeller.Labeller, apiProxy *apiproxy.APIProxy) *StringSecret {
+func NewStringSecret(name string, reconciler *labeller.Labeller, apiProxy apiproxy.APIProxy) *StringSecret {
 	return &StringSecret{
 		name:       name,
 		reconciler: reconciler,

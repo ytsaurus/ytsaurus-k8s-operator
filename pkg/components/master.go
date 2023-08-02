@@ -22,11 +22,11 @@ type master struct {
 	adminCredentials corev1.Secret
 }
 
-func NewMaster(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) ServerComponent {
-	ytsaurus := apiProxy.Ytsaurus()
+func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) ServerComponent {
+	resource := ytsaurus.GetResource()
 	labeller := labeller.Labeller{
-		Ytsaurus:       ytsaurus,
-		APIProxy:       apiProxy,
+		ObjectMeta:     &resource.ObjectMeta,
+		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelMaster,
 		ComponentName:  "Master",
 		MonitoringPort: consts.MasterMonitoringPort,
@@ -34,8 +34,8 @@ func NewMaster(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) ServerCom
 
 	server := NewServer(
 		&labeller,
-		apiProxy,
-		&ytsaurus.Spec.PrimaryMasters.InstanceSpec,
+		ytsaurus,
+		&resource.Spec.PrimaryMasters.InstanceSpec,
 		"/usr/bin/ytserver-master",
 		"ytserver-master.yson",
 		cfgen.GetMastersStatefulSetName(),
@@ -45,16 +45,19 @@ func NewMaster(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) ServerCom
 
 	initJob := NewInitJob(
 		&labeller,
-		apiProxy,
+		ytsaurus.APIProxy(),
+		ytsaurus,
+		resource.Spec.ImagePullSecrets,
 		"default",
 		consts.ClientConfigFileName,
+		resource.Spec.CoreImage,
 		cfgen.GetNativeClientConfig)
 
 	return &master{
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
 				labeller: &labeller,
-				apiProxy: apiProxy,
+				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
 			server: server,
@@ -64,10 +67,10 @@ func NewMaster(cfgen *ytconfig.Generator, apiProxy *apiproxy.APIProxy) ServerCom
 }
 
 func (m *master) Fetch(ctx context.Context) error {
-	if m.apiProxy.Ytsaurus().Spec.AdminCredentials != nil {
-		err := m.apiProxy.FetchObject(
+	if m.ytsaurus.GetResource().Spec.AdminCredentials != nil {
+		err := m.ytsaurus.APIProxy().FetchObject(
 			ctx,
-			m.apiProxy.Ytsaurus().Spec.AdminCredentials.Name,
+			m.ytsaurus.GetResource().Spec.AdminCredentials.Name,
 			&m.adminCredentials)
 		if err != nil {
 			return err
@@ -128,12 +131,12 @@ func (m *master) createInitScript() string {
 func (m *master) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
-	if m.apiProxy.GetClusterState() == v1.ClusterStateRunning && m.server.NeedUpdate() {
+	if m.ytsaurus.GetClusterState() == v1.ClusterStateRunning && m.server.NeedUpdate() {
 		return SyncStatusNeedUpdate, err
 	}
 
-	if m.apiProxy.GetClusterState() == v1.ClusterStateUpdating {
-		if m.apiProxy.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
+	if m.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
+		if m.ytsaurus.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, m.removePods(ctx, dry)
 		}
 	}

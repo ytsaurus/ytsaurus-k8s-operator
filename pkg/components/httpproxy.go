@@ -27,14 +27,14 @@ type httpProxy struct {
 
 func NewHTTPProxy(
 	cfgen *ytconfig.Generator,
-	apiProxy *apiproxy.APIProxy,
+	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
 	spec ytv1.HTTPProxiesSpec) Component {
 
-	ytsaurus := apiProxy.Ytsaurus()
+	resource := ytsaurus.GetResource()
 	labeller := labeller.Labeller{
-		Ytsaurus:       ytsaurus,
-		APIProxy:       apiProxy,
+		ObjectMeta:     &resource.ObjectMeta,
+		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: fmt.Sprintf("%s-%s", consts.YTComponentLabelHTTPProxy, spec.Role),
 		ComponentName:  fmt.Sprintf("HttpProxy-%s", spec.Role),
 		MonitoringPort: consts.HTTPProxyMonitoringPort,
@@ -42,7 +42,7 @@ func NewHTTPProxy(
 
 	server := NewServer(
 		&labeller,
-		apiProxy,
+		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-http-proxy",
 		"ytserver-http-proxy.yson",
@@ -57,7 +57,7 @@ func NewHTTPProxy(
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
 				labeller: &labeller,
-				apiProxy: apiProxy,
+				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
 			server: server,
@@ -68,7 +68,7 @@ func NewHTTPProxy(
 		balancingService: resources.NewHTTPService(
 			cfgen.GetHTTPProxiesServiceName(spec.Role),
 			&labeller,
-			apiProxy),
+			ytsaurus.APIProxy()),
 	}
 }
 
@@ -82,8 +82,8 @@ func (r *httpProxy) Fetch(ctx context.Context) error {
 func (r *httpProxy) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
-	if r.apiProxy.GetClusterState() == ytv1.ClusterStateUpdating {
-		if r.apiProxy.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if r.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, r.removePods(ctx, dry)
 		}
 	}

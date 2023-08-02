@@ -12,13 +12,13 @@ import (
 type ConfigMap struct {
 	name     string
 	labeller *labeller2.Labeller
-	apiProxy *apiproxy.APIProxy
+	apiProxy apiproxy.APIProxy
 
 	oldObject corev1.ConfigMap
 	newObject corev1.ConfigMap
 }
 
-func NewConfigMap(name string, labeller *labeller2.Labeller, apiProxy *apiproxy.APIProxy) *ConfigMap {
+func NewConfigMap(name string, labeller *labeller2.Labeller, apiProxy apiproxy.APIProxy) *ConfigMap {
 	return &ConfigMap{
 		name:     name,
 		labeller: labeller,

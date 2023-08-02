@@ -24,13 +24,13 @@ type queryTracker struct {
 
 func NewQueryTracker(
 	cfgen *ytconfig.Generator,
-	apiProxy *apiproxy.APIProxy,
+	ytsaurus *apiproxy.Ytsaurus,
 	yc YtsaurusClient,
 ) Component {
-	ytsaurus := apiProxy.Ytsaurus()
+	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
-		Ytsaurus:       ytsaurus,
-		APIProxy:       apiProxy,
+		ObjectMeta:     &resource.ObjectMeta,
+		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: "yt-query-tracker",
 		ComponentName:  "QueryTracker",
 		MonitoringPort: consts.QueryTrackerMonitoringPort,
@@ -38,8 +38,8 @@ func NewQueryTracker(
 
 	server := NewServer(
 		&l,
-		apiProxy,
-		&ytsaurus.Spec.QueryTrackers.InstanceSpec,
+		ytsaurus,
+		&resource.Spec.QueryTrackers.InstanceSpec,
 		"/usr/bin/ytserver-query-tracker",
 		"ytserver-query-tracker.yson",
 		cfgen.GetQueryTrackerStatefulSetName(),
@@ -51,7 +51,7 @@ func NewQueryTracker(
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
 				labeller: &l,
-				apiProxy: apiProxy,
+				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
 			server: server,
@@ -70,8 +70,8 @@ func (qt *queryTracker) Fetch(ctx context.Context) error {
 func (qt *queryTracker) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
-	if qt.apiProxy.GetClusterState() == ytv1.ClusterStateUpdating {
-		if qt.apiProxy.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, qt.removePods(ctx, dry)
 		}
 	}
@@ -89,7 +89,7 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (SyncStatus, error
 		return SyncStatusBlocked, err
 	}
 
-	if qt.apiProxy.IsStatusConditionTrue(qt.initCondition) {
+	if qt.ytsaurus.IsStatusConditionTrue(qt.initCondition) {
 		return SyncStatusReady, err
 	}
 
@@ -105,7 +105,7 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (SyncStatus, error
 			return SyncStatusPending, err
 		}
 
-		err = qt.apiProxy.SetStatusCondition(ctx, metav1.Condition{
+		err = qt.ytsaurus.SetStatusCondition(ctx, metav1.Condition{
 			Type:    qt.initCondition,
 			Status:  metav1.ConditionTrue,
 			Reason:  "InitQueryTrackerCompleted",

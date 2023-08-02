@@ -9,6 +9,7 @@ rules:
   - cluster.ytsaurus.tech
   resources:
   - ytsaurus
+  - spyts
   verbs:
   - create
   - delete
@@ -21,12 +22,14 @@ rules:
   - cluster.ytsaurus.tech
   resources:
   - ytsaurus/finalizers
+  - spyts/finalizers
   verbs:
   - update
 - apiGroups:
   - cluster.ytsaurus.tech
   resources:
   - ytsaurus/status
+  - spyts/status
   verbs:
   - get
   - patch

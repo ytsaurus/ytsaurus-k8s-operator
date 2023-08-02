@@ -16,13 +16,13 @@ import (
 type MonitoringService struct {
 	name     string
 	labeller *labeller2.Labeller
-	apiProxy *apiproxy.APIProxy
+	apiProxy apiproxy.APIProxy
 
 	oldObject corev1.Service
 	newObject corev1.Service
 }
 
-func NewMonitoringService(name string, labeller *labeller2.Labeller, apiProxy *apiproxy.APIProxy) *MonitoringService {
+func NewMonitoringService(labeller *labeller2.Labeller, apiProxy apiproxy.APIProxy) *MonitoringService {
 	return &MonitoringService{
 		name:     fmt.Sprintf("%s-monitoring", labeller.ComponentLabel),
 		labeller: labeller,
@@ -49,7 +49,7 @@ func (s *MonitoringService) Sync(ctx context.Context) error {
 func (s *MonitoringService) GetServiceMeta(name string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Name:      name,
-		Namespace: s.labeller.Ytsaurus.Namespace,
+		Namespace: s.labeller.ObjectMeta.Namespace,
 		Labels:    s.labeller.GetMonitoringMetaLabelMap(),
 	}
 }

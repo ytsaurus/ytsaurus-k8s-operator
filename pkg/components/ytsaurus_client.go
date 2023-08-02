@@ -35,13 +35,13 @@ type ytsaurusClient struct {
 
 func NewYtsaurusClient(
 	cfgen *ytconfig.Generator,
-	apiProxy *apiproxy.APIProxy,
+	ytsaurus *apiproxy.Ytsaurus,
 	httpProxy Component,
 ) YtsaurusClient {
-	ytsaurus := apiProxy.Ytsaurus()
+	resource := ytsaurus.GetResource()
 	labeller := labeller.Labeller{
-		Ytsaurus:       ytsaurus,
-		APIProxy:       apiProxy,
+		ObjectMeta:     &resource.ObjectMeta,
+		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelClient,
 		ComponentName:  "YtsaurusClient",
 	}
@@ -49,20 +49,23 @@ func NewYtsaurusClient(
 	return &ytsaurusClient{
 		ComponentBase: ComponentBase{
 			labeller: &labeller,
-			apiProxy: apiProxy,
+			ytsaurus: ytsaurus,
 			cfgen:    cfgen,
 		},
 		httpProxy: httpProxy,
 		initUserJob: NewInitJob(
 			&labeller,
-			apiProxy,
+			ytsaurus.APIProxy(),
+			ytsaurus,
+			ytsaurus.GetResource().Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,
+			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			labeller.GetSecretName(),
 			&labeller,
-			apiProxy),
+			ytsaurus.APIProxy()),
 	}
 }
 
@@ -121,7 +124,7 @@ func (yc *ytsaurusClient) getAllMasters(ctx context.Context) ([]MasterInfo, erro
 	}
 
 	var secondaryMasters []MasterInfo
-	if len(yc.apiProxy.Ytsaurus().Spec.SecondaryMasters) > 0 {
+	if len(yc.ytsaurus.GetResource().Spec.SecondaryMasters) > 0 {
 		err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection/secondary_masters"), &secondaryMasters, getReadOnlyGetOptions())
 		if err != nil {
 			return nil, err
@@ -141,7 +144,7 @@ func (yc *ytsaurusClient) startBuildMasterSnapshots(ctx context.Context) error {
 	var err error
 
 	allMastersReadOnly := true
-	for _, monitoringPath := range yc.apiProxy.Ytsaurus().Status.UpdateStatus.MasterMonitoringPaths {
+	for _, monitoringPath := range yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths {
 		masterHydra, err := yc.getMasterHydra(ctx, monitoringPath)
 		if err != nil {
 			return err
@@ -168,10 +171,10 @@ func (yc *ytsaurusClient) startBuildMasterSnapshots(ctx context.Context) error {
 func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, error) {
 	var err error
 
-	switch yc.apiProxy.GetUpdateState() {
+	switch yc.ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStatePossibilityCheck:
-		if !yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionHasPossibility) &&
-			!yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
+		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionHasPossibility) &&
+			!yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
 
 			// Check tablet cell bundles.
 			notGoodBundles, err := GetNotGoodTabletCellBundles(ctx, yc.ytClient)
@@ -181,7 +184,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 			}
 
 			if len(notGoodBundles) > 0 {
-				err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+				err = yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 					Type:    consts.ConditionNoPossibility,
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
@@ -198,7 +201,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 			}
 
 			if lvcCount > 0 {
-				err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+				err = yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 					Type:    consts.ConditionNoPossibility,
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
@@ -215,7 +218,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 			}
 
 			if qmcCount > 0 {
-				err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+				err = yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 					Type:    consts.ConditionNoPossibility,
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
@@ -246,7 +249,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 				}
 
 				if !hydra.Active {
-					err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+					err = yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 						Type:    consts.ConditionNoPossibility,
 						Status:  metav1.ConditionTrue,
 						Reason:  "Update",
@@ -264,7 +267,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 			}
 
 			if !(leadingPrimaryMasterCount == 1 && followingPrimaryMasterCount+1 == len(primaryMasterAddresses)) {
-				err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+				err = yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 					Type:    consts.ConditionNoPossibility,
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
@@ -273,7 +276,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 				return SyncStatusUpdating, err
 			}
 
-			err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+			err = yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionHasPossibility,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -283,13 +286,13 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 		}
 
 	case ytv1.UpdateStateWaitingForSafeModeEnabled:
-		if !yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionSafeModeEnabled) {
+		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSafeModeEnabled) {
 			err := yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), true, nil)
 			if err != nil {
 				return SyncStatusUpdating, err
 			}
 
-			err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+			err = yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionSafeModeEnabled,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -300,7 +303,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 		}
 
 	case ytv1.UpdateStateWaitingForTabletCellsSaving:
-		if !yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsSaved) {
+		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsSaved) {
 			var tabletCellBundles []ytv1.TabletCellBundleInfo
 			err := yc.ytClient.ListNode(
 				ctx,
@@ -312,14 +315,14 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 				return SyncStatusUpdating, err
 			}
 
-			yc.apiProxy.Ytsaurus().Status.UpdateStatus.TabletCellBundles = tabletCellBundles
-			err = yc.apiProxy.UpdateStatus(ctx)
+			yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles = tabletCellBundles
+			err = yc.ytsaurus.APIProxy().UpdateStatus(ctx)
 
 			if err != nil {
 				return SyncStatusUpdating, err
 			}
 
-			err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+			err = yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionTabletCellsSaved,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -329,7 +332,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 		}
 
 	case ytv1.UpdateStateWaitingForTabletCellsRemovingStart:
-		if !yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemovingStarted) {
+		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemovingStarted) {
 
 			var tabletCells []string
 			err := yc.ytClient.ListNode(
@@ -352,7 +355,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 				}
 			}
 
-			err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+			err = yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionTabletCellsRemovingStarted,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -362,7 +365,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 		}
 
 	case ytv1.UpdateStateWaitingForTabletCellsRemoved:
-		if !yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemoved) {
+		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemoved) {
 			var tabletCells []string
 			err := yc.ytClient.ListNode(
 				ctx,
@@ -378,7 +381,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 				return SyncStatusUpdating, err
 			}
 
-			err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+			err = yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionTabletCellsRemoved,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -388,8 +391,8 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 		}
 
 	case ytv1.UpdateStateWaitingForSnapshots:
-		if !yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionSnaphotsSaved) {
-			if !yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionSnapshotsMonitoringInfoSaved) {
+		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnaphotsSaved) {
+			if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnapshotsMonitoringInfoSaved) {
 
 				var monitoringPaths []string
 				mastersInfo, err := yc.getAllMasters(ctx)
@@ -404,14 +407,14 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 					}
 				}
 
-				yc.apiProxy.Ytsaurus().Status.UpdateStatus.MasterMonitoringPaths = monitoringPaths
-				err = yc.apiProxy.UpdateStatus(ctx)
+				yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths = monitoringPaths
+				err = yc.ytsaurus.APIProxy().UpdateStatus(ctx)
 
 				if err != nil {
 					return SyncStatusUpdating, err
 				}
 
-				err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+				err = yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 					Type:    consts.ConditionSnapshotsMonitoringInfoSaved,
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
@@ -419,12 +422,12 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 				})
 			}
 
-			if !yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionSnapshotsBuildingStarted) {
+			if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnapshotsBuildingStarted) {
 				if err = yc.startBuildMasterSnapshots(ctx); err != nil {
 					return SyncStatusUpdating, err
 				}
 
-				err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+				err = yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 					Type:    consts.ConditionSnapshotsBuildingStarted,
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
@@ -432,7 +435,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 				})
 			}
 
-			for _, monitoringPath := range yc.apiProxy.Ytsaurus().Status.UpdateStatus.MasterMonitoringPaths {
+			for _, monitoringPath := range yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths {
 				var masterHydra MasterHydra
 				err = yc.ytClient.GetNode(ctx, ypath.Path(monitoringPath), &masterHydra, getReadOnlyGetOptions())
 				if err != nil {
@@ -444,7 +447,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 				}
 			}
 
-			err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+			err = yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionSnaphotsSaved,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -454,16 +457,16 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 		}
 
 	case ytv1.UpdateStateWaitingForTabletCellsRecovery:
-		if !yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRecovered) {
+		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRecovered) {
 
-			for _, bundle := range yc.apiProxy.Ytsaurus().Status.UpdateStatus.TabletCellBundles {
+			for _, bundle := range yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles {
 				err = CreateTabletCells(ctx, yc.ytClient, bundle.Name, bundle.TabletCellCount)
 				if err != nil {
 					return SyncStatusUpdating, err
 				}
 			}
 
-			err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+			err = yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionTabletCellsRecovered,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -473,13 +476,13 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 		}
 
 	case ytv1.UpdateStateWaitingForSafeModeDisabled:
-		if !yc.apiProxy.IsUpdateStatusConditionTrue(consts.ConditionSafeModeDisabled) {
+		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSafeModeDisabled) {
 			err := yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), false, nil)
 			if err != nil {
 				return SyncStatusUpdating, err
 			}
 
-			err = yc.apiProxy.SetUpdateStatusCondition(ctx, metav1.Condition{
+			err = yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionSafeModeDisabled,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -490,6 +493,11 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (SyncStatus, 
 	}
 
 	return SyncStatusUpdating, err
+}
+
+func (yc *ytsaurusClient) getToken() string {
+	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
+	return token
 }
 
 func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
@@ -531,7 +539,7 @@ func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (SyncStatus, err
 		}
 	}
 
-	if yc.apiProxy.GetClusterState() == ytv1.ClusterStateUpdating {
+	if yc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if dry {
 			return SyncStatusUpdating, err
 		}

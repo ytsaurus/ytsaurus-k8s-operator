@@ -59,3 +59,43 @@ func GetNotGoodTabletCellBundles(ctx context.Context, ytClient yt.Client) ([]str
 
 	return notGoodBundles, err
 }
+
+func CreateUserCommand(ctx context.Context, ytClient yt.Client, userName, token string, isSuperuser bool) error {
+	var err error
+	_, err = ytClient.CreateNode(ctx, ypath.Path(""), yt.NodeUser, &yt.CreateNodeOptions{
+		IgnoreExisting: true,
+		Attributes: map[string]interface{}{
+			"name": userName,
+		}})
+	if err != nil {
+		return err
+	}
+
+	if token != "" {
+		tokenHash := sha256String(token)
+		tokenPath := fmt.Sprintf("//sys/cypress_tokens/%s", tokenHash)
+
+		_, err := ytClient.CreateNode(
+			ctx,
+			ypath.Path(tokenPath),
+			yt.NodeMap,
+			&yt.CreateNodeOptions{
+				IgnoreExisting: true,
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		err = ytClient.SetNode(ctx, ypath.Path(tokenPath).Attr("user"), userName, nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	if isSuperuser {
+		_ = ytClient.AddMember(ctx, "superusers", userName, nil)
+	}
+
+	return err
+}

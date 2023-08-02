@@ -15,7 +15,16 @@ spec:
     singular: ytsaurus
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - description: State of Ytsaurus cluster
+      jsonPath: .status.state
+      name: ClusterState
+      type: string
+    - description: Update state of Ytsaurus cluster
+      jsonPath: .status.updateStatus.state
+      name: UpdateState
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
         description: Ytsaurus is the Schema for the ytsaurus API
@@ -28412,11 +28421,34 @@ spec:
                   type: object
                 type: array
               spyt:
+                description: SpytSpec defines the desired state of Spyt
                 properties:
-                  sparkVersion:
+                  image:
                     type: string
-                  spytVersion:
+                  imagePullSecrets:
+                    items:
+                      description: LocalObjectReference contains enough information
+                        to let you locate the referenced object inside the same namespace.
+                      properties:
+                        name:
+                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?'
+                          type: string
+                      type: object
+                      x-kubernetes-map-type: atomic
+                    type: array
+                  name:
                     type: string
+                  ytsaurus:
+                    description: LocalObjectReference contains enough information
+                      to let you locate the referenced object inside the same namespace.
+                    properties:
+                      name:
+                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                          TODO: Add other useful fields. apiVersion, kind, uid?'
+                        type: string
+                    type: object
+                    x-kubernetes-map-type: atomic
                 type: object
               tabletNodes:
                 items:

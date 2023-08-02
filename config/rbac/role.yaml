@@ -1,3 +1,4 @@
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -8,17 +9,31 @@ rules:
   - cluster.ytsaurus.tech
   resources:
   - ytsaurus
-  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+  - spyts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - cluster.ytsaurus.tech
   resources:
   - ytsaurus/finalizers
-  verbs: ["update"]
+  - spyts/finalizers
+  verbs:
+  - update
 - apiGroups:
   - cluster.ytsaurus.tech
   resources:
   - ytsaurus/status
-  verbs: ["get", "patch", "update"]
+  - spyts/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
     - apps
   resources:

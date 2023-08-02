@@ -11,6 +11,26 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-cluster-ytsaurus-tech-v1-spyt
+  failurePolicy: Fail
+  name: mspyt.kb.io
+  rules:
+  - apiGroups:
+    - cluster.ytsaurus.tech
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - spyts
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-cluster-ytsaurus-tech-v1-ytsaurus
   failurePolicy: Fail
   name: mytsaurus.kb.io
@@ -32,6 +52,26 @@ metadata:
   creationTimestamp: null
   name: validating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-cluster-ytsaurus-tech-v1-spyt
+  failurePolicy: Fail
+  name: vspyt.kb.io
+  rules:
+  - apiGroups:
+    - cluster.ytsaurus.tech
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - spyts
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   clientConfig:

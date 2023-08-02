@@ -29,7 +29,7 @@ type Server interface {
 // Server represents a typical YT cluster server component, like master or scheduler.
 type server struct {
 	labeller *labeller.Labeller
-	apiProxy *apiproxy.APIProxy
+	ytsaurus *apiproxy.Ytsaurus
 
 	binaryPath string
 
@@ -45,32 +45,32 @@ type server struct {
 
 func NewServer(
 	labeller *labeller.Labeller,
-	apiProxy *apiproxy.APIProxy,
+	ytsaurus *apiproxy.Ytsaurus,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
 	generator ytconfig.GeneratorFunc) Server {
 	return &server{
 		labeller:     labeller,
-		apiProxy:     apiProxy,
+		ytsaurus:     ytsaurus,
 		instanceSpec: instanceSpec,
 		binaryPath:   binaryPath,
 		statefulSet: resources.NewStatefulSet(
 			statefulSetName,
 			labeller,
-			apiProxy),
+			ytsaurus),
 		headlessService: resources.NewHeadlessService(
 			serviceName,
 			labeller,
-			apiProxy),
+			ytsaurus.APIProxy()),
 		monitoringService: resources.NewMonitoringService(
-			serviceName,
 			labeller,
-			apiProxy),
+			ytsaurus.APIProxy()),
 		configHelper: NewConfigHelper(
 			labeller,
-			apiProxy,
+			ytsaurus.APIProxy(),
 			labeller.GetMainConfigMapName(),
 			configFileName,
+			ytsaurus.GetResource().Spec.ConfigOverrides,
 			generator),
 	}
 }
@@ -105,7 +105,7 @@ func (s *server) isImageEqualTo(expectedImage string) bool {
 }
 
 func (s *server) NeedUpdate() bool {
-	return !s.isImageEqualTo(s.apiProxy.Ytsaurus().Spec.CoreImage)
+	return !s.isImageEqualTo(s.ytsaurus.GetResource().Spec.CoreImage)
 }
 
 func (s *server) ArePodsReady(ctx context.Context) bool {
@@ -145,11 +145,11 @@ func (s *server) RebuildStatefulSet() *appsv1.StatefulSet {
 
 	setHostnameAsFQDN := true
 	statefulSet.Spec.Template.Spec = corev1.PodSpec{
-		ImagePullSecrets:  s.apiProxy.Ytsaurus().Spec.ImagePullSecrets,
+		ImagePullSecrets:  s.ytsaurus.GetResource().Spec.ImagePullSecrets,
 		SetHostnameAsFQDN: &setHostnameAsFQDN,
 		Containers: []corev1.Container{
 			{
-				Image:        s.apiProxy.Ytsaurus().Spec.CoreImage,
+				Image:        s.ytsaurus.GetResource().Spec.CoreImage,
 				Name:         consts.YTServerContainerName,
 				Command:      []string{s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, s.configHelper.GetFileName())},
 				VolumeMounts: volumeMounts,
@@ -158,7 +158,7 @@ func (s *server) RebuildStatefulSet() *appsv1.StatefulSet {
 		},
 		InitContainers: []corev1.Container{
 			{
-				Image:        s.labeller.Ytsaurus.Spec.CoreImage,
+				Image:        s.ytsaurus.GetResource().Spec.CoreImage,
 				Name:         consts.PrepareLocationsContainerName,
 				Command:      []string{"bash", "-c", locationCreationCommand},
 				VolumeMounts: volumeMounts,

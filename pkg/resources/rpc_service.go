@@ -14,13 +14,13 @@ import (
 type RPCService struct {
 	name     string
 	labeller *labeller2.Labeller
-	apiProxy *apiproxy.APIProxy
+	apiProxy apiproxy.APIProxy
 
 	oldObject corev1.Service
 	newObject corev1.Service
 }
 
-func NewRPCService(name string, labeller *labeller2.Labeller, apiProxy *apiproxy.APIProxy) *RPCService {
+func NewRPCService(name string, labeller *labeller2.Labeller, apiProxy apiproxy.APIProxy) *RPCService {
 	return &RPCService{
 		name:     name,
 		labeller: labeller,

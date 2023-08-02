@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,15 +16,15 @@ type FetchableObject struct {
 }
 
 type Labeller struct {
-	APIProxy       *apiproxy.APIProxy
-	Ytsaurus       *ytv1.Ytsaurus
+	APIProxy       apiproxy.APIProxy
+	ObjectMeta     *metav1.ObjectMeta
 	ComponentLabel string
 	ComponentName  string
 	MonitoringPort int32
 }
 
 func (l *Labeller) GetClusterName() string {
-	return l.Ytsaurus.Name
+	return l.ObjectMeta.Name
 }
 
 func (l *Labeller) GetSecretName() string {
@@ -51,13 +50,13 @@ func (l *Labeller) GetPodsRemovedCondition() string {
 func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Name:      name,
-		Namespace: l.Ytsaurus.Namespace,
+		Namespace: l.ObjectMeta.Namespace,
 		Labels:    l.GetMetaLabelMap(),
 	}
 }
 
 func (l *Labeller) GetYTLabelValue() string {
-	return fmt.Sprintf("%s-%s", l.Ytsaurus.Name, l.ComponentLabel)
+	return fmt.Sprintf("%s-%s", l.ObjectMeta.Name, l.ComponentLabel)
 }
 
 func (l *Labeller) GetSelectorLabelMap() map[string]string {
@@ -68,7 +67,7 @@ func (l *Labeller) GetSelectorLabelMap() map[string]string {
 
 func (l *Labeller) GetListOptions() []client.ListOption {
 	return []client.ListOption{
-		client.InNamespace(l.Ytsaurus.Namespace),
+		client.InNamespace(l.ObjectMeta.Namespace),
 		client.MatchingLabels(l.GetSelectorLabelMap()),
 	}
 }
@@ -76,15 +75,15 @@ func (l *Labeller) GetListOptions() []client.ListOption {
 func (l *Labeller) GetMetaLabelMap() map[string]string {
 	return map[string]string{
 		"app.kubernetes.io/name":       "Ytsaurus",
-		"app.kubernetes.io/instance":   l.Ytsaurus.Name,
+		"app.kubernetes.io/instance":   l.ObjectMeta.Name,
 		"app.kubernetes.io/component":  l.ComponentLabel,
 		"app.kubernetes.io/managed-by": "Ytsaurus-k8s-operator",
 		consts.YTComponentLabelName:    l.GetYTLabelValue(),
 	}
 }
 
-func (r *Labeller) GetMonitoringMetaLabelMap() map[string]string {
-	labels := r.GetMetaLabelMap()
+func (l *Labeller) GetMonitoringMetaLabelMap() map[string]string {
+	labels := l.GetMetaLabelMap()
 
 	labels[consts.YTMetricsLabelName] = "true"
 

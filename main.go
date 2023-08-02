@@ -21,8 +21,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ytsaurus/yt-k8s-operator/controllers"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/ytsaurus/yt-k8s-operator/controllers"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -117,6 +118,22 @@ func main() {
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err = (&clusterv1.Ytsaurus{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Ytsaurus")
+			os.Exit(1)
+		}
+	}
+
+	if err = (&controllers.SpytReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("spyt-controller"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Spyt")
+		os.Exit(1)
+	}
+
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		if err = (&clusterv1.Spyt{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "Spyt")
 			os.Exit(1)
 		}
 	}

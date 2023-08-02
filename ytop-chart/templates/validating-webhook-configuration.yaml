@@ -13,6 +13,26 @@ webhooks:
     service:
       name: '{{ include "ytop-chart.fullname" . }}-webhook-service'
       namespace: '{{ .Release.Namespace }}'
+      path: /validate-cluster-ytsaurus-tech-v1-spyt
+  failurePolicy: Fail
+  name: vspyt.kb.io
+  rules:
+  - apiGroups:
+    - cluster.ytsaurus.tech
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - spyts
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: '{{ include "ytop-chart.fullname" . }}-webhook-service'
+      namespace: '{{ .Release.Namespace }}'
       path: /validate-cluster-ytsaurus-tech-v1-ytsaurus
   failurePolicy: Fail
   name: vytsaurus.kb.io

@@ -159,13 +159,13 @@ var _ = Describe("Tablet node test", func() {
 
 		It("Tablet node sync; ytclient not ready", func() {
 			cfgen := ytconfig.NewGenerator(ytsaurusSpec, "cluster_domain")
-			apiProxy := apiproxy.NewAPIProxy(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
+			ytsaurus := apiproxy.NewYtsaurus(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
 
 			ytsaurusClient := NewFakeYtsaurusClient(mockYtClient)
 
 			ytsaurusClient.SetStatus(SyncStatusPending)
 
-			tabletNode := NewTabletNode(cfgen, apiProxy, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true).(*tabletNode)
+			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true).(*tabletNode)
 			tabletNode.server = NewFakeServer()
 			Expect(tabletNode.Status(context.Background())).Should(Equal(SyncStatusBlocked))
 
@@ -176,10 +176,10 @@ var _ = Describe("Tablet node test", func() {
 
 		It("Tablet node sync; pods are not ready", func() {
 			cfgen := ytconfig.NewGenerator(ytsaurusSpec, "cluster_domain")
-			apiProxy := apiproxy.NewAPIProxy(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
+			ytsaurus := apiproxy.NewYtsaurus(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
 
 			ytsaurusClient := NewFakeYtsaurusClient(mockYtClient)
-			tabletNode := NewTabletNode(cfgen, apiProxy, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true).(*tabletNode)
+			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true).(*tabletNode)
 			fakeServer := NewFakeServer()
 			fakeServer.arePodsReady = false
 			tabletNode.server = fakeServer
@@ -193,7 +193,7 @@ var _ = Describe("Tablet node test", func() {
 
 		It("Tablet node sync; yt errors", func() {
 			cfgen := ytconfig.NewGenerator(ytsaurusSpec, "cluster_domain")
-			apiProxy := apiproxy.NewAPIProxy(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
+			ytsaurus := apiproxy.NewYtsaurus(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
 
 			ytsaurusClient := NewFakeYtsaurusClient(mockYtClient)
 
@@ -316,7 +316,7 @@ var _ = Describe("Tablet node test", func() {
 					Return(yt.NodeID(guid.New()), nil).Times(1),
 			)
 
-			tabletNode := NewTabletNode(cfgen, apiProxy, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true).(*tabletNode)
+			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true).(*tabletNode)
 			tabletNode.server = NewFakeServer()
 
 			// Failed to check if there is //sys/tablet_cell_bundles/sys.
@@ -352,7 +352,7 @@ var _ = Describe("Tablet node test", func() {
 
 		It("Tablet node sync; success", func() {
 			cfgen := ytconfig.NewGenerator(ytsaurusSpec, "cluster_domain")
-			apiProxy := apiproxy.NewAPIProxy(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
+			ytsaurus := apiproxy.NewYtsaurus(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
 
 			ytsaurusClient := NewFakeYtsaurusClient(mockYtClient)
 
@@ -397,7 +397,7 @@ var _ = Describe("Tablet node test", func() {
 							}})).Return(yt.NodeID(guid.New()), nil)
 			}
 
-			tabletNode := NewTabletNode(cfgen, apiProxy, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true).(*tabletNode)
+			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true).(*tabletNode)
 			tabletNode.server = NewFakeServer()
 			err := tabletNode.Sync(context.Background())
 			Expect(err).Should(Succeed())
@@ -407,11 +407,11 @@ var _ = Describe("Tablet node test", func() {
 
 		It("Tablet node sync; no initialization", func() {
 			cfgen := ytconfig.NewGenerator(ytsaurusSpec, "cluster_domain")
-			apiProxy := apiproxy.NewAPIProxy(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
+			ytsaurus := apiproxy.NewYtsaurus(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
 
 			ytsaurusClient := NewFakeYtsaurusClient(mockYtClient)
 
-			tabletNode := NewTabletNode(cfgen, apiProxy, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], false).(*tabletNode)
+			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], false).(*tabletNode)
 			tabletNode.server = NewFakeServer()
 			err := tabletNode.Sync(context.Background())
 			Expect(err).Should(Succeed())

@@ -32,27 +32,36 @@ func initJobWithNativeDriverPrologue() string {
 
 type InitJob struct {
 	ComponentBase
-	apiProxy *apiproxy.APIProxy
+	apiProxy          apiproxy.APIProxy
+	conditionsManager apiproxy.ConditionManager
+	imagePullSecrets  []corev1.LocalObjectReference
 
 	initJob *resources.Job
 
 	configHelper *ConfigHelper
 	condition    string
 
+	image string
+
 	builtJob *batchv1.Job
 }
 
 func NewInitJob(
 	labeller *labeller.Labeller,
-	apiProxy *apiproxy.APIProxy,
-	name, configFileName string,
+	apiProxy apiproxy.APIProxy,
+	conditionsManager apiproxy.ConditionManager,
+	imagePullSecrets []corev1.LocalObjectReference,
+	name, configFileName, image string,
 	generator ytconfig.GeneratorFunc) *InitJob {
 	return &InitJob{
 		ComponentBase: ComponentBase{
 			labeller: labeller,
 		},
-		apiProxy:  apiProxy,
-		condition: fmt.Sprintf("%s%sInitJobCompleted", name, labeller.ComponentName),
+		apiProxy:          apiProxy,
+		conditionsManager: conditionsManager,
+		imagePullSecrets:  imagePullSecrets,
+		condition:         fmt.Sprintf("%s%sInitJobCompleted", name, labeller.ComponentName),
+		image:             image,
 		initJob: resources.NewJob(
 			labeller.GetInitJobName(name),
 			labeller,
@@ -65,6 +74,7 @@ func NewInitJob(
 				strings.ToLower(name),
 				labeller.ComponentLabel),
 			configFileName,
+			nil,
 			generator),
 	}
 }
@@ -82,10 +92,10 @@ func (j *InitJob) Build() *batchv1.Job {
 	job := j.initJob.Build()
 	job.Spec.Template = corev1.PodTemplateSpec{
 		Spec: corev1.PodSpec{
-			ImagePullSecrets: j.apiProxy.Ytsaurus().Spec.ImagePullSecrets,
+			ImagePullSecrets: j.imagePullSecrets,
 			Containers: []corev1.Container{
 				{
-					Image:   j.labeller.Ytsaurus.Spec.CoreImage,
+					Image:   j.image,
 					Name:    "ytsaurus-init",
 					Command: []string{"bash", "-c", path.Join(consts.ConfigMountPoint, consts.InitClusterScriptFileName)},
 					VolumeMounts: []corev1.VolumeMount{
@@ -114,7 +124,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (SyncStatus, error) {
 	logger := log.FromContext(ctx)
 
 	var err error
-	if j.apiProxy.IsStatusConditionTrue(j.condition) {
+	if j.conditionsManager.IsStatusConditionTrue(j.condition) {
 		return SyncStatusReady, err
 	}
 
@@ -136,7 +146,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (SyncStatus, error) {
 	}
 
 	if !dry {
-		err = j.apiProxy.SetStatusCondition(ctx, metav1.Condition{
+		err = j.conditionsManager.SetStatusCondition(ctx, metav1.Condition{
 			Type:    j.condition,
 			Status:  metav1.ConditionTrue,
 			Reason:  "InitJobCompleted",

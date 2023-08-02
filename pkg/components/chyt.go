@@ -32,22 +32,22 @@ const ChytInitClusterJobConfigFileName = "chyt-init-cluster.yson"
 
 func NewChytController(
 	cfgen *ytconfig.Generator,
-	apiProxy *apiproxy.APIProxy,
+	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	scheduler Component,
 	dataNodes []Component) Component {
-	ytsaurus := apiProxy.Ytsaurus()
+	resource := ytsaurus.GetResource()
 	labeller := labeller.Labeller{
-		Ytsaurus:       ytsaurus,
-		APIProxy:       apiProxy,
+		ObjectMeta:     &resource.ObjectMeta,
+		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: "yt-chyt-controller",
 		ComponentName:  "ChytController",
 	}
 
 	microservice := NewMicroservice(
 		&labeller,
-		apiProxy,
-		ytsaurus.Spec.CoreImage,
+		ytsaurus,
+		resource.Spec.CoreImage,
 		1,
 		cfgen.GetChytControllerConfig,
 		ChytControllerConfigFileName,
@@ -57,32 +57,41 @@ func NewChytController(
 	return &chytController{
 		ComponentBase: ComponentBase{
 			labeller: &labeller,
-			apiProxy: apiProxy,
+			ytsaurus: ytsaurus,
 			cfgen:    cfgen,
 		},
 		microservice: microservice,
 		initUserJob: NewInitJob(
 			&labeller,
-			apiProxy,
+			ytsaurus.APIProxy(),
+			ytsaurus,
+			ytsaurus.GetResource().Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,
+			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig),
 		initClusterJob: NewInitJob(
 			&labeller,
-			apiProxy,
+			ytsaurus.APIProxy(),
+			ytsaurus,
+			resource.Spec.ImagePullSecrets,
 			"cluster",
 			ChytInitClusterJobConfigFileName,
+			resource.Spec.CoreImage,
 			cfgen.GetChytInitClusterConfig),
 		initChPublicJob: NewInitJob(
 			&labeller,
-			apiProxy,
+			ytsaurus.APIProxy(),
+			ytsaurus,
+			resource.Spec.ImagePullSecrets,
 			"ch-public",
 			"",
+			resource.Spec.CoreImage,
 			nil),
 		secret: resources.NewStringSecret(
 			labeller.GetSecretName(),
 			&labeller,
-			apiProxy),
+			ytsaurus.APIProxy()),
 		master:    master,
 		scheduler: scheduler,
 		dataNodes: dataNodes,

@@ -11,7 +11,7 @@ import (
 )
 
 type ComponentManager struct {
-	apiProxy        *apiProxy.APIProxy
+	ytsaurus        *apiProxy.Ytsaurus
 	allComponents   []components.Component
 	masterComponent components.ServerComponent
 	status          ComponentStatus
@@ -19,25 +19,25 @@ type ComponentManager struct {
 
 func NewComponentManager(
 	ctx context.Context,
-	apiProxy *apiProxy.APIProxy,
+	ytsaurus *apiProxy.Ytsaurus,
 ) (*ComponentManager, error) {
 	logger := log.FromContext(ctx)
-	ytsaurus := apiProxy.Ytsaurus()
+	resource := ytsaurus.GetResource()
 
-	cfgen := ytconfig.NewGenerator(ytsaurus, getClusterDomain(apiProxy.Client()))
+	cfgen := ytconfig.NewGenerator(resource, getClusterDomain(ytsaurus.APIProxy().Client()))
 
-	d := components.NewDiscovery(cfgen, apiProxy)
-	m := components.NewMaster(cfgen, apiProxy)
+	d := components.NewDiscovery(cfgen, ytsaurus)
+	m := components.NewMaster(cfgen, ytsaurus)
 	var hps []components.Component
-	for _, hpSpec := range apiProxy.Ytsaurus().Spec.HTTPProxies {
-		hps = append(hps, components.NewHTTPProxy(cfgen, apiProxy, m, hpSpec))
+	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {
+		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
 	}
-	yc := components.NewYtsaurusClient(cfgen, apiProxy, hps[0])
+	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0])
 
 	var dnds []components.Component
-	if ytsaurus.Spec.DataNodes != nil && len(ytsaurus.Spec.DataNodes) > 0 {
-		for _, dndSpec := range apiProxy.Ytsaurus().Spec.DataNodes {
-			dnds = append(dnds, components.NewDataNode(cfgen, apiProxy, m, dndSpec))
+	if resource.Spec.DataNodes != nil && len(resource.Spec.DataNodes) > 0 {
+		for _, dndSpec := range ytsaurus.GetResource().Spec.DataNodes {
+			dnds = append(dnds, components.NewDataNode(cfgen, ytsaurus, m, dndSpec))
 		}
 	}
 
@@ -49,63 +49,58 @@ func NewComponentManager(
 	allComponents = append(allComponents, dnds...)
 	allComponents = append(allComponents, hps...)
 
-	if ytsaurus.Spec.UI != nil {
-		ui := components.NewUI(cfgen, apiProxy, m)
+	if resource.Spec.UI != nil {
+		ui := components.NewUI(cfgen, ytsaurus, m)
 		allComponents = append(allComponents, ui)
 	}
 
-	if ytsaurus.Spec.RPCProxies != nil && len(ytsaurus.Spec.RPCProxies) > 0 {
+	if resource.Spec.RPCProxies != nil && len(resource.Spec.RPCProxies) > 0 {
 		var rps []components.Component
-		for _, rpSpec := range apiProxy.Ytsaurus().Spec.RPCProxies {
-			rps = append(rps, components.NewRPCProxy(cfgen, apiProxy, m, rpSpec))
+		for _, rpSpec := range ytsaurus.GetResource().Spec.RPCProxies {
+			rps = append(rps, components.NewRPCProxy(cfgen, ytsaurus, m, rpSpec))
 		}
 		allComponents = append(allComponents, rps...)
 	}
 
 	var ends []components.Component
-	if ytsaurus.Spec.ExecNodes != nil && len(ytsaurus.Spec.ExecNodes) > 0 {
-		for _, endSpec := range apiProxy.Ytsaurus().Spec.ExecNodes {
-			ends = append(ends, components.NewExecNode(cfgen, apiProxy, m, endSpec))
+	if resource.Spec.ExecNodes != nil && len(resource.Spec.ExecNodes) > 0 {
+		for _, endSpec := range ytsaurus.GetResource().Spec.ExecNodes {
+			ends = append(ends, components.NewExecNode(cfgen, ytsaurus, m, endSpec))
 		}
 	}
 	allComponents = append(allComponents, ends...)
 
 	var tnds []components.Component
-	if ytsaurus.Spec.TabletNodes != nil && len(ytsaurus.Spec.TabletNodes) > 0 {
-		for idx, tndSpec := range apiProxy.Ytsaurus().Spec.TabletNodes {
-			tnds = append(tnds, components.NewTabletNode(cfgen, apiProxy, yc, tndSpec, idx == 0))
+	if resource.Spec.TabletNodes != nil && len(resource.Spec.TabletNodes) > 0 {
+		for idx, tndSpec := range ytsaurus.GetResource().Spec.TabletNodes {
+			tnds = append(tnds, components.NewTabletNode(cfgen, ytsaurus, yc, tndSpec, idx == 0))
 		}
 	}
 	allComponents = append(allComponents, tnds...)
 
-	if ytsaurus.Spec.Schedulers != nil {
-		s = components.NewScheduler(cfgen, apiProxy, m, ends, tnds)
+	if resource.Spec.Schedulers != nil {
+		s = components.NewScheduler(cfgen, ytsaurus, m, ends, tnds)
 		allComponents = append(allComponents, s)
 	}
 
-	if ytsaurus.Spec.ControllerAgents != nil {
-		ca := components.NewControllerAgent(cfgen, apiProxy, m)
+	if resource.Spec.ControllerAgents != nil {
+		ca := components.NewControllerAgent(cfgen, ytsaurus, m)
 		allComponents = append(allComponents, ca)
 	}
 
-	if ytsaurus.Spec.QueryTrackers != nil {
-		q := components.NewQueryTracker(cfgen, apiProxy, yc)
+	if resource.Spec.QueryTrackers != nil {
+		q := components.NewQueryTracker(cfgen, ytsaurus, yc)
 		allComponents = append(allComponents, q)
 	}
 
-	if ytsaurus.Spec.YQLAgents != nil {
-		yqla := components.NewYQLAgent(cfgen, apiProxy, m)
+	if resource.Spec.YQLAgents != nil {
+		yqla := components.NewYQLAgent(cfgen, ytsaurus, m)
 		allComponents = append(allComponents, yqla)
 	}
 
-	if ytsaurus.Spec.Chyt != nil && ytsaurus.Spec.Schedulers != nil {
-		chyt := components.NewChytController(cfgen, apiProxy, m, s, dnds)
+	if resource.Spec.Chyt != nil && resource.Spec.Schedulers != nil {
+		chyt := components.NewChytController(cfgen, ytsaurus, m, s, dnds)
 		allComponents = append(allComponents, chyt)
-	}
-
-	if ytsaurus.Spec.Spyt != nil && len(ends) > 0 && ytsaurus.Spec.Schedulers != nil {
-		spyt := components.NewSpyt(cfgen, apiProxy, m, s, ends, dnds)
-		allComponents = append(allComponents, spyt)
 	}
 
 	// Fetch component status.
@@ -142,11 +137,11 @@ func NewComponentManager(
 	logger.Info("Ytsaurus sync status",
 		"notReadyComponents", notReadyComponents,
 		"readyComponents", readyComponents,
-		"updateState", ytsaurus.Status.UpdateStatus.State,
-		"clusterState", ytsaurus.Status.State)
+		"updateState", resource.Status.UpdateStatus.State,
+		"clusterState", resource.Status.State)
 
 	return &ComponentManager{
-		apiProxy:        apiProxy,
+		ytsaurus:        ytsaurus,
 		allComponents:   allComponents,
 		masterComponent: m,
 		status:          componentStatus,
@@ -165,10 +160,10 @@ func (cm *ComponentManager) allReadyOrUpdating() bool {
 	return cm.status.allReadyOrUpdating
 }
 
-func (cm *ComponentManager) areServerPodsRemoved(proxy *apiProxy.APIProxy) bool {
+func (cm *ComponentManager) areServerPodsRemoved(ytsaurus *apiProxy.Ytsaurus) bool {
 	for _, cmp := range cm.allComponents {
 		if scmp, ok := cmp.(components.ServerComponent); ok {
-			if !proxy.IsUpdateStatusConditionTrue(scmp.GetPodsRemovedCondition()) {
+			if !ytsaurus.IsUpdateStatusConditionTrue(scmp.GetPodsRemovedCondition()) {
 				return false
 			}
 		}
