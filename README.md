@@ -5,7 +5,7 @@ YTsaurus is a distributed storage and processing platform for big data with supp
 This operator helps you to deploy YTsaurus using Kubernetes.
 
 ## Description
-Currently available in alpha-version and is capable to deploy a new YTsaurus cluster from scratch, primarily for testing purposes. Automated cluster updates will be available shortly.
+Currently available in alpha-version and is capable to deploy a new YTsaurus cluster from scratch, primarily for testing purposes. Also can perform automated cluster upgrades with downtime.
 
 
 ## Getting Started

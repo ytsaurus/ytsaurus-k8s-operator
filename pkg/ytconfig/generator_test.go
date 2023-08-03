@@ -18,6 +18,8 @@ type Volume struct {
 
 func TestGetMasterConfig(t *testing.T) {
 	t.Helper()
+	var logRotationPeriod int64 = 900000
+	totalLogSize := 10 * int64(1<<30)
 
 	ytsaurus := &v1.Ytsaurus{
 		ObjectMeta: metav1.ObjectMeta{
@@ -71,19 +73,26 @@ func TestGetMasterConfig(t *testing.T) {
 							Name:        "info",
 							WriterType:  v1.LogWriterTypeFile,
 							MinLogLevel: v1.LogLevelInfo,
+							Compression: v1.LogCompressionNone,
 						},
 						{
 							Name:        "error",
 							WriterType:  v1.LogWriterTypeFile,
 							MinLogLevel: v1.LogLevelError,
+							Compression: v1.LogCompressionNone,
 						},
 						{
 							Name:        "debug",
 							WriterType:  v1.LogWriterTypeFile,
 							MinLogLevel: v1.LogLevelDebug,
+							Compression: v1.LogCompressionZstd,
 							CategoriesFilter: &v1.CategoriesFilter{
 								Type:   v1.CategoriesFilterTypeExclude,
 								Values: []string{"Bus"},
+							},
+							RotationPolicy: &v1.LogRotationPolicy{
+								RotationPeriodMilliseconds: &logRotationPeriod,
+								MaxTotalSizeToKeep:         &totalLogSize,
 							},
 						},
 					},

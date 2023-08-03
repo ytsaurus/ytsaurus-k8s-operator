@@ -1003,6 +1003,9 @@ spec:
                               minItems: 1
                               type: array
                           type: object
+                        compression:
+                          default: none
+                          type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus
                             logging level.
@@ -1015,6 +1018,24 @@ spec:
                         name:
                           minLength: 1
                           type: string
+                        rotationPolicy:
+                          properties:
+                            maxSegmentCountToKeep:
+                              format: int64
+                              type: integer
+                            maxSegmentSize:
+                              format: int64
+                              type: integer
+                            maxTotalSizeToKeep:
+                              format: int64
+                              type: integer
+                            rotationPeriodMilliseconds:
+                              format: int64
+                              type: integer
+                          type: object
+                        use_timestamp_suffix:
+                          default: false
+                          type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
                             log writers.
@@ -3815,6 +3836,9 @@ spec:
                                 minItems: 1
                                 type: array
                             type: object
+                          compression:
+                            default: none
+                            type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -3827,6 +3851,24 @@ spec:
                           name:
                             minLength: 1
                             type: string
+                          rotationPolicy:
+                            properties:
+                              maxSegmentCountToKeep:
+                                format: int64
+                                type: integer
+                              maxSegmentSize:
+                                format: int64
+                                type: integer
+                              maxTotalSizeToKeep:
+                                format: int64
+                                type: integer
+                              rotationPeriodMilliseconds:
+                                format: int64
+                                type: integer
+                            type: object
+                          use_timestamp_suffix:
+                            default: false
+                            type: boolean
                           writerType:
                             description: LogWriterType string describes types of possible
                               log writers.
@@ -6664,6 +6706,9 @@ spec:
                               minItems: 1
                               type: array
                           type: object
+                        compression:
+                          default: none
+                          type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus
                             logging level.
@@ -6676,6 +6721,24 @@ spec:
                         name:
                           minLength: 1
                           type: string
+                        rotationPolicy:
+                          properties:
+                            maxSegmentCountToKeep:
+                              format: int64
+                              type: integer
+                            maxSegmentSize:
+                              format: int64
+                              type: integer
+                            maxTotalSizeToKeep:
+                              format: int64
+                              type: integer
+                            rotationPeriodMilliseconds:
+                              format: int64
+                              type: integer
+                          type: object
+                        use_timestamp_suffix:
+                          default: false
+                          type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
                             log writers.
@@ -9474,6 +9537,9 @@ spec:
                                 minItems: 1
                                 type: array
                             type: object
+                          compression:
+                            default: none
+                            type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -9486,6 +9552,24 @@ spec:
                           name:
                             minLength: 1
                             type: string
+                          rotationPolicy:
+                            properties:
+                              maxSegmentCountToKeep:
+                                format: int64
+                                type: integer
+                              maxSegmentSize:
+                                format: int64
+                                type: integer
+                              maxTotalSizeToKeep:
+                                format: int64
+                                type: integer
+                              rotationPeriodMilliseconds:
+                                format: int64
+                                type: integer
+                            type: object
+                          use_timestamp_suffix:
+                            default: false
+                            type: boolean
                           writerType:
                             description: LogWriterType string describes types of possible
                               log writers.
@@ -12340,6 +12424,9 @@ spec:
                                 minItems: 1
                                 type: array
                             type: object
+                          compression:
+                            default: none
+                            type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -12352,6 +12439,24 @@ spec:
                           name:
                             minLength: 1
                             type: string
+                          rotationPolicy:
+                            properties:
+                              maxSegmentCountToKeep:
+                                format: int64
+                                type: integer
+                              maxSegmentSize:
+                                format: int64
+                                type: integer
+                              maxTotalSizeToKeep:
+                                format: int64
+                                type: integer
+                              rotationPeriodMilliseconds:
+                                format: int64
+                                type: integer
+                            type: object
+                          use_timestamp_suffix:
+                            default: false
+                            type: boolean
                           writerType:
                             description: LogWriterType string describes types of possible
                               log writers.
@@ -15211,6 +15316,9 @@ spec:
                               minItems: 1
                               type: array
                           type: object
+                        compression:
+                          default: none
+                          type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus
                             logging level.
@@ -15223,6 +15331,24 @@ spec:
                         name:
                           minLength: 1
                           type: string
+                        rotationPolicy:
+                          properties:
+                            maxSegmentCountToKeep:
+                              format: int64
+                              type: integer
+                            maxSegmentSize:
+                              format: int64
+                              type: integer
+                            maxTotalSizeToKeep:
+                              format: int64
+                              type: integer
+                            rotationPeriodMilliseconds:
+                              format: int64
+                              type: integer
+                          type: object
+                        use_timestamp_suffix:
+                          default: false
+                          type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
                             log writers.
@@ -18009,6 +18135,9 @@ spec:
                               minItems: 1
                               type: array
                           type: object
+                        compression:
+                          default: none
+                          type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus
                             logging level.
@@ -18021,6 +18150,24 @@ spec:
                         name:
                           minLength: 1
                           type: string
+                        rotationPolicy:
+                          properties:
+                            maxSegmentCountToKeep:
+                              format: int64
+                              type: integer
+                            maxSegmentSize:
+                              format: int64
+                              type: integer
+                            maxTotalSizeToKeep:
+                              format: int64
+                              type: integer
+                            rotationPeriodMilliseconds:
+                              format: int64
+                              type: integer
+                          type: object
+                        use_timestamp_suffix:
+                          default: false
+                          type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
                             log writers.
@@ -20819,6 +20966,9 @@ spec:
                                 minItems: 1
                                 type: array
                             type: object
+                          compression:
+                            default: none
+                            type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -20831,6 +20981,24 @@ spec:
                           name:
                             minLength: 1
                             type: string
+                          rotationPolicy:
+                            properties:
+                              maxSegmentCountToKeep:
+                                format: int64
+                                type: integer
+                              maxSegmentSize:
+                                format: int64
+                                type: integer
+                              maxTotalSizeToKeep:
+                                format: int64
+                                type: integer
+                              rotationPeriodMilliseconds:
+                                format: int64
+                                type: integer
+                            type: object
+                          use_timestamp_suffix:
+                            default: false
+                            type: boolean
                           writerType:
                             description: LogWriterType string describes types of possible
                               log writers.
@@ -23671,6 +23839,9 @@ spec:
                               minItems: 1
                               type: array
                           type: object
+                        compression:
+                          default: none
+                          type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus
                             logging level.
@@ -23683,6 +23854,24 @@ spec:
                         name:
                           minLength: 1
                           type: string
+                        rotationPolicy:
+                          properties:
+                            maxSegmentCountToKeep:
+                              format: int64
+                              type: integer
+                            maxSegmentSize:
+                              format: int64
+                              type: integer
+                            maxTotalSizeToKeep:
+                              format: int64
+                              type: integer
+                            rotationPeriodMilliseconds:
+                              format: int64
+                              type: integer
+                          type: object
+                        use_timestamp_suffix:
+                          default: false
+                          type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
                             log writers.
@@ -26483,6 +26672,9 @@ spec:
                                 minItems: 1
                                 type: array
                             type: object
+                          compression:
+                            default: none
+                            type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -26495,6 +26687,24 @@ spec:
                           name:
                             minLength: 1
                             type: string
+                          rotationPolicy:
+                            properties:
+                              maxSegmentCountToKeep:
+                                format: int64
+                                type: integer
+                              maxSegmentSize:
+                                format: int64
+                                type: integer
+                              maxTotalSizeToKeep:
+                                format: int64
+                                type: integer
+                              rotationPeriodMilliseconds:
+                                format: int64
+                                type: integer
+                            type: object
+                          use_timestamp_suffix:
+                            default: false
+                            type: boolean
                           writerType:
                             description: LogWriterType string describes types of possible
                               log writers.
@@ -28421,34 +28631,11 @@ spec:
                   type: object
                 type: array
               spyt:
-                description: SpytSpec defines the desired state of Spyt
                 properties:
-                  image:
+                  sparkVersion:
                     type: string
-                  imagePullSecrets:
-                    items:
-                      description: LocalObjectReference contains enough information
-                        to let you locate the referenced object inside the same namespace.
-                      properties:
-                        name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                            TODO: Add other useful fields. apiVersion, kind, uid?'
-                          type: string
-                      type: object
-                      x-kubernetes-map-type: atomic
-                    type: array
-                  name:
+                  spytVersion:
                     type: string
-                  ytsaurus:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
-                    x-kubernetes-map-type: atomic
                 type: object
               tabletNodes:
                 items:
@@ -29373,6 +29560,9 @@ spec:
                                 minItems: 1
                                 type: array
                             type: object
+                          compression:
+                            default: none
+                            type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
@@ -29385,6 +29575,24 @@ spec:
                           name:
                             minLength: 1
                             type: string
+                          rotationPolicy:
+                            properties:
+                              maxSegmentCountToKeep:
+                                format: int64
+                                type: integer
+                              maxSegmentSize:
+                                format: int64
+                                type: integer
+                              maxTotalSizeToKeep:
+                                format: int64
+                                type: integer
+                              rotationPeriodMilliseconds:
+                                format: int64
+                                type: integer
+                            type: object
+                          use_timestamp_suffix:
+                            default: false
+                            type: boolean
                           writerType:
                             description: LogWriterType string describes types of possible
                               log writers.
@@ -32276,6 +32484,9 @@ spec:
                               minItems: 1
                               type: array
                           type: object
+                        compression:
+                          default: none
+                          type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus
                             logging level.
@@ -32288,6 +32499,24 @@ spec:
                         name:
                           minLength: 1
                           type: string
+                        rotationPolicy:
+                          properties:
+                            maxSegmentCountToKeep:
+                              format: int64
+                              type: integer
+                            maxSegmentSize:
+                              format: int64
+                              type: integer
+                            maxTotalSizeToKeep:
+                              format: int64
+                              type: integer
+                            rotationPeriodMilliseconds:
+                              format: int64
+                              type: integer
+                          type: object
+                        use_timestamp_suffix:
+                          default: false
+                          type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
                             log writers.

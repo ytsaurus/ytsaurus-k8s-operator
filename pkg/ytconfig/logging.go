@@ -39,8 +39,13 @@ type LoggingRule struct {
 }
 
 type LoggingWriter struct {
-	WriterType ytv1.LogWriterType `yson:"type,omitempty"`
-	FileName   string             `yson:"file_name,omitempty"`
+	WriterType         ytv1.LogWriterType `yson:"type,omitempty"`
+	FileName           string             `yson:"file_name,omitempty"`
+	CompressionMethod  string             `yson:"compression_method,omitempty"`
+	EnableCompression  bool               `yson:"enable_compression,omitempty"`
+	UseTimestampSuffix bool               `yson:"use_timestamp_suffix,omitempty"`
+
+	RotationPolicy *ytv1.LogRotationPolicy `yson:"rotation_policy,omitempty"`
 }
 
 type Logging struct {
@@ -97,6 +102,16 @@ func createLoggingWriter(componentName string, loggingDirectory string, loggerSp
 		loggingWriter.FileName = path.Join(loggingDirectory, fmt.Sprintf("%s.%s.log", componentName, loggerSpec.Name))
 	}
 
+	if loggerSpec.Compression != ytv1.LogCompressionNone {
+		loggingWriter.EnableCompression = true
+		loggingWriter.CompressionMethod = string(loggerSpec.Compression)
+		loggingWriter.FileName += fmt.Sprintf(".%s", loggingWriter.CompressionMethod)
+	} else {
+		loggingWriter.EnableCompression = false
+	}
+
+	loggingWriter.UseTimestampSuffix = loggerSpec.UseTimestampSuffix
+	loggingWriter.RotationPolicy = loggerSpec.RotationPolicy
 	return loggingWriter
 }
 

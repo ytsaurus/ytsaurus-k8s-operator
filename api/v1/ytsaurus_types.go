@@ -107,6 +107,14 @@ const (
 	LogWriterTypeStderr LogWriterType = "stderr"
 )
 
+type LogCompression string
+
+const (
+	LogCompressionNone LogCompression = "none"
+	LogCompressionGzip LogCompression = "gzip"
+	LogCompressionZstd LogCompression = "zstd"
+)
+
 // CategoriesFilterType string describes types of possible log CategoriesFilter.
 // +enum
 type CategoriesFilterType string
@@ -123,14 +131,27 @@ type CategoriesFilter struct {
 	Values []string `json:"values,omitempty"`
 }
 
+type LogRotationPolicy struct {
+	RotationPeriodMilliseconds *int64 `json:"rotationPeriodMilliseconds,omitempty" yson:"rotation_period,omitempty"`
+	MaxSegmentSize             *int64 `json:"maxSegmentSize,omitempty" yson:"max_segment_size,omitempty"`
+	MaxTotalSizeToKeep         *int64 `json:"maxTotalSizeToKeep,omitempty" yson:"max_total_size_to_keep,omitempty"`
+	MaxSegmentCountToKeep      *int64 `json:"maxSegmentCountToKeep,omitempty" yson:"max_segment_count_to_keep,omitempty"`
+}
+
 type LoggerSpec struct {
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name,omitempty"`
 	//+kubebuilder:validation:Enum=file;stderr
 	WriterType LogWriterType `json:"writerType,omitempty"`
 	//+kubebuilder:validation:Enum=trace;debug;info;error
-	MinLogLevel      LogLevel          `json:"minLogLevel,omitempty"`
-	CategoriesFilter *CategoriesFilter `json:"categoriesFilter,omitempty"`
+	MinLogLevel LogLevel `json:"minLogLevel,omitempty"`
+	//+kubebuilder:default:=none
+	//+kubebuilder:validation::Enum=none;gzip;zstd
+	Compression LogCompression `json:"compression,omitempty"`
+	//+kubebuilder:default:=false
+	UseTimestampSuffix bool               `json:"use_timestamp_suffix,omitempty"`
+	CategoriesFilter   *CategoriesFilter  `json:"categoriesFilter,omitempty"`
+	RotationPolicy     *LogRotationPolicy `json:"rotationPolicy,omitempty"`
 }
 
 type InstanceSpec struct {

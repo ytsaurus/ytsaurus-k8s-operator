@@ -5,14 +5,14 @@
 package mock_yt
 
 import (
-    context "context"
-    io "io"
-    reflect "reflect"
+	context "context"
+	io "io"
+	reflect "reflect"
 
-    gomock "github.com/golang/mock/gomock"
-    guid "go.ytsaurus.tech/yt/go/guid"
-    ypath "go.ytsaurus.tech/yt/go/ypath"
-    yt "go.ytsaurus.tech/yt/go/yt"
+	gomock "github.com/golang/mock/gomock"
+	guid "go.ytsaurus.tech/yt/go/guid"
+	ypath "go.ytsaurus.tech/yt/go/ypath"
+	yt "go.ytsaurus.tech/yt/go/yt"
 )
 
 // MockCypressClient is a mock of CypressClient interface.
