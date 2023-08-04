@@ -5,10 +5,69 @@ metadata:
   creationTimestamp: null
   name: manager-role
 rules:
+- resources:
+  - configmaps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- resources:
+  - events
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- resources:
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - cluster.ytsaurus.tech
   resources:
-  - ytsaurus
   - spyts
   verbs:
   - create
@@ -21,49 +80,40 @@ rules:
 - apiGroups:
   - cluster.ytsaurus.tech
   resources:
-  - ytsaurus/finalizers
   - spyts/finalizers
   verbs:
   - update
 - apiGroups:
   - cluster.ytsaurus.tech
   resources:
-  - ytsaurus/status
   - spyts/status
   verbs:
   - get
   - patch
   - update
 - apiGroups:
-    - apps
+  - cluster.ytsaurus.tech
   resources:
-    - statefulsets
-  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
-- apiGroups: [ "" ]
+  - ytsaurus
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster.ytsaurus.tech
   resources:
-    - secrets
-  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
-- apiGroups: [ "" ]
+  - ytsaurus/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cluster.ytsaurus.tech
   resources:
-    - configmaps
-  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
-- apiGroups: [ "" ]
-  resources:
-    - pods
-  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
-- apiGroups: [ "" ]
-  resources:
-    - services
-  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
-- apiGroups: [ "" ]
-  resources:
-    - events
-  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
-- apiGroups: [ "apps" ]
-  resources:
-    - deployments
-  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
-- apiGroups: [ "batch" ]
-  resources:
-    - jobs
-  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+  - ytsaurus/status
+  verbs:
+  - get
+  - patch
+  - update

@@ -5,10 +5,69 @@ metadata:
   labels:
   {{- include "ytop-chart.labels" . | nindent 4 }}
 rules:
+- resources:
+  - configmaps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- resources:
+  - events
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- resources:
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - cluster.ytsaurus.tech
   resources:
-  - ytsaurus
   - spyts
   verbs:
   - create
@@ -21,23 +80,21 @@ rules:
 - apiGroups:
   - cluster.ytsaurus.tech
   resources:
-  - ytsaurus/finalizers
   - spyts/finalizers
   verbs:
   - update
 - apiGroups:
   - cluster.ytsaurus.tech
   resources:
-  - ytsaurus/status
   - spyts/status
   verbs:
   - get
   - patch
   - update
 - apiGroups:
-  - apps
+  - cluster.ytsaurus.tech
   resources:
-  - statefulsets
+  - ytsaurus
   verbs:
   - create
   - delete
@@ -47,89 +104,19 @@ rules:
   - update
   - watch
 - apiGroups:
-  - ""
+  - cluster.ytsaurus.tech
   resources:
-  - secrets
+  - ytsaurus/finalizers
   verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
   - update
-  - watch
 - apiGroups:
-  - ""
+  - cluster.ytsaurus.tech
   resources:
-  - configmaps
+  - ytsaurus/status
   verbs:
-  - create
-  - delete
   - get
-  - list
   - patch
   - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - services
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - batch
-  resources:
-  - jobs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

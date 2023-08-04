@@ -38,6 +38,10 @@ type SpytStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
+//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=spyts,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=spyts/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=spyts/finalizers,verbs=update
+
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
