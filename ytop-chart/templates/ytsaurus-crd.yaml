@@ -1031,6 +1031,10 @@ spec:
                           type: string
                       type: object
                     type: array
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -3817,6 +3821,10 @@ spec:
                       default: default
                       minLength: 1
                       type: string
+                    nodeSelector:
+                      additionalProperties:
+                        type: string
+                      type: object
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -6610,6 +6618,10 @@ spec:
                           type: string
                       type: object
                     type: array
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -9394,6 +9406,10 @@ spec:
                       default: default
                       minLength: 1
                       type: string
+                    nodeSelector:
+                      additionalProperties:
+                        type: string
+                      type: object
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -12217,6 +12233,10 @@ spec:
                             type: string
                         type: object
                       type: array
+                    nodeSelector:
+                      additionalProperties:
+                        type: string
+                      type: object
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -15036,6 +15056,10 @@ spec:
                           type: string
                       type: object
                     type: array
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -17791,6 +17815,10 @@ spec:
                           type: string
                       type: object
                     type: array
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -20571,6 +20599,10 @@ spec:
                             type: string
                         type: object
                       type: array
+                    nodeSelector:
+                      additionalProperties:
+                        type: string
+                      type: object
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -23371,6 +23403,10 @@ spec:
                           type: string
                       type: object
                     type: array
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -26153,6 +26189,10 @@ spec:
                             type: string
                         type: object
                       type: array
+                    nodeSelector:
+                      additionalProperties:
+                        type: string
+                      type: object
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -28985,6 +29025,10 @@ spec:
                       default: default
                       minLength: 1
                       type: string
+                    nodeSelector:
+                      additionalProperties:
+                        type: string
+                      type: object
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -31832,6 +31876,10 @@ spec:
                           type: string
                       type: object
                     type: array
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
