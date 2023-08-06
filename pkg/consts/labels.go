@@ -2,6 +2,7 @@ package consts
 
 const YTComponentLabelName = "yt_component"
 const YTMetricsLabelName = "yt_metrics"
+const YTObjectName = "yt_object"
 
 const (
 	YTComponentLabelDiscovery       string = "yt-discovery"

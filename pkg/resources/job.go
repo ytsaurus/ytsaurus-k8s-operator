@@ -2,27 +2,31 @@ package resources
 
 import (
 	"context"
-
+	"fmt"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
-	labeller2 "github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
+	labeller "github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
+	"go.ytsaurus.tech/yt/go/guid"
 	batchv1 "k8s.io/api/batch/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Job struct {
-	name     string
-	labeller *labeller2.Labeller
-	apiProxy apiproxy.APIProxy
+	name       string
+	uniqueName string
+	l          *labeller.Labeller
+	apiProxy   apiproxy.APIProxy
 
 	oldObject batchv1.Job
 	newObject batchv1.Job
 }
 
-func NewJob(name string, labeller *labeller2.Labeller, apiProxy apiproxy.APIProxy) *Job {
+func NewJob(name string, l *labeller.Labeller, apiProxy apiproxy.APIProxy) *Job {
 	return &Job{
-		name:     name,
-		labeller: labeller,
-		apiProxy: apiProxy,
+		name:       name,
+		uniqueName: fmt.Sprintf("%s-%s", name, guid.New().String()),
+		l:          l,
+		apiProxy:   apiProxy,
 	}
 }
 
@@ -44,7 +48,8 @@ func (j *Job) Sync(ctx context.Context) error {
 
 func (j *Job) Build() *batchv1.Job {
 	var ttlSeconds int32 = 600
-	j.newObject.ObjectMeta = j.labeller.GetObjectMeta(j.name)
+	j.newObject.ObjectMeta = j.l.GetObjectMeta(j.name)
+	j.newObject.ObjectMeta.Name = j.uniqueName
 	j.newObject.Spec = batchv1.JobSpec{
 		TTLSecondsAfterFinished: &ttlSeconds,
 	}
@@ -53,5 +58,23 @@ func (j *Job) Build() *batchv1.Job {
 }
 
 func (j *Job) Fetch(ctx context.Context) error {
-	return j.apiProxy.FetchObject(ctx, j.name, &j.oldObject)
+	jobs := batchv1.JobList{}
+	err := j.apiProxy.ListObjects(ctx, &jobs, j.l.GetListOptions(&j.name)...)
+	if err != nil {
+		return err
+	}
+
+	lastCreationTimestamp := v1.Time{}
+	var lastJob *batchv1.Job
+
+	for _, job := range jobs.Items {
+		if lastCreationTimestamp.Before(&job.CreationTimestamp) {
+			lastCreationTimestamp = job.CreationTimestamp
+			lastJob = &job
+		}
+	}
+	if lastJob != nil {
+		j.oldObject = *lastJob
+	}
+	return err
 }

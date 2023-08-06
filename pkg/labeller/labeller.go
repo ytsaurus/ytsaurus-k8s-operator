@@ -51,7 +51,7 @@ func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Name:      name,
 		Namespace: l.ObjectMeta.Namespace,
-		Labels:    l.GetMetaLabelMap(),
+		Labels:    l.GetMetaLabelMap(&name),
 	}
 }
 
@@ -59,31 +59,40 @@ func (l *Labeller) GetYTLabelValue() string {
 	return fmt.Sprintf("%s-%s", l.ObjectMeta.Name, l.ComponentLabel)
 }
 
-func (l *Labeller) GetSelectorLabelMap() map[string]string {
-	return map[string]string{
+func (l *Labeller) GetSelectorLabelMap(name *string) map[string]string {
+	labels := map[string]string{
 		consts.YTComponentLabelName: l.GetYTLabelValue(),
 	}
+	if name != nil {
+		labels[consts.YTObjectName] = *name
+	}
+
+	return labels
 }
 
-func (l *Labeller) GetListOptions() []client.ListOption {
+func (l *Labeller) GetListOptions(name *string) []client.ListOption {
 	return []client.ListOption{
 		client.InNamespace(l.ObjectMeta.Namespace),
-		client.MatchingLabels(l.GetSelectorLabelMap()),
+		client.MatchingLabels(l.GetSelectorLabelMap(name)),
 	}
 }
 
-func (l *Labeller) GetMetaLabelMap() map[string]string {
-	return map[string]string{
+func (l *Labeller) GetMetaLabelMap(name *string) map[string]string {
+	labels := map[string]string{
 		"app.kubernetes.io/name":       "Ytsaurus",
 		"app.kubernetes.io/instance":   l.ObjectMeta.Name,
 		"app.kubernetes.io/component":  l.ComponentLabel,
 		"app.kubernetes.io/managed-by": "Ytsaurus-k8s-operator",
 		consts.YTComponentLabelName:    l.GetYTLabelValue(),
 	}
+	if name != nil {
+		labels[consts.YTObjectName] = *name
+	}
+	return labels
 }
 
 func (l *Labeller) GetMonitoringMetaLabelMap() map[string]string {
-	labels := l.GetMetaLabelMap()
+	labels := l.GetMetaLabelMap(nil)
 
 	labels[consts.YTMetricsLabelName] = "true"
 

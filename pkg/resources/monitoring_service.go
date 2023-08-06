@@ -57,7 +57,7 @@ func (s *MonitoringService) GetServiceMeta(name string) metav1.ObjectMeta {
 func (s *MonitoringService) Build() *corev1.Service {
 	s.newObject.ObjectMeta = s.GetServiceMeta(s.name)
 	s.newObject.Spec = corev1.ServiceSpec{
-		Selector: s.labeller.GetSelectorLabelMap(),
+		Selector: s.labeller.GetSelectorLabelMap(nil),
 		Ports: []corev1.ServicePort{
 			{
 				Name:       consts.YTMonitoringPortName,
