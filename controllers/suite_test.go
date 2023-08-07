@@ -48,8 +48,8 @@ var ctx context.Context
 var cancel context.CancelFunc
 
 func TestAPIs(t *testing.T) {
-	if os.Getenv("YTSAURUS_ENABLE_KIND_TESTS") != "true" {
-		return
+	if os.Getenv("YTSAURUS_ENABLE_E2E_TESTS") != "true" {
+		t.Skip("skipping E2E tests: set YTSAURUS_ENABLE_E2E_TESTS environment variable to 'true'")
 	}
 
 	RegisterFailHandler(Fail)
