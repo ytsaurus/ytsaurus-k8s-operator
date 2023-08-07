@@ -28,7 +28,7 @@ spec:
       - name: error
         minLogLevel: error
         writerType: stderr
-  
+
   primaryMasters:
     instanceCount: 1
     cellTag: 1
@@ -125,5 +125,4 @@ spec:
   ui:
     serviceType: NodePort
     instanceCount: 1
-    loggers: *loggers
 

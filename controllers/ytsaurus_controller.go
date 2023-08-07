@@ -18,7 +18,8 @@ package controllers
 
 import (
 	"context"
-
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -68,5 +69,10 @@ func (r *YtsaurusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 func (r *YtsaurusReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&ytv1.Ytsaurus{}).
+		Owns(&appsv1.StatefulSet{}).
+		Owns(&corev1.ConfigMap{}).
+		Owns(&corev1.Service{}).
+		Owns(&appsv1.Deployment{}).
+		Owns(&corev1.Secret{}).
 		Complete(r)
 }

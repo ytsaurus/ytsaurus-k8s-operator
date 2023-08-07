@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"time"
@@ -78,5 +79,6 @@ func (r *SpytReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 func (r *SpytReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&ytv1.Spyt{}).
+		Owns(&corev1.Secret{}).
 		Complete(r)
 }
