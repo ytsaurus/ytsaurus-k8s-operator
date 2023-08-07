@@ -149,6 +149,8 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 		})
 	}
 
+	env = append(env, u.ytsaurus.Spec.UI.ExtraEnvVariables...)
+
 	secretsVolumeSize, _ := resource.ParseQuantity("1Mi")
 	deployment := u.microservice.BuildDeployment()
 	deployment.Spec.Template.Spec.InitContainers = []corev1.Container{

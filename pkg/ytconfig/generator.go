@@ -451,6 +451,19 @@ func (g *Generator) GetWebUIConfig() ([]byte, error) {
 	c.Proxy = g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 	c.PrimaryMaster.CellTag = g.ytsaurus.Spec.PrimaryMasters.CellTag
 
+	if g.ytsaurus.Spec.Group != "" {
+		c.Group = g.ytsaurus.Spec.Group
+	}
+	if g.ytsaurus.Spec.Theme != "" {
+		c.Theme = g.ytsaurus.Spec.Theme
+	}
+	if g.ytsaurus.Spec.Environment != "" {
+		c.Environment = g.ytsaurus.Spec.Environment
+	}
+	if g.ytsaurus.Spec.Description != "" {
+		c.Description = g.ytsaurus.Spec.Description
+	}
+
 	return marshallJSONConfig(WebUI{Clusters: []UICluster{c}})
 }
 

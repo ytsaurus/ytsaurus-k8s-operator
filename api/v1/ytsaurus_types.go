@@ -241,6 +241,8 @@ type UISpec struct {
 	UseInsecureCookies bool                        `json:"useInsecureCookies,omitempty"`
 	Resources          corev1.ResourceRequirements `json:"resources,omitempty"`
 	InstanceCount      int32                       `json:"instanceCount,omitempty"`
+
+	ExtraEnvVariables []corev1.EnvVar `json:"extraEnvVariables,omitempty"`
 }
 
 type QueryTrackerSpec struct {
@@ -264,6 +266,11 @@ type DeprecatedSpytSpec struct {
 type YtsaurusSpec struct {
 	CoreImage string `json:"coreImage,omitempty"`
 	UIImage   string `json:"uiImage,omitempty"`
+
+	Group       string `json:"group,omitempty"`
+	Theme       string `json:"theme,omitempty"`
+	Description string `json:"description,omitempty"`
+	Environment string `json:"environment,omitempty"`
 
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 	ConfigOverrides  *corev1.LocalObjectReference  `json:"configOverrides,omitempty"`
