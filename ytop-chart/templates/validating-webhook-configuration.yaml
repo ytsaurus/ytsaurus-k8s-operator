@@ -3,7 +3,7 @@ kind: ValidatingWebhookConfiguration
 metadata:
   name: {{ include "ytop-chart.fullname" . }}-validating-webhook-configuration
   annotations:
-    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "ytop-chart.fullname" . }}-serving-cert
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "ytop-chart.fullname" . }}-webhook-cert
   labels:
   {{- include "ytop-chart.labels" . | nindent 4 }}
 webhooks:

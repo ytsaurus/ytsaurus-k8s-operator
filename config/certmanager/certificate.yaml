@@ -21,19 +21,41 @@ kind: Certificate
 metadata:
   labels:
     app.kubernetes.io/name: certificate
-    app.kubernetes.io/instance: serving-cert
+    app.kubernetes.io/instance: webhook-cert
     app.kubernetes.io/component: certificate
     app.kubernetes.io/created-by: yt-k8s-operator
     app.kubernetes.io/part-of: yt-k8s-operator
     app.kubernetes.io/managed-by: kustomize
-  name: serving-cert  # this name should match the one appeared in kustomizeconfig.yaml
+  name: webhook-cert  # this name should match the one appeared in kustomizeconfig.yaml
   namespace: system
 spec:
-  # $(SERVICE_NAME) and $(SERVICE_NAMESPACE) will be substituted by kustomize
+  # $(WEBHOOK_SERVICE_NAME) and $(WEBHOOK_SERVICE_NAMESPACE) will be substituted by kustomize
   dnsNames:
-  - $(SERVICE_NAME).$(SERVICE_NAMESPACE).svc
-  - $(SERVICE_NAME).$(SERVICE_NAMESPACE).svc.cluster.local
+  - $(WEBHOOK_SERVICE_NAME).$(WEBHOOK_SERVICE_NAMESPACE).svc
+  - $(WEBHOOK_SERVICE_NAME).$(WEBHOOK_SERVICE_NAMESPACE).svc.cluster.local
   issuerRef:
     kind: Issuer
     name: selfsigned-issuer
-  secretName: webhook-server-cert # this secret will not be prefixed, since it's not managed by kustomize
+  secretName: yt-operator-webhook-cert # this secret will not be prefixed, since it's not managed by kustomize
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  labels:
+    app.kubernetes.io/name: certificate
+    app.kubernetes.io/instance: metrics-cert
+    app.kubernetes.io/component: certificate
+    app.kubernetes.io/created-by: yt-k8s-operator
+    app.kubernetes.io/part-of: yt-k8s-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: metrics-cert  # this name should match the one appeared in kustomizeconfig.yaml
+  namespace: system
+spec:
+  # $(METRICS_SERVICE_NAME) and $(METRICS_SERVICE_NAMESPACE) will be substituted by kustomize
+  dnsNames:
+  - $(METRICS_SERVICE_NAME).$(METRICS_SERVICE_NAMESPACE).svc
+  - $(METRICS_SERVICE_NAME).$(METRICS_SERVICE_NAMESPACE).svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: selfsigned-issuer
+  secretName: yt-operator-metrics-cert # this secret will not be prefixed, since it's not managed by kustomize

@@ -4,8 +4,9 @@ IMG ?= controller:latest
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.24.2
 
-OPERATOR_IMAGE=ytsaurus/k8s-operator
-OPERATOR_TAG=0.0.0-alpha
+OPERATOR_IMAGE = ytsaurus/k8s-operator
+OPERATOR_TAG = 0.0.0-alpha
+OPERATOR_CHART = ytop-chart
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -65,7 +66,7 @@ test: manifests generate fmt vet envtest ## Run tests.
 helm-kind-install: ## Install helm chart from sources in kind.
 	docker build -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
 	kind load docker-image ${OPERATOR_IMAGE}:${OPERATOR_TAG}
-	helm install ytsaurus ytop-chart/
+	helm install ytsaurus $(OPERATOR_CHART)
 
 .PHONY: helm-minikube-install
 helm-minikube-install: ## Install helm chart from sources in minikube.
@@ -96,7 +97,7 @@ docker-push: ## Push docker image with the manager.
 
 .PHONY: helm
 helm: manifests kustomize helmify ## Generate helm chart.
-	$(KUSTOMIZE) build config/default | $(HELMIFY) -cert-manager-as-subchart ytop-chart
+	$(KUSTOMIZE) build config/default | $(HELMIFY) $(OPERATOR_CHART)
 
 ##@ Deployment
 
@@ -129,11 +130,11 @@ release: manifests kustomize helmify ## Release operator docker imager and helm 
 	docker build -t $(OPERATOR_IMAGE):${RELEASE_VERSION} .
 	docker push $(OPERATOR_IMAGE):${RELEASE_VERSION}
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(OPERATOR_IMAGE):${RELEASE_VERSION}
-	$(KUSTOMIZE) build config/default | $(HELMIFY) ytop-chart
-	sed -iE "s/appVersion: \".*\"/appVersion: \"${RELEASE_VERSION}\"/" ytop-chart/Chart.yaml
-	sed -iE "s/version:.*/version: ${RELEASE_VERSION}/" ytop-chart/Chart.yaml
-	helm package ytop-chart
-	helm push ytop-chart-${RELEASE_VERSION}.tgz oci://registry-1.docker.io/ytsaurus
+	$(KUSTOMIZE) build config/default | $(HELMIFY) $(OPERATOR_CHART)
+	sed -iE "s/appVersion: \".*\"/appVersion: \"${RELEASE_VERSION}\"/" $(OPERATOR_CHART)/Chart.yaml
+	sed -iE "s/version:.*/version: ${RELEASE_VERSION}/" $(OPERATOR_CHART)/Chart.yaml
+	helm package $(OPERATOR_CHART)
+	helm push $(OPERATOR_CHART)-${RELEASE_VERSION}.tgz oci://registry-1.docker.io/ytsaurus
 
 ##@ Build Dependencies
 
@@ -146,10 +147,13 @@ $(LOCALBIN):
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
+HELMIFY ?= $(LOCALBIN)/helmify
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v3.8.7
-CONTROLLER_TOOLS_VERSION ?= v0.9.2
+CONTROLLER_GEN_VERSION ?= v0.9.2
+ENVTEST_VERSION ?= latest
+HELMIFY_VERSION ?= v0.4.5
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
@@ -160,16 +164,14 @@ $(KUSTOMIZE): $(LOCALBIN)
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
 $(CONTROLLER_GEN): $(LOCALBIN)
-	test -s $(LOCALBIN)/controller-gen || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+	test -s $(LOCALBIN)/controller-gen || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
 
 .PHONY: envtest
 envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST): $(LOCALBIN)
-	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
-
-HELMIFY ?= $(LOCALBIN)/helmify
+	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@$(ENVTEST_VERSION)
 
 .PHONY: helmify
 helmify: $(HELMIFY) ## Download helmify locally if necessary.
 $(HELMIFY): $(LOCALBIN)
-	test -s $(LOCALBIN)/helmify || GOBIN=$(LOCALBIN) go install github.com/arttor/helmify/cmd/helmify@latest
+	test -s $(LOCALBIN)/helmify || GOBIN=$(LOCALBIN) go install github.com/arttor/helmify/cmd/helmify@$(HELMIFY_VERSION)

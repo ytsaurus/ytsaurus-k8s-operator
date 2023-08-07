@@ -35,6 +35,10 @@ spec:
           10 }}
         securityContext: {{- toYaml .Values.controllerManager.kubeRbacProxy.containerSecurityContext
           | nindent 10 }}
+        volumeMounts:
+        - mountPath: /etc/certs/tls
+          name: metrics-cert
+          readOnly: true
       - args: {{- toYaml .Values.controllerManager.manager.args | nindent 8 }}
         command:
         - /manager
@@ -66,14 +70,18 @@ spec:
           | nindent 10 }}
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
-          name: cert
+          name: webhook-cert
           readOnly: true
       securityContext:
         runAsNonRoot: true
       serviceAccountName: {{ include "ytop-chart.fullname" . }}-controller-manager
       terminationGracePeriodSeconds: 10
       volumes:
-      - name: cert
+      - name: webhook-cert
         secret:
           defaultMode: 420
-          secretName: webhook-server-cert
+          secretName: yt-operator-webhook-cert
+      - name: metrics-cert
+        secret:
+          defaultMode: 420
+          secretName: yt-operator-metrics-cert

@@ -1,12 +1,11 @@
-certmanager:
-  enabled: true
-  installCRDs: true
 controllerManager:
   kubeRbacProxy:
     args:
-    - --secure-listen-address=0.0.0.0:8443
+    - --secure-listen-address=:8443
     - --upstream=http://127.0.0.1:8080/
     - --logtostderr=true
+    - --tls-cert-file=/etc/certs/tls/tls.crt
+    - --tls-private-key-file=/etc/certs/tls/tls.key
     - --v=0
     containerSecurityContext:
       allowPrivilegeEscalation: false
