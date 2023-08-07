@@ -6,9 +6,23 @@ import (
 )
 
 type CypressCookieManager struct{}
+type CypressUserManager struct{}
 type CypressTokenAuthenticator struct {
 	Secure bool `yson:"secure"`
 }
+
+type OauthService struct {
+	Host                 string `yson:"host"`
+	Port                 int    `yson:"port"`
+	Secure               bool   `yson:"secure"`
+	UserInfoEndpoint     string `yson:"user_info_endpoint"`
+	UserInfoLoginField   string `yson:"user_info_login_field"`
+	UserInfoSubjectField string `yson:"user_info_subject_field,omitempty"`
+	UserInfoErrorField   string `yson:"user_info_error_field"`
+}
+
+type OauthCookieAuthenticator struct{}
+type OauthTokenAuthenticator struct{}
 
 type Coordinator struct {
 	Enable            bool   `yson:"enable"`
@@ -17,7 +31,11 @@ type Coordinator struct {
 
 type Auth struct {
 	CypressCookieManager      CypressCookieManager      `yson:"cypress_cookie_manager"`
+	CypressUserManager        CypressUserManager        `yson:"cypress_user_manager"`
 	CypressTokenAuthenticator CypressTokenAuthenticator `yson:"cypress_token_authenticator"`
+	OauthService              *OauthService             `yson:"oauth_service,omitempty"`
+	OauthCookieAuthenticator  *OauthCookieAuthenticator `yson:"oauth_cookie_authenticator,omitempty"`
+	OauthTokenAuthenticator   *OauthTokenAuthenticator  `yson:"oauth_token_authenticator,omitempty"`
 	RequireAuthentication     bool                      `yson:"require_authentication"`
 }
 
@@ -39,6 +57,10 @@ type NativeClient struct {
 type RPCProxyServer struct {
 	CommonServer
 	CypressTokenAuthenticator CypressTokenAuthenticator `yson:"cypress_token_authenticator"`
+	CypressUserManager        CypressUserManager        `yson:"cypress_user_manager"`
+	OauthService              *OauthService             `yson:"oauth_service,omitempty"`
+	OauthTokenAuthenticator   *OauthTokenAuthenticator  `yson:"oauth_token_authenticator,omitempty"`
+	RequireAuthentication     bool                      `yson:"require_authentication"`
 	Role                      string                    `yson:"role"`
 }
 

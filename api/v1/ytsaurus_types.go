@@ -260,6 +260,16 @@ type DeprecatedSpytSpec struct {
 	SpytVersion  string `json:"spytVersion,omitempty"`
 }
 
+type OauthServiceSpec struct {
+	Host                 string `json:"host,omitempty"`
+	Port                 int    `json:"port,omitempty"`
+	Secure               bool   `json:"secure,omitempty"`
+	UserInfoEndpoint     string `json:"userInfoEndpoint,omitempty"`
+	UserInfoLoginField   string `json:"userInfoLoginField,omitempty"`
+	UserInfoSubjectField string `json:"userInfoSubjectField,omitempty"`
+	UserInfoErrorField   string `json:"userInfoErrorField,omitempty"`
+}
+
 // YtsaurusSpec defines the desired state of Ytsaurus
 type YtsaurusSpec struct {
 	CoreImage string `json:"coreImage,omitempty"`
@@ -268,6 +278,8 @@ type YtsaurusSpec struct {
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 	ConfigOverrides  *corev1.LocalObjectReference  `json:"configOverrides,omitempty"`
 	AdminCredentials *corev1.LocalObjectReference  `json:"adminCredentials,omitempty"`
+
+	OauthService *OauthServiceSpec `json:"oauthService,omitempty"`
 
 	//+kubebuilder:default:=true
 	IsManaged bool `json:"isManaged,omitempty"`

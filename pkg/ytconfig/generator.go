@@ -3,7 +3,9 @@ package ytconfig
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/google/go-cmp/cmp"
+	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"go.ytsaurus.tech/yt/go/yson"
@@ -234,6 +236,21 @@ func (g *Generator) GetRPCProxyConfig(spec ytv1.RPCProxiesSpec) ([]byte, error) 
 		return []byte{}, err
 	}
 
+	if g.ytsaurus.Spec.OauthService != nil {
+		c.CypressUserManager = CypressUserManager{}
+		c.OauthService = &OauthService{
+			Host:                 g.ytsaurus.Spec.OauthService.Host,
+			Port:                 g.ytsaurus.Spec.OauthService.Port,
+			Secure:               g.ytsaurus.Spec.OauthService.Secure,
+			UserInfoEndpoint:     g.ytsaurus.Spec.OauthService.UserInfoEndpoint,
+			UserInfoLoginField:   g.ytsaurus.Spec.OauthService.UserInfoLoginField,
+			UserInfoSubjectField: g.ytsaurus.Spec.OauthService.UserInfoSubjectField,
+			UserInfoErrorField:   g.ytsaurus.Spec.OauthService.UserInfoErrorField,
+		}
+		c.OauthTokenAuthenticator = &OauthTokenAuthenticator{}
+		c.RequireAuthentication = true
+	}
+
 	return marshallYsonConfig(c)
 }
 
@@ -372,6 +389,20 @@ func (g *Generator) GetHTTPProxyConfig(spec ytv1.HTTPProxiesSpec) ([]byte, error
 	c, err := g.getHTTPProxyConfigImpl(spec)
 	if err != nil {
 		return nil, err
+	}
+
+	if g.ytsaurus.Spec.OauthService != nil {
+		c.Auth.OauthService = &OauthService{
+			Host:                 g.ytsaurus.Spec.OauthService.Host,
+			Port:                 g.ytsaurus.Spec.OauthService.Port,
+			Secure:               g.ytsaurus.Spec.OauthService.Secure,
+			UserInfoEndpoint:     g.ytsaurus.Spec.OauthService.UserInfoEndpoint,
+			UserInfoLoginField:   g.ytsaurus.Spec.OauthService.UserInfoLoginField,
+			UserInfoSubjectField: g.ytsaurus.Spec.OauthService.UserInfoSubjectField,
+			UserInfoErrorField:   g.ytsaurus.Spec.OauthService.UserInfoErrorField,
+		}
+		c.Auth.OauthCookieAuthenticator = &OauthCookieAuthenticator{}
+		c.Auth.OauthTokenAuthenticator = &OauthTokenAuthenticator{}
 	}
 
 	return marshallYsonConfig(c)
