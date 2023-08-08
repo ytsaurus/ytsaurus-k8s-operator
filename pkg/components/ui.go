@@ -126,7 +126,7 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 
 	if u.ytsaurus.Spec.UI.UseMetrikaCounter {
 		config := u.microservice.BuildConfig()
-		config.BinaryData[consts.MetrikaCounterFileName] = []byte(consts.MetrikaCounterScript)
+		config.Data[consts.MetrikaCounterFileName] = consts.MetrikaCounterScript
 
 		volumeMounts = append(volumeMounts,
 			corev1.VolumeMount{

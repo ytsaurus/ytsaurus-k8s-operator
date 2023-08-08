@@ -9,25 +9,31 @@ import (
 
 func defaultStderrLoggerSpec() ytv1.LoggerSpec {
 	return ytv1.LoggerSpec{
-		Name:        "stderr",
-		MinLogLevel: ytv1.LogLevelError,
-		WriterType:  ytv1.LogWriterTypeStderr,
+		Name:               "stderr",
+		MinLogLevel:        ytv1.LogLevelError,
+		WriterType:         ytv1.LogWriterTypeStderr,
+		Compression:        ytv1.LogCompressionNone,
+		UseTimestampSuffix: false,
 	}
 }
 
 func defaultDebugLoggerSpec() ytv1.LoggerSpec {
 	return ytv1.LoggerSpec{
-		Name:        "debug",
-		MinLogLevel: ytv1.LogLevelDebug,
-		WriterType:  ytv1.LogWriterTypeFile,
+		Name:               "debug",
+		MinLogLevel:        ytv1.LogLevelDebug,
+		WriterType:         ytv1.LogWriterTypeFile,
+		Compression:        ytv1.LogCompressionNone,
+		UseTimestampSuffix: false,
 	}
 }
 
 func defaultInfoLoggerSpec() ytv1.LoggerSpec {
 	return ytv1.LoggerSpec{
-		Name:        "info",
-		MinLogLevel: ytv1.LogLevelInfo,
-		WriterType:  ytv1.LogWriterTypeFile,
+		Name:               "info",
+		MinLogLevel:        ytv1.LogLevelInfo,
+		WriterType:         ytv1.LogWriterTypeFile,
+		Compression:        ytv1.LogCompressionNone,
+		UseTimestampSuffix: false,
 	}
 }
 

@@ -66,7 +66,7 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 	return &s.newObject
 }
 
-func (s *StatefulSet) CheckPodsReady(ctx context.Context) bool {
+func (s *StatefulSet) ArePodsReady(ctx context.Context) bool {
 	logger := log.FromContext(ctx)
 	podList := &corev1.PodList{}
 	err := s.ytsaurus.APIProxy().ListObjects(ctx, podList, s.labeller.GetListOptions(nil)...)

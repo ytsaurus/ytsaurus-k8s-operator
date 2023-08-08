@@ -93,7 +93,7 @@ func (h *ConfigHelper) GetConfigMapName() string {
 	return h.configMap.Name()
 }
 
-func (h *ConfigHelper) getConfig() []byte {
+func (h *ConfigHelper) getConfig() *string {
 	if h.generator == nil {
 		return nil
 	}
@@ -103,8 +103,8 @@ func (h *ConfigHelper) getConfig() []byte {
 		panic(err)
 	}
 	if h.overridesMap.GetResourceVersion() != "" {
-		if value, ok := h.overridesMap.BinaryData[h.fileName]; ok {
-			configWithOverrides, err := overrideYsonConfigs(serializedConfig, value)
+		if value, ok := h.overridesMap.Data[h.fileName]; ok {
+			configWithOverrides, err := overrideYsonConfigs(serializedConfig, []byte(value))
 			if err == nil {
 				serializedConfig = configWithOverrides
 			} else {
@@ -116,19 +116,33 @@ func (h *ConfigHelper) getConfig() []byte {
 		}
 	}
 
-	return serializedConfig
+	result := string(serializedConfig)
+	return &result
 }
 
 func (h *ConfigHelper) NeedSync() bool {
-	// ToDo(psushin): there could be more sophisticated logic.
-	return !resources.Exists(h.configMap)
+	if !resources.Exists(h.configMap) {
+		return true
+	}
+
+	oldData, oldExists := h.configMap.OldObject().(*corev1.ConfigMap).Data[h.fileName]
+	newData := h.getConfig()
+	
+	if newData == nil && (!oldExists || oldData == "") {
+		return false
+	}
+
+	if newData == nil || !oldExists || oldData == "" {
+		return true
+	}
+	return oldData != *newData
 }
 
 func (h *ConfigHelper) Build() *corev1.ConfigMap {
 	cm := h.configMap.Build()
 	data := h.getConfig()
 	if data != nil {
-		cm.BinaryData[h.fileName] = data
+		cm.Data[h.fileName] = *data
 	}
 
 	return cm

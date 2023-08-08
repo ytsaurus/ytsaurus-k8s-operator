@@ -109,7 +109,7 @@ func (s *server) NeedUpdate() bool {
 }
 
 func (s *server) ArePodsReady(ctx context.Context) bool {
-	return s.statefulSet.CheckPodsReady(ctx)
+	return s.statefulSet.ArePodsReady(ctx)
 }
 
 func (s *server) Sync(ctx context.Context) (err error) {

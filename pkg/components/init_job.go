@@ -81,7 +81,7 @@ func NewInitJob(
 
 func (j *InitJob) SetInitScript(script string) {
 	cm := j.configHelper.Build()
-	cm.BinaryData[consts.InitClusterScriptFileName] = []byte(script)
+	cm.Data[consts.InitClusterScriptFileName] = script
 }
 
 func (j *InitJob) Build() *batchv1.Job {

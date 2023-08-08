@@ -40,7 +40,7 @@ func (s *ConfigMap) Sync(ctx context.Context) error {
 
 func (s *ConfigMap) Build() *corev1.ConfigMap {
 	s.newObject.ObjectMeta = s.labeller.GetObjectMeta(s.name)
-	s.newObject.BinaryData = make(map[string][]byte)
+	s.newObject.Data = make(map[string]string)
 	return &s.newObject
 }
 
