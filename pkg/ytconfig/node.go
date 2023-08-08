@@ -37,6 +37,13 @@ type DiskLocation struct {
 	Path string `yson:"path"`
 }
 
+type SlotLocation struct {
+	Path               string `yson:"path"`
+	DiskQuota          *int64 `yson:"disk_quota"`
+	DiskUsageWatermark int64  `yson:"disk_usage_watermark"`
+	MediumName         string `yson:"medium_name"`
+}
+
 type DataNode struct {
 	StoreLocations []StoreLocation `yson:"store_locations"`
 	CacheLocations []DiskLocation  `yson:"cache_locations"`
@@ -59,7 +66,7 @@ type JobEnvironment struct {
 }
 
 type SlotManager struct {
-	Locations      []DiskLocation `yson:"locations"`
+	Locations      []SlotLocation `yson:"locations"`
 	JobEnvironment JobEnvironment `yson:"job_environment"`
 }
 
@@ -114,7 +121,7 @@ type TabletNodeServer struct {
 	CachingObjectService Cache `yson:"caching_object_service"`
 }
 
-func findVolumeMountForPath(locationPath string, spec ytv1.DataNodesSpec) *v1.VolumeMount {
+func findVolumeMountForPath(locationPath string, spec ytv1.InstanceSpec) *v1.VolumeMount {
 	for _, mount := range spec.VolumeMounts {
 		if strings.HasPrefix(locationPath, mount.MountPath) {
 			return &mount
@@ -123,7 +130,7 @@ func findVolumeMountForPath(locationPath string, spec ytv1.DataNodesSpec) *v1.Vo
 	return nil
 }
 
-func findVolumeClaimTemplate(volumeName string, spec ytv1.DataNodesSpec) *ytv1.EmbeddedPersistentVolumeClaim {
+func findVolumeClaimTemplate(volumeName string, spec ytv1.InstanceSpec) *ytv1.EmbeddedPersistentVolumeClaim {
 	for _, claim := range spec.VolumeClaimTemplates {
 		if claim.Name == volumeName {
 			return &claim
@@ -132,7 +139,7 @@ func findVolumeClaimTemplate(volumeName string, spec ytv1.DataNodesSpec) *ytv1.E
 	return nil
 }
 
-func findVolume(volumeName string, spec ytv1.DataNodesSpec) *v1.Volume {
+func findVolume(volumeName string, spec ytv1.InstanceSpec) *v1.Volume {
 	for _, volume := range spec.Volumes {
 		if volume.Name == volumeName {
 			return &volume
@@ -141,7 +148,7 @@ func findVolume(volumeName string, spec ytv1.DataNodesSpec) *v1.Volume {
 	return nil
 }
 
-func findQuotaForPath(locationPath string, spec ytv1.DataNodesSpec) *int64 {
+func findQuotaForPath(locationPath string, spec ytv1.InstanceSpec) *int64 {
 	mount := findVolumeMountForPath(locationPath, spec)
 	if mount == nil {
 		return nil
@@ -187,7 +194,7 @@ func getDataNodeServerCarcass(spec ytv1.DataNodesSpec) (DataNodeServer, error) {
 
 	c.Flavors = []NodeFlavor{NodeFlavorData}
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkStore) {
-		quota := findQuotaForPath(location.Path, spec)
+		quota := findQuotaForPath(location.Path, spec.InstanceSpec)
 		storeLocation := StoreLocation{
 			MediumName: location.Medium,
 			Path:       location.Path,
@@ -251,9 +258,19 @@ func getExecNodeServerCarcass(spec ytv1.ExecNodesSpec, usePorto bool) (ExecNodeS
 	}
 
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeSlots) {
-		c.ExecAgent.SlotManager.Locations = append(c.ExecAgent.SlotManager.Locations, DiskLocation{
-			Path: location.Path,
-		})
+		slotLocation := SlotLocation{
+			Path:       location.Path,
+			MediumName: location.Medium,
+		}
+		quota := findQuotaForPath(location.Path, spec.InstanceSpec)
+		if quota != nil {
+			slotLocation.DiskQuota = quota
+
+			// These are just simple heuristics.
+			gb := float64(1024 * 1024 * 1024)
+			slotLocation.DiskUsageWatermark = int64(math.Min(0.1*float64(*quota), float64(10)*gb))
+		}
+		c.ExecAgent.SlotManager.Locations = append(c.ExecAgent.SlotManager.Locations, slotLocation)
 	}
 
 	if len(c.ExecAgent.SlotManager.Locations) == 0 {
