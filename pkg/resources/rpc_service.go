@@ -47,7 +47,7 @@ func (s *RPCService) Sync(ctx context.Context) error {
 func (s *RPCService) Build() *corev1.Service {
 	s.newObject.ObjectMeta = s.labeller.GetObjectMeta(s.name)
 	s.newObject.Spec = corev1.ServiceSpec{
-		Selector: s.labeller.GetSelectorLabelMap(nil),
+		Selector: s.labeller.GetSelectorLabelMap(),
 		Ports: []corev1.ServicePort{
 			{
 				Name:       "rpc",

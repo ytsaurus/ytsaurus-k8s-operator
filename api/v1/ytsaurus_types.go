@@ -327,6 +327,8 @@ const (
 	UpdateStateWaitingForPodsRemoval              UpdateState = "WaitingForPodsRemoval"
 	UpdateStateWaitingForPodsCreation             UpdateState = "WaitingForPodsCreation"
 	UpdateStateWaitingForTabletCellsRecovery      UpdateState = "WaitingForTabletCellsRecovery"
+	UpdateStateWaitingForOpArchiveUpdatingPrepare UpdateState = "WaitingForOpArchiveUpdatingPrepare"
+	UpdateStateWaitingForOpArchiveUpdate          UpdateState = "WaitingForOpArchiveUpdate"
 	UpdateStateWaitingForSafeModeDisabled         UpdateState = "WaitingForSafeModeDisabled"
 )
 

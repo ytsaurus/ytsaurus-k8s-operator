@@ -42,7 +42,7 @@ func (s *HeadlessService) Build() *corev1.Service {
 	s.newObject.ObjectMeta = s.labeller.GetObjectMeta(s.name)
 	s.newObject.Spec = corev1.ServiceSpec{
 		ClusterIP: "None",
-		Selector:  s.labeller.GetSelectorLabelMap(nil),
+		Selector:  s.labeller.GetSelectorLabelMap(),
 	}
 
 	return &s.newObject

@@ -92,6 +92,10 @@ func (c *Ytsaurus) SetStatusCondition(ctx context.Context, condition metav1.Cond
 	return c.apiProxy.UpdateStatus(ctx)
 }
 
-func (c *Ytsaurus) IsStatusConditionTrue(condition string) bool {
-	return meta.IsStatusConditionTrue(c.ytsaurus.Status.Conditions, condition)
+func (c *Ytsaurus) IsStatusConditionTrue(conditionType string) bool {
+	return meta.IsStatusConditionTrue(c.ytsaurus.Status.Conditions, conditionType)
+}
+
+func (c *Ytsaurus) IsStatusConditionFalse(conditionType string) bool {
+	return meta.IsStatusConditionFalse(c.ytsaurus.Status.Conditions, conditionType)
 }

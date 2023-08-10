@@ -51,11 +51,11 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 		s.newObject.Spec = appsv1.StatefulSetSpec{
 			PodManagementPolicy: appsv1.ParallelPodManagement,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: s.labeller.GetSelectorLabelMap(nil),
+				MatchLabels: s.labeller.GetSelectorLabelMap(),
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      s.labeller.GetMetaLabelMap(nil),
+					Labels:      s.labeller.GetMetaLabelMap(),
 					Annotations: s.ytsaurus.GetResource().Spec.ExtraPodAnnotations,
 				},
 			},
@@ -69,7 +69,7 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 func (s *StatefulSet) ArePodsReady(ctx context.Context) bool {
 	logger := log.FromContext(ctx)
 	podList := &corev1.PodList{}
-	err := s.ytsaurus.APIProxy().ListObjects(ctx, podList, s.labeller.GetListOptions(nil)...)
+	err := s.ytsaurus.APIProxy().ListObjects(ctx, podList, s.labeller.GetListOptions()...)
 	if err != nil {
 		logger.Error(err, "unable to list pods for component", "component", s.labeller.ComponentName)
 		return false

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"strings"
 
@@ -38,8 +39,8 @@ type InitJob struct {
 
 	initJob *resources.Job
 
-	configHelper *ConfigHelper
-	condition    string
+	configHelper           *ConfigHelper
+	initCompletedCondition string
 
 	image string
 
@@ -57,11 +58,11 @@ func NewInitJob(
 		ComponentBase: ComponentBase{
 			labeller: labeller,
 		},
-		apiProxy:          apiProxy,
-		conditionsManager: conditionsManager,
-		imagePullSecrets:  imagePullSecrets,
-		condition:         fmt.Sprintf("%s%sInitJobCompleted", name, labeller.ComponentName),
-		image:             image,
+		apiProxy:               apiProxy,
+		conditionsManager:      conditionsManager,
+		imagePullSecrets:       imagePullSecrets,
+		initCompletedCondition: fmt.Sprintf("%s%sInitJobCompleted", name, labeller.ComponentName),
+		image:                  image,
 		initJob: resources.NewJob(
 			labeller.GetInitJobName(name),
 			labeller,
@@ -122,21 +123,22 @@ func (j *InitJob) Fetch(ctx context.Context) error {
 
 func (j *InitJob) Sync(ctx context.Context, dry bool) (SyncStatus, error) {
 	logger := log.FromContext(ctx)
-
 	var err error
-	if j.conditionsManager.IsStatusConditionTrue(j.condition) {
+
+	if j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition) {
 		return SyncStatusReady, err
 	}
 
 	// Deal with init job.
 	if !resources.Exists(j.initJob) {
-		if !dry {
-			_ = j.Build()
-			resources.Sync(ctx, []resources.Syncable{
-				j.configHelper,
-				j.initJob,
-			})
+		if dry {
+			return SyncStatusPending, nil
 		}
+		_ = j.Build()
+		err = resources.Sync(ctx, []resources.Syncable{
+			j.configHelper,
+			j.initJob,
+		})
 		return SyncStatusPending, err
 	}
 
@@ -147,7 +149,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (SyncStatus, error) {
 
 	if !dry {
 		err = j.conditionsManager.SetStatusCondition(ctx, metav1.Condition{
-			Type:    j.condition,
+			Type:    j.initCompletedCondition,
 			Status:  metav1.ConditionTrue,
 			Reason:  "InitJobCompleted",
 			Message: "Init job successfully completed",
@@ -155,4 +157,39 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (SyncStatus, error) {
 	}
 
 	return SyncStatusPending, err
+}
+
+func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
+	if dry {
+		return nil
+	}
+	if err := j.removeIfExists(ctx); err != nil {
+		return err
+	}
+	return j.conditionsManager.SetStatusCondition(ctx, metav1.Condition{
+		Type:    j.initCompletedCondition,
+		Status:  metav1.ConditionFalse,
+		Reason:  "InitJobNeedRestart",
+		Message: "Init job needs restart",
+	})
+}
+
+func (j *InitJob) isRestartPrepared() bool {
+	return !resources.Exists(j.initJob) && j.conditionsManager.IsStatusConditionFalse(j.initCompletedCondition)
+}
+
+func (j *InitJob) isRestartCompleted() bool {
+	return j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition)
+}
+
+func (j *InitJob) removeIfExists(ctx context.Context) error {
+	if !resources.Exists(j.initJob) {
+		return nil
+	}
+	propagation := metav1.DeletePropagationForeground
+	return j.apiProxy.DeleteObject(
+		ctx,
+		j.initJob.OldObject(),
+		&client.DeleteOptions{PropagationPolicy: &propagation},
+	)
 }

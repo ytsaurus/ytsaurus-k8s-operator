@@ -49,11 +49,11 @@ func (d *Deployment) Build() *appsv1.Deployment {
 		d.newObject.ObjectMeta = d.labeller.GetObjectMeta(d.name)
 		d.newObject.Spec = appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: d.labeller.GetSelectorLabelMap(nil),
+				MatchLabels: d.labeller.GetSelectorLabelMap(),
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      d.labeller.GetMetaLabelMap(nil),
+					Labels:      d.labeller.GetMetaLabelMap(),
 					Annotations: d.ytsaurus.GetResource().Spec.ExtraPodAnnotations,
 				},
 				Spec: corev1.PodSpec{

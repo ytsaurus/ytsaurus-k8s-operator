@@ -99,6 +99,20 @@ func (r *YtsaurusReconciler) handleUpdatingState(
 
 	case ytv1.UpdateStateWaitingForTabletCellsRecovery:
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRecovered) {
+			ytsaurus.LogUpdate(ctx, "Waiting for operations archive prepare for updating")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionOpArchivePreparedForUpdating) {
+			ytsaurus.LogUpdate(ctx, "Waiting for operations archive updating to finish")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForOpArchiveUpdate)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForOpArchiveUpdate:
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionOpArchiveUpdated) {
 			ytsaurus.LogUpdate(ctx, "Waiting for safe mode disabled")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSafeModeDisabled)
 			return &ctrl.Result{Requeue: true}, err

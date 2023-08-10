@@ -21,13 +21,15 @@ type APIProxy interface {
 	RecordWarning(reason, message string)
 	RecordNormal(reason, message string)
 	SyncObject(ctx context.Context, oldObj, newObj client.Object) error
+	DeleteObject(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error
 
 	UpdateStatus(ctx context.Context) error
 }
 
 type ConditionManager interface {
 	SetStatusCondition(ctx context.Context, condition metav1.Condition) error
-	IsStatusConditionTrue(condition string) bool
+	IsStatusConditionTrue(conditionType string) bool
+	IsStatusConditionFalse(conditionType string) bool
 }
 
 func NewAPIProxy(
@@ -104,6 +106,25 @@ func (c *apiProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object)
 	}
 
 	return err
+}
+
+func (c *apiProxy) DeleteObject(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
+	logger := log.FromContext(ctx)
+
+	if err := c.client.Delete(ctx, obj, opts...); err != nil {
+		// ToDo(psushin): take to the status.
+		c.RecordWarning(
+			"Reconciliation",
+			fmt.Sprintf("Failed to delete YT object %s: %s", obj.GetName(), err))
+		logger.Error(err, "unable to delete YT object", "object_name", obj.GetName())
+		return err
+	}
+
+	c.RecordNormal(
+		"Reconciliation",
+		fmt.Sprintf("Deleted YT object %s", obj.GetName()))
+	logger.V(2).Info("deleted YT object", "object_name", obj.GetName())
+	return nil
 }
 
 func (c *apiProxy) updateObject(ctx context.Context, obj client.Object) error {

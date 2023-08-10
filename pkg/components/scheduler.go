@@ -3,9 +3,10 @@ package components
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	"go.ytsaurus.tech/library/go/ptr"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -31,7 +32,7 @@ func NewScheduler(
 	master Component,
 	execNodes, tabletNodes []Component) Component {
 	resource := ytsaurus.GetResource()
-	labeller := labeller.Labeller{
+	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelScheduler,
@@ -40,7 +41,7 @@ func NewScheduler(
 	}
 
 	server := NewServer(
-		&labeller,
+		&l,
 		ytsaurus,
 		&resource.Spec.Schedulers.InstanceSpec,
 		"/usr/bin/ytserver-scheduler",
@@ -53,7 +54,7 @@ func NewScheduler(
 	return &scheduler{
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
-				labeller: &labeller,
+				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
@@ -63,7 +64,7 @@ func NewScheduler(
 		execNodes:   execNodes,
 		tabletNodes: tabletNodes,
 		initUser: NewInitJob(
-			&labeller,
+			&l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			resource.Spec.ImagePullSecrets,
@@ -72,7 +73,7 @@ func NewScheduler(
 			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig),
 		initOpArchive: NewInitJob(
-			&labeller,
+			&l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			resource.Spec.ImagePullSecrets,
@@ -81,35 +82,10 @@ func NewScheduler(
 			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
-			labeller.GetSecretName(),
-			&labeller,
+			l.GetSecretName(),
+			&l,
 			ytsaurus.APIProxy()),
 	}
-}
-
-func (s *scheduler) createInitScript() string {
-	token, _ := s.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand("operation_archivarius", "", token, true)
-	script := []string{
-		initJobWithNativeDriverPrologue(),
-	}
-	script = append(script, commands...)
-
-	return strings.Join(script, "\n")
-}
-
-func (s *scheduler) prepareInitOperationArchive() {
-	script := []string{
-		initJobWithNativeDriverPrologue(),
-		fmt.Sprintf("/usr/bin/init_operation_archive --force --latest --proxy %s",
-			s.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
-		"/usr/bin/yt set //sys/cluster_nodes/@config '{\"%true\" = {job_agent={enable_job_reporter=%true}}}'",
-	}
-
-	s.initOpArchive.SetInitScript(strings.Join(script, "\n"))
-	job := s.initOpArchive.Build()
-	container := &job.Spec.Template.Spec.Containers[0]
-	container.EnvFrom = []corev1.EnvFromSource{s.secret.GetEnvSource()}
 }
 
 func (s *scheduler) Fetch(ctx context.Context) error {
@@ -121,12 +97,26 @@ func (s *scheduler) Fetch(ctx context.Context) error {
 	})
 }
 
+func (s *scheduler) Status(ctx context.Context) SyncStatus {
+	status, err := s.doSync(ctx, true)
+	if err != nil {
+		panic(err)
+	}
+
+	return status
+}
+
+func (s *scheduler) Sync(ctx context.Context) error {
+	_, err := s.doSync(ctx, false)
+	return err
+}
+
 func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
 	if s.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
-		if s.ytsaurus.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
-			return SyncStatusUpdating, s.removePods(ctx, dry)
+		if status, err := s.update(ctx, dry); status != nil {
+			return *status, err
 		}
 	}
 
@@ -193,16 +183,63 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	return s.initOpArchive.Sync(ctx, dry)
 }
 
-func (s *scheduler) Status(ctx context.Context) SyncStatus {
-	status, err := s.doSync(ctx, true)
-	if err != nil {
-		panic(err)
+func (s *scheduler) update(ctx context.Context, dry bool) (*SyncStatus, error) {
+	var err error
+	switch s.ytsaurus.GetUpdateState() {
+	case v1.UpdateStateWaitingForPodsRemoval:
+		return ptr.T(SyncStatusUpdating), s.removePods(ctx, dry)
+	case v1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
+		if !s.initOpArchive.isRestartPrepared() {
+			return ptr.T(SyncStatusUpdating), s.initOpArchive.prepareRestart(ctx, dry)
+		}
+		if !dry {
+			err = s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+				Type:    consts.ConditionOpArchivePreparedForUpdating,
+				Status:  metav1.ConditionTrue,
+				Reason:  "OpArchivePreparedForUpdating",
+				Message: fmt.Sprintf("Operations archive prepared for updating"),
+			})
+		}
+		return ptr.T(SyncStatusUpdating), err
+	case v1.UpdateStateWaitingForOpArchiveUpdate:
+		if !s.initOpArchive.isRestartCompleted() {
+			return nil, nil
+		}
+		if !dry {
+			err = s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+				Type:    consts.ConditionOpArchiveUpdated,
+				Status:  metav1.ConditionTrue,
+				Reason:  "OpArchiveUpdated",
+				Message: fmt.Sprintf("Operations archive updated"),
+			})
+		}
+		return ptr.T(SyncStatusUpdating), err
+	default:
+		return nil, nil
 	}
-
-	return status
 }
 
-func (s *scheduler) Sync(ctx context.Context) error {
-	_, err := s.doSync(ctx, false)
-	return err
+func (s *scheduler) createInitScript() string {
+	token, _ := s.secret.GetValue(consts.TokenSecretKey)
+	commands := createUserCommand("operation_archivarius", "", token, true)
+	script := []string{
+		initJobWithNativeDriverPrologue(),
+	}
+	script = append(script, commands...)
+
+	return strings.Join(script, "\n")
+}
+
+func (s *scheduler) prepareInitOperationArchive() {
+	script := []string{
+		initJobWithNativeDriverPrologue(),
+		fmt.Sprintf("/usr/bin/init_operation_archive --force --latest --proxy %s",
+			s.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
+		"/usr/bin/yt set //sys/cluster_nodes/@config '{\"%true\" = {job_agent={enable_job_reporter=%true}}}'",
+	}
+
+	s.initOpArchive.SetInitScript(strings.Join(script, "\n"))
+	job := s.initOpArchive.Build()
+	container := &job.Spec.Template.Spec.Containers[0]
+	container.EnvFrom = []corev1.EnvFromSource{s.secret.GetEnvSource()}
 }

@@ -39,6 +39,10 @@ func (c *Spyt) SetStatusCondition(ctx context.Context, condition metav1.Conditio
 	return c.apiProxy.UpdateStatus(ctx)
 }
 
-func (c *Spyt) IsStatusConditionTrue(condition string) bool {
-	return meta.IsStatusConditionTrue(c.spyt.Status.Conditions, condition)
+func (c *Spyt) IsStatusConditionTrue(conditionType string) bool {
+	return meta.IsStatusConditionTrue(c.spyt.Status.Conditions, conditionType)
+}
+
+func (c *Spyt) IsStatusConditionFalse(conditionType string) bool {
+	return meta.IsStatusConditionFalse(c.spyt.Status.Conditions, conditionType)
 }
