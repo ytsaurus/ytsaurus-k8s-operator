@@ -2,7 +2,6 @@ package components
 
 import (
 	"context"
-	"fmt"
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -27,16 +26,16 @@ func NewRPCProxy(
 	masterReconciler Component,
 	spec ytv1.RPCProxiesSpec) Component {
 	resource := ytsaurus.GetResource()
-	labeller := labeller.Labeller{
+	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
-		ComponentLabel: fmt.Sprintf("%s-%s", consts.YTComponentLabelRPCProxy, spec.Role),
-		ComponentName:  fmt.Sprintf("RpcProxy-%s", spec.Role),
+		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelRPCProxy, spec.Role),
+		ComponentName:  cfgen.FormatComponentStringWithDefault("RpcProxy", spec.Role),
 		MonitoringPort: consts.RPCProxyMonitoringPort,
 	}
 
 	server := NewServer(
-		&labeller,
+		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-proxy",
@@ -52,14 +51,14 @@ func NewRPCProxy(
 	if spec.ServiceType != nil {
 		balancingService = resources.NewRPCService(
 			cfgen.GetRPCProxiesServiceName(spec.Role),
-			&labeller,
+			&l,
 			ytsaurus.APIProxy())
 	}
 
 	return &rpcProxy{
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
-				labeller: &labeller,
+				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},

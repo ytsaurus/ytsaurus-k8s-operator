@@ -83,15 +83,15 @@ func (g *Generator) GetChytControllerHeadlessServiceName() string {
 }
 
 func (g *Generator) GetHTTPProxiesServiceName(role string) string {
-	return g.getName(fmt.Sprintf("http-proxies-%s-lb", role))
+	return g.getName(fmt.Sprintf("%s-lb", g.FormatComponentStringWithDefault("http-proxies", role)))
 }
 
 func (g *Generator) GetHTTPProxiesHeadlessServiceName(role string) string {
-	return g.getName(fmt.Sprintf("http-proxies-%s", role))
+	return g.getName(g.FormatComponentStringWithDefault("http-proxies", role))
 }
 
 func (g *Generator) GetHTTPProxiesStatefulSetName(role string) string {
-	return g.getName(fmt.Sprintf("hp-%s", role))
+	return g.getName(g.FormatComponentStringWithDefault("hp", role))
 }
 
 func (g *Generator) GetHTTPProxiesAddress(role string) string {
@@ -110,15 +110,15 @@ func (g *Generator) GetSchedulerServiceName() string {
 }
 
 func (g *Generator) GetRPCProxiesStatefulSetName(role string) string {
-	return g.getName(fmt.Sprintf("rp-%s", role))
+	return g.getName(g.FormatComponentStringWithDefault("rp", role))
 }
 
 func (g *Generator) GetRPCProxiesServiceName(role string) string {
-	return g.getName(fmt.Sprintf("rpc-proxies-%s-lb", role))
+	return g.getName(fmt.Sprintf("%s-lb", g.FormatComponentStringWithDefault("rpc-proxies", role)))
 }
 
 func (g *Generator) GetRPCProxiesHeadlessServiceName(role string) string {
-	return g.getName(fmt.Sprintf("rpc-proxies-%s", role))
+	return g.getName(g.FormatComponentStringWithDefault("rpc-proxies", role))
 }
 
 func (g *Generator) GetQueryTrackerStatefulSetName() string {

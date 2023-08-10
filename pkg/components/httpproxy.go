@@ -2,7 +2,6 @@ package components
 
 import (
 	"context"
-	"fmt"
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -32,16 +31,16 @@ func NewHTTPProxy(
 	spec ytv1.HTTPProxiesSpec) Component {
 
 	resource := ytsaurus.GetResource()
-	labeller := labeller.Labeller{
+	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
-		ComponentLabel: fmt.Sprintf("%s-%s", consts.YTComponentLabelHTTPProxy, spec.Role),
-		ComponentName:  fmt.Sprintf("HttpProxy-%s", spec.Role),
+		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelHTTPProxy, spec.Role),
+		ComponentName:  cfgen.FormatComponentStringWithDefault("HttpProxy", spec.Role),
 		MonitoringPort: consts.HTTPProxyMonitoringPort,
 	}
 
 	server := NewServer(
-		&labeller,
+		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-http-proxy",
@@ -56,7 +55,7 @@ func NewHTTPProxy(
 	return &httpProxy{
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
-				labeller: &labeller,
+				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
@@ -67,7 +66,7 @@ func NewHTTPProxy(
 		role:        spec.Role,
 		balancingService: resources.NewHTTPService(
 			cfgen.GetHTTPProxiesServiceName(spec.Role),
-			&labeller,
+			&l,
 			ytsaurus.APIProxy()),
 	}
 }
