@@ -70,19 +70,19 @@ func mapify(i interface{}) (map[string]interface{}, bool) {
 
 func overrideYsonConfigs(base []byte, overrides []byte) ([]byte, error) {
 	b := map[string]interface{}{}
-	err := yson.Unmarshal(base, b)
+	err := yson.Unmarshal(base, &b)
 	if err != nil {
 		return base, err
 	}
 
 	o := map[string]interface{}{}
-	err = yson.Unmarshal(overrides, o)
+	err = yson.Unmarshal(overrides, &o)
 	if err != nil {
 		return base, err
 	}
 
 	merged := mergeMapsRecursively(b, o)
-	return yson.Marshal(merged)
+	return yson.MarshalFormat(merged, yson.FormatPretty)
 }
 
 func (h *ConfigHelper) GetFileName() string {
@@ -127,7 +127,7 @@ func (h *ConfigHelper) NeedSync() bool {
 
 	oldData, oldExists := h.configMap.OldObject().(*corev1.ConfigMap).Data[h.fileName]
 	newData := h.getConfig()
-	
+
 	if newData == nil && (!oldExists || oldData == "") {
 		return false
 	}
