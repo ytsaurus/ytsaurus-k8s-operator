@@ -70,7 +70,7 @@ helm-kind-install: ## Install helm chart from sources in kind.
 
 .PHONY: helm-minikube-install
 helm-minikube-install: ## Install helm chart from sources in minikube.
-	eval $(minikube docker-env) && docker build -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
+	eval $$(minikube docker-env) && docker build -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
 	helm install ytsaurus ytop-chart/
 
 .PHONY: helm-uninstall
