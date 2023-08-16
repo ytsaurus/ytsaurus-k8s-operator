@@ -105,6 +105,12 @@ func (r *YtsaurusReconciler) handleUpdatingState(
 		}
 
 	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNotNecessaryToUpdateOpArchive) {
+			ytsaurus.LogUpdate(ctx, "Operations archive update was skipped")
+			ytsaurus.LogUpdate(ctx, "Waiting for safe mode disabled")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSafeModeDisabled)
+			return &ctrl.Result{Requeue: true}, err
+		}
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionOpArchivePreparedForUpdating) {
 			ytsaurus.LogUpdate(ctx, "Waiting for operations archive updating to finish")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForOpArchiveUpdate)

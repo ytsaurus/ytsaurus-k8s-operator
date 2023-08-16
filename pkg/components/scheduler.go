@@ -156,7 +156,7 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		return SyncStatusBlocked, err
 	}
 
-	if s.tabletNodes == nil || len(s.tabletNodes) == 0 {
+	if !s.needOpArchiveInit() {
 		// Don't initialize operations archive.
 		return SyncStatusReady, err
 	}
@@ -189,16 +189,14 @@ func (s *scheduler) update(ctx context.Context, dry bool) (*SyncStatus, error) {
 	case v1.UpdateStateWaitingForPodsRemoval:
 		return ptr.T(SyncStatusUpdating), s.removePods(ctx, dry)
 	case v1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
+		if !s.needOpArchiveInit() {
+			return ptr.T(SyncStatusUpdating), s.setConditionNotNecessaryToUpdateOpArchive(ctx)
+		}
 		if !s.initOpArchive.isRestartPrepared() {
 			return ptr.T(SyncStatusUpdating), s.initOpArchive.prepareRestart(ctx, dry)
 		}
 		if !dry {
-			err = s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionOpArchivePreparedForUpdating,
-				Status:  metav1.ConditionTrue,
-				Reason:  "OpArchivePreparedForUpdating",
-				Message: fmt.Sprintf("Operations archive prepared for updating"),
-			})
+			err = s.setConditionOpArchivePreparedForUpdating(ctx)
 		}
 		return ptr.T(SyncStatusUpdating), err
 	case v1.UpdateStateWaitingForOpArchiveUpdate:
@@ -206,17 +204,43 @@ func (s *scheduler) update(ctx context.Context, dry bool) (*SyncStatus, error) {
 			return nil, nil
 		}
 		if !dry {
-			err = s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionOpArchiveUpdated,
-				Status:  metav1.ConditionTrue,
-				Reason:  "OpArchiveUpdated",
-				Message: fmt.Sprintf("Operations archive updated"),
-			})
+			err = s.setConditionOpArchiveUpdated(ctx)
 		}
 		return ptr.T(SyncStatusUpdating), err
 	default:
 		return nil, nil
 	}
+}
+
+func (s *scheduler) needOpArchiveInit() bool {
+	return s.tabletNodes != nil && len(s.tabletNodes) > 0
+}
+
+func (s *scheduler) setConditionNotNecessaryToUpdateOpArchive(ctx context.Context) error {
+	return s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    consts.ConditionNotNecessaryToUpdateOpArchive,
+		Status:  metav1.ConditionTrue,
+		Reason:  "NotNecessaryToUpdateOpArchive",
+		Message: fmt.Sprintf("Operations archive does not need to be updated"),
+	})
+}
+
+func (s *scheduler) setConditionOpArchivePreparedForUpdating(ctx context.Context) error {
+	return s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    consts.ConditionOpArchivePreparedForUpdating,
+		Status:  metav1.ConditionTrue,
+		Reason:  "OpArchivePreparedForUpdating",
+		Message: fmt.Sprintf("Operations archive prepared for updating"),
+	})
+}
+
+func (s *scheduler) setConditionOpArchiveUpdated(ctx context.Context) error {
+	return s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    consts.ConditionOpArchiveUpdated,
+		Status:  metav1.ConditionTrue,
+		Reason:  "OpArchiveUpdated",
+		Message: fmt.Sprintf("Operations archive updated"),
+	})
 }
 
 func (s *scheduler) createInitScript() string {
