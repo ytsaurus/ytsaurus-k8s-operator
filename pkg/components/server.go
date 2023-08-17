@@ -23,11 +23,12 @@ type Server interface {
 	BuildStatefulSet() *appsv1.StatefulSet
 	RebuildStatefulSet() *appsv1.StatefulSet
 	NeedUpdate() bool
-	isImageEqualTo(expectedImage string) bool
+	IsImageCorrespondsToSpec() bool
 }
 
 // Server represents a typical YT cluster server component, like master or scheduler.
 type server struct {
+	image    string
 	labeller *labeller.Labeller
 	ytsaurus *apiproxy.Ytsaurus
 
@@ -49,7 +50,12 @@ func NewServer(
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
 	generator ytconfig.GeneratorFunc) Server {
+	image := ytsaurus.GetResource().Spec.CoreImage
+	if instanceSpec.Image != nil {
+		image = *instanceSpec.Image
+	}
 	return &server{
+		image:        image,
 		labeller:     labeller,
 		ytsaurus:     ytsaurus,
 		instanceSpec: instanceSpec,
@@ -100,12 +106,12 @@ func (s *server) ArePodsRemoved() bool {
 	return s.statefulSet.NeedSync(0)
 }
 
-func (s *server) isImageEqualTo(expectedImage string) bool {
-	return s.statefulSet.OldObject().(*appsv1.StatefulSet).Spec.Template.Spec.Containers[0].Image == expectedImage
+func (s *server) IsImageCorrespondsToSpec() bool {
+	return s.statefulSet.OldObject().(*appsv1.StatefulSet).Spec.Template.Spec.Containers[0].Image == s.image
 }
 
 func (s *server) NeedUpdate() bool {
-	return !s.isImageEqualTo(s.ytsaurus.GetResource().Spec.CoreImage)
+	return !s.IsImageCorrespondsToSpec()
 }
 
 func (s *server) ArePodsReady(ctx context.Context) bool {
@@ -149,7 +155,7 @@ func (s *server) RebuildStatefulSet() *appsv1.StatefulSet {
 		SetHostnameAsFQDN: &setHostnameAsFQDN,
 		Containers: []corev1.Container{
 			{
-				Image:        s.ytsaurus.GetResource().Spec.CoreImage,
+				Image:        s.image,
 				Name:         consts.YTServerContainerName,
 				Command:      []string{s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, s.configHelper.GetFileName())},
 				VolumeMounts: volumeMounts,
@@ -158,7 +164,7 @@ func (s *server) RebuildStatefulSet() *appsv1.StatefulSet {
 		},
 		InitContainers: []corev1.Container{
 			{
-				Image:        s.ytsaurus.GetResource().Spec.CoreImage,
+				Image:        s.image,
 				Name:         consts.PrepareLocationsContainerName,
 				Command:      []string{"bash", "-c", locationCreationCommand},
 				VolumeMounts: volumeMounts,

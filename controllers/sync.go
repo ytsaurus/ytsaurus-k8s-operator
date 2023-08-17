@@ -36,14 +36,14 @@ func (r *YtsaurusReconciler) handleUpdatingState(
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSafeModeEnabled)
 			return &ctrl.Result{Requeue: true}, err
 		} else if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
-			ytsaurus.LogUpdate(ctx, "Update is impossible, need to apply previous core image")
+			ytsaurus.LogUpdate(ctx, "Update is impossible, need to apply previous images")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateImpossibleToStart)
 			return &ctrl.Result{Requeue: true}, err
 		}
 
 	case ytv1.UpdateStateImpossibleToStart:
-		if componentManager.masterComponent.IsImageEqualTo(ytsaurus.GetResource().Spec.CoreImage) {
-			ytsaurus.LogUpdate(ctx, "Core image was changed back, update is canceling")
+		if componentManager.areAllImagesChangedBack() {
+			ytsaurus.LogUpdate(ctx, "Images were changed back, update is canceling")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateCancelUpdate)
 			return &ctrl.Result{Requeue: true}, err
 		}
@@ -105,7 +105,8 @@ func (r *YtsaurusReconciler) handleUpdatingState(
 		}
 
 	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
-		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNotNecessaryToUpdateOpArchive) {
+		if ytsaurus.GetResource().Spec.Schedulers == nil ||
+			ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNotNecessaryToUpdateOpArchive) {
 			ytsaurus.LogUpdate(ctx, "Operations archive update was skipped")
 			ytsaurus.LogUpdate(ctx, "Waiting for safe mode disabled")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSafeModeDisabled)

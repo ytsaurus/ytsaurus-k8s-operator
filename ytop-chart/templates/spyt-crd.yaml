@@ -4,7 +4,7 @@ metadata:
   name: spyts.cluster.ytsaurus.tech
   annotations:
     cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "ytop-chart.fullname"
-      . }}-serving-cert'
+      . }}-$(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)'
     controller-gen.kubebuilder.io/version: v0.9.2
   labels:
   {{- include "ytop-chart.labels" . | nindent 4 }}

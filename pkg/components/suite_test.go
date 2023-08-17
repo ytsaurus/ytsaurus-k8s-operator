@@ -73,7 +73,7 @@ func (fs *FakeServer) NeedUpdate() bool {
 	return false
 }
 
-func (fs *FakeServer) isImageEqualTo(expectedImage string) bool {
+func (fs *FakeServer) IsImageCorrespondsToSpec() bool {
 	return true
 }
 

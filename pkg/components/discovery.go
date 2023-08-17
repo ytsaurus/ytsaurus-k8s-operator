@@ -57,6 +57,10 @@ func (d *discovery) Fetch(ctx context.Context) error {
 func (d *discovery) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
+	if d.ytsaurus.GetClusterState() == v1.ClusterStateRunning && d.server.NeedUpdate() {
+		return SyncStatusNeedUpdate, err
+	}
+
 	if d.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
 		if d.ytsaurus.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, d.removePods(ctx, dry)

@@ -70,6 +70,10 @@ func (qt *queryTracker) Fetch(ctx context.Context) error {
 func (qt *queryTracker) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
+	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && qt.server.NeedUpdate() {
+		return SyncStatusNeedUpdate, err
+	}
+
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, qt.removePods(ctx, dry)

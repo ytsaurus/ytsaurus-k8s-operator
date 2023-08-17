@@ -113,6 +113,10 @@ func (yqla *yqlAgent) createInitScript() string {
 func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
+	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && yqla.server.NeedUpdate() {
+		return SyncStatusNeedUpdate, err
+	}
+
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, yqla.removePods(ctx, dry)

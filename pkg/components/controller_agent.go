@@ -58,6 +58,11 @@ func (ca *controllerAgent) Fetch(ctx context.Context) error {
 
 func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
+
+	if ca.ytsaurus.GetClusterState() == v1.ClusterStateRunning && ca.server.NeedUpdate() {
+		return SyncStatusNeedUpdate, err
+	}
+
 	if ca.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
 		if ca.ytsaurus.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, ca.removePods(ctx, dry)

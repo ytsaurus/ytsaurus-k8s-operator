@@ -155,6 +155,7 @@ type LoggerSpec struct {
 }
 
 type InstanceSpec struct {
+	Image                *string                         `json:"image,omitempty"`
 	Volumes              []corev1.Volume                 `json:"volumes,omitempty"`
 	VolumeMounts         []corev1.VolumeMount            `json:"volumeMounts,omitempty"`
 	Resources            corev1.ResourceRequirements     `json:"resources,omitempty"`

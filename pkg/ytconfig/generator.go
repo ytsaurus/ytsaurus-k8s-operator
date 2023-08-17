@@ -179,10 +179,6 @@ func (g *Generator) GetSchedulerConfig() ([]byte, error) {
 }
 
 func (g *Generator) GetRPCProxyConfig(spec v1.RPCProxiesSpec) ([]byte, error) {
-	if g.ytsaurus.Spec.Schedulers == nil {
-		return []byte{}, nil
-	}
-
 	c, err := getRPCProxyServerCarcass(spec)
 	if err != nil {
 		return nil, err

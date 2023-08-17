@@ -148,29 +148,6 @@ func NewComponentManager(
 	}, nil
 }
 
-func (cm *ComponentManager) needSync() bool {
-	return cm.status.needSync
-}
-
-func (cm *ComponentManager) needUpdate() bool {
-	return cm.status.needUpdate
-}
-
-func (cm *ComponentManager) allReadyOrUpdating() bool {
-	return cm.status.allReadyOrUpdating
-}
-
-func (cm *ComponentManager) areServerPodsRemoved(ytsaurus *apiProxy.Ytsaurus) bool {
-	for _, cmp := range cm.allComponents {
-		if scmp, ok := cmp.(components.ServerComponent); ok {
-			if !ytsaurus.IsUpdateStatusConditionTrue(scmp.GetPodsRemovedCondition()) {
-				return false
-			}
-		}
-	}
-	return true
-}
-
 func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
@@ -194,4 +171,36 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	}
 
 	return ctrl.Result{RequeueAfter: time.Second}, nil
+}
+
+func (cm *ComponentManager) needSync() bool {
+	return cm.status.needSync
+}
+
+func (cm *ComponentManager) needUpdate() bool {
+	return cm.status.needUpdate
+}
+
+func (cm *ComponentManager) allReadyOrUpdating() bool {
+	return cm.status.allReadyOrUpdating
+}
+
+func (cm *ComponentManager) areServerPodsRemoved(ytsaurus *apiProxy.Ytsaurus) bool {
+	for _, cmp := range cm.allComponents {
+		if scmp, ok := cmp.(components.ServerComponent); ok {
+			if !ytsaurus.IsUpdateStatusConditionTrue(scmp.GetPodsRemovedCondition()) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (cm *ComponentManager) areAllImagesChangedBack() bool {
+	for _, component := range cm.allComponents {
+		if !component.(components.ServerComponent).IsImageCorrespondsToSpec() {
+			return false
+		}
+	}
+	return true
 }

@@ -73,6 +73,10 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 	logger := log.FromContext(ctx)
 
+	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && r.server.NeedUpdate() {
+		return SyncStatusNeedUpdate, err
+	}
+
 	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if r.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, r.removePods(ctx, dry)

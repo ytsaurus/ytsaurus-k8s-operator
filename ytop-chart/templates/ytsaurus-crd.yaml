@@ -953,6 +953,8 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
+                  image:
+                    type: string
                   instanceCount:
                     format: int32
                     type: integer
@@ -3778,6 +3780,8 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    image:
+                      type: string
                     instanceCount:
                       format: int32
                       type: integer
@@ -6619,6 +6623,8 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
+                  image:
+                    type: string
                   instanceCount:
                     format: int32
                     type: integer
@@ -9442,6 +9448,8 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    image:
+                      type: string
                     instanceCount:
                       format: int32
                       type: integer
@@ -12313,6 +12321,8 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    image:
+                      type: string
                     instanceCount:
                       format: int32
                       type: integer
@@ -15176,6 +15186,8 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
+                  image:
+                    type: string
                   instanceCount:
                     format: int32
                     type: integer
@@ -17974,6 +17986,8 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
+                  image:
+                    type: string
                   instanceCount:
                     format: int32
                     type: integer
@@ -20797,6 +20811,8 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    image:
+                      type: string
                     instanceCount:
                       format: int32
                       type: integer
@@ -23641,6 +23657,8 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
+                  image:
+                    type: string
                   instanceCount:
                     format: int32
                     type: integer
@@ -26466,6 +26484,8 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    image:
+                      type: string
                     instanceCount:
                       format: int32
                       type: integer
@@ -29338,6 +29358,8 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    image:
+                      type: string
                     instanceCount:
                       format: int32
                       type: integer
@@ -32233,6 +32255,8 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
+                  image:
+                    type: string
                   instanceCount:
                     format: int32
                     type: integer

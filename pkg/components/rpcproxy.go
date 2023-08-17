@@ -83,6 +83,10 @@ func (r *rpcProxy) Fetch(ctx context.Context) error {
 func (r *rpcProxy) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
+	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && r.server.NeedUpdate() {
+		return SyncStatusNeedUpdate, err
+	}
+
 	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if r.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			return SyncStatusUpdating, r.removePods(ctx, dry)
@@ -107,6 +111,10 @@ func (r *rpcProxy) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 			err = r.balancingService.Sync(ctx)
 		}
 		return SyncStatusPending, err
+	}
+
+	if !r.server.ArePodsReady(ctx) {
+		return SyncStatusBlocked, err
 	}
 
 	return SyncStatusReady, err

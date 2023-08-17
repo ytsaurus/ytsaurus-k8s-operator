@@ -114,6 +114,10 @@ func (s *scheduler) Sync(ctx context.Context) error {
 func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
+	if s.ytsaurus.GetClusterState() == v1.ClusterStateRunning && s.server.NeedUpdate() {
+		return SyncStatusNeedUpdate, err
+	}
+
 	if s.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
 		if status, err := s.update(ctx, dry); status != nil {
 			return *status, err
