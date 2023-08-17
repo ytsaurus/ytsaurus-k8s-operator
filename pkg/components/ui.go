@@ -28,19 +28,19 @@ type UI struct {
 const UIConfigFileName = "clusters-config.json"
 
 func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) Component {
-	resource := ytsaurus.GetResource()
-	labeller := labeller.Labeller{
-		ObjectMeta:     &resource.ObjectMeta,
+	r := ytsaurus.GetResource()
+	l := labeller.Labeller{
+		ObjectMeta:     &r.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelUI,
 		ComponentName:  "UI",
 	}
 
 	microservice := NewMicroservice(
-		&labeller,
+		&l,
 		ytsaurus,
-		resource.Spec.UIImage,
-		resource.Spec.UI.InstanceCount,
+		r.Spec.UIImage,
+		r.Spec.UI.InstanceCount,
 		cfgen.GetWebUIConfig,
 		UIConfigFileName,
 		"ytsaurus-ui-deployment",
@@ -48,25 +48,25 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 
 	return &UI{
 		ComponentBase: ComponentBase{
-			labeller: &labeller,
+			labeller: &l,
 			ytsaurus: ytsaurus,
 			cfgen:    cfgen,
 		},
 		microservice: microservice,
 		initJob: NewInitJob(
-			&labeller,
+			&l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
-			resource.Spec.ImagePullSecrets,
+			r.Spec.ImagePullSecrets,
 			"default",
 			consts.ClientConfigFileName,
-			resource.Spec.CoreImage,
+			r.Spec.CoreImage,
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
-			labeller.GetSecretName(),
-			&labeller,
+			l.GetSecretName(),
+			&l,
 			ytsaurus.APIProxy()),
-		ytsaurus: resource,
+		ytsaurus: r,
 		master:   master,
 	}
 }
@@ -151,7 +151,7 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 	secretsVolumeSize, _ := resource.ParseQuantity("1Mi")
 	deployment := u.microservice.BuildDeployment()
 	deployment.Spec.Template.Spec.InitContainers = []corev1.Container{
-		corev1.Container{
+		{
 			Image: u.microservice.image,
 			Name:  consts.PrepareSecretContainerName,
 			Command: []string{
@@ -166,7 +166,7 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 	}
 
 	deployment.Spec.Template.Spec.Containers = []corev1.Container{
-		corev1.Container{
+		{
 			Image:        u.microservice.image,
 			Name:         consts.UIContainerName,
 			Env:          env,
@@ -240,6 +240,10 @@ func (u *UI) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 			err = u.syncComponents(ctx)
 		}
 		return SyncStatusPending, err
+	}
+
+	if !u.microservice.ArePodsReady(ctx) {
+		return SyncStatusBlocked, err
 	}
 
 	return SyncStatusReady, err

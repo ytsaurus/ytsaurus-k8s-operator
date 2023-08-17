@@ -2,13 +2,13 @@ package resources
 
 import (
 	"context"
-
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	labeller2 "github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type Deployment struct {
@@ -85,6 +85,36 @@ func (d *Deployment) NeedSync(replicas int32, image string) bool {
 	}
 
 	return false
+}
+
+func (d *Deployment) ArePodsReady(ctx context.Context) bool {
+	logger := log.FromContext(ctx)
+
+	if d.oldObject.Spec.Replicas == nil {
+		logger.Error(nil,
+			"desired number of pods is not specified", "deployment", d.name)
+		return false
+	}
+
+	if *d.oldObject.Spec.Replicas != d.oldObject.Status.Replicas {
+		logger.Info("desired number of pods is not equal to actual yet",
+			"deployment", d.name,
+			"desiredNumberOfPods", *d.oldObject.Spec.Replicas,
+			"actualNumberOfPods", d.oldObject.Status.Replicas,
+		)
+		return false
+	}
+
+	if d.oldObject.Status.AvailableReplicas != d.oldObject.Status.Replicas {
+		logger.Info("total number of pods is not equal to number of running ones yet",
+			"deployment", d.name,
+			"totalNumberOfPods", *d.oldObject.Spec.Replicas,
+			"numberOfRunningPods", d.oldObject.Status.Replicas,
+		)
+		return false
+	}
+
+	return true
 }
 
 func (d *Deployment) Fetch(ctx context.Context) error {

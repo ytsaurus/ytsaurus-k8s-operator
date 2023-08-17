@@ -80,7 +80,7 @@ func (m *Microservice) BuildDeployment() *appsv1.Deployment {
 		m.builtDeployment = m.deployment.Build()
 		m.builtDeployment.Spec.Replicas = &m.instanceCount
 		m.builtDeployment.Spec.Template.Spec.Containers = []corev1.Container{
-			corev1.Container{
+			{
 				Image: m.image,
 			},
 		}
@@ -113,4 +113,8 @@ func (m *Microservice) Sync(ctx context.Context) (err error) {
 		m.configHelper,
 		m.service,
 	})
+}
+
+func (m *Microservice) ArePodsReady(ctx context.Context) bool {
+	return m.deployment.ArePodsReady(ctx)
 }
