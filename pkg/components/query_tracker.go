@@ -45,6 +45,9 @@ func NewQueryTracker(
 		cfgen.GetQueryTrackerStatefulSetName(),
 		cfgen.GetQueryTrackerServiceName(),
 		cfgen.GetQueryTrackerConfig,
+		func(data []byte) (bool, error) {
+			return cfgen.NeedQueryTrackerConfigReload(*resource.Spec.QueryTrackers, data)
+		},
 	)
 
 	return &queryTracker{
@@ -71,16 +74,19 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (SyncStatus, error
 	var err error
 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && qt.server.NeedUpdate() {
-		return SyncStatusNeedUpdate, err
+		return SyncStatusNeedLocalUpdate, err
 	}
 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			return SyncStatusUpdating, qt.removePods(ctx, dry)
+			updatingComponent := qt.ytsaurus.GetUpdatingComponent()
+			if updatingComponent == nil || *updatingComponent == qt.GetName() {
+				return SyncStatusUpdating, qt.removePods(ctx, dry)
+			}
 		}
 	}
 
-	if !qt.server.IsInSync() {
+	if qt.server.NeedSync() {
 		if !dry {
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = qt.server.Sync(ctx)

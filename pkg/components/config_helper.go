@@ -17,7 +17,8 @@ type ConfigHelper struct {
 	labeller *labeller.Labeller
 	apiProxy apiproxy.APIProxy
 
-	generator ytconfig.GeneratorFunc
+	generator     ytconfig.GeneratorFunc
+	reloadChecker ytconfig.ReloadCheckerFunc
 
 	configOverrides *corev1.LocalObjectReference
 	overridesMap    corev1.ConfigMap
@@ -31,11 +32,13 @@ func NewConfigHelper(
 	apiProxy apiproxy.APIProxy,
 	name, fileName string,
 	configOverrides *corev1.LocalObjectReference,
-	generator ytconfig.GeneratorFunc) *ConfigHelper {
+	generator ytconfig.GeneratorFunc,
+	reloadChecker ytconfig.ReloadCheckerFunc) *ConfigHelper {
 	return &ConfigHelper{
 		labeller:        labeller,
 		apiProxy:        apiProxy,
 		generator:       generator,
+		reloadChecker:   reloadChecker,
 		configOverrides: configOverrides,
 		fileName:        fileName,
 		configMap:       resources.NewConfigMap(name, labeller, apiProxy),
@@ -120,22 +123,35 @@ func (h *ConfigHelper) getConfig() *string {
 	return &result
 }
 
+func (h *ConfigHelper) getCurrentConfigValue() []byte {
+	if !resources.Exists(h.configMap) {
+		return nil
+	}
+
+	data, exists := h.configMap.OldObject().(*corev1.ConfigMap).Data[h.fileName]
+	if !exists {
+		return nil
+	}
+	return []byte(data)
+}
+
+func (h *ConfigHelper) NeedReload() (bool, error) {
+	if h.reloadChecker == nil {
+		return false, nil
+	}
+	return h.reloadChecker(h.getCurrentConfigValue())
+}
+
 func (h *ConfigHelper) NeedSync() bool {
 	if !resources.Exists(h.configMap) {
 		return true
 	}
-
-	oldData, oldExists := h.configMap.OldObject().(*corev1.ConfigMap).Data[h.fileName]
-	newData := h.getConfig()
-
-	if newData == nil && (!oldExists || oldData == "") {
+	needReload, err := h.NeedReload()
+	if err != nil {
 		return false
 	}
+	return needReload
 
-	if newData == nil || !oldExists || oldData == "" {
-		return true
-	}
-	return oldData != *newData
 }
 
 func (h *ConfigHelper) Build() *corev1.ConfigMap {

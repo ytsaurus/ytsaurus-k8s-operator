@@ -11,6 +11,13 @@ type QueryTrackerServer struct {
 	CreateStateTablesOnStartup bool   `yson:"create_state_tables_on_startup"`
 }
 
+func getQueryTrackerLogging(spec ytv1.QueryTrackerSpec) Logging {
+	return createLogging(
+		&spec.InstanceSpec,
+		"query-tracker",
+		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+}
+
 func getQueryTrackerServerCarcass(spec ytv1.QueryTrackerSpec) (QueryTrackerServer, error) {
 	var c QueryTrackerServer
 	c.RPCPort = consts.QueryTrackerRPCPort
@@ -19,7 +26,7 @@ func getQueryTrackerServerCarcass(spec ytv1.QueryTrackerSpec) (QueryTrackerServe
 	c.User = "query_tracker"
 	c.CreateStateTablesOnStartup = true
 
-	c.Logging = createLogging(&spec.InstanceSpec, "query-tracker", []ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+	c.Logging = getQueryTrackerLogging(spec)
 
 	return c, nil
 }

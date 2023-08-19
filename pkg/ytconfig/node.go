@@ -2,6 +2,7 @@ package ytconfig
 
 import (
 	"fmt"
+	ptr "k8s.io/utils/pointer"
 	"math"
 	"strings"
 
@@ -179,18 +180,32 @@ func fillCommonNodeServerCarcass(n *NodeServer) {
 	n.MonitoringPort = consts.NodeMonitoringPort
 }
 
+func getDataNodeResourceLimits(spec ytv1.DataNodesSpec) ResourceLimits {
+	var resourceLimits ResourceLimits
+
+	var cpu float32 = 0
+	resourceLimits.NodeDedicatedCpu = &cpu
+	resourceLimits.TotalCpu = &cpu
+
+	memory := spec.Resources.Requests.Memory()
+	if memory != nil {
+		resourceLimits.TotalMemory = memory.Value()
+	}
+	return resourceLimits
+}
+
+func getDataNodeLogging(spec ytv1.DataNodesSpec) Logging {
+	return createLogging(
+		&spec.InstanceSpec,
+		"data-node",
+		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+}
+
 func getDataNodeServerCarcass(spec ytv1.DataNodesSpec) (DataNodeServer, error) {
 	var c DataNodeServer
 	fillCommonNodeServerCarcass(&c.NodeServer)
 
-	var cpu float32 = 0
-	c.ResourceLimits.NodeDedicatedCpu = &cpu
-	c.ResourceLimits.TotalCpu = &cpu
-
-	memory := spec.Resources.Requests.Memory()
-	if memory != nil {
-		c.ResourceLimits.TotalMemory = memory.Value()
-	}
+	c.ResourceLimits = getDataNodeResourceLimits(spec)
 
 	c.Flavors = []NodeFlavor{NodeFlavorData}
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkStore) {
@@ -215,36 +230,48 @@ func getDataNodeServerCarcass(spec ytv1.DataNodesSpec) (DataNodeServer, error) {
 		return c, fmt.Errorf("error creating data node config: no storage locations provided")
 	}
 
-	c.Logging = createLogging(&spec.InstanceSpec, "data-node", []ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+	c.Logging = getDataNodeLogging(spec)
 
 	return c, nil
+}
+
+func getExecNodeResourceLimits(spec ytv1.ExecNodesSpec) ResourceLimits {
+	var resourceLimits ResourceLimits
+	resourceLimits.NodeDedicatedCpu = ptr.Float32Ptr(0)
+	cpuLimit := spec.Resources.Limits.Cpu()
+	cpuRequest := spec.Resources.Requests.Cpu()
+
+	if cpuLimit != nil {
+		value := float32(cpuLimit.Value())
+		resourceLimits.TotalCpu = &value
+	} else if cpuRequest != nil {
+		value := float32(cpuRequest.Value())
+		resourceLimits.TotalCpu = &value
+	}
+
+	memoryRequest := spec.Resources.Requests.Memory()
+	memoryLimit := spec.Resources.Limits.Memory()
+	if memoryLimit != nil {
+		resourceLimits.TotalMemory = memoryLimit.Value()
+	} else if memoryRequest != nil {
+		resourceLimits.TotalMemory = memoryRequest.Value()
+	}
+
+	return resourceLimits
+}
+
+func getExecNodeLogging(spec ytv1.ExecNodesSpec) Logging {
+	return createLogging(
+		&spec.InstanceSpec,
+		"exec-node",
+		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
 func getExecNodeServerCarcass(spec ytv1.ExecNodesSpec, usePorto bool) (ExecNodeServer, error) {
 	var c ExecNodeServer
 	fillCommonNodeServerCarcass(&c.NodeServer)
 
-	var dedicatedCpu float32 = 0
-	c.ResourceLimits.NodeDedicatedCpu = &dedicatedCpu
-
-	cpuLimit := spec.Resources.Limits.Cpu()
-	cpuRequest := spec.Resources.Requests.Cpu()
-
-	if cpuLimit != nil {
-		value := float32(cpuLimit.Value())
-		c.ResourceLimits.TotalCpu = &value
-	} else if cpuRequest != nil {
-		value := float32(cpuRequest.Value())
-		c.ResourceLimits.TotalCpu = &value
-	}
-
-	memoryRequest := spec.Resources.Requests.Memory()
-	memoryLimit := spec.Resources.Limits.Memory()
-	if memoryLimit != nil {
-		c.ResourceLimits.TotalMemory = memoryLimit.Value()
-	} else if memoryRequest != nil {
-		c.ResourceLimits.TotalMemory = memoryRequest.Value()
-	}
+	c.ResourceLimits = getExecNodeResourceLimits(spec)
 
 	c.Flavors = []NodeFlavor{NodeFlavorExec}
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
@@ -290,9 +317,16 @@ func getExecNodeServerCarcass(spec ytv1.ExecNodesSpec, usePorto bool) (ExecNodeS
 		c.ExecAgent.SlotManager.JobEnvironment.Type = JobEnvironmentTypeSimple
 	}
 
-	c.Logging = createLogging(&spec.InstanceSpec, "exec-node", []ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+	c.Logging = getExecNodeLogging(spec)
 
 	return c, nil
+}
+
+func getTabletNodeLogging(spec ytv1.TabletNodesSpec) Logging {
+	return createLogging(
+		&spec.InstanceSpec,
+		"tablet-node",
+		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
 func getTabletNodeServerCarcass(spec ytv1.TabletNodesSpec) (TabletNodeServer, error) {
@@ -310,7 +344,7 @@ func getTabletNodeServerCarcass(spec ytv1.TabletNodesSpec) (TabletNodeServer, er
 
 	c.Flavors = []NodeFlavor{NodeFlavorTablet}
 
-	c.Logging = createLogging(&spec.InstanceSpec, "tablet-node", []ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+	c.Logging = getTabletNodeLogging(spec)
 
 	return c, nil
 }

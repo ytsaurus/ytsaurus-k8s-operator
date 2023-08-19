@@ -3,7 +3,7 @@ package components
 import (
 	"context"
 
-	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
@@ -18,7 +18,7 @@ type controllerAgent struct {
 
 func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) Component {
 	resource := ytsaurus.GetResource()
-	labeller := labeller.Labeller{
+	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelControllerAgent,
@@ -27,7 +27,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 	}
 
 	server := NewServer(
-		&labeller,
+		&l,
 		ytsaurus,
 		&resource.Spec.ControllerAgents.InstanceSpec,
 		"/usr/bin/ytserver-controller-agent",
@@ -35,13 +35,16 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		"ca",
 		"controller-agents",
 		cfgen.GetControllerAgentConfig,
+		func(data []byte) (bool, error) {
+			return cfgen.NeedControllerAgentConfigReload(*resource.Spec.ControllerAgents, data)
+		},
 	)
 
 	return &controllerAgent{
 		ServerComponentBase: ServerComponentBase{
 			server: server,
 			ComponentBase: ComponentBase{
-				labeller: &labeller,
+				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
@@ -59,13 +62,16 @@ func (ca *controllerAgent) Fetch(ctx context.Context) error {
 func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
-	if ca.ytsaurus.GetClusterState() == v1.ClusterStateRunning && ca.server.NeedUpdate() {
-		return SyncStatusNeedUpdate, err
+	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && ca.server.NeedUpdate() {
+		return SyncStatusNeedLocalUpdate, err
 	}
 
-	if ca.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
-		if ca.ytsaurus.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
-			return SyncStatusUpdating, ca.removePods(ctx, dry)
+	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if ca.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			updatingComponent := ca.ytsaurus.GetUpdatingComponent()
+			if updatingComponent == nil || *updatingComponent == ca.GetName() {
+				return SyncStatusUpdating, ca.removePods(ctx, dry)
+			}
 		}
 	}
 
@@ -73,7 +79,7 @@ func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (SyncStatus, er
 		return SyncStatusBlocked, err
 	}
 
-	if !ca.server.IsInSync() {
+	if ca.server.NeedSync() {
 		if !dry {
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = ca.server.Sync(ctx)

@@ -22,6 +22,13 @@ type YQLAgentServer struct {
 	YQLAgent YQLAgent `yson:"yql_agent"`
 }
 
+func getYQLAgentLogging(spec ytv1.YQLAgentSpec) Logging {
+	return createLogging(
+		&spec.InstanceSpec,
+		"yql-agent",
+		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultDebugLoggerSpec(), defaultStderrLoggerSpec()})
+}
+
 func getYQLAgentServerCarcass(spec ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	var c YQLAgentServer
 	c.RPCPort = consts.YQLAgentRPCPort
@@ -32,7 +39,7 @@ func getYQLAgentServerCarcass(spec ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	c.YQLAgent.UDFDirectory = "/usr/lib/yql"
 	c.YQLAgent.MRJobBinary = "/usr/bin/mrjob"
 
-	c.Logging = createLogging(&spec.InstanceSpec, "yql-agent", []ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultDebugLoggerSpec(), defaultStderrLoggerSpec()})
+	c.Logging = getYQLAgentLogging(spec)
 
 	return c, nil
 }

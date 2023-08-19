@@ -37,7 +37,7 @@ func NewChytController(
 	scheduler Component,
 	dataNodes []Component) Component {
 	resource := ytsaurus.GetResource()
-	labeller := labeller.Labeller{
+	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: "yt-chyt-controller",
@@ -45,24 +45,25 @@ func NewChytController(
 	}
 
 	microservice := NewMicroservice(
-		&labeller,
+		&l,
 		ytsaurus,
 		resource.Spec.CoreImage,
 		1,
 		cfgen.GetChytControllerConfig,
+		nil,
 		ChytControllerConfigFileName,
 		"chyt-deployment",
 		"chyt")
 
 	return &chytController{
 		ComponentBase: ComponentBase{
-			labeller: &labeller,
+			labeller: &l,
 			ytsaurus: ytsaurus,
 			cfgen:    cfgen,
 		},
 		microservice: microservice,
 		initUserJob: NewInitJob(
-			&labeller,
+			&l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			ytsaurus.GetResource().Spec.ImagePullSecrets,
@@ -71,7 +72,7 @@ func NewChytController(
 			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig),
 		initClusterJob: NewInitJob(
-			&labeller,
+			&l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			resource.Spec.ImagePullSecrets,
@@ -80,7 +81,7 @@ func NewChytController(
 			resource.Spec.CoreImage,
 			cfgen.GetChytInitClusterConfig),
 		initChPublicJob: NewInitJob(
-			&labeller,
+			&l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			resource.Spec.ImagePullSecrets,
@@ -89,8 +90,8 @@ func NewChytController(
 			resource.Spec.CoreImage,
 			nil),
 		secret: resources.NewStringSecret(
-			labeller.GetSecretName(),
-			&labeller,
+			l.GetSecretName(),
+			&l,
 			ytsaurus.APIProxy()),
 		master:    master,
 		scheduler: scheduler,
@@ -263,7 +264,7 @@ func (c *chytController) doSync(ctx context.Context, dry bool) (SyncStatus, erro
 		return status, err
 	}
 
-	if !c.microservice.IsInSync() {
+	if c.microservice.NeedSync() {
 		if !dry {
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = c.syncComponents(ctx)

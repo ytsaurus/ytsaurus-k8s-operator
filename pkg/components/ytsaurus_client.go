@@ -39,7 +39,7 @@ func NewYtsaurusClient(
 	httpProxy Component,
 ) YtsaurusClient {
 	resource := ytsaurus.GetResource()
-	labeller := labeller.Labeller{
+	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelClient,
@@ -48,13 +48,13 @@ func NewYtsaurusClient(
 
 	return &ytsaurusClient{
 		ComponentBase: ComponentBase{
-			labeller: &labeller,
+			labeller: &l,
 			ytsaurus: ytsaurus,
 			cfgen:    cfgen,
 		},
 		httpProxy: httpProxy,
 		initUserJob: NewInitJob(
-			&labeller,
+			&l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			ytsaurus.GetResource().Spec.ImagePullSecrets,
@@ -63,8 +63,8 @@ func NewYtsaurusClient(
 			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
-			labeller.GetSecretName(),
-			&labeller,
+			l.GetSecretName(),
+			&l,
 			ytsaurus.APIProxy()),
 	}
 }

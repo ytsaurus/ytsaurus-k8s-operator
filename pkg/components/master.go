@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -24,7 +24,7 @@ type master struct {
 
 func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) ServerComponent {
 	resource := ytsaurus.GetResource()
-	labeller := labeller.Labeller{
+	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelMaster,
@@ -33,7 +33,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) ServerCom
 	}
 
 	server := NewServer(
-		&labeller,
+		&l,
 		ytsaurus,
 		&resource.Spec.PrimaryMasters.InstanceSpec,
 		"/usr/bin/ytserver-master",
@@ -41,10 +41,13 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) ServerCom
 		cfgen.GetMastersStatefulSetName(),
 		cfgen.GetMastersServiceName(),
 		cfgen.GetMasterConfig,
+		func(data []byte) (bool, error) {
+			return cfgen.NeedMasterConfigReload(resource.Spec.PrimaryMasters, data)
+		},
 	)
 
 	initJob := NewInitJob(
-		&labeller,
+		&l,
 		ytsaurus.APIProxy(),
 		ytsaurus,
 		resource.Spec.ImagePullSecrets,
@@ -56,7 +59,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) ServerCom
 	return &master{
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
-				labeller: &labeller,
+				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
@@ -131,17 +134,20 @@ func (m *master) createInitScript() string {
 func (m *master) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
-	if m.ytsaurus.GetClusterState() == v1.ClusterStateRunning && m.server.NeedUpdate() {
-		return SyncStatusNeedUpdate, err
+	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && m.server.NeedUpdate() {
+		return SyncStatusNeedFullUpdate, err
 	}
 
-	if m.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
-		if m.ytsaurus.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
-			return SyncStatusUpdating, m.removePods(ctx, dry)
+	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			updatingComponent := m.ytsaurus.GetUpdatingComponent()
+			if updatingComponent == nil || *updatingComponent == m.GetName() {
+				return SyncStatusUpdating, m.removePods(ctx, dry)
+			}
 		}
 	}
 
-	if !m.server.IsInSync() {
+	if m.server.NeedSync() {
 		if !dry {
 			err = m.server.Sync(ctx)
 		}

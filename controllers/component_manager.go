@@ -107,7 +107,12 @@ func NewComponentManager(
 	var readyComponents []string
 	var notReadyComponents []string
 
-	componentStatus := ComponentStatus{needSync: false, needUpdate: false, allReadyOrUpdating: true}
+	componentStatus := ComponentStatus{
+		needSync:           false,
+		needFullUpdate:     false,
+		needLocalUpdate:    nil,
+		allReadyOrUpdating: true,
+	}
 	for _, c := range allComponents {
 		err := c.Fetch(ctx)
 		if err != nil {
@@ -117,8 +122,12 @@ func NewComponentManager(
 
 		status := c.Status(ctx)
 
-		if status == components.SyncStatusNeedUpdate {
-			componentStatus.needUpdate = true
+		if status == components.SyncStatusNeedFullUpdate {
+			componentStatus.needFullUpdate = true
+		}
+
+		if status == components.SyncStatusNeedLocalUpdate {
+			componentStatus.needLocalUpdate = c
 		}
 
 		if status != components.SyncStatusReady && status != components.SyncStatusUpdating {
@@ -177,8 +186,12 @@ func (cm *ComponentManager) needSync() bool {
 	return cm.status.needSync
 }
 
-func (cm *ComponentManager) needUpdate() bool {
-	return cm.status.needUpdate
+func (cm *ComponentManager) needFullUpdate() bool {
+	return cm.status.needFullUpdate
+}
+
+func (cm *ComponentManager) needLocalUpdate() components.Component {
+	return cm.status.needLocalUpdate
 }
 
 func (cm *ComponentManager) allReadyOrUpdating() bool {
@@ -186,19 +199,21 @@ func (cm *ComponentManager) allReadyOrUpdating() bool {
 }
 
 func (cm *ComponentManager) areServerPodsRemoved(ytsaurus *apiProxy.Ytsaurus) bool {
+	component := ytsaurus.GetUpdatingComponent()
 	for _, cmp := range cm.allComponents {
 		if scmp, ok := cmp.(components.ServerComponent); ok {
-			if !ytsaurus.IsUpdateStatusConditionTrue(scmp.GetPodsRemovedCondition()) {
+			if (component == nil || scmp.GetName() == *component) && !ytsaurus.IsUpdateStatusConditionTrue(scmp.GetPodsRemovedCondition()) {
 				return false
 			}
 		}
 	}
+
 	return true
 }
 
 func (cm *ComponentManager) areAllImagesChangedBack() bool {
 	for _, component := range cm.allComponents {
-		if !component.(components.ServerComponent).IsImageCorrespondsToSpec() {
+		if !component.(components.ServerComponent).ImageCorrespondsToSpec() {
 			return false
 		}
 	}

@@ -16,14 +16,14 @@ import (
 
 type Server interface {
 	Fetch(ctx context.Context) error
-	IsInSync() bool
+	NeedSync() bool
 	ArePodsRemoved() bool
 	ArePodsReady(ctx context.Context) bool
 	Sync(ctx context.Context) error
 	BuildStatefulSet() *appsv1.StatefulSet
 	RebuildStatefulSet() *appsv1.StatefulSet
 	NeedUpdate() bool
-	IsImageCorrespondsToSpec() bool
+	ImageCorrespondsToSpec() bool
 }
 
 // Server represents a typical YT cluster server component, like master or scheduler.
@@ -49,7 +49,8 @@ func NewServer(
 	ytsaurus *apiproxy.Ytsaurus,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
-	generator ytconfig.GeneratorFunc) Server {
+	generator ytconfig.GeneratorFunc,
+	reloadChecker ytconfig.ReloadCheckerFunc) Server {
 	image := ytsaurus.GetResource().Spec.CoreImage
 	if instanceSpec.Image != nil {
 		image = *instanceSpec.Image
@@ -77,7 +78,8 @@ func NewServer(
 			labeller.GetMainConfigMapName(),
 			configFileName,
 			ytsaurus.GetResource().Spec.ConfigOverrides,
-			generator),
+			generator,
+			reloadChecker),
 	}
 }
 
@@ -90,12 +92,12 @@ func (s *server) Fetch(ctx context.Context) error {
 	})
 }
 
-func (s *server) IsInSync() bool {
-	if s.configHelper.NeedSync() || !resources.Exists(s.statefulSet) || !resources.Exists(s.headlessService) || !resources.Exists(s.monitoringService) {
-		return false
-	}
-
-	return s.statefulSet.NeedSync(s.instanceSpec.InstanceCount)
+func (s *server) NeedSync() bool {
+	return s.configHelper.NeedSync() ||
+		!resources.Exists(s.statefulSet) ||
+		!resources.Exists(s.headlessService) ||
+		!resources.Exists(s.monitoringService) ||
+		s.statefulSet.NeedSync(s.instanceSpec.InstanceCount)
 }
 
 func (s *server) ArePodsRemoved() bool {
@@ -103,15 +105,23 @@ func (s *server) ArePodsRemoved() bool {
 		return false
 	}
 
-	return s.statefulSet.NeedSync(0)
+	return !s.statefulSet.NeedSync(0)
 }
 
-func (s *server) IsImageCorrespondsToSpec() bool {
+func (s *server) ImageCorrespondsToSpec() bool {
 	return s.statefulSet.OldObject().(*appsv1.StatefulSet).Spec.Template.Spec.Containers[0].Image == s.image
 }
 
 func (s *server) NeedUpdate() bool {
-	return !s.IsImageCorrespondsToSpec()
+	if !s.ImageCorrespondsToSpec() {
+		return true
+	}
+
+	needReload, err := s.configHelper.NeedReload()
+	if err != nil {
+		return false
+	}
+	return needReload
 }
 
 func (s *server) ArePodsReady(ctx context.Context) bool {

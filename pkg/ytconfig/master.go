@@ -39,6 +39,13 @@ type MasterServer struct {
 	SecondaryMasters []MasterCell     `yson:"secondary_masters"`
 }
 
+func getMasterLogging(spec ytv1.MastersSpec) Logging {
+	return createLogging(
+		&spec.InstanceSpec,
+		"master",
+		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+}
+
 func getMasterServerCarcass(spec ytv1.MastersSpec) (MasterServer, error) {
 	var c MasterServer
 	c.UseNewHydra = true
@@ -60,7 +67,7 @@ func getMasterServerCarcass(spec ytv1.MastersSpec) (MasterServer, error) {
 		return c, fmt.Errorf("error creating master config: snapshot location not found")
 	}
 
-	c.Logging = createLogging(&spec.InstanceSpec, "master", []ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+	c.Logging = getMasterLogging(spec)
 
 	return c, nil
 }

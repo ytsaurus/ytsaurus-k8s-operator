@@ -16,12 +16,19 @@ type DiscoveryServer struct {
 	DiscoveryServer Discovery `yson:"discovery_server"`
 }
 
+func getDiscoveryLogging(spec ytv1.DiscoverySpec) Logging {
+	return createLogging(
+		&spec.InstanceSpec,
+		"discovery",
+		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+}
+
 func getDiscoveryServerCarcass(spec ytv1.DiscoverySpec) DiscoveryServer {
 	var c DiscoveryServer
 	c.MonitoringPort = consts.DiscoveryMonitoringPort
 	c.RPCPort = consts.DiscoveryRPCPort
 
-	c.Logging = createLogging(&spec.InstanceSpec, "discovery", []ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+	c.Logging = getDiscoveryLogging(spec)
 
 	return c
 }

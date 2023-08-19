@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	labeller2 "github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	appsv1 "k8s.io/api/apps/v1"
@@ -91,19 +90,9 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context) bool {
 }
 
 func (s *StatefulSet) NeedSync(replicas int32) bool {
-	if s.oldObject.Spec.Replicas == nil {
-		return false
-	}
-
-	if *s.oldObject.Spec.Replicas != replicas {
-		return false
-	}
-
-	if len(s.oldObject.Spec.Template.Spec.Containers) != 1 {
-		return false
-	}
-
-	return true
+	return s.oldObject.Spec.Replicas == nil ||
+		*s.oldObject.Spec.Replicas != replicas ||
+		len(s.oldObject.Spec.Template.Spec.Containers) != 1
 }
 
 func (s *StatefulSet) Fetch(ctx context.Context) error {

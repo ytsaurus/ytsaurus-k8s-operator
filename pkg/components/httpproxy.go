@@ -50,6 +50,9 @@ func NewHTTPProxy(
 		func() ([]byte, error) {
 			return cfgen.GetHTTPProxyConfig(spec)
 		},
+		func(data []byte) (bool, error) {
+			return cfgen.NeedHTTPProxyConfigReload(spec, data)
+		},
 	)
 
 	return &httpProxy{
@@ -82,12 +85,15 @@ func (r *httpProxy) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
 	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && r.server.NeedUpdate() {
-		return SyncStatusNeedUpdate, err
+		return SyncStatusNeedLocalUpdate, err
 	}
 
 	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if r.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			return SyncStatusUpdating, r.removePods(ctx, dry)
+			updatingComponent := r.ytsaurus.GetUpdatingComponent()
+			if updatingComponent == nil || *updatingComponent == r.GetName() {
+				return SyncStatusUpdating, r.removePods(ctx, dry)
+			}
 		}
 	}
 
@@ -95,7 +101,7 @@ func (r *httpProxy) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		return SyncStatusBlocked, err
 	}
 
-	if !r.server.IsInSync() {
+	if r.server.NeedSync() {
 		if !dry {
 			err = r.server.Sync(ctx)
 		}

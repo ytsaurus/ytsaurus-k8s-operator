@@ -44,6 +44,10 @@ func (c *Ytsaurus) GetUpdateState() ytv1.UpdateState {
 	return c.ytsaurus.Status.UpdateStatus.State
 }
 
+func (c *Ytsaurus) GetUpdatingComponent() *string {
+	return c.ytsaurus.Status.UpdateStatus.Component
+}
+
 func (c *Ytsaurus) IsUpdateStatusConditionTrue(condition string) bool {
 	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
 }
@@ -57,6 +61,7 @@ func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
 	c.ytsaurus.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
 	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
 	c.ytsaurus.Status.UpdateStatus.MasterMonitoringPaths = make([]string, 0)
+	c.ytsaurus.Status.UpdateStatus.Component = nil
 	return c.apiProxy.UpdateStatus(ctx)
 }
 
@@ -64,6 +69,19 @@ func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {
 	logger := log.FromContext(ctx)
 	c.apiProxy.RecordNormal("Update", message)
 	logger.Info(fmt.Sprintf("Ytsaurus update: %s", message))
+}
+
+func (c *Ytsaurus) SaveUpdatingClusterState(ctx context.Context, component *string) error {
+	logger := log.FromContext(ctx)
+	c.ytsaurus.Status.State = ytv1.ClusterStateUpdating
+	c.ytsaurus.Status.UpdateStatus.Component = component
+
+	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
+		logger.Error(err, "unable to update Ytsaurus cluster status")
+		return err
+	}
+
+	return nil
 }
 
 func (c *Ytsaurus) SaveClusterState(ctx context.Context, clusterState ytv1.ClusterState) error {

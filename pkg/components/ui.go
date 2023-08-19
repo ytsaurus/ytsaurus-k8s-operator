@@ -42,6 +42,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		r.Spec.UIImage,
 		r.Spec.UI.InstanceCount,
 		cfgen.GetWebUIConfig,
+		nil,
 		UIConfigFileName,
 		"ytsaurus-ui-deployment",
 		"ytsaurus-ui")
@@ -235,7 +236,7 @@ func (u *UI) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		return status, err
 	}
 
-	if !u.microservice.IsInSync() {
+	if u.microservice.NeedSync() {
 		if !dry {
 			err = u.syncComponents(ctx)
 		}

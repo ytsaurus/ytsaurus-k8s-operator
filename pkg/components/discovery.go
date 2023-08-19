@@ -3,7 +3,7 @@ package components
 import (
 	"context"
 
-	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
@@ -17,7 +17,7 @@ type discovery struct {
 
 func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component {
 	resource := ytsaurus.GetResource()
-	labeller := labeller.Labeller{
+	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelDiscovery,
@@ -26,7 +26,7 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Compon
 	}
 
 	server := NewServer(
-		&labeller,
+		&l,
 		ytsaurus,
 		&resource.Spec.Discovery.InstanceSpec,
 		"/usr/bin/ytserver-discovery",
@@ -34,12 +34,15 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Compon
 		cfgen.GetDiscoveryStatefulSetName(),
 		cfgen.GetDiscoveryServiceName(),
 		cfgen.GetDiscoveryConfig,
+		func(data []byte) (bool, error) {
+			return cfgen.NeedDiscoveryConfigReload(resource.Spec.Discovery, data)
+		},
 	)
 
 	return &discovery{
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
-				labeller: &labeller,
+				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
@@ -57,17 +60,16 @@ func (d *discovery) Fetch(ctx context.Context) error {
 func (d *discovery) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
-	if d.ytsaurus.GetClusterState() == v1.ClusterStateRunning && d.server.NeedUpdate() {
-		return SyncStatusNeedUpdate, err
-	}
-
-	if d.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
-		if d.ytsaurus.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval {
-			return SyncStatusUpdating, d.removePods(ctx, dry)
+	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if d.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			updatingComponent := d.ytsaurus.GetUpdatingComponent()
+			if updatingComponent == nil || *updatingComponent == d.GetName() {
+				return SyncStatusUpdating, d.removePods(ctx, dry)
+			}
 		}
 	}
 
-	if !d.server.IsInSync() {
+	if d.server.NeedSync() {
 		if !dry {
 			err = d.server.Sync(ctx)
 		}

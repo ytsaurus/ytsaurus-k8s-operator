@@ -24,7 +24,7 @@ type yqlAgent struct {
 
 func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) Component {
 	resource := ytsaurus.GetResource()
-	labeller := labeller.Labeller{
+	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelYqlAgent,
@@ -33,7 +33,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 	}
 
 	server := NewServer(
-		&labeller,
+		&l,
 		ytsaurus,
 		&resource.Spec.YQLAgents.InstanceSpec,
 		"/usr/bin/ytserver-yql-agent",
@@ -41,12 +41,15 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		cfgen.GetYQLAgentStatefulSetName(),
 		cfgen.GetYQLAgentServiceName(),
 		cfgen.GetYQLAgentConfig,
+		func(data []byte) (bool, error) {
+			return cfgen.NeedYQLAgentConfigReload(*resource.Spec.YQLAgents, data)
+		},
 	)
 
 	return &yqlAgent{
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
-				labeller: &labeller,
+				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
@@ -54,7 +57,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		},
 		master: master,
 		initEnvironment: NewInitJob(
-			&labeller,
+			&l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			resource.Spec.ImagePullSecrets,
@@ -63,8 +66,8 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
-			labeller.GetSecretName(),
-			&labeller,
+			l.GetSecretName(),
+			&l,
 			ytsaurus.APIProxy()),
 	}
 }
@@ -114,12 +117,15 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (SyncStatus, error) 
 	var err error
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && yqla.server.NeedUpdate() {
-		return SyncStatusNeedUpdate, err
+		return SyncStatusNeedLocalUpdate, err
 	}
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			return SyncStatusUpdating, yqla.removePods(ctx, dry)
+			updatingComponent := yqla.ytsaurus.GetUpdatingComponent()
+			if updatingComponent == nil || *updatingComponent == yqla.GetName() {
+				return SyncStatusUpdating, yqla.removePods(ctx, dry)
+			}
 		}
 	}
 
@@ -138,7 +144,7 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (SyncStatus, error) 
 		return SyncStatusPending, err
 	}
 
-	if !yqla.server.IsInSync() {
+	if yqla.server.NeedSync() {
 		if !dry {
 			ss := yqla.server.BuildStatefulSet()
 			container := &ss.Spec.Template.Spec.Containers[0]

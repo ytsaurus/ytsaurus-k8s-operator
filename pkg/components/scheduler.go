@@ -49,6 +49,9 @@ func NewScheduler(
 		cfgen.GetSchedulerStatefulSetName(),
 		cfgen.GetSchedulerServiceName(),
 		cfgen.GetSchedulerConfig,
+		func(data []byte) (bool, error) {
+			return cfgen.NeedSchedulerConfigReload(*resource.Spec.Schedulers, data)
+		},
 	)
 
 	return &scheduler{
@@ -115,7 +118,7 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	var err error
 
 	if s.ytsaurus.GetClusterState() == v1.ClusterStateRunning && s.server.NeedUpdate() {
-		return SyncStatusNeedUpdate, err
+		return SyncStatusNeedLocalUpdate, err
 	}
 
 	if s.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
@@ -148,7 +151,7 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		return SyncStatusPending, err
 	}
 
-	if !s.server.IsInSync() {
+	if s.server.NeedSync() {
 		if !dry {
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = s.server.Sync(ctx)
@@ -191,7 +194,11 @@ func (s *scheduler) update(ctx context.Context, dry bool) (*SyncStatus, error) {
 	var err error
 	switch s.ytsaurus.GetUpdateState() {
 	case v1.UpdateStateWaitingForPodsRemoval:
-		return ptr.T(SyncStatusUpdating), s.removePods(ctx, dry)
+		updatingComponent := s.ytsaurus.GetUpdatingComponent()
+		if updatingComponent == nil || *updatingComponent == s.GetName() {
+			return ptr.T(SyncStatusUpdating), s.removePods(ctx, dry)
+		}
+		return nil, nil
 	case v1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
 		if !s.needOpArchiveInit() {
 			return ptr.T(SyncStatusUpdating), s.setConditionNotNecessaryToUpdateOpArchive(ctx)

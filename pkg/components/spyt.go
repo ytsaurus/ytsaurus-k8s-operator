@@ -33,7 +33,7 @@ func NewSpyt(
 
 	spytSpec := spyt.GetResource().Spec
 
-	labeller := labeller.Labeller{
+	l := labeller.Labeller{
 		ObjectMeta:     &spyt.GetResource().ObjectMeta,
 		APIProxy:       spyt.APIProxy(),
 		ComponentLabel: fmt.Sprintf("ytsaurus-spyt-%s", spytSpec.Name),
@@ -41,12 +41,12 @@ func NewSpyt(
 	}
 
 	return &Spyt{
-		labeller: &labeller,
+		labeller: &l,
 		spyt:     spyt,
 		cfgen:    cfgen,
 		ytsaurus: ytsaurus,
 		initUser: NewInitJob(
-			&labeller,
+			&l,
 			spyt.APIProxy(),
 			spyt,
 			ytsaurus.Spec.ImagePullSecrets,
@@ -55,7 +55,7 @@ func NewSpyt(
 			ytsaurus.Spec.CoreImage,
 			cfgen.GetNativeClientConfig),
 		initEnvironment: NewInitJob(
-			&labeller,
+			&l,
 			spyt.APIProxy(),
 			spyt,
 			ytsaurus.Spec.ImagePullSecrets,
@@ -64,8 +64,8 @@ func NewSpyt(
 			spytSpec.Image,
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
-			labeller.GetSecretName(),
-			&labeller,
+			l.GetSecretName(),
+			&l,
 			spyt.APIProxy()),
 	}
 }

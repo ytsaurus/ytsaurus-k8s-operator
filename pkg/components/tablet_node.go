@@ -32,7 +32,7 @@ func NewTabletNode(
 	doInitiailization bool,
 ) Component {
 	resource := ytsaurus.GetResource()
-	labeller := labeller.Labeller{
+	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelTabletNode, spec.Name),
@@ -41,7 +41,7 @@ func NewTabletNode(
 	}
 
 	server := NewServer(
-		&labeller,
+		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
@@ -51,12 +51,15 @@ func NewTabletNode(
 		func() ([]byte, error) {
 			return cfgen.GetTabletNodeConfig(spec)
 		},
+		func(data []byte) (bool, error) {
+			return cfgen.NeedTabletNodeConfigReload(spec, data)
+		},
 	)
 
 	return &tabletNode{
 		ServerComponentBase: ServerComponentBase{
 			ComponentBase: ComponentBase{
-				labeller: &labeller,
+				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
@@ -74,16 +77,19 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	logger := log.FromContext(ctx)
 
 	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && r.server.NeedUpdate() {
-		return SyncStatusNeedUpdate, err
+		return SyncStatusNeedFullUpdate, err
 	}
 
 	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if r.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			return SyncStatusUpdating, r.removePods(ctx, dry)
+			updatingComponent := r.ytsaurus.GetUpdatingComponent()
+			if updatingComponent == nil || *updatingComponent == r.GetName() {
+				return SyncStatusUpdating, r.removePods(ctx, dry)
+			}
 		}
 	}
 
-	if !r.server.IsInSync() {
+	if r.server.NeedSync() {
 		if !dry {
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = r.server.Sync(ctx)

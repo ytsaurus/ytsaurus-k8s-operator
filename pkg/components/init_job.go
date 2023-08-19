@@ -76,7 +76,8 @@ func NewInitJob(
 				labeller.ComponentLabel),
 			configFileName,
 			nil,
-			generator),
+			generator,
+			nil),
 	}
 }
 

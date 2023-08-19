@@ -35,6 +35,7 @@ func NewMicroservice(
 	image string,
 	instanceCount int32,
 	configGenerator ytconfig.GeneratorFunc,
+	reloadChecker ytconfig.ReloadCheckerFunc,
 	configFileName, deploymentName, serviceName string) *Microservice {
 	return &Microservice{
 		labeller:      labeller,
@@ -54,7 +55,8 @@ func NewMicroservice(
 			labeller.GetMainConfigMapName(),
 			configFileName,
 			ytsaurus.GetResource().Spec.ConfigOverrides,
-			configGenerator),
+			configGenerator,
+			reloadChecker),
 	}
 }
 
@@ -66,13 +68,10 @@ func (m *Microservice) Fetch(ctx context.Context) error {
 	})
 }
 
-func (m *Microservice) IsInSync() bool {
-	if m.configHelper.NeedSync() ||
-		!resources.Exists(m.service) {
-		return false
-	}
-
-	return !m.deployment.NeedSync(m.instanceCount, m.image)
+func (m *Microservice) NeedSync() bool {
+	return m.configHelper.NeedSync() ||
+		!resources.Exists(m.service) ||
+		m.deployment.NeedSync(m.instanceCount, m.image)
 }
 
 func (m *Microservice) BuildDeployment() *appsv1.Deployment {

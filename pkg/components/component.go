@@ -12,17 +12,18 @@ import (
 type SyncStatus string
 
 const (
-	SyncStatusBlocked    SyncStatus = "Blocked"
-	SyncStatusNeedUpdate SyncStatus = "NeedUpdate"
-	SyncStatusPending    SyncStatus = "Pending"
-	SyncStatusReady      SyncStatus = "Ready"
-	SyncStatusUpdating   SyncStatus = "Updating"
+	SyncStatusBlocked         SyncStatus = "Blocked"
+	SyncStatusNeedFullUpdate  SyncStatus = "NeedFullUpdate"
+	SyncStatusNeedLocalUpdate SyncStatus = "NeedLocalUpdate"
+	SyncStatusPending         SyncStatus = "Pending"
+	SyncStatusReady           SyncStatus = "Ready"
+	SyncStatusUpdating        SyncStatus = "Updating"
 )
 
 type ServerComponent interface {
 	Component
 	GetPodsRemovedCondition() string
-	IsImageCorrespondsToSpec() bool
+	ImageCorrespondsToSpec() bool
 }
 
 type ServerComponentBase struct {
@@ -34,8 +35,8 @@ func (c *ServerComponentBase) GetPodsRemovedCondition() string {
 	return c.labeller.GetPodsRemovedCondition()
 }
 
-func (c *ServerComponentBase) IsImageCorrespondsToSpec() bool {
-	return c.server.IsImageCorrespondsToSpec()
+func (c *ServerComponentBase) ImageCorrespondsToSpec() bool {
+	return c.server.ImageCorrespondsToSpec()
 }
 
 func (c *ServerComponentBase) removePods(ctx context.Context, dry bool) error {

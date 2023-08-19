@@ -341,6 +341,7 @@ type TabletCellBundleInfo struct {
 type UpdateStatus struct {
 	//+kubebuilder:default:=None
 	State                 UpdateState            `json:"state,omitempty"`
+	Component             *string                `json:"component,omitempty"`
 	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
 	TabletCellBundles     []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
 	MasterMonitoringPaths []string               `json:"masterMonitoringPaths,omitempty"`
@@ -371,6 +372,7 @@ type YtsaurusStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:printcolumn:name="ClusterState",type="string",JSONPath=".status.state",description="State of Ytsaurus cluster"
 // +kubebuilder:printcolumn:name="UpdateState",type="string",JSONPath=".status.updateStatus.state",description="Update state of Ytsaurus cluster"
+// +kubebuilder:printcolumn:name="UpdatingComponent",type="string",JSONPath=".status.updateStatus.component",description="Updating component (for local update)"
 // +kubebuilder:subresource:status
 
 // Ytsaurus is the Schema for the ytsaurus API
