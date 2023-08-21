@@ -213,7 +213,7 @@ func (cm *ComponentManager) areServerPodsRemoved(ytsaurus *apiProxy.Ytsaurus) bo
 
 func (cm *ComponentManager) areAllImagesChangedBack() bool {
 	for _, component := range cm.allComponents {
-		if !component.(components.ServerComponent).ImageCorrespondsToSpec() {
+		if scmp, ok := component.(components.ServerComponent); ok && !scmp.ImageCorrespondsToSpec() {
 			return false
 		}
 	}
