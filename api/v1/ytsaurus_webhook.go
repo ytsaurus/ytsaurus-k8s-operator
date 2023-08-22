@@ -166,6 +166,23 @@ func (r *Ytsaurus) validateRPCProxies(old *runtime.Object) field.ErrorList {
 	return allErrors
 }
 
+func (r *Ytsaurus) validateTCPProxies(old *runtime.Object) field.ErrorList {
+	var allErrors field.ErrorList
+
+	tcpRoles := make(map[string]bool)
+	for i, rp := range r.Spec.TCPProxies {
+		path := field.NewPath("spec").Child("tcpProxies").Index(i)
+		if _, exists := tcpRoles[rp.Role]; exists {
+			allErrors = append(allErrors, field.Duplicate(path.Child("role"), rp.Role))
+		}
+		tcpRoles[rp.Role] = true
+
+		allErrors = append(allErrors, r.validateInstanceSpec(rp.InstanceSpec, path)...)
+	}
+
+	return allErrors
+}
+
 func (r *Ytsaurus) validateDataNodes(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
@@ -306,6 +323,7 @@ func (r *Ytsaurus) validateYtsaurus(old *runtime.Object) field.ErrorList {
 	allErrors = append(allErrors, r.validateSecondaryMasters(old)...)
 	allErrors = append(allErrors, r.validateHTTPProxies(old)...)
 	allErrors = append(allErrors, r.validateRPCProxies(old)...)
+	allErrors = append(allErrors, r.validateTCPProxies(old)...)
 	allErrors = append(allErrors, r.validateDataNodes(old)...)
 	allErrors = append(allErrors, r.validateExecNodes(old)...)
 	allErrors = append(allErrors, r.validateSchedulers(old)...)

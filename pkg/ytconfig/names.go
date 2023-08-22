@@ -121,6 +121,18 @@ func (g *Generator) GetRPCProxiesHeadlessServiceName(role string) string {
 	return g.getName(g.FormatComponentStringWithDefault("rpc-proxies", role))
 }
 
+func (g *Generator) GetTCPProxiesStatefulSetName(role string) string {
+	return g.getName(g.FormatComponentStringWithDefault("tp", role))
+}
+
+func (g *Generator) GetTCPProxiesServiceName(role string) string {
+	return g.getName(fmt.Sprintf("%s-lb", g.FormatComponentStringWithDefault("tcp-proxies", role)))
+}
+
+func (g *Generator) GetTCPProxiesHeadlessServiceName(role string) string {
+	return g.getName(g.FormatComponentStringWithDefault("tcp-proxies", role))
+}
+
 func (g *Generator) GetQueryTrackerStatefulSetName() string {
 	return g.getName("qt")
 }

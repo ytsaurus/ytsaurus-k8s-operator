@@ -13,6 +13,7 @@ const (
 	YTComponentLabelTabletNode      string = "yt-tablet-node"
 	YTComponentLabelHTTPProxy       string = "yt-http-proxy"
 	YTComponentLabelRPCProxy        string = "yt-rpc-proxy"
+	YTComponentLabelTCPProxy        string = "yt-tcp-proxy"
 	YTComponentLabelUI              string = "yt-ui"
 	YTComponentLabelYqlAgent        string = "yt-yql-agent"
 	YTComponentLabelClient          string = "yt-client"

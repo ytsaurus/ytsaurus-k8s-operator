@@ -62,6 +62,14 @@ func NewComponentManager(
 		allComponents = append(allComponents, rps...)
 	}
 
+	if resource.Spec.TCPProxies != nil && len(resource.Spec.TCPProxies) > 0 {
+		var tps []components.Component
+		for _, tpSpec := range ytsaurus.GetResource().Spec.TCPProxies {
+			tps = append(tps, components.NewTCPProxy(cfgen, ytsaurus, m, tpSpec))
+		}
+		allComponents = append(allComponents, tps...)
+	}
+
 	var ends []components.Component
 	if resource.Spec.ExecNodes != nil && len(resource.Spec.ExecNodes) > 0 {
 		for _, endSpec := range ytsaurus.GetResource().Spec.ExecNodes {

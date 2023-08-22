@@ -46,6 +46,25 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.rpcProxies[1].role: Duplicate value: \"default\"")))
 		})
 
+		It("Should not accept a Ytsaurus resource with the same TCP proxies roles", func() {
+			ytsaurus := CreateBaseYtsaurusResource(namespace)
+
+			ytsaurus.Spec.TCPProxies = []TCPProxiesSpec{
+				{
+					InstanceSpec: InstanceSpec{
+						InstanceCount: 1,
+					},
+				},
+				{
+					InstanceSpec: InstanceSpec{
+						InstanceCount: 1,
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.tcpProxies[1].role: Duplicate value: \"default\"")))
+		})
+
 		It("Should not accept a Ytsaurus resource with the same HTTP proxies roles", func() {
 			ytsaurus := CreateBaseYtsaurusResource(namespace)
 

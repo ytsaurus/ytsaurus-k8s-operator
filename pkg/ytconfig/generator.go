@@ -231,6 +231,30 @@ func (g *Generator) GetRPCProxyConfig(spec ytv1.RPCProxiesSpec) ([]byte, error) 
 	return marshallYsonConfig(c)
 }
 
+func (g *Generator) NeedTCPProxyConfigReload(spec ytv1.TCPProxiesSpec, data []byte) (bool, error) {
+	currentConfig := TCPProxyServer{}
+
+	if err := yson.Unmarshal(data, &currentConfig); err != nil {
+		return false, err
+	}
+
+	if !cmp.Equal(getTCPProxyLogging(spec), currentConfig.Logging) {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func (g *Generator) GetTCPProxyConfig(spec ytv1.TCPProxiesSpec) ([]byte, error) {
+	c, err := getTCPProxyServerCarcass(spec)
+	if err != nil {
+		return nil, err
+	}
+
+	g.fillCommonService(&c.CommonServer)
+	return marshallYsonConfig(c)
+}
+
 func (g *Generator) NeedControllerAgentConfigReload(spec ytv1.ControllerAgentsSpec, data []byte) (bool, error) {
 	currentConfig := ControllerAgentServer{}
 

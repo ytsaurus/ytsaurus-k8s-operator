@@ -42,6 +42,11 @@ type RPCProxyServer struct {
 	Role                      string                    `yson:"role"`
 }
 
+type TCPProxyServer struct {
+	CommonServer
+	Role string `yson:"role"`
+}
+
 func getHTTPProxyLogging(spec ytv1.HTTPProxiesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
@@ -85,6 +90,24 @@ func getRPCProxyServerCarcass(spec ytv1.RPCProxiesSpec) (RPCProxyServer, error) 
 
 	c.Role = spec.Role
 	c.Logging = getRPCProxyLogging(spec)
+
+	return c, nil
+}
+
+func getTCPProxyLogging(spec ytv1.TCPProxiesSpec) Logging {
+	return createLogging(
+		&spec.InstanceSpec,
+		"tcp-proxy",
+		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+}
+
+func getTCPProxyServerCarcass(spec ytv1.TCPProxiesSpec) (TCPProxyServer, error) {
+	var c TCPProxyServer
+
+	c.MonitoringPort = consts.TCPProxyMonitoringPort
+
+	c.Role = spec.Role
+	c.Logging = getTCPProxyLogging(spec)
 
 	return c, nil
 }
