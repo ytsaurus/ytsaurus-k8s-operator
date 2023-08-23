@@ -92,11 +92,15 @@ func (s *server) Fetch(ctx context.Context) error {
 	})
 }
 
+func (s *server) exists() bool {
+	return resources.Exists(s.statefulSet) &&
+		resources.Exists(s.headlessService) &&
+		resources.Exists(s.monitoringService)
+}
+
 func (s *server) NeedSync() bool {
 	return s.configHelper.NeedSync() ||
-		!resources.Exists(s.statefulSet) ||
-		!resources.Exists(s.headlessService) ||
-		!resources.Exists(s.monitoringService) ||
+		!s.exists() ||
 		s.statefulSet.NeedSync(s.instanceSpec.InstanceCount)
 }
 
@@ -113,6 +117,10 @@ func (s *server) ImageCorrespondsToSpec() bool {
 }
 
 func (s *server) NeedUpdate() bool {
+	if !s.exists() {
+		return false
+	}
+
 	if !s.ImageCorrespondsToSpec() {
 		return true
 	}

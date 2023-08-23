@@ -36,6 +36,10 @@ spec:
       jsonPath: .status.updateStatus.state
       name: UpdateState
       type: string
+    - description: Updating components (for local update)
+      jsonPath: .status.updateStatus.components
+      name: UpdatingComponents
+      type: string
     name: v1
     schema:
       openAPIV3Schema:
@@ -34283,8 +34287,10 @@ spec:
                 type: string
               updateStatus:
                 properties:
-                  component:
-                    type: string
+                  components:
+                    items:
+                      type: string
+                    type: array
                   conditions:
                     items:
                       description: "Condition contains details for one aspect of the

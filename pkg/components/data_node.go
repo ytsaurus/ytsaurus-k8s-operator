@@ -74,8 +74,8 @@ func (n *dataNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if n.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			updatingComponent := n.ytsaurus.GetUpdatingComponent()
-			if updatingComponent == nil || *updatingComponent == n.GetName() {
+			updatingComponents := n.ytsaurus.GetLocalUpdatingComponents()
+			if updatingComponents == nil {
 				return SyncStatusUpdating, n.removePods(ctx, dry)
 			}
 		}

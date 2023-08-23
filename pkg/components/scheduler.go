@@ -6,6 +6,7 @@ import (
 	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"go.ytsaurus.tech/library/go/ptr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/strings/slices"
 	"strings"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -49,9 +50,7 @@ func NewScheduler(
 		cfgen.GetSchedulerStatefulSetName(),
 		cfgen.GetSchedulerServiceName(),
 		cfgen.GetSchedulerConfig,
-		func(data []byte) (bool, error) {
-			return cfgen.NeedSchedulerConfigReload(*resource.Spec.Schedulers, data)
-		},
+		cfgen.NeedSchedulerConfigReload,
 	)
 
 	return &scheduler{
@@ -194,8 +193,8 @@ func (s *scheduler) update(ctx context.Context, dry bool) (*SyncStatus, error) {
 	var err error
 	switch s.ytsaurus.GetUpdateState() {
 	case v1.UpdateStateWaitingForPodsRemoval:
-		updatingComponent := s.ytsaurus.GetUpdatingComponent()
-		if updatingComponent == nil || *updatingComponent == s.GetName() {
+		updatingComponents := s.ytsaurus.GetLocalUpdatingComponents()
+		if updatingComponents == nil || slices.Contains(updatingComponents, s.GetName()) {
 			return ptr.T(SyncStatusUpdating), s.removePods(ctx, dry)
 		}
 		return nil, nil

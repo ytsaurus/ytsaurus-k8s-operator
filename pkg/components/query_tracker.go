@@ -12,6 +12,7 @@ import (
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -45,9 +46,7 @@ func NewQueryTracker(
 		cfgen.GetQueryTrackerStatefulSetName(),
 		cfgen.GetQueryTrackerServiceName(),
 		cfgen.GetQueryTrackerConfig,
-		func(data []byte) (bool, error) {
-			return cfgen.NeedQueryTrackerConfigReload(*resource.Spec.QueryTrackers, data)
-		},
+		cfgen.NeedQueryTrackerConfigReload,
 	)
 
 	return &queryTracker{
@@ -79,8 +78,8 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (SyncStatus, error
 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			updatingComponent := qt.ytsaurus.GetUpdatingComponent()
-			if updatingComponent == nil || *updatingComponent == qt.GetName() {
+			updatingComponents := qt.ytsaurus.GetLocalUpdatingComponents()
+			if updatingComponents == nil || slices.Contains(updatingComponents, qt.GetName()) {
 				return SyncStatusUpdating, qt.removePods(ctx, dry)
 			}
 		}

@@ -41,9 +41,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) ServerCom
 		cfgen.GetMastersStatefulSetName(),
 		cfgen.GetMastersServiceName(),
 		cfgen.GetMasterConfig,
-		func(data []byte) (bool, error) {
-			return cfgen.NeedMasterConfigReload(resource.Spec.PrimaryMasters, data)
-		},
+		cfgen.NeedMasterConfigReload,
 	)
 
 	initJob := NewInitJob(
@@ -140,8 +138,8 @@ func (m *master) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			updatingComponent := m.ytsaurus.GetUpdatingComponent()
-			if updatingComponent == nil || *updatingComponent == m.GetName() {
+			updatingComponents := m.ytsaurus.GetLocalUpdatingComponents()
+			if updatingComponents == nil {
 				return SyncStatusUpdating, m.removePods(ctx, dry)
 			}
 		}

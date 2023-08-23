@@ -5,6 +5,7 @@ import (
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
+	"k8s.io/utils/strings/slices"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"time"
@@ -127,7 +128,10 @@ func NewComponentManager(
 		}
 
 		if status == components.SyncStatusNeedLocalUpdate {
-			componentStatus.needLocalUpdate = c
+			if componentStatus.needLocalUpdate == nil {
+				componentStatus.needLocalUpdate = make([]components.Component, 0)
+			}
+			componentStatus.needLocalUpdate = append(componentStatus.needLocalUpdate, c)
 		}
 
 		if status != components.SyncStatusReady && status != components.SyncStatusUpdating {
@@ -190,7 +194,7 @@ func (cm *ComponentManager) needFullUpdate() bool {
 	return cm.status.needFullUpdate
 }
 
-func (cm *ComponentManager) needLocalUpdate() components.Component {
+func (cm *ComponentManager) needLocalUpdate() []components.Component {
 	return cm.status.needLocalUpdate
 }
 
@@ -199,10 +203,10 @@ func (cm *ComponentManager) allReadyOrUpdating() bool {
 }
 
 func (cm *ComponentManager) areServerPodsRemoved(ytsaurus *apiProxy.Ytsaurus) bool {
-	component := ytsaurus.GetUpdatingComponent()
+	componentNames := ytsaurus.GetLocalUpdatingComponents()
 	for _, cmp := range cm.allComponents {
 		if scmp, ok := cmp.(components.ServerComponent); ok {
-			if (component == nil || scmp.GetName() == *component) && !ytsaurus.IsUpdateStatusConditionTrue(scmp.GetPodsRemovedCondition()) {
+			if (componentNames == nil || slices.Contains(componentNames, scmp.GetName())) && !ytsaurus.IsUpdateStatusConditionTrue(scmp.GetPodsRemovedCondition()) {
 				return false
 			}
 		}
@@ -212,6 +216,7 @@ func (cm *ComponentManager) areServerPodsRemoved(ytsaurus *apiProxy.Ytsaurus) bo
 }
 
 func (cm *ComponentManager) areAllImagesChangedBack() bool {
+	// TODO(nadya73): add more logic here for config update.
 	for _, component := range cm.allComponents {
 		if scmp, ok := component.(components.ServerComponent); ok && !scmp.ImageCorrespondsToSpec() {
 			return false

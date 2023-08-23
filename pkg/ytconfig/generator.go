@@ -70,12 +70,12 @@ func (g *Generator) fillDriver(c *Driver) {
 	c.PrimaryMaster.Addresses = g.getMasterAddresses()
 	c.PrimaryMaster.CellID = generateCellID(g.ytsaurus.Spec.PrimaryMasters.CellTag)
 
-	c.MasterCache.enableMasterCacheDiscover = true
+	c.MasterCache.EnableMasterCacheDiscover = true
 	g.fillPrimaryMaster(&c.MasterCache.MasterCell)
 }
 
 func (g *Generator) fillAddressResolver(c *AddressResolver) {
-	var retries int = 1000
+	var retries = 1000
 
 	c.EnableIPv4 = !g.ytsaurus.Spec.UseIPv6
 	c.EnableIPv6 = g.ytsaurus.Spec.UseIPv6
@@ -136,30 +136,30 @@ func (g *Generator) GetChytInitClusterConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) NeedMasterConfigReload(spec ytv1.MastersSpec, data []byte) (bool, error) {
-	currentConfig := MasterServer{}
-
-	if err := yson.Unmarshal(data, &currentConfig); err != nil {
+func (g *Generator) NeedMasterConfigReload(data []byte) (bool, error) {
+	newData, err := g.GetMasterConfig()
+	if err != nil {
 		return false, err
 	}
-
-	if !cmp.Equal(getMasterLogging(spec), currentConfig.Logging) {
-		return true, nil
-	}
-
-	return false, nil
+	return !cmp.Equal(newData, data), nil
 }
 
-func (g *Generator) GetMasterConfig() ([]byte, error) {
+func (g *Generator) getMasterConfigImpl() (MasterServer, error) {
 	c, err := getMasterServerCarcass(g.ytsaurus.Spec.PrimaryMasters)
 	if err != nil {
-		return nil, err
+		return MasterServer{}, err
 	}
-
 	g.fillCommonService(&c.CommonServer)
 	g.fillPrimaryMaster(&c.PrimaryMaster)
 	configureMasterServerCypressManager(g.ytsaurus.Spec, &c.CypressManager)
+	return c, nil
+}
 
+func (g *Generator) GetMasterConfig() ([]byte, error) {
+	c, err := g.getMasterConfigImpl()
+	if err != nil {
+		return nil, err
+	}
 	return marshallYsonConfig(c)
 }
 
@@ -176,18 +176,25 @@ func (g *Generator) GetNativeClientConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) NeedSchedulerConfigReload(spec ytv1.SchedulersSpec, data []byte) (bool, error) {
-	currentConfig := SchedulerServer{}
-
-	if err := yson.Unmarshal(data, &currentConfig); err != nil {
+func (g *Generator) NeedSchedulerConfigReload(data []byte) (bool, error) {
+	newData, err := g.GetSchedulerConfig()
+	if err != nil {
 		return false, err
 	}
+	return !cmp.Equal(newData, data), nil
+}
 
-	if !cmp.Equal(getSchedulerLogging(spec), currentConfig.Logging) {
-		return true, nil
+func (g *Generator) getSchedulerConfigImpl() (SchedulerServer, error) {
+	c, err := getSchedulerServerCarcass(*g.ytsaurus.Spec.Schedulers)
+	if err != nil {
+		return SchedulerServer{}, err
 	}
 
-	return false, nil
+	if g.ytsaurus.Spec.TabletNodes == nil {
+		c.Scheduler.OperationsCleaner.EnableOperationArchivation = ptr.Bool(false)
+	}
+	g.fillCommonService(&c.CommonServer)
+	return c, nil
 }
 
 func (g *Generator) GetSchedulerConfig() ([]byte, error) {
@@ -195,235 +202,241 @@ func (g *Generator) GetSchedulerConfig() ([]byte, error) {
 		return []byte{}, nil
 	}
 
-	c, err := getSchedulerServerCarcass(*g.ytsaurus.Spec.Schedulers)
+	c, err := g.getSchedulerConfigImpl()
 	if err != nil {
 		return nil, err
 	}
 
-	if g.ytsaurus.Spec.TabletNodes == nil {
-		c.Scheduler.OperationsCleaner.EnableOperationArchivation = ptr.Bool(false)
-	}
-	g.fillCommonService(&c.CommonServer)
 	return marshallYsonConfig(c)
 }
 
 func (g *Generator) NeedRPCProxyConfigReload(spec ytv1.RPCProxiesSpec, data []byte) (bool, error) {
-	currentConfig := RPCProxyServer{}
-
-	if err := yson.Unmarshal(data, &currentConfig); err != nil {
+	newData, err := g.GetRPCProxyConfig(spec)
+	if err != nil {
 		return false, err
 	}
-
-	if !cmp.Equal(getRPCProxyLogging(spec), currentConfig.Logging) {
-		return true, nil
-	}
-
-	return false, nil
+	return !cmp.Equal(newData, data), nil
 }
 
-func (g *Generator) GetRPCProxyConfig(spec ytv1.RPCProxiesSpec) ([]byte, error) {
+func (g *Generator) getRPCProxyConfigImpl(spec ytv1.RPCProxiesSpec) (RPCProxyServer, error) {
 	c, err := getRPCProxyServerCarcass(spec)
 	if err != nil {
-		return nil, err
+		return RPCProxyServer{}, err
 	}
 
 	g.fillCommonService(&c.CommonServer)
+	return c, nil
+}
+
+func (g *Generator) GetRPCProxyConfig(spec ytv1.RPCProxiesSpec) ([]byte, error) {
+	c, err := g.getRPCProxyConfigImpl(spec)
+	if err != nil {
+		return []byte{}, err
+	}
+
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) NeedControllerAgentConfigReload(spec ytv1.ControllerAgentsSpec, data []byte) (bool, error) {
-	currentConfig := ControllerAgentServer{}
-
-	if err := yson.Unmarshal(data, &currentConfig); err != nil {
+func (g *Generator) NeedControllerAgentConfigReload(data []byte) (bool, error) {
+	newData, err := g.GetControllerAgentConfig()
+	if err != nil {
 		return false, err
 	}
-
-	if !cmp.Equal(getControllerAgentLogging(spec), currentConfig.Logging) {
-		return true, nil
-	}
-
-	return false, nil
+	return !cmp.Equal(newData, data), nil
 }
 
-func (g *Generator) GetControllerAgentConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.ControllerAgents == nil {
-		return []byte{}, nil
-	}
+func (g *Generator) getControllerAgentConfigImpl() (ControllerAgentServer, error) {
 	c, err := getControllerAgentServerCarcass(*g.ytsaurus.Spec.ControllerAgents)
 	if err != nil {
-		return nil, err
+		return ControllerAgentServer{}, err
 	}
 
 	c.ControllerAgent.EnableTmpfs = g.ytsaurus.Spec.UsePorto
 	c.ControllerAgent.UseColumnarStatisticsDefault = true
 
 	g.fillCommonService(&c.CommonServer)
+
+	return c, nil
+}
+
+func (g *Generator) GetControllerAgentConfig() ([]byte, error) {
+	if g.ytsaurus.Spec.ControllerAgents == nil {
+		return []byte{}, nil
+	}
+
+	c, err := g.getControllerAgentConfigImpl()
+	if err != nil {
+		return []byte{}, err
+	}
+
 	return marshallYsonConfig(c)
 }
 
 func (g *Generator) NeedDataNodeConfigReload(spec ytv1.DataNodesSpec, data []byte) (bool, error) {
-	currentConfig := DataNodeServer{}
-
-	if err := yson.Unmarshal(data, &currentConfig); err != nil {
+	newData, err := g.GetDataNodeConfig(spec)
+	if err != nil {
 		return false, err
 	}
-
-	if !cmp.Equal(getDataNodeLogging(spec), currentConfig.Logging) {
-		return true, nil
-	}
-
-	return false, nil
+	return !cmp.Equal(newData, data), nil
 }
 
-func (g *Generator) GetDataNodeConfig(spec ytv1.DataNodesSpec) ([]byte, error) {
+func (g *Generator) getDataNodeConfigImpl(spec ytv1.DataNodesSpec) (DataNodeServer, error) {
 	c, err := getDataNodeServerCarcass(spec)
 	if err != nil {
-		return nil, err
+		return DataNodeServer{}, err
 	}
 
 	g.fillCommonService(&c.CommonServer)
+	return c, nil
+}
 
+func (g *Generator) GetDataNodeConfig(spec ytv1.DataNodesSpec) ([]byte, error) {
+	c, err := g.getDataNodeConfigImpl(spec)
+	if err != nil {
+		return []byte{}, err
+	}
 	return marshallYsonConfig(c)
 }
 func (g *Generator) NeedExecNodeConfigReload(spec ytv1.ExecNodesSpec, data []byte) (bool, error) {
-	currentConfig := ExecNodeServer{}
-
-	if err := yson.Unmarshal(data, &currentConfig); err != nil {
+	newData, err := g.GetExecNodeConfig(spec)
+	if err != nil {
 		return false, err
 	}
-
-	if !cmp.Equal(getExecNodeResourceLimits(spec), currentConfig.ResourceLimits) {
-		return true, nil
-	}
-
-	if !cmp.Equal(getExecNodeLogging(spec), currentConfig.Logging) {
-		return true, nil
-	}
-
-	return false, nil
+	return !cmp.Equal(newData, data), nil
 }
 
-func (g *Generator) GetExecNodeConfig(spec ytv1.ExecNodesSpec) ([]byte, error) {
+func (g *Generator) getExecNodeConfigImpl(spec ytv1.ExecNodesSpec) (ExecNodeServer, error) {
 	c, err := getExecNodeServerCarcass(
 		spec,
 		g.ytsaurus.Spec.UsePorto)
 	if err != nil {
-		return nil, err
+		return c, err
 	}
-
 	g.fillCommonService(&c.CommonServer)
+	return c, nil
+}
 
+func (g *Generator) GetExecNodeConfig(spec ytv1.ExecNodesSpec) ([]byte, error) {
+	c, err := g.getExecNodeConfigImpl(spec)
+	if err != nil {
+		return []byte{}, err
+	}
 	return marshallYsonConfig(c)
 }
 
 func (g *Generator) NeedTabletNodeConfigReload(spec ytv1.TabletNodesSpec, data []byte) (bool, error) {
-	currentConfig := TabletNodeServer{}
-
-	if err := yson.Unmarshal(data, &currentConfig); err != nil {
+	newData, err := g.GetTabletNodeConfig(spec)
+	if err != nil {
 		return false, err
 	}
+	return !cmp.Equal(newData, data), nil
+}
 
-	if !cmp.Equal(getTabletNodeLogging(spec), currentConfig.Logging) {
-		return true, nil
+func (g *Generator) getTabletNodeConfigImpl(spec ytv1.TabletNodesSpec) (TabletNodeServer, error) {
+	c, err := getTabletNodeServerCarcass(spec)
+	if err != nil {
+		return c, err
 	}
-
-	return false, nil
+	g.fillCommonService(&c.CommonServer)
+	return c, nil
 }
 
 func (g *Generator) GetTabletNodeConfig(spec ytv1.TabletNodesSpec) ([]byte, error) {
-	c, err := getTabletNodeServerCarcass(spec)
+	c, err := g.getTabletNodeConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
-
-	g.fillCommonService(&c.CommonServer)
-
 	return marshallYsonConfig(c)
 }
 
 func (g *Generator) NeedHTTPProxyConfigReload(spec ytv1.HTTPProxiesSpec, data []byte) (bool, error) {
-	currentConfig := HTTPProxyServer{}
-
-	if err := yson.Unmarshal(data, &currentConfig); err != nil {
+	newData, err := g.GetHTTPProxyConfig(spec)
+	if err != nil {
 		return false, err
 	}
+	return !cmp.Equal(newData, data), nil
+}
 
-	if !cmp.Equal(getHTTPProxyLogging(spec), currentConfig.Logging) {
-		return true, nil
+func (g *Generator) getHTTPProxyConfigImpl(spec ytv1.HTTPProxiesSpec) (HTTPProxyServer, error) {
+	c, err := getHTTPProxyServerCarcass(spec)
+	if err != nil {
+		return c, err
 	}
 
-	return false, nil
+	g.fillDriver(&c.Driver)
+	g.fillCommonService(&c.CommonServer)
+	return c, nil
 }
 
 func (g *Generator) GetHTTPProxyConfig(spec ytv1.HTTPProxiesSpec) ([]byte, error) {
-	c, err := getHTTPProxyServerCarcass(spec)
+	c, err := g.getHTTPProxyConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
 
-	g.fillDriver(&c.Driver)
-	g.fillClusterConnection(&c.ClusterConnection)
-	g.fillAddressResolver(&c.AddressResolver)
-
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) NeedQueryTrackerConfigReload(spec ytv1.QueryTrackerSpec, data []byte) (bool, error) {
-	currentConfig := QueryTrackerServer{}
-
-	if err := yson.Unmarshal(data, &currentConfig); err != nil {
+func (g *Generator) NeedQueryTrackerConfigReload(data []byte) (bool, error) {
+	newData, err := g.GetQueryTrackerConfig()
+	if err != nil {
 		return false, err
 	}
+	return !cmp.Equal(newData, data), nil
+}
 
-	if !cmp.Equal(getQueryTrackerLogging(spec), currentConfig.Logging) {
-		return true, nil
+func (g *Generator) getQueryTrackerConfigImpl() (QueryTrackerServer, error) {
+	c, err := getQueryTrackerServerCarcass(*g.ytsaurus.Spec.QueryTrackers)
+	if err != nil {
+		return c, err
 	}
+	g.fillCommonService(&c.CommonServer)
 
-	return false, nil
+	return c, nil
 }
 
 func (g *Generator) GetQueryTrackerConfig() ([]byte, error) {
 	if g.ytsaurus.Spec.QueryTrackers == nil {
 		return []byte{}, nil
 	}
-	c, err := getQueryTrackerServerCarcass(*g.ytsaurus.Spec.QueryTrackers)
+
+	c, err := g.getQueryTrackerConfigImpl()
 	if err != nil {
 		return nil, err
 	}
-
-	g.fillCommonService(&c.CommonServer)
 
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) NeedYQLAgentConfigReload(spec ytv1.YQLAgentSpec, data []byte) (bool, error) {
-	currentConfig := YQLAgentServer{}
-
-	if err := yson.Unmarshal(data, &currentConfig); err != nil {
+func (g *Generator) NeedYQLAgentConfigReload(data []byte) (bool, error) {
+	newData, err := g.GetYQLAgentConfig()
+	if err != nil {
 		return false, err
 	}
-
-	if !cmp.Equal(getYQLAgentLogging(spec), currentConfig.Logging) {
-		return true, nil
-	}
-
-	return false, nil
+	return !cmp.Equal(newData, data), nil
 }
 
-func (g *Generator) GetYQLAgentConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.YQLAgents == nil {
-		return []byte{}, nil
-	}
+func (g *Generator) getYQLAgentConfigImpl() (YQLAgentServer, error) {
 	c, err := getYQLAgentServerCarcass(*g.ytsaurus.Spec.YQLAgents)
 	if err != nil {
-		return nil, err
+		return c, err
 	}
 	g.fillCommonService(&c.CommonServer)
 	c.YQLAgent.AdditionalClusters = map[string]string{
 		g.ytsaurus.Name: g.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole),
 	}
 	c.YQLAgent.DefaultCluster = g.ytsaurus.Name
+	return c, nil
+}
 
+func (g *Generator) GetYQLAgentConfig() ([]byte, error) {
+	if g.ytsaurus.Spec.YQLAgents == nil {
+		return []byte{}, nil
+	}
+	c, err := g.getYQLAgentConfigImpl()
+	if err != nil {
+		return nil, err
+	}
 	return marshallYsonConfig(c)
 }
 
@@ -441,25 +454,29 @@ func (g *Generator) GetWebUIConfig() ([]byte, error) {
 	return marshallJSONConfig(WebUI{Clusters: []UICluster{c}})
 }
 
-func (g *Generator) NeedDiscoveryConfigReload(spec ytv1.DiscoverySpec, data []byte) (bool, error) {
-	currentConfig := DiscoveryServer{}
-
-	if err := yson.Unmarshal(data, &currentConfig); err != nil {
+func (g *Generator) NeedDiscoveryConfigReload(data []byte) (bool, error) {
+	newData, err := g.GetDiscoveryConfig()
+	if err != nil {
 		return false, err
 	}
-
-	if !cmp.Equal(getDiscoveryLogging(spec), currentConfig.Logging) {
-		return true, nil
-	}
-
-	return false, nil
+	return !cmp.Equal(newData, data), nil
 }
 
-func (g *Generator) GetDiscoveryConfig() ([]byte, error) {
-	c := getDiscoveryServerCarcass(g.ytsaurus.Spec.Discovery)
+func (g *Generator) getDiscoveryConfigImpl() (DiscoveryServer, error) {
+	c, err := getDiscoveryServerCarcass(g.ytsaurus.Spec.Discovery)
+	if err != nil {
+		return c, err
+	}
 
 	g.fillCommonService(&c.CommonServer)
 	c.DiscoveryServer.Addresses = g.getDiscoveryAddresses()
+	return c, nil
+}
 
+func (g *Generator) GetDiscoveryConfig() ([]byte, error) {
+	c, err := g.getDiscoveryConfigImpl()
+	if err != nil {
+		return nil, err
+	}
 	return marshallYsonConfig(c)
 }

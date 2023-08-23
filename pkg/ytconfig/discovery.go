@@ -23,12 +23,13 @@ func getDiscoveryLogging(spec ytv1.DiscoverySpec) Logging {
 		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
-func getDiscoveryServerCarcass(spec ytv1.DiscoverySpec) DiscoveryServer {
+func getDiscoveryServerCarcass(spec ytv1.DiscoverySpec) (DiscoveryServer, error) {
 	var c DiscoveryServer
+
 	c.MonitoringPort = consts.DiscoveryMonitoringPort
 	c.RPCPort = consts.DiscoveryRPCPort
 
 	c.Logging = getDiscoveryLogging(spec)
 
-	return c
+	return c, nil
 }

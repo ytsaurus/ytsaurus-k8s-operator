@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"k8s.io/utils/strings/slices"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -34,9 +35,7 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Compon
 		cfgen.GetDiscoveryStatefulSetName(),
 		cfgen.GetDiscoveryServiceName(),
 		cfgen.GetDiscoveryConfig,
-		func(data []byte) (bool, error) {
-			return cfgen.NeedDiscoveryConfigReload(resource.Spec.Discovery, data)
-		},
+		cfgen.NeedDiscoveryConfigReload,
 	)
 
 	return &discovery{
@@ -62,8 +61,8 @@ func (d *discovery) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 
 	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if d.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			updatingComponent := d.ytsaurus.GetUpdatingComponent()
-			if updatingComponent == nil || *updatingComponent == d.GetName() {
+			updatingComponents := d.ytsaurus.GetLocalUpdatingComponents()
+			if updatingComponents == nil || slices.Contains(updatingComponents, d.GetName()) {
 				return SyncStatusUpdating, d.removePods(ctx, dry)
 			}
 		}

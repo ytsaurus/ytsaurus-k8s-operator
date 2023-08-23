@@ -9,6 +9,7 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/utils/strings/slices"
 )
 
 type rpcProxy struct {
@@ -92,8 +93,8 @@ func (r *rpcProxy) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 
 	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if r.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			updatingComponent := r.ytsaurus.GetUpdatingComponent()
-			if updatingComponent == nil || *updatingComponent == r.GetName() {
+			updatingComponents := r.ytsaurus.GetLocalUpdatingComponents()
+			if updatingComponents == nil || slices.Contains(updatingComponents, r.GetName()) {
 				return SyncStatusUpdating, r.removePods(ctx, dry)
 			}
 		}

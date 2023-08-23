@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
+	"k8s.io/utils/strings/slices"
 	"strings"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -41,9 +42,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		cfgen.GetYQLAgentStatefulSetName(),
 		cfgen.GetYQLAgentServiceName(),
 		cfgen.GetYQLAgentConfig,
-		func(data []byte) (bool, error) {
-			return cfgen.NeedYQLAgentConfigReload(*resource.Spec.YQLAgents, data)
-		},
+		cfgen.NeedYQLAgentConfigReload,
 	)
 
 	return &yqlAgent{
@@ -122,8 +121,8 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (SyncStatus, error) 
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			updatingComponent := yqla.ytsaurus.GetUpdatingComponent()
-			if updatingComponent == nil || *updatingComponent == yqla.GetName() {
+			updatingComponents := yqla.ytsaurus.GetLocalUpdatingComponents()
+			if updatingComponents == nil || slices.Contains(updatingComponents, yqla.GetName()) {
 				return SyncStatusUpdating, yqla.removePods(ctx, dry)
 			}
 		}

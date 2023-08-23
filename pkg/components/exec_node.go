@@ -8,6 +8,7 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
+	"k8s.io/utils/strings/slices"
 )
 
 type execNode struct {
@@ -74,8 +75,8 @@ func (n *execNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if n.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			updatingComponent := n.ytsaurus.GetUpdatingComponent()
-			if updatingComponent == nil || *updatingComponent == n.GetName() {
+			updatingComponents := n.ytsaurus.GetLocalUpdatingComponents()
+			if updatingComponents == nil || slices.Contains(updatingComponents, n.GetName()) {
 				return SyncStatusUpdating, n.removePods(ctx, dry)
 			}
 		}

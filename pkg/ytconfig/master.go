@@ -53,7 +53,7 @@ func getMasterServerCarcass(spec ytv1.MastersSpec) (MasterServer, error) {
 	c.MonitoringPort = consts.MasterMonitoringPort
 	c.HydraManager.MaxSnapshotCountToKeep = 2
 	c.HydraManager.MaxChangelogCountToKeep = 2
-	c.SecondaryMasters = make([]MasterCell, 0)
+	c.SecondaryMasters = nil
 
 	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeMasterChangelogs); location != nil {
 		c.Changelogs.Path = location.Path

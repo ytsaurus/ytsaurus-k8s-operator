@@ -15,7 +15,7 @@ import (
 type ComponentStatus struct {
 	needSync           bool
 	needFullUpdate     bool
-	needLocalUpdate    components.Component
+	needLocalUpdate    []components.Component
 	allReadyOrUpdating bool
 }
 
@@ -28,8 +28,7 @@ func (r *YtsaurusReconciler) handleUpdatingState(
 
 	switch resource.Status.UpdateStatus.State {
 	case ytv1.UpdateStateNone:
-		if resource.Status.UpdateStatus.Component != nil {
-			// TODO(nadya73): there should be me more sophisticated logic for stateful components
+		if resource.Status.UpdateStatus.Components != nil {
 			ytsaurus.LogUpdate(ctx, "Waiting for pods removal")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForPodsRemoval)
 			return &ctrl.Result{Requeue: true}, err
@@ -102,7 +101,7 @@ func (r *YtsaurusReconciler) handleUpdatingState(
 		if componentManager.allReadyOrUpdating() {
 			ytsaurus.LogUpdate(ctx, "All components were recreated")
 
-			if resource.Status.UpdateStatus.Component != nil {
+			if resource.Status.UpdateStatus.Components != nil {
 				ytsaurus.LogUpdate(ctx, "Finishing")
 				err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdateFinishing)
 				return &ctrl.Result{Requeue: true}, err
@@ -151,6 +150,17 @@ func (r *YtsaurusReconciler) handleUpdatingState(
 	return nil, nil
 }
 
+func getComponentNames(components []components.Component) []string {
+	if components == nil {
+		return nil
+	}
+	names := make([]string, 0)
+	for _, cmp := range components {
+		names = append(names, cmp.GetName())
+	}
+	return names
+}
+
 func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
@@ -191,9 +201,9 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			return ctrl.Result{Requeue: true}, err
 
 		case componentManager.needLocalUpdate() != nil:
-			componentName := componentManager.needLocalUpdate().GetName()
-			logger.Info("Ytsaurus needs component update", "component", componentName)
-			err := ytsaurus.SaveUpdatingClusterState(ctx, &componentName)
+			componentNames := getComponentNames(componentManager.needLocalUpdate())
+			logger.Info("Ytsaurus needs local components update", "components", componentNames)
+			err := ytsaurus.SaveUpdatingClusterState(ctx, componentNames)
 			return ctrl.Result{Requeue: true}, err
 
 		case componentManager.needSync():

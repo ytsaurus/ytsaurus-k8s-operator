@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"k8s.io/utils/strings/slices"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -35,9 +36,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		"ca",
 		"controller-agents",
 		cfgen.GetControllerAgentConfig,
-		func(data []byte) (bool, error) {
-			return cfgen.NeedControllerAgentConfigReload(*resource.Spec.ControllerAgents, data)
-		},
+		cfgen.NeedControllerAgentConfigReload,
 	)
 
 	return &controllerAgent{
@@ -68,8 +67,8 @@ func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (SyncStatus, er
 
 	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if ca.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			updatingComponent := ca.ytsaurus.GetUpdatingComponent()
-			if updatingComponent == nil || *updatingComponent == ca.GetName() {
+			updatingComponents := ca.ytsaurus.GetLocalUpdatingComponents()
+			if updatingComponents == nil || slices.Contains(updatingComponents, ca.GetName()) {
 				return SyncStatusUpdating, ca.removePods(ctx, dry)
 			}
 		}

@@ -84,7 +84,6 @@ func (s *Spyt) createInitUserScript() string {
 func (s *Spyt) createInitScript() string {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
-		"ls -la /",
 		"/entrypoint.sh",
 	}
 
