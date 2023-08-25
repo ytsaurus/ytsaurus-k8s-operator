@@ -6,9 +6,15 @@ type AddressList struct {
 	Addresses []string `yson:"addresses"`
 }
 
+type HydraPeer struct {
+	Address string `yson:"address"`
+	Voting  bool   `yson:"voting"`
+}
+
 type MasterCell struct {
 	AddressList
-	CellID string `yson:"cell_id"`
+	Peers  []HydraPeer `yson:"peers"`
+	CellID string      `yson:"cell_id"`
 }
 
 type TimestampProviders struct {

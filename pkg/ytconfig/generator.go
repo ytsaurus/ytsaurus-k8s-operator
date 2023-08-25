@@ -38,6 +38,17 @@ func (g *Generator) getMasterAddresses() []string {
 	return names
 }
 
+func (g *Generator) getMasterHydraPeers() []HydraPeer {
+	peers := make([]HydraPeer, 0, g.ytsaurus.Spec.PrimaryMasters.InstanceCount)
+	for _, address := range g.getMasterAddresses() {
+		peers = append(peers, HydraPeer{
+			Address: address,
+			Voting:  true,
+		})
+	}
+	return peers
+}
+
 func (g *Generator) getDiscoveryAddresses() []string {
 	names := make([]string, 0, g.ytsaurus.Spec.Discovery.InstanceCount)
 	for _, podName := range g.GetDiscoveryPodNames() {
@@ -84,6 +95,7 @@ func (g *Generator) fillAddressResolver(c *AddressResolver) {
 
 func (g *Generator) fillPrimaryMaster(c *MasterCell) {
 	c.Addresses = g.getMasterAddresses()
+	c.Peers = g.getMasterHydraPeers()
 	c.CellID = generateCellID(g.ytsaurus.Spec.PrimaryMasters.CellTag)
 }
 
