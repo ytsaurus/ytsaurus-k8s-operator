@@ -5,13 +5,14 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 )
 
-type YQLEmbedded struct {
-	MRJobBinary  string `yson:"mr_job_binary"`
-	UDFDirectory string `yson:"udf_directory"`
+type YQLPlugin struct {
+	MRJobBinary            string `yson:"mr_job_binary"`
+	UDFDirectory           string `yson:"udf_directory"`
+	YqlPluginSharedLibrary string `yson:"yql_plugin_shared_library"`
 }
 
 type YQLAgent struct {
-	YQLEmbedded
+	YQLPlugin
 	AdditionalClusters map[string]string `yson:"additional_clusters"`
 	DefaultCluster     string            `yson:"default_cluster"`
 }
@@ -38,6 +39,7 @@ func getYQLAgentServerCarcass(spec ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 
 	c.YQLAgent.UDFDirectory = "/usr/lib/yql"
 	c.YQLAgent.MRJobBinary = "/usr/bin/mrjob"
+	c.YQLAgent.YqlPluginSharedLibrary = "/usr/lib/yql/libyqlplugin.so"
 
 	c.Logging = getYQLAgentLogging(spec)
 
