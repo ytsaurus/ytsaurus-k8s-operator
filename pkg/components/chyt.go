@@ -120,7 +120,6 @@ func (c *chytController) createInitUserScript() string {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		c.initUsers(),
-		"/usr/bin/yt create user --attributes '{name=\"yt-clickhouse\"}' --ignore-existing",
 		"/usr/bin/yt create map_node //sys/bin --ignore-existing",
 		"/usr/bin/yt create map_node //sys/bin/clickhouse-trampoline --ignore-existing",
 		"/usr/bin/yt create map_node //sys/bin/ytserver-log-tailer --ignore-existing",
@@ -208,7 +207,6 @@ func (c *chytController) syncComponents(ctx context.Context) (err error) {
 				"/usr/bin/chyt-controller",
 				"--config-path",
 				path.Join(consts.ConfigMountPoint, ChytControllerConfigFileName),
-				"--log-to-stderr",
 				"run",
 			},
 			VolumeMounts: volumeMounts,

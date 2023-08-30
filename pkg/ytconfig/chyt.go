@@ -12,9 +12,10 @@ type Strawberry struct {
 }
 
 type ChytController struct {
-	LocationProxies []string      `yson:"location_proxies"`
-	Strawberry      Strawberry    `yson:"strawberry"`
-	Controller      yson.RawValue `yson:"controller"`
+	LocationProxies []string                 `yson:"location_proxies"`
+	Strawberry      Strawberry               `yson:"strawberry"`
+	Controllers     map[string]yson.RawValue `yson:"controllers"`
+	HTTPAPIEndpoint string                   `yson:"http_api_endpoint"`
 }
 
 type ChytInitCluster struct {
@@ -25,16 +26,19 @@ type ChytInitCluster struct {
 func getChytController() ChytController {
 	return ChytController{
 		Strawberry: Strawberry{
-			Root:          "//sys/clickhouse/strawberry",
+			Root:          "//sys/strawberry",
 			Stage:         "production",
 			RobotUsername: consts.ChytUserName,
 		},
-		Controller: yson.RawValue("{address_resolver={enable_ipv4=%true;enable_ipv6=%false;retries=1000}}"),
+		Controllers: map[string]yson.RawValue{
+			"chyt": yson.RawValue("{address_resolver={enable_ipv4=%true;enable_ipv6=%false;retries=1000}}"),
+		},
+		HTTPAPIEndpoint: ":80",
 	}
 }
 
 func getChytInitCluster() ChytInitCluster {
 	return ChytInitCluster{
-		StrawberryRoot: "//sys/clickhouse/strawberry",
+		StrawberryRoot: "//sys/strawberry/chyt",
 	}
 }
