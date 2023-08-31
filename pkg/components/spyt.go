@@ -83,7 +83,6 @@ func (s *Spyt) createInitUserScript() string {
 
 func (s *Spyt) createInitScript() string {
 	script := []string{
-		initJobWithNativeDriverPrologue(),
 		"/entrypoint.sh",
 	}
 
@@ -123,16 +122,16 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		token, _ := s.secret.GetValue(consts.TokenSecretKey)
 		container.Env = []corev1.EnvVar{
 			{
-				Name:  "PROXY",
+				Name:  "YT_PROXY",
 				Value: s.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
 			},
 			{
-				Name:  "EXTRA_CONFIG_GENERATOR_OPTIONS",
-				Value: fmt.Sprintf("--ytsaurus-token %s", token),
+				Name:  "YT_TOKEN",
+				Value: token,
 			},
 			{
 				Name:  "EXTRA_PUBLISH_CLUSTER_OPTIONS",
-				Value: fmt.Sprintf("--ignore-existing --ytsaurus-token %s", token),
+				Value: "--ignore-existing",
 			},
 		}
 	}
