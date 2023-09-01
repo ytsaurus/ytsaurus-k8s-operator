@@ -107,6 +107,14 @@ const (
 	LogWriterTypeStderr LogWriterType = "stderr"
 )
 
+type LogFormat string
+
+const (
+	LogFormatPlainText LogFormat = "plain_text"
+	LogFormatYson      LogFormat = "yson"
+	LogFormatJson      LogFormat = "json"
+)
+
 type LogCompression string
 
 const (
@@ -138,20 +146,33 @@ type LogRotationPolicy struct {
 	MaxSegmentCountToKeep      *int64 `json:"maxSegmentCountToKeep,omitempty" yson:"max_segment_count_to_keep,omitempty"`
 }
 
-type LoggerSpec struct {
+type BaseLoggerSpec struct {
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name,omitempty"`
-	//+kubebuilder:validation:Enum=file;stderr
-	WriterType LogWriterType `json:"writerType,omitempty"`
+	//+kubebuilder:default:=plain_text
+	//+kubebuilder:validation:Enum=plain_text;json;yson
+	Format LogFormat `json:"format,omitempty"`
 	//+kubebuilder:validation:Enum=trace;debug;info;error
+	//+kubebuilder:default:=info
 	MinLogLevel LogLevel `json:"minLogLevel,omitempty"`
 	//+kubebuilder:default:=none
-	//+kubebuilder:validation::Enum=none;gzip;zstd
+	//+kubebuilder:validation:Enum=none;gzip;zstd
 	Compression LogCompression `json:"compression,omitempty"`
 	//+kubebuilder:default:=false
 	UseTimestampSuffix bool               `json:"use_timestamp_suffix,omitempty"`
-	CategoriesFilter   *CategoriesFilter  `json:"categoriesFilter,omitempty"`
 	RotationPolicy     *LogRotationPolicy `json:"rotationPolicy,omitempty"`
+}
+
+type TextLoggerSpec struct {
+	BaseLoggerSpec `json:",inline"`
+	//+kubebuilder:validation:Enum=file;stderr
+	WriterType       LogWriterType     `json:"writerType,omitempty"`
+	CategoriesFilter *CategoriesFilter `json:"categoriesFilter,omitempty"`
+}
+
+type StructuredLoggerSpec struct {
+	BaseLoggerSpec `json:",inline"`
+	Category       string `json:"category,omitempty"`
 }
 
 type InstanceSpec struct {
@@ -163,11 +184,12 @@ type InstanceSpec struct {
 	Locations            []LocationSpec                  `json:"locations,omitempty"`
 	VolumeClaimTemplates []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
 	// Deprecated. Use Affinity.PodAntiAffinity instead.
-	EnableAntiAffinity *bool               `json:"enableAntiAffinity,omitempty"`
-	Loggers            []LoggerSpec        `json:"loggers,omitempty"`
-	Affinity           *corev1.Affinity    `json:"affinity,omitempty"`
-	NodeSelector       map[string]string   `json:"nodeSelector,omitempty"`
-	Tolerations        []corev1.Toleration `json:"tolerations,omitempty"`
+	EnableAntiAffinity *bool                  `json:"enableAntiAffinity,omitempty"`
+	Loggers            []TextLoggerSpec       `json:"loggers,omitempty"`
+	StructuredLoggers  []StructuredLoggerSpec `json:"structuredLoggers,omitempty"`
+	Affinity           *corev1.Affinity       `json:"affinity,omitempty"`
+	NodeSelector       map[string]string      `json:"nodeSelector,omitempty"`
+	Tolerations        []corev1.Toleration    `json:"tolerations,omitempty"`
 }
 
 type MastersSpec struct {

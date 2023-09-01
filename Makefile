@@ -62,6 +62,11 @@ vet: ## Run go vet against code.
 test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ATTACH_CONTROL_PLANE_OUTPUT="true" KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -v ./... -coverprofile cover.out
 
+
+.PHONY: canonize
+canonize: manifests generate fmt vet envtest ## Canonize tests.
+	KUBEBUILDER_ATTACH_CONTROL_PLANE_OUTPUT="true" KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" CANONIZE=y go test -v ./... -coverprofile cover.out
+
 .PHONY: helm-kind-install
 helm-kind-install: ## Install helm chart from sources in kind.
 	docker build -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .

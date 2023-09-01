@@ -15,7 +15,7 @@ func getQueryTrackerLogging(spec ytv1.QueryTrackerSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"query-tracker",
-		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
 func getQueryTrackerServerCarcass(spec ytv1.QueryTrackerSpec) (QueryTrackerServer, error) {

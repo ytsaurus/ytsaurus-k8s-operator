@@ -43,7 +43,7 @@ func getMasterLogging(spec ytv1.MastersSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"master",
-		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
 func getMasterServerCarcass(spec ytv1.MastersSpec) (MasterServer, error) {

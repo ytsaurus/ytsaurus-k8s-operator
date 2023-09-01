@@ -997,6 +997,17 @@ spec:
                           type: object
                         compression:
                           default: none
+                          enum:
+                          - none
+                          - gzip
+                          - zstd
+                          type: string
+                        format:
+                          default: plain_text
+                          enum:
+                          - plain_text
+                          - json
+                          - yson
                           type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus logging
@@ -1068,6 +1079,57 @@ spec:
                           to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
+                  structuredLoggers:
+                    items:
+                      properties:
+                        category:
+                          type: string
+                        compression:
+                          default: none
+                          enum:
+                          - none
+                          - gzip
+                          - zstd
+                          type: string
+                        format:
+                          default: plain_text
+                          enum:
+                          - plain_text
+                          - json
+                          - yson
+                          type: string
+                        minLogLevel:
+                          description: LogLevel string describes possible Ytsaurus logging
+                            level.
+                          enum:
+                          - trace
+                          - debug
+                          - info
+                          - error
+                          type: string
+                        name:
+                          minLength: 1
+                          type: string
+                        rotationPolicy:
+                          properties:
+                            maxSegmentCountToKeep:
+                              format: int64
+                              type: integer
+                            maxSegmentSize:
+                              format: int64
+                              type: integer
+                            maxTotalSizeToKeep:
+                              format: int64
+                              type: integer
+                            rotationPeriodMilliseconds:
+                              format: int64
+                              type: integer
+                          type: object
+                        use_timestamp_suffix:
+                          default: false
+                          type: boolean
+                      type: object
+                    type: array
                   tolerations:
                     items:
                       description: The pod this Toleration is attached to tolerates
@@ -3824,6 +3886,17 @@ spec:
                             type: object
                           compression:
                             default: none
+                            enum:
+                            - none
+                            - gzip
+                            - zstd
+                            type: string
+                          format:
+                            default: plain_text
+                            enum:
+                            - plain_text
+                            - json
+                            - yson
                             type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
@@ -3899,6 +3972,57 @@ spec:
                             to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                           type: object
                       type: object
+                    structuredLoggers:
+                      items:
+                        properties:
+                          category:
+                            type: string
+                          compression:
+                            default: none
+                            enum:
+                            - none
+                            - gzip
+                            - zstd
+                            type: string
+                          format:
+                            default: plain_text
+                            enum:
+                            - plain_text
+                            - json
+                            - yson
+                            type: string
+                          minLogLevel:
+                            description: LogLevel string describes possible Ytsaurus
+                              logging level.
+                            enum:
+                            - trace
+                            - debug
+                            - info
+                            - error
+                            type: string
+                          name:
+                            minLength: 1
+                            type: string
+                          rotationPolicy:
+                            properties:
+                              maxSegmentCountToKeep:
+                                format: int64
+                                type: integer
+                              maxSegmentSize:
+                                format: int64
+                                type: integer
+                              maxTotalSizeToKeep:
+                                format: int64
+                                type: integer
+                              rotationPeriodMilliseconds:
+                                format: int64
+                                type: integer
+                            type: object
+                          use_timestamp_suffix:
+                            default: false
+                            type: boolean
+                        type: object
+                      type: array
                     tolerations:
                       items:
                         description: The pod this Toleration is attached to tolerates
@@ -6667,6 +6791,17 @@ spec:
                           type: object
                         compression:
                           default: none
+                          enum:
+                          - none
+                          - gzip
+                          - zstd
+                          type: string
+                        format:
+                          default: plain_text
+                          enum:
+                          - plain_text
+                          - json
+                          - yson
                           type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus logging
@@ -6738,6 +6873,57 @@ spec:
                           to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
+                  structuredLoggers:
+                    items:
+                      properties:
+                        category:
+                          type: string
+                        compression:
+                          default: none
+                          enum:
+                          - none
+                          - gzip
+                          - zstd
+                          type: string
+                        format:
+                          default: plain_text
+                          enum:
+                          - plain_text
+                          - json
+                          - yson
+                          type: string
+                        minLogLevel:
+                          description: LogLevel string describes possible Ytsaurus logging
+                            level.
+                          enum:
+                          - trace
+                          - debug
+                          - info
+                          - error
+                          type: string
+                        name:
+                          minLength: 1
+                          type: string
+                        rotationPolicy:
+                          properties:
+                            maxSegmentCountToKeep:
+                              format: int64
+                              type: integer
+                            maxSegmentSize:
+                              format: int64
+                              type: integer
+                            maxTotalSizeToKeep:
+                              format: int64
+                              type: integer
+                            rotationPeriodMilliseconds:
+                              format: int64
+                              type: integer
+                          type: object
+                        use_timestamp_suffix:
+                          default: false
+                          type: boolean
+                      type: object
+                    type: array
                   tolerations:
                     items:
                       description: The pod this Toleration is attached to tolerates
@@ -9492,6 +9678,17 @@ spec:
                             type: object
                           compression:
                             default: none
+                            enum:
+                            - none
+                            - gzip
+                            - zstd
+                            type: string
+                          format:
+                            default: plain_text
+                            enum:
+                            - plain_text
+                            - json
+                            - yson
                             type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
@@ -9567,6 +9764,57 @@ spec:
                             to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                           type: object
                       type: object
+                    structuredLoggers:
+                      items:
+                        properties:
+                          category:
+                            type: string
+                          compression:
+                            default: none
+                            enum:
+                            - none
+                            - gzip
+                            - zstd
+                            type: string
+                          format:
+                            default: plain_text
+                            enum:
+                            - plain_text
+                            - json
+                            - yson
+                            type: string
+                          minLogLevel:
+                            description: LogLevel string describes possible Ytsaurus
+                              logging level.
+                            enum:
+                            - trace
+                            - debug
+                            - info
+                            - error
+                            type: string
+                          name:
+                            minLength: 1
+                            type: string
+                          rotationPolicy:
+                            properties:
+                              maxSegmentCountToKeep:
+                                format: int64
+                                type: integer
+                              maxSegmentSize:
+                                format: int64
+                                type: integer
+                              maxTotalSizeToKeep:
+                                format: int64
+                                type: integer
+                              rotationPeriodMilliseconds:
+                                format: int64
+                                type: integer
+                            type: object
+                          use_timestamp_suffix:
+                            default: false
+                            type: boolean
+                        type: object
+                      type: array
                     tolerations:
                       items:
                         description: The pod this Toleration is attached to tolerates
@@ -12365,6 +12613,17 @@ spec:
                             type: object
                           compression:
                             default: none
+                            enum:
+                            - none
+                            - gzip
+                            - zstd
+                            type: string
+                          format:
+                            default: plain_text
+                            enum:
+                            - plain_text
+                            - json
+                            - yson
                             type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
@@ -12445,6 +12704,57 @@ spec:
                       description: Service Type string describes ingress methods for
                         a service
                       type: string
+                    structuredLoggers:
+                      items:
+                        properties:
+                          category:
+                            type: string
+                          compression:
+                            default: none
+                            enum:
+                            - none
+                            - gzip
+                            - zstd
+                            type: string
+                          format:
+                            default: plain_text
+                            enum:
+                            - plain_text
+                            - json
+                            - yson
+                            type: string
+                          minLogLevel:
+                            description: LogLevel string describes possible Ytsaurus
+                              logging level.
+                            enum:
+                            - trace
+                            - debug
+                            - info
+                            - error
+                            type: string
+                          name:
+                            minLength: 1
+                            type: string
+                          rotationPolicy:
+                            properties:
+                              maxSegmentCountToKeep:
+                                format: int64
+                                type: integer
+                              maxSegmentSize:
+                                format: int64
+                                type: integer
+                              maxTotalSizeToKeep:
+                                format: int64
+                                type: integer
+                              rotationPeriodMilliseconds:
+                                format: int64
+                                type: integer
+                            type: object
+                          use_timestamp_suffix:
+                            default: false
+                            type: boolean
+                        type: object
+                      type: array
                     tolerations:
                       items:
                         description: The pod this Toleration is attached to tolerates
@@ -15230,6 +15540,17 @@ spec:
                           type: object
                         compression:
                           default: none
+                          enum:
+                          - none
+                          - gzip
+                          - zstd
+                          type: string
+                        format:
+                          default: plain_text
+                          enum:
+                          - plain_text
+                          - json
+                          - yson
                           type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus logging
@@ -15301,6 +15622,57 @@ spec:
                           to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
+                  structuredLoggers:
+                    items:
+                      properties:
+                        category:
+                          type: string
+                        compression:
+                          default: none
+                          enum:
+                          - none
+                          - gzip
+                          - zstd
+                          type: string
+                        format:
+                          default: plain_text
+                          enum:
+                          - plain_text
+                          - json
+                          - yson
+                          type: string
+                        minLogLevel:
+                          description: LogLevel string describes possible Ytsaurus logging
+                            level.
+                          enum:
+                          - trace
+                          - debug
+                          - info
+                          - error
+                          type: string
+                        name:
+                          minLength: 1
+                          type: string
+                        rotationPolicy:
+                          properties:
+                            maxSegmentCountToKeep:
+                              format: int64
+                              type: integer
+                            maxSegmentSize:
+                              format: int64
+                              type: integer
+                            maxTotalSizeToKeep:
+                              format: int64
+                              type: integer
+                            rotationPeriodMilliseconds:
+                              format: int64
+                              type: integer
+                          type: object
+                        use_timestamp_suffix:
+                          default: false
+                          type: boolean
+                      type: object
+                    type: array
                   tolerations:
                     items:
                       description: The pod this Toleration is attached to tolerates
@@ -18030,6 +18402,17 @@ spec:
                           type: object
                         compression:
                           default: none
+                          enum:
+                          - none
+                          - gzip
+                          - zstd
+                          type: string
+                        format:
+                          default: plain_text
+                          enum:
+                          - plain_text
+                          - json
+                          - yson
                           type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus logging
@@ -18101,6 +18484,57 @@ spec:
                           to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
+                  structuredLoggers:
+                    items:
+                      properties:
+                        category:
+                          type: string
+                        compression:
+                          default: none
+                          enum:
+                          - none
+                          - gzip
+                          - zstd
+                          type: string
+                        format:
+                          default: plain_text
+                          enum:
+                          - plain_text
+                          - json
+                          - yson
+                          type: string
+                        minLogLevel:
+                          description: LogLevel string describes possible Ytsaurus logging
+                            level.
+                          enum:
+                          - trace
+                          - debug
+                          - info
+                          - error
+                          type: string
+                        name:
+                          minLength: 1
+                          type: string
+                        rotationPolicy:
+                          properties:
+                            maxSegmentCountToKeep:
+                              format: int64
+                              type: integer
+                            maxSegmentSize:
+                              format: int64
+                              type: integer
+                            maxTotalSizeToKeep:
+                              format: int64
+                              type: integer
+                            rotationPeriodMilliseconds:
+                              format: int64
+                              type: integer
+                          type: object
+                        use_timestamp_suffix:
+                          default: false
+                          type: boolean
+                      type: object
+                    type: array
                   tolerations:
                     items:
                       description: The pod this Toleration is attached to tolerates
@@ -20855,6 +21289,17 @@ spec:
                             type: object
                           compression:
                             default: none
+                            enum:
+                            - none
+                            - gzip
+                            - zstd
+                            type: string
+                          format:
+                            default: plain_text
+                            enum:
+                            - plain_text
+                            - json
+                            - yson
                             type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
@@ -20934,6 +21379,57 @@ spec:
                       description: Service Type string describes ingress methods for
                         a service
                       type: string
+                    structuredLoggers:
+                      items:
+                        properties:
+                          category:
+                            type: string
+                          compression:
+                            default: none
+                            enum:
+                            - none
+                            - gzip
+                            - zstd
+                            type: string
+                          format:
+                            default: plain_text
+                            enum:
+                            - plain_text
+                            - json
+                            - yson
+                            type: string
+                          minLogLevel:
+                            description: LogLevel string describes possible Ytsaurus
+                              logging level.
+                            enum:
+                            - trace
+                            - debug
+                            - info
+                            - error
+                            type: string
+                          name:
+                            minLength: 1
+                            type: string
+                          rotationPolicy:
+                            properties:
+                              maxSegmentCountToKeep:
+                                format: int64
+                                type: integer
+                              maxSegmentSize:
+                                format: int64
+                                type: integer
+                              maxTotalSizeToKeep:
+                                format: int64
+                                type: integer
+                              rotationPeriodMilliseconds:
+                                format: int64
+                                type: integer
+                            type: object
+                          use_timestamp_suffix:
+                            default: false
+                            type: boolean
+                        type: object
+                      type: array
                     tolerations:
                       items:
                         description: The pod this Toleration is attached to tolerates
@@ -23701,6 +24197,17 @@ spec:
                           type: object
                         compression:
                           default: none
+                          enum:
+                          - none
+                          - gzip
+                          - zstd
+                          type: string
+                        format:
+                          default: plain_text
+                          enum:
+                          - plain_text
+                          - json
+                          - yson
                           type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus logging
@@ -23772,6 +24279,57 @@ spec:
                           to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
+                  structuredLoggers:
+                    items:
+                      properties:
+                        category:
+                          type: string
+                        compression:
+                          default: none
+                          enum:
+                          - none
+                          - gzip
+                          - zstd
+                          type: string
+                        format:
+                          default: plain_text
+                          enum:
+                          - plain_text
+                          - json
+                          - yson
+                          type: string
+                        minLogLevel:
+                          description: LogLevel string describes possible Ytsaurus logging
+                            level.
+                          enum:
+                          - trace
+                          - debug
+                          - info
+                          - error
+                          type: string
+                        name:
+                          minLength: 1
+                          type: string
+                        rotationPolicy:
+                          properties:
+                            maxSegmentCountToKeep:
+                              format: int64
+                              type: integer
+                            maxSegmentSize:
+                              format: int64
+                              type: integer
+                            maxTotalSizeToKeep:
+                              format: int64
+                              type: integer
+                            rotationPeriodMilliseconds:
+                              format: int64
+                              type: integer
+                          type: object
+                        use_timestamp_suffix:
+                          default: false
+                          type: boolean
+                      type: object
+                    type: array
                   tolerations:
                     items:
                       description: The pod this Toleration is attached to tolerates
@@ -26528,6 +27086,17 @@ spec:
                             type: object
                           compression:
                             default: none
+                            enum:
+                            - none
+                            - gzip
+                            - zstd
+                            type: string
+                          format:
+                            default: plain_text
+                            enum:
+                            - plain_text
+                            - json
+                            - yson
                             type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
@@ -26599,6 +27168,57 @@ spec:
                             to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                           type: object
                       type: object
+                    structuredLoggers:
+                      items:
+                        properties:
+                          category:
+                            type: string
+                          compression:
+                            default: none
+                            enum:
+                            - none
+                            - gzip
+                            - zstd
+                            type: string
+                          format:
+                            default: plain_text
+                            enum:
+                            - plain_text
+                            - json
+                            - yson
+                            type: string
+                          minLogLevel:
+                            description: LogLevel string describes possible Ytsaurus
+                              logging level.
+                            enum:
+                            - trace
+                            - debug
+                            - info
+                            - error
+                            type: string
+                          name:
+                            minLength: 1
+                            type: string
+                          rotationPolicy:
+                            properties:
+                              maxSegmentCountToKeep:
+                                format: int64
+                                type: integer
+                              maxSegmentSize:
+                                format: int64
+                                type: integer
+                              maxTotalSizeToKeep:
+                                format: int64
+                                type: integer
+                              rotationPeriodMilliseconds:
+                                format: int64
+                                type: integer
+                            type: object
+                          use_timestamp_suffix:
+                            default: false
+                            type: boolean
+                        type: object
+                      type: array
                     tolerations:
                       items:
                         description: The pod this Toleration is attached to tolerates
@@ -29402,6 +30022,17 @@ spec:
                             type: object
                           compression:
                             default: none
+                            enum:
+                            - none
+                            - gzip
+                            - zstd
+                            type: string
+                          format:
+                            default: plain_text
+                            enum:
+                            - plain_text
+                            - json
+                            - yson
                             type: string
                           minLogLevel:
                             description: LogLevel string describes possible Ytsaurus
@@ -29477,6 +30108,57 @@ spec:
                             to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                           type: object
                       type: object
+                    structuredLoggers:
+                      items:
+                        properties:
+                          category:
+                            type: string
+                          compression:
+                            default: none
+                            enum:
+                            - none
+                            - gzip
+                            - zstd
+                            type: string
+                          format:
+                            default: plain_text
+                            enum:
+                            - plain_text
+                            - json
+                            - yson
+                            type: string
+                          minLogLevel:
+                            description: LogLevel string describes possible Ytsaurus
+                              logging level.
+                            enum:
+                            - trace
+                            - debug
+                            - info
+                            - error
+                            type: string
+                          name:
+                            minLength: 1
+                            type: string
+                          rotationPolicy:
+                            properties:
+                              maxSegmentCountToKeep:
+                                format: int64
+                                type: integer
+                              maxSegmentSize:
+                                format: int64
+                                type: integer
+                              maxTotalSizeToKeep:
+                                format: int64
+                                type: integer
+                              rotationPeriodMilliseconds:
+                                format: int64
+                                type: integer
+                            type: object
+                          use_timestamp_suffix:
+                            default: false
+                            type: boolean
+                        type: object
+                      type: array
                     tolerations:
                       items:
                         description: The pod this Toleration is attached to tolerates
@@ -32299,6 +32981,17 @@ spec:
                           type: object
                         compression:
                           default: none
+                          enum:
+                          - none
+                          - gzip
+                          - zstd
+                          type: string
+                        format:
+                          default: plain_text
+                          enum:
+                          - plain_text
+                          - json
+                          - yson
                           type: string
                         minLogLevel:
                           description: LogLevel string describes possible Ytsaurus logging
@@ -32370,6 +33063,57 @@ spec:
                           to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
+                  structuredLoggers:
+                    items:
+                      properties:
+                        category:
+                          type: string
+                        compression:
+                          default: none
+                          enum:
+                          - none
+                          - gzip
+                          - zstd
+                          type: string
+                        format:
+                          default: plain_text
+                          enum:
+                          - plain_text
+                          - json
+                          - yson
+                          type: string
+                        minLogLevel:
+                          description: LogLevel string describes possible Ytsaurus logging
+                            level.
+                          enum:
+                          - trace
+                          - debug
+                          - info
+                          - error
+                          type: string
+                        name:
+                          minLength: 1
+                          type: string
+                        rotationPolicy:
+                          properties:
+                            maxSegmentCountToKeep:
+                              format: int64
+                              type: integer
+                            maxSegmentSize:
+                              format: int64
+                              type: integer
+                            maxTotalSizeToKeep:
+                              format: int64
+                              type: integer
+                            rotationPeriodMilliseconds:
+                              format: int64
+                              type: integer
+                          type: object
+                        use_timestamp_suffix:
+                          default: false
+                          type: boolean
+                      type: object
+                    type: array
                   tolerations:
                     items:
                       description: The pod this Toleration is attached to tolerates

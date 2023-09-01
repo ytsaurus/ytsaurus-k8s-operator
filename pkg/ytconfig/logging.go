@@ -2,54 +2,75 @@ package ytconfig
 
 import (
 	"fmt"
+	"go.ytsaurus.tech/library/go/ptr"
 	"path"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
-func defaultStderrLoggerSpec() ytv1.LoggerSpec {
-	return ytv1.LoggerSpec{
-		Name:               "stderr",
-		MinLogLevel:        ytv1.LogLevelError,
-		WriterType:         ytv1.LogWriterTypeStderr,
-		Compression:        ytv1.LogCompressionNone,
-		UseTimestampSuffix: false,
+func defaultStderrLoggerSpec() ytv1.TextLoggerSpec {
+	return ytv1.TextLoggerSpec{
+		BaseLoggerSpec: ytv1.BaseLoggerSpec{
+			Name:               "stderr",
+			MinLogLevel:        ytv1.LogLevelError,
+			Compression:        ytv1.LogCompressionNone,
+			UseTimestampSuffix: false,
+			Format:             ytv1.LogFormatPlainText,
+		},
+		WriterType: ytv1.LogWriterTypeStderr,
 	}
 }
 
-func defaultDebugLoggerSpec() ytv1.LoggerSpec {
-	return ytv1.LoggerSpec{
-		Name:               "debug",
-		MinLogLevel:        ytv1.LogLevelDebug,
-		WriterType:         ytv1.LogWriterTypeFile,
-		Compression:        ytv1.LogCompressionNone,
-		UseTimestampSuffix: false,
+func defaultDebugLoggerSpec() ytv1.TextLoggerSpec {
+	return ytv1.TextLoggerSpec{
+		BaseLoggerSpec: ytv1.BaseLoggerSpec{
+			Name:               "debug",
+			MinLogLevel:        ytv1.LogLevelDebug,
+			Compression:        ytv1.LogCompressionNone,
+			UseTimestampSuffix: false,
+			Format:             ytv1.LogFormatPlainText,
+		},
+		WriterType: ytv1.LogWriterTypeFile,
 	}
 }
 
-func defaultInfoLoggerSpec() ytv1.LoggerSpec {
-	return ytv1.LoggerSpec{
-		Name:               "info",
-		MinLogLevel:        ytv1.LogLevelInfo,
-		WriterType:         ytv1.LogWriterTypeFile,
-		Compression:        ytv1.LogCompressionNone,
-		UseTimestampSuffix: false,
+func defaultInfoLoggerSpec() ytv1.TextLoggerSpec {
+	return ytv1.TextLoggerSpec{
+		BaseLoggerSpec: ytv1.BaseLoggerSpec{
+			Name:               "info",
+			MinLogLevel:        ytv1.LogLevelInfo,
+			Compression:        ytv1.LogCompressionNone,
+			UseTimestampSuffix: false,
+			Format:             ytv1.LogFormatPlainText,
+		},
+		WriterType: ytv1.LogWriterTypeFile,
 	}
 }
+
+type LogFamily string
+
+const (
+	LogFamilyPlainText  LogFamily = "plain_text"
+	LogFamilyStructured LogFamily = "structured"
+)
 
 type LoggingRule struct {
 	ExcludeCategories []string      `yson:"exclude_categories,omitempty"`
 	IncludeCategories []string      `yson:"include_categories,omitempty"`
 	MinLevel          ytv1.LogLevel `yson:"min_level,omitempty"`
 	Writers           []string      `yson:"writers,omitempty"`
+	Family            *LogFamily    `yson:"family,omitempty"`
 }
 
 type LoggingWriter struct {
-	WriterType         ytv1.LogWriterType `yson:"type,omitempty"`
-	FileName           string             `yson:"file_name,omitempty"`
-	CompressionMethod  string             `yson:"compression_method,omitempty"`
-	EnableCompression  bool               `yson:"enable_compression,omitempty"`
-	UseTimestampSuffix bool               `yson:"use_timestamp_suffix,omitempty"`
+	WriterType ytv1.LogWriterType `yson:"type,omitempty"`
+	FileName   string             `yson:"file_name,omitempty"`
+	Format     ytv1.LogFormat     `yson:"format,omitempty"`
+
+	CompressionMethod    string `yson:"compression_method,omitempty"`
+	EnableCompression    bool   `yson:"enable_compression,omitempty"`
+	UseTimestampSuffix   bool   `yson:"use_timestamp_suffix,omitempty"`
+	EnableSystemMessages bool   `yson:"enable_system_messages,omitempty"`
 
 	RotationPolicy *ytv1.LogRotationPolicy `yson:"rotation_policy,omitempty"`
 }
@@ -57,6 +78,8 @@ type LoggingWriter struct {
 type Logging struct {
 	Writers map[string]LoggingWriter `yson:"writers"`
 	Rules   []LoggingRule            `yson:"rules"`
+
+	FlushPeriod int `yson:"flush_period"`
 }
 
 type loggingBuilder struct {
@@ -81,11 +104,17 @@ func newLoggingBuilder(location *ytv1.LocationSpec, componentName string) loggin
 	}
 }
 
-func createLoggingRule(spec ytv1.LoggerSpec) LoggingRule {
-	loggingRule := LoggingRule{
+func createBaseLoggingRule(spec ytv1.BaseLoggerSpec) LoggingRule {
+	return LoggingRule{
 		MinLevel: spec.MinLogLevel,
 		Writers:  []string{spec.Name},
 	}
+}
+
+func createLoggingRule(spec ytv1.TextLoggerSpec) LoggingRule {
+	loggingRule := createBaseLoggingRule(spec.BaseLoggerSpec)
+
+	loggingRule.Family = ptr.T(LogFamilyPlainText)
 
 	if spec.CategoriesFilter != nil {
 		switch spec.CategoriesFilter.Type {
@@ -99,13 +128,26 @@ func createLoggingRule(spec ytv1.LoggerSpec) LoggingRule {
 	return loggingRule
 }
 
-func createLoggingWriter(componentName string, loggingDirectory string, loggerSpec ytv1.LoggerSpec) LoggingWriter {
-	loggingWriter := LoggingWriter{
-		WriterType: loggerSpec.WriterType,
-	}
+func createStructuredLoggingRule(spec ytv1.StructuredLoggerSpec) LoggingRule {
+	loggingRule := createBaseLoggingRule(spec.BaseLoggerSpec)
+	loggingRule.Family = ptr.T(LogFamilyStructured)
+	loggingRule.IncludeCategories = []string{spec.Category}
+
+	return loggingRule
+}
+
+func createBaseLoggingWriter(componentName string, loggingDirectory string, writerType ytv1.LogWriterType, loggerSpec ytv1.BaseLoggerSpec) LoggingWriter {
+	loggingWriter := LoggingWriter{}
+
+	loggingWriter.WriterType = writerType
+	loggingWriter.Format = loggerSpec.Format
 
 	if loggingWriter.WriterType == ytv1.LogWriterTypeFile {
 		loggingWriter.FileName = path.Join(loggingDirectory, fmt.Sprintf("%s.%s.log", componentName, loggerSpec.Name))
+	}
+
+	if loggingWriter.Format != ytv1.LogFormatPlainText {
+		loggingWriter.FileName += fmt.Sprintf(".%s", loggingWriter.Format)
 	}
 
 	if loggerSpec.Compression != ytv1.LogCompressionNone {
@@ -121,9 +163,28 @@ func createLoggingWriter(componentName string, loggingDirectory string, loggerSp
 	return loggingWriter
 }
 
-func (b *loggingBuilder) addLogger(loggerSpec ytv1.LoggerSpec) *loggingBuilder {
+func createLoggingWriter(componentName string, loggingDirectory string, loggerSpec ytv1.TextLoggerSpec) LoggingWriter {
+	loggingWriter := createBaseLoggingWriter(componentName, loggingDirectory, loggerSpec.WriterType, loggerSpec.BaseLoggerSpec)
+	loggingWriter.EnableSystemMessages = true
+	return loggingWriter
+}
+
+func createStructuredLoggingWriter(componentName string, loggingDirectory string, loggerSpec ytv1.StructuredLoggerSpec) LoggingWriter {
+	loggingWriter := createBaseLoggingWriter(componentName, loggingDirectory, ytv1.LogWriterTypeFile, loggerSpec.BaseLoggerSpec)
+	loggingWriter.EnableSystemMessages = false
+	return loggingWriter
+}
+
+func (b *loggingBuilder) addLogger(loggerSpec ytv1.TextLoggerSpec) *loggingBuilder {
 	b.logging.Rules = append(b.logging.Rules, createLoggingRule(loggerSpec))
 	b.logging.Writers[loggerSpec.Name] = createLoggingWriter(b.componentName, b.loggingDirectory, loggerSpec)
+
+	return b
+}
+
+func (b *loggingBuilder) addStructuredLogger(loggerSpec ytv1.StructuredLoggerSpec) *loggingBuilder {
+	b.logging.Rules = append(b.logging.Rules, createStructuredLoggingRule(loggerSpec))
+	b.logging.Writers[loggerSpec.Name] = createStructuredLoggingWriter(b.componentName, b.loggingDirectory, loggerSpec)
 
 	return b
 }

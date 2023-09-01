@@ -32,14 +32,14 @@ func getSchedulerLogging(spec ytv1.SchedulersSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"scheduler",
-		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
 func getControllerAgentLogging(spec ytv1.ControllerAgentsSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"controller-agent",
-		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
 func getSchedulerServerCarcass(spec ytv1.SchedulersSpec) (SchedulerServer, error) {

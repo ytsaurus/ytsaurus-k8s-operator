@@ -68,31 +68,41 @@ func TestGetMasterConfig(t *testing.T) {
 						},
 					},
 
-					Loggers: []v1.LoggerSpec{
+					Loggers: []v1.TextLoggerSpec{
 						{
-							Name:        "info",
-							WriterType:  v1.LogWriterTypeFile,
-							MinLogLevel: v1.LogLevelInfo,
-							Compression: v1.LogCompressionNone,
+							BaseLoggerSpec: v1.BaseLoggerSpec{
+								Name:        "info",
+								MinLogLevel: v1.LogLevelInfo,
+								Compression: v1.LogCompressionNone,
+								Format:      v1.LogFormatPlainText,
+							},
+							WriterType: v1.LogWriterTypeFile,
 						},
 						{
-							Name:        "error",
-							WriterType:  v1.LogWriterTypeFile,
-							MinLogLevel: v1.LogLevelError,
-							Compression: v1.LogCompressionNone,
+							BaseLoggerSpec: v1.BaseLoggerSpec{
+								Name:        "error",
+								MinLogLevel: v1.LogLevelError,
+								Compression: v1.LogCompressionNone,
+								Format:      v1.LogFormatPlainText,
+							},
+							WriterType: v1.LogWriterTypeFile,
 						},
 						{
-							Name:        "debug",
-							WriterType:  v1.LogWriterTypeFile,
-							MinLogLevel: v1.LogLevelDebug,
-							Compression: v1.LogCompressionZstd,
+							BaseLoggerSpec: v1.BaseLoggerSpec{
+								Name:        "debug",
+								MinLogLevel: v1.LogLevelDebug,
+								Compression: v1.LogCompressionZstd,
+								Format:      v1.LogFormatPlainText,
+
+								RotationPolicy: &v1.LogRotationPolicy{
+									RotationPeriodMilliseconds: &logRotationPeriod,
+									MaxTotalSizeToKeep:         &totalLogSize,
+								},
+							},
+							WriterType: v1.LogWriterTypeFile,
 							CategoriesFilter: &v1.CategoriesFilter{
 								Type:   v1.CategoriesFilterTypeExclude,
 								Values: []string{"Bus"},
-							},
-							RotationPolicy: &v1.LogRotationPolicy{
-								RotationPeriodMilliseconds: &logRotationPeriod,
-								MaxTotalSizeToKeep:         &totalLogSize,
 							},
 						},
 					},

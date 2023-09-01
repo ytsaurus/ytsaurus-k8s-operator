@@ -20,7 +20,7 @@ func getDiscoveryLogging(spec ytv1.DiscoverySpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"discovery",
-		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
 func getDiscoveryServerCarcass(spec ytv1.DiscoverySpec) (DiscoveryServer, error) {

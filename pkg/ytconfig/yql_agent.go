@@ -27,7 +27,7 @@ func getYQLAgentLogging(spec ytv1.YQLAgentSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"yql-agent",
-		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultDebugLoggerSpec(), defaultStderrLoggerSpec()})
+		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultDebugLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
 func getYQLAgentServerCarcass(spec ytv1.YQLAgentSpec) (YQLAgentServer, error) {

@@ -198,7 +198,7 @@ func getDataNodeLogging(spec ytv1.DataNodesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"data-node",
-		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
 func getDataNodeServerCarcass(spec ytv1.DataNodesSpec) (DataNodeServer, error) {
@@ -264,7 +264,7 @@ func getExecNodeLogging(spec ytv1.ExecNodesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"exec-node",
-		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
 func getExecNodeServerCarcass(spec ytv1.ExecNodesSpec, usePorto bool) (ExecNodeServer, error) {
@@ -326,7 +326,7 @@ func getTabletNodeLogging(spec ytv1.TabletNodesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"tablet-node",
-		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
 func getTabletNodeServerCarcass(spec ytv1.TabletNodesSpec) (TabletNodeServer, error) {

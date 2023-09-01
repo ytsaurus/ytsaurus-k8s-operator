@@ -63,7 +63,7 @@ type CommonServer struct {
 	ClusterConnection  ClusterConnection  `yson:"cluster_connection"`
 }
 
-func createLogging(spec *ytv1.InstanceSpec, componentName string, defaultLoggerSpecs []ytv1.LoggerSpec) Logging {
+func createLogging(spec *ytv1.InstanceSpec, componentName string, defaultLoggerSpecs []ytv1.TextLoggerSpec) Logging {
 	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), componentName)
 	if spec.Loggers != nil && len(spec.Loggers) > 0 {
 		for _, loggerSpec := range spec.Loggers {
@@ -74,5 +74,11 @@ func createLogging(spec *ytv1.InstanceSpec, componentName string, defaultLoggerS
 			loggingBuilder.addLogger(defaultLoggerSpec)
 		}
 	}
+	if spec.StructuredLoggers != nil && len(spec.StructuredLoggers) > 0 {
+		for _, loggerSpec := range spec.StructuredLoggers {
+			loggingBuilder.addStructuredLogger(loggerSpec)
+		}
+	}
+	loggingBuilder.logging.FlushPeriod = 3000
 	return loggingBuilder.logging
 }

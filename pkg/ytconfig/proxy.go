@@ -46,7 +46,7 @@ func getHTTPProxyLogging(spec ytv1.HTTPProxiesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"http-proxy",
-		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
 func getHTTPProxyServerCarcass(spec ytv1.HTTPProxiesSpec) (HTTPProxyServer, error) {
@@ -72,7 +72,7 @@ func getRPCProxyLogging(spec ytv1.RPCProxiesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"rpc-proxy",
-		[]ytv1.LoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
 func getRPCProxyServerCarcass(spec ytv1.RPCProxiesSpec) (RPCProxyServer, error) {

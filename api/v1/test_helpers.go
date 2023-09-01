@@ -65,11 +65,13 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 							MountPath: "/yt/master-data",
 						},
 					},
-					Loggers: []LoggerSpec{
+					Loggers: []TextLoggerSpec{
 						{
-							MinLogLevel: LogLevelDebug,
-							WriterType:  LogWriterTypeFile,
-							Name:        "debug",
+							BaseLoggerSpec: BaseLoggerSpec{
+								MinLogLevel: LogLevelDebug,
+								Name:        "debug",
+							},
+							WriterType: LogWriterTypeFile,
 						},
 					},
 				},
@@ -115,11 +117,13 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 				{
 					InstanceSpec: InstanceSpec{
 						InstanceCount: 3,
-						Loggers: []LoggerSpec{
+						Loggers: []TextLoggerSpec{
 							{
-								MinLogLevel: LogLevelDebug,
-								WriterType:  LogWriterTypeFile,
-								Name:        "debug",
+								BaseLoggerSpec: BaseLoggerSpec{
+									MinLogLevel: LogLevelDebug,
+									Name:        "debug",
+								},
+								WriterType: LogWriterTypeFile,
 							},
 						},
 					},
@@ -135,11 +139,13 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 								corev1.ResourceMemory: execNodeMemory,
 							},
 						},
-						Loggers: []LoggerSpec{
+						Loggers: []TextLoggerSpec{
 							{
-								MinLogLevel: LogLevelDebug,
-								WriterType:  LogWriterTypeFile,
-								Name:        "debug",
+								BaseLoggerSpec: BaseLoggerSpec{
+									MinLogLevel: LogLevelDebug,
+									Name:        "debug",
+								},
+								WriterType: LogWriterTypeFile,
 							},
 						},
 						Locations: []LocationSpec{
