@@ -50,7 +50,7 @@ func NewChytController(
 		resource.Spec.CoreImage,
 		1,
 		cfgen.GetChytControllerConfig,
-		nil,
+		cfgen.NeedChytControllerConfigReload,
 		ChytControllerConfigFileName,
 		"chyt-deployment",
 		"chyt")
@@ -70,7 +70,8 @@ func NewChytController(
 			"user",
 			consts.ClientConfigFileName,
 			resource.Spec.CoreImage,
-			cfgen.GetNativeClientConfig),
+			cfgen.GetNativeClientConfig,
+			cfgen.NeedNativeClientConfigReload),
 		initClusterJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -79,7 +80,8 @@ func NewChytController(
 			"cluster",
 			ChytInitClusterJobConfigFileName,
 			resource.Spec.CoreImage,
-			cfgen.GetChytInitClusterConfig),
+			cfgen.GetChytInitClusterConfig,
+			cfgen.NeedChytInitClusterConfigReload),
 		initChPublicJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -88,6 +90,7 @@ func NewChytController(
 			"ch-public",
 			"",
 			resource.Spec.CoreImage,
+			nil,
 			nil),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
@@ -196,7 +199,7 @@ func (c *chytController) syncComponents(ctx context.Context) (err error) {
 	}
 
 	deployment.Spec.Template.Spec.Containers = []corev1.Container{
-		corev1.Container{
+		{
 			Image:   c.microservice.image,
 			Name:    consts.UIContainerName,
 			EnvFrom: c.getEnvSource(),

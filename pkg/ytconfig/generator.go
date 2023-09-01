@@ -134,12 +134,28 @@ func (g *Generator) GetClusterConnection() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
+func (g *Generator) NeedChytControllerConfigReload(data []byte) (bool, error) {
+	newData, err := g.GetChytControllerConfig()
+	if err != nil {
+		return false, err
+	}
+	return !cmp.Equal(newData, data), nil
+}
+
 func (g *Generator) GetChytControllerConfig() ([]byte, error) {
 	c := getChytController()
 	c.LocationProxies = []string{
 		g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
 	}
 	return marshallYsonConfig(c)
+}
+
+func (g *Generator) NeedChytInitClusterConfigReload(data []byte) (bool, error) {
+	newData, err := g.GetChytInitClusterConfig()
+	if err != nil {
+		return false, err
+	}
+	return !cmp.Equal(newData, data), nil
 }
 
 func (g *Generator) GetChytInitClusterConfig() ([]byte, error) {
@@ -173,6 +189,14 @@ func (g *Generator) GetMasterConfig() ([]byte, error) {
 		return nil, err
 	}
 	return marshallYsonConfig(c)
+}
+
+func (g *Generator) NeedNativeClientConfigReload(data []byte) (bool, error) {
+	newData, err := g.GetNativeClientConfig()
+	if err != nil {
+		return false, err
+	}
+	return !cmp.Equal(newData, data), nil
 }
 
 func (g *Generator) GetNativeClientConfig() ([]byte, error) {
@@ -450,6 +474,14 @@ func (g *Generator) GetYQLAgentConfig() ([]byte, error) {
 		return nil, err
 	}
 	return marshallYsonConfig(c)
+}
+
+func (g *Generator) NeedWebUIConfigReload(data []byte) (bool, error) {
+	newData, err := g.GetWebUIConfig()
+	if err != nil {
+		return false, err
+	}
+	return !cmp.Equal(newData, data), nil
 }
 
 func (g *Generator) GetWebUIConfig() ([]byte, error) {

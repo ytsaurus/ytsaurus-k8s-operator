@@ -42,7 +42,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		r.Spec.UIImage,
 		r.Spec.UI.InstanceCount,
 		cfgen.GetWebUIConfig,
-		nil,
+		cfgen.NeedWebUIConfigReload,
 		UIConfigFileName,
 		"ytsaurus-ui-deployment",
 		"ytsaurus-ui")
@@ -62,7 +62,8 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			"default",
 			consts.ClientConfigFileName,
 			r.Spec.CoreImage,
-			cfgen.GetNativeClientConfig),
+			cfgen.GetNativeClientConfig,
+			cfgen.NeedNativeClientConfigReload),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			&l,
