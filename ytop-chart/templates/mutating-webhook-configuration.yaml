@@ -14,7 +14,8 @@ webhooks:
       name: '{{ include "ytop-chart.fullname" . }}-webhook-service'
       namespace: '{{ .Release.Namespace }}'
       path: /mutate-cluster-ytsaurus-tech-v1-spyt
-  failurePolicy: Fail
+  failurePolicy: '{{ .Values.mutatingWebhookConfiguration.mspytKbIo.failurePolicy
+    }}'
   name: mspyt.kb.io
   rules:
   - apiGroups:
@@ -34,7 +35,8 @@ webhooks:
       name: '{{ include "ytop-chart.fullname" . }}-webhook-service'
       namespace: '{{ .Release.Namespace }}'
       path: /mutate-cluster-ytsaurus-tech-v1-ytsaurus
-  failurePolicy: Fail
+  failurePolicy: '{{ .Values.mutatingWebhookConfiguration.mytsaurusKbIo.failurePolicy
+    }}'
   name: mytsaurus.kb.io
   rules:
   - apiGroups:

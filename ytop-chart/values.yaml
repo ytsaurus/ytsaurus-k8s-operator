@@ -76,6 +76,16 @@ metricsService:
     protocol: TCP
     targetPort: https
   type: ClusterIP
+mutatingWebhookConfiguration:
+  mspytKbIo:
+    failurePolicy: Fail
+  mytsaurusKbIo:
+    failurePolicy: Fail
+validatingWebhookConfiguration:
+  vspytKbIo:
+    failurePolicy: Fail
+  vytsaurusKbIo:
+    failurePolicy: Fail
 webhookService:
   ports:
   - port: 443

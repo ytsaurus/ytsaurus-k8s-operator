@@ -14,7 +14,8 @@ webhooks:
       name: '{{ include "ytop-chart.fullname" . }}-webhook-service'
       namespace: '{{ .Release.Namespace }}'
       path: /validate-cluster-ytsaurus-tech-v1-spyt
-  failurePolicy: Fail
+  failurePolicy: '{{ .Values.validatingWebhookConfiguration.vspytKbIo.failurePolicy
+    }}'
   name: vspyt.kb.io
   rules:
   - apiGroups:
@@ -34,7 +35,8 @@ webhooks:
       name: '{{ include "ytop-chart.fullname" . }}-webhook-service'
       namespace: '{{ .Release.Namespace }}'
       path: /validate-cluster-ytsaurus-tech-v1-ytsaurus
-  failurePolicy: Fail
+  failurePolicy: '{{ .Values.validatingWebhookConfiguration.vytsaurusKbIo.failurePolicy
+    }}'
   name: vytsaurus.kb.io
   rules:
   - apiGroups:
