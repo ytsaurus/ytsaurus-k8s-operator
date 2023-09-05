@@ -271,8 +271,9 @@ type QueryTrackerSpec struct {
 	InstanceSpec `json:",inline"`
 }
 
-type ChytSpec struct {
+type ChytControllerSpec struct {
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	Image     *string                     `json:"image,omitempty"`
 }
 
 type YQLAgentSpec struct {
@@ -318,10 +319,10 @@ type YtsaurusSpec struct {
 	ControllerAgents *ControllerAgentsSpec `json:"controllerAgents,omitempty"`
 	TabletNodes      []TabletNodesSpec     `json:"tabletNodes,omitempty"`
 
-	Chyt          *ChytSpec           `json:"chyt,omitempty"`
-	QueryTrackers *QueryTrackerSpec   `json:"queryTrackers,omitempty"`
-	Spyt          *DeprecatedSpytSpec `json:"spyt,omitempty"`
-	YQLAgents     *YQLAgentSpec       `json:"yqlAgents,omitempty"`
+	ChytController *ChytControllerSpec `json:"chyt,omitempty"`
+	QueryTrackers  *QueryTrackerSpec   `json:"queryTrackers,omitempty"`
+	Spyt           *DeprecatedSpytSpec `json:"spyt,omitempty"`
+	YQLAgents      *YQLAgentSpec       `json:"yqlAgents,omitempty"`
 
 	UI *UISpec `json:"ui,omitempty"`
 }

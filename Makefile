@@ -102,7 +102,7 @@ docker-push: ## Push docker image with the manager.
 
 .PHONY: helm
 helm: manifests kustomize helmify ## Generate helm chart.
-	$(KUSTOMIZE) build config/default | $(HELMIFY) -crd-dir $(OPERATOR_CHART)
+	$(KUSTOMIZE) build config/default | $(HELMIFY) $(OPERATOR_CHART)
 
 ##@ Deployment
 

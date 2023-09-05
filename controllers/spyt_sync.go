@@ -8,6 +8,7 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"time"
 )
 
 func (r *SpytReconciler) Sync(ctx context.Context, resource *ytv1.Spyt, ytsaurus *ytv1.Ytsaurus) (ctrl.Result, error) {
@@ -26,11 +27,20 @@ func (r *SpytReconciler) Sync(ctx context.Context, resource *ytv1.Spyt, ytsaurus
 	}
 
 	componentStatus := component.Status(ctx)
-	if componentStatus.SyncStatus != components.SyncStatusReady {
-		if err := component.Sync(ctx); err != nil {
-			logger.Error(err, "spyt sync failed")
-			return ctrl.Result{Requeue: true}, err
-		}
+
+	if componentStatus.SyncStatus == components.SyncStatusBlocked {
+		return ctrl.Result{RequeueAfter: time.Second * 10}, nil
+	}
+
+	if componentStatus.SyncStatus == components.SyncStatusReady {
+		logger.Info("SPYT initialization finished")
+
+		return ctrl.Result{}, err
+	}
+
+	if err := component.Sync(ctx); err != nil {
+		logger.Error(err, "component sync failed", "component", "spyt")
+		return ctrl.Result{Requeue: true}, err
 	}
 
 	if err := spyt.APIProxy().UpdateStatus(ctx); err != nil {
@@ -38,7 +48,5 @@ func (r *SpytReconciler) Sync(ctx context.Context, resource *ytv1.Spyt, ytsaurus
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	logger.Info("SPYT initialization finished")
-
-	return ctrl.Result{}, err
+	return ctrl.Result{Requeue: true}, nil
 }

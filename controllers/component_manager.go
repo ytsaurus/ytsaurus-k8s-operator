@@ -106,7 +106,7 @@ func NewComponentManager(
 		allComponents = append(allComponents, yqla)
 	}
 
-	if resource.Spec.Chyt != nil && resource.Spec.Schedulers != nil {
+	if resource.Spec.ChytController != nil && resource.Spec.Schedulers != nil {
 		chyt := components.NewChytController(cfgen, ytsaurus, m, s, dnds)
 		allComponents = append(allComponents, chyt)
 	}

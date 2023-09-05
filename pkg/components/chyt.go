@@ -3,7 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
-	"path"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"strings"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -14,129 +14,97 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-type chytController struct {
-	ComponentBase
-	microservice    *Microservice
-	initUserJob     *InitJob
-	initClusterJob  *InitJob
-	initChPublicJob *InitJob
-	secret          *resources.StringSecret
+type Chyt struct {
+	labeller *labeller.Labeller
+	chyt     *apiproxy.Chyt
+	cfgen    *ytconfig.Generator
+	ytsaurus *ytv1.Ytsaurus
 
-	master    Component
-	scheduler Component
-	dataNodes []Component
+	secret *resources.StringSecret
+
+	initUser        *InitJob
+	initEnvironment *InitJob
+	initChPublicJob *InitJob
 }
 
-const ChytControllerConfigFileName = "chyt-controller.yson"
-const ChytInitClusterJobConfigFileName = "chyt-init-cluster.yson"
-
-func NewChytController(
+func NewChyt(
 	cfgen *ytconfig.Generator,
-	ytsaurus *apiproxy.Ytsaurus,
-	master Component,
-	scheduler Component,
-	dataNodes []Component) Component {
-	resource := ytsaurus.GetResource()
+	chyt *apiproxy.Chyt,
+	ytsaurus *ytv1.Ytsaurus) *Chyt {
+
+	chytSpec := chyt.GetResource().Spec
+
 	l := labeller.Labeller{
-		ObjectMeta:     &resource.ObjectMeta,
-		APIProxy:       ytsaurus.APIProxy(),
-		ComponentLabel: "yt-chyt-controller",
-		ComponentName:  "ChytController",
+		ObjectMeta:     &chyt.GetResource().ObjectMeta,
+		APIProxy:       chyt.APIProxy(),
+		ComponentLabel: fmt.Sprintf("ytsaurus-chyt-%s", chytSpec.Name),
+		ComponentName:  fmt.Sprintf("CHYT-%s", chytSpec.Name),
 	}
 
-	microservice := NewMicroservice(
-		&l,
-		ytsaurus,
-		resource.Spec.CoreImage,
-		1,
-		cfgen.GetChytControllerConfig,
-		cfgen.NeedChytControllerConfigReload,
-		ChytControllerConfigFileName,
-		"chyt-deployment",
-		"chyt")
-
-	return &chytController{
-		ComponentBase: ComponentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
-		},
-		microservice: microservice,
-		initUserJob: NewInitJob(
+	return &Chyt{
+		labeller: &l,
+		chyt:     chyt,
+		cfgen:    cfgen,
+		ytsaurus: ytsaurus,
+		initUser: NewInitJob(
 			&l,
-			ytsaurus.APIProxy(),
-			ytsaurus,
-			ytsaurus.GetResource().Spec.ImagePullSecrets,
+			chyt.APIProxy(),
+			chyt,
+			ytsaurus.Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,
-			resource.Spec.CoreImage,
+			ytsaurus.Spec.CoreImage,
 			cfgen.GetNativeClientConfig,
 			cfgen.NeedNativeClientConfigReload),
-		initClusterJob: NewInitJob(
+		initEnvironment: NewInitJob(
 			&l,
-			ytsaurus.APIProxy(),
-			ytsaurus,
-			resource.Spec.ImagePullSecrets,
-			"cluster",
-			ChytInitClusterJobConfigFileName,
-			resource.Spec.CoreImage,
-			cfgen.GetChytInitClusterConfig,
-			cfgen.NeedChytInitClusterConfigReload),
+			chyt.APIProxy(),
+			chyt,
+			ytsaurus.Spec.ImagePullSecrets,
+			"release",
+			consts.ClientConfigFileName,
+			chytSpec.Image,
+			cfgen.GetNativeClientConfig,
+			cfgen.NeedNativeClientConfigReload),
 		initChPublicJob: NewInitJob(
 			&l,
-			ytsaurus.APIProxy(),
-			ytsaurus,
-			resource.Spec.ImagePullSecrets,
+			chyt.APIProxy(),
+			chyt,
+			ytsaurus.Spec.ImagePullSecrets,
 			"ch-public",
 			"",
-			resource.Spec.CoreImage,
+			chytSpec.Image,
 			nil,
 			nil),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			&l,
-			ytsaurus.APIProxy()),
-		master:    master,
-		scheduler: scheduler,
-		dataNodes: dataNodes,
+			chyt.APIProxy()),
 	}
 }
 
-func (c *chytController) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
-		c.microservice,
-		c.initUserJob,
-		c.initClusterJob,
-		c.initChPublicJob,
-		c.secret,
-	})
-}
-
-func (c *chytController) initUsers() string {
+func (c *Chyt) createInitUserScript() string {
 	token, _ := c.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand(consts.ChytUserName, "", token, true)
-	commands = append(commands, createUserCommand("yt-clickhouse", "", "", true)...)
-	return strings.Join(commands, "\n")
-}
-
-func (c *chytController) createInitUserScript() string {
+	commands := createUserCommand("chyt_releaser", "", token, true)
 	script := []string{
 		initJobWithNativeDriverPrologue(),
-		c.initUsers(),
-		"/usr/bin/yt create map_node //sys/bin --ignore-existing",
-		"/usr/bin/yt create map_node //sys/bin/clickhouse-trampoline --ignore-existing",
-		"/usr/bin/yt create map_node //sys/bin/ytserver-clickhouse --ignore-existing",
-		"if [[ `/usr/bin/yt exists //sys/bin/clickhouse-trampoline/clickhouse-trampoline` == 'false' ]]; then /usr/bin/yt write-file //sys/bin/clickhouse-trampoline/clickhouse-trampoline < /usr/bin/clickhouse-trampoline; fi",
-		"/usr/bin/yt set //sys/bin/clickhouse-trampoline/clickhouse-trampoline/@executable %true",
-		"if [[ `/usr/bin/yt exists //sys/bin/ytserver-clickhouse/ytserver-clickhouse` == 'false' ]]; then /usr/bin/yt write-file //sys/bin/ytserver-clickhouse/ytserver-clickhouse < /usr/bin/ytserver-clickhouse; fi",
-		"/usr/bin/yt set //sys/bin/ytserver-clickhouse/ytserver-clickhouse/@executable %true",
-		"/usr/bin/yt create access_control_object_namespace --attributes '{name=chyt}' --ignore-existing",
 	}
+	script = append(script, commands...)
 
 	return strings.Join(script, "\n")
 }
 
-func (c *chytController) createInitChPublicScript() string {
+func (c *Chyt) createInitScript() string {
+	script := "/setup_cluster_for_chyt.sh"
+
+	if c.chyt.GetResource().Spec.MakeDefault {
+		script += " --make-default"
+	}
+
+	return script
+}
+
+func (c *Chyt) createInitChPublicScript() string {
 	script := []string{
 		initJobPrologue,
 		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v", c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole), c.cfgen.GetChytControllerServiceAddress()),
@@ -151,37 +119,7 @@ func (c *chytController) createInitChPublicScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (c *chytController) createInitClusterScript() string {
-	script := []string{
-		initJobPrologue,
-		fmt.Sprintf("/usr/bin/chyt-controller --config-path %s init-cluster",
-			path.Join(consts.ConfigMountPoint, ChytInitClusterJobConfigFileName)),
-	}
-
-	return strings.Join(script, "\n")
-}
-
-func (c *chytController) getEnvSource() []corev1.EnvFromSource {
-	return []corev1.EnvFromSource{
-		{
-			SecretRef: &corev1.SecretEnvSource{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: c.secret.Name(),
-				},
-			},
-		},
-	}
-}
-
-func (c *chytController) prepareInitClusterJob() {
-	c.initClusterJob.SetInitScript(c.createInitClusterScript())
-
-	job := c.initClusterJob.Build()
-	container := &job.Spec.Template.Spec.Containers[0]
-	container.EnvFrom = []corev1.EnvFromSource{c.secret.GetEnvSource()}
-}
-
-func (c *chytController) prepareChPublicJob() {
+func (c *Chyt) prepareChPublicJob() {
 	c.initChPublicJob.SetInitScript(c.createInitChPublicScript())
 
 	job := c.initChPublicJob.Build()
@@ -189,103 +127,78 @@ func (c *chytController) prepareChPublicJob() {
 	container.EnvFrom = []corev1.EnvFromSource{c.secret.GetEnvSource()}
 }
 
-func (c *chytController) syncComponents(ctx context.Context) (err error) {
-	service := c.microservice.BuildService()
-	service.Spec.Type = "ClusterIP"
-
-	deployment := c.microservice.BuildDeployment()
-	volumeMounts := []corev1.VolumeMount{
-		createConfigVolumeMount(),
-	}
-
-	deployment.Spec.Template.Spec.Containers = []corev1.Container{
-		{
-			Image:   c.microservice.image,
-			Name:    consts.UIContainerName,
-			EnvFrom: c.getEnvSource(),
-			Command: []string{
-				"/usr/bin/chyt-controller",
-				"--config-path",
-				path.Join(consts.ConfigMountPoint, ChytControllerConfigFileName),
-				"run",
-			},
-			VolumeMounts: volumeMounts,
-		},
-	}
-
-	deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
-		createConfigVolume(c.labeller.GetMainConfigMapName(), nil),
-	}
-
-	return c.microservice.Sync(ctx)
-}
-
-func (c *chytController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	// TODO: add update logic.
-
-	if c.master.Status(ctx).SyncStatus != SyncStatusReady {
-		return WaitingStatus(SyncStatusBlocked, c.master.GetName()), err
+	if c.ytsaurus.Status.State != ytv1.ClusterStateRunning {
+		return WaitingStatus(SyncStatusBlocked, "ytsaurus running"), err
 	}
 
-	if c.scheduler.Status(ctx).SyncStatus != SyncStatusReady {
-		return WaitingStatus(SyncStatusBlocked, c.scheduler.GetName()), err
-	}
-
-	for _, dataNode := range c.dataNodes {
-		if dataNode.Status(ctx).SyncStatus != SyncStatusReady {
-			return WaitingStatus(SyncStatusBlocked, dataNode.GetName()), err
-		}
-	}
-
+	// Create a user for chyt initialization.
 	if c.secret.NeedSync(consts.TokenSecretKey, "") {
 		if !dry {
-			s := c.secret.Build()
-			s.StringData = map[string]string{
+			secretSpec := c.secret.Build()
+			secretSpec.StringData = map[string]string{
 				consts.TokenSecretKey: ytconfig.RandString(30),
 			}
 			err = c.secret.Sync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, c.secret.Name()), err
 	}
-
 	if !dry {
-		c.initUserJob.SetInitScript(c.createInitUserScript())
+		c.initUser.SetInitScript(c.createInitUserScript())
 	}
-	status, err := c.initUserJob.Sync(ctx, dry)
-	if err != nil || status.SyncStatus != SyncStatusReady {
+
+	status, err := c.initUser.Sync(ctx, dry)
+	if status.SyncStatus != SyncStatusReady {
 		return status, err
 	}
 
 	if !dry {
-		c.prepareInitClusterJob()
-	}
-	status, err = c.initClusterJob.Sync(ctx, dry)
-	if err != nil || status.SyncStatus != SyncStatusReady {
-		return status, err
-	}
-
-	if c.microservice.NeedSync() {
-		if !dry {
-			// TODO(psushin): there should be me more sophisticated logic for version updates.
-			err = c.syncComponents(ctx)
+		c.initEnvironment.SetInitScript(c.createInitScript())
+		job := c.initEnvironment.Build()
+		container := &job.Spec.Template.Spec.Containers[0]
+		token, _ := c.secret.GetValue(consts.TokenSecretKey)
+		container.Env = []corev1.EnvVar{
+			{
+				Name:  "YT_PROXY",
+				Value: c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+			},
+			{
+				Name:  "YT_TOKEN",
+				Value: token,
+			},
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
-	if !dry {
-		c.prepareChPublicJob()
-	}
-	status, err = c.initChPublicJob.Sync(ctx, dry)
+	status, err = c.initEnvironment.Sync(ctx, dry)
 	if err != nil || status.SyncStatus != SyncStatusReady {
 		return status, err
+	}
+
+	if c.ytsaurus.Spec.ChytController != nil && c.chyt.GetResource().Spec.MakeDefault {
+		if !dry {
+			c.prepareChPublicJob()
+		}
+		status, err = c.initChPublicJob.Sync(ctx, dry)
+		if err != nil || status.SyncStatus != SyncStatusReady {
+			return status, err
+		}
 	}
 
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (c *chytController) Status(ctx context.Context) ComponentStatus {
+func (c *Chyt) Fetch(ctx context.Context) error {
+	return resources.Fetch(ctx, []resources.Fetchable{
+		c.initUser,
+		c.initEnvironment,
+		c.initChPublicJob,
+		c.secret,
+	})
+}
+
+func (c *Chyt) Status(ctx context.Context) ComponentStatus {
 	status, err := c.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -294,7 +207,7 @@ func (c *chytController) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (c *chytController) Sync(ctx context.Context) error {
+func (c *Chyt) Sync(ctx context.Context) error {
 	_, err := c.doSync(ctx, false)
 	return err
 }

@@ -28,7 +28,7 @@ func getChytController() ChytController {
 		Strawberry: Strawberry{
 			Root:          "//sys/strawberry",
 			Stage:         "production",
-			RobotUsername: consts.ChytUserName,
+			RobotUsername: consts.ChytControllerUserName,
 		},
 		Controllers: map[string]yson.RawValue{
 			"chyt": yson.RawValue("{address_resolver={enable_ipv4=%true;enable_ipv6=%false;retries=1000}}"),

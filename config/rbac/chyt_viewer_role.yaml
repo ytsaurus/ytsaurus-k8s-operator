@@ -1,0 +1,27 @@
+# permissions for end users to view chyts.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: chyt-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: yt-k8s-operator
+    app.kubernetes.io/part-of: yt-k8s-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: chyt-viewer-role
+rules:
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - chyts
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - chyts/status
+  verbs:
+  - get

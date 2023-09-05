@@ -72,6 +72,8 @@ spec:
                 x-kubernetes-map-type: atomic
               chyt:
                 properties:
+                  image:
+                    type: string
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -1010,6 +1012,7 @@ spec:
                           - yson
                           type: string
                         minLogLevel:
+                          default: info
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
                           enum:
@@ -1099,6 +1102,7 @@ spec:
                           - yson
                           type: string
                         minLogLevel:
+                          default: info
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
                           enum:
@@ -3899,6 +3903,7 @@ spec:
                             - yson
                             type: string
                           minLogLevel:
+                            default: info
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
@@ -3992,6 +3997,7 @@ spec:
                             - yson
                             type: string
                           minLogLevel:
+                            default: info
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
@@ -6804,6 +6810,7 @@ spec:
                           - yson
                           type: string
                         minLogLevel:
+                          default: info
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
                           enum:
@@ -6893,6 +6900,7 @@ spec:
                           - yson
                           type: string
                         minLogLevel:
+                          default: info
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
                           enum:
@@ -9691,6 +9699,7 @@ spec:
                             - yson
                             type: string
                           minLogLevel:
+                            default: info
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
@@ -9764,6 +9773,11 @@ spec:
                             to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                           type: object
                       type: object
+                    sidecars:
+                      description: List of sidecar containers as yaml of corev1.Container.
+                      items:
+                        type: string
+                      type: array
                     structuredLoggers:
                       items:
                         properties:
@@ -9784,6 +9798,7 @@ spec:
                             - yson
                             type: string
                           minLogLevel:
+                            default: info
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
@@ -12626,6 +12641,7 @@ spec:
                             - yson
                             type: string
                           minLogLevel:
+                            default: info
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
@@ -12724,6 +12740,7 @@ spec:
                             - yson
                             type: string
                           minLogLevel:
+                            default: info
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
@@ -15553,6 +15570,7 @@ spec:
                           - yson
                           type: string
                         minLogLevel:
+                          default: info
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
                           enum:
@@ -15642,6 +15660,7 @@ spec:
                           - yson
                           type: string
                         minLogLevel:
+                          default: info
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
                           enum:
@@ -18415,6 +18434,7 @@ spec:
                           - yson
                           type: string
                         minLogLevel:
+                          default: info
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
                           enum:
@@ -18504,6 +18524,7 @@ spec:
                           - yson
                           type: string
                         minLogLevel:
+                          default: info
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
                           enum:
@@ -21302,6 +21323,7 @@ spec:
                             - yson
                             type: string
                           minLogLevel:
+                            default: info
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
@@ -21399,6 +21421,7 @@ spec:
                             - yson
                             type: string
                           minLogLevel:
+                            default: info
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
@@ -24210,6 +24233,7 @@ spec:
                           - yson
                           type: string
                         minLogLevel:
+                          default: info
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
                           enum:
@@ -24299,6 +24323,7 @@ spec:
                           - yson
                           type: string
                         minLogLevel:
+                          default: info
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
                           enum:
@@ -27099,6 +27124,7 @@ spec:
                             - yson
                             type: string
                           minLogLevel:
+                            default: info
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
@@ -27188,6 +27214,7 @@ spec:
                             - yson
                             type: string
                           minLogLevel:
+                            default: info
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
@@ -30035,6 +30062,7 @@ spec:
                             - yson
                             type: string
                           minLogLevel:
+                            default: info
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
@@ -30128,6 +30156,7 @@ spec:
                             - yson
                             type: string
                           minLogLevel:
+                            default: info
                             description: LogLevel string describes possible Ytsaurus
                               logging level.
                             enum:
@@ -32994,6 +33023,7 @@ spec:
                           - yson
                           type: string
                         minLogLevel:
+                          default: info
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
                           enum:
@@ -33083,6 +33113,7 @@ spec:
                           - yson
                           type: string
                         minLogLevel:
+                          default: info
                           description: LogLevel string describes possible Ytsaurus logging
                             level.
                           enum:

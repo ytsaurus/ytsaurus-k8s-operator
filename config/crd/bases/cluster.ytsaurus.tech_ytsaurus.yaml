@@ -60,6 +60,8 @@ spec:
                 x-kubernetes-map-type: atomic
               chyt:
                 properties:
+                  image:
+                    type: string
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
