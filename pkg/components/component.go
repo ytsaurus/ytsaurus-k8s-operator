@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"fmt"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
@@ -19,6 +20,19 @@ const (
 	SyncStatusReady           SyncStatus = "Ready"
 	SyncStatusUpdating        SyncStatus = "Updating"
 )
+
+type ComponentStatus struct {
+	SyncStatus SyncStatus
+	Message    string
+}
+
+func WaitingStatus(status SyncStatus, event string) ComponentStatus {
+	return ComponentStatus{status, fmt.Sprintf("Wait for %s", event)}
+}
+
+func SimpleStatus(status SyncStatus) ComponentStatus {
+	return ComponentStatus{status, string(status)}
+}
 
 type ServerComponent interface {
 	Component
@@ -51,7 +65,7 @@ func (c *ServerComponentBase) removePods(ctx context.Context, dry bool) error {
 				return err
 			}
 
-			err = c.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			c.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
 				Type:    c.labeller.GetPodsRemovingStartedCondition(),
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -66,7 +80,7 @@ func (c *ServerComponentBase) removePods(ctx context.Context, dry bool) error {
 	}
 
 	if !dry {
-		err = c.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		c.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
 			Type:    c.labeller.GetPodsRemovedCondition(),
 			Status:  metav1.ConditionTrue,
 			Reason:  "Update",
@@ -80,9 +94,10 @@ func (c *ServerComponentBase) removePods(ctx context.Context, dry bool) error {
 type Component interface {
 	Fetch(ctx context.Context) error
 	Sync(ctx context.Context) error
-	Status(ctx context.Context) SyncStatus
+	Status(ctx context.Context) ComponentStatus
 	GetName() string
 	GetLabel() string
+	SetReadyCondition(status ComponentStatus)
 }
 
 type ComponentBase struct {
@@ -97,4 +112,17 @@ func (c *ComponentBase) GetName() string {
 
 func (c *ComponentBase) GetLabel() string {
 	return c.labeller.ComponentLabel
+}
+
+func (c *ComponentBase) SetReadyCondition(status ComponentStatus) {
+	ready := metav1.ConditionFalse
+	if status.SyncStatus == SyncStatusReady {
+		ready = metav1.ConditionTrue
+	}
+	c.ytsaurus.SetStatusCondition(metav1.Condition{
+		Type:    fmt.Sprintf("%sReady", c.labeller.ComponentName),
+		Status:  ready,
+		Reason:  string(status.SyncStatus),
+		Message: status.Message,
+	})
 }

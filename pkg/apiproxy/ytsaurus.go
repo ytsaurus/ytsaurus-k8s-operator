@@ -52,9 +52,8 @@ func (c *Ytsaurus) IsUpdateStatusConditionTrue(condition string) bool {
 	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
 }
 
-func (c *Ytsaurus) SetUpdateStatusCondition(ctx context.Context, condition metav1.Condition) error {
+func (c *Ytsaurus) SetUpdateStatusCondition(condition metav1.Condition) {
 	meta.SetStatusCondition(&c.ytsaurus.Status.UpdateStatus.Conditions, condition)
-	return c.apiProxy.UpdateStatus(ctx)
 }
 
 func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
@@ -105,9 +104,8 @@ func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateS
 	return nil
 }
 
-func (c *Ytsaurus) SetStatusCondition(ctx context.Context, condition metav1.Condition) error {
+func (c *Ytsaurus) SetStatusCondition(condition metav1.Condition) {
 	meta.SetStatusCondition(&c.ytsaurus.Status.Conditions, condition)
-	return c.apiProxy.UpdateStatus(ctx)
 }
 
 func (c *Ytsaurus) IsStatusConditionTrue(conditionType string) bool {

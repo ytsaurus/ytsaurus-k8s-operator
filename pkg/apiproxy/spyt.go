@@ -1,7 +1,6 @@
 package apiproxy
 
 import (
-	"context"
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,9 +33,8 @@ func (c *Spyt) APIProxy() APIProxy {
 	return c.apiProxy
 }
 
-func (c *Spyt) SetStatusCondition(ctx context.Context, condition metav1.Condition) error {
+func (c *Spyt) SetStatusCondition(condition metav1.Condition) {
 	meta.SetStatusCondition(&c.spyt.Status.Conditions, condition)
-	return c.apiProxy.UpdateStatus(ctx)
 }
 
 func (c *Spyt) IsStatusConditionTrue(conditionType string) bool {

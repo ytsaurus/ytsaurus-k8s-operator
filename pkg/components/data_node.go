@@ -65,41 +65,41 @@ func (n *dataNode) Fetch(ctx context.Context) error {
 	})
 }
 
-func (n *dataNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+func (n *dataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && n.server.NeedUpdate() {
-		return SyncStatusNeedFullUpdate, err
+		return SimpleStatus(SyncStatusNeedFullUpdate), err
 	}
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if n.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			updatingComponents := n.ytsaurus.GetLocalUpdatingComponents()
 			if updatingComponents == nil {
-				return SyncStatusUpdating, n.removePods(ctx, dry)
+				return WaitingStatus(SyncStatusUpdating, "pods removal"), n.removePods(ctx, dry)
 			}
 		}
 	}
 
-	if !(n.master.Status(ctx) == SyncStatusReady) {
-		return SyncStatusBlocked, err
+	if !(n.master.Status(ctx).SyncStatus == SyncStatusReady) {
+		return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
 	}
 
 	if n.server.NeedSync() {
 		if !dry {
 			err = n.server.Sync(ctx)
 		}
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
 	if !n.server.ArePodsReady(ctx) {
-		return SyncStatusBlocked, err
+		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
-	return SyncStatusReady, err
+	return SimpleStatus(SyncStatusReady), err
 }
 
-func (n *dataNode) Status(ctx context.Context) SyncStatus {
+func (n *dataNode) Status(ctx context.Context) ComponentStatus {
 	status, err := n.doSync(ctx, true)
 	if err != nil {
 		panic(err)

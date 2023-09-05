@@ -91,11 +91,11 @@ func (s *Spyt) createInitScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (s *Spyt) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if s.ytsaurus.Status.State != ytv1.ClusterStateRunning {
-		return SyncStatusBlocked, err
+		return WaitingStatus(SyncStatusBlocked, s.ytsaurus.GetName()), err
 	}
 
 	// Create user for spyt initialization.
@@ -107,13 +107,13 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 			}
 			err = s.secret.Sync(ctx)
 		}
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, s.secret.Name()), err
 	}
 	if !dry {
 		s.initUser.SetInitScript(s.createInitUserScript())
 	}
 	status, err := s.initUser.Sync(ctx, dry)
-	if status != SyncStatusReady {
+	if status.SyncStatus != SyncStatusReady {
 		return status, err
 	}
 
@@ -149,7 +149,7 @@ func (s *Spyt) Fetch(ctx context.Context) error {
 	})
 }
 
-func (s *Spyt) Status(ctx context.Context) SyncStatus {
+func (s *Spyt) Status(ctx context.Context) ComponentStatus {
 	status, err := s.doSync(ctx, true)
 	if err != nil {
 		panic(err)

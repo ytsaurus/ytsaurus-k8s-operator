@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"fmt"
 	"path"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -40,12 +41,13 @@ type server struct {
 	headlessService   *resources.HeadlessService
 	monitoringService *resources.MonitoringService
 	builtStatefulSet  *appsv1.StatefulSet
+	readyCondition    string
 
 	configHelper *ConfigHelper
 }
 
 func NewServer(
-	labeller *labeller.Labeller,
+	l *labeller.Labeller,
 	ytsaurus *apiproxy.Ytsaurus,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
@@ -57,25 +59,26 @@ func NewServer(
 	}
 	return &server{
 		image:        image,
-		labeller:     labeller,
+		labeller:     l,
 		ytsaurus:     ytsaurus,
 		instanceSpec: instanceSpec,
 		binaryPath:   binaryPath,
 		statefulSet: resources.NewStatefulSet(
 			statefulSetName,
-			labeller,
+			l,
 			ytsaurus),
 		headlessService: resources.NewHeadlessService(
 			serviceName,
-			labeller,
+			l,
 			ytsaurus.APIProxy()),
 		monitoringService: resources.NewMonitoringService(
-			labeller,
+			l,
 			ytsaurus.APIProxy()),
+		readyCondition: fmt.Sprintf("%sReady", l.ComponentName),
 		configHelper: NewConfigHelper(
-			labeller,
+			l,
 			ytsaurus.APIProxy(),
-			labeller.GetMainConfigMapName(),
+			l.GetMainConfigMapName(),
 			configFileName,
 			ytsaurus.GetResource().Spec.ConfigOverrides,
 			generator,

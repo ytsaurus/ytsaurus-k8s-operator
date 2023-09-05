@@ -30,11 +30,11 @@ var _ = BeforeSuite(func() {
 
 type FakeComponent struct {
 	name   string
-	status SyncStatus
+	status ComponentStatus
 }
 
 func NewFakeComponent(name string) *FakeComponent {
-	return &FakeComponent{name: name, status: SyncStatusReady}
+	return &FakeComponent{name: name, status: SimpleStatus(SyncStatusReady)}
 }
 
 func (fc *FakeComponent) Fetch(ctx context.Context) error {
@@ -45,7 +45,7 @@ func (fc *FakeComponent) Sync(ctx context.Context) error {
 	return nil
 }
 
-func (fc *FakeComponent) Status(ctx context.Context) SyncStatus {
+func (fc *FakeComponent) Status(ctx context.Context) ComponentStatus {
 	return fc.status
 }
 
@@ -56,6 +56,8 @@ func (fc *FakeComponent) GetName() string {
 func (fc *FakeComponent) GetLabel() string {
 	return fc.name
 }
+
+func (fc *FakeComponent) SetReadyCondition(status ComponentStatus) {}
 
 type FakeServer struct {
 	arePodsReady bool
@@ -117,6 +119,6 @@ func (fyc *FakeYtsaurusClient) GetYtClient() yt.Client {
 	return fyc.client
 }
 
-func (fyc *FakeYtsaurusClient) SetStatus(status SyncStatus) {
+func (fyc *FakeYtsaurusClient) SetStatus(status ComponentStatus) {
 	fyc.status = status
 }

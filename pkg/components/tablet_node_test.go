@@ -157,24 +157,24 @@ var _ = Describe("Tablet node test", func() {
 			Expect(ytsaurusSpecCopy).Should(Equal(ytsaurusSpec))
 		})
 
-		It("Tablet node sync; ytclient not ready", func() {
+		It("Tablet node Sync; ytclient not ready", func() {
 			cfgen := ytconfig.NewGenerator(ytsaurusSpec, "cluster_domain")
 			ytsaurus := apiproxy.NewYtsaurus(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
 
 			ytsaurusClient := NewFakeYtsaurusClient(mockYtClient)
 
-			ytsaurusClient.SetStatus(SyncStatusPending)
+			ytsaurusClient.SetStatus(SimpleStatus(SyncStatusPending))
 
 			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true).(*tabletNode)
 			tabletNode.server = NewFakeServer()
-			Expect(tabletNode.Status(context.Background())).Should(Equal(SyncStatusBlocked))
+			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusBlocked))
 
-			ytsaurusClient.SetStatus(SyncStatusReady)
+			ytsaurusClient.SetStatus(SimpleStatus(SyncStatusReady))
 
-			Expect(tabletNode.Status(context.Background())).Should(Equal(SyncStatusPending))
+			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
 		})
 
-		It("Tablet node sync; pods are not ready", func() {
+		It("Tablet node Sync; pods are not ready", func() {
 			cfgen := ytconfig.NewGenerator(ytsaurusSpec, "cluster_domain")
 			ytsaurus := apiproxy.NewYtsaurus(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
 
@@ -184,14 +184,14 @@ var _ = Describe("Tablet node test", func() {
 			fakeServer.arePodsReady = false
 			tabletNode.server = fakeServer
 
-			Expect(tabletNode.Status(context.Background())).Should(Equal(SyncStatusBlocked))
+			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusBlocked))
 
 			fakeServer.arePodsReady = true
 
-			Expect(tabletNode.Status(context.Background())).Should(Equal(SyncStatusPending))
+			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
 		})
 
-		It("Tablet node sync; yt errors", func() {
+		It("Tablet node Sync; yt errors", func() {
 			cfgen := ytconfig.NewGenerator(ytsaurusSpec, "cluster_domain")
 			ytsaurus := apiproxy.NewYtsaurus(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
 
@@ -322,35 +322,35 @@ var _ = Describe("Tablet node test", func() {
 			// Failed to check if there is //sys/tablet_cell_bundles/sys.
 			err := tabletNode.Sync(context.Background())
 			Expect(err).Should(Equal(existsNetError))
-			Expect(tabletNode.Status(context.Background())).Should(Equal(SyncStatusPending))
+			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
 
 			// Failed to create `sys` bundle.
 			err = tabletNode.Sync(context.Background())
 			Expect(err).Should(Equal(createBundleNetError))
-			Expect(tabletNode.Status(context.Background())).Should(Equal(SyncStatusPending))
+			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
 
 			// Failed to get @tablet_cell_count of the `sys` bundle.
 			err = tabletNode.Sync(context.Background())
 			Expect(err).Should(Equal(getNetError))
-			Expect(tabletNode.Status(context.Background())).Should(Equal(SyncStatusPending))
+			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
 
 			// Failed to create tablet_cell in the `sys` bundle.
 			err = tabletNode.Sync(context.Background())
 			Expect(err).Should(Equal(createCellNetError))
-			Expect(tabletNode.Status(context.Background())).Should(Equal(SyncStatusPending))
+			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
 
 			// Failed to get @tablet_cell_count of the `default` bundle.
 			err = tabletNode.Sync(context.Background())
 			Expect(err).Should(Equal(getNetError))
-			Expect(tabletNode.Status(context.Background())).Should(Equal(SyncStatusPending))
+			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
 
 			// Then everything was successfully.
 			err = tabletNode.Sync(context.Background())
 			Expect(err).Should(Succeed())
-			Expect(tabletNode.Status(context.Background())).Should(Equal(SyncStatusReady))
+			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusReady))
 		})
 
-		It("Tablet node sync; success", func() {
+		It("Tablet node Sync; success", func() {
 			cfgen := ytconfig.NewGenerator(ytsaurusSpec, "cluster_domain")
 			ytsaurus := apiproxy.NewYtsaurus(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
 
@@ -402,10 +402,10 @@ var _ = Describe("Tablet node test", func() {
 			err := tabletNode.Sync(context.Background())
 			Expect(err).Should(Succeed())
 
-			Expect(tabletNode.Status(context.Background())).Should(Equal(SyncStatusReady))
+			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusReady))
 		})
 
-		It("Tablet node sync; no initialization", func() {
+		It("Tablet node Sync; no initialization", func() {
 			cfgen := ytconfig.NewGenerator(ytsaurusSpec, "cluster_domain")
 			ytsaurus := apiproxy.NewYtsaurus(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
 
@@ -416,7 +416,7 @@ var _ = Describe("Tablet node test", func() {
 			err := tabletNode.Sync(context.Background())
 			Expect(err).Should(Succeed())
 
-			Expect(tabletNode.Status(context.Background())).Should(Equal(SyncStatusReady))
+			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusReady))
 		})
 	})
 })

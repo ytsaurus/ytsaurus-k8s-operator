@@ -130,18 +130,18 @@ func (m *master) createInitScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (m *master) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && m.server.NeedUpdate() {
-		return SyncStatusNeedFullUpdate, err
+		return SimpleStatus(SyncStatusNeedFullUpdate), err
 	}
 
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			updatingComponents := m.ytsaurus.GetLocalUpdatingComponents()
 			if updatingComponents == nil {
-				return SyncStatusUpdating, m.removePods(ctx, dry)
+				return WaitingStatus(SyncStatusUpdating, "pods removal"), m.removePods(ctx, dry)
 			}
 		}
 	}
@@ -150,11 +150,11 @@ func (m *master) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		if !dry {
 			err = m.server.Sync(ctx)
 		}
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
 	if !m.server.ArePodsReady(ctx) {
-		return SyncStatusBlocked, err
+		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
 	if !dry {
@@ -164,7 +164,7 @@ func (m *master) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	return m.initJob.Sync(ctx, dry)
 }
 
-func (m *master) Status(ctx context.Context) SyncStatus {
+func (m *master) Status(ctx context.Context) ComponentStatus {
 	status, err := m.doSync(ctx, true)
 	if err != nil {
 		panic(err)

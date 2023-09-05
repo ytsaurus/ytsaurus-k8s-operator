@@ -12,13 +12,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-type ComponentStatus struct {
-	needSync           bool
-	needFullUpdate     bool
-	needLocalUpdate    []components.Component
-	allReadyOrUpdating bool
-}
-
 func (r *YtsaurusReconciler) handleUpdatingState(
 	ctx context.Context,
 	ytsaurus *apiProxy.Ytsaurus,

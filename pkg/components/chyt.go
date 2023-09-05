@@ -220,18 +220,22 @@ func (c *chytController) syncComponents(ctx context.Context) (err error) {
 	return c.microservice.Sync(ctx)
 }
 
-func (c *chytController) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+func (c *chytController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	// TODO: add update logic.
 
-	if c.master.Status(ctx) != SyncStatusReady || c.scheduler.Status(ctx) != SyncStatusReady {
-		return SyncStatusBlocked, err
+	if c.master.Status(ctx).SyncStatus != SyncStatusReady {
+		return WaitingStatus(SyncStatusBlocked, c.master.GetName()), err
+	}
+
+	if c.scheduler.Status(ctx).SyncStatus != SyncStatusReady {
+		return WaitingStatus(SyncStatusBlocked, c.scheduler.GetName()), err
 	}
 
 	for _, dataNode := range c.dataNodes {
-		if dataNode.Status(ctx) != SyncStatusReady {
-			return SyncStatusBlocked, err
+		if dataNode.Status(ctx).SyncStatus != SyncStatusReady {
+			return WaitingStatus(SyncStatusBlocked, dataNode.GetName()), err
 		}
 	}
 
@@ -243,14 +247,14 @@ func (c *chytController) doSync(ctx context.Context, dry bool) (SyncStatus, erro
 			}
 			err = c.secret.Sync(ctx)
 		}
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, c.secret.Name()), err
 	}
 
 	if !dry {
 		c.initUserJob.SetInitScript(c.createInitUserScript())
 	}
 	status, err := c.initUserJob.Sync(ctx, dry)
-	if err != nil || status != SyncStatusReady {
+	if err != nil || status.SyncStatus != SyncStatusReady {
 		return status, err
 	}
 
@@ -258,7 +262,7 @@ func (c *chytController) doSync(ctx context.Context, dry bool) (SyncStatus, erro
 		c.prepareInitClusterJob()
 	}
 	status, err = c.initClusterJob.Sync(ctx, dry)
-	if err != nil || status != SyncStatusReady {
+	if err != nil || status.SyncStatus != SyncStatusReady {
 		return status, err
 	}
 
@@ -267,21 +271,21 @@ func (c *chytController) doSync(ctx context.Context, dry bool) (SyncStatus, erro
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = c.syncComponents(ctx)
 		}
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
 	if !dry {
 		c.prepareChPublicJob()
 	}
 	status, err = c.initChPublicJob.Sync(ctx, dry)
-	if err != nil || status != SyncStatusReady {
+	if err != nil || status.SyncStatus != SyncStatusReady {
 		return status, err
 	}
 
-	return SyncStatusReady, err
+	return SimpleStatus(SyncStatusReady), err
 }
 
-func (c *chytController) Status(ctx context.Context) SyncStatus {
+func (c *chytController) Status(ctx context.Context) ComponentStatus {
 	status, err := c.doSync(ctx, true)
 	if err != nil {
 		panic(err)

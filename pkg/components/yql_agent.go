@@ -113,24 +113,24 @@ func (yqla *yqlAgent) createInitScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && yqla.server.NeedUpdate() {
-		return SyncStatusNeedLocalUpdate, err
+		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			updatingComponents := yqla.ytsaurus.GetLocalUpdatingComponents()
 			if updatingComponents == nil || slices.Contains(updatingComponents, yqla.GetName()) {
-				return SyncStatusUpdating, yqla.removePods(ctx, dry)
+				return WaitingStatus(SyncStatusUpdating, "pods removal"), yqla.removePods(ctx, dry)
 			}
 		}
 	}
 
-	if yqla.master.Status(ctx) != SyncStatusReady {
-		return SyncStatusBlocked, err
+	if yqla.master.Status(ctx).SyncStatus != SyncStatusReady {
+		return WaitingStatus(SyncStatusBlocked, yqla.master.GetName()), err
 	}
 
 	if yqla.secret.NeedSync(consts.TokenSecretKey, "") {
@@ -141,7 +141,7 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (SyncStatus, error) 
 			}
 			err = yqla.secret.Sync(ctx)
 		}
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, yqla.secret.Name()), err
 	}
 
 	if yqla.server.NeedSync() {
@@ -152,11 +152,11 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (SyncStatus, error) 
 			container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "1"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
 			err = yqla.server.Sync(ctx)
 		}
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
 	if !yqla.server.ArePodsReady(ctx) {
-		return SyncStatusBlocked, err
+		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
 	if !dry {
@@ -166,7 +166,7 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (SyncStatus, error) 
 	return yqla.initEnvironment.Sync(ctx, dry)
 }
 
-func (yqla *yqlAgent) Status(ctx context.Context) SyncStatus {
+func (yqla *yqlAgent) Status(ctx context.Context) ComponentStatus {
 	status, err := yqla.doSync(ctx, true)
 	if err != nil {
 		panic(err)

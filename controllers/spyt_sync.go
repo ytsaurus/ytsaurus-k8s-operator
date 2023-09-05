@@ -25,8 +25,16 @@ func (r *SpytReconciler) Sync(ctx context.Context, resource *ytv1.Spyt, ytsaurus
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if status := component.Status(ctx); status != components.SyncStatusReady {
-		err := component.Sync(ctx)
+	componentStatus := component.Status(ctx)
+	if componentStatus.SyncStatus != components.SyncStatusReady {
+		if err := component.Sync(ctx); err != nil {
+			logger.Error(err, "spyt sync failed")
+			return ctrl.Result{Requeue: true}, err
+		}
+	}
+
+	if err := spyt.APIProxy().UpdateStatus(ctx); err != nil {
+		logger.Error(err, "update spyt status failed")
 		return ctrl.Result{Requeue: true}, err
 	}
 

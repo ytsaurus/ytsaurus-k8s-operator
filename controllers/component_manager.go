@@ -15,7 +15,14 @@ type ComponentManager struct {
 	ytsaurus        *apiProxy.Ytsaurus
 	allComponents   []components.Component
 	masterComponent components.ServerComponent
-	status          ComponentStatus
+	status          ComponentManagerStatus
+}
+
+type ComponentManagerStatus struct {
+	needSync           bool
+	needFullUpdate     bool
+	needLocalUpdate    []components.Component
+	allReadyOrUpdating bool
 }
 
 func NewComponentManager(
@@ -108,7 +115,7 @@ func NewComponentManager(
 	var readyComponents []string
 	var notReadyComponents []string
 
-	componentStatus := ComponentStatus{
+	status := ComponentManagerStatus{
 		needSync:           false,
 		needFullUpdate:     false,
 		needLocalUpdate:    nil,
@@ -121,27 +128,29 @@ func NewComponentManager(
 			return nil, err
 		}
 
-		status := c.Status(ctx)
+		componentStatus := c.Status(ctx)
+		c.SetReadyCondition(componentStatus)
+		syncStatus := componentStatus.SyncStatus
 
-		if status == components.SyncStatusNeedFullUpdate {
-			componentStatus.needFullUpdate = true
+		if syncStatus == components.SyncStatusNeedFullUpdate {
+			status.needFullUpdate = true
 		}
 
-		if status == components.SyncStatusNeedLocalUpdate {
-			if componentStatus.needLocalUpdate == nil {
-				componentStatus.needLocalUpdate = make([]components.Component, 0)
+		if syncStatus == components.SyncStatusNeedLocalUpdate {
+			if status.needLocalUpdate == nil {
+				status.needLocalUpdate = make([]components.Component, 0)
 			}
-			componentStatus.needLocalUpdate = append(componentStatus.needLocalUpdate, c)
+			status.needLocalUpdate = append(status.needLocalUpdate, c)
 		}
 
-		if status != components.SyncStatusReady && status != components.SyncStatusUpdating {
-			componentStatus.allReadyOrUpdating = false
+		if syncStatus != components.SyncStatusReady && syncStatus != components.SyncStatusUpdating {
+			status.allReadyOrUpdating = false
 		}
 
-		if status != components.SyncStatusReady {
-			logger.Info("component is not ready", "component", c.GetName(), "syncStatus", status)
+		if syncStatus != components.SyncStatusReady {
+			logger.Info("component is not ready", "component", c.GetName(), "syncStatus", syncStatus)
 			notReadyComponents = append(notReadyComponents, c.GetName())
-			componentStatus.needSync = true
+			status.needSync = true
 		} else {
 			readyComponents = append(readyComponents, c.GetName())
 		}
@@ -157,7 +166,7 @@ func NewComponentManager(
 		ytsaurus:        ytsaurus,
 		allComponents:   allComponents,
 		masterComponent: m,
-		status:          componentStatus,
+		status:          status,
 	}, nil
 }
 
@@ -168,7 +177,8 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	for _, c := range cm.allComponents {
 		status := c.Status(ctx)
 
-		if status == components.SyncStatusPending || status == components.SyncStatusUpdating {
+		if status.SyncStatus == components.SyncStatusPending ||
+			status.SyncStatus == components.SyncStatusUpdating {
 			hasPending = true
 			logger.Info("component sync", "component", c.GetName())
 			if err := c.Sync(ctx); err != nil {
@@ -176,6 +186,11 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 				return ctrl.Result{Requeue: true}, err
 			}
 		}
+	}
+
+	if err := cm.ytsaurus.APIProxy().UpdateStatus(ctx); err != nil {
+		logger.Error(err, "update Ytsaurus status failed")
+		return ctrl.Result{Requeue: true}, err
 	}
 
 	if !hasPending {

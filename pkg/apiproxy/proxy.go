@@ -27,7 +27,7 @@ type APIProxy interface {
 }
 
 type ConditionManager interface {
-	SetStatusCondition(ctx context.Context, condition metav1.Condition) error
+	SetStatusCondition(condition metav1.Condition)
 	IsStatusConditionTrue(conditionType string) bool
 	IsStatusConditionFalse(conditionType string) bool
 }

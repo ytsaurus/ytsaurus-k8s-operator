@@ -84,31 +84,31 @@ func (r *rpcProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, fetchable)
 }
 
-func (r *rpcProxy) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+func (r *rpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && r.server.NeedUpdate() {
-		return SyncStatusNeedLocalUpdate, err
+		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
 	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if r.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			updatingComponents := r.ytsaurus.GetLocalUpdatingComponents()
 			if updatingComponents == nil || slices.Contains(updatingComponents, r.GetName()) {
-				return SyncStatusUpdating, r.removePods(ctx, dry)
+				return WaitingStatus(SyncStatusUpdating, "pods removal"), r.removePods(ctx, dry)
 			}
 		}
 	}
 
-	if !(r.master.Status(ctx) == SyncStatusReady) {
-		return SyncStatusBlocked, err
+	if !(r.master.Status(ctx).SyncStatus == SyncStatusReady) {
+		return WaitingStatus(SyncStatusBlocked, r.master.GetName()), err
 	}
 
 	if r.server.NeedSync() {
 		if !dry {
 			err = r.server.Sync(ctx)
 		}
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
 	if r.balancingService != nil && !resources.Exists(r.balancingService) {
@@ -117,17 +117,17 @@ func (r *rpcProxy) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 			s.Spec.Type = *r.serviceType
 			err = r.balancingService.Sync(ctx)
 		}
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, r.balancingService.Name()), err
 	}
 
 	if !r.server.ArePodsReady(ctx) {
-		return SyncStatusBlocked, err
+		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
-	return SyncStatusReady, err
+	return SimpleStatus(SyncStatusReady), err
 }
 
-func (r *rpcProxy) Status(ctx context.Context) SyncStatus {
+func (r *rpcProxy) Status(ctx context.Context) ComponentStatus {
 	status, err := r.doSync(ctx, true)
 	if err != nil {
 		panic(err)

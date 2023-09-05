@@ -69,18 +69,18 @@ func (qt *queryTracker) Fetch(ctx context.Context) error {
 	})
 }
 
-func (qt *queryTracker) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+func (qt *queryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && qt.server.NeedUpdate() {
-		return SyncStatusNeedLocalUpdate, err
+		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			updatingComponents := qt.ytsaurus.GetLocalUpdatingComponents()
 			if updatingComponents == nil || slices.Contains(updatingComponents, qt.GetName()) {
-				return SyncStatusUpdating, qt.removePods(ctx, dry)
+				return WaitingStatus(SyncStatusUpdating, "pods removal"), qt.removePods(ctx, dry)
 			}
 		}
 	}
@@ -91,19 +91,19 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (SyncStatus, error
 			err = qt.server.Sync(ctx)
 		}
 
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
 	if !qt.server.ArePodsReady(ctx) {
-		return SyncStatusBlocked, err
+		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
 	if qt.ytsaurus.IsStatusConditionTrue(qt.initCondition) {
-		return SyncStatusReady, err
+		return SimpleStatus(SyncStatusReady), err
 	}
 
-	if qt.ytsaurusClient.Status(ctx) != SyncStatusReady {
-		return SyncStatusBlocked, err
+	if qt.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
+		return WaitingStatus(SyncStatusBlocked, qt.ytsaurusClient.GetName()), err
 	}
 
 	ytClient := qt.ytsaurusClient.GetYtClient()
@@ -111,10 +111,10 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (SyncStatus, error
 	if !dry {
 		err = qt.init(ctx, ytClient)
 		if err != nil {
-			return SyncStatusPending, err
+			return WaitingStatus(SyncStatusPending, fmt.Sprintf("%s initialization", qt.GetName())), err
 		}
 
-		err = qt.ytsaurus.SetStatusCondition(ctx, metav1.Condition{
+		qt.ytsaurus.SetStatusCondition(metav1.Condition{
 			Type:    qt.initCondition,
 			Status:  metav1.ConditionTrue,
 			Reason:  "InitQueryTrackerCompleted",
@@ -122,7 +122,7 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (SyncStatus, error
 		})
 	}
 
-	return SyncStatusPending, err
+	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", qt.initCondition)), err
 }
 
 func (qt *queryTracker) init(ctx context.Context, ytClient yt.Client) (err error) {
@@ -209,7 +209,7 @@ func (qt *queryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 	return
 }
 
-func (qt *queryTracker) Status(ctx context.Context) SyncStatus {
+func (qt *queryTracker) Status(ctx context.Context) ComponentStatus {
 	status, err := qt.doSync(ctx, true)
 	if err != nil {
 		panic(err)

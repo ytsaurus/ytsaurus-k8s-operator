@@ -56,14 +56,14 @@ func (d *discovery) Fetch(ctx context.Context) error {
 	})
 }
 
-func (d *discovery) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+func (d *discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if d.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			updatingComponents := d.ytsaurus.GetLocalUpdatingComponents()
 			if updatingComponents == nil || slices.Contains(updatingComponents, d.GetName()) {
-				return SyncStatusUpdating, d.removePods(ctx, dry)
+				return WaitingStatus(SyncStatusUpdating, "pods removal"), d.removePods(ctx, dry)
 			}
 		}
 	}
@@ -72,17 +72,17 @@ func (d *discovery) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		if !dry {
 			err = d.server.Sync(ctx)
 		}
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
 	if !d.server.ArePodsReady(ctx) {
-		return SyncStatusBlocked, err
+		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
-	return SyncStatusReady, err
+	return SimpleStatus(SyncStatusReady), err
 }
 
-func (d *discovery) Status(ctx context.Context) SyncStatus {
+func (d *discovery) Status(ctx context.Context) ComponentStatus {
 	status, err := d.doSync(ctx, true)
 	if err != nil {
 		panic(err)

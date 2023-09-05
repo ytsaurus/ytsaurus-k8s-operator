@@ -209,11 +209,11 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 	return u.microservice.Sync(ctx)
 }
 
-func (u *UI) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if u.master.Status(ctx) != SyncStatusReady {
-		return SyncStatusBlocked, err
+	if u.master.Status(ctx).SyncStatus != SyncStatusReady {
+		return WaitingStatus(SyncStatusBlocked, u.master.GetName()), err
 	}
 
 	if u.secret.NeedSync(consts.TokenSecretKey, "") {
@@ -226,14 +226,14 @@ func (u *UI) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 			}
 			err = u.secret.Sync(ctx)
 		}
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, u.secret.Name()), err
 	}
 
 	if !dry {
 		u.initJob.SetInitScript(u.createInitScript())
 	}
 	status, err := u.initJob.Sync(ctx, dry)
-	if err != nil || status != SyncStatusReady {
+	if err != nil || status.SyncStatus != SyncStatusReady {
 		return status, err
 	}
 
@@ -241,17 +241,17 @@ func (u *UI) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		if !dry {
 			err = u.syncComponents(ctx)
 		}
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
 	if !u.microservice.ArePodsReady(ctx) {
-		return SyncStatusBlocked, err
+		return WaitingStatus(SyncStatusPending, "pods"), err
 	}
 
-	return SyncStatusReady, err
+	return SimpleStatus(SyncStatusReady), err
 }
 
-func (u *UI) Status(ctx context.Context) SyncStatus {
+func (u *UI) Status(ctx context.Context) ComponentStatus {
 	status, err := u.doSync(ctx, true)
 	if err != nil {
 		panic(err)

@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"fmt"
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -72,19 +73,19 @@ func NewTabletNode(
 	}
 }
 
-func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+func (r *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 	logger := log.FromContext(ctx)
 
 	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && r.server.NeedUpdate() {
-		return SyncStatusNeedFullUpdate, err
+		return SimpleStatus(SyncStatusNeedFullUpdate), err
 	}
 
 	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if r.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			updatingComponents := r.ytsaurus.GetLocalUpdatingComponents()
 			if updatingComponents == nil {
-				return SyncStatusUpdating, r.removePods(ctx, dry)
+				return WaitingStatus(SyncStatusUpdating, "pods removal"), r.removePods(ctx, dry)
 			}
 
 		}
@@ -96,19 +97,19 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 			err = r.server.Sync(ctx)
 		}
 
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
 	if !r.server.ArePodsReady(ctx) {
-		return SyncStatusBlocked, err
+		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
 	if !r.doInitialization || r.ytsaurus.IsStatusConditionTrue(r.initBundlesCondition) {
-		return SyncStatusReady, err
+		return SimpleStatus(SyncStatusReady), err
 	}
 
-	if r.ytsaurusClient.Status(ctx) != SyncStatusReady {
-		return SyncStatusBlocked, err
+	if r.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
+		return WaitingStatus(SyncStatusBlocked, r.ytsaurusClient.GetName()), err
 	}
 
 	ytClient := r.ytsaurusClient.GetYtClient()
@@ -130,21 +131,21 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 
 					if err != nil {
 						logger.Error(err, "Creating tablet_cell_bundle failed")
-						return SyncStatusPending, err
+						return WaitingStatus(SyncStatusPending, "tablet_cell_bundle creation"), err
 					}
 				}
 			} else {
-				return SyncStatusPending, err
+				return WaitingStatus(SyncStatusPending, "tablet_cell_bundle creation"), err
 			}
 
 			for _, bundle := range []string{"default", "sys"} {
 				err = CreateTabletCells(ctx, ytClient, bundle, 1)
 				if err != nil {
-					return SyncStatusPending, err
+					return WaitingStatus(SyncStatusPending, "tablet cells creation"), err
 				}
 			}
 
-			err = r.ytsaurus.SetStatusCondition(ctx, metav1.Condition{
+			r.ytsaurus.SetStatusCondition(metav1.Condition{
 				Type:    r.initBundlesCondition,
 				Status:  metav1.ConditionTrue,
 				Reason:  "InitBundlesCompleted",
@@ -153,10 +154,10 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		}
 	}
 
-	return SyncStatusPending, err
+	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", r.initBundlesCondition)), err
 }
 
-func (r *tabletNode) Status(ctx context.Context) SyncStatus {
+func (r *tabletNode) Status(ctx context.Context) ComponentStatus {
 	status, err := r.doSync(ctx, true)
 	if err != nil {
 		panic(err)

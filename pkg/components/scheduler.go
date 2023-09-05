@@ -101,7 +101,7 @@ func (s *scheduler) Fetch(ctx context.Context) error {
 	})
 }
 
-func (s *scheduler) Status(ctx context.Context) SyncStatus {
+func (s *scheduler) Status(ctx context.Context) ComponentStatus {
 	status, err := s.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -115,11 +115,11 @@ func (s *scheduler) Sync(ctx context.Context) error {
 	return err
 }
 
-func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if s.ytsaurus.GetClusterState() == v1.ClusterStateRunning && s.server.NeedUpdate() {
-		return SyncStatusNeedLocalUpdate, err
+		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
 	if s.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
@@ -128,15 +128,15 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 		}
 	}
 
-	if s.master.Status(ctx) != SyncStatusReady {
-		return SyncStatusBlocked, err
+	if s.master.Status(ctx).SyncStatus != SyncStatusReady {
+		return WaitingStatus(SyncStatusBlocked, s.master.GetName()), err
 	}
 
 	if s.execNodes == nil || len(s.execNodes) > 0 {
 		for _, end := range s.execNodes {
-			if end.Status(ctx) != SyncStatusReady {
+			if end.Status(ctx).SyncStatus != SyncStatusReady {
 				// It makes no sense to start scheduler without exec nodes.
-				return SyncStatusBlocked, err
+				return WaitingStatus(SyncStatusBlocked, end.GetName()), err
 			}
 		}
 	}
@@ -149,7 +149,7 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 			}
 			err = s.secret.Sync(ctx)
 		}
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, s.secret.Name()), err
 	}
 
 	if s.server.NeedSync() {
@@ -157,16 +157,16 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = s.server.Sync(ctx)
 		}
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
 	if !s.server.ArePodsReady(ctx) {
-		return SyncStatusBlocked, err
+		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
 	if !s.needOpArchiveInit() {
 		// Don't initialize operations archive.
-		return SyncStatusReady, err
+		return SimpleStatus(SyncStatusReady), err
 	}
 
 	if !dry {
@@ -174,14 +174,14 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	}
 
 	status, err := s.initUser.Sync(ctx, dry)
-	if status != SyncStatusReady {
+	if status.SyncStatus != SyncStatusReady {
 		return status, err
 	}
 
 	for _, tnd := range s.tabletNodes {
-		if tnd.Status(ctx) != SyncStatusReady {
+		if tnd.Status(ctx).SyncStatus != SyncStatusReady {
 			// Wait for tablet nodes to proceed with operations archive init.
-			return SyncStatusBlocked, err
+			return WaitingStatus(SyncStatusBlocked, tnd.GetName()), err
 		}
 	}
 
@@ -191,34 +191,35 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
 	return s.initOpArchive.Sync(ctx, dry)
 }
 
-func (s *scheduler) update(ctx context.Context, dry bool) (*SyncStatus, error) {
+func (s *scheduler) update(ctx context.Context, dry bool) (*ComponentStatus, error) {
 	var err error
 	switch s.ytsaurus.GetUpdateState() {
 	case v1.UpdateStateWaitingForPodsRemoval:
 		updatingComponents := s.ytsaurus.GetLocalUpdatingComponents()
 		if updatingComponents == nil || slices.Contains(updatingComponents, s.GetName()) {
-			return ptr.T(SyncStatusUpdating), s.removePods(ctx, dry)
+			return ptr.T(WaitingStatus(SyncStatusUpdating, "pods removal")), s.removePods(ctx, dry)
 		}
 		return nil, nil
 	case v1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
 		if !s.needOpArchiveInit() {
-			return ptr.T(SyncStatusUpdating), s.setConditionNotNecessaryToUpdateOpArchive(ctx)
+			s.setConditionNotNecessaryToUpdateOpArchive()
+			return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
 		}
 		if !s.initOpArchive.isRestartPrepared() {
-			return ptr.T(SyncStatusUpdating), s.initOpArchive.prepareRestart(ctx, dry)
+			return ptr.T(SimpleStatus(SyncStatusUpdating)), s.initOpArchive.prepareRestart(ctx, dry)
 		}
 		if !dry {
-			err = s.setConditionOpArchivePreparedForUpdating(ctx)
+			s.setConditionOpArchivePreparedForUpdating()
 		}
-		return ptr.T(SyncStatusUpdating), err
+		return ptr.T(SimpleStatus(SyncStatusUpdating)), err
 	case v1.UpdateStateWaitingForOpArchiveUpdate:
 		if !s.initOpArchive.isRestartCompleted() {
 			return nil, nil
 		}
 		if !dry {
-			err = s.setConditionOpArchiveUpdated(ctx)
+			s.setConditionOpArchiveUpdated()
 		}
-		return ptr.T(SyncStatusUpdating), err
+		return ptr.T(SimpleStatus(SyncStatusUpdating)), err
 	default:
 		return nil, nil
 	}
@@ -228,8 +229,8 @@ func (s *scheduler) needOpArchiveInit() bool {
 	return s.tabletNodes != nil && len(s.tabletNodes) > 0
 }
 
-func (s *scheduler) setConditionNotNecessaryToUpdateOpArchive(ctx context.Context) error {
-	return s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+func (s *scheduler) setConditionNotNecessaryToUpdateOpArchive() {
+	s.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
 		Type:    consts.ConditionNotNecessaryToUpdateOpArchive,
 		Status:  metav1.ConditionTrue,
 		Reason:  "NotNecessaryToUpdateOpArchive",
@@ -237,8 +238,8 @@ func (s *scheduler) setConditionNotNecessaryToUpdateOpArchive(ctx context.Contex
 	})
 }
 
-func (s *scheduler) setConditionOpArchivePreparedForUpdating(ctx context.Context) error {
-	return s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+func (s *scheduler) setConditionOpArchivePreparedForUpdating() {
+	s.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
 		Type:    consts.ConditionOpArchivePreparedForUpdating,
 		Status:  metav1.ConditionTrue,
 		Reason:  "OpArchivePreparedForUpdating",
@@ -246,8 +247,8 @@ func (s *scheduler) setConditionOpArchivePreparedForUpdating(ctx context.Context
 	})
 }
 
-func (s *scheduler) setConditionOpArchiveUpdated(ctx context.Context) error {
-	return s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+func (s *scheduler) setConditionOpArchiveUpdated() {
+	s.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
 		Type:    consts.ConditionOpArchiveUpdated,
 		Status:  metav1.ConditionTrue,
 		Reason:  "OpArchiveUpdated",

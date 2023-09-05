@@ -58,24 +58,24 @@ func (ca *controllerAgent) Fetch(ctx context.Context) error {
 	})
 }
 
-func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (SyncStatus, error) {
+func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && ca.server.NeedUpdate() {
-		return SyncStatusNeedLocalUpdate, err
+		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
 	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if ca.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			updatingComponents := ca.ytsaurus.GetLocalUpdatingComponents()
 			if updatingComponents == nil || slices.Contains(updatingComponents, ca.GetName()) {
-				return SyncStatusUpdating, ca.removePods(ctx, dry)
+				return WaitingStatus(SyncStatusUpdating, "pods removal"), ca.removePods(ctx, dry)
 			}
 		}
 	}
 
-	if ca.master.Status(ctx) != SyncStatusReady {
-		return SyncStatusBlocked, err
+	if ca.master.Status(ctx).SyncStatus != SyncStatusReady {
+		return WaitingStatus(SyncStatusBlocked, ca.master.GetName()), err
 	}
 
 	if ca.server.NeedSync() {
@@ -83,17 +83,17 @@ func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (SyncStatus, er
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = ca.server.Sync(ctx)
 		}
-		return SyncStatusPending, err
+		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
 	if !ca.server.ArePodsReady(ctx) {
-		return SyncStatusBlocked, err
+		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
-	return SyncStatusReady, err
+	return SimpleStatus(SyncStatusReady), err
 }
 
-func (ca *controllerAgent) Status(ctx context.Context) SyncStatus {
+func (ca *controllerAgent) Status(ctx context.Context) ComponentStatus {
 	status, err := ca.doSync(ctx, true)
 	if err != nil {
 		panic(err)

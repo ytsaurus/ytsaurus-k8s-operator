@@ -123,34 +123,37 @@ func (j *InitJob) Fetch(ctx context.Context) error {
 	})
 }
 
-func (j *InitJob) Sync(ctx context.Context, dry bool) (SyncStatus, error) {
+func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	logger := log.FromContext(ctx)
 	var err error
 
 	if j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition) {
-		return SyncStatusReady, err
+		return ComponentStatus{
+			SyncStatusReady,
+			fmt.Sprintf("%s completed", j.initJob.Name()),
+		}, err
 	}
 
 	// Deal with init job.
 	if !resources.Exists(j.initJob) {
-		if dry {
-			return SyncStatusPending, nil
+		if !dry {
+			_ = j.Build()
+			err = resources.Sync(ctx, []resources.Syncable{
+				j.configHelper,
+				j.initJob,
+			})
 		}
-		_ = j.Build()
-		err = resources.Sync(ctx, []resources.Syncable{
-			j.configHelper,
-			j.initJob,
-		})
-		return SyncStatusPending, err
+
+		return WaitingStatus(SyncStatusPending, fmt.Sprintf("%s creation", j.initJob.Name())), err
 	}
 
 	if !j.initJob.Completed() {
 		logger.Info("Init job is not completed for " + j.labeller.ComponentName)
-		return SyncStatusBlocked, err
+		return WaitingStatus(SyncStatusBlocked, fmt.Sprintf("%s completion", j.initJob.Name())), err
 	}
 
 	if !dry {
-		err = j.conditionsManager.SetStatusCondition(ctx, metav1.Condition{
+		j.conditionsManager.SetStatusCondition(metav1.Condition{
 			Type:    j.initCompletedCondition,
 			Status:  metav1.ConditionTrue,
 			Reason:  "InitJobCompleted",
@@ -158,7 +161,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (SyncStatus, error) {
 		})
 	}
 
-	return SyncStatusPending, err
+	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", j.initCompletedCondition)), err
 }
 
 func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
@@ -168,12 +171,13 @@ func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
 	if err := j.removeIfExists(ctx); err != nil {
 		return err
 	}
-	return j.conditionsManager.SetStatusCondition(ctx, metav1.Condition{
+	j.conditionsManager.SetStatusCondition(metav1.Condition{
 		Type:    j.initCompletedCondition,
 		Status:  metav1.ConditionFalse,
 		Reason:  "InitJobNeedRestart",
 		Message: "Init job needs restart",
 	})
+	return nil
 }
 
 func (j *InitJob) isRestartPrepared() bool {
