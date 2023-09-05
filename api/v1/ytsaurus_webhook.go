@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apimachinery/pkg/util/yaml"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -188,6 +189,24 @@ func (r *Ytsaurus) validateDataNodes(old *runtime.Object) field.ErrorList {
 	return allErrors
 }
 
+func validateSidecars(sidecars []string, path *field.Path) field.ErrorList {
+	var allErrors field.ErrorList
+
+	names := make(map[string]bool)
+	for i, sidecarSpec := range sidecars {
+		sidecar := corev1.Container{}
+		if err := yaml.Unmarshal([]byte(sidecarSpec), &sidecar); err != nil {
+			allErrors = append(allErrors, field.Invalid(path.Index(i), sidecarSpec, err.Error()))
+		}
+		if _, exists := names[sidecar.Name]; exists {
+			allErrors = append(allErrors, field.Duplicate(path.Index(i).Child("name"), sidecar.Name))
+		}
+		names[sidecar.Name] = true
+	}
+
+	return allErrors
+}
+
 func (r *Ytsaurus) validateExecNodes(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
@@ -208,6 +227,10 @@ func (r *Ytsaurus) validateExecNodes(old *runtime.Object) field.ErrorList {
 
 		if FindFirstLocation(en.Locations, LocationTypeSlots) == nil {
 			allErrors = append(allErrors, field.NotFound(path.Child("locations"), LocationTypeSlots))
+		}
+
+		if en.Sidecars != nil {
+			allErrors = append(allErrors, validateSidecars(en.Sidecars, path.Child("sidecars"))...)
 		}
 	}
 

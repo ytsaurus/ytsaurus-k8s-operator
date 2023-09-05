@@ -197,5 +197,24 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("EnableAntiAffinity is deprecated, use Affinity instead")))
 		})
 
+		It("Should not accept invalid Sidecars", func() {
+			ytsaurus := CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.ExecNodes = []ExecNodesSpec{
+				{
+					InstanceSpec: InstanceSpec{InstanceCount: 1},
+					Sidecars:     []string{"foo"},
+				},
+			}
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.execNodes[0].sidecars[0]: Invalid value")))
+
+			ytsaurus = CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.ExecNodes = []ExecNodesSpec{
+				{
+					InstanceSpec: InstanceSpec{InstanceCount: 1},
+					Sidecars:     []string{"name: foo", "name: foo"},
+				},
+			}
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.execNodes[0].sidecars[1].name: Duplicate value: \"foo\"")))
+		})
 	})
 })

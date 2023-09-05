@@ -91,8 +91,7 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context) bool {
 
 func (s *StatefulSet) NeedSync(replicas int32) bool {
 	return s.oldObject.Spec.Replicas == nil ||
-		*s.oldObject.Spec.Replicas != replicas ||
-		len(s.oldObject.Spec.Template.Spec.Containers) != 1
+		*s.oldObject.Spec.Replicas != replicas
 }
 
 func (s *StatefulSet) Fetch(ctx context.Context) error {

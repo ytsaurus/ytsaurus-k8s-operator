@@ -229,6 +229,8 @@ type ExecNodesSpec struct {
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name,omitempty"`
+	// List of sidecar containers as yaml of corev1.Container.
+	Sidecars []string `json:"sidecars,omitempty"`
 }
 
 type TabletNodesSpec struct {
