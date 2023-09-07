@@ -26,6 +26,10 @@ func (r *ChytReconciler) Sync(ctx context.Context, resource *ytv1.Chyt, ytsaurus
 		return ctrl.Result{Requeue: true}, err
 	}
 
+	if chyt.GetResource().Status.ReleaseStatus == ytv1.ChytReleaseStatusFinished {
+		return ctrl.Result{}, nil
+	}
+
 	status := component.Status(ctx)
 	if status.SyncStatus == components.SyncStatusBlocked {
 		return ctrl.Result{RequeueAfter: time.Second * 10}, nil
@@ -34,7 +38,8 @@ func (r *ChytReconciler) Sync(ctx context.Context, resource *ytv1.Chyt, ytsaurus
 	if status.SyncStatus == components.SyncStatusReady {
 		logger.Info("CHYT initialization finished")
 
-		return ctrl.Result{}, err
+		err := chyt.SaveReleaseStatus(ctx, ytv1.ChytReleaseStatusFinished)
+		return ctrl.Result{Requeue: true}, err
 	}
 
 	if err := component.Sync(ctx); err != nil {

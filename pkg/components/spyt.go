@@ -31,13 +31,11 @@ func NewSpyt(
 	spyt *apiproxy.Spyt,
 	ytsaurus *ytv1.Ytsaurus) *Spyt {
 
-	spytSpec := spyt.GetResource().Spec
-
 	l := labeller.Labeller{
 		ObjectMeta:     &spyt.GetResource().ObjectMeta,
 		APIProxy:       spyt.APIProxy(),
-		ComponentLabel: fmt.Sprintf("ytsaurus-spyt-%s", spytSpec.Name),
-		ComponentName:  fmt.Sprintf("SPYT-%s", spytSpec.Name),
+		ComponentLabel: fmt.Sprintf("ytsaurus-spyt-%s", spyt.GetResource().Name),
+		ComponentName:  fmt.Sprintf("SPYT-%s", spyt.GetResource().Name),
 	}
 
 	return &Spyt{
@@ -62,7 +60,7 @@ func NewSpyt(
 			ytsaurus.Spec.ImagePullSecrets,
 			"spyt-environment",
 			consts.ClientConfigFileName,
-			spytSpec.Image,
+			spyt.GetResource().Spec.Image,
 			cfgen.GetNativeClientConfig,
 			cfgen.NeedNativeClientConfigReload),
 		secret: resources.NewStringSecret(
@@ -98,6 +96,10 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return WaitingStatus(SyncStatusBlocked, s.ytsaurus.GetName()), err
 	}
 
+	if s.spyt.GetResource().Status.ReleaseStatus == ytv1.SpytReleaseStatusFinished {
+		return SimpleStatus(SyncStatusReady), err
+	}
+
 	// Create user for spyt initialization.
 	if s.secret.NeedSync(consts.TokenSecretKey, "") {
 		if !dry {
@@ -107,13 +109,16 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 			}
 			err = s.secret.Sync(ctx)
 		}
+		s.spyt.GetResource().Status.ReleaseStatus = ytv1.SpytReleaseStatusCreatingUserSecret
 		return WaitingStatus(SyncStatusPending, s.secret.Name()), err
 	}
+
 	if !dry {
 		s.initUser.SetInitScript(s.createInitUserScript())
 	}
 	status, err := s.initUser.Sync(ctx, dry)
 	if status.SyncStatus != SyncStatusReady {
+		s.spyt.GetResource().Status.ReleaseStatus = ytv1.SpytReleaseStatusCreatingUser
 		return status, err
 	}
 
@@ -138,7 +143,15 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		}
 	}
 
-	return s.initEnvironment.Sync(ctx, dry)
+	status, err = s.initEnvironment.Sync(ctx, dry)
+	if status.SyncStatus != SyncStatusReady {
+		s.spyt.GetResource().Status.ReleaseStatus = ytv1.SpytReleaseStatusUploadingIntoCypress
+		return status, err
+	}
+
+	s.spyt.GetResource().Status.ReleaseStatus = ytv1.SpytReleaseStatusFinished
+
+	return SimpleStatus(SyncStatusReady), nil
 }
 
 func (s *Spyt) Fetch(ctx context.Context) error {

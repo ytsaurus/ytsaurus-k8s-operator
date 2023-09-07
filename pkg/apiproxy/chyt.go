@@ -1,12 +1,14 @@
 package apiproxy
 
 import (
+	"context"
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type Chyt struct {
@@ -43,4 +45,15 @@ func (c *Chyt) IsStatusConditionTrue(conditionType string) bool {
 
 func (c *Chyt) IsStatusConditionFalse(conditionType string) bool {
 	return meta.IsStatusConditionFalse(c.chyt.Status.Conditions, conditionType)
+}
+
+func (c *Chyt) SaveReleaseStatus(ctx context.Context, releaseStatus ytv1.ChytReleaseStatus) error {
+	logger := log.FromContext(ctx)
+	c.GetResource().Status.ReleaseStatus = releaseStatus
+	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
+		logger.Error(err, "unable to update Chyt release status")
+		return err
+	}
+
+	return nil
 }

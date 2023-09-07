@@ -24,11 +24,20 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+type ChytReleaseStatus string
+
+const (
+	ChytReleaseStatusCreatingUserSecret     ChytReleaseStatus = "CreatingUserSecret"
+	ChytReleaseStatusCreatingUser           ChytReleaseStatus = "CreatingUser"
+	ChytReleaseStatusUploadingIntoCypress   ChytReleaseStatus = "UploadingIntoCypress"
+	ChytReleaseStatusCreatingChPublicClique ChytReleaseStatus = "CreatingChPublicClique"
+	ChytReleaseStatusFinished               ChytReleaseStatus = "Finished"
+)
+
 // ChytSpec defines the desired state of Chyt
 type ChytSpec struct {
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 
-	Name        string                       `json:"name,omitempty"`
 	Ytsaurus    *corev1.LocalObjectReference `json:"ytsaurus,omitempty"`
 	Image       string                       `json:"image,omitempty"`
 	MakeDefault bool                         `json:"makeDefault,omitempty"`
@@ -36,10 +45,12 @@ type ChytSpec struct {
 
 // ChytStatus defines the observed state of Chyt
 type ChytStatus struct {
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	Conditions    []metav1.Condition `json:"conditions,omitempty"`
+	ReleaseStatus ChytReleaseStatus  `json:"releaseStatus,omitempty"`
 }
 
 //+kubebuilder:object:root=true
+// +kubebuilder:printcolumn:name="ReleaseStatus",type="string",JSONPath=".status.releaseStatus",description="Status of release"
 //+kubebuilder:subresource:status
 
 // Chyt is the Schema for the chyts API

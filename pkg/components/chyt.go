@@ -32,13 +32,11 @@ func NewChyt(
 	chyt *apiproxy.Chyt,
 	ytsaurus *ytv1.Ytsaurus) *Chyt {
 
-	chytSpec := chyt.GetResource().Spec
-
 	l := labeller.Labeller{
 		ObjectMeta:     &chyt.GetResource().ObjectMeta,
 		APIProxy:       chyt.APIProxy(),
-		ComponentLabel: fmt.Sprintf("ytsaurus-chyt-%s", chytSpec.Name),
-		ComponentName:  fmt.Sprintf("CHYT-%s", chytSpec.Name),
+		ComponentLabel: fmt.Sprintf("ytsaurus-chyt-%s", chyt.GetResource().Name),
+		ComponentName:  fmt.Sprintf("CHYT-%s", chyt.GetResource().Name),
 	}
 
 	return &Chyt{
@@ -63,7 +61,7 @@ func NewChyt(
 			ytsaurus.Spec.ImagePullSecrets,
 			"release",
 			consts.ClientConfigFileName,
-			chytSpec.Image,
+			chyt.GetResource().Spec.Image,
 			cfgen.GetNativeClientConfig,
 			cfgen.NeedNativeClientConfigReload),
 		initChPublicJob: NewInitJob(
@@ -73,7 +71,7 @@ func NewChyt(
 			ytsaurus.Spec.ImagePullSecrets,
 			"ch-public",
 			"",
-			chytSpec.Image,
+			chyt.GetResource().Spec.Image,
 			nil,
 			nil),
 		secret: resources.NewStringSecret(
@@ -143,14 +141,17 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 			}
 			err = c.secret.Sync(ctx)
 		}
+		c.chyt.GetResource().Status.ReleaseStatus = ytv1.ChytReleaseStatusCreatingUserSecret
 		return WaitingStatus(SyncStatusPending, c.secret.Name()), err
 	}
+
 	if !dry {
 		c.initUser.SetInitScript(c.createInitUserScript())
 	}
 
 	status, err := c.initUser.Sync(ctx, dry)
 	if status.SyncStatus != SyncStatusReady {
+		c.chyt.GetResource().Status.ReleaseStatus = ytv1.ChytReleaseStatusCreatingUser
 		return status, err
 	}
 
@@ -173,6 +174,7 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 
 	status, err = c.initEnvironment.Sync(ctx, dry)
 	if err != nil || status.SyncStatus != SyncStatusReady {
+		c.chyt.GetResource().Status.ReleaseStatus = ytv1.ChytReleaseStatusUploadingIntoCypress
 		return status, err
 	}
 
@@ -182,9 +184,12 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		}
 		status, err = c.initChPublicJob.Sync(ctx, dry)
 		if err != nil || status.SyncStatus != SyncStatusReady {
+			c.chyt.GetResource().Status.ReleaseStatus = ytv1.ChytReleaseStatusCreatingChPublicClique
 			return status, err
 		}
 	}
+
+	c.chyt.GetResource().Status.ReleaseStatus = ytv1.ChytReleaseStatusFinished
 
 	return SimpleStatus(SyncStatusReady), err
 }

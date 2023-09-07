@@ -24,18 +24,27 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+type SpytReleaseStatus string
+
+const (
+	SpytReleaseStatusCreatingUserSecret   SpytReleaseStatus = "CreatingUserSecret"
+	SpytReleaseStatusCreatingUser         SpytReleaseStatus = "CreatingUser"
+	SpytReleaseStatusUploadingIntoCypress SpytReleaseStatus = "UploadingIntoCypress"
+	SpytReleaseStatusFinished             SpytReleaseStatus = "Finished"
+)
+
 // SpytSpec defines the desired state of Spyt
 type SpytSpec struct {
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 
-	Name     string                       `json:"name,omitempty"`
 	Ytsaurus *corev1.LocalObjectReference `json:"ytsaurus,omitempty"`
 	Image    string                       `json:"image,omitempty"`
 }
 
 // SpytStatus defines the observed state of Spyt
 type SpytStatus struct {
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	Conditions    []metav1.Condition `json:"conditions,omitempty"`
+	ReleaseStatus SpytReleaseStatus  `json:"releaseStatus,omitempty"`
 }
 
 //+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=spyts,verbs=get;list;watch;create;update;patch;delete
@@ -43,6 +52,7 @@ type SpytStatus struct {
 //+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=spyts/finalizers,verbs=update
 
 //+kubebuilder:object:root=true
+// +kubebuilder:printcolumn:name="ReleaseStatus",type="string",JSONPath=".status.releaseStatus",description="Status of release"
 //+kubebuilder:subresource:status
 
 // Spyt is the Schema for the spyts API

@@ -7,10 +7,9 @@ metadata:
     app.kubernetes.io/part-of: yt-k8s-operator
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: yt-k8s-operator
-  name: spyt-sample
-spec:
   name: myspyt
+spec:
   ytsaurus:
     name:
       minisaurus
-  image: ytsaurus/spyt:1.69.0
+  image: ytsaurus/spyt:1.71.0

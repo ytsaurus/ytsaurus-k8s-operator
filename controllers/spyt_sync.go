@@ -26,6 +26,10 @@ func (r *SpytReconciler) Sync(ctx context.Context, resource *ytv1.Spyt, ytsaurus
 		return ctrl.Result{Requeue: true}, err
 	}
 
+	if spyt.GetResource().Status.ReleaseStatus == ytv1.SpytReleaseStatusFinished {
+		return ctrl.Result{}, nil
+	}
+
 	componentStatus := component.Status(ctx)
 
 	if componentStatus.SyncStatus == components.SyncStatusBlocked {
@@ -35,7 +39,8 @@ func (r *SpytReconciler) Sync(ctx context.Context, resource *ytv1.Spyt, ytsaurus
 	if componentStatus.SyncStatus == components.SyncStatusReady {
 		logger.Info("SPYT initialization finished")
 
-		return ctrl.Result{}, err
+		err := spyt.SaveReleaseStatus(ctx, ytv1.SpytReleaseStatusFinished)
+		return ctrl.Result{Requeue: true}, err
 	}
 
 	if err := component.Sync(ctx); err != nil {
