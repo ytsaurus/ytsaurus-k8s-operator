@@ -41,7 +41,6 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) ServerCom
 		cfgen.GetMastersStatefulSetName(),
 		cfgen.GetMastersServiceName(),
 		cfgen.GetMasterConfig,
-		cfgen.NeedMasterConfigReload,
 	)
 
 	initJob := NewInitJob(
@@ -52,8 +51,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) ServerCom
 		"default",
 		consts.ClientConfigFileName,
 		resource.Spec.CoreImage,
-		cfgen.GetNativeClientConfig,
-		cfgen.NeedNativeClientConfigReload)
+		cfgen.GetNativeClientConfig)
 
 	return &master{
 		ServerComponentBase: ServerComponentBase{

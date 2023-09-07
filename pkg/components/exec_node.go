@@ -45,9 +45,6 @@ func NewExecNode(
 		func() ([]byte, error) {
 			return cfgen.GetExecNodeConfig(spec)
 		},
-		func(data []byte) (bool, error) {
-			return cfgen.NeedExecNodeConfigReload(spec, data)
-		},
 	)
 
 	return &execNode{

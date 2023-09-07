@@ -52,9 +52,6 @@ func NewTabletNode(
 		func() ([]byte, error) {
 			return cfgen.GetTabletNodeConfig(spec)
 		},
-		func(data []byte) (bool, error) {
-			return cfgen.NeedTabletNodeConfigReload(spec, data)
-		},
 	)
 
 	return &tabletNode{

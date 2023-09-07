@@ -46,7 +46,6 @@ func NewQueryTracker(
 		cfgen.GetQueryTrackerStatefulSetName(),
 		cfgen.GetQueryTrackerServiceName(),
 		cfgen.GetQueryTrackerConfig,
-		cfgen.NeedQueryTrackerConfigReload,
 	)
 
 	return &queryTracker{

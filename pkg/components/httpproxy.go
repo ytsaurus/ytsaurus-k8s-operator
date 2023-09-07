@@ -51,9 +51,6 @@ func NewHTTPProxy(
 		func() ([]byte, error) {
 			return cfgen.GetHTTPProxyConfig(spec)
 		},
-		func(data []byte) (bool, error) {
-			return cfgen.NeedHTTPProxyConfigReload(spec, data)
-		},
 	)
 
 	return &httpProxy{

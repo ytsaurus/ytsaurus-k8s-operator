@@ -35,7 +35,6 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Compon
 		cfgen.GetDiscoveryStatefulSetName(),
 		cfgen.GetDiscoveryServiceName(),
 		cfgen.GetDiscoveryConfig,
-		cfgen.NeedDiscoveryConfigReload,
 	)
 
 	return &discovery{

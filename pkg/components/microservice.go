@@ -35,7 +35,6 @@ func NewMicroservice(
 	image string,
 	instanceCount int32,
 	configGenerator ytconfig.GeneratorFunc,
-	reloadChecker ytconfig.ReloadCheckerFunc,
 	configFileName, deploymentName, serviceName string) *Microservice {
 	return &Microservice{
 		labeller:      labeller,
@@ -55,8 +54,7 @@ func NewMicroservice(
 			labeller.GetMainConfigMapName(),
 			configFileName,
 			ytsaurus.GetResource().Spec.ConfigOverrides,
-			configGenerator,
-			reloadChecker),
+			configGenerator),
 	}
 }
 

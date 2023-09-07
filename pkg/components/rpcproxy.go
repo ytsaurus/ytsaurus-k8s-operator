@@ -46,9 +46,6 @@ func NewRPCProxy(
 		func() ([]byte, error) {
 			return cfgen.GetRPCProxyConfig(spec)
 		},
-		func(data []byte) (bool, error) {
-			return cfgen.NeedRPCProxyConfigReload(spec, data)
-		},
 	)
 
 	var balancingService *resources.RPCService = nil

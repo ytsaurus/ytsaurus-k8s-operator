@@ -42,7 +42,6 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		cfgen.GetYQLAgentStatefulSetName(),
 		cfgen.GetYQLAgentServiceName(),
 		cfgen.GetYQLAgentConfig,
-		cfgen.NeedYQLAgentConfigReload,
 	)
 
 	return &yqlAgent{
@@ -63,8 +62,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 			"yql-agent-environment",
 			consts.ClientConfigFileName,
 			resource.Spec.CoreImage,
-			cfgen.GetNativeClientConfig,
-			cfgen.NeedNativeClientConfigReload),
+			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			&l,

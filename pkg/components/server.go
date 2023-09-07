@@ -51,8 +51,7 @@ func NewServer(
 	ytsaurus *apiproxy.Ytsaurus,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
-	generator ytconfig.GeneratorFunc,
-	reloadChecker ytconfig.ReloadCheckerFunc) Server {
+	generator ytconfig.GeneratorFunc) Server {
 	image := ytsaurus.GetResource().Spec.CoreImage
 	if instanceSpec.Image != nil {
 		image = *instanceSpec.Image
@@ -81,8 +80,7 @@ func NewServer(
 			l.GetMainConfigMapName(),
 			configFileName,
 			ytsaurus.GetResource().Spec.ConfigOverrides,
-			generator,
-			reloadChecker),
+			generator),
 	}
 }
 

@@ -53,8 +53,7 @@ func NewInitJob(
 	conditionsManager apiproxy.ConditionManager,
 	imagePullSecrets []corev1.LocalObjectReference,
 	name, configFileName, image string,
-	generator ytconfig.GeneratorFunc,
-	reloadChecker ytconfig.ReloadCheckerFunc) *InitJob {
+	generator ytconfig.GeneratorFunc) *InitJob {
 	return &InitJob{
 		ComponentBase: ComponentBase{
 			labeller: labeller,
@@ -77,8 +76,7 @@ func NewInitJob(
 				labeller.ComponentLabel),
 			configFileName,
 			nil,
-			generator,
-			reloadChecker),
+			generator),
 	}
 }
 

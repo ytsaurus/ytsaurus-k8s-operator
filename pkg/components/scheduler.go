@@ -50,7 +50,6 @@ func NewScheduler(
 		cfgen.GetSchedulerStatefulSetName(),
 		cfgen.GetSchedulerServiceName(),
 		cfgen.GetSchedulerConfig,
-		cfgen.NeedSchedulerConfigReload,
 	)
 
 	return &scheduler{
@@ -73,8 +72,7 @@ func NewScheduler(
 			"user",
 			consts.ClientConfigFileName,
 			resource.Spec.CoreImage,
-			cfgen.GetNativeClientConfig,
-			cfgen.NeedNativeClientConfigReload),
+			cfgen.GetNativeClientConfig),
 		initOpArchive: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -83,8 +81,7 @@ func NewScheduler(
 			"op-archive",
 			consts.ClientConfigFileName,
 			resource.Spec.CoreImage,
-			cfgen.GetNativeClientConfig,
-			cfgen.NeedNativeClientConfigReload),
+			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			&l,

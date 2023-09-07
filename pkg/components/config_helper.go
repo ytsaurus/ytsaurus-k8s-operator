@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
@@ -17,8 +18,7 @@ type ConfigHelper struct {
 	labeller *labeller.Labeller
 	apiProxy apiproxy.APIProxy
 
-	generator     ytconfig.GeneratorFunc
-	reloadChecker ytconfig.ReloadCheckerFunc
+	generator ytconfig.GeneratorFunc
 
 	configOverrides *corev1.LocalObjectReference
 	overridesMap    corev1.ConfigMap
@@ -32,13 +32,11 @@ func NewConfigHelper(
 	apiProxy apiproxy.APIProxy,
 	name, fileName string,
 	configOverrides *corev1.LocalObjectReference,
-	generator ytconfig.GeneratorFunc,
-	reloadChecker ytconfig.ReloadCheckerFunc) *ConfigHelper {
+	generator ytconfig.GeneratorFunc) *ConfigHelper {
 	return &ConfigHelper{
 		labeller:        labeller,
 		apiProxy:        apiProxy,
 		generator:       generator,
-		reloadChecker:   reloadChecker,
 		configOverrides: configOverrides,
 		fileName:        fileName,
 		configMap:       resources.NewConfigMap(name, labeller, apiProxy),
@@ -96,15 +94,19 @@ func (h *ConfigHelper) GetConfigMapName() string {
 	return h.configMap.Name()
 }
 
-func (h *ConfigHelper) getConfig() *string {
+func (h *ConfigHelper) getConfig() ([]byte, error) {
 	if h.generator == nil {
-		return nil
+		return nil, nil
 	}
 
 	serializedConfig, err := h.generator()
 	if err != nil {
-		panic(err)
+		h.apiProxy.RecordWarning(
+			"Reconciling",
+			fmt.Sprintf("Failed to build config %s: %s", h.fileName, err))
+		return nil, err
 	}
+
 	if h.overridesMap.GetResourceVersion() != "" {
 		if value, ok := h.overridesMap.Data[h.fileName]; ok {
 			configWithOverrides, err := overrideYsonConfigs(serializedConfig, []byte(value))
@@ -119,8 +121,7 @@ func (h *ConfigHelper) getConfig() *string {
 		}
 	}
 
-	result := string(serializedConfig)
-	return &result
+	return serializedConfig, nil
 }
 
 func (h *ConfigHelper) getCurrentConfigValue() []byte {
@@ -136,10 +137,18 @@ func (h *ConfigHelper) getCurrentConfigValue() []byte {
 }
 
 func (h *ConfigHelper) NeedReload() (bool, error) {
-	if h.reloadChecker == nil {
+	newConfig, err := h.getConfig()
+	if err != nil {
+		return false, err
+	}
+	curConfig := h.getCurrentConfigValue()
+	if cmp.Equal(curConfig, newConfig) {
 		return false, nil
 	}
-	return h.reloadChecker(h.getCurrentConfigValue())
+	h.apiProxy.RecordNormal(
+		"Reconciliation",
+		fmt.Sprintf("Config %s needs reload", h.fileName))
+	return true, nil
 }
 
 func (h *ConfigHelper) NeedSync() bool {
@@ -156,9 +165,13 @@ func (h *ConfigHelper) NeedSync() bool {
 
 func (h *ConfigHelper) Build() *corev1.ConfigMap {
 	cm := h.configMap.Build()
-	data := h.getConfig()
+	data, err := h.getConfig()
+	if err != nil {
+		return nil
+	}
+
 	if data != nil {
-		cm.Data[h.fileName] = *data
+		cm.Data[h.fileName] = string(data)
 	}
 
 	return cm

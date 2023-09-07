@@ -41,9 +41,6 @@ func NewDataNode(
 		func() ([]byte, error) {
 			return cfgen.GetDataNodeConfig(spec)
 		},
-		func(data []byte) (bool, error) {
-			return cfgen.NeedDataNodeConfigReload(spec, data)
-		},
 	)
 
 	return &dataNode{

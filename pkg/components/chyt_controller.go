@@ -53,7 +53,6 @@ func NewChytController(
 		image,
 		1,
 		cfgen.GetChytControllerConfig,
-		cfgen.NeedChytControllerConfigReload,
 		ChytControllerConfigFileName,
 		"chyt-controller",
 		"chyt")
@@ -73,8 +72,7 @@ func NewChytController(
 			"user",
 			consts.ClientConfigFileName,
 			resource.Spec.CoreImage,
-			cfgen.GetNativeClientConfig,
-			cfgen.NeedNativeClientConfigReload),
+			cfgen.GetNativeClientConfig),
 		initClusterJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -83,8 +81,7 @@ func NewChytController(
 			"cluster",
 			ChytInitClusterJobConfigFileName,
 			resource.Spec.CoreImage,
-			cfgen.GetChytInitClusterConfig,
-			cfgen.NeedChytInitClusterConfigReload),
+			cfgen.GetChytInitClusterConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			&l,
