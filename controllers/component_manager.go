@@ -230,12 +230,11 @@ func (cm *ComponentManager) areServerPodsRemoved(ytsaurus *apiProxy.Ytsaurus) bo
 	return true
 }
 
-func (cm *ComponentManager) areAllImagesChangedBack() bool {
-	// TODO(nadya73): add more logic here for config update.
+func (cm *ComponentManager) needUpdate() bool {
 	for _, component := range cm.allComponents {
-		if scmp, ok := component.(components.ServerComponent); ok && !scmp.ImageCorrespondsToSpec() {
-			return false
+		if scmp, ok := component.(components.ServerComponent); ok && scmp.NeedUpdate() {
+			return true
 		}
 	}
-	return true
+	return false
 }

@@ -42,8 +42,8 @@ func (r *YtsaurusReconciler) handleUpdatingState(
 		}
 
 	case ytv1.UpdateStateImpossibleToStart:
-		if componentManager.areAllImagesChangedBack() {
-			ytsaurus.LogUpdate(ctx, "Images were changed back, update is canceling")
+		if !componentManager.needUpdate() || !ytsaurus.GetResource().Spec.EnableFullUpdate {
+			ytsaurus.LogUpdate(ctx, "Spec changed back or full update isn't enabled, update is canceling")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateCancelUpdate)
 			return &ctrl.Result{Requeue: true}, err
 		}
@@ -190,6 +190,10 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 
 		case componentManager.needFullUpdate():
 			logger.Info("Ytsaurus needs full update")
+			if ytsaurus.GetResource().Spec.EnableFullUpdate {
+				logger.Info("Full update isn't allowed, ignore it")
+				return ctrl.Result{}, nil
+			}
 			err := ytsaurus.SaveUpdatingClusterState(ctx, nil)
 			return ctrl.Result{Requeue: true}, err
 

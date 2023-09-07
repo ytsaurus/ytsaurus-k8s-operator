@@ -37,7 +37,7 @@ func SimpleStatus(status SyncStatus) ComponentStatus {
 type ServerComponent interface {
 	Component
 	GetPodsRemovedCondition() string
-	ImageCorrespondsToSpec() bool
+	NeedUpdate() bool
 }
 
 type ServerComponentBase struct {
@@ -49,8 +49,8 @@ func (c *ServerComponentBase) GetPodsRemovedCondition() string {
 	return c.labeller.GetPodsRemovedCondition()
 }
 
-func (c *ServerComponentBase) ImageCorrespondsToSpec() bool {
-	return c.server.ImageCorrespondsToSpec()
+func (c *ServerComponentBase) NeedUpdate() bool {
+	return c.server.NeedUpdate()
 }
 
 func (c *ServerComponentBase) removePods(ctx context.Context, dry bool) error {

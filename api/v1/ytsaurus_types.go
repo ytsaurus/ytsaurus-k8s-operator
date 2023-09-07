@@ -296,6 +296,8 @@ type YtsaurusSpec struct {
 
 	//+kubebuilder:default:=true
 	IsManaged bool `json:"isManaged,omitempty"`
+	//+kubebuilder:default:=true
+	EnableFullUpdate bool `json:"enableFullUpdate,omitempty"`
 
 	//+kubebuilder:default:=false
 	UseIPv6 bool `json:"useIpv6,omitempty"`

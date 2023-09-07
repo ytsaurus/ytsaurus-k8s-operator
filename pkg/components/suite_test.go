@@ -75,10 +75,6 @@ func (fs *FakeServer) NeedUpdate() bool {
 	return false
 }
 
-func (fs *FakeServer) ImageCorrespondsToSpec() bool {
-	return true
-}
-
 func (fs *FakeServer) NeedSync() bool {
 	return false
 }

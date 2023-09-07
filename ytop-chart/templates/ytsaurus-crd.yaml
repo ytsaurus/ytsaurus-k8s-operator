@@ -8772,6 +8772,9 @@ spec:
                       type: object
                     type: array
                 type: object
+              enableFullUpdate:
+                default: true
+                type: boolean
               execNodes:
                 items:
                   properties:
