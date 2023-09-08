@@ -38,9 +38,10 @@ const (
 type ChytSpec struct {
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 
-	Ytsaurus    *corev1.LocalObjectReference `json:"ytsaurus,omitempty"`
-	Image       string                       `json:"image,omitempty"`
-	MakeDefault bool                         `json:"makeDefault,omitempty"`
+	Ytsaurus *corev1.LocalObjectReference `json:"ytsaurus,omitempty"`
+	Image    string                       `json:"image,omitempty"`
+	//+kubebuilder:default:=false
+	MakeDefault bool `json:"makeDefault"`
 }
 
 // ChytStatus defines the observed state of Chyt

@@ -159,7 +159,7 @@ type BaseLoggerSpec struct {
 	//+kubebuilder:validation:Enum=none;gzip;zstd
 	Compression LogCompression `json:"compression,omitempty"`
 	//+kubebuilder:default:=false
-	UseTimestampSuffix bool               `json:"use_timestamp_suffix,omitempty"`
+	UseTimestampSuffix bool               `json:"use_timestamp_suffix"`
 	RotationPolicy     *LogRotationPolicy `json:"rotationPolicy,omitempty"`
 }
 
@@ -260,9 +260,9 @@ type UISpec struct {
 	//+kubebuilder:default:=NodePort
 	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
 	//+kubebuilder:default:=false
-	UseMetrikaCounter bool `json:"useMetrikaCounter,omitempty"`
+	UseMetrikaCounter bool `json:"useMetrikaCounter"`
 	//+kubebuilder:default:=true
-	UseInsecureCookies bool                        `json:"useInsecureCookies,omitempty"`
+	UseInsecureCookies bool                        `json:"useInsecureCookies"`
 	Resources          corev1.ResourceRequirements `json:"resources,omitempty"`
 	InstanceCount      int32                       `json:"instanceCount,omitempty"`
 }
@@ -295,16 +295,16 @@ type YtsaurusSpec struct {
 	AdminCredentials *corev1.LocalObjectReference  `json:"adminCredentials,omitempty"`
 
 	//+kubebuilder:default:=true
-	IsManaged bool `json:"isManaged,omitempty"`
+	IsManaged bool `json:"isManaged"`
 	//+kubebuilder:default:=true
-	EnableFullUpdate bool `json:"enableFullUpdate,omitempty"`
+	EnableFullUpdate bool `json:"enableFullUpdate"`
 
 	//+kubebuilder:default:=false
-	UseIPv6 bool `json:"useIpv6,omitempty"`
+	UseIPv6 bool `json:"useIpv6"`
 	//+kubebuilder:default:=true
-	UseShortNames bool `json:"useShortNames,omitempty"`
+	UseShortNames bool `json:"useShortNames"`
 	//+kubebuilder:default:=false
-	UsePorto bool `json:"usePorto,omitempty"`
+	UsePorto bool `json:"usePorto"`
 
 	ExtraPodAnnotations map[string]string `json:"extraPodAnnotations,omitempty"`
 
