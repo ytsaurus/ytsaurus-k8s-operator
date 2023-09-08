@@ -36,15 +36,9 @@ spec:
       jsonPath: .status.updateStatus.state
       name: UpdateState
       type: string
-<<<<<<< trunk: [k8s] YT-18987: Set CRD descriptions limit to 80 bytes
     - description: Updating components (for local update)
       jsonPath: .status.updateStatus.components
       name: UpdatingComponents
-=======
-    - description: Updating component (for local update)
-      jsonPath: .status.updateStatus.component
-      name: UpdatingComponent
->>>>>>> yt-k8s-crd: Regenerate CRD specs
       type: string
     name: v1
     schema:
@@ -13641,8 +13635,8 @@ spec:
                           - type: string
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
-                        description: 'Limits describes the maximum amount of compute
-                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        description: Limits describes the maximum amount of compute
+                          resources allowed.
                         type: object
                       requests:
                         additionalProperties:
@@ -13651,10 +13645,8 @@ spec:
                           - type: string
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
-                        description: 'Requests describes the minimum amount of compute
-                          resources required. If Requests is omitted for a container,
-                          it defaults to Limits if that is explicitly specified, otherwise
-                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        description: Requests describes the minimum amount of compute
+                          resources required.
                         type: object
                     type: object
                   structuredLoggers:
@@ -13711,38 +13703,6 @@ spec:
                       - use_timestamp_suffix
                       type: object
                     type: array
-<<<<<<< trunk: [k8s] YT-18987: Set CRD descriptions limit to 80 bytes
-=======
-                  nodeSelector:
-                    additionalProperties:
-                      type: string
-                    type: object
-                  resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
-                    properties:
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Limits describes the maximum amount of compute
-                          resources allowed.
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Requests describes the minimum amount of compute
-                          resources required.
-                        type: object
-                    type: object
->>>>>>> yt-k8s-crd: Regenerate CRD specs
                   tolerations:
                     items:
                       description: The pod this Toleration is attached to tolerates
