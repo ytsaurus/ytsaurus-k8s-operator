@@ -12,10 +12,12 @@ import (
 )
 
 type ComponentManager struct {
-	ytsaurus        *apiProxy.Ytsaurus
-	allComponents   []components.Component
-	masterComponent components.ServerComponent
-	status          ComponentManagerStatus
+	ytsaurus              *apiProxy.Ytsaurus
+	allComponents         []components.Component
+	masterComponent       components.ServerComponent
+	queryTrackerComponent components.Component
+	schedulerComponent    components.Component
+	status                ComponentManagerStatus
 }
 
 type ComponentManagerStatus struct {
@@ -96,8 +98,9 @@ func NewComponentManager(
 		allComponents = append(allComponents, ca)
 	}
 
-	if resource.Spec.QueryTrackers != nil {
-		q := components.NewQueryTracker(cfgen, ytsaurus, yc)
+	var q components.Component
+	if resource.Spec.QueryTrackers != nil && resource.Spec.Schedulers != nil && resource.Spec.TabletNodes != nil && len(resource.Spec.TabletNodes) > 0 {
+		q = components.NewQueryTracker(cfgen, ytsaurus, yc, tnds)
 		allComponents = append(allComponents, q)
 	}
 
@@ -163,10 +166,12 @@ func NewComponentManager(
 		"clusterState", resource.Status.State)
 
 	return &ComponentManager{
-		ytsaurus:        ytsaurus,
-		allComponents:   allComponents,
-		masterComponent: m,
-		status:          status,
+		ytsaurus:              ytsaurus,
+		allComponents:         allComponents,
+		masterComponent:       m,
+		queryTrackerComponent: q,
+		schedulerComponent:    s,
+		status:                status,
 	}, nil
 }
 
@@ -215,6 +220,16 @@ func (cm *ComponentManager) needLocalUpdate() []components.Component {
 
 func (cm *ComponentManager) allReadyOrUpdating() bool {
 	return cm.status.allReadyOrUpdating
+}
+
+func (cm *ComponentManager) needQueryTrackerUpdate(ytsaurus *apiProxy.Ytsaurus) bool {
+	componentNames := ytsaurus.GetLocalUpdatingComponents()
+	return cm.queryTrackerComponent != nil && (componentNames == nil || slices.Contains(componentNames, cm.queryTrackerComponent.GetName()))
+}
+
+func (cm *ComponentManager) needSchedulerUpdate(ytsaurus *apiProxy.Ytsaurus) bool {
+	componentNames := ytsaurus.GetLocalUpdatingComponents()
+	return cm.schedulerComponent != nil && (componentNames == nil || slices.Contains(componentNames, cm.schedulerComponent.GetName()))
 }
 
 func (cm *ComponentManager) areServerPodsRemoved(ytsaurus *apiProxy.Ytsaurus) bool {

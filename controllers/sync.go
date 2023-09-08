@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-func (r *YtsaurusReconciler) handleUpdatingState(
+func (r *YtsaurusReconciler) handleUpdatingStateFullMode(
 	ctx context.Context,
 	ytsaurus *apiProxy.Ytsaurus,
 	componentManager *ComponentManager,
@@ -21,11 +21,6 @@ func (r *YtsaurusReconciler) handleUpdatingState(
 
 	switch resource.Status.UpdateStatus.State {
 	case ytv1.UpdateStateNone:
-		if resource.Status.UpdateStatus.Components != nil {
-			ytsaurus.LogUpdate(ctx, "Waiting for pods removal")
-			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForPodsRemoval)
-			return &ctrl.Result{Requeue: true}, err
-		}
 		ytsaurus.LogUpdate(ctx, "Checking the possibility of updating")
 		err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStatePossibilityCheck)
 		return &ctrl.Result{Requeue: true}, err
@@ -93,13 +88,6 @@ func (r *YtsaurusReconciler) handleUpdatingState(
 	case ytv1.UpdateStateWaitingForPodsCreation:
 		if componentManager.allReadyOrUpdating() {
 			ytsaurus.LogUpdate(ctx, "All components were recreated")
-
-			if resource.Status.UpdateStatus.Components != nil {
-				ytsaurus.LogUpdate(ctx, "Finishing")
-				err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdateFinishing)
-				return &ctrl.Result{Requeue: true}, err
-			}
-
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForTabletCellsRecovery)
 			return &ctrl.Result{RequeueAfter: time.Second * 7}, err
 		}
@@ -112,11 +100,11 @@ func (r *YtsaurusReconciler) handleUpdatingState(
 		}
 
 	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
-		if ytsaurus.GetResource().Spec.Schedulers == nil ||
+		if !componentManager.needSchedulerUpdate(ytsaurus) ||
 			ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNotNecessaryToUpdateOpArchive) {
 			ytsaurus.LogUpdate(ctx, "Operations archive update was skipped")
-			ytsaurus.LogUpdate(ctx, "Waiting for safe mode disabled")
-			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSafeModeDisabled)
+			ytsaurus.LogUpdate(ctx, "Waiting for query tracker state prepare for updating")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForQTStateUpdatingPrepare)
 			return &ctrl.Result{Requeue: true}, err
 		}
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionOpArchivePreparedForUpdating) {
@@ -127,6 +115,26 @@ func (r *YtsaurusReconciler) handleUpdatingState(
 
 	case ytv1.UpdateStateWaitingForOpArchiveUpdate:
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionOpArchiveUpdated) {
+			ytsaurus.LogUpdate(ctx, "Waiting for query tracker state prepare for updating")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForQTStateUpdatingPrepare)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:
+		if !componentManager.needQueryTrackerUpdate(ytsaurus) {
+			ytsaurus.LogUpdate(ctx, "Query tracker state update was skipped")
+			ytsaurus.LogUpdate(ctx, "Waiting for safe mode disabled")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSafeModeDisabled)
+			return &ctrl.Result{Requeue: true}, err
+		}
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionQTStatePreparedForUpdating) {
+			ytsaurus.LogUpdate(ctx, "Waiting for query tracker state updating to finish")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForQTStateUpdate)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForQTStateUpdate:
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionQTStateUpdated) {
 			ytsaurus.LogUpdate(ctx, "Waiting for safe mode disabled")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSafeModeDisabled)
 			return &ctrl.Result{Requeue: true}, err
@@ -134,6 +142,78 @@ func (r *YtsaurusReconciler) handleUpdatingState(
 
 	case ytv1.UpdateStateWaitingForSafeModeDisabled:
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSafeModeDisabled) {
+			ytsaurus.LogUpdate(ctx, "Finishing")
+			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdateFinishing)
+			return &ctrl.Result{Requeue: true}, err
+		}
+	}
+
+	return nil, nil
+}
+
+func (r *YtsaurusReconciler) handleUpdatingStateLocalMode(
+	ctx context.Context,
+	ytsaurus *apiProxy.Ytsaurus,
+	componentManager *ComponentManager,
+) (*ctrl.Result, error) {
+	resource := ytsaurus.GetResource()
+
+	switch resource.Status.UpdateStatus.State {
+	case ytv1.UpdateStateNone:
+		ytsaurus.LogUpdate(ctx, "Waiting for pods removal")
+		err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForPodsRemoval)
+		return &ctrl.Result{Requeue: true}, err
+
+	case ytv1.UpdateStateWaitingForPodsRemoval:
+		if componentManager.areServerPodsRemoved(ytsaurus) {
+			ytsaurus.LogUpdate(ctx, "Waiting for pods creation")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForPodsCreation)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForPodsCreation:
+		if componentManager.allReadyOrUpdating() {
+			ytsaurus.LogUpdate(ctx, "All components were recreated")
+			ytsaurus.LogUpdate(ctx, "Waiting for operations archive prepare for updating")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
+		if !componentManager.needSchedulerUpdate(ytsaurus) || ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNotNecessaryToUpdateOpArchive) {
+			ytsaurus.LogUpdate(ctx, "Operations archive update was skipped")
+			ytsaurus.LogUpdate(ctx, "Waiting for query tracker state prepare for updating")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForQTStateUpdatingPrepare)
+			return &ctrl.Result{Requeue: true}, err
+		}
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionOpArchivePreparedForUpdating) {
+			ytsaurus.LogUpdate(ctx, "Waiting for operations archive updating to finish")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForOpArchiveUpdate)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForOpArchiveUpdate:
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionOpArchiveUpdated) {
+			ytsaurus.LogUpdate(ctx, "Waiting for query tracker state prepare for updating")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForQTStateUpdatingPrepare)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:
+		if !componentManager.needQueryTrackerUpdate(ytsaurus) {
+			ytsaurus.LogUpdate(ctx, "Query tracker state update was skipped")
+			ytsaurus.LogUpdate(ctx, "Finishing")
+			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdateFinishing)
+			return &ctrl.Result{Requeue: true}, err
+		}
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionQTStatePreparedForUpdating) {
+			ytsaurus.LogUpdate(ctx, "Waiting for query tracker state updating to finish")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForQTStateUpdate)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForQTStateUpdate:
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionQTStateUpdated) {
 			ytsaurus.LogUpdate(ctx, "Finishing")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdateFinishing)
 			return &ctrl.Result{Requeue: true}, err
@@ -210,7 +290,14 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		}
 
 	case ytv1.ClusterStateUpdating:
-		result, err := r.handleUpdatingState(ctx, ytsaurus, componentManager)
+		var result *ctrl.Result
+		var err error
+		if ytsaurus.GetLocalUpdatingComponents() != nil {
+			result, err = r.handleUpdatingStateLocalMode(ctx, ytsaurus, componentManager)
+		} else {
+			result, err = r.handleUpdatingStateFullMode(ctx, ytsaurus, componentManager)
+		}
+
 		if result != nil {
 			return *result, err
 		}
