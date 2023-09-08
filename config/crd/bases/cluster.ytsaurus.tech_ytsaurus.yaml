@@ -776,8 +776,6 @@ spec:
                           - file
                           - stderr
                           type: string
-                      required:
-                      - use_timestamp_suffix
                       type: object
                     type: array
                   nodeSelector:
@@ -859,8 +857,6 @@ spec:
                         use_timestamp_suffix:
                           default: false
                           type: boolean
-                      required:
-                      - use_timestamp_suffix
                       type: object
                     type: array
                   tolerations:
@@ -2924,8 +2920,6 @@ spec:
                             - file
                             - stderr
                             type: string
-                        required:
-                        - use_timestamp_suffix
                         type: object
                       type: array
                     name:
@@ -3011,8 +3005,6 @@ spec:
                           use_timestamp_suffix:
                             default: false
                             type: boolean
-                        required:
-                        - use_timestamp_suffix
                         type: object
                       type: array
                     tolerations:
@@ -5084,8 +5076,6 @@ spec:
                           - file
                           - stderr
                           type: string
-                      required:
-                      - use_timestamp_suffix
                       type: object
                     type: array
                   nodeSelector:
@@ -5167,8 +5157,6 @@ spec:
                         use_timestamp_suffix:
                           default: false
                           type: boolean
-                      required:
-                      - use_timestamp_suffix
                       type: object
                     type: array
                   tolerations:
@@ -7233,8 +7221,6 @@ spec:
                             - file
                             - stderr
                             type: string
-                        required:
-                        - use_timestamp_suffix
                         type: object
                       type: array
                     name:
@@ -7325,8 +7311,6 @@ spec:
                           use_timestamp_suffix:
                             default: false
                             type: boolean
-                        required:
-                        - use_timestamp_suffix
                         type: object
                       type: array
                     tolerations:
@@ -9408,8 +9392,6 @@ spec:
                             - file
                             - stderr
                             type: string
-                        required:
-                        - use_timestamp_suffix
                         type: object
                       type: array
                     nodeSelector:
@@ -9500,8 +9482,6 @@ spec:
                           use_timestamp_suffix:
                             default: false
                             type: boolean
-                        required:
-                        - use_timestamp_suffix
                         type: object
                       type: array
                     tolerations:
@@ -11589,8 +11569,6 @@ spec:
                           - file
                           - stderr
                           type: string
-                      required:
-                      - use_timestamp_suffix
                       type: object
                     type: array
                   nodeSelector:
@@ -11672,8 +11650,6 @@ spec:
                         use_timestamp_suffix:
                           default: false
                           type: boolean
-                      required:
-                      - use_timestamp_suffix
                       type: object
                     type: array
                   tolerations:
@@ -13730,8 +13706,6 @@ spec:
                           - file
                           - stderr
                           type: string
-                      required:
-                      - use_timestamp_suffix
                       type: object
                     type: array
                   nodeSelector:
@@ -13813,8 +13787,6 @@ spec:
                         use_timestamp_suffix:
                           default: false
                           type: boolean
-                      required:
-                      - use_timestamp_suffix
                       type: object
                     type: array
                   tolerations:
@@ -15876,8 +15848,6 @@ spec:
                             - file
                             - stderr
                             type: string
-                        required:
-                        - use_timestamp_suffix
                         type: object
                       type: array
                     nodeSelector:
@@ -15967,8 +15937,6 @@ spec:
                           use_timestamp_suffix:
                             default: false
                             type: boolean
-                        required:
-                        - use_timestamp_suffix
                         type: object
                       type: array
                     tolerations:
@@ -18039,8 +18007,6 @@ spec:
                           - file
                           - stderr
                           type: string
-                      required:
-                      - use_timestamp_suffix
                       type: object
                     type: array
                   nodeSelector:
@@ -18122,8 +18088,6 @@ spec:
                         use_timestamp_suffix:
                           default: false
                           type: boolean
-                      required:
-                      - use_timestamp_suffix
                       type: object
                     type: array
                   tolerations:
@@ -20187,8 +20151,6 @@ spec:
                             - file
                             - stderr
                             type: string
-                        required:
-                        - use_timestamp_suffix
                         type: object
                       type: array
                     nodeSelector:
@@ -20270,8 +20232,6 @@ spec:
                           use_timestamp_suffix:
                             default: false
                             type: boolean
-                        required:
-                        - use_timestamp_suffix
                         type: object
                       type: array
                     tolerations:
@@ -22358,8 +22318,6 @@ spec:
                             - file
                             - stderr
                             type: string
-                        required:
-                        - use_timestamp_suffix
                         type: object
                       type: array
                     name:
@@ -22445,8 +22403,6 @@ spec:
                           use_timestamp_suffix:
                             default: false
                             type: boolean
-                        required:
-                        - use_timestamp_suffix
                         type: object
                       type: array
                     tolerations:
@@ -23876,9 +23832,6 @@ spec:
                   useMetrikaCounter:
                     default: false
                     type: boolean
-                required:
-                - useInsecureCookies
-                - useMetrikaCounter
                 type: object
               uiImage:
                 type: string
@@ -24573,8 +24526,6 @@ spec:
                           - file
                           - stderr
                           type: string
-                      required:
-                      - use_timestamp_suffix
                       type: object
                     type: array
                   nodeSelector:
@@ -24656,8 +24607,6 @@ spec:
                         use_timestamp_suffix:
                           default: false
                           type: boolean
-                      required:
-                      - use_timestamp_suffix
                       type: object
                     type: array
                   tolerations:
@@ -26030,12 +25979,6 @@ spec:
                       type: object
                     type: array
                 type: object
-            required:
-            - enableFullUpdate
-            - isManaged
-            - useIpv6
-            - usePorto
-            - useShortNames
             type: object
           status:
             description: YtsaurusStatus defines the observed state of Ytsaurus
