@@ -14,6 +14,7 @@ import (
 	"go.ytsaurus.tech/yt/go/yt/ythttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ptr "k8s.io/utils/pointer"
+	"os"
 	"strings"
 	"time"
 )
@@ -518,10 +519,17 @@ func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 	if yc.ytClient == nil {
 		token, _ := yc.secret.GetValue(consts.TokenSecretKey)
 		timeout := time.Second * 10
+		proxy, ok := os.LookupEnv("YTOP_PROXY")
+		disableProxyDiscovery := true
+		if !ok {
+			proxy = yc.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
+			disableProxyDiscovery = false
+		}
 		yc.ytClient, err = ythttp.NewClient(&yt.Config{
-			Proxy:               yc.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
-			Token:               token,
-			LightRequestTimeout: &timeout,
+			Proxy:                 proxy,
+			Token:                 token,
+			LightRequestTimeout:   &timeout,
+			DisableProxyDiscovery: disableProxyDiscovery,
 		})
 
 		if err != nil {
