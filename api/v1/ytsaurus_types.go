@@ -232,6 +232,8 @@ type ExecNodesSpec struct {
 	Name string `json:"name,omitempty"`
 	// List of sidecar containers as yaml of corev1.Container.
 	Sidecars []string `json:"sidecars,omitempty"`
+	//+kubebuilder:default:=true
+	Privileged bool `json:"privileged"`
 }
 
 type TabletNodesSpec struct {

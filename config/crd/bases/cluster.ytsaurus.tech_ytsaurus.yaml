@@ -7231,6 +7231,9 @@ spec:
                       additionalProperties:
                         type: string
                       type: object
+                    privileged:
+                      default: true
+                      type: boolean
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -8697,6 +8700,8 @@ spec:
                         - name
                         type: object
                       type: array
+                  required:
+                  - privileged
                   type: object
                 type: array
               extraPodAnnotations:
