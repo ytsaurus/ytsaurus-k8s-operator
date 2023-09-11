@@ -74,7 +74,7 @@ helm-kind-install: ## Install helm chart from sources in kind.
 	helm install ytsaurus $(OPERATOR_CHART)
 
 .PHONY: helm-minikube-install
-helm-minikube-install: ## Install helm chart from sources in minikube.
+helm-minikube-install: helm ## Install helm chart from sources in minikube.
 	eval $$(minikube docker-env) && docker build -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
 	helm install ytsaurus ytop-chart/
 
@@ -101,7 +101,7 @@ docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
 
 .PHONY: helm
-helm: manifests kustomize helmify ## Generate helm chart.
+helm: manifests kustomize helmify build ## Generate helm chart.
 	$(KUSTOMIZE) build config/default | $(HELMIFY) $(OPERATOR_CHART)
 
 ##@ Deployment
