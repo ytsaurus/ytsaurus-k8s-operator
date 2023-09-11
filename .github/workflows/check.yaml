@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - nadya73/*
 
 jobs:
   start-vm:
@@ -52,6 +53,11 @@ jobs:
         with:
           go-version: 1.19
 
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.11.2
+
       - name: Build
         shell: bash
         run: |
@@ -61,6 +67,15 @@ jobs:
         shell: bash
         run: |
           make test
+
+      - name: Docker Hub login
+        run: |
+          echo '${{ secrets.DOCKER_HUB_PASSWORD }}' | docker login --username ${{ secrets.DOCKER_HUB_LOGIN}} --password-stdin
+
+      - name: Docker
+        shell: bash
+        run: |
+          make release RELEASE_VERSION=0.0.0-dev-${GITHUB_SHA} OPERATOR_IMAGE=ytsaurus/k8s-operator-nightly OPERATOR_CHART=ytop-chart-nightly
 
   stop-vm:
     name: Stop VM
@@ -78,22 +93,5 @@ jobs:
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
           label: ${{ needs.start-vm.outputs.label }}
           instance-id: ${{ needs.start-vm.outputs.instance-id }}
-  send-notifications:
-    name: Send notifications
-    needs:
-      - stop-vm
-    runs-on: trampoline
-    if: ${{ failure() }}
-    steps:
-      - name: Send telegram message
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          disable_web_page_preview: true
-          format: markdown
-          message: |
-            Workflow *${{github.workflow}}* failed: ${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}. Commit:
-            ```
-            ${{github.event.head_commit.message}}
-            ```
+
+
