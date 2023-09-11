@@ -10,13 +10,16 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	ptr "k8s.io/utils/pointer"
 	"k8s.io/utils/strings/slices"
+	"log"
 )
 
 type execNode struct {
 	ServerComponentBase
-	master   Component
-	sidecars []string
+	master     Component
+	sidecars   []string
+	privileged bool
 }
 
 func NewExecNode(
@@ -56,8 +59,9 @@ func NewExecNode(
 			},
 			server: server,
 		},
-		master:   master,
-		sidecars: spec.Sidecars,
+		master:     master,
+		sidecars:   spec.Sidecars,
+		privileged: spec.Privileged,
 	}
 }
 
@@ -90,12 +94,17 @@ func (n *execNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	if n.server.NeedSync() {
 		if !dry {
 			statefulSet := n.server.BuildStatefulSet()
+			containers := &statefulSet.Spec.Template.Spec.Containers
+			if len(*containers) != 1 {
+				log.Panicf("length of exec node containers is expected to be 1, actual %v", len(*containers))
+			}
+			(*containers)[0].SecurityContext = &corev1.SecurityContext{Privileged: ptr.Bool(n.privileged)}
 			for _, sidecarSpec := range n.sidecars {
 				sidecar := corev1.Container{}
 				if err := yaml.Unmarshal([]byte(sidecarSpec), &sidecar); err != nil {
 					return WaitingStatus(SyncStatusBlocked, "invalid sidecar"), err
 				}
-				statefulSet.Spec.Template.Spec.Containers = append(statefulSet.Spec.Template.Spec.Containers, sidecar)
+				*containers = append(*containers, sidecar)
 			}
 			err = n.server.Sync(ctx)
 		}
