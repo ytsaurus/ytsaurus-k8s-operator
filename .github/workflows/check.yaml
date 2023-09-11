@@ -52,6 +52,11 @@ jobs:
         with:
           go-version: 1.19
 
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.11.2
+
       - name: Build
         shell: bash
         run: |
@@ -61,6 +66,15 @@ jobs:
         shell: bash
         run: |
           make test
+
+      - name: Docker Hub login
+        run: |
+          echo '${{ secrets.DOCKER_HUB_PASSWORD }}' | docker login --username ${{ secrets.DOCKER_HUB_LOGIN}} --password-stdin
+      - name: Docker
+        shell: bash
+        run: |
+          make release RELEASE_VERSION=0.0.0-dev-${GITHUB_SHA} OPERATOR_IMAGE=ytsaurus/k8s-operator-nightly OPERATOR_CHART=ytop-chart-nightly
+
 
   stop-vm:
     name: Stop VM
