@@ -223,6 +223,30 @@ func (g *Generator) GetRPCProxyConfig(spec ytv1.RPCProxiesSpec) ([]byte, error) 
 	return marshallYsonConfig(c)
 }
 
+func (g *Generator) getTCPProxyConfigImpl(spec ytv1.TCPProxiesSpec) (TCPProxyServer, error) {
+	c, err := getTCPProxyServerCarcass(spec)
+	if err != nil {
+		return TCPProxyServer{}, err
+	}
+
+	g.fillCommonService(&c.CommonServer)
+
+	return c, nil
+}
+
+func (g *Generator) GetTCPProxyConfig(spec ytv1.TCPProxiesSpec) ([]byte, error) {
+	if g.ytsaurus.Spec.TCPProxies == nil {
+		return []byte{}, nil
+	}
+
+	c, err := g.getTCPProxyConfigImpl(spec)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return marshallYsonConfig(c)
+}
+
 func (g *Generator) getControllerAgentConfigImpl() (ControllerAgentServer, error) {
 	c, err := getControllerAgentServerCarcass(*g.ytsaurus.Spec.ControllerAgents)
 	if err != nil {

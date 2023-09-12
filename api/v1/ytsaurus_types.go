@@ -215,6 +215,14 @@ type RPCProxiesSpec struct {
 	Role string `json:"role,omitempty"`
 }
 
+type TCPProxiesSpec struct {
+	InstanceSpec `json:",inline"`
+	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
+	//+kubebuilder:default:=default
+	//+kubebuilder:validation:MinLength:=1
+	Role string `json:"role,omitempty"`
+}
+
 type DataNodesSpec struct {
 	// label filter (for daemonset)
 	// use host network
@@ -324,6 +332,7 @@ type YtsaurusSpec struct {
 	// +kubebuilder:validation:MinItems:=1
 	HTTPProxies []HTTPProxiesSpec `json:"httpProxies,omitempty"`
 	RPCProxies  []RPCProxiesSpec  `json:"rpcProxies,omitempty"`
+	TCPProxies  []TCPProxiesSpec  `json:"tcpProxies,omitempty"`
 	// +kubebuilder:validation:MinItems:=1
 	DataNodes        []DataNodesSpec       `json:"dataNodes,omitempty"`
 	ExecNodes        []ExecNodesSpec       `json:"execNodes,omitempty"`

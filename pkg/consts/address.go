@@ -27,6 +27,10 @@ const (
 	HTTPProxyHTTPPort       = 80
 	HTTPProxyHTTPSPort      = 443
 
+	TCPProxyMonitoringPort = 10017
+	TCPProxyMinTCPPort     = 20000
+	TCPProxyMaxTCPPort     = 30000
+
 	QueryTrackerRPCPort        = 9028
 	QueryTrackerMonitoringPort = 10028
 
