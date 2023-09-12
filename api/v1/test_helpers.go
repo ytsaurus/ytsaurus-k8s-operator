@@ -129,6 +129,16 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 					},
 				},
 			},
+			Schedulers: &SchedulersSpec{
+				InstanceSpec: InstanceSpec{
+					InstanceCount: 1,
+				},
+			},
+			ControllerAgents: &ControllerAgentsSpec{
+				InstanceSpec: InstanceSpec{
+					InstanceCount: 1,
+				},
+			},
 			ExecNodes: []ExecNodesSpec{
 				{
 					InstanceSpec: InstanceSpec{

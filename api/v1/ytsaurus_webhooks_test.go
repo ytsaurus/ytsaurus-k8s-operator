@@ -3,6 +3,7 @@ package v1
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -157,6 +158,12 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 				{
 					InstanceSpec: InstanceSpec{
 						EnableAntiAffinity: &trueEnableAntiAffinity,
+						VolumeMounts: []v1.VolumeMount{
+							{
+								Name:      "123",
+								MountPath: "/yt",
+							},
+						},
 						Locations: []LocationSpec{
 							{
 								LocationType: LocationTypeChunkStore,
@@ -169,6 +176,12 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 				{
 					InstanceSpec: InstanceSpec{
 						EnableAntiAffinity: &falseEnableAntiAffinity,
+						VolumeMounts: []v1.VolumeMount{
+							{
+								Name:      "123",
+								MountPath: "/yt",
+							},
+						},
 						Locations: []LocationSpec{
 							{
 								LocationType: LocationTypeChunkStore,
@@ -187,6 +200,12 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			ytsaurus.Spec.PrimaryMasters = MastersSpec{
 				InstanceSpec: InstanceSpec{
 					EnableAntiAffinity: &trueEnableAntiAffinity,
+					VolumeMounts: []v1.VolumeMount{
+						{
+							Name:      "123",
+							MountPath: "/yt",
+						},
+					},
 					Locations: []LocationSpec{
 						{
 							LocationType: LocationTypeMasterSnapshots,
@@ -234,6 +253,49 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 				},
 			}
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.execNodes[0].sidecars[1].name: Duplicate value: \"foo\"")))
+		})
+
+		It("Check combination of schedulers, controllerAgents and execNodes", func() {
+			ytsaurus := CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.Schedulers = nil
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.schedulers")))
+
+			ytsaurus = CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.ControllerAgents = nil
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.controllerAgents")))
+
+			ytsaurus = CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.Schedulers = nil
+			ytsaurus.Spec.ControllerAgents = nil
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.schedulers: Required value: execNodes doesn't make sense without schedulers")))
+		})
+
+		It("Should not accept queryTracker without tabletNodes and scheduler", func() {
+			ytsaurus := CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.QueryTrackers = &QueryTrackerSpec{InstanceSpec: InstanceSpec{InstanceCount: 1}}
+			ytsaurus.Spec.TabletNodes = nil
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.tabletNodes: Required")))
+
+			ytsaurus = CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.QueryTrackers = &QueryTrackerSpec{InstanceSpec: InstanceSpec{InstanceCount: 1}}
+			ytsaurus.Spec.Schedulers = nil
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.schedulers: Required")))
+		})
+
+		It("Check tabletNodes instanceCount", func() {
+			ytsaurus := CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.TabletNodes[0].InstanceCount = 2
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.tabletNodes[0].instanceCount")))
+		})
+
+		It("Check volumeMounts for locations", func() {
+			ytsaurus := CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.PrimaryMasters.VolumeMounts = []v1.VolumeMount{}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("location path is not in any volume mount")))
 		})
 	})
 })

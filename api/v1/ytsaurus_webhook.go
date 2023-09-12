@@ -18,6 +18,7 @@ package v1
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	corev1 "k8s.io/api/core/v1"
@@ -251,6 +252,12 @@ func (r *Ytsaurus) validateExecNodes(old *runtime.Object) field.ErrorList {
 		}
 	}
 
+	if r.Spec.ExecNodes != nil && len(r.Spec.ExecNodes) > 0 {
+		if r.Spec.Schedulers == nil {
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"), "execNodes doesn't make sense without schedulers"))
+		}
+	}
+
 	return allErrors
 }
 
@@ -260,6 +267,10 @@ func (r *Ytsaurus) validateSchedulers(old *runtime.Object) field.ErrorList {
 	if r.Spec.Schedulers != nil {
 		path := field.NewPath("spec").Child("schedulers")
 		allErrors = append(allErrors, r.validateInstanceSpec(r.Spec.Schedulers.InstanceSpec, path)...)
+
+		if r.Spec.ControllerAgents == nil {
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("controllerAgents"), "schedulers doesn't make sense without controllerAgents"))
+		}
 	}
 
 	return allErrors
@@ -271,6 +282,10 @@ func (r *Ytsaurus) validateControllerAgents(old *runtime.Object) field.ErrorList
 	if r.Spec.ControllerAgents != nil {
 		path := field.NewPath("spec").Child("controllerAgents")
 		allErrors = append(allErrors, r.validateInstanceSpec(r.Spec.ControllerAgents.InstanceSpec, path)...)
+
+		if r.Spec.Schedulers == nil {
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"), "controllerAgents doesn't make sense without schedulers"))
+		}
 	}
 
 	return allErrors
@@ -288,6 +303,10 @@ func (r *Ytsaurus) validateTabletNodes(old *runtime.Object) field.ErrorList {
 		}
 		names[tn.Name] = true
 
+		if tn.InstanceCount < 3 {
+			allErrors = append(allErrors, field.Invalid(path.Child("instanceCount"), tn.InstanceCount, "must be at least 3"))
+		}
+
 		allErrors = append(allErrors, r.validateInstanceSpec(tn.InstanceSpec, path)...)
 	}
 
@@ -296,6 +315,7 @@ func (r *Ytsaurus) validateTabletNodes(old *runtime.Object) field.ErrorList {
 
 func (r *Ytsaurus) validateChyt(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
+
 	return allErrors
 }
 
@@ -305,6 +325,14 @@ func (r *Ytsaurus) validateQueryTrackers(old *runtime.Object) field.ErrorList {
 	if r.Spec.QueryTrackers != nil {
 		path := field.NewPath("spec").Child("queryTrackers")
 		allErrors = append(allErrors, r.validateInstanceSpec(r.Spec.QueryTrackers.InstanceSpec, path)...)
+
+		if r.Spec.TabletNodes == nil || len(r.Spec.TabletNodes) == 0 {
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("tabletNodes"), "tabletNodes are required for queryTrackers"))
+		}
+
+		if r.Spec.Schedulers == nil {
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"), "schedulers are required for queryTrackers"))
+		}
 	}
 
 	return allErrors
@@ -312,6 +340,12 @@ func (r *Ytsaurus) validateQueryTrackers(old *runtime.Object) field.ErrorList {
 
 func (r *Ytsaurus) validateSpyt(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
+	path := field.NewPath("spec").Child("spyt")
+
+	if r.Spec.Spyt != nil {
+		allErrors = append(allErrors, field.Invalid(path, r.Spec.Spyt, "spyt is deprecated here, use Spyt resource instead"))
+	}
+
 	return allErrors
 }
 
@@ -321,6 +355,10 @@ func (r *Ytsaurus) validateYQLAgents(old *runtime.Object) field.ErrorList {
 	if r.Spec.YQLAgents != nil {
 		path := field.NewPath("spec").Child("YQLAgents")
 		allErrors = append(allErrors, r.validateInstanceSpec(r.Spec.YQLAgents.InstanceSpec, path)...)
+
+		if r.Spec.QueryTrackers == nil {
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("queryTrackers"), "yqlAgents doesn't make sense without queryTrackers"))
+		}
 	}
 
 	return allErrors
@@ -333,6 +371,30 @@ func (r *Ytsaurus) validateInstanceSpec(instanceSpec InstanceSpec, path *field.P
 
 	if instanceSpec.EnableAntiAffinity != nil {
 		allErrors = append(allErrors, field.Invalid(path.Child("EnableAntiAffinity"), instanceSpec.EnableAntiAffinity, "EnableAntiAffinity is deprecated, use Affinity instead"))
+	}
+
+	volumeMountPaths := make([]string, 0)
+	if instanceSpec.VolumeMounts != nil {
+		for _, volumeMount := range instanceSpec.VolumeMounts {
+			volumeMountPaths = append(volumeMountPaths, volumeMount.MountPath)
+		}
+	}
+
+	if instanceSpec.Locations != nil {
+		for locationIdx, location := range instanceSpec.Locations {
+
+			inVolumeMount := false
+			for _, volumeMount := range instanceSpec.VolumeMounts {
+				if strings.HasPrefix(location.Path, volumeMount.MountPath) {
+					inVolumeMount = true
+					break
+				}
+			}
+
+			if !inVolumeMount {
+				allErrors = append(allErrors, field.Invalid(path.Child("locations").Index(locationIdx), location, "location path is not in any volume mount"))
+			}
+		}
 	}
 
 	return allErrors
