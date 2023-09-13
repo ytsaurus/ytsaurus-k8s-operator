@@ -4,6 +4,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ptr "k8s.io/utils/pointer"
 )
 
 const (
@@ -28,6 +29,20 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 			Discovery: DiscoverySpec{
 				InstanceSpec: InstanceSpec{
 					InstanceCount: 1,
+				},
+			},
+			Bootstrap: &BootstrapSpec{
+				TabletCellBundles: &BundlesBootstrapSpec{
+					Sys: &BundleBootstrapSpec{
+						TabletCellCount:        2,
+						ChangelogPrimaryMedium: ptr.String("default"),
+						SnapshotPrimaryMedium:  ptr.String("default"),
+					},
+					Default: &BundleBootstrapSpec{
+						TabletCellCount:        2,
+						ChangelogPrimaryMedium: ptr.String("default"),
+						SnapshotPrimaryMedium:  ptr.String("default"),
+					},
 				},
 			},
 			PrimaryMasters: MastersSpec{

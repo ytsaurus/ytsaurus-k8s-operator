@@ -67,6 +67,32 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
+              bootstrap:
+                properties:
+                  tabletCellBundles:
+                    properties:
+                      default:
+                        properties:
+                          changelogMedium:
+                            type: string
+                          snapshotMedium:
+                            type: string
+                          tabletCellCount:
+                            default: 1
+                            type: integer
+                        type: object
+                      sys:
+                        properties:
+                          changelogMedium:
+                            type: string
+                          snapshotMedium:
+                            type: string
+                          tabletCellCount:
+                            default: 1
+                            type: integer
+                        type: object
+                    type: object
+                type: object
               chyt:
                 properties:
                   image:
@@ -775,7 +801,7 @@ spec:
                               format: int64
                               type: integer
                           type: object
-                        use_timestamp_suffix:
+                        useTimestampSuffix:
                           default: false
                           type: boolean
                         writerType:
@@ -863,7 +889,7 @@ spec:
                               format: int64
                               type: integer
                           type: object
-                        use_timestamp_suffix:
+                        useTimestampSuffix:
                           default: false
                           type: boolean
                       type: object
@@ -2896,7 +2922,7 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
-                          use_timestamp_suffix:
+                          useTimestampSuffix:
                             default: false
                             type: boolean
                           writerType:
@@ -2988,7 +3014,7 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
-                          use_timestamp_suffix:
+                          useTimestampSuffix:
                             default: false
                             type: boolean
                         type: object
@@ -5034,7 +5060,7 @@ spec:
                               format: int64
                               type: integer
                           type: object
-                        use_timestamp_suffix:
+                        useTimestampSuffix:
                           default: false
                           type: boolean
                         writerType:
@@ -5122,7 +5148,7 @@ spec:
                               format: int64
                               type: integer
                           type: object
-                        use_timestamp_suffix:
+                        useTimestampSuffix:
                           default: false
                           type: boolean
                       type: object
@@ -7156,7 +7182,7 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
-                          use_timestamp_suffix:
+                          useTimestampSuffix:
                             default: false
                             type: boolean
                           writerType:
@@ -7256,7 +7282,7 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
-                          use_timestamp_suffix:
+                          useTimestampSuffix:
                             default: false
                             type: boolean
                         type: object
@@ -9311,7 +9337,7 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
-                          use_timestamp_suffix:
+                          useTimestampSuffix:
                             default: false
                             type: boolean
                           writerType:
@@ -9408,7 +9434,7 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
-                          use_timestamp_suffix:
+                          useTimestampSuffix:
                             default: false
                             type: boolean
                         type: object
@@ -11470,7 +11496,7 @@ spec:
                               format: int64
                               type: integer
                           type: object
-                        use_timestamp_suffix:
+                        useTimestampSuffix:
                           default: false
                           type: boolean
                         writerType:
@@ -11558,7 +11584,7 @@ spec:
                               format: int64
                               type: integer
                           type: object
-                        use_timestamp_suffix:
+                        useTimestampSuffix:
                           default: false
                           type: boolean
                       type: object
@@ -13587,7 +13613,7 @@ spec:
                               format: int64
                               type: integer
                           type: object
-                        use_timestamp_suffix:
+                        useTimestampSuffix:
                           default: false
                           type: boolean
                         writerType:
@@ -13675,7 +13701,7 @@ spec:
                               format: int64
                               type: integer
                           type: object
-                        use_timestamp_suffix:
+                        useTimestampSuffix:
                           default: false
                           type: boolean
                       type: object
@@ -15706,7 +15732,7 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
-                          use_timestamp_suffix:
+                          useTimestampSuffix:
                             default: false
                             type: boolean
                           writerType:
@@ -15802,7 +15828,7 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
-                          use_timestamp_suffix:
+                          useTimestampSuffix:
                             default: false
                             type: boolean
                         type: object
@@ -17847,7 +17873,7 @@ spec:
                               format: int64
                               type: integer
                           type: object
-                        use_timestamp_suffix:
+                        useTimestampSuffix:
                           default: false
                           type: boolean
                         writerType:
@@ -17935,7 +17961,7 @@ spec:
                               format: int64
                               type: integer
                           type: object
-                        use_timestamp_suffix:
+                        useTimestampSuffix:
                           default: false
                           type: boolean
                       type: object
@@ -19968,7 +19994,7 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
-                          use_timestamp_suffix:
+                          useTimestampSuffix:
                             default: false
                             type: boolean
                           writerType:
@@ -20056,7 +20082,7 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
-                          use_timestamp_suffix:
+                          useTimestampSuffix:
                             default: false
                             type: boolean
                         type: object
@@ -22114,7 +22140,7 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
-                          use_timestamp_suffix:
+                          useTimestampSuffix:
                             default: false
                             type: boolean
                           writerType:
@@ -22206,7 +22232,7 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
-                          use_timestamp_suffix:
+                          useTimestampSuffix:
                             default: false
                             type: boolean
                         type: object
@@ -24255,7 +24281,7 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
-                          use_timestamp_suffix:
+                          useTimestampSuffix:
                             default: false
                             type: boolean
                           writerType:
@@ -24351,7 +24377,7 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
-                          use_timestamp_suffix:
+                          useTimestampSuffix:
                             default: false
                             type: boolean
                         type: object
@@ -26451,7 +26477,7 @@ spec:
                               format: int64
                               type: integer
                           type: object
-                        use_timestamp_suffix:
+                        useTimestampSuffix:
                           default: false
                           type: boolean
                         writerType:
@@ -26539,7 +26565,7 @@ spec:
                               format: int64
                               type: integer
                           type: object
-                        use_timestamp_suffix:
+                        useTimestampSuffix:
                           default: false
                           type: boolean
                       type: object

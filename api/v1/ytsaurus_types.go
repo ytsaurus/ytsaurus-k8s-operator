@@ -160,7 +160,7 @@ type BaseLoggerSpec struct {
 	Compression LogCompression `json:"compression,omitempty"`
 	//+kubebuilder:default:=false
 	//+optional
-	UseTimestampSuffix bool               `json:"use_timestamp_suffix"`
+	UseTimestampSuffix bool               `json:"useTimestampSuffix"`
 	RotationPolicy     *LogRotationPolicy `json:"rotationPolicy,omitempty"`
 }
 
@@ -174,6 +174,22 @@ type TextLoggerSpec struct {
 type StructuredLoggerSpec struct {
 	BaseLoggerSpec `json:",inline"`
 	Category       string `json:"category,omitempty"`
+}
+
+type BundleBootstrapSpec struct {
+	SnapshotPrimaryMedium  *string `json:"snapshotMedium,omitempty"`
+	ChangelogPrimaryMedium *string `json:"changelogMedium,omitempty"`
+	//+kubebuilder:default:=1
+	TabletCellCount int `json:"tabletCellCount,omitempty"`
+}
+
+type BundlesBootstrapSpec struct {
+	Sys     *BundleBootstrapSpec `json:"sys,omitempty"`
+	Default *BundleBootstrapSpec `json:"default,omitempty"`
+}
+
+type BootstrapSpec struct {
+	TabletCellBundles *BundlesBootstrapSpec `json:"tabletCellBundles,omitempty"`
 }
 
 type InstanceSpec struct {
@@ -326,6 +342,8 @@ type YtsaurusSpec struct {
 	UsePorto bool `json:"usePorto"`
 
 	ExtraPodAnnotations map[string]string `json:"extraPodAnnotations,omitempty"`
+
+	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
 	Discovery        DiscoverySpec `json:"discovery,omitempty"`
 	PrimaryMasters   MastersSpec   `json:"primaryMasters,omitempty"`
