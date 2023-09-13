@@ -71,15 +71,15 @@ func (g *Generator) GetHTTPProxiesServiceAddress(role string) string {
 		g.clusterDomain)
 }
 
-func (g *Generator) GetChytControllerServiceAddress() string {
+func (g *Generator) GetStrawberryControllerServiceAddress() string {
 	return fmt.Sprintf("%s.%s.svc.%s",
-		g.GetChytControllerHeadlessServiceName(),
+		g.GetStrawberryControllerHeadlessServiceName(),
 		g.ytsaurus.Namespace,
 		g.clusterDomain)
 }
 
-func (g *Generator) GetChytControllerHeadlessServiceName() string {
-	return g.getName("chyt")
+func (g *Generator) GetStrawberryControllerHeadlessServiceName() string {
+	return g.getName("strawberry")
 }
 
 func (g *Generator) GetHTTPProxiesServiceName(role string) string {

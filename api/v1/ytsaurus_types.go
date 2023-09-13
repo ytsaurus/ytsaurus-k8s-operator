@@ -301,7 +301,7 @@ type QueryTrackerSpec struct {
 	InstanceSpec `json:",inline"`
 }
 
-type ChytControllerSpec struct {
+type StrawberryControllerSpec struct {
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 	Image     *string                     `json:"image,omitempty"`
 }
@@ -359,10 +359,11 @@ type YtsaurusSpec struct {
 	ControllerAgents *ControllerAgentsSpec `json:"controllerAgents,omitempty"`
 	TabletNodes      []TabletNodesSpec     `json:"tabletNodes,omitempty"`
 
-	ChytController *ChytControllerSpec `json:"chyt,omitempty"`
-	QueryTrackers  *QueryTrackerSpec   `json:"queryTrackers,omitempty"`
-	Spyt           *DeprecatedSpytSpec `json:"spyt,omitempty"`
-	YQLAgents      *YQLAgentSpec       `json:"yqlAgents,omitempty"`
+	StrawberryController     *StrawberryControllerSpec `json:"strawberry,omitempty"`
+	DeprecatedChytController *StrawberryControllerSpec `json:"chyt,omitempty"`
+	QueryTrackers            *QueryTrackerSpec         `json:"queryTrackers,omitempty"`
+	Spyt                     *DeprecatedSpytSpec       `json:"spyt,omitempty"`
+	YQLAgents                *YQLAgentSpec             `json:"yqlAgents,omitempty"`
 
 	UI *UISpec `json:"ui,omitempty"`
 }

@@ -102,7 +102,7 @@ func (c *Chyt) createInitScript() string {
 func (c *Chyt) createInitChPublicScript() string {
 	script := []string{
 		initJobPrologue,
-		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v", c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole), c.cfgen.GetChytControllerServiceAddress()),
+		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v", c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole), c.cfgen.GetStrawberryControllerServiceAddress()),
 		"yt clickhouse ctl create ch_public || true",
 		"yt clickhouse ctl set-option --alias ch_public enable_geodata '%false'",
 		"yt clickhouse ctl set-option --alias ch_public instance_cpu 2",
@@ -175,7 +175,7 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return status, err
 	}
 
-	if c.ytsaurus.Spec.ChytController != nil && c.chyt.GetResource().Spec.MakeDefault {
+	if c.ytsaurus.Spec.StrawberryController != nil && c.chyt.GetResource().Spec.MakeDefault {
 		if !dry {
 			c.prepareChPublicJob()
 		}

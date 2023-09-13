@@ -3,7 +3,6 @@ package components
 import (
 	"context"
 	"fmt"
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
@@ -14,37 +13,59 @@ import (
 	"strings"
 )
 
-type chytController struct {
-	microserviceComponentBase
-	initUserJob    *InitJob
-	initClusterJob *InitJob
-	secret         *resources.StringSecret
+type strawberryController struct {
+	componentBase
+	microservice       microservice
+	initUserJob        *InitJob
+	initChytClusterJob *InitJob
+	secret             *resources.StringSecret
 
 	master    Component
 	scheduler Component
 	dataNodes []Component
+
+	name string
 }
 
-const ChytControllerConfigFileName = "chyt-controller.yson"
+func getControllerConfigFileName(name string) string {
+	if name == "chyt" {
+		return "chyt-controller.yson"
+	} else {
+		return "strawberry-controller.yson"
+	}
+}
+
 const ChytInitClusterJobConfigFileName = "chyt-init-cluster.yson"
 
-func NewChytController(
+func NewStrawberryController(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	scheduler Component,
 	dataNodes []Component) Component {
 	resource := ytsaurus.GetResource()
+
+	image := resource.Spec.CoreImage
+	name := "chyt"
+	componentName := "ChytController"
+	if resource.Spec.DeprecatedChytController != nil {
+		if resource.Spec.DeprecatedChytController.Image != nil {
+			image = *resource.Spec.DeprecatedChytController.Image
+		}
+	}
+	if resource.Spec.StrawberryController != nil {
+		name = "strawberry"
+		componentName = "StrawberryController"
+		if resource.Spec.StrawberryController.Image != nil {
+			image = *resource.Spec.StrawberryController.Image
+		}
+	}
+
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
-		ComponentLabel: "yt-chyt-controller",
-		ComponentName:  "ChytController",
-	}
-
-	image := resource.Spec.CoreImage
-	if resource.Spec.ChytController.Image != nil {
-		image = *resource.Spec.ChytController.Image
+		ComponentLabel: fmt.Sprintf("yt-%s-controller", name),
+		ComponentName:  componentName,
 	}
 
 	microservice := newMicroservice(
@@ -52,20 +73,18 @@ func NewChytController(
 		ytsaurus,
 		image,
 		1,
-		cfgen.GetChytControllerConfig,
-		ChytControllerConfigFileName,
-		"chyt-controller",
-		"chyt")
+		cfgen.GetStrawberryControllerConfig,
+		getControllerConfigFileName(name),
+		fmt.Sprintf("%s-controller", name),
+		name)
 
-	return &chytController{
-		microserviceComponentBase: microserviceComponentBase{
-			componentBase: componentBase{
-				labeller: &l,
-				ytsaurus: ytsaurus,
-				cfgen:    cfgen,
-			},
-			microservice: microservice,
+	return &strawberryController{
+		componentBase: componentBase{
+			labeller: &l,
+			ytsaurus: ytsaurus,
+			cfgen:    cfgen,
 		},
+		microservice: microservice,
 		initUserJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -75,7 +94,7 @@ func NewChytController(
 			consts.ClientConfigFileName,
 			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig),
-		initClusterJob: NewInitJob(
+		initChytClusterJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
@@ -88,28 +107,29 @@ func NewChytController(
 			l.GetSecretName(),
 			&l,
 			ytsaurus.APIProxy()),
+		name:      name,
 		master:    master,
 		scheduler: scheduler,
 		dataNodes: dataNodes,
 	}
 }
 
-func (c *chytController) Fetch(ctx context.Context) error {
+func (c *strawberryController) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, []resources.Fetchable{
 		c.microservice,
 		c.initUserJob,
-		c.initClusterJob,
+		c.initChytClusterJob,
 		c.secret,
 	})
 }
 
-func (c *chytController) initUsers() string {
+func (c *strawberryController) initUsers() string {
 	token, _ := c.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand(consts.ChytControllerUserName, "", token, true)
+	commands := createUserCommand(consts.StrawberryControllerUserName, "", token, true)
 	return strings.Join(commands, "\n")
 }
 
-func (c *chytController) createInitUserScript() string {
+func (c *strawberryController) createInitUserScript() string {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		c.initUsers(),
@@ -118,7 +138,7 @@ func (c *chytController) createInitUserScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (c *chytController) createInitClusterScript() string {
+func (c *strawberryController) createInitChytClusterScript() string {
 	script := []string{
 		initJobPrologue,
 		fmt.Sprintf("/usr/bin/chyt-controller --config-path %s init-cluster",
@@ -128,7 +148,7 @@ func (c *chytController) createInitClusterScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (c *chytController) getEnvSource() []corev1.EnvFromSource {
+func (c *strawberryController) getEnvSource() []corev1.EnvFromSource {
 	return []corev1.EnvFromSource{
 		{
 			SecretRef: &corev1.SecretEnvSource{
@@ -140,15 +160,15 @@ func (c *chytController) getEnvSource() []corev1.EnvFromSource {
 	}
 }
 
-func (c *chytController) prepareInitClusterJob() {
-	c.initClusterJob.SetInitScript(c.createInitClusterScript())
+func (c *strawberryController) prepareInitChytClusterJob() {
+	c.initChytClusterJob.SetInitScript(c.createInitChytClusterScript())
 
-	job := c.initClusterJob.Build()
+	job := c.initChytClusterJob.Build()
 	container := &job.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{c.secret.GetEnvSource()}
 }
 
-func (c *chytController) syncComponents(ctx context.Context) (err error) {
+func (c *strawberryController) syncComponents(ctx context.Context) (err error) {
 	service := c.microservice.buildService()
 	service.Spec.Type = "ClusterIP"
 
@@ -165,7 +185,7 @@ func (c *chytController) syncComponents(ctx context.Context) (err error) {
 			Command: []string{
 				"/usr/bin/chyt-controller",
 				"--config-path",
-				path.Join(consts.ConfigMountPoint, ChytControllerConfigFileName),
+				path.Join(consts.ConfigMountPoint, getControllerConfigFileName(c.name)),
 				"run",
 			},
 			VolumeMounts: volumeMounts,
@@ -179,21 +199,8 @@ func (c *chytController) syncComponents(ctx context.Context) (err error) {
 	return c.microservice.Sync(ctx)
 }
 
-func (c *chytController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (c *strawberryController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
-
-	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && c.microservice.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
-	}
-
-	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && c.IsUpdating() {
-		if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			if !dry {
-				err = c.removePods(ctx)
-			}
-			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
-		}
-	}
 
 	if c.master.Status(ctx).SyncStatus != SyncStatusReady {
 		return WaitingStatus(SyncStatusBlocked, c.master.GetName()), err
@@ -229,9 +236,9 @@ func (c *chytController) doSync(ctx context.Context, dry bool) (ComponentStatus,
 	}
 
 	if !dry {
-		c.prepareInitClusterJob()
+		c.prepareInitChytClusterJob()
 	}
-	status, err = c.initClusterJob.Sync(ctx, dry)
+	status, err = c.initChytClusterJob.Sync(ctx, dry)
 	if err != nil || status.SyncStatus != SyncStatusReady {
 		return status, err
 	}
@@ -247,7 +254,7 @@ func (c *chytController) doSync(ctx context.Context, dry bool) (ComponentStatus,
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (c *chytController) Status(ctx context.Context) ComponentStatus {
+func (c *strawberryController) Status(ctx context.Context) ComponentStatus {
 	status, err := c.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -256,7 +263,7 @@ func (c *chytController) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (c *chytController) Sync(ctx context.Context) error {
+func (c *strawberryController) Sync(ctx context.Context) error {
 	_, err := c.doSync(ctx, false)
 	return err
 }

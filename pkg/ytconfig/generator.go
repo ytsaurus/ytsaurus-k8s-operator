@@ -132,8 +132,8 @@ func (g *Generator) GetClusterConnection() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) GetChytControllerConfig() ([]byte, error) {
-	c := getChytController()
+func (g *Generator) GetStrawberryControllerConfig() ([]byte, error) {
+	c := getStrawberryController()
 	c.LocationProxies = []string{
 		g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
 	}

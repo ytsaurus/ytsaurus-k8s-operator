@@ -11,7 +11,7 @@ type Strawberry struct {
 	RobotUsername string `yson:"robot_username"`
 }
 
-type ChytController struct {
+type StrawberryController struct {
 	LocationProxies []string                 `yson:"location_proxies"`
 	Strawberry      Strawberry               `yson:"strawberry"`
 	Controllers     map[string]yson.RawValue `yson:"controllers"`
@@ -23,12 +23,13 @@ type ChytInitCluster struct {
 	StrawberryRoot string `yson:"strawberry_root"`
 }
 
-func getChytController() ChytController {
-	return ChytController{
+func getStrawberryController() StrawberryController {
+	return StrawberryController{
 		Strawberry: Strawberry{
-			Root:          "//sys/strawberry",
-			Stage:         "production",
-			RobotUsername: consts.ChytControllerUserName,
+			Root:  "//sys/strawberry",
+			Stage: "production",
+
+			RobotUsername: consts.StrawberryControllerUserName,
 		},
 		Controllers: map[string]yson.RawValue{
 			"chyt": yson.RawValue("{address_resolver={enable_ipv4=%true;enable_ipv6=%false;retries=1000}}"),

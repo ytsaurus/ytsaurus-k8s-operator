@@ -3,7 +3,7 @@ kind: Ytsaurus
 metadata:
   name: minisaurus
 spec:
-  coreImage: ytsaurus/ytsaurus-nightly:dev-23.1-35ba9c721c7e267d1f03cf9a9b28f6f007e21e6e
+  coreImage: ytsaurus/ytsaurus:stable-23.1.0-relwithdebinfo
 
   discovery:
     instanceCount: 1
@@ -125,3 +125,8 @@ spec:
     image: ytsaurus/ui:stable
     serviceType: NodePort
     instanceCount: 1
+
+  strawberry:
+    resources:
+      limits:
+        memory: 100Mi

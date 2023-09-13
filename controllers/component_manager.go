@@ -115,9 +115,9 @@ func NewComponentManager(
 		allComponents = append(allComponents, yqla)
 	}
 
-	if resource.Spec.ChytController != nil && resource.Spec.Schedulers != nil {
-		chyt := components.NewChytController(cfgen, ytsaurus, m, s, dnds)
-		allComponents = append(allComponents, chyt)
+	if (resource.Spec.DeprecatedChytController != nil || resource.Spec.StrawberryController != nil) && resource.Spec.Schedulers != nil {
+		strawberry := components.NewStrawberryController(cfgen, ytsaurus, m, s, dnds)
+		allComponents = append(allComponents, strawberry)
 	}
 
 	// Fetch component status.

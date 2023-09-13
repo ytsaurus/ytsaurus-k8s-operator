@@ -3,7 +3,7 @@ kind: Ytsaurus
 metadata:
   name: ytdemo
 spec:
-  coreImage: ytsaurus/ytsaurus-nightly:dev-23.1-35ba9c721c7e267d1f03cf9a9b28f6f007e21e6e
+  coreImage: ytsaurus/ytsaurus:stable-23.1.0-relwithdebinfo
   uiImage: ytsaurus/ui:stable
 
   adminCredentials:
@@ -11,15 +11,6 @@ spec:
 
   discovery:
     instanceCount: 1
-
-  chyt:
-    resources:
-      limits:
-        memory: 100Mi
-
-  spyt:
-    sparkVersion: '1.69.0'
-    spytVersion: '1.69.3'
 
   primaryMasters:
     instanceCount: 3
@@ -109,3 +100,8 @@ spec:
   ui:
     serviceType: NodePort
     instanceCount: 1
+ 
+  strawberry:
+    resources:
+      limits:
+        memory: 100Mi
