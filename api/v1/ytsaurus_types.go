@@ -257,6 +257,7 @@ type ExecNodesSpec struct {
 	// List of sidecar containers as yaml of corev1.Container.
 	Sidecars []string `json:"sidecars,omitempty"`
 	//+kubebuilder:default:=true
+	//+optional
 	Privileged bool `json:"privileged"`
 }
 
