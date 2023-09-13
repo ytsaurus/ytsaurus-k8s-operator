@@ -6,7 +6,6 @@ import (
 	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"go.ytsaurus.tech/library/go/ptr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/strings/slices"
 	"strings"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -18,7 +17,7 @@ import (
 )
 
 type scheduler struct {
-	ServerComponentBase
+	serverComponentBase
 	master        Component
 	execNodes     []Component
 	tabletNodes   []Component
@@ -41,7 +40,7 @@ func NewScheduler(
 		MonitoringPort: consts.SchedulerMonitoringPort,
 	}
 
-	server := NewServer(
+	server := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.Schedulers.InstanceSpec,
@@ -53,8 +52,8 @@ func NewScheduler(
 	)
 
 	return &scheduler{
-		ServerComponentBase: ServerComponentBase{
-			ComponentBase: ComponentBase{
+		serverComponentBase: serverComponentBase{
+			componentBase: componentBase{
 				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
@@ -115,12 +114,18 @@ func (s *scheduler) Sync(ctx context.Context) error {
 func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if s.ytsaurus.GetClusterState() == v1.ClusterStateRunning && s.server.NeedUpdate() {
+	if s.ytsaurus.GetClusterState() == v1.ClusterStateRunning && s.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
 	if s.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
-		if status, err := s.update(ctx, dry); status != nil {
+		if s.ytsaurus.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval && s.IsUpdating() {
+			if !dry {
+				err = s.removePods(ctx)
+			}
+			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+		}
+		if status, err := s.updateOpArchive(ctx, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -149,7 +154,7 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return WaitingStatus(SyncStatusPending, s.secret.Name()), err
 	}
 
-	if s.server.NeedSync() {
+	if s.server.needSync() {
 		if !dry {
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = s.server.Sync(ctx)
@@ -157,7 +162,7 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
-	if !s.server.ArePodsReady(ctx) {
+	if !s.server.arePodsReady(ctx) {
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
@@ -188,15 +193,9 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return s.initOpArchive.Sync(ctx, dry)
 }
 
-func (s *scheduler) update(ctx context.Context, dry bool) (*ComponentStatus, error) {
+func (s *scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentStatus, error) {
 	var err error
 	switch s.ytsaurus.GetUpdateState() {
-	case v1.UpdateStateWaitingForPodsRemoval:
-		updatingComponents := s.ytsaurus.GetLocalUpdatingComponents()
-		if updatingComponents == nil || slices.Contains(updatingComponents, s.GetName()) {
-			return ptr.T(WaitingStatus(SyncStatusUpdating, "pods removal")), s.removePods(ctx, dry)
-		}
-		return nil, nil
 	case v1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
 		if !s.needOpArchiveInit() {
 			s.setConditionNotNecessaryToUpdateOpArchive()

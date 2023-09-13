@@ -25729,6 +25729,8 @@ spec:
                 type: array
               ui:
                 properties:
+                  image:
+                    type: string
                   instanceCount:
                     format: int32
                     type: integer

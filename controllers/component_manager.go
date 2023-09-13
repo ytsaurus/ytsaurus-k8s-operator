@@ -5,7 +5,6 @@ import (
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"k8s.io/utils/strings/slices"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"time"
@@ -14,7 +13,6 @@ import (
 type ComponentManager struct {
 	ytsaurus              *apiProxy.Ytsaurus
 	allComponents         []components.Component
-	masterComponent       components.ServerComponent
 	queryTrackerComponent components.Component
 	schedulerComponent    components.Component
 	status                ComponentManagerStatus
@@ -176,7 +174,6 @@ func NewComponentManager(
 	return &ComponentManager{
 		ytsaurus:              ytsaurus,
 		allComponents:         allComponents,
-		masterComponent:       m,
 		queryTrackerComponent: q,
 		schedulerComponent:    s,
 		status:                status,
@@ -230,21 +227,18 @@ func (cm *ComponentManager) allReadyOrUpdating() bool {
 	return cm.status.allReadyOrUpdating
 }
 
-func (cm *ComponentManager) needQueryTrackerUpdate(ytsaurus *apiProxy.Ytsaurus) bool {
-	componentNames := ytsaurus.GetLocalUpdatingComponents()
-	return cm.queryTrackerComponent != nil && (componentNames == nil || slices.Contains(componentNames, cm.queryTrackerComponent.GetName()))
+func (cm *ComponentManager) needQueryTrackerUpdate() bool {
+	return cm.queryTrackerComponent != nil && cm.queryTrackerComponent.IsUpdating()
 }
 
-func (cm *ComponentManager) needSchedulerUpdate(ytsaurus *apiProxy.Ytsaurus) bool {
-	componentNames := ytsaurus.GetLocalUpdatingComponents()
-	return cm.schedulerComponent != nil && (componentNames == nil || slices.Contains(componentNames, cm.schedulerComponent.GetName()))
+func (cm *ComponentManager) needSchedulerUpdate() bool {
+	return cm.schedulerComponent != nil && cm.schedulerComponent.IsUpdating()
 }
 
-func (cm *ComponentManager) areServerPodsRemoved(ytsaurus *apiProxy.Ytsaurus) bool {
-	componentNames := ytsaurus.GetLocalUpdatingComponents()
+func (cm *ComponentManager) arePodsRemoved() bool {
 	for _, cmp := range cm.allComponents {
-		if scmp, ok := cmp.(components.ServerComponent); ok {
-			if (componentNames == nil || slices.Contains(componentNames, scmp.GetName())) && !ytsaurus.IsUpdateStatusConditionTrue(scmp.GetPodsRemovedCondition()) {
+		if scmp, ok := cmp.(components.ServiceComponent); ok {
+			if scmp.IsUpdating() && !scmp.IsPodsRemovedConditionTrue() {
 				return false
 			}
 		}
@@ -255,8 +249,10 @@ func (cm *ComponentManager) areServerPodsRemoved(ytsaurus *apiProxy.Ytsaurus) bo
 
 func (cm *ComponentManager) needUpdate() bool {
 	for _, component := range cm.allComponents {
-		if scmp, ok := component.(components.ServerComponent); ok && scmp.NeedUpdate() {
-			return true
+		if scmp, ok := component.(components.ServiceComponent); ok {
+			if scmp.NeedUpdate() {
+				return true
+			}
 		}
 	}
 	return false

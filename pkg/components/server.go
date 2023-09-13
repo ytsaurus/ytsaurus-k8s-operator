@@ -2,7 +2,7 @@ package components
 
 import (
 	"context"
-	"fmt"
+	ptr "k8s.io/utils/pointer"
 	"path"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -15,19 +15,18 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-type Server interface {
-	Fetch(ctx context.Context) error
-	NeedSync() bool
-	ArePodsRemoved() bool
-	ArePodsReady(ctx context.Context) bool
-	Sync(ctx context.Context) error
-	BuildStatefulSet() *appsv1.StatefulSet
-	RebuildStatefulSet() *appsv1.StatefulSet
-	NeedUpdate() bool
+// server manages common resources of YTsaurus cluster server components.
+type server interface {
+	resources.Fetchable
+	resources.Syncable
+	podsManager
+	needSync() bool
+	needUpdate() bool
+	buildStatefulSet() *appsv1.StatefulSet
+	rebuildStatefulSet() *appsv1.StatefulSet
 }
 
-// Server represents a typical YT cluster server component, like master or scheduler.
-type server struct {
+type serverImpl struct {
 	image    string
 	labeller *labeller.Labeller
 	ytsaurus *apiproxy.Ytsaurus
@@ -39,25 +38,24 @@ type server struct {
 	statefulSet       *resources.StatefulSet
 	headlessService   *resources.HeadlessService
 	monitoringService *resources.MonitoringService
-	builtStatefulSet  *appsv1.StatefulSet
-	readyCondition    string
+	configHelper      *ConfigHelper
 
-	configHelper *ConfigHelper
+	builtStatefulSet *appsv1.StatefulSet
 }
 
-func NewServer(
+func newServer(
 	l *labeller.Labeller,
 	ytsaurus *apiproxy.Ytsaurus,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
-	generator ytconfig.GeneratorFunc) Server {
+	generator ytconfig.GeneratorFunc) server {
 	image := ytsaurus.GetResource().Spec.CoreImage
 	if instanceSpec.Image != nil {
 		image = *instanceSpec.Image
 	}
-	return &server{
-		image:        image,
+	return &serverImpl{
 		labeller:     l,
+		image:        image,
 		ytsaurus:     ytsaurus,
 		instanceSpec: instanceSpec,
 		binaryPath:   binaryPath,
@@ -72,7 +70,6 @@ func NewServer(
 		monitoringService: resources.NewMonitoringService(
 			l,
 			ytsaurus.APIProxy()),
-		readyCondition: fmt.Sprintf("%sReady", l.ComponentName),
 		configHelper: NewConfigHelper(
 			l,
 			ytsaurus.APIProxy(),
@@ -83,7 +80,7 @@ func NewServer(
 	}
 }
 
-func (s *server) Fetch(ctx context.Context) error {
+func (s *serverImpl) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, []resources.Fetchable{
 		s.statefulSet,
 		s.configHelper,
@@ -92,19 +89,33 @@ func (s *server) Fetch(ctx context.Context) error {
 	})
 }
 
-func (s *server) exists() bool {
+func (s *serverImpl) exists() bool {
 	return resources.Exists(s.statefulSet) &&
 		resources.Exists(s.headlessService) &&
 		resources.Exists(s.monitoringService)
 }
 
-func (s *server) NeedSync() bool {
+func (s *serverImpl) needSync() bool {
 	return s.configHelper.NeedSync() ||
 		!s.exists() ||
 		s.statefulSet.NeedSync(s.instanceSpec.InstanceCount)
 }
 
-func (s *server) ArePodsRemoved() bool {
+func (s *serverImpl) Sync(ctx context.Context) error {
+	_ = s.configHelper.Build()
+	_ = s.headlessService.Build()
+	_ = s.monitoringService.Build()
+	_ = s.buildStatefulSet()
+
+	return resources.Sync(ctx, []resources.Syncable{
+		s.statefulSet,
+		s.configHelper,
+		s.headlessService,
+		s.monitoringService,
+	})
+}
+
+func (s *serverImpl) arePodsRemoved() bool {
 	if s.configHelper.NeedSync() || !resources.Exists(s.statefulSet) || !resources.Exists(s.headlessService) {
 		return false
 	}
@@ -112,16 +123,16 @@ func (s *server) ArePodsRemoved() bool {
 	return !s.statefulSet.NeedSync(0)
 }
 
-func (s *server) imageCorrespondsToSpec() bool {
+func (s *serverImpl) podsImageCorrespondsToSpec() bool {
 	return s.statefulSet.OldObject().(*appsv1.StatefulSet).Spec.Template.Spec.Containers[0].Image == s.image
 }
 
-func (s *server) NeedUpdate() bool {
+func (s *serverImpl) needUpdate() bool {
 	if !s.exists() {
 		return false
 	}
 
-	if !s.imageCorrespondsToSpec() {
+	if !s.podsImageCorrespondsToSpec() {
 		return true
 	}
 
@@ -132,33 +143,19 @@ func (s *server) NeedUpdate() bool {
 	return needReload
 }
 
-func (s *server) ArePodsReady(ctx context.Context) bool {
+func (s *serverImpl) arePodsReady(ctx context.Context) bool {
 	return s.statefulSet.ArePodsReady(ctx)
 }
 
-func (s *server) Sync(ctx context.Context) (err error) {
-	_ = s.configHelper.Build()
-	_ = s.headlessService.Build()
-	_ = s.monitoringService.Build()
-	_ = s.BuildStatefulSet()
-
-	return resources.Sync(ctx, []resources.Syncable{
-		s.statefulSet,
-		s.configHelper,
-		s.headlessService,
-		s.monitoringService,
-	})
-}
-
-func (s *server) BuildStatefulSet() *appsv1.StatefulSet {
+func (s *serverImpl) buildStatefulSet() *appsv1.StatefulSet {
 	if s.builtStatefulSet != nil {
 		return s.builtStatefulSet
 	}
 
-	return s.RebuildStatefulSet()
+	return s.rebuildStatefulSet()
 }
 
-func (s *server) RebuildStatefulSet() *appsv1.StatefulSet {
+func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	locationCreationCommand := getLocationInitCommand(s.instanceSpec.Locations)
 	volumeMounts := createVolumeMounts(s.instanceSpec.VolumeMounts)
 
@@ -195,4 +192,10 @@ func (s *server) RebuildStatefulSet() *appsv1.StatefulSet {
 	}
 	s.builtStatefulSet = statefulSet
 	return statefulSet
+}
+
+func (s *serverImpl) removePods(ctx context.Context) error {
+	ss := s.rebuildStatefulSet()
+	ss.Spec.Replicas = ptr.Int32(0)
+	return s.Sync(ctx)
 }

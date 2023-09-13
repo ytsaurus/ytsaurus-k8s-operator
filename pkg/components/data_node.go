@@ -11,7 +11,7 @@ import (
 )
 
 type dataNode struct {
-	ServerComponentBase
+	serverComponentBase
 	master Component
 }
 
@@ -30,7 +30,7 @@ func NewDataNode(
 		MonitoringPort: consts.NodeMonitoringPort,
 	}
 
-	server := NewServer(
+	server := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -44,8 +44,8 @@ func NewDataNode(
 	)
 
 	return &dataNode{
-		ServerComponentBase: ServerComponentBase{
-			ComponentBase: ComponentBase{
+		serverComponentBase: serverComponentBase{
+			componentBase: componentBase{
 				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
@@ -65,16 +65,16 @@ func (n *dataNode) Fetch(ctx context.Context) error {
 func (n *dataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && n.server.NeedUpdate() {
+	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && n.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedFullUpdate), err
 	}
 
-	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && n.IsUpdating() {
 		if n.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			updatingComponents := n.ytsaurus.GetLocalUpdatingComponents()
-			if updatingComponents == nil {
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), n.removePods(ctx, dry)
+			if !dry {
+				err = n.removePods(ctx)
 			}
+			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}
 	}
 
@@ -82,14 +82,14 @@ func (n *dataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
 	}
 
-	if n.server.NeedSync() {
+	if n.server.needSync() {
 		if !dry {
 			err = n.server.Sync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
-	if !n.server.ArePodsReady(ctx) {
+	if !n.server.arePodsReady(ctx) {
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 

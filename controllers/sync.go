@@ -79,7 +79,7 @@ func (r *YtsaurusReconciler) handleUpdatingStateFullMode(
 		}
 
 	case ytv1.UpdateStateWaitingForPodsRemoval:
-		if componentManager.areServerPodsRemoved(ytsaurus) {
+		if componentManager.arePodsRemoved() {
 			ytsaurus.LogUpdate(ctx, "Waiting for pods creation")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForPodsCreation)
 			return &ctrl.Result{Requeue: true}, err
@@ -100,7 +100,7 @@ func (r *YtsaurusReconciler) handleUpdatingStateFullMode(
 		}
 
 	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
-		if !componentManager.needSchedulerUpdate(ytsaurus) ||
+		if !componentManager.needSchedulerUpdate() ||
 			ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNotNecessaryToUpdateOpArchive) {
 			ytsaurus.LogUpdate(ctx, "Operations archive update was skipped")
 			ytsaurus.LogUpdate(ctx, "Waiting for query tracker state prepare for updating")
@@ -121,7 +121,7 @@ func (r *YtsaurusReconciler) handleUpdatingStateFullMode(
 		}
 
 	case ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:
-		if !componentManager.needQueryTrackerUpdate(ytsaurus) {
+		if !componentManager.needQueryTrackerUpdate() {
 			ytsaurus.LogUpdate(ctx, "Query tracker state update was skipped")
 			ytsaurus.LogUpdate(ctx, "Waiting for safe mode disabled")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSafeModeDisabled)
@@ -165,7 +165,7 @@ func (r *YtsaurusReconciler) handleUpdatingStateLocalMode(
 		return &ctrl.Result{Requeue: true}, err
 
 	case ytv1.UpdateStateWaitingForPodsRemoval:
-		if componentManager.areServerPodsRemoved(ytsaurus) {
+		if componentManager.arePodsRemoved() {
 			ytsaurus.LogUpdate(ctx, "Waiting for pods creation")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForPodsCreation)
 			return &ctrl.Result{Requeue: true}, err
@@ -180,7 +180,7 @@ func (r *YtsaurusReconciler) handleUpdatingStateLocalMode(
 		}
 
 	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
-		if !componentManager.needSchedulerUpdate(ytsaurus) || ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNotNecessaryToUpdateOpArchive) {
+		if !componentManager.needSchedulerUpdate() || ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNotNecessaryToUpdateOpArchive) {
 			ytsaurus.LogUpdate(ctx, "Operations archive update was skipped")
 			ytsaurus.LogUpdate(ctx, "Waiting for query tracker state prepare for updating")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForQTStateUpdatingPrepare)
@@ -200,7 +200,7 @@ func (r *YtsaurusReconciler) handleUpdatingStateLocalMode(
 		}
 
 	case ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:
-		if !componentManager.needQueryTrackerUpdate(ytsaurus) {
+		if !componentManager.needQueryTrackerUpdate() {
 			ytsaurus.LogUpdate(ctx, "Query tracker state update was skipped")
 			ytsaurus.LogUpdate(ctx, "Finishing")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdateFinishing)
@@ -270,7 +270,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 
 		case componentManager.needFullUpdate():
 			logger.Info("Ytsaurus needs full update")
-			if ytsaurus.GetResource().Spec.EnableFullUpdate {
+			if !ytsaurus.GetResource().Spec.EnableFullUpdate {
 				logger.Info("Full update isn't allowed, ignore it")
 				return ctrl.Result{}, nil
 			}

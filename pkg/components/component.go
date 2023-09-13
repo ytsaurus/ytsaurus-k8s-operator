@@ -7,7 +7,7 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ptr "k8s.io/utils/pointer"
+	"k8s.io/utils/strings/slices"
 )
 
 type SyncStatus string
@@ -34,87 +34,31 @@ func SimpleStatus(status SyncStatus) ComponentStatus {
 	return ComponentStatus{status, string(status)}
 }
 
-type ServerComponent interface {
-	Component
-	GetPodsRemovedCondition() string
-	NeedUpdate() bool
-}
-
-type ServerComponentBase struct {
-	ComponentBase
-	server Server
-}
-
-func (c *ServerComponentBase) GetPodsRemovedCondition() string {
-	return c.labeller.GetPodsRemovedCondition()
-}
-
-func (c *ServerComponentBase) NeedUpdate() bool {
-	return c.server.NeedUpdate()
-}
-
-func (c *ServerComponentBase) removePods(ctx context.Context, dry bool) error {
-	var err error
-	if !c.ytsaurus.IsUpdateStatusConditionTrue(c.labeller.GetPodsRemovingStartedCondition()) {
-		if !dry {
-			ss := c.server.RebuildStatefulSet()
-			ss.Spec.Replicas = ptr.Int32(0)
-			err = c.server.Sync(ctx)
-
-			if err != nil {
-				return err
-			}
-
-			c.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
-				Type:    c.labeller.GetPodsRemovingStartedCondition(),
-				Status:  metav1.ConditionTrue,
-				Reason:  "Update",
-				Message: "Pods removing was started",
-			})
-		}
-		return err
-	}
-
-	if !c.server.ArePodsRemoved() {
-		return err
-	}
-
-	if !dry {
-		c.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
-			Type:    c.labeller.GetPodsRemovedCondition(),
-			Status:  metav1.ConditionTrue,
-			Reason:  "Update",
-			Message: "Pods removed",
-		})
-	}
-
-	return err
-}
-
 type Component interface {
 	Fetch(ctx context.Context) error
 	Sync(ctx context.Context) error
 	Status(ctx context.Context) ComponentStatus
+	IsUpdating() bool
 	GetName() string
 	GetLabel() string
 	SetReadyCondition(status ComponentStatus)
 }
 
-type ComponentBase struct {
+type componentBase struct {
 	labeller *labeller.Labeller
 	ytsaurus *apiproxy.Ytsaurus
 	cfgen    *ytconfig.Generator
 }
 
-func (c *ComponentBase) GetName() string {
+func (c *componentBase) GetName() string {
 	return c.labeller.ComponentName
 }
 
-func (c *ComponentBase) GetLabel() string {
+func (c *componentBase) GetLabel() string {
 	return c.labeller.ComponentLabel
 }
 
-func (c *ComponentBase) SetReadyCondition(status ComponentStatus) {
+func (c *componentBase) SetReadyCondition(status ComponentStatus) {
 	ready := metav1.ConditionFalse
 	if status.SyncStatus == SyncStatusReady {
 		ready = metav1.ConditionTrue
@@ -125,4 +69,9 @@ func (c *ComponentBase) SetReadyCondition(status ComponentStatus) {
 		Reason:  string(status.SyncStatus),
 		Message: status.Message,
 	})
+}
+
+func (c *componentBase) IsUpdating() bool {
+	componentNames := c.ytsaurus.GetLocalUpdatingComponents()
+	return componentNames == nil || slices.Contains(componentNames, c.GetName())
 }

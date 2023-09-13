@@ -17,12 +17,10 @@ import (
 )
 
 type UI struct {
-	ComponentBase
-	ytsaurus     *ytv1.Ytsaurus
-	microservice *Microservice
-	initJob      *InitJob
-	master       Component
-	secret       *resources.StringSecret
+	microserviceComponentBase
+	initJob *InitJob
+	master  Component
+	secret  *resources.StringSecret
 }
 
 const UIConfigFileName = "clusters-config.json"
@@ -36,10 +34,15 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		ComponentName:  "UI",
 	}
 
-	microservice := NewMicroservice(
+	image := r.Spec.UIImage
+	if r.Spec.UI.Image != nil {
+		image = *r.Spec.UI.Image
+	}
+
+	microservice := newMicroservice(
 		&l,
 		ytsaurus,
-		r.Spec.UIImage,
+		image,
 		r.Spec.UI.InstanceCount,
 		cfgen.GetWebUIConfig,
 		UIConfigFileName,
@@ -47,12 +50,14 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		"ytsaurus-ui")
 
 	return &UI{
-		ComponentBase: ComponentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
+		microserviceComponentBase: microserviceComponentBase{
+			componentBase: componentBase{
+				labeller: &l,
+				ytsaurus: ytsaurus,
+				cfgen:    cfgen,
+			},
+			microservice: microservice,
 		},
-		microservice: microservice,
 		initJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -66,12 +71,12 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			l.GetSecretName(),
 			&l,
 			ytsaurus.APIProxy()),
-		ytsaurus: r,
-		master:   master,
+		master: master,
 	}
 }
 
 func (u *UI) Fetch(ctx context.Context) error {
+
 	return resources.Fetch(ctx, []resources.Fetchable{
 		u.microservice,
 		u.initJob,
@@ -95,8 +100,9 @@ func (u *UI) createInitScript() string {
 }
 
 func (u *UI) syncComponents(ctx context.Context) (err error) {
-	service := u.microservice.BuildService()
-	service.Spec.Type = u.ytsaurus.Spec.UI.ServiceType
+	ytsaurusResource := u.ytsaurus.GetResource()
+	service := u.microservice.buildService()
+	service.Spec.Type = ytsaurusResource.Spec.UI.ServiceType
 
 	volumeMounts := []corev1.VolumeMount{
 		{
@@ -120,12 +126,12 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 	env := []corev1.EnvVar{
 		{
 			Name:  "YT_AUTH_CLUSTER_ID",
-			Value: u.ytsaurus.Name,
+			Value: ytsaurusResource.Name,
 		},
 	}
 
-	if u.ytsaurus.Spec.UI.UseMetrikaCounter {
-		config := u.microservice.BuildConfig()
+	if ytsaurusResource.Spec.UI.UseMetrikaCounter {
+		config := u.microservice.buildConfig()
 		config.Data[consts.MetrikaCounterFileName] = consts.MetrikaCounterScript
 
 		volumeMounts = append(volumeMounts,
@@ -141,7 +147,7 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 		})
 	}
 
-	if u.ytsaurus.Spec.UI.UseInsecureCookies {
+	if ytsaurusResource.Spec.UI.UseInsecureCookies {
 		env = append(env, corev1.EnvVar{
 			Name:  "YT_AUTH_ALLOW_INSECURE",
 			Value: "1",
@@ -149,10 +155,10 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 	}
 
 	secretsVolumeSize, _ := resource.ParseQuantity("1Mi")
-	deployment := u.microservice.BuildDeployment()
+	deployment := u.microservice.buildDeployment()
 	deployment.Spec.Template.Spec.InitContainers = []corev1.Container{
 		{
-			Image: u.microservice.image,
+			Image: u.microservice.getImage(),
 			Name:  consts.PrepareSecretContainerName,
 			Command: []string{
 				"bash",
@@ -167,7 +173,7 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 
 	deployment.Spec.Template.Spec.Containers = []corev1.Container{
 		{
-			Image:        u.microservice.image,
+			Image:        u.microservice.getImage(),
 			Name:         consts.UIContainerName,
 			Env:          env,
 			Command:      []string{"supervisord"},
@@ -210,6 +216,19 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
+	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && u.microservice.needUpdate() {
+		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+	}
+
+	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && u.IsUpdating() {
+		if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			if !dry {
+				err = u.removePods(ctx)
+			}
+			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+		}
+	}
+
 	if u.master.Status(ctx).SyncStatus != SyncStatusReady {
 		return WaitingStatus(SyncStatusBlocked, u.master.GetName()), err
 	}
@@ -235,14 +254,14 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return status, err
 	}
 
-	if u.microservice.NeedSync() {
+	if u.microservice.needSync() {
 		if !dry {
 			err = u.syncComponents(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
-	if !u.microservice.ArePodsReady(ctx) {
+	if !u.microservice.arePodsReady(ctx) {
 		return WaitingStatus(SyncStatusPending, "pods"), err
 	}
 

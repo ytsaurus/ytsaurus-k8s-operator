@@ -10,11 +10,10 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 	"go.ytsaurus.tech/yt/go/yt"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/utils/strings/slices"
 )
 
 type httpProxy struct {
-	ServerComponentBase
+	serverComponentBase
 	serviceType v1.ServiceType
 
 	master           Component
@@ -40,7 +39,7 @@ func NewHTTPProxy(
 		MonitoringPort: consts.HTTPProxyMonitoringPort,
 	}
 
-	server := NewServer(
+	server := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -54,8 +53,8 @@ func NewHTTPProxy(
 	)
 
 	return &httpProxy{
-		ServerComponentBase: ServerComponentBase{
-			ComponentBase: ComponentBase{
+		serverComponentBase: serverComponentBase{
+			componentBase: componentBase{
 				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
@@ -72,58 +71,58 @@ func NewHTTPProxy(
 	}
 }
 
-func (r *httpProxy) Fetch(ctx context.Context) error {
+func (hp *httpProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, []resources.Fetchable{
-		r.server,
-		r.balancingService,
+		hp.server,
+		hp.balancingService,
 	})
 }
 
-func (r *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && r.server.NeedUpdate() {
+	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && hp.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if r.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			updatingComponents := r.ytsaurus.GetLocalUpdatingComponents()
-			if updatingComponents == nil || slices.Contains(updatingComponents, r.GetName()) {
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), r.removePods(ctx, dry)
+	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && hp.IsUpdating() {
+		if hp.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			if !dry {
+				err = hp.removePods(ctx)
 			}
+			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}
 	}
 
-	if !(r.master.Status(ctx).SyncStatus == SyncStatusReady) {
-		return WaitingStatus(SyncStatusBlocked, r.master.GetName()), err
+	if !(hp.master.Status(ctx).SyncStatus == SyncStatusReady) {
+		return WaitingStatus(SyncStatusBlocked, hp.master.GetName()), err
 	}
 
-	if r.server.NeedSync() {
+	if hp.server.needSync() {
 		if !dry {
-			err = r.server.Sync(ctx)
+			err = hp.server.Sync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
-	if !resources.Exists(r.balancingService) {
+	if !resources.Exists(hp.balancingService) {
 		if !dry {
-			s := r.balancingService.Build()
-			s.Spec.Type = r.serviceType
-			err = r.balancingService.Sync(ctx)
+			s := hp.balancingService.Build()
+			s.Spec.Type = hp.serviceType
+			err = hp.balancingService.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, r.balancingService.Name()), err
+		return WaitingStatus(SyncStatusPending, hp.balancingService.Name()), err
 	}
 
-	if !r.server.ArePodsReady(ctx) {
+	if !hp.server.arePodsReady(ctx) {
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (r *httpProxy) Status(ctx context.Context) ComponentStatus {
-	status, err := r.doSync(ctx, true)
+func (hp *httpProxy) Status(ctx context.Context) ComponentStatus {
+	status, err := hp.doSync(ctx, true)
 	if err != nil {
 		panic(err)
 	}
@@ -131,7 +130,7 @@ func (r *httpProxy) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (r *httpProxy) Sync(ctx context.Context) error {
-	_, err := r.doSync(ctx, false)
+func (hp *httpProxy) Sync(ctx context.Context) error {
+	_, err := hp.doSync(ctx, false)
 	return err
 }

@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
@@ -14,8 +15,7 @@ import (
 )
 
 type chytController struct {
-	ComponentBase
-	microservice   *Microservice
+	microserviceComponentBase
 	initUserJob    *InitJob
 	initClusterJob *InitJob
 	secret         *resources.StringSecret
@@ -47,7 +47,7 @@ func NewChytController(
 		image = *resource.Spec.ChytController.Image
 	}
 
-	microservice := NewMicroservice(
+	microservice := newMicroservice(
 		&l,
 		ytsaurus,
 		image,
@@ -58,12 +58,14 @@ func NewChytController(
 		"chyt")
 
 	return &chytController{
-		ComponentBase: ComponentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
+		microserviceComponentBase: microserviceComponentBase{
+			componentBase: componentBase{
+				labeller: &l,
+				ytsaurus: ytsaurus,
+				cfgen:    cfgen,
+			},
+			microservice: microservice,
 		},
-		microservice: microservice,
 		initUserJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -147,17 +149,17 @@ func (c *chytController) prepareInitClusterJob() {
 }
 
 func (c *chytController) syncComponents(ctx context.Context) (err error) {
-	service := c.microservice.BuildService()
+	service := c.microservice.buildService()
 	service.Spec.Type = "ClusterIP"
 
-	deployment := c.microservice.BuildDeployment()
+	deployment := c.microservice.buildDeployment()
 	volumeMounts := []corev1.VolumeMount{
 		createConfigVolumeMount(),
 	}
 
 	deployment.Spec.Template.Spec.Containers = []corev1.Container{
 		{
-			Image:   c.microservice.image,
+			Image:   c.microservice.getImage(),
 			Name:    consts.UIContainerName,
 			EnvFrom: c.getEnvSource(),
 			Command: []string{
@@ -179,6 +181,19 @@ func (c *chytController) syncComponents(ctx context.Context) (err error) {
 
 func (c *chytController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
+
+	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && c.microservice.needUpdate() {
+		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+	}
+
+	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && c.IsUpdating() {
+		if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			if !dry {
+				err = c.removePods(ctx)
+			}
+			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+		}
+	}
 
 	if c.master.Status(ctx).SyncStatus != SyncStatusReady {
 		return WaitingStatus(SyncStatusBlocked, c.master.GetName()), err
@@ -221,7 +236,7 @@ func (c *chytController) doSync(ctx context.Context, dry bool) (ComponentStatus,
 		return status, err
 	}
 
-	if c.microservice.NeedSync() {
+	if c.microservice.needSync() {
 		if !dry {
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = c.syncComponents(ctx)

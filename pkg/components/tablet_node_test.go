@@ -181,12 +181,12 @@ var _ = Describe("Tablet node test", func() {
 			ytsaurusClient := NewFakeYtsaurusClient(mockYtClient)
 			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true).(*tabletNode)
 			fakeServer := NewFakeServer()
-			fakeServer.arePodsReady = false
+			fakeServer.podsReady = false
 			tabletNode.server = fakeServer
 
 			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusBlocked))
 
-			fakeServer.arePodsReady = true
+			fakeServer.podsReady = true
 
 			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
 		})

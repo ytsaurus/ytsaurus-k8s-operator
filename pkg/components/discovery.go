@@ -2,8 +2,6 @@ package components
 
 import (
 	"context"
-	"k8s.io/utils/strings/slices"
-
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -13,7 +11,7 @@ import (
 )
 
 type discovery struct {
-	ServerComponentBase
+	serverComponentBase
 }
 
 func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component {
@@ -26,7 +24,7 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Compon
 		MonitoringPort: consts.DiscoveryMonitoringPort,
 	}
 
-	server := NewServer(
+	server := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.Discovery.InstanceSpec,
@@ -38,8 +36,8 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Compon
 	)
 
 	return &discovery{
-		ServerComponentBase: ServerComponentBase{
-			ComponentBase: ComponentBase{
+		serverComponentBase: serverComponentBase{
+			componentBase: componentBase{
 				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
@@ -58,23 +56,27 @@ func (d *discovery) Fetch(ctx context.Context) error {
 func (d *discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && d.server.needUpdate() {
+		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+	}
+
+	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && d.IsUpdating() {
 		if d.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			updatingComponents := d.ytsaurus.GetLocalUpdatingComponents()
-			if updatingComponents == nil || slices.Contains(updatingComponents, d.GetName()) {
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), d.removePods(ctx, dry)
+			if !dry {
+				err = d.removePods(ctx)
 			}
+			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}
 	}
 
-	if d.server.NeedSync() {
+	if d.server.needSync() {
 		if !dry {
 			err = d.server.Sync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
-	if !d.server.ArePodsReady(ctx) {
+	if !d.server.arePodsReady(ctx) {
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 

@@ -4,7 +4,6 @@ metadata:
   name: minisaurus
 spec:
   coreImage: ytsaurus/ytsaurus-nightly:dev-23.1-35ba9c721c7e267d1f03cf9a9b28f6f007e21e6e
-  uiImage: ytsaurus/ui:stable
 
   discovery:
     instanceCount: 1
@@ -71,7 +70,7 @@ spec:
       role: heavy
 
   dataNodes:
-    - instanceCount: 1
+    - instanceCount: 3
       loggers: *loggers
 
       volumeMounts:
@@ -123,6 +122,6 @@ spec:
     loggers: *loggers
 
   ui:
+    image: ytsaurus/ui:stable
     serviceType: NodePort
     instanceCount: 1
-

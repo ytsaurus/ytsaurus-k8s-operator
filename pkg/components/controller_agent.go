@@ -2,8 +2,6 @@ package components
 
 import (
 	"context"
-	"k8s.io/utils/strings/slices"
-
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -13,7 +11,7 @@ import (
 )
 
 type controllerAgent struct {
-	ServerComponentBase
+	serverComponentBase
 	master Component
 }
 
@@ -27,7 +25,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		MonitoringPort: consts.ControllerAgentMonitoringPort,
 	}
 
-	server := NewServer(
+	server := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.ControllerAgents.InstanceSpec,
@@ -39,13 +37,13 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 	)
 
 	return &controllerAgent{
-		ServerComponentBase: ServerComponentBase{
-			server: server,
-			ComponentBase: ComponentBase{
+		serverComponentBase: serverComponentBase{
+			componentBase: componentBase{
 				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
 			},
+			server: server,
 		},
 		master: master,
 	}
@@ -60,16 +58,16 @@ func (ca *controllerAgent) Fetch(ctx context.Context) error {
 func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && ca.server.NeedUpdate() {
+	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && ca.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && ca.IsUpdating() {
 		if ca.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			updatingComponents := ca.ytsaurus.GetLocalUpdatingComponents()
-			if updatingComponents == nil || slices.Contains(updatingComponents, ca.GetName()) {
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), ca.removePods(ctx, dry)
+			if !dry {
+				err = ca.removePods(ctx)
 			}
+			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}
 	}
 
@@ -77,7 +75,7 @@ func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 		return WaitingStatus(SyncStatusBlocked, ca.master.GetName()), err
 	}
 
-	if ca.server.NeedSync() {
+	if ca.server.needSync() {
 		if !dry {
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = ca.server.Sync(ctx)
@@ -85,7 +83,7 @@ func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
-	if !ca.server.ArePodsReady(ctx) {
+	if !ca.server.arePodsReady(ctx) {
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 

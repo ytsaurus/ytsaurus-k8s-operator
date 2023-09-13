@@ -11,12 +11,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	ptr "k8s.io/utils/pointer"
-	"k8s.io/utils/strings/slices"
 	"log"
 )
 
 type execNode struct {
-	ServerComponentBase
+	serverComponentBase
 	master     Component
 	sidecars   []string
 	privileged bool
@@ -37,7 +36,7 @@ func NewExecNode(
 		MonitoringPort: consts.NodeMonitoringPort,
 	}
 
-	server := NewServer(
+	server := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -51,8 +50,8 @@ func NewExecNode(
 	)
 
 	return &execNode{
-		ServerComponentBase: ServerComponentBase{
-			ComponentBase: ComponentBase{
+		serverComponentBase: serverComponentBase{
+			componentBase: componentBase{
 				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
@@ -74,16 +73,16 @@ func (n *execNode) Fetch(ctx context.Context) error {
 func (n *execNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && n.server.NeedUpdate() {
+	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && n.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && n.IsUpdating() {
 		if n.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			updatingComponents := n.ytsaurus.GetLocalUpdatingComponents()
-			if updatingComponents == nil || slices.Contains(updatingComponents, n.GetName()) {
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), n.removePods(ctx, dry)
+			if !dry {
+				err = n.removePods(ctx)
 			}
+			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}
 	}
 
@@ -91,9 +90,9 @@ func (n *execNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
 	}
 
-	if n.server.NeedSync() {
+	if n.server.needSync() {
 		if !dry {
-			statefulSet := n.server.BuildStatefulSet()
+			statefulSet := n.server.buildStatefulSet()
 			containers := &statefulSet.Spec.Template.Spec.Containers
 			if len(*containers) != 1 {
 				log.Panicf("length of exec node containers is expected to be 1, actual %v", len(*containers))
@@ -111,7 +110,7 @@ func (n *execNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
-	if !n.server.ArePodsReady(ctx) {
+	if !n.server.arePodsReady(ctx) {
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 

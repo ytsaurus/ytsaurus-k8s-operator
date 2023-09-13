@@ -16,7 +16,7 @@ import (
 )
 
 type tabletNode struct {
-	ServerComponentBase
+	serverComponentBase
 
 	ytsaurusClient YtsaurusClient
 
@@ -41,7 +41,7 @@ func NewTabletNode(
 		MonitoringPort: consts.NodeMonitoringPort,
 	}
 
-	server := NewServer(
+	server := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -55,8 +55,8 @@ func NewTabletNode(
 	)
 
 	return &tabletNode{
-		ServerComponentBase: ServerComponentBase{
-			ComponentBase: ComponentBase{
+		serverComponentBase: serverComponentBase{
+			componentBase: componentBase{
 				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
@@ -70,50 +70,49 @@ func NewTabletNode(
 	}
 }
 
-func (r *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 	logger := log.FromContext(ctx)
 
-	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && r.server.NeedUpdate() {
+	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && tn.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedFullUpdate), err
 	}
 
-	if r.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if r.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			updatingComponents := r.ytsaurus.GetLocalUpdatingComponents()
-			if updatingComponents == nil {
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), r.removePods(ctx, dry)
+	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && tn.IsUpdating() {
+		if tn.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			if !dry {
+				err = tn.removePods(ctx)
 			}
-
+			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}
 	}
 
-	if r.server.NeedSync() {
+	if tn.server.needSync() {
 		if !dry {
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
-			err = r.server.Sync(ctx)
+			err = tn.server.Sync(ctx)
 		}
 
 		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
-	if !r.server.ArePodsReady(ctx) {
+	if !tn.server.arePodsReady(ctx) {
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
-	if !r.doInitialization || r.ytsaurus.IsStatusConditionTrue(r.initBundlesCondition) {
+	if !tn.doInitialization || tn.ytsaurus.IsStatusConditionTrue(tn.initBundlesCondition) {
 		return SimpleStatus(SyncStatusReady), err
 	}
 
-	if r.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
-		return WaitingStatus(SyncStatusBlocked, r.ytsaurusClient.GetName()), err
+	if tn.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
+		return WaitingStatus(SyncStatusBlocked, tn.ytsaurusClient.GetName()), err
 	}
 
-	ytClient := r.ytsaurusClient.GetYtClient()
+	ytClient := tn.ytsaurusClient.GetYtClient()
 
 	if !dry {
 		// TODO: refactor it
-		if r.doInitialization {
+		if tn.doInitialization {
 			if exists, err := ytClient.NodeExists(ctx, ypath.Path("//sys/tablet_cell_bundles/sys"), nil); err == nil {
 				if !exists {
 					_, err = ytClient.CreateObject(ctx, yt.NodeTabletCellBundle, &yt.CreateObjectOptions{
@@ -142,8 +141,8 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 				}
 			}
 
-			r.ytsaurus.SetStatusCondition(metav1.Condition{
-				Type:    r.initBundlesCondition,
+			tn.ytsaurus.SetStatusCondition(metav1.Condition{
+				Type:    tn.initBundlesCondition,
 				Status:  metav1.ConditionTrue,
 				Reason:  "InitBundlesCompleted",
 				Message: "Init bundles successfully completed",
@@ -151,11 +150,11 @@ func (r *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 		}
 	}
 
-	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", r.initBundlesCondition)), err
+	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", tn.initBundlesCondition)), err
 }
 
-func (r *tabletNode) Status(ctx context.Context) ComponentStatus {
-	status, err := r.doSync(ctx, true)
+func (tn *tabletNode) Status(ctx context.Context) ComponentStatus {
+	status, err := tn.doSync(ctx, true)
 	if err != nil {
 		panic(err)
 	}
@@ -163,13 +162,13 @@ func (r *tabletNode) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (r *tabletNode) Sync(ctx context.Context) error {
-	_, err := r.doSync(ctx, false)
+func (tn *tabletNode) Sync(ctx context.Context) error {
+	_, err := tn.doSync(ctx, false)
 	return err
 }
 
-func (r *tabletNode) Fetch(ctx context.Context) error {
+func (tn *tabletNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, []resources.Fetchable{
-		r.server,
+		tn.server,
 	})
 }

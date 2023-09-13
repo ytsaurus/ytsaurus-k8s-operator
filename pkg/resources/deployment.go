@@ -67,24 +67,10 @@ func (d *Deployment) Build() *appsv1.Deployment {
 	return &d.newObject
 }
 
-func (d *Deployment) NeedSync(replicas int32, image string) bool {
-	if d.oldObject.Spec.Replicas == nil {
-		return true
-	}
-
-	if *d.oldObject.Spec.Replicas != replicas {
-		return true
-	}
-
-	if len(d.oldObject.Spec.Template.Spec.Containers) != 1 {
-		return true
-	}
-
-	if d.oldObject.Spec.Template.Spec.Containers[0].Image != image {
-		return true
-	}
-
-	return false
+func (d *Deployment) NeedSync(replicas int32) bool {
+	return d.oldObject.Spec.Replicas == nil ||
+		*d.oldObject.Spec.Replicas != replicas ||
+		len(d.oldObject.Spec.Template.Spec.Containers) != 1
 }
 
 func (d *Deployment) ArePodsReady(ctx context.Context) bool {

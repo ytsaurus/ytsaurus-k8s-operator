@@ -25,7 +25,7 @@ type YtsaurusClient interface {
 }
 
 type ytsaurusClient struct {
-	ComponentBase
+	componentBase
 	httpProxy Component
 
 	initUserJob *InitJob
@@ -48,7 +48,7 @@ func NewYtsaurusClient(
 	}
 
 	return &ytsaurusClient{
-		ComponentBase: ComponentBase{
+		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
 			cfgen:    cfgen,

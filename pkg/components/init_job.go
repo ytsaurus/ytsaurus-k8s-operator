@@ -32,7 +32,7 @@ func initJobWithNativeDriverPrologue() string {
 }
 
 type InitJob struct {
-	ComponentBase
+	componentBase
 	apiProxy          apiproxy.APIProxy
 	conditionsManager apiproxy.ConditionManager
 	imagePullSecrets  []corev1.LocalObjectReference
@@ -55,7 +55,7 @@ func NewInitJob(
 	name, configFileName, image string,
 	generator ytconfig.GeneratorFunc) *InitJob {
 	return &InitJob{
-		ComponentBase: ComponentBase{
+		componentBase: componentBase{
 			labeller: labeller,
 		},
 		apiProxy:               apiProxy,

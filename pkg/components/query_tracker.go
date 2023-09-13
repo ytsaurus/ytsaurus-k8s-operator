@@ -16,12 +16,11 @@ import (
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type queryTracker struct {
-	ServerComponentBase
+	serverComponentBase
 
 	ytsaurusClient YtsaurusClient
 	tabletNodes    []Component
@@ -45,7 +44,7 @@ func NewQueryTracker(
 		MonitoringPort: consts.QueryTrackerMonitoringPort,
 	}
 
-	server := NewServer(
+	server := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.QueryTrackers.InstanceSpec,
@@ -62,8 +61,8 @@ func NewQueryTracker(
 	}
 
 	return &queryTracker{
-		ServerComponentBase: ServerComponentBase{
-			ComponentBase: ComponentBase{
+		serverComponentBase: serverComponentBase{
+			componentBase: componentBase{
 				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
@@ -100,12 +99,18 @@ func (qt *queryTracker) Fetch(ctx context.Context) error {
 func (qt *queryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && qt.server.NeedUpdate() {
+	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && qt.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := qt.update(ctx, dry); status != nil {
+		if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && qt.IsUpdating() {
+			if !dry {
+				err = qt.removePods(ctx)
+			}
+			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+		}
+		if status, err := qt.updateQTState(ctx, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -121,7 +126,7 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		return WaitingStatus(SyncStatusPending, qt.secret.Name()), err
 	}
 
-	if qt.server.NeedSync() {
+	if qt.server.needSync() {
 		if !dry {
 			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = qt.server.Sync(ctx)
@@ -130,7 +135,7 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
-	if !qt.server.ArePodsReady(ctx) {
+	if !qt.server.arePodsReady(ctx) {
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
@@ -298,15 +303,9 @@ func (qt *queryTracker) prepareInitQueryTrackerState() {
 	container.EnvFrom = []corev1.EnvFromSource{qt.secret.GetEnvSource()}
 }
 
-func (qt *queryTracker) update(ctx context.Context, dry bool) (*ComponentStatus, error) {
+func (qt *queryTracker) updateQTState(ctx context.Context, dry bool) (*ComponentStatus, error) {
 	var err error
 	switch qt.ytsaurus.GetUpdateState() {
-	case ytv1.UpdateStateWaitingForPodsRemoval:
-		updatingComponents := qt.ytsaurus.GetLocalUpdatingComponents()
-		if updatingComponents == nil || slices.Contains(updatingComponents, qt.GetName()) {
-			return ptr.T(WaitingStatus(SyncStatusUpdating, "pods removal")), qt.removePods(ctx, dry)
-		}
-		return nil, nil
 	case ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:
 		if !qt.initQTState.isRestartPrepared() {
 			return ptr.T(SimpleStatus(SyncStatusUpdating)), qt.initQTState.prepareRestart(ctx, dry)

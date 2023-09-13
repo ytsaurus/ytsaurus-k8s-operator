@@ -49,6 +49,10 @@ func (fc *FakeComponent) Status(ctx context.Context) ComponentStatus {
 	return fc.status
 }
 
+func (fc *FakeComponent) IsUpdating() bool {
+	return false
+}
+
 func (fc *FakeComponent) GetName() string {
 	return fc.name
 }
@@ -60,43 +64,55 @@ func (fc *FakeComponent) GetLabel() string {
 func (fc *FakeComponent) SetReadyCondition(status ComponentStatus) {}
 
 type FakeServer struct {
-	arePodsReady bool
+	podsReady bool
 }
 
 func NewFakeServer() *FakeServer {
-	return &FakeServer{arePodsReady: true}
+	return &FakeServer{podsReady: true}
 }
 
 func (fs *FakeServer) Fetch(ctx context.Context) error {
 	return nil
 }
 
-func (fs *FakeServer) NeedUpdate() bool {
+func (fs *FakeServer) needUpdate() bool {
 	return false
 }
 
-func (fs *FakeServer) NeedSync() bool {
-	return false
-}
-
-func (fs *FakeServer) ArePodsRemoved() bool {
+func (fs *FakeServer) podsImageCorrespondsToSpec() bool {
 	return true
 }
 
-func (fs *FakeServer) ArePodsReady(ctx context.Context) bool {
-	return fs.arePodsReady
+func (fs *FakeServer) needSync() bool {
+	return false
+}
+
+func (fs *FakeServer) arePodsRemoved() bool {
+	return true
+}
+
+func (fs *FakeServer) arePodsReady(ctx context.Context) bool {
+	return fs.podsReady
 }
 
 func (fs *FakeServer) Sync(ctx context.Context) error {
 	return nil
 }
 
-func (fs *FakeServer) BuildStatefulSet() *appsv1.StatefulSet {
+func (fs *FakeServer) buildStatefulSet() *appsv1.StatefulSet {
 	return nil
 }
 
-func (fs *FakeServer) RebuildStatefulSet() *appsv1.StatefulSet {
+func (fs *FakeServer) rebuildStatefulSet() *appsv1.StatefulSet {
 	return nil
+}
+
+func (fs *FakeServer) removePods(ctx context.Context) error {
+	return nil
+}
+
+func (fs *FakeServer) GetImage() string {
+	return ""
 }
 
 type FakeYtsaurusClient struct {

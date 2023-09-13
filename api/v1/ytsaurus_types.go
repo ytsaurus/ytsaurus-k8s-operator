@@ -268,6 +268,7 @@ type DiscoverySpec struct {
 }
 
 type UISpec struct {
+	Image *string `json:"image,omitempty"`
 	//+kubebuilder:default:=NodePort
 	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
 	//+kubebuilder:default:=false

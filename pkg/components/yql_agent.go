@@ -3,7 +3,6 @@ package components
 import (
 	"context"
 	"fmt"
-	"k8s.io/utils/strings/slices"
 	"strings"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -17,7 +16,7 @@ import (
 )
 
 type yqlAgent struct {
-	ServerComponentBase
+	serverComponentBase
 	master          Component
 	initEnvironment *InitJob
 	secret          *resources.StringSecret
@@ -33,7 +32,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		MonitoringPort: consts.YQLAgentMonitoringPort,
 	}
 
-	server := NewServer(
+	server := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.YQLAgents.InstanceSpec,
@@ -45,8 +44,8 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 	)
 
 	return &yqlAgent{
-		ServerComponentBase: ServerComponentBase{
-			ComponentBase: ComponentBase{
+		serverComponentBase: serverComponentBase{
+			componentBase: componentBase{
 				labeller: &l,
 				ytsaurus: ytsaurus,
 				cfgen:    cfgen,
@@ -114,16 +113,16 @@ func (yqla *yqlAgent) createInitScript() string {
 func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && yqla.server.NeedUpdate() {
+	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && yqla.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && yqla.IsUpdating() {
 		if yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			updatingComponents := yqla.ytsaurus.GetLocalUpdatingComponents()
-			if updatingComponents == nil || slices.Contains(updatingComponents, yqla.GetName()) {
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), yqla.removePods(ctx, dry)
+			if !dry {
+				err = yqla.removePods(ctx)
 			}
+			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}
 	}
 
@@ -142,9 +141,9 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return WaitingStatus(SyncStatusPending, yqla.secret.Name()), err
 	}
 
-	if yqla.server.NeedSync() {
+	if yqla.server.needSync() {
 		if !dry {
-			ss := yqla.server.BuildStatefulSet()
+			ss := yqla.server.buildStatefulSet()
 			container := &ss.Spec.Template.Spec.Containers[0]
 			container.EnvFrom = []corev1.EnvFromSource{yqla.secret.GetEnvSource()}
 			container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "1"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
@@ -153,7 +152,7 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
-	if !yqla.server.ArePodsReady(ctx) {
+	if !yqla.server.arePodsReady(ctx) {
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
