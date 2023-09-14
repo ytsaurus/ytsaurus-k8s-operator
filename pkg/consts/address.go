@@ -29,7 +29,7 @@ const (
 
 	TCPProxyMonitoringPort = 10017
 	TCPProxyMinTCPPort     = 20000
-	TCPProxyMaxTCPPort     = 30000
+	TCPProxyMaxTCPPort     = 20100
 
 	QueryTrackerRPCPort        = 9028
 	QueryTrackerMonitoringPort = 10028
