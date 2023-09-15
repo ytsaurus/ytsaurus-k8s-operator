@@ -37,6 +37,10 @@ func NewFakeComponent(name string) *FakeComponent {
 	return &FakeComponent{name: name, status: SimpleStatus(SyncStatusReady)}
 }
 
+func (fc *FakeComponent) IsUpdatable() bool {
+	return false
+}
+
 func (fc *FakeComponent) Fetch(ctx context.Context) error {
 	return nil
 }
@@ -133,4 +137,8 @@ func (fyc *FakeYtsaurusClient) GetYtClient() yt.Client {
 
 func (fyc *FakeYtsaurusClient) SetStatus(status ComponentStatus) {
 	fyc.status = status
+}
+
+func (fc *FakeYtsaurusClient) IsUpdatable() bool {
+	return false
 }

@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
@@ -114,6 +115,10 @@ func NewStrawberryController(
 	}
 }
 
+func (c *strawberryController) IsUpdatable() bool {
+	return true
+}
+
 func (c *strawberryController) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, []resources.Fetchable{
 		c.microservice,
@@ -201,6 +206,19 @@ func (c *strawberryController) syncComponents(ctx context.Context) (err error) {
 
 func (c *strawberryController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
+
+	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && c.microservice.needUpdate() {
+		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+	}
+
+	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(c.ytsaurus, c) {
+		if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			if !dry {
+				err = removePods(ctx, c.microservice, &c.componentBase)
+			}
+			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+		}
+	}
 
 	if c.master.Status(ctx).SyncStatus != SyncStatusReady {
 		return WaitingStatus(SyncStatusBlocked, c.master.GetName()), err

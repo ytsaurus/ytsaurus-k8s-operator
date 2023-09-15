@@ -11,7 +11,8 @@ import (
 )
 
 type discovery struct {
-	serverComponentBase
+	componentBase
+	server server
 }
 
 func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component {
@@ -36,15 +37,17 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Compon
 	)
 
 	return &discovery{
-		serverComponentBase: serverComponentBase{
-			componentBase: componentBase{
-				labeller: &l,
-				ytsaurus: ytsaurus,
-				cfgen:    cfgen,
-			},
-			server: server,
+		componentBase: componentBase{
+			labeller: &l,
+			ytsaurus: ytsaurus,
+			cfgen:    cfgen,
 		},
+		server: server,
 	}
+}
+
+func (d *discovery) IsUpdatable() bool {
+	return true
 }
 
 func (d *discovery) Fetch(ctx context.Context) error {
@@ -60,10 +63,10 @@ func (d *discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && d.IsUpdating() {
+	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(d.ytsaurus, d) {
 		if d.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !dry {
-				err = d.removePods(ctx)
+				err = removePods(ctx, d.server, &d.componentBase)
 			}
 			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}

@@ -43,10 +43,6 @@ func (l *Labeller) GetPodsRemovingStartedCondition() string {
 	return fmt.Sprintf("%sPodsRemovingStarted", l.ComponentName)
 }
 
-func (l *Labeller) GetPodsRemovedCondition() string {
-	return fmt.Sprintf("%sPodsRemoved", l.ComponentName)
-}
-
 func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Name:      name,
@@ -88,4 +84,8 @@ func (l *Labeller) GetMonitoringMetaLabelMap() map[string]string {
 	labels[consts.YTMetricsLabelName] = "true"
 
 	return labels
+}
+
+func GetPodsRemovedCondition(componentName string) string {
+	return fmt.Sprintf("%sPodsRemoved", componentName)
 }

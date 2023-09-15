@@ -12,7 +12,8 @@ import (
 )
 
 type tcpProxy struct {
-	serverComponentBase
+	componentBase
+	server server
 
 	master Component
 
@@ -56,18 +57,20 @@ func NewTCPProxy(
 	}
 
 	return &tcpProxy{
-		serverComponentBase: serverComponentBase{
-			componentBase: componentBase{
-				labeller: &l,
-				ytsaurus: ytsaurus,
-				cfgen:    cfgen,
-			},
-			server: server,
+		componentBase: componentBase{
+			labeller: &l,
+			ytsaurus: ytsaurus,
+			cfgen:    cfgen,
 		},
+		server:           server,
 		master:           masterReconciler,
 		serviceType:      spec.ServiceType,
 		balancingService: balancingService,
 	}
+}
+
+func (tp *tcpProxy) IsUpdatable() bool {
+	return true
 }
 
 func (tp *tcpProxy) Fetch(ctx context.Context) error {
@@ -87,10 +90,10 @@ func (tp *tcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if tp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && tp.IsUpdating() {
+	if tp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(tp.ytsaurus, tp) {
 		if tp.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !dry {
-				err = tp.removePods(ctx)
+				err = removePods(ctx, tp.server, &tp.componentBase)
 			}
 			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}

@@ -15,7 +15,8 @@ import (
 )
 
 type execNode struct {
-	serverComponentBase
+	componentBase
+	server     server
 	master     Component
 	sidecars   []string
 	privileged bool
@@ -50,18 +51,20 @@ func NewExecNode(
 	)
 
 	return &execNode{
-		serverComponentBase: serverComponentBase{
-			componentBase: componentBase{
-				labeller: &l,
-				ytsaurus: ytsaurus,
-				cfgen:    cfgen,
-			},
-			server: server,
+		componentBase: componentBase{
+			labeller: &l,
+			ytsaurus: ytsaurus,
+			cfgen:    cfgen,
 		},
+		server:     server,
 		master:     master,
 		sidecars:   spec.Sidecars,
 		privileged: spec.Privileged,
 	}
+}
+
+func (n *execNode) IsUpdatable() bool {
+	return true
 }
 
 func (n *execNode) Fetch(ctx context.Context) error {
@@ -77,10 +80,10 @@ func (n *execNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && n.IsUpdating() {
+	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(n.ytsaurus, n) {
 		if n.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !dry {
-				err = n.removePods(ctx)
+				err = removePods(ctx, n.server, &n.componentBase)
 			}
 			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}

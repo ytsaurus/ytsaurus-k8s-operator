@@ -19,7 +19,8 @@ const SysBundle string = "sys"
 const DefaultBundle string = "default"
 
 type tabletNode struct {
-	serverComponentBase
+	componentBase
+	server server
 
 	ytsaurusClient YtsaurusClient
 
@@ -58,19 +59,21 @@ func NewTabletNode(
 	)
 
 	return &tabletNode{
-		serverComponentBase: serverComponentBase{
-			componentBase: componentBase{
-				labeller: &l,
-				ytsaurus: ytsaurus,
-				cfgen:    cfgen,
-			},
-			server: server,
+		componentBase: componentBase{
+			labeller: &l,
+			ytsaurus: ytsaurus,
+			cfgen:    cfgen,
 		},
+		server:               server,
 		initBundlesCondition: "bundlesTabletNodeInitCompleted",
 		ytsaurusClient:       ytsaurusClient,
 		spec:                 spec,
 		doInitialization:     doInitiailization,
 	}
+}
+
+func (tn *tabletNode) IsUpdatable() bool {
+	return true
 }
 
 func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
@@ -81,10 +84,10 @@ func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return SimpleStatus(SyncStatusNeedFullUpdate), err
 	}
 
-	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && tn.IsUpdating() {
+	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(tn.ytsaurus, tn) {
 		if tn.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !dry {
-				err = tn.removePods(ctx)
+				err = removePods(ctx, tn.server, &tn.componentBase)
 			}
 			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}

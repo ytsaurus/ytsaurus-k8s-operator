@@ -37,7 +37,7 @@ func (r *YtsaurusReconciler) handleUpdatingStateFullMode(
 		}
 
 	case ytv1.UpdateStateImpossibleToStart:
-		if !componentManager.needUpdate() || !ytsaurus.GetResource().Spec.EnableFullUpdate {
+		if !componentManager.needSync() || !ytsaurus.GetResource().Spec.EnableFullUpdate {
 			ytsaurus.LogUpdate(ctx, "Spec changed back or full update isn't enabled, update is canceling")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateCancelUpdate)
 			return &ctrl.Result{Requeue: true}, err

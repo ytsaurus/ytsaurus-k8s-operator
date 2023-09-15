@@ -16,7 +16,8 @@ import (
 )
 
 type yqlAgent struct {
-	serverComponentBase
+	componentBase
+	server          server
 	master          Component
 	initEnvironment *InitJob
 	secret          *resources.StringSecret
@@ -44,14 +45,12 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 	)
 
 	return &yqlAgent{
-		serverComponentBase: serverComponentBase{
-			componentBase: componentBase{
-				labeller: &l,
-				ytsaurus: ytsaurus,
-				cfgen:    cfgen,
-			},
-			server: server,
+		componentBase: componentBase{
+			labeller: &l,
+			ytsaurus: ytsaurus,
+			cfgen:    cfgen,
 		},
+		server: server,
 		master: master,
 		initEnvironment: NewInitJob(
 			&l,
@@ -67,6 +66,10 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 			&l,
 			ytsaurus.APIProxy()),
 	}
+}
+
+func (yqla *yqlAgent) IsUpdatable() bool {
+	return true
 }
 
 func (yqla *yqlAgent) GetName() string {
@@ -117,10 +120,10 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && yqla.IsUpdating() {
+	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(yqla.ytsaurus, yqla) {
 		if yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !dry {
-				err = yqla.removePods(ctx)
+				err = removePods(ctx, yqla.server, &yqla.componentBase)
 			}
 			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}

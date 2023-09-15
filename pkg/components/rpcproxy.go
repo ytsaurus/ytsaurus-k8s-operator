@@ -12,7 +12,8 @@ import (
 )
 
 type rpcProxy struct {
-	serverComponentBase
+	componentBase
+	server server
 
 	master Component
 
@@ -56,18 +57,20 @@ func NewRPCProxy(
 	}
 
 	return &rpcProxy{
-		serverComponentBase: serverComponentBase{
-			componentBase: componentBase{
-				labeller: &l,
-				ytsaurus: ytsaurus,
-				cfgen:    cfgen,
-			},
-			server: server,
+		componentBase: componentBase{
+			labeller: &l,
+			ytsaurus: ytsaurus,
+			cfgen:    cfgen,
 		},
+		server:           server,
 		master:           masterReconciler,
 		serviceType:      spec.ServiceType,
 		balancingService: balancingService,
 	}
+}
+
+func (rp *rpcProxy) IsUpdatable() bool {
+	return true
 }
 
 func (rp *rpcProxy) Fetch(ctx context.Context) error {
@@ -87,10 +90,10 @@ func (rp *rpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && rp.IsUpdating() {
+	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(rp.ytsaurus, rp) {
 		if rp.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !dry {
-				err = rp.removePods(ctx)
+				err = removePods(ctx, rp.server, &rp.componentBase)
 			}
 			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}

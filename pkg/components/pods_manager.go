@@ -2,9 +2,11 @@ package components
 
 import (
 	"context"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// TODO: move to Updatable
 type podsManager interface {
 	removePods(ctx context.Context) error
 	arePodsRemoved() bool
@@ -45,7 +47,7 @@ func setPodsRemovingStartedCondition(c *componentBase) {
 
 func setPodsRemovedCondition(c *componentBase) {
 	c.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
-		Type:    c.labeller.GetPodsRemovedCondition(),
+		Type:    labeller.GetPodsRemovedCondition(c.GetName()),
 		Status:  metav1.ConditionTrue,
 		Reason:  "Update",
 		Message: "Pods removed",

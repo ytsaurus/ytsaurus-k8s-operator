@@ -17,7 +17,8 @@ import (
 )
 
 type scheduler struct {
-	serverComponentBase
+	componentBase
+	server        server
 	master        Component
 	execNodes     []Component
 	tabletNodes   []Component
@@ -52,14 +53,12 @@ func NewScheduler(
 	)
 
 	return &scheduler{
-		serverComponentBase: serverComponentBase{
-			componentBase: componentBase{
-				labeller: &l,
-				ytsaurus: ytsaurus,
-				cfgen:    cfgen,
-			},
-			server: server,
+		componentBase: componentBase{
+			labeller: &l,
+			ytsaurus: ytsaurus,
+			cfgen:    cfgen,
 		},
+		server:      server,
 		master:      master,
 		execNodes:   execNodes,
 		tabletNodes: tabletNodes,
@@ -86,6 +85,10 @@ func NewScheduler(
 			&l,
 			ytsaurus.APIProxy()),
 	}
+}
+
+func (s *scheduler) IsUpdatable() bool {
+	return true
 }
 
 func (s *scheduler) Fetch(ctx context.Context) error {
@@ -119,9 +122,9 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if s.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
-		if s.ytsaurus.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval && s.IsUpdating() {
+		if s.ytsaurus.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(s.ytsaurus, s) {
 			if !dry {
-				err = s.removePods(ctx)
+				err = removePods(ctx, s.server, &s.componentBase)
 			}
 			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}

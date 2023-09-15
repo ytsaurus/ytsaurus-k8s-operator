@@ -7,7 +7,6 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/strings/slices"
 )
 
 type SyncStatus string
@@ -38,10 +37,12 @@ type Component interface {
 	Fetch(ctx context.Context) error
 	Sync(ctx context.Context) error
 	Status(ctx context.Context) ComponentStatus
-	IsUpdating() bool
 	GetName() string
 	GetLabel() string
 	SetReadyCondition(status ComponentStatus)
+
+	// TODO(nadya73): refactor it
+	IsUpdatable() bool
 }
 
 type componentBase struct {
@@ -69,9 +70,4 @@ func (c *componentBase) SetReadyCondition(status ComponentStatus) {
 		Reason:  string(status.SyncStatus),
 		Message: status.Message,
 	})
-}
-
-func (c *componentBase) IsUpdating() bool {
-	componentNames := c.ytsaurus.GetLocalUpdatingComponents()
-	return componentNames == nil || slices.Contains(componentNames, c.GetName())
 }

@@ -17,10 +17,11 @@ import (
 )
 
 type UI struct {
-	microserviceComponentBase
-	initJob *InitJob
-	master  Component
-	secret  *resources.StringSecret
+	componentBase
+	microservice microservice
+	initJob      *InitJob
+	master       Component
+	secret       *resources.StringSecret
 }
 
 const UIConfigFileName = "clusters-config.json"
@@ -50,14 +51,12 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		"ytsaurus-ui")
 
 	return &UI{
-		microserviceComponentBase: microserviceComponentBase{
-			componentBase: componentBase{
-				labeller: &l,
-				ytsaurus: ytsaurus,
-				cfgen:    cfgen,
-			},
-			microservice: microservice,
+		componentBase: componentBase{
+			labeller: &l,
+			ytsaurus: ytsaurus,
+			cfgen:    cfgen,
 		},
+		microservice: microservice,
 		initJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -73,6 +72,10 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			ytsaurus.APIProxy()),
 		master: master,
 	}
+}
+
+func (u *UI) IsUpdatable() bool {
+	return true
 }
 
 func (u *UI) Fetch(ctx context.Context) error {
@@ -220,10 +223,10 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && u.IsUpdating() {
+	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(u.ytsaurus, u) {
 		if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !dry {
-				err = u.removePods(ctx)
+				err = removePods(ctx, u.microservice, &u.componentBase)
 			}
 			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}

@@ -16,7 +16,8 @@ import (
 )
 
 type master struct {
-	serverComponentBase
+	componentBase
+	server server
 
 	initJob          *InitJob
 	adminCredentials corev1.Secret
@@ -54,16 +55,18 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component
 		cfgen.GetNativeClientConfig)
 
 	return &master{
-		serverComponentBase: serverComponentBase{
-			componentBase: componentBase{
-				labeller: &l,
-				ytsaurus: ytsaurus,
-				cfgen:    cfgen,
-			},
-			server: server,
+		componentBase: componentBase{
+			labeller: &l,
+			ytsaurus: ytsaurus,
+			cfgen:    cfgen,
 		},
+		server:  server,
 		initJob: initJob,
 	}
+}
+
+func (m *master) IsUpdatable() bool {
+	return true
 }
 
 func (m *master) Fetch(ctx context.Context) error {
@@ -135,10 +138,10 @@ func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 		return SimpleStatus(SyncStatusNeedFullUpdate), err
 	}
 
-	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && m.IsUpdating() {
+	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(m.ytsaurus, m) {
 		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !dry {
-				err = m.removePods(ctx)
+				err = removePods(ctx, m.server, &m.componentBase)
 			}
 			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}

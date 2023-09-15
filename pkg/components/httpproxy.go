@@ -13,9 +13,10 @@ import (
 )
 
 type httpProxy struct {
-	serverComponentBase
-	serviceType v1.ServiceType
+	componentBase
+	server server
 
+	serviceType      v1.ServiceType
 	master           Component
 	balancingService *resources.HTTPService
 
@@ -53,14 +54,12 @@ func NewHTTPProxy(
 	)
 
 	return &httpProxy{
-		serverComponentBase: serverComponentBase{
-			componentBase: componentBase{
-				labeller: &l,
-				ytsaurus: ytsaurus,
-				cfgen:    cfgen,
-			},
-			server: server,
+		componentBase: componentBase{
+			labeller: &l,
+			ytsaurus: ytsaurus,
+			cfgen:    cfgen,
 		},
+		server:      server,
 		master:      masterReconciler,
 		serviceType: spec.ServiceType,
 		role:        spec.Role,
@@ -69,6 +68,10 @@ func NewHTTPProxy(
 			&l,
 			ytsaurus.APIProxy()),
 	}
+}
+
+func (hp *httpProxy) IsUpdatable() bool {
+	return true
 }
 
 func (hp *httpProxy) Fetch(ctx context.Context) error {
@@ -85,10 +88,14 @@ func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && hp.IsUpdating() {
+	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(hp.ytsaurus, hp) {
+		if hp.ytsaurus.GetUpdateState() == ytv1.UpdateStateImpossibleToStart && !hp.server.needUpdate() {
+			return SimpleStatus(SyncStatusReady), err
+		}
+
 		if hp.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !dry {
-				err = hp.removePods(ctx)
+				err = removePods(ctx, hp.server, &hp.componentBase)
 			}
 			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}

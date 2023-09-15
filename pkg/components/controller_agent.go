@@ -11,7 +11,8 @@ import (
 )
 
 type controllerAgent struct {
-	serverComponentBase
+	componentBase
+	server server
 	master Component
 }
 
@@ -37,16 +38,18 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 	)
 
 	return &controllerAgent{
-		serverComponentBase: serverComponentBase{
-			componentBase: componentBase{
-				labeller: &l,
-				ytsaurus: ytsaurus,
-				cfgen:    cfgen,
-			},
-			server: server,
+		componentBase: componentBase{
+			labeller: &l,
+			ytsaurus: ytsaurus,
+			cfgen:    cfgen,
 		},
+		server: server,
 		master: master,
 	}
+}
+
+func (ca *controllerAgent) IsUpdatable() bool {
+	return true
 }
 
 func (ca *controllerAgent) Fetch(ctx context.Context) error {
@@ -62,10 +65,10 @@ func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && ca.IsUpdating() {
+	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(ca.ytsaurus, ca) {
 		if ca.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !dry {
-				err = ca.removePods(ctx)
+				err = removePods(ctx, ca.server, &ca.componentBase)
 			}
 			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 		}

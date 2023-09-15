@@ -3,8 +3,10 @@ package components
 import (
 	"context"
 	"fmt"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
+	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -98,4 +100,9 @@ func CreateUserCommand(ctx context.Context, ytClient yt.Client, userName, token 
 	}
 
 	return err
+}
+
+func IsUpdatingComponent(ytsaurus *apiproxy.Ytsaurus, component Component) bool {
+	componentNames := ytsaurus.GetLocalUpdatingComponents()
+	return (componentNames == nil && component.IsUpdatable()) || slices.Contains(componentNames, component.GetName())
 }

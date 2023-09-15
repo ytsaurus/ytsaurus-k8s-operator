@@ -70,6 +70,10 @@ func NewYtsaurusClient(
 	}
 }
 
+func (yc *ytsaurusClient) IsUpdatable() bool {
+	return false
+}
+
 func (yc *ytsaurusClient) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, []resources.Fetchable{
 		yc.secret,

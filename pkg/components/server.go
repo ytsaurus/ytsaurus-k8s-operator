@@ -20,8 +20,8 @@ type server interface {
 	resources.Fetchable
 	resources.Syncable
 	podsManager
-	needSync() bool
 	needUpdate() bool
+	needSync() bool
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
 }
