@@ -38,6 +38,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
   check:
     name: Run checks
@@ -75,7 +77,7 @@ jobs:
       - name: Docker
         shell: bash
         run: |
-          make release RELEASE_VERSION=0.0.0-dev-${GITHUB_SHA} OPERATOR_IMAGE=ytsaurus/k8s-operator-nightly OPERATOR_CHART=ytop-chart-nightly
+          make release RELEASE_VERSION=0.0.$(git rev-list --count HEAD)-dev-${GITHUB_SHA} OPERATOR_IMAGE=ytsaurus/k8s-operator-nightly OPERATOR_CHART=ytop-chart-nightly
 
   stop-vm:
     name: Stop VM
