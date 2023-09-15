@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	ptr "k8s.io/utils/pointer"
+	"log"
 	"path"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -48,7 +49,7 @@ func newServer(
 	ytsaurus *apiproxy.Ytsaurus,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
-	generator ytconfig.GeneratorFunc) server {
+	generator ytconfig.YsonGeneratorFunc) server {
 	image := ytsaurus.GetResource().Spec.CoreImage
 	if instanceSpec.Image != nil {
 		image = *instanceSpec.Image
@@ -74,9 +75,13 @@ func newServer(
 			l,
 			ytsaurus.APIProxy(),
 			l.GetMainConfigMapName(),
-			configFileName,
 			ytsaurus.GetResource().Spec.ConfigOverrides,
-			generator),
+			map[string]ytconfig.GeneratorDescriptor{
+				configFileName: {
+					F:   generator,
+					Fmt: ytconfig.ConfigFormatYson,
+				},
+			}),
 	}
 }
 
@@ -166,6 +171,11 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	statefulSet.Spec.ServiceName = s.headlessService.Name()
 	statefulSet.Spec.VolumeClaimTemplates = createVolumeClaims(s.instanceSpec.VolumeClaimTemplates)
 
+	fileNames := s.configHelper.GetFileNames()
+	if len(fileNames) != 1 {
+		log.Panicf("expected exactly one config filename, found %v", len(fileNames))
+	}
+
 	setHostnameAsFQDN := true
 	statefulSet.Spec.Template.Spec = corev1.PodSpec{
 		ImagePullSecrets:  s.ytsaurus.GetResource().Spec.ImagePullSecrets,
@@ -174,7 +184,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 			{
 				Image:        s.image,
 				Name:         consts.YTServerContainerName,
-				Command:      []string{s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, s.configHelper.GetFileName())},
+				Command:      []string{s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, fileNames[0])},
 				VolumeMounts: volumeMounts,
 				Resources:    s.instanceSpec.Resources,
 			},

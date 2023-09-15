@@ -74,8 +74,12 @@ func NewStrawberryController(
 		ytsaurus,
 		image,
 		1,
-		cfgen.GetStrawberryControllerConfig,
-		getControllerConfigFileName(name),
+		map[string]ytconfig.GeneratorDescriptor{
+			getControllerConfigFileName(name): {
+				F:   cfgen.GetStrawberryControllerConfig,
+				Fmt: ytconfig.ConfigFormatYson,
+			},
+		},
 		fmt.Sprintf("%s-controller", name),
 		name)
 

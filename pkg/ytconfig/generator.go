@@ -1,7 +1,6 @@
 package ytconfig
 
 import (
-	"encoding/json"
 	"fmt"
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -9,7 +8,23 @@ import (
 	ptr "k8s.io/utils/pointer"
 )
 
-type GeneratorFunc func() ([]byte, error)
+type ConfigFormat string
+
+const (
+	ConfigFormatYson               = "yson"
+	ConfigFormatJson               = "json"
+	ConfigFormatJsonWithJsPrologue = "json_with_js_prologue"
+)
+
+type YsonGeneratorFunc func() ([]byte, error)
+type GeneratorDescriptor struct {
+	// F must generate config in YSON.
+	F YsonGeneratorFunc
+	// Fmt is the desired serialization format for config map.
+	// Note that conversion from YSON to Fmt (if needed) is performed as a very last
+	// step of config generation pipeline.
+	Fmt ConfigFormat
+}
 
 type Generator struct {
 	ytsaurus      *ytv1.Ytsaurus
@@ -112,14 +127,6 @@ func (g *Generator) fillCommonService(c *CommonServer) {
 
 func marshallYsonConfig(c interface{}) ([]byte, error) {
 	result, err := yson.MarshalFormat(c, yson.FormatPretty)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func marshallJSONConfig(c interface{}) ([]byte, error) {
-	result, err := json.Marshal(c)
 	if err != nil {
 		return nil, err
 	}
@@ -395,7 +402,7 @@ func (g *Generator) GetYQLAgentConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) GetWebUIConfig() ([]byte, error) {
+func (g *Generator) GetUIClustersConfig() ([]byte, error) {
 	if g.ytsaurus.Spec.UI == nil {
 		return []byte{}, nil
 	}
@@ -406,7 +413,21 @@ func (g *Generator) GetWebUIConfig() ([]byte, error) {
 	c.Proxy = g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 	c.PrimaryMaster.CellTag = g.ytsaurus.Spec.PrimaryMasters.CellTag
 
-	return marshallJSONConfig(WebUI{Clusters: []UICluster{c}})
+	return marshallYsonConfig(UIClusters{
+		Clusters: []UICluster{c},
+	})
+}
+
+func (g *Generator) GetUICustomConfig() ([]byte, error) {
+	if g.ytsaurus.Spec.UI == nil {
+		return []byte{}, nil
+	}
+
+	c := UICustom{
+		OdinBaseUrl: g.ytsaurus.Spec.UI.OdinBaseUrl,
+	}
+
+	return marshallYsonConfig(c)
 }
 
 func (g *Generator) getDiscoveryConfigImpl() (DiscoveryServer, error) {

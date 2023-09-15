@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 
@@ -14,15 +15,18 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+const (
+	JsPrologue string = "module.exports = "
+)
+
 type ConfigHelper struct {
 	labeller *labeller.Labeller
 	apiProxy apiproxy.APIProxy
 
-	generator ytconfig.GeneratorFunc
+	generators map[string]ytconfig.GeneratorDescriptor
 
 	configOverrides *corev1.LocalObjectReference
 	overridesMap    corev1.ConfigMap
-	fileName        string
 
 	configMap *resources.ConfigMap
 }
@@ -30,15 +34,14 @@ type ConfigHelper struct {
 func NewConfigHelper(
 	labeller *labeller.Labeller,
 	apiProxy apiproxy.APIProxy,
-	name, fileName string,
+	name string,
 	configOverrides *corev1.LocalObjectReference,
-	generator ytconfig.GeneratorFunc) *ConfigHelper {
+	generators map[string]ytconfig.GeneratorDescriptor) *ConfigHelper {
 	return &ConfigHelper{
 		labeller:        labeller,
 		apiProxy:        apiProxy,
-		generator:       generator,
+		generators:      generators,
 		configOverrides: configOverrides,
-		fileName:        fileName,
 		configMap:       resources.NewConfigMap(name, labeller, apiProxy),
 	}
 }
@@ -86,29 +89,34 @@ func overrideYsonConfigs(base []byte, overrides []byte) ([]byte, error) {
 	return yson.MarshalFormat(merged, yson.FormatPretty)
 }
 
-func (h *ConfigHelper) GetFileName() string {
-	return h.fileName
+func (h *ConfigHelper) GetFileNames() []string {
+	fileNames := []string{}
+	for fileName, _ := range h.generators {
+		fileNames = append(fileNames, fileName)
+	}
+	return fileNames
 }
 
 func (h *ConfigHelper) GetConfigMapName() string {
 	return h.configMap.Name()
 }
 
-func (h *ConfigHelper) getConfig() ([]byte, error) {
-	if h.generator == nil {
+func (h *ConfigHelper) getConfig(fileName string) ([]byte, error) {
+	descriptor, ok := h.generators[fileName]
+	if !ok {
 		return nil, nil
 	}
 
-	serializedConfig, err := h.generator()
+	serializedConfig, err := descriptor.F()
 	if err != nil {
 		h.apiProxy.RecordWarning(
 			"Reconciling",
-			fmt.Sprintf("Failed to build config %s: %s", h.fileName, err))
+			fmt.Sprintf("Failed to build config %s: %s", fileName, err))
 		return nil, err
 	}
 
 	if h.overridesMap.GetResourceVersion() != "" {
-		if value, ok := h.overridesMap.Data[h.fileName]; ok {
+		if value, ok := h.overridesMap.Data[fileName]; ok {
 			configWithOverrides, err := overrideYsonConfigs(serializedConfig, []byte(value))
 			if err == nil {
 				serializedConfig = configWithOverrides
@@ -116,20 +124,35 @@ func (h *ConfigHelper) getConfig() ([]byte, error) {
 				// ToDo(psushin): better error handling.
 				h.apiProxy.RecordWarning(
 					"Reconciling",
-					fmt.Sprintf("Failed to apply config overrides for %s, skipping: %s", h.fileName, err))
+					fmt.Sprintf("Failed to apply config overrides for %s, skipping: %s", fileName, err))
 			}
+		}
+	}
+
+	if descriptor.Fmt == ytconfig.ConfigFormatJson || descriptor.Fmt == ytconfig.ConfigFormatJsonWithJsPrologue {
+		var config any
+		err := yson.Unmarshal(serializedConfig, &config)
+		if err != nil {
+			return nil, err
+		}
+		serializedConfig, err = json.Marshal(config)
+		if err != nil {
+			return nil, err
+		}
+		if descriptor.Fmt == ytconfig.ConfigFormatJsonWithJsPrologue {
+			serializedConfig = append([]byte(JsPrologue), serializedConfig...)
 		}
 	}
 
 	return serializedConfig, nil
 }
 
-func (h *ConfigHelper) getCurrentConfigValue() []byte {
+func (h *ConfigHelper) getCurrentConfigValue(fileName string) []byte {
 	if !resources.Exists(h.configMap) {
 		return nil
 	}
 
-	data, exists := h.configMap.OldObject().(*corev1.ConfigMap).Data[h.fileName]
+	data, exists := h.configMap.OldObject().(*corev1.ConfigMap).Data[fileName]
 	if !exists {
 		return nil
 	}
@@ -137,18 +160,20 @@ func (h *ConfigHelper) getCurrentConfigValue() []byte {
 }
 
 func (h *ConfigHelper) NeedReload() (bool, error) {
-	newConfig, err := h.getConfig()
-	if err != nil {
-		return false, err
+	for fileName, _ := range h.generators {
+		newConfig, err := h.getConfig(fileName)
+		if err != nil {
+			return false, err
+		}
+		curConfig := h.getCurrentConfigValue(fileName)
+		if !cmp.Equal(curConfig, newConfig) {
+			h.apiProxy.RecordNormal(
+				"Reconciliation",
+				fmt.Sprintf("Config %s needs reload", fileName))
+			return true, nil
+		}
 	}
-	curConfig := h.getCurrentConfigValue()
-	if cmp.Equal(curConfig, newConfig) {
-		return false, nil
-	}
-	h.apiProxy.RecordNormal(
-		"Reconciliation",
-		fmt.Sprintf("Config %s needs reload", h.fileName))
-	return true, nil
+	return false, nil
 }
 
 func (h *ConfigHelper) NeedSync() bool {
@@ -160,18 +185,20 @@ func (h *ConfigHelper) NeedSync() bool {
 		return false
 	}
 	return needReload
-
 }
 
 func (h *ConfigHelper) Build() *corev1.ConfigMap {
 	cm := h.configMap.Build()
-	data, err := h.getConfig()
-	if err != nil {
-		return nil
-	}
 
-	if data != nil {
-		cm.Data[h.fileName] = string(data)
+	for fileName, _ := range h.generators {
+		data, err := h.getConfig(fileName)
+		if err != nil {
+			return nil
+		}
+
+		if data != nil {
+			cm.Data[fileName] = string(data)
+		}
 	}
 
 	return cm

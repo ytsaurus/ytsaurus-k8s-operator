@@ -53,7 +53,7 @@ func NewInitJob(
 	conditionsManager apiproxy.ConditionManager,
 	imagePullSecrets []corev1.LocalObjectReference,
 	name, configFileName, image string,
-	generator ytconfig.GeneratorFunc) *InitJob {
+	generator ytconfig.YsonGeneratorFunc) *InitJob {
 	return &InitJob{
 		componentBase: componentBase{
 			labeller: labeller,
@@ -74,9 +74,13 @@ func NewInitJob(
 				"%s-%s-init-job-config",
 				strings.ToLower(name),
 				labeller.ComponentLabel),
-			configFileName,
 			nil,
-			generator),
+			map[string]ytconfig.GeneratorDescriptor{
+				configFileName: {
+					F:   generator,
+					Fmt: ytconfig.ConfigFormatYson,
+				},
+			}),
 	}
 }
 

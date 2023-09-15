@@ -299,14 +299,14 @@ type UISpec struct {
 	Image *string `json:"image,omitempty"`
 	//+kubebuilder:default:=NodePort
 	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
-	//+kubebuilder:default:=false
-	//+optional
-	UseMetrikaCounter bool `json:"useMetrikaCounter"`
 	//+kubebuilder:default:=true
 	//+optional
 	UseInsecureCookies bool                        `json:"useInsecureCookies"`
 	Resources          corev1.ResourceRequirements `json:"resources,omitempty"`
 	InstanceCount      int32                       `json:"instanceCount,omitempty"`
+
+	//+optional
+	OdinBaseUrl *string `json:"odinBaseUrl,omitempty"`
 }
 
 type QueryTrackerSpec struct {
