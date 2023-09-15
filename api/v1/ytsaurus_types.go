@@ -239,10 +239,21 @@ type TCPProxiesSpec struct {
 	Role string `json:"role,omitempty"`
 }
 
+// ClusterNodesSpec is a common part of spec for nodes of all flavors.
+type ClusterNodesSpec struct {
+	// List of the node tags.
+	Tags []string `json:"tags,omitempty"`
+	// Name of the node rack.
+	// +optional
+	Rack string `json:"rack,omitempty"`
+}
+
 type DataNodesSpec struct {
 	// label filter (for daemonset)
 	// use host network
 	InstanceSpec `json:",inline"`
+	// Common part of the cluster node spec.
+	ClusterNodesSpec `json:",inline"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name,omitempty"`
@@ -251,6 +262,8 @@ type DataNodesSpec struct {
 type ExecNodesSpec struct {
 	// label filter (for daemonset)
 	InstanceSpec `json:",inline"`
+	// Common part of the cluster node spec.
+	ClusterNodesSpec `json:",inline"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name,omitempty"`
@@ -264,6 +277,8 @@ type ExecNodesSpec struct {
 type TabletNodesSpec struct {
 	// label filter (for daemonset)
 	InstanceSpec `json:",inline"`
+	// Common part of the cluster node spec.
+	ClusterNodesSpec `json:",inline"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name,omitempty"`
