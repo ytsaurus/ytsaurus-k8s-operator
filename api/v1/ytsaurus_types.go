@@ -244,7 +244,6 @@ type ClusterNodesSpec struct {
 	// List of the node tags.
 	Tags []string `json:"tags,omitempty"`
 	// Name of the node rack.
-	// +optional
 	Rack string `json:"rack,omitempty"`
 }
 
