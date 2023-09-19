@@ -55,6 +55,7 @@ func newMicroservice(
 		instanceCount: instanceCount,
 		service: resources.NewHTTPService(
 			serviceName,
+			nil,
 			labeller,
 			ytsaurus.APIProxy()),
 		deployment: resources.NewDeployment(

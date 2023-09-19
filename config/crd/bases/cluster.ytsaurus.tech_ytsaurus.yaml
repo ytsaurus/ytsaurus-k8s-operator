@@ -9541,6 +9541,20 @@ spec:
                             type: string
                         type: object
                       type: array
+                    transport:
+                      properties:
+                        disableHttp:
+                          default: false
+                          type: boolean
+                        httpsSecret:
+                          description: Reference to kubernetes.io/tls secret
+                          properties:
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.'
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
                     volumeClaimTemplates:
                       items:
                         description: EmbeddedPersistentVolumeClaim is an embedded

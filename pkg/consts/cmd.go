@@ -1,10 +1,11 @@
 package consts
 
 const (
-	ConfigMountPoint    = "/config"
-	UIConfigMountPoint  = "/opt/app/"
-	UISecretsMountPoint = "/opt/app/secrets"
-	UIVaultMountPoint   = "/vault"
+	ConfigMountPoint      = "/config"
+	HTTPSSecretMountPoint = "/config/https_secret"
+	UIConfigMountPoint    = "/opt/app/"
+	UISecretsMountPoint   = "/opt/app/secrets"
+	UIVaultMountPoint     = "/vault"
 )
 
 const (
@@ -25,8 +26,9 @@ const (
 )
 
 const (
-	ConfigVolumeName     = "config"
-	InitScriptVolumeName = "init-script"
-	UIVaultVolumeName    = "vault"
-	UISecretsVolumeName  = "secrets"
+	ConfigVolumeName      = "config"
+	HTTPSSecretVolumeName = "https-secret"
+	InitScriptVolumeName  = "init-script"
+	UIVaultVolumeName     = "vault"
+	UISecretsVolumeName   = "secrets"
 )

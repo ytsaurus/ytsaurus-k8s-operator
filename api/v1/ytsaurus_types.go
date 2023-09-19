@@ -214,6 +214,15 @@ type MastersSpec struct {
 	CellTag      int16 `json:"cellTag"`
 }
 
+type HTTPTransportSpec struct {
+	// Reference to kubernetes.io/tls secret
+	//+optional
+	HTTPSSecret *corev1.LocalObjectReference `json:"httpsSecret,omitempty"`
+	//+kubebuilder:default:=false
+	//+optional
+	DisableHTTP bool `json:"disableHttp,omitempty"`
+}
+
 type HTTPProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	//+kubebuilder:default:=NodePort
@@ -221,6 +230,8 @@ type HTTPProxiesSpec struct {
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`
+	//+optional
+	Transport HTTPTransportSpec `json:"transport,omitempty"`
 }
 
 type RPCProxiesSpec struct {

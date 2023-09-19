@@ -9,18 +9,19 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 	"go.ytsaurus.tech/yt/go/yt"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type httpProxy struct {
 	componentBase
 	server server
 
-	serviceType      v1.ServiceType
+	serviceType      corev1.ServiceType
 	master           Component
 	balancingService *resources.HTTPService
 
-	role string
+	role        string
+	httpsSecret *resources.TLSSecret
 
 	ytClient yt.Client
 }
@@ -53,6 +54,14 @@ func NewHTTPProxy(
 		},
 	)
 
+	var httpsSecret *resources.TLSSecret
+	if spec.Transport.HTTPSSecret != nil {
+		httpsSecret = resources.NewTLSSecret(
+			spec.Transport.HTTPSSecret.Name,
+			consts.HTTPSSecretVolumeName,
+			consts.HTTPSSecretMountPoint)
+	}
+
 	return &httpProxy{
 		componentBase: componentBase{
 			labeller: &l,
@@ -63,8 +72,10 @@ func NewHTTPProxy(
 		master:      masterReconciler,
 		serviceType: spec.ServiceType,
 		role:        spec.Role,
+		httpsSecret: httpsSecret,
 		balancingService: resources.NewHTTPService(
 			cfgen.GetHTTPProxiesServiceName(spec.Role),
+			&spec.Transport,
 			&l,
 			ytsaurus.APIProxy()),
 	}
@@ -107,6 +118,11 @@ func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 
 	if hp.server.needSync() {
 		if !dry {
+			statefulSet := hp.server.buildStatefulSet()
+			if hp.httpsSecret != nil {
+				hp.httpsSecret.AddVolume(&statefulSet.Spec.Template.Spec)
+				hp.httpsSecret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
+			}
 			err = hp.server.Sync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err

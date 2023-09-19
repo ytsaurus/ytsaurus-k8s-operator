@@ -3,6 +3,8 @@ package ytconfig
 import (
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	corev1 "k8s.io/api/core/v1"
+	"path"
 )
 
 type CypressCookieManager struct{}
@@ -21,13 +23,33 @@ type Auth struct {
 	RequireAuthentication     bool                      `yson:"require_authentication"`
 }
 
+type HTTPServer struct {
+	Port int `yson:"port"`
+}
+
+type PemBlob struct {
+	FileName string `yson:"file_name,omitempty"`
+	Value    string `yson:"value,omitempty"`
+}
+
+type HTTPSServerCredentials struct {
+	CertChain  PemBlob `yson:"cert_chain,omitempty"`
+	PrivateKey PemBlob `yson:"private_key,omitempty"`
+}
+
+type HTTPSServer struct {
+	HTTPServer
+	Credentials HTTPSServerCredentials `yson:"credentials"`
+}
+
 type HTTPProxyServer struct {
 	CommonServer
-	Port        int         `yson:"port"`
-	Auth        Auth        `yson:"auth"`
-	Coordinator Coordinator `yson:"coordinator"`
-	Driver      Driver      `yson:"driver"`
-	Role        string      `yson:"role"`
+	Port        int          `yson:"port"`
+	Auth        Auth         `yson:"auth"`
+	Coordinator Coordinator  `yson:"coordinator"`
+	Driver      Driver       `yson:"driver"`
+	Role        string       `yson:"role"`
+	HTTPSServer *HTTPSServer `yson:"https_server,omitempty"`
 }
 
 type NativeClient struct {
@@ -69,6 +91,24 @@ func getHTTPProxyServerCarcass(spec ytv1.HTTPProxiesSpec) (HTTPProxyServer, erro
 	c.Role = spec.Role
 
 	c.Logging = getHTTPProxyLogging(spec)
+
+	// FIXME handle DisableHTTP
+
+	if spec.Transport.HTTPSSecret != nil {
+		c.HTTPSServer = &HTTPSServer{
+			HTTPServer: HTTPServer{
+				Port: consts.HTTPProxyHTTPSPort,
+			},
+			Credentials: HTTPSServerCredentials{
+				CertChain: PemBlob{
+					FileName: path.Join(consts.HTTPSSecretMountPoint, corev1.TLSCertKey),
+				},
+				PrivateKey: PemBlob{
+					FileName: path.Join(consts.HTTPSSecretMountPoint, corev1.TLSPrivateKeyKey),
+				},
+			},
+		}
+	}
 
 	return c, nil
 }

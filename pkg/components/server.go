@@ -157,6 +157,8 @@ func (s *serverImpl) buildStatefulSet() *appsv1.StatefulSet {
 
 func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	locationCreationCommand := getLocationInitCommand(s.instanceSpec.Locations)
+
+	volumes := createVolumes(s.instanceSpec.Volumes, s.labeller.GetMainConfigMapName())
 	volumeMounts := createVolumeMounts(s.instanceSpec.VolumeMounts)
 
 	statefulSet := s.statefulSet.Build()
@@ -185,7 +187,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				VolumeMounts: volumeMounts,
 			},
 		},
-		Volumes:      createVolumes(s.instanceSpec.Volumes, s.labeller.GetMainConfigMapName()),
+		Volumes:      volumes,
 		Affinity:     s.instanceSpec.Affinity,
 		NodeSelector: s.instanceSpec.NodeSelector,
 		Tolerations:  s.instanceSpec.Tolerations,
