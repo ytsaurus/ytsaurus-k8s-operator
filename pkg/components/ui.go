@@ -24,7 +24,8 @@ type UI struct {
 	secret       *resources.StringSecret
 }
 
-const UIConfigFileName = "clusters-config.json"
+const UIClustersConfigFileName = "clusters-config.json"
+const UICustomConfigFileName = "common.js"
 
 func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) Component {
 	r := ytsaurus.GetResource()
@@ -45,8 +46,16 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		ytsaurus,
 		image,
 		r.Spec.UI.InstanceCount,
-		cfgen.GetWebUIConfig,
-		UIConfigFileName,
+		map[string]ytconfig.GeneratorDescriptor{
+			UIClustersConfigFileName: {
+				F:   cfgen.GetUIClustersConfig,
+				Fmt: ytconfig.ConfigFormatJson,
+			},
+			UICustomConfigFileName: {
+				F:   cfgen.GetUICustomConfig,
+				Fmt: ytconfig.ConfigFormatJsonWithJsPrologue,
+			},
+		},
 		"ytsaurus-ui-deployment",
 		"ytsaurus-ui")
 
@@ -110,8 +119,14 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      consts.ConfigVolumeName,
-			MountPath: path.Join(consts.UIConfigMountPoint, UIConfigFileName),
-			SubPath:   UIConfigFileName,
+			MountPath: path.Join(consts.UIClustersConfigMountPoint, UIClustersConfigFileName),
+			SubPath:   UIClustersConfigFileName,
+			ReadOnly:  true,
+		},
+		{
+			Name:      consts.ConfigVolumeName,
+			MountPath: path.Join(consts.UICustomConfigMountPoint, UICustomConfigFileName),
+			SubPath:   UICustomConfigFileName,
 			ReadOnly:  true,
 		},
 		{
@@ -131,23 +146,10 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 			Name:  "YT_AUTH_CLUSTER_ID",
 			Value: ytsaurusResource.Name,
 		},
-	}
-
-	if ytsaurusResource.Spec.UI.UseMetrikaCounter {
-		config := u.microservice.buildConfig()
-		config.Data[consts.MetrikaCounterFileName] = consts.MetrikaCounterScript
-
-		volumeMounts = append(volumeMounts,
-			corev1.VolumeMount{
-				Name:      consts.ConfigVolumeName,
-				MountPath: path.Join("/opt/app/dist/server/configs/custom", consts.MetrikaCounterFileName),
-				SubPath:   consts.MetrikaCounterFileName,
-				ReadOnly:  true,
-			})
-		env = append(env, corev1.EnvVar{
+		{
 			Name:  "APP_INSTALLATION",
 			Value: "custom",
-		})
+		},
 	}
 
 	if ytsaurusResource.Spec.UI.UseInsecureCookies {

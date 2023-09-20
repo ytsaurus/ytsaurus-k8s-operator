@@ -47,8 +47,8 @@ func newMicroservice(
 	ytsaurus *apiproxy.Ytsaurus,
 	image string,
 	instanceCount int32,
-	configGenerator ytconfig.GeneratorFunc,
-	configFileName, deploymentName, serviceName string) microservice {
+	generators map[string]ytconfig.GeneratorDescriptor,
+	deploymentName, serviceName string) microservice {
 	return &microserviceImpl{
 		labeller:      labeller,
 		image:         image,
@@ -66,9 +66,8 @@ func newMicroservice(
 			labeller,
 			ytsaurus.APIProxy(),
 			labeller.GetMainConfigMapName(),
-			configFileName,
 			ytsaurus.GetResource().Spec.ConfigOverrides,
-			configGenerator),
+			generators),
 	}
 }
 

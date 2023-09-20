@@ -1,11 +1,12 @@
 package consts
 
 const (
-	ConfigMountPoint      = "/config"
-	HTTPSSecretMountPoint = "/config/https_secret"
-	UIConfigMountPoint    = "/opt/app/"
-	UISecretsMountPoint   = "/opt/app/secrets"
-	UIVaultMountPoint     = "/vault"
+	ConfigMountPoint           = "/config"
+	HTTPSSecretMountPoint =    "/config/https_secret"
+	UIClustersConfigMountPoint = "/opt/app"
+	UICustomConfigMountPoint   = "/opt/app/dist/server/configs/custom"
+	UISecretsMountPoint        = "/opt/app/secrets"
+	UIVaultMountPoint          = "/vault"
 )
 
 const (

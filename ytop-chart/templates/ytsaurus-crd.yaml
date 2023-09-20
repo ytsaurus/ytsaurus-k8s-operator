@@ -25802,6 +25802,8 @@ spec:
                   instanceCount:
                     format: int32
                     type: integer
+                  odinBaseUrl:
+                    type: string
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -25834,9 +25836,6 @@ spec:
                     type: string
                   useInsecureCookies:
                     default: true
-                    type: boolean
-                  useMetrikaCounter:
-                    default: false
                     type: boolean
                 type: object
               uiImage:

@@ -7,24 +7,24 @@ const (
 )
 
 type UIPrimaryMaster struct {
-	CellTag int16 `json:"cellTag"`
+	CellTag int16 `yson:"cellTag"`
 }
 
 type UICluster struct {
-	ID             string               `json:"id"`
-	Name           string               `json:"name"`
-	Proxy          string               `json:"proxy"`
-	Secure         bool                 `json:"secure"`
-	Authentication UIAuthenticationType `json:"authentication"`
-	Group          string               `json:"group"`
-	Theme          string               `json:"theme"`
-	Environment    string               `json:"environment"`
-	Description    string               `json:"description"`
-	PrimaryMaster  UIPrimaryMaster      `json:"primaryMaster"`
+	ID             string               `yson:"id"`
+	Name           string               `yson:"name"`
+	Proxy          string               `yson:"proxy"`
+	Secure         bool                 `yson:"secure"`
+	Authentication UIAuthenticationType `yson:"authentication"`
+	Group          string               `yson:"group"`
+	Theme          string               `yson:"theme"`
+	Environment    string               `yson:"environment"`
+	Description    string               `yson:"description"`
+	PrimaryMaster  UIPrimaryMaster      `yson:"primaryMaster"`
 }
 
-type WebUI struct {
-	Clusters []UICluster `json:"clusters"`
+type UIClusters struct {
+	Clusters []UICluster `yson:"clusters"`
 }
 
 func getUIClusterCarcass() UICluster {
@@ -36,4 +36,8 @@ func getUIClusterCarcass() UICluster {
 		Description:    "My first Ytsaurus. Handle with care.",
 		Environment:    "testing",
 	}
+}
+
+type UICustom struct {
+	OdinBaseUrl *string `yson:"odinBaseUrl,omitempty"`
 }
