@@ -2956,6 +2956,9 @@ spec:
                       additionalProperties:
                         type: string
                       type: object
+                    rack:
+                      description: Name of the node rack.
+                      type: string
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -3032,6 +3035,11 @@ spec:
                             default: false
                             type: boolean
                         type: object
+                      type: array
+                    tags:
+                      description: List of the node tags.
+                      items:
+                        type: string
                       type: array
                     tolerations:
                       items:
@@ -7260,6 +7268,9 @@ spec:
                     privileged:
                       default: true
                       type: boolean
+                    rack:
+                      description: Name of the node rack.
+                      type: string
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -7341,6 +7352,11 @@ spec:
                             default: false
                             type: boolean
                         type: object
+                      type: array
+                    tags:
+                      description: List of the node tags.
+                      items:
+                        type: string
                       type: array
                     tolerations:
                       items:
@@ -22401,6 +22417,9 @@ spec:
                       additionalProperties:
                         type: string
                       type: object
+                    rack:
+                      description: Name of the node rack.
+                      type: string
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -22477,6 +22496,11 @@ spec:
                             default: false
                             type: boolean
                         type: object
+                      type: array
+                    tags:
+                      description: List of the node tags.
+                      items:
+                        type: string
                       type: array
                     tolerations:
                       items:

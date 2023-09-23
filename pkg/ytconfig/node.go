@@ -101,6 +101,8 @@ type NodeServer struct {
 	CommonServer
 	Flavors        []NodeFlavor   `yson:"flavors"`
 	ResourceLimits ResourceLimits `yson:"resource_limits, omitempty"`
+	Tags           []string       `yson:"tags, omitempty"`
+	Rack           string         `yson:"rack, omitempty"`
 }
 
 type DataNodeServer struct {
@@ -175,9 +177,12 @@ func findQuotaForPath(locationPath string, spec ytv1.InstanceSpec) *int64 {
 	return nil
 }
 
-func fillCommonNodeServerCarcass(n *NodeServer) {
+func fillClusterNodeServerCarcass(n *NodeServer, spec ytv1.ClusterNodesSpec) {
 	n.RPCPort = consts.NodeRPCPort
 	n.MonitoringPort = consts.NodeMonitoringPort
+
+	n.Tags = spec.Tags
+	n.Rack = spec.Rack
 }
 
 func getDataNodeResourceLimits(spec ytv1.DataNodesSpec) ResourceLimits {
@@ -203,7 +208,7 @@ func getDataNodeLogging(spec ytv1.DataNodesSpec) Logging {
 
 func getDataNodeServerCarcass(spec ytv1.DataNodesSpec) (DataNodeServer, error) {
 	var c DataNodeServer
-	fillCommonNodeServerCarcass(&c.NodeServer)
+	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec)
 
 	c.ResourceLimits = getDataNodeResourceLimits(spec)
 
@@ -269,7 +274,7 @@ func getExecNodeLogging(spec ytv1.ExecNodesSpec) Logging {
 
 func getExecNodeServerCarcass(spec ytv1.ExecNodesSpec, usePorto bool) (ExecNodeServer, error) {
 	var c ExecNodeServer
-	fillCommonNodeServerCarcass(&c.NodeServer)
+	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec)
 
 	c.ResourceLimits = getExecNodeResourceLimits(spec)
 
@@ -331,7 +336,7 @@ func getTabletNodeLogging(spec ytv1.TabletNodesSpec) Logging {
 
 func getTabletNodeServerCarcass(spec ytv1.TabletNodesSpec) (TabletNodeServer, error) {
 	var c TabletNodeServer
-	fillCommonNodeServerCarcass(&c.NodeServer)
+	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec)
 
 	var cpu float32 = 0
 	c.ResourceLimits.NodeDedicatedCpu = &cpu
