@@ -202,6 +202,12 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		NodeSelector: s.instanceSpec.NodeSelector,
 		Tolerations:  s.instanceSpec.Tolerations,
 	}
+	// TODO(zlobober): support host network for masters.
+	if s.ytsaurus.GetResource().Spec.HostNetwork && s.labeller.ComponentName != "Master" {
+		statefulSet.Spec.Template.Spec.HostNetwork = true
+		statefulSet.Spec.Template.Spec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
+	}
+
 	s.builtStatefulSet = statefulSet
 	return statefulSet
 }

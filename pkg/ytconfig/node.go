@@ -103,6 +103,7 @@ type NodeServer struct {
 	ResourceLimits ResourceLimits `yson:"resource_limits, omitempty"`
 	Tags           []string       `yson:"tags, omitempty"`
 	Rack           string         `yson:"rack, omitempty"`
+	SkynetHttpPort int32          `yson:"skynet_http_port"`
 }
 
 type DataNodeServer struct {
@@ -177,10 +178,23 @@ func findQuotaForPath(locationPath string, spec ytv1.InstanceSpec) *int64 {
 	return nil
 }
 
-func fillClusterNodeServerCarcass(n *NodeServer, spec ytv1.ClusterNodesSpec) {
-	n.RPCPort = consts.NodeRPCPort
-	n.MonitoringPort = consts.NodeMonitoringPort
+func fillClusterNodeServerCarcass(n *NodeServer, spec ytv1.ClusterNodesSpec, flavor NodeFlavor) {
+	switch flavor {
+	case NodeFlavorData:
+		n.RPCPort = consts.DataNodeRPCPort
+		n.MonitoringPort = consts.DataNodeMonitoringPort
+		n.SkynetHttpPort = consts.DataNodeSkynetPort
+	case NodeFlavorExec:
+		n.RPCPort = consts.ExecNodeRPCPort
+		n.MonitoringPort = consts.ExecNodeMonitoringPort
+		n.SkynetHttpPort = consts.ExecNodeSkynetPort
+	case NodeFlavorTablet:
+		n.RPCPort = consts.TabletNodeRPCPort
+		n.MonitoringPort = consts.TabletNodeMonitoringPort
+		n.SkynetHttpPort = consts.TabletNodeSkynetPort
+	}
 
+	n.Flavors = []NodeFlavor{flavor}
 	n.Tags = spec.Tags
 	n.Rack = spec.Rack
 }
@@ -208,11 +222,10 @@ func getDataNodeLogging(spec ytv1.DataNodesSpec) Logging {
 
 func getDataNodeServerCarcass(spec ytv1.DataNodesSpec) (DataNodeServer, error) {
 	var c DataNodeServer
-	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec)
+	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec, NodeFlavorData)
 
 	c.ResourceLimits = getDataNodeResourceLimits(spec)
 
-	c.Flavors = []NodeFlavor{NodeFlavorData}
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkStore) {
 		quota := findQuotaForPath(location.Path, spec.InstanceSpec)
 		storeLocation := StoreLocation{
@@ -274,11 +287,10 @@ func getExecNodeLogging(spec ytv1.ExecNodesSpec) Logging {
 
 func getExecNodeServerCarcass(spec ytv1.ExecNodesSpec, usePorto bool) (ExecNodeServer, error) {
 	var c ExecNodeServer
-	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec)
+	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec, NodeFlavorExec)
 
 	c.ResourceLimits = getExecNodeResourceLimits(spec)
 
-	c.Flavors = []NodeFlavor{NodeFlavorExec}
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
 		c.DataNode.CacheLocations = append(c.DataNode.CacheLocations, DiskLocation{
 			Path: location.Path,
@@ -336,7 +348,7 @@ func getTabletNodeLogging(spec ytv1.TabletNodesSpec) Logging {
 
 func getTabletNodeServerCarcass(spec ytv1.TabletNodesSpec) (TabletNodeServer, error) {
 	var c TabletNodeServer
-	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec)
+	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec, NodeFlavorTablet)
 
 	var cpu float32 = 0
 	c.ResourceLimits.NodeDedicatedCpu = &cpu
@@ -346,8 +358,6 @@ func getTabletNodeServerCarcass(spec ytv1.TabletNodesSpec) (TabletNodeServer, er
 	if memory != nil {
 		c.ResourceLimits.TotalMemory = memory.Value()
 	}
-
-	c.Flavors = []NodeFlavor{NodeFlavorTablet}
 
 	c.Logging = getTabletNodeLogging(spec)
 
