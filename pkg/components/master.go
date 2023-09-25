@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
+	"go.ytsaurus.tech/yt/go/yson"
 	"strings"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -110,6 +111,44 @@ func (m *master) initAdminUser() string {
 	return strings.Join(commands, "\n")
 }
 
+type Medium struct {
+	Name string `yson:"name"`
+}
+
+func (m *master) getExtraMedia() []Medium {
+	mediaMap := make(map[string]Medium)
+
+	for _, d := range m.ytsaurus.GetResource().Spec.DataNodes {
+		for _, l := range d.Locations {
+			if l.Medium == consts.DefaultMedium {
+				continue
+			}
+			mediaMap[l.Medium] = Medium{
+				Name: l.Medium,
+			}
+		}
+	}
+
+	mediaSlice := make([]Medium, 0, len(mediaMap))
+	for _, v := range mediaMap {
+		mediaSlice = append(mediaSlice, v)
+	}
+
+	return mediaSlice
+}
+
+func (m *master) initMedia() string {
+	commands := []string{}
+	for _, medium := range m.getExtraMedia() {
+		attr, err := yson.MarshalFormat(medium, yson.FormatText)
+		if err != nil {
+			panic(err)
+		}
+		commands = append(commands, fmt.Sprintf("/usr/bin/yt get //sys/media/%s/@name || /usr/bin/yt create medium --attr '%s'", medium.Name, string(attr)))
+	}
+	return strings.Join(commands, "\n")
+}
+
 func (m *master) createInitScript() string {
 	clusterConnection, err := m.cfgen.GetClusterConnection()
 	if err != nil {
@@ -126,6 +165,7 @@ func (m *master) createInitScript() string {
 		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection '%s'", string(clusterConnection)),
 		"/usr/bin/yt set //sys/controller_agents/config/operation_options/spec_template '{enable_partitioned_data_balancing=%false}' -r -f",
 		m.initAdminUser(),
+		m.initMedia(),
 	}
 
 	return strings.Join(script, "\n")
