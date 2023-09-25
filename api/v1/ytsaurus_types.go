@@ -192,6 +192,24 @@ type BootstrapSpec struct {
 	TabletCellBundles *BundlesBootstrapSpec `json:"tabletCellBundles,omitempty"`
 }
 
+type OauthUserInfoHandlerSpec struct {
+	//+kubebuilder:default:=user/info
+	Endpoint string `json:"endpoint,omitempty"`
+	//+kubebuilder:default:=nickname
+	LoginField string  `json:"loginField,omitempty"`
+	ErrorField *string `json:"errorField,omitempty"`
+}
+
+type OauthServiceSpec struct {
+	//+kubebuilder:validation:MinLength:=1
+	Host string `json:"host,omitempty"`
+	//+kubebuilder:default:=80
+	Port int `json:"port,omitempty"`
+	//+kubebuilder:default:=false
+	Secure   bool                     `json:"secure,omitempty"`
+	UserInfo OauthUserInfoHandlerSpec `json:"userInfoHandler,omitempty"`
+}
+
 type InstanceSpec struct {
 	Image                *string                         `json:"image,omitempty"`
 	Volumes              []corev1.Volume                 `json:"volumes,omitempty"`
@@ -349,6 +367,8 @@ type YtsaurusSpec struct {
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 	ConfigOverrides  *corev1.LocalObjectReference  `json:"configOverrides,omitempty"`
 	AdminCredentials *corev1.LocalObjectReference  `json:"adminCredentials,omitempty"`
+
+	OauthService *OauthServiceSpec `json:"oauthService,omitempty"`
 
 	//+kubebuilder:default:=true
 	//+optional

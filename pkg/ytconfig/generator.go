@@ -218,6 +218,21 @@ func (g *Generator) getRPCProxyConfigImpl(spec ytv1.RPCProxiesSpec) (RPCProxySer
 	}
 
 	g.fillCommonService(&c.CommonServer)
+
+	if g.ytsaurus.Spec.OauthService != nil {
+		c.CypressUserManager = CypressUserManager{}
+		c.OauthService = &OauthService{
+			Host:               g.ytsaurus.Spec.OauthService.Host,
+			Port:               g.ytsaurus.Spec.OauthService.Port,
+			Secure:             g.ytsaurus.Spec.OauthService.Secure,
+			UserInfoEndpoint:   g.ytsaurus.Spec.OauthService.UserInfo.Endpoint,
+			UserInfoLoginField: g.ytsaurus.Spec.OauthService.UserInfo.LoginField,
+			UserInfoErrorField: g.ytsaurus.Spec.OauthService.UserInfo.ErrorField,
+		}
+		c.OauthTokenAuthenticator = &OauthTokenAuthenticator{}
+		c.RequireAuthentication = true
+	}
+
 	return c, nil
 }
 
@@ -343,6 +358,20 @@ func (g *Generator) getHTTPProxyConfigImpl(spec ytv1.HTTPProxiesSpec) (HTTPProxy
 
 	g.fillDriver(&c.Driver)
 	g.fillCommonService(&c.CommonServer)
+
+	if g.ytsaurus.Spec.OauthService != nil {
+		c.Auth.OauthService = &OauthService{
+			Host:               g.ytsaurus.Spec.OauthService.Host,
+			Port:               g.ytsaurus.Spec.OauthService.Port,
+			Secure:             g.ytsaurus.Spec.OauthService.Secure,
+			UserInfoEndpoint:   g.ytsaurus.Spec.OauthService.UserInfo.Endpoint,
+			UserInfoLoginField: g.ytsaurus.Spec.OauthService.UserInfo.LoginField,
+			UserInfoErrorField: g.ytsaurus.Spec.OauthService.UserInfo.ErrorField,
+		}
+		c.Auth.OauthCookieAuthenticator = &OauthCookieAuthenticator{}
+		c.Auth.OauthTokenAuthenticator = &OauthTokenAuthenticator{}
+	}
+
 	return c, nil
 }
 
