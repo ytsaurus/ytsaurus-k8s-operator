@@ -10853,6 +10853,29 @@ spec:
               isManaged:
                 default: true
                 type: boolean
+              oauthService:
+                properties:
+                  host:
+                    minLength: 1
+                    type: string
+                  port:
+                    default: 80
+                    type: integer
+                  secure:
+                    default: false
+                    type: boolean
+                  userInfoHandler:
+                    properties:
+                      endpoint:
+                        default: user/info
+                        type: string
+                      errorField:
+                        type: string
+                      loginField:
+                        default: nickname
+                        type: string
+                    type: object
+                type: object
               primaryMasters:
                 properties:
                   affinity:
