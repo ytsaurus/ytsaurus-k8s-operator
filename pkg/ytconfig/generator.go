@@ -442,6 +442,15 @@ func (g *Generator) GetUIClustersConfig() ([]byte, error) {
 	c.Proxy = g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 	c.PrimaryMaster.CellTag = g.ytsaurus.Spec.PrimaryMasters.CellTag
 
+	c.Theme = g.ytsaurus.Spec.UI.Theme
+	c.Environment = g.ytsaurus.Spec.UI.Environment
+	if g.ytsaurus.Spec.UI.Group != nil {
+		c.Group = *g.ytsaurus.Spec.UI.Group
+	}
+	if g.ytsaurus.Spec.UI.Description != nil {
+		c.Description = *g.ytsaurus.Spec.UI.Description
+	}
+
 	return marshallYsonConfig(UIClusters{
 		Clusters: []UICluster{c},
 	})

@@ -339,6 +339,15 @@ type UISpec struct {
 
 	//+optional
 	OdinBaseUrl *string `json:"odinBaseUrl,omitempty"`
+
+	ExtraEnvVariables []corev1.EnvVar `json:"extraEnvVariables,omitempty"`
+
+	//+kubebuilder:default:=testing
+	Environment string `json:"environment,omitempty"`
+	//+kubebuilder:default:=lavander
+	Theme       string  `json:"theme,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Group       *string `json:"group,omitempty"`
 }
 
 type QueryTrackerSpec struct {

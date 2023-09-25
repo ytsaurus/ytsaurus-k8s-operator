@@ -32,9 +32,7 @@ func getUIClusterCarcass() UICluster {
 		Secure:         false,
 		Authentication: uiAuthenticationBasic,
 		Group:          "My Ytsaurus clusters",
-		Theme:          "lavander",
 		Description:    "My first Ytsaurus. Handle with care.",
-		Environment:    "testing",
 	}
 }
 
