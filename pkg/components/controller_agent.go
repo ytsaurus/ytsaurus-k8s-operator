@@ -65,12 +65,9 @@ func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(ca.ytsaurus, ca) {
-		if ca.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			if !dry {
-				err = removePods(ctx, ca.server, &ca.componentBase)
-			}
-			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.componentBase, ca.server, dry); status != nil {
+			return *status, err
 		}
 	}
 

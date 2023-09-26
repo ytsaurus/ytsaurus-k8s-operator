@@ -3,7 +3,9 @@ package components
 import (
 	"context"
 	"fmt"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
 	"k8s.io/utils/strings/slices"
@@ -105,4 +107,31 @@ func CreateUserCommand(ctx context.Context, ytClient yt.Client, userName, token 
 func IsUpdatingComponent(ytsaurus *apiproxy.Ytsaurus, component Component) bool {
 	componentNames := ytsaurus.GetLocalUpdatingComponents()
 	return (componentNames == nil && component.IsUpdatable()) || slices.Contains(componentNames, component.GetName())
+}
+
+func handleUpdatingClusterState(
+	ctx context.Context,
+	ytsaurus *apiproxy.Ytsaurus,
+	cmp Component,
+	cmpBase *componentBase,
+	server server,
+	dry bool,
+) (*ComponentStatus, error) {
+	var err error
+
+	if IsUpdatingComponent(ytsaurus, cmp) {
+		if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			if !dry {
+				err = removePods(ctx, server, cmpBase)
+			}
+			return ptr.T(WaitingStatus(SyncStatusUpdating, "pods removal")), err
+		}
+
+		if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+			return ptr.T(NewComponentStatus(SyncStatusReady, "Nothing to do now")), err
+		}
+	} else {
+		return ptr.T(NewComponentStatus(SyncStatusReady, "Not updating component")), err
+	}
+	return nil, err
 }

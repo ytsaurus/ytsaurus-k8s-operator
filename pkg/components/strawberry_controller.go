@@ -215,12 +215,20 @@ func (c *strawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(c.ytsaurus, c) {
-		if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			if !dry {
-				err = removePods(ctx, c.microservice, &c.componentBase)
+	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if IsUpdatingComponent(c.ytsaurus, c) {
+			if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+				if !dry {
+					err = removePods(ctx, c.microservice, &c.componentBase)
+				}
+				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
-			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+
+			if c.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
+			}
+		} else {
+			return NewComponentStatus(SyncStatusReady, "Not updating component"), err
 		}
 	}
 

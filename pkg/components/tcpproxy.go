@@ -90,12 +90,9 @@ func (tp *tcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if tp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(tp.ytsaurus, tp) {
-		if tp.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			if !dry {
-				err = removePods(ctx, tp.server, &tp.componentBase)
-			}
-			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+	if tp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, tp.ytsaurus, tp, &tp.componentBase, tp.server, dry); status != nil {
+			return *status, err
 		}
 	}
 

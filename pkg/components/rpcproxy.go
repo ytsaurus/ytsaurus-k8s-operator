@@ -90,12 +90,9 @@ func (rp *rpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(rp.ytsaurus, rp) {
-		if rp.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			if !dry {
-				err = removePods(ctx, rp.server, &rp.componentBase)
-			}
-			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.componentBase, rp.server, dry); status != nil {
+			return *status, err
 		}
 	}
 

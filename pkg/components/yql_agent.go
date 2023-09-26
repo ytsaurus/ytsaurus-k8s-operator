@@ -120,12 +120,9 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(yqla.ytsaurus, yqla) {
-		if yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			if !dry {
-				err = removePods(ctx, yqla.server, &yqla.componentBase)
-			}
-			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.componentBase, yqla.server, dry); status != nil {
+			return *status, err
 		}
 	}
 

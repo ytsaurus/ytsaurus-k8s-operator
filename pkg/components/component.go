@@ -25,6 +25,10 @@ type ComponentStatus struct {
 	Message    string
 }
 
+func NewComponentStatus(status SyncStatus, message string) ComponentStatus {
+	return ComponentStatus{status, message}
+}
+
 func WaitingStatus(status SyncStatus, event string) ComponentStatus {
 	return ComponentStatus{status, fmt.Sprintf("Wait for %s", event)}
 }

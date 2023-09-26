@@ -99,16 +99,9 @@ func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(hp.ytsaurus, hp) {
-		if hp.ytsaurus.GetUpdateState() == ytv1.UpdateStateImpossibleToStart && !hp.server.needUpdate() {
-			return SimpleStatus(SyncStatusReady), err
-		}
-
-		if hp.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			if !dry {
-				err = removePods(ctx, hp.server, &hp.componentBase)
-			}
-			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.componentBase, hp.server, dry); status != nil {
+			return *status, err
 		}
 	}
 

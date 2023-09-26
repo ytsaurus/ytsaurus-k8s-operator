@@ -307,6 +307,10 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			return ctrl.Result{Requeue: true}, err
 		}
 
+		if err := ytsaurus.ClearUpdateStatus(ctx); err != nil {
+			return ctrl.Result{Requeue: true}, err
+		}
+
 		logger.Info("Ytsaurus update was canceled, ytsaurus is running now")
 		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
 		return ctrl.Result{}, err

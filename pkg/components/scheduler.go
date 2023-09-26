@@ -3,7 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
-	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"go.ytsaurus.tech/library/go/ptr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"strings"
@@ -117,19 +117,29 @@ func (s *scheduler) Sync(ctx context.Context) error {
 func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if s.ytsaurus.GetClusterState() == v1.ClusterStateRunning && s.server.needUpdate() {
+	if s.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && s.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if s.ytsaurus.GetClusterState() == v1.ClusterStateUpdating {
-		if s.ytsaurus.GetUpdateState() == v1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(s.ytsaurus, s) {
-			if !dry {
-				err = removePods(ctx, s.server, &s.componentBase)
+	if s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if IsUpdatingComponent(s.ytsaurus, s) {
+			if s.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+				if !dry {
+					err = removePods(ctx, s.server, &s.componentBase)
+				}
+				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
-			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
-		}
-		if status, err := s.updateOpArchive(ctx, dry); status != nil {
-			return *status, err
+
+			if status, err := s.updateOpArchive(ctx, dry); status != nil {
+				return *status, err
+			}
+
+			if s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+				s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForOpArchiveUpdate {
+				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
+			}
+		} else {
+			return NewComponentStatus(SyncStatusReady, "Not updating component"), err
 		}
 	}
 
@@ -199,7 +209,7 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 func (s *scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentStatus, error) {
 	var err error
 	switch s.ytsaurus.GetUpdateState() {
-	case v1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
+	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
 		if !s.needOpArchiveInit() {
 			s.setConditionNotNecessaryToUpdateOpArchive()
 			return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
@@ -211,7 +221,7 @@ func (s *scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentSt
 			s.setConditionOpArchivePreparedForUpdating()
 		}
 		return ptr.T(SimpleStatus(SyncStatusUpdating)), err
-	case v1.UpdateStateWaitingForOpArchiveUpdate:
+	case ytv1.UpdateStateWaitingForOpArchiveUpdate:
 		if !s.initOpArchive.isRestartCompleted() {
 			return nil, nil
 		}

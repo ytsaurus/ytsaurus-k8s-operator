@@ -63,12 +63,9 @@ func (d *discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(d.ytsaurus, d) {
-		if d.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			if !dry {
-				err = removePods(ctx, d.server, &d.componentBase)
-			}
-			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, d.ytsaurus, d, &d.componentBase, d.server, dry); status != nil {
+			return *status, err
 		}
 	}
 

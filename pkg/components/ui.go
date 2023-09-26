@@ -227,12 +227,21 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && IsUpdatingComponent(u.ytsaurus, u) {
-		if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			if !dry {
-				err = removePods(ctx, u.microservice, &u.componentBase)
+	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if IsUpdatingComponent(u.ytsaurus, u) {
+
+			if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+				if !dry {
+					err = removePods(ctx, u.microservice, &u.componentBase)
+				}
+				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
-			return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+
+			if u.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
+			}
+		} else {
+			return NewComponentStatus(SyncStatusReady, "Not updating component"), err
 		}
 	}
 
