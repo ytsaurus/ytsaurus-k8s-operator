@@ -42,7 +42,7 @@ func NewTabletNode(
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelTabletNode, spec.Name),
 		ComponentName:  cfgen.FormatComponentStringWithDefault("TabletNode", spec.Name),
-		MonitoringPort: consts.NodeMonitoringPort,
+		MonitoringPort: consts.TabletNodeMonitoringPort,
 	}
 
 	server := newServer(

@@ -28,7 +28,7 @@ func NewDataNode(
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelDataNode, spec.Name),
 		ComponentName:  cfgen.FormatComponentStringWithDefault("DataNode", spec.Name),
-		MonitoringPort: consts.NodeMonitoringPort,
+		MonitoringPort: consts.DataNodeMonitoringPort,
 	}
 
 	server := newServer(

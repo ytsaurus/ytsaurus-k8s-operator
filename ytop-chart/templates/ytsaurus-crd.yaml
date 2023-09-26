@@ -8678,6 +8678,9 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              hostNetwork:
+                default: false
+                type: boolean
               httpProxies:
                 items:
                   properties:

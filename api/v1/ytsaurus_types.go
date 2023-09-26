@@ -395,6 +395,9 @@ type YtsaurusSpec struct {
 	//+kubebuilder:default:=false
 	//+optional
 	UsePorto bool `json:"usePorto"`
+	//+kubebuilder:default:=false
+	//+optional
+	HostNetwork bool `json:"hostNetwork"`
 
 	ExtraPodAnnotations map[string]string `json:"extraPodAnnotations,omitempty"`
 

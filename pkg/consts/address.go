@@ -16,8 +16,19 @@ const (
 	ControllerAgentRPCPort        = 9014
 	ControllerAgentMonitoringPort = 10014
 
-	NodeRPCPort        = 9012
-	NodeMonitoringPort = 10012
+	DataNodeRPCPort        = 9012
+	DataNodeMonitoringPort = 10012
+
+	TabletNodeRPCPort        = 9022
+	TabletNodeMonitoringPort = 10022
+
+	ExecNodeRPCPort        = 9029
+	ExecNodeMonitoringPort = 10029
+
+	// TODO(zlobober): temporary until YT-20036.
+	DataNodeSkynetPort   = 11012
+	TabletNodeSkynetPort = 11022
+	ExecNodeSkynetPort   = 11029
 
 	RPCProxyRPCPort        = 9013
 	RPCProxyMonitoringPort = 10013

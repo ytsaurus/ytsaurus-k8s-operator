@@ -34,7 +34,7 @@ func NewExecNode(
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelExecNode, spec.Name),
 		ComponentName:  cfgen.FormatComponentStringWithDefault("ExecNode", spec.Name),
-		MonitoringPort: consts.NodeMonitoringPort,
+		MonitoringPort: consts.ExecNodeMonitoringPort,
 	}
 
 	server := newServer(
