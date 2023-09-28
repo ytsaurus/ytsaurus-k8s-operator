@@ -19,8 +19,9 @@ type StrawberryController struct {
 }
 
 type ChytInitCluster struct {
-	Proxy          string `yson:"proxy"`
-	StrawberryRoot string `yson:"strawberry_root"`
+	Proxy          string   `yson:"proxy"`
+	StrawberryRoot string   `yson:"strawberry_root"`
+	Families       []string `yson:"families"`
 }
 
 func getStrawberryController() StrawberryController {
@@ -40,6 +41,7 @@ func getStrawberryController() StrawberryController {
 
 func getChytInitCluster() ChytInitCluster {
 	return ChytInitCluster{
-		StrawberryRoot: "//sys/strawberry/chyt",
+		StrawberryRoot: "//sys/strawberry",
+		Families:       []string{"chyt"},
 	}
 }

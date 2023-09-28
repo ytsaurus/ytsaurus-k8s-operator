@@ -106,7 +106,7 @@ func NewStrawberryController(
 			resource.Spec.ImagePullSecrets,
 			"cluster",
 			ChytInitClusterJobConfigFileName,
-			resource.Spec.CoreImage,
+			image,
 			cfgen.GetChytInitClusterConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

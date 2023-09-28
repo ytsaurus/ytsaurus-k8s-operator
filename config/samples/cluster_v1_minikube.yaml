@@ -130,3 +130,4 @@ spec:
     resources:
       limits:
         memory: 100Mi
+    image: ytsaurus/strawberry:0.0.5
