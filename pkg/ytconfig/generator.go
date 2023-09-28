@@ -5,7 +5,9 @@ import (
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"go.ytsaurus.tech/yt/go/yson"
+	corev1 "k8s.io/api/core/v1"
 	ptr "k8s.io/utils/pointer"
+	"path"
 )
 
 type ConfigFormat string
@@ -125,6 +127,23 @@ func (g *Generator) fillCommonService(c *CommonServer) {
 	c.TimestampProviders.Addresses = g.getMasterAddresses()
 }
 
+func (g *Generator) fillBusEncryption(b *Bus, s *ytv1.RPCTransportSpec) {
+	if s.TLSRequired {
+		b.EncryptionMode = EncryptionModeRequired
+	} else {
+		b.EncryptionMode = EncryptionModeOptional
+	}
+
+	if s.TLSSecret != nil {
+		b.CertChain = &PemBlob{
+			FileName: path.Join(consts.RPCSecretMountPoint, corev1.TLSCertKey),
+		}
+		b.PrivateKey = &PemBlob{
+			FileName: path.Join(consts.RPCSecretMountPoint, corev1.TLSPrivateKeyKey),
+		}
+	}
+}
+
 func marshallYsonConfig(c interface{}) ([]byte, error) {
 	result, err := yson.MarshalFormat(c, yson.FormatPretty)
 	if err != nil {
@@ -240,6 +259,13 @@ func (g *Generator) GetRPCProxyConfig(spec ytv1.RPCProxiesSpec) ([]byte, error) 
 	c, err := g.getRPCProxyConfigImpl(spec)
 	if err != nil {
 		return []byte{}, err
+	}
+
+	if spec.Transport.TLSSecret != nil {
+		if c.BusServer == nil {
+			c.BusServer = &BusServer{}
+		}
+		g.fillBusEncryption(&c.BusServer.Bus, &spec.Transport)
 	}
 
 	return marshallYsonConfig(c)

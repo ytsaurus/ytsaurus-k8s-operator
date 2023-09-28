@@ -72,14 +72,25 @@ spec:
       loggers: *loggers
       instanceCount: 1
       role: control
+      transport:
+        httpsSecret:
+          name: minisaurus-https-control-secret
+        disableHttp: true
 
   rpcProxies:
     - instanceCount: 1
       loggers: *loggers
       role: default
+      transport:
+        tlsSecret:
+          name: minisaurus-rpc-secret
+        tlsRequired: true
     - instanceCount: 1
       loggers: *loggers
       role: heavy
+      transport:
+        tlsSecret:
+          name: minisaurus-rpc-heavy-secret
 
   dataNodes:
     - instanceCount: 1
@@ -144,9 +155,9 @@ metadata:
   name: ytadminsec
 type: Opaque
 data:
-  login: YWRtaW4=
-  password: cGFzc3dvcmQ=
-  token: cGFzc3dvcmQ=
+  login: YWRtaW4=         # admin
+  password: cGFzc3dvcmQ=  # password
+  token: cGFzc3dvcmQ=     # password
 
 ---
 apiVersion: v1
@@ -167,13 +178,83 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
+  name: minisaurus-ca
+spec:
+  isCA: true
+  commonName: minisaurus-ca
+  subject:
+    organizations:
+      - Minisaurus CA
+  secretName: minisaurus-ca-secret
+  issuerRef:
+    kind: Issuer
+    name: minisaurus-selfsigned-issuer
+
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: minisaurus-ca-issuer
+spec:
+  ca:
+    secretName: minisaurus-ca-secret
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
   name: minisaurus-https-cert
 spec:
   dnsNames:
   - "*.minisaurus.svc"
   - "*.minisaurus.svc.cluster.local"
+  - "*.http-proxies.minisaurus.svc"
+  - "*.http-proxies.minisaurus.svc.cluster.local"
   issuerRef:
     kind: Issuer
-    name: minisaurus-selfsigned-issuer
+    name: minisaurus-ca-issuer
   secretName: minisaurus-https-secret
 
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: minisaurus-https-control-cert
+spec:
+  dnsNames:
+  - "*.minisaurus.svc"
+  - "*.minisaurus.svc.cluster.local"
+  - "*.http-proxies-control.minisaurus.svc"
+  - "*.http-proxies-control.minisaurus.svc.cluster.local"
+  issuerRef:
+    kind: Issuer
+    name: minisaurus-ca-issuer
+  secretName: minisaurus-https-control-secret
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: minisaurus-rpc-cert
+spec:
+  dnsNames:
+  - "*.rpc-proxies.minisaurus.svc"
+  - "*.rpc-proxies.minisaurus.svc.cluster.local"
+  issuerRef:
+    kind: Issuer
+    name: minisaurus-ca-issuer
+  secretName: minisaurus-rpc-secret
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: minisaurus-rpc-heavy-cert
+spec:
+  dnsNames:
+  - "*.rpc-proxies-heavy.minisaurus.svc"
+  - "*.rpc-proxies-heavy.minisaurus.svc.cluster.local"
+  issuerRef:
+    kind: Issuer
+    name: minisaurus-ca-issuer
+  secretName: minisaurus-rpc-heavy-secret

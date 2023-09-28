@@ -252,12 +252,23 @@ type HTTPProxiesSpec struct {
 	Transport HTTPTransportSpec `json:"transport,omitempty"`
 }
 
+type RPCTransportSpec struct {
+	// Reference to kubernetes.io/tls secret
+	//+optional
+	TLSSecret *corev1.LocalObjectReference `json:"tlsSecret,omitempty"`
+	// Require encrypted connections, otherwise only when required by peer
+	//+optional
+	TLSRequired bool `json:"tlsRequired,omitempty"`
+}
+
 type RPCProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`
+	//+optional
+	Transport RPCTransportSpec `json:"transport,omitempty"`
 }
 
 type TCPProxiesSpec struct {

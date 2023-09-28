@@ -44,11 +44,6 @@ type HTTPServer struct {
 	Port int `yson:"port"`
 }
 
-type PemBlob struct {
-	FileName string `yson:"file_name,omitempty"`
-	Value    string `yson:"value,omitempty"`
-}
-
 type HTTPSServerCredentials struct {
 	CertChain  PemBlob `yson:"cert_chain,omitempty"`
 	PrivateKey PemBlob `yson:"private_key,omitempty"`

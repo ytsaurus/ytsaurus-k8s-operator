@@ -16052,6 +16052,21 @@ spec:
                             type: string
                         type: object
                       type: array
+                    transport:
+                      properties:
+                        tlsRequired:
+                          description: Require encrypted connections, otherwise only
+                            when required by peer
+                          type: boolean
+                        tlsSecret:
+                          description: Reference to kubernetes.io/tls secret
+                          properties:
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.'
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
                     volumeClaimTemplates:
                       items:
                         description: EmbeddedPersistentVolumeClaim is an embedded

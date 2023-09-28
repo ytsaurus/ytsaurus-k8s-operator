@@ -19,6 +19,7 @@ type rpcProxy struct {
 
 	serviceType      *v1.ServiceType
 	balancingService *resources.RPCService
+	tlsSecret        *resources.TLSSecret
 }
 
 func NewRPCProxy(
@@ -56,6 +57,14 @@ func NewRPCProxy(
 			ytsaurus.APIProxy())
 	}
 
+	var tlsSecret *resources.TLSSecret
+	if secret := spec.Transport.TLSSecret; secret != nil {
+		tlsSecret = resources.NewTLSSecret(
+			secret.Name,
+			consts.RPCSecretVolumeName,
+			consts.RPCSecretMountPoint)
+	}
+
 	return &rpcProxy{
 		componentBase: componentBase{
 			labeller: &l,
@@ -66,6 +75,7 @@ func NewRPCProxy(
 		master:           masterReconciler,
 		serviceType:      spec.ServiceType,
 		balancingService: balancingService,
+		tlsSecret:        tlsSecret,
 	}
 }
 
@@ -102,6 +112,11 @@ func (rp *rpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 
 	if rp.server.needSync() {
 		if !dry {
+			statefulSet := rp.server.buildStatefulSet()
+			if secret := rp.tlsSecret; secret != nil {
+				secret.AddVolume(&statefulSet.Spec.Template.Spec)
+				secret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
+			}
 			err = rp.server.Sync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err

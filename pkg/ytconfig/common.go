@@ -49,12 +49,37 @@ type AddressResolver struct {
 	Retries    *int `yson:"retries,omitempty"`
 }
 
+type PemBlob struct {
+	FileName string `yson:"file_name,omitempty"`
+	Value    string `yson:"value,omitempty"`
+}
+
+type EncryptionMode string
+
+const (
+	EncryptionModeDisabled EncryptionMode = "disabled"
+	EncryptionModeOptional EncryptionMode = "optional"
+	EncryptionModeRequired EncryptionMode = "required"
+)
+
+type Bus struct {
+	EncryptionMode EncryptionMode `yson:"encryption_mode,omitempty"`
+	CertChain      *PemBlob       `yson:"cert_chain,omitempty"`
+	PrivateKey     *PemBlob       `yson:"private_key,omitempty"`
+	CipherList     []string       `yson:"cipher_list,omitempty"`
+}
+
+type BusServer struct {
+	Bus
+}
+
 // This is used as a basic config for basic components, such as clocks or discovery.
 type BasicServer struct {
 	AddressResolver AddressResolver `yson:"address_resolver"`
 	Logging         Logging         `yson:"logging"`
 	MonitoringPort  int32           `yson:"monitoring_port"`
 	RPCPort         int32           `yson:"rpc_port"`
+	BusServer       *BusServer      `yson:"bus_server,omitempty"`
 }
 
 type CommonServer struct {
