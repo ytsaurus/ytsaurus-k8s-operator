@@ -1,0 +1,103 @@
+apiVersion: cluster.ytsaurus.tech/v1
+kind: Ytsaurus
+metadata:
+  name: ytdemo
+spec:
+  coreImage: ytsaurus/ytsaurus-nightly:dev-23.1-35ba9c721c7e267d1f03cf9a9b28f6f007e21e6e
+  uiImage: ytsaurus/ui:stable
+
+  adminCredentials:
+    name: ytadminsec
+
+  discovery:
+    instanceCount: 1
+
+  primaryMasters:
+    instanceCount: 3
+    cellTag: 1
+    volumeMounts:
+      - name: master-data
+        mountPath: /yt/master-data
+    locations:
+      - locationType: MasterChangelogs
+        path: /yt/master-data/master-changelogs
+      - locationType: MasterSnapshots
+        path: /yt/master-data/master-snapshots
+
+    volumeClaimTemplates:
+      - metadata:
+          name: master-data
+        spec:
+          accessModes: [ "ReadWriteOnce" ]
+          resources:
+            requests:
+              storage: 20Gi
+
+  httpProxies:
+    - serviceType: NodePort
+      instanceCount: 3
+
+  rpcProxies:
+    - serviceType: LoadBalancer
+      instanceCount: 3
+
+  dataNodes:
+    - instanceCount: 3
+      volumeMounts:
+        - name: node-data
+          mountPath: /yt/node-data
+
+      locations:
+        - locationType: ChunkStore
+          path: /yt/node-data/chunk-store
+
+      volumeClaimTemplates:
+        - metadata:
+            name: node-data
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: 50Gi
+
+  execNodes:
+    - instanceCount: 3
+      resources:
+        limits:
+          cpu: 3
+          memory: 5Gi
+
+      volumeMounts:
+        - name: node-data
+          mountPath: /yt/node-data
+
+      volumes:
+        - name: node-data
+          emptyDir:
+            sizeLimit: 40Gi
+
+      locations:
+        - locationType: ChunkCache
+          path: /yt/node-data/chunk-cache
+        - locationType: Slots
+          path: /yt/node-data/slots
+
+  tabletNodes:
+    - instanceCount: 3
+
+  queryTrackers:
+    instanceCount: 1
+
+  yqlAgents:
+    instanceCount: 1
+
+  schedulers:
+    instanceCount: 1
+
+  controllerAgents:
+    instanceCount: 1
+
+  ui:
+    serviceType: NodePort
+    instanceCount: 1
+
