@@ -116,15 +116,21 @@ func (h *ConfigHelper) getConfig(fileName string) ([]byte, error) {
 	}
 
 	if h.overridesMap.GetResourceVersion() != "" {
-		if value, ok := h.overridesMap.Data[fileName]; ok {
-			configWithOverrides, err := overrideYsonConfigs(serializedConfig, []byte(value))
-			if err == nil {
-				serializedConfig = configWithOverrides
-			} else {
-				// ToDo(psushin): better error handling.
-				h.apiProxy.RecordWarning(
-					"Reconciling",
-					fmt.Sprintf("Failed to apply config overrides for %s, skipping: %s", fileName, err))
+		overrideNames := []string{
+			fileName,
+			fmt.Sprintf("%s--%s", h.GetConfigMapName(), fileName),
+		}
+		for _, overrideName := range overrideNames {
+			if value, ok := h.overridesMap.Data[overrideName]; ok {
+				configWithOverrides, err := overrideYsonConfigs(serializedConfig, []byte(value))
+				if err == nil {
+					serializedConfig = configWithOverrides
+				} else {
+					// ToDo(psushin): better error handling.
+					h.apiProxy.RecordWarning(
+						"Reconciling",
+						fmt.Sprintf("Failed to apply config override %s for %s, skipping: %s", overrideName, fileName, err))
+				}
 			}
 		}
 	}
