@@ -87,11 +87,11 @@ spec:
 
   queryTrackers:
     instanceCount: 1
-    image: ytsaurus/query-tracker-nightly:dev-66905-ecb23a91d6e5b9e427b74bc9b4bb1698853ad8de-relwithdebinfo
+    image: ytsaurus/query-tracker-nightly:dev-66906-ce55146bc191ec5c82efcde5d6e0d592fc0ec50a-relwithdebinfo
 
   yqlAgents:
     instanceCount: 1
-    image: ytsaurus/query-tracker-nightly:dev-66905-ecb23a91d6e5b9e427b74bc9b4bb1698853ad8de-relwithdebinfo
+    image: ytsaurus/query-tracker-nightly:dev-66906-ce55146bc191ec5c82efcde5d6e0d592fc0ec50a-relwithdebinfo
 
   schedulers:
     instanceCount: 1

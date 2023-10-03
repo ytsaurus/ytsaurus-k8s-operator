@@ -127,6 +127,7 @@ spec:
     instanceCount: 1
 
   strawberry:
+    image: ytsaurus/strawberry:0.0.5
     resources:
       limits:
         memory: 100Mi
