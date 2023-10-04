@@ -90,6 +90,19 @@ func (g *Generator) GetYQLAgentAddresses() []string {
 	return names
 }
 
+func (g *Generator) GetQueueAgentAddresses() []string {
+	names := make([]string, 0, g.ytsaurus.Spec.QueueAgents.InstanceCount)
+	for _, podName := range g.GetQueueAgentPodNames() {
+		names = append(names, fmt.Sprintf("%s.%s.%s.svc.%s:%d",
+			podName,
+			g.GetQueueAgentServiceName(),
+			g.ytsaurus.Namespace,
+			g.clusterDomain,
+			consts.QueueAgentRPCPort))
+	}
+	return names
+}
+
 func (g *Generator) fillDriver(c *Driver) {
 	c.TimestampProviders.Addresses = g.getMasterAddresses()
 
@@ -426,6 +439,29 @@ func (g *Generator) GetQueryTrackerConfig() ([]byte, error) {
 	}
 
 	c, err := g.getQueryTrackerConfigImpl()
+	if err != nil {
+		return nil, err
+	}
+
+	return marshallYsonConfig(c)
+}
+
+func (g *Generator) getQueueAgentConfigImpl() (QueueAgentServer, error) {
+	c, err := getQueueAgentServerCarcass(*g.ytsaurus.Spec.QueueAgents)
+	if err != nil {
+		return c, err
+	}
+	g.fillCommonService(&c.CommonServer)
+
+	return c, nil
+}
+
+func (g *Generator) GetQueueAgentConfig() ([]byte, error) {
+	if g.ytsaurus.Spec.QueueAgents == nil {
+		return []byte{}, nil
+	}
+
+	c, err := g.getQueueAgentConfigImpl()
 	if err != nil {
 		return nil, err
 	}

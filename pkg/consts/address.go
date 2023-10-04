@@ -48,5 +48,8 @@ const (
 	YQLAgentRPCPort        = 9019
 	YQLAgentMonitoringPort = 10029
 
+	QueueAgentRPCPort        = 9030
+	QueueAgentMonitoringPort = 10030
+
 	UIHTTPPort = 80
 )

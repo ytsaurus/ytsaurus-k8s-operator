@@ -375,6 +375,10 @@ type YQLAgentSpec struct {
 	InstanceSpec `json:",inline"`
 }
 
+type QueueAgentSpec struct {
+	InstanceSpec `json:",inline"`
+}
+
 type DeprecatedSpytSpec struct {
 	SparkVersion string `json:"sparkVersion,omitempty"`
 	SpytVersion  string `json:"spytVersion,omitempty"`
@@ -434,6 +438,7 @@ type YtsaurusSpec struct {
 	QueryTrackers            *QueryTrackerSpec         `json:"queryTrackers,omitempty"`
 	Spyt                     *DeprecatedSpytSpec       `json:"spyt,omitempty"`
 	YQLAgents                *YQLAgentSpec             `json:"yqlAgents,omitempty"`
+	QueueAgents              *QueueAgentSpec           `json:"queueAgents,omitempty"`
 
 	UI *UISpec `json:"ui,omitempty"`
 }

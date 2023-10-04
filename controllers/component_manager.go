@@ -111,6 +111,11 @@ func NewComponentManager(
 		allComponents = append(allComponents, q)
 	}
 
+	if resource.Spec.QueueAgents != nil && resource.Spec.TabletNodes != nil && len(resource.Spec.TabletNodes) > 0 {
+		qa := components.NewQueueAgent(cfgen, ytsaurus, yc, m, tnds)
+		allComponents = append(allComponents, qa)
+	}
+
 	if resource.Spec.YQLAgents != nil {
 		yqla := components.NewYQLAgent(cfgen, ytsaurus, m)
 		allComponents = append(allComponents, yqla)

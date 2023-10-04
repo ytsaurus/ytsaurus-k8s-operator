@@ -338,6 +338,21 @@ func (r *Ytsaurus) validateQueryTrackers(old *runtime.Object) field.ErrorList {
 	return allErrors
 }
 
+func (r *Ytsaurus) validateQueueAgents(old *runtime.Object) field.ErrorList {
+	var allErrors field.ErrorList
+
+	if r.Spec.QueueAgents != nil {
+		path := field.NewPath("spec").Child("queueAgents")
+		allErrors = append(allErrors, r.validateInstanceSpec(r.Spec.QueueAgents.InstanceSpec, path)...)
+
+		if r.Spec.TabletNodes == nil || len(r.Spec.TabletNodes) == 0 {
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("tabletNodes"), "tabletNodes are required for queueAgents"))
+		}
+	}
+
+	return allErrors
+}
+
 func (r *Ytsaurus) validateSpyt(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 	path := field.NewPath("spec").Child("spyt")
@@ -416,6 +431,7 @@ func (r *Ytsaurus) validateYtsaurus(old *runtime.Object) field.ErrorList {
 	allErrors = append(allErrors, r.validateTabletNodes(old)...)
 	allErrors = append(allErrors, r.validateChyt(old)...)
 	allErrors = append(allErrors, r.validateQueryTrackers(old)...)
+	allErrors = append(allErrors, r.validateQueueAgents(old)...)
 	allErrors = append(allErrors, r.validateSpyt(old)...)
 	allErrors = append(allErrors, r.validateYQLAgents(old)...)
 

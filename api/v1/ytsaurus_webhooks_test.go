@@ -284,6 +284,14 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.schedulers: Required")))
 		})
 
+		It("Should not accept queueAgent without tabletNodes", func() {
+			ytsaurus := CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.QueueAgents = &QueueAgentSpec{InstanceSpec: InstanceSpec{InstanceCount: 1}}
+			ytsaurus.Spec.TabletNodes = nil
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.tabletNodes: Required")))
+		})
+
 		It("Check tabletNodes instanceCount", func() {
 			ytsaurus := CreateBaseYtsaurusResource(namespace)
 			ytsaurus.Spec.TabletNodes[0].InstanceCount = 2

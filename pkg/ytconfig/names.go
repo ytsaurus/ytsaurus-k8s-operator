@@ -64,6 +64,15 @@ func (g *Generator) GetYQLAgentPodNames() []string {
 	return podNames
 }
 
+func (g *Generator) GetQueueAgentPodNames() []string {
+	podNames := make([]string, 0, g.ytsaurus.Spec.QueueAgents.InstanceSpec.InstanceCount)
+	for i := 0; i < int(g.ytsaurus.Spec.QueueAgents.InstanceSpec.InstanceCount); i++ {
+		podNames = append(podNames, fmt.Sprintf("%s-%d", g.GetQueueAgentStatefulSetName(), i))
+	}
+
+	return podNames
+}
+
 func (g *Generator) GetHTTPProxiesServiceAddress(role string) string {
 	return fmt.Sprintf("%s.%s.svc.%s",
 		g.GetHTTPProxiesHeadlessServiceName(role),
@@ -139,6 +148,14 @@ func (g *Generator) GetQueryTrackerStatefulSetName() string {
 
 func (g *Generator) GetQueryTrackerServiceName() string {
 	return g.getName("query-trackers")
+}
+
+func (g *Generator) GetQueueAgentStatefulSetName() string {
+	return g.getName("qa")
+}
+
+func (g *Generator) GetQueueAgentServiceName() string {
+	return g.getName("queue-agents")
 }
 
 func (g *Generator) GetDataNodesStatefulSetName(name string) string {
