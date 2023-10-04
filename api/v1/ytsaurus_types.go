@@ -211,13 +211,14 @@ type OauthServiceSpec struct {
 }
 
 type InstanceSpec struct {
-	Image                *string                         `json:"image,omitempty"`
-	Volumes              []corev1.Volume                 `json:"volumes,omitempty"`
-	VolumeMounts         []corev1.VolumeMount            `json:"volumeMounts,omitempty"`
-	Resources            corev1.ResourceRequirements     `json:"resources,omitempty"`
-	InstanceCount        int32                           `json:"instanceCount,omitempty"`
-	Locations            []LocationSpec                  `json:"locations,omitempty"`
-	VolumeClaimTemplates []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
+	Image                 *string                         `json:"image,omitempty"`
+	Volumes               []corev1.Volume                 `json:"volumes,omitempty"`
+	VolumeMounts          []corev1.VolumeMount            `json:"volumeMounts,omitempty"`
+	Resources             corev1.ResourceRequirements     `json:"resources,omitempty"`
+	InstanceCount         int32                           `json:"instanceCount,omitempty"`
+	MinReadyInstanceCount *int                            `json:"minReadyInstanceCount,omitempty"`
+	Locations             []LocationSpec                  `json:"locations,omitempty"`
+	VolumeClaimTemplates  []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
 	// Deprecated. Use Affinity.PodAntiAffinity instead.
 	EnableAntiAffinity *bool                  `json:"enableAntiAffinity,omitempty"`
 	Loggers            []TextLoggerSpec       `json:"loggers,omitempty"`

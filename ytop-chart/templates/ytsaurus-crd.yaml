@@ -813,6 +813,8 @@ spec:
                           type: string
                       type: object
                     type: array
+                  minReadyInstanceCount:
+                    type: integer
                   nodeSelector:
                     additionalProperties:
                       type: string
@@ -2934,6 +2936,8 @@ spec:
                             type: string
                         type: object
                       type: array
+                    minReadyInstanceCount:
+                      type: integer
                     name:
                       default: default
                       minLength: 1
@@ -5080,6 +5084,8 @@ spec:
                           type: string
                       type: object
                     type: array
+                  minReadyInstanceCount:
+                    type: integer
                   nodeSelector:
                     additionalProperties:
                       type: string
@@ -7202,6 +7208,8 @@ spec:
                             type: string
                         type: object
                       type: array
+                    minReadyInstanceCount:
+                      type: integer
                     name:
                       default: default
                       minLength: 1
@@ -9366,6 +9374,8 @@ spec:
                             type: string
                         type: object
                       type: array
+                    minReadyInstanceCount:
+                      type: integer
                     nodeSelector:
                       additionalProperties:
                         type: string
@@ -11562,6 +11572,8 @@ spec:
                           type: string
                       type: object
                     type: array
+                  minReadyInstanceCount:
+                    type: integer
                   nodeSelector:
                     additionalProperties:
                       type: string
@@ -13679,6 +13691,8 @@ spec:
                           type: string
                       type: object
                     type: array
+                  minReadyInstanceCount:
+                    type: integer
                   nodeSelector:
                     additionalProperties:
                       type: string
@@ -15798,6 +15812,8 @@ spec:
                             type: string
                         type: object
                       type: array
+                    minReadyInstanceCount:
+                      type: integer
                     nodeSelector:
                       additionalProperties:
                         type: string
@@ -17954,6 +17970,8 @@ spec:
                           type: string
                       type: object
                     type: array
+                  minReadyInstanceCount:
+                    type: integer
                   nodeSelector:
                     additionalProperties:
                       type: string
@@ -20075,6 +20093,8 @@ spec:
                             type: string
                         type: object
                       type: array
+                    minReadyInstanceCount:
+                      type: integer
                     nodeSelector:
                       additionalProperties:
                         type: string
@@ -22251,6 +22271,8 @@ spec:
                             type: string
                         type: object
                       type: array
+                    minReadyInstanceCount:
+                      type: integer
                     name:
                       default: default
                       minLength: 1
@@ -24400,6 +24422,8 @@ spec:
                             type: string
                         type: object
                       type: array
+                    minReadyInstanceCount:
+                      type: integer
                     nodeSelector:
                       additionalProperties:
                         type: string
@@ -26699,6 +26723,8 @@ spec:
                           type: string
                       type: object
                     type: array
+                  minReadyInstanceCount:
+                    type: integer
                   nodeSelector:
                     additionalProperties:
                       type: string

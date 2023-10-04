@@ -456,6 +456,11 @@ func (in *InstanceSpec) DeepCopyInto(out *InstanceSpec) {
 		}
 	}
 	in.Resources.DeepCopyInto(&out.Resources)
+	if in.MinReadyInstanceCount != nil {
+		in, out := &in.MinReadyInstanceCount, &out.MinReadyInstanceCount
+		*out = new(int)
+		**out = **in
+	}
 	if in.Locations != nil {
 		in, out := &in.Locations, &out.Locations
 		*out = make([]LocationSpec, len(*in))

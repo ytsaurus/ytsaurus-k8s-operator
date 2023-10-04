@@ -149,7 +149,7 @@ func (s *serverImpl) needUpdate() bool {
 }
 
 func (s *serverImpl) arePodsReady(ctx context.Context) bool {
-	return s.statefulSet.ArePodsReady(ctx)
+	return s.statefulSet.ArePodsReady(ctx, s.instanceSpec.MinReadyInstanceCount)
 }
 
 func (s *serverImpl) buildStatefulSet() *appsv1.StatefulSet {

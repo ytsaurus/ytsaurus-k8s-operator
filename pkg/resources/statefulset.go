@@ -65,7 +65,7 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 	return &s.newObject
 }
 
-func (s *StatefulSet) ArePodsReady(ctx context.Context) bool {
+func (s *StatefulSet) ArePodsReady(ctx context.Context, minReadyInstanceCount *int) bool {
 	logger := log.FromContext(ctx)
 	podList := &corev1.PodList{}
 	err := s.ytsaurus.APIProxy().ListObjects(ctx, podList, s.labeller.GetListOptions()...)
@@ -79,11 +79,28 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context) bool {
 		return false
 	}
 
+	effectiveMinReadyInstanceCount := len(podList.Items)
+	if minReadyInstanceCount != nil && *minReadyInstanceCount < len(podList.Items) {
+		effectiveMinReadyInstanceCount = *minReadyInstanceCount
+	}
+
+	readyInstanceCount := 0
 	for _, pod := range podList.Items {
 		if pod.Status.Phase != corev1.PodRunning {
 			logger.Info("pod is not yet running", "podName", pod.Name, "phase", pod.Status.Phase)
-			return false
+		} else {
+			readyInstanceCount += 1
 		}
+	}
+
+	if readyInstanceCount < effectiveMinReadyInstanceCount {
+		logger.Info(
+			"not enough pods are running",
+			"component", s.labeller.ComponentName,
+			"readyInstanceCount", readyInstanceCount,
+			"minReadyInstanceCount", effectiveMinReadyInstanceCount,
+			"totalInstanceCount", len(podList.Items))
+		return false
 	}
 
 	return true
