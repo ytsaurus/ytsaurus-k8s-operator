@@ -211,7 +211,7 @@ func (qt *queryTracker) createUser(ctx context.Context, ytClient yt.Client) (err
 	logger := log.FromContext(ctx)
 
 	token, _ := qt.secret.GetValue(consts.TokenSecretKey)
-	err = CreateUserCommand(ctx, ytClient, "query_tracker", token, true)
+	err = CreateUser(ctx, ytClient, "query_tracker", token, true)
 	if err != nil {
 		logger.Error(err, "Creating user 'query_tracker' failed")
 		return

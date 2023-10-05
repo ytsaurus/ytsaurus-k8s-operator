@@ -64,7 +64,7 @@ func GetNotGoodTabletCellBundles(ctx context.Context, ytClient yt.Client) ([]str
 	return notGoodBundles, err
 }
 
-func CreateUserCommand(ctx context.Context, ytClient yt.Client, userName, token string, isSuperuser bool) error {
+func CreateUser(ctx context.Context, ytClient yt.Client, userName, token string, isSuperuser bool) error {
 	var err error
 	_, err = ytClient.CreateObject(ctx, yt.NodeUser, &yt.CreateObjectOptions{
 		IgnoreExisting: true,
