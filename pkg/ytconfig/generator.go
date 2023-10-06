@@ -116,8 +116,12 @@ func (g *Generator) fillDriver(c *Driver) {
 func (g *Generator) fillAddressResolver(c *AddressResolver) {
 	var retries = 1000
 
-	c.EnableIPv4 = !g.ytsaurus.Spec.UseIPv6
+	c.EnableIPv4 = g.ytsaurus.Spec.UseIPv4
 	c.EnableIPv6 = g.ytsaurus.Spec.UseIPv6
+	if !c.EnableIPv6 && !c.EnableIPv4 {
+		// In case when nothing is specified, we prefer IPv4 due to compatibility reasons.
+		c.EnableIPv4 = true
+	}
 	c.Retries = &retries
 }
 

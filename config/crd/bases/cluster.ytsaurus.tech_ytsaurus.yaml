@@ -28405,6 +28405,9 @@ spec:
                 type: object
               uiImage:
                 type: string
+              useIpv4:
+                default: false
+                type: boolean
               useIpv6:
                 default: false
                 type: boolean
