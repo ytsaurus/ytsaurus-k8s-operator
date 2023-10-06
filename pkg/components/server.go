@@ -163,7 +163,7 @@ func (s *serverImpl) buildStatefulSet() *appsv1.StatefulSet {
 func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	locationCreationCommand := getLocationInitCommand(s.instanceSpec.Locations)
 
-	volumes := createVolumes(s.instanceSpec.Volumes, s.labeller.GetMainConfigMapName())
+	volumes := createServerVolumes(s.instanceSpec.Volumes, s.labeller.GetMainConfigMapName())
 	volumeMounts := createVolumeMounts(s.instanceSpec.VolumeMounts)
 
 	statefulSet := s.statefulSet.Build()
@@ -175,6 +175,9 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	if len(fileNames) != 1 {
 		log.Panicf("expected exactly one config filename, found %v", len(fileNames))
 	}
+
+	configPostprocessingCommand := getConfigPostprocessingCommand(fileNames[0])
+	configPostprocessEnv := getConfigPostprocessEnv()
 
 	setHostnameAsFQDN := true
 	statefulSet.Spec.Template.Spec = corev1.PodSpec{
@@ -193,7 +196,14 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 			{
 				Image:        s.image,
 				Name:         consts.PrepareLocationsContainerName,
-				Command:      []string{"bash", "-c", locationCreationCommand},
+				Command:      []string{"bash", "-xc", locationCreationCommand},
+				VolumeMounts: volumeMounts,
+			},
+			{
+				Image:        s.image,
+				Name:         consts.PostprocessConfigContainerName,
+				Command:      []string{"bash", "-xc", configPostprocessingCommand},
+				Env:          configPostprocessEnv,
 				VolumeMounts: volumeMounts,
 			},
 		},
