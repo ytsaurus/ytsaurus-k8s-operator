@@ -109,7 +109,7 @@ func (j *InitJob) Build() *batchv1.Job {
 				},
 			},
 			Volumes: []corev1.Volume{
-				createConfigVolume(j.configHelper.GetConfigMapName(), &defaultMode),
+				createConfigVolume(consts.ConfigVolumeName, j.configHelper.GetConfigMapName(), &defaultMode),
 			},
 			RestartPolicy: corev1.RestartPolicyOnFailure,
 		},

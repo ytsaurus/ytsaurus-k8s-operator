@@ -202,7 +202,7 @@ func (c *strawberryController) syncComponents(ctx context.Context) (err error) {
 	}
 
 	deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
-		createConfigVolume(c.labeller.GetMainConfigMapName(), nil),
+		createConfigVolume(consts.ConfigVolumeName, c.labeller.GetMainConfigMapName(), nil),
 	}
 
 	return c.microservice.Sync(ctx)
