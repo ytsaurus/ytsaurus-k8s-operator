@@ -40,14 +40,20 @@ func NewGenerator(ytsaurus *ytv1.Ytsaurus, clusterDomain string) *Generator {
 	}
 }
 
+func (g *Generator) getMasterPodFqdnSuffix() string {
+	return fmt.Sprintf("%s.%s.svc.%s",
+		g.GetMastersServiceName(),
+		g.ytsaurus.Namespace,
+		g.clusterDomain)
+}
+
 func (g *Generator) getMasterAddresses() []string {
 	names := make([]string, 0, g.ytsaurus.Spec.PrimaryMasters.InstanceCount)
+	masterPodSuffix := g.getMasterPodFqdnSuffix()
 	for _, podName := range g.GetMasterPodNames() {
-		names = append(names, fmt.Sprintf("%s.%s.%s.svc.%s:%d",
+		names = append(names, fmt.Sprintf("%s.%s:%d",
 			podName,
-			g.GetMastersServiceName(),
-			g.ytsaurus.Namespace,
-			g.clusterDomain,
+			masterPodSuffix,
 			consts.MasterRPCPort))
 	}
 	return names
@@ -197,6 +203,19 @@ func (g *Generator) getMasterConfigImpl() (MasterServer, error) {
 	g.fillCommonService(&c.CommonServer)
 	g.fillPrimaryMaster(&c.PrimaryMaster)
 	configureMasterServerCypressManager(g.ytsaurus.Spec, &c.CypressManager)
+
+	if g.ytsaurus.Spec.HostNetwork {
+		// Each master deduces its index within cell by looking up his FQDN in the
+		// list of all master peers. Master peers are specified using their pod addresses,
+		// therefore we must also switch masters from identifying themselves by FQDN addresses
+		// to their pod addresses.
+
+		// POD_NAME is set to pod name through downward API env var and substituted during
+		// config postprocessing.
+		c.AddressResolver.LocalhostNameOverride = ptr.String(
+			fmt.Sprintf("%v.%v", "{POD_NAME}", g.getMasterPodFqdnSuffix()))
+	}
+
 	return c, nil
 }
 
