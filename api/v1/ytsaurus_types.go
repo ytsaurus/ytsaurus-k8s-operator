@@ -242,6 +242,12 @@ type HTTPTransportSpec struct {
 	DisableHTTP bool `json:"disableHttp,omitempty"`
 }
 
+type CookieGeneratorSpec struct {
+	// Controls "domain" parameters of the cookies generated.
+	//+optional
+	Domain string `json:"domain,omitempty"`
+}
+
 type HTTPProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	//+kubebuilder:default:=NodePort
@@ -251,6 +257,8 @@ type HTTPProxiesSpec struct {
 	Role string `json:"role,omitempty"`
 	//+optional
 	Transport HTTPTransportSpec `json:"transport,omitempty"`
+	//+optional
+	CookieGeneratorSpec CookieGeneratorSpec `json:"cookiesGenerator,omitempty"`
 }
 
 type RPCTransportSpec struct {

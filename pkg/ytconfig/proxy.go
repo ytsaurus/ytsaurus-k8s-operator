@@ -7,8 +7,16 @@ import (
 	"path"
 )
 
-type CypressCookieManager struct{}
+type CypressCookieGenerator struct {
+	Domain string `yson:"domain,omitempty"`
+}
+
+type CypressCookieManager struct {
+	CypressCookieGenerator CypressCookieGenerator `yson:"cypress_cookie_generator,omitempty"`
+}
+
 type CypressUserManager struct{}
+
 type CypressTokenAuthenticator struct {
 	Secure bool `yson:"secure"`
 }
@@ -97,6 +105,7 @@ func getHTTPProxyServerCarcass(spec ytv1.HTTPProxiesSpec) (HTTPProxyServer, erro
 
 	c.Auth.RequireAuthentication = true
 	c.Auth.CypressTokenAuthenticator.Secure = true
+	c.Auth.CypressCookieManager.CypressCookieGenerator.Domain = spec.CookieGeneratorSpec.Domain
 	c.Coordinator.Enable = true
 	c.Coordinator.DefaultRoleFilter = consts.DefaultHTTPProxyRole
 

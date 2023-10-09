@@ -9355,6 +9355,13 @@ spec:
                               type: array
                           type: object
                       type: object
+                    cookiesGenerator:
+                      properties:
+                        domain:
+                          description: Controls "domain" parameters of the cookies
+                            generated.
+                          type: string
+                      type: object
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
@@ -15942,6 +15949,8 @@ spec:
                           type: string
                       type: object
                     type: array
+                  minReadyInstanceCount:
+                    type: integer
                   nodeSelector:
                     additionalProperties:
                       type: string
