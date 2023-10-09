@@ -143,10 +143,19 @@ func (g *Generator) fillClusterConnection(c *ClusterConnection) {
 	c.DiscoveryConnection.Addresses = g.getDiscoveryAddresses()
 }
 
+func (g *Generator) fillCypressAnnotations(c *map[string]any) {
+	*c = map[string]any{
+		"k8s_pod_name":      "{K8S_POD_NAME}",
+		"k8s_pod_namespace": "{K8S_POD_NAMESPACE}",
+		"k8s_node_name":     "{K8S_NODE_NAME}",
+	}
+}
+
 func (g *Generator) fillCommonService(c *CommonServer) {
 	// ToDo(psushin): enable porto resource tracker?
 	g.fillAddressResolver(&c.AddressResolver)
 	g.fillClusterConnection(&c.ClusterConnection)
+	g.fillCypressAnnotations(&c.CypressAnnotations)
 	c.TimestampProviders.Addresses = g.getMasterAddresses()
 }
 
@@ -213,7 +222,7 @@ func (g *Generator) getMasterConfigImpl() (MasterServer, error) {
 		// POD_NAME is set to pod name through downward API env var and substituted during
 		// config postprocessing.
 		c.AddressResolver.LocalhostNameOverride = ptr.String(
-			fmt.Sprintf("%v.%v", "{POD_NAME}", g.getMasterPodFqdnSuffix()))
+			fmt.Sprintf("%v.%v", "{K8S_POD_NAME}", g.getMasterPodFqdnSuffix()))
 	}
 
 	return c, nil
