@@ -405,6 +405,9 @@ type YtsaurusSpec struct {
 	//+kubebuilder:default:=false
 	//+optional
 	UseIPv6 bool `json:"useIpv6"`
+	//+kubebuilder:default:=false
+	//+optional
+	UseIPv4 bool `json:"useIpv4"`
 	//+kubebuilder:default:=true
 	//+optional
 	UseShortNames bool `json:"useShortNames"`
