@@ -15808,6 +15808,8 @@ spec:
                           type: string
                       type: object
                     type: array
+                  minReadyInstanceCount:
+                    type: integer
                   nodeSelector:
                     additionalProperties:
                       type: string
