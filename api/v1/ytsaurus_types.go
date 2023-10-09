@@ -258,7 +258,7 @@ type HTTPProxiesSpec struct {
 	//+optional
 	Transport HTTPTransportSpec `json:"transport,omitempty"`
 	//+optional
-	CookieGeneratorSpec CookieGeneratorSpec `json:"cookiesGenerator,omitempty"`
+	CookieGeneratorSpec CookieGeneratorSpec `json:"cookieGenerator,omitempty"`
 }
 
 type RPCTransportSpec struct {

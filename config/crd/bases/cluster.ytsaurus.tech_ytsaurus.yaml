@@ -9355,7 +9355,7 @@ spec:
                               type: array
                           type: object
                       type: object
-                    cookiesGenerator:
+                    cookieGenerator:
                       properties:
                         domain:
                           description: Controls "domain" parameters of the cookies
