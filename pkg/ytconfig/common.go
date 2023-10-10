@@ -75,7 +75,7 @@ type BusServer struct {
 	Bus
 }
 
-// This is used as a basic config for basic components, such as clocks or discovery.
+// BasicServer is used as a basic config for basic components, such as clocks or discovery.
 type BasicServer struct {
 	AddressResolver AddressResolver `yson:"address_resolver"`
 	Logging         Logging         `yson:"logging"`
@@ -88,6 +88,7 @@ type CommonServer struct {
 	BasicServer
 	TimestampProviders TimestampProviders `yson:"timestamp_provider"`
 	ClusterConnection  ClusterConnection  `yson:"cluster_connection"`
+	CypressAnnotations map[string]any     `yson:"cypress_annotations,omitempty"`
 }
 
 func createLogging(spec *ytv1.InstanceSpec, componentName string, defaultLoggerSpecs []ytv1.TextLoggerSpec) Logging {

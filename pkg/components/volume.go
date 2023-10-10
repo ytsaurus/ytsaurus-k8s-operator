@@ -105,8 +105,10 @@ func getConfigPostprocessingCommand(configFileName string) string {
 	}
 
 	postprocessScript := fmt.Sprintf("cp %v %v; ", configTemplatePath, configPath)
-	postprocessScript += substituteEnvCommand("POD_NAME")
-	postprocessScript += substituteEnvCommand("POD_NAMESPACE")
+
+	for _, envVar := range getConfigPostprocessEnv() {
+		postprocessScript += substituteEnvCommand(envVar.Name)
+	}
 
 	command += fmt.Sprintf("echo '%v' > %v; ", postprocessScript, postprocessScriptPath)
 	command += fmt.Sprintf("chmod +x '%v'; ", postprocessScriptPath)
@@ -119,7 +121,7 @@ func getConfigPostprocessingCommand(configFileName string) string {
 func getConfigPostprocessEnv() []v1.EnvVar {
 	return []v1.EnvVar{
 		{
-			Name: "POD_NAME",
+			Name: "K8S_POD_NAME",
 			ValueFrom: &v1.EnvVarSource{
 				FieldRef: &v1.ObjectFieldSelector{
 					FieldPath: "metadata.name",
@@ -127,10 +129,18 @@ func getConfigPostprocessEnv() []v1.EnvVar {
 			},
 		},
 		{
-			Name: "POD_NAMESPACE",
+			Name: "K8S_POD_NAMESPACE",
 			ValueFrom: &v1.EnvVarSource{
 				FieldRef: &v1.ObjectFieldSelector{
 					FieldPath: "metadata.namespace",
+				},
+			},
+		},
+		{
+			Name: "K8S_NODE_NAME",
+			ValueFrom: &v1.EnvVarSource{
+				FieldRef: &v1.ObjectFieldSelector{
+					FieldPath: "spec.nodeName",
 				},
 			},
 		},
