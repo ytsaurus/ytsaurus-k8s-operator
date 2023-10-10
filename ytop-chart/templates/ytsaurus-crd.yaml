@@ -9497,7 +9497,6 @@ spec:
                     transport:
                       properties:
                         disableHttp:
-                          default: false
                           type: boolean
                         httpsSecret:
                           description: Reference to kubernetes.io/tls secret

@@ -237,7 +237,6 @@ type HTTPTransportSpec struct {
 	// Reference to kubernetes.io/tls secret
 	//+optional
 	HTTPSSecret *corev1.LocalObjectReference `json:"httpsSecret,omitempty"`
-	//+kubebuilder:default:=false
 	//+optional
 	DisableHTTP bool `json:"disableHttp,omitempty"`
 }
