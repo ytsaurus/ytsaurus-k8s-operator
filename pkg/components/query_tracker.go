@@ -236,6 +236,9 @@ func (qt *queryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 						"chyt_engine": map[string]interface{}{
 							"default_cluster": qt.labeller.GetClusterName(),
 						},
+						"spyt_engine": map[string]interface{}{
+							"default_cluster": qt.labeller.GetClusterName(),
+						},
 					},
 				},
 			},
