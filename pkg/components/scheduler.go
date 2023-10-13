@@ -3,10 +3,11 @@ package components
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"go.ytsaurus.tech/library/go/ptr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strings"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -39,6 +40,7 @@ func NewScheduler(
 		ComponentLabel: consts.YTComponentLabelScheduler,
 		ComponentName:  "Scheduler",
 		MonitoringPort: consts.SchedulerMonitoringPort,
+		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
 	server := newServer(

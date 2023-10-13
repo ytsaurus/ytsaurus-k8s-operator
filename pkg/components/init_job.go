@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"strings"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"strings"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -96,6 +97,7 @@ func (j *InitJob) Build() *batchv1.Job {
 	var defaultMode int32 = 0500
 	job := j.initJob.Build()
 	job.Spec.Template = corev1.PodTemplateSpec{
+		ObjectMeta: j.componentBase.labeller.GetObjectMeta("ytsaurus-init"),
 		Spec: corev1.PodSpec{
 			ImagePullSecrets: j.imagePullSecrets,
 			Containers: []corev1.Container{

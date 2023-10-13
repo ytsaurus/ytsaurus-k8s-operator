@@ -28,24 +28,25 @@ const UIClustersConfigFileName = "clusters-config.json"
 const UICustomConfigFileName = "common.js"
 
 func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) Component {
-	r := ytsaurus.GetResource()
+	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
-		ObjectMeta:     &r.ObjectMeta,
+		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelUI,
 		ComponentName:  "UI",
+		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
-	image := r.Spec.UIImage
-	if r.Spec.UI.Image != nil {
-		image = *r.Spec.UI.Image
+	image := resource.Spec.UIImage
+	if resource.Spec.UI.Image != nil {
+		image = *resource.Spec.UI.Image
 	}
 
 	microservice := newMicroservice(
 		&l,
 		ytsaurus,
 		image,
-		r.Spec.UI.InstanceCount,
+		resource.Spec.UI.InstanceCount,
 		map[string]ytconfig.GeneratorDescriptor{
 			UIClustersConfigFileName: {
 				F:   cfgen.GetUIClustersConfig,
@@ -70,10 +71,10 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			&l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
-			r.Spec.ImagePullSecrets,
+			resource.Spec.ImagePullSecrets,
 			"default",
 			consts.ClientConfigFileName,
-			r.Spec.CoreImage,
+			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

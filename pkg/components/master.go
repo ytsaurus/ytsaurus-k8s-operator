@@ -3,8 +3,9 @@ package components
 import (
 	"context"
 	"fmt"
-	"go.ytsaurus.tech/yt/go/yson"
 	"strings"
+
+	"go.ytsaurus.tech/yt/go/yson"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 
@@ -32,6 +33,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component
 		ComponentLabel: consts.YTComponentLabelMaster,
 		ComponentName:  "Master",
 		MonitoringPort: consts.MasterMonitoringPort,
+		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
 	server := newServer(

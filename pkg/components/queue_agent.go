@@ -44,6 +44,7 @@ func NewQueueAgent(
 		ComponentLabel: "yt-queue-agent",
 		ComponentName:  "QueueAgent",
 		MonitoringPort: consts.QueueAgentMonitoringPort,
+		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
 	server := newServer(

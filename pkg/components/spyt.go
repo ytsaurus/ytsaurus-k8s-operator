@@ -3,9 +3,10 @@ package components
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
-	"strings"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -36,6 +37,7 @@ func NewSpyt(
 		APIProxy:       spyt.APIProxy(),
 		ComponentLabel: fmt.Sprintf("ytsaurus-spyt-%s", spyt.GetResource().Name),
 		ComponentName:  fmt.Sprintf("SPYT-%s", spyt.GetResource().Name),
+		Annotations:    ytsaurus.Spec.ExtraPodAnnotations,
 	}
 
 	return &Spyt{

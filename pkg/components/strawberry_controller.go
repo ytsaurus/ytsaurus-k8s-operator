@@ -3,6 +3,9 @@ package components
 import (
 	"context"
 	"fmt"
+	"path"
+	"strings"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -10,8 +13,6 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 	corev1 "k8s.io/api/core/v1"
-	"path"
-	"strings"
 )
 
 type strawberryController struct {
@@ -67,6 +68,7 @@ func NewStrawberryController(
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: fmt.Sprintf("yt-%s-controller", name),
 		ComponentName:  componentName,
+		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
 	microservice := newMicroservice(

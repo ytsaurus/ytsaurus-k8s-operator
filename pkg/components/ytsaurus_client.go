@@ -3,6 +3,10 @@ package components
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+	"time"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -14,9 +18,6 @@ import (
 	"go.ytsaurus.tech/yt/go/yt/ythttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ptr "k8s.io/utils/pointer"
-	"os"
-	"strings"
-	"time"
 )
 
 type YtsaurusClient interface {
@@ -45,6 +46,7 @@ func NewYtsaurusClient(
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelClient,
 		ComponentName:  "YtsaurusClient",
+		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
 	return &ytsaurusClient{

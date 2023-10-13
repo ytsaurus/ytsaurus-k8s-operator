@@ -21,6 +21,7 @@ type Labeller struct {
 	ComponentLabel string
 	ComponentName  string
 	MonitoringPort int32
+	Annotations    map[string]string
 }
 
 func (l *Labeller) GetClusterName() string {
@@ -45,9 +46,10 @@ func (l *Labeller) GetPodsRemovingStartedCondition() string {
 
 func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
-		Name:      name,
-		Namespace: l.ObjectMeta.Namespace,
-		Labels:    l.GetMetaLabelMap(),
+		Name:        name,
+		Namespace:   l.ObjectMeta.Namespace,
+		Labels:      l.GetMetaLabelMap(),
+		Annotations: l.Annotations,
 	}
 }
 

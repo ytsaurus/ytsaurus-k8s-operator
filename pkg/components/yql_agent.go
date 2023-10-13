@@ -31,6 +31,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		ComponentLabel: consts.YTComponentLabelYqlAgent,
 		ComponentName:  "YqlAgent",
 		MonitoringPort: consts.YQLAgentMonitoringPort,
+		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
 	server := newServer(
