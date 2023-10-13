@@ -33,7 +33,7 @@ func getStrawberryController() StrawberryController {
 			RobotUsername: consts.StrawberryControllerUserName,
 		},
 		Controllers: map[string]yson.RawValue{
-			"chyt": yson.RawValue("{address_resolver={enable_ipv4=%true;enable_ipv6=%false;retries=1000}}"),
+			"chyt": yson.RawValue("{address_resolver={enable_ipv4=%true;enable_ipv6=%true;retries=1000}}"),
 		},
 		HTTPAPIEndpoint: ":80",
 	}
