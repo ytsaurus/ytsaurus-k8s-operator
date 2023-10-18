@@ -71,6 +71,7 @@ jobs:
           chmod +x ./kind
           sudo mv ./kind /usr/local/bin/kind
           kind create cluster --retain -v 100
+          echo "HEREEEE"
           kubectl get pod
           YTSAURUS_ENABLE_E2E_TESTS=true make test
 
@@ -99,22 +100,4 @@ jobs:
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
           label: ${{ needs.start-vm.outputs.label }}
           instance-id: ${{ needs.start-vm.outputs.instance-id }}
-  send-notifications:
-    name: Send notifications
-    needs:
-      - stop-vm
-    runs-on: trampoline
-    if: ${{ failure() }}
-    steps:
-      - name: Send telegram message
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          disable_web_page_preview: true
-          format: markdown
-          message: |
-            Workflow *${{github.workflow}}* failed: ${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}. Commit:
-            ```
-            ${{github.event.head_commit.message}}
-            ```
+
