@@ -22,7 +22,7 @@ import (
 const (
 	namespace = "default"
 
-	timeout  = time.Second * 90 * 15
+	timeout  = time.Second * 180
 	interval = time.Millisecond * 250
 )
 
