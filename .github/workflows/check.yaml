@@ -73,6 +73,7 @@ jobs:
           kind create cluster --retain -v 100
           echo "HEREEEE"
           kubectl get pod
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
           make helm-kind-install
           YTSAURUS_ENABLE_E2E_TESTS=true make test
 
