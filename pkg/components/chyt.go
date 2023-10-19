@@ -104,12 +104,14 @@ func (c *Chyt) createInitChPublicScript() string {
 	script := []string{
 		initJobPrologue,
 		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v", c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole), c.cfgen.GetStrawberryControllerServiceAddress()),
+		"yt create scheduler_pool --attributes '{name=chyt; pool_tree=default}' --ignore-existing",
 		"yt clickhouse ctl create ch_public || true",
+		"yt clickhouse ctl set-option --alias ch_public pool chyt",
 		"yt clickhouse ctl set-option --alias ch_public enable_geodata '%false'",
 		"yt clickhouse ctl set-option --alias ch_public instance_cpu 1",
 		"yt clickhouse ctl set-option --alias ch_public instance_memory '{reader=100000000;chunk_meta_cache=100000000;compressed_cache=100000000;clickhouse=100000000;clickhouse_watermark=10;footprint=500000000;log_tailer=100000000;watchdog_oom_watermark=0;watchdog_oom_window_watermark=0}'",
 		"yt clickhouse ctl set-option --alias ch_public instance_count 1",
-		"yt clickhouse ctl start ch_public --untracked",
+		"yt clickhouse ctl start ch_public",
 	}
 
 	return strings.Join(script, "\n")
