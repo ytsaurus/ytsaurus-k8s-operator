@@ -48,7 +48,13 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component
 	)
 
 	initJob := NewInitJob(
-		&l,
+		&labeller.Labeller{
+			ObjectMeta:     &resource.ObjectMeta,
+			APIProxy:       ytsaurus.APIProxy(),
+			ComponentLabel: consts.YTComponentLabelInitJob,
+			ComponentName:  "MasterInitJob",
+			Annotations:    resource.Spec.ExtraPodAnnotations,
+		},
 		ytsaurus.APIProxy(),
 		ytsaurus,
 		resource.Spec.ImagePullSecrets,
