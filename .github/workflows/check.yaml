@@ -75,6 +75,11 @@ jobs:
           kubectl get pod
           kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
           make helm-kind-install
+          docker pull ytsaurus/ytsaurus-nightly:dev-864e613b6261e2458fbee05f1a440d4b277c9ee6
+          kind load docker-image ytsaurus/ytsaurus-nightly:dev-864e613b6261e2458fbee05f1a440d4b277c9ee6
+          docker pull ytsaurus/ytsaurus-nightly:dev-4526e114f0d15afdd3b7448f65e49abdfb084de9
+          kind load docker-image ytsaurus/ytsaurus-nightly:dev-4526e114f0d15afdd3b7448f65e49abdfb084de9
+
           YTSAURUS_ENABLE_E2E_TESTS=true make test
 
       - name: Docker Hub login
