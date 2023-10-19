@@ -73,6 +73,7 @@ jobs:
           kind create cluster --retain -v 100
           echo "HEREEEE"
           kubectl get pod
+          make helm-kind-install
           YTSAURUS_ENABLE_E2E_TESTS=true make test
 
       - name: Docker Hub login
