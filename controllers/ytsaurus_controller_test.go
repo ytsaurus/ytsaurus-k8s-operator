@@ -91,7 +91,7 @@ func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
 	}, timeout, interval).Should(BeTrue())
 
 	By("Check pods are running")
-	for _, podName := range []string{"ds-0", "ms-0", "hp-default-0", "dnd-0", "end-0"} {
+	for _, podName := range []string{"ds-0", "ms-0", "hp-0", "dnd-0", "end-0"} {
 		Eventually(func() bool {
 			pod := &corev1.Pod{}
 			err := k8sClient.Get(ctx, types.NamespacedName{Name: podName, Namespace: namespace}, pod)
