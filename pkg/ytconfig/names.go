@@ -83,15 +83,15 @@ func (g *Generator) GetStrawberryControllerHeadlessServiceName() string {
 }
 
 func (g *Generator) GetHTTPProxiesServiceName(role string) string {
-	return g.getName(fmt.Sprintf("%s-lb", g.FormatComponentStringWithDefault("http-proxies", role)))
+	return g.getName(fmt.Sprintf("%s-lb", g.FormatProxyStringWithDefault("http-proxies", role)))
 }
 
 func (g *Generator) GetHTTPProxiesHeadlessServiceName(role string) string {
-	return g.getName(g.FormatComponentStringWithDefault("http-proxies", role))
+	return g.getName(g.FormatProxyStringWithDefault("http-proxies", role))
 }
 
 func (g *Generator) GetHTTPProxiesStatefulSetName(role string) string {
-	return g.getName(g.FormatComponentStringWithDefault("hp", role))
+	return g.getName(g.FormatProxyStringWithDefault("hp", role))
 }
 
 func (g *Generator) GetHTTPProxiesAddress(role string) string {
@@ -110,15 +110,15 @@ func (g *Generator) GetSchedulerServiceName() string {
 }
 
 func (g *Generator) GetRPCProxiesStatefulSetName(role string) string {
-	return g.getName(g.FormatComponentStringWithDefault("rp", role))
+	return g.getName(g.FormatProxyStringWithDefault("rp", role))
 }
 
 func (g *Generator) GetRPCProxiesServiceName(role string) string {
-	return g.getName(fmt.Sprintf("%s-lb", g.FormatComponentStringWithDefault("rpc-proxies", role)))
+	return g.getName(fmt.Sprintf("%s-lb", g.FormatProxyStringWithDefault("rpc-proxies", role)))
 }
 
 func (g *Generator) GetRPCProxiesHeadlessServiceName(role string) string {
-	return g.getName(g.FormatComponentStringWithDefault("rpc-proxies", role))
+	return g.getName(g.FormatProxyStringWithDefault("rpc-proxies", role))
 }
 
 func (g *Generator) GetTCPProxiesStatefulSetName(role string) string {
@@ -163,6 +163,10 @@ func (g *Generator) GetTabletNodesStatefulSetName(name string) string {
 
 func (g *Generator) GetTabletNodesServiceName(name string) string {
 	return g.getName(g.FormatComponentStringWithDefault("tablet-nodes", name))
+}
+
+func (g *Generator) FormatProxyStringWithDefault(base string, name string) string {
+    return fmt.Sprintf("%s-%s", base, name)
 }
 
 func (g *Generator) FormatComponentStringWithDefault(base string, name string) string {

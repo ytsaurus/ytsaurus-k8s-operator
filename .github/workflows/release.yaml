@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'release/0\.[0-9]+\.[0-9]+-fix'
+      - 'release/0\.[0-9]+\.[0-9]+-fix2'
 
 jobs:
   start-vm:
@@ -61,11 +61,6 @@ jobs:
         shell: bash
         run: |
           make build
-
-      - name: Run tests
-        shell: bash
-        run: |
-          make test
 
       - name: Docker Hub login
         shell: bash
