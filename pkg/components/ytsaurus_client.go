@@ -183,6 +183,16 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionHasPossibility) &&
 			!yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
 
+			if !yc.ytsaurus.GetResource().Spec.EnableFullUpdate {
+				yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+					Type:    consts.ConditionNoPossibility,
+					Status:  metav1.ConditionTrue,
+					Reason:  "Update",
+					Message: "Full update is not enabled",
+				})
+				return SimpleStatus(SyncStatusUpdating), nil
+			}
+
 			// Check tablet cell bundles.
 			notGoodBundles, err := GetNotGoodTabletCellBundles(ctx, yc.ytClient)
 
