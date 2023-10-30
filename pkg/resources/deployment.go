@@ -53,7 +53,7 @@ func (d *Deployment) Build() *appsv1.Deployment {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      d.labeller.GetMetaLabelMap(),
+					Labels:      d.labeller.GetMetaLabelMap(false),
 					Annotations: d.ytsaurus.GetResource().Spec.ExtraPodAnnotations,
 				},
 				Spec: corev1.PodSpec{
@@ -71,6 +71,10 @@ func (d *Deployment) NeedSync(replicas int32) bool {
 	return d.oldObject.Spec.Replicas == nil ||
 		*d.oldObject.Spec.Replicas != replicas ||
 		len(d.oldObject.Spec.Template.Spec.Containers) != 1
+}
+
+func (d *Deployment) ArePodsRemoved(ctx context.Context) bool {
+	return d.oldObject.Status.AvailableReplicas == 0 && d.oldObject.Status.Replicas == 0
 }
 
 func (d *Deployment) ArePodsReady(ctx context.Context) bool {
@@ -94,8 +98,8 @@ func (d *Deployment) ArePodsReady(ctx context.Context) bool {
 	if d.oldObject.Status.AvailableReplicas != d.oldObject.Status.Replicas {
 		logger.Info("total number of pods is not equal to number of running ones yet",
 			"deployment", d.name,
-			"totalNumberOfPods", *d.oldObject.Spec.Replicas,
-			"numberOfRunningPods", d.oldObject.Status.Replicas,
+			"totalNumberOfPods", d.oldObject.Status.Replicas,
+			"numberOfRunningPods", d.oldObject.Status.AvailableReplicas,
 		)
 		return false
 	}

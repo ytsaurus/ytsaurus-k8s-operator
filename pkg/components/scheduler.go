@@ -119,7 +119,7 @@ func (s *scheduler) Sync(ctx context.Context) error {
 func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if s.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && s.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(s.ytsaurus.GetClusterState()) && s.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
@@ -145,13 +145,13 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	if s.master.Status(ctx).SyncStatus != SyncStatusReady {
+	if !IsRunningStatus(s.master.Status(ctx).SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, s.master.GetName()), err
 	}
 
 	if s.execNodes == nil || len(s.execNodes) > 0 {
 		for _, end := range s.execNodes {
-			if end.Status(ctx).SyncStatus != SyncStatusReady {
+			if !IsRunningStatus(end.Status(ctx).SyncStatus) {
 				// It makes no sense to start scheduler without exec nodes.
 				return WaitingStatus(SyncStatusBlocked, end.GetName()), err
 			}
@@ -171,7 +171,6 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 
 	if s.server.needSync() {
 		if !dry {
-			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = s.server.Sync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err
@@ -186,8 +185,12 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return SimpleStatus(SyncStatusReady), err
 	}
 
+	return s.initOpAchieve(ctx, dry)
+}
+
+func (s *scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatus, error) {
 	if !dry {
-		s.initUser.SetInitScript(s.createInitScript())
+		s.initUser.SetInitScript(s.createInitUserScript())
 	}
 
 	status, err := s.initUser.Sync(ctx, dry)
@@ -196,7 +199,7 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	for _, tnd := range s.tabletNodes {
-		if tnd.Status(ctx).SyncStatus != SyncStatusReady {
+		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
 			// Wait for tablet nodes to proceed with operations archive init.
 			return WaitingStatus(SyncStatusBlocked, tnd.GetName()), err
 		}
@@ -267,7 +270,7 @@ func (s *scheduler) setConditionOpArchiveUpdated() {
 	})
 }
 
-func (s *scheduler) createInitScript() string {
+func (s *scheduler) createInitUserScript() string {
 	token, _ := s.secret.GetValue(consts.TokenSecretKey)
 	commands := createUserCommand("operation_archivarius", "", token, true)
 	script := []string{

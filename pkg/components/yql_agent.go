@@ -117,7 +117,7 @@ func (yqla *yqlAgent) createInitScript() string {
 func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && yqla.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(yqla.ytsaurus.GetClusterState()) && yqla.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
@@ -127,7 +127,7 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		}
 	}
 
-	if yqla.master.Status(ctx).SyncStatus != SyncStatusReady {
+	if !IsRunningStatus(yqla.master.Status(ctx).SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, yqla.master.GetName()), err
 	}
 

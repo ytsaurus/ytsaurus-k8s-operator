@@ -91,7 +91,7 @@ func (fs *FakeServer) needSync() bool {
 	return false
 }
 
-func (fs *FakeServer) arePodsRemoved() bool {
+func (fs *FakeServer) arePodsRemoved(ctx context.Context) bool {
 	return true
 }
 

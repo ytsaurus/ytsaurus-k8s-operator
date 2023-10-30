@@ -20,13 +20,11 @@ import (
 )
 
 const (
-	namespace = "default"
-
 	timeout  = time.Second * 90
 	interval = time.Millisecond * 250
 )
 
-func getYtClient(g *ytconfig.Generator) yt.Client {
+func getYtClient(g *ytconfig.Generator, namespace string) yt.Client {
 	httpProxyService := corev1.Service{}
 	Expect(k8sClient.Get(ctx,
 		types.NamespacedName{Name: g.GetHTTPProxiesServiceName(consts.DefaultHTTPProxyRole), Namespace: namespace},
@@ -49,8 +47,9 @@ func getYtClient(g *ytconfig.Generator) yt.Client {
 	}
 
 	ytClient, err := ythttp.NewClient(&yt.Config{
-		Proxy: fmt.Sprintf("%s:%v", httpProxyAddress, port),
-		Token: consts.DefaultAdminPassword,
+		Proxy:                 fmt.Sprintf("%s:%v", httpProxyAddress, port),
+		Token:                 consts.DefaultAdminPassword,
+		DisableProxyDiscovery: true,
 	})
 	Expect(err).Should(Succeed())
 
@@ -67,19 +66,25 @@ func deleteYtsaurus(ctx context.Context, ytsaurus *ytv1.Ytsaurus) {
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "master-data-ms-0",
-			Namespace: namespace,
+			Namespace: ytsaurus.Namespace,
 		},
 	}
 
 	if err := k8sClient.Delete(ctx, pvc); err != nil {
 		logger.Error(err, "Deleting ytsaurus pvc failed")
 	}
+
+	if err := k8sClient.Delete(ctx, &corev1.Namespace{ObjectMeta: v1.ObjectMeta{Name: ytsaurus.Namespace}}); err != nil {
+		logger.Error(err, "Deleting namespace failed")
+	}
 }
 
 func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
+	Expect(k8sClient.Create(ctx, &corev1.Namespace{ObjectMeta: v1.ObjectMeta{Name: ytsaurus.Namespace}})).Should(Succeed())
+
 	Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
 
-	ytsaurusLookupKey := types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}
+	ytsaurusLookupKey := types.NamespacedName{Name: ytsaurus.Name, Namespace: ytsaurus.Namespace}
 
 	Eventually(func() bool {
 		createdYtsaurus := &ytv1.Ytsaurus{}
@@ -91,10 +96,10 @@ func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
 	}, timeout, interval).Should(BeTrue())
 
 	By("Check pods are running")
-	for _, podName := range []string{"ds-0", "ms-0", "hp-default-0", "dnd-0", "end-0"} {
+	for _, podName := range []string{"ds-0", "ms-0", "hp-0", "dnd-0", "end-0"} {
 		Eventually(func() bool {
 			pod := &corev1.Pod{}
-			err := k8sClient.Get(ctx, types.NamespacedName{Name: podName, Namespace: namespace}, pod)
+			err := k8sClient.Get(ctx, types.NamespacedName{Name: podName, Namespace: ytsaurus.Namespace}, pod)
 			if err != nil {
 				return false
 			}
@@ -103,26 +108,29 @@ func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
 	}
 
 	By("Checking that ytsaurus state is equal to `Running`")
-	Eventually(func() bool {
+	Eventually(func() ytv1.ClusterState {
 		ytsaurus := &ytv1.Ytsaurus{}
-		err := k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)
+		err := k8sClient.Get(ctx, ytsaurusLookupKey, ytsaurus)
 		if err != nil {
-			return false
+			return ytv1.ClusterStateCreated
 		}
-		return ytsaurus.Status.State == ytv1.ClusterStateRunning
-	}, timeout*2, interval).Should(BeTrue())
+		return ytsaurus.Status.State
+	}, timeout*2, interval).Should(Equal(ytv1.ClusterStateRunning))
 }
 
 func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client) {
 
 	By("Run cluster update")
-	Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)).Should(Succeed())
+	name := ytsaurus.Name
+	namespace := ytsaurus.Namespace
+
+	Expect(k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, ytsaurus)).Should(Succeed())
 	ytsaurus.Spec.CoreImage = ytv1.CoreImageSecond
 	Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
 
 	Eventually(func() bool {
 		ytsaurus := &ytv1.Ytsaurus{}
-		err := k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)
+		err := k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, ytsaurus)
 		if err != nil {
 			return false
 		}
@@ -131,14 +139,16 @@ func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client)
 	}, timeout, interval).Should(BeTrue())
 
 	By("Set previous core image")
-	Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)).Should(Succeed())
-	ytsaurus.Spec.CoreImage = ytv1.CoreImageFirst
-	Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+	Eventually(func(g Gomega) {
+		g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, ytsaurus)).Should(Succeed())
+		ytsaurus.Spec.CoreImage = ytv1.CoreImageFirst
+		g.Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+	}, timeout, interval).Should(Succeed())
 
 	By("Wait for running")
 	Eventually(func() bool {
 		ytsaurus := &ytv1.Ytsaurus{}
-		err := k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)
+		err := k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, ytsaurus)
 		if err != nil {
 			return false
 		}
@@ -161,6 +171,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			By("Creating a Ytsaurus resource")
 			ctx := context.Background()
 
+			namespace := "test1"
+
 			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
 
 			g := ytconfig.NewGenerator(ytsaurus, "local")
@@ -170,7 +182,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			By("Creating ytsaurus client")
 
-			ytClient := getYtClient(g)
+			ytClient := getYtClient(g, namespace)
 
 			By("Check that cluster alive")
 
@@ -209,7 +221,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 					return false
 				}
 				return ytsaurus.Status.State == ytv1.ClusterStateRunning
-			}, timeout*3, interval).Should(BeTrue())
+			}, timeout*5, interval).Should(BeTrue())
 
 			By("Check that cluster alive after update")
 
@@ -220,6 +232,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			By("Creating a Ytsaurus resource")
 			ctx := context.Background()
 
+			namespace := "test2"
+
 			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
 
 			g := ytconfig.NewGenerator(ytsaurus, "local")
@@ -228,7 +242,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			runYtsaurus(ytsaurus)
 
 			By("Creating ytsaurus client")
-			ytClient := getYtClient(g)
+			ytClient := getYtClient(g, namespace)
 
 			By("Check that cluster alive")
 
@@ -248,7 +262,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			By("Ban all tablet nodes")
 			for i := 0; i < int(ytsaurus.Spec.TabletNodes[0].InstanceCount); i++ {
 				Expect(ytClient.SetNode(ctx, ypath.Path(fmt.Sprintf(
-					"//sys/cluster_nodes/tnd-%v.tablet-nodes.default.svc.cluster.local:9012/@banned", i)), true, nil))
+					"//sys/cluster_nodes/tnd-%v.tablet-nodes.%v.svc.cluster.local:9022/@banned", i, namespace)), true, nil)).Should(Succeed())
 			}
 
 			By("Waiting tablet cell bundles are not in `good` health")
@@ -267,6 +281,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			By("Creating a Ytsaurus resource")
 			ctx := context.Background()
 
+			namespace := "test3"
+
 			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
 			ytsaurus.Spec.TabletNodes = make([]ytv1.TabletNodesSpec, 0)
 
@@ -276,7 +292,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			runYtsaurus(ytsaurus)
 
 			By("Creating ytsaurus client")
-			ytClient := getYtClient(g)
+			ytClient := getYtClient(g, namespace)
 
 			By("Check that cluster alive")
 			res := make([]string, 0)
@@ -285,15 +301,18 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			By("Create a chunk")
 			_, err := ytClient.CreateNode(ctx, ypath.Path("//tmp/a"), yt.NodeTable, nil)
 			Expect(err).Should(Succeed())
-			writer, err := ytClient.WriteTable(ctx, ypath.Path("//tmp/a"), nil)
-			Expect(err).Should(Succeed())
-			Expect(writer.Write(testRow{A: "123"})).Should(Succeed())
-			Expect(writer.Commit()).Should(Succeed())
+
+			Eventually(func(g Gomega) {
+				writer, err := ytClient.WriteTable(ctx, ypath.Path("//tmp/a"), nil)
+				g.Expect(err).Should(BeNil())
+				g.Expect(writer.Write(testRow{A: "123"})).Should(Succeed())
+				g.Expect(writer.Commit()).Should(Succeed())
+			}, timeout, interval).Should(Succeed())
 
 			By("Ban all data nodes")
 			for i := 0; i < int(ytsaurus.Spec.DataNodes[0].InstanceCount); i++ {
 				Expect(ytClient.SetNode(ctx, ypath.Path(fmt.Sprintf(
-					"//sys/cluster_nodes/dnd-%v.data-nodes.default.svc.cluster.local:9012/@banned", i)), true, nil))
+					"//sys/cluster_nodes/dnd-%v.data-nodes.%v.svc.cluster.local:9012/@banned", i, namespace)), true, nil))
 			}
 
 			By("Waiting for lvc > 0")

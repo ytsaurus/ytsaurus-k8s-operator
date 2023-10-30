@@ -95,7 +95,7 @@ func (hp *httpProxy) Fetch(ctx context.Context) error {
 func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && hp.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(hp.ytsaurus.GetClusterState()) && hp.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
@@ -105,7 +105,7 @@ func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 		}
 	}
 
-	if !(hp.master.Status(ctx).SyncStatus == SyncStatusReady) {
+	if !IsRunningStatus(hp.master.Status(ctx).SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, hp.master.GetName()), err
 	}
 

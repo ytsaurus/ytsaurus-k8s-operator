@@ -48,18 +48,31 @@ func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Name:        name,
 		Namespace:   l.ObjectMeta.Namespace,
-		Labels:      l.GetMetaLabelMap(),
+		Labels:      l.GetMetaLabelMap(false),
 		Annotations: l.Annotations,
 	}
 }
 
-func (l *Labeller) GetYTLabelValue() string {
-	return fmt.Sprintf("%s-%s", l.ObjectMeta.Name, l.ComponentLabel)
+func (l *Labeller) GetInitJobObjectMeta() metav1.ObjectMeta {
+	return metav1.ObjectMeta{
+		Name:        "ytsaurus-init",
+		Namespace:   l.ObjectMeta.Namespace,
+		Labels:      l.GetMetaLabelMap(true),
+		Annotations: l.Annotations,
+	}
+}
+
+func (l *Labeller) GetYTLabelValue(isInitJob bool) string {
+	result := fmt.Sprintf("%s-%s", l.ObjectMeta.Name, l.ComponentLabel)
+	if isInitJob {
+		result = fmt.Sprintf("%s-%s", result, "init-job")
+	}
+	return result
 }
 
 func (l *Labeller) GetSelectorLabelMap() map[string]string {
 	return map[string]string{
-		consts.YTComponentLabelName: l.GetYTLabelValue(),
+		consts.YTComponentLabelName: l.GetYTLabelValue(false),
 	}
 }
 
@@ -70,18 +83,18 @@ func (l *Labeller) GetListOptions() []client.ListOption {
 	}
 }
 
-func (l *Labeller) GetMetaLabelMap() map[string]string {
+func (l *Labeller) GetMetaLabelMap(isInitJob bool) map[string]string {
 	return map[string]string{
 		"app.kubernetes.io/name":       "Ytsaurus",
 		"app.kubernetes.io/instance":   l.ObjectMeta.Name,
 		"app.kubernetes.io/component":  l.ComponentLabel,
 		"app.kubernetes.io/managed-by": "Ytsaurus-k8s-operator",
-		consts.YTComponentLabelName:    l.GetYTLabelValue(),
+		consts.YTComponentLabelName:    l.GetYTLabelValue(isInitJob),
 	}
 }
 
 func (l *Labeller) GetMonitoringMetaLabelMap() map[string]string {
-	labels := l.GetMetaLabelMap()
+	labels := l.GetMetaLabelMap(false)
 
 	labels[consts.YTMetricsLabelName] = "true"
 

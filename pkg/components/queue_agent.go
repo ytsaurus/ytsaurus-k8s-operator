@@ -105,7 +105,7 @@ func (qa *queueAgent) Fetch(ctx context.Context) error {
 func (qa *queueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && qa.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(qa.ytsaurus.GetClusterState()) && qa.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
@@ -115,7 +115,7 @@ func (qa *queueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		}
 	}
 
-	if qa.master.Status(ctx).SyncStatus != SyncStatusReady {
+	if !IsRunningStatus(qa.master.Status(ctx).SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, qa.master.GetName()), err
 	}
 
@@ -124,7 +124,7 @@ func (qa *queueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return WaitingStatus(SyncStatusBlocked, "tablet nodes"), fmt.Errorf("cannot initialize queue agent without tablet nodes")
 	}
 	for _, tnd := range qa.tabletNodes {
-		if tnd.Status(ctx).SyncStatus != SyncStatusReady {
+		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
 			return WaitingStatus(SyncStatusBlocked, tnd.GetName()), err
 		}
 	}

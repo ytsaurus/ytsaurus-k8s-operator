@@ -457,6 +457,10 @@ const (
 	ClusterStateCancelUpdate    ClusterState = "CancelUpdate"
 )
 
+func IsReadyToUpdateClusterState(clusterState ClusterState) bool {
+	return clusterState == ClusterStateRunning
+}
+
 type UpdateState string
 
 const (

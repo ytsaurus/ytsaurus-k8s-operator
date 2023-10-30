@@ -9,7 +9,7 @@ import (
 // TODO: move to Updatable
 type podsManager interface {
 	removePods(ctx context.Context) error
-	arePodsRemoved() bool
+	arePodsRemoved(ctx context.Context) bool
 	arePodsReady(ctx context.Context) bool
 	podsImageCorrespondsToSpec() bool
 }
@@ -24,7 +24,7 @@ func removePods(ctx context.Context, manager podsManager, c *componentBase) erro
 		return nil
 	}
 
-	if !manager.arePodsRemoved() {
+	if !manager.arePodsRemoved(ctx) {
 		return nil
 	}
 

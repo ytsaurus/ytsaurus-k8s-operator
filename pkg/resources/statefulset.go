@@ -54,7 +54,7 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      s.labeller.GetMetaLabelMap(),
+					Labels:      s.labeller.GetMetaLabelMap(false),
 					Annotations: s.ytsaurus.GetResource().Spec.ExtraPodAnnotations,
 				},
 			},
@@ -65,17 +65,37 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 	return &s.newObject
 }
 
-func (s *StatefulSet) ArePodsReady(ctx context.Context, minReadyInstanceCount *int) bool {
+func (s *StatefulSet) getPods(ctx context.Context) *corev1.PodList {
 	logger := log.FromContext(ctx)
 	podList := &corev1.PodList{}
 	err := s.ytsaurus.APIProxy().ListObjects(ctx, podList, s.labeller.GetListOptions()...)
 	if err != nil {
 		logger.Error(err, "unable to list pods for component", "component", s.labeller.ComponentName)
-		return false
+		return nil
 	}
 
-	if len(podList.Items) == 0 {
-		logger.Info("no pods found for component", "component", s.labeller.ComponentName)
+	return podList
+}
+
+func (s *StatefulSet) ArePodsRemoved(ctx context.Context) bool {
+	logger := log.FromContext(ctx)
+
+	podList := s.getPods(ctx)
+	if podList == nil {
+		return false
+	}
+	podsCount := len(podList.Items)
+	if podsCount != 0 {
+		logger.Info("there are pods", "podsCount", podsCount, "component", s.labeller.ComponentName)
+		return false
+	}
+	return true
+}
+
+func (s *StatefulSet) ArePodsReady(ctx context.Context, minReadyInstanceCount *int) bool {
+	logger := log.FromContext(ctx)
+	podList := s.getPods(ctx)
+	if podList == nil {
 		return false
 	}
 

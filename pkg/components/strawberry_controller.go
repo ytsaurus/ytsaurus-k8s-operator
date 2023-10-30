@@ -213,7 +213,7 @@ func (c *strawberryController) syncComponents(ctx context.Context) (err error) {
 func (c *strawberryController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && c.microservice.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(c.ytsaurus.GetClusterState()) && c.microservice.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
@@ -234,16 +234,16 @@ func (c *strawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		}
 	}
 
-	if c.master.Status(ctx).SyncStatus != SyncStatusReady {
+	if !IsRunningStatus(c.master.Status(ctx).SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, c.master.GetName()), err
 	}
 
-	if c.scheduler.Status(ctx).SyncStatus != SyncStatusReady {
+	if !IsRunningStatus(c.scheduler.Status(ctx).SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, c.scheduler.GetName()), err
 	}
 
 	for _, dataNode := range c.dataNodes {
-		if dataNode.Status(ctx).SyncStatus != SyncStatusReady {
+		if !IsRunningStatus(dataNode.Status(ctx).SyncStatus) {
 			return WaitingStatus(SyncStatusBlocked, dataNode.GetName()), err
 		}
 	}
@@ -277,7 +277,6 @@ func (c *strawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 
 	if c.microservice.needSync() {
 		if !dry {
-			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = c.syncComponents(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err

@@ -20,6 +20,10 @@ const (
 	SyncStatusUpdating        SyncStatus = "Updating"
 )
 
+func IsRunningStatus(status SyncStatus) bool {
+	return status == SyncStatusReady || status == SyncStatusNeedLocalUpdate || status == SyncStatusNeedFullUpdate
+}
+
 type ComponentStatus struct {
 	SyncStatus SyncStatus
 	Message    string

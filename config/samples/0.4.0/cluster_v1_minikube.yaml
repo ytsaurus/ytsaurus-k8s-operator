@@ -3,7 +3,7 @@ kind: Ytsaurus
 metadata:
   name: minisaurus
 spec:
-  coreImage: ytsaurus/ytsaurus:stable-23.1.0-relwithdebinfo
+  coreImage: ytsaurus/ytsaurus:stable-23.1.0-relwithdebinfo-copy
 
   discovery:
     instanceCount: 1
@@ -27,6 +27,17 @@ spec:
       - name: error
         minLogLevel: error
         writerType: stderr
+
+  tabletNodes:
+    - instanceCount: 3
+
+  queryTrackers:
+    instanceCount: 1
+    image: ytsaurus/query-tracker-nightly:dev-66906-ce55146bc191ec5c82efcde5d6e0d592fc0ec50a-relwithdebinfo
+
+  yqlAgents:
+    instanceCount: 1
+    image: ytsaurus/query-tracker-nightly:dev-66906-ce55146bc191ec5c82efcde5d6e0d592fc0ec50a-relwithdebinfo
 
   primaryMasters:
     instanceCount: 1

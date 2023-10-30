@@ -319,6 +319,18 @@ func (r *Ytsaurus) validateChyt(old *runtime.Object) field.ErrorList {
 	return allErrors
 }
 
+func (r *Ytsaurus) validateStrawberry(old *runtime.Object) field.ErrorList {
+	var allErrors field.ErrorList
+
+	if r.Spec.StrawberryController != nil {
+		if r.Spec.Schedulers == nil {
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"), "schedulers are required for strawberry"))
+		}
+	}
+
+	return allErrors
+}
+
 func (r *Ytsaurus) validateQueryTrackers(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
@@ -430,6 +442,7 @@ func (r *Ytsaurus) validateYtsaurus(old *runtime.Object) field.ErrorList {
 	allErrors = append(allErrors, r.validateControllerAgents(old)...)
 	allErrors = append(allErrors, r.validateTabletNodes(old)...)
 	allErrors = append(allErrors, r.validateChyt(old)...)
+	allErrors = append(allErrors, r.validateStrawberry(old)...)
 	allErrors = append(allErrors, r.validateQueryTrackers(old)...)
 	allErrors = append(allErrors, r.validateQueueAgents(old)...)
 	allErrors = append(allErrors, r.validateSpyt(old)...)

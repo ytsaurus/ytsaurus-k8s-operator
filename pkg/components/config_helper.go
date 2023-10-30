@@ -182,15 +182,16 @@ func (h *ConfigHelper) NeedReload() (bool, error) {
 	return false, nil
 }
 
-func (h *ConfigHelper) NeedSync() bool {
+func (h *ConfigHelper) NeedInit() bool {
 	if !resources.Exists(h.configMap) {
 		return true
 	}
-	needReload, err := h.NeedReload()
+	return false
+	/*needReload, err := h.NeedReload()
 	if err != nil {
 		return false
 	}
-	return needReload
+	return needReload*/
 }
 
 func (h *ConfigHelper) Build() *corev1.ConfigMap {
@@ -211,7 +212,11 @@ func (h *ConfigHelper) Build() *corev1.ConfigMap {
 }
 
 func (h *ConfigHelper) Sync(ctx context.Context) error {
-	if !h.NeedSync() {
+	needReload, err := h.NeedReload()
+	if err != nil {
+		needReload = false
+	}
+	if !h.NeedInit() && !needReload {
 		return nil
 	}
 

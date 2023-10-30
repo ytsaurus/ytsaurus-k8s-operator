@@ -255,7 +255,7 @@ func (g *Generator) getSchedulerConfigImpl() (SchedulerServer, error) {
 		return SchedulerServer{}, err
 	}
 
-	if g.ytsaurus.Spec.TabletNodes == nil {
+	if g.ytsaurus.Spec.TabletNodes == nil || len(g.ytsaurus.Spec.TabletNodes) == 0 {
 		c.Scheduler.OperationsCleaner.EnableOperationArchivation = ptr.Bool(false)
 	}
 	g.fillCommonService(&c.CommonServer)

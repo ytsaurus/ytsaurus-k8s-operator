@@ -21,6 +21,7 @@ type ComponentManager struct {
 
 type ComponentManagerStatus struct {
 	needSync           bool
+	needInit           bool
 	needFullUpdate     bool
 	needLocalUpdate    []components.Component
 	allReadyOrUpdating bool
@@ -131,6 +132,7 @@ func NewComponentManager(
 	var notReadyComponents []string
 
 	status := ComponentManagerStatus{
+		needInit:           false,
 		needSync:           false,
 		needFullUpdate:     false,
 		needLocalUpdate:    nil,
@@ -156,6 +158,10 @@ func NewComponentManager(
 				status.needLocalUpdate = make([]components.Component, 0)
 			}
 			status.needLocalUpdate = append(status.needLocalUpdate, c)
+		}
+
+		if !components.IsRunningStatus(syncStatus) {
+			status.needInit = true
 		}
 
 		if syncStatus != components.SyncStatusReady && syncStatus != components.SyncStatusUpdating {
@@ -219,6 +225,10 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 
 func (cm *ComponentManager) needSync() bool {
 	return cm.status.needSync
+}
+
+func (cm *ComponentManager) needInit() bool {
+	return cm.status.needInit
 }
 
 func (cm *ComponentManager) needFullUpdate() bool {

@@ -103,7 +103,7 @@ func (qt *queryTracker) Fetch(ctx context.Context) error {
 func (qt *queryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && qt.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(qt.ytsaurus.GetClusterState()) && qt.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
@@ -141,7 +141,6 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 
 	if qt.server.needSync() {
 		if !dry {
-			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = qt.server.Sync(ctx)
 		}
 
@@ -156,8 +155,9 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	if qt.tabletNodes == nil || len(qt.tabletNodes) == 0 {
 		return WaitingStatus(SyncStatusBlocked, "tablet nodes"), fmt.Errorf("cannot initialize query tracker without tablet nodes")
 	}
+
 	for _, tnd := range qt.tabletNodes {
-		if tnd.Status(ctx).SyncStatus != SyncStatusReady {
+		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
 			return WaitingStatus(SyncStatusBlocked, "tablet nodes"), err
 		}
 	}

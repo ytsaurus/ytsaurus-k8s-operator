@@ -61,7 +61,7 @@ func (ca *controllerAgent) Fetch(ctx context.Context) error {
 func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && ca.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(ca.ytsaurus.GetClusterState()) && ca.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
@@ -71,13 +71,12 @@ func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 		}
 	}
 
-	if ca.master.Status(ctx).SyncStatus != SyncStatusReady {
+	if !IsRunningStatus(ca.master.Status(ctx).SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, ca.master.GetName()), err
 	}
 
 	if ca.server.needSync() {
 		if !dry {
-			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = ca.server.Sync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err

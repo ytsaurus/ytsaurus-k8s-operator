@@ -17,5 +17,4 @@ const (
 	YTComponentLabelUI              string = "yt-ui"
 	YTComponentLabelYqlAgent        string = "yt-yql-agent"
 	YTComponentLabelClient          string = "yt-client"
-	YTComponentLabelInitJob         string = "yt-init-job"
 )

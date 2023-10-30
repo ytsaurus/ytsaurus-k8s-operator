@@ -246,7 +246,7 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		}
 	}
 
-	if u.master.Status(ctx).SyncStatus != SyncStatusReady {
+	if !IsRunningStatus(u.master.Status(ctx).SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, u.master.GetName()), err
 	}
 

@@ -80,7 +80,7 @@ func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	var err error
 	logger := log.FromContext(ctx)
 
-	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && tn.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(tn.ytsaurus.GetClusterState()) && tn.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedFullUpdate), err
 	}
 
@@ -92,7 +92,6 @@ func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 
 	if tn.server.needSync() {
 		if !dry {
-			// TODO(psushin): there should be me more sophisticated logic for version updates.
 			err = tn.server.Sync(ctx)
 		}
 

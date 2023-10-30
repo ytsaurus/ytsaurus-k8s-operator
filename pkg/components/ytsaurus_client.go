@@ -509,7 +509,7 @@ func (yc *ytsaurusClient) getToken() string {
 
 func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
-	if !(yc.httpProxy.Status(ctx).SyncStatus == SyncStatusReady) {
+	if !IsRunningStatus(yc.httpProxy.Status(ctx).SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, yc.httpProxy.GetName()), err
 	}
 
@@ -554,6 +554,9 @@ func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 	}
 
 	if yc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if yc.ytsaurus.GetResource().Status.UpdateStatus.State == ytv1.UpdateStateImpossibleToStart {
+			return SimpleStatus(SyncStatusReady), err
+		}
 		if dry {
 			return SimpleStatus(SyncStatusUpdating), err
 		}

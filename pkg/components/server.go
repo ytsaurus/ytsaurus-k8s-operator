@@ -101,7 +101,12 @@ func (s *serverImpl) exists() bool {
 }
 
 func (s *serverImpl) needSync() bool {
-	return s.configHelper.NeedSync() ||
+	needReload, err := s.configHelper.NeedReload()
+	if err != nil {
+		needReload = false
+	}
+	return s.configHelper.NeedInit() ||
+		(s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && needReload) ||
 		!s.exists() ||
 		s.statefulSet.NeedSync(s.instanceSpec.InstanceCount)
 }
@@ -120,12 +125,12 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 	})
 }
 
-func (s *serverImpl) arePodsRemoved() bool {
-	if s.configHelper.NeedSync() || !resources.Exists(s.statefulSet) || !resources.Exists(s.headlessService) {
+func (s *serverImpl) arePodsRemoved(ctx context.Context) bool {
+	if s.configHelper.NeedInit() || !resources.Exists(s.statefulSet) || !resources.Exists(s.headlessService) {
 		return false
 	}
 
-	return !s.statefulSet.NeedSync(0)
+	return s.statefulSet.ArePodsRemoved(ctx)
 }
 
 func (s *serverImpl) podsImageCorrespondsToSpec() bool {

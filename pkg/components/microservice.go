@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	ptr "k8s.io/utils/pointer"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -32,6 +33,7 @@ type microserviceImpl struct {
 	image         string
 	labeller      *labeller.Labeller
 	instanceCount int32
+	ytsaurus      *apiproxy.Ytsaurus
 
 	deployment   *resources.Deployment
 	service      *resources.HTTPService
@@ -53,6 +55,7 @@ func newMicroservice(
 		labeller:      labeller,
 		image:         image,
 		instanceCount: instanceCount,
+		ytsaurus:      ytsaurus,
 		service: resources.NewHTTPService(
 			serviceName,
 			nil,
@@ -92,7 +95,12 @@ func (m *microserviceImpl) Fetch(ctx context.Context) error {
 }
 
 func (m *microserviceImpl) needSync() bool {
-	return m.configHelper.NeedSync() ||
+	needReload, err := m.configHelper.NeedReload()
+	if err != nil {
+		needReload = false
+	}
+	return m.configHelper.NeedInit() ||
+		(m.ytsaurus.GetClusterState() == v1.ClusterStateUpdating && needReload) ||
 		!resources.Exists(m.service) ||
 		m.deployment.NeedSync(m.instanceCount)
 }
@@ -134,12 +142,11 @@ func (m *microserviceImpl) arePodsReady(ctx context.Context) bool {
 	return m.deployment.ArePodsReady(ctx)
 }
 
-func (m *microserviceImpl) arePodsRemoved() bool {
-	if m.configHelper.NeedSync() || !resources.Exists(m.deployment) || !resources.Exists(m.service) {
+func (m *microserviceImpl) arePodsRemoved(ctx context.Context) bool {
+	if m.configHelper.NeedInit() || !resources.Exists(m.deployment) || !resources.Exists(m.service) {
 		return false
 	}
-
-	return !m.deployment.NeedSync(0)
+	return m.deployment.ArePodsRemoved(ctx)
 }
 
 func (m *microserviceImpl) needUpdate() bool {

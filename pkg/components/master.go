@@ -48,13 +48,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component
 	)
 
 	initJob := NewInitJob(
-		&labeller.Labeller{
-			ObjectMeta:     &resource.ObjectMeta,
-			APIProxy:       ytsaurus.APIProxy(),
-			ComponentLabel: consts.YTComponentLabelInitJob,
-			ComponentName:  "MasterInitJob",
-			Annotations:    resource.Spec.ExtraPodAnnotations,
-		},
+		&l,
 		ytsaurus.APIProxy(),
 		ytsaurus,
 		resource.Spec.ImagePullSecrets,
@@ -183,7 +177,7 @@ func (m *master) createInitScript() string {
 func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && m.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(m.ytsaurus.GetClusterState()) && m.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedFullUpdate), err
 	}
 

@@ -85,6 +85,10 @@ func NewInitJob(
 	}
 }
 
+func (j *InitJob) IsCompleted() bool {
+	return j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition)
+}
+
 func (j *InitJob) SetInitScript(script string) {
 	cm := j.configHelper.Build()
 	cm.Data[consts.InitClusterScriptFileName] = script
@@ -97,7 +101,7 @@ func (j *InitJob) Build() *batchv1.Job {
 	var defaultMode int32 = 0500
 	job := j.initJob.Build()
 	job.Spec.Template = corev1.PodTemplateSpec{
-		ObjectMeta: j.componentBase.labeller.GetObjectMeta("ytsaurus-init"),
+		ObjectMeta: j.componentBase.labeller.GetInitJobObjectMeta(),
 		Spec: corev1.PodSpec{
 			ImagePullSecrets: j.imagePullSecrets,
 			Containers: []corev1.Container{

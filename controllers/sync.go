@@ -268,6 +268,11 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			logger.Info("Ytsaurus is running and happy")
 			return ctrl.Result{}, nil
 
+		case componentManager.needInit():
+			logger.Info("Ytsaurus needs initialization of some components")
+			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateReconfiguration)
+			return ctrl.Result{Requeue: true}, err
+
 		case componentManager.needFullUpdate():
 			logger.Info("Ytsaurus needs full update")
 			if !ytsaurus.GetResource().Spec.EnableFullUpdate {
@@ -281,11 +286,6 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			componentNames := getComponentNames(componentManager.needLocalUpdate())
 			logger.Info("Ytsaurus needs local components update", "components", componentNames)
 			err := ytsaurus.SaveUpdatingClusterState(ctx, componentNames)
-			return ctrl.Result{Requeue: true}, err
-
-		case componentManager.needSync():
-			logger.Info("Ytsaurus needs reconfiguration")
-			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateReconfiguration)
 			return ctrl.Result{Requeue: true}, err
 		}
 
@@ -329,7 +329,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		return ctrl.Result{}, err
 
 	case ytv1.ClusterStateReconfiguration:
-		if !componentManager.needSync() {
+		if !componentManager.needInit() {
 			logger.Info("Ytsaurus has reconfigured and is running now")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
 			return ctrl.Result{}, err
