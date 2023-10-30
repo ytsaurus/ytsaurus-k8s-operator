@@ -3,7 +3,7 @@ name: Build and test
 on:
   push:
     branches:
-      - main
+      - nadya73/e2e-tests-2
 
 jobs:
   start-vm:
@@ -67,7 +67,20 @@ jobs:
       - name: Run tests
         shell: bash
         run: |
-          make test
+          [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.19.0/kind-linux-amd64
+          chmod +x ./kind
+          sudo mv ./kind /usr/local/bin/kind
+          kind create cluster --retain -v 100
+          echo "HEREEEE"
+          kubectl get pod
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
+          make helm-kind-install
+          docker pull ytsaurus/ytsaurus-nightly:dev-864e613b6261e2458fbee05f1a440d4b277c9ee6
+          kind load docker-image ytsaurus/ytsaurus-nightly:dev-864e613b6261e2458fbee05f1a440d4b277c9ee6
+          docker pull ytsaurus/ytsaurus-nightly:dev-4526e114f0d15afdd3b7448f65e49abdfb084de9
+          kind load docker-image ytsaurus/ytsaurus-nightly:dev-4526e114f0d15afdd3b7448f65e49abdfb084de9
+
+          YTSAURUS_ENABLE_E2E_TESTS=true make test
 
       - name: Docker Hub login
         run: |
