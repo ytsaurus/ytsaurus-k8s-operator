@@ -90,6 +90,37 @@ spec:
               requests:
                 storage: 5Gi
 
+  execNodes:
+    - instanceCount: 1
+      loggers: *loggers
+      resources:
+        limits:
+          cpu: 1
+          memory: 2Gi
+
+      volumeMounts:
+        - name: node-data
+          mountPath: /yt/node-data
+
+      volumes:
+        - name: node-data
+          emptyDir:
+            sizeLimit: 5Gi
+
+      locations:
+        - locationType: ChunkCache
+          path: /yt/node-data/chunk-cache
+        - locationType: Slots
+          path: /yt/node-data/slots
+
+  schedulers:
+    instanceCount: 1
+    loggers: *loggers
+
+  controllerAgents:
+    instanceCount: 1
+    loggers: *loggers
+
   ui:
     image: ytsaurus/ui:stable
     serviceType: NodePort
