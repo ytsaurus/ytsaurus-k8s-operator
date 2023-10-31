@@ -23,14 +23,14 @@ type YQLAgentServer struct {
 	YQLAgent YQLAgent `yson:"yql_agent"`
 }
 
-func getYQLAgentLogging(spec ytv1.YQLAgentSpec) Logging {
+func getYQLAgentLogging(spec *ytv1.YQLAgentSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"yql-agent",
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultDebugLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
-func getYQLAgentServerCarcass(spec ytv1.YQLAgentSpec) (YQLAgentServer, error) {
+func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	var c YQLAgentServer
 	c.RPCPort = consts.YQLAgentRPCPort
 	c.MonitoringPort = consts.YQLAgentMonitoringPort

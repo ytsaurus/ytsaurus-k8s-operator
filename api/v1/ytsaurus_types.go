@@ -226,6 +226,9 @@ type InstanceSpec struct {
 	Affinity           *corev1.Affinity       `json:"affinity,omitempty"`
 	NodeSelector       map[string]string      `json:"nodeSelector,omitempty"`
 	Tolerations        []corev1.Toleration    `json:"tolerations,omitempty"`
+	// Component config for native RPC bus transport.
+	//+optional
+	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
 }
 
 type MastersSpec struct {
@@ -234,7 +237,7 @@ type MastersSpec struct {
 }
 
 type HTTPTransportSpec struct {
-	// Reference to kubernetes.io/tls secret
+	// Reference to kubernetes.io/tls secret.
 	//+optional
 	HTTPSSecret *corev1.LocalObjectReference `json:"httpsSecret,omitempty"`
 	//+optional
@@ -253,12 +256,18 @@ type HTTPProxiesSpec struct {
 }
 
 type RPCTransportSpec struct {
-	// Reference to kubernetes.io/tls secret
+	// Reference to kubernetes.io/tls secret.
 	//+optional
 	TLSSecret *corev1.LocalObjectReference `json:"tlsSecret,omitempty"`
-	// Require encrypted connections, otherwise only when required by peer
+	// Require encrypted connections, otherwise only when required by peer.
 	//+optional
 	TLSRequired bool `json:"tlsRequired,omitempty"`
+	// Disable TLS certificate verification.
+	//+optional
+	TLSInsecure bool `json:"tlsInsecure,omitempty"`
+	// Define alternative host name for certificate verification.
+	//+optional
+	TLSPeerAlternativeHostName string `json:"tlsPeerAlternativeHostName,omitempty"`
 }
 
 type RPCProxiesSpec struct {
@@ -393,6 +402,14 @@ type YtsaurusSpec struct {
 	AdminCredentials *corev1.LocalObjectReference  `json:"adminCredentials,omitempty"`
 
 	OauthService *OauthServiceSpec `json:"oauthService,omitempty"`
+
+	// Reference to ConfigMap with trusted certificates: "ca.crt".
+	//+optional
+	CABundle *corev1.LocalObjectReference `json:"caBundle,omitempty"`
+
+	// Common config for native RPC bus transport.
+	//+optional
+	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
 
 	//+kubebuilder:default:=true
 	//+optional

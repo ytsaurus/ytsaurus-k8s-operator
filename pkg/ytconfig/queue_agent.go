@@ -15,14 +15,14 @@ type QueueAgentServer struct {
 	QueueAgent QueueAgent `yson:"queue_agent"`
 }
 
-func getQueueAgentLogging(spec ytv1.QueueAgentSpec) Logging {
+func getQueueAgentLogging(spec *ytv1.QueueAgentSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"queue-agent",
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
-func getQueueAgentServerCarcass(spec ytv1.QueueAgentSpec) (QueueAgentServer, error) {
+func getQueueAgentServerCarcass(spec *ytv1.QueueAgentSpec) (QueueAgentServer, error) {
 	var c QueueAgentServer
 	c.RPCPort = consts.QueueAgentRPCPort
 	c.MonitoringPort = consts.QueueAgentMonitoringPort

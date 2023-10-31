@@ -81,6 +81,14 @@ spec:
                         type: object
                     type: object
                 type: object
+              caBundle:
+                description: 'Reference to ConfigMap with trusted certificates: "ca.crt".'
+                properties:
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.'
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
               chyt:
                 properties:
                   image:
@@ -806,6 +814,29 @@ spec:
                     type: array
                   minReadyInstanceCount:
                     type: integer
+                  nativeTransport:
+                    description: Component config for native RPC bus transport.
+                    properties:
+                      tlsInsecure:
+                        description: Disable TLS certificate verification.
+                        type: boolean
+                      tlsPeerAlternativeHostName:
+                        description: Define alternative host name for certificate
+                          verification.
+                        type: string
+                      tlsRequired:
+                        description: Require encrypted connections, otherwise only
+                          when required by peer.
+                        type: boolean
+                      tlsSecret:
+                        description: Reference to kubernetes.io/tls secret.
+                        properties:
+                          name:
+                            description: 'Name of the referent. More info: https://kubernetes.'
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
                   nodeSelector:
                     additionalProperties:
                       type: string
@@ -2956,6 +2987,29 @@ spec:
                       default: default
                       minLength: 1
                       type: string
+                    nativeTransport:
+                      description: Component config for native RPC bus transport.
+                      properties:
+                        tlsInsecure:
+                          description: Disable TLS certificate verification.
+                          type: boolean
+                        tlsPeerAlternativeHostName:
+                          description: Define alternative host name for certificate
+                            verification.
+                          type: string
+                        tlsRequired:
+                          description: Require encrypted connections, otherwise only
+                            when required by peer.
+                          type: boolean
+                        tlsSecret:
+                          description: Reference to kubernetes.io/tls secret.
+                          properties:
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.'
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
                     nodeSelector:
                       additionalProperties:
                         type: string
@@ -5118,6 +5172,29 @@ spec:
                     type: array
                   minReadyInstanceCount:
                     type: integer
+                  nativeTransport:
+                    description: Component config for native RPC bus transport.
+                    properties:
+                      tlsInsecure:
+                        description: Disable TLS certificate verification.
+                        type: boolean
+                      tlsPeerAlternativeHostName:
+                        description: Define alternative host name for certificate
+                          verification.
+                        type: string
+                      tlsRequired:
+                        description: Require encrypted connections, otherwise only
+                          when required by peer.
+                        type: boolean
+                      tlsSecret:
+                        description: Reference to kubernetes.io/tls secret.
+                        properties:
+                          name:
+                            description: 'Name of the referent. More info: https://kubernetes.'
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
                   nodeSelector:
                     additionalProperties:
                       type: string
@@ -7269,6 +7346,29 @@ spec:
                       default: default
                       minLength: 1
                       type: string
+                    nativeTransport:
+                      description: Component config for native RPC bus transport.
+                      properties:
+                        tlsInsecure:
+                          description: Disable TLS certificate verification.
+                          type: boolean
+                        tlsPeerAlternativeHostName:
+                          description: Define alternative host name for certificate
+                            verification.
+                          type: string
+                        tlsRequired:
+                          description: Require encrypted connections, otherwise only
+                            when required by peer.
+                          type: boolean
+                        tlsSecret:
+                          description: Reference to kubernetes.io/tls secret.
+                          properties:
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.'
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
                     nodeSelector:
                       additionalProperties:
                         type: string
@@ -9452,6 +9552,29 @@ spec:
                       type: array
                     minReadyInstanceCount:
                       type: integer
+                    nativeTransport:
+                      description: Component config for native RPC bus transport.
+                      properties:
+                        tlsInsecure:
+                          description: Disable TLS certificate verification.
+                          type: boolean
+                        tlsPeerAlternativeHostName:
+                          description: Define alternative host name for certificate
+                            verification.
+                          type: string
+                        tlsRequired:
+                          description: Require encrypted connections, otherwise only
+                            when required by peer.
+                          type: boolean
+                        tlsSecret:
+                          description: Reference to kubernetes.io/tls secret.
+                          properties:
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.'
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
                     nodeSelector:
                       additionalProperties:
                         type: string
@@ -9575,7 +9698,7 @@ spec:
                         disableHttp:
                           type: boolean
                         httpsSecret:
-                          description: Reference to kubernetes.io/tls secret
+                          description: Reference to kubernetes.io/tls secret.
                           properties:
                             name:
                               description: 'Name of the referent. More info: https://kubernetes.'
@@ -10956,6 +11079,28 @@ spec:
               isManaged:
                 default: true
                 type: boolean
+              nativeTransport:
+                description: Common config for native RPC bus transport.
+                properties:
+                  tlsInsecure:
+                    description: Disable TLS certificate verification.
+                    type: boolean
+                  tlsPeerAlternativeHostName:
+                    description: Define alternative host name for certificate verification.
+                    type: string
+                  tlsRequired:
+                    description: Require encrypted connections, otherwise only when
+                      required by peer.
+                    type: boolean
+                  tlsSecret:
+                    description: Reference to kubernetes.io/tls secret.
+                    properties:
+                      name:
+                        description: 'Name of the referent. More info: https://kubernetes.'
+                        type: string
+                    type: object
+                    x-kubernetes-map-type: atomic
+                type: object
               oauthService:
                 properties:
                   host:
@@ -11667,6 +11812,29 @@ spec:
                     type: array
                   minReadyInstanceCount:
                     type: integer
+                  nativeTransport:
+                    description: Component config for native RPC bus transport.
+                    properties:
+                      tlsInsecure:
+                        description: Disable TLS certificate verification.
+                        type: boolean
+                      tlsPeerAlternativeHostName:
+                        description: Define alternative host name for certificate
+                          verification.
+                        type: string
+                      tlsRequired:
+                        description: Require encrypted connections, otherwise only
+                          when required by peer.
+                        type: boolean
+                      tlsSecret:
+                        description: Reference to kubernetes.io/tls secret.
+                        properties:
+                          name:
+                            description: 'Name of the referent. More info: https://kubernetes.'
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
                   nodeSelector:
                     additionalProperties:
                       type: string
@@ -13806,6 +13974,29 @@ spec:
                     type: array
                   minReadyInstanceCount:
                     type: integer
+                  nativeTransport:
+                    description: Component config for native RPC bus transport.
+                    properties:
+                      tlsInsecure:
+                        description: Disable TLS certificate verification.
+                        type: boolean
+                      tlsPeerAlternativeHostName:
+                        description: Define alternative host name for certificate
+                          verification.
+                        type: string
+                      tlsRequired:
+                        description: Require encrypted connections, otherwise only
+                          when required by peer.
+                        type: boolean
+                      tlsSecret:
+                        description: Reference to kubernetes.io/tls secret.
+                        properties:
+                          name:
+                            description: 'Name of the referent. More info: https://kubernetes.'
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
                   nodeSelector:
                     additionalProperties:
                       type: string
@@ -15943,6 +16134,29 @@ spec:
                     type: array
                   minReadyInstanceCount:
                     type: integer
+                  nativeTransport:
+                    description: Component config for native RPC bus transport.
+                    properties:
+                      tlsInsecure:
+                        description: Disable TLS certificate verification.
+                        type: boolean
+                      tlsPeerAlternativeHostName:
+                        description: Define alternative host name for certificate
+                          verification.
+                        type: string
+                      tlsRequired:
+                        description: Require encrypted connections, otherwise only
+                          when required by peer.
+                        type: boolean
+                      tlsSecret:
+                        description: Reference to kubernetes.io/tls secret.
+                        properties:
+                          name:
+                            description: 'Name of the referent. More info: https://kubernetes.'
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
                   nodeSelector:
                     additionalProperties:
                       type: string
@@ -18087,6 +18301,29 @@ spec:
                       type: array
                     minReadyInstanceCount:
                       type: integer
+                    nativeTransport:
+                      description: Component config for native RPC bus transport.
+                      properties:
+                        tlsInsecure:
+                          description: Disable TLS certificate verification.
+                          type: boolean
+                        tlsPeerAlternativeHostName:
+                          description: Define alternative host name for certificate
+                            verification.
+                          type: string
+                        tlsRequired:
+                          description: Require encrypted connections, otherwise only
+                            when required by peer.
+                          type: boolean
+                        tlsSecret:
+                          description: Reference to kubernetes.io/tls secret.
+                          properties:
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.'
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
                     nodeSelector:
                       additionalProperties:
                         type: string
@@ -18206,12 +18443,19 @@ spec:
                       type: array
                     transport:
                       properties:
+                        tlsInsecure:
+                          description: Disable TLS certificate verification.
+                          type: boolean
+                        tlsPeerAlternativeHostName:
+                          description: Define alternative host name for certificate
+                            verification.
+                          type: string
                         tlsRequired:
                           description: Require encrypted connections, otherwise only
-                            when required by peer
+                            when required by peer.
                           type: boolean
                         tlsSecret:
-                          description: Reference to kubernetes.io/tls secret
+                          description: Reference to kubernetes.io/tls secret.
                           properties:
                             name:
                               description: 'Name of the referent. More info: https://kubernetes.'
@@ -20263,6 +20507,29 @@ spec:
                     type: array
                   minReadyInstanceCount:
                     type: integer
+                  nativeTransport:
+                    description: Component config for native RPC bus transport.
+                    properties:
+                      tlsInsecure:
+                        description: Disable TLS certificate verification.
+                        type: boolean
+                      tlsPeerAlternativeHostName:
+                        description: Define alternative host name for certificate
+                          verification.
+                        type: string
+                      tlsRequired:
+                        description: Require encrypted connections, otherwise only
+                          when required by peer.
+                        type: boolean
+                      tlsSecret:
+                        description: Reference to kubernetes.io/tls secret.
+                        properties:
+                          name:
+                            description: 'Name of the referent. More info: https://kubernetes.'
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
                   nodeSelector:
                     additionalProperties:
                       type: string
@@ -22409,6 +22676,29 @@ spec:
                       type: array
                     minReadyInstanceCount:
                       type: integer
+                    nativeTransport:
+                      description: Component config for native RPC bus transport.
+                      properties:
+                        tlsInsecure:
+                          description: Disable TLS certificate verification.
+                          type: boolean
+                        tlsPeerAlternativeHostName:
+                          description: Define alternative host name for certificate
+                            verification.
+                          type: string
+                        tlsRequired:
+                          description: Require encrypted connections, otherwise only
+                            when required by peer.
+                          type: boolean
+                        tlsSecret:
+                          description: Reference to kubernetes.io/tls secret.
+                          properties:
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.'
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
                     nodeSelector:
                       additionalProperties:
                         type: string
@@ -24612,6 +24902,29 @@ spec:
                       default: default
                       minLength: 1
                       type: string
+                    nativeTransport:
+                      description: Component config for native RPC bus transport.
+                      properties:
+                        tlsInsecure:
+                          description: Disable TLS certificate verification.
+                          type: boolean
+                        tlsPeerAlternativeHostName:
+                          description: Define alternative host name for certificate
+                            verification.
+                          type: string
+                        tlsRequired:
+                          description: Require encrypted connections, otherwise only
+                            when required by peer.
+                          type: boolean
+                        tlsSecret:
+                          description: Reference to kubernetes.io/tls secret.
+                          properties:
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.'
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
                     nodeSelector:
                       additionalProperties:
                         type: string
@@ -26780,6 +27093,29 @@ spec:
                       type: array
                     minReadyInstanceCount:
                       type: integer
+                    nativeTransport:
+                      description: Component config for native RPC bus transport.
+                      properties:
+                        tlsInsecure:
+                          description: Disable TLS certificate verification.
+                          type: boolean
+                        tlsPeerAlternativeHostName:
+                          description: Define alternative host name for certificate
+                            verification.
+                          type: string
+                        tlsRequired:
+                          description: Require encrypted connections, otherwise only
+                            when required by peer.
+                          type: boolean
+                        tlsSecret:
+                          description: Reference to kubernetes.io/tls secret.
+                          properties:
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.'
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
                     nodeSelector:
                       additionalProperties:
                         type: string
@@ -29104,6 +29440,29 @@ spec:
                     type: array
                   minReadyInstanceCount:
                     type: integer
+                  nativeTransport:
+                    description: Component config for native RPC bus transport.
+                    properties:
+                      tlsInsecure:
+                        description: Disable TLS certificate verification.
+                        type: boolean
+                      tlsPeerAlternativeHostName:
+                        description: Define alternative host name for certificate
+                          verification.
+                        type: string
+                      tlsRequired:
+                        description: Require encrypted connections, otherwise only
+                          when required by peer.
+                        type: boolean
+                      tlsSecret:
+                        description: Reference to kubernetes.io/tls secret.
+                        properties:
+                          name:
+                            description: 'Name of the referent. More info: https://kubernetes.'
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
                   nodeSelector:
                     additionalProperties:
                       type: string

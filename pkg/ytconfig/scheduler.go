@@ -28,21 +28,21 @@ type ControllerAgentServer struct {
 	ControllerAgent ControllerAgent `yson:"controller_agent"`
 }
 
-func getSchedulerLogging(spec ytv1.SchedulersSpec) Logging {
+func getSchedulerLogging(spec *ytv1.SchedulersSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"scheduler",
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
-func getControllerAgentLogging(spec ytv1.ControllerAgentsSpec) Logging {
+func getControllerAgentLogging(spec *ytv1.ControllerAgentsSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"controller-agent",
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
-func getSchedulerServerCarcass(spec ytv1.SchedulersSpec) (SchedulerServer, error) {
+func getSchedulerServerCarcass(spec *ytv1.SchedulersSpec) (SchedulerServer, error) {
 	var c SchedulerServer
 	c.RPCPort = consts.SchedulerRPCPort
 	c.MonitoringPort = consts.SchedulerMonitoringPort
@@ -51,7 +51,7 @@ func getSchedulerServerCarcass(spec ytv1.SchedulersSpec) (SchedulerServer, error
 	return c, nil
 }
 
-func getControllerAgentServerCarcass(spec ytv1.ControllerAgentsSpec) (ControllerAgentServer, error) {
+func getControllerAgentServerCarcass(spec *ytv1.ControllerAgentsSpec) (ControllerAgentServer, error) {
 	var c ControllerAgentServer
 	c.RPCPort = consts.ControllerAgentRPCPort
 	c.MonitoringPort = consts.ControllerAgentMonitoringPort

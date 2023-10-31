@@ -199,7 +199,7 @@ func fillClusterNodeServerCarcass(n *NodeServer, spec ytv1.ClusterNodesSpec, fla
 	n.Rack = spec.Rack
 }
 
-func getDataNodeResourceLimits(spec ytv1.DataNodesSpec) ResourceLimits {
+func getDataNodeResourceLimits(spec *ytv1.DataNodesSpec) ResourceLimits {
 	var resourceLimits ResourceLimits
 
 	var cpu float32 = 0
@@ -213,14 +213,14 @@ func getDataNodeResourceLimits(spec ytv1.DataNodesSpec) ResourceLimits {
 	return resourceLimits
 }
 
-func getDataNodeLogging(spec ytv1.DataNodesSpec) Logging {
+func getDataNodeLogging(spec *ytv1.DataNodesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"data-node",
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
-func getDataNodeServerCarcass(spec ytv1.DataNodesSpec) (DataNodeServer, error) {
+func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) {
 	var c DataNodeServer
 	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec, NodeFlavorData)
 
@@ -253,7 +253,7 @@ func getDataNodeServerCarcass(spec ytv1.DataNodesSpec) (DataNodeServer, error) {
 	return c, nil
 }
 
-func getExecNodeResourceLimits(spec ytv1.ExecNodesSpec) ResourceLimits {
+func getExecNodeResourceLimits(spec *ytv1.ExecNodesSpec) ResourceLimits {
 	var resourceLimits ResourceLimits
 	resourceLimits.NodeDedicatedCpu = ptr.Float32Ptr(0)
 	cpuLimit := spec.Resources.Limits.Cpu()
@@ -278,14 +278,14 @@ func getExecNodeResourceLimits(spec ytv1.ExecNodesSpec) ResourceLimits {
 	return resourceLimits
 }
 
-func getExecNodeLogging(spec ytv1.ExecNodesSpec) Logging {
+func getExecNodeLogging(spec *ytv1.ExecNodesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"exec-node",
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
-func getExecNodeServerCarcass(spec ytv1.ExecNodesSpec, usePorto bool) (ExecNodeServer, error) {
+func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNodeServer, error) {
 	var c ExecNodeServer
 	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec, NodeFlavorExec)
 
@@ -339,14 +339,14 @@ func getExecNodeServerCarcass(spec ytv1.ExecNodesSpec, usePorto bool) (ExecNodeS
 	return c, nil
 }
 
-func getTabletNodeLogging(spec ytv1.TabletNodesSpec) Logging {
+func getTabletNodeLogging(spec *ytv1.TabletNodesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"tablet-node",
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
-func getTabletNodeServerCarcass(spec ytv1.TabletNodesSpec) (TabletNodeServer, error) {
+func getTabletNodeServerCarcass(spec *ytv1.TabletNodesSpec) (TabletNodeServer, error) {
 	var c TabletNodeServer
 	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec, NodeFlavorTablet)
 

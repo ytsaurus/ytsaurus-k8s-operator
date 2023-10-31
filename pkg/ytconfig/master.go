@@ -39,14 +39,14 @@ type MasterServer struct {
 	SecondaryMasters []MasterCell     `yson:"secondary_masters"`
 }
 
-func getMasterLogging(spec ytv1.MastersSpec) Logging {
+func getMasterLogging(spec *ytv1.MastersSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
 		"master",
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
-func getMasterServerCarcass(spec ytv1.MastersSpec) (MasterServer, error) {
+func getMasterServerCarcass(spec *ytv1.MastersSpec) (MasterServer, error) {
 	var c MasterServer
 	c.UseNewHydra = true
 	c.RPCPort = consts.MasterRPCPort

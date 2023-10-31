@@ -7,6 +7,8 @@ const AdminLoginSecret = "login"
 const AdminPasswordSecret = "password"
 const AdminTokenSecret = "token"
 
+const DefaultCABundlePath = "/etc/ssl/certs/ca-certificates.crt"
+
 const UIUserName = "robot-ui"
 const StrawberryControllerUserName = "robot-strawberry-controller"
 const YqlUserName = "yql_agent"

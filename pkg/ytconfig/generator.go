@@ -137,10 +137,11 @@ func (g *Generator) fillPrimaryMaster(c *MasterCell) {
 	c.CellID = generateCellID(g.ytsaurus.Spec.PrimaryMasters.CellTag)
 }
 
-func (g *Generator) fillClusterConnection(c *ClusterConnection) {
+func (g *Generator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCTransportSpec) {
 	g.fillPrimaryMaster(&c.PrimaryMaster)
 	c.ClusterName = g.ytsaurus.Name
 	c.DiscoveryConnection.Addresses = g.getDiscoveryAddresses()
+	g.fillClusterConnectionEncryption(c, s)
 }
 
 func (g *Generator) fillCypressAnnotations(c *map[string]any) {
@@ -151,10 +152,10 @@ func (g *Generator) fillCypressAnnotations(c *map[string]any) {
 	}
 }
 
-func (g *Generator) fillCommonService(c *CommonServer) {
+func (g *Generator) fillCommonService(c *CommonServer, s *ytv1.InstanceSpec) {
 	// ToDo(psushin): enable porto resource tracker?
 	g.fillAddressResolver(&c.AddressResolver)
-	g.fillClusterConnection(&c.ClusterConnection)
+	g.fillClusterConnection(&c.ClusterConnection, s.NativeTransport)
 	g.fillCypressAnnotations(&c.CypressAnnotations)
 	c.TimestampProviders.Addresses = g.getMasterAddresses()
 }
@@ -166,13 +167,79 @@ func (g *Generator) fillBusEncryption(b *Bus, s *ytv1.RPCTransportSpec) {
 		b.EncryptionMode = EncryptionModeOptional
 	}
 
-	if s.TLSSecret != nil {
-		b.CertChain = &PemBlob{
-			FileName: path.Join(consts.RPCSecretMountPoint, corev1.TLSCertKey),
+	b.CertChain = &PemBlob{
+		FileName: path.Join(consts.RPCSecretMountPoint, corev1.TLSCertKey),
+	}
+	b.PrivateKey = &PemBlob{
+		FileName: path.Join(consts.RPCSecretMountPoint, corev1.TLSPrivateKeyKey),
+	}
+}
+
+func (g *Generator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec) {
+	if s == nil {
+		// Use common bus transport config
+		s = g.ytsaurus.Spec.NativeTransport
+	}
+	if s == nil || s.TLSSecret == nil {
+		return
+	}
+
+	if c.BusServer == nil {
+		c.BusServer = &BusServer{}
+	}
+
+	// FIXME(khlebnikov): some clients does not support TLS yet
+	if s.TLSRequired && s != g.ytsaurus.Spec.NativeTransport {
+		c.BusServer.EncryptionMode = EncryptionModeRequired
+	} else {
+		c.BusServer.EncryptionMode = EncryptionModeOptional
+	}
+
+	c.BusServer.CertChain = &PemBlob{
+		FileName: path.Join(consts.BusSecretMountPoint, corev1.TLSCertKey),
+	}
+	c.BusServer.PrivateKey = &PemBlob{
+		FileName: path.Join(consts.BusSecretMountPoint, corev1.TLSPrivateKeyKey),
+	}
+}
+
+func (g *Generator) fillClusterConnectionEncryption(c *ClusterConnection, s *ytv1.RPCTransportSpec) {
+	if s == nil {
+		// Use common bus transport config
+		s = g.ytsaurus.Spec.NativeTransport
+	}
+	if s == nil || s.TLSSecret == nil {
+		return
+	}
+
+	if c.BusClient == nil {
+		c.BusClient = &Bus{}
+	}
+
+	if g.ytsaurus.Spec.CABundle != nil {
+		c.BusClient.CA = &PemBlob{
+			FileName: path.Join(consts.CABundleMountPoint, consts.CABundleFileName),
 		}
-		b.PrivateKey = &PemBlob{
-			FileName: path.Join(consts.RPCSecretMountPoint, corev1.TLSPrivateKeyKey),
+	} else {
+		c.BusClient.CA = &PemBlob{
+			FileName: consts.DefaultCABundlePath,
 		}
+	}
+
+	if s.TLSRequired {
+		c.BusClient.EncryptionMode = EncryptionModeRequired
+	} else {
+		c.BusClient.EncryptionMode = EncryptionModeOptional
+	}
+
+	if s.TLSInsecure {
+		c.BusClient.VerificationMode = VerificationModeNone
+	} else {
+		c.BusClient.VerificationMode = VerificationModeFull
+	}
+
+	if s.TLSPeerAlternativeHostName != "" {
+		c.BusClient.PeerAlternativeHostName = s.TLSPeerAlternativeHostName
 	}
 }
 
@@ -186,7 +253,7 @@ func marshallYsonConfig(c interface{}) ([]byte, error) {
 
 func (g *Generator) GetClusterConnection() ([]byte, error) {
 	var c ClusterConnection
-	g.fillClusterConnection(&c)
+	g.fillClusterConnection(&c, nil)
 	return marshallYsonConfig(c)
 }
 
@@ -205,11 +272,13 @@ func (g *Generator) GetChytInitClusterConfig() ([]byte, error) {
 }
 
 func (g *Generator) getMasterConfigImpl() (MasterServer, error) {
-	c, err := getMasterServerCarcass(g.ytsaurus.Spec.PrimaryMasters)
+	spec := &g.ytsaurus.Spec.PrimaryMasters
+	c, err := getMasterServerCarcass(spec)
 	if err != nil {
 		return MasterServer{}, err
 	}
-	g.fillCommonService(&c.CommonServer)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	g.fillPrimaryMaster(&c.PrimaryMaster)
 	configureMasterServerCypressManager(g.ytsaurus.Spec, &c.CypressManager)
 
@@ -250,7 +319,8 @@ func (g *Generator) GetNativeClientConfig() ([]byte, error) {
 }
 
 func (g *Generator) getSchedulerConfigImpl() (SchedulerServer, error) {
-	c, err := getSchedulerServerCarcass(*g.ytsaurus.Spec.Schedulers)
+	spec := g.ytsaurus.Spec.Schedulers
+	c, err := getSchedulerServerCarcass(spec)
 	if err != nil {
 		return SchedulerServer{}, err
 	}
@@ -258,7 +328,8 @@ func (g *Generator) getSchedulerConfigImpl() (SchedulerServer, error) {
 	if g.ytsaurus.Spec.TabletNodes == nil || len(g.ytsaurus.Spec.TabletNodes) == 0 {
 		c.Scheduler.OperationsCleaner.EnableOperationArchivation = ptr.Bool(false)
 	}
-	g.fillCommonService(&c.CommonServer)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	return c, nil
 }
 
@@ -275,13 +346,13 @@ func (g *Generator) GetSchedulerConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getRPCProxyConfigImpl(spec ytv1.RPCProxiesSpec) (RPCProxyServer, error) {
+func (g *Generator) getRPCProxyConfigImpl(spec *ytv1.RPCProxiesSpec) (RPCProxyServer, error) {
 	c, err := getRPCProxyServerCarcass(spec)
 	if err != nil {
 		return RPCProxyServer{}, err
 	}
 
-	g.fillCommonService(&c.CommonServer)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 
 	if g.ytsaurus.Spec.OauthService != nil {
 		c.CypressUserManager = CypressUserManager{}
@@ -301,7 +372,7 @@ func (g *Generator) getRPCProxyConfigImpl(spec ytv1.RPCProxiesSpec) (RPCProxySer
 }
 
 func (g *Generator) GetRPCProxyConfig(spec ytv1.RPCProxiesSpec) ([]byte, error) {
-	c, err := g.getRPCProxyConfigImpl(spec)
+	c, err := g.getRPCProxyConfigImpl(&spec)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -316,13 +387,13 @@ func (g *Generator) GetRPCProxyConfig(spec ytv1.RPCProxiesSpec) ([]byte, error) 
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getTCPProxyConfigImpl(spec ytv1.TCPProxiesSpec) (TCPProxyServer, error) {
+func (g *Generator) getTCPProxyConfigImpl(spec *ytv1.TCPProxiesSpec) (TCPProxyServer, error) {
 	c, err := getTCPProxyServerCarcass(spec)
 	if err != nil {
 		return TCPProxyServer{}, err
 	}
 
-	g.fillCommonService(&c.CommonServer)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 
 	return c, nil
 }
@@ -332,7 +403,7 @@ func (g *Generator) GetTCPProxyConfig(spec ytv1.TCPProxiesSpec) ([]byte, error) 
 		return []byte{}, nil
 	}
 
-	c, err := g.getTCPProxyConfigImpl(spec)
+	c, err := g.getTCPProxyConfigImpl(&spec)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -341,7 +412,8 @@ func (g *Generator) GetTCPProxyConfig(spec ytv1.TCPProxiesSpec) ([]byte, error) 
 }
 
 func (g *Generator) getControllerAgentConfigImpl() (ControllerAgentServer, error) {
-	c, err := getControllerAgentServerCarcass(*g.ytsaurus.Spec.ControllerAgents)
+	spec := g.ytsaurus.Spec.ControllerAgents
+	c, err := getControllerAgentServerCarcass(spec)
 	if err != nil {
 		return ControllerAgentServer{}, err
 	}
@@ -349,7 +421,8 @@ func (g *Generator) getControllerAgentConfigImpl() (ControllerAgentServer, error
 	c.ControllerAgent.EnableTmpfs = g.ytsaurus.Spec.UsePorto
 	c.ControllerAgent.UseColumnarStatisticsDefault = true
 
-	g.fillCommonService(&c.CommonServer)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
 	return c, nil
 }
@@ -367,68 +440,72 @@ func (g *Generator) GetControllerAgentConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getDataNodeConfigImpl(spec ytv1.DataNodesSpec) (DataNodeServer, error) {
+func (g *Generator) getDataNodeConfigImpl(spec *ytv1.DataNodesSpec) (DataNodeServer, error) {
 	c, err := getDataNodeServerCarcass(spec)
 	if err != nil {
 		return DataNodeServer{}, err
 	}
 
-	g.fillCommonService(&c.CommonServer)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	return c, nil
 }
 
 func (g *Generator) GetDataNodeConfig(spec ytv1.DataNodesSpec) ([]byte, error) {
-	c, err := g.getDataNodeConfigImpl(spec)
+	c, err := g.getDataNodeConfigImpl(&spec)
 	if err != nil {
 		return []byte{}, err
 	}
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getExecNodeConfigImpl(spec ytv1.ExecNodesSpec) (ExecNodeServer, error) {
+func (g *Generator) getExecNodeConfigImpl(spec *ytv1.ExecNodesSpec) (ExecNodeServer, error) {
 	c, err := getExecNodeServerCarcass(
 		spec,
 		g.ytsaurus.Spec.UsePorto)
 	if err != nil {
 		return c, err
 	}
-	g.fillCommonService(&c.CommonServer)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	return c, nil
 }
 
 func (g *Generator) GetExecNodeConfig(spec ytv1.ExecNodesSpec) ([]byte, error) {
-	c, err := g.getExecNodeConfigImpl(spec)
+	c, err := g.getExecNodeConfigImpl(&spec)
 	if err != nil {
 		return []byte{}, err
 	}
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getTabletNodeConfigImpl(spec ytv1.TabletNodesSpec) (TabletNodeServer, error) {
+func (g *Generator) getTabletNodeConfigImpl(spec *ytv1.TabletNodesSpec) (TabletNodeServer, error) {
 	c, err := getTabletNodeServerCarcass(spec)
 	if err != nil {
 		return c, err
 	}
-	g.fillCommonService(&c.CommonServer)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	return c, nil
 }
 
 func (g *Generator) GetTabletNodeConfig(spec ytv1.TabletNodesSpec) ([]byte, error) {
-	c, err := g.getTabletNodeConfigImpl(spec)
+	c, err := g.getTabletNodeConfigImpl(&spec)
 	if err != nil {
 		return nil, err
 	}
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getHTTPProxyConfigImpl(spec ytv1.HTTPProxiesSpec) (HTTPProxyServer, error) {
+func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, error) {
 	c, err := getHTTPProxyServerCarcass(spec)
 	if err != nil {
 		return c, err
 	}
 
 	g.fillDriver(&c.Driver)
-	g.fillCommonService(&c.CommonServer)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
 	if g.ytsaurus.Spec.OauthService != nil {
 		c.Auth.OauthService = &OauthService{
@@ -447,7 +524,7 @@ func (g *Generator) getHTTPProxyConfigImpl(spec ytv1.HTTPProxiesSpec) (HTTPProxy
 }
 
 func (g *Generator) GetHTTPProxyConfig(spec ytv1.HTTPProxiesSpec) ([]byte, error) {
-	c, err := g.getHTTPProxyConfigImpl(spec)
+	c, err := g.getHTTPProxyConfigImpl(&spec)
 	if err != nil {
 		return nil, err
 	}
@@ -456,11 +533,13 @@ func (g *Generator) GetHTTPProxyConfig(spec ytv1.HTTPProxiesSpec) ([]byte, error
 }
 
 func (g *Generator) getQueryTrackerConfigImpl() (QueryTrackerServer, error) {
-	c, err := getQueryTrackerServerCarcass(*g.ytsaurus.Spec.QueryTrackers)
+	spec := g.ytsaurus.Spec.QueryTrackers
+	c, err := getQueryTrackerServerCarcass(spec)
 	if err != nil {
 		return c, err
 	}
-	g.fillCommonService(&c.CommonServer)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
 	return c, nil
 }
@@ -479,11 +558,14 @@ func (g *Generator) GetQueryTrackerConfig() ([]byte, error) {
 }
 
 func (g *Generator) getQueueAgentConfigImpl() (QueueAgentServer, error) {
-	c, err := getQueueAgentServerCarcass(*g.ytsaurus.Spec.QueueAgents)
+	spec := g.ytsaurus.Spec.QueueAgents
+	c, err := getQueueAgentServerCarcass(spec)
 	if err != nil {
 		return c, err
 	}
-	g.fillCommonService(&c.CommonServer)
+
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
 	return c, nil
 }
@@ -502,11 +584,13 @@ func (g *Generator) GetQueueAgentConfig() ([]byte, error) {
 }
 
 func (g *Generator) getYQLAgentConfigImpl() (YQLAgentServer, error) {
-	c, err := getYQLAgentServerCarcass(*g.ytsaurus.Spec.YQLAgents)
+	spec := g.ytsaurus.Spec.YQLAgents
+	c, err := getYQLAgentServerCarcass(spec)
 	if err != nil {
 		return c, err
 	}
-	g.fillCommonService(&c.CommonServer)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	c.YQLAgent.AdditionalClusters = map[string]string{
 		g.ytsaurus.Name: g.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole),
 	}
@@ -563,12 +647,14 @@ func (g *Generator) GetUICustomConfig() ([]byte, error) {
 }
 
 func (g *Generator) getDiscoveryConfigImpl() (DiscoveryServer, error) {
-	c, err := getDiscoveryServerCarcass(g.ytsaurus.Spec.Discovery)
+	spec := &g.ytsaurus.Spec.Discovery
+	c, err := getDiscoveryServerCarcass(spec)
 	if err != nil {
 		return c, err
 	}
 
-	g.fillCommonService(&c.CommonServer)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	c.DiscoveryServer.Addresses = g.getDiscoveryAddresses()
 	return c, nil
 }

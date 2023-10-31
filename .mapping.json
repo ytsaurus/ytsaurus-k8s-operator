@@ -143,6 +143,7 @@
   "pkg/consts/metrika.go":"yt/k8s/operator/pkg/consts/metrika.go",
   "pkg/labeller/labeller.go":"yt/k8s/operator/pkg/labeller/labeller.go",
   "pkg/mock/mock_ytsaurus_client.go":"yt/k8s/operator/pkg/mock/mock_ytsaurus_client.go",
+  "pkg/resources/ca_bundle.go":"yt/k8s/operator/pkg/resources/ca_bundle.go",
   "pkg/resources/configmap.go":"yt/k8s/operator/pkg/resources/configmap.go",
   "pkg/resources/deployment.go":"yt/k8s/operator/pkg/resources/deployment.go",
   "pkg/resources/headless_service.go":"yt/k8s/operator/pkg/resources/headless_service.go",

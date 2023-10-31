@@ -5,6 +5,8 @@ const (
 	ConfigTemplateMountPoint   = "/config_template"
 	HTTPSSecretMountPoint      = "/config/https_secret"
 	RPCSecretMountPoint        = "/config/rpc_secret"
+	BusSecretMountPoint        = "/config/bus_secret"
+	CABundleMountPoint         = "/config/ca_bundle"
 	UIClustersConfigMountPoint = "/opt/app"
 	UICustomConfigMountPoint   = "/opt/app/dist/server/configs/custom"
 	UISecretsMountPoint        = "/opt/app/secrets"
@@ -27,6 +29,7 @@ const (
 
 	UIClusterConfigFileName = "clusters-config.json"
 	UISecretFileName        = "yt-interface-secret.json"
+	CABundleFileName        = "ca.crt"
 	TokenSecretKey          = "YT_TOKEN"
 )
 
@@ -35,6 +38,8 @@ const (
 	ConfigVolumeName         = "config"
 	HTTPSSecretVolumeName    = "https-secret"
 	RPCSecretVolumeName      = "rpc-secret"
+	BusSecretVolumeName      = "bus-secret"
+	CABundleVolumeName       = "ca-bundle"
 	InitScriptVolumeName     = "init-script"
 	UIVaultVolumeName        = "vault"
 	UISecretsVolumeName      = "secrets"

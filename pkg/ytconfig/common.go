@@ -41,6 +41,7 @@ type ClusterConnection struct {
 	ClusterName         string              `yson:"cluster_name"`
 	PrimaryMaster       MasterCell          `yson:"primary_master"`
 	DiscoveryConnection DiscoveryConnection `yson:"discovery_connection,omitempty"`
+	BusClient           *Bus                `yson:"bus_client,omitempty"`
 }
 
 type AddressResolver struct {
@@ -64,11 +65,23 @@ const (
 	EncryptionModeRequired EncryptionMode = "required"
 )
 
+type VerificationMode string
+
+const (
+	VerificationModeNone VerificationMode = "none"
+	VerificationModeCa   VerificationMode = "ca"
+	VerificationModeFull VerificationMode = "full"
+)
+
 type Bus struct {
 	EncryptionMode EncryptionMode `yson:"encryption_mode,omitempty"`
 	CertChain      *PemBlob       `yson:"cert_chain,omitempty"`
 	PrivateKey     *PemBlob       `yson:"private_key,omitempty"`
 	CipherList     []string       `yson:"cipher_list,omitempty"`
+
+	CA                      *PemBlob         `yson:"ca,omitempty"`
+	VerificationMode        VerificationMode `yson:"verification_mode,omitempty"`
+	PeerAlternativeHostName string           `yson:"peer_alternative_host_name,omitempty"`
 }
 
 type BusServer struct {

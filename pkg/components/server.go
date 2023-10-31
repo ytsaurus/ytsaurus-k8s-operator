@@ -39,6 +39,8 @@ type serverImpl struct {
 	statefulSet       *resources.StatefulSet
 	headlessService   *resources.HeadlessService
 	monitoringService *resources.MonitoringService
+	caBundle          *resources.CABundle
+	tlsSecret         *resources.TLSSecret
 	configHelper      *ConfigHelper
 
 	builtStatefulSet *appsv1.StatefulSet
@@ -54,6 +56,24 @@ func newServer(
 	if instanceSpec.Image != nil {
 		image = *instanceSpec.Image
 	}
+	var caBundle *resources.CABundle
+	if caBundleSpec := ytsaurus.GetResource().Spec.CABundle; caBundleSpec != nil {
+		caBundle = resources.NewCABundle(caBundleSpec.Name, consts.CABundleVolumeName, consts.CABundleMountPoint)
+	}
+
+	var tlsSecret *resources.TLSSecret
+	transportSpec := instanceSpec.NativeTransport
+	if transportSpec == nil {
+		//FIXME(khlebnikov): do not mount common bus secret into all servers
+		transportSpec = ytsaurus.GetResource().Spec.NativeTransport
+	}
+	if transportSpec != nil && transportSpec.TLSSecret != nil {
+		tlsSecret = resources.NewTLSSecret(
+			transportSpec.TLSSecret.Name,
+			consts.BusSecretVolumeName,
+			consts.BusSecretMountPoint)
+	}
+
 	return &serverImpl{
 		labeller:     l,
 		image:        image,
@@ -71,6 +91,8 @@ func newServer(
 		monitoringService: resources.NewMonitoringService(
 			l,
 			ytsaurus.APIProxy()),
+		caBundle:  caBundle,
+		tlsSecret: tlsSecret,
 		configHelper: NewConfigHelper(
 			l,
 			ytsaurus.APIProxy(),
@@ -220,6 +242,21 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	if s.ytsaurus.GetResource().Spec.HostNetwork {
 		statefulSet.Spec.Template.Spec.HostNetwork = true
 		statefulSet.Spec.Template.Spec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
+	}
+
+	if s.caBundle != nil {
+		s.caBundle.AddVolume(&statefulSet.Spec.Template.Spec)
+		for i := range statefulSet.Spec.Template.Spec.Containers {
+			s.caBundle.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[i])
+		}
+		for i := range statefulSet.Spec.Template.Spec.InitContainers {
+			s.caBundle.AddVolumeMount(&statefulSet.Spec.Template.Spec.InitContainers[i])
+		}
+	}
+
+	if s.tlsSecret != nil {
+		s.tlsSecret.AddVolume(&statefulSet.Spec.Template.Spec)
+		s.tlsSecret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
 	}
 
 	s.builtStatefulSet = statefulSet
