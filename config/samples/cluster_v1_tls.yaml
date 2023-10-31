@@ -1,18 +1,35 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: minisaurus
+
+---
 apiVersion: cluster.ytsaurus.tech/v1
 kind: Ytsaurus
 metadata:
+  namespace: minisaurus
   name: minisaurus
 spec:
   coreImage: ytsaurus/ytsaurus:stable-23.1.0-relwithdebinfo
   uiImage: ytsaurus/ui:stable
 
-  useIpv6: false
+  useIpv4: true
+  useIpv6: true
 
   configOverrides:
     name: minisaurus-overrides
 
   adminCredentials:
     name: ytadminsec
+
+  caBundle:
+    name: minisaurus-ca-bundle
+
+  nativeTransport:
+    tlsSecret:
+      name: minisaurus-native-secret
+    tlsRequired: true
+    tlsPeerAlternativeHostName: "minisaurus.svc.cluster.local"
 
   discovery:
     instanceCount: 1
@@ -152,6 +169,7 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
+  namespace: minisaurus
   name: ytadminsec
 type: Opaque
 data:
@@ -163,6 +181,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  namespace: minisaurus
   name: minisaurus-overrides
 data:
 
@@ -170,6 +189,7 @@ data:
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
+  namespace: cert-manager
   name: minisaurus-selfsigned-issuer
 spec:
   selfSigned: {}
@@ -178,6 +198,7 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
+  namespace: cert-manager
   name: minisaurus-ca
 spec:
   isCA: true
@@ -192,17 +213,38 @@ spec:
 
 ---
 apiVersion: cert-manager.io/v1
-kind: Issuer
+kind: ClusterIssuer
 metadata:
+  namespace: cert-manager
   name: minisaurus-ca-issuer
 spec:
   ca:
     secretName: minisaurus-ca-secret
 
 ---
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  namespace: minisaurus
+  name: minisaurus-ca-bundle
+spec:
+  sources:
+  - useDefaultCAs: false
+  - secret:
+      name: "minisaurus-ca-secret"
+      key: "tls.crt"
+  target:
+    configMap:
+      key: "ca.crt"
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: minisaurus
+
+---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
+  namespace: minisaurus
   name: minisaurus-https-cert
 spec:
   dnsNames:
@@ -211,7 +253,7 @@ spec:
   - "*.http-proxies.minisaurus.svc"
   - "*.http-proxies.minisaurus.svc.cluster.local"
   issuerRef:
-    kind: Issuer
+    kind: ClusterIssuer
     name: minisaurus-ca-issuer
   secretName: minisaurus-https-secret
 
@@ -219,6 +261,23 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
+  namespace: minisaurus
+  name: minisaurus-native-cert
+spec:
+  dnsNames:
+  - "minisaurus.svc.cluster.local"
+  - "*.masters.minisaurus.svc.cluster.local"
+  - "*.discovery.minisaurus.svc.cluster.local"
+  issuerRef:
+    kind: ClusterIssuer
+    name: minisaurus-ca-issuer
+  secretName: minisaurus-native-secret
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  namespace: minisaurus
   name: minisaurus-https-control-cert
 spec:
   dnsNames:
@@ -227,7 +286,7 @@ spec:
   - "*.http-proxies-control.minisaurus.svc"
   - "*.http-proxies-control.minisaurus.svc.cluster.local"
   issuerRef:
-    kind: Issuer
+    kind: ClusterIssuer
     name: minisaurus-ca-issuer
   secretName: minisaurus-https-control-secret
 
@@ -235,13 +294,14 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
+  namespace: minisaurus
   name: minisaurus-rpc-cert
 spec:
   dnsNames:
   - "*.rpc-proxies.minisaurus.svc"
   - "*.rpc-proxies.minisaurus.svc.cluster.local"
   issuerRef:
-    kind: Issuer
+    kind: ClusterIssuer
     name: minisaurus-ca-issuer
   secretName: minisaurus-rpc-secret
 
@@ -249,12 +309,13 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
+  namespace: minisaurus
   name: minisaurus-rpc-heavy-cert
 spec:
   dnsNames:
   - "*.rpc-proxies-heavy.minisaurus.svc"
   - "*.rpc-proxies-heavy.minisaurus.svc.cluster.local"
   issuerRef:
-    kind: Issuer
+    kind: ClusterIssuer
     name: minisaurus-ca-issuer
   secretName: minisaurus-rpc-heavy-secret
