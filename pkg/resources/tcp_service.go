@@ -51,7 +51,7 @@ func (s *TCPService) Build() *corev1.Service {
 	var ports = make([]corev1.ServicePort, 0)
 	for port := consts.TCPProxyMinTCPPort; port <= consts.TCPProxyMaxTCPPort; port++ {
 		ports = append(ports, corev1.ServicePort{
-			Name:       fmt.Sprintf("tcp[%d]", port),
+			Name:       fmt.Sprintf("tcp-%d", port),
 			Port:       int32(port),
 			TargetPort: intstr.IntOrString{IntVal: int32(port)},
 		})
