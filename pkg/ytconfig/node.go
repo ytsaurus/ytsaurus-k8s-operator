@@ -207,10 +207,14 @@ func getDataNodeResourceLimits(spec *ytv1.DataNodesSpec) ResourceLimits {
 	resourceLimits.NodeDedicatedCpu = &cpu
 	resourceLimits.TotalCpu = &cpu
 
-	memory := spec.Resources.Requests.Memory()
-	if memory != nil {
-		resourceLimits.TotalMemory = memory.Value()
+	memoryRequest := spec.Resources.Requests.Memory()
+	memoryLimit := spec.Resources.Limits.Memory()
+	if memoryRequest != nil && !memoryRequest.IsZero() {
+		resourceLimits.TotalMemory = memoryRequest.Value()
+	} else if memoryLimit != nil && !memoryLimit.IsZero() {
+		resourceLimits.TotalMemory = memoryLimit.Value()
 	}
+
 	return resourceLimits
 }
 
@@ -257,23 +261,23 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 func getExecNodeResourceLimits(spec *ytv1.ExecNodesSpec) ResourceLimits {
 	var resourceLimits ResourceLimits
 	resourceLimits.NodeDedicatedCpu = ptr.Float32Ptr(0)
+
 	cpuLimit := spec.Resources.Limits.Cpu()
 	cpuRequest := spec.Resources.Requests.Cpu()
-
-	if cpuLimit != nil {
-		value := float32(cpuLimit.Value())
-		resourceLimits.TotalCpu = &value
-	} else if cpuRequest != nil {
+	if cpuRequest != nil && !cpuRequest.IsZero() {
 		value := float32(cpuRequest.Value())
+		resourceLimits.TotalCpu = &value
+	} else if cpuLimit != nil && !cpuLimit.IsZero() {
+		value := float32(cpuLimit.Value())
 		resourceLimits.TotalCpu = &value
 	}
 
 	memoryRequest := spec.Resources.Requests.Memory()
 	memoryLimit := spec.Resources.Limits.Memory()
-	if memoryLimit != nil {
-		resourceLimits.TotalMemory = memoryLimit.Value()
-	} else if memoryRequest != nil {
+	if memoryRequest != nil && !memoryRequest.IsZero() {
 		resourceLimits.TotalMemory = memoryRequest.Value()
+	} else if memoryLimit != nil && !memoryLimit.IsZero() {
+		resourceLimits.TotalMemory = memoryLimit.Value()
 	}
 
 	return resourceLimits
@@ -368,9 +372,12 @@ func getTabletNodeServerCarcass(spec *ytv1.TabletNodesSpec) (TabletNodeServer, e
 	c.ResourceLimits.NodeDedicatedCpu = &cpu
 	c.ResourceLimits.TotalCpu = &cpu
 
-	memory := spec.Resources.Requests.Memory()
-	if memory != nil {
-		c.ResourceLimits.TotalMemory = memory.Value()
+	memoryRequest := spec.Resources.Requests.Memory()
+	memoryLimit := spec.Resources.Limits.Memory()
+	if memoryRequest != nil && !memoryRequest.IsZero() {
+		c.ResourceLimits.TotalMemory = memoryRequest.Value()
+	} else if memoryLimit != nil && !memoryLimit.IsZero() {
+		c.ResourceLimits.TotalMemory = memoryLimit.Value()
 	}
 
 	c.Logging = getTabletNodeLogging(spec)
