@@ -292,13 +292,6 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.tabletNodes: Required")))
 		})
 
-		It("Check tabletNodes instanceCount", func() {
-			ytsaurus := CreateBaseYtsaurusResource(namespace)
-			ytsaurus.Spec.TabletNodes[0].InstanceCount = 2
-
-			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.tabletNodes[0].instanceCount")))
-		})
-
 		It("Check volumeMounts for locations", func() {
 			ytsaurus := CreateBaseYtsaurusResource(namespace)
 			ytsaurus.Spec.PrimaryMasters.VolumeMounts = []v1.VolumeMount{}

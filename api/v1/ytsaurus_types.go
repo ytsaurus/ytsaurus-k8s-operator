@@ -319,7 +319,8 @@ type ExecNodesSpec struct {
 	Sidecars []string `json:"sidecars,omitempty"`
 	//+kubebuilder:default:=true
 	//+optional
-	Privileged bool `json:"privileged"`
+	Privileged      bool             `json:"privileged"`
+	JobProxyLoggers []TextLoggerSpec `json:"jobProxyLoggers,omitempty"`
 }
 
 type TabletNodesSpec struct {

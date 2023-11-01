@@ -7253,6 +7253,78 @@ spec:
                     instanceCount:
                       format: int32
                       type: integer
+                    jobProxyLoggers:
+                      items:
+                        properties:
+                          categoriesFilter:
+                            properties:
+                              type:
+                                description: CategoriesFilterType string describes
+                                  types of possible log CategoriesFilter.
+                                enum:
+                                - exclude
+                                - include
+                                type: string
+                              values:
+                                items:
+                                  type: string
+                                minItems: 1
+                                type: array
+                            type: object
+                          compression:
+                            default: none
+                            enum:
+                            - none
+                            - gzip
+                            - zstd
+                            type: string
+                          format:
+                            default: plain_text
+                            enum:
+                            - plain_text
+                            - json
+                            - yson
+                            type: string
+                          minLogLevel:
+                            default: info
+                            description: LogLevel string describes possible Ytsaurus
+                              logging level.
+                            enum:
+                            - trace
+                            - debug
+                            - info
+                            - error
+                            type: string
+                          name:
+                            minLength: 1
+                            type: string
+                          rotationPolicy:
+                            properties:
+                              maxSegmentCountToKeep:
+                                format: int64
+                                type: integer
+                              maxSegmentSize:
+                                format: int64
+                                type: integer
+                              maxTotalSizeToKeep:
+                                format: int64
+                                type: integer
+                              rotationPeriodMilliseconds:
+                                format: int64
+                                type: integer
+                            type: object
+                          useTimestampSuffix:
+                            default: false
+                            type: boolean
+                          writerType:
+                            description: LogWriterType string describes types of possible
+                              log writers.
+                            enum:
+                            - file
+                            - stderr
+                            type: string
+                        type: object
+                      type: array
                     locations:
                       items:
                         properties:

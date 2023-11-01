@@ -104,6 +104,17 @@ func newLoggingBuilder(location *ytv1.LocationSpec, componentName string) loggin
 	}
 }
 
+func newJobProxyLoggingBuilder() loggingBuilder {
+	return loggingBuilder{
+		loggingDirectory: "",
+		componentName:    "job-proxy",
+		logging: Logging{
+			Rules:   make([]LoggingRule, 0),
+			Writers: make(map[string]LoggingWriter),
+		},
+	}
+}
+
 func createBaseLoggingRule(spec ytv1.BaseLoggerSpec) LoggingRule {
 	return LoggingRule{
 		MinLevel: spec.MinLogLevel,

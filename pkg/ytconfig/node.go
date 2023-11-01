@@ -80,8 +80,9 @@ type JobController struct {
 }
 
 type ExecAgent struct {
-	SlotManager   SlotManager   `yson:"slot_manager"`
-	JobController JobController `yson:"job_controller"`
+	SlotManager     SlotManager   `yson:"slot_manager"`
+	JobController   JobController `yson:"job_controller"`
+	JobProxyLogging Logging       `yson:"job_proxy_logging"`
 }
 
 type Cache struct {
@@ -335,6 +336,19 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 	}
 
 	c.Logging = getExecNodeLogging(spec)
+
+	jobProxyLoggingBuilder := newJobProxyLoggingBuilder()
+	if spec.JobProxyLoggers != nil && len(spec.JobProxyLoggers) > 0 {
+		for _, loggerSpec := range spec.JobProxyLoggers {
+			jobProxyLoggingBuilder.addLogger(loggerSpec)
+		}
+	} else {
+		for _, defaultLoggerSpec := range []ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()} {
+			jobProxyLoggingBuilder.addLogger(defaultLoggerSpec)
+		}
+	}
+	jobProxyLoggingBuilder.logging.FlushPeriod = 3000
+	c.ExecAgent.JobProxyLogging = jobProxyLoggingBuilder.logging
 
 	return c, nil
 }

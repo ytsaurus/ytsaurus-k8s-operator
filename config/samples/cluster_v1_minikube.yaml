@@ -113,6 +113,26 @@ spec:
         - locationType: Slots
           path: /yt/node-data/slots
 
+      jobProxyLoggers:
+        - name: debug
+          compression: zstd
+          minLogLevel: debug
+          writerType: file
+          useTimestampSuffix: true
+          rotationPolicy: &rotationPolicy
+            maxTotalSizeToKeep: 10000000
+            rotationPeriodMilliseconds: 900000
+          categoriesFilter:
+            type: exclude
+            values: [ "Bus" ]
+        - name: info
+          minLogLevel: info
+          writerType: file
+          rotationPolicy: *rotationPolicy
+        - name: error
+          minLogLevel: error
+          writerType: stderr
+
   schedulers:
     instanceCount: 1
     loggers: *loggers

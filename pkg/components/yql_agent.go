@@ -147,7 +147,11 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			ss := yqla.server.buildStatefulSet()
 			container := &ss.Spec.Template.Spec.Containers[0]
 			container.EnvFrom = []corev1.EnvFromSource{yqla.secret.GetEnvSource()}
-			container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "1"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
+			if yqla.ytsaurus.GetResource().Spec.UseIPv6 {
+				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "1"}}
+			} else {
+				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "1"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
+			}
 			err = yqla.server.Sync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err

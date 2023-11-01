@@ -303,10 +303,6 @@ func (r *Ytsaurus) validateTabletNodes(old *runtime.Object) field.ErrorList {
 		}
 		names[tn.Name] = true
 
-		if tn.InstanceCount < 3 {
-			allErrors = append(allErrors, field.Invalid(path.Child("instanceCount"), tn.InstanceCount, "must be at least 3"))
-		}
-
 		allErrors = append(allErrors, r.validateInstanceSpec(tn.InstanceSpec, path)...)
 	}
 
