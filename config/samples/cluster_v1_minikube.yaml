@@ -151,3 +151,14 @@ spec:
       limits:
         memory: 100Mi
     image: ytsaurus/strawberry:0.0.5
+
+  tabletNodes:
+    - instanceCount: 1
+
+  yqlAgents:
+    instanceCount: 1
+    image: ytsaurus/query-tracker:0.0.1
+
+  queryTrackers:
+    instanceCount: 1
+    image: ytsaurus/query-tracker:0.0.1

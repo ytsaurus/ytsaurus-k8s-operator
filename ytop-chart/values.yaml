@@ -32,6 +32,8 @@ controllerManager:
       capabilities:
         drop:
         - ALL
+    env:
+      ytLogLevel: DEBUG
     image:
       repository: ytsaurus/k8s-operator
       tag: 0.0.0-alpha

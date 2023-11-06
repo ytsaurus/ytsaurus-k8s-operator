@@ -40,6 +40,9 @@ spec:
         - --leader-elect
         image: controller:latest
         name: manager
+        env:
+          - name: YT_LOG_LEVEL
+            value: DEBUG
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
