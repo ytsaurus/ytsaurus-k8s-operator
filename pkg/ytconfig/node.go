@@ -61,6 +61,13 @@ const (
 	JobEnvironmentTypePorto  JobEnvironmentType = "porto"
 )
 
+type GpuInfoSourceType string
+
+const (
+	GpuInfoSourceTypeNvGpuManager GpuInfoSourceType = "nv_gpu_manager"
+	GpuInfoSourceTypeNvidiaSmi    GpuInfoSourceType = "nvidia_smi"
+)
+
 type JobEnvironment struct {
 	Type     JobEnvironmentType `yson:"type,omitempty"`
 	StartUID int                `yson:"start_uid,omitempty"`
@@ -75,8 +82,17 @@ type JobResourceLimits struct {
 	UserSlots int `yson:"user_slots"`
 }
 
+type GpuInfoSource struct {
+	Type GpuInfoSourceType `yson:"type"`
+}
+
+type GpuManager struct {
+	GpuInfoSource GpuInfoSource `yson:"gpu_info_source"`
+}
+
 type JobController struct {
 	ResourceLimits JobResourceLimits `yson:"resource_limits"`
+	GpuManager     GpuManager        `yson:"gpu_manager"`
 }
 
 type ExecAgent struct {
@@ -338,6 +354,8 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 	} else {
 		c.ExecAgent.SlotManager.JobEnvironment.Type = JobEnvironmentTypeSimple
 	}
+
+	c.ExecAgent.JobController.GpuManager.GpuInfoSource.Type = GpuInfoSourceTypeNvidiaSmi
 
 	c.Logging = getExecNodeLogging(spec)
 
