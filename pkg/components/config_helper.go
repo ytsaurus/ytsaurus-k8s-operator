@@ -187,11 +187,6 @@ func (h *ConfigHelper) NeedInit() bool {
 		return true
 	}
 	return false
-	/*needReload, err := h.NeedReload()
-	if err != nil {
-		return false
-	}
-	return needReload*/
 }
 
 func (h *ConfigHelper) Build() *corev1.ConfigMap {
