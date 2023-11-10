@@ -31,8 +31,8 @@ func getUIClusterCarcass() UICluster {
 	return UICluster{
 		Secure:         false,
 		Authentication: uiAuthenticationBasic,
-		Group:          "My Ytsaurus clusters",
-		Description:    "My first Ytsaurus. Handle with care.",
+		Group:          "My YTsaurus clusters",
+		Description:    "My first YTsaurus. Handle with care.",
 	}
 }
 
