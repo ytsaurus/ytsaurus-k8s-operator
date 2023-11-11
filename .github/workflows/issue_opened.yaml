@@ -67,7 +67,7 @@ jobs:
     name: Stop VM
     needs:
       - start-vm
-      - release
+      - sync
       - telegram
     runs-on: ubuntu-latest
     if: ${{ always() }}
