@@ -35,8 +35,11 @@ if args.create_issue:
 
     response = requests.post('https://st-api.yandex-team.ru/v2/issues/', headers=headers, data=json.dumps(data))
 
-    print("Issue was created: ", args.github_issue_id, response)
-    print(response.json()["key"])
+    if not response.ok:
+        print("Failed to create issue", response.json())
+        exit(1)
+
+    print("Issue was created: ", args.github_issue_id, response.json()["key"])
 
 if args.close_issue:
     # Find issue.
