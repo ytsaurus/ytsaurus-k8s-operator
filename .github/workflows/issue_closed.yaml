@@ -1,24 +1,17 @@
-name: Issue notifications
+name: Close issue
 
 on:
   issues:
     types: [closed]
 
 jobs:
-  checkout:
-    name: Checkout sources
+  send:
+    name: Close issue
     runs-on: trampoline
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-  sync:
-    name: Sync
-    needs:
-      - start-vm
-      - checkout
-    runs-on: ${{ needs.start-vm.outputs.label }}
-    steps:
       - name: Close issue
         run: |
           ./scripts/sync_issue.py --close-issue --repo 'ytsaurus/yt-k8s-operator' --github-issue-id ${{github.event.issue.number}} --token ${{secrets.ROBOT_SUP_TOKEN}}
