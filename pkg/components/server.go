@@ -148,8 +148,8 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 }
 
 func (s *serverImpl) arePodsRemoved(ctx context.Context) bool {
-	if s.configHelper.NeedInit() || !resources.Exists(s.statefulSet) || !resources.Exists(s.headlessService) {
-		return false
+	if !resources.Exists(s.statefulSet) {
+		return true
 	}
 
 	return s.statefulSet.ArePodsRemoved(ctx)

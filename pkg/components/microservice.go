@@ -143,8 +143,8 @@ func (m *microserviceImpl) arePodsReady(ctx context.Context) bool {
 }
 
 func (m *microserviceImpl) arePodsRemoved(ctx context.Context) bool {
-	if m.configHelper.NeedInit() || !resources.Exists(m.deployment) || !resources.Exists(m.service) {
-		return false
+	if !resources.Exists(m.deployment) {
+		return true
 	}
 	return m.deployment.ArePodsRemoved(ctx)
 }
