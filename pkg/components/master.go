@@ -83,10 +83,10 @@ func (m *master) Fetch(ctx context.Context) error {
 		}
 	}
 
-	return resources.Fetch(ctx, []resources.Fetchable{
+	return resources.Fetch(ctx,
 		m.server,
 		m.initJob,
-	})
+	)
 }
 
 func (m *master) initAdminUser() string {

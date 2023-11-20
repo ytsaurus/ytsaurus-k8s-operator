@@ -90,11 +90,11 @@ func (u *UI) IsUpdatable() bool {
 
 func (u *UI) Fetch(ctx context.Context) error {
 
-	return resources.Fetch(ctx, []resources.Fetchable{
+	return resources.Fetch(ctx,
 		u.microservice,
 		u.initJob,
 		u.secret,
-	})
+	)
 }
 
 func (u *UI) initUser() string {

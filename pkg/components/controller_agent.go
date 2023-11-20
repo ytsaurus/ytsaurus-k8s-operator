@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -53,9 +54,7 @@ func (ca *controllerAgent) IsUpdatable() bool {
 }
 
 func (ca *controllerAgent) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
-		ca.server,
-	})
+	return resources.Fetch(ctx, ca.server)
 }
 
 func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {

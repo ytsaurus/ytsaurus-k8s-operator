@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	ptr "k8s.io/utils/pointer"
 
@@ -14,7 +15,7 @@ import (
 )
 
 // microservice manages common resources of YTsaurus service component
-// that typically is not directly presented in the cypress
+// that typically is not directly presented in Cypress
 // and doesn't use native connection to communicate with the cluster.
 // Examples are YT UI and CHYT controller.
 type microservice interface {
@@ -79,19 +80,19 @@ func (m *microserviceImpl) Sync(ctx context.Context) (err error) {
 	_ = m.buildDeployment()
 	_ = m.buildService()
 
-	return resources.Sync(ctx, []resources.Syncable{
+	return resources.Sync(ctx,
 		m.deployment,
 		m.configHelper,
 		m.service,
-	})
+	)
 }
 
 func (m *microserviceImpl) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
+	return resources.Fetch(ctx,
 		m.configHelper,
 		m.deployment,
 		m.service,
-	})
+	)
 }
 
 func (m *microserviceImpl) needSync() bool {

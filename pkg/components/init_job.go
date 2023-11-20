@@ -125,10 +125,10 @@ func (j *InitJob) Build() *batchv1.Job {
 }
 
 func (j *InitJob) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
+	return resources.Fetch(ctx,
 		j.initJob,
 		j.configHelper,
-	})
+	)
 }
 
 func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
@@ -146,10 +146,10 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	if !resources.Exists(j.initJob) {
 		if !dry {
 			_ = j.Build()
-			err = resources.Sync(ctx, []resources.Syncable{
+			err = resources.Sync(ctx,
 				j.configHelper,
 				j.initJob,
-			})
+			)
 		}
 
 		return WaitingStatus(SyncStatusPending, fmt.Sprintf("%s creation", j.initJob.Name())), err

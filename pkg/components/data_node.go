@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -60,9 +61,7 @@ func (n *dataNode) IsUpdatable() bool {
 }
 
 func (n *dataNode) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
-		n.server,
-	})
+	return resources.Fetch(ctx, n.server)
 }
 
 func (n *dataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {

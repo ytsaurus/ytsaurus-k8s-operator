@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -224,7 +225,5 @@ func (tn *tabletNode) Sync(ctx context.Context) error {
 }
 
 func (tn *tabletNode) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
-		tn.server,
-	})
+	return resources.Fetch(ctx, tn.server)
 }

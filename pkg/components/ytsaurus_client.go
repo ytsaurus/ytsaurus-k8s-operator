@@ -77,11 +77,11 @@ func (yc *ytsaurusClient) IsUpdatable() bool {
 }
 
 func (yc *ytsaurusClient) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
+	return resources.Fetch(ctx,
 		yc.secret,
 		yc.initUserJob,
 		yc.httpProxy,
-	})
+	)
 }
 
 func (yc *ytsaurusClient) createInitUserScript() string {

@@ -93,11 +93,11 @@ func (qt *queryTracker) IsUpdatable() bool {
 }
 
 func (qt *queryTracker) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
+	return resources.Fetch(ctx,
 		qt.server,
 		qt.initQTState,
 		qt.secret,
-	})
+	)
 }
 
 func (qt *queryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {

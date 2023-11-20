@@ -94,12 +94,12 @@ func (s *scheduler) IsUpdatable() bool {
 }
 
 func (s *scheduler) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
+	return resources.Fetch(ctx,
 		s.server,
 		s.initOpArchive,
 		s.initUser,
 		s.secret,
-	})
+	)
 }
 
 func (s *scheduler) Status(ctx context.Context) ComponentStatus {

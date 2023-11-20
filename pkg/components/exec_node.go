@@ -2,6 +2,8 @@ package components
 
 import (
 	"context"
+	"log"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -11,7 +13,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	ptr "k8s.io/utils/pointer"
-	"log"
 )
 
 type execNode struct {
@@ -68,9 +69,7 @@ func (n *execNode) IsUpdatable() bool {
 }
 
 func (n *execNode) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
-		n.server,
-	})
+	return resources.Fetch(ctx, n.server)
 }
 
 func (n *execNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {

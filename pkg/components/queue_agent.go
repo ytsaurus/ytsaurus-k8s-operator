@@ -95,11 +95,11 @@ func (qa *queueAgent) IsUpdatable() bool {
 }
 
 func (qa *queueAgent) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
+	return resources.Fetch(ctx,
 		qa.server,
 		qa.initQAState,
 		qa.secret,
-	})
+	)
 }
 
 func (qa *queueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {

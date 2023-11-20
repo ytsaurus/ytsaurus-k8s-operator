@@ -155,11 +155,11 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 }
 
 func (s *Spyt) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
+	return resources.Fetch(ctx,
 		s.initUser,
 		s.initEnvironment,
 		s.secret,
-	})
+	)
 }
 
 func (s *Spyt) Status(ctx context.Context) ComponentStatus {

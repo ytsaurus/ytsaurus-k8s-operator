@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -86,10 +87,10 @@ func (hp *httpProxy) IsUpdatable() bool {
 }
 
 func (hp *httpProxy) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
+	return resources.Fetch(ctx,
 		hp.server,
 		hp.balancingService,
-	})
+	)
 }
 
 func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {

@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -17,9 +18,11 @@ type Fetchable interface {
 	Fetch(ctx context.Context) error
 }
 
-func Fetch(ctx context.Context, objects []Fetchable) error {
-	for i := range objects {
-		obj := objects[i]
+func Fetch(ctx context.Context, objects ...Fetchable) error {
+	for _, obj := range objects {
+		if obj == nil {
+			continue
+		}
 		err := obj.Fetch(ctx)
 		if err != nil {
 			return err
@@ -32,9 +35,11 @@ type Syncable interface {
 	Sync(ctx context.Context) error
 }
 
-func Sync(ctx context.Context, objects []Syncable) error {
-	for i := range objects {
-		obj := objects[i]
+func Sync(ctx context.Context, objects ...Syncable) error {
+	for _, obj := range objects {
+		if obj == nil {
+			continue
+		}
 		err := obj.Sync(ctx)
 		if err != nil {
 			return err

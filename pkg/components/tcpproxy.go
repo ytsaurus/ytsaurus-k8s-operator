@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -80,7 +81,7 @@ func (tp *tcpProxy) Fetch(ctx context.Context) error {
 	if tp.balancingService != nil {
 		fetchable = append(fetchable, tp.balancingService)
 	}
-	return resources.Fetch(ctx, fetchable)
+	return resources.Fetch(ctx, fetchable...)
 }
 
 func (tp *tcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {

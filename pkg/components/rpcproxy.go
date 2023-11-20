@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -90,7 +91,7 @@ func (rp *rpcProxy) Fetch(ctx context.Context) error {
 	if rp.balancingService != nil {
 		fetchable = append(fetchable, rp.balancingService)
 	}
-	return resources.Fetch(ctx, fetchable)
+	return resources.Fetch(ctx, fetchable...)
 }
 
 func (rp *rpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {

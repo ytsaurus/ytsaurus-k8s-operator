@@ -126,12 +126,12 @@ func (c *strawberryController) IsUpdatable() bool {
 }
 
 func (c *strawberryController) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
+	return resources.Fetch(ctx,
 		c.microservice,
 		c.initUserJob,
 		c.initChytClusterJob,
 		c.secret,
-	})
+	)
 }
 
 func (c *strawberryController) initUsers() string {

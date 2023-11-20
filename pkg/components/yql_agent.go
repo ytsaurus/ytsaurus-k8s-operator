@@ -78,11 +78,11 @@ func (yqla *yqlAgent) GetName() string {
 }
 
 func (yqla *yqlAgent) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
+	return resources.Fetch(ctx,
 		yqla.server,
 		yqla.initEnvironment,
 		yqla.secret,
-	})
+	)
 }
 
 func (yqla *yqlAgent) initUsers() string {

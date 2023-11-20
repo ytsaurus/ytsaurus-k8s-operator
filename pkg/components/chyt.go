@@ -3,8 +3,9 @@ package components
 import (
 	"context"
 	"fmt"
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"strings"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -195,12 +196,12 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 }
 
 func (c *Chyt) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
+	return resources.Fetch(ctx,
 		c.initUser,
 		c.initEnvironment,
 		c.initChPublicJob,
 		c.secret,
-	})
+	)
 }
 
 func (c *Chyt) Status(ctx context.Context) ComponentStatus {

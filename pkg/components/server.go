@@ -2,9 +2,10 @@ package components
 
 import (
 	"context"
-	ptr "k8s.io/utils/pointer"
 	"log"
 	"path"
+
+	ptr "k8s.io/utils/pointer"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -108,12 +109,12 @@ func newServer(
 }
 
 func (s *serverImpl) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, []resources.Fetchable{
+	return resources.Fetch(ctx,
 		s.statefulSet,
 		s.configHelper,
 		s.headlessService,
 		s.monitoringService,
-	})
+	)
 }
 
 func (s *serverImpl) exists() bool {
@@ -139,12 +140,12 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 	_ = s.monitoringService.Build()
 	_ = s.buildStatefulSet()
 
-	return resources.Sync(ctx, []resources.Syncable{
+	return resources.Sync(ctx,
 		s.statefulSet,
 		s.configHelper,
 		s.headlessService,
 		s.monitoringService,
-	})
+	)
 }
 
 func (s *serverImpl) arePodsRemoved(ctx context.Context) bool {
