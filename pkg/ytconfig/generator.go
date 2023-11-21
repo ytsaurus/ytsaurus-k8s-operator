@@ -591,10 +591,21 @@ func (g *Generator) getYQLAgentConfigImpl() (YQLAgentServer, error) {
 	}
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+
+	c.YQLAgent.GatewayConfig.ClusterMapping = []ClusterMapping{
+		{
+			Name:    g.ytsaurus.Name,
+			Cluster: g.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole),
+			Default: true,
+		},
+	}
+
+	// For backward compatibility.
 	c.YQLAgent.AdditionalClusters = map[string]string{
 		g.ytsaurus.Name: g.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole),
 	}
 	c.YQLAgent.DefaultCluster = g.ytsaurus.Name
+
 	return c, nil
 }
 
