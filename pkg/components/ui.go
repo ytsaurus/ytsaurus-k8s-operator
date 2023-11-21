@@ -60,6 +60,8 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		"ytsaurus-ui-deployment",
 		"ytsaurus-ui")
 
+	microservice.getHttpService().SetHttpNodePort(resource.Spec.UI.HttpNodePort)
+
 	return &UI{
 		componentBase: componentBase{
 			labeller: &l,

@@ -9530,6 +9530,12 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    httpNodePort:
+                      format: int32
+                      type: integer
+                    httpsNodePort:
+                      format: int32
+                      type: integer
                     image:
                       type: string
                     instanceCount:
@@ -18396,10 +18402,16 @@ spec:
                           type: object
                           x-kubernetes-map-type: atomic
                       type: object
+                    nodePort:
+                      format: int32
+                      type: integer
                     nodeSelector:
                       additionalProperties:
                         type: string
                       type: object
+                    portCount:
+                      format: int32
+                      type: integer
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -27163,6 +27175,11 @@ spec:
                             type: string
                         type: object
                       type: array
+                    minNodePort:
+                      description: When presented, a continious port range is allocated,
+                        starting with minNodePort.
+                      format: int32
+                      type: integer
                     minReadyInstanceCount:
                       type: integer
                     nativeTransport:
@@ -27192,6 +27209,10 @@ spec:
                       additionalProperties:
                         type: string
                       type: object
+                    portCount:
+                      description: Number of ports to allocate for balancing service.
+                      format: int32
+                      type: integer
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -28768,6 +28789,9 @@ spec:
                     type: array
                   group:
                     type: string
+                  httpNodePort:
+                    format: int32
+                    type: integer
                   image:
                     type: string
                   instanceCount:

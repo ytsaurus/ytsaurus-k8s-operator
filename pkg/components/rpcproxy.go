@@ -56,6 +56,8 @@ func NewRPCProxy(
 			cfgen.GetRPCProxiesServiceName(spec.Role),
 			&l,
 			ytsaurus.APIProxy())
+
+		balancingService.SetNodePort(spec.NodePort)
 	}
 
 	var tlsSecret *resources.TLSSecret

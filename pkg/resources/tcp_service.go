@@ -3,8 +3,8 @@ package resources
 import (
 	"context"
 	"fmt"
+
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	labeller2 "github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -12,7 +12,10 @@ import (
 )
 
 type TCPService struct {
-	name string
+	name        string
+	serviceType corev1.ServiceType
+	portCount   int32
+	minPort     int32
 
 	labeller *labeller2.Labeller
 	apiProxy apiproxy.APIProxy
@@ -21,11 +24,19 @@ type TCPService struct {
 	newObject corev1.Service
 }
 
-func NewTCPService(name string, labeller *labeller2.Labeller, apiProxy apiproxy.APIProxy) *TCPService {
+func NewTCPService(name string,
+	serviceType corev1.ServiceType,
+	portCount int32,
+	minPort int32,
+	labeller *labeller2.Labeller,
+	apiProxy apiproxy.APIProxy) *TCPService {
 	return &TCPService{
-		name:     name,
-		labeller: labeller,
-		apiProxy: apiProxy,
+		name:        name,
+		serviceType: serviceType,
+		portCount:   portCount,
+		minPort:     minPort,
+		labeller:    labeller,
+		apiProxy:    apiProxy,
 	}
 }
 
@@ -49,16 +60,21 @@ func (s *TCPService) Build() *corev1.Service {
 	s.newObject.ObjectMeta = s.labeller.GetObjectMeta(s.name)
 
 	var ports = make([]corev1.ServicePort, 0)
-	for port := consts.TCPProxyMinTCPPort; port <= consts.TCPProxyMaxTCPPort; port++ {
-		ports = append(ports, corev1.ServicePort{
+	for port := s.minPort; port < s.minPort+s.portCount; port++ {
+		servicePort := corev1.ServicePort{
 			Name:       fmt.Sprintf("tcp-%d", port),
-			Port:       int32(port),
-			TargetPort: intstr.IntOrString{IntVal: int32(port)},
-		})
+			Port:       port,
+			TargetPort: intstr.IntOrString{IntVal: port},
+		}
+		if s.serviceType == corev1.ServiceTypeNodePort {
+			servicePort.NodePort = port
+		}
+		ports = append(ports, servicePort)
 	}
 
 	s.newObject.Spec = corev1.ServiceSpec{
 		Selector: s.labeller.GetSelectorLabelMap(),
+		Type:     s.serviceType,
 		Ports:    ports,
 	}
 

@@ -247,7 +247,9 @@ type HTTPTransportSpec struct {
 type HTTPProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	//+kubebuilder:default:=NodePort
-	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
+	ServiceType   corev1.ServiceType `json:"serviceType,omitempty"`
+	HttpNodePort  *int32             `json:"httpNodePort,omitempty"`
+	HttpsNodePort *int32             `json:"httpsNodePort,omitempty"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`
@@ -273,6 +275,7 @@ type RPCTransportSpec struct {
 type RPCProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
+	NodePort     *int32              `json:"nodePort,omitempty"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`
@@ -283,6 +286,11 @@ type RPCProxiesSpec struct {
 type TCPProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
+	//+kubebuilder:default:=32000
+	MinPort int32 `json:"minPort"`
+	// Number of ports to allocate for balancing service.
+	//+kubebuilder:default:=20
+	PortCount int32 `json:"portCount"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`
@@ -297,8 +305,6 @@ type ClusterNodesSpec struct {
 }
 
 type DataNodesSpec struct {
-	// label filter (for daemonset)
-	// use host network
 	InstanceSpec `json:",inline"`
 	// Common part of the cluster node spec.
 	ClusterNodesSpec `json:",inline"`
@@ -351,7 +357,8 @@ type DiscoverySpec struct {
 type UISpec struct {
 	Image *string `json:"image,omitempty"`
 	//+kubebuilder:default:=NodePort
-	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
+	ServiceType  corev1.ServiceType `json:"serviceType,omitempty"`
+	HttpNodePort *int32             `json:"httpNodePort,omitempty"`
 	//+kubebuilder:default:=true
 	//+optional
 	UseInsecureCookies bool                        `json:"useInsecureCookies"`

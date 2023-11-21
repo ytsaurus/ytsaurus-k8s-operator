@@ -53,6 +53,9 @@ func NewTCPProxy(
 	if spec.ServiceType != nil {
 		balancingService = resources.NewTCPService(
 			cfgen.GetTCPProxiesServiceName(spec.Role),
+			*spec.ServiceType,
+			spec.PortCount,
+			spec.MinPort,
 			&l,
 			ytsaurus.APIProxy())
 	}
@@ -110,8 +113,7 @@ func (tp *tcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 
 	if tp.balancingService != nil && !resources.Exists(tp.balancingService) {
 		if !dry {
-			s := tp.balancingService.Build()
-			s.Spec.Type = *tp.serviceType
+			tp.balancingService.Build()
 			err = tp.balancingService.Sync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, tp.balancingService.Name()), err

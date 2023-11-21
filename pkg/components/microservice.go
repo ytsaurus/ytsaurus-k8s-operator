@@ -25,6 +25,7 @@ type microservice interface {
 	needSync() bool
 	needUpdate() bool
 	getImage() string
+	getHttpService() *resources.HTTPService
 	buildDeployment() *appsv1.Deployment
 	buildService() *corev1.Service
 	buildConfig() *corev1.ConfigMap
@@ -112,6 +113,10 @@ func (m *microserviceImpl) buildDeployment() *appsv1.Deployment {
 	}
 
 	return m.rebuildDeployment()
+}
+
+func (m *microserviceImpl) getHttpService() *resources.HTTPService {
+	return m.service
 }
 
 func (m *microserviceImpl) rebuildDeployment() *appsv1.Deployment {

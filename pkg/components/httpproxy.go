@@ -63,22 +63,27 @@ func NewHTTPProxy(
 			consts.HTTPSSecretMountPoint)
 	}
 
+	balancingService := resources.NewHTTPService(
+		cfgen.GetHTTPProxiesServiceName(spec.Role),
+		&spec.Transport,
+		&l,
+		ytsaurus.APIProxy())
+
+	balancingService.SetHttpNodePort(spec.HttpNodePort)
+	balancingService.SetHttpsNodePort(spec.HttpsNodePort)
+
 	return &httpProxy{
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
 			cfgen:    cfgen,
 		},
-		server:      server,
-		master:      masterReconciler,
-		serviceType: spec.ServiceType,
-		role:        spec.Role,
-		httpsSecret: httpsSecret,
-		balancingService: resources.NewHTTPService(
-			cfgen.GetHTTPProxiesServiceName(spec.Role),
-			&spec.Transport,
-			&l,
-			ytsaurus.APIProxy()),
+		server:           server,
+		master:           masterReconciler,
+		serviceType:      spec.ServiceType,
+		role:             spec.Role,
+		httpsSecret:      httpsSecret,
+		balancingService: balancingService,
 	}
 }
 
