@@ -95,10 +95,15 @@ type JobController struct {
 	GpuManager     GpuManager        `yson:"gpu_manager"`
 }
 
+type JobProxy struct {
+	JobProxyLogging       Logging       `yson:"job_proxy_logging"`
+}
+
 type ExecAgent struct {
-	SlotManager     SlotManager   `yson:"slot_manager"`
-	JobController   JobController `yson:"job_controller"`
-	JobProxyLogging Logging       `yson:"job_proxy_logging"`
+	SlotManager           SlotManager      `yson:"slot_manager"`
+	JobController   	  JobController    `yson:"job_controller"`
+	JobProxy      JobProxy `yson:"job_proxy"`
+	JobProxyLoggingLegacy Logging          `yson:"job_proxy_logging"`
 }
 
 type Cache struct {
@@ -370,7 +375,8 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 		}
 	}
 	jobProxyLoggingBuilder.logging.FlushPeriod = 3000
-	c.ExecAgent.JobProxyLogging = jobProxyLoggingBuilder.logging
+	c.ExecAgent.JobProxyLoggingLegacy = jobProxyLoggingBuilder.logging
+	c.ExecAgent.JobProxy.JobProxyLogging = jobProxyLoggingBuilder.logging
 
 	return c, nil
 }
