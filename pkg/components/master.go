@@ -159,7 +159,7 @@ func (m *master) createInitScript() string {
 
 	script := []string{
 		initJobWithNativeDriverPrologue(),
-		"/usr/bin/yt execute master_exit_read_only '{}'",
+		"/usr/bin/yt execute master_exit_read_only '{}' || echo 'master_exit_read_only is supported since 23.2'",
 		"/usr/bin/yt remove //sys/@provision_lock -f",
 		"/usr/bin/yt create scheduler_pool_tree --attributes '{name=default; config={nodes_filter=\"\"}}' --ignore-existing",
 		"/usr/bin/yt set //sys/pool_trees/@default_tree default",
