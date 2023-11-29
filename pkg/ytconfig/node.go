@@ -91,8 +91,12 @@ type GpuManager struct {
 }
 
 type JobController struct {
+	ResourceLimitsLegacy JobResourceLimits `yson:"resource_limits"`
+	GpuManager           GpuManager        `yson:"gpu_manager"`
+}
+
+type JobResourceManager struct {
 	ResourceLimits JobResourceLimits `yson:"resource_limits"`
-	GpuManager     GpuManager        `yson:"gpu_manager"`
 }
 
 type JobProxy struct {
@@ -135,10 +139,11 @@ type DataNodeServer struct {
 
 type ExecNodeServer struct {
 	NodeServer
-	ExecAgent            ExecAgent  `yson:"exec_agent"`
-	DataNode             DataNode   `yson:"data_node"`
-	TabletNode           TabletNode `yson:"tablet_node"`
-	CachingObjectService Cache      `yson:"caching_object_service"`
+	JobResourceManager   JobResourceManager `yson:"job_resource_manager"`
+	ExecAgent            ExecAgent  		`yson:"exec_agent"`
+	DataNode             DataNode   		`yson:"data_node"`
+	TabletNode           TabletNode 		`yson:"tablet_node"`
+	CachingObjectService Cache      		`yson:"caching_object_service"`
 }
 
 type TabletNodeServer struct {
@@ -349,7 +354,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 
 	if c.ResourceLimits.TotalCpu != nil {
 		// Dummy heuristic.
-		c.ExecAgent.JobController.ResourceLimits.UserSlots = int(5 * *c.ResourceLimits.TotalCpu)
+		c.ExecAgent.JobController.ResourceLimitsLegacy.UserSlots = int(5 * *c.ResourceLimits.TotalCpu)
 	}
 
 	c.ExecAgent.SlotManager.JobEnvironment.StartUID = consts.StartUID
@@ -377,6 +382,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 	jobProxyLoggingBuilder.logging.FlushPeriod = 3000
 	c.ExecAgent.JobProxyLoggingLegacy = jobProxyLoggingBuilder.logging
 	c.ExecAgent.JobProxy.JobProxyLogging = jobProxyLoggingBuilder.logging
+	c.JobResourceManager.ResourceLimits = c.ExecAgent.JobController.ResourceLimitsLegacy
 
 	return c, nil
 }
