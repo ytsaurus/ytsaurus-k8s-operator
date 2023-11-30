@@ -1,6 +1,7 @@
 package ytconfig
 
 import (
+	"go.ytsaurus.tech/library/go/ptr"
 	"testing"
 
 	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -30,7 +31,8 @@ func TestGetMasterConfig(t *testing.T) {
 			UseIPv6: true,
 
 			PrimaryMasters: v1.MastersSpec{
-				CellTag: 0,
+				CellTag:                0,
+				MaxSnapshotCountToKeep: ptr.Int(1543),
 				InstanceSpec: v1.InstanceSpec{
 					InstanceCount: 1,
 

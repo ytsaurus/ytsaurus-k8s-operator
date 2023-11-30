@@ -99,7 +99,7 @@
     "use_new_hydra"=%true;
     "hydra_manager"={
         "max_changelog_count_to_keep"=2;
-        "max_snapshot_count_to_keep"=2;
+        "max_snapshot_count_to_keep"=1543;
     };
     "cypress_manager"={
         "default_table_replication_factor"=1;
