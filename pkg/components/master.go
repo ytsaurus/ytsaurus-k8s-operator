@@ -5,16 +5,19 @@ import (
 	"fmt"
 	"strings"
 
+	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/yson"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	corev1 "k8s.io/api/core/v1"
 )
 
 type master struct {
@@ -22,6 +25,7 @@ type master struct {
 	server server
 
 	initJob          *InitJob
+	exitReadOnlyJob  *InitJob
 	adminCredentials corev1.Secret
 }
 
@@ -57,14 +61,26 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component
 		resource.Spec.CoreImage,
 		cfgen.GetNativeClientConfig)
 
+	exitReadOnlyJob := NewInitJob(
+		&l,
+		ytsaurus.APIProxy(),
+		ytsaurus,
+		resource.Spec.ImagePullSecrets,
+		"exit-read-only",
+		consts.ClientConfigFileName,
+		resource.Spec.CoreImage,
+		cfgen.GetNativeClientConfig,
+	)
+
 	return &master{
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
 			cfgen:    cfgen,
 		},
-		server:  server,
-		initJob: initJob,
+		server:          server,
+		initJob:         initJob,
+		exitReadOnlyJob: exitReadOnlyJob,
 	}
 }
 
@@ -86,6 +102,7 @@ func (m *master) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		m.server,
 		m.initJob,
+		m.exitReadOnlyJob,
 	)
 }
 
@@ -159,8 +176,6 @@ func (m *master) createInitScript() string {
 
 	script := []string{
 		initJobWithNativeDriverPrologue(),
-		// TODO: remove || in the future
-		"/usr/bin/yt execute master_exit_read_only '{}' || echo 'master_exit_read_only is supported since 23.2'",
 		"/usr/bin/yt remove //sys/@provision_lock -f",
 		"/usr/bin/yt create scheduler_pool_tree --attributes '{name=default; config={nodes_filter=\"\"}}' --ignore-existing",
 		"/usr/bin/yt set //sys/pool_trees/@default_tree default",
@@ -176,6 +191,16 @@ func (m *master) createInitScript() string {
 	return strings.Join(script, "\n")
 }
 
+func (m *master) createExitReadOnlyScript() string {
+	script := []string{
+		initJobWithNativeDriverPrologue(),
+		// TODO: remove || in the future
+		"/usr/bin/yt execute master_exit_read_only '{}' || echo 'master_exit_read_only is supported since 23.2'",
+	}
+
+	return strings.Join(script, "\n")
+}
+
 func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
@@ -184,7 +209,12 @@ func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	}
 
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.componentBase, m.server, dry); status != nil {
+		status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.componentBase, m.server, dry)
+		if status != nil && status.SyncStatus != SyncStatusReady {
+			return *status, err
+		}
+		status, err = m.exitReadOnly(ctx, dry)
+		if status != nil && status.SyncStatus != SyncStatusReady {
 			return *status, err
 		}
 	}
@@ -219,4 +249,51 @@ func (m *master) Status(ctx context.Context) ComponentStatus {
 func (m *master) Sync(ctx context.Context) error {
 	_, err := m.doSync(ctx, false)
 	return err
+}
+
+func (m *master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, error) {
+	if m.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForMasterExitReadOnly {
+		return nil, nil
+	}
+
+	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterExitReadOnlyPrepared) {
+		if !m.exitReadOnlyJob.isRestartPrepared() {
+			if err := m.exitReadOnlyJob.prepareRestart(ctx, dry); err != nil {
+				return ptr.T(SimpleStatus(SyncStatusUpdating)), err
+			}
+		}
+
+		if !dry {
+			m.setMasterReadOnlyExitPrepared(metav1.ConditionTrue)
+		}
+		return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
+	}
+
+	if !m.exitReadOnlyJob.IsCompleted() {
+		if !dry {
+			m.exitReadOnlyJob.SetInitScript(m.createExitReadOnlyScript())
+		}
+		status, err := m.exitReadOnlyJob.Sync(ctx, dry)
+		return &status, err
+	}
+
+	if !dry {
+		m.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+			Type:    consts.ConditionMasterExitedReadOnly,
+			Status:  metav1.ConditionTrue,
+			Reason:  "MasterExitedReadOnly",
+			Message: "Master exited read only",
+		})
+		m.setMasterReadOnlyExitPrepared(metav1.ConditionFalse)
+	}
+	return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
+}
+
+func (m *master) setMasterReadOnlyExitPrepared(status metav1.ConditionStatus) {
+	m.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+		Type:    consts.ConditionMasterExitReadOnlyPrepared,
+		Status:  status,
+		Reason:  "MasterExitReadOnlyPrepared",
+		Message: "Master is ready for exit read only",
+	})
 }

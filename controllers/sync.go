@@ -2,14 +2,16 @@ package controllers
 
 import (
 	"context"
+	"time"
+
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
-	"time"
+
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func (r *YtsaurusReconciler) handleUpdatingStateFullMode(
@@ -88,8 +90,15 @@ func (r *YtsaurusReconciler) handleUpdatingStateFullMode(
 	case ytv1.UpdateStateWaitingForPodsCreation:
 		if componentManager.allReadyOrUpdating() {
 			ytsaurus.LogUpdate(ctx, "All components were recreated")
-			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForTabletCellsRecovery)
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForMasterExitReadOnly)
 			return &ctrl.Result{RequeueAfter: time.Second * 7}, err
+		}
+
+	case ytv1.UpdateStateWaitingForMasterExitReadOnly:
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterExitedReadOnly) {
+			ytsaurus.LogUpdate(ctx, "Master exited read only")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForTabletCellsRecovery)
+			return &ctrl.Result{Requeue: true}, err
 		}
 
 	case ytv1.UpdateStateWaitingForTabletCellsRecovery:
