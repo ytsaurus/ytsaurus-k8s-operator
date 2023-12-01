@@ -194,8 +194,10 @@ func (m *master) createInitScript() string {
 func (m *master) createExitReadOnlyScript() string {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
+		"export YT_LOG_LEVEL=DEBUG",
 		// COMPAT(l0kix2): remove || part when the compatibility with 23.1 and older is dropped.
-		"/usr/bin/yt execute master_exit_read_only '{}' || echo 'master_exit_read_only is supported since 23.2'",
+		`[[ "$YTSAURUS_VERSION" < "23.2" ]] && echo "master_exit_read_only is supported since 23.2, nothing to do" && exit 0`,
+		"/usr/bin/yt execute master_exit_read_only '{}'",
 	}
 
 	return strings.Join(script, "\n")
