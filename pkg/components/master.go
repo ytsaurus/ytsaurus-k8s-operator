@@ -194,7 +194,7 @@ func (m *master) createInitScript() string {
 func (m *master) createExitReadOnlyScript() string {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
-		// TODO: remove || in the future
+		// COMPAT(l0kix2): remove || part when the compatibility with 23.1 and older is dropped.
 		"/usr/bin/yt execute master_exit_read_only '{}' || echo 'master_exit_read_only is supported since 23.2'",
 	}
 
@@ -282,7 +282,7 @@ func (m *master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, 
 			Type:    consts.ConditionMasterExitedReadOnly,
 			Status:  metav1.ConditionTrue,
 			Reason:  "MasterExitedReadOnly",
-			Message: "Master exited read only",
+			Message: "Masters exited read-only state",
 		})
 		m.setMasterReadOnlyExitPrepared(metav1.ConditionFalse)
 	}
@@ -294,6 +294,6 @@ func (m *master) setMasterReadOnlyExitPrepared(status metav1.ConditionStatus) {
 		Type:    consts.ConditionMasterExitReadOnlyPrepared,
 		Status:  status,
 		Reason:  "MasterExitReadOnlyPrepared",
-		Message: "Master is ready for exit read only",
+		Message: "Masters are ready to exit read-only state",
 	})
 }

@@ -96,7 +96,7 @@ func (r *YtsaurusReconciler) handleUpdatingStateFullMode(
 
 	case ytv1.UpdateStateWaitingForMasterExitReadOnly:
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterExitedReadOnly) {
-			ytsaurus.LogUpdate(ctx, "Master exited read only")
+			ytsaurus.LogUpdate(ctx, "Masters exited read-only state")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForTabletCellsRecovery)
 			return &ctrl.Result{Requeue: true}, err
 		}
