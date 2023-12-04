@@ -51,8 +51,16 @@ func getMasterServerCarcass(spec *ytv1.MastersSpec) (MasterServer, error) {
 	c.UseNewHydra = true
 	c.RPCPort = consts.MasterRPCPort
 	c.MonitoringPort = consts.MasterMonitoringPort
+
 	c.HydraManager.MaxSnapshotCountToKeep = 2
+	if spec.MaxSnapshotCountToKeep != nil {
+		c.HydraManager.MaxSnapshotCountToKeep = *spec.MaxSnapshotCountToKeep
+	}
 	c.HydraManager.MaxChangelogCountToKeep = 2
+	if spec.MaxChangelogCountToKeep != nil {
+		c.HydraManager.MaxChangelogCountToKeep = *spec.MaxChangelogCountToKeep
+	}
+
 	c.SecondaryMasters = nil
 
 	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeMasterChangelogs); location != nil {

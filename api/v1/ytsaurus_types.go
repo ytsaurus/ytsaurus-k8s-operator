@@ -234,6 +234,9 @@ type InstanceSpec struct {
 type MastersSpec struct {
 	InstanceSpec `json:",inline"`
 	CellTag      int16 `json:"cellTag"`
+
+	MaxSnapshotCountToKeep  *int `json:"maxSnapshotCountToKeep,omitempty"`
+	MaxChangelogCountToKeep *int `json:"maxChangelogCountToKeep,omitempty"`
 }
 
 type HTTPTransportSpec struct {
