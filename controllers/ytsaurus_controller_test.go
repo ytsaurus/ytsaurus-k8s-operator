@@ -3,12 +3,11 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
 	"go.ytsaurus.tech/yt/go/yt/ythttp"
@@ -16,7 +15,11 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"time"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
 const (
@@ -34,8 +37,12 @@ func getYtClient(g *ytconfig.Generator, namespace string) yt.Client {
 	port := httpProxyService.Spec.Ports[0].NodePort
 
 	k8sNode := corev1.Node{}
+	kindClusterName := os.Getenv("KIND_CLUSTER_NAME")
+	if kindClusterName == "" {
+		kindClusterName = "kind"
+	}
 	Expect(k8sClient.Get(ctx,
-		types.NamespacedName{Name: "kind-control-plane", Namespace: namespace},
+		types.NamespacedName{Name: kindClusterName + "-control-plane", Namespace: namespace},
 		&k8sNode),
 	).Should(Succeed())
 
