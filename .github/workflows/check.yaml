@@ -75,10 +75,10 @@ jobs:
           kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
 
           make helm-kind-install
-          docker pull ytsaurus/ytsaurus-nightly:dev-864e613b6261e2458fbee05f1a440d4b277c9ee6
-          kind load docker-image ytsaurus/ytsaurus-nightly:dev-864e613b6261e2458fbee05f1a440d4b277c9ee6
-          docker pull ytsaurus/ytsaurus-nightly:dev-4526e114f0d15afdd3b7448f65e49abdfb084de9
-          kind load docker-image ytsaurus/ytsaurus-nightly:dev-4526e114f0d15afdd3b7448f65e49abdfb084de9
+          docker pull ytsaurus/ytsaurus-nightly:dev-23.1-5f8638fc66f6e59c7a06708ed508804986a6579f
+          kind load docker-image ytsaurus/ytsaurus-nightly:dev-23.1-5f8638fc66f6e59c7a06708ed508804986a6579f
+          docker pull ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de
+          kind load docker-image ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de
           YTSAURUS_ENABLE_E2E_TESTS=true make test
           helm uninstall ytsaurus
 
