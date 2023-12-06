@@ -9,8 +9,8 @@ import (
 
 const (
 	YtsaurusName    = "test-ytsaurus"
-	CoreImageFirst  = "ytsaurus/ytsaurus-nightly:dev-864e613b6261e2458fbee05f1a440d4b277c9ee6"
-	CoreImageSecond = "ytsaurus/ytsaurus-nightly:dev-4526e114f0d15afdd3b7448f65e49abdfb084de9"
+	CoreImageFirst  = "ytsaurus/ytsaurus-nightly:dev-23.1-relwithdebinfo-5f8638fc66f6e59c7a06708ed508804986a6579f"
+	CoreImageSecond = "ytsaurus/ytsaurus-nightly:dev-23.1-relwithdebinfo-9779e0140ff73f5a786bd5362313ef9a74fcd0de"
 )
 
 func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
