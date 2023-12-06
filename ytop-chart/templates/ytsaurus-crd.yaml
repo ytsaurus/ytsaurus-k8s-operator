@@ -9452,6 +9452,12 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    httpNodePort:
+                      format: int32
+                      type: integer
+                    httpsNodePort:
+                      format: int32
+                      type: integer
                     image:
                       type: string
                     instanceCount:
@@ -11786,6 +11792,10 @@ spec:
                           type: string
                       type: object
                     type: array
+                  maxChangelogCountToKeep:
+                    type: integer
+                  maxSnapshotCountToKeep:
+                    type: integer
                   minReadyInstanceCount:
                     type: integer
                   nativeTransport:
@@ -18234,6 +18244,9 @@ spec:
                           type: object
                           x-kubernetes-map-type: atomic
                       type: object
+                    nodePort:
+                      format: int32
+                      type: integer
                     nodeSelector:
                       additionalProperties:
                         type: string
@@ -22542,6 +22555,10 @@ spec:
                             type: string
                         type: object
                       type: array
+                    maxChangelogCountToKeep:
+                      type: integer
+                    maxSnapshotCountToKeep:
+                      type: integer
                     minReadyInstanceCount:
                       type: integer
                     nativeTransport:
@@ -26917,6 +26934,10 @@ spec:
                             type: string
                         type: object
                       type: array
+                    minPort:
+                      default: 32000
+                      format: int32
+                      type: integer
                     minReadyInstanceCount:
                       type: integer
                     nativeTransport:
@@ -26946,6 +26967,11 @@ spec:
                       additionalProperties:
                         type: string
                       type: object
+                    portCount:
+                      default: 20
+                      description: Number of ports to allocate for balancing service.
+                      format: int32
+                      type: integer
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -28400,6 +28426,9 @@ spec:
                         - name
                         type: object
                       type: array
+                  required:
+                  - minPort
+                  - portCount
                   type: object
                 type: array
               ui:
@@ -28505,6 +28534,9 @@ spec:
                     type: array
                   group:
                     type: string
+                  httpNodePort:
+                    format: int32
+                    type: integer
                   image:
                     type: string
                   instanceCount:
