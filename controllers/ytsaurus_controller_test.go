@@ -173,73 +173,20 @@ type testRow struct {
 
 var _ = Describe("Basic test for Ytsaurus controller", func() {
 	Context("When setting up the test environment", func() {
-		It("Should run and update Ytsaurus", func() {
-
-			By("Creating a Ytsaurus resource")
-			ctx := context.Background()
-
-			namespace := "test1"
-
-			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
-
-			g := ytconfig.NewGenerator(ytsaurus, "local")
-
-			defer deleteYtsaurus(ctx, ytsaurus)
-			runYtsaurus(ytsaurus)
-
-			By("Creating ytsaurus client")
-
-			ytClient := getYtClient(g, namespace)
-
-			By("Check that cluster alive")
-
-			res := make([]string, 0)
-			Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
-
-			By("Check that tablet cell bundles are in `good` health")
-
-			Eventually(func() bool {
-				notGoodBundles, err := components.GetNotGoodTabletCellBundles(ctx, ytClient)
-				if err != nil {
-					return false
-				}
-				return len(notGoodBundles) == 0
-			}, timeout, interval).Should(BeTrue())
-
-			By("Run cluster update")
-
-			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)).Should(Succeed())
-			ytsaurus.Spec.CoreImage = ytv1.CoreImageSecond
-			Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
-
-			Eventually(func() bool {
-				ytsaurus := &ytv1.Ytsaurus{}
-				err := k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)
-				if err != nil {
-					return false
-				}
-				return ytsaurus.Status.State == ytv1.ClusterStateUpdating
-			}, timeout, interval).Should(BeTrue())
-
-			Eventually(func() bool {
-				ytsaurus := &ytv1.Ytsaurus{}
-				err := k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)
-				if err != nil {
-					return false
-				}
-				return ytsaurus.Status.State == ytv1.ClusterStateRunning
-			}, timeout*5, interval).Should(BeTrue())
-
-			By("Check that cluster alive after update")
-
-			Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
-		})
+		It(
+			"Should run and update Ytsaurus to the same minor version",
+			getSimpleUpdateScenario("test1", ytv1.CoreImageSecond),
+		)
+		It(
+			"Should run and update Ytsaurus to the next minor version",
+			getSimpleUpdateScenario("test2", ytv1.CoreImageNextVer),
+		)
 
 		It("Should run and try to update Ytsaurus with tablet cell bundle which is not in `good` health", func() {
 			By("Creating a Ytsaurus resource")
 			ctx := context.Background()
 
-			namespace := "test2"
+			namespace := "test3"
 
 			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
 
@@ -288,7 +235,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			By("Creating a Ytsaurus resource")
 			ctx := context.Background()
 
-			namespace := "test3"
+			namespace := "test4"
 
 			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
 			ytsaurus.Spec.TabletNodes = make([]ytv1.TabletNodesSpec, 0)
@@ -337,3 +284,65 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 	})
 
 })
+
+func getSimpleUpdateScenario(namespace, newImage string) func() {
+	return func() {
+
+		By("Creating a Ytsaurus resource")
+		ctx := context.Background()
+
+		ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+
+		g := ytconfig.NewGenerator(ytsaurus, "local")
+
+		defer deleteYtsaurus(ctx, ytsaurus)
+		runYtsaurus(ytsaurus)
+
+		By("Creating ytsaurus client")
+
+		ytClient := getYtClient(g, namespace)
+
+		By("Check that cluster alive")
+
+		res := make([]string, 0)
+		Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
+
+		By("Check that tablet cell bundles are in `good` health")
+
+		Eventually(func() bool {
+			notGoodBundles, err := components.GetNotGoodTabletCellBundles(ctx, ytClient)
+			if err != nil {
+				return false
+			}
+			return len(notGoodBundles) == 0
+		}, timeout, interval).Should(BeTrue())
+
+		By("Run cluster update")
+
+		Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)).Should(Succeed())
+		ytsaurus.Spec.CoreImage = newImage
+		Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+
+		Eventually(func() bool {
+			ytsaurus := &ytv1.Ytsaurus{}
+			err := k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)
+			if err != nil {
+				return false
+			}
+			return ytsaurus.Status.State == ytv1.ClusterStateUpdating
+		}, timeout, interval).Should(BeTrue())
+
+		Eventually(func() bool {
+			ytsaurus := &ytv1.Ytsaurus{}
+			err := k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)
+			if err != nil {
+				return false
+			}
+			return ytsaurus.Status.State == ytv1.ClusterStateRunning
+		}, timeout*5, interval).Should(BeTrue())
+
+		By("Check that cluster alive after update")
+
+		Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
+	}
+}
