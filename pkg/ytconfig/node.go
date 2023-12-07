@@ -100,14 +100,14 @@ type JobResourceManager struct {
 }
 
 type JobProxy struct {
-	JobProxyLogging       Logging       `yson:"job_proxy_logging"`
+	JobProxyLogging Logging `yson:"job_proxy_logging"`
 }
 
 type ExecAgent struct {
-	SlotManager           SlotManager      `yson:"slot_manager"`
-	JobController   	  JobController    `yson:"job_controller"`
-	JobProxy      JobProxy `yson:"job_proxy"`
-	JobProxyLoggingLegacy Logging          `yson:"job_proxy_logging"`
+	SlotManager           SlotManager   `yson:"slot_manager"`
+	JobController         JobController `yson:"job_controller"`
+	JobProxy              JobProxy      `yson:"job_proxy"`
+	JobProxyLoggingLegacy Logging       `yson:"job_proxy_logging"`
 }
 
 type Cache struct {
@@ -140,10 +140,10 @@ type DataNodeServer struct {
 type ExecNodeServer struct {
 	NodeServer
 	JobResourceManager   JobResourceManager `yson:"job_resource_manager"`
-	ExecAgent            ExecAgent  		`yson:"exec_agent"`
-	DataNode             DataNode   		`yson:"data_node"`
-	TabletNode           TabletNode 		`yson:"tablet_node"`
-	CachingObjectService Cache      		`yson:"caching_object_service"`
+	ExecAgent            ExecAgent          `yson:"exec_agent"`
+	DataNode             DataNode           `yson:"data_node"`
+	TabletNode           TabletNode         `yson:"tablet_node"`
+	CachingObjectService Cache              `yson:"caching_object_service"`
 }
 
 type TabletNodeServer struct {

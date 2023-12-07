@@ -11888,6 +11888,10 @@ spec:
                           type: string
                       type: object
                     type: array
+                  maxChangelogCountToKeep:
+                    type: integer
+                  maxSnapshotCountToKeep:
+                    type: integer
                   minReadyInstanceCount:
                     type: integer
                   nativeTransport:
@@ -18409,9 +18413,6 @@ spec:
                       additionalProperties:
                         type: string
                       type: object
-                    portCount:
-                      format: int32
-                      type: integer
                     resources:
                       description: ResourceRequirements describes the compute resource
                         requirements.
@@ -22758,6 +22759,10 @@ spec:
                             type: string
                         type: object
                       type: array
+                    maxChangelogCountToKeep:
+                      type: integer
+                    maxSnapshotCountToKeep:
+                      type: integer
                     minReadyInstanceCount:
                       type: integer
                     nativeTransport:
@@ -27175,9 +27180,8 @@ spec:
                             type: string
                         type: object
                       type: array
-                    minNodePort:
-                      description: When presented, a continious port range is allocated,
-                        starting with minNodePort.
+                    minPort:
+                      default: 32000
                       format: int32
                       type: integer
                     minReadyInstanceCount:
@@ -27210,6 +27214,7 @@ spec:
                         type: string
                       type: object
                     portCount:
+                      default: 20
                       description: Number of ports to allocate for balancing service.
                       format: int32
                       type: integer
@@ -28682,6 +28687,9 @@ spec:
                         - name
                         type: object
                       type: array
+                  required:
+                  - minPort
+                  - portCount
                   type: object
                 type: array
               ui:
