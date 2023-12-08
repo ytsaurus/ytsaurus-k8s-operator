@@ -11700,6 +11700,12 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
+                  hostAddressLabel:
+                    type: string
+                  hostAddresses:
+                    items:
+                      type: string
+                    type: array
                   image:
                     type: string
                   instanceCount:
@@ -22463,6 +22469,12 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    hostAddressLabel:
+                      type: string
+                    hostAddresses:
+                      items:
+                        type: string
+                      type: array
                     image:
                       type: string
                     instanceCount:

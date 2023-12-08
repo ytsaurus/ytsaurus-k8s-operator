@@ -599,6 +599,11 @@ func (in *LogRotationPolicy) DeepCopy() *LogRotationPolicy {
 func (in *MastersSpec) DeepCopyInto(out *MastersSpec) {
 	*out = *in
 	in.InstanceSpec.DeepCopyInto(&out.InstanceSpec)
+	if in.HostAddresses != nil {
+		in, out := &in.HostAddresses, &out.HostAddresses
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.MaxSnapshotCountToKeep != nil {
 		in, out := &in.MaxSnapshotCountToKeep, &out.MaxSnapshotCountToKeep
 		*out = new(int)
