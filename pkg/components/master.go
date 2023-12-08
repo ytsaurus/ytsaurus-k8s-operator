@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
+	"go.ytsaurus.tech/yt/go/yt"
 	"strings"
 
 	"go.ytsaurus.tech/library/go/ptr"
@@ -132,7 +133,7 @@ func (m *master) initAdminUser() string {
 	}
 
 	commands := createUserCommand(adminLogin, adminPassword, adminToken, true)
-	return strings.Join(commands, "\n")
+	return RunIfNonexistent(fmt.Sprintf("//sys/users/%s", adminLogin), commands...)
 }
 
 type Medium struct {
@@ -162,7 +163,7 @@ func (m *master) getExtraMedia() []Medium {
 }
 
 func (m *master) initMedia() string {
-	commands := []string{}
+	var commands []string
 	for _, medium := range m.getExtraMedia() {
 		attr, err := yson.MarshalFormat(medium, yson.FormatText)
 		if err != nil {
@@ -170,6 +171,77 @@ func (m *master) initMedia() string {
 		}
 		commands = append(commands, fmt.Sprintf("/usr/bin/yt get //sys/media/%s/@name || /usr/bin/yt create medium --attr '%s'", medium.Name, string(attr)))
 	}
+	return strings.Join(commands, "\n")
+}
+
+func (m *master) initGroups() string {
+	commands := []string{
+		"/usr/bin/yt create group --attr '{name=admins}' --ignore-existing",
+	}
+	return strings.Join(commands, "\n")
+}
+
+func (m *master) initSchemaACLs() string {
+	userReadACE := yt.ACE{
+		Action:      "allow",
+		Subjects:    []string{"users"},
+		Permissions: []yt.Permission{"read"},
+	}
+	userReadCreateACE := yt.ACE{
+		Action:      "allow",
+		Subjects:    []string{"users"},
+		Permissions: []yt.Permission{"read", "create"},
+	}
+	userReadWriteCreateACE := yt.ACE{
+		Action:      "allow",
+		Subjects:    []string{"users"},
+		Permissions: []yt.Permission{"read", "write", "create"},
+	}
+
+	adminACE := yt.ACE{
+		Action:      "allow",
+		Subjects:    []string{"admins"},
+		Permissions: []yt.Permission{"read", "write", "administer", "create", "remove"},
+	}
+
+	var commands []string
+
+	// Users should not be able to create or write objects of these types on their own.
+	for _, objectType := range []string{
+		"tablet_cell", "tablet_action", "tablet_cell_bundle",
+		"user", "group",
+		"rack", "data_center", "cluster_node",
+		"access_control_object", "access_control_object_namespace", "access_control_object_namespace_map"} {
+		commands = append(commands, SetPathAcl(fmt.Sprintf("//sys/schemas/%s", objectType), []yt.ACE{
+			userReadACE,
+			adminACE,
+		}))
+	}
+	// COMPAT(achulkov2): Drop the first command after `medium` is obsolete in all major versions.
+	commands = append(commands, fmt.Sprintf("%s || %s",
+		SetPathAcl("//sys/schemas/medium", []yt.ACE{
+			userReadACE,
+			adminACE,
+		}),
+		SetPathAcl("//sys/schemas/domestic_medium", []yt.ACE{
+			userReadCreateACE,
+			adminACE,
+		})))
+
+	// Users can to create pools, pool trees and accounts given the right circumstances and permissions.
+	for _, objectType := range []string{"account", "scheduler_pool", "scheduler_pool_tree"} {
+		commands = append(commands, SetPathAcl(fmt.Sprintf("//sys/schemas/%s", objectType), []yt.ACE{
+			userReadCreateACE,
+			adminACE,
+		}))
+	}
+
+	// Users can write account_resource_usage_lease objects.
+	commands = append(commands, SetPathAcl("//sys/schemas/account_resource_usage_lease", []yt.ACE{
+		userReadWriteCreateACE,
+		adminACE,
+	}))
+
 	return strings.Join(commands, "\n")
 }
 
@@ -181,16 +253,18 @@ func (m *master) createInitScript() string {
 
 	script := []string{
 		initJobWithNativeDriverPrologue(),
-		"/usr/bin/yt remove //sys/@provision_lock -f",
+		m.initGroups(),
+		RunIfExists("//sys/@provision_lock", m.initSchemaACLs()),
 		"/usr/bin/yt create scheduler_pool_tree --attributes '{name=default; config={nodes_filter=\"\"}}' --ignore-existing",
-		"/usr/bin/yt set //sys/pool_trees/@default_tree default",
-		"/usr/bin/yt link --force //sys/pool_trees/default //sys/pools",
+		SetWithIgnoreExisting("//sys/pool_trees/@default_tree", "default"),
+		RunIfNonexistent("//sys/pools", "/usr/bin/yt link //sys/pool_trees/default //sys/pools"),
 		"/usr/bin/yt create scheduler_pool --attributes '{name=research; pool_tree=default}' --ignore-existing",
 		"/usr/bin/yt create map_node //home --ignore-existing",
-		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection '%s'", string(clusterConnection)),
-		"/usr/bin/yt set //sys/controller_agents/config/operation_options/spec_template '{enable_partitioned_data_balancing=%false}' -r -f",
+		RunIfExists("//sys/@provision_lock", fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection '%s'", string(clusterConnection))),
+		SetWithIgnoreExisting("//sys/controller_agents/config/operation_options/spec_template", "'{enable_partitioned_data_balancing=%false}' -r"),
 		m.initAdminUser(),
 		m.initMedia(),
+		"/usr/bin/yt remove //sys/@provision_lock -f",
 	}
 
 	return strings.Join(script, "\n")

@@ -7,9 +7,11 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
 	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"strings"
 )
 
 func CreateTabletCells(ctx context.Context, ytClient yt.Client, bundle string, tabletCellCount int) error {
@@ -134,4 +136,32 @@ func handleUpdatingClusterState(
 		return ptr.T(NewComponentStatus(SyncStatusReady, "Not updating component")), err
 	}
 	return nil, err
+}
+
+func SetPathAcl(path string, acl []yt.ACE) string {
+	aclAsString, err := yson.MarshalFormat(acl, yson.FormatText)
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("/usr/bin/yt set %s/@acl '%s'", path, string(aclAsString))
+}
+
+func RunIfCondition(condition string, commands ...string) string {
+	var wrappedCommands []string
+	wrappedCommands = append(wrappedCommands, fmt.Sprintf("if [ %s ]; then", condition))
+	wrappedCommands = append(wrappedCommands, commands...)
+	wrappedCommands = append(wrappedCommands, "fi")
+	return strings.Join(wrappedCommands, "\n")
+}
+
+func RunIfNonexistent(path string, commands ...string) string {
+	return RunIfCondition(fmt.Sprintf("$(/usr/bin/yt exists %s) = 'false'", path), commands...)
+}
+
+func RunIfExists(path string, commands ...string) string {
+	return RunIfCondition(fmt.Sprintf("$(/usr/bin/yt exists %s) = 'true'", path), commands...)
+}
+
+func SetWithIgnoreExisting(path string, value string) string {
+	return RunIfNonexistent(path, fmt.Sprintf("/usr/bin/yt set %s %s", path, value))
 }
