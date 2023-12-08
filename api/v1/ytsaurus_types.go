@@ -235,6 +235,9 @@ type MastersSpec struct {
 	InstanceSpec `json:",inline"`
 	CellTag      int16 `json:"cellTag"`
 
+	HostAddresses    []string `json:"hostAddresses,omitempty"`
+	HostAddressLabel string   `json:"hostAddressLabel,omitempty"`
+
 	MaxSnapshotCountToKeep  *int `json:"maxSnapshotCountToKeep,omitempty"`
 	MaxChangelogCountToKeep *int `json:"maxChangelogCountToKeep,omitempty"`
 }

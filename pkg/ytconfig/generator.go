@@ -2,12 +2,14 @@ package ytconfig
 
 import (
 	"fmt"
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	"path"
+
 	"go.ytsaurus.tech/yt/go/yson"
 	corev1 "k8s.io/api/core/v1"
 	ptr "k8s.io/utils/pointer"
-	"path"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 )
 
 type ConfigFormat string
@@ -48,15 +50,23 @@ func (g *Generator) getMasterPodFqdnSuffix() string {
 }
 
 func (g *Generator) getMasterAddresses() []string {
-	names := make([]string, 0, g.ytsaurus.Spec.PrimaryMasters.InstanceCount)
-	masterPodSuffix := g.getMasterPodFqdnSuffix()
-	for _, podName := range g.GetMasterPodNames() {
-		names = append(names, fmt.Sprintf("%s.%s:%d",
-			podName,
-			masterPodSuffix,
-			consts.MasterRPCPort))
+	hosts := g.ytsaurus.Spec.PrimaryMasters.HostAddresses
+
+	if len(hosts) == 0 {
+		masterPodSuffix := g.getMasterPodFqdnSuffix()
+		for _, podName := range g.GetMasterPodNames() {
+			hosts = append(hosts, fmt.Sprintf("%s.%s",
+				podName,
+				masterPodSuffix,
+			))
+		}
 	}
-	return names
+
+	addresses := make([]string, len(hosts))
+	for idx, host := range hosts {
+		addresses[idx] = fmt.Sprintf("%s:%d", host, consts.MasterRPCPort)
+	}
+	return addresses
 }
 
 func (g *Generator) getMasterHydraPeers() []HydraPeer {
@@ -281,19 +291,6 @@ func (g *Generator) getMasterConfigImpl() (MasterServer, error) {
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	g.fillPrimaryMaster(&c.PrimaryMaster)
 	configureMasterServerCypressManager(g.ytsaurus.Spec, &c.CypressManager)
-
-	if g.ytsaurus.Spec.HostNetwork {
-		// Each master deduces its index within cell by looking up his FQDN in the
-		// list of all master peers. Master peers are specified using their pod addresses,
-		// therefore we must also switch masters from identifying themselves by FQDN addresses
-		// to their pod addresses.
-
-		// POD_NAME is set to pod name through downward API env var and substituted during
-		// config postprocessing.
-		c.AddressResolver.LocalhostNameOverride = ptr.String(
-			fmt.Sprintf("%v.%v", "{K8S_POD_NAME}", g.getMasterPodFqdnSuffix()))
-	}
-
 	return c, nil
 }
 

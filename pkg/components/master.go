@@ -7,6 +7,7 @@ import (
 
 	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/yson"
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -18,6 +19,10 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
+)
+
+const (
+	defaultExternalHostnameLabel = "kubernetes.io/hostname"
 )
 
 type master struct {
@@ -223,7 +228,7 @@ func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 
 	if m.server.needSync() {
 		if !dry {
-			err = m.server.Sync(ctx)
+			err = m.doServerSync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err
 	}
@@ -251,6 +256,51 @@ func (m *master) Status(ctx context.Context) ComponentStatus {
 func (m *master) Sync(ctx context.Context) error {
 	_, err := m.doSync(ctx, false)
 	return err
+}
+
+func (m *master) doServerSync(ctx context.Context) error {
+	statefulSet := m.server.buildStatefulSet()
+	m.addAffinity(statefulSet)
+	return m.server.Sync(ctx)
+}
+
+func (m *master) addAffinity(statefulSet *appsv1.StatefulSet) {
+	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
+	if len(primaryMastersSpec.HostAddresses) == 0 {
+		return
+	}
+
+	affinity := &corev1.Affinity{}
+	if statefulSet.Spec.Template.Spec.Affinity != nil {
+		affinity = statefulSet.Spec.Template.Spec.Affinity
+	}
+
+	nodeAffinity := &corev1.NodeAffinity{}
+	if affinity.NodeAffinity != nil {
+		nodeAffinity = affinity.NodeAffinity
+	}
+
+	selector := &corev1.NodeSelector{}
+	if nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
+		selector = nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution
+	}
+
+	nodeHostnameLabel := primaryMastersSpec.HostAddressLabel
+	if nodeHostnameLabel == "" {
+		nodeHostnameLabel = defaultExternalHostnameLabel
+	}
+	selector.NodeSelectorTerms = append(selector.NodeSelectorTerms, corev1.NodeSelectorTerm{
+		MatchExpressions: []corev1.NodeSelectorRequirement{
+			{
+				Key:      nodeHostnameLabel,
+				Operator: corev1.NodeSelectorOpIn,
+				Values:   primaryMastersSpec.HostAddresses,
+			},
+		},
+	})
+	nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = selector
+	affinity.NodeAffinity = nodeAffinity
+	statefulSet.Spec.Template.Spec.Affinity = affinity
 }
 
 func (m *master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, error) {
