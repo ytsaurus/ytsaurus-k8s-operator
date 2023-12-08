@@ -174,11 +174,11 @@ type testRow struct {
 var _ = Describe("Basic test for Ytsaurus controller", func() {
 	Context("When setting up the test environment", func() {
 		It(
-			"Should run and update Ytsaurus to the same minor version",
+			"Should run and update Ytsaurus within same major version",
 			getSimpleUpdateScenario("test1", ytv1.CoreImageSecond),
 		)
 		It(
-			"Should run and update Ytsaurus to the next minor version",
+			"Should run and update Ytsaurus to the next major version",
 			getSimpleUpdateScenario("test2", ytv1.CoreImageNextVer),
 		)
 
