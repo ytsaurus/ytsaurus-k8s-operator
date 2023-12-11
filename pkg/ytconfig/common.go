@@ -48,6 +48,8 @@ type AddressResolver struct {
 	EnableIPv4 bool `yson:"enable_ipv4"`
 	EnableIPv6 bool `yson:"enable_ipv6"`
 	Retries    *int `yson:"retries,omitempty"`
+
+	LocalhostNameOverride *string `yson:"localhost_name_override,omitempty"`
 }
 
 type PemBlob struct {
