@@ -292,7 +292,7 @@ func (g *Generator) getMasterConfigImpl() (MasterServer, error) {
 	g.fillPrimaryMaster(&c.PrimaryMaster)
 	configureMasterServerCypressManager(g.ytsaurus.Spec, &c.CypressManager)
 
-	if g.ytsaurus.Spec.HostNetwork {
+	if g.ytsaurus.Spec.HostNetwork && len(spec.HostAddresses) == 0 {
 		// Each master deduces its index within cell by looking up his FQDN in the
 		// list of all master peers. Master peers are specified using their pod addresses,
 		// therefore we must also switch masters from identifying themselves by FQDN addresses
