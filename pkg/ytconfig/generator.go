@@ -291,19 +291,6 @@ func (g *Generator) getMasterConfigImpl() (MasterServer, error) {
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	g.fillPrimaryMaster(&c.PrimaryMaster)
 	configureMasterServerCypressManager(g.ytsaurus.Spec, &c.CypressManager)
-
-	if g.ytsaurus.Spec.HostNetwork {
-		// Each master deduces its index within cell by looking up his FQDN in the
-		// list of all master peers. Master peers are specified using their pod addresses,
-		// therefore we must also switch masters from identifying themselves by FQDN addresses
-		// to their pod addresses.
-
-		// POD_NAME is set to pod name through downward API env var and substituted during
-		// config postprocessing.
-		c.AddressResolver.LocalhostNameOverride = ptr.String(
-			fmt.Sprintf("%v.%v", "{K8S_POD_NAME}", g.getMasterPodFqdnSuffix()))
-	}
-
 	return c, nil
 }
 
