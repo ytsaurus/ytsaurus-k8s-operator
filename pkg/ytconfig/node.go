@@ -105,6 +105,7 @@ type JobProxy struct {
 
 type ExecAgent struct {
 	SlotManager           SlotManager   `yson:"slot_manager"`
+	GpuManager            GpuManager    `yson:"gpu_manager"`
 	JobController         JobController `yson:"job_controller"`
 	JobProxy              JobProxy      `yson:"job_proxy"`
 	JobProxyLoggingLegacy Logging       `yson:"job_proxy_logging"`
@@ -383,6 +384,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 	c.ExecAgent.JobProxyLoggingLegacy = jobProxyLoggingBuilder.logging
 	c.ExecAgent.JobProxy.JobProxyLogging = jobProxyLoggingBuilder.logging
 	c.JobResourceManager.ResourceLimits = c.ExecAgent.JobController.ResourceLimitsLegacy
+	c.ExecAgent.GpuManager = c.ExecAgent.JobController.GpuManager
 
 	return c, nil
 }
