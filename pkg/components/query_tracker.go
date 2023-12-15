@@ -287,6 +287,37 @@ func (qt *queryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 		logger.Error(err, fmt.Sprintf("Setting '//sys/clusters/%s' failed", qt.labeller.GetClusterName()))
 		return
 	}
+
+	_, err = ytClient.CreateObject(
+		ctx,
+		yt.NodeAccessControlObjectNamespace,
+		&yt.CreateObjectOptions{
+			Attributes: map[string]interface{}{
+				"name": "queries",
+			},
+			IgnoreExisting: true,
+		},
+	)
+	if err != nil {
+		logger.Error(err, "Creating access control object namespace 'queries' failed")
+		return
+	}
+
+	_, err = ytClient.CreateObject(
+		ctx,
+		yt.NodeAccessControlObject,
+		&yt.CreateObjectOptions{
+			Attributes: map[string]interface{}{
+				"name":      "nobody",
+				"namespace": "queries",
+			},
+			IgnoreExisting: true,
+		},
+	)
+	if err != nil {
+		logger.Error(err, "Creating access control object 'nobody' in namespace 'queries' failed")
+		return
+	}
 	return
 }
 
