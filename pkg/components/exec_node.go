@@ -91,12 +91,25 @@ func (n *execNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 
 	if n.server.needSync() {
 		if !dry {
+			setContainerPrivileged := func(ct *corev1.Container) {
+				if ct.SecurityContext == nil {
+					ct.SecurityContext = &corev1.SecurityContext{}
+				}
+				ct.SecurityContext.Privileged = ptr.Bool(n.privileged)
+			}
+
 			statefulSet := n.server.buildStatefulSet()
 			containers := &statefulSet.Spec.Template.Spec.Containers
 			if len(*containers) != 1 {
 				log.Panicf("length of exec node containers is expected to be 1, actual %v", len(*containers))
 			}
-			(*containers)[0].SecurityContext = &corev1.SecurityContext{Privileged: ptr.Bool(n.privileged)}
+			setContainerPrivileged(&(*containers)[0])
+
+			initContainers := &statefulSet.Spec.Template.Spec.InitContainers
+			for i := range *initContainers {
+				setContainerPrivileged(&(*initContainers)[i])
+			}
+
 			for _, sidecarSpec := range n.sidecars {
 				sidecar := corev1.Container{}
 				if err := yaml.Unmarshal([]byte(sidecarSpec), &sidecar); err != nil {
