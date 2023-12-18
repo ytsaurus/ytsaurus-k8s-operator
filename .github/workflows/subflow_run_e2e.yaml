@@ -13,9 +13,6 @@ on:
 jobs:
   check:
     name: Run checks
-    needs:
-      - start-vm
-      - checkout
     runs-on: ${{ inputs.runs-on-value }}
     env:
       HOME: /root
