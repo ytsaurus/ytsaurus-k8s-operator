@@ -551,6 +551,7 @@ type YtsaurusStatus struct {
 // +kubebuilder:printcolumn:name="ClusterState",type="string",JSONPath=".status.state",description="State of Ytsaurus cluster"
 // +kubebuilder:printcolumn:name="UpdateState",type="string",JSONPath=".status.updateStatus.state",description="Update state of Ytsaurus cluster"
 // +kubebuilder:printcolumn:name="UpdatingComponents",type="string",JSONPath=".status.updateStatus.components",description="Updating components (for local update)"
+// +kubebuilder:resource:shortName=yt
 // +kubebuilder:subresource:status
 
 // Ytsaurus is the Schema for the ytsaurus API
