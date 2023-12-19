@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	defaultExternalHostnameLabel = "kubernetes.io/hostname"
+	defaultHostAddressLabel = "kubernetes.io/hostname"
 )
 
 type master struct {
@@ -285,10 +285,7 @@ func (m *master) addAffinity(statefulSet *appsv1.StatefulSet) {
 		selector = nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution
 	}
 
-	nodeHostnameLabel := primaryMastersSpec.HostAddressLabel
-	if nodeHostnameLabel == "" {
-		nodeHostnameLabel = defaultExternalHostnameLabel
-	}
+	nodeHostnameLabel := m.getHostAddressLabel()
 	selector.NodeSelectorTerms = append(selector.NodeSelectorTerms, corev1.NodeSelectorTerm{
 		MatchExpressions: []corev1.NodeSelectorRequirement{
 			{
@@ -301,6 +298,14 @@ func (m *master) addAffinity(statefulSet *appsv1.StatefulSet) {
 	nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = selector
 	affinity.NodeAffinity = nodeAffinity
 	statefulSet.Spec.Template.Spec.Affinity = affinity
+}
+
+func (m *master) getHostAddressLabel() string {
+	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
+	if primaryMastersSpec.HostAddressLabel != "" {
+		return primaryMastersSpec.HostAddressLabel
+	}
+	return defaultHostAddressLabel
 }
 
 func (m *master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, error) {
