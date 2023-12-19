@@ -24,6 +24,8 @@ spec:
     kind: Ytsaurus
     listKind: YtsaurusList
     plural: ytsaurus
+    shortNames:
+    - yt
     singular: ytsaurus
   scope: Namespaced
   versions:
