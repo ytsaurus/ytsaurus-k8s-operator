@@ -292,6 +292,7 @@ func (g *Generator) getMasterConfigImpl() (MasterServer, error) {
 	g.fillPrimaryMaster(&c.PrimaryMaster)
 	configureMasterServerCypressManager(g.ytsaurus.Spec, &c.CypressManager)
 
+	// COMPAT(l0kix2): remove that after we drop support for specifying host network without master host addresses.
 	if g.ytsaurus.Spec.HostNetwork && len(spec.HostAddresses) == 0 {
 		// Each master deduces its index within cell by looking up his FQDN in the
 		// list of all master peers. Master peers are specified using their pod addresses,
