@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +30,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 )
 
 // log is for logging in this package.
@@ -90,9 +91,9 @@ func (r *Ytsaurus) validateDiscovery(old *runtime.Object) field.ErrorList {
 func (r *Ytsaurus) validatePrimaryMasters(old *runtime.Object) field.ErrorList {
 	var allErrors field.ErrorList
 
-	allErrors = append(allErrors, r.validateInstanceSpec(r.Spec.PrimaryMasters.InstanceSpec, field.NewPath("spec").Child("primaryMasters"))...)
-
 	path := field.NewPath("spec").Child("primaryMasters")
+	allErrors = append(allErrors, r.validateInstanceSpec(r.Spec.PrimaryMasters.InstanceSpec, path)...)
+	allErrors = append(allErrors, r.validateHostAddresses(r.Spec.PrimaryMasters, path)...)
 
 	if FindFirstLocation(r.Spec.PrimaryMasters.Locations, LocationTypeMasterChangelogs) == nil {
 		allErrors = append(allErrors, field.NotFound(path.Child("locations"), LocationTypeMasterChangelogs))
@@ -119,6 +120,36 @@ func (r *Ytsaurus) validateSecondaryMasters(old *runtime.Object) field.ErrorList
 	for i, sm := range r.Spec.SecondaryMasters {
 		path := field.NewPath("spec").Child("secondaryMasters").Index(i)
 		allErrors = append(allErrors, r.validateInstanceSpec(sm.InstanceSpec, path)...)
+		allErrors = append(allErrors, r.validateHostAddresses(r.Spec.PrimaryMasters, path)...)
+	}
+
+	return allErrors
+}
+
+func (r *Ytsaurus) validateHostAddresses(masterSpec MastersSpec, fieldPath *field.Path) field.ErrorList {
+	var allErrors field.ErrorList
+
+	hostAddressesFieldPath := fieldPath.Child("hostAddresses")
+	if !r.Spec.HostNetwork && len(masterSpec.HostAddresses) != 0 {
+		allErrors = append(
+			allErrors,
+			field.Required(
+				field.NewPath("spec").Child("hostNetwork"),
+				fmt.Sprintf("%s doesn't make sense without hostNetwork=true", hostAddressesFieldPath.String()),
+			),
+		)
+	}
+
+	if len(masterSpec.HostAddresses) != 0 && len(masterSpec.HostAddresses) != int(masterSpec.InstanceCount) {
+		instanceCountFieldPath := fieldPath.Child("instanceCount")
+		allErrors = append(
+			allErrors,
+			field.Invalid(
+				hostAddressesFieldPath,
+				masterSpec.HostAddresses,
+				fmt.Sprintf("%s list length shoud be equal to %s", hostAddressesFieldPath.String(), instanceCountFieldPath.String()),
+			),
+		)
 	}
 
 	return allErrors
