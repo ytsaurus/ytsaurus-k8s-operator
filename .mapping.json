@@ -1,4 +1,5 @@
 {
+  "":"yt/k8s/operator",
   ".arcignore":"yt/k8s/operator/.arcignore",
   ".dockerignore":"yt/k8s/operator/.dockerignore",
   ".github/pull_request_template.md":"yt/k8s/operator/.github/pull_request_template.md",
