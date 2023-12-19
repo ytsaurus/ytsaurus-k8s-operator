@@ -6,7 +6,7 @@ on:
         type: string
       release:
         required: true
-        type: bool
+        type: boolean
     secrets:
       DOCKER_HUB_LOGIN:
         required: true
