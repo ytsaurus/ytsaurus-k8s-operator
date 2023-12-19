@@ -47,9 +47,6 @@ jobs:
     with:
       runs-on-value: ${{ needs.start-vm.outputs.label }}
       release: false
-    secrets:
-      DOCKER_HUB_LOGIN: ${{ secrets.DOCKER_HUB_LOGIN }}
-      DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
     uses: ./.github/workflows/subflow_run_e2e.yaml
 
   stop-vm:

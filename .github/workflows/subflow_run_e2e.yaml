@@ -9,9 +9,9 @@ on:
         type: boolean
     secrets:
       DOCKER_HUB_LOGIN:
-        required: true
+        required: false
       DOCKER_HUB_PASSWORD:
-        required: true
+        required: false
 
 jobs:
   check:
