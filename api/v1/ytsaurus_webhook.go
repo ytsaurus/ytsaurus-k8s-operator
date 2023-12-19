@@ -141,12 +141,13 @@ func (r *Ytsaurus) validateHostAddresses(masterSpec MastersSpec, fieldPath *fiel
 	}
 
 	if len(masterSpec.HostAddresses) != 0 && len(masterSpec.HostAddresses) != int(masterSpec.InstanceCount) {
+		instanceCountFieldPath := fieldPath.Child("instanceCount")
 		allErrors = append(
 			allErrors,
 			field.Invalid(
 				hostAddressesFieldPath,
 				masterSpec.HostAddresses,
-				fmt.Sprintf("%s list length shoud be equal to instanceCount", hostAddressesFieldPath.String()),
+				fmt.Sprintf("%s list length shoud be equal to %s", hostAddressesFieldPath.String(), instanceCountFieldPath.String()),
 			),
 		)
 	}
