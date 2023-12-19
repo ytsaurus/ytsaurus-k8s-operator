@@ -299,7 +299,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("location path is not in any volume mount")))
 		})
 
-		It("Should not accept not empty primaryMaster/hostAddresses with HostNetwork=false", func() {
+		It("Should not accept non-empty primaryMaster/hostAddresses with HostNetwork=false", func() {
 			ytsaurus := CreateBaseYtsaurusResource(namespace)
 			ytsaurus.Spec.HostNetwork = false
 			ytsaurus.Spec.PrimaryMasters.HostAddresses = []string{"test.yt.address"}
