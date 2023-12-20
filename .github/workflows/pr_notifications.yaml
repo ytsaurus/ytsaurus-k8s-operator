@@ -5,7 +5,8 @@ on:
     branches:
       - main
     types:
-      - opened
+      - review_requested
+      - ready_for_review
 
 jobs:
   pr-notifications:
