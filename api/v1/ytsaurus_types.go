@@ -231,12 +231,16 @@ type InstanceSpec struct {
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
 }
 
-type MastersSpec struct {
-	InstanceSpec `json:",inline"`
-	CellTag      int16 `json:"cellTag"`
+type MasterConnectionSpec struct {
+	CellTag       int16    `json:"cellTag"`
+	HostAddresses []string `json:"hostAddresses,omitempty"`
+}
 
-	HostAddresses    []string `json:"hostAddresses,omitempty"`
-	HostAddressLabel string   `json:"hostAddressLabel,omitempty"`
+type MastersSpec struct {
+	InstanceSpec         `json:",inline"`
+	MasterConnectionSpec `json:",inline"`
+
+	HostAddressLabel string `json:"hostAddressLabel,omitempty"`
 
 	MaxSnapshotCountToKeep  *int `json:"maxSnapshotCountToKeep,omitempty"`
 	MaxChangelogCountToKeep *int `json:"maxChangelogCountToKeep,omitempty"`
@@ -406,16 +410,8 @@ type DeprecatedSpytSpec struct {
 	SpytVersion  string `json:"spytVersion,omitempty"`
 }
 
-// YtsaurusSpec defines the desired state of Ytsaurus
-type YtsaurusSpec struct {
+type ConfigurationSpec struct {
 	CoreImage string `json:"coreImage,omitempty"`
-	UIImage   string `json:"uiImage,omitempty"`
-
-	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
-	ConfigOverrides  *corev1.LocalObjectReference  `json:"configOverrides,omitempty"`
-	AdminCredentials *corev1.LocalObjectReference  `json:"adminCredentials,omitempty"`
-
-	OauthService *OauthServiceSpec `json:"oauthService,omitempty"`
 
 	// Reference to ConfigMap with trusted certificates: "ca.crt".
 	//+optional
@@ -424,13 +420,6 @@ type YtsaurusSpec struct {
 	// Common config for native RPC bus transport.
 	//+optional
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
-
-	//+kubebuilder:default:=true
-	//+optional
-	IsManaged bool `json:"isManaged"`
-	//+kubebuilder:default:=true
-	//+optional
-	EnableFullUpdate bool `json:"enableFullUpdate"`
 
 	//+kubebuilder:default:=false
 	//+optional
@@ -447,6 +436,25 @@ type YtsaurusSpec struct {
 	//+kubebuilder:default:=false
 	//+optional
 	HostNetwork bool `json:"hostNetwork"`
+}
+
+// YtsaurusSpec defines the desired state of Ytsaurus
+type YtsaurusSpec struct {
+	ConfigurationSpec `json:",inline"`
+	UIImage           string `json:"uiImage,omitempty"`
+
+	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+	ConfigOverrides  *corev1.LocalObjectReference  `json:"configOverrides,omitempty"`
+	AdminCredentials *corev1.LocalObjectReference  `json:"adminCredentials,omitempty"`
+
+	OauthService *OauthServiceSpec `json:"oauthService,omitempty"`
+
+	//+kubebuilder:default:=true
+	//+optional
+	IsManaged bool `json:"isManaged"`
+	//+kubebuilder:default:=true
+	//+optional
+	EnableFullUpdate bool `json:"enableFullUpdate"`
 
 	ExtraPodAnnotations map[string]string `json:"extraPodAnnotations,omitempty"`
 
