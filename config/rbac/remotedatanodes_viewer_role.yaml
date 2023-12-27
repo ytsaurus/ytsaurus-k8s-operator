@@ -1,0 +1,27 @@
+# permissions for end users to view remotedatanodes.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: remotedatanodes-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: yt-k8s-operator
+    app.kubernetes.io/part-of: yt-k8s-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: remotedatanodes-viewer-role
+rules:
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - remotedatanodes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - remotedatanodes/status
+  verbs:
+  - get
