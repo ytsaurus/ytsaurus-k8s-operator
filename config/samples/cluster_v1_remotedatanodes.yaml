@@ -1,0 +1,12 @@
+apiVersion: cluster.ytsaurus.tech/v1
+kind: RemoteDataNodes
+metadata:
+  labels:
+    app.kubernetes.io/name: remotedatanodes
+    app.kubernetes.io/instance: remotedatanodes-sample
+    app.kubernetes.io/part-of: yt-k8s-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: yt-k8s-operator
+  name: remotedatanodes-sample
+spec:
+  # TODO(user): Add fields here
