@@ -6,17 +6,19 @@ import (
 	"path"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	corev1 "k8s.io/api/core/v1"
 )
 
 type strawberryController struct {
 	componentBase
+	cfgen              *ytconfig.Generator
 	microservice       microservice
 	initUserJob        *InitJob
 	initChytClusterJob *InitJob
@@ -89,8 +91,8 @@ func NewStrawberryController(
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
 		},
+		cfgen:        cfgen,
 		microservice: microservice,
 		initUserJob: NewInitJob(
 			&l,

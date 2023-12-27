@@ -5,20 +5,23 @@ import (
 	"fmt"
 	"strings"
 
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"go.ytsaurus.tech/library/go/ptr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	corev1 "k8s.io/api/core/v1"
 )
 
 type scheduler struct {
 	componentBase
+	cfgen         *ytconfig.Generator
 	server        server
 	master        Component
 	execNodes     []Component
@@ -58,8 +61,8 @@ func NewScheduler(
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
 		},
+		cfgen:       cfgen,
 		server:      server,
 		master:      master,
 		execNodes:   execNodes,
