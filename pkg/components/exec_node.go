@@ -4,19 +4,21 @@ import (
 	"context"
 	"log"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/yaml"
+	ptr "k8s.io/utils/pointer"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/yaml"
-	ptr "k8s.io/utils/pointer"
 )
 
 type execNode struct {
 	componentBase
+	cfgen      *ytconfig.NodeGenerator
 	server     server
 	master     Component
 	sidecars   []string
@@ -24,7 +26,7 @@ type execNode struct {
 }
 
 func NewExecNode(
-	cfgen *ytconfig.Generator,
+	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	spec ytv1.ExecNodesSpec,
@@ -55,8 +57,8 @@ func NewExecNode(
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
 		},
+		cfgen:      cfgen,
 		server:     server,
 		master:     master,
 		sidecars:   spec.Sidecars,

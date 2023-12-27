@@ -190,7 +190,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
 
-			g := ytconfig.NewGenerator(ytsaurus, "local")
+			g, err := ytconfig.NewGenerator(ytsaurus, "local")
+			Expect(err).Should(Succeed())
 
 			defer deleteYtsaurus(ctx, ytsaurus)
 			runYtsaurus(ytsaurus)
@@ -240,7 +241,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
 			ytsaurus.Spec.TabletNodes = make([]ytv1.TabletNodesSpec, 0)
 
-			g := ytconfig.NewGenerator(ytsaurus, "local")
+			g, err := ytconfig.NewGenerator(ytsaurus, "local")
+			Expect(err).Should(Succeed())
 
 			defer deleteYtsaurus(ctx, ytsaurus)
 			runYtsaurus(ytsaurus)
@@ -253,7 +255,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
 
 			By("Create a chunk")
-			_, err := ytClient.CreateNode(ctx, ypath.Path("//tmp/a"), yt.NodeTable, nil)
+			_, err = ytClient.CreateNode(ctx, ypath.Path("//tmp/a"), yt.NodeTable, nil)
 			Expect(err).Should(Succeed())
 
 			Eventually(func(g Gomega) {
@@ -296,7 +298,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			}
 			ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
 
-			g := ytconfig.NewGenerator(ytsaurus, "local")
+			g, err := ytconfig.NewGenerator(ytsaurus, "local")
+			Expect(err).Should(Succeed())
 
 			defer deleteYtsaurus(ctx, ytsaurus)
 			runYtsaurus(ytsaurus)
@@ -322,7 +325,8 @@ func getSimpleUpdateScenario(namespace, newImage string) func() {
 
 		ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
 
-		g := ytconfig.NewGenerator(ytsaurus, "local")
+		g, err := ytconfig.NewGenerator(ytsaurus, "local")
+		Expect(err).Should(Succeed())
 
 		defer deleteYtsaurus(ctx, ytsaurus)
 		runYtsaurus(ytsaurus)

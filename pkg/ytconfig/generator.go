@@ -31,26 +31,32 @@ type GeneratorDescriptor struct {
 }
 
 type Generator struct {
-	ytsaurus      *ytv1.Ytsaurus
-	clusterDomain string
+	BaseGenerator
+	ytsaurus *ytv1.Ytsaurus
 }
 
-func NewGenerator(ytsaurus *ytv1.Ytsaurus, clusterDomain string) *Generator {
-	return &Generator{
-		ytsaurus:      ytsaurus,
-		clusterDomain: clusterDomain,
+func NewGenerator(
+	ytsaurus *ytv1.Ytsaurus,
+	clusterDomain string,
+) (*Generator, error) {
+	baseGenerator, err := NewBaseGeneratorFromYtsaurus(ytsaurus, clusterDomain)
+	if err != nil {
+		return nil, err
 	}
+	return &Generator{
+		BaseGenerator: *baseGenerator,
+		ytsaurus:      ytsaurus,
+	}, nil
 }
-
-func (g *Generator) getMasterPodFqdnSuffix() string {
+func (g *BaseGenerator) getMasterPodFqdnSuffix() string {
 	return fmt.Sprintf("%s.%s.svc.%s",
 		g.GetMastersServiceName(),
-		g.ytsaurus.Namespace,
+		g.key.Namespace,
 		g.clusterDomain)
 }
 
-func (g *Generator) getMasterAddresses() []string {
-	hosts := g.ytsaurus.Spec.PrimaryMasters.HostAddresses
+func (g *BaseGenerator) getMasterAddresses() []string {
+	hosts := g.masterConnectionSpec.HostAddresses
 
 	if len(hosts) == 0 {
 		masterPodSuffix := g.getMasterPodFqdnSuffix()
@@ -69,8 +75,8 @@ func (g *Generator) getMasterAddresses() []string {
 	return addresses
 }
 
-func (g *Generator) getMasterHydraPeers() []HydraPeer {
-	peers := make([]HydraPeer, 0, g.ytsaurus.Spec.PrimaryMasters.InstanceCount)
+func (g *BaseGenerator) getMasterHydraPeers() []HydraPeer {
+	peers := make([]HydraPeer, 0, g.masterInstanceCount)
 	for _, address := range g.getMasterAddresses() {
 		peers = append(peers, HydraPeer{
 			Address: address,
@@ -80,13 +86,13 @@ func (g *Generator) getMasterHydraPeers() []HydraPeer {
 	return peers
 }
 
-func (g *Generator) getDiscoveryAddresses() []string {
-	names := make([]string, 0, g.ytsaurus.Spec.Discovery.InstanceCount)
+func (g *BaseGenerator) getDiscoveryAddresses() []string {
+	names := make([]string, 0, g.discoveryInstanceCount)
 	for _, podName := range g.GetDiscoveryPodNames() {
 		names = append(names, fmt.Sprintf("%s.%s.%s.svc.%s:%d",
 			podName,
 			g.GetDiscoveryServiceName(),
-			g.ytsaurus.Namespace,
+			g.key.Namespace,
 			g.clusterDomain,
 			consts.DiscoveryRPCPort))
 	}
@@ -129,11 +135,11 @@ func (g *Generator) fillDriver(c *Driver) {
 	g.fillPrimaryMaster(&c.MasterCache.MasterCell)
 }
 
-func (g *Generator) fillAddressResolver(c *AddressResolver) {
+func (g *BaseGenerator) fillAddressResolver(c *AddressResolver) {
 	var retries = 1000
 
-	c.EnableIPv4 = g.ytsaurus.Spec.UseIPv4
-	c.EnableIPv6 = g.ytsaurus.Spec.UseIPv6
+	c.EnableIPv4 = g.configSpec.UseIPv4
+	c.EnableIPv6 = g.configSpec.UseIPv6
 	if !c.EnableIPv6 && !c.EnableIPv4 {
 		// In case when nothing is specified, we prefer IPv4 due to compatibility reasons.
 		c.EnableIPv4 = true
@@ -141,20 +147,20 @@ func (g *Generator) fillAddressResolver(c *AddressResolver) {
 	c.Retries = &retries
 }
 
-func (g *Generator) fillPrimaryMaster(c *MasterCell) {
+func (g *BaseGenerator) fillPrimaryMaster(c *MasterCell) {
 	c.Addresses = g.getMasterAddresses()
 	c.Peers = g.getMasterHydraPeers()
-	c.CellID = generateCellID(g.ytsaurus.Spec.PrimaryMasters.CellTag)
+	c.CellID = generateCellID(g.masterConnectionSpec.CellTag)
 }
 
-func (g *Generator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCTransportSpec) {
+func (g *BaseGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCTransportSpec) {
 	g.fillPrimaryMaster(&c.PrimaryMaster)
-	c.ClusterName = g.ytsaurus.Name
+	c.ClusterName = g.key.Name
 	c.DiscoveryConnection.Addresses = g.getDiscoveryAddresses()
 	g.fillClusterConnectionEncryption(c, s)
 }
 
-func (g *Generator) fillCypressAnnotations(c *map[string]any) {
+func (g *BaseGenerator) fillCypressAnnotations(c *map[string]any) {
 	*c = map[string]any{
 		"k8s_pod_name":      "{K8S_POD_NAME}",
 		"k8s_pod_namespace": "{K8S_POD_NAMESPACE}",
@@ -162,7 +168,7 @@ func (g *Generator) fillCypressAnnotations(c *map[string]any) {
 	}
 }
 
-func (g *Generator) fillCommonService(c *CommonServer, s *ytv1.InstanceSpec) {
+func (g *BaseGenerator) fillCommonService(c *CommonServer, s *ytv1.InstanceSpec) {
 	// ToDo(psushin): enable porto resource tracker?
 	g.fillAddressResolver(&c.AddressResolver)
 	g.fillClusterConnection(&c.ClusterConnection, s.NativeTransport)
@@ -185,10 +191,10 @@ func (g *Generator) fillBusEncryption(b *Bus, s *ytv1.RPCTransportSpec) {
 	}
 }
 
-func (g *Generator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec) {
+func (g *BaseGenerator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec) {
 	if s == nil {
 		// Use common bus transport config
-		s = g.ytsaurus.Spec.NativeTransport
+		s = g.configSpec.NativeTransport
 	}
 	if s == nil || s.TLSSecret == nil {
 		return
@@ -199,7 +205,7 @@ func (g *Generator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec) {
 	}
 
 	// FIXME(khlebnikov): some clients does not support TLS yet
-	if s.TLSRequired && s != g.ytsaurus.Spec.NativeTransport {
+	if s.TLSRequired && s != g.configSpec.NativeTransport {
 		c.BusServer.EncryptionMode = EncryptionModeRequired
 	} else {
 		c.BusServer.EncryptionMode = EncryptionModeOptional
@@ -213,10 +219,10 @@ func (g *Generator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec) {
 	}
 }
 
-func (g *Generator) fillClusterConnectionEncryption(c *ClusterConnection, s *ytv1.RPCTransportSpec) {
+func (g *BaseGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s *ytv1.RPCTransportSpec) {
 	if s == nil {
 		// Use common bus transport config
-		s = g.ytsaurus.Spec.NativeTransport
+		s = g.configSpec.NativeTransport
 	}
 	if s == nil || s.TLSSecret == nil {
 		return
@@ -226,7 +232,7 @@ func (g *Generator) fillClusterConnectionEncryption(c *ClusterConnection, s *ytv
 		c.BusClient = &Bus{}
 	}
 
-	if g.ytsaurus.Spec.CABundle != nil {
+	if g.configSpec.CABundle != nil {
 		c.BusClient.CA = &PemBlob{
 			FileName: path.Join(consts.CABundleMountPoint, consts.CABundleFileName),
 		}
@@ -451,7 +457,7 @@ func (g *Generator) GetControllerAgentConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getDataNodeConfigImpl(spec *ytv1.DataNodesSpec) (DataNodeServer, error) {
+func (g *NodeGenerator) getDataNodeConfigImpl(spec *ytv1.DataNodesSpec) (DataNodeServer, error) {
 	c, err := getDataNodeServerCarcass(spec)
 	if err != nil {
 		return DataNodeServer{}, err
@@ -462,7 +468,7 @@ func (g *Generator) getDataNodeConfigImpl(spec *ytv1.DataNodesSpec) (DataNodeSer
 	return c, nil
 }
 
-func (g *Generator) GetDataNodeConfig(spec ytv1.DataNodesSpec) ([]byte, error) {
+func (g *NodeGenerator) GetDataNodeConfig(spec ytv1.DataNodesSpec) ([]byte, error) {
 	c, err := g.getDataNodeConfigImpl(&spec)
 	if err != nil {
 		return []byte{}, err
@@ -470,10 +476,10 @@ func (g *Generator) GetDataNodeConfig(spec ytv1.DataNodesSpec) ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getExecNodeConfigImpl(spec *ytv1.ExecNodesSpec) (ExecNodeServer, error) {
+func (g *NodeGenerator) getExecNodeConfigImpl(spec *ytv1.ExecNodesSpec) (ExecNodeServer, error) {
 	c, err := getExecNodeServerCarcass(
 		spec,
-		g.ytsaurus.Spec.UsePorto)
+		g.configSpec.UsePorto)
 	if err != nil {
 		return c, err
 	}
@@ -482,7 +488,7 @@ func (g *Generator) getExecNodeConfigImpl(spec *ytv1.ExecNodesSpec) (ExecNodeSer
 	return c, nil
 }
 
-func (g *Generator) GetExecNodeConfig(spec ytv1.ExecNodesSpec) ([]byte, error) {
+func (g *NodeGenerator) GetExecNodeConfig(spec ytv1.ExecNodesSpec) ([]byte, error) {
 	c, err := g.getExecNodeConfigImpl(&spec)
 	if err != nil {
 		return []byte{}, err
@@ -490,7 +496,7 @@ func (g *Generator) GetExecNodeConfig(spec ytv1.ExecNodesSpec) ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getTabletNodeConfigImpl(spec *ytv1.TabletNodesSpec) (TabletNodeServer, error) {
+func (g *NodeGenerator) getTabletNodeConfigImpl(spec *ytv1.TabletNodesSpec) (TabletNodeServer, error) {
 	c, err := getTabletNodeServerCarcass(spec)
 	if err != nil {
 		return c, err
@@ -500,7 +506,7 @@ func (g *Generator) getTabletNodeConfigImpl(spec *ytv1.TabletNodesSpec) (TabletN
 	return c, nil
 }
 
-func (g *Generator) GetTabletNodeConfig(spec ytv1.TabletNodesSpec) ([]byte, error) {
+func (g *NodeGenerator) GetTabletNodeConfig(spec ytv1.TabletNodesSpec) ([]byte, error) {
 	c, err := g.getTabletNodeConfigImpl(&spec)
 	if err != nil {
 		return nil, err
