@@ -1,0 +1,499 @@
+apiVersion: cluster.ytsaurus.tech/v1
+kind: Ytsaurus
+metadata:
+  name: ytsaurus
+spec:
+  # coreImage: ytsaurus/ytsaurus-nightly:latest
+  # coreImage: ytsaurus/ytsaurus:dev-relwithdebinfo
+  # coreImage: ytsaurus/ytsaurus:dev-23.1-relwithdebinfo
+  coreImage: ytsaurus/ytsaurus:dev-23.2-relwithdebinfo
+
+  uiImage: ytsaurus/ui:stable
+
+  adminCredentials:
+    name: admin-credentials
+
+  configOverrides:
+    name: ytsaurus-config-overrides
+
+  # isManaged: false
+  # enableFullUpdate: false
+
+  hostNetwork: true
+  useIpv4: true
+  useIpv6: true
+
+
+  ui:
+    instanceCount: 1
+    serviceType: NodePort
+
+
+  discovery:
+    instanceCount: 1
+
+    # Make reusable loggers config with yaml anchor.
+    loggers: &loggers
+      - name: debug
+        compression: zstd
+        minLogLevel: debug
+        writerType: file
+        rotationPolicy: &rotationPolicy
+          maxTotalSizeToKeep: 1073741824 # 1GiB
+          rotationPeriodMilliseconds: 900000 # 15Min
+          maxSegmentCountToKeep: 1000
+        categoriesFilter:
+          type: exclude
+          values: ["Bus"]
+      - name: info
+        minLogLevel: info
+        writerType: file
+        rotationPolicy: *rotationPolicy
+      - name: info-stderr
+        minLogLevel: info
+        writerType: stderr
+
+    locations:
+      - locationType: Logs
+        path: /yt/discovery-logs
+
+    volumeMounts:
+      - name: discovery-logs
+        mountPath: /yt/discovery-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: discovery-logs
+        spec: &logsVolumeSpec
+          accessModes: [ "ReadWriteOnce" ]
+          resources:
+            requests:
+              storage: 10Gi
+
+
+  primaryMasters:
+    instanceCount: 1
+    
+    cellTag: 1
+
+    loggers: *loggers
+
+    locations:
+      - locationType: MasterChangelogs
+        path: /yt/master-data/master-changelogs
+      - locationType: MasterSnapshots
+        path: /yt/master-data/master-snapshots
+      - locationType: Logs
+        path: /yt/master-logs
+
+    volumeMounts:
+      - name: master-data
+        mountPath: /yt/master-data
+      - name: master-logs
+        mountPath: /yt/master-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: master-data
+        spec:
+          accessModes: [ "ReadWriteOnce" ]
+          resources:
+            requests:
+              storage: 10Gi
+      - metadata:
+          name: master-logs
+        spec: *logsVolumeSpec
+
+
+  httpProxies:
+    - instanceCount: 1
+
+      loggers: *loggers
+
+      locations:
+        - locationType: Logs
+          path: /yt/http-proxy-logs
+
+      volumeMounts:
+        - name: http-proxy-logs
+          mountPath: /yt/http-proxy-logs
+
+      volumeClaimTemplates:
+        - metadata:
+            name: http-proxy-logs
+          spec: *logsVolumeSpec
+
+      serviceType: NodePort
+      # transport:
+      #  httpsSecret:
+      #    name: dora-wildcard
+
+
+  rpcProxies:
+    - instanceCount: 1
+
+      loggers: *loggers
+
+      locations:
+        - locationType: Logs
+          path: /yt/rpc-proxy-logs
+
+      volumeMounts:
+        - name: rpc-proxy-logs
+          mountPath: /yt/rpc-proxy-logs
+
+      volumeClaimTemplates:
+        - metadata:
+            name: rpc-proxy-logs
+          spec: *logsVolumeSpec
+
+      serviceType: NodePort
+
+
+  dataNodes:
+    - instanceCount: 3
+
+      loggers: *loggers
+
+      locations:
+        - locationType: ChunkStore
+          path: /yt/node-data/chunk-store
+        - locationType: Logs
+          path: /yt/data-node-logs
+
+      volumeMounts:
+        - name: node-data
+          mountPath: /yt/node-data
+        - name: data-node-logs
+          mountPath: /yt/data-node-logs
+
+      volumeClaimTemplates:
+        - metadata:
+            name: node-data
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: 20Gi
+        - metadata:
+            name: data-node-logs
+          spec: *logsVolumeSpec
+
+
+  execNodes:
+    - instanceCount: 1
+    
+      loggers: *loggers
+
+      jobProxyLoggers:
+        - name: debug
+          compression: zstd
+          minLogLevel: debug
+          writerType: file
+          useTimestampSuffix: true
+          rotationPolicy: &rotationPolicyJobs
+            maxTotalSizeToKeep: 104857600  # 100Mi
+            rotationPeriodMilliseconds: 900000  # 15Min
+          categoriesFilter:
+            type: exclude
+            values: [ "Bus", "Concurrency" ]
+        - name: info
+          minLogLevel: info
+          writerType: file
+          rotationPolicy: *rotationPolicyJobs
+        - name: error
+          minLogLevel: error
+          writerType: stderr
+
+      resources:
+        requests:
+          cpu: 1
+          memory: 1Gi
+        limits:
+          cpu: 10
+          memory: 10Gi
+
+      locations:
+        - locationType: ChunkCache
+          path: /yt/node-data/chunk-cache
+        - locationType: Slots
+          path: /yt/node-data/slots
+        - locationType: Logs
+          path: /yt/exec-node-logs
+
+      volumeMounts:
+        - name: node-data
+          mountPath: /yt/node-data
+          mountPropagation: Bidirectional  # for tmpfs
+        - name: exec-node-logs
+          mountPath: /yt/exec-node-logs
+
+      volumes:
+        - name: containerd-config
+          configMap:
+            name: containerd-config
+        # - name: containerd-metadata
+        #   emptyDir:
+        #     sizeLimit: 128Mi
+        #     medium: Memory
+
+      volumeClaimTemplates:
+        - metadata:
+            name: node-data
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: 20Gi
+        - metadata:
+            name: exec-node-logs
+          spec: *logsVolumeSpec
+
+      privileged: true  # for tmpfs
+
+      sidecars:
+        - |
+          # image: ytsaurus/ytsaurus:dev-relwithdebinfo
+          # image: ytsaurus/ytsaurus:dev-23.1-relwithdebinfo
+          image: ytsaurus/ytsaurus:dev-23.2-relwithdebinfo   # should match exec-node image
+          name: containerd
+          args:
+            - tini
+            - --
+            - containerd
+          envFrom:
+            - configMapRef:
+                name: containerd-env
+          resources:
+            requests:
+              cpu: 1
+              memory: 1Gi
+            limits:
+              cpu: 10
+              memory: 10Gi
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: node-data
+              mountPath: /yt/node-data
+              mountPropagation: HostToContainer  # for tmpfs
+            - name: containerd-config
+              mountPath: /etc/containerd
+            # - name: containerd-metadata
+            #   mountPath: /yt/node-data/containerd/io.containerd.metadata.v1.bolt  # speed up containerd
+
+
+  schedulers:
+    instanceCount: 1
+
+    loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/scheduler-logs
+
+    volumeMounts:
+      - name: scheduler-logs
+        mountPath: /yt/scheduler-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: scheduler-logs
+        spec: *logsVolumeSpec
+
+
+  controllerAgents:
+    instanceCount: 1
+
+    loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/controller-agent-logs
+
+    volumeMounts:
+      - name: controller-agent-logs
+        mountPath: /yt/controller-agent-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: controller-agent-logs
+        spec: *logsVolumeSpec
+ 
+
+  tabletNodes:
+    - instanceCount: 1
+
+      loggers: *loggers
+
+      locations:
+        - locationType: Logs
+          path: /yt/tablet-node-logs
+  
+      volumeMounts:
+        - name: tablet-node-logs
+          mountPath: /yt/tablet-node-logs
+
+      volumeClaimTemplates:
+        - metadata:
+            name: tablet-node-logs
+          spec: *logsVolumeSpec
+
+
+  yqlAgents:
+    instanceCount: 1
+    # image: ytsaurus/query-tracker:dev-relwithdebinfo
+    image: ytsaurus/query-tracker:0.0.3-relwithdebinfo
+
+    loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/yql-agent-logs
+
+    volumeMounts:
+      - name: yql-agent-logs
+        mountPath: /yt/yql-agent-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: yql-agent-logs
+        spec: *logsVolumeSpec
+
+
+  queryTrackers:
+    instanceCount: 1
+    # image: ytsaurus/query-tracker:dev-relwithdebinfo
+    image: ytsaurus/query-tracker:0.0.3-relwithdebinfo
+
+    loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/query-tracker-logs
+
+    volumeMounts:
+      - name: query-tracker-logs
+        mountPath: /yt/query-tracker-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: query-tracker-logs
+        spec: *logsVolumeSpec
+
+
+  strawberry:
+    resources:
+      limits:
+        memory: 100Mi
+    image: ytsaurus/strawberry:0.0.6
+
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ytsaurus-config-overrides
+data:
+  ytserver-exec-node.yson: |
+    {
+      monitoring_port = 20029;
+
+      exec_agent = {
+        do_not_set_user_id = %true;
+        job_controller = {
+          resource_limits = {
+            user_slots = 10;
+          };
+        };
+        slot_manager = {
+          job_environment = {
+            type = cri;
+            job_proxy_image = "docker.io/library/python:3.12-slim";
+            use_job_proxy_from_image = %false;
+            job_proxy_bind_mounts = [
+              {
+                internal_path = "/yt";
+                external_path = "/yt";
+                read_only = %false;
+              };
+            ];
+            cri_executor = {
+              runtime_endpoint = "unix:///yt/node-data/containerd.sock";
+              image_endpoint = "unix:///yt/node-data/containerd.sock";
+              base_cgroup = "yt.slice";
+              namespace = "yt";
+              retry_backoff_time = 1000;
+              retry_attempts = 1800;
+            };
+          };
+        };
+      };
+    }
+
+  ytserver-controller-agent.yson: |
+    {
+      controller_agent = {
+        enable_tmpfs = %true;
+      };
+    }
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: admin-credentials
+type: Opaque
+data:
+  login: YWRtaW4=         # admin
+  password: cGFzc3dvcmQ=  # password
+  token: dG9rZW4=         # token
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: containerd-env
+data:
+  CONTAINER_RUNTIME_ENDPOINT: "unix:///yt/node-data/containerd.sock"  # crictl
+  CONTAINERD_ADDRESS: "/yt/node-data/containerd.sock"  # ctr
+  CONTAINERD_NAMESPACE: "k8s.io"  # ctr
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: containerd-config
+data:
+  config.toml: |
+    version = 2
+    root = "/yt/node-data/containerd"
+
+    [grpc]
+      address = "/yt/node-data/containerd.sock"
+      uid = 0
+      gid = 0
+
+    [plugins]
+
+      [plugins."io.containerd.grpc.v1.cri"]
+        sandbox_image = "registry.k8s.io/pause:3.8"
+        restrict_oom_score_adj = true
+        image_pull_progress_timeout = "5m0s"
+
+        [plugins."io.containerd.grpc.v1.cri".cni]
+          bin_dir = "/usr/local/lib/cni"
+          conf_dir = "/etc/cni/net.d"
+
+        [plugins."io.containerd.grpc.v1.cri".containerd]
+          default_runtime_name = "runc"
+
+          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
+
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+              runtime_type = "io.containerd.runc.v2"
+              sandbox_mode = "podsandbox"
+
+              [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+                SystemdCgroup = false
+
