@@ -1,7 +1,7 @@
 {
     "address_resolver"={
-        "enable_ipv4"=%false;
-        "enable_ipv6"=%true;
+        "enable_ipv4"=%true;
+        "enable_ipv6"=%false;
         retries=1000;
     };
     logging={
@@ -82,6 +82,9 @@
         };
         "discovery_connection"={
             addresses=[
+                "ds-test-0.discovery-test.fake.svc.fake.zone:9020";
+                "ds-test-1.discovery-test.fake.svc.fake.zone:9020";
+                "ds-test-2.discovery-test.fake.svc.fake.zone:9020";
             ];
         };
     };
