@@ -3,13 +3,15 @@ package apiproxy
 import (
 	"context"
 	"fmt"
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
 type Ytsaurus struct {
@@ -36,8 +38,16 @@ func (c *Ytsaurus) GetResource() *ytv1.Ytsaurus {
 	return c.ytsaurus
 }
 
+func (c *Ytsaurus) GetConfigurationSpec() ytv1.ConfigurationSpec {
+	return c.GetResource().Spec.ConfigurationSpec
+}
+
 func (c *Ytsaurus) GetClusterState() ytv1.ClusterState {
 	return c.ytsaurus.Status.State
+}
+
+func (c *Ytsaurus) IsUpdating() bool {
+	return c.GetClusterState() == ytv1.ClusterStateUpdating
 }
 
 func (c *Ytsaurus) GetUpdateState() ytv1.UpdateState {

@@ -438,6 +438,9 @@ type ConfigurationSpec struct {
 	HostNetwork bool `json:"hostNetwork"`
 
 	ExtraPodAnnotations map[string]string `json:"extraPodAnnotations,omitempty"`
+
+	ConfigOverrides  *corev1.LocalObjectReference  `json:"configOverrides,omitempty"`
+	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 }
 
 // YtsaurusSpec defines the desired state of Ytsaurus
@@ -445,9 +448,7 @@ type YtsaurusSpec struct {
 	ConfigurationSpec `json:",inline"`
 	UIImage           string `json:"uiImage,omitempty"`
 
-	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
-	ConfigOverrides  *corev1.LocalObjectReference  `json:"configOverrides,omitempty"`
-	AdminCredentials *corev1.LocalObjectReference  `json:"adminCredentials,omitempty"`
+	AdminCredentials *corev1.LocalObjectReference `json:"adminCredentials,omitempty"`
 
 	OauthService *OauthServiceSpec `json:"oauthService,omitempty"`
 
