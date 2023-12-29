@@ -18,19 +18,23 @@ package controllers
 
 import (
 	"context"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	clusterv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
 // RemoteDataNodesReconciler reconciles a RemoteDataNodes object
 type RemoteDataNodesReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme   *runtime.Scheme
+	Recorder record.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=remotedatanodes,verbs=get;list;watch;create;update;patch;delete
@@ -47,16 +51,30 @@ type RemoteDataNodesReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.4/pkg/reconcile
 func (r *RemoteDataNodesReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	var nodes ytv1.RemoteDataNodes
+	if err := r.Get(ctx, req.NamespacedName, &nodes); err != nil {
+		logger.Error(err, "unable to fetch remote data nodes")
+		// we'll ignore not-found errors, since they can't be fixed by an immediate
+		// requeue (we'll need to wait for a new notification), and we can get them
+		// on deleted requests.
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
 
-	return ctrl.Result{}, nil
+	var remoteYtsaurus ytv1.RemoteYtsaurus
+	ytsaurusName := types.NamespacedName{Name: nodes.Spec.RemoteClusterSpec.Name, Namespace: req.Namespace}
+	if err := r.Get(ctx, ytsaurusName, &remoteYtsaurus); err != nil {
+		logger.Error(err, "unable to fetch remote YTsaurus for remote data nodes")
+		return ctrl.Result{RequeueAfter: time.Second * 10}, err
+	}
+
+	return r.Sync(ctx, &nodes, &remoteYtsaurus)
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *RemoteDataNodesReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&clusterv1.RemoteDataNodes{}).
+		For(&ytv1.RemoteDataNodes{}).
 		Complete(r)
 }
