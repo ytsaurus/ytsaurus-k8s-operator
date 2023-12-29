@@ -5,6 +5,7 @@ import (
 	"log"
 	"path"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ptr "k8s.io/utils/pointer"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -52,6 +53,7 @@ type parentResource interface {
 	APIProxy() apiproxy.APIProxy
 	GetConfigurationSpec() ytv1.ConfigurationSpec
 	IsUpdating() bool
+	GetObjectMeta() metav1.ObjectMeta
 }
 
 func newServer(

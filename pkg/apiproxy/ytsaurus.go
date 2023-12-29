@@ -38,6 +38,10 @@ func (c *Ytsaurus) GetResource() *ytv1.Ytsaurus {
 	return c.ytsaurus
 }
 
+func (c *Ytsaurus) GetObjectMeta() metav1.ObjectMeta {
+	return c.GetResource().ObjectMeta
+}
+
 func (c *Ytsaurus) GetConfigurationSpec() ytv1.ConfigurationSpec {
 	return c.GetResource().Spec.ConfigurationSpec
 }
