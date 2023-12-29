@@ -34,10 +34,18 @@ type RemoteDataNodesSpec struct {
 	DataNodesSpec     `json:",inline"`
 }
 
+type RemoteDataNodesDeployStatus string
+
+const (
+	RemoteDataNodesStatusUpdating RemoteDataNodesDeployStatus = "Updating"
+	RemoteDataNodesStatusStarted  RemoteDataNodesDeployStatus = "Started"
+)
+
 // RemoteDataNodesStatus defines the observed state of RemoteDataNodes
 type RemoteDataNodesStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	DeployStatus RemoteDataNodesDeployStatus
 }
 
 //+kubebuilder:object:root=true
