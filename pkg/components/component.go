@@ -6,7 +6,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 )
 
@@ -56,7 +55,8 @@ type Component interface {
 
 type componentBase struct {
 	labeller *labeller.Labeller
-	ytsaurus *apiproxy.Ytsaurus
+	// TODO(sibirev): rename to cluster
+	ytsaurusStateManager ytsaurusResourceStateManager
 }
 
 func (c *componentBase) GetName() string {
@@ -72,7 +72,7 @@ func (c *componentBase) SetReadyCondition(status ComponentStatus) {
 	if status.SyncStatus == SyncStatusReady {
 		ready = metav1.ConditionTrue
 	}
-	c.ytsaurus.SetStatusCondition(metav1.Condition{
+	c.ytsaurusStateManager.SetStatusCondition(metav1.Condition{
 		Type:    fmt.Sprintf("%sReady", c.labeller.ComponentName),
 		Status:  ready,
 		Reason:  string(status.SyncStatus),

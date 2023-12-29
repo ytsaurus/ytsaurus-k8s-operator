@@ -67,8 +67,8 @@ func NewQueueAgent(
 
 	return &queueAgent{
 		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
+			labeller:             &l,
+			ytsaurusStateManager: ytsaurus,
 		},
 		cfgen:          cfgen,
 		server:         server,
@@ -107,12 +107,12 @@ func (qa *queueAgent) Fetch(ctx context.Context) error {
 func (qa *queueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(qa.ytsaurus.GetClusterState()) && qa.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(qa.ytsaurusStateManager.GetClusterState()) && qa.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, qa.ytsaurus, qa, &qa.componentBase, qa.server, dry); status != nil {
+	if qa.ytsaurusStateManager.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, qa.ytsaurusStateManager, qa, &qa.componentBase, qa.server, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -155,7 +155,7 @@ func (qa *queueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	var ytClient yt.Client
-	if qa.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
+	if qa.ytsaurusStateManager.GetClusterState() != ytv1.ClusterStateUpdating {
 		if qa.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
 			return WaitingStatus(SyncStatusBlocked, qa.ytsaurusClient.GetName()), err
 		}
@@ -178,7 +178,7 @@ func (qa *queueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return status, err
 	}
 
-	if qa.ytsaurus.IsStatusConditionTrue(qa.initCondition) {
+	if qa.ytsaurusStateManager.IsStatusConditionTrue(qa.initCondition) {
 		return SimpleStatus(SyncStatusReady), err
 	}
 
@@ -188,7 +188,7 @@ func (qa *queueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			return WaitingStatus(SyncStatusPending, fmt.Sprintf("%s initialization", qa.GetName())), err
 		}
 
-		qa.ytsaurus.SetStatusCondition(metav1.Condition{
+		qa.ytsaurusStateManager.SetStatusCondition(metav1.Condition{
 			Type:    qa.initCondition,
 			Status:  metav1.ConditionTrue,
 			Reason:  "InitQueueAgentCompleted",

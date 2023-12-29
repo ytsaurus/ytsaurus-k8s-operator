@@ -64,8 +64,8 @@ func NewTCPProxy(
 
 	return &tcpProxy{
 		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
+			labeller:             &l,
+			ytsaurusStateManager: ytsaurus,
 		},
 		cfgen:            cfgen,
 		server:           server,
@@ -92,12 +92,12 @@ func (tp *tcpProxy) Fetch(ctx context.Context) error {
 func (tp *tcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(tp.ytsaurus.GetClusterState()) && tp.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(tp.ytsaurusStateManager.GetClusterState()) && tp.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if tp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, tp.ytsaurus, tp, &tp.componentBase, tp.server, dry); status != nil {
+	if tp.ytsaurusStateManager.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, tp.ytsaurusStateManager, tp, &tp.componentBase, tp.server, dry); status != nil {
 			return *status, err
 		}
 	}

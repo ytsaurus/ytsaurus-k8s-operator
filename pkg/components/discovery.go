@@ -40,8 +40,8 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Compon
 
 	return &discovery{
 		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
+			labeller:             &l,
+			ytsaurusStateManager: ytsaurus,
 		},
 		cfgen:  cfgen,
 		server: server,
@@ -59,12 +59,12 @@ func (d *discovery) Fetch(ctx context.Context) error {
 func (d *discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(d.ytsaurus.GetClusterState()) && d.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(d.ytsaurusStateManager.GetClusterState()) && d.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, d.ytsaurus, d, &d.componentBase, d.server, dry); status != nil {
+	if d.ytsaurusStateManager.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, d.ytsaurusStateManager, d, &d.componentBase, d.server, dry); status != nil {
 			return *status, err
 		}
 	}

@@ -27,8 +27,9 @@ const (
 
 type master struct {
 	componentBase
-	cfgen  *ytconfig.Generator
-	server server
+	cfgen    *ytconfig.Generator
+	server   server
+	ytsaurus *apiproxy.Ytsaurus
 
 	initJob          *InitJob
 	exitReadOnlyJob  *InitJob
@@ -46,7 +47,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
-	server := newServer(
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.PrimaryMasters.InstanceSpec,
@@ -80,11 +81,12 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component
 
 	return &master{
 		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
+			labeller:             &l,
+			ytsaurusStateManager: ytsaurus,
 		},
 		cfgen:           cfgen,
-		server:          server,
+		server:          srv,
+		ytsaurus:        ytsaurus,
 		initJob:         initJob,
 		exitReadOnlyJob: exitReadOnlyJob,
 	}
@@ -212,12 +214,12 @@ func (m *master) createExitReadOnlyScript() string {
 func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(m.ytsaurus.GetClusterState()) && m.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(m.ytsaurusStateManager.GetClusterState()) && m.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedFullUpdate), err
 	}
 
-	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.componentBase, m.server, dry)
+	if m.ytsaurusStateManager.GetClusterState() == ytv1.ClusterStateUpdating {
+		status, err := handleUpdatingClusterState(ctx, m.ytsaurusStateManager, m, &m.componentBase, m.server, dry)
 		if status != nil && status.SyncStatus != SyncStatusReady {
 			return *status, err
 		}

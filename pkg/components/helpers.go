@@ -3,13 +3,14 @@ package components
 import (
 	"context"
 	"fmt"
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+
 	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
 	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
 func CreateTabletCells(ctx context.Context, ytClient yt.Client, bundle string, tabletCellCount int) error {
@@ -104,14 +105,14 @@ func CreateUser(ctx context.Context, ytClient yt.Client, userName, token string,
 	return err
 }
 
-func IsUpdatingComponent(ytsaurus *apiproxy.Ytsaurus, component Component) bool {
+func IsUpdatingComponent(ytsaurus ytsaurusResourceStateManager, component Component) bool {
 	componentNames := ytsaurus.GetLocalUpdatingComponents()
 	return (componentNames == nil && component.IsUpdatable()) || slices.Contains(componentNames, component.GetName())
 }
 
 func handleUpdatingClusterState(
 	ctx context.Context,
-	ytsaurus *apiproxy.Ytsaurus,
+	ytsaurus ytsaurusResourceStateManager,
 	cmp Component,
 	cmpBase *componentBase,
 	server server,

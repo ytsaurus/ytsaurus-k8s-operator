@@ -63,8 +63,8 @@ func NewTabletNode(
 
 	return &tabletNode{
 		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
+			labeller:             &l,
+			ytsaurusStateManager: ytsaurus,
 		},
 		cfgen:                cfgen,
 		server:               server,
@@ -83,12 +83,12 @@ func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	var err error
 	logger := log.FromContext(ctx)
 
-	if ytv1.IsReadyToUpdateClusterState(tn.ytsaurus.GetClusterState()) && tn.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(tn.ytsaurusStateManager.GetClusterState()) && tn.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedFullUpdate), err
 	}
 
-	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.componentBase, tn.server, dry); status != nil {
+	if tn.ytsaurusStateManager.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, tn.ytsaurusStateManager, tn, &tn.componentBase, tn.server, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -105,7 +105,7 @@ func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
-	if !tn.doInitialization || tn.ytsaurus.IsStatusConditionTrue(tn.initBundlesCondition) {
+	if !tn.doInitialization || tn.ytsaurusStateManager.IsStatusConditionTrue(tn.initBundlesCondition) {
 		return SimpleStatus(SyncStatusReady), err
 	}
 
@@ -183,7 +183,7 @@ func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 				}
 			}
 
-			tn.ytsaurus.SetStatusCondition(metav1.Condition{
+			tn.ytsaurusStateManager.SetStatusCondition(metav1.Condition{
 				Type:    tn.initBundlesCondition,
 				Status:  metav1.ConditionTrue,
 				Reason:  "InitBundlesCompleted",
@@ -196,7 +196,7 @@ func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 }
 
 func (tn *tabletNode) getBundleBootstrap(bundle string) *ytv1.BundleBootstrapSpec {
-	resource := tn.ytsaurus.GetResource()
+	resource := tn.ytsaurusStateManager.GetResource()
 	if resource.Spec.Bootstrap == nil || resource.Spec.Bootstrap.TabletCellBundles == nil {
 		return nil
 	}

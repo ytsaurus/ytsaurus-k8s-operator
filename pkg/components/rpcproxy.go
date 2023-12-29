@@ -72,8 +72,8 @@ func NewRPCProxy(
 
 	return &rpcProxy{
 		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
+			labeller:             &l,
+			ytsaurusStateManager: ytsaurus,
 		},
 		cfgen:            cfgen,
 		server:           server,
@@ -101,12 +101,12 @@ func (rp *rpcProxy) Fetch(ctx context.Context) error {
 func (rp *rpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(rp.ytsaurus.GetClusterState()) && rp.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(rp.ytsaurusStateManager.GetClusterState()) && rp.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.componentBase, rp.server, dry); status != nil {
+	if rp.ytsaurusStateManager.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, rp.ytsaurusStateManager, rp, &rp.componentBase, rp.server, dry); status != nil {
 			return *status, err
 		}
 	}

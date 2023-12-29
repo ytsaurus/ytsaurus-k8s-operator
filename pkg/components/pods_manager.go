@@ -2,8 +2,10 @@ package components
 
 import (
 	"context"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 )
 
 // TODO: move to Updatable
@@ -33,11 +35,11 @@ func removePods(ctx context.Context, manager podsManager, c *componentBase) erro
 }
 
 func isPodsRemovingStarted(c *componentBase) bool {
-	return c.ytsaurus.IsUpdateStatusConditionTrue(c.labeller.GetPodsRemovingStartedCondition())
+	return c.ytsaurusStateManager.IsUpdateStatusConditionTrue(c.labeller.GetPodsRemovingStartedCondition())
 }
 
 func setPodsRemovingStartedCondition(c *componentBase) {
-	c.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+	c.ytsaurusStateManager.SetUpdateStatusCondition(metav1.Condition{
 		Type:    c.labeller.GetPodsRemovingStartedCondition(),
 		Status:  metav1.ConditionTrue,
 		Reason:  "Update",
@@ -46,7 +48,7 @@ func setPodsRemovingStartedCondition(c *componentBase) {
 }
 
 func setPodsRemovedCondition(c *componentBase) {
-	c.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+	c.ytsaurusStateManager.SetUpdateStatusCondition(metav1.Condition{
 		Type:    labeller.GetPodsRemovedCondition(c.GetName()),
 		Status:  metav1.ConditionTrue,
 		Reason:  "Update",

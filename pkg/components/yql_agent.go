@@ -18,6 +18,7 @@ import (
 
 type yqlAgent struct {
 	componentBase
+	ytsaurus        *apiproxy.Ytsaurus
 	cfgen           *ytconfig.Generator
 	server          server
 	master          Component
@@ -49,8 +50,8 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 
 	return &yqlAgent{
 		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
+			labeller:             &l,
+			ytsaurusStateManager: ytsaurus,
 		},
 		cfgen:  cfgen,
 		server: server,
@@ -119,12 +120,12 @@ func (yqla *yqlAgent) createInitScript() string {
 func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(yqla.ytsaurus.GetClusterState()) && yqla.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(yqla.ytsaurusStateManager.GetClusterState()) && yqla.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.componentBase, yqla.server, dry); status != nil {
+	if yqla.ytsaurusStateManager.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, yqla.ytsaurusStateManager, yqla, &yqla.componentBase, yqla.server, dry); status != nil {
 			return *status, err
 		}
 	}

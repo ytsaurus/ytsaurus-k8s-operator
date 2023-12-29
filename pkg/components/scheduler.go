@@ -59,8 +59,8 @@ func NewScheduler(
 
 	return &scheduler{
 		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
+			labeller:             &l,
+			ytsaurusStateManager: ytsaurus,
 		},
 		cfgen:       cfgen,
 		server:      server,
@@ -122,13 +122,13 @@ func (s *scheduler) Sync(ctx context.Context) error {
 func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(s.ytsaurus.GetClusterState()) && s.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(s.ytsaurusStateManager.GetClusterState()) && s.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(s.ytsaurus, s) {
-			if s.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+	if s.ytsaurusStateManager.GetClusterState() == ytv1.ClusterStateUpdating {
+		if IsUpdatingComponent(s.ytsaurusStateManager, s) {
+			if s.ytsaurusStateManager.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
 					err = removePods(ctx, s.server, &s.componentBase)
 				}
@@ -139,8 +139,8 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 				return *status, err
 			}
 
-			if s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
-				s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForOpArchiveUpdate {
+			if s.ytsaurusStateManager.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+				s.ytsaurusStateManager.GetUpdateState() != ytv1.UpdateStateWaitingForOpArchiveUpdate {
 				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
 			}
 		} else {
@@ -216,7 +216,7 @@ func (s *scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatu
 
 func (s *scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentStatus, error) {
 	var err error
-	switch s.ytsaurus.GetUpdateState() {
+	switch s.ytsaurusStateManager.GetUpdateState() {
 	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
 		if !s.needOpArchiveInit() {
 			s.setConditionNotNecessaryToUpdateOpArchive()
@@ -247,7 +247,7 @@ func (s *scheduler) needOpArchiveInit() bool {
 }
 
 func (s *scheduler) setConditionNotNecessaryToUpdateOpArchive() {
-	s.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+	s.ytsaurusStateManager.SetUpdateStatusCondition(metav1.Condition{
 		Type:    consts.ConditionNotNecessaryToUpdateOpArchive,
 		Status:  metav1.ConditionTrue,
 		Reason:  "NotNecessaryToUpdateOpArchive",
@@ -256,7 +256,7 @@ func (s *scheduler) setConditionNotNecessaryToUpdateOpArchive() {
 }
 
 func (s *scheduler) setConditionOpArchivePreparedForUpdating() {
-	s.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+	s.ytsaurusStateManager.SetUpdateStatusCondition(metav1.Condition{
 		Type:    consts.ConditionOpArchivePreparedForUpdating,
 		Status:  metav1.ConditionTrue,
 		Reason:  "OpArchivePreparedForUpdating",
@@ -265,7 +265,7 @@ func (s *scheduler) setConditionOpArchivePreparedForUpdating() {
 }
 
 func (s *scheduler) setConditionOpArchiveUpdated() {
-	s.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+	s.ytsaurusStateManager.SetUpdateStatusCondition(metav1.Condition{
 		Type:    consts.ConditionOpArchiveUpdated,
 		Status:  metav1.ConditionTrue,
 		Reason:  "OpArchiveUpdated",

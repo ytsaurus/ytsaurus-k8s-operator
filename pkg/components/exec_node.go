@@ -55,8 +55,8 @@ func NewExecNode(
 
 	return &execNode{
 		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
+			labeller:             &l,
+			ytsaurusStateManager: ytsaurus,
 		},
 		cfgen:      cfgen,
 		server:     server,
@@ -77,12 +77,12 @@ func (n *execNode) Fetch(ctx context.Context) error {
 func (n *execNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && n.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(n.ytsaurusStateManager.GetClusterState()) && n.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, &n.componentBase, n.server, dry); status != nil {
+	if n.ytsaurusStateManager.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, n.ytsaurusStateManager, n, &n.componentBase, n.server, dry); status != nil {
 			return *status, err
 		}
 	}

@@ -41,8 +41,8 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 
 	return &controllerAgent{
 		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
+			labeller:             &l,
+			ytsaurusStateManager: ytsaurus,
 		},
 		cfgen:  cfgen,
 		server: server,
@@ -61,12 +61,12 @@ func (ca *controllerAgent) Fetch(ctx context.Context) error {
 func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(ca.ytsaurus.GetClusterState()) && ca.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(ca.ytsaurusStateManager.GetClusterState()) && ca.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.componentBase, ca.server, dry); status != nil {
+	if ca.ytsaurusStateManager.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, ca.ytsaurusStateManager, ca, &ca.componentBase, ca.server, dry); status != nil {
 			return *status, err
 		}
 	}

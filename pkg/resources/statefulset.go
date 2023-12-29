@@ -2,19 +2,22 @@ package resources
 
 import (
 	"context"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
-	labeller2 "github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	labeller2 "github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 )
 
 type StatefulSet struct {
-	name     string
-	labeller *labeller2.Labeller
-	ytsaurus *apiproxy.Ytsaurus
+	name                string
+	labeller            *labeller2.Labeller
+	proxy               apiproxy.APIProxy
+	extraPodAnnotations map[string]string
 
 	oldObject appsv1.StatefulSet
 	newObject appsv1.StatefulSet
@@ -24,11 +27,14 @@ type StatefulSet struct {
 func NewStatefulSet(
 	name string,
 	labeller *labeller2.Labeller,
-	ytsaurus *apiproxy.Ytsaurus) *StatefulSet {
+	proxy apiproxy.APIProxy,
+	extraPodAnnotations map[string]string,
+) *StatefulSet {
 	return &StatefulSet{
-		name:     name,
-		labeller: labeller,
-		ytsaurus: ytsaurus,
+		name:                name,
+		labeller:            labeller,
+		proxy:               proxy,
+		extraPodAnnotations: extraPodAnnotations,
 	}
 }
 
@@ -41,7 +47,7 @@ func (s *StatefulSet) Name() string {
 }
 
 func (s *StatefulSet) Sync(ctx context.Context) error {
-	return s.ytsaurus.APIProxy().SyncObject(ctx, &s.oldObject, &s.newObject)
+	return s.proxy.SyncObject(ctx, &s.oldObject, &s.newObject)
 }
 
 func (s *StatefulSet) Build() *appsv1.StatefulSet {
@@ -55,7 +61,7 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      s.labeller.GetMetaLabelMap(false),
-					Annotations: s.ytsaurus.GetResource().Spec.ExtraPodAnnotations,
+					Annotations: s.extraPodAnnotations,
 				},
 			},
 		}
@@ -68,7 +74,7 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 func (s *StatefulSet) getPods(ctx context.Context) *corev1.PodList {
 	logger := log.FromContext(ctx)
 	podList := &corev1.PodList{}
-	err := s.ytsaurus.APIProxy().ListObjects(ctx, podList, s.labeller.GetListOptions()...)
+	err := s.proxy.ListObjects(ctx, podList, s.labeller.GetListOptions()...)
 	if err != nil {
 		logger.Error(err, "unable to list pods for component", "component", s.labeller.ComponentName)
 		return nil
@@ -132,5 +138,5 @@ func (s *StatefulSet) NeedSync(replicas int32) bool {
 }
 
 func (s *StatefulSet) Fetch(ctx context.Context) error {
-	return s.ytsaurus.APIProxy().FetchObject(ctx, s.name, &s.oldObject)
+	return s.proxy.FetchObject(ctx, s.name, &s.oldObject)
 }

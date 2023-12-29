@@ -76,8 +76,8 @@ func NewHTTPProxy(
 
 	return &httpProxy{
 		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
+			labeller:             &l,
+			ytsaurusStateManager: ytsaurus,
 		},
 		cfgen:            cfgen,
 		server:           server,
@@ -103,12 +103,12 @@ func (hp *httpProxy) Fetch(ctx context.Context) error {
 func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(hp.ytsaurus.GetClusterState()) && hp.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(hp.ytsaurusStateManager.GetClusterState()) && hp.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.componentBase, hp.server, dry); status != nil {
+	if hp.ytsaurusStateManager.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, hp.ytsaurusStateManager, hp, &hp.componentBase, hp.server, dry); status != nil {
 			return *status, err
 		}
 	}

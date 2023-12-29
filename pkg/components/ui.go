@@ -66,8 +66,8 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 
 	return &UI{
 		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
+			labeller:             &l,
+			ytsaurusStateManager: ytsaurus,
 		},
 		cfgen:        cfgen,
 		microservice: microservice,
@@ -117,7 +117,7 @@ func (u *UI) createInitScript() string {
 }
 
 func (u *UI) syncComponents(ctx context.Context) (err error) {
-	ytsaurusResource := u.ytsaurus.GetResource()
+	ytsaurusResource := u.ytsaurusStateManager.GetResource()
 	service := u.microservice.buildService()
 	service.Spec.Type = ytsaurusResource.Spec.UI.ServiceType
 
@@ -228,21 +228,21 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && u.microservice.needUpdate() {
+	if u.ytsaurusStateManager.GetClusterState() == ytv1.ClusterStateRunning && u.microservice.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(u.ytsaurus, u) {
+	if u.ytsaurusStateManager.GetClusterState() == ytv1.ClusterStateUpdating {
+		if IsUpdatingComponent(u.ytsaurusStateManager, u) {
 
-			if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			if u.ytsaurusStateManager.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
 					err = removePods(ctx, u.microservice, &u.componentBase)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
 
-			if u.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+			if u.ytsaurusStateManager.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
 				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
 			}
 		} else {
