@@ -7,14 +7,15 @@ import (
 
 	ptr "k8s.io/utils/pointer"
 
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // server manages common resources of YTsaurus cluster server components.
@@ -53,15 +54,20 @@ func newServer(
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
 	generator ytconfig.YsonGeneratorFunc) server {
+	// TODO: this should be taken from separate configuration, not from ytsaurus
+	//  (maybe from some main custom resource)
+	//  or support ytsaurus = nil -> then take from instance spec
 	image := ytsaurus.GetResource().Spec.CoreImage
 	if instanceSpec.Image != nil {
 		image = *instanceSpec.Image
 	}
+	// TODO: this should be taken from separate configuration, not from ytsaurus
 	var caBundle *resources.CABundle
 	if caBundleSpec := ytsaurus.GetResource().Spec.CABundle; caBundleSpec != nil {
 		caBundle = resources.NewCABundle(caBundleSpec.Name, consts.CABundleVolumeName, consts.CABundleMountPoint)
 	}
 
+	// TODO: this should be taken from separate configuration, not from ytsaurus
 	var tlsSecret *resources.TLSSecret
 	transportSpec := instanceSpec.NativeTransport
 	if transportSpec == nil {
@@ -84,7 +90,10 @@ func newServer(
 		statefulSet: resources.NewStatefulSet(
 			statefulSetName,
 			l,
-			ytsaurus),
+			ytsaurus.APIProxy(),
+			ytsaurus.GetResource().Spec.ConfigurationSpec,
+		),
+		// TODO: api proxy here and later can be taken from parent CRD resource as it now
 		headlessService: resources.NewHeadlessService(
 			serviceName,
 			l,
@@ -98,6 +107,7 @@ func newServer(
 			l,
 			ytsaurus.APIProxy(),
 			l.GetMainConfigMapName(),
+			// TODO: this should be taken from separate configuration, not from ytsaurus
 			ytsaurus.GetResource().Spec.ConfigOverrides,
 			map[string]ytconfig.GeneratorDescriptor{
 				configFileName: {
@@ -129,6 +139,7 @@ func (s *serverImpl) needSync() bool {
 		needReload = false
 	}
 	return s.configHelper.NeedInit() ||
+		// TODO: parent object isUpdating?
 		(s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && needReload) ||
 		!s.exists() ||
 		s.statefulSet.NeedSync(s.instanceSpec.InstanceCount)
@@ -209,6 +220,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 
 	setHostnameAsFQDN := true
 	statefulSet.Spec.Template.Spec = corev1.PodSpec{
+		// TODO: this could be taken from some abstract parent spec
 		ImagePullSecrets:  s.ytsaurus.GetResource().Spec.ImagePullSecrets,
 		SetHostnameAsFQDN: &setHostnameAsFQDN,
 		Containers: []corev1.Container{
@@ -240,6 +252,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		NodeSelector: s.instanceSpec.NodeSelector,
 		Tolerations:  s.instanceSpec.Tolerations,
 	}
+	// TODO: this could be taken from some abstract parent spec
 	if s.ytsaurus.GetResource().Spec.HostNetwork {
 		statefulSet.Spec.Template.Spec.HostNetwork = true
 		statefulSet.Spec.Template.Spec.DNSPolicy = corev1.DNSClusterFirstWithHostNet

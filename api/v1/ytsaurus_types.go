@@ -436,6 +436,8 @@ type ConfigurationSpec struct {
 	//+kubebuilder:default:=false
 	//+optional
 	HostNetwork bool `json:"hostNetwork"`
+
+	ExtraPodAnnotations map[string]string `json:"extraPodAnnotations,omitempty"`
 }
 
 // YtsaurusSpec defines the desired state of Ytsaurus
@@ -455,8 +457,6 @@ type YtsaurusSpec struct {
 	//+kubebuilder:default:=true
 	//+optional
 	EnableFullUpdate bool `json:"enableFullUpdate"`
-
-	ExtraPodAnnotations map[string]string `json:"extraPodAnnotations,omitempty"`
 
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
