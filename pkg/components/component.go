@@ -56,7 +56,16 @@ type Component interface {
 
 type componentBase struct {
 	labeller *labeller.Labeller
+}
+
+type ytsaurusComponent struct {
+	componentBase
 	ytsaurus *apiproxy.Ytsaurus
+}
+
+type ytsaurusServerComponent struct {
+	ytsaurusComponent
+	server server
 }
 
 func (c *componentBase) GetName() string {
@@ -67,7 +76,18 @@ func (c *componentBase) GetLabel() string {
 	return c.labeller.ComponentLabel
 }
 
-func (c *componentBase) SetReadyCondition(status ComponentStatus) {
+func newYtsaurusComponent(
+	labeller *labeller.Labeller,
+	ytsaurus *apiproxy.Ytsaurus,
+
+) ytsaurusComponent {
+	return ytsaurusComponent{
+		componentBase: componentBase{labeller: labeller},
+		ytsaurus:      ytsaurus,
+	}
+}
+
+func (c *ytsaurusComponent) SetReadyCondition(status ComponentStatus) {
 	ready := metav1.ConditionFalse
 	if status.SyncStatus == SyncStatusReady {
 		ready = metav1.ConditionTrue
@@ -78,4 +98,27 @@ func (c *componentBase) SetReadyCondition(status ComponentStatus) {
 		Reason:  string(status.SyncStatus),
 		Message: status.Message,
 	})
+}
+
+func newYtsaurusServerComponent(
+	labeller *labeller.Labeller,
+	ytsaurus *apiproxy.Ytsaurus,
+	server server,
+
+) ytsaurusServerComponent {
+	return ytsaurusServerComponent{
+		ytsaurusComponent: ytsaurusComponent{
+			componentBase: componentBase{
+				labeller: labeller,
+			},
+			ytsaurus: ytsaurus,
+		},
+		server: server,
+	}
+}
+
+func (c *ytsaurusServerComponent) NeedSync() bool {
+	return (c.server.configNeedsReload() && c.ytsaurus.IsUpdating()) ||
+		c.server.configNeedsReload() ||
+		c.server.needSync()
 }

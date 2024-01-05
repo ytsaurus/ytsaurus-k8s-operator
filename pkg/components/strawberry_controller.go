@@ -17,7 +17,7 @@ import (
 )
 
 type strawberryController struct {
-	componentBase
+	ytsaurusComponent
 	cfgen              *ytconfig.Generator
 	microservice       microservice
 	initUserJob        *InitJob
@@ -88,12 +88,9 @@ func NewStrawberryController(
 		name)
 
 	return &strawberryController{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
-		cfgen:        cfgen,
-		microservice: microservice,
+		ytsaurusComponent: newYtsaurusComponent(&l, ytsaurus),
+		cfgen:             cfgen,
+		microservice:      microservice,
 		initUserJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -223,7 +220,7 @@ func (c *strawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		if IsUpdatingComponent(c.ytsaurus, c) {
 			if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, c.microservice, &c.componentBase)
+					err = removePods(ctx, c.microservice, &c.ytsaurusComponent)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}

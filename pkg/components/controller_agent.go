@@ -12,9 +12,8 @@ import (
 )
 
 type controllerAgent struct {
-	componentBase
+	ytsaurusServerComponent
 	cfgen  *ytconfig.Generator
-	server server
 	master Component
 }
 
@@ -28,7 +27,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		MonitoringPort: consts.ControllerAgentMonitoringPort,
 	}
 
-	server := newServer(
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.ControllerAgents.InstanceSpec,
@@ -40,13 +39,9 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 	)
 
 	return &controllerAgent{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
-		cfgen:  cfgen,
-		server: server,
-		master: master,
+		ytsaurusServerComponent: newYtsaurusServerComponent(&l, ytsaurus, srv),
+		cfgen:                   cfgen,
+		master:                  master,
 	}
 }
 
@@ -66,7 +61,7 @@ func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.componentBase, ca.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.ytsaurusComponent, ca.server, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -75,7 +70,7 @@ func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 		return WaitingStatus(SyncStatusBlocked, ca.master.GetName()), err
 	}
 
-	if ca.server.needSync() {
+	if ca.NeedSync() {
 		if !dry {
 			err = ca.server.Sync(ctx)
 		}

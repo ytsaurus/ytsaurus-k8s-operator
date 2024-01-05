@@ -20,9 +20,8 @@ import (
 )
 
 type scheduler struct {
-	componentBase
+	ytsaurusServerComponent
 	cfgen         *ytconfig.Generator
-	server        server
 	master        Component
 	execNodes     []Component
 	tabletNodes   []Component
@@ -46,7 +45,7 @@ func NewScheduler(
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
-	server := newServer(
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.Schedulers.InstanceSpec,
@@ -58,15 +57,11 @@ func NewScheduler(
 	)
 
 	return &scheduler{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
-		cfgen:       cfgen,
-		server:      server,
-		master:      master,
-		execNodes:   execNodes,
-		tabletNodes: tabletNodes,
+		ytsaurusServerComponent: newYtsaurusServerComponent(&l, ytsaurus, srv),
+		cfgen:                   cfgen,
+		master:                  master,
+		execNodes:               execNodes,
+		tabletNodes:             tabletNodes,
 		initUser: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -130,7 +125,7 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		if IsUpdatingComponent(s.ytsaurus, s) {
 			if s.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, s.server, &s.componentBase)
+					err = removePods(ctx, s.server, &s.ytsaurusComponent)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
@@ -172,7 +167,7 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return WaitingStatus(SyncStatusPending, s.secret.Name()), err
 	}
 
-	if s.server.needSync() {
+	if s.NeedSync() {
 		if !dry {
 			err = s.server.Sync(ctx)
 		}

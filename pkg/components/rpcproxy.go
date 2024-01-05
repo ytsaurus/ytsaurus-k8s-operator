@@ -14,9 +14,8 @@ import (
 )
 
 type rpcProxy struct {
-	componentBase
-	cfgen  *ytconfig.Generator
-	server server
+	ytsaurusServerComponent
+	cfgen *ytconfig.Generator
 
 	master Component
 
@@ -39,7 +38,7 @@ func NewRPCProxy(
 		MonitoringPort: consts.RPCProxyMonitoringPort,
 	}
 
-	server := newServer(
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -71,16 +70,12 @@ func NewRPCProxy(
 	}
 
 	return &rpcProxy{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
-		cfgen:            cfgen,
-		server:           server,
-		master:           masterReconciler,
-		serviceType:      spec.ServiceType,
-		balancingService: balancingService,
-		tlsSecret:        tlsSecret,
+		ytsaurusServerComponent: newYtsaurusServerComponent(&l, ytsaurus, srv),
+		cfgen:                   cfgen,
+		master:                  masterReconciler,
+		serviceType:             spec.ServiceType,
+		balancingService:        balancingService,
+		tlsSecret:               tlsSecret,
 	}
 }
 
@@ -106,7 +101,7 @@ func (rp *rpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.componentBase, rp.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.ytsaurusComponent, rp.server, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -115,7 +110,7 @@ func (rp *rpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return WaitingStatus(SyncStatusBlocked, rp.master.GetName()), err
 	}
 
-	if rp.server.needSync() {
+	if rp.NeedSync() {
 		if !dry {
 			statefulSet := rp.server.buildStatefulSet()
 			if secret := rp.tlsSecret; secret != nil {

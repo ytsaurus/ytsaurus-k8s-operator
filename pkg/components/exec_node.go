@@ -17,9 +17,8 @@ import (
 )
 
 type execNode struct {
-	componentBase
+	ytsaurusServerComponent
 	cfgen      *ytconfig.NodeGenerator
-	server     server
 	master     Component
 	sidecars   []string
 	privileged bool
@@ -40,7 +39,7 @@ func NewExecNode(
 		MonitoringPort: consts.ExecNodeMonitoringPort,
 	}
 
-	server := newServer(
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -54,15 +53,11 @@ func NewExecNode(
 	)
 
 	return &execNode{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
-		cfgen:      cfgen,
-		server:     server,
-		master:     master,
-		sidecars:   spec.Sidecars,
-		privileged: spec.Privileged,
+		ytsaurusServerComponent: newYtsaurusServerComponent(&l, ytsaurus, srv),
+		cfgen:                   cfgen,
+		master:                  master,
+		sidecars:                spec.Sidecars,
+		privileged:              spec.Privileged,
 	}
 }
 
@@ -82,7 +77,7 @@ func (n *execNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	}
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, &n.componentBase, n.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, &n.ytsaurusComponent, n.server, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -91,7 +86,7 @@ func (n *execNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
 	}
 
-	if n.server.needSync() {
+	if n.NeedSync() {
 		if !dry {
 			setContainerPrivileged := func(ct *corev1.Container) {
 				if ct.SecurityContext == nil {

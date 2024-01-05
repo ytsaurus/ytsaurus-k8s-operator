@@ -21,9 +21,8 @@ import (
 )
 
 type queryTracker struct {
-	componentBase
-	cfgen  *ytconfig.Generator
-	server server
+	ytsaurusServerComponent
+	cfgen *ytconfig.Generator
 
 	ytsaurusClient YtsaurusClient
 	tabletNodes    []Component
@@ -48,7 +47,7 @@ func NewQueryTracker(
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
-	server := newServer(
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.QueryTrackers.InstanceSpec,
@@ -65,15 +64,11 @@ func NewQueryTracker(
 	}
 
 	return &queryTracker{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
-		cfgen:          cfgen,
-		server:         server,
-		tabletNodes:    tabletNodes,
-		initCondition:  "queryTrackerInitCompleted",
-		ytsaurusClient: yc,
+		ytsaurusServerComponent: newYtsaurusServerComponent(&l, ytsaurus, srv),
+		cfgen:                   cfgen,
+		tabletNodes:             tabletNodes,
+		initCondition:           "queryTrackerInitCompleted",
+		ytsaurusClient:          yc,
 		initQTState: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -113,7 +108,7 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		if IsUpdatingComponent(qt.ytsaurus, qt) {
 			if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(qt.ytsaurus, qt) {
 				if !dry {
-					err = removePods(ctx, qt.server, &qt.componentBase)
+					err = removePods(ctx, qt.server, &qt.ytsaurusComponent)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
@@ -141,7 +136,7 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		return WaitingStatus(SyncStatusPending, qt.secret.Name()), err
 	}
 
-	if qt.server.needSync() {
+	if qt.NeedSync() {
 		if !dry {
 			err = qt.server.Sync(ctx)
 		}

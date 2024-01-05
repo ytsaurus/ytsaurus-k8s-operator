@@ -12,9 +12,8 @@ import (
 )
 
 type dataNode struct {
-	componentBase
+	ytsaurusServerComponent
 	cfgen  *ytconfig.NodeGenerator
-	server server
 	master Component
 }
 
@@ -33,7 +32,7 @@ func NewDataNode(
 		MonitoringPort: consts.DataNodeMonitoringPort,
 	}
 
-	server := newServer(
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -47,13 +46,9 @@ func NewDataNode(
 	)
 
 	return &dataNode{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
-		cfgen:  cfgen,
-		server: server,
-		master: master,
+		ytsaurusServerComponent: newYtsaurusServerComponent(&l, ytsaurus, srv),
+		cfgen:                   cfgen,
+		master:                  master,
 	}
 }
 
@@ -73,7 +68,7 @@ func (n *dataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	}
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, &n.componentBase, n.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, &n.ytsaurusComponent, n.server, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -82,7 +77,7 @@ func (n *dataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
 	}
 
-	if n.server.needSync() {
+	if n.NeedSync() {
 		if !dry {
 			err = n.server.Sync(ctx)
 		}

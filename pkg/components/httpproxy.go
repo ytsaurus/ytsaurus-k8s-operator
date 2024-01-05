@@ -15,9 +15,8 @@ import (
 )
 
 type httpProxy struct {
-	componentBase
-	cfgen  *ytconfig.Generator
-	server server
+	ytsaurusServerComponent
+	cfgen *ytconfig.Generator
 
 	serviceType      corev1.ServiceType
 	master           Component
@@ -44,7 +43,7 @@ func NewHTTPProxy(
 		MonitoringPort: consts.HTTPProxyMonitoringPort,
 	}
 
-	server := newServer(
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -75,17 +74,13 @@ func NewHTTPProxy(
 	balancingService.SetHttpsNodePort(spec.HttpsNodePort)
 
 	return &httpProxy{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
-		cfgen:            cfgen,
-		server:           server,
-		master:           masterReconciler,
-		serviceType:      spec.ServiceType,
-		role:             spec.Role,
-		httpsSecret:      httpsSecret,
-		balancingService: balancingService,
+		ytsaurusServerComponent: newYtsaurusServerComponent(&l, ytsaurus, srv),
+		cfgen:                   cfgen,
+		master:                  masterReconciler,
+		serviceType:             spec.ServiceType,
+		role:                    spec.Role,
+		httpsSecret:             httpsSecret,
+		balancingService:        balancingService,
 	}
 }
 
@@ -108,7 +103,7 @@ func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	}
 
 	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.componentBase, hp.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.ytsaurusComponent, hp.server, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -117,7 +112,7 @@ func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 		return WaitingStatus(SyncStatusBlocked, hp.master.GetName()), err
 	}
 
-	if hp.server.needSync() {
+	if hp.NeedSync() {
 		if !dry {
 			statefulSet := hp.server.buildStatefulSet()
 			if hp.httpsSecret != nil {

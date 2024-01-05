@@ -20,9 +20,8 @@ import (
 )
 
 type queueAgent struct {
-	componentBase
-	cfgen  *ytconfig.Generator
-	server server
+	ytsaurusServerComponent
+	cfgen *ytconfig.Generator
 
 	ytsaurusClient YtsaurusClient
 	master         Component
@@ -49,7 +48,7 @@ func NewQueueAgent(
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
-	server := newServer(
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.QueueAgents.InstanceSpec,
@@ -66,16 +65,12 @@ func NewQueueAgent(
 	}
 
 	return &queueAgent{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
-		cfgen:          cfgen,
-		server:         server,
-		master:         master,
-		tabletNodes:    tabletNodes,
-		initCondition:  "queueAgentInitCompleted",
-		ytsaurusClient: yc,
+		ytsaurusServerComponent: newYtsaurusServerComponent(&l, ytsaurus, srv),
+		cfgen:                   cfgen,
+		master:                  master,
+		tabletNodes:             tabletNodes,
+		initCondition:           "queueAgentInitCompleted",
+		ytsaurusClient:          yc,
 		initQAState: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -112,7 +107,7 @@ func (qa *queueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, qa.ytsaurus, qa, &qa.componentBase, qa.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, qa.ytsaurus, qa, &qa.ytsaurusComponent, qa.server, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -142,7 +137,7 @@ func (qa *queueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return WaitingStatus(SyncStatusPending, qa.secret.Name()), err
 	}
 
-	if qa.server.needSync() {
+	if qa.NeedSync() {
 		if !dry {
 			err = qa.server.Sync(ctx)
 		}
