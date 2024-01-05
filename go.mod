@@ -10,6 +10,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.9.7
 	github.com/onsi/gomega v1.27.8
 	github.com/pmezard/go-difflib v1.0.0
+	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.24.0
 	go.ytsaurus.tech/library/go/ptr v0.0.1
 	go.ytsaurus.tech/yt/go v0.0.9

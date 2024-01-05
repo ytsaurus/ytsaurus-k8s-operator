@@ -8,7 +8,7 @@
         writers={
             info={
                 type=file;
-                "file_name"="/var/log/scheduler.info.log";
+                "file_name"="/var/log/controller-agent.info.log";
                 format="plain_text";
                 "enable_system_messages"=%true;
             };
@@ -36,8 +36,8 @@
         ];
         "flush_period"=3000;
     };
-    "monitoring_port"=10011;
-    "rpc_port"=9011;
+    "monitoring_port"=10014;
+    "rpc_port"=9014;
     "timestamp_provider"={
         addresses=[
             "ms-test-0.masters-test.fake.svc.fake.zone:9010";
@@ -70,9 +70,8 @@
         "k8s_pod_name"="{K8S_POD_NAME}";
         "k8s_pod_namespace"="{K8S_POD_NAMESPACE}";
     };
-    scheduler={
-        "operations_cleaner"={
-            "enable_operation_archivation"=%false;
-        };
+    "controller_agent"={
+        "enable_tmpfs"=%true;
+        "use_columnar_statistics_default"=%true;
     };
 }

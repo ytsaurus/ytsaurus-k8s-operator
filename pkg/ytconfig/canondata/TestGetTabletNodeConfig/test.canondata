@@ -8,7 +8,7 @@
         writers={
             info={
                 type=file;
-                "file_name"="/var/log/scheduler.info.log";
+                "file_name"="/var/log/tablet-node.info.log";
                 format="plain_text";
                 "enable_system_messages"=%true;
             };
@@ -36,8 +36,8 @@
         ];
         "flush_period"=3000;
     };
-    "monitoring_port"=10011;
-    "rpc_port"=9011;
+    "monitoring_port"=10022;
+    "rpc_port"=9022;
     "timestamp_provider"={
         addresses=[
             "ms-test-0.masters-test.fake.svc.fake.zone:9010";
@@ -70,9 +70,20 @@
         "k8s_pod_name"="{K8S_POD_NAME}";
         "k8s_pod_namespace"="{K8S_POD_NAMESPACE}";
     };
-    scheduler={
-        "operations_cleaner"={
-            "enable_operation_archivation"=%false;
-        };
+    flavors=[
+        tablet;
+    ];
+    "resource_limits"={
+        "total_memory"=5368709120;
+        "total_cpu"=0.000000;
+        "node_dedicated_cpu"=0.000000;
+    };
+    tags=[
+        "rack:xn-a";
+    ];
+    rack=fake;
+    "skynet_http_port"=11022;
+    "caching_object_service"={
+        capacity=0;
     };
 }
