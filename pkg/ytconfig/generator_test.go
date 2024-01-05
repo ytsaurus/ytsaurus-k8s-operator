@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.ytsaurus.tech/library/go/ptr"
+	"k8s.io/apimachinery/pkg/types"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -15,7 +16,13 @@ import (
 )
 
 var (
-	testClusterDomain             = "fake.zone"
+	testClusterDomain  = "fake.zone"
+	testNamespace      = "fake"
+	testYtsaurusName   = "test"
+	testNamespacedName = types.NamespacedName{
+		Namespace: testNamespace,
+		Name:      testYtsaurusName,
+	}
 	testLogRotationPeriod   int64 = 900000
 	testTotalLogSize              = 10 * int64(1<<30)
 	testMasterExternalHosts       = []string{
@@ -82,7 +89,19 @@ func TestGetControllerAgentsConfig(t *testing.T) {
 }
 
 func TestGetDataNodeConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	g := NewNodeGeneratorFromYtsaurus(getYtsaurusWithEverything(), testClusterDomain)
+	cfg, err := g.GetDataNodeConfig(getDataNodeSpec())
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetDataNodeWithoutYtsaurusConfig(t *testing.T) {
+	g := NewNodeGenerator(
+		testNamespacedName,
+		testClusterDomain,
+		getConfigurationSpec(),
+		getMasterConnectionSpecWithFixedMasterHosts(),
+	)
 	cfg, err := g.GetDataNodeConfig(getDataNodeSpec())
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
@@ -96,7 +115,19 @@ func TestGetDiscoveryConfig(t *testing.T) {
 }
 
 func TestGetExecNodeConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	g := NewNodeGeneratorFromYtsaurus(getYtsaurusWithEverything(), testClusterDomain)
+	cfg, err := g.GetExecNodeConfig(getExecNodeSpec())
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetExecNodeWithoutYtsaurusConfig(t *testing.T) {
+	g := NewNodeGenerator(
+		testNamespacedName,
+		testClusterDomain,
+		getConfigurationSpec(),
+		getMasterConnectionSpecWithFixedMasterHosts(),
+	)
 	cfg, err := g.GetExecNodeConfig(getExecNodeSpec())
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
@@ -173,7 +204,19 @@ func TestGetStrawberryControllerConfig(t *testing.T) {
 }
 
 func TestGetTabletNodeConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	g := NewNodeGeneratorFromYtsaurus(getYtsaurusWithEverything(), testClusterDomain)
+	cfg, err := g.GetTabletNodeConfig(getTabletNodeSpec())
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetTabletNodeWithoutYtsaurusConfig(t *testing.T) {
+	g := NewNodeGenerator(
+		testNamespacedName,
+		testClusterDomain,
+		getConfigurationSpec(),
+		getMasterConnectionSpecWithFixedMasterHosts(),
+	)
 	cfg, err := g.GetTabletNodeConfig(getTabletNodeSpec())
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
@@ -210,14 +253,14 @@ func TestGetYQLAgentConfig(t *testing.T) {
 func getYtsaurus() *v1.Ytsaurus {
 	return &v1.Ytsaurus{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "fake",
-			Name:      "test",
+			Namespace: testNamespace,
+			Name:      testYtsaurusName,
 		},
 		Spec: v1.YtsaurusSpec{
-			UseIPv6: true,
+			ConfigurationSpec: getConfigurationSpec(),
 
 			PrimaryMasters: v1.MastersSpec{
-				CellTag:                0,
+				MasterConnectionSpec:   getMasterConnectionSpec(),
 				MaxSnapshotCountToKeep: ptr.Int(1543),
 				InstanceSpec: v1.InstanceSpec{
 					InstanceCount: 1,
@@ -512,4 +555,23 @@ func getTCPProxySpec() v1.TCPProxiesSpec {
 		},
 		Role: "default",
 	}
+}
+
+func getConfigurationSpec() v1.ConfigurationSpec {
+	return v1.ConfigurationSpec{
+		UseIPv6: true,
+	}
+}
+
+func getMasterConnectionSpec() v1.MasterConnectionSpec {
+	return v1.MasterConnectionSpec{
+		CellTag: 0,
+	}
+}
+
+func getMasterConnectionSpecWithFixedMasterHosts() v1.MasterConnectionSpec {
+	spec := getMasterConnectionSpec()
+	spec.HostAddresses = testMasterExternalHosts
+	spec.CellTag = 1000
+	return spec
 }

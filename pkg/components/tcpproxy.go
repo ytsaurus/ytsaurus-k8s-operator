@@ -3,17 +3,19 @@ package components
 import (
 	"context"
 
+	v1 "k8s.io/api/core/v1"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	v1 "k8s.io/api/core/v1"
 )
 
 type tcpProxy struct {
 	componentBase
+	cfgen  *ytconfig.Generator
 	server server
 
 	master Component
@@ -64,8 +66,8 @@ func NewTCPProxy(
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
 		},
+		cfgen:            cfgen,
 		server:           server,
 		master:           masterReconciler,
 		serviceType:      spec.ServiceType,

@@ -26,10 +26,12 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 			Namespace: namespace,
 		},
 		Spec: YtsaurusSpec{
+			ConfigurationSpec: ConfigurationSpec{
+				UseShortNames: true,
+				CoreImage:     CoreImageFirst,
+			},
 			EnableFullUpdate: true,
 			IsManaged:        true,
-			UseShortNames:    true,
-			CoreImage:        CoreImageFirst,
 			Discovery: DiscoverySpec{
 				InstanceSpec: InstanceSpec{
 					InstanceCount: 1,
@@ -50,7 +52,9 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 				},
 			},
 			PrimaryMasters: MastersSpec{
-				CellTag: 1,
+				MasterConnectionSpec: MasterConnectionSpec{
+					CellTag: 1,
+				},
 				InstanceSpec: InstanceSpec{
 					InstanceCount: 1,
 					Locations: []LocationSpec{
