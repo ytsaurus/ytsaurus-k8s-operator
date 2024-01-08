@@ -130,6 +130,32 @@ rules:
 - apiGroups:
   - cluster.ytsaurus.tech
   resources:
+  - remoteexecnodes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - remoteexecnodes/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - remoteexecnodes/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
   - spyts
   verbs:
   - create
