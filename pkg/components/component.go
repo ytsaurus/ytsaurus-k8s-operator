@@ -54,36 +54,43 @@ type Component interface {
 	IsUpdatable() bool
 }
 
-type componentBase struct {
+type labellable struct {
 	labeller *labeller.Labeller
 }
 
-type ytsaurusComponent struct {
-	componentBase
+type ytsaurusAware struct {
 	ytsaurus *apiproxy.Ytsaurus
+}
+
+type serverComponent struct {
+	server server
+}
+
+type ytsaurusComponent struct {
+	labellable
+	ytsaurusAware
 }
 
 type ytsaurusServerComponent struct {
 	ytsaurusComponent
-	server server
+	serverComponent
 }
 
-func (c *componentBase) GetName() string {
+func (c *labellable) GetName() string {
 	return c.labeller.ComponentName
 }
 
-func (c *componentBase) GetLabel() string {
+func (c *labellable) GetLabel() string {
 	return c.labeller.ComponentLabel
 }
 
 func newYtsaurusComponent(
 	labeller *labeller.Labeller,
 	ytsaurus *apiproxy.Ytsaurus,
-
 ) ytsaurusComponent {
 	return ytsaurusComponent{
-		componentBase: componentBase{labeller: labeller},
-		ytsaurus:      ytsaurus,
+		labellable:    labellable{labeller: labeller},
+		ytsaurusAware: ytsaurusAware{ytsaurus: ytsaurus},
 	}
 }
 
@@ -104,21 +111,26 @@ func newYtsaurusServerComponent(
 	labeller *labeller.Labeller,
 	ytsaurus *apiproxy.Ytsaurus,
 	server server,
-
 ) ytsaurusServerComponent {
 	return ytsaurusServerComponent{
 		ytsaurusComponent: ytsaurusComponent{
-			componentBase: componentBase{
+			labellable: labellable{
 				labeller: labeller,
 			},
-			ytsaurus: ytsaurus,
+			ytsaurusAware: ytsaurusAware{ytsaurus: ytsaurus},
 		},
-		server: server,
+		serverComponent: serverComponent{
+			server: server,
+		},
 	}
+}
+
+func (c *serverComponent) NeedSync() bool {
+	return c.server.configNeedsReload() ||
+		c.server.needSync()
 }
 
 func (c *ytsaurusServerComponent) NeedSync() bool {
 	return (c.server.configNeedsReload() && c.ytsaurus.IsUpdating()) ||
-		c.server.configNeedsReload() ||
 		c.server.needSync()
 }
