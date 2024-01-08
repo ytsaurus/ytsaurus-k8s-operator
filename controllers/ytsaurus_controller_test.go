@@ -34,8 +34,6 @@ func getYtClient(g *ytconfig.Generator, namespace string) yt.Client {
 		&httpProxyService),
 	).Should(Succeed())
 
-	port := httpProxyService.Spec.Ports[0].NodePort
-
 	k8sNode := corev1.Node{}
 	kindClusterName := os.Getenv("KIND_CLUSTER_NAME")
 	if kindClusterName == "" {
@@ -46,15 +44,21 @@ func getYtClient(g *ytconfig.Generator, namespace string) yt.Client {
 		&k8sNode),
 	).Should(Succeed())
 
-	httpProxyAddress := ""
-	for _, address := range k8sNode.Status.Addresses {
-		if address.Type == corev1.NodeInternalIP {
-			httpProxyAddress = address.Address
+	ytProxy := os.Getenv("E2E_YT_PROXY")
+	if ytProxy == "" {
+		httpProxyAddress := ""
+		for _, address := range k8sNode.Status.Addresses {
+			if address.Type == corev1.NodeInternalIP {
+				httpProxyAddress = address.Address
+			}
 		}
+		port := httpProxyService.Spec.Ports[0].NodePort
+		ytProxy = fmt.Sprintf("%s:%v", httpProxyAddress, port)
+
 	}
 
 	ytClient, err := ythttp.NewClient(&yt.Config{
-		Proxy:                 fmt.Sprintf("%s:%v", httpProxyAddress, port),
+		Proxy:                 ytProxy,
 		Token:                 consts.DefaultAdminPassword,
 		DisableProxyDiscovery: true,
 	})
