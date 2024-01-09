@@ -216,12 +216,11 @@ func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	}
 
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.componentBase, m.server, dry)
-		if status != nil && status.SyncStatus != SyncStatusReady {
-			return *status, err
+		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForMasterExitReadOnly {
+			st, err := m.exitReadOnly(ctx, dry)
+			return *st, err
 		}
-		status, err = m.exitReadOnly(ctx, dry)
-		if status != nil && status.SyncStatus != SyncStatusReady {
+		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.componentBase, m.server, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -309,10 +308,6 @@ func (m *master) getHostAddressLabel() string {
 }
 
 func (m *master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, error) {
-	if m.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForMasterExitReadOnly {
-		return nil, nil
-	}
-
 	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterExitReadOnlyPrepared) {
 		if !m.exitReadOnlyJob.isRestartPrepared() {
 			if err := m.exitReadOnlyJob.prepareRestart(ctx, dry); err != nil {
