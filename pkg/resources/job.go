@@ -3,10 +3,11 @@ package resources
 import (
 	"context"
 
-	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	batchv1 "k8s.io/api/batch/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 )
 
 type Job struct {
@@ -44,9 +45,11 @@ func (j *Job) Sync(ctx context.Context) error {
 
 func (j *Job) Build() *batchv1.Job {
 	var ttlSeconds int32 = 600
+	var backoffLimit int32 = 15
 	j.newObject.ObjectMeta = j.l.GetObjectMeta(j.name)
 	j.newObject.Spec = batchv1.JobSpec{
 		TTLSecondsAfterFinished: &ttlSeconds,
+		BackoffLimit:            &backoffLimit,
 	}
 
 	return &j.newObject
