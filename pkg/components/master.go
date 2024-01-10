@@ -321,7 +321,7 @@ func (m *master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, 
 		}
 
 		if !dry {
-			m.setMasterReadOnlyExitPrepared(metav1.ConditionTrue)
+			m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionTrue)
 		}
 		return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
 	}
@@ -335,19 +335,19 @@ func (m *master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, 
 	}
 
 	if !dry {
-		m.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+		m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 			Type:    consts.ConditionMasterExitedReadOnly,
 			Status:  metav1.ConditionTrue,
 			Reason:  "MasterExitedReadOnly",
 			Message: "Masters exited read-only state",
 		})
-		m.setMasterReadOnlyExitPrepared(metav1.ConditionFalse)
+		m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionFalse)
 	}
 	return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
 }
 
-func (m *master) setMasterReadOnlyExitPrepared(status metav1.ConditionStatus) {
-	m.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+func (m *master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav1.ConditionStatus) {
+	m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    consts.ConditionMasterExitReadOnlyPrepared,
 		Status:  status,
 		Reason:  "MasterExitReadOnlyPrepared",
