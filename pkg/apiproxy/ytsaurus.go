@@ -3,13 +3,15 @@ package apiproxy
 import (
 	"context"
 	"fmt"
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
 type Ytsaurus struct {
@@ -52,7 +54,9 @@ func (c *Ytsaurus) IsUpdateStatusConditionTrue(condition string) bool {
 	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
 }
 
-func (c *Ytsaurus) SetUpdateStatusCondition(condition metav1.Condition) {
+func (c *Ytsaurus) SetUpdateStatusCondition(ctx context.Context, condition metav1.Condition) {
+	logger := log.FromContext(ctx)
+	logger.Info("Setting update status condition", "condition", condition)
 	meta.SetStatusCondition(&c.ytsaurus.Status.UpdateStatus.Conditions, condition)
 }
 

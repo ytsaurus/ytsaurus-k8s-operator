@@ -5,18 +5,19 @@ import (
 	"fmt"
 	"strings"
 
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
 type queryTracker struct {
@@ -358,7 +359,7 @@ func (qt *queryTracker) updateQTState(ctx context.Context, dry bool) (*Component
 			return ptr.T(SimpleStatus(SyncStatusUpdating)), qt.initQTState.prepareRestart(ctx, dry)
 		}
 		if !dry {
-			qt.setConditionQTStatePreparedForUpdating()
+			qt.setConditionQTStatePreparedForUpdating(ctx)
 		}
 		return ptr.T(SimpleStatus(SyncStatusUpdating)), err
 	case ytv1.UpdateStateWaitingForQTStateUpdate:
@@ -366,7 +367,7 @@ func (qt *queryTracker) updateQTState(ctx context.Context, dry bool) (*Component
 			return nil, nil
 		}
 		if !dry {
-			qt.setConditionQTStateUpdated()
+			qt.setConditionQTStateUpdated(ctx)
 		}
 		return ptr.T(SimpleStatus(SyncStatusUpdating)), err
 	default:
@@ -374,8 +375,8 @@ func (qt *queryTracker) updateQTState(ctx context.Context, dry bool) (*Component
 	}
 }
 
-func (qt *queryTracker) setConditionQTStatePreparedForUpdating() {
-	qt.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+func (qt *queryTracker) setConditionQTStatePreparedForUpdating(ctx context.Context) {
+	qt.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    consts.ConditionQTStatePreparedForUpdating,
 		Status:  metav1.ConditionTrue,
 		Reason:  "QTStatePreparedForUpdating",
@@ -383,8 +384,8 @@ func (qt *queryTracker) setConditionQTStatePreparedForUpdating() {
 	})
 }
 
-func (qt *queryTracker) setConditionQTStateUpdated() {
-	qt.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+func (qt *queryTracker) setConditionQTStateUpdated(ctx context.Context) {
+	qt.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    consts.ConditionQTStateUpdated,
 		Status:  metav1.ConditionTrue,
 		Reason:  "QTStateUpdated",

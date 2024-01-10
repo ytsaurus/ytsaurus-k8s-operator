@@ -7,17 +7,18 @@ import (
 	"strings"
 	"time"
 
+	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yt"
+	"go.ytsaurus.tech/yt/go/yt/ythttp"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ptr "k8s.io/utils/pointer"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/ythttp"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ptr "k8s.io/utils/pointer"
 )
 
 type YtsaurusClient interface {
@@ -184,7 +185,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			!yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
 
 			if !yc.ytsaurus.GetResource().Spec.EnableFullUpdate {
-				yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 					Type:    consts.ConditionNoPossibility,
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
@@ -201,7 +202,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			}
 
 			if len(notGoodBundles) > 0 {
-				yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 					Type:    consts.ConditionNoPossibility,
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
@@ -218,7 +219,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			}
 
 			if lvcCount > 0 {
-				yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 					Type:    consts.ConditionNoPossibility,
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
@@ -235,7 +236,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			}
 
 			if qmcCount > 0 {
-				yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 					Type:    consts.ConditionNoPossibility,
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
@@ -266,7 +267,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 				}
 
 				if !hydra.Active {
-					yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+					yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 						Type:    consts.ConditionNoPossibility,
 						Status:  metav1.ConditionTrue,
 						Reason:  "Update",
@@ -284,7 +285,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			}
 
 			if !(leadingPrimaryMasterCount == 1 && followingPrimaryMasterCount+1 == len(primaryMasterAddresses)) {
-				yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 					Type:    consts.ConditionNoPossibility,
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
@@ -293,7 +294,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 				return SimpleStatus(SyncStatusUpdating), nil
 			}
 
-			yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionHasPossibility,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -309,7 +310,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 				return SimpleStatus(SyncStatusUpdating), err
 			}
 
-			yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionSafeModeEnabled,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -334,7 +335,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 			yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles = tabletCellBundles
 
-			yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionTabletCellsSaved,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -367,7 +368,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 				}
 			}
 
-			yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionTabletCellsRemovingStarted,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -393,7 +394,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 				return SimpleStatus(SyncStatusUpdating), err
 			}
 
-			yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionTabletCellsRemoved,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -421,7 +422,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 				yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths = monitoringPaths
 
-				yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 					Type:    consts.ConditionSnapshotsMonitoringInfoSaved,
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
@@ -434,7 +435,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 					return SimpleStatus(SyncStatusUpdating), err
 				}
 
-				yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 					Type:    consts.ConditionSnapshotsBuildingStarted,
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
@@ -454,7 +455,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 				}
 			}
 
-			yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionSnaphotsSaved,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -473,7 +474,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 				}
 			}
 
-			yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionTabletCellsRecovered,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
@@ -489,7 +490,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 				return SimpleStatus(SyncStatusUpdating), err
 			}
 
-			yc.ytsaurus.SetUpdateStatusCondition(metav1.Condition{
+			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionSafeModeDisabled,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
