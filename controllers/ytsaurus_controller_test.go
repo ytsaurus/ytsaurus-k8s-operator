@@ -35,12 +35,9 @@ func getYtClient(g *ytconfig.Generator, namespace string) yt.Client {
 	).Should(Succeed())
 
 	k8sNode := corev1.Node{}
-	kindClusterName := os.Getenv("KIND_CLUSTER_NAME")
-	if kindClusterName == "" {
-		kindClusterName = "kind"
-	}
+
 	Expect(k8sClient.Get(ctx,
-		types.NamespacedName{Name: kindClusterName + "-control-plane", Namespace: namespace},
+		types.NamespacedName{Name: getKindControlPlaneName(), Namespace: namespace},
 		&k8sNode),
 	).Should(Succeed())
 
@@ -65,6 +62,21 @@ func getYtClient(g *ytconfig.Generator, namespace string) yt.Client {
 	Expect(err).Should(Succeed())
 
 	return ytClient
+}
+
+func getKindControlPlaneName() string {
+	kindClusterName := os.Getenv("KIND_CLUSTER_NAME")
+	if kindClusterName == "" {
+		kindClusterName = "kind"
+	}
+	return kindClusterName + "-control-plane"
+}
+
+func getMasterPod(name, namespace string) corev1.Pod {
+	msPod := corev1.Pod{}
+	err := k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &msPod)
+	Expect(err).Should(Succeed())
+	return msPod
 }
 
 func deleteYtsaurus(ctx context.Context, ytsaurus *ytv1.Ytsaurus) {
@@ -107,7 +119,17 @@ func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
 	}, timeout, interval).Should(BeTrue())
 
 	By("Check pods are running")
-	for _, podName := range []string{"ds-0", "ms-0", "hp-0", "dnd-0", "end-0"} {
+	pods := []string{"ms-0", "hp-0"}
+	if ytsaurus.Spec.Discovery.InstanceCount != 0 {
+		pods = append(pods, "ds-0")
+	}
+	if len(ytsaurus.Spec.DataNodes) != 0 {
+		pods = append(pods, "dnd-0")
+	}
+	if len(ytsaurus.Spec.ExecNodes) != 0 {
+		pods = append(pods, "end-0")
+	}
+	for _, podName := range pods {
 		Eventually(func() bool {
 			pod := &corev1.Pod{}
 			err := k8sClient.Get(ctx, types.NamespacedName{Name: podName, Namespace: ytsaurus.Namespace}, pod)
@@ -186,11 +208,59 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			getSimpleUpdateScenario("test2", ytv1.CoreImageNextVer),
 		)
 
+		// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
+		It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", func() {
+			namespace := "test3"
+			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
+			ytsaurusKey := types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}
+
+			By("Creating a Ytsaurus resource")
+			ctx := context.Background()
+			g := ytconfig.NewGenerator(ytsaurus, "local")
+			defer deleteYtsaurus(ctx, ytsaurus)
+			runYtsaurus(ytsaurus)
+
+			By("Creating ytsaurus client")
+			ytClient := getYtClient(g, namespace)
+
+			By("Check that cluster alive")
+			res := make([]string, 0)
+			Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
+
+			By("Store master pod creation time")
+			msPod := getMasterPod(g.GetMasterPodNames()[0], namespace)
+			podCreatedFirstTimestamp := msPod.CreationTimestamp
+
+			By("Run cluster update")
+			Expect(k8sClient.Get(ctx, ytsaurusKey, ytsaurus)).Should(Succeed())
+			ytsaurus.Spec.HostNetwork = true
+			ytsaurus.Spec.PrimaryMasters.HostAddresses = []string{
+				getKindControlPlaneName(),
+			}
+			Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+
+			By("Waiting Running")
+			Eventually(func() bool {
+				ytsaurus := &ytv1.Ytsaurus{}
+				err := k8sClient.Get(ctx, ytsaurusKey, ytsaurus)
+				if err != nil {
+					return false
+				}
+				return ytsaurus.Status.State == ytv1.ClusterStateUpdating &&
+					ytsaurus.Status.UpdateStatus.State == ytv1.UpdateStatePossibilityCheck
+			}, timeout, interval).Should(BeTrue())
+
+			By("Check that master pod was NOT recreated at the PossibilityCheck stage")
+			time.Sleep(1 * time.Second)
+			msPod = getMasterPod(g.GetMasterPodNames()[0], namespace)
+			Expect(podCreatedFirstTimestamp == msPod.CreationTimestamp).Should(BeTrue())
+		})
+
 		It("Should run and try to update Ytsaurus with tablet cell bundle which is not in `good` health", func() {
 			By("Creating a Ytsaurus resource")
 			ctx := context.Background()
 
-			namespace := "test3"
+			namespace := "test4"
 
 			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
 
@@ -239,7 +309,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			By("Creating a Ytsaurus resource")
 			ctx := context.Background()
 
-			namespace := "test4"
+			namespace := "test5"
 
 			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
 			ytsaurus.Spec.TabletNodes = make([]ytv1.TabletNodesSpec, 0)
