@@ -211,7 +211,7 @@ func (m *master) initSchemaACLs() string {
 		"tablet_cell", "tablet_action", "tablet_cell_bundle",
 		"user", "group",
 		"rack", "data_center", "cluster_node",
-		"access_control_object", "access_control_object_namespace", "access_control_object_namespace_map"} {
+		"access_control_object_namespace", "access_control_object_namespace_map"} {
 		commands = append(commands, SetPathAcl(fmt.Sprintf("//sys/schemas/%s", objectType), []yt.ACE{
 			userReadACE,
 			adminACE,
@@ -228,8 +228,8 @@ func (m *master) initSchemaACLs() string {
 			adminACE,
 		})))
 
-	// Users can to create pools, pool trees and accounts given the right circumstances and permissions.
-	for _, objectType := range []string{"account", "scheduler_pool", "scheduler_pool_tree"} {
+	// Users can to create pools, pool trees, accounts and access control objects given the right circumstances and permissions.
+	for _, objectType := range []string{"account", "scheduler_pool", "scheduler_pool_tree", "access_control_object"} {
 		commands = append(commands, SetPathAcl(fmt.Sprintf("//sys/schemas/%s", objectType), []yt.ACE{
 			userReadCreateACE,
 			adminACE,
