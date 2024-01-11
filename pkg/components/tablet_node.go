@@ -21,9 +21,8 @@ const SysBundle string = "sys"
 const DefaultBundle string = "default"
 
 type tabletNode struct {
-	componentBase
-	cfgen  *ytconfig.NodeGenerator
-	server server
+	localServerComponent
+	cfgen *ytconfig.NodeGenerator
 
 	ytsaurusClient YtsaurusClient
 
@@ -48,7 +47,7 @@ func NewTabletNode(
 		MonitoringPort: consts.TabletNodeMonitoringPort,
 	}
 
-	server := newServer(
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -62,12 +61,8 @@ func NewTabletNode(
 	)
 
 	return &tabletNode{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
-		server:               server,
 		initBundlesCondition: "bundlesTabletNodeInitCompleted",
 		ytsaurusClient:       ytsaurusClient,
 		spec:                 spec,
@@ -88,12 +83,12 @@ func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.componentBase, tn.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.localComponent, tn.server, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	if tn.server.needSync() {
+	if tn.NeedSync() {
 		if !dry {
 			err = tn.server.Sync(ctx)
 		}

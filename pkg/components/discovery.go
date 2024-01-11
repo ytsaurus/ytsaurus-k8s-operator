@@ -12,9 +12,8 @@ import (
 )
 
 type discovery struct {
-	componentBase
-	cfgen  *ytconfig.Generator
-	server server
+	localServerComponent
+	cfgen *ytconfig.Generator
 }
 
 func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component {
@@ -27,7 +26,7 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Compon
 		MonitoringPort: consts.DiscoveryMonitoringPort,
 	}
 
-	server := newServer(
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.Discovery.InstanceSpec,
@@ -39,12 +38,8 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Compon
 	)
 
 	return &discovery{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
-		cfgen:  cfgen,
-		server: server,
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		cfgen:                cfgen,
 	}
 }
 
@@ -64,12 +59,12 @@ func (d *discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, d.ytsaurus, d, &d.componentBase, d.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, d.ytsaurus, d, &d.localComponent, d.server, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	if d.server.needSync() {
+	if d.NeedSync() {
 		if !dry {
 			err = d.server.Sync(ctx)
 		}

@@ -27,7 +27,7 @@ type YtsaurusClient interface {
 }
 
 type ytsaurusClient struct {
-	componentBase
+	localComponent
 	cfgen     *ytconfig.Generator
 	httpProxy Component
 
@@ -52,12 +52,9 @@ func NewYtsaurusClient(
 	}
 
 	return &ytsaurusClient{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
-		cfgen:     cfgen,
-		httpProxy: httpProxy,
+		localComponent: newLocalComponent(&l, ytsaurus),
+		cfgen:          cfgen,
+		httpProxy:      httpProxy,
 		initUserJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
