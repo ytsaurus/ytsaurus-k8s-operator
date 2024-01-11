@@ -73,6 +73,18 @@ helm-kind-install: ## Install helm chart from sources in kind.
 	kind load docker-image ${OPERATOR_IMAGE}:${OPERATOR_TAG}
 	helm install ytsaurus $(OPERATOR_CHART)
 
+TEST_IMAGES = \
+	ytsaurus/ytsaurus-nightly:dev-23.1-5f8638fc66f6e59c7a06708ed508804986a6579f \
+	ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de \
+	ytsaurus/ytsaurus-nightly:dev-23.2-62a472c4efc2c8395d125a13ca0216720e06999d
+.PHONY: kind-load-test-images
+kind-load-test-images:
+	$(foreach img,$(TEST_IMAGES),docker pull $(img) && kind load docker-image $(img);)
+
+.PHONY: k8s-install-cert-manager
+k8s-install-cert-manager:
+	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
+
 .PHONY: helm-minikube-install
 helm-minikube-install: helm ## Install helm chart from sources in minikube.
 	eval $$(minikube docker-env) && docker build -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
