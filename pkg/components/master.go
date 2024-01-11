@@ -228,7 +228,7 @@ func (m *master) initSchemaACLs() string {
 			adminACE,
 		})))
 
-	// Users can to create pools, pool trees, accounts and access control objects given the right circumstances and permissions.
+	// Users can create pools, pool trees, accounts and access control objects given the right circumstances and permissions.
 	for _, objectType := range []string{"account", "scheduler_pool", "scheduler_pool_tree", "access_control_object"} {
 		commands = append(commands, SetPathAcl(fmt.Sprintf("//sys/schemas/%s", objectType), []yt.ACE{
 			userReadCreateACE,

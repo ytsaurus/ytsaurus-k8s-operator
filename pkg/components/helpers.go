@@ -139,11 +139,11 @@ func handleUpdatingClusterState(
 }
 
 func SetPathAcl(path string, acl []yt.ACE) string {
-	aclAsString, err := yson.MarshalFormat(acl, yson.FormatText)
+	formattedAcl, err := yson.MarshalFormat(acl, yson.FormatText)
 	if err != nil {
 		panic(err)
 	}
-	return fmt.Sprintf("/usr/bin/yt set %s/@acl '%s'", path, string(aclAsString))
+	return fmt.Sprintf("/usr/bin/yt set %s/@acl '%s'", path, string(formattedAcl))
 }
 
 func RunIfCondition(condition string, commands ...string) string {
