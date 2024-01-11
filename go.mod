@@ -3,6 +3,7 @@ module github.com/ytsaurus/yt-k8s-operator
 go 1.21
 
 require (
+	github.com/BurntSushi/toml v1.3.2
 	github.com/go-logr/logr v1.2.4
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.9

@@ -38,6 +38,18 @@ const (
 )
 
 const (
+	JobsContainerName = "jobs"
+
+	ContainerdConfigVolumeName = "config-containerd"
+	ContainerdConfigMountPoint = "/config/containerd"
+	ContainerdSocketName       = "containerd.sock"
+	ContainerdConfigFileName   = "containerd.toml"
+
+	CRINamespace  = "yt"
+	CRIBaseCgroup = "/yt"
+)
+
+const (
 	ConfigTemplateVolumeName = "config-template"
 	ConfigVolumeName         = "config"
 	HTTPSSecretVolumeName    = "https-secret"

@@ -7736,9 +7736,40 @@ spec:
                       type: integer
                     jobEnvironment:
                       properties:
+                        cri:
+                          description: CRI service configuration for running jobs in
+                            sidecar container.
+                          properties:
+                            apiRetryTimeoutSeconds:
+                              description: Timeout for retrying CRI API calls.
+                              format: int32
+                              type: integer
+                            baseCgroup:
+                              description: Base cgroup for jobs.
+                              type: string
+                            criNamespace:
+                              description: CRI namespace for jobs containers.
+                              type: string
+                            entrypointWrapper:
+                              description: Specifies wrapper for CRI service (i.e. containerd)
+                                command.
+                              items:
+                                type: string
+                              type: array
+                            sandboxImage:
+                              description: Sandbox (pause) image.
+                              type: string
+                          type: object
+                        doNotSetUserId:
+                          description: Do not use slot user id for running jobs.
+                          type: boolean
                         isolated:
                           description: Isolate job execution environment from exec node
                             or not, by default true when po
+                          type: boolean
+                        useArtifactBinds:
+                          description: Pass artifacts as read-only bind-mounts rather
+                            than symlinks.
                           type: boolean
                         userSlots:
                           description: Count of slots for user jobs on each exec node,
@@ -11972,6 +12003,9 @@ spec:
               isManaged:
                 default: true
                 type: boolean
+              jobImage:
+                description: Default docker image for user jobs.
+                type: string
               masterCaches:
                 properties:
                   affinity:

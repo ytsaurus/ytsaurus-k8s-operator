@@ -35,6 +35,10 @@ func (l *Labeller) GetMainConfigMapName() string {
 	return fmt.Sprintf("%s-config", l.ComponentLabel)
 }
 
+func (l *Labeller) GetSidecarConfigMapName(name string) string {
+	return fmt.Sprintf("%s-%s-config", l.ComponentLabel, name)
+}
+
 func (l *Labeller) GetInitJobName(name string) string {
 	return fmt.Sprintf("%s-init-job-%s", l.ComponentLabel, strings.ToLower(name))
 }
