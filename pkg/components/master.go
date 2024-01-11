@@ -27,9 +27,8 @@ const (
 )
 
 type master struct {
-	componentBase
-	cfgen  *ytconfig.Generator
-	server server
+	localServerComponent
+	cfgen *ytconfig.Generator
 
 	initJob          *InitJob
 	exitReadOnlyJob  *InitJob
@@ -47,7 +46,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
-	server := newServer(
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.PrimaryMasters.InstanceSpec,
@@ -80,14 +79,10 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component
 	)
 
 	return &master{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
-		cfgen:           cfgen,
-		server:          server,
-		initJob:         initJob,
-		exitReadOnlyJob: exitReadOnlyJob,
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		cfgen:                cfgen,
+		initJob:              initJob,
+		exitReadOnlyJob:      exitReadOnlyJob,
 	}
 }
 
@@ -295,12 +290,12 @@ func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 			st, err := m.exitReadOnly(ctx, dry)
 			return *st, err
 		}
-		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.componentBase, m.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	if m.server.needSync() {
+	if m.NeedSync() {
 		if !dry {
 			err = m.doServerSync(ctx)
 		}

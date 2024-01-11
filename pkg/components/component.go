@@ -54,20 +54,48 @@ type Component interface {
 	IsUpdatable() bool
 }
 
-type componentBase struct {
+type labellable struct {
 	labeller *labeller.Labeller
-	ytsaurus *apiproxy.Ytsaurus
 }
 
-func (c *componentBase) GetName() string {
+func (c *labellable) GetName() string {
 	return c.labeller.ComponentName
 }
 
-func (c *componentBase) GetLabel() string {
+func (c *labellable) GetLabel() string {
 	return c.labeller.ComponentLabel
 }
 
-func (c *componentBase) SetReadyCondition(status ComponentStatus) {
+type serverComponent struct {
+	server server
+}
+
+func (c *serverComponent) NeedSync() bool {
+	return c.server.configNeedsReload() ||
+		c.server.needSync()
+}
+
+type localComponent struct {
+	labellable
+	ytsaurus *apiproxy.Ytsaurus
+}
+
+type localServerComponent struct {
+	localComponent
+	serverComponent
+}
+
+func newLocalComponent(
+	labeller *labeller.Labeller,
+	ytsaurus *apiproxy.Ytsaurus,
+) localComponent {
+	return localComponent{
+		labellable: labellable{labeller: labeller},
+		ytsaurus:   ytsaurus,
+	}
+}
+
+func (c *localComponent) SetReadyCondition(status ComponentStatus) {
 	ready := metav1.ConditionFalse
 	if status.SyncStatus == SyncStatusReady {
 		ready = metav1.ConditionTrue
@@ -78,4 +106,27 @@ func (c *componentBase) SetReadyCondition(status ComponentStatus) {
 		Reason:  string(status.SyncStatus),
 		Message: status.Message,
 	})
+}
+
+func newLocalServerComponent(
+	labeller *labeller.Labeller,
+	ytsaurus *apiproxy.Ytsaurus,
+	server server,
+) localServerComponent {
+	return localServerComponent{
+		localComponent: localComponent{
+			labellable: labellable{
+				labeller: labeller,
+			},
+			ytsaurus: ytsaurus,
+		},
+		serverComponent: serverComponent{
+			server: server,
+		},
+	}
+}
+
+func (c *localServerComponent) NeedSync() bool {
+	return (c.server.configNeedsReload() && c.ytsaurus.IsUpdating()) ||
+		c.server.needSync()
 }

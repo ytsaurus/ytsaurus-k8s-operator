@@ -18,7 +18,7 @@ import (
 )
 
 type UI struct {
-	componentBase
+	localComponent
 	cfgen        *ytconfig.Generator
 	microservice microservice
 	initJob      *InitJob
@@ -65,12 +65,9 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 	microservice.getHttpService().SetHttpNodePort(resource.Spec.UI.HttpNodePort)
 
 	return &UI{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
-		cfgen:        cfgen,
-		microservice: microservice,
+		localComponent: newLocalComponent(&l, ytsaurus),
+		cfgen:          cfgen,
+		microservice:   microservice,
 		initJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -237,7 +234,7 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 
 			if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, u.microservice, &u.componentBase)
+					err = removePods(ctx, u.microservice, &u.localComponent)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}

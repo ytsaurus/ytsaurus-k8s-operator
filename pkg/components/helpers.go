@@ -3,15 +3,17 @@ package components
 import (
 	"context"
 	"fmt"
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"strings"
+
 	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
 	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"strings"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 )
 
 func CreateTabletCells(ctx context.Context, ytClient yt.Client, bundle string, tabletCellCount int) error {
@@ -115,7 +117,7 @@ func handleUpdatingClusterState(
 	ctx context.Context,
 	ytsaurus *apiproxy.Ytsaurus,
 	cmp Component,
-	cmpBase *componentBase,
+	cmpBase *localComponent,
 	server server,
 	dry bool,
 ) (*ComponentStatus, error) {
