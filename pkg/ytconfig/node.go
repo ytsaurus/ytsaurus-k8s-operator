@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"time"
+
+	"go.ytsaurus.tech/yt/go/yson"
 
 	ptr "k8s.io/utils/pointer"
 
@@ -62,6 +65,7 @@ type JobEnvironmentType string
 const (
 	JobEnvironmentTypeSimple JobEnvironmentType = "simple"
 	JobEnvironmentTypePorto  JobEnvironmentType = "porto"
+	JobEnvironmentTypeCRI    JobEnvironmentType = "cri"
 )
 
 type GpuInfoSourceType string
@@ -71,9 +75,30 @@ const (
 	GpuInfoSourceTypeNvidiaSmi    GpuInfoSourceType = "nvidia_smi"
 )
 
+type CriExecutor struct {
+	RetryingChannel
+
+	RuntimeEndpoint string        `yson:"runtime_endpoint,omitempty"`
+	ImageEndpoint   string        `yson:"image_endpoint,omitempty"`
+	Namespace       string        `yson:"namespace"`
+	BaseCgroup      string        `yson:"base_cgroup"`
+	RuntimeHandler  string        `yson:"runtime_handler,omitempty"`
+	CpuPeriod       yson.Duration `yson:"cpu_period,omitempty"`
+}
+
+type CriJobEnvironment struct {
+	CriExecutor          *CriExecutor `yson:"cri_executor,omitempty"`
+	JobProxyImage        string       `yson:"job_proxy_image,omitempty"`
+	JobProxyBindMounts   []BindMount  `yson:"job_proxy_bind_mounts,omitempty"`
+	UseJobProxyFromImage *bool        `yson:"use_job_proxy_from_image,omitempty"`
+}
+
 type JobEnvironment struct {
 	Type     JobEnvironmentType `yson:"type,omitempty"`
 	StartUID int                `yson:"start_uid,omitempty"`
+
+	// FIXME(khlebnikov): Add "inline" tag into yson or remove polymorphism in config.
+	CriJobEnvironment
 }
 
 type SlotManager struct {
@@ -340,7 +365,67 @@ func getExecNodeLogging(spec *ytv1.ExecNodesSpec) Logging {
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
-func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNodeServer, error) {
+func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonSpec) error {
+	envSpec := spec.JobEnvironment
+	jobEnv := &execNode.SlotManager.JobEnvironment
+
+	jobEnv.StartUID = consts.StartUID
+
+	if envSpec != nil && envSpec.CRI != nil {
+		jobEnv.Type = JobEnvironmentTypeCRI
+
+		if jobImage := commonSpec.JobImage; jobImage != nil {
+			jobEnv.JobProxyImage = *jobImage
+			jobEnv.UseJobProxyFromImage = ptr.Bool(false)
+		} else {
+			jobEnv.JobProxyImage = ptr.StringDeref(spec.Image, commonSpec.CoreImage)
+			jobEnv.UseJobProxyFromImage = ptr.Bool(true)
+		}
+
+		endpoint := "unix://" + getContainerdSocketPath(spec)
+
+		jobEnv.CriExecutor = &CriExecutor{
+			RuntimeEndpoint: endpoint,
+			ImageEndpoint:   endpoint,
+			Namespace:       ptr.StringDeref(envSpec.CRI.CRINamespace, consts.CRINamespace),
+			BaseCgroup:      ptr.StringDeref(envSpec.CRI.BaseCgroup, consts.CRIBaseCgroup),
+		}
+
+		if timeout := envSpec.CRI.APIRetryTimeoutSeconds; timeout != nil {
+			jobEnv.CriExecutor.RetryingChannel = RetryingChannel{
+				RetryBackoffTime: yson.Duration(time.Second),
+				RetryAttempts:    *timeout,
+				RetryTimeout:     yson.Duration(time.Duration(*timeout) * time.Second),
+			}
+		}
+
+		// NOTE: Default was "false", now it's "true" and option was moved into dynamic config.
+		execNode.UseArtifactBindsLegacy = ptr.Bool(ptr.BoolDeref(envSpec.UseArtifactBinds, true))
+		if !*execNode.UseArtifactBindsLegacy {
+			// Bind mount chunk cache into job containers if artifact are passed via symlinks.
+			for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
+				jobEnv.JobProxyBindMounts = append(jobEnv.JobProxyBindMounts, BindMount{
+					InternalPath: location.Path,
+					ExternalPath: location.Path,
+					ReadOnly:     true,
+				})
+			}
+		}
+
+		// FIXME(khlebnikov): For now running jobs as non-root is more likely broken.
+		execNode.SlotManager.DoNotSetUserId = ptr.Bool(ptr.BoolDeref(envSpec.UseArtifactBinds, true))
+
+	} else if commonSpec.UsePorto {
+		jobEnv.Type = JobEnvironmentTypePorto
+		// TODO(psushin): volume locations, root fs binds, etc.
+	} else {
+		jobEnv.Type = JobEnvironmentTypeSimple
+	}
+
+	return nil
+}
+
+func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonSpec) (ExecNodeServer, error) {
 	var c ExecNodeServer
 	fillClusterNodeServerCarcass(&c.NodeServer, NodeFlavorExec, spec.ClusterNodesSpec, &spec.InstanceSpec)
 
@@ -386,12 +471,8 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 		}
 	}
 
-	c.ExecNode.SlotManager.JobEnvironment.StartUID = consts.StartUID
-	if usePorto {
-		c.ExecNode.SlotManager.JobEnvironment.Type = JobEnvironmentTypePorto
-		// ToDo(psushin): volume locations, root fs binds, etc.
-	} else {
-		c.ExecNode.SlotManager.JobEnvironment.Type = JobEnvironmentTypeSimple
+	if err := fillJobEnvironment(&c.ExecNode, spec, commonSpec); err != nil {
+		return c, err
 	}
 
 	c.ExecNode.GpuManager.GpuInfoSource.Type = GpuInfoSourceTypeNvidiaSmi

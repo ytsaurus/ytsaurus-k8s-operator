@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"log"
+	"path"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -10,6 +11,7 @@ import (
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
@@ -18,6 +20,8 @@ type baseExecNode struct {
 	server server
 	cfgen  *ytconfig.NodeGenerator
 	spec   *ytv1.ExecNodesSpec
+
+	sidecarConfig *ConfigHelper
 }
 
 // Returns true if jobs are executed outside of exec node container.
@@ -26,12 +30,15 @@ func (n *baseExecNode) IsJobEnvironmentIsolated() bool {
 		if envSpec.Isolated != nil {
 			return *envSpec.Isolated
 		}
+		if n.spec.JobEnvironment.CRI != nil {
+			return true
+		}
 	}
 	return false
 }
 
 func (n *baseExecNode) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, n.server)
+	return resources.Fetch(ctx, n.server, n.sidecarConfig)
 }
 
 func (n *baseExecNode) doBuildBase() error {
@@ -71,6 +78,22 @@ func (n *baseExecNode) doBuildBase() error {
 		setContainerPrivileged(&podSpec.InitContainers[i])
 	}
 
+	if n.IsJobEnvironmentIsolated() {
+		// Add sidecar container for running jobs.
+		if envSpec := n.spec.JobEnvironment; envSpec != nil && envSpec.CRI != nil {
+			n.doBuildCRISidecar(envSpec, podSpec)
+		}
+	} else if n.sidecarConfig != nil {
+		// Mount sidecar config into exec node container if job environment is not isolated.
+		// CRI service is supposed to be started by exec node entrypoint wrapper.
+		podSpec.Containers[0].VolumeMounts = append(podSpec.Containers[0].VolumeMounts,
+			corev1.VolumeMount{
+				Name:      consts.ContainerdConfigVolumeName,
+				MountPath: consts.ContainerdConfigMountPoint,
+				ReadOnly:  true,
+			})
+	}
+
 	for _, sidecarSpec := range n.spec.Sidecars {
 		sidecar := corev1.Container{}
 		if err := yaml.Unmarshal([]byte(sidecarSpec), &sidecar); err != nil {
@@ -79,7 +102,62 @@ func (n *baseExecNode) doBuildBase() error {
 		podSpec.Containers = append(podSpec.Containers, sidecar)
 	}
 
+	if n.sidecarConfig != nil {
+		podSpec.Volumes = append(podSpec.Volumes, createConfigVolume(consts.ContainerdConfigVolumeName,
+			n.sidecarConfig.labeller.GetSidecarConfigMapName(consts.JobsContainerName), nil))
+
+		n.sidecarConfig.Build()
+	}
+
 	return nil
+}
+
+func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSpec *corev1.PodSpec) {
+	configPath := path.Join(consts.ContainerdConfigMountPoint, consts.ContainerdConfigFileName)
+
+	wrapper := envSpec.CRI.EntrypointWrapper
+	if len(wrapper) == 0 {
+		wrapper = []string{"tini", "--"}
+	}
+	command := make([]string, 0, 1+len(wrapper))
+	command = append(append(command, wrapper...), "containerd")
+
+	jobsContainer := corev1.Container{
+		Name:         consts.JobsContainerName,
+		Image:        podSpec.Containers[0].Image,
+		Command:      command,
+		Args:         []string{"--config", configPath},
+		VolumeMounts: createVolumeMounts(n.spec.VolumeMounts),
+		SecurityContext: &corev1.SecurityContext{
+			Privileged: ptr.Bool(true),
+		},
+	}
+
+	jobsContainer.VolumeMounts = append(jobsContainer.VolumeMounts,
+		corev1.VolumeMount{
+			Name:      consts.ContainerdConfigVolumeName,
+			MountPath: consts.ContainerdConfigMountPoint,
+			ReadOnly:  true,
+		})
+
+	// Replace mount propagation "Bidirectional" -> "HostToContainer".
+	// Tmpfs are propagated: exec-node -> host -> containerd.
+	for i := range jobsContainer.VolumeMounts {
+		mount := &jobsContainer.VolumeMounts[i]
+		newProp := corev1.MountPropagationHostToContainer
+		if prop := mount.MountPropagation; prop != nil && *prop == corev1.MountPropagationBidirectional {
+			mount.MountPropagation = &newProp
+		}
+	}
+
+	if n.spec.JobResources != nil {
+		jobsContainer.Resources = *n.spec.JobResources
+	} else {
+		// Without dedicated job resources enforce same limits as for node.
+		jobsContainer.Resources.Limits = n.spec.Resources.Limits
+	}
+
+	podSpec.Containers = append(podSpec.Containers, jobsContainer)
 }
 
 func (n *baseExecNode) doSyncBase(ctx context.Context, dry bool) (ComponentStatus, error) {
@@ -89,7 +167,7 @@ func (n *baseExecNode) doSyncBase(ctx context.Context, dry bool) (ComponentStatu
 		if err != nil {
 			return WaitingStatus(SyncStatusBlocked, "cannot build exec node spec"), err
 		}
-		err = n.server.Sync(ctx)
+		err = resources.Sync(ctx, n.server, n.sidecarConfig)
 	}
 	return WaitingStatus(SyncStatusPending, "components"), err
 }

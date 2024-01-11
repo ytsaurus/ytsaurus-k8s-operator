@@ -76,6 +76,7 @@ const (
 	LocationTypeLogs             LocationType = "Logs"
 	LocationTypeMasterChangelogs LocationType = "MasterChangelogs"
 	LocationTypeMasterSnapshots  LocationType = "MasterSnapshots"
+	LocationTypeImageCache       LocationType = "ImageCache"
 )
 
 type LocationSpec struct {
@@ -347,6 +348,24 @@ type DataNodesSpec struct {
 	Name string `json:"name,omitempty"`
 }
 
+type CRIJobEnvironmentSpec struct {
+	// Specifies wrapper for CRI service (i.e. containerd) command.
+	//+optional
+	EntrypointWrapper []string `json:"entrypointWrapper,omitempty"`
+	// Sandbox (pause) image.
+	//+optional
+	SandboxImage *string `json:"sandboxImage,omitempty"`
+	// Timeout for retrying CRI API calls.
+	//+optional
+	APIRetryTimeoutSeconds *int32 `json:"apiRetryTimeoutSeconds,omitempty"`
+	// CRI namespace for jobs containers.
+	//+optional
+	CRINamespace *string `json:"criNamespace,omitempty"`
+	// Base cgroup for jobs.
+	//+optional
+	BaseCgroup *string `json:"baseCgroup,omitempty"`
+}
+
 type JobEnvironmentSpec struct {
 	// Isolate job execution environment from exec node or not, by default true when possible.
 	//+optional
@@ -354,6 +373,15 @@ type JobEnvironmentSpec struct {
 	// Count of slots for user jobs on each exec node, default is 5 per CPU.
 	//+optional
 	UserSlots *int `json:"userSlots,omitempty"`
+	// CRI service configuration for running jobs in sidecar container.
+	//+optional
+	CRI *CRIJobEnvironmentSpec `json:"cri,omitempty"`
+	// Pass artifacts as read-only bind-mounts rather than symlinks.
+	//+optional
+	UseArtifactBinds *bool `json:"useArtifactBinds,omitempty"`
+	// Do not use slot user id for running jobs.
+	//+optional
+	DoNotSetUserId *bool `json:"doNotSetUserId,omitempty"`
 }
 
 type ExecNodesSpec struct {
@@ -463,6 +491,10 @@ type MasterCachesSpec struct {
 // It is inlined in these specs.
 type CommonSpec struct {
 	CoreImage string `json:"coreImage,omitempty"`
+
+	// Default docker image for user jobs.
+	//+optional
+	JobImage *string `json:"jobImage,omitempty"`
 
 	// Reference to ConfigMap with trusted certificates: "ca.crt".
 	//+optional

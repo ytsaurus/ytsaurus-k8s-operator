@@ -1,10 +1,13 @@
 package components
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
+
+	"github.com/BurntSushi/toml"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -135,7 +138,8 @@ func (h *ConfigHelper) getConfig(fileName string) ([]byte, error) {
 		}
 	}
 
-	if descriptor.Fmt == ytconfig.ConfigFormatJson || descriptor.Fmt == ytconfig.ConfigFormatJsonWithJsPrologue {
+	switch descriptor.Fmt {
+	case ytconfig.ConfigFormatJson, ytconfig.ConfigFormatJsonWithJsPrologue:
 		var config any
 		err := yson.Unmarshal(serializedConfig, &config)
 		if err != nil {
@@ -148,6 +152,19 @@ func (h *ConfigHelper) getConfig(fileName string) ([]byte, error) {
 		if descriptor.Fmt == ytconfig.ConfigFormatJsonWithJsPrologue {
 			serializedConfig = append([]byte(JsPrologue), serializedConfig...)
 		}
+	case ytconfig.ConfigFormatToml:
+		var config any
+		err := yson.Unmarshal(serializedConfig, &config)
+		if err != nil {
+			return nil, err
+		}
+
+		var buf bytes.Buffer
+		err = toml.NewEncoder(&buf).Encode(config)
+		if err != nil {
+			return nil, err
+		}
+		serializedConfig = buf.Bytes()
 	}
 
 	return serializedConfig, nil

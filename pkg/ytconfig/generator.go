@@ -18,6 +18,7 @@ const (
 	ConfigFormatYson               = "yson"
 	ConfigFormatJson               = "json"
 	ConfigFormatJsonWithJsPrologue = "json_with_js_prologue"
+	ConfigFormatToml               = "toml"
 )
 
 type YsonGeneratorFunc func() ([]byte, error)
@@ -477,9 +478,7 @@ func (g *NodeGenerator) GetDataNodeConfig(spec ytv1.DataNodesSpec) ([]byte, erro
 }
 
 func (g *NodeGenerator) getExecNodeConfigImpl(spec *ytv1.ExecNodesSpec) (ExecNodeServer, error) {
-	c, err := getExecNodeServerCarcass(
-		spec,
-		g.commonSpec.UsePorto)
+	c, err := getExecNodeServerCarcass(spec, &g.commonSpec)
 	if err != nil {
 		return c, err
 	}
