@@ -13,6 +13,7 @@ import (
 
 type controllerAgent struct {
 	componentBase
+	cfgen  *ytconfig.Generator
 	server server
 	master Component
 }
@@ -42,8 +43,8 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
 		},
+		cfgen:  cfgen,
 		server: server,
 		master: master,
 	}

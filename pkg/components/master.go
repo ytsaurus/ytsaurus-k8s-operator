@@ -27,6 +27,7 @@ const (
 
 type master struct {
 	componentBase
+	cfgen  *ytconfig.Generator
 	server server
 
 	initJob          *InitJob
@@ -81,8 +82,8 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
 		},
+		cfgen:           cfgen,
 		server:          server,
 		initJob:         initJob,
 		exitReadOnlyJob: exitReadOnlyJob,

@@ -5,21 +5,23 @@ import (
 	"fmt"
 	"strings"
 
+	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yt"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yt"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type queueAgent struct {
 	componentBase
+	cfgen  *ytconfig.Generator
 	server server
 
 	ytsaurusClient YtsaurusClient
@@ -67,8 +69,8 @@ func NewQueueAgent(
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
 		},
+		cfgen:          cfgen,
 		server:         server,
 		master:         master,
 		tabletNodes:    tabletNodes,
