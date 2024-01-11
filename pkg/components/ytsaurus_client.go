@@ -28,6 +28,7 @@ type YtsaurusClient interface {
 
 type ytsaurusClient struct {
 	componentBase
+	cfgen     *ytconfig.Generator
 	httpProxy Component
 
 	initUserJob *InitJob
@@ -54,8 +55,8 @@ func NewYtsaurusClient(
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
 		},
+		cfgen:     cfgen,
 		httpProxy: httpProxy,
 		initUserJob: NewInitJob(
 			&l,

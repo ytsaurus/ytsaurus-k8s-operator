@@ -21,6 +21,7 @@ import (
 
 type scheduler struct {
 	componentBase
+	cfgen         *ytconfig.Generator
 	server        server
 	master        Component
 	execNodes     []Component
@@ -60,8 +61,8 @@ func NewScheduler(
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
 		},
+		cfgen:       cfgen,
 		server:      server,
 		master:      master,
 		execNodes:   execNodes,

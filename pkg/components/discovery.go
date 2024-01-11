@@ -13,6 +13,7 @@ import (
 
 type discovery struct {
 	componentBase
+	cfgen  *ytconfig.Generator
 	server server
 }
 
@@ -41,8 +42,8 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Compon
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
 		},
+		cfgen:  cfgen,
 		server: server,
 	}
 }
