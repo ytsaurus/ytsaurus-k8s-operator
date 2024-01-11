@@ -229,7 +229,21 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			By("Store master pod creation time")
 			msPod := getMasterPod(g.GetMasterPodNames()[0], namespace)
-			podCreatedFirstTimestamp := msPod.CreationTimestamp
+			msPodCreationFirstTimestamp := msPod.CreationTimestamp
+
+			By("Setting artificial conditions for deploy to stuck in PossibilityCheck")
+			var masters []string
+			err := ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &masters, nil)
+			Expect(err).Should(Succeed())
+			Expect(len(masters)).Should(Equal(1))
+			onlyMaster := masters[0]
+			_, err = ytClient.CopyNode(
+				ctx,
+				ypath.Path("//sys/primary_masters/"+onlyMaster),
+				ypath.Path("//sys/primary_masters/"+onlyMaster+"-fake-leader"),
+				nil,
+			)
+			Expect(err).Should(Succeed())
 
 			By("Run cluster update")
 			Expect(k8sClient.Get(ctx, ytsaurusKey, ytsaurus)).Should(Succeed())
@@ -239,7 +253,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			}
 			Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
 
-			By("Waiting Running")
+			By("Waiting PossibilityCheck")
 			Eventually(func() bool {
 				ytsaurus := &ytv1.Ytsaurus{}
 				err := k8sClient.Get(ctx, ytsaurusKey, ytsaurus)
@@ -253,7 +267,9 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			By("Check that master pod was NOT recreated at the PossibilityCheck stage")
 			time.Sleep(1 * time.Second)
 			msPod = getMasterPod(g.GetMasterPodNames()[0], namespace)
-			Expect(podCreatedFirstTimestamp == msPod.CreationTimestamp).Should(BeTrue())
+			msPodCreationSecondTimestamp := msPod.CreationTimestamp
+			fmt.Fprintf(GinkgoWriter, "ms pods ts: \n%v\n%v\n", msPodCreationFirstTimestamp, msPodCreationSecondTimestamp)
+			Expect(msPodCreationFirstTimestamp == msPodCreationSecondTimestamp).Should(BeTrue())
 		})
 
 		It("Should run and try to update Ytsaurus with tablet cell bundle which is not in `good` health", func() {
