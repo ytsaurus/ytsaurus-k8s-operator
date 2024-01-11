@@ -1,6 +1,9 @@
 package v1
 
 import (
+	"os"
+	"strconv"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -96,12 +99,7 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 				},
 			},
 			HTTPProxies: []HTTPProxiesSpec{
-				{
-					ServiceType: "NodePort",
-					InstanceSpec: InstanceSpec{
-						InstanceCount: 1,
-					},
-				},
+				createHTTPProxiesSpec(),
 			},
 			DataNodes: []DataNodesSpec{
 				{
@@ -208,4 +206,23 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 			},
 		},
 	}
+}
+
+func createHTTPProxiesSpec() HTTPProxiesSpec {
+	spec := HTTPProxiesSpec{
+		ServiceType: "NodePort",
+		InstanceSpec: InstanceSpec{
+			InstanceCount: 1,
+		},
+	}
+	portStr := os.Getenv("E2E_HTTP_PROXY_INTERNAL_PORT")
+	if portStr != "" {
+		port, err := strconv.Atoi(portStr)
+		if err != nil {
+			panic("Invalid E2E_HTTP_PROXY_INTERNAL_PORT value")
+		}
+		portInt32 := int32(port)
+		spec.HttpNodePort = &portInt32
+	}
+	return spec
 }
