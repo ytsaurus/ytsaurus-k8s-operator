@@ -25,6 +25,7 @@ type server interface {
 	podsManager
 	needUpdate() bool
 	configNeedsReload() bool
+	needBuild() bool
 	needSync() bool
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
@@ -160,10 +161,14 @@ func (s *serverImpl) configNeedsReload() bool {
 	return needReload
 }
 
-func (s *serverImpl) needSync() bool {
+func (s *serverImpl) needBuild() bool {
 	return s.configHelper.NeedInit() ||
 		!s.exists() ||
 		s.statefulSet.NeedSync(s.instanceSpec.InstanceCount)
+}
+
+func (s *serverImpl) needSync() bool {
+	return s.configNeedsReload() || s.needBuild()
 }
 
 func (s *serverImpl) Sync(ctx context.Context) error {

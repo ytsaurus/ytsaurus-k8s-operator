@@ -66,15 +66,6 @@ func (c *labellable) GetLabel() string {
 	return c.labeller.ComponentLabel
 }
 
-type serverComponent struct {
-	server server
-}
-
-func (c *serverComponent) NeedSync() bool {
-	return c.server.configNeedsReload() ||
-		c.server.needSync()
-}
-
 type localComponent struct {
 	labellable
 	ytsaurus *apiproxy.Ytsaurus
@@ -82,7 +73,7 @@ type localComponent struct {
 
 type localServerComponent struct {
 	localComponent
-	serverComponent
+	server server
 }
 
 func newLocalComponent(
@@ -120,13 +111,11 @@ func newLocalServerComponent(
 			},
 			ytsaurus: ytsaurus,
 		},
-		serverComponent: serverComponent{
-			server: server,
-		},
+		server: server,
 	}
 }
 
 func (c *localServerComponent) NeedSync() bool {
 	return (c.server.configNeedsReload() && c.ytsaurus.IsUpdating()) ||
-		c.server.needSync()
+		c.server.needBuild()
 }

@@ -93,6 +93,10 @@ func (fs *FakeServer) configNeedsReload() bool {
 	return false
 }
 
+func (fs *FakeServer) needBuild() bool {
+	return false
+}
+
 func (fs *FakeServer) needSync() bool {
 	return false
 }
