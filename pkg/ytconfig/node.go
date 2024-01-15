@@ -76,10 +76,14 @@ type JobEnvironment struct {
 type SlotManager struct {
 	Locations      []SlotLocation `yson:"locations"`
 	JobEnvironment JobEnvironment `yson:"job_environment"`
+
+	DoNotSetUserId      *bool `yson:"do_not_set_user_id,omitempty"`
+	EnableTmpfs         *bool `yson:"enable_tmpfs,omitempty"`
+	DetachedTmpfsUmount *bool `yson:"detached_tmpfs_umount,omitempty"`
 }
 
 type JobResourceLimits struct {
-	UserSlots int `yson:"user_slots"`
+	UserSlots *int `yson:"user_slots,omitempty"`
 }
 
 type GpuInfoSource struct {
@@ -91,8 +95,8 @@ type GpuManager struct {
 }
 
 type JobController struct {
-	ResourceLimitsLegacy JobResourceLimits `yson:"resource_limits"`
-	GpuManager           GpuManager        `yson:"gpu_manager"`
+	ResourceLimitsLegacy *JobResourceLimits `yson:"resource_limits,omitempty"`
+	GpuManagerLegacy     *GpuManager        `yson:"gpu_manager,omitempty"`
 }
 
 type JobResourceManager struct {
@@ -104,11 +108,16 @@ type JobProxy struct {
 }
 
 type ExecNode struct {
-	SlotManager           SlotManager   `yson:"slot_manager"`
-	GpuManager            GpuManager    `yson:"gpu_manager"`
-	JobController         JobController `yson:"job_controller"`
-	JobProxy              JobProxy      `yson:"job_proxy"`
-	JobProxyLoggingLegacy Logging       `yson:"job_proxy_logging"`
+	SlotManager   SlotManager   `yson:"slot_manager"`
+	GpuManager    GpuManager    `yson:"gpu_manager"`
+	JobController JobController `yson:"job_controller"`
+	JobProxy      JobProxy      `yson:"job_proxy"`
+
+	JobProxyLoggingLegacy *Logging `yson:"job_proxy_logging,omitempty"`
+	DoNotSetUserIdLegacy  *bool    `yson:"do_not_set_user_id,omitempty"`
+
+	// NOTE: Non-legacy "use_artifact_binds" moved into dynamic config.
+	UseArtifactBindsLegacy *bool `yson:"use_artifact_binds,omitempty"`
 }
 
 type Cache struct {
@@ -127,9 +136,9 @@ type TabletNode struct {
 type NodeServer struct {
 	CommonServer
 	Flavors        []NodeFlavor   `yson:"flavors"`
-	ResourceLimits ResourceLimits `yson:"resource_limits, omitempty"`
-	Tags           []string       `yson:"tags, omitempty"`
-	Rack           string         `yson:"rack, omitempty"`
+	ResourceLimits ResourceLimits `yson:"resource_limits,omitempty"`
+	Tags           []string       `yson:"tags,omitempty"`
+	Rack           string         `yson:"rack,omitempty"`
 	SkynetHttpPort int32          `yson:"skynet_http_port"`
 }
 
@@ -355,7 +364,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 
 	if c.ResourceLimits.TotalCpu != nil {
 		// Dummy heuristic.
-		c.ExecNode.JobController.ResourceLimitsLegacy.UserSlots = int(5 * *c.ResourceLimits.TotalCpu)
+		c.JobResourceManager.ResourceLimits.UserSlots = ptr.Int(int(5 * *c.ResourceLimits.TotalCpu))
 	}
 
 	c.ExecNode.SlotManager.JobEnvironment.StartUID = consts.StartUID
@@ -366,7 +375,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 		c.ExecNode.SlotManager.JobEnvironment.Type = JobEnvironmentTypeSimple
 	}
 
-	c.ExecNode.JobController.GpuManager.GpuInfoSource.Type = GpuInfoSourceTypeNvidiaSmi
+	c.ExecNode.GpuManager.GpuInfoSource.Type = GpuInfoSourceTypeNvidiaSmi
 
 	c.Logging = getExecNodeLogging(spec)
 
@@ -381,10 +390,13 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 		}
 	}
 	jobProxyLoggingBuilder.logging.FlushPeriod = 3000
-	c.ExecNode.JobProxyLoggingLegacy = jobProxyLoggingBuilder.logging
 	c.ExecNode.JobProxy.JobProxyLogging = jobProxyLoggingBuilder.logging
-	c.JobResourceManager.ResourceLimits = c.ExecNode.JobController.ResourceLimitsLegacy
-	c.ExecNode.GpuManager = c.ExecNode.JobController.GpuManager
+
+	// TODO(khlebnikov): Drop legacy fields depending on ytsaurus version.
+	c.ExecNode.JobController.ResourceLimitsLegacy = &c.JobResourceManager.ResourceLimits
+	c.ExecNode.JobController.GpuManagerLegacy = &c.ExecNode.GpuManager
+	c.ExecNode.JobProxyLoggingLegacy = &c.ExecNode.JobProxy.JobProxyLogging
+	c.ExecNode.DoNotSetUserIdLegacy = c.ExecNode.SlotManager.DoNotSetUserId
 
 	return c, nil
 }
