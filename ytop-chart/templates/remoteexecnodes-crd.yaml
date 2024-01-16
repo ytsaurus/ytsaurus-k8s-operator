@@ -673,6 +673,17 @@ spec:
               instanceCount:
                 format: int32
                 type: integer
+              jobEnvironment:
+                properties:
+                  isolated:
+                    description: Isolate job execution environment from exec node or
+                      not, by default true when po
+                    type: boolean
+                  userSlots:
+                    description: Count of slots for user jobs on each exec node, default
+                      is 5 per CPU.
+                    type: integer
+                type: object
               jobProxyLoggers:
                 items:
                   properties:
@@ -745,6 +756,45 @@ spec:
                       type: string
                   type: object
                 type: array
+              jobResources:
+                description: Resources dedicated for running jobs.
+                properties:
+                  claims:
+                    description: Claims lists the names of resources, defined in spec.
+                    items:
+                      description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                      properties:
+                        name:
+                          description: Name must match the name of one entry in pod.spec.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                  limits:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: Limits describes the maximum amount of compute resources
+                      allowed.
+                    type: object
+                  requests:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: Requests describes the minimum amount of compute resources
+                      required.
+                    type: object
+                type: object
               locations:
                 items:
                   properties:
