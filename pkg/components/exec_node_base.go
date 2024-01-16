@@ -20,6 +20,16 @@ type baseExecNode struct {
 	spec   *ytv1.ExecNodesSpec
 }
 
+// Returns true if jobs are executed outside of exec node container.
+func (n *baseExecNode) IsJobEnvironmentIsolated() bool {
+	if envSpec := n.spec.JobEnvironment; envSpec != nil {
+		if envSpec.Isolated != nil {
+			return *envSpec.Isolated
+		}
+	}
+	return false
+}
+
 func (n *baseExecNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, n.server)
 }
@@ -27,6 +37,23 @@ func (n *baseExecNode) Fetch(ctx context.Context) error {
 func (n *baseExecNode) doBuildBase() error {
 	statefulSet := n.server.buildStatefulSet()
 	podSpec := &statefulSet.Spec.Template.Spec
+
+	// Pour job resources into node container if jobs are not isolated.
+	if n.spec.JobResources != nil && !n.IsJobEnvironmentIsolated() {
+		addResourceList := func(list, newList corev1.ResourceList) {
+			for name, quantity := range newList {
+				if value, ok := list[name]; ok {
+					value.Add(quantity)
+					list[name] = value
+				} else {
+					list[name] = quantity.DeepCopy()
+				}
+			}
+		}
+
+		addResourceList(podSpec.Containers[0].Resources.Requests, n.spec.JobResources.Requests)
+		addResourceList(podSpec.Containers[0].Resources.Limits, n.spec.JobResources.Limits)
+	}
 
 	setContainerPrivileged := func(ct *corev1.Container) {
 		if ct.SecurityContext == nil {

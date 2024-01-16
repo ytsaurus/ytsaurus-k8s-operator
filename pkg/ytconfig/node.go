@@ -7,9 +7,11 @@ import (
 
 	ptr "k8s.io/utils/pointer"
 
+	"k8s.io/apimachinery/pkg/api/resource"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type NodeFlavor string
@@ -163,7 +165,7 @@ type TabletNodeServer struct {
 	CachingObjectService Cache `yson:"caching_object_service"`
 }
 
-func findVolumeMountForPath(locationPath string, spec ytv1.InstanceSpec) *v1.VolumeMount {
+func findVolumeMountForPath(locationPath string, spec ytv1.InstanceSpec) *corev1.VolumeMount {
 	for _, mount := range spec.VolumeMounts {
 		if strings.HasPrefix(locationPath, mount.MountPath) {
 			return &mount
@@ -181,7 +183,7 @@ func findVolumeClaimTemplate(volumeName string, spec ytv1.InstanceSpec) *ytv1.Em
 	return nil
 }
 
-func findVolume(volumeName string, spec ytv1.InstanceSpec) *v1.Volume {
+func findVolume(volumeName string, spec ytv1.InstanceSpec) *corev1.Volume {
 	for _, volume := range spec.Volumes {
 		if volume.Name == volumeName {
 			return &volume
@@ -294,26 +296,38 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 	return c, nil
 }
 
+func getResourceQuantity(resources *corev1.ResourceRequirements, name corev1.ResourceName) resource.Quantity {
+	if request, ok := resources.Requests[name]; ok && !request.IsZero() {
+		return request
+	}
+	if limit, ok := resources.Limits[name]; ok && !limit.IsZero() {
+		return limit
+	}
+	return resource.Quantity{}
+}
+
 func getExecNodeResourceLimits(spec *ytv1.ExecNodesSpec) ResourceLimits {
 	var resourceLimits ResourceLimits
-	resourceLimits.NodeDedicatedCpu = ptr.Float32(0)
 
-	cpuLimit := spec.Resources.Limits.Cpu()
-	cpuRequest := spec.Resources.Requests.Cpu()
-	if cpuRequest != nil && !cpuRequest.IsZero() {
-		value := float32(cpuRequest.Value())
-		resourceLimits.TotalCpu = &value
-	} else if cpuLimit != nil && !cpuLimit.IsZero() {
-		value := float32(cpuLimit.Value())
-		resourceLimits.TotalCpu = &value
+	nodeMemory := getResourceQuantity(&spec.Resources, corev1.ResourceMemory)
+	nodeCpu := getResourceQuantity(&spec.Resources, corev1.ResourceCPU)
+
+	totalMemory := nodeMemory
+	totalCpu := nodeCpu
+
+	if spec.JobResources != nil {
+		totalMemory.Add(getResourceQuantity(spec.JobResources, corev1.ResourceMemory))
+		totalCpu.Add(getResourceQuantity(spec.JobResources, corev1.ResourceCPU))
+
+		resourceLimits.NodeDedicatedCpu = ptr.Float32(float32(nodeCpu.AsApproximateFloat64()))
+	} else {
+		// TODO(khlebnikov): Add better defaults.
+		resourceLimits.NodeDedicatedCpu = ptr.Float32(0)
 	}
 
-	memoryRequest := spec.Resources.Requests.Memory()
-	memoryLimit := spec.Resources.Limits.Memory()
-	if memoryRequest != nil && !memoryRequest.IsZero() {
-		resourceLimits.TotalMemory = memoryRequest.Value()
-	} else if memoryLimit != nil && !memoryLimit.IsZero() {
-		resourceLimits.TotalMemory = memoryLimit.Value()
+	resourceLimits.TotalMemory = totalMemory.Value()
+	if !totalCpu.IsZero() {
+		resourceLimits.TotalCpu = ptr.Float32(float32(totalCpu.AsApproximateFloat64()))
 	}
 
 	return resourceLimits
@@ -362,9 +376,14 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 		return c, fmt.Errorf("error creating exec node config: no slot locations provided")
 	}
 
-	if c.ResourceLimits.TotalCpu != nil {
+	if spec.JobEnvironment != nil && spec.JobEnvironment.UserSlots != nil {
+		c.JobResourceManager.ResourceLimits.UserSlots = ptr.Int(*spec.JobEnvironment.UserSlots)
+	} else {
 		// Dummy heuristic.
-		c.JobResourceManager.ResourceLimits.UserSlots = ptr.Int(int(5 * *c.ResourceLimits.TotalCpu))
+		jobCpu := ptr.Float32Deref(c.ResourceLimits.TotalCpu, 0) - ptr.Float32Deref(c.ResourceLimits.NodeDedicatedCpu, 0)
+		if jobCpu > 0 {
+			c.JobResourceManager.ResourceLimits.UserSlots = ptr.Int(int(5 * jobCpu))
+		}
 	}
 
 	c.ExecNode.SlotManager.JobEnvironment.StartUID = consts.StartUID

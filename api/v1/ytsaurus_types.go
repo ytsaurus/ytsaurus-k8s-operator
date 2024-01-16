@@ -347,6 +347,15 @@ type DataNodesSpec struct {
 	Name string `json:"name,omitempty"`
 }
 
+type JobEnvironmentSpec struct {
+	// Isolate job execution environment from exec node or not, by default true when possible.
+	//+optional
+	Isolated *bool `json:"isolated,omitempty"`
+	// Count of slots for user jobs on each exec node, default is 5 per CPU.
+	//+optional
+	UserSlots *int `json:"userSlots,omitempty"`
+}
+
 type ExecNodesSpec struct {
 	// label filter (for daemonset)
 	InstanceSpec `json:",inline"`
@@ -361,6 +370,11 @@ type ExecNodesSpec struct {
 	//+optional
 	Privileged      bool             `json:"privileged"`
 	JobProxyLoggers []TextLoggerSpec `json:"jobProxyLoggers,omitempty"`
+	// Resources dedicated for running jobs.
+	//+optional
+	JobResources *corev1.ResourceRequirements `json:"jobResources,omitempty"`
+	//+optional
+	JobEnvironment *JobEnvironmentSpec `json:"jobEnvironment,omitempty"`
 }
 
 type TabletNodesSpec struct {
