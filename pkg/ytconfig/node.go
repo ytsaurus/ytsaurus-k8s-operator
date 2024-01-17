@@ -103,7 +103,7 @@ type JobProxy struct {
 	JobProxyLogging Logging `yson:"job_proxy_logging"`
 }
 
-type ExecAgent struct {
+type ExecNode struct {
 	SlotManager           SlotManager   `yson:"slot_manager"`
 	GpuManager            GpuManager    `yson:"gpu_manager"`
 	JobController         JobController `yson:"job_controller"`
@@ -141,7 +141,7 @@ type DataNodeServer struct {
 type ExecNodeServer struct {
 	NodeServer
 	JobResourceManager   JobResourceManager `yson:"job_resource_manager"`
-	ExecAgent            ExecAgent          `yson:"exec_agent"`
+	ExecNode             ExecNode           `yson:"exec_node"`
 	DataNode             DataNode           `yson:"data_node"`
 	TabletNode           TabletNode         `yson:"tablet_node"`
 	CachingObjectService Cache              `yson:"caching_object_service"`
@@ -346,27 +346,27 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 			gb := float64(1024 * 1024 * 1024)
 			slotLocation.DiskUsageWatermark = int64(math.Min(0.1*float64(*quota), float64(10)*gb))
 		}
-		c.ExecAgent.SlotManager.Locations = append(c.ExecAgent.SlotManager.Locations, slotLocation)
+		c.ExecNode.SlotManager.Locations = append(c.ExecNode.SlotManager.Locations, slotLocation)
 	}
 
-	if len(c.ExecAgent.SlotManager.Locations) == 0 {
+	if len(c.ExecNode.SlotManager.Locations) == 0 {
 		return c, fmt.Errorf("error creating exec node config: no slot locations provided")
 	}
 
 	if c.ResourceLimits.TotalCpu != nil {
 		// Dummy heuristic.
-		c.ExecAgent.JobController.ResourceLimitsLegacy.UserSlots = int(5 * *c.ResourceLimits.TotalCpu)
+		c.ExecNode.JobController.ResourceLimitsLegacy.UserSlots = int(5 * *c.ResourceLimits.TotalCpu)
 	}
 
-	c.ExecAgent.SlotManager.JobEnvironment.StartUID = consts.StartUID
+	c.ExecNode.SlotManager.JobEnvironment.StartUID = consts.StartUID
 	if usePorto {
-		c.ExecAgent.SlotManager.JobEnvironment.Type = JobEnvironmentTypePorto
+		c.ExecNode.SlotManager.JobEnvironment.Type = JobEnvironmentTypePorto
 		// ToDo(psushin): volume locations, root fs binds, etc.
 	} else {
-		c.ExecAgent.SlotManager.JobEnvironment.Type = JobEnvironmentTypeSimple
+		c.ExecNode.SlotManager.JobEnvironment.Type = JobEnvironmentTypeSimple
 	}
 
-	c.ExecAgent.JobController.GpuManager.GpuInfoSource.Type = GpuInfoSourceTypeNvidiaSmi
+	c.ExecNode.JobController.GpuManager.GpuInfoSource.Type = GpuInfoSourceTypeNvidiaSmi
 
 	c.Logging = getExecNodeLogging(spec)
 
@@ -381,10 +381,10 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 		}
 	}
 	jobProxyLoggingBuilder.logging.FlushPeriod = 3000
-	c.ExecAgent.JobProxyLoggingLegacy = jobProxyLoggingBuilder.logging
-	c.ExecAgent.JobProxy.JobProxyLogging = jobProxyLoggingBuilder.logging
-	c.JobResourceManager.ResourceLimits = c.ExecAgent.JobController.ResourceLimitsLegacy
-	c.ExecAgent.GpuManager = c.ExecAgent.JobController.GpuManager
+	c.ExecNode.JobProxyLoggingLegacy = jobProxyLoggingBuilder.logging
+	c.ExecNode.JobProxy.JobProxyLogging = jobProxyLoggingBuilder.logging
+	c.JobResourceManager.ResourceLimits = c.ExecNode.JobController.ResourceLimitsLegacy
+	c.ExecNode.GpuManager = c.ExecNode.JobController.GpuManager
 
 	return c, nil
 }
