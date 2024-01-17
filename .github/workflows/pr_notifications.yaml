@@ -10,6 +10,7 @@ on:
 jobs:
   pr-notifications:
     name: Send PR notifications
+    if: github.event.pull_request.draft == false
     runs-on: trampoline
     steps:
       - name: Send to notification chat
