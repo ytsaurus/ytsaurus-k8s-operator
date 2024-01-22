@@ -2,9 +2,10 @@ package ytconfig
 
 import (
 	"fmt"
-	ptr "k8s.io/utils/pointer"
 	"math"
 	"strings"
+
+	ptr "k8s.io/utils/pointer"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -38,6 +39,13 @@ type DiskLocation struct {
 	Path string `yson:"path"`
 }
 
+type LayerLocation struct {
+	Path               string `yson:"path"`
+	Quota              int64  `yson:"quota"`
+	LowWatermark       int64  `yson:"low_watermark"`
+	LocationIsAbsolute bool   `yson:"location_is_absolute"`
+}
+
 type SlotLocation struct {
 	Path               string `yson:"path"`
 	DiskQuota          *int64 `yson:"disk_quota"`
@@ -48,10 +56,15 @@ type SlotLocation struct {
 type DataNode struct {
 	StoreLocations []StoreLocation `yson:"store_locations"`
 	CacheLocations []DiskLocation  `yson:"cache_locations"`
+	VolumeManager  VolumeManager   `yson:"volume_manager"`
 	BlockCache     BlockCache      `yson:"block_cache"`
 	BlocksExtCache Cache           `yson:"blocks_ext_cache"`
 	ChunkMetaCache Cache           `yson:"chunk_meta_cache"`
 	BlockMetaCache Cache           `yson:"block_meta_cache"`
+}
+
+type VolumeManager struct {
+	LayerLocations []LayerLocation `yson:"layer_locations"`
 }
 
 type JobEnvironmentType string
@@ -327,6 +340,21 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 		c.DataNode.CacheLocations = append(c.DataNode.CacheLocations, DiskLocation{
 			Path: location.Path,
 		})
+	}
+
+	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkLayer) {
+		quota := findQuotaForPath(location.Path, spec.InstanceSpec)
+		layerLocation := LayerLocation{
+			Path: location.Path,
+		}
+		if quota != nil {
+			layerLocation.Quota = *quota
+
+			// These are just simple heuristics.
+			gb := float64(1024 * 1024 * 1024)
+			layerLocation.LowWatermark = int64(math.Min(0.1*float64(layerLocation.Quota), float64(5)*gb))
+		}
+		c.DataNode.VolumeManager.LayerLocations = append(c.DataNode.VolumeManager.LayerLocations, layerLocation)
 	}
 
 	if len(c.DataNode.CacheLocations) == 0 {

@@ -72,6 +72,7 @@ type LocationType string
 const (
 	LocationTypeChunkStore       LocationType = "ChunkStore"
 	LocationTypeChunkCache       LocationType = "ChunkCache"
+	LocationTypeChunkLayer       LocationType = "ChunkLayer"
 	LocationTypeSlots            LocationType = "Slots"
 	LocationTypeLogs             LocationType = "Logs"
 	LocationTypeMasterChangelogs LocationType = "MasterChangelogs"
