@@ -53,10 +53,10 @@ type apiProxy struct {
 }
 
 func (c *apiProxy) getObjectKey(name string) types.NamespacedName {
-	return types.NamespacedName{
-		Name:      name,
-		Namespace: c.object.GetNamespace(),
-	}
+    return types.NamespacedName{
+        Name:      name,
+        Namespace: c.object.GetNamespace(),
+    }
 }
 
 func (c *apiProxy) Client() client.Client {
@@ -160,7 +160,7 @@ func (c *apiProxy) createAndReferenceObject(ctx context.Context, obj client.Obje
 	}
 
 	if err := c.client.Create(ctx, obj); err != nil {
-		// ToDo(psushin): take to the status.
+		// TODO(psushin): take to the status.
 		c.RecordWarning(
 			"Reconciliation",
 			fmt.Sprintf("Failed to create YT object %s: %s", obj.GetName(), err))
