@@ -288,7 +288,7 @@ func (s *scheduler) prepareInitOperationArchive() {
 		initJobWithNativeDriverPrologue(),
 		fmt.Sprintf("/usr/bin/init_operation_archive --force --latest --proxy %s",
 			s.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
-		"/usr/bin/yt set //sys/cluster_nodes/@config '{\"%true\" = {job_agent={enable_job_reporter=%true}}}'",
+		SetWithIgnoreExisting("//sys/cluster_nodes/@config", "'{\"%true\" = {job_agent={enable_job_reporter=%true}}}'"),
 	}
 
 	s.initOpArchive.SetInitScript(strings.Join(script, "\n"))

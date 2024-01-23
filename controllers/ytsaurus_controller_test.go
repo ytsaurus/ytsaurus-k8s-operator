@@ -201,11 +201,11 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 	Context("When setting up the test environment", func() {
 		It(
 			"Should run and update Ytsaurus within same major version",
-			getSimpleUpdateScenario("test1", ytv1.CoreImageSecond),
+			getSimpleUpdateScenario("test-minor-update", ytv1.CoreImageSecond),
 		)
 		It(
 			"Should run and update Ytsaurus to the next major version",
-			getSimpleUpdateScenario("test2", ytv1.CoreImageNextVer),
+			getSimpleUpdateScenario("test-major-update", ytv1.CoreImageNextVer),
 		)
 
 		// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
@@ -404,6 +404,36 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 })
 
+func checkClusterBaseViability(ytClient yt.Client) {
+	By("Check that cluster is alive")
+
+	res := make([]string, 0)
+	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
+
+	By("Check that tablet cell bundles are in `good` health")
+
+	Eventually(func() bool {
+		notGoodBundles, err := components.GetNotGoodTabletCellBundles(ctx, ytClient)
+		if err != nil {
+			return false
+		}
+		return len(notGoodBundles) == 0
+	}, timeout, interval).Should(BeTrue())
+}
+
+func checkClusterViability(ytClient yt.Client) {
+	checkClusterBaseViability(ytClient)
+
+	By("Create a test user")
+	_, err := ytClient.CreateObject(ctx, yt.NodeUser, &yt.CreateObjectOptions{Attributes: map[string]any{"name": "test-user"}})
+	Expect(err).Should(Succeed())
+
+	By("Check that test user cannot access things they shouldn't")
+	hasPermission, err := ytClient.CheckPermission(ctx, "test-user", yt.PermissionWrite, ypath.Path("//sys/groups/superusers"), nil)
+	Expect(err).Should(Succeed())
+	Expect(hasPermission.Action).Should(Equal(yt.ActionDeny))
+}
+
 func getSimpleUpdateScenario(namespace, newImage string) func() {
 	return func() {
 
@@ -421,20 +451,7 @@ func getSimpleUpdateScenario(namespace, newImage string) func() {
 
 		ytClient := getYtClient(g, namespace)
 
-		By("Check that cluster alive")
-
-		res := make([]string, 0)
-		Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
-
-		By("Check that tablet cell bundles are in `good` health")
-
-		Eventually(func() bool {
-			notGoodBundles, err := components.GetNotGoodTabletCellBundles(ctx, ytClient)
-			if err != nil {
-				return false
-			}
-			return len(notGoodBundles) == 0
-		}, timeout, interval).Should(BeTrue())
+		checkClusterViability(ytClient)
 
 		By("Run cluster update")
 
@@ -460,8 +477,6 @@ func getSimpleUpdateScenario(namespace, newImage string) func() {
 			return ytsaurus.Status.State == ytv1.ClusterStateRunning
 		}, timeout*5, interval).Should(BeTrue())
 
-		By("Check that cluster alive after update")
-
-		Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
+		checkClusterBaseViability(ytClient)
 	}
 }
