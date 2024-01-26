@@ -96,6 +96,10 @@
         ];
         "cache_locations"=[
         ];
+        "volume_manager"={
+            "layer_locations"=[
+            ];
+        };
         "block_cache"={
             "compressed_data"={
                 capacity=0;
