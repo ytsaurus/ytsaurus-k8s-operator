@@ -122,6 +122,13 @@ type ExecNode struct {
 	JobController         JobController `yson:"job_controller"`
 	JobProxy              JobProxy      `yson:"job_proxy"`
 	JobProxyLoggingLegacy Logging       `yson:"job_proxy_logging"`
+	RootFSBinds           []RootFSBind  `yson:"root_fs_binds"`
+}
+
+type RootFSBind struct {
+	InternalPath string `yson:"internal_path"`
+	ExternalPath string `yson:"external_path"`
+	ReadOnly     bool   `yson:"read_only"`
 }
 
 type Cache struct {
@@ -413,6 +420,16 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 	c.ExecNode.JobProxy.JobProxyLogging = jobProxyLoggingBuilder.logging
 	c.JobResourceManager.ResourceLimits = c.ExecNode.JobController.ResourceLimitsLegacy
 	c.ExecNode.GpuManager = c.ExecNode.JobController.GpuManager
+
+	if usePorto {
+		for _, loc := range spec.Locations {
+			c.ExecNode.RootFSBinds = append(c.ExecNode.RootFSBinds, RootFSBind{
+				InternalPath: loc.Path,
+				ExternalPath: loc.Path,
+				ReadOnly:     false,
+			})
+		}
+	}
 
 	return c, nil
 }
