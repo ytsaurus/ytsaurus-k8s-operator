@@ -180,6 +180,18 @@
             ];
             "flush_period"=3000;
         };
+        "root_fs_binds"=[
+            {
+                "internal_path"="/yt/hdd1/chunk-cache";
+                "external_path"="/yt/hdd1/chunk-cache";
+                "read_only"=%false;
+            };
+            {
+                "internal_path"="/yt/hdd2/slots";
+                "external_path"="/yt/hdd2/slots";
+                "read_only"=%false;
+            };
+        ];
     };
     "data_node"={
         "store_locations"=[
