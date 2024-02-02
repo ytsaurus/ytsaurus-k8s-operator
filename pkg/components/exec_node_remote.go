@@ -10,30 +10,29 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type ExecNode struct {
+type RemoteExecNode struct {
 	baseExecNode
-	localComponent
-	master Component
+	labellable
 }
 
-func NewExecNode(
+func NewRemoteExecNodes(
 	cfgen *ytconfig.NodeGenerator,
-	ytsaurus *apiproxy.Ytsaurus,
-	master Component,
+	nodes *ytv1.RemoteExecNodes,
+	proxy apiproxy.APIProxy,
 	spec ytv1.ExecNodesSpec,
-) *ExecNode {
-	resource := ytsaurus.GetResource()
+	configSpec ytv1.ConfigurationSpec,
+) *RemoteExecNode {
 	l := labeller.Labeller{
-		ObjectMeta:     &resource.ObjectMeta,
-		APIProxy:       ytsaurus.APIProxy(),
+		ObjectMeta:     &nodes.ObjectMeta,
+		APIProxy:       proxy,
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelExecNode, spec.Name),
 		ComponentName:  cfgen.FormatComponentStringWithDefault("ExecNode", spec.Name),
 		MonitoringPort: consts.ExecNodeMonitoringPort,
 	}
-
-	srv := newServer(
+	srv := newServerConfigured(
 		&l,
-		ytsaurus,
+		proxy,
+		configSpec,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-exec-node.yson",
@@ -43,41 +42,21 @@ func NewExecNode(
 			return cfgen.GetExecNodeConfig(spec)
 		},
 	)
-
-	return &ExecNode{
-		localComponent: newLocalComponent(&l, ytsaurus),
+	return &RemoteExecNode{
+		labellable: labellable{labeller: &l},
 		baseExecNode: baseExecNode{
 			server:     srv,
 			cfgen:      cfgen,
 			sidecars:   spec.Sidecars,
 			privileged: spec.Privileged,
 		},
-		master: master,
 	}
 }
 
-func (n *ExecNode) IsUpdatable() bool {
-	return true
-}
-
-func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (n *RemoteExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && n.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
-	}
-
-	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, &n.localComponent, n.server, dry); status != nil {
-			return *status, err
-		}
-	}
-
-	if !IsRunningStatus(n.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
-	}
-
-	if LocalServerNeedSync(n.server, n.ytsaurus) {
+	if n.server.needSync() {
 		return n.doSyncInternal(ctx, dry)
 	}
 
@@ -88,16 +67,7 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (n *ExecNode) Status(ctx context.Context) ComponentStatus {
-	status, err := n.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
-}
-
-func (n *ExecNode) Sync(ctx context.Context) error {
+func (n *RemoteExecNode) Sync(ctx context.Context) error {
 	_, err := n.doSync(ctx, false)
 	return err
 }

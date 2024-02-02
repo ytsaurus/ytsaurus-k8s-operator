@@ -116,6 +116,10 @@ func newLocalServerComponent(
 }
 
 func (c *localServerComponent) NeedSync() bool {
-	return (c.server.configNeedsReload() && c.ytsaurus.IsUpdating()) ||
-		c.server.needBuild()
+	return LocalServerNeedSync(c.server, c.ytsaurus)
+}
+
+func LocalServerNeedSync(srv server, ytsaurus *apiproxy.Ytsaurus) bool {
+	return (srv.configNeedsReload() && ytsaurus.IsUpdating()) ||
+		srv.needBuild()
 }
