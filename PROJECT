@@ -47,4 +47,21 @@ resources:
     defaulting: true
     validation: true
     webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: ytsaurus.tech
+  group: cluster
+  kind: RemoteYtsaurus
+  path: github.com/ytsaurus/yt-k8s-operator/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: ytsaurus.tech
+  group: cluster
+  kind: RemoteExecNodes
+  path: github.com/ytsaurus/yt-k8s-operator/api/v1
+  version: v1
 version: "3"
