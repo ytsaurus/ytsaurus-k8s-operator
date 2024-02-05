@@ -4,11 +4,15 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"go.ytsaurus.tech/yt/go/mapreduce"
+	"go.ytsaurus.tech/yt/go/mapreduce/spec"
 	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
 	"go.ytsaurus.tech/yt/go/yt/ythttp"
 	corev1 "k8s.io/api/core/v1"
@@ -149,6 +153,61 @@ func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
 		}
 		return ytsaurus.Status.State
 	}, timeout*2, interval).Should(Equal(ytv1.ClusterStateRunning))
+}
+
+func runRemoteYtsaurus(remoteYtsaurus *ytv1.RemoteYtsaurus) {
+	Expect(k8sClient.Create(ctx, remoteYtsaurus)).Should(Succeed())
+	lookupKey := types.NamespacedName{Name: remoteYtsaurus.Name, Namespace: remoteYtsaurus.Namespace}
+	Eventually(func() bool {
+		createdYtsaurus := &ytv1.RemoteYtsaurus{}
+		err := k8sClient.Get(ctx, lookupKey, createdYtsaurus)
+		if err != nil {
+			return false
+		}
+		return true
+	}, timeout, interval).Should(BeTrue())
+}
+
+func deleteRemoteYtsaurus(ctx context.Context, remoteYtsaurus *ytv1.RemoteYtsaurus) {
+	logger := log.FromContext(ctx)
+	if err := k8sClient.Delete(ctx, remoteYtsaurus); err != nil {
+		logger.Error(err, "Deleting remote ytsaurus failed")
+	}
+}
+
+func runRemoteExecNodes(remoteExecNodes *ytv1.RemoteExecNodes) {
+	Expect(k8sClient.Create(ctx, remoteExecNodes)).Should(Succeed())
+	lookupKey := types.NamespacedName{Name: remoteExecNodes.Name, Namespace: remoteExecNodes.Namespace}
+	Eventually(func() bool {
+		createdYtsaurus := &ytv1.RemoteExecNodes{}
+		err := k8sClient.Get(ctx, lookupKey, createdYtsaurus)
+		if err != nil {
+			return false
+		}
+		return true
+	}, timeout, interval).Should(BeTrue())
+
+	By("Checking that remote nodes state is equal to `Running`")
+	Eventually(
+		func() bool {
+			nodes := &ytv1.RemoteExecNodes{}
+			err := k8sClient.Get(ctx, lookupKey, nodes)
+			if err != nil {
+				return false
+			}
+			return nodes.Status.ReleaseStatus == ytv1.RemoteExecNodeReleaseStatusRunning
+		},
+		timeout*2,
+		interval,
+	)
+
+}
+
+func deleteRemoteExecNodes(ctx context.Context, remoteExecNodes *ytv1.RemoteExecNodes) {
+	logger := log.FromContext(ctx)
+	if err := k8sClient.Delete(ctx, remoteExecNodes); err != nil {
+		logger.Error(err, "Deleting remote ytsaurus failed")
+	}
 }
 
 func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client) {
@@ -400,6 +459,66 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			By("Check that access control object 'nobody' in namespace 'queries' exists")
 			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/nobody"), nil)).Should(Equal(true))
 		})
+
+		It("Should create ytsaurus with remote exec nodes and execute a job", func() {
+			By("Creating a Ytsaurus resource")
+			ctx := context.Background()
+
+			namespace := "remoteexec"
+
+			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
+			// Ensure that no local exec nodes exist, only remote ones (which will be created later).
+			ytsaurus.Spec.ExecNodes = []ytv1.ExecNodesSpec{}
+			ytsaurus.Spec.DataNodes = []ytv1.DataNodesSpec{{
+				InstanceSpec: ytv1.CreateDataNodeInstanceSpec(1),
+			}}
+			g := ytconfig.NewGenerator(ytsaurus, "local")
+
+			remoteYtsaurus := &ytv1.RemoteYtsaurus{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      ytv1.RemoteResourceName,
+					Namespace: namespace,
+				},
+				Spec: ytv1.RemoteYtsaurusSpec{
+					MasterConnectionSpec: ytv1.MasterConnectionSpec{
+						CellTag: ytsaurus.Spec.PrimaryMasters.CellTag,
+						HostAddresses: []string{
+							"ms-0.masters.remoteexec.svc.cluster.local",
+						},
+					},
+				},
+			}
+
+			remoteNodes := &ytv1.RemoteExecNodes{
+				ObjectMeta: v1.ObjectMeta{Name: ytv1.RemoteResourceName, Namespace: namespace},
+				Spec: ytv1.RemoteExecNodesSpec{
+					RemoteClusterSpec: &corev1.LocalObjectReference{
+						Name: ytv1.RemoteResourceName,
+					},
+					ConfigurationSpec: ytv1.ConfigurationSpec{
+						CoreImage: ytv1.CoreImageFirst,
+					},
+					ExecNodesSpec: ytv1.ExecNodesSpec{
+						InstanceSpec: ytv1.CreateExecNodeInstanceSpec(),
+					},
+				},
+			}
+
+			defer deleteYtsaurus(ctx, ytsaurus)
+			runYtsaurus(ytsaurus)
+
+			defer deleteRemoteYtsaurus(ctx, remoteYtsaurus)
+			runRemoteYtsaurus(remoteYtsaurus)
+
+			defer deleteRemoteExecNodes(ctx, remoteNodes)
+			runRemoteExecNodes(remoteNodes)
+
+			By("Creating ytsaurus client")
+			ytClient := getYtClient(g, namespace)
+
+			By("Running sort operation to ensure exec node works")
+			runAndCheckSortOperation(ytClient)
+		})
 	})
 
 })
@@ -479,4 +598,65 @@ func getSimpleUpdateScenario(namespace, newImage string) func() {
 
 		checkClusterBaseViability(ytClient)
 	}
+}
+
+func runAndCheckSortOperation(ytClient yt.Client) {
+	testTablePathIn := ypath.Path("//tmp/testexec")
+	testTablePathOut := ypath.Path("//tmp/testexec-out")
+	_, err := ytClient.CreateNode(
+		ctx,
+		testTablePathIn,
+		yt.NodeTable,
+		nil,
+	)
+	Expect(err).Should(Succeed())
+	_, err = ytClient.CreateNode(
+		ctx,
+		testTablePathOut,
+		yt.NodeTable,
+		nil,
+	)
+	Expect(err).Should(Succeed())
+
+	type Row struct {
+		Key string `yson:"key"`
+	}
+	keys := []string{
+		"xxx",
+		"aaa",
+		"bbb",
+	}
+	writer, err := ytClient.WriteTable(ctx, testTablePathIn, nil)
+	for _, key := range keys {
+		err = writer.Write(Row{Key: key})
+		Expect(err).Should(Succeed())
+	}
+	err = writer.Commit()
+	Expect(err).Should(Succeed())
+
+	mrCli := mapreduce.New(ytClient)
+	op, err := mrCli.Sort(&spec.Spec{
+		Type:            yt.OperationSort,
+		InputTablePaths: []ypath.YPath{testTablePathIn},
+		OutputTablePath: testTablePathOut,
+		SortBy:          []string{"key"},
+		TimeLimit:       yson.Duration(3 * time.Minute),
+	})
+	Expect(err).Should(Succeed())
+	err = op.Wait()
+	Expect(err).Should(Succeed())
+
+	reader, err := ytClient.ReadTable(ctx, testTablePathOut, nil)
+	Expect(err).Should(Succeed())
+
+	var rows []string
+	for reader.Next() {
+		row := Row{}
+		err = reader.Scan(&row)
+		Expect(err).Should(Succeed())
+		rows = append(rows, row.Key)
+	}
+
+	sort.Strings(keys)
+	Expect(rows).Should(Equal(keys))
 }
