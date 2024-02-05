@@ -1,0 +1,12 @@
+apiVersion: cluster.ytsaurus.tech/v1
+kind: RemoteYtsaurus
+metadata:
+  labels:
+    app.kubernetes.io/name: remoteytsaurus
+    app.kubernetes.io/instance: remoteytsaurus-sample
+    app.kubernetes.io/part-of: yt-k8s-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: yt-k8s-operator
+  name: remoteytsaurus-sample
+spec:
+  # TODO(user): Add fields here
