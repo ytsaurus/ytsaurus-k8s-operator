@@ -43,16 +43,10 @@ jobs:
           sudo mv ./kind /usr/local/bin/kind
           kind create cluster --retain -v 100
           kubectl get pod
-          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
+          make k8s-install-cert-manager
 
           make helm-kind-install
-          docker pull ytsaurus/ytsaurus-nightly:dev-23.1-5f8638fc66f6e59c7a06708ed508804986a6579f
-          kind load docker-image ytsaurus/ytsaurus-nightly:dev-23.1-5f8638fc66f6e59c7a06708ed508804986a6579f
-          docker pull ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de
-          kind load docker-image ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de
-          docker pull ytsaurus/ytsaurus-nightly:dev-23.2-62a472c4efc2c8395d125a13ca0216720e06999d
-          kind load docker-image ytsaurus/ytsaurus-nightly:dev-23.2-62a472c4efc2c8395d125a13ca0216720e06999d
-          YTSAURUS_ENABLE_E2E_TESTS=true make test
+          make kind-load-test-images
           helm uninstall ytsaurus
 
           ./compat_test.sh --from-version 0.4.1 --to-version trunk
