@@ -3,10 +3,12 @@ package components
 import (
 	"context"
 	"fmt"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type SyncStatus string
@@ -51,6 +53,13 @@ type Component interface {
 
 	// TODO(nadya73): refactor it
 	IsUpdatable() bool
+}
+
+type SubComponent interface {
+	Fetch(ctx context.Context) error
+	Sync2(ctx context.Context) error
+	Status(ctx context.Context) ComponentStatus
+	GetName() string
 }
 
 type componentBase struct {

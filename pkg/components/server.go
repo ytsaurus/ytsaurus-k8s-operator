@@ -7,14 +7,15 @@ import (
 
 	ptr "k8s.io/utils/pointer"
 
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // server manages common resources of YTsaurus cluster server components.
@@ -22,6 +23,9 @@ type server interface {
 	resources.Fetchable
 	resources.Syncable
 	podsManager
+	Status(ctx context.Context) ComponentStatus
+	Sync2(ctx context.Context) error
+	GetName() string
 	needUpdate() bool
 	needSync() bool
 	buildStatefulSet() *appsv1.StatefulSet
@@ -117,6 +121,10 @@ func (s *serverImpl) Fetch(ctx context.Context) error {
 	)
 }
 
+func (s *serverImpl) GetName() string {
+	return "Server"
+}
+
 func (s *serverImpl) exists() bool {
 	return resources.Exists(s.statefulSet) &&
 		resources.Exists(s.headlessService) &&
@@ -146,6 +154,10 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 		s.headlessService,
 		s.monitoringService,
 	)
+}
+
+func (s *serverImpl) Sync2(ctx context.Context) error {
+	return s.Sync(ctx)
 }
 
 func (s *serverImpl) arePodsRemoved(ctx context.Context) bool {

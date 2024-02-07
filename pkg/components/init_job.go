@@ -87,6 +87,14 @@ func NewInitJob(
 	}
 }
 
+func (j *InitJob) Status(_ context.Context) ComponentStatus {
+	if j.initJob.Completed() {
+		return ComponentStatus{SyncStatus: SyncStatusReady}
+	}
+	// TODO: updating/blocked?
+	return ComponentStatus{SyncStatus: SyncStatusPending}
+}
+
 func (j *InitJob) IsCompleted() bool {
 	return j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition)
 }
@@ -131,6 +139,11 @@ func (j *InitJob) Fetch(ctx context.Context) error {
 		j.initJob,
 		j.configHelper,
 	)
+}
+
+func (j *InitJob) Sync2(ctx context.Context) error {
+	_, err := j.Sync(ctx, false)
+	return err
 }
 
 func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
