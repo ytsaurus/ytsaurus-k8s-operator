@@ -208,7 +208,7 @@ func (s *scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	if !dry {
-		s.prepareInitOperationArchive()
+		s.prepareInitOperationsArchive()
 	}
 	return s.initOpArchive.Sync(ctx, dry)
 }
@@ -283,10 +283,18 @@ func (s *scheduler) createInitUserScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (s *scheduler) prepareInitOperationArchive() {
+func (s *scheduler) prepareInitOperationsArchive() {
+	initOpArchivePath = "/usr/bin/init_operations_archive"
+	// COMPAT(omgronny): drop once new srcipt name is everywhere
+	if _, err := os.Stat(initOpArchivePath); err != nil {
+		if os.IsNotExist(err) {
+			initOpArchivePath = "/usr/bin/init_operation_archive"
+		}
+	}
 	script := []string{
 		initJobWithNativeDriverPrologue(),
-		fmt.Sprintf("/usr/bin/init_operation_archive --force --latest --proxy %s",
+		fmt.Sprintf("%s --force --latest --proxy %s",
+			initOpArchivePath,
 			s.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
 		SetWithIgnoreExisting("//sys/cluster_nodes/@config", "'{\"%true\" = {job_agent={enable_job_reporter=%true}}}'"),
 	}
