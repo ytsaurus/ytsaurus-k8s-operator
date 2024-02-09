@@ -22,7 +22,7 @@ import (
 )
 
 type YtsaurusClient interface {
-	Component
+	Component2
 	GetYtClient() yt.Client
 }
 

@@ -3,8 +3,9 @@ package components
 import (
 	"context"
 	"fmt"
-	"go.ytsaurus.tech/yt/go/yt"
 	"strings"
+
+	"go.ytsaurus.tech/yt/go/yt"
 
 	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/yson"
@@ -26,7 +27,7 @@ const (
 	defaultHostAddressLabel = "kubernetes.io/hostname"
 )
 
-type master struct {
+type Master struct {
 	componentBase
 	server server
 
@@ -35,7 +36,7 @@ type master struct {
 	adminCredentials corev1.Secret
 }
 
-func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component {
+func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -78,7 +79,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component
 		cfgen.GetNativeClientConfig,
 	)
 
-	return &master{
+	return &Master{
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
@@ -90,11 +91,11 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component
 	}
 }
 
-func (m *master) IsUpdatable() bool {
+func (m *Master) IsUpdatable() bool {
 	return true
 }
 
-func (m *master) Fetch(ctx context.Context) error {
+func (m *Master) Fetch(ctx context.Context) error {
 	if m.ytsaurus.GetResource().Spec.AdminCredentials != nil {
 		err := m.ytsaurus.APIProxy().FetchObject(
 			ctx,
@@ -112,7 +113,7 @@ func (m *master) Fetch(ctx context.Context) error {
 	)
 }
 
-func (m *master) initAdminUser() string {
+func (m *Master) initAdminUser() string {
 	adminLogin, adminPassword := consts.DefaultAdminLogin, consts.DefaultAdminPassword
 	adminToken := consts.DefaultAdminPassword
 
@@ -140,7 +141,7 @@ type Medium struct {
 	Name string `yson:"name"`
 }
 
-func (m *master) getExtraMedia() []Medium {
+func (m *Master) getExtraMedia() []Medium {
 	mediaMap := make(map[string]Medium)
 
 	for _, d := range m.ytsaurus.GetResource().Spec.DataNodes {
@@ -162,7 +163,7 @@ func (m *master) getExtraMedia() []Medium {
 	return mediaSlice
 }
 
-func (m *master) initMedia() string {
+func (m *Master) initMedia() string {
 	var commands []string
 	for _, medium := range m.getExtraMedia() {
 		attr, err := yson.MarshalFormat(medium, yson.FormatText)
@@ -174,14 +175,14 @@ func (m *master) initMedia() string {
 	return strings.Join(commands, "\n")
 }
 
-func (m *master) initGroups() string {
+func (m *Master) initGroups() string {
 	commands := []string{
 		"/usr/bin/yt create group --attr '{name=admins}' --ignore-existing",
 	}
 	return strings.Join(commands, "\n")
 }
 
-func (m *master) initSchemaACLs() string {
+func (m *Master) initSchemaACLs() string {
 	userReadACE := yt.ACE{
 		Action:      "allow",
 		Subjects:    []string{"users"},
@@ -245,7 +246,7 @@ func (m *master) initSchemaACLs() string {
 	return strings.Join(commands, "\n")
 }
 
-func (m *master) createInitScript() string {
+func (m *Master) createInitScript() string {
 	clusterConnection, err := m.cfgen.GetClusterConnection()
 	if err != nil {
 		panic(err)
@@ -270,7 +271,7 @@ func (m *master) createInitScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (m *master) createExitReadOnlyScript() string {
+func (m *Master) createExitReadOnlyScript() string {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		"export YT_LOG_LEVEL=DEBUG",
@@ -282,7 +283,7 @@ func (m *master) createExitReadOnlyScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(m.ytsaurus.GetClusterState()) && m.server.needUpdate() {
@@ -317,7 +318,7 @@ func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	return m.initJob.Sync(ctx, dry)
 }
 
-func (m *master) Status(ctx context.Context) ComponentStatus {
+func (m *Master) Status(ctx context.Context) ComponentStatus {
 	status, err := m.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -326,18 +327,18 @@ func (m *master) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (m *master) Sync(ctx context.Context) error {
+func (m *Master) Sync(ctx context.Context) error {
 	_, err := m.doSync(ctx, false)
 	return err
 }
 
-func (m *master) doServerSync(ctx context.Context) error {
+func (m *Master) doServerSync(ctx context.Context) error {
 	statefulSet := m.server.buildStatefulSet()
 	m.addAffinity(statefulSet)
 	return m.server.Sync(ctx)
 }
 
-func (m *master) addAffinity(statefulSet *appsv1.StatefulSet) {
+func (m *Master) addAffinity(statefulSet *appsv1.StatefulSet) {
 	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
 	if len(primaryMastersSpec.HostAddresses) == 0 {
 		return
@@ -373,7 +374,7 @@ func (m *master) addAffinity(statefulSet *appsv1.StatefulSet) {
 	statefulSet.Spec.Template.Spec.Affinity = affinity
 }
 
-func (m *master) getHostAddressLabel() string {
+func (m *Master) getHostAddressLabel() string {
 	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
 	if primaryMastersSpec.HostAddressLabel != "" {
 		return primaryMastersSpec.HostAddressLabel
@@ -381,7 +382,7 @@ func (m *master) getHostAddressLabel() string {
 	return defaultHostAddressLabel
 }
 
-func (m *master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, error) {
+func (m *Master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, error) {
 	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterExitReadOnlyPrepared) {
 		if !m.exitReadOnlyJob.isRestartPrepared() {
 			if err := m.exitReadOnlyJob.prepareRestart(ctx, dry); err != nil {
@@ -415,7 +416,7 @@ func (m *master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, 
 	return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
 }
 
-func (m *master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav1.ConditionStatus) {
+func (m *Master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav1.ConditionStatus) {
 	m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    consts.ConditionMasterExitReadOnlyPrepared,
 		Status:  status,

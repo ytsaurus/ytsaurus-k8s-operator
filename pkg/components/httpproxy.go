@@ -3,17 +3,18 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/yt/go/yt"
+	corev1 "k8s.io/api/core/v1"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/yt/go/yt"
-	corev1 "k8s.io/api/core/v1"
 )
 
-type httpProxy struct {
+type HTTPProxy struct {
 	componentBase
 	server server
 
@@ -31,7 +32,7 @@ func NewHTTPProxy(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
-	spec ytv1.HTTPProxiesSpec) Component {
+	spec ytv1.HTTPProxiesSpec) *HTTPProxy {
 
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
@@ -72,7 +73,7 @@ func NewHTTPProxy(
 	balancingService.SetHttpNodePort(spec.HttpNodePort)
 	balancingService.SetHttpsNodePort(spec.HttpsNodePort)
 
-	return &httpProxy{
+	return &HTTPProxy{
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
@@ -87,18 +88,18 @@ func NewHTTPProxy(
 	}
 }
 
-func (hp *httpProxy) IsUpdatable() bool {
+func (hp *HTTPProxy) IsUpdatable() bool {
 	return true
 }
 
-func (hp *httpProxy) Fetch(ctx context.Context) error {
+func (hp *HTTPProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		hp.server,
 		hp.balancingService,
 	)
 }
 
-func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (hp *HTTPProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(hp.ytsaurus.GetClusterState()) && hp.server.needUpdate() {
@@ -143,7 +144,7 @@ func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (hp *httpProxy) Status(ctx context.Context) ComponentStatus {
+func (hp *HTTPProxy) Status(ctx context.Context) ComponentStatus {
 	status, err := hp.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -152,7 +153,7 @@ func (hp *httpProxy) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (hp *httpProxy) Sync(ctx context.Context) error {
+func (hp *HTTPProxy) Sync(ctx context.Context) error {
 	_, err := hp.doSync(ctx, false)
 	return err
 }

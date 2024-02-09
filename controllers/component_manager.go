@@ -2,18 +2,40 @@ package controllers
 
 import (
 	"context"
+	"time"
+
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-	"time"
 )
+
+type componentsStructured struct {
+	discovery   components.Component2
+	master      components.Component2
+	httpProxies []components.Component2
+	ytClient    components.Component2
+	dataNodes   []components.Component2
+	// (optional) ui (depends on master)
+	// (optional) rpcproxies (depends on master)
+	// (optional) tcpproxies (depends on master)
+	// (optional) execnodes (depends on master)
+	// (optional) tabletnodes (depends on master, yt client)
+	// (optional) scheduler (depends on master, exec nodes, tablet nodes)
+	// (optional) controller agents (depends on master)
+	// (optional) querytrackers (depends on yt client and tablet nodes)
+	// (optional) queueagents (depend on y cli, master, tablet nodes)
+	// (optional) yqlagents (depend on master)
+	// (optional) strawberry (depend on master, scheduler, data nodes)
+}
 
 type ComponentManager struct {
 	ytsaurus              *apiProxy.Ytsaurus
 	allComponents         []components.Component
+	allStructured         componentsStructured
 	queryTrackerComponent components.Component
 	schedulerComponent    components.Component
 	status                ComponentManagerStatus
@@ -39,15 +61,21 @@ func NewComponentManager(
 	d := components.NewDiscovery(cfgen, ytsaurus)
 	m := components.NewMaster(cfgen, ytsaurus)
 	var hps []components.Component
+	var hps2 []components.Component2
 	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {
-		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
+		hp := components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec)
+		hps = append(hps, hp)
+		hps2 = append(hps2, hp)
 	}
 	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0])
 
 	var dnds []components.Component
+	var dnds2 []components.Component2
 	if resource.Spec.DataNodes != nil && len(resource.Spec.DataNodes) > 0 {
 		for _, dndSpec := range ytsaurus.GetResource().Spec.DataNodes {
-			dnds = append(dnds, components.NewDataNode(cfgen, ytsaurus, m, dndSpec))
+			dns := components.NewDataNode(cfgen, ytsaurus, m, dndSpec)
+			dnds = append(dnds, dns)
+			dnds2 = append(dnds2, dns)
 		}
 	}
 
@@ -184,8 +212,15 @@ func NewComponentManager(
 		"clusterState", resource.Status.State)
 
 	return &ComponentManager{
-		ytsaurus:              ytsaurus,
-		allComponents:         allComponents,
+		ytsaurus:      ytsaurus,
+		allComponents: allComponents,
+		allStructured: componentsStructured{
+			discovery:   d,
+			master:      m,
+			httpProxies: hps2,
+			ytClient:    yc,
+			dataNodes:   dnds2,
+		},
 		queryTrackerComponent: q,
 		schedulerComponent:    s,
 		status:                status,

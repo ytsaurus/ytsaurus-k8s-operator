@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"context"
+	"os"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -62,6 +64,10 @@ func (r *YtsaurusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 	logger.V(1).Info("found Ytsaurus cluster")
 
+	// temporary
+	if os.Getenv("ENABLE_NEW_FLOW") == "true" {
+		return r.SyncNew(ctx, &ytsaurus)
+	}
 	return r.Sync(ctx, &ytsaurus)
 }
 
