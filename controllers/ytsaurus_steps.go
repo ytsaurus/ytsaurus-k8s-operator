@@ -16,11 +16,12 @@ type Step interface {
 }
 
 type Ytsaurus struct {
-	steps []Step
+	steps         []Step
+	ytsaurusProxy *apiProxy.Ytsaurus
 }
 
-func NewYtsaurus(ctx context.Context, ytsaurus *apiProxy.Ytsaurus) (*Ytsaurus, error) {
-	componentManager, err := NewComponentManager(ctx, ytsaurus)
+func NewYtsaurus(ctx context.Context, ytsaurusProxy *apiProxy.Ytsaurus) (*Ytsaurus, error) {
+	componentManager, err := NewComponentManager(ctx, ytsaurusProxy)
 	if err != nil {
 		return nil, err
 	}
@@ -28,16 +29,17 @@ func NewYtsaurus(ctx context.Context, ytsaurus *apiProxy.Ytsaurus) (*Ytsaurus, e
 
 	discoveryStep := newComponentStep(comps.discovery)
 	masterStep := newComponentStep(comps.master)
-	httpProxiesSteps := make([]Step, len(comps.httpProxies))
+	var httpProxiesSteps []Step
 	for _, hp := range comps.httpProxies {
 		httpProxiesSteps = append(httpProxiesSteps, newComponentStep(hp))
 	}
 	ytsaurusClientStep := newComponentStep(comps.ytClient)
-	dataNodesSteps := make([]Step, len(comps.dataNodes))
+	var dataNodesSteps []Step
 	for _, dn := range comps.dataNodes {
 		dataNodesSteps = append(dataNodesSteps, newComponentStep(dn))
 	}
 
+	// TODO: not lose enable fullUpdate — it should become blocked status
 	steps := concat(
 		enableSafeMode(),
 		saveTabletCells(),
@@ -66,12 +68,9 @@ func NewYtsaurus(ctx context.Context, ytsaurus *apiProxy.Ytsaurus) (*Ytsaurus, e
 		disableSafeMode(),
 	)
 	return &Ytsaurus{
-		steps: steps,
+		ytsaurusProxy: ytsaurusProxy,
+		steps:         steps,
 	}, nil
-}
-
-func (c *Ytsaurus) Fetch(_ context.Context) error {
-	return nil
 }
 
 func (c *Ytsaurus) Status(ctx context.Context) (components.ComponentStatus, error) {
@@ -137,7 +136,7 @@ func enableSafeMode() Step {
 		//    return true
 		return false
 	}
-	return newActionStep(action, doneCheck).WithRunCondition(runCondition)
+	return newActionStep("enableSafeMode", action, doneCheck).WithRunCondition(runCondition)
 }
 func saveTabletCells() Step {
 	action := func(context.Context) error {
@@ -153,7 +152,7 @@ func saveTabletCells() Step {
 		// reuse some code from maybeEnableSafeModeStep about master/data/tablet statuses
 		return false
 	}
-	return newActionStep(action, doneCheck).WithRunCondition(runCondition)
+	return newActionStep("saveTabletCells", action, doneCheck).WithRunCondition(runCondition)
 }
 func removeTabletCells() Step {
 	action := func(context.Context) error {
@@ -170,7 +169,7 @@ func removeTabletCells() Step {
 		// reuse some code from maybeEnableSafeModeStep about master/data/tablet statuses
 		return false
 	}
-	return newActionStep(action, doneCheck).WithRunCondition(runCondition)
+	return newActionStep("removeTabletCells", action, doneCheck).WithRunCondition(runCondition)
 }
 func buildMasterSnapshots() Step {
 	action := func(context.Context) error {
@@ -187,7 +186,7 @@ func buildMasterSnapshots() Step {
 		// reuse some code from maybeEnableSafeModeStep about master/data/tablet statuses
 		return false
 	}
-	return newActionStep(action, doneCheck).WithRunCondition(runCondition)
+	return newActionStep("buildMasterSnapshots", action, doneCheck).WithRunCondition(runCondition)
 }
 
 // maybe it shouldn't be inside master at all
@@ -200,7 +199,7 @@ func masterExitReadOnly() Step {
 		// is read only check
 		return false, nil
 	}
-	return newActionStep(action, doneCheck)
+	return newActionStep("masterExitReadOnly", action, doneCheck)
 }
 func recoverTableCells() Step {
 	action := func(context.Context) error {
@@ -212,7 +211,7 @@ func recoverTableCells() Step {
 		// check TabletCellBundles not empty &&  TabletCellBundles != //sys/tablet_cell_bundles ??
 		return false, nil
 	}
-	return newActionStep(action, doneCheck)
+	return newActionStep("recoverTableCells", action, doneCheck)
 }
 
 // maybe prepare is needed also?
@@ -227,7 +226,7 @@ func updateOpArchive() Step {
 		// check script and understand how to check if archive is inited
 		return false, nil
 	}
-	return newActionStep(action, doneCheck)
+	return newActionStep("updateOpArchive", action, doneCheck)
 }
 func updateQTState() Step {
 	action := func(context.Context) error {
@@ -240,7 +239,7 @@ func updateQTState() Step {
 		// check /usr/bin/init_query_tracker_state script and understand how to check if qt state is set
 		return false, nil
 	}
-	return newActionStep(action, doneCheck)
+	return newActionStep("updateQTState", action, doneCheck)
 }
 func disableSafeMode() Step {
 	action := func(context.Context) error {
@@ -251,7 +250,7 @@ func disableSafeMode() Step {
 		// check @enable_safe_mode is false
 		return false, nil
 	}
-	return newActionStep(action, doneCheck)
+	return newActionStep("disableSafeMode", action, doneCheck)
 }
 
 func concat(items ...interface{}) []Step {

@@ -30,8 +30,8 @@ func (r *YtsaurusReconciler) SyncNew(ctx context.Context, resource *ytv1.Ytsauru
 		return requeueLater, nil
 	}
 
-	ytsaurus := apiProxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
-	ytsaurusComponent, err := NewYtsaurus(ctx, ytsaurus)
+	ytsaurusProxy := apiProxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
+	ytsaurusComponent, err := NewYtsaurus(ctx, ytsaurusProxy)
 	if err != nil {
 		return requeueASAP, err
 	}
@@ -41,12 +41,20 @@ func (r *YtsaurusReconciler) SyncNew(ctx context.Context, resource *ytv1.Ytsauru
 		return requeueASAP, err
 	}
 	if !status.IsReady() {
+		err = ytsaurusProxy.SaveClusterState(ctx, ytv1.ClusterStateUpdating)
+		if err != nil {
+			return requeueASAP, err
+		}
 		// TODO: maybe we need a different behaviour for different statuses
 		// TODO: maybe we need a different requeue time for different statuses
 		err = ytsaurusComponent.Sync(ctx)
 		return requeueSoon, err
 	}
 
+	err = ytsaurusProxy.SaveClusterState(ctx, ytv1.ClusterStateRunning)
+	if err != nil {
+		return requeueASAP, err
+	}
 	logger.Info("Ytsaurus is running and happy")
 	return requeueNot, nil
 }

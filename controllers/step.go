@@ -34,7 +34,12 @@ func (s *baseStep) ShouldRun() bool {
 }
 
 func newComponentStep(component components.Component2) *componentStep {
-	return &componentStep{component: component}
+	return &componentStep{
+		baseStep: baseStep{
+			name: component.GetName(),
+		},
+		component: component,
+	}
 }
 func (s *componentStep) WithRunCondition(condition func() bool) *componentStep {
 	s.runCondition = condition
@@ -45,14 +50,18 @@ func (s *componentStep) Done(ctx context.Context) (bool, error) {
 	return status.IsReady(), err
 }
 func (s *componentStep) Run(ctx context.Context) error {
-	return s.component.Sync(ctx)
+	return s.component.Sync2(ctx)
 }
 
 func newActionStep(
+	name string,
 	action func(context.Context) error,
 	doneCheck func(context.Context) (bool, error),
 ) *actionStep {
 	return &actionStep{
+		baseStep: baseStep{
+			name: name,
+		},
 		action:    action,
 		doneCheck: doneCheck,
 	}
