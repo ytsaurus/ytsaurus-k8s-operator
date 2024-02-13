@@ -50,4 +50,6 @@ const (
 	QueueAgentMonitoringPort = 10030
 
 	UIHTTPPort = 80
+
+	StrawberryHTTPAPIPort = 80
 )

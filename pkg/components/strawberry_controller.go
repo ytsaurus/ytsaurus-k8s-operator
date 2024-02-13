@@ -18,7 +18,7 @@ import (
 type strawberryController struct {
 	componentBase
 	microservice       microservice
-	initUserJob        *InitJob
+	initUserAndUrlJob  *InitJob
 	initChytClusterJob *InitJob
 	secret             *resources.StringSecret
 
@@ -92,7 +92,7 @@ func NewStrawberryController(
 			cfgen:    cfgen,
 		},
 		microservice: microservice,
-		initUserJob: NewInitJob(
+		initUserAndUrlJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
@@ -128,7 +128,7 @@ func (c *strawberryController) IsUpdatable() bool {
 func (c *strawberryController) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		c.microservice,
-		c.initUserJob,
+		c.initUserAndUrlJob,
 		c.initChytClusterJob,
 		c.secret,
 	)
@@ -140,10 +140,13 @@ func (c *strawberryController) initUsers() string {
 	return strings.Join(commands, "\n")
 }
 
-func (c *strawberryController) createInitUserScript() string {
+func (c *strawberryController) createInitUserAndUrlScript() string {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		c.initUsers(),
+		RunIfNonexistent("//sys/@ui_config", "yt set //sys/@ui_config '{}'"),
+		fmt.Sprintf("yt set //sys/@ui_config/chyt_controller_base_url '\"http://%v:%v\"'",
+        	c.microservice.getHttpService().Name(), consts.StrawberryHTTPAPIPort),
 	}
 
 	return strings.Join(script, "\n")
@@ -260,9 +263,9 @@ func (c *strawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 	}
 
 	if !dry {
-		c.initUserJob.SetInitScript(c.createInitUserScript())
+		c.initUserAndUrlJob.SetInitScript(c.createInitUserAndUrlScript())
 	}
-	status, err := c.initUserJob.Sync(ctx, dry)
+	status, err := c.initUserAndUrlJob.Sync(ctx, dry)
 	if err != nil || status.SyncStatus != SyncStatusReady {
 		return status, err
 	}
