@@ -49,11 +49,7 @@ type ComponentManagerStatus struct {
 	allReadyOrUpdating bool
 }
 
-func NewComponentManager(
-	ctx context.Context,
-	ytsaurus *apiProxy.Ytsaurus,
-) (*ComponentManager, error) {
-	logger := log.FromContext(ctx)
+func NewComponentManager(ytsaurus *apiProxy.Ytsaurus) (*ComponentManager, error) {
 	resource := ytsaurus.GetResource()
 
 	cfgen := ytconfig.NewGenerator(resource, getClusterDomain(ytsaurus.APIProxy().Client()))
@@ -154,7 +150,24 @@ func NewComponentManager(
 		strawberry := components.NewStrawberryController(cfgen, ytsaurus, m, s, dnds)
 		allComponents = append(allComponents, strawberry)
 	}
+	return &ComponentManager{
+		ytsaurus:      ytsaurus,
+		allComponents: allComponents,
+		allStructured: componentsStructured{
+			discovery:   d,
+			master:      m,
+			httpProxies: hps2,
+			ytClient:    yc,
+			dataNodes:   dnds2,
+		},
+		queryTrackerComponent: q,
+		schedulerComponent:    s,
+		//status:                status,
+	}, nil
+}
 
+func (cm *ComponentManager) FetchAll(ctx context.Context) error {
+	logger := log.FromContext(ctx)
 	// Fetch component status.
 	var readyComponents []string
 	var notReadyComponents []string
@@ -166,11 +179,11 @@ func NewComponentManager(
 		needLocalUpdate:    nil,
 		allReadyOrUpdating: true,
 	}
-	for _, c := range allComponents {
+	for _, c := range cm.allComponents {
 		err := c.Fetch(ctx)
 		if err != nil {
 			logger.Error(err, "failed to fetch status for controller", "component", c.GetName())
-			return nil, err
+			return nil
 		}
 
 		componentStatus := c.Status(ctx)
@@ -205,26 +218,15 @@ func NewComponentManager(
 		}
 	}
 
+	resource := cm.ytsaurus.GetResource()
 	logger.Info("Ytsaurus sync status",
 		"notReadyComponents", notReadyComponents,
 		"readyComponents", readyComponents,
 		"updateState", resource.Status.UpdateStatus.State,
 		"clusterState", resource.Status.State)
 
-	return &ComponentManager{
-		ytsaurus:      ytsaurus,
-		allComponents: allComponents,
-		allStructured: componentsStructured{
-			discovery:   d,
-			master:      m,
-			httpProxies: hps2,
-			ytClient:    yc,
-			dataNodes:   dnds2,
-		},
-		queryTrackerComponent: q,
-		schedulerComponent:    s,
-		status:                status,
-	}, nil
+	cm.status = status
+	return nil
 }
 
 func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {

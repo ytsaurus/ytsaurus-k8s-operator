@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -19,13 +20,38 @@ const (
 
 func TestYtsaurusFromScratch(t *testing.T) {
 	require.NoError(t, os.Setenv("ENABLE_NEW_FLOW", "true"))
-	h := newTestHelper(t, "ytsaurus-from-scratch")
+	namespace := "ytsaurus-from-scratch"
+	h := newTestHelper(t, namespace)
 	h.start()
 	defer h.stop()
 
 	remoteYtsaurusSpec := buildMinimalYtsaurus(h, ytsaurusName)
 	deployObject(h, &remoteYtsaurusSpec)
 
+	fetchAndCheckEventually(
+		h,
+		"ds",
+		&appsv1.StatefulSet{},
+		func(obj client.Object) bool { return true },
+	)
+	fetchAndCheckConfigMapContainsEventually(
+		h,
+		"yt-discovery-config",
+		"ytserver-discovery.yson",
+		"ms-0.masters."+namespace+".svc.cluster.local:9010",
+	)
+	fetchAndCheckEventually(
+		h,
+		"ms",
+		&appsv1.StatefulSet{},
+		func(obj client.Object) bool { return true },
+	)
+	fetchAndCheckConfigMapContainsEventually(
+		h,
+		"yt-master-config",
+		"ytserver-master.yson",
+		"ds-0.discovery."+namespace+".svc.cluster.local:9020",
+	)
 	fetchAndCheckEventually(
 		h,
 		ytsaurusName,
@@ -44,6 +70,7 @@ func buildMinimalYtsaurus(h *testHelper, name string) ytv1.Ytsaurus {
 			CoreImage:        testYtsaurusImage,
 			IsManaged:        true,
 			EnableFullUpdate: false,
+			UseShortNames:    true,
 
 			Discovery: ytv1.DiscoverySpec{
 				InstanceSpec: ytv1.InstanceSpec{
@@ -53,13 +80,23 @@ func buildMinimalYtsaurus(h *testHelper, name string) ytv1.Ytsaurus {
 			PrimaryMasters: ytv1.MastersSpec{
 				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount: 3,
+					Locations: []ytv1.LocationSpec{
+						{
+							LocationType: "MasterChangelogs",
+							Path:         "/yt/master-data/master-changelogs",
+						},
+						{
+							LocationType: "MasterSnapshots",
+							Path:         "/yt/master-data/master-snapshots",
+						},
+					},
 				},
 				CellTag: 1,
 			},
 			HTTPProxies: []ytv1.HTTPProxiesSpec{
 				{
 					InstanceSpec: ytv1.InstanceSpec{InstanceCount: 3},
-					ServiceType:  v1.ServiceTypeNodePort,
+					ServiceType:  corev1.ServiceTypeNodePort,
 				},
 			},
 			DataNodes: []ytv1.DataNodesSpec{

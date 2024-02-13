@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-logr/logr/testr"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -72,6 +73,7 @@ func (h *testHelper) start() {
 		// To get rid of macOS' accept incoming network connections popup
 		MetricsBindAddress:     "0",
 		HealthProbeBindAddress: "0",
+		Logger:                 testr.New(t),
 	})
 	require.NoError(t, err)
 
@@ -199,4 +201,21 @@ func eventually(h *testHelper, condition func() bool) {
 		waitTime,
 		eventuallyTickTime,
 	)
+}
+
+func fetchAndCheckConfigMapContainsEventually(h *testHelper, objectKey, cmKey, expectSubstr string) {
+	var cmData map[string]string
+	fetchAndCheckEventually(
+		h,
+		objectKey,
+		&corev1.ConfigMap{},
+		func(obj client.Object) bool {
+			cmData = obj.(*corev1.ConfigMap).Data
+			return true
+		},
+	)
+	require.Contains(h.t, cmData, cmKey)
+	ysonContent := cmData[cmKey]
+	require.Contains(h.t, ysonContent, expectSubstr)
+
 }

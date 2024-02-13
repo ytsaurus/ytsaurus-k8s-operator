@@ -4,6 +4,8 @@ import (
 	"context"
 	"reflect"
 
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
 )
@@ -21,7 +23,7 @@ type Ytsaurus struct {
 }
 
 func NewYtsaurus(ctx context.Context, ytsaurusProxy *apiProxy.Ytsaurus) (*Ytsaurus, error) {
-	componentManager, err := NewComponentManager(ctx, ytsaurusProxy)
+	componentManager, err := NewComponentManager(ytsaurusProxy)
 	if err != nil {
 		return nil, err
 	}
@@ -29,27 +31,27 @@ func NewYtsaurus(ctx context.Context, ytsaurusProxy *apiProxy.Ytsaurus) (*Ytsaur
 
 	discoveryStep := newComponentStep(comps.discovery)
 	masterStep := newComponentStep(comps.master)
-	var httpProxiesSteps []Step
-	for _, hp := range comps.httpProxies {
-		httpProxiesSteps = append(httpProxiesSteps, newComponentStep(hp))
-	}
-	ytsaurusClientStep := newComponentStep(comps.ytClient)
-	var dataNodesSteps []Step
-	for _, dn := range comps.dataNodes {
-		dataNodesSteps = append(dataNodesSteps, newComponentStep(dn))
-	}
+	//var httpProxiesSteps []Step
+	//for _, hp := range comps.httpProxies {
+	//	httpProxiesSteps = append(httpProxiesSteps, newComponentStep(hp))
+	//}
+	//ytsaurusClientStep := newComponentStep(comps.ytClient)
+	//var dataNodesSteps []Step
+	//for _, dn := range comps.dataNodes {
+	//	dataNodesSteps = append(dataNodesSteps, newComponentStep(dn))
+	//}
 
 	// TODO: not lose enable fullUpdate — it should become blocked status
 	steps := concat(
-		enableSafeMode(),
-		saveTabletCells(),
-		removeTabletCells(),
-		buildMasterSnapshots(),
+		//enableSafeMode(),
+		//saveTabletCells(),
+		//removeTabletCells(),
+		//buildMasterSnapshots(),
 		discoveryStep,
 		masterStep,
-		httpProxiesSteps,
-		ytsaurusClientStep,
-		dataNodesSteps,
+		//httpProxiesSteps,
+		//ytsaurusClientStep,
+		//dataNodesSteps,
 		// (optional) ui (depends on master)
 		// (optional) rpcproxies (depends on master)
 		// (optional) tcpproxies (depends on master)
@@ -61,11 +63,11 @@ func NewYtsaurus(ctx context.Context, ytsaurusProxy *apiProxy.Ytsaurus) (*Ytsaur
 		// (optional) queueagents (depend on y cli, master, tablet nodes)
 		// (optional) yqlagents (depend on master)
 		// (optional) strawberry (depend on master, scheduler, data nodes)
-		masterExitReadOnly(),
-		recoverTableCells(),
-		updateOpArchive(),
-		updateQTState(),
-		disableSafeMode(),
+		//masterExitReadOnly(),
+		//recoverTableCells(),
+		//updateOpArchive(),
+		//updateQTState(),
+		//disableSafeMode(),
 	)
 	return &Ytsaurus{
 		ytsaurusProxy: ytsaurusProxy,
@@ -74,8 +76,11 @@ func NewYtsaurus(ctx context.Context, ytsaurusProxy *apiProxy.Ytsaurus) (*Ytsaur
 }
 
 func (c *Ytsaurus) Status(ctx context.Context) (components.ComponentStatus, error) {
+	logger := log.FromContext(ctx)
+
 	for _, step := range c.steps {
-		if step.ShouldRun() {
+		if !step.ShouldRun() {
+			logger.Info(step.GetName() + " step shouldn't run")
 			continue
 		}
 		done, err := step.Done(ctx)
@@ -97,8 +102,11 @@ func (c *Ytsaurus) Status(ctx context.Context) (components.ComponentStatus, erro
 }
 
 func (c *Ytsaurus) Sync(ctx context.Context) error {
+	logger := log.FromContext(ctx)
+
 	for _, step := range c.steps {
-		if step.ShouldRun() {
+		if !step.ShouldRun() {
+			logger.Info(step.GetName() + " step shouldn't run")
 			continue
 		}
 		done, err := step.Done(ctx)
@@ -106,8 +114,10 @@ func (c *Ytsaurus) Sync(ctx context.Context) error {
 			return err
 		}
 		if done {
+			logger.Info(step.GetName() + " step is already done")
 			continue
 		}
+		logger.Info("Going to run step: " + step.GetName())
 		return step.Run(ctx)
 	}
 	return nil

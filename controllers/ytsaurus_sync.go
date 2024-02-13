@@ -48,6 +48,9 @@ func (r *YtsaurusReconciler) SyncNew(ctx context.Context, resource *ytv1.Ytsauru
 		// TODO: maybe we need a different behaviour for different statuses
 		// TODO: maybe we need a different requeue time for different statuses
 		err = ytsaurusComponent.Sync(ctx)
+		if err != nil {
+			logger.Error(err, "failed to sync ytsaurus")
+		}
 		return requeueSoon, err
 	}
 

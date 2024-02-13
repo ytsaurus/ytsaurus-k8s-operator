@@ -46,10 +46,18 @@ func (s *componentStep) WithRunCondition(condition func() bool) *componentStep {
 	return s
 }
 func (s *componentStep) Done(ctx context.Context) (bool, error) {
+	err := s.component.Fetch(ctx)
+	if err != nil {
+		return false, err
+	}
 	status, err := s.component.Status2(ctx)
 	return status.IsReady(), err
 }
 func (s *componentStep) Run(ctx context.Context) error {
+	err := s.component.Fetch(ctx)
+	if err != nil {
+		return err
+	}
 	return s.component.Sync2(ctx)
 }
 
