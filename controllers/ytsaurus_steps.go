@@ -46,7 +46,7 @@ func NewYtsaurusSteps(ytsaurusProxy *apiProxy.Ytsaurus) (*YtsaurusSteps, error) 
 		dataNodesSteps = append(dataNodesSteps, newComponentStep(dn))
 	}
 
-	//spec := ytsaurusProxy.GetResource().Spec
+	//ytsaurusResource := ytsaurusProxy.GetResource()
 	// TODO: not lose enable fullUpdate — it should become blocked status
 	steps := concat(
 		enableSafeMode(yc, comps.master),
@@ -150,28 +150,21 @@ func enableSafeMode(yc components.YtsaurusClient, master components.Component2) 
 	return newActionStep("enableSafeMode", action, doneCheck).WithRunCondition(runCondition)
 }
 func saveTabletCells(yc components.YtsaurusClient, master components.Component2) Step {
-	action := func(context.Context) error {
-		// use ytclient code
-		// ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles = tabletCellBundles
-		return nil
+	action := func(ctx context.Context) error {
+		return yc.SaveTableCellsAndUpdateState(ctx)
 	}
 	doneCheck := func(context.Context) (bool, error) {
-		// check ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles not empty?
-		return false, nil
+		return yc.IsTableCellsSaved(), nil
 	}
 	runCondition := getFullUpdateCondition(yc, master)
 	return newActionStep("saveTabletCells", action, doneCheck).WithRunCondition(runCondition)
 }
 func removeTabletCells(yc components.YtsaurusClient, master components.Component2) Step {
-	action := func(context.Context) error {
-		// use ytclient code
-		// yc.ytClient.RemoveNode
-		return nil
+	action := func(ctx context.Context) error {
+		return yc.RemoveTableCells(ctx)
 	}
-	doneCheck := func(context.Context) (bool, error) {
-		// check //sys/tablet_cells is empty?
-		// like in UpdateStateWaitingForTabletCellsRemoved
-		return false, nil
+	doneCheck := func(ctx context.Context) (bool, error) {
+		return yc.AreTabletCellsRemoved(ctx)
 	}
 	runCondition := getFullUpdateCondition(yc, master)
 	return newActionStep("removeTabletCells", action, doneCheck).WithRunCondition(runCondition)

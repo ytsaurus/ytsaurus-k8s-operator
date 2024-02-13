@@ -25,8 +25,12 @@ type YtsaurusClient interface {
 	Component2
 	GetYtClient() yt.Client
 	HandlePossibilityCheck(context.Context) (bool, string, error)
-	EnableSafeMode(ctx context.Context) error
+	EnableSafeMode(context.Context) error
 	IsSafeModeEnabled(context.Context) (bool, error)
+	SaveTableCellsAndUpdateState(ctx context.Context) error
+	IsTableCellsSaved() bool
+	RemoveTableCells(context.Context) error
+	AreTabletCellsRemoved(context.Context) (bool, error)
 }
 
 type ytsaurusClient struct {
@@ -179,143 +183,6 @@ func (yc *ytsaurusClient) startBuildMasterSnapshots(ctx context.Context) error {
 	return err
 }
 
-func (yc *ytsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, msg string, err error) {
-	if !yc.ytsaurus.GetResource().Spec.EnableFullUpdate {
-		msg = "Full update is not enabled"
-		yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    consts.ConditionNoPossibility,
-			Status:  metav1.ConditionTrue,
-			Reason:  "Update",
-			Message: msg,
-		})
-		return false, msg, nil
-	}
-
-	// Check tablet cell bundles.
-	notGoodBundles, err := GetNotGoodTabletCellBundles(ctx, yc.ytClient)
-
-	if err != nil {
-		return
-	}
-
-	if len(notGoodBundles) > 0 {
-		msg = fmt.Sprintf("Tablet cell bundles (%v) aren't in 'good' health", notGoodBundles)
-		yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    consts.ConditionNoPossibility,
-			Status:  metav1.ConditionTrue,
-			Reason:  "Update",
-			Message: msg,
-		})
-		return false, msg, nil
-	}
-
-	// Check LVC.
-	lvcCount := 0
-	err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/lost_vital_chunks/@count"), &lvcCount, nil)
-	if err != nil {
-		return
-	}
-
-	if lvcCount > 0 {
-		msg = fmt.Sprintf("There are lost vital chunks: %v", lvcCount)
-		yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    consts.ConditionNoPossibility,
-			Status:  metav1.ConditionTrue,
-			Reason:  "Update",
-			Message: msg,
-		})
-		return false, msg, nil
-	}
-
-	// Check QMC.
-	qmcCount := 0
-	err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/quorum_missing_chunks/@count"), &qmcCount, nil)
-	if err != nil {
-		return
-	}
-
-	if qmcCount > 0 {
-		msg = fmt.Sprintf("There are quorum missing chunks: %v", qmcCount)
-		yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    consts.ConditionNoPossibility,
-			Status:  metav1.ConditionTrue,
-			Reason:  "Update",
-			Message: msg,
-		})
-		return false, msg, nil
-	}
-
-	// Check masters.
-	primaryMasterAddresses := make([]string, 0)
-	err = yc.ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &primaryMasterAddresses, nil)
-	if err != nil {
-		return
-	}
-
-	leadingPrimaryMasterCount := 0
-	followingPrimaryMasterCount := 0
-
-	for _, primaryMasterAddress := range primaryMasterAddresses {
-		var hydra MasterHydra
-		err = yc.ytClient.GetNode(
-			ctx,
-			ypath.Path(fmt.Sprintf("//sys/primary_masters/%v/orchid/monitoring/hydra", primaryMasterAddress)),
-			&hydra,
-			nil)
-		if err != nil {
-			return
-		}
-
-		if !hydra.Active {
-			msg = fmt.Sprintf("There is a non-active master: %v", primaryMasterAddresses)
-			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionNoPossibility,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Update",
-				Message: msg,
-			})
-			return false, msg, nil
-		}
-
-		switch hydra.State {
-		case MasterStateLeading:
-			leadingPrimaryMasterCount += 1
-		case MasterStateFollowing:
-			followingPrimaryMasterCount += 1
-		}
-	}
-
-	if !(leadingPrimaryMasterCount == 1 && followingPrimaryMasterCount+1 == len(primaryMasterAddresses)) {
-		msg = fmt.Sprintf("There is no leader or some peer is not active")
-		yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    consts.ConditionNoPossibility,
-			Status:  metav1.ConditionTrue,
-			Reason:  "Update",
-			Message: msg,
-		})
-		return false, msg, nil
-	}
-
-	msg = "Update is possible"
-	yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionHasPossibility,
-		Status:  metav1.ConditionTrue,
-		Reason:  "Update",
-		Message: msg,
-	})
-	return true, "", nil
-}
-
-func (yc *ytsaurusClient) EnableSafeMode(ctx context.Context) error {
-	return yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), true, nil)
-}
-
-func (yc *ytsaurusClient) IsSafeModeEnabled(ctx context.Context) (bool, error) {
-	var isEnabled bool
-	err := yc.ytClient.GetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), isEnabled, nil)
-	return isEnabled, err
-}
-
 func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentStatus, error) {
 	var err error
 
@@ -346,84 +213,28 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 	case ytv1.UpdateStateWaitingForTabletCellsSaving:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsSaved) {
-			var tabletCellBundles []ytv1.TabletCellBundleInfo
-			err := yc.ytClient.ListNode(
-				ctx,
-				ypath.Path("//sys/tablet_cell_bundles"),
-				&tabletCellBundles,
-				&yt.ListNodeOptions{Attributes: []string{"tablet_cell_count"}})
-
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-
-			yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles = tabletCellBundles
-
-			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionTabletCellsSaved,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Update",
-				Message: "Tablet cells were saved",
-			})
-			return SimpleStatus(SyncStatusUpdating), nil
+			return SimpleStatus(SyncStatusUpdating), yc.saveTableCells(ctx)
 		}
 
 	case ytv1.UpdateStateWaitingForTabletCellsRemovingStart:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemovingStarted) {
-
-			var tabletCells []string
-			err := yc.ytClient.ListNode(
-				ctx,
-				ypath.Path("//sys/tablet_cells"),
-				&tabletCells,
-				nil)
-
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-
-			for _, tabletCell := range tabletCells {
-				err := yc.ytClient.RemoveNode(
-					ctx,
-					ypath.Path(fmt.Sprintf("//sys/tablet_cells/%s", tabletCell)),
-					nil)
-				if err != nil {
-					return SimpleStatus(SyncStatusUpdating), err
-				}
-			}
-
-			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionTabletCellsRemovingStarted,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Update",
-				Message: "Tablet cells removing was started",
-			})
-			return SimpleStatus(SyncStatusUpdating), nil
+			return SimpleStatus(SyncStatusUpdating), yc.RemoveTableCells(ctx)
 		}
 
 	case ytv1.UpdateStateWaitingForTabletCellsRemoved:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemoved) {
-			var tabletCells []string
-			err := yc.ytClient.ListNode(
-				ctx,
-				ypath.Path("//sys/tablet_cells"),
-				&tabletCells,
-				nil)
-
+			removed, err := yc.AreTabletCellsRemoved(ctx)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
 			}
-
-			if len(tabletCells) != 0 {
-				return SimpleStatus(SyncStatusUpdating), err
+			if removed {
+				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+					Type:    consts.ConditionTabletCellsRemoved,
+					Status:  metav1.ConditionTrue,
+					Reason:  "Update",
+					Message: "Tablet cells were removed",
+				})
 			}
-
-			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionTabletCellsRemoved,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Update",
-				Message: "Tablet cells were removed",
-			})
 			return SimpleStatus(SyncStatusUpdating), nil
 		}
 
@@ -607,4 +418,227 @@ func (yc *ytsaurusClient) Sync(ctx context.Context) error {
 
 func (yc *ytsaurusClient) GetYtClient() yt.Client {
 	return yc.ytClient
+}
+
+func (yc *ytsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, msg string, err error) {
+	if !yc.ytsaurus.GetResource().Spec.EnableFullUpdate {
+		msg = "Full update is not enabled"
+		yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    consts.ConditionNoPossibility,
+			Status:  metav1.ConditionTrue,
+			Reason:  "Update",
+			Message: msg,
+		})
+		return false, msg, nil
+	}
+
+	// Check tablet cell bundles.
+	notGoodBundles, err := GetNotGoodTabletCellBundles(ctx, yc.ytClient)
+
+	if err != nil {
+		return
+	}
+
+	if len(notGoodBundles) > 0 {
+		msg = fmt.Sprintf("Tablet cell bundles (%v) aren't in 'good' health", notGoodBundles)
+		yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    consts.ConditionNoPossibility,
+			Status:  metav1.ConditionTrue,
+			Reason:  "Update",
+			Message: msg,
+		})
+		return false, msg, nil
+	}
+
+	// Check LVC.
+	lvcCount := 0
+	err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/lost_vital_chunks/@count"), &lvcCount, nil)
+	if err != nil {
+		return
+	}
+
+	if lvcCount > 0 {
+		msg = fmt.Sprintf("There are lost vital chunks: %v", lvcCount)
+		yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    consts.ConditionNoPossibility,
+			Status:  metav1.ConditionTrue,
+			Reason:  "Update",
+			Message: msg,
+		})
+		return false, msg, nil
+	}
+
+	// Check QMC.
+	qmcCount := 0
+	err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/quorum_missing_chunks/@count"), &qmcCount, nil)
+	if err != nil {
+		return
+	}
+
+	if qmcCount > 0 {
+		msg = fmt.Sprintf("There are quorum missing chunks: %v", qmcCount)
+		yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    consts.ConditionNoPossibility,
+			Status:  metav1.ConditionTrue,
+			Reason:  "Update",
+			Message: msg,
+		})
+		return false, msg, nil
+	}
+
+	// Check masters.
+	primaryMasterAddresses := make([]string, 0)
+	err = yc.ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &primaryMasterAddresses, nil)
+	if err != nil {
+		return
+	}
+
+	leadingPrimaryMasterCount := 0
+	followingPrimaryMasterCount := 0
+
+	for _, primaryMasterAddress := range primaryMasterAddresses {
+		var hydra MasterHydra
+		err = yc.ytClient.GetNode(
+			ctx,
+			ypath.Path(fmt.Sprintf("//sys/primary_masters/%v/orchid/monitoring/hydra", primaryMasterAddress)),
+			&hydra,
+			nil)
+		if err != nil {
+			return
+		}
+
+		if !hydra.Active {
+			msg = fmt.Sprintf("There is a non-active master: %v", primaryMasterAddresses)
+			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+				Type:    consts.ConditionNoPossibility,
+				Status:  metav1.ConditionTrue,
+				Reason:  "Update",
+				Message: msg,
+			})
+			return false, msg, nil
+		}
+
+		switch hydra.State {
+		case MasterStateLeading:
+			leadingPrimaryMasterCount += 1
+		case MasterStateFollowing:
+			followingPrimaryMasterCount += 1
+		}
+	}
+
+	if !(leadingPrimaryMasterCount == 1 && followingPrimaryMasterCount+1 == len(primaryMasterAddresses)) {
+		msg = fmt.Sprintf("There is no leader or some peer is not active")
+		yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    consts.ConditionNoPossibility,
+			Status:  metav1.ConditionTrue,
+			Reason:  "Update",
+			Message: msg,
+		})
+		return false, msg, nil
+	}
+
+	msg = "Update is possible"
+	yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    consts.ConditionHasPossibility,
+		Status:  metav1.ConditionTrue,
+		Reason:  "Update",
+		Message: msg,
+	})
+	return true, "", nil
+}
+
+func (yc *ytsaurusClient) EnableSafeMode(ctx context.Context) error {
+	return yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), true, nil)
+}
+
+func (yc *ytsaurusClient) IsSafeModeEnabled(ctx context.Context) (bool, error) {
+	var isEnabled bool
+	err := yc.ytClient.GetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), isEnabled, nil)
+	return isEnabled, err
+}
+
+func (yc *ytsaurusClient) saveTableCells(ctx context.Context) error {
+	var tabletCellBundles []ytv1.TabletCellBundleInfo
+	err := yc.ytClient.ListNode(
+		ctx,
+		ypath.Path("//sys/tablet_cell_bundles"),
+		&tabletCellBundles,
+		&yt.ListNodeOptions{Attributes: []string{"tablet_cell_count"}})
+
+	if err != nil {
+		return err
+	}
+
+	yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles = tabletCellBundles
+
+	yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    consts.ConditionTabletCellsSaved,
+		Status:  metav1.ConditionTrue,
+		Reason:  "Update",
+		Message: "Tablet cells were saved",
+	})
+	return nil
+}
+
+func (yc *ytsaurusClient) SaveTableCellsAndUpdateState(ctx context.Context) error {
+	err := yc.saveTableCells(ctx)
+	if err != nil {
+		return err
+	}
+	return yc.ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateNone)
+}
+
+func (yc *ytsaurusClient) IsTableCellsSaved() bool {
+	// FIXME: is it a good check? What if we have 0 table cells for example?
+	return len(yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles) != 0
+}
+
+func (yc *ytsaurusClient) RemoveTableCells(ctx context.Context) error {
+	// FIXME: this needs locking or it can't be two reconciler loops in the same time?
+	var tabletCells []string
+	err := yc.ytClient.ListNode(
+		ctx,
+		ypath.Path("//sys/tablet_cells"),
+		&tabletCells,
+		nil)
+
+	if err != nil {
+		return err
+	}
+
+	for _, tabletCell := range tabletCells {
+		err = yc.ytClient.RemoveNode(
+			ctx,
+			ypath.Path(fmt.Sprintf("//sys/tablet_cells/%s", tabletCell)),
+			nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    consts.ConditionTabletCellsRemovingStarted,
+		Status:  metav1.ConditionTrue,
+		Reason:  "Update",
+		Message: "Tablet cells removing was started",
+	})
+	return nil
+}
+
+func (yc *ytsaurusClient) AreTabletCellsRemoved(ctx context.Context) (bool, error) {
+	var tabletCells []string
+	err := yc.ytClient.ListNode(
+		ctx,
+		ypath.Path("//sys/tablet_cells"),
+		&tabletCells,
+		nil)
+
+	if err != nil {
+		return false, err
+	}
+
+	if len(tabletCells) != 0 {
+		return false, err
+	}
+	return true, nil
 }
