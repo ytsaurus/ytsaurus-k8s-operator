@@ -15,6 +15,9 @@ type Step interface {
 	ShouldRun() bool
 	Run(ctx context.Context) error
 	Done(ctx context.Context) (bool, error)
+	// Status return step status. It is not nice to use ComponentStatus for anything
+	// but components, but let us do that for simplicity now and migrate later.
+	Status(ctx context.Context) (components.ComponentStatus, error)
 }
 
 type Ytsaurus struct {
@@ -83,17 +86,28 @@ func (c *Ytsaurus) Status(ctx context.Context) (components.ComponentStatus, erro
 			logger.Info(step.GetName() + " step shouldn't run")
 			continue
 		}
-		done, err := step.Done(ctx)
+		status, err := step.Status(ctx)
 		if err != nil {
 			return components.ComponentStatus{}, err
 		}
-		if done {
+		if status.IsReady() {
 			continue
 		}
 
+		stepSyncStatus := status.SyncStatus
+		var ytsarurusSyncStatus components.SyncStatus
+		switch stepSyncStatus {
+		case components.SyncStatusBlocked:
+			ytsarurusSyncStatus = components.SyncStatusBlocked
+		case components.SyncStatusUpdating:
+			ytsarurusSyncStatus = components.SyncStatusUpdating
+		default:
+			ytsarurusSyncStatus = components.SyncStatusNeedLocalUpdate
+		}
+
 		return components.ComponentStatus{
-			SyncStatus: components.SyncStatusPending,
-			Message:    step.GetName() + " is not done",
+			SyncStatus: ytsarurusSyncStatus,
+			Message:    step.GetName() + " is not done: " + status.Message,
 		}, nil
 	}
 	return components.ComponentStatus{

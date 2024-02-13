@@ -478,6 +478,8 @@ type YtsaurusSpec struct {
 
 type ClusterState string
 
+// TODO: I'm not sure if we need so much states
+// I suggest we have: Running, Updating, UpdateBlocked
 const (
 	ClusterStateCreated         ClusterState = "Created"
 	ClusterStateInitializing    ClusterState = "Initializing"

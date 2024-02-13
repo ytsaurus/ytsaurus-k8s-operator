@@ -53,6 +53,13 @@ func (s *componentStep) Done(ctx context.Context) (bool, error) {
 	status, err := s.component.Status2(ctx)
 	return status.IsReady(), err
 }
+func (s *componentStep) Status(ctx context.Context) (components.ComponentStatus, error) {
+	err := s.component.Fetch(ctx)
+	if err != nil {
+		return components.ComponentStatus{}, err
+	}
+	return s.component.Status2(ctx)
+}
 func (s *componentStep) Run(ctx context.Context) error {
 	err := s.component.Fetch(ctx)
 	if err != nil {
@@ -80,6 +87,16 @@ func (s *actionStep) WithRunCondition(condition func() bool) *actionStep {
 }
 func (s *actionStep) Done(ctx context.Context) (bool, error) {
 	return s.doneCheck(ctx)
+}
+func (s *actionStep) Status(ctx context.Context) (components.ComponentStatus, error) {
+	done, err := s.Done(ctx)
+	if err != nil {
+		return components.ComponentStatus{}, err
+	}
+	if done {
+		return components.SimpleStatus(components.SyncStatusReady), nil
+	}
+	return components.SimpleStatus(components.SyncStatusNeedLocalUpdate), nil
 }
 func (s *actionStep) Run(ctx context.Context) error {
 	return s.action(ctx)
