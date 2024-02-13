@@ -26,6 +26,14 @@ type SyncStatus string
 // "Pending" — currently this means not ready and waiting for some other component to be ready,
 // I'm not sure if we need this distinction in practice.
 
+/*
+I suggest in future we have statuses:
+ 1. Ready = all good
+ 2. NeedUpdate = sync me
+ 3. NeedFullUpdate = sync me (but I will recreate pods, just saying)
+ 4. Updating = nothing to do, come later
+ 5. Blocked = human please fix you configs or bugs in code
+*/
 const (
 	SyncStatusBlocked         SyncStatus = "Blocked"
 	SyncStatusNeedFullUpdate  SyncStatus = "NeedFullUpdate"

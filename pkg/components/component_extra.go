@@ -39,7 +39,7 @@ type Component2 interface {
 func (d *Discovery) Status2(ctx context.Context) (ComponentStatus, error) {
 	// exists but images or config is not up-to-date
 	if d.server.needUpdate() {
-		return SimpleStatus(SyncStatusPending), nil
+		return SimpleStatus(SyncStatusNeedLocalUpdate), nil
 	}
 
 	// configMap not exists
@@ -47,12 +47,12 @@ func (d *Discovery) Status2(ctx context.Context) (ComponentStatus, error) {
 	// OR server not exists
 	// OR not enough pods in sts
 	if d.server.needSync2() {
-		return SimpleStatus(SyncStatusPending), nil
+		return SimpleStatus(SyncStatusNeedLocalUpdate), nil
 	}
 
 	// FIXME: possible leaking abstraction, we should only check if server ready or nor
 	if !d.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusPending, "pods"), nil
+		return WaitingStatus(SyncStatusUpdating, "pods"), nil
 	}
 
 	return SimpleStatus(SyncStatusReady), nil
@@ -69,10 +69,10 @@ func (m *Master) Status2(ctx context.Context) (ComponentStatus, error) {
 		return SimpleStatus(SyncStatusNeedFullUpdate), nil
 	}
 	if m.server.needSync2() {
-		return SimpleStatus(SyncStatusPending), nil
+		return SimpleStatus(SyncStatusNeedLocalUpdate), nil
 	}
 	if !m.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusPending, "pods"), nil
+		return WaitingStatus(SyncStatusUpdating, "pods"), nil
 	}
 	return SimpleStatus(SyncStatusReady), nil
 }
@@ -80,7 +80,7 @@ func (m *Master) Sync2(ctx context.Context) error { return m.doServerSync(ctx) }
 
 func (hp *HTTPProxy) Status2(ctx context.Context) (ComponentStatus, error) {
 	if hp.server.needUpdate() {
-		return SimpleStatus(SyncStatusPending), nil
+		return SimpleStatus(SyncStatusNeedLocalUpdate), nil
 	}
 
 	// FIXME: stopped checking master running status:
@@ -89,15 +89,15 @@ func (hp *HTTPProxy) Status2(ctx context.Context) (ComponentStatus, error) {
 	// I suppose such check could another step or some other component dependency)
 
 	if hp.server.needSync2() {
-		return SimpleStatus(SyncStatusPending), nil
+		return SimpleStatus(SyncStatusNeedLocalUpdate), nil
 	}
 
 	if !resources.Exists(hp.balancingService) {
-		return WaitingStatus(SyncStatusPending, hp.balancingService.Name()), nil
+		return WaitingStatus(SyncStatusNeedLocalUpdate, hp.balancingService.Name()), nil
 	}
 
 	if !hp.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusPending, "pods"), nil
+		return WaitingStatus(SyncStatusUpdating, "pods"), nil
 	}
 
 	return SimpleStatus(SyncStatusReady), nil
@@ -132,7 +132,7 @@ func (yc *ytsaurusClient) Status2(_ context.Context) (ComponentStatus, error) {
 	// maybe we need some action-step for healthcheck before ytsaurus client
 
 	if yc.secret.NeedSync(consts.TokenSecretKey, "") {
-		return WaitingStatus(SyncStatusPending, yc.secret.Name()), nil
+		return WaitingStatus(SyncStatusNeedLocalUpdate, yc.secret.Name()), nil
 	}
 
 	// TODO: understand how check for initUserJob runs
@@ -182,10 +182,10 @@ func (n *DataNode) Status2(ctx context.Context) (ComponentStatus, error) {
 	}
 	// TODO: we don't checking master running status anymore
 	if n.server.needSync2() {
-		return SimpleStatus(SyncStatusPending), nil
+		return SimpleStatus(SyncStatusNeedLocalUpdate), nil
 	}
 	if !n.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusPending, "pods"), nil
+		return WaitingStatus(SyncStatusUpdating, "pods"), nil
 	}
 	return SimpleStatus(SyncStatusReady), nil
 }

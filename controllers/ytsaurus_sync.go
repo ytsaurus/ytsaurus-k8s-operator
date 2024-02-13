@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -9,7 +10,6 @@ import (
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
 )
 
 var (
@@ -39,46 +39,31 @@ func (r *YtsaurusReconciler) SyncNew(ctx context.Context, resource *ytv1.Ytsauru
 	}
 
 	ytsaurusProxy := apiProxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
-	ytsaurusComponent, err := NewYtsaurus(ctx, ytsaurusProxy)
+	ytsaurusComponent, err := NewYtsaurus(ytsaurusProxy)
+	if err != nil {
+		return requeueASAP, err
+	}
+	state, err := ytsaurusComponent.Sync(ctx)
 	if err != nil {
 		return requeueASAP, err
 	}
 
-	status, err := ytsaurusComponent.Status(ctx)
-	if err != nil {
-		return requeueASAP, err
-	}
-
-	syncStatus := status.SyncStatus
-	var newClusterState ytv1.ClusterState
 	var requeue ctrl.Result
-
-	switch syncStatus {
-	case components.SyncStatusReady:
+	switch state {
+	case ytv1.ClusterStateRunning:
 		logger.Info("YTsaurus is running and happy")
-		newClusterState = ytv1.ClusterStateRunning
 		requeue = requeueNot
-	case components.SyncStatusBlocked:
+	case ytv1.ClusterStateCancelUpdate:
 		logger.Info("YTsaurus is not in sync, but update is blocked. Human is needed.")
-		newClusterState = ytv1.ClusterStateCancelUpdate
 		requeue = requeueLater
-	case components.SyncStatusUpdating:
+	case ytv1.ClusterStateUpdating:
 		logger.Info("YTsaurus is updating, but nothing to do currently.")
-		newClusterState = ytv1.ClusterStateUpdating
 		requeue = requeueSoon
 	default:
-		// currently here may be NeedFullUpdate or NeedLocalUpdate. At that level it is no difference.
-		// also Pending is possible, but I'm not plan to use it.
-		logger.Info("YTsaurus is not in sync. Synchronizing.", "status", status)
-		err = ytsaurusComponent.Sync(ctx)
-		if err != nil {
-			logger.Error(err, "failed to sync YTsaurus", "status", status)
-		}
-		newClusterState = ytv1.ClusterStateUpdating
-		requeue = requeueASAP
+		return requeueLater, fmt.Errorf("unexpected ytsaurus cluster state: %s", state)
 	}
 
-	err = ytsaurusProxy.SaveClusterState(ctx, newClusterState)
+	err = ytsaurusProxy.SaveClusterState(ctx, state)
 	if err != nil {
 		return requeueASAP, err
 	}

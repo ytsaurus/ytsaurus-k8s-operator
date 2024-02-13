@@ -6,6 +6,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
 )
@@ -25,7 +26,7 @@ type Ytsaurus struct {
 	ytsaurusProxy *apiProxy.Ytsaurus
 }
 
-func NewYtsaurus(ctx context.Context, ytsaurusProxy *apiProxy.Ytsaurus) (*Ytsaurus, error) {
+func NewYtsaurus(ytsaurusProxy *apiProxy.Ytsaurus) (*Ytsaurus, error) {
 	componentManager, err := NewComponentManager(ytsaurusProxy)
 	if err != nil {
 		return nil, err
@@ -78,7 +79,7 @@ func NewYtsaurus(ctx context.Context, ytsaurusProxy *apiProxy.Ytsaurus) (*Ytsaur
 	}, nil
 }
 
-func (c *Ytsaurus) Status(ctx context.Context) (components.ComponentStatus, error) {
+func (c *Ytsaurus) Sync(ctx context.Context) (ytv1.ClusterState, error) {
 	logger := log.FromContext(ctx)
 
 	for _, step := range c.steps {
@@ -88,53 +89,27 @@ func (c *Ytsaurus) Status(ctx context.Context) (components.ComponentStatus, erro
 		}
 		status, err := step.Status(ctx)
 		if err != nil {
-			return components.ComponentStatus{}, err
+			return "", err
 		}
 		if status.IsReady() {
 			continue
 		}
 
 		stepSyncStatus := status.SyncStatus
-		var ytsarurusSyncStatus components.SyncStatus
 		switch stepSyncStatus {
 		case components.SyncStatusBlocked:
-			ytsarurusSyncStatus = components.SyncStatusBlocked
+			logger.Info(step.GetName()+" step is blocked", "status", status)
+			return ytv1.ClusterStateCancelUpdate, nil
 		case components.SyncStatusUpdating:
-			ytsarurusSyncStatus = components.SyncStatusUpdating
+			logger.Info("Waiting for "+step.GetName()+" to finish", "status", status)
+			return ytv1.ClusterStateUpdating, nil
 		default:
-			ytsarurusSyncStatus = components.SyncStatusNeedLocalUpdate
+			logger.Info("Going to run step: "+step.GetName(), "status", status)
+			err = step.Run(ctx)
+			return ytv1.ClusterStateUpdating, err
 		}
-
-		return components.ComponentStatus{
-			SyncStatus: ytsarurusSyncStatus,
-			Message:    step.GetName() + " is not done: " + status.Message,
-		}, nil
 	}
-	return components.ComponentStatus{
-		SyncStatus: components.SyncStatusReady,
-	}, nil
-}
-
-func (c *Ytsaurus) Sync(ctx context.Context) error {
-	logger := log.FromContext(ctx)
-
-	for _, step := range c.steps {
-		if !step.ShouldRun() {
-			logger.Info(step.GetName() + " step shouldn't run")
-			continue
-		}
-		done, err := step.Done(ctx)
-		if err != nil {
-			return err
-		}
-		if done {
-			logger.Info(step.GetName() + " step is already done")
-			continue
-		}
-		logger.Info("Going to run step: " + step.GetName())
-		return step.Run(ctx)
-	}
-	return nil
+	return ytv1.ClusterStateRunning, nil
 }
 
 func enableSafeMode() Step {
