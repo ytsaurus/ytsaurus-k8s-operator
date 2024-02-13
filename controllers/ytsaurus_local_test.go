@@ -40,11 +40,18 @@ func TestYtsaurusFromScratch(t *testing.T) {
 			"ms-0.masters."+namespace+".svc.cluster.local:9010",
 		)
 	}
+	fetchAndCheckConfigMapContainsEventually(
+		h,
+		"yt-data-node-"+dndsNameOne+"-config",
+		"ytserver-data-node.yson",
+		"ms-0.masters."+namespace+".svc.cluster.local:9010",
+	)
 
 	for _, stsName := range []string{
 		"ds",
 		"ms",
 		"hp",
+		"dnd-" + dndsNameOne,
 	} {
 		fetchAndCheckEventually(
 			h,
@@ -113,7 +120,15 @@ func buildMinimalYtsaurus(h *testHelper, name string) ytv1.Ytsaurus {
 			},
 			DataNodes: []ytv1.DataNodesSpec{
 				{
-					InstanceSpec:     ytv1.InstanceSpec{InstanceCount: 5},
+					InstanceSpec: ytv1.InstanceSpec{
+						InstanceCount: 5,
+						Locations: []ytv1.LocationSpec{
+							{
+								LocationType: "ChunkStore",
+								Path:         "/yt/node-data/chunk-store",
+							},
+						},
+					},
 					ClusterNodesSpec: ytv1.ClusterNodesSpec{},
 					Name:             dndsNameOne,
 				},

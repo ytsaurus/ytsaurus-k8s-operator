@@ -36,10 +36,10 @@ func NewYtsaurus(ctx context.Context, ytsaurusProxy *apiProxy.Ytsaurus) (*Ytsaur
 		httpProxiesSteps = append(httpProxiesSteps, newComponentStep(hp))
 	}
 	ytsaurusClientStep := newComponentStep(comps.ytClient)
-	//var dataNodesSteps []Step
-	//for _, dn := range comps.dataNodes {
-	//	dataNodesSteps = append(dataNodesSteps, newComponentStep(dn))
-	//}
+	var dataNodesSteps []Step
+	for _, dn := range comps.dataNodes {
+		dataNodesSteps = append(dataNodesSteps, newComponentStep(dn))
+	}
 
 	// TODO: not lose enable fullUpdate — it should become blocked status
 	steps := concat(
@@ -51,7 +51,7 @@ func NewYtsaurus(ctx context.Context, ytsaurusProxy *apiProxy.Ytsaurus) (*Ytsaur
 		masterStep,
 		httpProxiesSteps,
 		ytsaurusClientStep,
-		//dataNodesSteps,
+		dataNodesSteps,
 		// (optional) ui (depends on master)
 		// (optional) rpcproxies (depends on master)
 		// (optional) tcpproxies (depends on master)

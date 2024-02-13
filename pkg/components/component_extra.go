@@ -176,7 +176,19 @@ func (yc *ytsaurusClient) Sync2(ctx context.Context) error {
 	return nil
 }
 
-func (n *DataNode) Status2(_ context.Context) (ComponentStatus, error) {
+func (n *DataNode) Status2(ctx context.Context) (ComponentStatus, error) {
+	if n.server.needUpdate() {
+		return SimpleStatus(SyncStatusNeedFullUpdate), nil
+	}
+	// TODO: we don't checking master running status anymore
+	if n.server.needSync2() {
+		return SimpleStatus(SyncStatusPending), nil
+	}
+	if !n.server.arePodsReady(ctx) {
+		return WaitingStatus(SyncStatusPending, "pods"), nil
+	}
 	return SimpleStatus(SyncStatusReady), nil
 }
-func (n *DataNode) Sync2(context.Context) error { return nil }
+func (n *DataNode) Sync2(ctx context.Context) error {
+	return n.server.Sync(ctx)
+}
