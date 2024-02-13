@@ -2,8 +2,15 @@ package components
 
 import (
 	"context"
+	"os"
+	"time"
 
+	"go.ytsaurus.tech/yt/go/yt"
+	"go.ytsaurus.tech/yt/go/yt/ythttp"
+
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
 func (s ComponentStatus) IsReady() bool {
@@ -120,11 +127,54 @@ func (hp *HTTPProxy) Sync2(ctx context.Context) error {
 
 func (yc *ytsaurusClient) Status2(_ context.Context) (ComponentStatus, error) {
 	// FIXME: stopped checking hp running status:
-	// but maybe we still should
+	// though but maybe we still should?
+	// It depends on if hps could be deployed before master or not
+	// maybe we need some action-step for healthcheck before ytsaurus client
+
+	if yc.secret.NeedSync(consts.TokenSecretKey, "") {
+		return WaitingStatus(SyncStatusPending, yc.secret.Name()), nil
+	}
+
+	// TODO: understand how check for initUserJob runs
+	// we need to differentiate when it needed to be run and when it already ran
 
 	return SimpleStatus(SyncStatusReady), nil
 }
-func (yc *ytsaurusClient) Sync2(context.Context) error { return nil }
+func (yc *ytsaurusClient) Sync2(ctx context.Context) error {
+	var err error
+
+	if yc.secret.NeedSync(consts.TokenSecretKey, "") {
+		s := yc.secret.Build()
+		s.StringData = map[string]string{
+			consts.TokenSecretKey: ytconfig.RandString(30),
+		}
+		err = yc.secret.Sync(ctx)
+	}
+
+	// todo run init job if necessary
+
+	if yc.ytClient == nil {
+		token, _ := yc.secret.GetValue(consts.TokenSecretKey)
+		timeout := time.Second * 10
+		proxy, ok := os.LookupEnv("YTOP_PROXY")
+		disableProxyDiscovery := true
+		if !ok {
+			proxy = yc.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
+			disableProxyDiscovery = false
+		}
+		yc.ytClient, err = ythttp.NewClient(&yt.Config{
+			Proxy:                 proxy,
+			Token:                 token,
+			LightRequestTimeout:   &timeout,
+			DisableProxyDiscovery: disableProxyDiscovery,
+		})
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func (n *DataNode) Status2(_ context.Context) (ComponentStatus, error) {
 	return SimpleStatus(SyncStatusReady), nil

@@ -56,6 +56,16 @@ func TestYtsaurusFromScratch(t *testing.T) {
 
 	fetchAndCheckEventually(
 		h,
+		"yt-client-secret",
+		&corev1.Secret{},
+		func(obj client.Object) bool {
+			secret := obj.(*corev1.Secret)
+			return len(secret.Data["YT_TOKEN"]) != 0
+		},
+	)
+
+	fetchAndCheckEventually(
+		h,
 		ytsaurusName,
 		&ytv1.Ytsaurus{},
 		func(obj client.Object) bool {
