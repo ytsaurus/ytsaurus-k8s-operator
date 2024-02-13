@@ -8,7 +8,7 @@ import (
 
 type baseStep struct {
 	name         string
-	runCondition func() bool
+	runCondition func(context.Context) (bool, string, error)
 }
 type dummyStep struct {
 	name string
@@ -26,11 +26,12 @@ type actionStep struct {
 func (s *baseStep) GetName() string {
 	return s.name
 }
-func (s *baseStep) ShouldRun() bool {
+func (s *baseStep) ShouldRun(ctx context.Context) (bool, string, error) {
 	if s.runCondition == nil {
-		return true
+		return true, "no run condition is set", nil
 	}
-	return !s.runCondition()
+	shouldRun, comment, err := s.runCondition(ctx)
+	return shouldRun, comment, err
 }
 
 func newComponentStep(component components.Component2) *componentStep {
@@ -41,7 +42,7 @@ func newComponentStep(component components.Component2) *componentStep {
 		component: component,
 	}
 }
-func (s *componentStep) WithRunCondition(condition func() bool) *componentStep {
+func (s *componentStep) WithRunCondition(condition func(context.Context) (bool, string, error)) *componentStep {
 	s.runCondition = condition
 	return s
 }
@@ -81,7 +82,7 @@ func newActionStep(
 		doneCheck: doneCheck,
 	}
 }
-func (s *actionStep) WithRunCondition(condition func() bool) *actionStep {
+func (s *actionStep) WithRunCondition(condition func(ctx context.Context) (bool, string, error)) *actionStep {
 	s.runCondition = condition
 	return s
 }

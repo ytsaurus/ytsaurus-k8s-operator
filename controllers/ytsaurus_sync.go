@@ -39,11 +39,11 @@ func (r *YtsaurusReconciler) SyncNew(ctx context.Context, resource *ytv1.Ytsauru
 	}
 
 	ytsaurusProxy := apiProxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
-	ytsaurusComponent, err := NewYtsaurus(ytsaurusProxy)
+	ytsaurusSteps, err := NewYtsaurusSteps(ytsaurusProxy)
 	if err != nil {
 		return requeueASAP, err
 	}
-	state, err := ytsaurusComponent.Sync(ctx)
+	state, err := ytsaurusSteps.Sync(ctx)
 	if err != nil {
 		return requeueASAP, err
 	}

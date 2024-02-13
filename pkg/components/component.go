@@ -13,19 +13,6 @@ import (
 
 type SyncStatus string
 
-// I suggest to change semantics of statuses:
-// "Blocked" — nothing can be done by operator, human needed
-// i.e. need to do full update but EnableFullUpdate = false or config generator failing with error
-// "NeedFullUpdate" >> *this component* sync will require it's full rebuild (recreate pods and so on)
-// (currently it means ytsaurus needs full update).
-// maybe rename like "NeedSyncWithRebuild".
-// "NeedLocalUpdate" >> "NeedSync" there are some changes, but it is not expected that component will be
-// recreated (or maybe nothing bad can happen of such recreating)
-// "Ready" — all good
-// "Updating" — not ready, but nothing to do for operator
-// "Pending" — currently this means not ready and waiting for some other component to be ready,
-// I'm not sure if we need this distinction in practice.
-
 /*
 I suggest in future we have statuses:
  1. Ready = all good

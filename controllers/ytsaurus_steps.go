@@ -13,20 +13,20 @@ import (
 
 type Step interface {
 	GetName() string
-	ShouldRun() bool
+	ShouldRun(context.Context) (bool, string, error)
 	Run(ctx context.Context) error
-	Done(ctx context.Context) (bool, error)
 	// Status return step status. It is not nice to use ComponentStatus for anything
 	// but components, but let us do that for simplicity now and migrate later.
 	Status(ctx context.Context) (components.ComponentStatus, error)
+	// Done(ctx context.Context) (bool, error)
 }
 
-type Ytsaurus struct {
+type YtsaurusSteps struct {
 	steps         []Step
 	ytsaurusProxy *apiProxy.Ytsaurus
 }
 
-func NewYtsaurus(ytsaurusProxy *apiProxy.Ytsaurus) (*Ytsaurus, error) {
+func NewYtsaurusSteps(ytsaurusProxy *apiProxy.Ytsaurus) (*YtsaurusSteps, error) {
 	componentManager, err := NewComponentManager(ytsaurusProxy)
 	if err != nil {
 		return nil, err
@@ -39,18 +39,20 @@ func NewYtsaurus(ytsaurusProxy *apiProxy.Ytsaurus) (*Ytsaurus, error) {
 	for _, hp := range comps.httpProxies {
 		httpProxiesSteps = append(httpProxiesSteps, newComponentStep(hp))
 	}
+	yc := comps.ytClient.(components.YtsaurusClient)
 	ytsaurusClientStep := newComponentStep(comps.ytClient)
 	var dataNodesSteps []Step
 	for _, dn := range comps.dataNodes {
 		dataNodesSteps = append(dataNodesSteps, newComponentStep(dn))
 	}
 
+	//spec := ytsaurusProxy.GetResource().Spec
 	// TODO: not lose enable fullUpdate — it should become blocked status
 	steps := concat(
-		//enableSafeMode(),
-		//saveTabletCells(),
-		//removeTabletCells(),
-		//buildMasterSnapshots(),
+		enableSafeMode(yc, comps.master),
+		saveTabletCells(yc, comps.master),
+		removeTabletCells(yc, comps.master),
+		buildMasterSnapshots(yc, comps.master),
 		discoveryStep,
 		masterStep,
 		httpProxiesSteps,
@@ -73,18 +75,22 @@ func NewYtsaurus(ytsaurusProxy *apiProxy.Ytsaurus) (*Ytsaurus, error) {
 		//updateQTState(),
 		//disableSafeMode(),
 	)
-	return &Ytsaurus{
+	return &YtsaurusSteps{
 		ytsaurusProxy: ytsaurusProxy,
 		steps:         steps,
 	}, nil
 }
 
-func (c *Ytsaurus) Sync(ctx context.Context) (ytv1.ClusterState, error) {
+func (s *YtsaurusSteps) Sync(ctx context.Context) (ytv1.ClusterState, error) {
 	logger := log.FromContext(ctx)
 
-	for _, step := range c.steps {
-		if !step.ShouldRun() {
-			logger.Info(step.GetName() + " step shouldn't run")
+	for _, step := range s.steps {
+		shouldRun, comment, err := step.ShouldRun(ctx)
+		if err != nil {
+			return "", err
+		}
+		if !shouldRun {
+			logger.Info(step.GetName() + " step shouldn't run: " + comment)
 			continue
 		}
 		status, err := step.Status(ctx)
@@ -112,32 +118,38 @@ func (c *Ytsaurus) Sync(ctx context.Context) (ytv1.ClusterState, error) {
 	return ytv1.ClusterStateRunning, nil
 }
 
-func enableSafeMode() Step {
-	action := func(context.Context) error {
-		// use ytclient code
-		// where we will get ytclient — I suppose it is some common thing
-		// we don't exactly call it component maybe?
-		// or for simplicity now we can put this method in Ytsaurus component
-		return nil
-	}
-	doneCheck := func(context.Context) (bool, error) {
-		// check @enable_safe_mode is set
-		return false, nil
-	}
-	runCondition := func() bool {
-		// if master status is syncNeedRecreate
-		//    return true
+func getFullUpdateCondition(yc components.YtsaurusClient, master components.Component2) func(context.Context) (bool, string, error) {
+	return func(ctx context.Context) (bool, string, error) {
+		if master.Status(ctx).SyncStatus != components.SyncStatusNeedFullUpdate {
+			return false, "master doesn't need recreating", nil
+		}
+		isPossible, msg, err := yc.HandlePossibilityCheck(ctx)
+		if err != nil {
+			return false, "", err
+		}
+		if !isPossible {
+			return false, msg, nil
+		}
+		// FIXME: should we support that really?
 		// if data node status is syncNeedRecreate
 		//    return true
 		// if tablet node status is syncNeedRecreate
 		//    return true
-		// if check for update possibility stuff
-		//    return true
-		return false
+		return true, "", nil
 	}
+}
+
+func enableSafeMode(yc components.YtsaurusClient, master components.Component2) Step {
+	action := func(ctx context.Context) error {
+		return yc.EnableSafeMode(ctx)
+	}
+	doneCheck := func(ctx context.Context) (bool, error) {
+		return yc.IsSafeModeEnabled(ctx)
+	}
+	runCondition := getFullUpdateCondition(yc, master)
 	return newActionStep("enableSafeMode", action, doneCheck).WithRunCondition(runCondition)
 }
-func saveTabletCells() Step {
+func saveTabletCells(yc components.YtsaurusClient, master components.Component2) Step {
 	action := func(context.Context) error {
 		// use ytclient code
 		// ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles = tabletCellBundles
@@ -147,13 +159,10 @@ func saveTabletCells() Step {
 		// check ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles not empty?
 		return false, nil
 	}
-	runCondition := func() bool {
-		// reuse some code from maybeEnableSafeModeStep about master/data/tablet statuses
-		return false
-	}
+	runCondition := getFullUpdateCondition(yc, master)
 	return newActionStep("saveTabletCells", action, doneCheck).WithRunCondition(runCondition)
 }
-func removeTabletCells() Step {
+func removeTabletCells(yc components.YtsaurusClient, master components.Component2) Step {
 	action := func(context.Context) error {
 		// use ytclient code
 		// yc.ytClient.RemoveNode
@@ -164,13 +173,10 @@ func removeTabletCells() Step {
 		// like in UpdateStateWaitingForTabletCellsRemoved
 		return false, nil
 	}
-	runCondition := func() bool {
-		// reuse some code from maybeEnableSafeModeStep about master/data/tablet statuses
-		return false
-	}
+	runCondition := getFullUpdateCondition(yc, master)
 	return newActionStep("removeTabletCells", action, doneCheck).WithRunCondition(runCondition)
 }
-func buildMasterSnapshots() Step {
+func buildMasterSnapshots(yc components.YtsaurusClient, master components.Component2) Step {
 	action := func(context.Context) error {
 		// use ytclient code
 		// yc.ytClient.RemoveNode
@@ -181,10 +187,7 @@ func buildMasterSnapshots() Step {
 		// like in UpdateStateWaitingForTabletCellsRemoved
 		return false, nil
 	}
-	runCondition := func() bool {
-		// reuse some code from maybeEnableSafeModeStep about master/data/tablet statuses
-		return false
-	}
+	runCondition := getFullUpdateCondition(yc, master)
 	return newActionStep("buildMasterSnapshots", action, doneCheck).WithRunCondition(runCondition)
 }
 
