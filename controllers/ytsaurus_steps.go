@@ -31,11 +31,11 @@ func NewYtsaurus(ctx context.Context, ytsaurusProxy *apiProxy.Ytsaurus) (*Ytsaur
 
 	discoveryStep := newComponentStep(comps.discovery)
 	masterStep := newComponentStep(comps.master)
-	//var httpProxiesSteps []Step
-	//for _, hp := range comps.httpProxies {
-	//	httpProxiesSteps = append(httpProxiesSteps, newComponentStep(hp))
-	//}
-	//ytsaurusClientStep := newComponentStep(comps.ytClient)
+	var httpProxiesSteps []Step
+	for _, hp := range comps.httpProxies {
+		httpProxiesSteps = append(httpProxiesSteps, newComponentStep(hp))
+	}
+	ytsaurusClientStep := newComponentStep(comps.ytClient)
 	//var dataNodesSteps []Step
 	//for _, dn := range comps.dataNodes {
 	//	dataNodesSteps = append(dataNodesSteps, newComponentStep(dn))
@@ -49,8 +49,8 @@ func NewYtsaurus(ctx context.Context, ytsaurusProxy *apiProxy.Ytsaurus) (*Ytsaur
 		//buildMasterSnapshots(),
 		discoveryStep,
 		masterStep,
-		//httpProxiesSteps,
-		//ytsaurusClientStep,
+		httpProxiesSteps,
+		ytsaurusClientStep,
 		//dataNodesSteps,
 		// (optional) ui (depends on master)
 		// (optional) rpcproxies (depends on master)

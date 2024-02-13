@@ -28,30 +28,32 @@ func TestYtsaurusFromScratch(t *testing.T) {
 	remoteYtsaurusSpec := buildMinimalYtsaurus(h, ytsaurusName)
 	deployObject(h, &remoteYtsaurusSpec)
 
-	fetchAndCheckEventually(
-		h,
+	for _, compName := range []string{
+		"discovery",
+		"master",
+		"http-proxy",
+	} {
+		fetchAndCheckConfigMapContainsEventually(
+			h,
+			"yt-"+compName+"-config",
+			"ytserver-"+compName+".yson",
+			"ms-0.masters."+namespace+".svc.cluster.local:9010",
+		)
+	}
+
+	for _, stsName := range []string{
 		"ds",
-		&appsv1.StatefulSet{},
-		func(obj client.Object) bool { return true },
-	)
-	fetchAndCheckConfigMapContainsEventually(
-		h,
-		"yt-discovery-config",
-		"ytserver-discovery.yson",
-		"ms-0.masters."+namespace+".svc.cluster.local:9010",
-	)
-	fetchAndCheckEventually(
-		h,
 		"ms",
-		&appsv1.StatefulSet{},
-		func(obj client.Object) bool { return true },
-	)
-	fetchAndCheckConfigMapContainsEventually(
-		h,
-		"yt-master-config",
-		"ytserver-master.yson",
-		"ds-0.discovery."+namespace+".svc.cluster.local:9020",
-	)
+		"hp",
+	} {
+		fetchAndCheckEventually(
+			h,
+			stsName,
+			&appsv1.StatefulSet{},
+			func(obj client.Object) bool { return true },
+		)
+	}
+
 	fetchAndCheckEventually(
 		h,
 		ytsaurusName,
