@@ -17,7 +17,7 @@ type componentsStructured struct {
 	discovery   components.Component2
 	master      components.Component2
 	httpProxies []components.Component2
-	ytClient    components.Component2
+	ytClient    components.YtsaurusClient2
 	dataNodes   []components.Component2
 	// (optional) ui (depends on master)
 	// (optional) rpcproxies (depends on master)

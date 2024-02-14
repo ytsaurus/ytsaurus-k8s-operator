@@ -22,19 +22,8 @@ import (
 )
 
 type YtsaurusClient interface {
-	Component2
+	Component
 	GetYtClient() yt.Client
-	HandlePossibilityCheck(context.Context) (bool, string, error)
-	EnableSafeMode(context.Context) error
-	DisableSafeMode(context.Context) error
-	IsSafeModeEnabled(context.Context) (bool, error)
-	SaveTableCellsAndUpdateState(ctx context.Context) error
-	IsTableCellsSaved() bool
-	RemoveTableCells(context.Context) error
-	RecoverTableCells(context.Context) error
-	AreTabletCellsRemoved(context.Context) (bool, error)
-	AreTabletCellsRecovered(context.Context) (bool, error)
-	IsMasterReadOnly(context.Context) (bool, error)
 }
 
 type ytsaurusClient struct {
@@ -51,7 +40,7 @@ func NewYtsaurusClient(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	httpProxy Component,
-) YtsaurusClient {
+) YtsaurusClient2 {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,

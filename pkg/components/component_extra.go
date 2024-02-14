@@ -40,6 +40,22 @@ type Component2 interface {
 	Sync2(context.Context) error
 }
 
+type YtsaurusClient2 interface {
+	YtsaurusClient
+	Component2
+	HandlePossibilityCheck(context.Context) (bool, string, error)
+	EnableSafeMode(context.Context) error
+	DisableSafeMode(context.Context) error
+	IsSafeModeEnabled(context.Context) (bool, error)
+	SaveTableCellsAndUpdateState(ctx context.Context) error
+	IsTableCellsSaved() bool
+	RemoveTableCells(context.Context) error
+	RecoverTableCells(context.Context) error
+	AreTabletCellsRemoved(context.Context) (bool, error)
+	AreTabletCellsRecovered(context.Context) (bool, error)
+	IsMasterReadOnly(context.Context) (bool, error)
+}
+
 func (d *Discovery) Status2(ctx context.Context) (ComponentStatus, error) {
 	// exists but images or config is not up-to-date
 	if d.server.needUpdate() {

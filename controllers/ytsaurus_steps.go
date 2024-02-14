@@ -39,7 +39,7 @@ func NewYtsaurusSteps(ytsaurusProxy *apiProxy.Ytsaurus) (*YtsaurusSteps, error) 
 	for _, hp := range comps.httpProxies {
 		httpProxiesSteps = append(httpProxiesSteps, newComponentStep(hp))
 	}
-	yc := comps.ytClient.(components.YtsaurusClient)
+	yc := comps.ytClient.(components.YtsaurusClient2)
 	ytsaurusClientStep := newComponentStep(comps.ytClient)
 	var dataNodesSteps []Step
 	for _, dn := range comps.dataNodes {
@@ -119,7 +119,7 @@ func (s *YtsaurusSteps) Sync(ctx context.Context) (ytv1.ClusterState, error) {
 	return ytv1.ClusterStateRunning, nil
 }
 
-func getFullUpdateCondition(yc components.YtsaurusClient, master components.Component2) func(context.Context) (bool, string, error) {
+func getFullUpdateCondition(yc components.YtsaurusClient2, master components.Component2) func(context.Context) (bool, string, error) {
 	return func(ctx context.Context) (bool, string, error) {
 		if master.Status(ctx).SyncStatus != components.SyncStatusNeedFullUpdate {
 			return false, "master doesn't need recreating", nil
@@ -140,7 +140,7 @@ func getFullUpdateCondition(yc components.YtsaurusClient, master components.Comp
 	}
 }
 
-func enableSafeMode(yc components.YtsaurusClient, master components.Component2) Step {
+func enableSafeMode(yc components.YtsaurusClient2, master components.Component2) Step {
 	action := func(ctx context.Context) error {
 		return yc.EnableSafeMode(ctx)
 	}
@@ -150,7 +150,7 @@ func enableSafeMode(yc components.YtsaurusClient, master components.Component2) 
 	runCondition := getFullUpdateCondition(yc, master)
 	return newActionStep("enableSafeMode", action, doneCheck).WithRunCondition(runCondition)
 }
-func saveTabletCells(yc components.YtsaurusClient, master components.Component2) Step {
+func saveTabletCells(yc components.YtsaurusClient2, master components.Component2) Step {
 	action := func(ctx context.Context) error {
 		return yc.SaveTableCellsAndUpdateState(ctx)
 	}
@@ -160,7 +160,7 @@ func saveTabletCells(yc components.YtsaurusClient, master components.Component2)
 	runCondition := getFullUpdateCondition(yc, master)
 	return newActionStep("saveTabletCells", action, doneCheck).WithRunCondition(runCondition)
 }
-func removeTabletCells(yc components.YtsaurusClient, master components.Component2) Step {
+func removeTabletCells(yc components.YtsaurusClient2, master components.Component2) Step {
 	action := func(ctx context.Context) error {
 		return yc.RemoveTableCells(ctx)
 	}
@@ -170,7 +170,7 @@ func removeTabletCells(yc components.YtsaurusClient, master components.Component
 	runCondition := getFullUpdateCondition(yc, master)
 	return newActionStep("removeTabletCells", action, doneCheck).WithRunCondition(runCondition)
 }
-func buildMasterSnapshots(yc components.YtsaurusClient, master components.Component2) Step {
+func buildMasterSnapshots(yc components.YtsaurusClient2, master components.Component2) Step {
 	action := func(context.Context) error {
 		// use ytclient code
 		// yc.ytClient.RemoveNode
@@ -186,7 +186,7 @@ func buildMasterSnapshots(yc components.YtsaurusClient, master components.Compon
 }
 
 // maybe it shouldn't be inside master at all
-func masterExitReadOnly(yc components.YtsaurusClient, master components.Component2) Step {
+func masterExitReadOnly(yc components.YtsaurusClient2, master components.Component2) Step {
 	action := func(ctx context.Context) error {
 		masterImpl := master.(*components.Master)
 		return masterImpl.DoExitReadOnly(ctx)
@@ -196,7 +196,7 @@ func masterExitReadOnly(yc components.YtsaurusClient, master components.Componen
 	}
 	return newActionStep("masterExitReadOnly", action, doneCheck)
 }
-func recoverTableCells(yc components.YtsaurusClient, master components.Component2) Step {
+func recoverTableCells(yc components.YtsaurusClient2, master components.Component2) Step {
 	action := func(ctx context.Context) error {
 		return yc.RecoverTableCells(ctx)
 	}
@@ -233,7 +233,7 @@ func updateQTState() Step {
 	}
 	return newActionStep("updateQTState", action, doneCheck)
 }
-func disableSafeMode(yc components.YtsaurusClient) Step {
+func disableSafeMode(yc components.YtsaurusClient2) Step {
 	action := func(ctx context.Context) error {
 		return yc.DisableSafeMode(ctx)
 	}
