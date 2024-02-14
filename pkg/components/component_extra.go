@@ -78,9 +78,24 @@ func (m *Master) Status2(ctx context.Context) (ComponentStatus, error) {
 	if !m.server.arePodsReady(ctx) {
 		return WaitingStatus(SyncStatusUpdating, "pods"), nil
 	}
+	// TODO: refactor access to inner initjob
+	if !resources.Exists(m.initJob.initJob) {
+		return SimpleStatus(SyncStatusNeedLocalUpdate), nil
+	}
+	if !m.initJob.initJob.Completed() {
+		return WaitingStatus(SyncStatusUpdating, "init-job"), nil
+	}
 	return SimpleStatus(SyncStatusReady), nil
 }
-func (m *Master) Sync2(ctx context.Context) error { return m.doServerSync(ctx) }
+func (m *Master) Sync2(ctx context.Context) error {
+	err := m.doServerSync(ctx)
+	if err != nil {
+		return err
+	}
+	m.initJob.SetInitScript(m.createInitScript())
+	_, err = m.initJob.Sync(ctx, false)
+	return err
+}
 
 func (hp *HTTPProxy) Status2(ctx context.Context) (ComponentStatus, error) {
 	if hp.server.needUpdate() {

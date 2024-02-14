@@ -46,7 +46,6 @@ func NewYtsaurusSteps(ytsaurusProxy *apiProxy.Ytsaurus) (*YtsaurusSteps, error) 
 		dataNodesSteps = append(dataNodesSteps, newComponentStep(dn))
 	}
 
-	//ytsaurusResource := ytsaurusProxy.GetResource()
 	steps := concat(
 		enableSafeMode(yc, comps.master),
 		saveTabletCells(yc, comps.master),

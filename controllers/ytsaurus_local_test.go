@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -30,6 +29,9 @@ func TestYtsaurusFromScratch(t *testing.T) {
 
 	remoteYtsaurusResource := buildMinimalYtsaurus(h, ytsaurusName)
 	deployObject(h, &remoteYtsaurusResource)
+
+	// emulate master init job succeeded
+	markJobSucceeded(h, "yt-master-init-job-default")
 
 	for _, compName := range []string{
 		"discovery",
@@ -74,15 +76,8 @@ func TestYtsaurusFromScratch(t *testing.T) {
 	)
 
 	// emulate master read only is done
-	job := &batchv1.Job{}
-	fetchEventually(
-		h,
-		"yt-master-init-job-exit-read-only",
-		job,
-	)
+	markJobSucceeded(h, "yt-master-init-job-exit-read-only")
 	h.ytsaurusInMemory.Set("//sys/@hydra_read_only", true)
-	job.Status.Succeeded = 1
-	updateObjectStatus(h, job)
 
 	// emulate tablet cells recovered
 	h.ytsaurusInMemory.Set("//sys/tablet_cells", map[string]any{

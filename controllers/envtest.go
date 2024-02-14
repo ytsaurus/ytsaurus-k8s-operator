@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-logr/logr/testr"
 	"github.com/stretchr/testify/require"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -163,6 +164,13 @@ func updateObjectStatus(h *testHelper, newObject client.Object) {
 	k8sCli := h.getK8sClient()
 	err := k8sCli.Status().Update(context.Background(), newObject)
 	require.NoError(h.t, err)
+}
+
+func markJobSucceeded(h *testHelper, key string) {
+	job := &batchv1.Job{}
+	fetchEventually(h, key, job)
+	job.Status.Succeeded = 1
+	updateObjectStatus(h, job)
 }
 
 const (

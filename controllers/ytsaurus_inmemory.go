@@ -1,5 +1,7 @@
 package controllers
 
+// TODO(l0kix2): this code has a lot of copypaste, needs small refactoring
+
 import (
 	"net/http"
 	"strconv"
