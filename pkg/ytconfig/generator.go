@@ -269,8 +269,10 @@ func (g *Generator) GetClusterConnection() ([]byte, error) {
 
 func (g *Generator) GetStrawberryControllerConfig() ([]byte, error) {
 	c := getStrawberryController()
-	c.LocationProxies = []string{
-		g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+	proxy := g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
+	c.LocationProxies = []string{proxy}
+	c.HTTPLocationAliases = map[string][]string{
+		proxy: []string{g.ytsaurus.Name},
 	}
 	return marshallYsonConfig(c)
 }
