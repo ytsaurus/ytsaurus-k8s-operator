@@ -47,7 +47,6 @@ func NewYtsaurusSteps(ytsaurusProxy *apiProxy.Ytsaurus) (*YtsaurusSteps, error) 
 	}
 
 	//ytsaurusResource := ytsaurusProxy.GetResource()
-	// TODO: not lose enable fullUpdate — it should become blocked status
 	steps := concat(
 		enableSafeMode(yc, comps.master),
 		saveTabletCells(yc, comps.master),
@@ -69,11 +68,11 @@ func NewYtsaurusSteps(ytsaurusProxy *apiProxy.Ytsaurus) (*YtsaurusSteps, error) 
 		// (optional) queueagents (depend on y cli, master, tablet nodes)
 		// (optional) yqlagents (depend on master)
 		// (optional) strawberry (depend on master, scheduler, data nodes)
-		//masterExitReadOnly(),
-		//recoverTableCells(),
+		masterExitReadOnly(yc, comps.master),
+		recoverTableCells(yc, comps.master),
 		//updateOpArchive(),
 		//updateQTState(),
-		//disableSafeMode(),
+		disableSafeMode(yc),
 	)
 	return &YtsaurusSteps{
 		ytsaurusProxy: ytsaurusProxy,
@@ -98,7 +97,10 @@ func (s *YtsaurusSteps) Sync(ctx context.Context) (ytv1.ClusterState, error) {
 			return "", err
 		}
 		if status.IsReady() {
+			logger.Info(step.GetName() + " step is ready")
 			continue
+		} else {
+			logger.Info(step.GetName()+" step is NOT ready", "status", status)
 		}
 
 		stepSyncStatus := status.SyncStatus
@@ -185,26 +187,22 @@ func buildMasterSnapshots(yc components.YtsaurusClient, master components.Compon
 }
 
 // maybe it shouldn't be inside master at all
-func masterExitReadOnly() Step {
-	action := func(context.Context) error {
-		// runJob
-		return nil
+func masterExitReadOnly(yc components.YtsaurusClient, master components.Component2) Step {
+	action := func(ctx context.Context) error {
+		masterImpl := master.(*components.Master)
+		return masterImpl.DoExitReadOnly(ctx)
 	}
-	doneCheck := func(context.Context) (bool, error) {
-		// is read only check
-		return false, nil
+	doneCheck := func(ctx context.Context) (bool, error) {
+		return yc.IsMasterReadOnly(ctx)
 	}
 	return newActionStep("masterExitReadOnly", action, doneCheck)
 }
-func recoverTableCells() Step {
-	action := func(context.Context) error {
-		// helpers.CreateTabletCells
-		// delete status
-		return nil
+func recoverTableCells(yc components.YtsaurusClient, master components.Component2) Step {
+	action := func(ctx context.Context) error {
+		return yc.RecoverTableCells(ctx)
 	}
-	doneCheck := func(context.Context) (bool, error) {
-		// check TabletCellBundles not empty &&  TabletCellBundles != //sys/tablet_cell_bundles ??
-		return false, nil
+	doneCheck := func(ctx context.Context) (bool, error) {
+		return yc.AreTabletCellsRecovered(ctx)
 	}
 	return newActionStep("recoverTableCells", action, doneCheck)
 }
@@ -236,14 +234,13 @@ func updateQTState() Step {
 	}
 	return newActionStep("updateQTState", action, doneCheck)
 }
-func disableSafeMode() Step {
-	action := func(context.Context) error {
-		// use ytclient code
-		return nil
+func disableSafeMode(yc components.YtsaurusClient) Step {
+	action := func(ctx context.Context) error {
+		return yc.DisableSafeMode(ctx)
 	}
-	doneCheck := func(context.Context) (bool, error) {
-		// check @enable_safe_mode is false
-		return false, nil
+	doneCheck := func(ctx context.Context) (bool, error) {
+		enabled, err := yc.IsSafeModeEnabled(ctx)
+		return !enabled, err
 	}
 	return newActionStep("disableSafeMode", action, doneCheck)
 }

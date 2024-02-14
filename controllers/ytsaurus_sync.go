@@ -33,6 +33,9 @@ func (r *YtsaurusReconciler) SyncNew(ctx context.Context, resource *ytv1.Ytsauru
 	var err error
 	logger := log.FromContext(ctx)
 
+	logger.Info(">>> Start reconciliation loop")
+	defer logger.Info("<<< Finish reconciliation loop")
+
 	if !resource.Spec.IsManaged {
 		logger.Info("Ytsaurus cluster is not managed by controller, do nothing")
 		return requeueLater, nil
@@ -41,10 +44,12 @@ func (r *YtsaurusReconciler) SyncNew(ctx context.Context, resource *ytv1.Ytsauru
 	ytsaurusProxy := apiProxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
 	ytsaurusSteps, err := NewYtsaurusSteps(ytsaurusProxy)
 	if err != nil {
+		logger.Error(err, "failed to create ytsaurus steps")
 		return requeueASAP, err
 	}
 	state, err := ytsaurusSteps.Sync(ctx)
 	if err != nil {
+		logger.Error(err, "failed to sync ytsaurus steps")
 		return requeueASAP, err
 	}
 
@@ -65,6 +70,7 @@ func (r *YtsaurusReconciler) SyncNew(ctx context.Context, resource *ytv1.Ytsauru
 
 	err = ytsaurusProxy.SaveClusterState(ctx, state)
 	if err != nil {
+		logger.Error(err, "failed to save cluster state", "state", state)
 		return requeueASAP, err
 	}
 	return requeue, nil

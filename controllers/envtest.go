@@ -22,13 +22,14 @@ import (
 )
 
 type testHelper struct {
-	t          *testing.T
-	ctx        context.Context
-	cancel     context.CancelFunc
-	k8sTestEnv *envtest.Environment
-	k8sClient  client.Client
-	cfg        *rest.Config
-	namespace  string
+	t                *testing.T
+	ctx              context.Context
+	cancel           context.CancelFunc
+	k8sTestEnv       *envtest.Environment
+	k8sClient        client.Client
+	cfg              *rest.Config
+	namespace        string
+	ytsaurusInMemory *YtsaurusInMemory
 }
 
 func newTestHelper(t *testing.T, namespace string) *testHelper {
@@ -49,12 +50,15 @@ func newTestHelper(t *testing.T, namespace string) *testHelper {
 	}
 
 	testCtx, testCancel := context.WithCancel(context.Background())
+
+	ytsaurusInMemory := NewYtsaurusInMemory()
 	return &testHelper{
-		t:          t,
-		ctx:        testCtx,
-		cancel:     testCancel,
-		k8sTestEnv: k8sTestEnv,
-		namespace:  namespace,
+		t:                t,
+		ctx:              testCtx,
+		cancel:           testCancel,
+		k8sTestEnv:       k8sTestEnv,
+		namespace:        namespace,
+		ytsaurusInMemory: ytsaurusInMemory,
 	}
 }
 
@@ -67,6 +71,12 @@ func (h *testHelper) start() {
 
 	err = ytv1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
+
+	require.NoError(t, os.Setenv("YTOP_PROXY", "127.0.0.1:9999"))
+	go func() {
+		err = h.ytsaurusInMemory.Start(9999)
+		require.NoError(t, err)
+	}()
 
 	mgr, err := ctrl.NewManager(conf, ctrl.Options{
 		Scheme: scheme.Scheme,
@@ -147,6 +157,11 @@ func updateObject(h *testHelper, emptyObject, newObject client.Object) {
 
 	newObject.SetResourceVersion(emptyObject.GetResourceVersion())
 	err := k8sCli.Update(context.Background(), newObject)
+	require.NoError(h.t, err)
+}
+func updateObjectStatus(h *testHelper, newObject client.Object) {
+	k8sCli := h.getK8sClient()
+	err := k8sCli.Status().Update(context.Background(), newObject)
 	require.NoError(h.t, err)
 }
 

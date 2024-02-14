@@ -108,6 +108,15 @@ func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateS
 	return nil
 }
 
+func (c *Ytsaurus) SaveUpdateStatus(ctx context.Context) error {
+	logger := log.FromContext(ctx)
+	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
+		logger.Error(err, "unable to update Ytsaurus update state")
+		return err
+	}
+	return nil
+}
+
 func (c *Ytsaurus) SetStatusCondition(condition metav1.Condition) {
 	meta.SetStatusCondition(&c.ytsaurus.Status.Conditions, condition)
 }
