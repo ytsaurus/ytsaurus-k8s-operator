@@ -283,6 +283,8 @@ func (s *scheduler) createInitUserScript() string {
 	return strings.Join(script, "\n")
 }
 
+// omgronny: The file was renamed in ytsaurus image. Refer to
+// https://github.com/ytsaurus/ytsaurus/commit/e5348fef221110ce27bba13df5f9790649084b01
 const setInitOpArchivePath = `
 export INIT_OP_ARCHIVE=/usr/bin/init_operations_archive
 if [ ! -f $INIT_OP_ARCHIVE ]; then
