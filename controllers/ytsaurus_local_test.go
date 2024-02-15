@@ -27,8 +27,8 @@ func TestYtsaurusFromScratch(t *testing.T) {
 
 	h.ytsaurusInMemory.Set("//sys/@hydra_read_only", false)
 
-	remoteYtsaurusResource := buildMinimalYtsaurus(h, ytsaurusName)
-	deployObject(h, &remoteYtsaurusResource)
+	ytsaurusResource := buildMinimalYtsaurus(h, ytsaurusName)
+	deployObject(h, &ytsaurusResource)
 
 	// emulate master init job succeeded
 	markJobSucceeded(h, "yt-master-init-job-default")
@@ -83,6 +83,101 @@ func TestYtsaurusFromScratch(t *testing.T) {
 	h.ytsaurusInMemory.Set("//sys/tablet_cells", map[string]any{
 		"1-602-2bc-955ed415": nil,
 	})
+	h.ytsaurusInMemory.Set("//sys/tablet_cells/1-602-2bc-955ed415/@tablet_cell_bundle", "sys")
+
+	fetchAndCheckEventually(
+		h,
+		ytsaurusName,
+		&ytv1.Ytsaurus{},
+		func(obj client.Object) bool {
+			state := obj.(*ytv1.Ytsaurus).Status.State
+			return state == ytv1.ClusterStateRunning
+		},
+	)
+}
+
+func TestYtsaurusUpdateMasterImage(t *testing.T) {
+	require.NoError(t, os.Setenv("ENABLE_NEW_FLOW", "true"))
+	namespace := "upd-master-image"
+	h := newTestHelper(t, namespace)
+	h.start()
+	defer h.stop()
+
+	h.ytsaurusInMemory.Set("//sys/@hydra_read_only", false)
+	ytsaurusResource := buildMinimalYtsaurus(h, ytsaurusName)
+	deployObject(h, &ytsaurusResource)
+
+	// emulate master init job succeeded
+	markJobSucceeded(h, "yt-master-init-job-default")
+
+	// emulate master read only is done
+	markJobSucceeded(h, "yt-master-init-job-exit-read-only")
+	h.ytsaurusInMemory.Set("//sys/@hydra_read_only", true)
+
+	// emulate tablet cells recovered
+	h.ytsaurusInMemory.Set("//sys/tablet_cell_bundles", map[string]any{"sys": nil})
+	h.ytsaurusInMemory.Set("//sys/tablet_cells/1-602-2bc-955ed415/@tablet_cell_bundle", "sys")
+
+	fetchAndCheckEventually(
+		h,
+		ytsaurusName,
+		&ytv1.Ytsaurus{},
+		func(obj client.Object) bool {
+			state := obj.(*ytv1.Ytsaurus).Status.State
+			return state == ytv1.ClusterStateRunning
+		},
+	)
+
+	imageUpdated := testYtsaurusImage + "-updated"
+	ytsaurusResource.Spec.PrimaryMasters.Image = &imageUpdated
+	t.Log("[ Updating master ]")
+	updateObject(h, &ytv1.Ytsaurus{}, &ytsaurusResource)
+
+	// expect would block on full update
+	fetchAndCheckEventually(
+		h,
+		ytsaurusName,
+		&ytv1.Ytsaurus{},
+		func(obj client.Object) bool {
+			state := obj.(*ytv1.Ytsaurus).Status.State
+			return state == ytv1.ClusterStateCancelUpdate
+		},
+	)
+
+	// Making full update possible.
+	h.ytsaurusInMemory.Set("//sys/tablet_cell_bundles/sys/@health", "good")
+	h.ytsaurusInMemory.Set("//sys/lost_vital_chunks/@count", 0)
+	h.ytsaurusInMemory.Set("//sys/quorum_missing_chunks/@count", 0)
+	h.ytsaurusInMemory.Set(
+		"//sys/primary_masters/ms-0/orchid/monitoring/hydra",
+		map[string]any{"active": true, "state": "leading"},
+	)
+	h.ytsaurusInMemory.Set(
+		"//sys/primary_masters/ms-1/orchid/monitoring/hydra",
+		map[string]any{"active": true, "state": "following"},
+	)
+	h.ytsaurusInMemory.Set(
+		"//sys/primary_masters/ms-2/orchid/monitoring/hydra",
+		map[string]any{"active": true, "state": "following"},
+	)
+	h.ytsaurusInMemory.Set("//sys/primary_masters", map[string]any{
+		"ms-0": nil,
+		"ms-1": nil,
+		"ms-2": nil,
+	})
+	t.Log("[ Enable Full Update ]")
+	ytsaurusResource.Spec.EnableFullUpdate = true
+	updateObject(h, &ytv1.Ytsaurus{}, &ytsaurusResource)
+
+	fetchAndCheckEventually(
+		h,
+		ytsaurusName,
+		&ytv1.Ytsaurus{},
+		func(obj client.Object) bool {
+			state := obj.(*ytv1.Ytsaurus).Status.State
+			return state == ytv1.ClusterStateUpdating
+		},
+	)
 
 	fetchAndCheckEventually(
 		h,

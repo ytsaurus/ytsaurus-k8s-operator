@@ -53,6 +53,7 @@ type YtsaurusClient2 interface {
 	RecoverTableCells(context.Context) error
 	AreTabletCellsRemoved(context.Context) (bool, error)
 	AreTabletCellsRecovered(context.Context) (bool, error)
+	StartBuildMasterSnapshots(ctx context.Context) error
 	IsMasterReadOnly(context.Context) (bool, error)
 }
 

@@ -148,7 +148,7 @@ func (yc *ytsaurusClient) getMasterHydra(ctx context.Context, path string) (Mast
 	return masterHydra, err
 }
 
-func (yc *ytsaurusClient) startBuildMasterSnapshots(ctx context.Context) error {
+func (yc *ytsaurusClient) StartBuildMasterSnapshots(ctx context.Context) error {
 	var err error
 
 	allMastersReadOnly := true
@@ -259,7 +259,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			}
 
 			if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnapshotsBuildingStarted) {
-				if err = yc.startBuildMasterSnapshots(ctx); err != nil {
+				if err = yc.StartBuildMasterSnapshots(ctx); err != nil {
 					return SimpleStatus(SyncStatusUpdating), err
 				}
 

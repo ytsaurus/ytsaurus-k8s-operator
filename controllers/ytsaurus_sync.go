@@ -42,7 +42,7 @@ func (r *YtsaurusReconciler) SyncNew(ctx context.Context, resource *ytv1.Ytsauru
 	}
 
 	ytsaurusProxy := apiProxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
-	ytsaurusSteps, err := NewYtsaurusSteps(ytsaurusProxy)
+	ytsaurusSteps, err := NewYtsaurusSteps(ctx, ytsaurusProxy)
 	if err != nil {
 		logger.Error(err, "failed to create ytsaurus steps")
 		return requeueASAP, err
@@ -54,21 +54,25 @@ func (r *YtsaurusReconciler) SyncNew(ctx context.Context, resource *ytv1.Ytsauru
 	}
 
 	var requeue ctrl.Result
+	var clusterState ytv1.ClusterState
 	switch state {
-	case ytv1.ClusterStateRunning:
-		logger.Info("YTsaurus is running and happy")
+	case StepSyncStatusDone:
+		logger.Info("YTsaurus is running and happy.")
 		requeue = requeueNot
-	case ytv1.ClusterStateCancelUpdate:
+		clusterState = ytv1.ClusterStateRunning
+	case StepSyncStatusUpdating:
+		logger.Info("YTsaurus is updating.")
+		requeue = requeueSoon
+		clusterState = ytv1.ClusterStateUpdating
+	case StepSyncStatusBlocked:
 		logger.Info("YTsaurus is not in sync, but update is blocked. Human is needed.")
 		requeue = requeueLater
-	case ytv1.ClusterStateUpdating:
-		logger.Info("YTsaurus is updating, but nothing to do currently.")
-		requeue = requeueSoon
+		clusterState = ytv1.ClusterStateCancelUpdate
 	default:
 		return requeueLater, fmt.Errorf("unexpected ytsaurus cluster state: %s", state)
 	}
 
-	err = ytsaurusProxy.SaveClusterState(ctx, state)
+	err = ytsaurusProxy.SaveClusterState(ctx, clusterState)
 	if err != nil {
 		logger.Error(err, "failed to save cluster state", "state", state)
 		return requeueASAP, err

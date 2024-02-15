@@ -2,23 +2,20 @@ package controllers
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"reflect"
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
 )
 
 type Step interface {
 	GetName() string
-	ShouldRun(context.Context) (bool, string, error)
+	Status(ctx context.Context) (StepStatus, error)
 	Run(ctx context.Context) error
-	// Status return step status. It is not nice to use ComponentStatus for anything
-	// but components, but let us do that for simplicity now and migrate later.
-	Status(ctx context.Context) (components.ComponentStatus, error)
-	// Done(ctx context.Context) (bool, error)
 }
 
 type YtsaurusSteps struct {
@@ -26,10 +23,16 @@ type YtsaurusSteps struct {
 	ytsaurusProxy *apiProxy.Ytsaurus
 }
 
-func NewYtsaurusSteps(ytsaurusProxy *apiProxy.Ytsaurus) (*YtsaurusSteps, error) {
+func NewYtsaurusSteps(ctx context.Context, ytsaurusProxy *apiProxy.Ytsaurus) (*YtsaurusSteps, error) {
 	componentManager, err := NewComponentManager(ytsaurusProxy)
 	if err != nil {
 		return nil, err
+	}
+	for _, c := range componentManager.allComponents {
+		err = c.Fetch(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch status for %s: %w", c.GetName(), err)
+		}
 	}
 	comps := componentManager.allStructured
 
@@ -47,6 +50,10 @@ func NewYtsaurusSteps(ytsaurusProxy *apiProxy.Ytsaurus) (*YtsaurusSteps, error) 
 	}
 
 	steps := concat(
+		// it seems ytsaurusClientStep needs to be synced first because
+		// it is needed for action steps, but it can't work until its Sync not called
+		// (secret needs to be created)
+		ytsaurusClientStep,
 		enableSafeMode(yc, comps.master),
 		saveTabletCells(yc, comps.master),
 		removeTabletCells(yc, comps.master),
@@ -54,7 +61,6 @@ func NewYtsaurusSteps(ytsaurusProxy *apiProxy.Ytsaurus) (*YtsaurusSteps, error) 
 		discoveryStep,
 		masterStep,
 		httpProxiesSteps,
-		ytsaurusClientStep,
 		dataNodesSteps,
 		// (optional) ui (depends on master)
 		// (optional) rpcproxies (depends on master)
@@ -68,7 +74,7 @@ func NewYtsaurusSteps(ytsaurusProxy *apiProxy.Ytsaurus) (*YtsaurusSteps, error) 
 		// (optional) yqlagents (depend on master)
 		// (optional) strawberry (depend on master, scheduler, data nodes)
 		masterExitReadOnly(yc, comps.master),
-		recoverTableCells(yc, comps.master),
+		recoverTableCells(yc),
 		//updateOpArchive(),
 		//updateQTState(),
 		disableSafeMode(yc),
@@ -79,110 +85,182 @@ func NewYtsaurusSteps(ytsaurusProxy *apiProxy.Ytsaurus) (*YtsaurusSteps, error) 
 	}, nil
 }
 
-func (s *YtsaurusSteps) Sync(ctx context.Context) (ytv1.ClusterState, error) {
+func (s *YtsaurusSteps) Sync(ctx context.Context) (StepSyncStatus, error) {
 	logger := log.FromContext(ctx)
 
 	for _, step := range s.steps {
-		shouldRun, comment, err := step.ShouldRun(ctx)
-		if err != nil {
-			return "", err
-		}
-		if !shouldRun {
-			logger.Info(step.GetName() + " step shouldn't run: " + comment)
-			continue
-		}
 		status, err := step.Status(ctx)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to get status for step `%s`: %w", step.GetName(), err)
 		}
-		if status.IsReady() {
-			logger.Info(step.GetName() + " step is ready")
-			continue
-		} else {
-			logger.Info(step.GetName()+" step is NOT ready", "status", status)
+
+		logMsg := statusToIcon(status.SyncStatus) + " " + step.GetName()
+		if status.Message != "" {
+			logMsg += ": " + status.Message
 		}
+		logger.Info(logMsg)
 
 		stepSyncStatus := status.SyncStatus
 		switch stepSyncStatus {
-		case components.SyncStatusBlocked:
-			logger.Info(step.GetName()+" step is blocked", "status", status)
-			return ytv1.ClusterStateCancelUpdate, nil
-		case components.SyncStatusUpdating:
-			logger.Info("Waiting for "+step.GetName()+" to finish", "status", status)
-			return ytv1.ClusterStateUpdating, nil
-		default:
-			logger.Info("Going to run step: "+step.GetName(), "status", status)
+		case StepSyncStatusDone:
+			continue
+		case StepSyncStatusSkip:
+			continue
+		case StepSyncStatusUpdating:
+			return StepSyncStatusUpdating, nil
+		case StepSyncStatusBlocked:
+			return StepSyncStatusBlocked, nil
+		case StepSyncStatusNeedRun:
 			err = step.Run(ctx)
-			return ytv1.ClusterStateUpdating, err
+			logger.Info("finish " + step.GetName() + " execution")
+			return StepSyncStatusUpdating, err
+		default:
+			return "", errors.New("unexpected step sync status: " + string(stepSyncStatus))
 		}
 	}
-	return ytv1.ClusterStateRunning, nil
+
+	return StepSyncStatusDone, nil
 }
 
-func getFullUpdateCondition(yc components.YtsaurusClient2, master components.Component2) func(context.Context) (bool, string, error) {
-	return func(ctx context.Context) (bool, string, error) {
-		if master.Status(ctx).SyncStatus != components.SyncStatusNeedFullUpdate {
-			return false, "master doesn't need recreating", nil
-		}
-		isPossible, msg, err := yc.HandlePossibilityCheck(ctx)
-		if err != nil {
-			return false, "", err
-		}
-		if !isPossible {
-			return false, msg, nil
-		}
-		// FIXME: should we support that really?
-		// if data node status is syncNeedRecreate
-		//    return true
-		// if tablet node status is syncNeedRecreate
-		//    return true
-		return true, "", nil
+func statusToIcon(status StepSyncStatus) string {
+	return map[StepSyncStatus]string{
+		StepSyncStatusDone:     "[v]",
+		StepSyncStatusSkip:     "[-]",
+		StepSyncStatusUpdating: "[.]",
+		StepSyncStatusBlocked:  "[x]",
+		StepSyncStatusNeedRun:  "[ ]",
+	}[status]
+}
+
+func isFullUpdateRequired(ctx context.Context, master components.Component2) (bool, string, error) {
+	masterStatus, err := master.Status2(ctx)
+	// FIXME: should we support that really?
+	// if data node status is syncNeedRecreate
+	//    return true
+	// if tablet node status is syncNeedRecreate
+	//    return true
+	if err != nil {
+		return false, "", err
 	}
+	if masterStatus.SyncStatus == components.SyncStatusNeedFullUpdate {
+		return true, "master needs recreating", nil
+	}
+	return false, "master doesn't need recreating", nil
+}
+
+func getFullUpdateStatus(ctx context.Context, yc components.YtsaurusClient2, master components.Component2) (StepStatus, error) {
+	required, updateReason, err := isFullUpdateRequired(ctx, master)
+	if err != nil {
+		return StepStatus{}, err
+	}
+	if !required {
+		return StepStatus{StepSyncStatusSkip, updateReason}, nil
+	}
+	possible, possibilityReason, err := yc.HandlePossibilityCheck(ctx)
+	msg := updateReason + ": " + possibilityReason
+	if err != nil {
+		return StepStatus{}, err
+	}
+	if !possible {
+		return StepStatus{StepSyncStatusBlocked, msg}, nil
+	}
+	return StepStatus{StepSyncStatusNeedRun, msg}, nil
+
 }
 
 func enableSafeMode(yc components.YtsaurusClient2, master components.Component2) Step {
 	action := func(ctx context.Context) error {
 		return yc.EnableSafeMode(ctx)
 	}
-	doneCheck := func(ctx context.Context) (bool, error) {
-		return yc.IsSafeModeEnabled(ctx)
+	statusCheck := func(ctx context.Context) (StepStatus, error) {
+		status, err := getFullUpdateStatus(ctx, yc, master)
+		if err != nil {
+			return StepStatus{}, err
+		}
+		if status.SyncStatus != StepSyncStatusNeedRun {
+			return status, nil
+		}
+		done, err := yc.IsSafeModeEnabled(ctx)
+		if err != nil {
+			return StepStatus{}, err
+		}
+		if done {
+			return StepStatus{StepSyncStatusDone, status.Message}, nil
+		}
+		return StepStatus{StepSyncStatusNeedRun, status.Message}, nil
 	}
-	runCondition := getFullUpdateCondition(yc, master)
-	return newActionStep("enableSafeMode", action, doneCheck).WithRunCondition(runCondition)
+	return newActionStep("enableSafeMode", action, statusCheck)
 }
 func saveTabletCells(yc components.YtsaurusClient2, master components.Component2) Step {
 	action := func(ctx context.Context) error {
 		return yc.SaveTableCellsAndUpdateState(ctx)
 	}
-	doneCheck := func(context.Context) (bool, error) {
-		return yc.IsTableCellsSaved(), nil
+	statusCheck := func(ctx context.Context) (StepStatus, error) {
+		status, err := getFullUpdateStatus(ctx, yc, master)
+		if err != nil {
+			return StepStatus{}, err
+		}
+		if status.SyncStatus != StepSyncStatusNeedRun {
+			return status, nil
+		}
+		done := yc.IsTableCellsSaved()
+		if done {
+			return StepStatus{StepSyncStatusDone, status.Message}, nil
+		}
+		return StepStatus{StepSyncStatusNeedRun, status.Message}, nil
 	}
-	runCondition := getFullUpdateCondition(yc, master)
-	return newActionStep("saveTabletCells", action, doneCheck).WithRunCondition(runCondition)
+	return newActionStep("saveTabletCells", action, statusCheck)
 }
 func removeTabletCells(yc components.YtsaurusClient2, master components.Component2) Step {
 	action := func(ctx context.Context) error {
 		return yc.RemoveTableCells(ctx)
 	}
-	doneCheck := func(ctx context.Context) (bool, error) {
-		return yc.AreTabletCellsRemoved(ctx)
+	statusCheck := func(ctx context.Context) (StepStatus, error) {
+		status, err := getFullUpdateStatus(ctx, yc, master)
+		if err != nil {
+			return StepStatus{}, err
+		}
+		if status.SyncStatus != StepSyncStatusNeedRun {
+			return status, nil
+		}
+		done, err := yc.AreTabletCellsRemoved(ctx)
+		if err != nil {
+			return StepStatus{}, err
+		}
+		if done {
+			return StepStatus{StepSyncStatusDone, status.Message}, nil
+		}
+		return StepStatus{StepSyncStatusNeedRun, status.Message}, nil
 	}
-	runCondition := getFullUpdateCondition(yc, master)
-	return newActionStep("removeTabletCells", action, doneCheck).WithRunCondition(runCondition)
+	return newActionStep("removeTabletCells", action, statusCheck)
 }
 func buildMasterSnapshots(yc components.YtsaurusClient2, master components.Component2) Step {
-	action := func(context.Context) error {
-		// use ytclient code
-		// yc.ytClient.RemoveNode
-		return nil
+	action := func(ctx context.Context) error {
+		return yc.StartBuildMasterSnapshots(ctx)
 	}
-	doneCheck := func(context.Context) (bool, error) {
-		// check //sys/tablet_cells is empty?
-		// like in UpdateStateWaitingForTabletCellsRemoved
-		return false, nil
+	areSnapshotsBuild := func() (bool, error) {
+		// TODO: is there a way to check if snapshots are built
+		// without using k8s condition?
+		return true, nil
 	}
-	runCondition := getFullUpdateCondition(yc, master)
-	return newActionStep("buildMasterSnapshots", action, doneCheck).WithRunCondition(runCondition)
+	statusCheck := func(ctx context.Context) (StepStatus, error) {
+		status, err := getFullUpdateStatus(ctx, yc, master)
+		if err != nil {
+			return StepStatus{}, err
+		}
+		if status.SyncStatus != StepSyncStatusNeedRun {
+			return status, nil
+		}
+		done, err := areSnapshotsBuild()
+		if err != nil {
+			return StepStatus{}, err
+		}
+		if done {
+			return StepStatus{StepSyncStatusDone, status.Message}, nil
+		}
+		return StepStatus{StepSyncStatusNeedRun, status.Message}, nil
+	}
+	return newActionStep("buildMasterSnapshots", action, statusCheck)
 }
 
 // maybe it shouldn't be inside master at all
@@ -191,19 +269,33 @@ func masterExitReadOnly(yc components.YtsaurusClient2, master components.Compone
 		masterImpl := master.(*components.Master)
 		return masterImpl.DoExitReadOnly(ctx)
 	}
-	doneCheck := func(ctx context.Context) (bool, error) {
-		return yc.IsMasterReadOnly(ctx)
+	statusCheck := func(ctx context.Context) (StepStatus, error) {
+		done, err := yc.IsMasterReadOnly(ctx)
+		if err != nil {
+			return StepStatus{}, err
+		}
+		if done {
+			return StepStatus{StepSyncStatusDone, ""}, nil
+		}
+		return StepStatus{StepSyncStatusNeedRun, ""}, nil
 	}
-	return newActionStep("masterExitReadOnly", action, doneCheck)
+	return newActionStep("masterExitReadOnly", action, statusCheck)
 }
-func recoverTableCells(yc components.YtsaurusClient2, master components.Component2) Step {
+func recoverTableCells(yc components.YtsaurusClient2) Step {
 	action := func(ctx context.Context) error {
 		return yc.RecoverTableCells(ctx)
 	}
-	doneCheck := func(ctx context.Context) (bool, error) {
-		return yc.AreTabletCellsRecovered(ctx)
+	statusCheck := func(ctx context.Context) (StepStatus, error) {
+		done, err := yc.AreTabletCellsRecovered(ctx)
+		if err != nil {
+			return StepStatus{}, err
+		}
+		if done {
+			return StepStatus{StepSyncStatusDone, ""}, nil
+		}
+		return StepStatus{StepSyncStatusNeedRun, ""}, nil
 	}
-	return newActionStep("recoverTableCells", action, doneCheck)
+	return newActionStep("recoverTableCells", action, statusCheck)
 }
 
 // maybe prepare is needed also?
@@ -213,12 +305,12 @@ func updateOpArchive() Step {
 		// run job
 		return nil
 	}
-	doneCheck := func(context.Context) (bool, error) {
+	statusCheck := func(ctx context.Context) (StepStatus, error) {
 		// maybe some //sys/cluster_nodes/@config value?
 		// check script and understand how to check if archive is inited
-		return false, nil
+		return StepStatus{}, nil
 	}
-	return newActionStep("updateOpArchive", action, doneCheck)
+	return newActionStep("updateOpArchive", action, statusCheck)
 }
 func updateQTState() Step {
 	action := func(context.Context) error {
@@ -226,22 +318,28 @@ func updateQTState() Step {
 		// run job
 		return nil
 	}
-	doneCheck := func(context.Context) (bool, error) {
+	statusCheck := func(ctx context.Context) (StepStatus, error) {
 		// maybe some //sys/cluster_nodes/@config value?
 		// check /usr/bin/init_query_tracker_state script and understand how to check if qt state is set
-		return false, nil
+		return StepStatus{}, nil
 	}
-	return newActionStep("updateQTState", action, doneCheck)
+	return newActionStep("updateQTState", action, statusCheck)
 }
 func disableSafeMode(yc components.YtsaurusClient2) Step {
 	action := func(ctx context.Context) error {
 		return yc.DisableSafeMode(ctx)
 	}
-	doneCheck := func(ctx context.Context) (bool, error) {
+	statusCheck := func(ctx context.Context) (StepStatus, error) {
 		enabled, err := yc.IsSafeModeEnabled(ctx)
-		return !enabled, err
+		if err != nil {
+			return StepStatus{}, err
+		}
+		if !enabled {
+			return StepStatus{StepSyncStatusDone, ""}, nil
+		}
+		return StepStatus{StepSyncStatusNeedRun, ""}, nil
 	}
-	return newActionStep("disableSafeMode", action, doneCheck)
+	return newActionStep("disableSafeMode", action, statusCheck)
 }
 
 func concat(items ...interface{}) []Step {
