@@ -14,12 +14,12 @@ type componentStep struct {
 func newComponentStep(component components.Component2) *componentStep {
 	return &componentStep{
 		baseStep: baseStep{
-			name: component.GetName(),
+			name: StepName(component.GetName()),
 		},
 		component: component,
 	}
 }
-func (s *componentStep) Status(ctx context.Context) (StepStatus, error) {
+func (s *componentStep) Status(ctx context.Context, _ executionStats) (StepStatus, error) {
 	componentStatus, err := s.component.Status2(ctx)
 	if err != nil {
 		return StepStatus{}, err

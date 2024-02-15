@@ -75,10 +75,6 @@ func TestYtsaurusFromScratch(t *testing.T) {
 		},
 	)
 
-	// emulate master read only is done
-	markJobSucceeded(h, "yt-master-init-job-exit-read-only")
-	h.ytsaurusInMemory.Set("//sys/@hydra_read_only", true)
-
 	// emulate tablet cells recovered
 	h.ytsaurusInMemory.Set("//sys/tablet_cells", map[string]any{
 		"1-602-2bc-955ed415": nil,

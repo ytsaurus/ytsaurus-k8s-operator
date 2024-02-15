@@ -1,6 +1,7 @@
 package controllers
 
 type StepSyncStatus string
+type StepName string
 
 const (
 	// StepSyncStatusDone means that step is done.
@@ -23,9 +24,31 @@ type StepStatus struct {
 }
 
 type baseStep struct {
-	name string
+	name StepName
 }
 
-func (s *baseStep) GetName() string {
+func (s *baseStep) GetName() StepName {
 	return s.name
+}
+
+type executionStats struct {
+	statuses map[StepName]StepStatus
+}
+
+func newExecutionStats() executionStats {
+	return executionStats{
+		statuses: make(map[StepName]StepStatus),
+	}
+}
+
+func (s *executionStats) Collect(name StepName, status StepStatus) {
+	s.statuses[name] = status
+}
+
+func (s *executionStats) isSkipped(name StepName) bool {
+	status, wasExecuted := s.statuses[name]
+	if !wasExecuted {
+		return false
+	}
+	return status.SyncStatus == StepSyncStatusSkip
 }
