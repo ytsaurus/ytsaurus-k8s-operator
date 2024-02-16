@@ -42,7 +42,12 @@ func (r *YtsaurusReconciler) SyncNew(ctx context.Context, resource *ytv1.Ytsauru
 	}
 
 	ytsaurusProxy := apiProxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
-	ytsaurusSteps, err := NewYtsaurusSteps(ctx, ytsaurusProxy)
+	cm, err := NewComponentManager(ytsaurusProxy)
+	if err != nil {
+		return requeueASAP, err
+	}
+
+	ytsaurusSteps, err := NewYtsaurusSteps(cm.allComponents, resource.Status)
 	if err != nil {
 		logger.Error(err, "failed to create ytsaurus steps")
 		return requeueASAP, err

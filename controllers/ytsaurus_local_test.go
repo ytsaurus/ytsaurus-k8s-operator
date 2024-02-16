@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -27,7 +28,7 @@ func TestYtsaurusFromScratch(t *testing.T) {
 
 	h.ytsaurusInMemory.Set("//sys/@hydra_read_only", false)
 
-	ytsaurusResource := buildMinimalYtsaurus(h, ytsaurusName)
+	ytsaurusResource := buildMinimalYtsaurus(namespace, ytsaurusName)
 	deployObject(h, &ytsaurusResource)
 
 	// emulate master init job succeeded
@@ -100,15 +101,14 @@ func TestYtsaurusUpdateMasterImage(t *testing.T) {
 	defer h.stop()
 
 	h.ytsaurusInMemory.Set("//sys/@hydra_read_only", false)
-	ytsaurusResource := buildMinimalYtsaurus(h, ytsaurusName)
+	ytsaurusResource := buildMinimalYtsaurus(namespace, ytsaurusName)
 	deployObject(h, &ytsaurusResource)
 
 	// emulate master init job succeeded
 	markJobSucceeded(h, "yt-master-init-job-default")
 
 	// emulate master read only is done
-	markJobSucceeded(h, "yt-master-init-job-exit-read-only")
-	h.ytsaurusInMemory.Set("//sys/@hydra_read_only", true)
+	//markJobSucceeded(h, "yt-master-init-job-exit-read-only")
 
 	// emulate tablet cells recovered
 	h.ytsaurusInMemory.Set("//sys/tablet_cell_bundles", map[string]any{"sys": nil})
@@ -186,9 +186,9 @@ func TestYtsaurusUpdateMasterImage(t *testing.T) {
 	)
 }
 
-func buildMinimalYtsaurus(h *testHelper, name string) ytv1.Ytsaurus {
+func buildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
 	remoteYtsaurus := ytv1.Ytsaurus{
-		ObjectMeta: h.getObjectMeta(name),
+		ObjectMeta: v1.ObjectMeta{Namespace: namespace, Name: name},
 		Spec: ytv1.YtsaurusSpec{
 			CoreImage:        testYtsaurusImage,
 			IsManaged:        true,

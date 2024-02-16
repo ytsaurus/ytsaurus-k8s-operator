@@ -253,7 +253,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 
 	ytsaurus := apiProxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
 	componentManager, err := NewComponentManager(ytsaurus)
-	err = componentManager.FetchAll(ctx)
+	err = componentManager.CollectStatuses(ctx)
 	if err != nil {
 		return ctrl.Result{Requeue: true}, err
 	}

@@ -19,7 +19,7 @@ func newComponentStep(component components.Component2) *componentStep {
 		component: component,
 	}
 }
-func (s *componentStep) Status(ctx context.Context, _ executionStats) (StepStatus, error) {
+func (s *componentStep) Status(ctx context.Context, _ *ytsaurusState) (StepStatus, error) {
 	componentStatus, err := s.component.Status2(ctx)
 	if err != nil {
 		return StepStatus{}, err
