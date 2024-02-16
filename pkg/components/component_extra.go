@@ -46,9 +46,9 @@ type YtsaurusClient2 interface {
 	HandlePossibilityCheck(context.Context) (bool, string, error)
 	EnableSafeMode(context.Context) error
 	DisableSafeMode(context.Context) error
-	IsSafeModeEnabled(context.Context) (bool, error)
-	SaveTableCellsAndUpdateState(ctx context.Context) error
-	IsTableCellsSaved() bool
+	IsSafeModeEnabled() bool
+	SaveTableCells(ctx context.Context) error
+	AreTableCellsSaved() bool
 	RemoveTableCells(context.Context) error
 	RecoverTableCells(context.Context) error
 	AreTabletCellsRemoved(context.Context) (bool, error)
@@ -360,24 +360,35 @@ func (yc *ytsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 	return true, "", nil
 }
 func (yc *ytsaurusClient) EnableSafeMode(ctx context.Context) error {
-	return yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), true, nil)
+	err := yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), true, nil)
+	if err != nil {
+		return err
+	}
+	yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    consts.ConditionSafeModeEnabled,
+		Status:  metav1.ConditionTrue,
+		Reason:  "Update",
+		Message: "Safe mode was enabled",
+	})
+	return nil
 }
 func (yc *ytsaurusClient) DisableSafeMode(ctx context.Context) error {
 	return yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), false, nil)
 }
-func (yc *ytsaurusClient) IsSafeModeEnabled(ctx context.Context) (bool, error) {
-	enableSafeModePath := "//sys/@enable_safe_mode"
-	exists, err := yc.ytClient.NodeExists(ctx, ypath.Path(enableSafeModePath), nil)
-	if err != nil {
-		return false, err
-	}
-	if !exists {
-		return false, nil
-	}
-
-	var isEnabled bool
-	err = yc.ytClient.GetNode(ctx, ypath.Path(enableSafeModePath), &isEnabled, nil)
-	return isEnabled, err
+func (yc *ytsaurusClient) IsSafeModeEnabled() bool {
+	return yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSafeModeEnabled)
+	//enableSafeModePath := "//sys/@enable_safe_mode"
+	//exists, err := yc.ytClient.NodeExists(ctx, ypath.Path(enableSafeModePath), nil)
+	//if err != nil {
+	//	return false, err
+	//}
+	//if !exists {
+	//	return false, nil
+	//}
+	//
+	//var isEnabled bool
+	//err = yc.ytClient.GetNode(ctx, ypath.Path(enableSafeModePath), &isEnabled, nil)
+	//return isEnabled, err
 }
 func (yc *ytsaurusClient) saveTableCells(ctx context.Context) error {
 	var tabletCellBundles []ytv1.TabletCellBundleInfo
@@ -401,16 +412,13 @@ func (yc *ytsaurusClient) saveTableCells(ctx context.Context) error {
 	})
 	return nil
 }
-func (yc *ytsaurusClient) SaveTableCellsAndUpdateState(ctx context.Context) error {
-	err := yc.saveTableCells(ctx)
-	if err != nil {
-		return err
-	}
-	return yc.ytsaurus.SaveUpdateStatus(ctx)
+func (yc *ytsaurusClient) SaveTableCells(ctx context.Context) error {
+	return yc.saveTableCells(ctx)
 }
-func (yc *ytsaurusClient) IsTableCellsSaved() bool {
+func (yc *ytsaurusClient) AreTableCellsSaved() bool {
+	return yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsSaved)
 	// FIXME: is it a good check? What if we have 0 table cells for example?
-	return len(yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles) != 0
+	//return len(yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles) != 0
 }
 func (yc *ytsaurusClient) RemoveTableCells(ctx context.Context) error {
 	// FIXME: this needs locking or it can't be two reconciler loops in the same time?

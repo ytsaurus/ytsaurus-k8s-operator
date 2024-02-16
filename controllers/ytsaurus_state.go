@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
@@ -54,4 +55,7 @@ func (s *ytsaurusState) isStatusConditionTrue(conditionType string) bool {
 }
 func (s *ytsaurusState) isStatusConditionFalse(conditionType string) bool {
 	return meta.IsStatusConditionFalse(s.ytsaurusStatus.Conditions, conditionType)
+}
+func (s *ytsaurusState) SetStatusCondition(condition metav1.Condition) {
+	meta.SetStatusCondition(&s.ytsaurusStatus.Conditions, condition)
 }

@@ -189,19 +189,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 	case ytv1.UpdateStateWaitingForSafeModeEnabled:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSafeModeEnabled) {
-			err := yc.EnableSafeMode(ctx)
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-
-			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionSafeModeEnabled,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Update",
-				Message: "Safe mode was enabled",
-			})
-
-			return SimpleStatus(SyncStatusUpdating), nil
+			return SimpleStatus(SyncStatusUpdating), yc.EnableSafeMode(ctx)
 		}
 
 	case ytv1.UpdateStateWaitingForTabletCellsSaving:

@@ -9,8 +9,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 )
 
 type Step interface {
@@ -37,7 +37,7 @@ const (
 	disableSafeModeStepName      StepName = "disableSafeMode"
 )
 
-func NewYtsaurusSteps(comps componentsStore, ytsaurusStatus ytv1.YtsaurusStatus) (*YtsaurusSteps, error) {
+func NewYtsaurusSteps(comps componentsStore, ytsaurusStatus ytv1.YtsaurusStatus, apiproxy *apiProxy.Ytsaurus) (*YtsaurusSteps, error) {
 	discoveryStep := newComponentStep(comps.discovery)
 	masterStep := newComponentStep(comps.master)
 	var httpProxiesSteps []Step
@@ -57,7 +57,7 @@ func NewYtsaurusSteps(comps componentsStore, ytsaurusStatus ytv1.YtsaurusStatus)
 		// (secret needs to be created)
 		ytsaurusClientStep,
 		enableSafeMode(yc),
-		//saveTabletCells(yc),
+		saveTabletCells(yc),
 		//removeTabletCells(yc),
 		//buildMasterSnapshots(yc),
 		discoveryStep,
@@ -85,7 +85,7 @@ func NewYtsaurusSteps(comps componentsStore, ytsaurusStatus ytv1.YtsaurusStatus)
 	state := newYtsaurusState(comps, ytsaurusStatus)
 
 	return &YtsaurusSteps{
-		//ytsaurusProxy: ytsaurusProxy,
+		//ytsaurusProxy: apiproxy,
 		steps: steps,
 		state: state,
 	}, nil
@@ -207,7 +207,7 @@ func enableSafeMode(yc components.YtsaurusClient2) Step {
 		if status.SyncStatus != StepSyncStatusNeedRun {
 			return status, nil
 		}
-		done := state.isStatusConditionTrue(consts.ConditionSafeModeEnabled)
+		done := yc.IsSafeModeEnabled()
 		if done {
 			return StepStatus{StepSyncStatusDone, status.Message}, nil
 		}
@@ -227,14 +227,14 @@ func saveTabletCells(yc components.YtsaurusClient2) Step {
 		if status.SyncStatus != StepSyncStatusNeedRun {
 			return status, nil
 		}
-		done := yc.IsTableCellsSaved()
+		done := yc.AreTableCellsSaved()
 		if done {
 			return StepStatus{StepSyncStatusDone, status.Message}, nil
 		}
 		return StepStatus{StepSyncStatusNeedRun, status.Message}, nil
 	}
 	action := func(ctx context.Context) error {
-		return yc.SaveTableCellsAndUpdateState(ctx)
+		return yc.SaveTableCells(ctx)
 	}
 	return newActionStep(saveTabletCellsStepName, action, statusCheck)
 }
@@ -351,22 +351,23 @@ func updateQTState() Step {
 	}
 	return newActionStep(updateQTStateStepName, action, statusCheck)
 }
-func disableSafeMode(yc components.YtsaurusClient2) Step {
-	action := func(ctx context.Context) error {
-		return yc.DisableSafeMode(ctx)
-	}
-	statusCheck := func(ctx context.Context, _ *ytsaurusState) (StepStatus, error) {
-		enabled, err := yc.IsSafeModeEnabled(ctx)
-		if err != nil {
-			return StepStatus{}, err
-		}
-		if !enabled {
-			return StepStatus{StepSyncStatusDone, ""}, nil
-		}
-		return StepStatus{StepSyncStatusNeedRun, ""}, nil
-	}
-	return newActionStep(disableSafeModeStepName, action, statusCheck)
-}
+
+//func disableSafeMode(yc components.YtsaurusClient2) Step {
+//	action := func(ctx context.Context) error {
+//		return yc.DisableSafeMode(ctx)
+//	}
+//	statusCheck := func(ctx context.Context, _ *ytsaurusState) (StepStatus, error) {
+//		enabled, err := yc.IsSafeModeEnabled(ctx)
+//		if err != nil {
+//			return StepStatus{}, err
+//		}
+//		if !enabled {
+//			return StepStatus{StepSyncStatusDone, ""}, nil
+//		}
+//		return StepStatus{StepSyncStatusNeedRun, ""}, nil
+//	}
+//	return newActionStep(disableSafeModeStepName, action, statusCheck)
+//}
 
 func concat(items ...interface{}) []Step {
 	var result []Step

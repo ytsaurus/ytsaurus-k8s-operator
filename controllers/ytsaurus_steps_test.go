@@ -42,17 +42,17 @@ func (yc *fakeYtClient) GetYtClient() yt.Client { return nil }
 func (yc *fakeYtClient) HandlePossibilityCheck(context.Context) (bool, string, error) {
 	return false, "", nil
 }
-func (yc *fakeYtClient) EnableSafeMode(context.Context) error                   { return nil }
-func (yc *fakeYtClient) DisableSafeMode(context.Context) error                  { return nil }
-func (yc *fakeYtClient) IsSafeModeEnabled(context.Context) (bool, error)        { return false, nil }
-func (yc *fakeYtClient) SaveTableCellsAndUpdateState(ctx context.Context) error { return nil }
-func (yc *fakeYtClient) IsTableCellsSaved() bool                                { return false }
-func (yc *fakeYtClient) RemoveTableCells(context.Context) error                 { return nil }
-func (yc *fakeYtClient) RecoverTableCells(context.Context) error                { return nil }
-func (yc *fakeYtClient) AreTabletCellsRemoved(context.Context) (bool, error)    { return false, nil }
-func (yc *fakeYtClient) AreTabletCellsRecovered(context.Context) (bool, error)  { return false, nil }
-func (yc *fakeYtClient) StartBuildMasterSnapshots(ctx context.Context) error    { return nil }
-func (yc *fakeYtClient) IsMasterReadOnly(context.Context) (bool, error)         { return false, nil }
+func (yc *fakeYtClient) EnableSafeMode(context.Context) error                  { return nil }
+func (yc *fakeYtClient) DisableSafeMode(context.Context) error                 { return nil }
+func (yc *fakeYtClient) IsSafeModeEnabled() bool                               { return false }
+func (yc *fakeYtClient) SaveTableCells(ctx context.Context) error              { return nil }
+func (yc *fakeYtClient) AreTableCellsSaved() bool                              { return false }
+func (yc *fakeYtClient) RemoveTableCells(context.Context) error                { return nil }
+func (yc *fakeYtClient) RecoverTableCells(context.Context) error               { return nil }
+func (yc *fakeYtClient) AreTabletCellsRemoved(context.Context) (bool, error)   { return false, nil }
+func (yc *fakeYtClient) AreTabletCellsRecovered(context.Context) (bool, error) { return false, nil }
+func (yc *fakeYtClient) StartBuildMasterSnapshots(ctx context.Context) error   { return nil }
+func (yc *fakeYtClient) IsMasterReadOnly(context.Context) (bool, error)        { return false, nil }
 
 func TestStepChosenCorrectly(t *testing.T) {
 	httpProxies := []components.Component2{
@@ -80,7 +80,7 @@ func TestStepChosenCorrectly(t *testing.T) {
 		Conditions:   nil,
 		UpdateStatus: ytv1.UpdateStatus{State: ytv1.UpdateStateNone},
 	}
-	steps, err := NewYtsaurusSteps(store, ytsaurusStatus)
+	steps, err := NewYtsaurusSteps(store, ytsaurusStatus, nil)
 	require.NoError(t, err)
 
 	step, status, err := steps.getNextStep(context.Background())

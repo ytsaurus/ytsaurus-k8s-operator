@@ -76,11 +76,11 @@ func TestYtsaurusFromScratch(t *testing.T) {
 		},
 	)
 
-	// emulate tablet cells recovered
-	h.ytsaurusInMemory.Set("//sys/tablet_cells", map[string]any{
-		"1-602-2bc-955ed415": nil,
-	})
-	h.ytsaurusInMemory.Set("//sys/tablet_cells/1-602-2bc-955ed415/@tablet_cell_bundle", "sys")
+	//// emulate tablet cells recovered
+	//h.ytsaurusInMemory.Set("//sys/tablet_cells", map[string]any{
+	//	"1-602-2bc-955ed415": nil,
+	//})
+	//h.ytsaurusInMemory.Set("//sys/tablet_cells/1-602-2bc-955ed415/@tablet_cell_bundle", "sys")
 
 	fetchAndCheckEventually(
 		h,
@@ -100,7 +100,7 @@ func TestYtsaurusUpdateMasterImage(t *testing.T) {
 	h.start()
 	defer h.stop()
 
-	h.ytsaurusInMemory.Set("//sys/@hydra_read_only", false)
+	//h.ytsaurusInMemory.Set("//sys/@hydra_read_only", false)
 	ytsaurusResource := buildMinimalYtsaurus(namespace, ytsaurusName)
 	deployObject(h, &ytsaurusResource)
 
@@ -111,8 +111,8 @@ func TestYtsaurusUpdateMasterImage(t *testing.T) {
 	//markJobSucceeded(h, "yt-master-init-job-exit-read-only")
 
 	// emulate tablet cells recovered
-	h.ytsaurusInMemory.Set("//sys/tablet_cell_bundles", map[string]any{"sys": nil})
-	h.ytsaurusInMemory.Set("//sys/tablet_cells/1-602-2bc-955ed415/@tablet_cell_bundle", "sys")
+	//h.ytsaurusInMemory.Set("//sys/tablet_cell_bundles", map[string]any{"sys": nil})
+	//h.ytsaurusInMemory.Set("//sys/tablet_cells/1-602-2bc-955ed415/@tablet_cell_bundle", "sys")
 
 	fetchAndCheckEventually(
 		h,
@@ -141,7 +141,7 @@ func TestYtsaurusUpdateMasterImage(t *testing.T) {
 	)
 
 	// Making full update possible.
-	h.ytsaurusInMemory.Set("//sys/tablet_cell_bundles/sys/@health", "good")
+	//h.ytsaurusInMemory.Set("//sys/tablet_cell_bundles/sys/@health", "good")
 	h.ytsaurusInMemory.Set("//sys/lost_vital_chunks/@count", 0)
 	h.ytsaurusInMemory.Set("//sys/quorum_missing_chunks/@count", 0)
 	h.ytsaurusInMemory.Set(
