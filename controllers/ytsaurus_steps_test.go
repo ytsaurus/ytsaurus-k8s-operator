@@ -58,6 +58,7 @@ func (yc *fakeYtClient) StartBuildingMasterSnapshots(context.Context) error    {
 func (yc *fakeYtClient) AreMasterSnapshotsBuilt(context.Context) (bool, error) {
 	return false, nil
 }
+func (yc *fakeYtClient) ClearUpdateStatus(context.Context) error { return nil }
 
 func TestStepChosenCorrectly(t *testing.T) {
 	httpProxies := []components.Component2{

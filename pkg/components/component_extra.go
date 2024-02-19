@@ -56,6 +56,8 @@ type YtsaurusClient2 interface {
 	SaveMasterMonitoringPaths(context.Context) error
 	StartBuildingMasterSnapshots(context.Context) error
 	AreMasterSnapshotsBuilt(context.Context) (bool, error)
+
+	ClearUpdateStatus(context.Context) error
 }
 
 func (d *Discovery) Status2(ctx context.Context) (ComponentStatus, error) {
@@ -503,4 +505,7 @@ func (yc *ytsaurusClient) AreMasterSnapshotsBuilt(ctx context.Context) (bool, er
 		}
 	}
 	return true, nil
+}
+func (yc *ytsaurusClient) ClearUpdateStatus(ctx context.Context) error {
+	return yc.ytsaurus.ClearUpdateStatus(ctx)
 }

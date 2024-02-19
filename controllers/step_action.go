@@ -27,7 +27,7 @@ func newActionStep(
 	}
 }
 
-func newActionStepWithCondition(
+func newActionStepWithDoneCondition(
 	name StepName,
 	action func(context.Context, *ytsaurusState) error,
 	statusCheck func(context.Context, *ytsaurusState) (StepStatus, error),

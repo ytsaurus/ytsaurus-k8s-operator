@@ -83,7 +83,7 @@ func NewYtsaurusSteps(comps componentsStore, ytsaurusStatus *ytv1.YtsaurusStatus
 		//recoverTableCells(yc),
 		//updateOpArchive(),
 		//updateQTState(),
-		//disableSafeMode(yc),
+		disableSafeMode(yc),
 	)
 
 	state := newYtsaurusState(comps, ytsaurusStatus)
@@ -213,7 +213,7 @@ func enableSafeMode(yc components.YtsaurusClient2) Step {
 		state.SetUpdateStatusCondition(SafeModeEnabledCondition)
 		return nil
 	}
-	return newActionStepWithCondition(
+	return newActionStepWithDoneCondition(
 		enableSafeModeStepName,
 		action,
 		statusCheck,
@@ -231,7 +231,7 @@ func saveTabletCells(yc components.YtsaurusClient2) Step {
 		state.SetUpdateStatusCondition(TabletCellsSavedCondition)
 		return nil
 	}
-	return newActionStepWithCondition(
+	return newActionStepWithDoneCondition(
 		saveTabletCellsStepName,
 		action,
 		statusCheck,
@@ -263,7 +263,7 @@ func saveMasterMonitoringPaths(yc components.YtsaurusClient2) Step {
 		state.SetUpdateStatusCondition(SnapshotsMonitoringInfoSavedCondition)
 		return nil
 	}
-	return newActionStepWithCondition(
+	return newActionStepWithDoneCondition(
 		saveMasterSnapshotMonitoringStepName,
 		action,
 		statusCheck,
@@ -284,7 +284,7 @@ func startBuildingMasterSnapshots(yc components.YtsaurusClient2) Step {
 		state.SetUpdateStatusCondition(SnapshotsBuildingStartedCondition)
 		return nil
 	}
-	return newActionStepWithCondition(
+	return newActionStepWithDoneCondition(
 		startBuildingMasterSnapshotsStepName,
 		action,
 		statusCheck,
@@ -372,22 +372,50 @@ func finishBuildingMasterSnapshots(yc components.YtsaurusClient2) Step {
 //	return newActionStep(updateQTStateStepName, action, statusCheck)
 //}
 
-//func disableSafeMode(yc components.YtsaurusClient2) Step {
-//	action := func(ctx context.Context) error {
-//		return yc.DisableSafeMode(ctx)
-//	}
-//	statusCheck := func(ctx context.Context, _ *ytsaurusState) (StepStatus, error) {
-//		enabled, err := yc.IsSafeModeEnabled(ctx)
-//		if err != nil {
-//			return StepStatus{}, err
+//	func disableSafeMode(yc components.YtsaurusClient2) Step {
+//		action := func(ctx context.Context) error {
+//			return yc.DisableSafeMode(ctx)
 //		}
-//		if !enabled {
-//			return StepStatus{StepSyncStatusDone, ""}, nil
+//		statusCheck := func(ctx context.Context, _ *ytsaurusState) (StepStatus, error) {
+//			enabled, err := yc.IsSafeModeEnabled(ctx)
+//			if err != nil {
+//				return StepStatus{}, err
+//			}
+//			if !enabled {
+//				return StepStatus{StepSyncStatusDone, ""}, nil
+//			}
+//			return StepStatus{StepSyncStatusNeedRun, ""}, nil
 //		}
-//		return StepStatus{StepSyncStatusNeedRun, ""}, nil
+//		return newActionStep(disableSafeModeStepName, action, statusCheck)
 //	}
-//	return newActionStep(disableSafeModeStepName, action, statusCheck)
-//}
+
+// I think disableSafeMode could and should be implemented without conditions
+// (with just checking cypress node), but let's think about in the next refactoring.
+func disableSafeMode(yc components.YtsaurusClient2) Step {
+	statusCheck := func(ctx context.Context, state *ytsaurusState) (StepStatus, error) {
+		if !state.isUpdateStatusConditionTrue(SafeModeEnabledCondition.Type) {
+			return StepStatus{
+				SyncStatus: StepSyncStatusSkip,
+				Message:    "safe mode wasn't enabled",
+			}, nil
+		}
+		return StepStatus{StepSyncStatusNeedRun, ""}, nil
+	}
+	action := func(ctx context.Context, state *ytsaurusState) error {
+		if err := yc.DisableSafeMode(ctx); err != nil {
+			return err
+		}
+		// state.SetUpdateStatusCondition(SafeModeDisabledCondition)
+		// I suppose this should be in ytsaurusState, but it needs ytsaurus proxy dependency.
+		return yc.ClearUpdateStatus(ctx)
+	}
+	return newActionStepWithDoneCondition(
+		disableSafeModeStepName,
+		action,
+		statusCheck,
+		SafeModeDisabledCondition.Type,
+	)
+}
 
 func concat(items ...interface{}) []Step {
 	var result []Step

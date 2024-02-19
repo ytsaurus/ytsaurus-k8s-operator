@@ -180,7 +180,6 @@ func TestYtsaurusUpdateMasterImage(t *testing.T) {
 		"cell_id":   "1",
 		"addresses": masterAddressesList,
 	})
-	// AreMasterSnapshotsBuilt
 	var masterMonitoringPaths []string
 	for _, ms := range masterAddressesList {
 		path := "//sys/cluster_masters/" + ms + "/orchid/monitoring/hydra"
@@ -200,7 +199,7 @@ func TestYtsaurusUpdateMasterImage(t *testing.T) {
 		},
 	)
 
-	// emulate startBuildMasterSnapshots executed
+	t.Log("[ Emulate startBuildMasterSnapshots executed ]")
 	for _, path := range masterMonitoringPaths {
 		h.ytsaurusInMemory.Set(path, map[string]any{
 			"read_only":               true,
