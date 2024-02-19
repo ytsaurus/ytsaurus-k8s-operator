@@ -53,6 +53,11 @@ func (yc *fakeYtClient) AreTabletCellsRemoved(context.Context) (bool, error)   {
 func (yc *fakeYtClient) AreTabletCellsRecovered(context.Context) (bool, error) { return false, nil }
 func (yc *fakeYtClient) StartBuildMasterSnapshots(ctx context.Context) error   { return nil }
 func (yc *fakeYtClient) IsMasterReadOnly(context.Context) (bool, error)        { return false, nil }
+func (yc *fakeYtClient) SaveMasterMonitoringPaths(context.Context) error       { return nil }
+func (yc *fakeYtClient) StartBuildingMasterSnapshots(context.Context) error    { return nil }
+func (yc *fakeYtClient) AreMasterSnapshotsBuilt(context.Context) (bool, error) {
+	return false, nil
+}
 
 func TestStepChosenCorrectly(t *testing.T) {
 	httpProxies := []components.Component2{

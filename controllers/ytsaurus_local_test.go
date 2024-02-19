@@ -145,28 +145,68 @@ func TestYtsaurusUpdateMasterImage(t *testing.T) {
 
 	// Making full update possible.
 	//h.ytsaurusInMemory.Set("//sys/tablet_cell_bundles/sys/@health", "good")
+	// HandlePossibilityCheck: lost vital chunks check
 	h.ytsaurusInMemory.Set("//sys/lost_vital_chunks/@count", 0)
+	// HandlePossibilityCheck: quorum missing chunks check
 	h.ytsaurusInMemory.Set("//sys/quorum_missing_chunks/@count", 0)
+	// HandlePossibilityCheck: master activity check
+	const (
+		ms0 = "ms-0:9010"
+		ms1 = "ms-1:9010"
+		ms2 = "ms-2:9010"
+	)
+	masterAddressesList := []string{ms0, ms1, ms2}
 	h.ytsaurusInMemory.Set(
-		"//sys/primary_masters/ms-0/orchid/monitoring/hydra",
+		"//sys/primary_masters/"+ms0+"/orchid/monitoring/hydra",
 		map[string]any{"active": true, "state": "leading"},
 	)
 	h.ytsaurusInMemory.Set(
-		"//sys/primary_masters/ms-1/orchid/monitoring/hydra",
+		"//sys/primary_masters/"+ms1+"/orchid/monitoring/hydra",
 		map[string]any{"active": true, "state": "following"},
 	)
 	h.ytsaurusInMemory.Set(
-		"//sys/primary_masters/ms-2/orchid/monitoring/hydra",
+		"//sys/primary_masters/"+ms2+"/orchid/monitoring/hydra",
 		map[string]any{"active": true, "state": "following"},
 	)
-	h.ytsaurusInMemory.Set("//sys/primary_masters", map[string]any{
-		"ms-0": nil,
-		"ms-1": nil,
-		"ms-2": nil,
+	masterAddresses := map[string]any{
+		ms0: nil,
+		ms1: nil,
+		ms2: nil,
+	}
+	h.ytsaurusInMemory.Set("//sys/primary_masters", masterAddresses)
+
+	// SaveMasterMonitoringPaths
+	h.ytsaurusInMemory.Set("//sys/@cluster_connection/primary_master", map[string]any{
+		"cell_id":   "1",
+		"addresses": masterAddressesList,
 	})
+	// AreMasterSnapshotsBuilt
+	var masterMonitoringPaths []string
+	for _, ms := range masterAddressesList {
+		path := "//sys/cluster_masters/" + ms + "/orchid/monitoring/hydra"
+		masterMonitoringPaths = append(masterMonitoringPaths, path)
+	}
 	t.Log("[ Enable Full Update ]")
 	ytsaurusResource.Spec.EnableFullUpdate = true
 	updateObject(h, &ytv1.Ytsaurus{}, &ytsaurusResource)
+
+	fetchAndCheckEventually(
+		h,
+		ytsaurusName,
+		&ytv1.Ytsaurus{},
+		func(obj client.Object) bool {
+			status := obj.(*ytv1.Ytsaurus).Status
+			return len(status.UpdateStatus.MasterMonitoringPaths) == len(masterMonitoringPaths)
+		},
+	)
+
+	// emulate startBuildMasterSnapshots executed
+	for _, path := range masterMonitoringPaths {
+		h.ytsaurusInMemory.Set(path, map[string]any{
+			"read_only":               true,
+			"last_snapshot_read_only": true,
+		})
+	}
 
 	t.Log("[ Wait for YTsaurus Running status ]")
 	fetchAndCheckEventually(

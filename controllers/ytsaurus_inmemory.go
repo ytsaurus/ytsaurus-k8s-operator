@@ -231,9 +231,6 @@ func (y *YtsaurusInMemory) Get(path string) (any, bool) {
 	return value, ok
 }
 func (y *YtsaurusInMemory) List(path string, attributes []string) ([]valueWithGenericAttrs, bool) {
-	// value=[<health=good;>sys;<health=good;>default;<health=good;>sequoia;];
-	// {
-	//value=[<health=good;>sys;<health=good;>default;<health=good;>sequoia;];}
 	y.mx.RLock()
 	defer y.mx.RUnlock()
 	value, ok := y.cypress[path]

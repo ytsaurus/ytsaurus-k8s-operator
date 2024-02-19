@@ -1,5 +1,10 @@
 package controllers
 
+import (
+	"fmt"
+	"strings"
+)
+
 type StepSyncStatus string
 type StepName string
 
@@ -32,11 +37,17 @@ func (s *baseStep) GetName() StepName {
 }
 
 type executionStats struct {
+	order    []StepName
 	statuses map[StepName]StepStatus
 }
 
-func newExecutionStats() executionStats {
+func newExecutionStats(steps []Step) executionStats {
+	var order []StepName
+	for _, step := range steps {
+		order = append(order, step.GetName())
+	}
 	return executionStats{
+		order:    order,
 		statuses: make(map[StepName]StepStatus),
 	}
 }
@@ -51,4 +62,27 @@ func (s *executionStats) isSkipped(name StepName) bool {
 		return false
 	}
 	return status.SyncStatus == StepSyncStatusSkip
+}
+
+func (s *executionStats) AsLines() []string {
+	var lines []string
+	total := len(s.order)
+	for idx, stepName := range s.order {
+		status, ok := s.statuses[stepName]
+		icon := statusToIcon(status.SyncStatus)
+		if !ok {
+			icon = "[ ]"
+		}
+		line := fmt.Sprintf("%s (%02d/%02d) %s", icon, idx+1, total, stepName)
+		if status.Message != "" {
+			line += ": " + status.Message
+		}
+
+		lines = append(lines, line)
+	}
+	return lines
+}
+
+func (s *executionStats) AsText() string {
+	return strings.Join(s.AsLines(), "\n")
 }

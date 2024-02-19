@@ -11,7 +11,6 @@ import (
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 )
 
 type Step interface {
@@ -27,16 +26,17 @@ type YtsaurusSteps struct {
 }
 
 const (
-	enableSafeModeStepName               StepName = "enableSafeMode"
-	saveTabletCellsStepName              StepName = "saveTabletCells"
-	removeTabletCellsStepName            StepName = "removeTabletCells"
-	saveMasterSnapshotMonitoringStepName StepName = "saveMasterSnapshotMonitoring"
-	buildMasterSnapshotsStepName         StepName = "buildMasterSnapshots"
-	masterExitReadOnlyStepName           StepName = "masterExitReadOnly"
-	recoverTableCellsStepName            StepName = "recoverTableCells"
-	updateOpArchiveStepName              StepName = "updateOpArchive"
-	updateQTStateStepName                StepName = "updateQTState"
-	disableSafeModeStepName              StepName = "disableSafeMode"
+	enableSafeModeStepName                StepName = "enableSafeMode"
+	saveTabletCellsStepName               StepName = "saveTabletCells"
+	removeTabletCellsStepName             StepName = "removeTabletCells"
+	saveMasterSnapshotMonitoringStepName  StepName = "saveMasterSnapshotMonitoring"
+	startBuildingMasterSnapshotsStepName  StepName = "startBuildingMasterSnapshots"
+	finishBuildingMasterSnapshotsStepName StepName = "finishBuildingMasterSnapshots"
+	masterExitReadOnlyStepName            StepName = "masterExitReadOnly"
+	recoverTableCellsStepName             StepName = "recoverTableCells"
+	updateOpArchiveStepName               StepName = "updateOpArchive"
+	updateQTStateStepName                 StepName = "updateQTState"
+	disableSafeModeStepName               StepName = "disableSafeMode"
 )
 
 func NewYtsaurusSteps(comps componentsStore, ytsaurusStatus *ytv1.YtsaurusStatus, apiproxy *apiProxy.Ytsaurus) (*YtsaurusSteps, error) {
@@ -61,8 +61,9 @@ func NewYtsaurusSteps(comps componentsStore, ytsaurusStatus *ytv1.YtsaurusStatus
 		enableSafeMode(yc),
 		saveTabletCells(yc),
 		removeTabletCells(yc),
-		//saveMasterSnapshotMonitoring(yc),
-		//buildMasterSnapshots(yc),
+		saveMasterMonitoringPaths(yc),
+		startBuildingMasterSnapshots(yc),
+		finishBuildingMasterSnapshots(yc),
 		discoveryStep,
 		masterStep,
 		httpProxiesSteps,
@@ -121,7 +122,7 @@ func (s *YtsaurusSteps) Sync(ctx context.Context) (StepSyncStatus, error) {
 
 func (s *YtsaurusSteps) getNextStep(ctx context.Context) (Step, StepStatus, error) {
 	logger := log.FromContext(ctx)
-	execStat := newExecutionStats()
+	execStat := newExecutionStats(s.steps)
 	if err := s.state.Build(ctx); err != nil {
 		return nil, StepStatus{}, err
 	}
@@ -135,12 +136,6 @@ func (s *YtsaurusSteps) getNextStep(ctx context.Context) (Step, StepStatus, erro
 			return nil, StepStatus{}, fmt.Errorf("failed to get status for step `%s`: %w", stepName, err)
 		}
 
-		logMsg := statusToIcon(status.SyncStatus) + " " + stepName
-		if status.Message != "" {
-			logMsg += ": " + status.Message
-		}
-		logger.Info(logMsg)
-
 		stepSyncStatus := status.SyncStatus
 		switch stepSyncStatus {
 		case StepSyncStatusDone:
@@ -148,10 +143,16 @@ func (s *YtsaurusSteps) getNextStep(ctx context.Context) (Step, StepStatus, erro
 		case StepSyncStatusSkip:
 			continue
 		default:
+			for _, line := range execStat.AsLines() {
+				logger.Info(line)
+			}
 			return step, status, nil
 		}
 	}
 
+	for _, line := range execStat.AsLines() {
+		logger.Info(line)
+	}
 	return nil, StepStatus{}, nil
 }
 
@@ -206,18 +207,17 @@ func enableSafeMode(yc components.YtsaurusClient2) Step {
 		return getFullUpdateStatus(ctx, yc, state)
 	}
 	action := func(ctx context.Context, state *ytsaurusState) error {
-		err := yc.EnableSafeMode(ctx)
-		if err != nil {
+		if err := yc.EnableSafeMode(ctx); err != nil {
 			return err
 		}
-		state.SetUpdateStatusCondition(components.EnableSafeModeCondition)
+		state.SetUpdateStatusCondition(SafeModeEnabledCondition)
 		return nil
 	}
 	return newActionStepWithCondition(
 		enableSafeModeStepName,
 		action,
 		statusCheck,
-		consts.ConditionSafeModeEnabled,
+		SafeModeEnabledCondition.Type,
 	)
 }
 func saveTabletCells(yc components.YtsaurusClient2) Step {
@@ -225,74 +225,90 @@ func saveTabletCells(yc components.YtsaurusClient2) Step {
 		return getFullUpdateStatus(ctx, yc, state)
 	}
 	action := func(ctx context.Context, state *ytsaurusState) error {
-		return yc.SaveTableCells(ctx)
+		if err := yc.SaveTableCells(ctx); err != nil {
+			return err
+		}
+		state.SetUpdateStatusCondition(TabletCellsSavedCondition)
+		return nil
 	}
 	return newActionStepWithCondition(
 		saveTabletCellsStepName,
 		action,
 		statusCheck,
-		consts.ConditionTabletCellsSaved,
+		TabletCellsSavedCondition.Type,
 	)
 }
 func removeTabletCells(yc components.YtsaurusClient2) Step {
 	statusCheck := func(ctx context.Context, state *ytsaurusState) (StepStatus, error) {
 		return getFullUpdateStatus(ctx, yc, state)
 	}
-	doneCheck := func(ctx context.Context, state *ytsaurusState) (bool, error) {
-		return yc.AreTabletCellsRemoved(ctx)
-	}
+	// FIXME: do we need condition for that operation, i suppose not,
+	// because removing nodes is idempotent and we don't expect races with operator loops.
 	action := func(ctx context.Context, state *ytsaurusState) error {
 		return yc.RemoveTableCells(ctx)
 	}
+	doneCheck := func(ctx context.Context, state *ytsaurusState) (bool, error) {
+		return yc.AreTabletCellsRemoved(ctx)
+	}
 	return newActionStep(removeTabletCellsStepName, action, statusCheck, doneCheck)
 }
+func saveMasterMonitoringPaths(yc components.YtsaurusClient2) Step {
+	statusCheck := func(ctx context.Context, state *ytsaurusState) (StepStatus, error) {
+		return getFullUpdateStatus(ctx, yc, state)
+	}
+	action := func(ctx context.Context, state *ytsaurusState) error {
+		if err := yc.SaveMasterMonitoringPaths(ctx); err != nil {
+			return err
+		}
+		state.SetUpdateStatusCondition(SnapshotsMonitoringInfoSavedCondition)
+		return nil
+	}
+	return newActionStepWithCondition(
+		saveMasterSnapshotMonitoringStepName,
+		action,
+		statusCheck,
+		SnapshotsMonitoringInfoSavedCondition.Type,
+	)
+}
 
-//func saveMasterSnapshotMonitoring(yc components.YtsaurusClient2) Step {
-//	statusCheck := func(ctx context.Context, state *ytsaurusState) (StepStatus, error) {
-//		status, err := getFullUpdateStatus(ctx, yc, state)
-//		if err != nil {
-//			return StepStatus{}, err
-//		}
-//		if status.SyncStatus != StepSyncStatusNeedRun {
-//			return status, nil
-//		}
-//		done, err := yc.IsMasterSnapshotMonitoringSaved(ctx)
-//		if err != nil {
-//			return StepStatus{}, err
-//		}
-//		if done {
-//			return StepStatus{StepSyncStatusDone, status.Message}, nil
-//		}
-//		return StepStatus{StepSyncStatusNeedRun, status.Message}, nil
-//	}
-//	action := func(ctx context.Context) error {
-//		return yc.StartBuildMasterSnapshots(ctx)
-//	}
-//	return newActionStep(buildMasterSnapshotsStepName, action, statusCheck)
-//}
-//func buildMasterSnapshots(yc components.YtsaurusClient2) Step {
-//	statusCheck := func(ctx context.Context, state *ytsaurusState) (StepStatus, error) {
-//		status, err := getFullUpdateStatus(ctx, yc, state)
-//		if err != nil {
-//			return StepStatus{}, err
-//		}
-//		if status.SyncStatus != StepSyncStatusNeedRun {
-//			return status, nil
-//		}
-//		done, err := yc.AreMasterSnapshotsBuilt()
-//		if err != nil {
-//			return StepStatus{}, err
-//		}
-//		if done {
-//			return StepStatus{StepSyncStatusDone, status.Message}, nil
-//		}
-//		return StepStatus{StepSyncStatusNeedRun, status.Message}, nil
-//	}
-//	action := func(ctx context.Context) error {
-//		return yc.StartBuildMasterSnapshots(ctx)
-//	}
-//	return newActionStep(buildMasterSnapshotsStepName, action, statusCheck)
-//}
+// FIXME: it is better not to start multiple snapshot building operations, so we use two steps here.
+// though we have allMastersReadOnly check and maybe it could be one step.
+func startBuildingMasterSnapshots(yc components.YtsaurusClient2) Step {
+	statusCheck := func(ctx context.Context, state *ytsaurusState) (StepStatus, error) {
+		return getFullUpdateStatus(ctx, yc, state)
+	}
+	action := func(ctx context.Context, state *ytsaurusState) error {
+		if err := yc.StartBuildingMasterSnapshots(ctx); err != nil {
+			return err
+		}
+		state.SetUpdateStatusCondition(SnapshotsBuildingStartedCondition)
+		return nil
+	}
+	return newActionStepWithCondition(
+		startBuildingMasterSnapshotsStepName,
+		action,
+		statusCheck,
+		SnapshotsBuildingStartedCondition.Type,
+	)
+}
+func finishBuildingMasterSnapshots(yc components.YtsaurusClient2) Step {
+	statusCheck := func(ctx context.Context, state *ytsaurusState) (StepStatus, error) {
+		return getFullUpdateStatus(ctx, yc, state)
+	}
+	action := func(ctx context.Context, state *ytsaurusState) error {
+		state.SetUpdateStatusCondition(MasterSnapshotsBuiltCondition)
+		return nil
+	}
+	doneCheck := func(ctx context.Context, _ *ytsaurusState) (bool, error) {
+		return yc.AreMasterSnapshotsBuilt(ctx)
+	}
+	return newActionStep(
+		finishBuildingMasterSnapshotsStepName,
+		action,
+		statusCheck,
+		doneCheck,
+	)
+}
 
 //func masterExitReadOnly(yc components.YtsaurusClient2, master components.Component2) Step {
 //	statusCheck := func(ctx context.Context, _ *ytsaurusState) (StepStatus, error) {

@@ -46,25 +46,17 @@ type YtsaurusClient2 interface {
 	HandlePossibilityCheck(context.Context) (bool, string, error)
 	EnableSafeMode(context.Context) error
 	DisableSafeMode(context.Context) error
-	IsSafeModeEnabled() bool
-	SaveTableCells(ctx context.Context) error
-	AreTableCellsSaved() bool
+
+	SaveTableCells(context.Context) error
 	RemoveTableCells(context.Context) error
 	RecoverTableCells(context.Context) error
 	AreTabletCellsRemoved(context.Context) (bool, error)
 	AreTabletCellsRecovered(context.Context) (bool, error)
-	StartBuildMasterSnapshots(ctx context.Context) error
-	IsMasterReadOnly(context.Context) (bool, error)
-}
 
-var (
-	EnableSafeModeCondition = metav1.Condition{
-		Type:    consts.ConditionSafeModeEnabled,
-		Status:  metav1.ConditionTrue,
-		Reason:  "Update",
-		Message: "Safe mode was enabled",
-	}
-)
+	SaveMasterMonitoringPaths(context.Context) error
+	StartBuildingMasterSnapshots(context.Context) error
+	AreMasterSnapshotsBuilt(context.Context) (bool, error)
+}
 
 func (d *Discovery) Status2(ctx context.Context) (ComponentStatus, error) {
 	// exists but images or config is not up-to-date
@@ -242,6 +234,7 @@ func (yc *ytsaurusClient) Sync2(ctx context.Context) error {
 
 	return nil
 }
+
 func (yc *ytsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, msg string, err error) {
 	if !yc.ytsaurus.GetResource().Spec.EnableFullUpdate {
 		msg = "Full update is not enabled"
@@ -384,22 +377,7 @@ func (yc *ytsaurusClient) EnableSafeMode(ctx context.Context) error {
 func (yc *ytsaurusClient) DisableSafeMode(ctx context.Context) error {
 	return yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), false, nil)
 }
-func (yc *ytsaurusClient) IsSafeModeEnabled() bool {
-	return yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSafeModeEnabled)
-	//enableSafeModePath := "//sys/@enable_safe_mode"
-	//exists, err := yc.ytClient.NodeExists(ctx, ypath.Path(enableSafeModePath), nil)
-	//if err != nil {
-	//	return false, err
-	//}
-	//if !exists {
-	//	return false, nil
-	//}
-	//
-	//var isEnabled bool
-	//err = yc.ytClient.GetNode(ctx, ypath.Path(enableSafeModePath), &isEnabled, nil)
-	//return isEnabled, err
-}
-func (yc *ytsaurusClient) saveTableCells(ctx context.Context) error {
+func (yc *ytsaurusClient) SaveTableCells(ctx context.Context) error {
 	var tabletCellBundles []ytv1.TabletCellBundleInfo
 	err := yc.ytClient.ListNode(
 		ctx,
@@ -412,22 +390,7 @@ func (yc *ytsaurusClient) saveTableCells(ctx context.Context) error {
 	}
 
 	yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles = tabletCellBundles
-
-	yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionTabletCellsSaved,
-		Status:  metav1.ConditionTrue,
-		Reason:  "Update",
-		Message: "Tablet cells were saved",
-	})
 	return nil
-}
-func (yc *ytsaurusClient) SaveTableCells(ctx context.Context) error {
-	return yc.saveTableCells(ctx)
-}
-func (yc *ytsaurusClient) AreTableCellsSaved() bool {
-	return yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsSaved)
-	// FIXME: is it a good check? What if we have 0 table cells for example?
-	//return len(yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles) != 0
 }
 func (yc *ytsaurusClient) RemoveTableCells(ctx context.Context) error {
 	// FIXME: this needs locking or it can't be two reconciler loops in the same time?
@@ -452,12 +415,12 @@ func (yc *ytsaurusClient) RemoveTableCells(ctx context.Context) error {
 		}
 	}
 
-	yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionTabletCellsRemovingStarted,
-		Status:  metav1.ConditionTrue,
-		Reason:  "Update",
-		Message: "Tablet cells removing was started",
-	})
+	//yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+	//	Type:    consts.ConditionTabletCellsRemovingStarted,
+	//	Status:  metav1.ConditionTrue,
+	//	Reason:  "Update",
+	//	Message: "Tablet cells removing was started",
+	//})
 	return nil
 }
 func (yc *ytsaurusClient) AreTabletCellsRemoved(ctx context.Context) (bool, error) {
@@ -510,9 +473,34 @@ func (yc *ytsaurusClient) RecoverTableCells(ctx context.Context) error {
 	yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
 	return yc.ytsaurus.SaveUpdateStatus(ctx)
 }
-func (yc *ytsaurusClient) IsMasterReadOnly(ctx context.Context) (bool, error) {
-	var isReadOnly bool
-	// FIXME: can read only be checked that way?
-	err := yc.ytClient.GetNode(ctx, ypath.Path("//sys/@hydra_read_only"), &isReadOnly, nil)
-	return isReadOnly, err
+func (yc *ytsaurusClient) SaveMasterMonitoringPaths(ctx context.Context) error {
+	var monitoringPaths []string
+	mastersInfo, err := yc.getAllMasters(ctx)
+	if err != nil {
+		return err
+	}
+	for _, masterInfo := range mastersInfo {
+		for _, address := range masterInfo.Addresses {
+			monitoringPath := fmt.Sprintf("//sys/cluster_masters/%s/orchid/monitoring/hydra", address)
+			monitoringPaths = append(monitoringPaths, monitoringPath)
+		}
+	}
+	yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths = monitoringPaths
+	return nil
+}
+func (yc *ytsaurusClient) StartBuildingMasterSnapshots(ctx context.Context) error {
+	return yc.startBuildMasterSnapshots(ctx)
+}
+func (yc *ytsaurusClient) AreMasterSnapshotsBuilt(ctx context.Context) (bool, error) {
+	for _, monitoringPath := range yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths {
+		var masterHydra MasterHydra
+		if err := yc.ytClient.GetNode(ctx, ypath.Path(monitoringPath), &masterHydra, getReadOnlyGetOptions()); err != nil {
+			return false, err
+		}
+
+		if !masterHydra.LastSnapshotReadOnly {
+			return false, nil
+		}
+	}
+	return true, nil
 }
