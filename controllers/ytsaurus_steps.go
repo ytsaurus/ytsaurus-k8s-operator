@@ -33,7 +33,7 @@ const (
 	startBuildingMasterSnapshotsStepName  StepName = "startBuildingMasterSnapshots"
 	finishBuildingMasterSnapshotsStepName StepName = "finishBuildingMasterSnapshots"
 	masterExitReadOnlyStepName            StepName = "masterExitReadOnly"
-	recoverTableCellsStepName             StepName = "recoverTableCells"
+	recoverTabletCellsStepName            StepName = "recoverTabletCells"
 	updateOpArchiveStepName               StepName = "updateOpArchive"
 	updateQTStateStepName                 StepName = "updateQTState"
 	disableSafeModeStepName               StepName = "disableSafeMode"
@@ -53,6 +53,7 @@ func NewYtsaurusSteps(comps componentsStore, ytsaurusStatus *ytv1.YtsaurusStatus
 		dataNodesSteps = append(dataNodesSteps, newComponentStep(dn))
 	}
 
+	// We are trying to
 	steps := concat(
 		// it seems ytsaurusClientStep needs to be synced first because
 		// it is needed for action steps, but it can't work until its Sync not called
@@ -79,8 +80,8 @@ func NewYtsaurusSteps(comps componentsStore, ytsaurusStatus *ytv1.YtsaurusStatus
 		// (optional) queueagents (depend on y cli, master, tablet nodes)
 		// (optional) yqlagents (depend on master)
 		// (optional) strawberry (depend on master, scheduler, data nodes)
-		//masterExitReadOnly(yc, comps.master),
-		//recoverTableCells(yc),
+		masterExitReadOnly(comps.master),
+		recoverTabletCells(yc),
 		//updateOpArchive(),
 		//updateQTState(),
 		disableSafeMode(yc),
@@ -199,43 +200,44 @@ func getFullUpdateStatus(ctx context.Context, yc components.YtsaurusClient2, sta
 		return StepStatus{StepSyncStatusBlocked, msg}, nil
 	}
 	return StepStatus{StepSyncStatusNeedRun, msg}, nil
-
 }
 
 func enableSafeMode(yc components.YtsaurusClient2) Step {
 	statusCheck := func(ctx context.Context, state *ytsaurusState) (StepStatus, error) {
 		return getFullUpdateStatus(ctx, yc, state)
 	}
+	doneCondition := SafeModeEnabledCondition
 	action := func(ctx context.Context, state *ytsaurusState) error {
 		if err := yc.EnableSafeMode(ctx); err != nil {
 			return err
 		}
-		state.SetUpdateStatusCondition(SafeModeEnabledCondition)
+		state.SetUpdateStatusCondition(doneCondition)
 		return nil
 	}
 	return newActionStepWithDoneCondition(
 		enableSafeModeStepName,
 		action,
 		statusCheck,
-		SafeModeEnabledCondition.Type,
+		doneCondition.Type,
 	)
 }
 func saveTabletCells(yc components.YtsaurusClient2) Step {
 	statusCheck := func(ctx context.Context, state *ytsaurusState) (StepStatus, error) {
 		return getFullUpdateStatus(ctx, yc, state)
 	}
+	doneCondition := TabletCellsSavedCondition
 	action := func(ctx context.Context, state *ytsaurusState) error {
 		if err := yc.SaveTableCells(ctx); err != nil {
 			return err
 		}
-		state.SetUpdateStatusCondition(TabletCellsSavedCondition)
+		state.SetUpdateStatusCondition(doneCondition)
 		return nil
 	}
 	return newActionStepWithDoneCondition(
 		saveTabletCellsStepName,
 		action,
 		statusCheck,
-		TabletCellsSavedCondition.Type,
+		doneCondition.Type,
 	)
 }
 func removeTabletCells(yc components.YtsaurusClient2) Step {
@@ -256,18 +258,19 @@ func saveMasterMonitoringPaths(yc components.YtsaurusClient2) Step {
 	statusCheck := func(ctx context.Context, state *ytsaurusState) (StepStatus, error) {
 		return getFullUpdateStatus(ctx, yc, state)
 	}
+	doneCondition := SnapshotsMonitoringInfoSavedCondition
 	action := func(ctx context.Context, state *ytsaurusState) error {
 		if err := yc.SaveMasterMonitoringPaths(ctx); err != nil {
 			return err
 		}
-		state.SetUpdateStatusCondition(SnapshotsMonitoringInfoSavedCondition)
+		state.SetUpdateStatusCondition(doneCondition)
 		return nil
 	}
 	return newActionStepWithDoneCondition(
 		saveMasterSnapshotMonitoringStepName,
 		action,
 		statusCheck,
-		SnapshotsMonitoringInfoSavedCondition.Type,
+		doneCondition.Type,
 	)
 }
 
@@ -277,72 +280,112 @@ func startBuildingMasterSnapshots(yc components.YtsaurusClient2) Step {
 	statusCheck := func(ctx context.Context, state *ytsaurusState) (StepStatus, error) {
 		return getFullUpdateStatus(ctx, yc, state)
 	}
+	doneCondition := SnapshotsBuildingStartedCondition
 	action := func(ctx context.Context, state *ytsaurusState) error {
 		if err := yc.StartBuildingMasterSnapshots(ctx); err != nil {
 			return err
 		}
-		state.SetUpdateStatusCondition(SnapshotsBuildingStartedCondition)
+		state.SetUpdateStatusCondition(doneCondition)
 		return nil
 	}
 	return newActionStepWithDoneCondition(
 		startBuildingMasterSnapshotsStepName,
 		action,
 		statusCheck,
-		SnapshotsBuildingStartedCondition.Type,
+		doneCondition.Type,
 	)
 }
 func finishBuildingMasterSnapshots(yc components.YtsaurusClient2) Step {
 	statusCheck := func(ctx context.Context, state *ytsaurusState) (StepStatus, error) {
 		return getFullUpdateStatus(ctx, yc, state)
 	}
+	doneCondition := MasterSnapshotsBuiltCondition
 	action := func(ctx context.Context, state *ytsaurusState) error {
-		state.SetUpdateStatusCondition(MasterSnapshotsBuiltCondition)
+		built, err := yc.AreMasterSnapshotsBuilt(ctx)
+		if err != nil {
+			return err
+		}
+		if !built {
+			return nil
+		}
+		state.SetUpdateStatusCondition(doneCondition)
 		return nil
 	}
-	doneCheck := func(ctx context.Context, _ *ytsaurusState) (bool, error) {
-		return yc.AreMasterSnapshotsBuilt(ctx)
+	return newActionStepWithDoneCondition(
+		finishBuildingMasterSnapshotsStepName,
+		action,
+		statusCheck,
+		doneCondition.Type,
+	)
+}
+func masterExitReadOnly(master components.Component2) Step {
+	statusCheck := func(ctx context.Context, state *ytsaurusState) (StepStatus, error) {
+		if !state.isUpdateStatusConditionTrue(MasterSnapshotsBuiltCondition.Type) {
+			return StepStatus{
+				SyncStatus: StepSyncStatusSkip,
+				Message:    "Snapshots haven't been built, cluster shouldn't be in read only",
+			}, nil
+		}
+		return StepStatus{StepSyncStatusNeedRun, ""}, nil
+	}
+	doneCondition := MasterExitedReadOnlyCondition
+	action := func(ctx context.Context, state *ytsaurusState) error {
+		// TODO: this could be extracted from master
+		masterImpl := master.(*components.Master)
+		err := masterImpl.DoExitReadOnly(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	doneCheck := func(ctx context.Context, state *ytsaurusState) (bool, error) {
+		if state.isUpdateStatusConditionTrue(doneCondition.Type) {
+			return true, nil
+		}
+
+		masterImpl := master.(*components.Master)
+		done, err := masterImpl.IsExitReadOnlyDone(ctx)
+		if err != nil {
+			return false, err
+		}
+		if !done {
+			return false, nil
+		}
+		state.SetUpdateStatusCondition(doneCondition)
+		return true, nil
 	}
 	return newActionStep(
-		finishBuildingMasterSnapshotsStepName,
+		masterExitReadOnlyStepName,
 		action,
 		statusCheck,
 		doneCheck,
 	)
 }
-
-//func masterExitReadOnly(yc components.YtsaurusClient2, master components.Component2) Step {
-//	statusCheck := func(ctx context.Context, _ *ytsaurusState) (StepStatus, error) {
-//		isReadOnly, err := yc.IsMasterReadOnly(ctx)
-//		if err != nil {
-//			return StepStatus{}, err
-//		}
-//		if !isReadOnly {
-//			return StepStatus{StepSyncStatusDone, ""}, nil
-//		}
-//		return StepStatus{StepSyncStatusNeedRun, ""}, nil
-//	}
-//	action := func(ctx context.Context) error {
-//		masterImpl := master.(*components.Master)
-//		return masterImpl.DoExitReadOnly(ctx)
-//	}
-//	return newActionStep(masterExitReadOnlyStepName, action, statusCheck)
-//}
-//func recoverTableCells(yc components.YtsaurusClient2) Step {
-//	action := func(ctx context.Context) error {
-//		return yc.RecoverTableCells(ctx)
-//	}
-//	statusCheck := func(ctx context.Context, _ *ytsaurusState) (StepStatus, error) {
-//		done, err := yc.AreTabletCellsRecovered(ctx)
-//		if err != nil {
-//			return StepStatus{}, err
-//		}
-//		if done {
-//			return StepStatus{StepSyncStatusDone, ""}, nil
-//		}
-//		return StepStatus{StepSyncStatusNeedRun, ""}, nil
-//	}
-//	return newActionStep(recoverTableCellsStepName, action, statusCheck)
-//}
+func recoverTabletCells(yc components.YtsaurusClient2) Step {
+	statusCheck := func(ctx context.Context, state *ytsaurusState) (StepStatus, error) {
+		if !state.isUpdateStatusConditionTrue(MasterExitedReadOnlyCondition.Type) {
+			return StepStatus{
+				SyncStatus: StepSyncStatusSkip,
+				Message:    "Master is in read only, can't recover tablet cells",
+			}, nil
+		}
+		return StepStatus{StepSyncStatusNeedRun, ""}, nil
+	}
+	doneCondition := TabletCellsRecoveredCondition
+	action := func(ctx context.Context, state *ytsaurusState) error {
+		if err := yc.RecoverTableCells(ctx); err != nil {
+			return err
+		}
+		state.SetUpdateStatusCondition(doneCondition)
+		return nil
+	}
+	return newActionStepWithDoneCondition(
+		recoverTabletCellsStepName,
+		action,
+		statusCheck,
+		doneCondition.Type,
+	)
+}
 
 // maybe prepare is needed also?
 //func updateOpArchive() Step {
@@ -372,28 +415,11 @@ func finishBuildingMasterSnapshots(yc components.YtsaurusClient2) Step {
 //	return newActionStep(updateQTStateStepName, action, statusCheck)
 //}
 
-//	func disableSafeMode(yc components.YtsaurusClient2) Step {
-//		action := func(ctx context.Context) error {
-//			return yc.DisableSafeMode(ctx)
-//		}
-//		statusCheck := func(ctx context.Context, _ *ytsaurusState) (StepStatus, error) {
-//			enabled, err := yc.IsSafeModeEnabled(ctx)
-//			if err != nil {
-//				return StepStatus{}, err
-//			}
-//			if !enabled {
-//				return StepStatus{StepSyncStatusDone, ""}, nil
-//			}
-//			return StepStatus{StepSyncStatusNeedRun, ""}, nil
-//		}
-//		return newActionStep(disableSafeModeStepName, action, statusCheck)
-//	}
-
-// I think disableSafeMode could and should be implemented without conditions
-// (with just checking cypress node), but let's think about in the next refactoring.
 func disableSafeMode(yc components.YtsaurusClient2) Step {
 	statusCheck := func(ctx context.Context, state *ytsaurusState) (StepStatus, error) {
-		if !state.isUpdateStatusConditionTrue(SafeModeEnabledCondition.Type) {
+		// fix it later when updateQTState is implemented
+		if !state.isUpdateStatusConditionTrue(TabletCellsRecoveredCondition.Type) {
+			//if !state.isUpdateStatusConditionTrue(SafeModeEnabledCondition.Type) {
 			return StepStatus{
 				SyncStatus: StepSyncStatusSkip,
 				Message:    "safe mode wasn't enabled",

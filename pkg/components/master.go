@@ -427,6 +427,14 @@ func (m *Master) DoExitReadOnly(ctx context.Context) error {
 	return err
 }
 
+func (m *Master) IsExitReadOnlyDone(ctx context.Context) (bool, error) {
+	err := m.exitReadOnlyJob.Fetch(ctx)
+	if err != nil {
+		return false, err
+	}
+	return m.exitReadOnlyJob.initJob.Completed(), nil
+}
+
 func (m *Master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav1.ConditionStatus) {
 	m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    consts.ConditionMasterExitReadOnlyPrepared,
