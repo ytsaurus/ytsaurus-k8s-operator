@@ -38,7 +38,7 @@ func (s *componentStep) Status(ctx context.Context, _ *ytsaurusState) (StepStatu
 		Message:    componentStatus.Message,
 	}, nil
 }
-func (s *componentStep) Run(ctx context.Context) error {
+func (s *componentStep) Run(ctx context.Context, _ *ytsaurusState) error {
 	err := s.component.Fetch(ctx)
 	if err != nil {
 		return err

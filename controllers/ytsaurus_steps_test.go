@@ -80,7 +80,7 @@ func TestStepChosenCorrectly(t *testing.T) {
 		Conditions:   nil,
 		UpdateStatus: ytv1.UpdateStatus{State: ytv1.UpdateStateNone},
 	}
-	steps, err := NewYtsaurusSteps(store, ytsaurusStatus, nil)
+	steps, err := NewYtsaurusSteps(store, &ytsaurusStatus, nil)
 	require.NoError(t, err)
 
 	step, status, err := steps.getNextStep(context.Background())

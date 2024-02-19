@@ -13,13 +13,13 @@ import (
 
 type ytsaurusState struct {
 	comps          componentsStore
-	ytsaurusStatus ytv1.YtsaurusStatus
+	ytsaurusStatus *ytv1.YtsaurusStatus
 	statuses       map[string]components.ComponentStatus
 }
 
 func newYtsaurusState(
 	comps componentsStore,
-	ytsaurusStatus ytv1.YtsaurusStatus,
+	ytsaurusStatus *ytv1.YtsaurusStatus,
 
 ) *ytsaurusState {
 	return &ytsaurusState{
@@ -53,13 +53,15 @@ func (s *ytsaurusState) getMasterStatus() components.ComponentStatus {
 func (s *ytsaurusState) isStatusConditionTrue(conditionType string) bool {
 	return meta.IsStatusConditionTrue(s.ytsaurusStatus.Conditions, conditionType)
 }
+func (s *ytsaurusState) isUpdateStatusConditionTrue(conditionType string) bool {
+	return meta.IsStatusConditionTrue(s.ytsaurusStatus.UpdateStatus.Conditions, conditionType)
+}
 func (s *ytsaurusState) isStatusConditionFalse(conditionType string) bool {
 	return meta.IsStatusConditionFalse(s.ytsaurusStatus.Conditions, conditionType)
 }
 func (s *ytsaurusState) SetStatusCondition(condition metav1.Condition) {
 	meta.SetStatusCondition(&s.ytsaurusStatus.Conditions, condition)
 }
-
 func (s *ytsaurusState) SetUpdateStatusCondition(condition metav1.Condition) {
 	meta.SetStatusCondition(&s.ytsaurusStatus.UpdateStatus.Conditions, condition)
 }

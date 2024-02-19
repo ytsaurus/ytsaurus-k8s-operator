@@ -57,6 +57,15 @@ type YtsaurusClient2 interface {
 	IsMasterReadOnly(context.Context) (bool, error)
 }
 
+var (
+	EnableSafeModeCondition = metav1.Condition{
+		Type:    consts.ConditionSafeModeEnabled,
+		Status:  metav1.ConditionTrue,
+		Reason:  "Update",
+		Message: "Safe mode was enabled",
+	}
+)
+
 func (d *Discovery) Status2(ctx context.Context) (ComponentStatus, error) {
 	// exists but images or config is not up-to-date
 	if d.server.needUpdate() {
@@ -360,17 +369,17 @@ func (yc *ytsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 	return true, "", nil
 }
 func (yc *ytsaurusClient) EnableSafeMode(ctx context.Context) error {
-	err := yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), true, nil)
-	if err != nil {
-		return err
-	}
-	yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionSafeModeEnabled,
-		Status:  metav1.ConditionTrue,
-		Reason:  "Update",
-		Message: "Safe mode was enabled",
-	})
-	return nil
+	return yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), true, nil)
+	//if err != nil {
+	//	return err
+	//}
+	//yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+	//	Type:    consts.ConditionSafeModeEnabled,
+	//	Status:  metav1.ConditionTrue,
+	//	Reason:  "Update",
+	//	Message: "Safe mode was enabled",
+	//})
+	//return nil
 }
 func (yc *ytsaurusClient) DisableSafeMode(ctx context.Context) error {
 	return yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), false, nil)

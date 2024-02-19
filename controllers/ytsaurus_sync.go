@@ -47,7 +47,7 @@ func (r *YtsaurusReconciler) SyncNew(ctx context.Context, resource *ytv1.Ytsauru
 		return requeueASAP, err
 	}
 
-	ytsaurusSteps, err := NewYtsaurusSteps(cm.allComponents, resource.Status, ytsaurusProxy)
+	ytsaurusSteps, err := NewYtsaurusSteps(cm.allComponents, &resource.Status, ytsaurusProxy)
 	if err != nil {
 		logger.Error(err, "failed to create ytsaurus steps")
 		return requeueASAP, err
