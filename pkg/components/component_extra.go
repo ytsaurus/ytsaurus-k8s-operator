@@ -116,6 +116,23 @@ func (m *Master) Sync2(ctx context.Context) error {
 	_, err = m.initJob.Sync(ctx, false)
 	return err
 }
+func (m *Master) DoExitReadOnly(ctx context.Context) error {
+	// FIXME: test how it goes if ran several times
+	err := m.exitReadOnlyJob.Fetch(ctx)
+	if err != nil {
+		return err
+	}
+	m.exitReadOnlyJob.SetInitScript(m.createExitReadOnlyScript())
+	_, err = m.exitReadOnlyJob.Sync(ctx, false)
+	return err
+}
+func (m *Master) IsExitReadOnlyDone(ctx context.Context) (bool, error) {
+	err := m.exitReadOnlyJob.Fetch(ctx)
+	if err != nil {
+		return false, err
+	}
+	return m.exitReadOnlyJob.initJob.Completed(), nil
+}
 
 func (hp *HTTPProxy) Status2(ctx context.Context) (ComponentStatus, error) {
 	if hp.server.needUpdate() {
@@ -234,6 +251,37 @@ func (yc *ytsaurusClient) Sync2(ctx context.Context) error {
 
 	// todo run init job if necessary
 
+	return nil
+}
+
+func (s *scheduler) Status2(ctx context.Context) (ComponentStatus, error) {
+	if s.server.needUpdate() {
+		return SimpleStatus(SyncStatusNeedLocalUpdate), nil
+	}
+
+	// FIXME: i've removed wait for master & exec nodes here
+
+	if s.secret.NeedSync(consts.TokenSecretKey, "") {
+		return WaitingStatus(SyncStatusNeedLocalUpdate, s.secret.Name()), nil
+	}
+
+	if s.server.needSync2() {
+		return SimpleStatus(SyncStatusNeedLocalUpdate), nil
+	}
+
+	if !s.server.arePodsReady(ctx) {
+		return WaitingStatus(SyncStatusUpdating, "pods"), nil
+	}
+
+	return SimpleStatus(SyncStatusReady), nil
+}
+func (s *scheduler) Sync2(ctx context.Context) error {
+	if err := s.secret.Sync(ctx); err != nil {
+		return err
+	}
+	if err := s.server.Sync(ctx); err != nil {
+		return err
+	}
 	return nil
 }
 

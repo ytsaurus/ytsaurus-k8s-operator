@@ -416,25 +416,6 @@ func (m *Master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, 
 	return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
 }
 
-func (m *Master) DoExitReadOnly(ctx context.Context) error {
-	// FIXME: test how it goes if ran several times
-	err := m.exitReadOnlyJob.Fetch(ctx)
-	if err != nil {
-		return err
-	}
-	m.exitReadOnlyJob.SetInitScript(m.createExitReadOnlyScript())
-	_, err = m.exitReadOnlyJob.Sync(ctx, false)
-	return err
-}
-
-func (m *Master) IsExitReadOnlyDone(ctx context.Context) (bool, error) {
-	err := m.exitReadOnlyJob.Fetch(ctx)
-	if err != nil {
-		return false, err
-	}
-	return m.exitReadOnlyJob.initJob.Completed(), nil
-}
-
 func (m *Master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav1.ConditionStatus) {
 	m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    consts.ConditionMasterExitReadOnlyPrepared,
