@@ -173,7 +173,18 @@ func (yc *ytsaurusClient) StartBuildMasterSnapshots(ctx context.Context) error {
 		SetReadOnly:               ptr.Bool(true),
 	})
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    consts.ConditionSnapshotsBuildingStarted,
+		Status:  metav1.ConditionTrue,
+		Reason:  "Update",
+		Message: "Snapshots building started",
+	})
+
+	return nil
 }
 
 func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentStatus, error) {
@@ -247,16 +258,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			}
 
 			if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnapshotsBuildingStarted) {
-				if err = yc.StartBuildMasterSnapshots(ctx); err != nil {
-					return SimpleStatus(SyncStatusUpdating), err
-				}
-
-				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-					Type:    consts.ConditionSnapshotsBuildingStarted,
-					Status:  metav1.ConditionTrue,
-					Reason:  "Update",
-					Message: "Snapshots building started",
-				})
+				return SimpleStatus(SyncStatusUpdating), yc.StartBuildMasterSnapshots(ctx)
 			}
 
 			for _, monitoringPath := range yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths {

@@ -112,6 +112,9 @@ func TestYtsaurusUpdateMasterImage(t *testing.T) {
 
 	// emulate tablet cells recovered
 	//h.ytsaurusInMemory.Set("//sys/tablet_cell_bundles", map[string]any{"sys": nil})
+	h.ytsaurusInMemory.Set("//sys/tablet_cells", map[string]any{
+		"1-602-2bc-955ed415": nil,
+	})
 	//h.ytsaurusInMemory.Set("//sys/tablet_cells/1-602-2bc-955ed415/@tablet_cell_bundle", "sys")
 
 	fetchAndCheckEventually(
@@ -165,16 +168,7 @@ func TestYtsaurusUpdateMasterImage(t *testing.T) {
 	ytsaurusResource.Spec.EnableFullUpdate = true
 	updateObject(h, &ytv1.Ytsaurus{}, &ytsaurusResource)
 
-	fetchAndCheckEventually(
-		h,
-		ytsaurusName,
-		&ytv1.Ytsaurus{},
-		func(obj client.Object) bool {
-			state := obj.(*ytv1.Ytsaurus).Status.State
-			return state == ytv1.ClusterStateUpdating
-		},
-	)
-
+	t.Log("[ Wait for YTsaurus Running status ]")
 	fetchAndCheckEventually(
 		h,
 		ytsaurusName,

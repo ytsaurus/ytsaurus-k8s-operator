@@ -59,3 +59,7 @@ func (s *ytsaurusState) isStatusConditionFalse(conditionType string) bool {
 func (s *ytsaurusState) SetStatusCondition(condition metav1.Condition) {
 	meta.SetStatusCondition(&s.ytsaurusStatus.Conditions, condition)
 }
+
+func (s *ytsaurusState) SetUpdateStatusCondition(condition metav1.Condition) {
+	meta.SetStatusCondition(&s.ytsaurusStatus.UpdateStatus.Conditions, condition)
+}
