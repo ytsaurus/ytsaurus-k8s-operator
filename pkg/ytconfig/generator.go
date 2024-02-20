@@ -135,8 +135,8 @@ func (g *Generator) fillDriver(c *Driver) {
 func (g *BaseGenerator) fillAddressResolver(c *AddressResolver) {
 	var retries = 1000
 
-	c.EnableIPv4 = g.configSpec.UseIPv4
-	c.EnableIPv6 = g.configSpec.UseIPv6
+	c.EnableIPv4 = g.commonSpec.UseIPv4
+	c.EnableIPv6 = g.commonSpec.UseIPv6
 	if !c.EnableIPv6 && !c.EnableIPv4 {
 		// In case when nothing is specified, we prefer IPv4 due to compatibility reasons.
 		c.EnableIPv4 = true
@@ -191,7 +191,7 @@ func (g *Generator) fillBusEncryption(b *Bus, s *ytv1.RPCTransportSpec) {
 func (g *BaseGenerator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec) {
 	if s == nil {
 		// Use common bus transport config
-		s = g.configSpec.NativeTransport
+		s = g.commonSpec.NativeTransport
 	}
 	if s == nil || s.TLSSecret == nil {
 		return
@@ -202,7 +202,7 @@ func (g *BaseGenerator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec)
 	}
 
 	// FIXME(khlebnikov): some clients does not support TLS yet
-	if s.TLSRequired && s != g.configSpec.NativeTransport {
+	if s.TLSRequired && s != g.commonSpec.NativeTransport {
 		c.BusServer.EncryptionMode = EncryptionModeRequired
 	} else {
 		c.BusServer.EncryptionMode = EncryptionModeOptional
@@ -219,7 +219,7 @@ func (g *BaseGenerator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec)
 func (g *BaseGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s *ytv1.RPCTransportSpec) {
 	if s == nil {
 		// Use common bus transport config
-		s = g.configSpec.NativeTransport
+		s = g.commonSpec.NativeTransport
 	}
 	if s == nil || s.TLSSecret == nil {
 		return
@@ -229,7 +229,7 @@ func (g *BaseGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s 
 		c.BusClient = &Bus{}
 	}
 
-	if g.configSpec.CABundle != nil {
+	if g.commonSpec.CABundle != nil {
 		c.BusClient.CA = &PemBlob{
 			FileName: path.Join(consts.CABundleMountPoint, consts.CABundleFileName),
 		}
@@ -478,7 +478,7 @@ func (g *NodeGenerator) GetDataNodeConfig(spec ytv1.DataNodesSpec) ([]byte, erro
 func (g *NodeGenerator) getExecNodeConfigImpl(spec *ytv1.ExecNodesSpec) (ExecNodeServer, error) {
 	c, err := getExecNodeServerCarcass(
 		spec,
-		g.configSpec.UsePorto)
+		g.commonSpec.UsePorto)
 	if err != nil {
 		return c, err
 	}

@@ -7,7 +7,7 @@ import (
 )
 
 func (g *BaseGenerator) getName(shortName string) string {
-	if g.configSpec.UseShortNames {
+	if g.commonSpec.UseShortNames {
 		return shortName
 	} else {
 		return fmt.Sprintf("%s-%s", shortName, g.key.Name)

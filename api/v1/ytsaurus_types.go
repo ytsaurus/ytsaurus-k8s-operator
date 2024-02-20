@@ -410,7 +410,9 @@ type DeprecatedSpytSpec struct {
 	SpytVersion  string `json:"spytVersion,omitempty"`
 }
 
-type ConfigurationSpec struct {
+// CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.
+// It is inlined in these specs.
+type CommonSpec struct {
 	CoreImage string `json:"coreImage,omitempty"`
 
 	// Reference to ConfigMap with trusted certificates: "ca.crt".
@@ -440,8 +442,8 @@ type ConfigurationSpec struct {
 
 // YtsaurusSpec defines the desired state of Ytsaurus
 type YtsaurusSpec struct {
-	ConfigurationSpec `json:",inline"`
-	UIImage           string `json:"uiImage,omitempty"`
+	CommonSpec `json:",inline"`
+	UIImage    string `json:"uiImage,omitempty"`
 
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 	ConfigOverrides  *corev1.LocalObjectReference  `json:"configOverrides,omitempty"`

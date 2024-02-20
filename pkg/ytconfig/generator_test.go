@@ -99,7 +99,7 @@ func TestGetDataNodeWithoutYtsaurusConfig(t *testing.T) {
 	g := NewRemoteNodeGenerator(
 		testNamespacedName,
 		testClusterDomain,
-		getConfigurationSpec(),
+		getCommonSpec(),
 		getMasterConnectionSpecWithFixedMasterHosts(),
 	)
 	cfg, err := g.GetDataNodeConfig(getDataNodeSpec())
@@ -125,7 +125,7 @@ func TestGetExecNodeWithoutYtsaurusConfig(t *testing.T) {
 	g := NewRemoteNodeGenerator(
 		testNamespacedName,
 		testClusterDomain,
-		getConfigurationSpec(),
+		getCommonSpec(),
 		getMasterConnectionSpecWithFixedMasterHosts(),
 	)
 	cfg, err := g.GetExecNodeConfig(getExecNodeSpec())
@@ -214,7 +214,7 @@ func TestGetTabletNodeWithoutYtsaurusConfig(t *testing.T) {
 	g := NewRemoteNodeGenerator(
 		testNamespacedName,
 		testClusterDomain,
-		getConfigurationSpec(),
+		getCommonSpec(),
 		getMasterConnectionSpecWithFixedMasterHosts(),
 	)
 	cfg, err := g.GetTabletNodeConfig(getTabletNodeSpec())
@@ -257,7 +257,7 @@ func getYtsaurus() *v1.Ytsaurus {
 			Name:      testYtsaurusName,
 		},
 		Spec: v1.YtsaurusSpec{
-			ConfigurationSpec: getConfigurationSpec(),
+			CommonSpec: getCommonSpec(),
 
 			PrimaryMasters: v1.MastersSpec{
 				MasterConnectionSpec:   getMasterConnectionSpec(),
@@ -557,8 +557,8 @@ func getTCPProxySpec() v1.TCPProxiesSpec {
 	}
 }
 
-func getConfigurationSpec() v1.ConfigurationSpec {
-	return v1.ConfigurationSpec{
+func getCommonSpec() v1.CommonSpec {
+	return v1.CommonSpec{
 		UseIPv6: true,
 	}
 }

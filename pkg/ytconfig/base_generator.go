@@ -10,7 +10,7 @@ type BaseGenerator struct {
 	key           types.NamespacedName
 	clusterDomain string
 
-	configSpec             ytv1.ConfigurationSpec
+	commonSpec             ytv1.CommonSpec
 	masterConnectionSpec   ytv1.MasterConnectionSpec
 	masterInstanceCount    int32
 	discoveryInstanceCount int32
@@ -19,13 +19,13 @@ type BaseGenerator struct {
 func NewRemoteBaseGenerator(
 	key types.NamespacedName,
 	clusterDomain string,
-	configSpec ytv1.ConfigurationSpec,
+	commonSpec ytv1.CommonSpec,
 	masterConnectionSpec ytv1.MasterConnectionSpec,
 ) *BaseGenerator {
 	return &BaseGenerator{
 		key:                  key,
 		clusterDomain:        clusterDomain,
-		configSpec:           configSpec,
+		commonSpec:           commonSpec,
 		masterConnectionSpec: masterConnectionSpec,
 	}
 }
@@ -40,7 +40,7 @@ func NewLocalBaseGenerator(
 			Name:      ytsaurus.Name,
 		},
 		clusterDomain:          clusterDomain,
-		configSpec:             ytsaurus.Spec.ConfigurationSpec,
+		commonSpec:             ytsaurus.Spec.CommonSpec,
 		masterConnectionSpec:   ytsaurus.Spec.PrimaryMasters.MasterConnectionSpec,
 		masterInstanceCount:    ytsaurus.Spec.PrimaryMasters.InstanceCount,
 		discoveryInstanceCount: ytsaurus.Spec.Discovery.InstanceCount,

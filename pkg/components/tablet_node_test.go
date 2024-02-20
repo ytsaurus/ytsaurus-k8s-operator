@@ -49,7 +49,7 @@ var _ = Describe("Tablet node test", func() {
 				Namespace: namespace,
 			},
 			Spec: v1.YtsaurusSpec{
-				ConfigurationSpec: v1.ConfigurationSpec{
+				CommonSpec: v1.CommonSpec{
 					CoreImage: "ytsaurus/ytsaurus:latest",
 				},
 				Discovery: v1.DiscoverySpec{

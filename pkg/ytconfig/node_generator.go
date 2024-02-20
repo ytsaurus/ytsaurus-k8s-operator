@@ -13,13 +13,13 @@ type NodeGenerator struct {
 func NewRemoteNodeGenerator(
 	key types.NamespacedName,
 	clusterDomain string,
-	configSpec ytv1.ConfigurationSpec,
+	commonSpec ytv1.CommonSpec,
 	masterConnectionSpec ytv1.MasterConnectionSpec,
 ) *NodeGenerator {
 	baseGenerator := NewRemoteBaseGenerator(
 		key,
 		clusterDomain,
-		configSpec,
+		commonSpec,
 		masterConnectionSpec,
 	)
 	return &NodeGenerator{
