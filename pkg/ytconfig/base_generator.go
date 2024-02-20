@@ -35,14 +35,14 @@ func NewLocalBaseGenerator(
 	clusterDomain string,
 ) *BaseGenerator {
 	return &BaseGenerator{
-		types.NamespacedName{
+		key: types.NamespacedName{
 			Namespace: ytsaurus.Namespace,
 			Name:      ytsaurus.Name,
 		},
-		clusterDomain,
-		ytsaurus.Spec.ConfigurationSpec,
-		ytsaurus.Spec.PrimaryMasters.MasterConnectionSpec,
-		ytsaurus.Spec.PrimaryMasters.InstanceCount,
-		ytsaurus.Spec.Discovery.InstanceCount,
+		clusterDomain:          clusterDomain,
+		configSpec:             ytsaurus.Spec.ConfigurationSpec,
+		masterConnectionSpec:   ytsaurus.Spec.PrimaryMasters.MasterConnectionSpec,
+		masterInstanceCount:    ytsaurus.Spec.PrimaryMasters.InstanceCount,
+		discoveryInstanceCount: ytsaurus.Spec.Discovery.InstanceCount,
 	}
 }
