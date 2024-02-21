@@ -52,4 +52,7 @@ const (
 	UIHTTPPort = 80
 
 	StrawberryHTTPAPIPort = 80
+
+	MasterCachesRPCPort        = 9018
+	MasterCachesMonitoringPort = 10018
 )

@@ -427,6 +427,13 @@ type DeprecatedSpytSpec struct {
 	SpytVersion  string `json:"spytVersion,omitempty"`
 }
 
+type MasterCachesSpec struct {
+	InstanceSpec               `json:",inline"`
+	HostAddresses              []string `json:"hostAddresses,omitempty"`
+	HostAddressLabel           string   `json:"hostAddressesLabel,omitempty"`
+	MasterCacheDiscoveryPeriod *int     `json:"masterCacheDiscoveryPeriod"`
+}
+
 // CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.
 // It is inlined in these specs.
 type CommonSpec struct {
@@ -480,9 +487,10 @@ type YtsaurusSpec struct {
 
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
-	Discovery        DiscoverySpec `json:"discovery,omitempty"`
-	PrimaryMasters   MastersSpec   `json:"primaryMasters,omitempty"`
-	SecondaryMasters []MastersSpec `json:"secondaryMasters,omitempty"`
+	Discovery        DiscoverySpec     `json:"discovery,omitempty"`
+	PrimaryMasters   MastersSpec       `json:"primaryMasters,omitempty"`
+	SecondaryMasters []MastersSpec     `json:"secondaryMasters,omitempty"`
+	MasterCaches     *MasterCachesSpec `json:"masterCaches,omitempty"`
 	// +kubebuilder:validation:MinItems:=1
 	HTTPProxies []HTTPProxiesSpec `json:"httpProxies,omitempty"`
 	RPCProxies  []RPCProxiesSpec  `json:"rpcProxies,omitempty"`

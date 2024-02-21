@@ -27,6 +27,7 @@ type DiscoveryConnection struct {
 
 type MasterCache struct {
 	MasterCell
+	AddressList
 	EnableMasterCacheDiscover bool `yson:"enable_master_cache_discovery"`
 }
 
@@ -42,6 +43,7 @@ type ClusterConnection struct {
 	PrimaryMaster       MasterCell          `yson:"primary_master"`
 	DiscoveryConnection DiscoveryConnection `yson:"discovery_connection,omitempty"`
 	BusClient           *Bus                `yson:"bus_client,omitempty"`
+	MasterCache         MasterCache         `yson:"master_cache"`
 }
 
 type AddressResolver struct {
