@@ -5,6 +5,7 @@ import (
 	"log"
 	"path"
 
+	"k8s.io/apimachinery/pkg/util/intstr"
 	ptr "k8s.io/utils/pointer"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -16,6 +17,15 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
+)
+
+const (
+	initialProbesDelaySeconds = 90
+
+	probesTimeoutSeconds = 3
+	probesPeriodSeconds  = 15
+
+	readinessProbeHTTPPath = "/solomon/status"
 )
 
 // server manages common resources of YTsaurus cluster server components.
@@ -255,6 +265,27 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Command:      []string{s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, fileNames[0])},
 				VolumeMounts: volumeMounts,
 				Resources:    s.instanceSpec.Resources,
+				StartupProbe: &corev1.Probe{
+					ProbeHandler: corev1.ProbeHandler{
+						TCPSocket: &corev1.TCPSocketAction{
+							Port: intstr.FromInt(int(s.labeller.MonitoringPort)),
+						},
+					},
+					InitialDelaySeconds: initialProbesDelaySeconds,
+					TimeoutSeconds:      probesTimeoutSeconds,
+					PeriodSeconds:       probesPeriodSeconds,
+				},
+				ReadinessProbe: &corev1.Probe{
+					ProbeHandler: corev1.ProbeHandler{
+						HTTPGet: &corev1.HTTPGetAction{
+							Port: intstr.FromInt(int(s.labeller.MonitoringPort)),
+							Path: readinessProbeHTTPPath,
+						},
+					},
+					InitialDelaySeconds: initialProbesDelaySeconds,
+					TimeoutSeconds:      probesTimeoutSeconds,
+					PeriodSeconds:       probesPeriodSeconds,
+				},
 			},
 		},
 		InitContainers: []corev1.Container{
