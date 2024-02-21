@@ -97,7 +97,7 @@
             "user_slots"=100;
         };
     };
-    "exec_agent"={
+    "exec_node"={
         "slot_manager"={
             locations=[
                 {
