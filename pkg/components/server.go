@@ -5,6 +5,7 @@ import (
 	"log"
 	"path"
 
+	"k8s.io/apimachinery/pkg/util/intstr"
 	ptr "k8s.io/utils/pointer"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -19,11 +20,6 @@ import (
 )
 
 const (
-	initialProbesDelaySeconds = 90
-
-	probesTimeoutSeconds = 3
-	probesPeriodSeconds  = 15
-
 	readinessProbeHTTPPath = "/orchid/service"
 )
 
@@ -264,27 +260,19 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Command:      []string{s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, fileNames[0])},
 				VolumeMounts: volumeMounts,
 				Resources:    s.instanceSpec.Resources,
-				//StartupProbe: &corev1.Probe{
-				//	ProbeHandler: corev1.ProbeHandler{
-				//		TCPSocket: &corev1.TCPSocketAction{
-				//			Port: intstr.FromInt(int(s.labeller.MonitoringPort)),
-				//		},
-				//	},
-				//	InitialDelaySeconds: initialProbesDelaySeconds,
-				//	TimeoutSeconds:      probesTimeoutSeconds,
-				//	PeriodSeconds:       probesPeriodSeconds,
-				//},
-				//ReadinessProbe: &corev1.Probe{
-				//	ProbeHandler: corev1.ProbeHandler{
-				//		HTTPGet: &corev1.HTTPGetAction{
-				//			Port: intstr.FromInt(int(s.labeller.MonitoringPort)),
-				//			Path: readinessProbeHTTPPath,
-				//		},
-				//	},
-				//	InitialDelaySeconds: initialProbesDelaySeconds,
-				//	TimeoutSeconds:      probesTimeoutSeconds,
-				//	PeriodSeconds:       probesPeriodSeconds,
-				//},
+				ReadinessProbe: &corev1.Probe{
+					ProbeHandler: corev1.ProbeHandler{
+						HTTPGet: &corev1.HTTPGetAction{
+							Port: intstr.FromInt(int(s.labeller.MonitoringPort)),
+							Path: readinessProbeHTTPPath,
+						},
+					},
+					InitialDelaySeconds: s.instanceSpec.ReadinessProbeParams.InitialDelaySeconds,
+					TimeoutSeconds:      s.instanceSpec.ReadinessProbeParams.TimeoutSeconds,
+					PeriodSeconds:       s.instanceSpec.ReadinessProbeParams.PeriodSeconds,
+					SuccessThreshold:    s.instanceSpec.ReadinessProbeParams.SuccessThreshold,
+					FailureThreshold:    s.instanceSpec.ReadinessProbeParams.FailureThreshold,
+				},
 			},
 		},
 		InitContainers: []corev1.Container{
