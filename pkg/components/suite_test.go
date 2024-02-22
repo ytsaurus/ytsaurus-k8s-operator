@@ -63,10 +63,6 @@ func (fc *FakeComponent) GetName() string {
 	return fc.name
 }
 
-func (fc *FakeComponent) GetLabel() string {
-	return fc.name
-}
-
 func (fc *FakeComponent) SetReadyCondition(status ComponentStatus) {}
 
 type FakeServer struct {

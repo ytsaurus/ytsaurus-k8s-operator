@@ -35,7 +35,7 @@ func initJobWithNativeDriverPrologue() string {
 }
 
 type InitJob struct {
-	labellable
+	baseComponent
 	apiProxy          apiproxy.APIProxy
 	conditionsManager apiproxy.ConditionManager
 	imagePullSecrets  []corev1.LocalObjectReference
@@ -58,7 +58,7 @@ func NewInitJob(
 	name, configFileName, image string,
 	generator ytconfig.YsonGeneratorFunc) *InitJob {
 	return &InitJob{
-		labellable: labellable{
+		baseComponent: baseComponent{
 			labeller: labeller,
 		},
 		apiProxy:               apiProxy,
@@ -103,7 +103,7 @@ func (j *InitJob) Build() *batchv1.Job {
 	var defaultMode int32 = 0500
 	job := j.initJob.Build()
 	job.Spec.Template = corev1.PodTemplateSpec{
-		ObjectMeta: j.labellable.labeller.GetInitJobObjectMeta(),
+		ObjectMeta: j.baseComponent.labeller.GetInitJobObjectMeta(),
 		Spec: corev1.PodSpec{
 			ImagePullSecrets: j.imagePullSecrets,
 			Containers: []corev1.Container{

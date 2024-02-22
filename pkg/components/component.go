@@ -47,30 +47,36 @@ type Component interface {
 	Sync(ctx context.Context) error
 	Status(ctx context.Context) ComponentStatus
 	GetName() string
-	GetLabel() string
 	SetReadyCondition(status ComponentStatus)
 
 	// TODO(nadya73): refactor it
 	IsUpdatable() bool
 }
 
-type labellable struct {
+// Following structs are used as a base for implementing YTsaurus components objects.
+// baseComponent is a base struct intendend for use in the simplest components and remote components
+// (the ones that don't have access to the ytsaurus resource).
+type baseComponent struct {
 	labeller *labeller.Labeller
 }
 
-func (c *labellable) GetName() string {
+// GetName returns component's name, which is used as an identifier in component management
+// and for mentioning in logs.
+// For example for master component name is "Master",
+// For data node name looks like "DataNode<NameFromSpec>".
+func (c *baseComponent) GetName() string {
 	return c.labeller.ComponentName
 }
 
-func (c *labellable) GetLabel() string {
-	return c.labeller.ComponentLabel
-}
-
+// localComponent is a base structs for components which have access to ytsaurus resource,
+// but don't depend on server. Example: UI, Strawberry.
 type localComponent struct {
-	labellable
+	baseComponent
 	ytsaurus *apiproxy.Ytsaurus
 }
 
+// localServerComponent is a base structs for components which have access to ytsaurus resource,
+// and use server. Almost all components are based on this struct.
 type localServerComponent struct {
 	localComponent
 	server server
@@ -81,8 +87,8 @@ func newLocalComponent(
 	ytsaurus *apiproxy.Ytsaurus,
 ) localComponent {
 	return localComponent{
-		labellable: labellable{labeller: labeller},
-		ytsaurus:   ytsaurus,
+		baseComponent: baseComponent{labeller: labeller},
+		ytsaurus:      ytsaurus,
 	}
 }
 
@@ -106,7 +112,7 @@ func newLocalServerComponent(
 ) localServerComponent {
 	return localServerComponent{
 		localComponent: localComponent{
-			labellable: labellable{
+			baseComponent: baseComponent{
 				labeller: labeller,
 			},
 			ytsaurus: ytsaurus,
