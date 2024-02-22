@@ -3,18 +3,20 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/yt/go/yt"
+	corev1 "k8s.io/api/core/v1"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/yt/go/yt"
-	corev1 "k8s.io/api/core/v1"
 )
 
 type httpProxy struct {
 	componentBase
+	cfgen  *ytconfig.Generator
 	server server
 
 	serviceType      corev1.ServiceType
@@ -76,8 +78,8 @@ func NewHTTPProxy(
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
 		},
+		cfgen:            cfgen,
 		server:           server,
 		master:           masterReconciler,
 		serviceType:      spec.ServiceType,

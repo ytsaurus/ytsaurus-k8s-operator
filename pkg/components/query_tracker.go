@@ -22,6 +22,7 @@ import (
 
 type queryTracker struct {
 	componentBase
+	cfgen  *ytconfig.Generator
 	server server
 
 	ytsaurusClient YtsaurusClient
@@ -67,8 +68,8 @@ func NewQueryTracker(
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
 		},
+		cfgen:          cfgen,
 		server:         server,
 		tabletNodes:    tabletNodes,
 		initCondition:  "queryTrackerInitCompleted",

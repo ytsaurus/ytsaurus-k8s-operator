@@ -4,16 +4,17 @@ import (
 	"context"
 	"fmt"
 
+	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const SysBundle string = "sys"
@@ -21,6 +22,7 @@ const DefaultBundle string = "default"
 
 type tabletNode struct {
 	componentBase
+	cfgen  *ytconfig.NodeGenerator
 	server server
 
 	ytsaurusClient YtsaurusClient
@@ -31,7 +33,7 @@ type tabletNode struct {
 }
 
 func NewTabletNode(
-	cfgen *ytconfig.Generator,
+	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	ytsaurusClient YtsaurusClient,
 	spec ytv1.TabletNodesSpec,
@@ -63,8 +65,8 @@ func NewTabletNode(
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
 		},
+		cfgen:                cfgen,
 		server:               server,
 		initBundlesCondition: "bundlesTabletNodeInitCompleted",
 		ytsaurusClient:       ytsaurusClient,

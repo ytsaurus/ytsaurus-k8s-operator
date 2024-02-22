@@ -2,22 +2,23 @@ package ytconfig
 
 import (
 	"fmt"
+
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 )
 
-func (g *Generator) getName(shortName string) string {
-	if g.ytsaurus.Spec.UseShortNames {
+func (g *BaseGenerator) getName(shortName string) string {
+	if g.commonSpec.UseShortNames {
 		return shortName
 	} else {
-		return fmt.Sprintf("%s-%s", shortName, g.ytsaurus.Name)
+		return fmt.Sprintf("%s-%s", shortName, g.key.Name)
 	}
 }
 
-func (g *Generator) GetMastersStatefulSetName() string {
+func (g *BaseGenerator) GetMastersStatefulSetName() string {
 	return g.getName("ms")
 }
 
-func (g *Generator) GetDiscoveryStatefulSetName() string {
+func (g *BaseGenerator) GetDiscoveryStatefulSetName() string {
 	return g.getName("ds")
 }
 
@@ -25,11 +26,11 @@ func (g *Generator) GetYQLAgentStatefulSetName() string {
 	return g.getName("yqla")
 }
 
-func (g *Generator) GetMastersServiceName() string {
+func (g *BaseGenerator) GetMastersServiceName() string {
 	return g.getName("masters")
 }
 
-func (g *Generator) GetDiscoveryServiceName() string {
+func (g *BaseGenerator) GetDiscoveryServiceName() string {
 	return g.getName("discovery")
 }
 
@@ -37,18 +38,18 @@ func (g *Generator) GetYQLAgentServiceName() string {
 	return g.getName("yql-agents")
 }
 
-func (g *Generator) GetMasterPodNames() []string {
-	podNames := make([]string, 0, g.ytsaurus.Spec.PrimaryMasters.InstanceSpec.InstanceCount)
-	for i := 0; i < int(g.ytsaurus.Spec.PrimaryMasters.InstanceSpec.InstanceCount); i++ {
+func (g *BaseGenerator) GetMasterPodNames() []string {
+	podNames := make([]string, 0, g.masterInstanceCount)
+	for i := 0; i < int(g.masterInstanceCount); i++ {
 		podNames = append(podNames, fmt.Sprintf("%s-%d", g.GetMastersStatefulSetName(), i))
 	}
 
 	return podNames
 }
 
-func (g *Generator) GetDiscoveryPodNames() []string {
-	podNames := make([]string, 0, g.ytsaurus.Spec.Discovery.InstanceSpec.InstanceCount)
-	for i := 0; i < int(g.ytsaurus.Spec.Discovery.InstanceSpec.InstanceCount); i++ {
+func (g *BaseGenerator) GetDiscoveryPodNames() []string {
+	podNames := make([]string, 0, g.discoveryInstanceCount)
+	for i := 0; i < int(g.discoveryInstanceCount); i++ {
 		podNames = append(podNames, fmt.Sprintf("%s-%d", g.GetDiscoveryStatefulSetName(), i))
 	}
 
@@ -158,31 +159,31 @@ func (g *Generator) GetQueueAgentServiceName() string {
 	return g.getName("queue-agents")
 }
 
-func (g *Generator) GetDataNodesStatefulSetName(name string) string {
+func (g *NodeGenerator) GetDataNodesStatefulSetName(name string) string {
 	return g.getName(g.FormatComponentStringWithDefault("dnd", name))
 }
 
-func (g *Generator) GetDataNodesServiceName(name string) string {
+func (g *NodeGenerator) GetDataNodesServiceName(name string) string {
 	return g.getName(g.FormatComponentStringWithDefault("data-nodes", name))
 }
 
-func (g *Generator) GetExecNodesStatefulSetName(name string) string {
+func (g *NodeGenerator) GetExecNodesStatefulSetName(name string) string {
 	return g.getName(g.FormatComponentStringWithDefault("end", name))
 }
 
-func (g *Generator) GetExecNodesServiceName(name string) string {
+func (g *NodeGenerator) GetExecNodesServiceName(name string) string {
 	return g.getName(g.FormatComponentStringWithDefault("exec-nodes", name))
 }
 
-func (g *Generator) GetTabletNodesStatefulSetName(name string) string {
+func (g *NodeGenerator) GetTabletNodesStatefulSetName(name string) string {
 	return g.getName(g.FormatComponentStringWithDefault("tnd", name))
 }
 
-func (g *Generator) GetTabletNodesServiceName(name string) string {
+func (g *NodeGenerator) GetTabletNodesServiceName(name string) string {
 	return g.getName(g.FormatComponentStringWithDefault("tablet-nodes", name))
 }
 
-func (g *Generator) FormatComponentStringWithDefault(base string, name string) string {
+func (g *BaseGenerator) FormatComponentStringWithDefault(base string, name string) string {
 	if name != consts.DefaultName {
 		return fmt.Sprintf("%s-%s", base, name)
 	}

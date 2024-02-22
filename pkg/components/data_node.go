@@ -13,12 +13,13 @@ import (
 
 type dataNode struct {
 	componentBase
+	cfgen  *ytconfig.NodeGenerator
 	server server
 	master Component
 }
 
 func NewDataNode(
-	cfgen *ytconfig.Generator,
+	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	spec ytv1.DataNodesSpec,
@@ -49,8 +50,8 @@ func NewDataNode(
 		componentBase: componentBase{
 			labeller: &l,
 			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
 		},
+		cfgen:  cfgen,
 		server: server,
 		master: master,
 	}
