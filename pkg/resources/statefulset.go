@@ -19,7 +19,7 @@ type StatefulSet struct {
 	labeller *labeller2.Labeller
 
 	proxy      apiproxy.APIProxy
-	configSpec ytv1.ConfigurationSpec
+	commonSpec ytv1.CommonSpec
 
 	oldObject appsv1.StatefulSet
 	newObject appsv1.StatefulSet
@@ -30,13 +30,13 @@ func NewStatefulSet(
 	name string,
 	labeller *labeller2.Labeller,
 	proxy apiproxy.APIProxy,
-	configSpec ytv1.ConfigurationSpec,
+	commonSpec ytv1.CommonSpec,
 ) *StatefulSet {
 	return &StatefulSet{
 		name:       name,
 		labeller:   labeller,
 		proxy:      proxy,
-		configSpec: configSpec,
+		commonSpec: commonSpec,
 	}
 }
 
@@ -63,7 +63,7 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      s.labeller.GetMetaLabelMap(false),
-					Annotations: s.configSpec.ExtraPodAnnotations,
+					Annotations: s.commonSpec.ExtraPodAnnotations,
 				},
 			},
 		}

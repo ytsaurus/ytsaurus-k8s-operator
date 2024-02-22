@@ -35,7 +35,7 @@ type serverImpl struct {
 	image      string
 	labeller   *labeller.Labeller
 	proxy      apiproxy.APIProxy
-	configSpec ytv1.ConfigurationSpec
+	commonSpec ytv1.CommonSpec
 
 	binaryPath string
 
@@ -59,11 +59,11 @@ func newServer(
 	generator ytconfig.YsonGeneratorFunc,
 ) server {
 	proxy := ytsaurus.APIProxy()
-	configSpec := ytsaurus.GetConfigurationSpec()
+	commonSpec := ytsaurus.GetCommonSpec()
 	return newServerConfigured(
 		l,
 		proxy,
-		configSpec,
+		commonSpec,
 		instanceSpec,
 		binaryPath, configFileName, statefulSetName, serviceName,
 		generator,
@@ -73,17 +73,17 @@ func newServer(
 func newServerConfigured(
 	l *labeller.Labeller,
 	proxy apiproxy.APIProxy,
-	configSpec ytv1.ConfigurationSpec,
+	commonSpec ytv1.CommonSpec,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
 	generator ytconfig.YsonGeneratorFunc,
 ) server {
-	image := configSpec.CoreImage
+	image := commonSpec.CoreImage
 	if instanceSpec.Image != nil {
 		image = *instanceSpec.Image
 	}
 	var caBundle *resources.CABundle
-	if caBundleSpec := configSpec.CABundle; caBundleSpec != nil {
+	if caBundleSpec := commonSpec.CABundle; caBundleSpec != nil {
 		caBundle = resources.NewCABundle(caBundleSpec.Name, consts.CABundleVolumeName, consts.CABundleMountPoint)
 	}
 
@@ -91,7 +91,7 @@ func newServerConfigured(
 	transportSpec := instanceSpec.NativeTransport
 	if transportSpec == nil {
 		//FIXME(khlebnikov): do not mount common bus secret into all servers
-		transportSpec = configSpec.NativeTransport
+		transportSpec = commonSpec.NativeTransport
 	}
 	if transportSpec != nil && transportSpec.TLSSecret != nil {
 		tlsSecret = resources.NewTLSSecret(
@@ -104,14 +104,14 @@ func newServerConfigured(
 		labeller:     l,
 		image:        image,
 		proxy:        proxy,
-		configSpec:   configSpec,
+		commonSpec:   commonSpec,
 		instanceSpec: instanceSpec,
 		binaryPath:   binaryPath,
 		statefulSet: resources.NewStatefulSet(
 			statefulSetName,
 			l,
 			proxy,
-			configSpec,
+			commonSpec,
 		),
 		headlessService: resources.NewHeadlessService(
 			serviceName,
@@ -128,7 +128,7 @@ func newServerConfigured(
 			l,
 			proxy,
 			l.GetMainConfigMapName(),
-			configSpec.ConfigOverrides,
+			commonSpec.ConfigOverrides,
 			map[string]ytconfig.GeneratorDescriptor{
 				configFileName: {
 					F:   generator,
@@ -246,7 +246,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 
 	setHostnameAsFQDN := true
 	statefulSet.Spec.Template.Spec = corev1.PodSpec{
-		ImagePullSecrets:  s.configSpec.ImagePullSecrets,
+		ImagePullSecrets:  s.commonSpec.ImagePullSecrets,
 		SetHostnameAsFQDN: &setHostnameAsFQDN,
 		Containers: []corev1.Container{
 			{
@@ -277,7 +277,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		NodeSelector: s.instanceSpec.NodeSelector,
 		Tolerations:  s.instanceSpec.Tolerations,
 	}
-	if s.configSpec.HostNetwork {
+	if s.commonSpec.HostNetwork {
 		statefulSet.Spec.Template.Spec.HostNetwork = true
 		statefulSet.Spec.Template.Spec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
 	}

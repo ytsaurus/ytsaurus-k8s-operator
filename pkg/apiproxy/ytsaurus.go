@@ -38,8 +38,8 @@ func (c *Ytsaurus) GetResource() *ytv1.Ytsaurus {
 	return c.ytsaurus
 }
 
-func (c *Ytsaurus) GetConfigurationSpec() ytv1.ConfigurationSpec {
-	return c.GetResource().Spec.ConfigurationSpec
+func (c *Ytsaurus) GetCommonSpec() ytv1.CommonSpec {
+	return c.GetResource().Spec.CommonSpec
 }
 
 func (c *Ytsaurus) GetClusterState() ytv1.ClusterState {
