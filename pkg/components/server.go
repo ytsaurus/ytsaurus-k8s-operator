@@ -7,14 +7,15 @@ import (
 
 	ptr "k8s.io/utils/pointer"
 
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // server manages common resources of YTsaurus cluster server components.
@@ -23,15 +24,18 @@ type server interface {
 	resources.Syncable
 	podsManager
 	needUpdate() bool
+	configNeedsReload() bool
+	needBuild() bool
 	needSync() bool
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
 }
 
 type serverImpl struct {
-	image    string
-	labeller *labeller.Labeller
-	ytsaurus *apiproxy.Ytsaurus
+	image      string
+	labeller   *labeller.Labeller
+	proxy      apiproxy.APIProxy
+	commonSpec ytv1.CommonSpec
 
 	binaryPath string
 
@@ -52,13 +56,34 @@ func newServer(
 	ytsaurus *apiproxy.Ytsaurus,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
-	generator ytconfig.YsonGeneratorFunc) server {
-	image := ytsaurus.GetResource().Spec.CoreImage
+	generator ytconfig.YsonGeneratorFunc,
+) server {
+	proxy := ytsaurus.APIProxy()
+	commonSpec := ytsaurus.GetCommonSpec()
+	return newServerConfigured(
+		l,
+		proxy,
+		commonSpec,
+		instanceSpec,
+		binaryPath, configFileName, statefulSetName, serviceName,
+		generator,
+	)
+}
+
+func newServerConfigured(
+	l *labeller.Labeller,
+	proxy apiproxy.APIProxy,
+	commonSpec ytv1.CommonSpec,
+	instanceSpec *ytv1.InstanceSpec,
+	binaryPath, configFileName, statefulSetName, serviceName string,
+	generator ytconfig.YsonGeneratorFunc,
+) server {
+	image := commonSpec.CoreImage
 	if instanceSpec.Image != nil {
 		image = *instanceSpec.Image
 	}
 	var caBundle *resources.CABundle
-	if caBundleSpec := ytsaurus.GetResource().Spec.CABundle; caBundleSpec != nil {
+	if caBundleSpec := commonSpec.CABundle; caBundleSpec != nil {
 		caBundle = resources.NewCABundle(caBundleSpec.Name, consts.CABundleVolumeName, consts.CABundleMountPoint)
 	}
 
@@ -66,7 +91,7 @@ func newServer(
 	transportSpec := instanceSpec.NativeTransport
 	if transportSpec == nil {
 		//FIXME(khlebnikov): do not mount common bus secret into all servers
-		transportSpec = ytsaurus.GetResource().Spec.NativeTransport
+		transportSpec = commonSpec.NativeTransport
 	}
 	if transportSpec != nil && transportSpec.TLSSecret != nil {
 		tlsSecret = resources.NewTLSSecret(
@@ -78,27 +103,32 @@ func newServer(
 	return &serverImpl{
 		labeller:     l,
 		image:        image,
-		ytsaurus:     ytsaurus,
+		proxy:        proxy,
+		commonSpec:   commonSpec,
 		instanceSpec: instanceSpec,
 		binaryPath:   binaryPath,
 		statefulSet: resources.NewStatefulSet(
 			statefulSetName,
 			l,
-			ytsaurus),
+			proxy,
+			commonSpec,
+		),
 		headlessService: resources.NewHeadlessService(
 			serviceName,
 			l,
-			ytsaurus.APIProxy()),
+			proxy,
+		),
 		monitoringService: resources.NewMonitoringService(
 			l,
-			ytsaurus.APIProxy()),
+			proxy,
+		),
 		caBundle:  caBundle,
 		tlsSecret: tlsSecret,
 		configHelper: NewConfigHelper(
 			l,
-			ytsaurus.APIProxy(),
+			proxy,
 			l.GetMainConfigMapName(),
-			ytsaurus.GetResource().Spec.ConfigOverrides,
+			commonSpec.ConfigOverrides,
 			map[string]ytconfig.GeneratorDescriptor{
 				configFileName: {
 					F:   generator,
@@ -123,15 +153,22 @@ func (s *serverImpl) exists() bool {
 		resources.Exists(s.monitoringService)
 }
 
-func (s *serverImpl) needSync() bool {
+func (s *serverImpl) configNeedsReload() bool {
 	needReload, err := s.configHelper.NeedReload()
 	if err != nil {
 		needReload = false
 	}
+	return needReload
+}
+
+func (s *serverImpl) needBuild() bool {
 	return s.configHelper.NeedInit() ||
-		(s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && needReload) ||
 		!s.exists() ||
 		s.statefulSet.NeedSync(s.instanceSpec.InstanceCount)
+}
+
+func (s *serverImpl) needSync() bool {
+	return s.configNeedsReload() || s.needBuild()
 }
 
 func (s *serverImpl) Sync(ctx context.Context) error {
@@ -209,7 +246,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 
 	setHostnameAsFQDN := true
 	statefulSet.Spec.Template.Spec = corev1.PodSpec{
-		ImagePullSecrets:  s.ytsaurus.GetResource().Spec.ImagePullSecrets,
+		ImagePullSecrets:  s.commonSpec.ImagePullSecrets,
 		SetHostnameAsFQDN: &setHostnameAsFQDN,
 		Containers: []corev1.Container{
 			{
@@ -240,7 +277,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		NodeSelector: s.instanceSpec.NodeSelector,
 		Tolerations:  s.instanceSpec.Tolerations,
 	}
-	if s.ytsaurus.GetResource().Spec.HostNetwork {
+	if s.commonSpec.HostNetwork {
 		statefulSet.Spec.Template.Spec.HostNetwork = true
 		statefulSet.Spec.Template.Spec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
 	}

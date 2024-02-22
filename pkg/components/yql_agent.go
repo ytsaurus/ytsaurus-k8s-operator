@@ -17,9 +17,8 @@ import (
 )
 
 type yqlAgent struct {
-	componentBase
+	localServerComponent
 	cfgen           *ytconfig.Generator
-	server          server
 	master          Component
 	initEnvironment *InitJob
 	secret          *resources.StringSecret
@@ -36,7 +35,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
-	server := newServer(
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.YQLAgents.InstanceSpec,
@@ -48,13 +47,9 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 	)
 
 	return &yqlAgent{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
-		cfgen:  cfgen,
-		server: server,
-		master: master,
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		cfgen:                cfgen,
+		master:               master,
 		initEnvironment: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -124,7 +119,7 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.componentBase, yqla.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.localComponent, yqla.server, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -144,7 +139,7 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return WaitingStatus(SyncStatusPending, yqla.secret.Name()), err
 	}
 
-	if yqla.server.needSync() {
+	if yqla.NeedSync() {
 		if !dry {
 			ss := yqla.server.buildStatefulSet()
 			container := &ss.Spec.Template.Spec.Containers[0]

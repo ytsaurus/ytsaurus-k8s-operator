@@ -14,9 +14,8 @@ import (
 )
 
 type tcpProxy struct {
-	componentBase
-	cfgen  *ytconfig.Generator
-	server server
+	localServerComponent
+	cfgen *ytconfig.Generator
 
 	master Component
 
@@ -38,7 +37,7 @@ func NewTCPProxy(
 		MonitoringPort: consts.TCPProxyMonitoringPort,
 	}
 
-	server := newServer(
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -63,15 +62,11 @@ func NewTCPProxy(
 	}
 
 	return &tcpProxy{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-		},
-		cfgen:            cfgen,
-		server:           server,
-		master:           masterReconciler,
-		serviceType:      spec.ServiceType,
-		balancingService: balancingService,
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		cfgen:                cfgen,
+		master:               masterReconciler,
+		serviceType:          spec.ServiceType,
+		balancingService:     balancingService,
 	}
 }
 
@@ -97,7 +92,7 @@ func (tp *tcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if tp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, tp.ytsaurus, tp, &tp.componentBase, tp.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, tp.ytsaurus, tp, &tp.localComponent, tp.server, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -106,7 +101,7 @@ func (tp *tcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return WaitingStatus(SyncStatusBlocked, tp.master.GetName()), err
 	}
 
-	if tp.server.needSync() {
+	if tp.NeedSync() {
 		if !dry {
 			err = tp.server.Sync(ctx)
 		}

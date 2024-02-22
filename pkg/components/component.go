@@ -47,27 +47,52 @@ type Component interface {
 	Sync(ctx context.Context) error
 	Status(ctx context.Context) ComponentStatus
 	GetName() string
-	GetLabel() string
 	SetReadyCondition(status ComponentStatus)
 
 	// TODO(nadya73): refactor it
 	IsUpdatable() bool
 }
 
-type componentBase struct {
+// Following structs are used as a base for implementing YTsaurus components objects.
+// baseComponent is a base struct intendend for use in the simplest components and remote components
+// (the ones that don't have access to the ytsaurus resource).
+type baseComponent struct {
 	labeller *labeller.Labeller
-	ytsaurus *apiproxy.Ytsaurus
 }
 
-func (c *componentBase) GetName() string {
+// GetName returns component's name, which is used as an identifier in component management
+// and for mentioning in logs.
+// For example for master component name is "Master",
+// For data node name looks like "DataNode<NameFromSpec>".
+func (c *baseComponent) GetName() string {
 	return c.labeller.ComponentName
 }
 
-func (c *componentBase) GetLabel() string {
-	return c.labeller.ComponentLabel
+// localComponent is a base structs for components which have access to ytsaurus resource,
+// but don't depend on server. Example: UI, Strawberry.
+type localComponent struct {
+	baseComponent
+	ytsaurus *apiproxy.Ytsaurus
 }
 
-func (c *componentBase) SetReadyCondition(status ComponentStatus) {
+// localServerComponent is a base structs for components which have access to ytsaurus resource,
+// and use server. Almost all components are based on this struct.
+type localServerComponent struct {
+	localComponent
+	server server
+}
+
+func newLocalComponent(
+	labeller *labeller.Labeller,
+	ytsaurus *apiproxy.Ytsaurus,
+) localComponent {
+	return localComponent{
+		baseComponent: baseComponent{labeller: labeller},
+		ytsaurus:      ytsaurus,
+	}
+}
+
+func (c *localComponent) SetReadyCondition(status ComponentStatus) {
 	ready := metav1.ConditionFalse
 	if status.SyncStatus == SyncStatusReady {
 		ready = metav1.ConditionTrue
@@ -78,4 +103,25 @@ func (c *componentBase) SetReadyCondition(status ComponentStatus) {
 		Reason:  string(status.SyncStatus),
 		Message: status.Message,
 	})
+}
+
+func newLocalServerComponent(
+	labeller *labeller.Labeller,
+	ytsaurus *apiproxy.Ytsaurus,
+	server server,
+) localServerComponent {
+	return localServerComponent{
+		localComponent: localComponent{
+			baseComponent: baseComponent{
+				labeller: labeller,
+			},
+			ytsaurus: ytsaurus,
+		},
+		server: server,
+	}
+}
+
+func (c *localServerComponent) NeedSync() bool {
+	return (c.server.configNeedsReload() && c.ytsaurus.IsUpdating()) ||
+		c.server.needBuild()
 }

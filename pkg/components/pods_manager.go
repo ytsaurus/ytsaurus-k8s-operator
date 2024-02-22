@@ -16,7 +16,7 @@ type podsManager interface {
 	podsImageCorrespondsToSpec() bool
 }
 
-func removePods(ctx context.Context, manager podsManager, c *componentBase) error {
+func removePods(ctx context.Context, manager podsManager, c *localComponent) error {
 	if !isPodsRemovingStarted(c) {
 		if err := manager.removePods(ctx); err != nil {
 			return err
@@ -34,11 +34,11 @@ func removePods(ctx context.Context, manager podsManager, c *componentBase) erro
 	return nil
 }
 
-func isPodsRemovingStarted(c *componentBase) bool {
+func isPodsRemovingStarted(c *localComponent) bool {
 	return c.ytsaurus.IsUpdateStatusConditionTrue(c.labeller.GetPodsRemovingStartedCondition())
 }
 
-func setPodsRemovingStartedCondition(ctx context.Context, c *componentBase) {
+func setPodsRemovingStartedCondition(ctx context.Context, c *localComponent) {
 	c.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    c.labeller.GetPodsRemovingStartedCondition(),
 		Status:  metav1.ConditionTrue,
@@ -47,7 +47,7 @@ func setPodsRemovingStartedCondition(ctx context.Context, c *componentBase) {
 	})
 }
 
-func setPodsRemovedCondition(ctx context.Context, c *componentBase) {
+func setPodsRemovedCondition(ctx context.Context, c *localComponent) {
 	c.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    labeller.GetPodsRemovedCondition(c.GetName()),
 		Status:  metav1.ConditionTrue,
