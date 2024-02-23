@@ -24,7 +24,7 @@ func (r *RemoteExecNodesReconciler) Sync(
 	cfgen := ytconfig.NewRemoteNodeGenerator(
 		types.NamespacedName{Name: resource.Name, Namespace: resource.Namespace},
 		getClusterDomain(r.Client),
-		resource.Spec.ConfigurationSpec,
+		resource.Spec.CommonSpec,
 		remoteYtsaurus.Spec.MasterConnectionSpec,
 	)
 
@@ -33,7 +33,7 @@ func (r *RemoteExecNodesReconciler) Sync(
 		resource,
 		apiProxy,
 		resource.Spec.ExecNodesSpec,
-		resource.Spec.ConfigurationSpec,
+		resource.Spec.CommonSpec,
 	)
 	err := component.Fetch(ctx)
 	if err != nil {
