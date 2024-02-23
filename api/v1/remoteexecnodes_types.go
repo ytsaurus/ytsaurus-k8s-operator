@@ -30,7 +30,7 @@ type RemoteExecNodesSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	RemoteClusterSpec *corev1.LocalObjectReference `json:"remoteClusterSpec"`
-	ConfigurationSpec `json:",inline"`
+	CommonSpec        `json:",inline"`
 	ExecNodesSpec     `json:",inline"`
 }
 
