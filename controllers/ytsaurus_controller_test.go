@@ -468,6 +468,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
 			// Ensure that no local exec nodes exist, only remote ones (which will be created later).
+			ytsaurus.Spec.HostNetwork = true
 			ytsaurus.Spec.ExecNodes = []ytv1.ExecNodesSpec{}
 			ytsaurus.Spec.DataNodes = []ytv1.DataNodesSpec{{
 				InstanceSpec: ytv1.CreateDataNodeInstanceSpec(1),
