@@ -191,7 +191,7 @@ func (g *BaseGenerator) FormatComponentStringWithDefault(base string, name strin
 }
 
 func (g *Generator) GetMasterCachesStatefulSetName() string {
-	return g.getName("ms-cache")
+	return g.getName("msc")
 }
 
 func (g *Generator) GetMasterCachesServiceName() string {

@@ -27,7 +27,6 @@ type DiscoveryConnection struct {
 
 type MasterCache struct {
 	MasterCell
-	AddressList
 	EnableMasterCacheDiscover bool `yson:"enable_master_cache_discovery"`
 }
 

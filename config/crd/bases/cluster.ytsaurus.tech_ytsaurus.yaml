@@ -11949,8 +11949,6 @@ spec:
                           type: string
                       type: object
                     type: array
-                  masterCacheDiscoveryPeriod:
-                    type: integer
                   minReadyInstanceCount:
                     type: integer
                   nativeTransport:
@@ -13426,8 +13424,6 @@ spec:
                       - name
                       type: object
                     type: array
-                required:
-                - masterCacheDiscoveryPeriod
                 type: object
               nativeTransport:
                 description: Common config for native RPC bus transport.

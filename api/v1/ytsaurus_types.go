@@ -428,10 +428,9 @@ type DeprecatedSpytSpec struct {
 }
 
 type MasterCachesSpec struct {
-	InstanceSpec               `json:",inline"`
-	HostAddresses              []string `json:"hostAddresses,omitempty"`
-	HostAddressLabel           string   `json:"hostAddressesLabel,omitempty"`
-	MasterCacheDiscoveryPeriod *int     `json:"masterCacheDiscoveryPeriod"`
+	InstanceSpec     `json:",inline"`
+	HostAddresses    []string `json:"hostAddresses,omitempty"`
+	HostAddressLabel string   `json:"hostAddressesLabel,omitempty"`
 }
 
 // CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.

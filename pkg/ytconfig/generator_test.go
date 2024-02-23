@@ -30,6 +30,10 @@ var (
 		"host2.external.address",
 		"host3.external.address",
 	}
+	testMasterCachesExternalHosts = []string{
+		"host1.external.address",
+		"host2.external.address",
+	}
 	testBasicInstanceSpec = v1.InstanceSpec{InstanceCount: 3}
 	testStorageClassname  = "yc-network-hdd"
 	testResourceReqs      = corev1.ResourceRequirements{
@@ -250,6 +254,20 @@ func TestGetYQLAgentConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetMasterCachesWithFixedHostsConfig(t *testing.T) {
+	g := NewGenerator(withFixedMasterCachesHosts(getYtsaurusWithEverything()), testClusterDomain)
+	cfg, err := g.GetMasterCachesConfig()
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetMasterCachesConfig(t *testing.T) {
+	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	cfg, err := g.GetMasterCachesConfig()
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func getYtsaurus() *v1.Ytsaurus {
 	return &v1.Ytsaurus{
 		ObjectMeta: metav1.ObjectMeta{
@@ -356,6 +374,7 @@ func getYtsaurusWithEverything() *v1.Ytsaurus {
 	ytsaurus = withTCPPRoxies(ytsaurus)
 	ytsaurus = withUI(ytsaurus)
 	ytsaurus = withYQLAgent(ytsaurus)
+	ytsaurus = withMasterCashes(ytsaurus)
 	return ytsaurus
 }
 
@@ -449,8 +468,18 @@ func withUICustom(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 	return ytsaurus
 }
 
+func withMasterCashes(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
+	ytsaurus.Spec.MasterCaches = &v1.MasterCachesSpec{InstanceSpec: testBasicInstanceSpec}
+	return ytsaurus
+}
+
 func withYQLAgent(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 	ytsaurus.Spec.YQLAgents = &v1.YQLAgentSpec{InstanceSpec: testBasicInstanceSpec}
+	return ytsaurus
+}
+
+func withFixedMasterCachesHosts(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
+	ytsaurus.Spec.MasterCaches.HostAddresses = testMasterCachesExternalHosts
 	return ytsaurus
 }
 
