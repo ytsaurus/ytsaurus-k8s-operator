@@ -19,7 +19,7 @@ jobs:
           fetch-depth: 0
 
       - name: run KinD
-        uses: helm/kind-action@v1.5.0
+        uses: engineerd/setup-kind@v0.5.0
         with:
           cluster_name: kind
 
@@ -41,7 +41,7 @@ jobs:
           make helm-kind-install
           make kind-load-test-images
           YTSAURUS_ENABLE_E2E_TESTS=true make test
-          kubectl get pod,svc -A
+          kubectl get pod -A
           kubectl logs 
           helm uninstall ytsaurus
 
