@@ -467,7 +467,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			namespace := "remoteexec"
 
 			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
-			ytsaurus.Spec.CommonSpec.UseIPv4 = true
+			ytsaurus.Spec.CommonSpec.UseIPv4 = false
 			ytsaurus.Spec.CommonSpec.UseIPv6 = true
 			// Ensure that no local exec nodes exist, only remote ones (which will be created later).
 			ytsaurus.Spec.ExecNodes = []ytv1.ExecNodesSpec{}
