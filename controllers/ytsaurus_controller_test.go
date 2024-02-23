@@ -495,7 +495,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 					RemoteClusterSpec: &corev1.LocalObjectReference{
 						Name: ytv1.RemoteResourceName,
 					},
-					ConfigurationSpec: ytv1.ConfigurationSpec{
+					CommonSpec: ytv1.CommonSpec{
 						CoreImage: ytv1.CoreImageFirst,
 					},
 					ExecNodesSpec: ytv1.ExecNodesSpec{
