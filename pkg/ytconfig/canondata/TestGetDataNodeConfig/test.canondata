@@ -88,10 +88,6 @@
             {
                 path="/yt/hdd1/chunk-store";
                 "medium_name"=nvme;
-                quota=0;
-                "high_watermark"=0;
-                "low_watermark"=0;
-                "disable_writes_watermark"=0;
             };
         ];
         "cache_locations"=[

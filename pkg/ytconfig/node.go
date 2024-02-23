@@ -22,10 +22,10 @@ const (
 type StoreLocation struct {
 	Path                   string `yson:"path"`
 	MediumName             string `yson:"medium_name"`
-	Quota                  int64  `yson:"quota"`
-	HighWatermark          int64  `yson:"high_watermark"`
-	LowWatermark           int64  `yson:"low_watermark"`
-	DisableWritesWatermark int64  `yson:"disable_writes_watermark"`
+	Quota                  int64  `yson:"quota,omitempty"`
+	HighWatermark          int64  `yson:"high_watermark,omitempty"`
+	LowWatermark           int64  `yson:"low_watermark,omitempty"`
+	DisableWritesWatermark int64  `yson:"disable_writes_watermark,omitempty"`
 }
 
 type ResourceLimits struct {
@@ -40,8 +40,8 @@ type DiskLocation struct {
 
 type SlotLocation struct {
 	Path               string `yson:"path"`
-	DiskQuota          *int64 `yson:"disk_quota"`
-	DiskUsageWatermark int64  `yson:"disk_usage_watermark"`
+	DiskQuota          *int64 `yson:"disk_quota,omitempty"`
+	DiskUsageWatermark int64  `yson:"disk_usage_watermark,omitempty"`
 	MediumName         string `yson:"medium_name"`
 }
 

@@ -102,8 +102,6 @@
             locations=[
                 {
                     path="/yt/hdd2/slots";
-                    "disk_quota"=#;
-                    "disk_usage_watermark"=0;
                     "medium_name"="";
                 };
             ];
