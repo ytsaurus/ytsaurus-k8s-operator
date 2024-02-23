@@ -12,7 +12,7 @@ import (
 
 type RemoteExecNode struct {
 	baseExecNode
-	labellable
+	baseComponent
 }
 
 func NewRemoteExecNodes(
@@ -20,7 +20,7 @@ func NewRemoteExecNodes(
 	nodes *ytv1.RemoteExecNodes,
 	proxy apiproxy.APIProxy,
 	spec ytv1.ExecNodesSpec,
-	configSpec ytv1.ConfigurationSpec,
+	commonSpec ytv1.CommonSpec,
 ) *RemoteExecNode {
 	l := labeller.Labeller{
 		ObjectMeta:     &nodes.ObjectMeta,
@@ -32,7 +32,7 @@ func NewRemoteExecNodes(
 	srv := newServerConfigured(
 		&l,
 		proxy,
-		configSpec,
+		commonSpec,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-exec-node.yson",
@@ -43,7 +43,7 @@ func NewRemoteExecNodes(
 		},
 	)
 	return &RemoteExecNode{
-		labellable: labellable{labeller: &l},
+		baseComponent: baseComponent{labeller: &l},
 		baseExecNode: baseExecNode{
 			server:     srv,
 			cfgen:      cfgen,
