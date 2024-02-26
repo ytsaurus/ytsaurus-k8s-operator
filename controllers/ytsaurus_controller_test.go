@@ -467,8 +467,6 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			namespace := "remoteexec"
 
 			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
-			// DNS resolving fails for gh workflow without it.
-			ytsaurus.Spec.HostNetwork = true
 			// Ensure that no local exec nodes exist, only remote ones (which will be created later).
 			ytsaurus.Spec.ExecNodes = []ytv1.ExecNodesSpec{}
 			ytsaurus.Spec.DataNodes = []ytv1.DataNodesSpec{{
