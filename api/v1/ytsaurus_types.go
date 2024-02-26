@@ -210,10 +210,25 @@ type OauthServiceSpec struct {
 	UserInfo OauthUserInfoHandlerSpec `json:"userInfoHandler,omitempty"`
 }
 
+type HealthcheckProbeParams struct {
+	//+optional
+	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
+	//+optional
+	TimeoutSeconds int32 `json:"timeoutSeconds,omitempty"`
+	//+optional
+	PeriodSeconds int32 `json:"periodSeconds,omitempty"`
+	//+optional
+	SuccessThreshold int32 `json:"successThreshold,omitempty"`
+	//+optional
+	FailureThreshold int32 `json:"failureThreshold,omitempty"`
+}
+
 type InstanceSpec struct {
-	Image                 *string                         `json:"image,omitempty"`
-	Volumes               []corev1.Volume                 `json:"volumes,omitempty"`
-	VolumeMounts          []corev1.VolumeMount            `json:"volumeMounts,omitempty"`
+	Image        *string              `json:"image,omitempty"`
+	Volumes      []corev1.Volume      `json:"volumes,omitempty"`
+	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
+	//+optional
+	ReadinessProbeParams  HealthcheckProbeParams          `json:"readinessProbeParams,omitempty"`
 	Resources             corev1.ResourceRequirements     `json:"resources,omitempty"`
 	InstanceCount         int32                           `json:"instanceCount,omitempty"`
 	MinReadyInstanceCount *int                            `json:"minReadyInstanceCount,omitempty"`

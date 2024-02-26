@@ -5,6 +5,7 @@ import (
 	"log"
 	"path"
 
+	"k8s.io/apimachinery/pkg/util/intstr"
 	ptr "k8s.io/utils/pointer"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -16,6 +17,10 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
+)
+
+const (
+	readinessProbeHTTPPath = "/orchid/service"
 )
 
 // server manages common resources of YTsaurus cluster server components.
@@ -255,6 +260,19 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Command:      []string{s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, fileNames[0])},
 				VolumeMounts: volumeMounts,
 				Resources:    s.instanceSpec.Resources,
+				ReadinessProbe: &corev1.Probe{
+					ProbeHandler: corev1.ProbeHandler{
+						HTTPGet: &corev1.HTTPGetAction{
+							Port: intstr.FromInt(int(s.labeller.MonitoringPort)),
+							Path: readinessProbeHTTPPath,
+						},
+					},
+					InitialDelaySeconds: s.instanceSpec.ReadinessProbeParams.InitialDelaySeconds,
+					TimeoutSeconds:      s.instanceSpec.ReadinessProbeParams.TimeoutSeconds,
+					PeriodSeconds:       s.instanceSpec.ReadinessProbeParams.PeriodSeconds,
+					SuccessThreshold:    s.instanceSpec.ReadinessProbeParams.SuccessThreshold,
+					FailureThreshold:    s.instanceSpec.ReadinessProbeParams.FailureThreshold,
+				},
 			},
 		},
 		InitContainers: []corev1.Container{
