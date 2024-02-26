@@ -145,7 +145,7 @@ func (c *strawberryController) createInitUserAndUrlScript() string {
 		c.initUsers(),
 		RunIfNonexistent("//sys/@ui_config", "yt set //sys/@ui_config '{}'"),
 		fmt.Sprintf("yt set //sys/@ui_config/chyt_controller_base_url '\"http://%v:%v\"'",
-        	c.microservice.getHttpService().Name(), consts.StrawberryHTTPAPIPort),
+			c.microservice.getHttpService().Name(), consts.StrawberryHTTPAPIPort),
 	}
 
 	return strings.Join(script, "\n")
