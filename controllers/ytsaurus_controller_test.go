@@ -262,11 +262,11 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			"Should run and update Ytsaurus within same major version",
 			getSimpleUpdateScenario("test-minor-update", ytv1.CoreImageSecond),
 		)
-		//It(
-		//	"Should run and update Ytsaurus to the next major version",
-		//	getSimpleUpdateScenario("test-major-update", ytv1.CoreImageNextVer),
-		//)
-		//
+		It(
+			"Should run and update Ytsaurus to the next major version",
+			getSimpleUpdateScenario("test-major-update", ytv1.CoreImageNextVer),
+		)
+
 		//// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
 		//It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", func() {
 		//	namespace := "test3"
