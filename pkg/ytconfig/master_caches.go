@@ -18,11 +18,11 @@ func getMasterCachesLogging(spec *ytv1.MasterCachesSpec) Logging {
 }
 
 func getMasterCachesCarcass(spec *ytv1.MasterCachesSpec) (MasterCacheServer, error) {
-	var mc MasterCacheServer
-	mc.RPCPort = consts.MasterCachesRPCPort
-	mc.MonitoringPort = consts.MasterCachesMonitoringPort
+	var mcs MasterCacheServer
+	mcs.RPCPort = consts.MasterCachesRPCPort
+	mcs.MonitoringPort = consts.MasterCachesMonitoringPort
 
-	mc.Logging = getMasterCachesLogging(spec)
+	mcs.Logging = getMasterCachesLogging(spec)
 
-	return mc, nil
+	return mcs, nil
 }
