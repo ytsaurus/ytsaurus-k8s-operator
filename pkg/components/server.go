@@ -279,7 +279,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	}
 	if s.commonSpec.HostNetwork {
 		statefulSet.Spec.Template.Spec.HostNetwork = true
-		statefulSet.Spec.Template.Spec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
+		//statefulSet.Spec.Template.Spec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
 	}
 
 	if s.caBundle != nil {
