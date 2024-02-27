@@ -331,55 +331,55 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			Expect(msPodCreationFirstTimestamp == msPodCreationSecondTimestamp).Should(BeTrue())
 		})
 
-		//It("Should run and try to update Ytsaurus with tablet cell bundle which is not in `good` health", func() {
-		//	By("Creating a Ytsaurus resource")
-		//	ctx := context.Background()
-		//
-		//	namespace := "test4"
-		//
-		//	ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
-		//
-		//	g := ytconfig.NewGenerator(ytsaurus, "local")
-		//
-		//	defer deleteYtsaurus(ctx, ytsaurus)
-		//	runYtsaurus(ytsaurus)
-		//
-		//	By("Creating ytsaurus client")
-		//	ytClient := getYtClient(g, namespace)
-		//
-		//	By("Check that cluster alive")
-		//
-		//	res := make([]string, 0)
-		//	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
-		//
-		//	By("Check that tablet cell bundles are in `good` health")
-		//
-		//	Eventually(func() bool {
-		//		notGoodBundles, err := components.GetNotGoodTabletCellBundles(ctx, ytClient)
-		//		if err != nil {
-		//			return false
-		//		}
-		//		return len(notGoodBundles) == 0
-		//	}, timeout*3, interval).Should(BeTrue())
-		//
-		//	By("Ban all tablet nodes")
-		//	for i := 0; i < int(ytsaurus.Spec.TabletNodes[0].InstanceCount); i++ {
-		//		Expect(ytClient.SetNode(ctx, ypath.Path(fmt.Sprintf(
-		//			"//sys/cluster_nodes/tnd-%v.tablet-nodes.%v.svc.cluster.local:9022/@banned", i, namespace)), true, nil)).Should(Succeed())
-		//	}
-		//
-		//	By("Waiting tablet cell bundles are not in `good` health")
-		//	Eventually(func() bool {
-		//		notGoodBundles, err := components.GetNotGoodTabletCellBundles(ctx, ytClient)
-		//		if err != nil {
-		//			return false
-		//		}
-		//		return len(notGoodBundles) > 0
-		//	}, timeout, interval).Should(BeTrue())
-		//
-		//	runImpossibleUpdateAndRollback(ytsaurus, ytClient)
-		//})
-		//
+		It("Should run and try to update Ytsaurus with tablet cell bundle which is not in `good` health", func() {
+			By("Creating a Ytsaurus resource")
+			ctx := context.Background()
+
+			namespace := "test4"
+
+			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+
+			g := ytconfig.NewGenerator(ytsaurus, "local")
+
+			defer deleteYtsaurus(ctx, ytsaurus)
+			runYtsaurus(ytsaurus)
+
+			By("Creating ytsaurus client")
+			ytClient := getYtClient(g, namespace)
+
+			By("Check that cluster alive")
+
+			res := make([]string, 0)
+			Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
+
+			By("Check that tablet cell bundles are in `good` health")
+
+			Eventually(func() bool {
+				notGoodBundles, err := components.GetNotGoodTabletCellBundles(ctx, ytClient)
+				if err != nil {
+					return false
+				}
+				return len(notGoodBundles) == 0
+			}, timeout*3, interval).Should(BeTrue())
+
+			By("Ban all tablet nodes")
+			for i := 0; i < int(ytsaurus.Spec.TabletNodes[0].InstanceCount); i++ {
+				Expect(ytClient.SetNode(ctx, ypath.Path(fmt.Sprintf(
+					"//sys/cluster_nodes/tnd-%v.tablet-nodes.%v.svc.cluster.local:9022/@banned", i, namespace)), true, nil)).Should(Succeed())
+			}
+
+			By("Waiting tablet cell bundles are not in `good` health")
+			Eventually(func() bool {
+				notGoodBundles, err := components.GetNotGoodTabletCellBundles(ctx, ytClient)
+				if err != nil {
+					return false
+				}
+				return len(notGoodBundles) > 0
+			}, timeout, interval).Should(BeTrue())
+
+			runImpossibleUpdateAndRollback(ytsaurus, ytClient)
+		})
+
 		//It("Should run and try to update Ytsaurus with lvc", func() {
 		//	By("Creating a Ytsaurus resource")
 		//	ctx := context.Background()
