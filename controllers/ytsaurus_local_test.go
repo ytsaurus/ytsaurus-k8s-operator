@@ -1,4 +1,4 @@
-package controllers
+package controllers_test
 
 import (
 	"testing"
@@ -10,6 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	"github.com/ytsaurus/yt-k8s-operator/controllers"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/testutil"
 )
 
@@ -23,7 +24,7 @@ func TestYtsaurusFromScratch(t *testing.T) {
 	namespace := "ytsaurus-from-scratch"
 	h := testutil.NewTestHelper(t, namespace)
 	reconcilerSetup := func(mgr ctrl.Manager) error {
-		return (&YtsaurusReconciler{
+		return (&controllers.YtsaurusReconciler{
 			Client:   mgr.GetClient(),
 			Scheme:   mgr.GetScheme(),
 			Recorder: mgr.GetEventRecorderFor("ytsaurus-controller"),
