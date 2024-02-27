@@ -267,70 +267,70 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			getSimpleUpdateScenario("test-major-update", ytv1.CoreImageNextVer),
 		)
 
-		//// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
-		//It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", func() {
-		//	namespace := "test3"
-		//	ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
-		//	ytsaurusKey := types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}
-		//
-		//	By("Creating a Ytsaurus resource")
-		//	ctx := context.Background()
-		//	g := ytconfig.NewGenerator(ytsaurus, "local")
-		//	defer deleteYtsaurus(ctx, ytsaurus)
-		//	runYtsaurus(ytsaurus)
-		//
-		//	By("Creating ytsaurus client")
-		//	ytClient := getYtClient(g, namespace)
-		//
-		//	By("Check that cluster alive")
-		//	res := make([]string, 0)
-		//	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
-		//
-		//	By("Store master pod creation time")
-		//	msPod := getMasterPod(g.GetMasterPodNames()[0], namespace)
-		//	msPodCreationFirstTimestamp := msPod.CreationTimestamp
-		//
-		//	By("Setting artificial conditions for deploy to stuck in PossibilityCheck")
-		//	var masters []string
-		//	err := ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &masters, nil)
-		//	Expect(err).Should(Succeed())
-		//	Expect(len(masters)).Should(Equal(1))
-		//	onlyMaster := masters[0]
-		//	_, err = ytClient.CopyNode(
-		//		ctx,
-		//		ypath.Path("//sys/primary_masters/"+onlyMaster),
-		//		ypath.Path("//sys/primary_masters/"+onlyMaster+"-fake-leader"),
-		//		nil,
-		//	)
-		//	Expect(err).Should(Succeed())
-		//
-		//	By("Run cluster update")
-		//	Expect(k8sClient.Get(ctx, ytsaurusKey, ytsaurus)).Should(Succeed())
-		//	ytsaurus.Spec.HostNetwork = true
-		//	ytsaurus.Spec.PrimaryMasters.HostAddresses = []string{
-		//		getKindControlPlaneName(),
-		//	}
-		//	Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
-		//
-		//	By("Waiting PossibilityCheck")
-		//	Eventually(func() bool {
-		//		ytsaurus := &ytv1.Ytsaurus{}
-		//		err := k8sClient.Get(ctx, ytsaurusKey, ytsaurus)
-		//		if err != nil {
-		//			return false
-		//		}
-		//		return ytsaurus.Status.State == ytv1.ClusterStateUpdating &&
-		//			ytsaurus.Status.UpdateStatus.State == ytv1.UpdateStatePossibilityCheck
-		//	}, timeout, interval).Should(BeTrue())
-		//
-		//	By("Check that master pod was NOT recreated at the PossibilityCheck stage")
-		//	time.Sleep(1 * time.Second)
-		//	msPod = getMasterPod(g.GetMasterPodNames()[0], namespace)
-		//	msPodCreationSecondTimestamp := msPod.CreationTimestamp
-		//	fmt.Fprintf(GinkgoWriter, "ms pods ts: \n%v\n%v\n", msPodCreationFirstTimestamp, msPodCreationSecondTimestamp)
-		//	Expect(msPodCreationFirstTimestamp == msPodCreationSecondTimestamp).Should(BeTrue())
-		//})
-		//
+		// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
+		It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", func() {
+			namespace := "test3"
+			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
+			ytsaurusKey := types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}
+
+			By("Creating a Ytsaurus resource")
+			ctx := context.Background()
+			g := ytconfig.NewGenerator(ytsaurus, "local")
+			defer deleteYtsaurus(ctx, ytsaurus)
+			runYtsaurus(ytsaurus)
+
+			By("Creating ytsaurus client")
+			ytClient := getYtClient(g, namespace)
+
+			By("Check that cluster alive")
+			res := make([]string, 0)
+			Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
+
+			By("Store master pod creation time")
+			msPod := getMasterPod(g.GetMasterPodNames()[0], namespace)
+			msPodCreationFirstTimestamp := msPod.CreationTimestamp
+
+			By("Setting artificial conditions for deploy to stuck in PossibilityCheck")
+			var masters []string
+			err := ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &masters, nil)
+			Expect(err).Should(Succeed())
+			Expect(len(masters)).Should(Equal(1))
+			onlyMaster := masters[0]
+			_, err = ytClient.CopyNode(
+				ctx,
+				ypath.Path("//sys/primary_masters/"+onlyMaster),
+				ypath.Path("//sys/primary_masters/"+onlyMaster+"-fake-leader"),
+				nil,
+			)
+			Expect(err).Should(Succeed())
+
+			By("Run cluster update")
+			Expect(k8sClient.Get(ctx, ytsaurusKey, ytsaurus)).Should(Succeed())
+			ytsaurus.Spec.HostNetwork = true
+			ytsaurus.Spec.PrimaryMasters.HostAddresses = []string{
+				getKindControlPlaneName(),
+			}
+			Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+
+			By("Waiting PossibilityCheck")
+			Eventually(func() bool {
+				ytsaurus := &ytv1.Ytsaurus{}
+				err := k8sClient.Get(ctx, ytsaurusKey, ytsaurus)
+				if err != nil {
+					return false
+				}
+				return ytsaurus.Status.State == ytv1.ClusterStateUpdating &&
+					ytsaurus.Status.UpdateStatus.State == ytv1.UpdateStatePossibilityCheck
+			}, timeout, interval).Should(BeTrue())
+
+			By("Check that master pod was NOT recreated at the PossibilityCheck stage")
+			time.Sleep(1 * time.Second)
+			msPod = getMasterPod(g.GetMasterPodNames()[0], namespace)
+			msPodCreationSecondTimestamp := msPod.CreationTimestamp
+			fmt.Fprintf(GinkgoWriter, "ms pods ts: \n%v\n%v\n", msPodCreationFirstTimestamp, msPodCreationSecondTimestamp)
+			Expect(msPodCreationFirstTimestamp == msPodCreationSecondTimestamp).Should(BeTrue())
+		})
+
 		//It("Should run and try to update Ytsaurus with tablet cell bundle which is not in `good` health", func() {
 		//	By("Creating a Ytsaurus resource")
 		//	ctx := context.Background()
