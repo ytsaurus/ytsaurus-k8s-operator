@@ -430,35 +430,35 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 		//
 		//	runImpossibleUpdateAndRollback(ytsaurus, ytClient)
 		//})
-		//
-		//It("Should run with query tracker and check that access control object namespace 'queries' and object 'nobody' exists", func() {
-		//	By("Creating a Ytsaurus resource")
-		//	ctx := context.Background()
-		//
-		//	namespace := "querytrackeraco"
-		//
-		//	ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
-		//	ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{
-		//		{
-		//			InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1},
-		//		},
-		//	}
-		//	ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
-		//
-		//	g := ytconfig.NewGenerator(ytsaurus, "local")
-		//
-		//	defer deleteYtsaurus(ctx, ytsaurus)
-		//	runYtsaurus(ytsaurus)
-		//
-		//	By("Creating ytsaurus client")
-		//	ytClient := getYtClient(g, namespace)
-		//
-		//	By("Check that access control object namespace 'queries' exists")
-		//	Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries"), nil)).Should(Equal(true))
-		//
-		//	By("Check that access control object 'nobody' in namespace 'queries' exists")
-		//	Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/nobody"), nil)).Should(Equal(true))
-		//})
+
+		It("Should run with query tracker and check that access control object namespace 'queries' and object 'nobody' exists", func() {
+			By("Creating a Ytsaurus resource")
+			ctx := context.Background()
+
+			namespace := "querytrackeraco"
+
+			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{
+				{
+					InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1},
+				},
+			}
+			ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
+
+			g := ytconfig.NewGenerator(ytsaurus, "local")
+
+			defer deleteYtsaurus(ctx, ytsaurus)
+			runYtsaurus(ytsaurus)
+
+			By("Creating ytsaurus client")
+			ytClient := getYtClient(g, namespace)
+
+			By("Check that access control object namespace 'queries' exists")
+			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries"), nil)).Should(Equal(true))
+
+			By("Check that access control object 'nobody' in namespace 'queries' exists")
+			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/nobody"), nil)).Should(Equal(true))
+		})
 
 		It("Should create ytsaurus with remote exec nodes and execute a job", func() {
 			By("Creating a Ytsaurus resource")
