@@ -380,56 +380,56 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			runImpossibleUpdateAndRollback(ytsaurus, ytClient)
 		})
 
-		//It("Should run and try to update Ytsaurus with lvc", func() {
-		//	By("Creating a Ytsaurus resource")
-		//	ctx := context.Background()
-		//
-		//	namespace := "test5"
-		//
-		//	ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
-		//	ytsaurus.Spec.TabletNodes = make([]ytv1.TabletNodesSpec, 0)
-		//
-		//	g := ytconfig.NewGenerator(ytsaurus, "local")
-		//
-		//	defer deleteYtsaurus(ctx, ytsaurus)
-		//	runYtsaurus(ytsaurus)
-		//
-		//	By("Creating ytsaurus client")
-		//	ytClient := getYtClient(g, namespace)
-		//
-		//	By("Check that cluster alive")
-		//	res := make([]string, 0)
-		//	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
-		//
-		//	By("Create a chunk")
-		//	_, err := ytClient.CreateNode(ctx, ypath.Path("//tmp/a"), yt.NodeTable, nil)
-		//	Expect(err).Should(Succeed())
-		//
-		//	Eventually(func(g Gomega) {
-		//		writer, err := ytClient.WriteTable(ctx, ypath.Path("//tmp/a"), nil)
-		//		g.Expect(err).Should(BeNil())
-		//		g.Expect(writer.Write(testRow{A: "123"})).Should(Succeed())
-		//		g.Expect(writer.Commit()).Should(Succeed())
-		//	}, timeout, interval).Should(Succeed())
-		//
-		//	By("Ban all data nodes")
-		//	for i := 0; i < int(ytsaurus.Spec.DataNodes[0].InstanceCount); i++ {
-		//		Expect(ytClient.SetNode(ctx, ypath.Path(fmt.Sprintf(
-		//			"//sys/cluster_nodes/dnd-%v.data-nodes.%v.svc.cluster.local:9012/@banned", i, namespace)), true, nil))
-		//	}
-		//
-		//	By("Waiting for lvc > 0")
-		//	Eventually(func() bool {
-		//		lvcCount := 0
-		//		err := ytClient.GetNode(ctx, ypath.Path("//sys/lost_vital_chunks/@count"), &lvcCount, nil)
-		//		if err != nil {
-		//			return false
-		//		}
-		//		return lvcCount > 0
-		//	}, timeout, interval).Should(BeTrue())
-		//
-		//	runImpossibleUpdateAndRollback(ytsaurus, ytClient)
-		//})
+		It("Should run and try to update Ytsaurus with lvc", func() {
+			By("Creating a Ytsaurus resource")
+			ctx := context.Background()
+
+			namespace := "test5"
+
+			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.TabletNodes = make([]ytv1.TabletNodesSpec, 0)
+
+			g := ytconfig.NewGenerator(ytsaurus, "local")
+
+			defer deleteYtsaurus(ctx, ytsaurus)
+			runYtsaurus(ytsaurus)
+
+			By("Creating ytsaurus client")
+			ytClient := getYtClient(g, namespace)
+
+			By("Check that cluster alive")
+			res := make([]string, 0)
+			Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
+
+			By("Create a chunk")
+			_, err := ytClient.CreateNode(ctx, ypath.Path("//tmp/a"), yt.NodeTable, nil)
+			Expect(err).Should(Succeed())
+
+			Eventually(func(g Gomega) {
+				writer, err := ytClient.WriteTable(ctx, ypath.Path("//tmp/a"), nil)
+				g.Expect(err).Should(BeNil())
+				g.Expect(writer.Write(testRow{A: "123"})).Should(Succeed())
+				g.Expect(writer.Commit()).Should(Succeed())
+			}, timeout, interval).Should(Succeed())
+
+			By("Ban all data nodes")
+			for i := 0; i < int(ytsaurus.Spec.DataNodes[0].InstanceCount); i++ {
+				Expect(ytClient.SetNode(ctx, ypath.Path(fmt.Sprintf(
+					"//sys/cluster_nodes/dnd-%v.data-nodes.%v.svc.cluster.local:9012/@banned", i, namespace)), true, nil))
+			}
+
+			By("Waiting for lvc > 0")
+			Eventually(func() bool {
+				lvcCount := 0
+				err := ytClient.GetNode(ctx, ypath.Path("//sys/lost_vital_chunks/@count"), &lvcCount, nil)
+				if err != nil {
+					return false
+				}
+				return lvcCount > 0
+			}, timeout, interval).Should(BeTrue())
+
+			runImpossibleUpdateAndRollback(ytsaurus, ytClient)
+		})
 
 		It("Should run with query tracker and check that access control object namespace 'queries' and object 'nobody' exists", func() {
 			By("Creating a Ytsaurus resource")
