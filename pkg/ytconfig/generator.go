@@ -729,21 +729,23 @@ func (g *Generator) getMasterCachesPodFqdnSuffix() string {
 }
 
 func (g *Generator) getMasterCachesAddresses() []string {
-	hosts := g.ytsaurus.Spec.MasterCaches.HostAddresses
-
-	if len(hosts) == 0 {
-		masterCachesPodSuffix := g.getMasterCachesPodFqdnSuffix()
-		for _, podName := range g.GetMasterCachesPodNames() {
-			hosts = append(hosts, fmt.Sprintf("%s.%s",
-				podName,
-				masterCachesPodSuffix,
-			))
+	if g.ytsaurus.Spec.MasterCaches != nil {
+		hosts := g.ytsaurus.Spec.MasterCaches.HostAddresses
+		if len(hosts) == 0 {
+			masterCachesPodSuffix := g.getMasterCachesPodFqdnSuffix()
+			for _, podName := range g.GetMasterCachesPodNames() {
+				hosts = append(hosts, fmt.Sprintf("%s.%s",
+					podName,
+					masterCachesPodSuffix,
+				))
+			}
 		}
-	}
 
-	addresses := make([]string, len(hosts))
-	for idx, host := range hosts {
-		addresses[idx] = fmt.Sprintf("%s:%d", host, consts.MasterCachesRPCPort)
+		addresses := make([]string, len(hosts))
+		for idx, host := range hosts {
+			addresses[idx] = fmt.Sprintf("%s:%d", host, consts.MasterCachesRPCPort)
+		}
+		return addresses
 	}
-	return addresses
+	return make([]string, 0)
 }
