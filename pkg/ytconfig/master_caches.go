@@ -7,7 +7,6 @@ import (
 
 type MasterCacheServer struct {
 	CommonServer
-	AddressList
 }
 
 func getMasterCachesLogging(spec *ytv1.MasterCachesSpec) Logging {

@@ -33,6 +33,7 @@ var (
 	testMasterCachesExternalHosts = []string{
 		"host1.external.address",
 		"host2.external.address",
+		"host3.external.address",
 	}
 	testBasicInstanceSpec = v1.InstanceSpec{InstanceCount: 3}
 	testStorageClassname  = "yc-network-hdd"

@@ -96,6 +96,14 @@
             addresses=[
             ];
         };
+        "master_cache"={
+            addresses=[
+            ];
+            peers=[
+            ];
+            "cell_id"="";
+            "enable_master_cache_discovery"=%false;
+        };
     };
     "cypress_annotations"={
         "k8s_node_name"="{K8S_NODE_NAME}";

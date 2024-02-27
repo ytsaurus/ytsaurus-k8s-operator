@@ -6,27 +6,14 @@
     };
     logging={
         writers={
-            debug={
-                type=file;
-                "file_name"="/var/log/master.debug.log.zstd";
-                format="plain_text";
-                "compression_method"=zstd;
-                "enable_compression"=%true;
-                "enable_system_messages"=%true;
-                "rotation_policy"={
-                    "rotation_period"=900000;
-                    "max_total_size_to_keep"=10737418240;
-                };
-            };
-            error={
-                type=file;
-                "file_name"="/var/log/master.error.log";
-                format="plain_text";
-                "enable_system_messages"=%true;
-            };
             info={
                 type=file;
-                "file_name"="/var/log/master.info.log";
+                "file_name"="/var/log/master-cache.info.log";
+                format="plain_text";
+                "enable_system_messages"=%true;
+            };
+            stderr={
+                type=stderr;
                 format="plain_text";
                 "enable_system_messages"=%true;
             };
@@ -42,25 +29,15 @@
             {
                 "min_level"=error;
                 writers=[
-                    error;
-                ];
-                family="plain_text";
-            };
-            {
-                "exclude_categories"=[
-                    Bus;
-                ];
-                "min_level"=debug;
-                writers=[
-                    debug;
+                    stderr;
                 ];
                 family="plain_text";
             };
         ];
         "flush_period"=3000;
     };
-    "monitoring_port"=10010;
-    "rpc_port"=9010;
+    "monitoring_port"=10018;
+    "rpc_port"=9018;
     "timestamp_provider"={
         addresses=[
             "ms-test-0.masters-test.fake.svc.fake.zone:9010";
@@ -89,8 +66,14 @@
         };
         "master_cache"={
             addresses=[
-                "msc-test-0.master-caches-test.fake.svc.fake.zone:9018"
+                "msc-test-0.master-caches-test.fake.svc.fake.zone:9018";
+                "msc-test-1.master-caches-test.fake.svc.fake.zone:9018";
+                "msc-test-2.master-caches-test.fake.svc.fake.zone:9018";
             ];
+            peers=[
+            ];
+            "cell_id"="65726e65-ad6b7562-259-79747361";
+            "enable_master_cache_discovery"=%false;
         };
     };
     "cypress_annotations"={
@@ -98,36 +81,4 @@
         "k8s_pod_name"="{K8S_POD_NAME}";
         "k8s_pod_namespace"="{K8S_POD_NAMESPACE}";
     };
-    snapshots={
-        path="/yt/master-data/master-snapshots";
-    };
-    changelogs={
-        path="/yt/master-data/master-changelogs";
-    };
-    "use_new_hydra"=%true;
-    "hydra_manager"={
-        "max_changelog_count_to_keep"=2;
-        "max_snapshot_count_to_keep"=1543;
-    };
-    "cypress_manager"={
-        "default_table_replication_factor"=1;
-        "default_file_replication_factor"=1;
-        "default_journal_replication_factor"=1;
-        "default_journal_read_quorum"=1;
-        "default_journal_write_quorum"=1;
-    };
-    "primary_master"={
-        addresses=[
-            "ms-test-0.masters-test.fake.svc.fake.zone:9010";
-        ];
-        peers=[
-            {
-                address="ms-test-0.masters-test.fake.svc.fake.zone:9010";
-                voting=%true;
-            };
-        ];
-        "cell_id"="65726e65-ad6b7562-259-79747361";
-    };
-    "secondary_masters"=[
-    ];
 }
