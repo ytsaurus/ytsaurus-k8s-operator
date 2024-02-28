@@ -30,7 +30,7 @@ type TestHelper struct {
 	k8sTestEnv *envtest.Environment
 	k8sClient  client.Client
 	cfg        *rest.Config
-	namespace  string
+	Namespace  string
 }
 
 func NewTestHelper(t *testing.T, namespace string) *TestHelper {
@@ -57,7 +57,7 @@ func NewTestHelper(t *testing.T, namespace string) *TestHelper {
 		ctx:        testCtx,
 		cancel:     testCancel,
 		k8sTestEnv: k8sTestEnv,
-		namespace:  namespace,
+		Namespace:  namespace,
 	}
 }
 
@@ -109,18 +109,18 @@ func (h *TestHelper) GetK8sClient() client.Client {
 }
 
 func (h *TestHelper) GetObjectKey(name string) client.ObjectKey {
-	return client.ObjectKey{Name: name, Namespace: h.namespace}
+	return client.ObjectKey{Name: name, Namespace: h.Namespace}
 }
 
 func (h *TestHelper) GetObjectMeta(name string) metav1.ObjectMeta {
-	return metav1.ObjectMeta{Name: name, Namespace: h.namespace}
+	return metav1.ObjectMeta{Name: name, Namespace: h.Namespace}
 }
 
 func (h *TestHelper) createNamespace() {
 	c := h.GetK8sClient()
 	ns := corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: h.namespace,
+			Name: h.Namespace,
 		},
 	}
 	err := c.Create(context.Background(), &ns)
@@ -230,4 +230,12 @@ func FetchAndCheckConfigMapContainsEventually(h *TestHelper, objectKey, cmKey, e
 	ysonContent := cmData[cmKey]
 	require.Contains(h.t, ysonContent, expectSubstr)
 
+}
+
+func FetchConfigMapData(h *TestHelper, objectKey, mapKey string) string {
+	configMap := corev1.ConfigMap{}
+	FetchEventually(h, objectKey, &configMap)
+	data := configMap.Data
+	ysonNodeConfig := data[mapKey]
+	return ysonNodeConfig
 }
