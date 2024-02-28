@@ -53,7 +53,8 @@ jobs:
           make k8s-install-cert-manager
           make helm-kind-install
           make kind-load-test-images
-          YTSAURUS_ENABLE_E2E_TESTS=true make test
+          make test
+          make test-e2e
           helm uninstall ytsaurus
 
           ./compat_test.sh --from-version 0.4.1 --to-version trunk
