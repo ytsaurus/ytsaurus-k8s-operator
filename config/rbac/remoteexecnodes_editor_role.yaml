@@ -1,0 +1,24 @@
+# permissions for end users to edit remoteexecnodes.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: remoteexecnodes-editor-role
+rules:
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - remoteexecnodes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - remoteexecnodes/status
+  verbs:
+  - get
