@@ -65,14 +65,6 @@ func TestRemoteExecNodesFromScratch(t *testing.T) {
 // remote nodes changes its configs accordingly.
 func TestRemoteExecNodesYtsaurusChanges(t *testing.T) {
 	h := startHelperWithController(t, "remote-exec-nodes-test-host-change")
-	reconcilerSetup := func(mgr ctrl.Manager) error {
-		return (&controllers.RemoteExecNodesReconciler{
-			Client:   mgr.GetClient(),
-			Scheme:   mgr.GetScheme(),
-			Recorder: mgr.GetEventRecorderFor("remoteexecnodes-controller"),
-		}).SetupWithManager(mgr)
-	}
-	h.Start(reconcilerSetup)
 	defer h.Stop()
 
 	remoteYtsaurus := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
