@@ -79,7 +79,7 @@ func (h *testHelper) start() {
 	err = (&RemoteExecNodesReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("remotedatanodes-controller"),
+		Recorder: mgr.GetEventRecorderFor("remoteexecnodes-controller"),
 	}).SetupWithManager(mgr)
 	require.NoError(t, err)
 

@@ -18,7 +18,7 @@ func (r *RemoteExecNodesReconciler) Sync(
 	resource *ytv1.RemoteExecNodes,
 	remoteYtsaurus *ytv1.RemoteYtsaurus,
 ) (ctrl.Result, error) {
-	logger := log.FromContext(ctx).WithValues("component", "remotedatanodes")
+	logger := log.FromContext(ctx).WithValues("component", "remoteexecnodes")
 	apiProxy := apiproxy.NewAPIProxy(resource, r.Client, r.Recorder, r.Scheme)
 
 	cfgen := ytconfig.NewRemoteNodeGenerator(

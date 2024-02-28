@@ -154,7 +154,7 @@ func main() {
 	if err = (&controllers.RemoteExecNodesReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("remotedatanodes-controller"),
+		Recorder: mgr.GetEventRecorderFor("remoteexecnodes-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteExecNodes")
 		os.Exit(1)

@@ -93,7 +93,7 @@ func TestRemoteExecNodesYtsaurusChanges(t *testing.T) {
 	)
 }
 
-// TestRemoteExecNodesImageUpdate ensures that if remote exec nodes images changes controller
+// TestRemoteExecNodesImageUpdate ensures that if remote exec nodes images changes, controller
 // sets new image for nodes' stateful set.
 func TestRemoteExecNodesImageUpdate(t *testing.T) {
 	h := newTestHelper(t, "remote-exec-nodes-test-image-update")
@@ -124,7 +124,7 @@ func TestRemoteExecNodesImageUpdate(t *testing.T) {
 	)
 }
 
-// TestRemoteExecNodesChangeInstanceCount ensures that if remote nodes instance count changed in spec
+// TestRemoteExecNodesChangeInstanceCount ensures that if remote nodes instance count changed in spec,
 // it is reflected in stateful set spec.
 func TestRemoteExecNodesChangeInstanceCount(t *testing.T) {
 	h := newTestHelper(t, "remote-exec-nodes-test-change-instance-count")
@@ -242,7 +242,6 @@ func deployObject(h *testHelper, object client.Object) {
 func updateObject(h *testHelper, emptyObject, newObject client.Object) {
 	k8sCli := h.getK8sClient()
 
-	//key := client.ObjectKey{Name: newObject.GetName(), Namespace: newObject.GetNamespace()}
 	getObject(h, newObject.GetName(), emptyObject)
 
 	newObject.SetResourceVersion(emptyObject.GetResourceVersion())

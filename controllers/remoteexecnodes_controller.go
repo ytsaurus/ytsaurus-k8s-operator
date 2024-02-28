@@ -70,7 +70,7 @@ func (r *RemoteExecNodesReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	var nodes ytv1.RemoteExecNodes
 	if err := r.Get(ctx, req.NamespacedName, &nodes); err != nil {
 		logger.Error(err, "unable to fetch remote nodes")
-		// we'll ignore not-found errors, since they can't be fixed by an immediate
+		// We'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
 		// on deleted requests.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
