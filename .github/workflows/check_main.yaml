@@ -6,74 +6,19 @@ on:
       - main
 
 jobs:
-  start-vm:
-    name: Start VM
-    runs-on: ubuntu-latest
-    outputs:
-      label: ${{ steps.start-yc-runner.outputs.label }}
-      instance-id: ${{ steps.start-yc-runner.outputs.instance-id }}
-    steps:
-      - name: Start YC runner
-        id: start-yc-runner
-        uses: yc-actions/yc-github-runner@v1
-        with:
-          mode: start
-          yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          folder-id: ${{ vars.YC_FOLDER_ID }}
-          image-id: ${{ vars.YC_DEFAULT_IMAGE_ID }}
-          zone-id: ${{ vars.YC_ZONE_ID }}
-          subnet-id: ${{ vars.YC_SUBNET_ID }}
-          cores: 4
-          memory: 8GB
-          core-fraction: 100
-          disk-type: network-ssd-nonreplicated
-          disk-size: 93GB
-
-  checkout:
-    name: Checkout sources
-    needs: start-vm
-    runs-on: ${{ needs.start-vm.outputs.label }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
   check:
     name: Run checks
-    needs:
-      - start-vm
-      - checkout
     with:
-      runs-on-value: ${{ needs.start-vm.outputs.label }}
       release: true
     secrets:
       DOCKER_HUB_LOGIN: ${{ secrets.DOCKER_HUB_LOGIN }}
       DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
     uses: ./.github/workflows/subflow_run_e2e.yaml
 
-  stop-vm:
-    name: Stop VM
-    needs:
-      - start-vm
-      - check
-    runs-on: ubuntu-latest
-    if: ${{ always() }}
-    steps:
-      - name: Stop YC runner
-        uses: yc-actions/yc-github-runner@v1
-        with:
-          mode: stop
-          yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          label: ${{ needs.start-vm.outputs.label }}
-          instance-id: ${{ needs.start-vm.outputs.instance-id }}
-
   send-notifications:
     name: Send notifications
     needs:
-      - stop-vm
+      - check
     runs-on: trampoline
     if: ${{ failure() }}
     steps:
