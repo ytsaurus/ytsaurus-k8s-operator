@@ -1,6 +1,9 @@
 on:
   workflow_call:
     inputs:
+      runs-on-value:
+        required: true
+        type: string
       release:
         required: true
         type: boolean
@@ -13,19 +16,14 @@ on:
 jobs:
   check:
     name: Run checks
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs-on-value }}
     env:
       HOME: /root
     steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
+      - name: Set up Go
+        uses: actions/setup-go@v3
         with:
-          tool-cache: false
-
-      - name: checkout sources
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+          go-version: 1.19
 
       - name: Set up Helm
         uses: azure/setup-helm@v1
@@ -45,8 +43,8 @@ jobs:
           sudo mv ./kind /usr/local/bin/kind
           kind create cluster --retain -v 100
           kubectl get pod
-
           make k8s-install-cert-manager
+
           make helm-kind-install
           make kind-load-test-images
           YTSAURUS_ENABLE_E2E_TESTS=true make test
