@@ -31,7 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
@@ -101,21 +100,21 @@ func (r *RemoteExecNodesReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&ytv1.RemoteExecNodes{}).
 		Watches(
-			&source.Kind{Type: &ytv1.RemoteYtsaurus{}},
+			&ytv1.RemoteYtsaurus{},
 			handler.EnqueueRequestsFromMapFunc(r.findRemoteNodesForRemoteYtsaurus),
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		).
 		Complete(r)
 }
 
-func (r *RemoteExecNodesReconciler) findRemoteNodesForRemoteYtsaurus(remoteYtsaurus client.Object) []reconcile.Request {
+func (r *RemoteExecNodesReconciler) findRemoteNodesForRemoteYtsaurus(ctx context.Context, remoteYtsaurus client.Object) []reconcile.Request {
 	// See https://book.kubebuilder.io/reference/watching-resources/externally-managed for the reference implementation
 	attachedRemoteExecNodes := &ytv1.RemoteExecNodesList{}
 	listOps := &client.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector(remoteClusterSpecField, remoteYtsaurus.GetName()),
 		Namespace:     remoteYtsaurus.GetNamespace(),
 	}
-	err := r.List(context.TODO(), attachedRemoteExecNodes, listOps)
+	err := r.List(ctx, attachedRemoteExecNodes, listOps)
 	if err != nil {
 		return []reconcile.Request{}
 	}

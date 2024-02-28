@@ -30,6 +30,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 )
@@ -491,23 +492,23 @@ func (r *Ytsaurus) evaluateYtsaurusValidation(old *runtime.Object) error {
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Ytsaurus) ValidateCreate() error {
+func (r *Ytsaurus) ValidateCreate() (admission.Warnings, error) {
 	ytsauruslog.Info("validate create", "name", r.Name)
 
-	return r.evaluateYtsaurusValidation(nil)
+	return nil, r.evaluateYtsaurusValidation(nil)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Ytsaurus) ValidateUpdate(old runtime.Object) error {
+func (r *Ytsaurus) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	ytsauruslog.Info("validate update", "name", r.Name)
 
-	return r.evaluateYtsaurusValidation(&old)
+	return nil, r.evaluateYtsaurusValidation(&old)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Ytsaurus) ValidateDelete() error {
+func (r *Ytsaurus) ValidateDelete() (admission.Warnings, error) {
 	ytsauruslog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
-	return nil
+	return nil, nil
 }

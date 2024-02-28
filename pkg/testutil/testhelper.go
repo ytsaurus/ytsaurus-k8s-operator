@@ -19,6 +19,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
@@ -75,7 +76,9 @@ func (h *TestHelper) Start(reconcilerSetup func(mgr ctrl.Manager) error) {
 	mgr, err := ctrl.NewManager(conf, ctrl.Options{
 		Scheme: scheme.Scheme,
 		// To get rid of macOS' accept incoming network connections popup
-		MetricsBindAddress:     "0",
+		Metrics: metricsserver.Options{
+			BindAddress: "0",
+		},
 		HealthProbeBindAddress: "0",
 		Logger:                 testr.New(t),
 	})
