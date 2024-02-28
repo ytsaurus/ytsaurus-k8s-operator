@@ -14,8 +14,7 @@ jobs:
   check:
     name: Run checks
     runs-on: ubuntu-latest
-    env:
-      HOME: /root
+
     steps:
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main
