@@ -882,7 +882,7 @@ func (in *RemoteExecNodesSpec) DeepCopyInto(out *RemoteExecNodesSpec) {
 		*out = new(corev1.LocalObjectReference)
 		**out = **in
 	}
-	in.ConfigurationSpec.DeepCopyInto(&out.ConfigurationSpec)
+	in.CommonSpec.DeepCopyInto(&out.CommonSpec)
 	in.ExecNodesSpec.DeepCopyInto(&out.ExecNodesSpec)
 }
 
