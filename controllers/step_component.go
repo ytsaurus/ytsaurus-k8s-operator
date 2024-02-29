@@ -8,25 +8,22 @@ import (
 )
 
 type componentStep struct {
-	baseStep
-	// status of the component is observed before step is built.
+	name flows.StepName
+	// status of the component is observed before step is built and stored in step.
 	status    components.ComponentStatus
 	component component
 }
 
 func newComponentStep(component component, status components.ComponentStatus) *componentStep {
 	return &componentStep{
-		baseStep: baseStep{
-			name: flows.StepName(component.GetName()),
-		},
+		name:      flows.StepName(component.GetName()),
 		status:    status,
 		component: component,
 	}
 }
 
-func (s *componentStep) Cacheable() bool {
-	// We want to check status of component every time step is being executed.
-	return false
+func (s *componentStep) StepName() flows.StepName {
+	return s.name
 }
 
 func (s *componentStep) Status(_ context.Context) (flows.StepStatus, error) {

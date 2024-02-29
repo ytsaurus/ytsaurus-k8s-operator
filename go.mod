@@ -3,7 +3,6 @@ module github.com/ytsaurus/yt-k8s-operator
 go 1.18
 
 require (
-	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/go-logr/logr v1.2.4
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.9
@@ -15,6 +14,7 @@ require (
 	go.uber.org/zap v1.24.0
 	go.ytsaurus.tech/library/go/ptr v0.0.1
 	go.ytsaurus.tech/yt/go v0.0.9
+	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
 	k8s.io/api v0.24.2
 	k8s.io/apimachinery v0.24.2
 	k8s.io/client-go v0.24.2
@@ -81,14 +81,14 @@ require (
 	go.ytsaurus.tech/library/go/core/xerrors v0.0.3 // indirect
 	go.ytsaurus.tech/library/go/x/xreflect v0.0.2 // indirect
 	go.ytsaurus.tech/library/go/x/xruntime v0.0.3 // indirect
-	golang.org/x/crypto v0.11.0 // indirect
-	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/crypto v0.19.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b // indirect
-	golang.org/x/sys v0.10.0 // indirect
-	golang.org/x/term v0.10.0 // indirect
-	golang.org/x/text v0.11.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/term v0.17.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect
-	golang.org/x/tools v0.9.1 // indirect
+	golang.org/x/tools v0.18.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

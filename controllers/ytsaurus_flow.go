@@ -12,7 +12,7 @@ import (
 
 type YtsaurusFlow struct {
 	registry          *componentRegistry
-	conditionsManager *updateConditionsManager
+	conditionsManager *stepsStateManager
 	statuses          map[string]components.ComponentStatus
 	steps             []flows.StepType
 }
@@ -20,7 +20,7 @@ type YtsaurusFlow struct {
 func newYtsaurusFlow(ytsaurusProxy *apiProxy.Ytsaurus) (*YtsaurusFlow, error) {
 	return &YtsaurusFlow{
 		registry:          buildComponentRegistry(ytsaurusProxy),
-		conditionsManager: newUpdateConditionsManager(ytsaurusProxy),
+		conditionsManager: newStepsStateManager(ytsaurusProxy),
 		statuses:          make(map[string]components.ComponentStatus),
 	}, nil
 }

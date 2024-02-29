@@ -191,7 +191,7 @@ func FetchAndCheckEventually(h *TestHelper, key string, obj client.Object, condD
 				require.NoError(h.t, err)
 			}
 			if condition(obj) {
-				h.t.Log("condition '%s' succeeded", condDescription)
+				h.t.Logf("condition '%s' succeeded", condDescription)
 				return true
 			}
 			return false

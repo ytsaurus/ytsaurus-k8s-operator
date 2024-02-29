@@ -151,16 +151,13 @@ func buildSteps(
 	for _, dn := range registry.getListByType(consts.ComponentTypeDataNode) {
 		dataNodesSteps = append(dataNodesSteps, newComponentStep(dn, statuses[dn.GetName()]))
 	}
-	isFullUpdateNeeded := func(ctx context.Context) (string, error) {
+	isFullUpdateNeeded := func(ctx context.Context) (bool, error) {
 		// FIXME: should we support that ?
 		// if data node status is syncNeedRecreate
 		//    return true
 		// if tablet node status is syncNeedRecreate
 		//    return true
-		if masterStatus.SyncStatus == components.SyncStatusNeedFullUpdate {
-			return "True", nil
-		}
-		return "False", nil
+		return masterStatus.SyncStatus == components.SyncStatusNeedFullUpdate, nil
 	}
 
 	componentsUpdateChain, err := flows.FlattenSteps(
@@ -187,8 +184,7 @@ func buildSteps(
 	fullUpdateComponetsChain, err := flows.FlattenSteps(
 		checkFullUpdatePossibility(ycClient),
 		enableSafeMode(ycClient),
-		saveTabletCells(ycClient),
-		removeTabletCells(ycClient),
+		backupTabletCells(ycClient),
 		buildMasterSnapshots(ycClient),
 		componentsUpdateChain,
 		//masterExitReadOnly(master),
@@ -203,14 +199,11 @@ func buildSteps(
 
 	return []flows.StepType{
 		ytsaurusClientStep,
-
-		flows.NewConditionStep(
-			"IsFullUpdate",
-			isFullUpdateNeeded,
-			map[string][]flows.StepType{
-				"True":  fullUpdateComponetsChain,
-				"False": componentsUpdateChain,
-			},
-		),
+		flows.BoolConditionStep{
+			Name:  IsFullUpdateStepName,
+			Cond:  isFullUpdateNeeded,
+			True:  fullUpdateComponetsChain,
+			False: componentsUpdateChain,
+		},
 	}, nil
 }

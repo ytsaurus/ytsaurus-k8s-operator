@@ -170,7 +170,6 @@ func (yc *ytsaurusClient) SaveTableCells(ctx context.Context) error {
 	return yc.ytsaurus.APIProxy().UpdateStatus(ctx)
 }
 func (yc *ytsaurusClient) RemoveTableCells(ctx context.Context) error {
-	// FIXME: this needs locking or it can't be two reconciler loops in the same time?
 	var tabletCells []string
 	err := yc.ytClient.ListNode(
 		ctx,
@@ -192,12 +191,6 @@ func (yc *ytsaurusClient) RemoveTableCells(ctx context.Context) error {
 		}
 	}
 
-	//yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-	//	Type:    consts.ConditionTabletCellsRemovingStarted,
-	//	Status:  metav1.ConditionTrue,
-	//	Reason:  "Update",
-	//	Message: "Tablet cells removing was started",
-	//})
 	return nil
 }
 func (yc *ytsaurusClient) AreTabletCellsRemoved(ctx context.Context) (bool, error) {

@@ -62,6 +62,10 @@ func (c *Ytsaurus) IsUpdateStatusConditionTrue(condition string) bool {
 	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
 }
 
+func (c *Ytsaurus) IsUpdateStatusConditionFalse(condition string) bool {
+	return meta.IsStatusConditionFalse(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
+}
+
 func (c *Ytsaurus) SetUpdateStatusCondition(ctx context.Context, condition metav1.Condition) {
 	logger := log.FromContext(ctx)
 	logger.Info("Setting update status condition", "condition", condition)

@@ -10,15 +10,16 @@ import (
 
 // not sure if we need flows.StepType names
 const (
-	EnableSafeModeStepName       flows.StepName = "enableSafeMode"
-	SaveTabletCellsStepName      flows.StepName = "saveTabletCells"
-	RemoveTabletCellsStepName    flows.StepName = "removeTabletCells"
-	BuildMasterSnapshotsStepName flows.StepName = "buildMasterSnapshots"
-	masterExitReadOnlyStepName   flows.StepName = "masterExitReadOnly"
-	RecoverTabletCellsStepName   flows.StepName = "recoverTabletCells"
-	updateOpArchiveStepName      flows.StepName = "updateOpArchive"
-	updateQTStateStepName        flows.StepName = "updateQTState"
-	DisableSafeModeStepName      flows.StepName = "disableSafeMode"
+	IsFullUpdateStepName               flows.StepName = "isFullUpdate"
+	CheckFullUpdatePossibilityStepName flows.StepName = "checkFullUpdatePossibility"
+	EnableSafeModeStepName             flows.StepName = "enableSafeMode"
+	BackupTabletCellsStepName          flows.StepName = "backupTabletCells"
+	BuildMasterSnapshotsStepName       flows.StepName = "buildMasterSnapshots"
+	masterExitReadOnlyStepName         flows.StepName = "masterExitReadOnly"
+	RecoverTabletCellsStepName         flows.StepName = "recoverTabletCells"
+	updateOpArchiveStepName            flows.StepName = "updateOpArchive"
+	updateQTStateStepName              flows.StepName = "updateQTState"
+	DisableSafeModeStepName            flows.StepName = "disableSafeMode"
 )
 
 // this is temporary interface.
@@ -66,7 +67,7 @@ type ytsaurusClient interface {
 //}
 
 func checkFullUpdatePossibility(yc ytsaurusClient) flows.StepType {
-	statusCheck := func(ctx context.Context) (flows.StepStatus, error) {
+	preRun := func(ctx context.Context) (flows.StepStatus, error) {
 		possible, msg, err := yc.HandlePossibilityCheck(ctx)
 		if err != nil {
 			return flows.StepStatus{}, err
@@ -82,120 +83,90 @@ func checkFullUpdatePossibility(yc ytsaurusClient) flows.StepType {
 			Message:    msg,
 		}, nil
 	}
-	return flows.NewOperationStep(
-		RemoveTabletCellsStepName,
-		statusCheck,
-		func(ctx context.Context) error { return nil },
-	)
+	return flows.ActionStep{
+		Name:       CheckFullUpdatePossibilityStepName,
+		PreRunFunc: preRun,
+	}
 }
 
 func enableSafeMode(yc ytsaurusClient) flows.StepType {
-	return flows.NewActionStep(
-		EnableSafeModeStepName,
-		yc.EnableSafeMode,
-	)
-}
-func saveTabletCells(yc ytsaurusClient) flows.StepType {
-	return flows.NewActionStep(
-		SaveTabletCellsStepName,
-		yc.SaveTableCells,
-	)
+	return flows.ActionStep{
+		Name:    EnableSafeModeStepName,
+		RunFunc: yc.EnableSafeMode,
+	}
 }
 
-func removeTabletCells(yc ytsaurusClient) flows.StepType {
-	statusCheck := func(ctx context.Context) (flows.StepStatus, error) {
+func backupTabletCells(yc ytsaurusClient) flows.StepType {
+	preRun := func(ctx context.Context) (flows.StepStatus, error) {
+		if err := yc.SaveTableCells(ctx); err != nil {
+			return flows.StepStatus{}, err
+		}
+		return flows.StepStatus{
+			SyncStatus: flows.StepSyncStatusNeedRun,
+			Message:    "tablet cell bundles are stored in the resource state",
+		}, nil
+	}
+	run := yc.RemoveTableCells
+	postRun := func(ctx context.Context) (flows.StepStatus, error) {
 		done, err := yc.AreTabletCellsRemoved(ctx)
 		if err != nil {
 			return flows.StepStatus{}, err
 		}
-		if !done {
+		if done {
 			return flows.StepStatus{
-				SyncStatus: flows.StepSyncStatusNeedRun,
-				Message:    "Tablet cells are not removed",
+				SyncStatus: flows.StepSyncStatusDone,
+				Message:    "tablet cells were successfully removed",
 			}, nil
 		}
 		return flows.StepStatus{
-			SyncStatus: flows.StepSyncStatusDone,
-			Message:    "Tablet cells were removed",
+			SyncStatus: flows.StepSyncStatusUpdating,
+			Message:    "tablet cells not have been removed yet",
 		}, nil
 	}
-	return flows.NewOperationStep(
-		RemoveTabletCellsStepName,
-		statusCheck,
-		yc.RemoveTableCells,
-	)
+
+	return flows.ActionStep{
+		Name:        BackupTabletCellsStepName,
+		PreRunFunc:  preRun,
+		RunFunc:     run,
+		PostRunFunc: postRun,
+	}
 }
 
 func buildMasterSnapshots(yc ytsaurusClient) flows.StepType {
-	action := func(ctx context.Context) error {
+	preRun := func(ctx context.Context) (flows.StepStatus, error) {
 		if err := yc.SaveMasterMonitoringPaths(ctx); err != nil {
-			return err
+			return flows.StepStatus{}, err
 		}
-		return yc.StartBuildingMasterSnapshots(ctx)
+		return flows.StepStatus{
+			SyncStatus: flows.StepSyncStatusNeedRun,
+			Message:    "master monitor paths were saved in state",
+		}, nil
 	}
-	statusCheck := func(ctx context.Context) (flows.StepStatus, error) {
+	postRun := func(ctx context.Context) (flows.StepStatus, error) {
 		done, err := yc.AreMasterSnapshotsBuilt(ctx)
 		if err != nil {
 			return flows.StepStatus{}, err
 		}
-		if !done {
+		if done {
 			return flows.StepStatus{
-				SyncStatus: flows.StepSyncStatusUpdating,
-				Message:    "Snapshots are not built",
+				SyncStatus: flows.StepSyncStatusDone,
+				Message:    "master snapshots were successfully built",
 			}, nil
 		}
 		return flows.StepStatus{
-			SyncStatus: flows.StepSyncStatusDone,
-			Message:    "Snapshots are built",
+			SyncStatus: flows.StepSyncStatusUpdating,
+			Message:    "master snapshots haven't been not removed yet",
 		}, nil
 	}
-	return flows.NewOperationStep(
-		BuildMasterSnapshotsStepName,
-		statusCheck,
-		action,
-	)
+
+	return flows.ActionStep{
+		Name:        BuildMasterSnapshotsStepName,
+		PreRunFunc:  preRun,
+		RunFunc:     yc.StartBuildingMasterSnapshots,
+		PostRunFunc: postRun,
+	}
 }
 
-//	func saveMasterMonitoringPaths(yc ytsaurusClient) flows.StepType {
-//		action := func(ctx context.Context) error {
-//			return yc.SaveMasterMonitoringPaths(ctx)
-//		}
-//		return newActionStep(
-//			saveMasterSnapshotMonitoringStepName,
-//			action,
-//		)
-//	}
-//
-// // FIXME: it is better not to start multiple snapshot building operations, so we use two steps here.
-// // though we have allMastersReadOnly check and maybe it could be one step.
-//
-//	func startBuildingMasterSnapshots(yc ytsaurusClient) flows.StepType {
-//		action := func(ctx context.Context) error {
-//			return yc.StartBuildingMasterSnapshots(ctx)
-//		}
-//		return newActionStep(
-//			startBuildingMasterSnapshotsStepName,
-//			action,
-//		)
-//	}
-//
-//	func finishBuildingMasterSnapshots(yc ytsaurusClient) flows.StepType {
-//		action := func(ctx context.Context) error {
-//			built, err := yc.AreMasterSnapshotsBuilt(ctx)
-//			if err != nil {
-//				return err
-//			}
-//			if !built {
-//				return nil
-//			}
-//			return nil
-//		}
-//		return newActionStep(
-//			finishBuildingMasterSnapshotsStepName,
-//			action,
-//		)
-//	}
-//
 //	func masterExitReadOnly(master component) flows.StepType {
 //		statusCheck := func(ctx context.Context) (bool, error) {
 //			if state.isUpdateStatusConditionTrue(doneCondition.Type) {
@@ -228,10 +199,10 @@ func buildMasterSnapshots(yc ytsaurusClient) flows.StepType {
 //		)
 //	}
 func recoverTabletCells(yc ytsaurusClient) flows.StepType {
-	return flows.NewActionStep(
-		RecoverTabletCellsStepName,
-		yc.RecoverTableCells,
-	)
+	return flows.ActionStep{
+		Name:    RecoverTabletCellsStepName,
+		RunFunc: yc.RecoverTableCells,
+	}
 }
 
 // maybe prepare is needed also?
@@ -263,8 +234,8 @@ func recoverTabletCells(yc ytsaurusClient) flows.StepType {
 //}
 
 func disableSafeMode(yc ytsaurusClient) flows.StepType {
-	return flows.NewActionStep(
-		DisableSafeModeStepName,
-		yc.DisableSafeMode,
-	)
+	return flows.ActionStep{
+		Name:    DisableSafeModeStepName,
+		RunFunc: yc.DisableSafeMode,
+	}
 }

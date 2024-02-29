@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/go-logr/logr/testr"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,10 +14,6 @@ const (
 	testRunErrorMsg    = "test run error"
 )
 
-func success(context.Context) error {
-	return nil
-}
-
 func fail(context.Context) error {
 	return errors.New(testRunErrorMsg)
 }
@@ -24,7 +21,7 @@ func fail(context.Context) error {
 var chooseCases = []struct {
 	name                 string
 	steps                []StepType
-	storageBefore        map[string]struct{}
+	storageBefore        map[string]bool
 	expectedStepName     StepName
 	expectedStepStatus   StepSyncStatus
 	expectedErrorMessage string
@@ -32,8 +29,8 @@ var chooseCases = []struct {
 	{
 		name: "simple-first-step-need-run",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusNeedRun),
-			newCachelessStep("step2", StepSyncStatusNeedRun),
+			newSelfManagedStep("step1", StepSyncStatusNeedRun),
+			newSelfManagedStep("step2", StepSyncStatusNeedRun),
 		},
 		expectedStepName:   "step1",
 		expectedStepStatus: StepSyncStatusNeedRun,
@@ -41,8 +38,8 @@ var chooseCases = []struct {
 	{
 		name: "simple-first-step-updating",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusUpdating),
-			newCachelessStep("step2", StepSyncStatusNeedRun),
+			newSelfManagedStep("step1", StepSyncStatusUpdating),
+			newSelfManagedStep("step2", StepSyncStatusNeedRun),
 		},
 		expectedStepName:   "step1",
 		expectedStepStatus: StepSyncStatusUpdating,
@@ -50,8 +47,8 @@ var chooseCases = []struct {
 	{
 		name: "simple-first-step-blocked",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusBlocked),
-			newCachelessStep("step2", StepSyncStatusNeedRun),
+			newSelfManagedStep("step1", StepSyncStatusBlocked),
+			newSelfManagedStep("step2", StepSyncStatusNeedRun),
 		},
 		expectedStepName:   "step1",
 		expectedStepStatus: StepSyncStatusBlocked,
@@ -59,8 +56,8 @@ var chooseCases = []struct {
 	{
 		name: "simple-first-step-done-second-run",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusDone),
-			newCachelessStep("step2", StepSyncStatusNeedRun),
+			newSelfManagedStep("step1", StepSyncStatusDone),
+			newSelfManagedStep("step2", StepSyncStatusNeedRun),
 		},
 		expectedStepName:   "step2",
 		expectedStepStatus: StepSyncStatusNeedRun,
@@ -68,8 +65,8 @@ var chooseCases = []struct {
 	{
 		name: "simple-first-step-done-second-updating",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusDone),
-			newCachelessStep("step2", StepSyncStatusUpdating),
+			newSelfManagedStep("step1", StepSyncStatusDone),
+			newSelfManagedStep("step2", StepSyncStatusUpdating),
 		},
 		expectedStepName:   "step2",
 		expectedStepStatus: StepSyncStatusUpdating,
@@ -77,23 +74,23 @@ var chooseCases = []struct {
 	{
 		name: "simple-first-step-done-second-done",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusDone),
-			newCachelessStep("step2", StepSyncStatusDone),
+			newSelfManagedStep("step1", StepSyncStatusDone),
+			newSelfManagedStep("step2", StepSyncStatusDone),
 		},
 	},
 	{
 		name: "simple-first-step-error",
 		steps: []StepType{
-			newStatusErrorStep("step1", StepSyncStatusNeedRun),
-			newCachelessStep("step2", StepSyncStatusNeedRun),
+			newSelfManagedErrorStep("step1", StepSyncStatusNeedRun),
+			newSelfManagedStep("step2", StepSyncStatusNeedRun),
 		},
-		expectedErrorMessage: "failed to get status for step step1",
+		expectedErrorMessage: "failed to collect status for step step1",
 	},
 	{
 		name: "simple-action-success",
 		steps: []StepType{
-			NewActionStep("step1", success),
-			NewActionStep("step2", success),
+			ActionStep{Name: "step1"},
+			ActionStep{Name: "step2"},
 		},
 		expectedStepName:   "step1",
 		expectedStepStatus: StepSyncStatusNeedRun,
@@ -101,11 +98,12 @@ var chooseCases = []struct {
 	{
 		name: "simple-action-step1-done-step2-run",
 		steps: []StepType{
-			NewActionStep("step1", success),
-			NewActionStep("step2", success),
+			ActionStep{Name: "step1"},
+			ActionStep{Name: "step2"},
 		},
-		storageBefore: map[string]struct{}{
-			"step1Done": {},
+		storageBefore: map[string]bool{
+			"step1Run":  true,
+			"step1Done": true,
 		},
 		expectedStepName:   "step2",
 		expectedStepStatus: StepSyncStatusNeedRun,
@@ -113,68 +111,69 @@ var chooseCases = []struct {
 	{
 		name: "simple-action-all-done",
 		steps: []StepType{
-			NewActionStep("step1", success),
-			NewActionStep("step2", success),
+			ActionStep{Name: "step1"},
+			ActionStep{Name: "step2"},
 		},
-		storageBefore: map[string]struct{}{
-			"step1Done": {},
-			"step2Done": {},
+		storageBefore: map[string]bool{
+			"step1Run":  true,
+			"step1Done": true,
+			"step2Run":  true,
+			"step2Done": true,
 		},
 	},
 	{
 		name: "simple-mixed-steps-first-status-run",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusNeedRun),
-			NewActionStep("step2", success),
+			newSelfManagedStep("step1", StepSyncStatusNeedRun),
+			ActionStep{Name: "step2"},
 		},
 		expectedStepName: "step1",
 	},
 	{
 		name: "simple-mixed-steps-first-status-done",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusDone),
-			NewActionStep("step2", success),
+			newSelfManagedStep("step1", StepSyncStatusDone),
+			ActionStep{Name: "step2"},
 		},
 		expectedStepName: "step2",
 	},
 	{
 		name: "simple-mixed-steps-first-cached-run",
 		steps: []StepType{
-			NewActionStep("step1", success),
-			newCachelessStep("step2", StepSyncStatusDone),
+			ActionStep{Name: "step1"},
+			newSelfManagedStep("step2", StepSyncStatusDone),
 		},
 		expectedStepName: "step1",
 	},
 	{
 		name: "simple-mixed-steps-first-cached-done",
 		steps: []StepType{
-			NewActionStep("step1", success),
-			newCachelessStep("step2", StepSyncStatusNeedRun),
+			ActionStep{Name: "step1"},
+			newSelfManagedStep("step2", StepSyncStatusNeedRun),
 		},
-		storageBefore: map[string]struct{}{
-			"step1Done": {},
+		storageBefore: map[string]bool{
+			"step1Done": true,
+			"step1Run":  true,
 		},
 		expectedStepName: "step2",
 	},
 	{
 		name: "condition-simple-steps-branch-1",
 		steps: []StepType{
-			NewConditionStep(
-				"cond",
-				func(ctx context.Context) (string, error) {
-					return "True", nil
+			BoolConditionStep{
+				Name: "cond",
+				Cond: func(ctx context.Context) (bool, error) {
+					return true, nil
 				},
-				map[string][]StepType{
-					"True": {
-						newCachelessStep("step11", StepSyncStatusDone),
-						newCachelessStep("step12", StepSyncStatusNeedRun),
-					},
-					"False": {
-						newCachelessStep("step21", StepSyncStatusDone),
-						newCachelessStep("step22", StepSyncStatusNeedRun),
-					},
+				True: []StepType{
+					newSelfManagedStep("step11", StepSyncStatusDone),
+					newSelfManagedStep("step12", StepSyncStatusNeedRun),
 				},
-			),
+				False: []StepType{
+					newSelfManagedStep("step21", StepSyncStatusDone),
+					newSelfManagedStep("step22", StepSyncStatusNeedRun),
+				},
+			},
 		},
 		expectedStepName:   "step12",
 		expectedStepStatus: StepSyncStatusNeedRun,
@@ -182,22 +181,20 @@ var chooseCases = []struct {
 	{
 		name: "condition-simple-steps-branch-2",
 		steps: []StepType{
-			NewConditionStep(
-				"cond",
-				func(ctx context.Context) (string, error) {
-					return "False", nil
+			BoolConditionStep{
+				Name: "cond",
+				Cond: func(ctx context.Context) (bool, error) {
+					return false, nil
 				},
-				map[string][]StepType{
-					"True": {
-						newCachelessStep("step11", StepSyncStatusDone),
-						newCachelessStep("step12", StepSyncStatusNeedRun),
-					},
-					"False": {
-						newCachelessStep("step21", StepSyncStatusDone),
-						newCachelessStep("step22", StepSyncStatusNeedRun),
-					},
+				True: []StepType{
+					newSelfManagedStep("step11", StepSyncStatusDone),
+					newSelfManagedStep("step12", StepSyncStatusNeedRun),
 				},
-			),
+				False: []StepType{
+					newSelfManagedStep("step21", StepSyncStatusDone),
+					newSelfManagedStep("step22", StepSyncStatusNeedRun),
+				},
+			},
 		},
 		expectedStepName:   "step22",
 		expectedStepStatus: StepSyncStatusNeedRun,
@@ -205,47 +202,44 @@ var chooseCases = []struct {
 	{
 		name: "condition-simple-steps-branch-1-done",
 		steps: []StepType{
-			NewConditionStep(
-				"cond",
-				func(ctx context.Context) (string, error) {
-					return "True", nil
+			BoolConditionStep{
+				Name: "cond",
+				Cond: func(ctx context.Context) (bool, error) {
+					return false, nil
 				},
-				map[string][]StepType{
-					"True": {
-						newCachelessStep("step11", StepSyncStatusDone),
-						newCachelessStep("step12", StepSyncStatusDone),
-					},
-					"False": {
-						newCachelessStep("step21", StepSyncStatusNeedRun),
-						newCachelessStep("step22", StepSyncStatusNeedRun),
-					},
+				True: []StepType{
+					newSelfManagedStep("step11", StepSyncStatusDone),
+					newSelfManagedStep("step12", StepSyncStatusDone),
 				},
-			),
+				False: []StepType{
+					newSelfManagedStep("step21", StepSyncStatusNeedRun),
+					newSelfManagedStep("step22", StepSyncStatusNeedRun),
+				},
+			},
 		},
+		expectedStepName:   "step21",
+		expectedStepStatus: StepSyncStatusNeedRun,
 	},
 	{
 		name: "condition-result-cached",
 		steps: []StepType{
-			NewConditionStep(
-				"cond",
-				func(ctx context.Context) (string, error) {
-					// This should be ignored as False was cached from before.
-					return "True", nil
+			BoolConditionStep{
+				Name: "cond",
+				Cond: func(ctx context.Context) (bool, error) {
+					return true, nil
 				},
-				map[string][]StepType{
-					"True": {
-						newCachelessStep("step11", StepSyncStatusDone),
-						newCachelessStep("step12", StepSyncStatusNeedRun),
-					},
-					"False": {
-						newCachelessStep("step21", StepSyncStatusDone),
-						newCachelessStep("step22", StepSyncStatusNeedRun),
-					},
+				True: []StepType{
+					newSelfManagedStep("step11", StepSyncStatusDone),
+					newSelfManagedStep("step12", StepSyncStatusNeedRun),
 				},
-			),
+				False: []StepType{
+					newSelfManagedStep("step21", StepSyncStatusDone),
+					newSelfManagedStep("step22", StepSyncStatusNeedRun),
+				},
+			},
 		},
-		storageBefore: map[string]struct{}{
-			"condFalse": {},
+		storageBefore: map[string]bool{
+			"condCond": false,
 		},
 		expectedStepName:   "step22",
 		expectedStepStatus: StepSyncStatusNeedRun,
@@ -253,21 +247,19 @@ var chooseCases = []struct {
 	{
 		name: "condition-action-steps-branch-1",
 		steps: []StepType{
-			NewConditionStep(
-				"cond",
-				func(ctx context.Context) (string, error) {
-					return "True", nil
+			BoolConditionStep{
+				Name: "cond",
+				Cond: func(ctx context.Context) (bool, error) {
+					return true, nil
 				},
-				map[string][]StepType{
-					"True": {
-						NewActionStep("step11", success),
-						NewActionStep("step12", success),
-					},
-					"False": {
-						newCachelessStep("step21", StepSyncStatusDone),
-					},
+				True: []StepType{
+					ActionStep{Name: "step11"},
+					ActionStep{Name: "step12"},
 				},
-			),
+				False: []StepType{
+					newSelfManagedStep("step21", StepSyncStatusDone),
+				},
+			},
 		},
 		expectedStepName:   "step11",
 		expectedStepStatus: StepSyncStatusNeedRun,
@@ -275,24 +267,23 @@ var chooseCases = []struct {
 	{
 		name: "condition-action-steps-branch-1-first-done",
 		steps: []StepType{
-			NewConditionStep(
-				"cond",
-				func(ctx context.Context) (string, error) {
-					return "True", nil
+			BoolConditionStep{
+				Name: "cond",
+				Cond: func(ctx context.Context) (bool, error) {
+					return true, nil
 				},
-				map[string][]StepType{
-					"True": {
-						NewActionStep("step11", success),
-						NewActionStep("step12", success),
-					},
-					"False": {
-						newCachelessStep("step21", StepSyncStatusDone),
-					},
+				True: []StepType{
+					ActionStep{Name: "step11"},
+					ActionStep{Name: "step12"},
 				},
-			),
+				False: []StepType{
+					newSelfManagedStep("step21", StepSyncStatusDone),
+				},
+			},
 		},
-		storageBefore: map[string]struct{}{
-			"step11Done": {},
+		storageBefore: map[string]bool{
+			"step11Run":  true,
+			"step11Done": true,
 		},
 		expectedStepName:   "step12",
 		expectedStepStatus: StepSyncStatusNeedRun,
@@ -303,7 +294,7 @@ func TestStepChoosing(t *testing.T) {
 	for _, testCase := range chooseCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			storage := newTestStorage(testCase.storageBefore)
-			flow := NewFlow(testCase.steps, storage)
+			flow := NewFlow(testCase.steps, storage, testr.New(t))
 
 			step, status, err := flow.getNextStep(context.Background())
 			if testCase.expectedErrorMessage != "" {
@@ -329,203 +320,243 @@ func TestStepChoosing(t *testing.T) {
 var advanceCases = []struct {
 	name                 string
 	steps                []StepType
-	storageBefore        map[string]struct{}
+	storageBefore        map[string]bool
 	expectedStepStatus   StepSyncStatus
 	expectedErrorMessage string
-	expectedStorageAfter map[string]struct{}
+	expectedStorageAfter map[string]bool
 }{
 	{
 		name: "simple-first-step-need-run",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusNeedRun),
-			newCachelessStep("step2", StepSyncStatusNeedRun),
+			newSelfManagedStep("step1", StepSyncStatusNeedRun),
+			newSelfManagedStep("step2", StepSyncStatusNeedRun),
 		},
 		expectedStepStatus: StepSyncStatusUpdating,
 	},
 	{
 		name: "simple-first-step-updating",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusUpdating),
-			newCachelessStep("step2", StepSyncStatusNeedRun),
+			newSelfManagedStep("step1", StepSyncStatusUpdating),
+			newSelfManagedStep("step2", StepSyncStatusNeedRun),
 		},
 		expectedStepStatus: StepSyncStatusUpdating,
 	},
 	{
 		name: "simple-first-step-blocked",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusBlocked),
-			newCachelessStep("step2", StepSyncStatusNeedRun),
+			newSelfManagedStep("step1", StepSyncStatusBlocked),
+			newSelfManagedStep("step2", StepSyncStatusNeedRun),
 		},
 		expectedStepStatus: StepSyncStatusBlocked,
 	},
 	{
 		name: "simple-first-empty-state-1",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusBlocked),
-			newCachelessStep("step2", StepSyncStatusNeedRun),
+			newSelfManagedStep("step1", StepSyncStatusBlocked),
+			newSelfManagedStep("step2", StepSyncStatusNeedRun),
 		},
 		expectedStepStatus:   StepSyncStatusBlocked,
-		expectedStorageAfter: map[string]struct{}{},
+		expectedStorageAfter: map[string]bool{},
 	},
 	{
 		name: "simple-first-empty-state-2",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusNeedRun),
-			newCachelessStep("step2", StepSyncStatusNeedRun),
+			newSelfManagedStep("step1", StepSyncStatusNeedRun),
+			newSelfManagedStep("step2", StepSyncStatusNeedRun),
 		},
 		expectedStepStatus:   StepSyncStatusUpdating,
-		expectedStorageAfter: map[string]struct{}{},
+		expectedStorageAfter: map[string]bool{},
 	},
 	{
 		name: "simple-first-empty-state-3",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusDone),
-			newCachelessStep("step2", StepSyncStatusNeedRun),
+			newSelfManagedStep("step1", StepSyncStatusDone),
+			newSelfManagedStep("step2", StepSyncStatusNeedRun),
 		},
 		expectedStepStatus:   StepSyncStatusUpdating,
-		expectedStorageAfter: map[string]struct{}{},
+		expectedStorageAfter: map[string]bool{},
 	},
 	{
 		name: "simple-first-all-done",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusDone),
-			newCachelessStep("step2", StepSyncStatusDone),
+			newSelfManagedStep("step1", StepSyncStatusDone),
+			newSelfManagedStep("step2", StepSyncStatusDone),
 		},
 		expectedStepStatus:   StepSyncStatusDone,
-		expectedStorageAfter: map[string]struct{}{},
+		expectedStorageAfter: map[string]bool{},
 	},
 	{
 		name: "actions-first-run-success",
 		steps: []StepType{
-			NewActionStep("step1", success),
-			NewActionStep("step2", success),
+			ActionStep{Name: "step1"},
+			ActionStep{Name: "step2"},
 		},
 		expectedStepStatus: StepSyncStatusUpdating,
-		expectedStorageAfter: map[string]struct{}{
-			"step1Done": {},
+		expectedStorageAfter: map[string]bool{
+			"step1Run": true,
+		},
+	},
+	{
+		name: "actions-first-done-after-run-success",
+		steps: []StepType{
+			ActionStep{Name: "step1"},
+			ActionStep{Name: "step2"},
+		},
+		expectedStepStatus: StepSyncStatusUpdating,
+		storageBefore: map[string]bool{
+			"step1Run": true,
+		},
+		expectedStorageAfter: map[string]bool{
+			"step1Run":  true,
+			"step1Done": true,
+			"step2Run":  true,
 		},
 	},
 	{
 		name: "actions-second-run-success",
 		steps: []StepType{
-			NewActionStep("step1", success),
-			NewActionStep("step2", success),
+			ActionStep{Name: "step1"},
+			ActionStep{Name: "step2"},
 		},
-		storageBefore: map[string]struct{}{
-			"step1Done": {},
+		storageBefore: map[string]bool{
+			"step1Run":  true,
+			"step1Done": true,
 		},
 		expectedStepStatus: StepSyncStatusUpdating,
-		expectedStorageAfter: map[string]struct{}{
-			"step1Done": {},
-			"step2Done": {},
+		expectedStorageAfter: map[string]bool{
+			"step1Run":  true,
+			"step1Done": true,
+			"step2Run":  true,
 		},
+	},
+	{
+		name: "actions-second-run-done-success",
+		steps: []StepType{
+			ActionStep{Name: "step1"},
+			ActionStep{Name: "step2"},
+		},
+		storageBefore: map[string]bool{
+			"step1Run":  true,
+			"step1Done": true,
+			"step2Run":  true,
+		},
+		expectedStepStatus:   StepSyncStatusDone,
+		expectedStorageAfter: map[string]bool{},
 	},
 	{
 		name: "actions-first-run-error",
 		steps: []StepType{
-			NewActionStep("step1", fail),
-			NewActionStep("step2", success),
+			ActionStep{Name: "step1", RunFunc: fail},
+			ActionStep{Name: "step2"},
 		},
 		expectedErrorMessage: "step1 execution failed",
-		expectedStorageAfter: map[string]struct{}{},
+		expectedStorageAfter: map[string]bool{},
 	},
 	{
 		name: "actions-first-run-cached-error",
 		steps: []StepType{
 			// fail is ignored, because we have stored state
-			NewActionStep("step1", fail),
-			NewActionStep("step2", success),
+			ActionStep{Name: "step1", RunFunc: fail},
+			ActionStep{Name: "step2"},
 		},
-		storageBefore: map[string]struct{}{
-			"step1Done": {},
+		storageBefore: map[string]bool{
+			"step1Run":  true,
+			"step1Done": true,
 		},
 		expectedStepStatus: StepSyncStatusUpdating,
-		expectedStorageAfter: map[string]struct{}{
-			"step1Done": {},
-			"step2Done": {},
+		expectedStorageAfter: map[string]bool{
+			"step1Run":  true,
+			"step1Done": true,
+			"step2Run":  true,
 		},
 	},
 	{
 		name: "actions-first-state-reset",
 		steps: []StepType{
-			NewActionStep("step1", success),
-			NewActionStep("step2", success),
+			ActionStep{Name: "step1"},
+			ActionStep{Name: "step2"},
 		},
-		storageBefore: map[string]struct{}{
-			"step1Done": {},
-			"step2Done": {},
+		storageBefore: map[string]bool{
+			"step1Run":  true,
+			"step1Done": true,
+			"step2Run":  true,
+			"step2Done": true,
 		},
 		expectedStepStatus:   StepSyncStatusDone,
-		expectedStorageAfter: map[string]struct{}{},
+		expectedStorageAfter: map[string]bool{},
 	},
 	{
 		name: "mixed-simple-action-first-run",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusNeedRun),
-			NewActionStep("step2", success),
+			newSelfManagedStep("step1", StepSyncStatusNeedRun),
+			ActionStep{Name: "step2"},
 		},
 		expectedStepStatus:   StepSyncStatusUpdating,
-		expectedStorageAfter: map[string]struct{}{},
+		expectedStorageAfter: map[string]bool{},
 	},
 	{
 		name: "mixed-simple-action-second-run",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusDone),
-			NewActionStep("step2", success),
+			newSelfManagedStep("step1", StepSyncStatusDone),
+			ActionStep{Name: "step2"},
 		},
 		expectedStepStatus: StepSyncStatusUpdating,
-		expectedStorageAfter: map[string]struct{}{
-			"step2Done": {},
+		expectedStorageAfter: map[string]bool{
+			"step2Run": true,
 		},
 	},
 	{
 		name: "mixed-simple-action-all-done",
 		steps: []StepType{
-			newCachelessStep("step1", StepSyncStatusDone),
-			NewActionStep("step2", success),
+			newSelfManagedStep("step1", StepSyncStatusDone),
+			ActionStep{Name: "step2"},
 		},
-		storageBefore: map[string]struct{}{
-			"step2Done": {},
+		storageBefore: map[string]bool{
+			"step2Run":  true,
+			"step2Done": true,
 		},
 		expectedStepStatus:   StepSyncStatusDone,
-		expectedStorageAfter: map[string]struct{}{},
+		expectedStorageAfter: map[string]bool{},
 	},
 	{
 		name: "mixed-action-simple-first-run",
 		steps: []StepType{
-			NewActionStep("step1", success),
-			newCachelessStep("step2", StepSyncStatusNeedRun),
+			ActionStep{Name: "step1"},
+			newSelfManagedStep("step2", StepSyncStatusNeedRun),
 		},
 		expectedStepStatus: StepSyncStatusUpdating,
-		expectedStorageAfter: map[string]struct{}{
-			"step1Done": {},
+		expectedStorageAfter: map[string]bool{
+			"step1Run": true,
 		},
 	},
 	{
 		name: "mixed-action-simple-second-run",
 		steps: []StepType{
-			NewActionStep("step1", success),
-			newCachelessStep("step2", StepSyncStatusNeedRun),
+			ActionStep{Name: "step1"},
+			newSelfManagedStep("step2", StepSyncStatusNeedRun),
 		},
-		storageBefore: map[string]struct{}{
-			"step1Done": {},
+		storageBefore: map[string]bool{
+			"step1Run":  true,
+			"step1Done": true,
 		},
 		expectedStepStatus: StepSyncStatusUpdating,
-		expectedStorageAfter: map[string]struct{}{
-			"step1Done": {},
+		expectedStorageAfter: map[string]bool{
+			"step1Run":  true,
+			"step1Done": true,
 		},
 	},
 	{
 		name: "mixed-action-simple-all-done",
 		steps: []StepType{
-			NewActionStep("step1", success),
-			newCachelessStep("step2", StepSyncStatusDone),
+			ActionStep{Name: "step1"},
+			newSelfManagedStep("step2", StepSyncStatusDone),
 		},
-		storageBefore: map[string]struct{}{
-			"step1Done": {},
+		storageBefore: map[string]bool{
+			"step1Run":  true,
+			"step1Done": true,
 		},
 		expectedStepStatus:   StepSyncStatusDone,
-		expectedStorageAfter: map[string]struct{}{},
+		expectedStorageAfter: map[string]bool{},
 	},
 }
 
@@ -533,7 +564,7 @@ func TestAdvance(t *testing.T) {
 	for _, testCase := range advanceCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			storage := newTestStorage(testCase.storageBefore)
-			flow := NewFlow(testCase.steps, storage)
+			flow := NewFlow(testCase.steps, storage, testr.New(t))
 
 			status, err := flow.Advance(context.Background())
 			if testCase.expectedErrorMessage != "" {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"golang.org/x/exp/slices"
 )
 
 type StepType interface {
@@ -15,28 +16,75 @@ type StepType interface {
 type runnableStepType interface {
 	StepType
 	Run(context.Context) error
+
+	// Cacheable == true means that Run and Done events will be cached until the end of a flow.
+	// I.e. in onw flow Run wouldn't be executed more than once if returned nil error and
+	// PostRun will be executed until it returns StepSyncStatusDone.
+	//Cacheable() bool
 }
 
-type runnableStatusStepType interface {
+var (
+	validPreRunStatuses = []StepSyncStatus{
+		StepSyncStatusNeedRun,
+		StepSyncStatusBlocked,
+		StepSyncStatusUpdating,
+	}
+	validPostRunStatuses = []StepSyncStatus{
+		StepSyncStatusDone,
+		StepSyncStatusUpdating,
+		StepSyncStatusBlocked,
+	}
+)
+
+// autoManagedRunnableStep steps execution is partially controlled by a flow.
+// Run and Done events will be cached until the end of a flow.
+// I.e. in a single flow Run method wouldn't be called more than once (except it returns an error) and
+// PostRun will be executed until it returns StepSyncStatusDone.
+type autoManagedRunnableStep interface {
 	runnableStepType
-	Status(context.Context) (StepStatus, error)
-	// Cacheable for runnableStatusStepType means that Status will be called until it returns successfully Done status.
-	// N.B. Run method could be called multiple times if Status returns NeedRun status.
-	Cacheable() bool
+	// PreRun is executed before Run. It can do some preparation work.
+	// It should return one of the statuses:
+	//  - StepSyncStatusNeedRun
+	//  - StepSyncStatusBlocked
+	//  - StepSyncStatusUpdating
+	PreRun(context.Context) (StepStatus, error)
+	Run(context.Context) error
+	// PostRun is executed after Run. It can do some preparation work.
+	// It should return one of the statuses:
+	//  - StepSyncStatusDone
+	//  - StepSyncStatusUpdating
+	//  - StepSyncStatusBlocked
+	PostRun(context.Context) (StepStatus, error)
 }
 
-type conditionStepType interface {
+type selfManagedRunnableStep interface {
+	runnableStepType
+	// Status is called before Run.
+	// It must say if step should be run or be waited or already done.
+	// Any existing status is valid to return:
+	//  - StepSyncStatusNeedRun
+	//  - StepSyncStatusBlocked
+	//  - StepSyncStatusUpdating
+	//  - StepSyncStatusDone
+	Status(context.Context) (StepStatus, error)
+}
+
+type boolConditionStepType interface {
 	StepType
-	GetBranches() map[string][]StepType
-	RunCondition(ctx context.Context) (string, error)
-	// Cacheable for conditionStepType it means that RunCondition result will be saved and used
-	// until for branch choosing until the flow is complete.
-	Cacheable() bool
+	GetBranch(value bool) []StepType
+	RunCondition(ctx context.Context) (bool, error)
+	// AutoManaged == true means that RunCondition result will be saved and same
+	// branch will be chosen until the flow is complete.
+	AutoManaged() bool
 }
 
 type stateStorage interface {
-	Put(string)
-	Exists(string) bool
+	StoreRun(name StepName)
+	StoreDone(name StepName)
+	HasRun(name StepName) bool
+	IsDone(name StepName) bool
+	StoreConditionResult(name StepName, result bool)
+	GetConditionResult(name StepName) (result bool, ok bool)
 	Clear(context.Context) error
 }
 
@@ -80,6 +128,7 @@ func (f *Flow) Advance(ctx context.Context) (StepSyncStatus, error) {
 }
 
 func (f *Flow) logStep(step StepType, status StepStatus, err error) {
+	// TODO: maybe support all steps logging in the end of flow
 	statusToIcon := map[StepSyncStatus]string{
 		StepSyncStatusDone:     "[v]",
 		StepSyncStatusUpdating: "[.]",
@@ -110,31 +159,31 @@ func (f *Flow) getNextStep(ctx context.Context) (runnableStepType, StepStatus, e
 			break
 		}
 		nextStep := steps[idx]
+		name := nextStep.StepName()
+		if name == "" {
+			return nil, StepStatus{}, fmt.Errorf("empty step name")
+		}
+		var status StepStatus
 
 		switch step := nextStep.(type) {
-		case runnableStatusStepType:
-			var status StepStatus
-			status, err = f.getStepStatus(ctx, step)
-			// TODO: maybe support all steps logging in the end of flow
+		case runnableStepType:
+			status, err = f.getRunnableStepStatus(ctx, step)
 			f.logStep(step, status, err)
 			if err != nil {
-				return nil, StepStatus{}, err
+				return nil, StepStatus{}, fmt.Errorf("failed to collect status for step %s: %w", name, err)
 			}
 
-			if status.SyncStatus == StepSyncStatusDone {
-				idx++
-				continue
+			if status.SyncStatus != StepSyncStatusDone {
+				// Either wait or execute.
+				return step, status, nil
 			}
-			return step, status, nil
-		case runnableStepType:
-			if f.isDoneMarkExist(step.StepName()) {
-				idx++
-				continue
-			}
-			return step, StepStatus{StepSyncStatusNeedRun, "step haven't being run yet"}, nil
-		case conditionStepType:
-			// If we've met ConditionStep we follow the branch chosen according the condition.
-			steps, err = f.getConditionBranch(ctx, step)
+
+			// Step is done — go to the next one.
+			idx++
+			continue
+		case boolConditionStepType:
+			// If we've met BoolConditionStep we follow the branch chosen according the condition.
+			steps, err = f.getBoolConditionBranch(ctx, step)
 			if err != nil {
 				return nil, StepStatus{}, err
 			}
@@ -160,110 +209,96 @@ func (f *Flow) runStep(nextStep runnableStepType, ctx context.Context) error {
 		return fmt.Errorf("step %s execution failed: %s", nextStep.StepName(), err)
 	}
 
-	// Here we save Done state for runnableStepType (those which don't have Status())
-	// and do nothing for runnableStatusStepType (their Done state is saved on Status() return Done).
-	switch step := nextStep.(type) {
-	case runnableStatusStepType:
-		// Do nothing for that type.
-	case runnableStepType:
-		f.setDoneMark(step.StepName())
+	if _, isAuto := nextStep.(autoManagedRunnableStep); isAuto {
+		f.storage.StoreRun(nextStep.StepName())
 	}
-
 	return nil
 }
 
-func (f *Flow) getConditionBranch(ctx context.Context, condStep conditionStepType) ([]StepType, error) {
-	var chosenBranchName string
-	var markExists bool
+func (f *Flow) getBoolConditionBranch(ctx context.Context, condStep boolConditionStepType) ([]StepType, error) {
+	var chosenBoolBranch bool
+	var valueStored bool
 	var err error
-
-	getBranch := func(stepName StepName, branchName string) ([]StepType, error) {
-		if branch, exists := condStep.GetBranches()[chosenBranchName]; exists {
-			return branch, nil
-		}
-		return nil, fmt.Errorf(
-			"executed condition step %s have returned unexpected branch name: %s",
-			condStep.StepName(),
-			chosenBranchName,
-		)
-	}
+	name := condStep.StepName()
 
 	// Checking if condition has been already ran in a flow.
-	if condStep.Cacheable() {
-		chosenBranchName, markExists = f.isConditionMarkExists(condStep)
-		if markExists {
-			return getBranch(condStep.StepName(), chosenBranchName)
+	if condStep.AutoManaged() {
+		chosenBoolBranch, valueStored = f.storage.GetConditionResult(name)
+		if valueStored {
+			return condStep.GetBranch(chosenBoolBranch), nil
 		}
 	}
 
-	// Either not cacheable or not yet ran.
-	chosenBranchName, err = condStep.RunCondition(ctx)
+	// Either step is self-managed or not ran yet.
+	chosenBoolBranch, err = condStep.RunCondition(ctx)
 	if err != nil {
-		return []StepType{}, fmt.Errorf("failed to run fork %s: %w", condStep.StepName(), err)
+		return []StepType{}, fmt.Errorf("failed to choose branch of condition step %s: %w", condStep.StepName(), err)
 	}
 
 	// If executed successfully and is cacheable — storing result.
-	if condStep.Cacheable() {
-		condStepMark := f.getConditionMark(condStep.StepName(), chosenBranchName)
-		f.storage.Put(condStepMark)
+	if condStep.AutoManaged() {
+		f.storage.StoreConditionResult(name, chosenBoolBranch)
 	}
 
-	return getBranch(condStep.StepName(), chosenBranchName)
+	return condStep.GetBranch(chosenBoolBranch), nil
 }
 
-func (f *Flow) getStepStatus(ctx context.Context, step runnableStatusStepType) (StepStatus, error) {
-	// Checking if state has been already successfully executed (we've received Done status).
-	if step.Cacheable() {
-		if f.isDoneMarkExist(step.StepName()) {
-			return StepStatus{
-				SyncStatus: StepSyncStatusDone,
-				Message:    "Step was successfully done in previous iterations",
-			}, nil
+func (f *Flow) getRunnableStepStatus(ctx context.Context, runnableStep runnableStepType) (StepStatus, error) {
+	switch step := runnableStep.(type) {
+	case selfManagedRunnableStep:
+		return step.Status(ctx)
+	case autoManagedRunnableStep:
+		return f.getAutoManagedStepStatus(ctx, step)
+	default:
+		return StepStatus{}, fmt.Errorf("unexpected runnable step `%s` type", step.StepName())
+	}
+}
+
+func (f *Flow) getAutoManagedStepStatus(ctx context.Context, step autoManagedRunnableStep) (StepStatus, error) {
+	name := step.StepName()
+	if !f.storage.HasRun(name) {
+		preRunStatus, err := step.PreRun(ctx)
+		if err != nil {
+			return StepStatus{}, fmt.Errorf("failed to prerun step %s: %w", name, err)
 		}
+		preRunSyncStatus := preRunStatus.SyncStatus
+		if !slices.Contains(validPreRunStatuses, preRunSyncStatus) {
+			return StepStatus{}, fmt.Errorf("unexpected PreRun() status: %s of auto managed step %s", preRunSyncStatus, name)
+		}
+		return preRunStatus, nil
+	}
+	// Step already been successfully run before.
+
+	if f.storage.IsDone(name) {
+		return StepStatus{StepSyncStatusDone, "step was done earlier"}, nil
 	}
 
-	// Either not cacheable, or not yet successfully executed.
-	status, err := step.Status(ctx)
+	postRunStatus, err := step.PostRun(ctx)
 	if err != nil {
-		return StepStatus{}, fmt.Errorf("failed to get status for step %s: %w", step.StepName(), err)
+		return StepStatus{}, err
+	}
+	syncStatus := postRunStatus.SyncStatus
+	if !slices.Contains(validPostRunStatuses, syncStatus) {
+		return StepStatus{}, fmt.Errorf("unexpected postRun() status: %s of cacheable step %s", syncStatus, name)
 	}
 
-	// Saving status only in case of successfully and fully executed.
-	if step.Cacheable() && status.SyncStatus == StepSyncStatusDone {
-		f.setDoneMark(step.StepName())
+	if syncStatus == StepSyncStatusDone {
+		f.storage.StoreDone(name)
+		return StepStatus{StepSyncStatusDone, "step just have become done"}, nil
 	}
-
-	return status, nil
+	return postRunStatus, nil
 }
 
 func (f *Flow) reset(ctx context.Context) error {
 	return f.storage.Clear(ctx)
 }
 
-func (f *Flow) getDoneMark(name StepName) string {
-	return fmt.Sprintf("%sDone", name)
-}
-
-func (f *Flow) isDoneMarkExist(name StepName) bool {
-	mark := f.getDoneMark(name)
-	return f.storage.Exists(mark)
-}
-
-func (f *Flow) setDoneMark(name StepName) {
-	mark := f.getDoneMark(name)
-	f.storage.Put(mark)
-}
-
-func (f *Flow) getConditionMark(name StepName, result string) string {
-	return fmt.Sprintf("%s%s", name, result)
-}
-
-func (f *Flow) isConditionMarkExists(condStep conditionStepType) (string, bool) {
-	for key := range condStep.GetBranches() {
-		markToCheck := f.getConditionMark(condStep.StepName(), key)
-		if f.storage.Exists(markToCheck) {
-			return key, true
-		}
-	}
-	return "", false
-}
+//func (f *Flow) isConditionMarkExists(condStep boolConditionStepType) (string, bool) {
+//	for key := range condStep.GetBranches() {
+//		markToCheck := f.getConditionMark(condStep.StepName(), key)
+//		if f.storage.IsDone(markToCheck) {
+//			return key, true
+//		}
+//	}
+//	return "", false
+//}
