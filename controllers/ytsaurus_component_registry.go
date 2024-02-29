@@ -12,6 +12,10 @@ type component interface {
 	GetName() string
 	Fetch(ctx context.Context) error
 	Sync(ctx context.Context) error
+}
+
+type statefulComponent interface {
+	component
 	// TODO (l0kix2): I suppose Status() should be able to return error
 	Status(ctx context.Context) components.ComponentStatus
 }

@@ -99,7 +99,6 @@ func TestYtsaurusFromScratch(t *testing.T) {
 }
 
 func TestYtsaurusUpdateMasterImage(t *testing.T) {
-	require.NoError(t, os.Setenv("ENABLE_NEW_FLOW", "true"))
 	namespace := "upd-master-image"
 	h := testutil.NewTestHelper(t, namespace)
 	reconcilerSetup := func(mgr ctrl.Manager) error {
@@ -112,7 +111,7 @@ func TestYtsaurusUpdateMasterImage(t *testing.T) {
 	h.Start(reconcilerSetup)
 	defer h.Stop()
 
-	ytsaurusInMemory := testutil.NewYtsaurusInMemory()
+	ytsaurusInMemory := testutil.NewYtsaurusInMemory(t.Log)
 	require.NoError(t, os.Setenv("YTOP_PROXY", "127.0.0.1:9999"))
 	go func() {
 		err := ytsaurusInMemory.Start(9999)
@@ -201,6 +200,10 @@ func TestYtsaurusUpdateMasterImage(t *testing.T) {
 	var masterMonitoringPaths []string
 	for _, ms := range masterAddressesList {
 		path := "//sys/cluster_masters/" + ms + "/orchid/monitoring/hydra"
+		// emulate not read only before update
+		ytsaurusInMemory.Set(path, map[string]any{
+			"read_only": false,
+		})
 		masterMonitoringPaths = append(masterMonitoringPaths, path)
 	}
 	t.Log("[ Enable Full Update ]")

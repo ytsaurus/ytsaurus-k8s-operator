@@ -126,18 +126,18 @@ func buildSteps(
 	if !ok {
 		return nil, errors.New("missing discovery component")
 	}
-	discoveryStep := newComponentStep(discovery, statuses[discovery.GetName()])
+	discoveryStep := newComponentStep(discovery.(statefulComponent), statuses[discovery.GetName()])
 
 	master, ok := registry.getByType(consts.ComponentTypeMaster)
 	if !ok {
 		return nil, errors.New("missing master component")
 	}
-	masterStep := newComponentStep(master, statuses[master.GetName()])
+	masterStep := newComponentStep(master.(statefulComponent), statuses[master.GetName()])
 	masterStatus := statuses["Master"]
 
 	var httpProxiesSteps []flows.StepType
 	for _, hp := range registry.getListByType(consts.ComponentTypeHTTPProxy) {
-		httpProxiesSteps = append(httpProxiesSteps, newComponentStep(hp, statuses[hp.GetName()]))
+		httpProxiesSteps = append(httpProxiesSteps, newComponentStep(hp.(statefulComponent), statuses[hp.GetName()]))
 	}
 	yc, ok := registry.getByType(consts.ComponentTypeClient)
 	if !ok {
@@ -145,11 +145,11 @@ func buildSteps(
 	}
 	// temporary
 	ycClient := yc.(ytsaurusClient)
-	ytsaurusClientStep := newComponentStep(yc, statuses[yc.GetName()])
+	ytsaurusClientStep := newComponentStep(yc.(statefulComponent), statuses[yc.GetName()])
 
 	var dataNodesSteps []flows.StepType
 	for _, dn := range registry.getListByType(consts.ComponentTypeDataNode) {
-		dataNodesSteps = append(dataNodesSteps, newComponentStep(dn, statuses[dn.GetName()]))
+		dataNodesSteps = append(dataNodesSteps, newComponentStep(dn.(statefulComponent), statuses[dn.GetName()]))
 	}
 	isFullUpdateNeeded := func(ctx context.Context) (bool, error) {
 		// FIXME: should we support that ?

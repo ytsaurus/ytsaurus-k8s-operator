@@ -79,7 +79,7 @@ func checkFullUpdatePossibility(yc ytsaurusClient) flows.StepType {
 			}, nil
 		}
 		return flows.StepStatus{
-			SyncStatus: flows.StepSyncStatusDone,
+			SyncStatus: flows.StepSyncStatusNeedRun,
 			Message:    msg,
 		}, nil
 	}
@@ -142,6 +142,7 @@ func buildMasterSnapshots(yc ytsaurusClient) flows.StepType {
 			Message:    "master monitor paths were saved in state",
 		}, nil
 	}
+	run := yc.StartBuildingMasterSnapshots
 	postRun := func(ctx context.Context) (flows.StepStatus, error) {
 		done, err := yc.AreMasterSnapshotsBuilt(ctx)
 		if err != nil {
@@ -162,7 +163,7 @@ func buildMasterSnapshots(yc ytsaurusClient) flows.StepType {
 	return flows.ActionStep{
 		Name:        BuildMasterSnapshotsStepName,
 		PreRunFunc:  preRun,
-		RunFunc:     yc.StartBuildingMasterSnapshots,
+		RunFunc:     run,
 		PostRunFunc: postRun,
 	}
 }

@@ -59,14 +59,15 @@ func (m *stepsStateManager) HasRun(name flows.StepName) bool {
 	return m.ytsaurusProxy.IsUpdateStatusConditionTrue(m.getRunConditionName(name))
 }
 func (m *stepsStateManager) GetConditionResult(name flows.StepName) (result bool, exists bool) {
-	if m.ytsaurusProxy.IsUpdateStatusConditionTrue(m.getRunConditionName(name)) {
+	conditionName := m.getBoolConditionName(name)
+	if m.ytsaurusProxy.IsUpdateStatusConditionTrue(conditionName) {
 		return true, true
 	}
-	if m.ytsaurusProxy.IsUpdateStatusConditionFalse(m.getRunConditionName(name)) {
+	if m.ytsaurusProxy.IsUpdateStatusConditionFalse(conditionName) {
 		return false, true
 	}
 
-	return false, true
+	return false, false
 }
 func (m *stepsStateManager) Clear(ctx context.Context) error {
 	// TODO(l0kix2): here we are clearing ALL the update fields

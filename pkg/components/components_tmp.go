@@ -79,13 +79,6 @@ func (m *master) DoExitReadOnly(ctx context.Context) error {
 	_, err = m.exitReadOnlyJob.Sync(ctx, false)
 	return err
 }
-func (m *master) IsExitReadOnlyDone(ctx context.Context) (bool, error) {
-	err := m.exitReadOnlyJob.Fetch(ctx)
-	if err != nil {
-		return false, err
-	}
-	return m.exitReadOnlyJob.initJob.Completed(), nil
-}
 
 func (hp *httpProxy) Status(ctx context.Context) ComponentStatus {
 	if hp.server.needUpdate() {

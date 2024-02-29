@@ -12,20 +12,22 @@ import (
 )
 
 type YtsaurusInMemory struct {
-	mx      sync.RWMutex
-	cypress map[string]any
+	mx         sync.RWMutex
+	cypress    map[string]any
+	loggerFunc func(args ...any)
 }
 type valueWithGenericAttrs struct {
 	Attrs map[string]any `yson:",attrs"`
 	Value any            `yson:",value"`
 }
 
-func NewYtsaurusInMemory() *YtsaurusInMemory {
+func NewYtsaurusInMemory(loggerFunc func(args ...any)) *YtsaurusInMemory {
 	return &YtsaurusInMemory{
 		cypress: map[string]any{
 			"//sys/tablet_cells":        map[string]any{},
 			"//sys/tablet_cell_bundles": map[string]any{},
 		},
+		loggerFunc: loggerFunc,
 	}
 }
 
@@ -37,9 +39,13 @@ func (y *YtsaurusInMemory) Start(port int) error {
 	http.HandleFunc("/api/v4/remove", y.removeHandler)
 	return http.ListenAndServe("localhost:"+strconv.Itoa(port), nil)
 }
+func (y *YtsaurusInMemory) Log(args ...any) {
+	y.loggerFunc(args...)
+}
 
 func (y *YtsaurusInMemory) getHandler(w http.ResponseWriter, r *http.Request) {
 	paramsSerialized := r.Header.Get("X-Yt-Parameters")
+	y.Log("get params raw", paramsSerialized)
 	type Params struct {
 		Path string `yson:"path"`
 	}
@@ -53,6 +59,7 @@ func (y *YtsaurusInMemory) getHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	value, ok := y.Get(params.Path)
+	y.Log("get params", params)
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		// {"code":500,"message":"Attribute \"nonexistent\" is not found","attributes":{"host":"localhost","pid":74,"tid":6385775732996512218,"fid":18446446043579299186,"datetime":"2024-02-14T11:40:14.500934Z","trace_id":"9cf2de84-837d5527-b486f4d5-98a700cf","span_id":11858309240037149274,"path":"//sys/@nonexistent"}}
@@ -92,6 +99,7 @@ func (y *YtsaurusInMemory) getHandler(w http.ResponseWriter, r *http.Request) {
 }
 func (y *YtsaurusInMemory) listHandler(w http.ResponseWriter, r *http.Request) {
 	paramsSerialized := r.Header.Get("X-Yt-Parameters")
+	y.Log("list params raw", paramsSerialized)
 	type Params struct {
 		Path       string   `yson:"path"`
 		Attributes []string `yson:"attributes"`
@@ -105,6 +113,7 @@ func (y *YtsaurusInMemory) listHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	y.Log("list params", params)
 	values, ok := y.List(params.Path, params.Attributes)
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
@@ -145,6 +154,7 @@ func (y *YtsaurusInMemory) listHandler(w http.ResponseWriter, r *http.Request) {
 }
 func (y *YtsaurusInMemory) existsHandler(w http.ResponseWriter, r *http.Request) {
 	paramsSerialized := r.Header.Get("X-Yt-Parameters")
+	y.Log("exists params raw", paramsSerialized)
 	type Params struct {
 		Path string `yson:"path"`
 	}
@@ -157,6 +167,7 @@ func (y *YtsaurusInMemory) existsHandler(w http.ResponseWriter, r *http.Request)
 			return
 		}
 	}
+	y.Log("exists params", params)
 	exists := y.Exists(params.Path)
 
 	w.WriteHeader(http.StatusOK)
@@ -177,6 +188,8 @@ func (y *YtsaurusInMemory) existsHandler(w http.ResponseWriter, r *http.Request)
 }
 func (y *YtsaurusInMemory) setHandler(w http.ResponseWriter, r *http.Request) {
 	paramsSerialized := r.Header.Get("X-Yt-Parameters")
+	y.Log("set params raw", paramsSerialized)
+
 	type Params struct {
 		Path string `yson:"path"`
 	}
@@ -199,6 +212,7 @@ func (y *YtsaurusInMemory) setHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	y.Log("set params:", paramsSerialized, " value:", value)
 	y.Set(params.Path, value)
 	w.WriteHeader(http.StatusOK)
 }
@@ -218,6 +232,7 @@ func (y *YtsaurusInMemory) removeHandler(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
+	y.Log("remove params:", params)
 	y.Remove(params.Path)
 	w.WriteHeader(http.StatusOK)
 }

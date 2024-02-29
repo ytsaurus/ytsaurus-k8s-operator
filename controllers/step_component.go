@@ -11,10 +11,10 @@ type componentStep struct {
 	name flows.StepName
 	// status of the component is observed before step is built and stored in step.
 	status    components.ComponentStatus
-	component component
+	component statefulComponent
 }
 
-func newComponentStep(component component, status components.ComponentStatus) *componentStep {
+func newComponentStep(component statefulComponent, status components.ComponentStatus) *componentStep {
 	return &componentStep{
 		name:      flows.StepName(component.GetName()),
 		status:    status,
