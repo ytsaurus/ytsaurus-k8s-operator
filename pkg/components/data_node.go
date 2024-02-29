@@ -91,16 +91,16 @@ func (n *dataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (n *dataNode) Status(ctx context.Context) ComponentStatus {
-	status, err := n.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
-}
-
-func (n *dataNode) Sync(ctx context.Context) error {
-	_, err := n.doSync(ctx, false)
-	return err
-}
+//func (n *dataNode) Status(ctx context.Context) ComponentStatus {
+//	status, err := n.doSync(ctx, true)
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	return status
+//}
+//
+//func (n *dataNode) Sync(ctx context.Context) error {
+//	_, err := n.doSync(ctx, false)
+//	return err
+//}

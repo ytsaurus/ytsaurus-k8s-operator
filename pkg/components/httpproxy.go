@@ -140,16 +140,16 @@ func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (hp *httpProxy) Status(ctx context.Context) ComponentStatus {
-	status, err := hp.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
-}
-
-func (hp *httpProxy) Sync(ctx context.Context) error {
-	_, err := hp.doSync(ctx, false)
-	return err
-}
+//func (hp *httpProxy) Status(ctx context.Context) ComponentStatus {
+//	status, err := hp.doSync(ctx, true)
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	return status
+//}
+//
+//func (hp *httpProxy) Sync(ctx context.Context) error {
+//	_, err := hp.doSync(ctx, false)
+//	return err
+//}

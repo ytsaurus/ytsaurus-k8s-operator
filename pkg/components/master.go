@@ -3,8 +3,9 @@ package components
 import (
 	"context"
 	"fmt"
-	"go.ytsaurus.tech/yt/go/yt"
 	"strings"
+
+	"go.ytsaurus.tech/yt/go/yt"
 
 	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/yson"
@@ -313,19 +314,19 @@ func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	return m.initJob.Sync(ctx, dry)
 }
 
-func (m *master) Status(ctx context.Context) ComponentStatus {
-	status, err := m.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
-}
-
-func (m *master) Sync(ctx context.Context) error {
-	_, err := m.doSync(ctx, false)
-	return err
-}
+//func (m *master) Status(ctx context.Context) ComponentStatus {
+//	status, err := m.doSync(ctx, true)
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	return status
+//}
+//
+//func (m *master) Sync(ctx context.Context) error {
+//	_, err := m.doSync(ctx, false)
+//	return err
+//}
 
 func (m *master) doServerSync(ctx context.Context) error {
 	statefulSet := m.server.buildStatefulSet()

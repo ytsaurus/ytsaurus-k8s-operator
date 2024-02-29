@@ -78,16 +78,16 @@ func (d *discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (d *discovery) Status(ctx context.Context) ComponentStatus {
-	status, err := d.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
-}
-
-func (d *discovery) Sync(ctx context.Context) error {
-	_, err := d.doSync(ctx, false)
-	return err
-}
+//func (d *discovery) Status(ctx context.Context) ComponentStatus {
+//	status, err := d.doSync(ctx, true)
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	return status
+//}
+//
+//func (d *discovery) Sync(ctx context.Context) error {
+//	_, err := d.doSync(ctx, false)
+//	return err
+//}

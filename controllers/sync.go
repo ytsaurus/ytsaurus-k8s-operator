@@ -8,7 +8,6 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -243,107 +242,107 @@ func getComponentNames(components []components.Component) []string {
 	return names
 }
 
-func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
-
-	if !resource.Spec.IsManaged {
-		logger.Info("Ytsaurus cluster is not managed by controller, do nothing")
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
-	}
-
-	ytsaurus := apiProxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
-	componentManager, err := NewComponentManager(ctx, ytsaurus)
-	if err != nil {
-		return ctrl.Result{Requeue: true}, err
-	}
-
-	switch resource.Status.State {
-	case ytv1.ClusterStateCreated:
-		logger.Info("Ytsaurus is just created and needs initialization")
-		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateInitializing)
-		return ctrl.Result{Requeue: true}, err
-
-	case ytv1.ClusterStateInitializing:
-		// Ytsaurus has finished initializing, and is running now.
-		if !componentManager.needSync() {
-			logger.Info("Ytsaurus has synced and is running now")
-			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
-			return ctrl.Result{Requeue: true}, err
-		}
-
-	case ytv1.ClusterStateRunning:
-		switch {
-		case !componentManager.needSync():
-			logger.Info("Ytsaurus is running and happy")
-			return ctrl.Result{}, nil
-
-		case componentManager.needInit():
-			logger.Info("Ytsaurus needs initialization of some components")
-			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateReconfiguration)
-			return ctrl.Result{Requeue: true}, err
-
-		case componentManager.needFullUpdate():
-			logger.Info("Ytsaurus needs full update")
-			if !ytsaurus.GetResource().Spec.EnableFullUpdate {
-				logger.Info("Full update isn't allowed, ignore it")
-				return ctrl.Result{}, nil
-			}
-			err := ytsaurus.SaveUpdatingClusterState(ctx, nil)
-			return ctrl.Result{Requeue: true}, err
-
-		case componentManager.needLocalUpdate() != nil:
-			componentNames := getComponentNames(componentManager.needLocalUpdate())
-			logger.Info("Ytsaurus needs local components update", "components", componentNames)
-			err := ytsaurus.SaveUpdatingClusterState(ctx, componentNames)
-			return ctrl.Result{Requeue: true}, err
-		}
-
-	case ytv1.ClusterStateUpdating:
-		var result *ctrl.Result
-		var err error
-		if ytsaurus.GetLocalUpdatingComponents() != nil {
-			result, err = r.handleUpdatingStateLocalMode(ctx, ytsaurus, componentManager)
-		} else {
-			result, err = r.handleUpdatingStateFullMode(ctx, ytsaurus, componentManager)
-		}
-
-		if result != nil {
-			return *result, err
-		}
-
-	case ytv1.ClusterStateCancelUpdate:
-		if err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateNone); err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
-
-		if err := ytsaurus.ClearUpdateStatus(ctx); err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
-
-		logger.Info("Ytsaurus update was canceled, ytsaurus is running now")
-		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
-		return ctrl.Result{}, err
-
-	case ytv1.ClusterStateUpdateFinishing:
-		if err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateNone); err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
-
-		if err := ytsaurus.ClearUpdateStatus(ctx); err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
-
-		logger.Info("Ytsaurus update was finished and Ytsaurus is running now")
-		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
-		return ctrl.Result{}, err
-
-	case ytv1.ClusterStateReconfiguration:
-		if !componentManager.needInit() {
-			logger.Info("Ytsaurus has reconfigured and is running now")
-			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
-			return ctrl.Result{}, err
-		}
-	}
-
-	return componentManager.Sync(ctx)
-}
+//func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
+//	logger := log.FromContext(ctx)
+//
+//	if !resource.Spec.IsManaged {
+//		logger.Info("Ytsaurus cluster is not managed by controller, do nothing")
+//		return ctrl.Result{RequeueAfter: time.Minute}, nil
+//	}
+//
+//	ytsaurus := apiProxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
+//	componentManager, err := NewComponentManager(ctx, ytsaurus)
+//	if err != nil {
+//		return ctrl.Result{Requeue: true}, err
+//	}
+//
+//	switch resource.Status.State {
+//	case ytv1.ClusterStateCreated:
+//		logger.Info("Ytsaurus is just created and needs initialization")
+//		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateInitializing)
+//		return ctrl.Result{Requeue: true}, err
+//
+//	case ytv1.ClusterStateInitializing:
+//		// Ytsaurus has finished initializing, and is running now.
+//		if !componentManager.needSync() {
+//			logger.Info("Ytsaurus has synced and is running now")
+//			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
+//			return ctrl.Result{Requeue: true}, err
+//		}
+//
+//	case ytv1.ClusterStateRunning:
+//		switch {
+//		case !componentManager.needSync():
+//			logger.Info("Ytsaurus is running and happy")
+//			return ctrl.Result{}, nil
+//
+//		case componentManager.needInit():
+//			logger.Info("Ytsaurus needs initialization of some components")
+//			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateReconfiguration)
+//			return ctrl.Result{Requeue: true}, err
+//
+//		case componentManager.needFullUpdate():
+//			logger.Info("Ytsaurus needs full update")
+//			if !ytsaurus.GetResource().Spec.EnableFullUpdate {
+//				logger.Info("Full update isn't allowed, ignore it")
+//				return ctrl.Result{}, nil
+//			}
+//			err := ytsaurus.SaveUpdatingClusterState(ctx, nil)
+//			return ctrl.Result{Requeue: true}, err
+//
+//		case componentManager.needLocalUpdate() != nil:
+//			componentNames := getComponentNames(componentManager.needLocalUpdate())
+//			logger.Info("Ytsaurus needs local components update", "components", componentNames)
+//			err := ytsaurus.SaveUpdatingClusterState(ctx, componentNames)
+//			return ctrl.Result{Requeue: true}, err
+//		}
+//
+//	case ytv1.ClusterStateUpdating:
+//		var result *ctrl.Result
+//		var err error
+//		if ytsaurus.GetLocalUpdatingComponents() != nil {
+//			result, err = r.handleUpdatingStateLocalMode(ctx, ytsaurus, componentManager)
+//		} else {
+//			result, err = r.handleUpdatingStateFullMode(ctx, ytsaurus, componentManager)
+//		}
+//
+//		if result != nil {
+//			return *result, err
+//		}
+//
+//	case ytv1.ClusterStateCancelUpdate:
+//		if err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateNone); err != nil {
+//			return ctrl.Result{Requeue: true}, err
+//		}
+//
+//		if err := ytsaurus.ClearUpdateStatus(ctx); err != nil {
+//			return ctrl.Result{Requeue: true}, err
+//		}
+//
+//		logger.Info("Ytsaurus update was canceled, ytsaurus is running now")
+//		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
+//		return ctrl.Result{}, err
+//
+//	case ytv1.ClusterStateUpdateFinishing:
+//		if err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateNone); err != nil {
+//			return ctrl.Result{Requeue: true}, err
+//		}
+//
+//		if err := ytsaurus.ClearUpdateStatus(ctx); err != nil {
+//			return ctrl.Result{Requeue: true}, err
+//		}
+//
+//		logger.Info("Ytsaurus update was finished and Ytsaurus is running now")
+//		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
+//		return ctrl.Result{}, err
+//
+//	case ytv1.ClusterStateReconfiguration:
+//		if !componentManager.needInit() {
+//			logger.Info("Ytsaurus has reconfigured and is running now")
+//			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
+//			return ctrl.Result{}, err
+//		}
+//	}
+//
+//	return componentManager.Sync(ctx)
+//}

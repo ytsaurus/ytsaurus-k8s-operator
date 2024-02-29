@@ -565,19 +565,19 @@ func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (yc *ytsaurusClient) Status(ctx context.Context) ComponentStatus {
-	status, err := yc.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
-}
-
-func (yc *ytsaurusClient) Sync(ctx context.Context) error {
-	_, err := yc.doSync(ctx, false)
-	return err
-}
+//func (yc *ytsaurusClient) Status(ctx context.Context) ComponentStatus {
+//	status, err := yc.doSync(ctx, true)
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	return status
+//}
+//
+//func (yc *ytsaurusClient) Sync(ctx context.Context) error {
+//	_, err := yc.doSync(ctx, false)
+//	return err
+//}
 
 func (yc *ytsaurusClient) GetYtClient() yt.Client {
 	return yc.ytClient

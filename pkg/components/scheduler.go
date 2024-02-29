@@ -100,19 +100,19 @@ func (s *scheduler) Fetch(ctx context.Context) error {
 	)
 }
 
-func (s *scheduler) Status(ctx context.Context) ComponentStatus {
-	status, err := s.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
-}
-
-func (s *scheduler) Sync(ctx context.Context) error {
-	_, err := s.doSync(ctx, false)
-	return err
-}
+//func (s *scheduler) Status(ctx context.Context) ComponentStatus {
+//	status, err := s.doSync(ctx, true)
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	return status
+//}
+//
+//func (s *scheduler) Sync(ctx context.Context) error {
+//	_, err := s.doSync(ctx, false)
+//	return err
+//}
 
 func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
