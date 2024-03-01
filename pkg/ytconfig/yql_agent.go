@@ -20,6 +20,7 @@ type GatewayConfig struct {
 type YQLAgent struct {
 	GatewayConfig          GatewayConfig `yson:"gateway_config"`
 	YqlPluginSharedLibrary string        `yson:"yql_plugin_shared_library"`
+	YTTokenPath            string        `yson:"yt_token_path"`
 
 	// For backward compatibility.
 	MRJobBinary        string            `yson:"mr_job_binary"`
@@ -55,6 +56,7 @@ func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	// For backward compatibility.
 	c.YQLAgent.UDFDirectory = "/usr/lib/yql"
 	c.YQLAgent.MRJobBinary = "/usr/bin/mrjob"
+	c.YQLAgent.YTTokenPath = "/usr/yql_agent_token"
 
 	c.Logging = getYQLAgentLogging(spec)
 

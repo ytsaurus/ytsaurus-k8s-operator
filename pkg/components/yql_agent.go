@@ -141,8 +141,10 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 
 	if yqla.NeedSync() {
 		if !dry {
+			token, _ := yqla.secret.GetValue(consts.TokenSecretKey)
 			ss := yqla.server.buildStatefulSet()
 			container := &ss.Spec.Template.Spec.Containers[0]
+			container.Command = []string{"sh", "-c", fmt.Sprintf("echo -n %s > /usr/yql_agent_token; %s", token, strings.Join(container.Command, " "))}
 			container.EnvFrom = []corev1.EnvFromSource{yqla.secret.GetEnvSource()}
 			if yqla.ytsaurus.GetResource().Spec.UseIPv6 && !yqla.ytsaurus.GetResource().Spec.UseIPv4 {
 				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "1"}}
