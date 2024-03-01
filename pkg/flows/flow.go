@@ -79,11 +79,11 @@ type boolConditionStepType interface {
 }
 
 type stateStorage interface {
-	StoreRun(name StepName)
-	StoreDone(name StepName)
+	StoreRun(ctx context.Context, name StepName) error
+	StoreDone(ctx context.Context, name StepName) error
 	HasRun(name StepName) bool
 	IsDone(name StepName) bool
-	StoreConditionResult(name StepName, result bool)
+	StoreConditionResult(ctx context.Context, name StepName, result bool) error
 	GetConditionResult(name StepName) (result bool, ok bool)
 	Clear(context.Context) error
 }
@@ -121,7 +121,7 @@ func (f *Flow) Advance(ctx context.Context) (StepSyncStatus, error) {
 	case StepSyncStatusBlocked:
 		return StepSyncStatusBlocked, nil
 	case StepSyncStatusNeedRun:
-		return StepSyncStatusUpdating, f.runStep(step, ctx)
+		return StepSyncStatusUpdating, f.runStep(ctx, step)
 	default:
 		return "", errors.New("unexpected step sync status: " + string(stepSyncStatus))
 	}
@@ -203,14 +203,16 @@ func (f *Flow) getNextStep(ctx context.Context) (runnableStepType, StepStatus, e
 	return nil, StepStatus{}, nil
 }
 
-func (f *Flow) runStep(nextStep runnableStepType, ctx context.Context) error {
+func (f *Flow) runStep(ctx context.Context, nextStep runnableStepType) error {
 	err := nextStep.Run(ctx)
 	if err != nil {
 		return fmt.Errorf("step %s execution failed: %s", nextStep.StepName(), err)
 	}
 
 	if _, isAuto := nextStep.(autoManagedRunnableStep); isAuto {
-		f.storage.StoreRun(nextStep.StepName())
+		if err = f.storage.StoreRun(ctx, nextStep.StepName()); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -237,7 +239,9 @@ func (f *Flow) getBoolConditionBranch(ctx context.Context, condStep boolConditio
 
 	// If executed successfully and is cacheable — storing result.
 	if condStep.AutoManaged() {
-		f.storage.StoreConditionResult(name, chosenBoolBranch)
+		if err = f.storage.StoreConditionResult(ctx, name, chosenBoolBranch); err != nil {
+			return nil, err
+		}
 	}
 
 	return condStep.GetBranch(chosenBoolBranch), nil
@@ -283,7 +287,9 @@ func (f *Flow) getAutoManagedStepStatus(ctx context.Context, step autoManagedRun
 	}
 
 	if syncStatus == StepSyncStatusDone {
-		f.storage.StoreDone(name)
+		if err = f.storage.StoreDone(ctx, name); err != nil {
+			return StepStatus{}, err
+		}
 		return StepStatus{StepSyncStatusDone, "step just have become done"}, nil
 	}
 	return postRunStatus, nil
