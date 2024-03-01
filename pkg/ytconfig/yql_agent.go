@@ -56,7 +56,7 @@ func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	// For backward compatibility.
 	c.YQLAgent.UDFDirectory = "/usr/lib/yql"
 	c.YQLAgent.MRJobBinary = "/usr/bin/mrjob"
-	c.YQLAgent.YTTokenPath = "/usr/yql_agent_token"
+	c.YQLAgent.YTTokenPath = consts.DefaultYqlTokenPath
 
 	c.Logging = getYQLAgentLogging(spec)
 

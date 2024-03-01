@@ -11,8 +11,10 @@ const DefaultCABundlePath = "/etc/ssl/certs/ca-certificates.crt"
 
 const UIUserName = "robot-ui"
 const StrawberryControllerUserName = "robot-strawberry-controller"
-const YqlUserName = "yql_agent"
 const YtsaurusOperatorUserName = "robot-yt-k8s-operator"
+
+const YqlUserName = "yql_agent"
+const DefaultYqlTokenPath = "/usr/yql_agent_token"
 
 const StartUID = 19500
 
