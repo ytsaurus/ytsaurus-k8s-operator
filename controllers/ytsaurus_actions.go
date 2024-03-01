@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 
 	"go.ytsaurus.tech/yt/go/yt"
 
@@ -171,37 +170,11 @@ func buildMasterSnapshots(yc ytsaurusClient) flows.ActionStep {
 }
 
 func masterExitReadOnly(job *components.JobStateless) flows.ActionStep {
-	preRun := func(ctx context.Context) (flows.StepStatus, error) {
-		fmt.Println("masterExitReadOnly prerun")
-		if !job.IsPrepared() {
-			if err := job.Prepare(ctx); err != nil {
-				return flows.StepStatus{}, err
-			}
-			return flows.StepStatus{SyncStatus: flows.StepSyncStatusUpdating}, nil
-		}
-
-		return flows.StepStatus{
-			SyncStatus: flows.StepSyncStatusNeedRun,
-			Message:    "job is prepared",
-		}, nil
-	}
-	run := func(ctx context.Context) error {
-		fmt.Println("masterExitReadOnly run")
-		job.SetInitScript(components.CreateExitReadOnlyScript())
-		return job.Sync(ctx)
-	}
-	postRun := func(ctx context.Context) (flows.StepStatus, error) {
-		if !job.IsCompleted() {
-			return flows.StepStatus{SyncStatus: flows.StepSyncStatusUpdating}, nil
-		}
-		return flows.StepStatus{SyncStatus: flows.StepSyncStatusDone}, nil
-	}
-	return flows.ActionStep{
-		Name:        MasterExitReadOnlyStepName,
-		PreRunFunc:  preRun,
-		RunFunc:     run,
-		PostRunFunc: postRun,
-	}
+	return newJobStep(
+		MasterExitReadOnlyStepName,
+		job,
+		components.CreateExitReadOnlyScript(),
+	)
 }
 
 func recoverTabletCells(yc ytsaurusClient) flows.ActionStep {
@@ -211,7 +184,6 @@ func recoverTabletCells(yc ytsaurusClient) flows.ActionStep {
 	}
 }
 
-// maybe prepare is needed also?
 //func updateOpArchive() flows.StepType {
 //	action := func(context.Context) error {
 //		// maybe we can use scheduler component here
