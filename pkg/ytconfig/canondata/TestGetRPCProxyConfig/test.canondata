@@ -72,7 +72,7 @@
             ];
             peers=[
             ];
-            "cell_id"="65726e65-ad6b7562-259-79747361";
+            "cell_id"="65726e65-ad6b7562-3e80259-79747361";
             "enable_master_cache_discovery"=%false;
         };
     };

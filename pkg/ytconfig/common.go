@@ -26,8 +26,9 @@ type DiscoveryConnection struct {
 }
 
 type MasterCache struct {
-	MasterCell
-	EnableMasterCacheDiscover bool `yson:"enable_master_cache_discovery"`
+	AddressList
+	CellID                    string `yson:"cell_id"`
+	EnableMasterCacheDiscover bool   `yson:"enable_master_cache_discovery"`
 }
 
 type Driver struct {

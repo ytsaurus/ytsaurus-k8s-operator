@@ -129,7 +129,7 @@ func (g *Generator) fillDriver(c *Driver) {
 	c.PrimaryMaster.CellID = generateCellID(g.ytsaurus.Spec.PrimaryMasters.CellTag)
 
 	c.MasterCache.EnableMasterCacheDiscover = true
-	g.fillPrimaryMaster(&c.MasterCache.MasterCell)
+	g.fillPrimaryMaster(&c.PrimaryMaster)
 }
 
 func (g *BaseGenerator) fillAddressResolver(c *AddressResolver) {
@@ -157,7 +157,7 @@ func (g *BaseGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCT
 	g.fillClusterConnectionEncryption(c, s)
 	if len(g.getMasterCachesAddresses()) != 0 {
 		c.MasterCache.Addresses = g.getMasterCachesAddresses()
-		c.MasterCache.MasterCell.CellID = generateCellID(g.masterConnectionSpec.CellTag)
+		c.MasterCache.CellID = generateCellID(g.masterConnectionSpec.CellTag)
 	}
 }
 
@@ -711,9 +711,9 @@ func (g *Generator) getMasterCachesConfigImpl() (MasterCacheServer, error) {
 }
 
 func (g *Generator) GetMasterCachesConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.MasterCaches == nil {
-		return []byte{}, nil
-	}
+	//if g.ytsaurus.Spec.MasterCaches == nil {
+	//	return []byte{}, nil
+	//}
 	c, err := g.getMasterCachesConfigImpl()
 	if err != nil {
 		return nil, err
@@ -729,8 +729,8 @@ func (g *BaseGenerator) getMasterCachesPodFqdnSuffix() string {
 }
 
 func (g *BaseGenerator) getMasterCachesAddresses() []string {
-	if g.masterCachesSpec.HostAddresses != nil {
-		hosts := g.masterCachesSpec.HostAddresses
+	hosts := g.masterCachesSpec.HostAddresses
+	if hosts != nil {
 		if len(hosts) == 0 {
 			masterCachesPodSuffix := g.getMasterCachesPodFqdnSuffix()
 			for _, podName := range g.GetMasterCachesPodNames() {
