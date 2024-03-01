@@ -429,7 +429,7 @@ type DeprecatedSpytSpec struct {
 
 type MasterCachesSpec struct {
 	InstanceSpec     `json:",inline"`
-	HostAddresses    []string `json:"hostAddresses,omitempty"`
+	HostAddresses    []string `json:"hostAddressesMasterCaches,omitempty"`
 	HostAddressLabel string   `json:"hostAddressesLabel,omitempty"`
 }
 

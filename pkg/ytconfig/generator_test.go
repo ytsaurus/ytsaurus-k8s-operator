@@ -106,6 +106,7 @@ func TestGetDataNodeWithoutYtsaurusConfig(t *testing.T) {
 		testClusterDomain,
 		getCommonSpec(),
 		getMasterConnectionSpecWithFixedMasterHosts(),
+		getMasterCachesSpecWithFixedHosts(),
 	)
 	cfg, err := g.GetDataNodeConfig(getDataNodeSpec())
 	require.NoError(t, err)
@@ -132,6 +133,7 @@ func TestGetExecNodeWithoutYtsaurusConfig(t *testing.T) {
 		testClusterDomain,
 		getCommonSpec(),
 		getMasterConnectionSpecWithFixedMasterHosts(),
+		getMasterCachesSpecWithFixedHosts(),
 	)
 	cfg, err := g.GetExecNodeConfig(getExecNodeSpec())
 	require.NoError(t, err)
@@ -221,6 +223,7 @@ func TestGetTabletNodeWithoutYtsaurusConfig(t *testing.T) {
 		testClusterDomain,
 		getCommonSpec(),
 		getMasterConnectionSpecWithFixedMasterHosts(),
+		getMasterCachesSpecWithFixedHosts(),
 	)
 	cfg, err := g.GetTabletNodeConfig(getTabletNodeSpec())
 	require.NoError(t, err)
@@ -604,4 +607,14 @@ func getMasterConnectionSpecWithFixedMasterHosts() v1.MasterConnectionSpec {
 	spec.HostAddresses = testMasterExternalHosts
 	spec.CellTag = 1000
 	return spec
+}
+
+func getMasterCachesSpec() v1.MasterCachesSpec {
+	return v1.MasterCachesSpec{}
+}
+
+func getMasterCachesSpecWithFixedHosts() *v1.MasterCachesSpec {
+	spec := getMasterCachesSpec()
+	spec.HostAddresses = testMasterCachesExternalHosts
+	return &spec
 }

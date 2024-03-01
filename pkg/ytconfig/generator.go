@@ -729,8 +729,8 @@ func (g *BaseGenerator) getMasterCachesPodFqdnSuffix() string {
 }
 
 func (g *BaseGenerator) getMasterCachesAddresses() []string {
-	if g.MasterCachesSpec.HostAddresses != nil {
-		hosts := g.MasterCachesSpec.HostAddresses
+	if g.masterCachesSpec.HostAddresses != nil {
+		hosts := g.masterCachesSpec.HostAddresses
 		if len(hosts) == 0 {
 			masterCachesPodSuffix := g.getMasterCachesPodFqdnSuffix()
 			for _, podName := range g.GetMasterCachesPodNames() {

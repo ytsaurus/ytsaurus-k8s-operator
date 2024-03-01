@@ -843,6 +843,24 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                  readinessProbeParams:
+                    properties:
+                      failureThreshold:
+                        format: int32
+                        type: integer
+                      initialDelaySeconds:
+                        format: int32
+                        type: integer
+                      periodSeconds:
+                        format: int32
+                        type: integer
+                      successThreshold:
+                        format: int32
+                        type: integer
+                      timeoutSeconds:
+                        format: int32
+                        type: integer
+                    type: object
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -11833,12 +11851,12 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
-                  hostAddresses:
+                  hostAddressesLabel:
+                    type: string
+                  hostAddressesMasterCaches:
                     items:
                       type: string
                     type: array
-                  hostAddressesLabel:
-                    type: string
                   image:
                     type: string
                   instanceCount:
