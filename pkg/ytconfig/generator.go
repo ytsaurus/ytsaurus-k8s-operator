@@ -157,7 +157,7 @@ func (g *BaseGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCT
 	g.fillClusterConnectionEncryption(c, s)
 	if len(g.getMasterCachesAddresses()) != 0 {
 		c.MasterCache.Addresses = g.getMasterCachesAddresses()
-		c.MasterCache.MasterCell.CellID = generateCellID(g.ytsaurus.Spec.PrimaryMasters.CellTag)
+		c.MasterCache.MasterCell.CellID = generateCellID(g.masterConnectionSpec.CellTag)
 	}
 }
 
@@ -721,16 +721,16 @@ func (g *Generator) GetMasterCachesConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getMasterCachesPodFqdnSuffix() string {
+func (g *BaseGenerator) getMasterCachesPodFqdnSuffix() string {
 	return fmt.Sprintf("%s.%s.svc.%s",
 		g.GetMasterCachesServiceName(),
-		g.ytsaurus.Namespace,
+		g.key.Namespace,
 		g.clusterDomain)
 }
 
-func (g *Generator) getMasterCachesAddresses() []string {
-	if g.ytsaurus.Spec.MasterCaches != nil {
-		hosts := g.ytsaurus.Spec.MasterCaches.HostAddresses
+func (g *BaseGenerator) getMasterCachesAddresses() []string {
+	if g.MasterCachesSpec.HostAddresses != nil {
+		hosts := g.MasterCachesSpec.HostAddresses
 		if len(hosts) == 0 {
 			masterCachesPodSuffix := g.getMasterCachesPodFqdnSuffix()
 			for _, podName := range g.GetMasterCachesPodNames() {

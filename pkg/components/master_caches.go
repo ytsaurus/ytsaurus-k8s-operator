@@ -13,8 +13,8 @@ import (
 )
 
 type masterCache struct {
-	componentBase
-	server  server
+	localServerComponent
+	cfgen   *ytconfig.Generator
 	initJob *InitJob
 }
 
@@ -29,7 +29,7 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Comp
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
-	server := newServer(
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.MasterCaches.InstanceSpec,
@@ -51,13 +51,9 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Comp
 		cfgen.GetNativeClientConfig)
 
 	return &masterCache{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
-		},
-		server:  server,
-		initJob: initJob,
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		cfgen:                cfgen,
+		initJob:              initJob,
 	}
 }
 
@@ -77,7 +73,7 @@ func (mc *masterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 	}
 
 	if mc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, mc.ytsaurus, mc, &mc.componentBase, mc.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, mc.ytsaurus, mc, &mc.localComponent, mc.server, dry); status != nil {
 			return *status, err
 		}
 	}

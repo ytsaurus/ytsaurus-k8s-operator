@@ -190,17 +190,17 @@ func (g *BaseGenerator) FormatComponentStringWithDefault(base string, name strin
 	return base
 }
 
-func (g *Generator) GetMasterCachesStatefulSetName() string {
+func (g *BaseGenerator) GetMasterCachesStatefulSetName() string {
 	return g.getName("msc")
 }
 
-func (g *Generator) GetMasterCachesServiceName() string {
+func (g *BaseGenerator) GetMasterCachesServiceName() string {
 	return g.getName("master-caches")
 }
 
-func (g *Generator) GetMasterCachesPodNames() []string {
-	podNames := make([]string, 0, g.ytsaurus.Spec.MasterCaches.InstanceSpec.InstanceCount)
-	for i := 0; i < int(g.ytsaurus.Spec.MasterCaches.InstanceSpec.InstanceCount); i++ {
+func (g *BaseGenerator) GetMasterCachesPodNames() []string {
+	podNames := make([]string, 0, g.masterCacheInstanceCount)
+	for i := 0; i < int(g.masterCacheInstanceCount); i++ {
 		podNames = append(podNames, fmt.Sprintf("%s-%d", g.GetMasterCachesStatefulSetName(), i))
 	}
 
