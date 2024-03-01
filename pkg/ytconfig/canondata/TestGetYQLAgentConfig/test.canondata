@@ -97,6 +97,7 @@
             ];
         };
         "yql_plugin_shared_library"="/usr/lib/yql/libyqlplugin.so";
+        "yt_token_path"="/usr/yql_agent_token";
         "mr_job_binary"="/usr/bin/mrjob";
         "udf_directory"="/usr/lib/yql";
         "additional_clusters"={
