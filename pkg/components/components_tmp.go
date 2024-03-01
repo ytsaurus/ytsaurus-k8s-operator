@@ -69,16 +69,6 @@ func (m *master) Sync(ctx context.Context) error {
 	_, err = m.initJob.Sync(ctx, false)
 	return err
 }
-func (m *master) DoExitReadOnly(ctx context.Context) error {
-	// FIXME: test how it goes if ran several times
-	err := m.exitReadOnlyJob.Fetch(ctx)
-	if err != nil {
-		return err
-	}
-	m.exitReadOnlyJob.SetInitScript(m.createExitReadOnlyScript())
-	_, err = m.exitReadOnlyJob.Sync(ctx, false)
-	return err
-}
 
 func (hp *httpProxy) Status(ctx context.Context) ComponentStatus {
 	if hp.server.needUpdate() {

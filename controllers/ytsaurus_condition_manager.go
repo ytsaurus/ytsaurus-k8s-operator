@@ -75,14 +75,23 @@ func (m *stepsStateManager) Clear(ctx context.Context) error {
 	return m.ytsaurusProxy.ClearUpdateStatus(ctx)
 }
 
+func (m *stepsStateManager) SaveUpdateStatus(ctx context.Context) error {
+	return m.ytsaurusProxy.APIProxy().UpdateStatus(ctx)
+}
+
 func (m *stepsStateManager) getDoneConditionName(stepName flows.StepName) string {
 	return fmt.Sprintf("%sDone", stepName)
 }
-
 func (m *stepsStateManager) getRunConditionName(stepName flows.StepName) string {
 	return fmt.Sprintf("%sRun", stepName)
 }
-
 func (m *stepsStateManager) getBoolConditionName(stepName flows.StepName) string {
 	return fmt.Sprintf("%sCond", stepName)
+}
+func (m *stepsStateManager) getAllSetConditions() []string {
+	var result []string
+	for _, cond := range m.ytsaurusProxy.GetResource().Status.UpdateStatus.Conditions {
+		result = append(result, cond.Type)
+	}
+	return result
 }

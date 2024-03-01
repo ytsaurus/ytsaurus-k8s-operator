@@ -2,9 +2,11 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"go.ytsaurus.tech/yt/go/yt"
 
+	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/flows"
 )
 
@@ -15,7 +17,7 @@ const (
 	EnableSafeModeStepName             flows.StepName = "enableSafeMode"
 	BackupTabletCellsStepName          flows.StepName = "backupTabletCells"
 	BuildMasterSnapshotsStepName       flows.StepName = "buildMasterSnapshots"
-	masterExitReadOnlyStepName         flows.StepName = "masterExitReadOnly"
+	MasterExitReadOnlyStepName         flows.StepName = "masterExitReadOnly"
 	RecoverTabletCellsStepName         flows.StepName = "recoverTabletCells"
 	updateOpArchiveStepName            flows.StepName = "updateOpArchive"
 	updateQTStateStepName              flows.StepName = "updateQTState"
@@ -66,7 +68,7 @@ type ytsaurusClient interface {
 //	return flows.StepStatus{StepSyncStatusNeedRun, msg}, nil
 //}
 
-func checkFullUpdatePossibility(yc ytsaurusClient) flows.StepType {
+func checkFullUpdatePossibility(yc ytsaurusClient) flows.ActionStep {
 	preRun := func(ctx context.Context) (flows.StepStatus, error) {
 		possible, msg, err := yc.HandlePossibilityCheck(ctx)
 		if err != nil {
@@ -89,14 +91,14 @@ func checkFullUpdatePossibility(yc ytsaurusClient) flows.StepType {
 	}
 }
 
-func enableSafeMode(yc ytsaurusClient) flows.StepType {
+func enableSafeMode(yc ytsaurusClient) flows.ActionStep {
 	return flows.ActionStep{
 		Name:    EnableSafeModeStepName,
 		RunFunc: yc.EnableSafeMode,
 	}
 }
 
-func backupTabletCells(yc ytsaurusClient) flows.StepType {
+func backupTabletCells(yc ytsaurusClient) flows.ActionStep {
 	preRun := func(ctx context.Context) (flows.StepStatus, error) {
 		if err := yc.SaveTableCells(ctx); err != nil {
 			return flows.StepStatus{}, err
@@ -132,7 +134,7 @@ func backupTabletCells(yc ytsaurusClient) flows.StepType {
 	}
 }
 
-func buildMasterSnapshots(yc ytsaurusClient) flows.StepType {
+func buildMasterSnapshots(yc ytsaurusClient) flows.ActionStep {
 	preRun := func(ctx context.Context) (flows.StepStatus, error) {
 		if err := yc.SaveMasterMonitoringPaths(ctx); err != nil {
 			return flows.StepStatus{}, err
@@ -168,38 +170,41 @@ func buildMasterSnapshots(yc ytsaurusClient) flows.StepType {
 	}
 }
 
-//	func masterExitReadOnly(master component) flows.StepType {
-//		statusCheck := func(ctx context.Context) (bool, error) {
-//			if state.isUpdateStatusConditionTrue(doneCondition.Type) {
-//				return true, nil
-//			}
-//			masterImpl := master.(*components.Master)
-//			done, err := masterImpl.IsExitReadOnlyDone(ctx)
-//			if err != nil {
-//				return false, err
-//			}
-//			if !done {
-//				return false, nil
-//			}
-//			state.SetUpdateStatusCondition(doneCondition)
-//			return true, nil
-//		}
-//		action := func(ctx context.Context) error {
-//			// TODO: this could be extracted from master
-//			masterImpl := master.(*components.Master)
-//			err := masterImpl.DoExitReadOnly(ctx)
-//			if err != nil {
-//				return err
-//			}
-//			return nil
-//		}
-//		return flows.NewOperationStep(
-//			masterExitReadOnlyStepName,
-//			statusCheck,
-//			action,
-//		)
-//	}
-func recoverTabletCells(yc ytsaurusClient) flows.StepType {
+func masterExitReadOnly(job *components.JobStateless) flows.ActionStep {
+	preRun := func(ctx context.Context) (flows.StepStatus, error) {
+		fmt.Println("masterExitReadOnly prerun")
+		if !job.IsPrepared() {
+			if err := job.Prepare(ctx); err != nil {
+				return flows.StepStatus{}, err
+			}
+			return flows.StepStatus{SyncStatus: flows.StepSyncStatusUpdating}, nil
+		}
+
+		return flows.StepStatus{
+			SyncStatus: flows.StepSyncStatusNeedRun,
+			Message:    "job is prepared",
+		}, nil
+	}
+	run := func(ctx context.Context) error {
+		fmt.Println("masterExitReadOnly run")
+		job.SetInitScript(components.CreateExitReadOnlyScript())
+		return job.Sync(ctx)
+	}
+	postRun := func(ctx context.Context) (flows.StepStatus, error) {
+		if !job.IsCompleted() {
+			return flows.StepStatus{SyncStatus: flows.StepSyncStatusUpdating}, nil
+		}
+		return flows.StepStatus{SyncStatus: flows.StepSyncStatusDone}, nil
+	}
+	return flows.ActionStep{
+		Name:        MasterExitReadOnlyStepName,
+		PreRunFunc:  preRun,
+		RunFunc:     run,
+		PostRunFunc: postRun,
+	}
+}
+
+func recoverTabletCells(yc ytsaurusClient) flows.ActionStep {
 	return flows.ActionStep{
 		Name:    RecoverTabletCellsStepName,
 		RunFunc: yc.RecoverTableCells,
@@ -234,7 +239,7 @@ func recoverTabletCells(yc ytsaurusClient) flows.StepType {
 //	return newActionStep(updateQTStateStepName, action, statusCheck)
 //}
 
-func disableSafeMode(yc ytsaurusClient) flows.StepType {
+func disableSafeMode(yc ytsaurusClient) flows.ActionStep {
 	return flows.ActionStep{
 		Name:    DisableSafeModeStepName,
 		RunFunc: yc.DisableSafeMode,

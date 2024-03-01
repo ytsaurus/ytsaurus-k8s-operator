@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -233,18 +234,18 @@ func TestYtsaurusUpdateMasterImage(t *testing.T) {
 		})
 	}
 
-	//t.Log("[ Emulate master exit read only succeeded ]")
-	//testutil.FetchAndCheckEventually(
-	//	h,
-	//	ytsaurusName,
-	//	&ytv1.Ytsaurus{},
-	//	"master snapshot is done",
-	//	func(obj client.Object) bool {
-	//		status := obj.(*ytv1.Ytsaurus).Status
-	//		return meta.IsStatusConditionTrue(status.UpdateStatus.Conditions, string(BuildMasterSnapshotsStepName)+"Done")
-	//	},
-	//)
-	//testutil.MarkJobSucceeded(h, "yt-master-init-job-exit-read-only")
+	t.Log("[ Emulate master exit read only succeeded ]")
+	testutil.FetchAndCheckEventually(
+		h,
+		ytsaurusName,
+		&ytv1.Ytsaurus{},
+		"master snapshot is done",
+		func(obj client.Object) bool {
+			status := obj.(*ytv1.Ytsaurus).Status
+			return meta.IsStatusConditionTrue(status.UpdateStatus.Conditions, string(controllers.MasterExitReadOnlyStepName)+"Run")
+		},
+	)
+	testutil.MarkJobSucceeded(h, "yt-master-init-job-exit-read-only")
 
 	t.Log("[ Wait for YTsaurus Running status ]")
 	testutil.FetchAndCheckEventually(

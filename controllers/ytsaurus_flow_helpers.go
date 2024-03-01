@@ -22,6 +22,10 @@ func buildComponentRegistry(ytsaurus *apiProxy.Ytsaurus) *componentRegistry {
 	registry.add(components.NewDiscovery(cfgen, ytsaurus))
 	m := components.NewMaster(cfgen, ytsaurus)
 	registry.add(m)
+
+	masterExitReadOnlyJob := components.NewMasterExitReadOnlyJob(cfgen, ytsaurus)
+	registry.add(masterExitReadOnlyJob)
+
 	var hps []components.Component
 	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {
 		hp := components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec)
@@ -128,12 +132,17 @@ func buildSteps(
 	}
 	discoveryStep := newComponentStep(discovery.(statefulComponent), statuses[discovery.GetName()])
 
-	master, ok := registry.getByType(consts.ComponentTypeMaster)
+	master, ok := registry.getByName("Master")
 	if !ok {
 		return nil, errors.New("missing master component")
 	}
 	masterStep := newComponentStep(master.(statefulComponent), statuses[master.GetName()])
 	masterStatus := statuses["Master"]
+
+	masterExitReadOnlyJob, ok := registry.getByName("MasterExitReadOnlyJob")
+	if !ok {
+		return nil, errors.New("missing MasterExitReadOnlyJob")
+	}
 
 	var httpProxiesSteps []flows.StepType
 	for _, hp := range registry.getListByType(consts.ComponentTypeHTTPProxy) {
@@ -187,7 +196,7 @@ func buildSteps(
 		backupTabletCells(ycClient),
 		buildMasterSnapshots(ycClient),
 		componentsUpdateChain,
-		//masterExitReadOnly(master),
+		masterExitReadOnly(masterExitReadOnlyJob.(*components.JobStateless)),
 		recoverTabletCells(ycClient),
 		//updateOpArchive(),
 		//updateQTState(),

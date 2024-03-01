@@ -3,6 +3,7 @@ package apiproxy
 import (
 	"context"
 	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -175,5 +176,6 @@ func (c *apiProxy) createAndReferenceObject(ctx context.Context, obj client.Obje
 }
 
 func (c *apiProxy) UpdateStatus(ctx context.Context) error {
+	fmt.Println("UPDATE STATUS called")
 	return c.client.Status().Update(ctx, c.object)
 }

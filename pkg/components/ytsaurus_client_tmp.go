@@ -167,7 +167,10 @@ func (yc *ytsaurusClient) SaveTableCells(ctx context.Context) error {
 	}
 
 	yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles = tabletCellBundles
-	return yc.ytsaurus.APIProxy().UpdateStatus(ctx)
+	if err = yc.ytsaurus.APIProxy().UpdateStatus(ctx); err != nil {
+		return fmt.Errorf("failed to update status after SaveMasterMonitoringPaths: %w", err)
+	}
+	return nil
 }
 func (yc *ytsaurusClient) RemoveTableCells(ctx context.Context) error {
 	var tabletCells []string
@@ -241,7 +244,10 @@ func (yc *ytsaurusClient) RecoverTableCells(ctx context.Context) error {
 		}
 	}
 	yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
-	return yc.ytsaurus.APIProxy().UpdateStatus(ctx)
+	if err = yc.ytsaurus.APIProxy().UpdateStatus(ctx); err != nil {
+		return fmt.Errorf("failed to update status after SaveMasterMonitoringPaths: %w", err)
+	}
+	return nil
 }
 func (yc *ytsaurusClient) SaveMasterMonitoringPaths(ctx context.Context) error {
 	var monitoringPaths []string
@@ -256,7 +262,10 @@ func (yc *ytsaurusClient) SaveMasterMonitoringPaths(ctx context.Context) error {
 		}
 	}
 	yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths = monitoringPaths
-	return yc.ytsaurus.APIProxy().UpdateStatus(ctx)
+	if err = yc.ytsaurus.APIProxy().UpdateStatus(ctx); err != nil {
+		return fmt.Errorf("failed to update status after SaveMasterMonitoringPaths: %w", err)
+	}
+	return nil
 }
 func (yc *ytsaurusClient) StartBuildingMasterSnapshots(ctx context.Context) error {
 	return yc.startBuildMasterSnapshots(ctx)

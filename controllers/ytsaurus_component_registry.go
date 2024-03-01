@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"sort"
 	"strings"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
@@ -62,6 +63,10 @@ func (r *componentRegistry) getListByType(compType consts.ComponentType) []compo
 
 func (r *componentRegistry) getByType(compType consts.ComponentType) (component, bool) {
 	allOfType := r.getListByType(compType)
+	// TODO(l0kix2): This code is crappy, replace it.
+	sort.Slice(allOfType, func(i, j int) bool {
+		return len(allOfType[i].GetName()) > len(allOfType[j].GetName())
+	})
 	if len(allOfType) == 0 {
 		return nil, false
 	}

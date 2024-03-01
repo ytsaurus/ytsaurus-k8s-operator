@@ -7,13 +7,8 @@ import (
 
 	"go.ytsaurus.tech/yt/go/yt"
 
-	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/yson"
 	appsv1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
-
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -31,8 +26,8 @@ type master struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
 
-	initJob          *InitJob
-	exitReadOnlyJob  *InitJob
+	initJob *InitJob
+	//exitReadOnlyJob  *InitJob
 	adminCredentials corev1.Secret
 }
 
@@ -68,22 +63,22 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component
 		resource.Spec.CoreImage,
 		cfgen.GetNativeClientConfig)
 
-	exitReadOnlyJob := NewInitJob(
-		&l,
-		ytsaurus.APIProxy(),
-		ytsaurus,
-		resource.Spec.ImagePullSecrets,
-		"exit-read-only",
-		consts.ClientConfigFileName,
-		resource.Spec.CoreImage,
-		cfgen.GetNativeClientConfig,
-	)
+	//exitReadOnlyJob := NewInitJob(
+	//	&l,
+	//	ytsaurus.APIProxy(),
+	//	ytsaurus,
+	//	resource.Spec.ImagePullSecrets,
+	//	"exit-read-only",
+	//	consts.ClientConfigFileName,
+	//	resource.Spec.CoreImage,
+	//	cfgen.GetNativeClientConfig,
+	//)
 
 	return &master{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
 		initJob:              initJob,
-		exitReadOnlyJob:      exitReadOnlyJob,
+		//exitReadOnlyJob:      exitReadOnlyJob,
 	}
 }
 
@@ -105,7 +100,7 @@ func (m *master) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		m.server,
 		m.initJob,
-		m.exitReadOnlyJob,
+		//m.exitReadOnlyJob,
 	)
 }
 
@@ -279,40 +274,40 @@ func (m *master) createExitReadOnlyScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
-	if ytv1.IsReadyToUpdateClusterState(m.ytsaurus.GetClusterState()) && m.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedFullUpdate), err
-	}
-
-	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForMasterExitReadOnly {
-			st, err := m.exitReadOnly(ctx, dry)
-			return *st, err
-		}
-		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
-			return *status, err
-		}
-	}
-
-	if m.NeedSync() {
-		if !dry {
-			err = m.doServerSync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, "components"), err
-	}
-
-	if !m.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
-	}
-
-	if !dry {
-		m.initJob.SetInitScript(m.createInitScript())
-	}
-
-	return m.initJob.Sync(ctx, dry)
-}
+//func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+//	var err error
+//
+//	if ytv1.IsReadyToUpdateClusterState(m.ytsaurus.GetClusterState()) && m.server.needUpdate() {
+//		return SimpleStatus(SyncStatusNeedFullUpdate), err
+//	}
+//
+//	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+//		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForMasterExitReadOnly {
+//			st, err := m.exitReadOnly(ctx, dry)
+//			return *st, err
+//		}
+//		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
+//			return *status, err
+//		}
+//	}
+//
+//	if m.NeedSync() {
+//		if !dry {
+//			err = m.doServerSync(ctx)
+//		}
+//		return WaitingStatus(SyncStatusPending, "components"), err
+//	}
+//
+//	if !m.server.arePodsReady(ctx) {
+//		return WaitingStatus(SyncStatusBlocked, "pods"), err
+//	}
+//
+//	if !dry {
+//		m.initJob.SetInitScript(m.createInitScript())
+//	}
+//
+//	return m.initJob.Sync(ctx, dry)
+//}
 
 //func (m *master) Status(ctx context.Context) ComponentStatus {
 //	status, err := m.doSync(ctx, true)
@@ -378,45 +373,45 @@ func (m *master) getHostAddressLabel() string {
 	return defaultHostAddressLabel
 }
 
-func (m *master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, error) {
-	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterExitReadOnlyPrepared) {
-		if !m.exitReadOnlyJob.isRestartPrepared() {
-			if err := m.exitReadOnlyJob.prepareRestart(ctx, dry); err != nil {
-				return ptr.T(SimpleStatus(SyncStatusUpdating)), err
-			}
-		}
-
-		if !dry {
-			m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionTrue)
-		}
-		return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
-	}
-
-	if !m.exitReadOnlyJob.IsCompleted() {
-		if !dry {
-			m.exitReadOnlyJob.SetInitScript(m.createExitReadOnlyScript())
-		}
-		status, err := m.exitReadOnlyJob.Sync(ctx, dry)
-		return &status, err
-	}
-
-	if !dry {
-		m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    consts.ConditionMasterExitedReadOnly,
-			Status:  metav1.ConditionTrue,
-			Reason:  "MasterExitedReadOnly",
-			Message: "Masters exited read-only state",
-		})
-		m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionFalse)
-	}
-	return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
-}
-
-func (m *master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav1.ConditionStatus) {
-	m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionMasterExitReadOnlyPrepared,
-		Status:  status,
-		Reason:  "MasterExitReadOnlyPrepared",
-		Message: "Masters are ready to exit read-only state",
-	})
-}
+//func (m *master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, error) {
+//	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterExitReadOnlyPrepared) {
+//		if !m.exitReadOnlyJob.isRestartPrepared() {
+//			if err := m.exitReadOnlyJob.prepareRestart(ctx, dry); err != nil {
+//				return ptr.T(SimpleStatus(SyncStatusUpdating)), err
+//			}
+//		}
+//
+//		if !dry {
+//			m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionTrue)
+//		}
+//		return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
+//	}
+//
+//	if !m.exitReadOnlyJob.IsCompleted() {
+//		if !dry {
+//			m.exitReadOnlyJob.SetInitScript(m.createExitReadOnlyScript())
+//		}
+//		status, err := m.exitReadOnlyJob.Sync(ctx, dry)
+//		return &status, err
+//	}
+//
+//	if !dry {
+//		m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+//			Type:    consts.ConditionMasterExitedReadOnly,
+//			Status:  metav1.ConditionTrue,
+//			Reason:  "MasterExitedReadOnly",
+//			Message: "Masters exited read-only state",
+//		})
+//		m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionFalse)
+//	}
+//	return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
+//}
+//
+//func (m *master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav1.ConditionStatus) {
+//	m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+//		Type:    consts.ConditionMasterExitReadOnlyPrepared,
+//		Status:  status,
+//		Reason:  "MasterExitReadOnlyPrepared",
+//		Message: "Masters are ready to exit read-only state",
+//	})
+//}

@@ -18,9 +18,11 @@ type YtsaurusFlow struct {
 }
 
 func newYtsaurusFlow(ytsaurusProxy *apiProxy.Ytsaurus) (*YtsaurusFlow, error) {
+	stateManager := newStepsStateManager(ytsaurusProxy)
+	compRegistry := buildComponentRegistry(ytsaurusProxy)
 	return &YtsaurusFlow{
-		registry:          buildComponentRegistry(ytsaurusProxy),
-		conditionsManager: newStepsStateManager(ytsaurusProxy),
+		registry:          compRegistry,
+		conditionsManager: stateManager,
 		statuses:          make(map[string]components.ComponentStatus),
 	}, nil
 }
@@ -32,7 +34,9 @@ func (f *YtsaurusFlow) fetch(ctx context.Context) error {
 		if err := comp.Fetch(ctx); err != nil {
 			return err
 		}
-		f.statuses[comp.GetName()] = comp.Status(ctx)
+		if statefulComp, ok := comp.(statefulComponent); ok {
+			f.statuses[comp.GetName()] = statefulComp.Status(ctx)
+		}
 	}
 	return nil
 }
