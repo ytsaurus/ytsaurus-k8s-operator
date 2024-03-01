@@ -10,12 +10,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
 type APIProxy interface {
@@ -28,7 +25,6 @@ type APIProxy interface {
 	DeleteObject(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error
 
 	UpdateStatus(ctx context.Context) error
-	UpdateStatusRetryOnConflict(ctx context.Context, change func(ytsaurusResource *ytv1.Ytsaurus)) error
 }
 
 type ConditionManager interface {
@@ -182,24 +178,4 @@ func (c *apiProxy) createAndReferenceObject(ctx context.Context, obj client.Obje
 func (c *apiProxy) UpdateStatus(ctx context.Context) error {
 	fmt.Println("UPDATE STATUS called")
 	return c.client.Status().Update(ctx, c.object)
-}
-
-func (c *apiProxy) UpdateStatusRetryOnConflict(ctx context.Context, change func(ytsaurusResource *ytv1.Ytsaurus)) error {
-	// TODO: maybe do first time and check if conflict first?
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		// Fetch the resource here; you need to refetch it on every try, since
-		// if you got a conflict on the last update attempt then you need to get
-		// the current version before making your own changes.
-		name := c.object.GetName()
-		ytsaurusResource := ytv1.Ytsaurus{}
-		if err := c.FetchObject(ctx, name, &ytsaurusResource); err != nil {
-			return err
-		}
-
-		change(&ytsaurusResource)
-
-		// You have to return err itself here (not wrapped inside another error)
-		// so that RetryOnConflict can identify it correctly.
-		return c.client.Status().Update(ctx, &ytsaurusResource)
-	})
 }

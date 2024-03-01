@@ -55,7 +55,7 @@ func (m *stepsStateManager) StoreConditionResult(ctx context.Context, name flows
 	return m.setConditionWithRetries(ctx, condition)
 }
 func (m *stepsStateManager) setConditionWithRetries(ctx context.Context, cond metav1.Condition) error {
-	err := m.ytsaurusProxy.APIProxy().UpdateStatusRetryOnConflict(ctx, func(ytsaurusResource *ytv1.Ytsaurus) {
+	err := m.ytsaurusProxy.UpdateStatusRetryOnConflict(ctx, func(ytsaurusResource *ytv1.Ytsaurus) {
 		meta.SetStatusCondition(&ytsaurusResource.Status.UpdateStatus.Conditions, cond)
 	})
 	if err != nil {
@@ -84,7 +84,7 @@ func (m *stepsStateManager) GetConditionResult(name flows.StepName) (result bool
 	return false, false
 }
 func (m *stepsStateManager) Clear(ctx context.Context) error {
-	return m.ytsaurusProxy.APIProxy().UpdateStatusRetryOnConflict(ctx, func(ytsaurusResource *ytv1.Ytsaurus) {
+	return m.ytsaurusProxy.UpdateStatusRetryOnConflict(ctx, func(ytsaurusResource *ytv1.Ytsaurus) {
 		ytsaurusResource.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
 	})
 }

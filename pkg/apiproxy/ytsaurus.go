@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -73,7 +75,7 @@ func (c *Ytsaurus) SetUpdateStatusCondition(ctx context.Context, condition metav
 }
 
 func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
-	return c.apiProxy.UpdateStatusRetryOnConflict(
+	return c.UpdateStatusRetryOnConflict(
 		ctx,
 		func(ytsaurusResource *ytv1.Ytsaurus) {
 			ytsaurusResource.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
@@ -134,4 +136,31 @@ func (c *Ytsaurus) IsStatusConditionTrue(conditionType string) bool {
 
 func (c *Ytsaurus) IsStatusConditionFalse(conditionType string) bool {
 	return meta.IsStatusConditionFalse(c.ytsaurus.Status.Conditions, conditionType)
+}
+
+func (c *Ytsaurus) UpdateStatusRetryOnConflict(ctx context.Context, change func(ytsaurusResource *ytv1.Ytsaurus)) error {
+	tryUpdate := func(ytsaurusResource *ytv1.Ytsaurus) error {
+		change(ytsaurusResource)
+		// You have to return err itself here (not wrapped inside another error)
+		// so that RetryOnConflict can identify it correctly.
+		return c.APIProxy().Client().Status().Update(ctx, ytsaurusResource)
+	}
+
+	err := tryUpdate(c.ytsaurus)
+	if err == nil || !errors.IsConflict(err) {
+		return err
+	}
+
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		// Fetch the resource here; you need to refetch it on every try, since
+		// if you got a conflict on the last update attempt then you need to get
+		// the current version before making your own changes.
+		name := c.ytsaurus.GetName()
+		ytsaurusResource := ytv1.Ytsaurus{}
+		if err = c.APIProxy().FetchObject(ctx, name, &ytsaurusResource); err != nil {
+			return err
+		}
+
+		return tryUpdate(&ytsaurusResource)
+	})
 }

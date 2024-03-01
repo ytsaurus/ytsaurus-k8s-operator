@@ -83,7 +83,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		return requeueLater, fmt.Errorf("unexpected ytsaurus cluster state: %s", state)
 	}
 
-	err = ytsaurusProxy.APIProxy().UpdateStatusRetryOnConflict(
+	err = ytsaurusProxy.UpdateStatusRetryOnConflict(
 		ctx,
 		func(ytsaurusResource *ytv1.Ytsaurus) {
 			ytsaurusResource.Status.State = clusterState
