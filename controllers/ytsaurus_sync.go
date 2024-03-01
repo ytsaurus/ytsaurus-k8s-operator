@@ -23,7 +23,7 @@ var (
 	requeueLater    = ctrl.Result{RequeueAfter: 1 * time.Minute}
 )
 
-// SyncNew is responsible for
+// Sync is responsible for
 //   - building main ytsaurus component
 //   - checking its status
 //   - asking ytsaurus component to sync if it is not ready
@@ -83,7 +83,12 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		return requeueLater, fmt.Errorf("unexpected ytsaurus cluster state: %s", state)
 	}
 
-	err = ytsaurusProxy.SaveClusterState(ctx, clusterState)
+	err = ytsaurusProxy.APIProxy().UpdateStatusRetryOnConflict(
+		ctx,
+		func(ytsaurusResource *ytv1.Ytsaurus) {
+			ytsaurusResource.Status.State = clusterState
+		},
+	)
 	if err != nil {
 		logger.Error(err, "failed to save cluster state", "state", state)
 		return requeueASAP, err

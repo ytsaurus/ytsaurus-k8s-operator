@@ -6,7 +6,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/util/retry"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -56,29 +55,17 @@ func (m *stepsStateManager) StoreConditionResult(ctx context.Context, name flows
 	return m.setConditionWithRetries(ctx, condition)
 }
 func (m *stepsStateManager) setConditionWithRetries(ctx context.Context, cond metav1.Condition) error {
-	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		// Fetch the resource here; you need to refetch it on every try, since
-		// if you got a conflict on the last update attempt then you need to get
-		// the current version before making your own changes.
-		name := m.ytsaurusProxy.GetResource().Name
-		ytsaurusResource := ytv1.Ytsaurus{}
-		if err := m.ytsaurusProxy.APIProxy().FetchObject(ctx, name, &ytsaurusResource); err != nil {
-			return err
-		}
-
+	err := m.ytsaurusProxy.APIProxy().UpdateStatusRetryOnConflict(ctx, func(ytsaurusResource *ytv1.Ytsaurus) {
 		meta.SetStatusCondition(&ytsaurusResource.Status.UpdateStatus.Conditions, cond)
-
-		// You have to return err itself here (not wrapped inside another error)
-		// so that RetryOnConflict can identify it correctly.
-		return m.ytsaurusProxy.APIProxy().Client().Status().Update(ctx, &ytsaurusResource)
 	})
 	if err != nil {
 		// May be conflict if max retries were hit, or may be something unrelated
 		// like permissions or a network error
-		return fmt.Errorf("failed to set condition %s with retries: %w", cond.Type, err)
+		return fmt.Errorf("failed to set update state %s with retries: %w", cond.Type, err)
 	}
 	return nil
 }
+
 func (m *stepsStateManager) IsDone(name flows.StepName) bool {
 	return m.ytsaurusProxy.IsUpdateStatusConditionTrue(m.getDoneConditionName(name))
 }
@@ -97,13 +84,9 @@ func (m *stepsStateManager) GetConditionResult(name flows.StepName) (result bool
 	return false, false
 }
 func (m *stepsStateManager) Clear(ctx context.Context) error {
-	// TODO(l0kix2): here we are clearing ALL the update fields
-	// this may unexpected in some cases.
-	return m.ytsaurusProxy.ClearUpdateStatus(ctx)
-}
-
-func (m *stepsStateManager) SaveUpdateStatus(ctx context.Context) error {
-	return m.ytsaurusProxy.APIProxy().UpdateStatus(ctx)
+	return m.ytsaurusProxy.APIProxy().UpdateStatusRetryOnConflict(ctx, func(ytsaurusResource *ytv1.Ytsaurus) {
+		ytsaurusResource.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
+	})
 }
 
 func (m *stepsStateManager) getDoneConditionName(stepName flows.StepName) string {

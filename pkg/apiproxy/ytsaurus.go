@@ -73,11 +73,15 @@ func (c *Ytsaurus) SetUpdateStatusCondition(ctx context.Context, condition metav
 }
 
 func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
-	c.ytsaurus.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
-	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
-	c.ytsaurus.Status.UpdateStatus.MasterMonitoringPaths = make([]string, 0)
-	c.ytsaurus.Status.UpdateStatus.Components = nil
-	return c.apiProxy.UpdateStatus(ctx)
+	return c.apiProxy.UpdateStatusRetryOnConflict(
+		ctx,
+		func(ytsaurusResource *ytv1.Ytsaurus) {
+			ytsaurusResource.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
+			ytsaurusResource.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
+			ytsaurusResource.Status.UpdateStatus.MasterMonitoringPaths = make([]string, 0)
+			ytsaurusResource.Status.UpdateStatus.Components = nil
+		},
+	)
 }
 
 func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {
