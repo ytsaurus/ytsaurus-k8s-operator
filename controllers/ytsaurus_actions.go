@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"go.ytsaurus.tech/yt/go/yt"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/flows"
@@ -18,8 +19,9 @@ const (
 	BuildMasterSnapshotsStepName       flows.StepName = "buildMasterSnapshots"
 	MasterExitReadOnlyStepName         flows.StepName = "masterExitReadOnly"
 	RecoverTabletCellsStepName         flows.StepName = "recoverTabletCells"
-	updateOpArchiveStepName            flows.StepName = "updateOpArchive"
-	updateQTStateStepName              flows.StepName = "updateQTState"
+	InitOpArchiveStepName              flows.StepName = "initOpArchive"
+	UpdateOpArchiveStepName            flows.StepName = "updateOpArchive"
+	InitQTStateStepName                flows.StepName = "initQTState"
 	DisableSafeModeStepName            flows.StepName = "disableSafeMode"
 )
 
@@ -184,32 +186,61 @@ func recoverTabletCells(yc ytsaurusClient) flows.ActionStep {
 	}
 }
 
-//func updateOpArchive() flows.StepType {
-//	action := func(context.Context) error {
-//		// maybe we can use scheduler component here
-//		// run job
-//		return nil
-//	}
-//	statusCheck := func(ctx context.Context, _ *ytsaurusState) (flows.StepStatus, error) {
-//		// maybe some //sys/cluster_nodes/@config value?
-//		// check script and understand how to check if archive is inited
-//		return flows.StepStatus{}, nil
-//	}
-//	return newActionStep(updateOpArchiveStepName, action, statusCheck)
-//}
-//func updateQTState() flows.StepType {
-//	action := func(context.Context) error {
-//		// maybe we can use queryTracker component here
-//		// run job
-//		return nil
-//	}
-//	statusCheck := func(ctx context.Context, _ *ytsaurusState) (flows.StepStatus, error) {
-//		// maybe some //sys/cluster_nodes/@config value?
-//		// check /usr/bin/init_query_tracker_state script and understand how to check if qt state is set
-//		return flows.StepStatus{}, nil
-//	}
-//	return newActionStep(updateQTStateStepName, action, statusCheck)
-//}
+func initOpArchive(job *components.JobStateless, scheduler *components.Scheduler) flows.ActionStep {
+	if !scheduler.NeedOpArchiveInit() {
+		// no-op step
+		return flows.ActionStep{Name: InitOpArchiveStepName}
+	}
+	return newJobStep(
+		InitOpArchiveStepName,
+		job,
+		scheduler.GetInitOpArchiveScript(),
+	)
+}
+
+func updateOpArchive(job *components.JobStateless, scheduler *components.Scheduler) flows.ActionStep {
+	// this wrapper is lousy
+	jobStep := newJobStep(
+		UpdateOpArchiveStepName,
+		job,
+		scheduler.GetUpdateOpArchiveScript(),
+	)
+	run := func(ctx context.Context) error {
+		job.SetInitScript(scheduler.GetUpdateOpArchiveScript())
+		batchJob := job.Build()
+		container := &batchJob.Spec.Template.Spec.Containers[0]
+		container.EnvFrom = []corev1.EnvFromSource{scheduler.GetSecretEnv()}
+		return job.Sync(ctx)
+	}
+	return flows.ActionStep{
+		Name:        UpdateOpArchiveStepName,
+		PreRunFunc:  jobStep.PreRunFunc,
+		RunFunc:     run,
+		PostRunFunc: jobStep.PostRunFunc,
+	}
+}
+
+func initQueryTracker(job *components.JobStateless, queryTracker *components.QueryTracker) flows.ActionStep {
+	// this wrapper is lousy
+	jobStep := newJobStep(
+		InitQTStateStepName,
+		job,
+		queryTracker.GetInitQueryTrackerJobScript(),
+	)
+	run := func(ctx context.Context) error {
+		job.SetInitScript(queryTracker.GetInitQueryTrackerJobScript())
+		batchJob := job.Build()
+		container := &batchJob.Spec.Template.Spec.Containers[0]
+		container.EnvFrom = []corev1.EnvFromSource{queryTracker.GetSecretEnv()}
+		return job.Sync(ctx)
+	}
+	return flows.ActionStep{
+		Name:        InitQTStateStepName,
+		PreRunFunc:  jobStep.PreRunFunc,
+		RunFunc:     run,
+		PostRunFunc: jobStep.PostRunFunc,
+	}
+}
 
 func disableSafeMode(yc ytsaurusClient) flows.ActionStep {
 	return flows.ActionStep{

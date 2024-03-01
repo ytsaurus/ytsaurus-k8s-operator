@@ -44,8 +44,6 @@ func buildComponentRegistry(ytsaurus *apiProxy.Ytsaurus) *componentRegistry {
 		}
 	}
 
-	var s components.Component
-
 	if resource.Spec.UI != nil {
 		ui := components.NewUI(cfgen, ytsaurus, m)
 		registry.add(ui)
@@ -87,9 +85,12 @@ func buildComponentRegistry(ytsaurus *apiProxy.Ytsaurus) *componentRegistry {
 		}
 	}
 
+	var s components.Component
 	if resource.Spec.Schedulers != nil {
 		s = components.NewScheduler(cfgen, ytsaurus, m, ends, tnds)
 		registry.add(s)
+		registry.add(components.NewInitOpArchiveJob(cfgen, ytsaurus))
+		registry.add(components.NewUpdateOpArchiveJob(cfgen, ytsaurus))
 	}
 
 	if resource.Spec.ControllerAgents != nil {
@@ -101,6 +102,7 @@ func buildComponentRegistry(ytsaurus *apiProxy.Ytsaurus) *componentRegistry {
 	if resource.Spec.QueryTrackers != nil && resource.Spec.Schedulers != nil && resource.Spec.TabletNodes != nil && len(resource.Spec.TabletNodes) > 0 {
 		q = components.NewQueryTracker(cfgen, ytsaurus, yc, tnds)
 		registry.add(q)
+		registry.add(components.NewInitQueryTrackerJob(cfgen, ytsaurus))
 	}
 
 	if resource.Spec.QueueAgents != nil && resource.Spec.TabletNodes != nil && len(resource.Spec.TabletNodes) > 0 {
@@ -126,21 +128,21 @@ func buildSteps(
 	registry *componentRegistry,
 	statuses map[string]components.ComponentStatus,
 ) ([]flows.StepType, error) {
-	discovery, ok := registry.getByType(consts.ComponentTypeDiscovery)
-	if !ok {
+	discovery, schedulerExists := registry.getByType(consts.ComponentTypeDiscovery)
+	if !schedulerExists {
 		return nil, errors.New("missing discovery component")
 	}
 	discoveryStep := newComponentStep(discovery.(statefulComponent), statuses[discovery.GetName()])
 
-	master, ok := registry.getByName("Master")
-	if !ok {
+	master, schedulerExists := registry.getByName("Master")
+	if !schedulerExists {
 		return nil, errors.New("missing master component")
 	}
 	masterStep := newComponentStep(master.(statefulComponent), statuses[master.GetName()])
 	masterStatus := statuses["Master"]
 
-	masterExitReadOnlyJob, ok := registry.getByName("MasterExitReadOnlyJob")
-	if !ok {
+	masterExitReadOnlyJob, schedulerExists := registry.getByName("MasterExitReadOnlyJob")
+	if !schedulerExists {
 		return nil, errors.New("missing MasterExitReadOnlyJob")
 	}
 
@@ -148,8 +150,8 @@ func buildSteps(
 	for _, hp := range registry.getListByType(consts.ComponentTypeHTTPProxy) {
 		httpProxiesSteps = append(httpProxiesSteps, newComponentStep(hp.(statefulComponent), statuses[hp.GetName()]))
 	}
-	yc, ok := registry.getByType(consts.ComponentTypeClient)
-	if !ok {
+	yc, schedulerExists := registry.getByType(consts.ComponentTypeClient)
+	if !schedulerExists {
 		return nil, errors.New("missing client component")
 	}
 	// temporary
@@ -160,6 +162,46 @@ func buildSteps(
 	for _, dn := range registry.getListByType(consts.ComponentTypeDataNode) {
 		dataNodesSteps = append(dataNodesSteps, newComponentStep(dn.(statefulComponent), statuses[dn.GetName()]))
 	}
+
+	// Scheduler is optional
+	scheduler, schedulerExists := registry.getByName("Scheduler")
+	var schedulerStep flows.StepType
+	var initOpArchiveStep flows.StepType
+	var updateOpArchiveStep flows.StepType
+	if !schedulerExists {
+		schedulerStep = flows.DummyStep{Name: "Scheduler"}
+		initOpArchiveStep = flows.DummyStep{Name: InitOpArchiveStepName}
+		updateOpArchiveStep = flows.DummyStep{Name: UpdateOpArchiveStepName}
+	} else {
+		schedulerStep = newComponentStep(scheduler.(statefulComponent), statuses[scheduler.GetName()])
+		initJob, ok := registry.getByName("InitOpArchiveJob")
+		if !ok {
+			return nil, errors.New("missing InitOpArchiveJob")
+		}
+		initOpArchiveStep = initOpArchive(initJob.(*components.JobStateless), scheduler.(*components.Scheduler))
+		updateJob, ok := registry.getByName("UpdateOpArchiveJob")
+		if !ok {
+			return nil, errors.New("missing UpdateOpArchiveJob")
+		}
+		updateOpArchiveStep = updateOpArchive(updateJob.(*components.JobStateless), scheduler.(*components.Scheduler))
+	}
+
+	// QueryTracker is optional
+	queryTracker, qtExists := registry.getByName("QueryTracker")
+	var queryTrackerStep flows.StepType
+	var initQTStep flows.StepType
+	if !qtExists {
+		queryTrackerStep = flows.DummyStep{Name: "QueryTracker"}
+		initQTStep = flows.DummyStep{Name: InitQTStateStepName}
+	} else {
+		queryTrackerStep = newComponentStep(queryTracker.(statefulComponent), statuses[queryTracker.GetName()])
+		initJob, ok := registry.getByName("InitQueryTrackerJob")
+		if !ok {
+			return nil, errors.New("missing InitQueryTrackerJob")
+		}
+		initQTStep = initQueryTracker(initJob.(*components.JobStateless), queryTracker.(*components.QueryTracker))
+	}
+
 	isFullUpdateNeeded := func(ctx context.Context) (bool, error) {
 		// FIXME: should we support that ?
 		// if data node status is syncNeedRecreate
@@ -179,9 +221,9 @@ func buildSteps(
 		// (optional) tcpproxies (depends on master)
 		// (optional) execnodes (depends on master)
 		// (optional) tabletnodes (depends on master, yt client)
-		// (optional) scheduler (depends on master, exec nodes, tablet nodes)
+		schedulerStep, //(optional) (depends on master, exec nodes, tablet nodes)
 		// (optional) controller agents (depends on master)
-		// (optional) querytrackers (depends on yt client and tablet nodes)
+		queryTrackerStep, // (optional) (depends on yt client and tablet nodes)
 		// (optional) queueagents (depend on y cli, master, tablet nodes)
 		// (optional) yqlagents (depend on master)
 		// (optional) strawberry (depend on master, scheduler, data nodes)
@@ -198,8 +240,9 @@ func buildSteps(
 		componentsUpdateChain,
 		masterExitReadOnly(masterExitReadOnlyJob.(*components.JobStateless)),
 		recoverTabletCells(ycClient),
-		//updateOpArchive(),
-		//updateQTState(),
+		initOpArchiveStep,
+		updateOpArchiveStep,
+		initQTStep,
 		disableSafeMode(ycClient),
 	)
 	if err != nil {

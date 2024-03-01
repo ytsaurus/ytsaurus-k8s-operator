@@ -5,11 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"go.ytsaurus.tech/library/go/ptr"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
-
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -19,15 +14,16 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
+type Scheduler = scheduler
 type scheduler struct {
 	localServerComponent
-	cfgen         *ytconfig.Generator
-	master        Component
-	execNodes     []Component
-	tabletNodes   []Component
-	initUser      *InitJob
-	initOpArchive *InitJob
-	secret        *resources.StringSecret
+	cfgen       *ytconfig.Generator
+	master      Component
+	execNodes   []Component
+	tabletNodes []Component
+	//initUser    *InitJob
+	//initOpArchive *JobStateless
+	secret *resources.StringSecret
 }
 
 func NewScheduler(
@@ -62,24 +58,24 @@ func NewScheduler(
 		master:               master,
 		execNodes:            execNodes,
 		tabletNodes:          tabletNodes,
-		initUser: NewInitJob(
-			&l,
-			ytsaurus.APIProxy(),
-			ytsaurus,
-			resource.Spec.ImagePullSecrets,
-			"user",
-			consts.ClientConfigFileName,
-			resource.Spec.CoreImage,
-			cfgen.GetNativeClientConfig),
-		initOpArchive: NewInitJob(
-			&l,
-			ytsaurus.APIProxy(),
-			ytsaurus,
-			resource.Spec.ImagePullSecrets,
-			"op-archive",
-			consts.ClientConfigFileName,
-			resource.Spec.CoreImage,
-			cfgen.GetNativeClientConfig),
+		//initUser: NewInitJob(
+		//	&l,
+		//	ytsaurus.APIProxy(),
+		//	ytsaurus,
+		//	resource.Spec.ImagePullSecrets,
+		//	"user",
+		//	consts.ClientConfigFileName,
+		//	resource.Spec.CoreImage,
+		//	cfgen.GetNativeClientConfig),
+		//initOpArchive: NewInitJob(
+		//	&l,
+		//	ytsaurus.APIProxy(),
+		//	resource.Spec.ImagePullSecrets,
+		//	"op-archive",
+		//	consts.ClientConfigFileName,
+		//	resource.Spec.CoreImage,
+		//	cfgen.GetNativeClientConfig,
+		//),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			&l,
@@ -94,8 +90,8 @@ func (s *scheduler) IsUpdatable() bool {
 func (s *scheduler) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		s.server,
-		s.initOpArchive,
-		s.initUser,
+		//s.initOpArchive,
+		//s.initUser,
 		s.secret,
 	)
 }
@@ -114,161 +110,106 @@ func (s *scheduler) Fetch(ctx context.Context) error {
 //	return err
 //}
 
-func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+//func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+//	var err error
+//
+//	if ytv1.IsReadyToUpdateClusterState(s.ytsaurus.GetClusterState()) && s.server.needUpdate() {
+//		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+//	}
+//
+//	if s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+//		if IsUpdatingComponent(s.ytsaurus, s) {
+//			if s.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+//				if !dry {
+//					err = removePods(ctx, s.server, &s.localComponent)
+//				}
+//				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+//			}
+//
+//			//if status, err := s.updateOpArchive(ctx, dry); status != nil {
+//			//	return *status, err
+//			//}
+//
+//			if s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+//				s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForOpArchiveUpdate {
+//				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
+//			}
+//		} else {
+//			return NewComponentStatus(SyncStatusReady, "Not updating component"), err
+//		}
+//	}
+//
+//	if !IsRunningStatus(s.master.Status(ctx).SyncStatus) {
+//		return WaitingStatus(SyncStatusBlocked, s.master.GetName()), err
+//	}
+//
+//	if s.execNodes == nil || len(s.execNodes) > 0 {
+//		for _, end := range s.execNodes {
+//			if !IsRunningStatus(end.Status(ctx).SyncStatus) {
+//				// It makes no sense to start scheduler without exec nodes.
+//				return WaitingStatus(SyncStatusBlocked, end.GetName()), err
+//			}
+//		}
+//	}
+//
+//	if s.secret.NeedSync(consts.TokenSecretKey, "") {
+//		if !dry {
+//			secretSpec := s.secret.Build()
+//			secretSpec.StringData = map[string]string{
+//				consts.TokenSecretKey: ytconfig.RandString(30),
+//			}
+//			err = s.secret.Sync(ctx)
+//		}
+//		return WaitingStatus(SyncStatusPending, s.secret.Name()), err
+//	}
+//
+//	if s.NeedSync() {
+//		if !dry {
+//			err = s.server.Sync(ctx)
+//		}
+//		return WaitingStatus(SyncStatusPending, "components"), err
+//	}
+//
+//	if !s.server.arePodsReady(ctx) {
+//		return WaitingStatus(SyncStatusBlocked, "pods"), err
+//	}
+//
+//	if !s.NeedOpArchiveInit() {
+//		// Don't initialize operations archive.
+//		return SimpleStatus(SyncStatusReady), err
+//	}
+//
+//	return SimpleStatus(SyncStatusReady), nil
+//}
 
-	if ytv1.IsReadyToUpdateClusterState(s.ytsaurus.GetClusterState()) && s.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
-	}
+//func (s *scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatus, error) {
+//	if !dry {
+//		s.initUser.SetInitScript(s.GetInitOpArchiveScript())
+//	}
+//
+//	status, err := s.initUser.Sync(ctx, dry)
+//	if status.SyncStatus != SyncStatusReady {
+//		return status, err
+//	}
+//
+//	for _, tnd := range s.tabletNodes {
+//		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
+//			// Wait for tablet nodes to proceed with operations archive init.
+//			return WaitingStatus(SyncStatusBlocked, tnd.GetName()), err
+//		}
+//	}
+//
+//	if !dry {
+//		s.prepareInitOperationArchive()
+//	}
+//	return s.initOpArchive.Sync(ctx, dry)
+//}
 
-	if s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(s.ytsaurus, s) {
-			if s.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-				if !dry {
-					err = removePods(ctx, s.server, &s.localComponent)
-				}
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
-			}
-
-			if status, err := s.updateOpArchive(ctx, dry); status != nil {
-				return *status, err
-			}
-
-			if s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
-				s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForOpArchiveUpdate {
-				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
-			}
-		} else {
-			return NewComponentStatus(SyncStatusReady, "Not updating component"), err
-		}
-	}
-
-	if !IsRunningStatus(s.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, s.master.GetName()), err
-	}
-
-	if s.execNodes == nil || len(s.execNodes) > 0 {
-		for _, end := range s.execNodes {
-			if !IsRunningStatus(end.Status(ctx).SyncStatus) {
-				// It makes no sense to start scheduler without exec nodes.
-				return WaitingStatus(SyncStatusBlocked, end.GetName()), err
-			}
-		}
-	}
-
-	if s.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			secretSpec := s.secret.Build()
-			secretSpec.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
-			}
-			err = s.secret.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, s.secret.Name()), err
-	}
-
-	if s.NeedSync() {
-		if !dry {
-			err = s.server.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, "components"), err
-	}
-
-	if !s.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
-	}
-
-	if !s.needOpArchiveInit() {
-		// Don't initialize operations archive.
-		return SimpleStatus(SyncStatusReady), err
-	}
-
-	return s.initOpAchieve(ctx, dry)
-}
-
-func (s *scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatus, error) {
-	if !dry {
-		s.initUser.SetInitScript(s.createInitUserScript())
-	}
-
-	status, err := s.initUser.Sync(ctx, dry)
-	if status.SyncStatus != SyncStatusReady {
-		return status, err
-	}
-
-	for _, tnd := range s.tabletNodes {
-		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
-			// Wait for tablet nodes to proceed with operations archive init.
-			return WaitingStatus(SyncStatusBlocked, tnd.GetName()), err
-		}
-	}
-
-	if !dry {
-		s.prepareInitOperationArchive()
-	}
-	return s.initOpArchive.Sync(ctx, dry)
-}
-
-func (s *scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentStatus, error) {
-	var err error
-	switch s.ytsaurus.GetUpdateState() {
-	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
-		if !s.needOpArchiveInit() {
-			s.setConditionNotNecessaryToUpdateOpArchive(ctx)
-			return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
-		}
-		if !s.initOpArchive.isRestartPrepared() {
-			return ptr.T(SimpleStatus(SyncStatusUpdating)), s.initOpArchive.prepareRestart(ctx, dry)
-		}
-		if !dry {
-			s.setConditionOpArchivePreparedForUpdating(ctx)
-		}
-		return ptr.T(SimpleStatus(SyncStatusUpdating)), err
-	case ytv1.UpdateStateWaitingForOpArchiveUpdate:
-		if !s.initOpArchive.isRestartCompleted() {
-			return nil, nil
-		}
-		if !dry {
-			s.setConditionOpArchiveUpdated(ctx)
-		}
-		return ptr.T(SimpleStatus(SyncStatusUpdating)), err
-	default:
-		return nil, nil
-	}
-}
-
-func (s *scheduler) needOpArchiveInit() bool {
+func (s *scheduler) NeedOpArchiveInit() bool {
 	return s.tabletNodes != nil && len(s.tabletNodes) > 0
 }
 
-func (s *scheduler) setConditionNotNecessaryToUpdateOpArchive(ctx context.Context) {
-	s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionNotNecessaryToUpdateOpArchive,
-		Status:  metav1.ConditionTrue,
-		Reason:  "NotNecessaryToUpdateOpArchive",
-		Message: fmt.Sprintf("Operations archive does not need to be updated"),
-	})
-}
-
-func (s *scheduler) setConditionOpArchivePreparedForUpdating(ctx context.Context) {
-	s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionOpArchivePreparedForUpdating,
-		Status:  metav1.ConditionTrue,
-		Reason:  "OpArchivePreparedForUpdating",
-		Message: fmt.Sprintf("Operations archive prepared for updating"),
-	})
-}
-
-func (s *scheduler) setConditionOpArchiveUpdated(ctx context.Context) {
-	s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionOpArchiveUpdated,
-		Status:  metav1.ConditionTrue,
-		Reason:  "OpArchiveUpdated",
-		Message: fmt.Sprintf("Operations archive updated"),
-	})
-}
-
-func (s *scheduler) createInitUserScript() string {
+func (s *scheduler) GetInitOpArchiveScript() string {
 	token, _ := s.secret.GetValue(consts.TokenSecretKey)
 	commands := createUserCommand("operation_archivarius", "", token, true)
 	script := []string{
@@ -279,16 +220,16 @@ func (s *scheduler) createInitUserScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (s *scheduler) prepareInitOperationArchive() {
+func (s *scheduler) GetUpdateOpArchiveScript() string {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		fmt.Sprintf("/usr/bin/init_operation_archive --force --latest --proxy %s",
 			s.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
 		SetWithIgnoreExisting("//sys/cluster_nodes/@config", "'{\"%true\" = {job_agent={enable_job_reporter=%true}}}'"),
 	}
+	return strings.Join(script, "\n")
+}
 
-	s.initOpArchive.SetInitScript(strings.Join(script, "\n"))
-	job := s.initOpArchive.Build()
-	container := &job.Spec.Template.Spec.Containers[0]
-	container.EnvFrom = []corev1.EnvFromSource{s.secret.GetEnvSource()}
+func (s *scheduler) GetSecretEnv() corev1.EnvFromSource {
+	return s.secret.GetEnvSource()
 }
