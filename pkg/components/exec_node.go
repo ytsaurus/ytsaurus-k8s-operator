@@ -52,10 +52,9 @@ func NewExecNode(
 	return &ExecNode{
 		localComponent: newLocalComponent(&l, ytsaurus),
 		baseExecNode: baseExecNode{
-			server:     srv,
-			cfgen:      cfgen,
-			sidecars:   spec.Sidecars,
-			privileged: spec.Privileged,
+			server: srv,
+			cfgen:  cfgen,
+			spec:   &spec,
 		},
 		master: master,
 	}
