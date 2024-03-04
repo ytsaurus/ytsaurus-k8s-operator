@@ -199,8 +199,8 @@ func (g *BaseGenerator) GetMasterCachesServiceName() string {
 }
 
 func (g *BaseGenerator) GetMasterCachesPodNames() []string {
-	podNames := make([]string, 0, g.masterCachesInstanceCount)
-	for i := 0; i < int(g.masterCachesInstanceCount); i++ {
+	podNames := make([]string, 0, g.masterCachesSpec.InstanceSpec.InstanceCount)
+	for i := 0; i < int(g.masterCachesSpec.InstanceSpec.InstanceCount); i++ {
 		podNames = append(podNames, fmt.Sprintf("%s-%d", g.GetMasterCachesStatefulSetName(), i))
 	}
 

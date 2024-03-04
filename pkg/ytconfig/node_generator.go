@@ -15,7 +15,8 @@ func NewRemoteNodeGenerator(
 	clusterDomain string,
 	commonSpec ytv1.CommonSpec,
 	masterConnectionSpec ytv1.MasterConnectionSpec,
-	masterCachesSpec *ytv1.MasterCachesSpec,
+	masterCachesSpec ytv1.MasterCachesSpec,
+	// masterCachesConnectionSpec ytv1.MasterCachesConnectionSpec,
 ) *NodeGenerator {
 	baseGenerator := NewRemoteBaseGenerator(
 		key,

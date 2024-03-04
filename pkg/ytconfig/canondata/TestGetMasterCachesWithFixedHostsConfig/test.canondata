@@ -70,8 +70,6 @@
                 "host2.external.address:9018";
                 "host3.external.address:9018";
             ];
-            peers=[
-            ];
             "cell_id"="65726e65-ad6b7562-259-79747361";
             "enable_master_cache_discovery"=%false;
         };

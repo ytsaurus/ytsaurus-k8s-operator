@@ -11848,6 +11848,8 @@ spec:
                             type: array
                         type: object
                     type: object
+                  cellTagMasterCaches:
+                    type: integer
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
@@ -13442,6 +13444,8 @@ spec:
                       - name
                       type: object
                     type: array
+                required:
+                - cellTagMasterCaches
                 type: object
               nativeTransport:
                 description: Common config for native RPC bus transport.

@@ -76,8 +76,6 @@
         "master_cache"={
             addresses=[
             ];
-            peers=[
-            ];
             "cell_id"="";
             "enable_master_cache_discovery"=%false;
         };

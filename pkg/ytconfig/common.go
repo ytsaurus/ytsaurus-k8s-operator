@@ -32,7 +32,6 @@ type MasterCache struct {
 }
 
 type Driver struct {
-	MasterCache        MasterCache        `yson:"master_cache,omitempty"`
 	TimestampProviders TimestampProviders `yson:"timestamp_provider,omitempty"`
 	PrimaryMaster      MasterCell         `yson:"primary_master,omitempty"`
 	APIVersion         int                `yson:"api_version,omitempty"`

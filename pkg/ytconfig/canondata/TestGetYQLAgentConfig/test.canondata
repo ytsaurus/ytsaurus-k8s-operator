@@ -83,8 +83,6 @@
                 "msc-test-1.master-caches-test.fake.svc.fake.zone:9018";
                 "msc-test-2.master-caches-test.fake.svc.fake.zone:9018";
             ];
-            peers=[
-            ];
             "cell_id"="65726e65-ad6b7562-259-79747361";
             "enable_master_cache_discovery"=%false;
         };

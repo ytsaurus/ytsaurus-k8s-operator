@@ -127,8 +127,7 @@ func (g *Generator) fillDriver(c *Driver) {
 
 	c.PrimaryMaster.Addresses = g.getMasterAddresses()
 	c.PrimaryMaster.CellID = generateCellID(g.ytsaurus.Spec.PrimaryMasters.CellTag)
-
-	c.MasterCache.EnableMasterCacheDiscover = true
+	//c.PrimaryMaster.Peers = g.getMasterHydraPeers()
 	g.fillPrimaryMaster(&c.PrimaryMaster)
 }
 
@@ -705,15 +704,14 @@ func (g *Generator) getMasterCachesConfigImpl() (MasterCacheServer, error) {
 		return MasterCacheServer{}, err
 	}
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
-	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
 	return c, nil
 }
 
 func (g *Generator) GetMasterCachesConfig() ([]byte, error) {
-	//if g.ytsaurus.Spec.MasterCaches == nil {
-	//	return []byte{}, nil
-	//}
+	if g.ytsaurus.Spec.MasterCaches == nil {
+		return []byte{}, nil
+	}
 	c, err := g.getMasterCachesConfigImpl()
 	if err != nil {
 		return nil, err
@@ -729,8 +727,8 @@ func (g *BaseGenerator) getMasterCachesPodFqdnSuffix() string {
 }
 
 func (g *BaseGenerator) getMasterCachesAddresses() []string {
-	hosts := g.masterCachesSpec.HostAddresses
-	if hosts != nil {
+	if g.masterCachesSpec != nil {
+		hosts := g.masterCachesSpec.HostAddresses
 		if len(hosts) == 0 {
 			masterCachesPodSuffix := g.getMasterCachesPodFqdnSuffix()
 			for _, podName := range g.GetMasterCachesPodNames() {
@@ -740,7 +738,6 @@ func (g *BaseGenerator) getMasterCachesAddresses() []string {
 				))
 			}
 		}
-
 		addresses := make([]string, len(hosts))
 		for idx, host := range hosts {
 			addresses[idx] = fmt.Sprintf("%s:%d", host, consts.MasterCachesRPCPort)

@@ -427,10 +427,15 @@ type DeprecatedSpytSpec struct {
 	SpytVersion  string `json:"spytVersion,omitempty"`
 }
 
+type MasterCachesConnectionSpec struct {
+	CellTag       int16    `json:"cellTagMasterCaches"`
+	HostAddresses []string `json:"hostAddressesMasterCaches,omitempty"`
+}
+
 type MasterCachesSpec struct {
-	InstanceSpec     `json:",inline"`
-	HostAddresses    []string `json:"hostAddressesMasterCaches,omitempty"`
-	HostAddressLabel string   `json:"hostAddressesLabel,omitempty"`
+	InstanceSpec               `json:",inline"`
+	MasterCachesConnectionSpec `json:",inline"`
+	HostAddressLabel           string `json:"hostAddressesLabel,omitempty"`
 }
 
 // CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.

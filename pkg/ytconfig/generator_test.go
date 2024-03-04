@@ -378,7 +378,7 @@ func getYtsaurusWithEverything() *v1.Ytsaurus {
 	ytsaurus = withTCPPRoxies(ytsaurus)
 	ytsaurus = withUI(ytsaurus)
 	ytsaurus = withYQLAgent(ytsaurus)
-	ytsaurus = withMasterCashes(ytsaurus)
+	ytsaurus = withMasterCaches(ytsaurus)
 	return ytsaurus
 }
 
@@ -472,7 +472,7 @@ func withUICustom(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 	return ytsaurus
 }
 
-func withMasterCashes(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
+func withMasterCaches(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 	ytsaurus.Spec.MasterCaches = &v1.MasterCachesSpec{InstanceSpec: testBasicInstanceSpec}
 	return ytsaurus
 }
@@ -483,7 +483,7 @@ func withYQLAgent(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 }
 
 func withFixedMasterCachesHosts(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
-	ytsaurus.Spec.MasterCaches.HostAddresses = testMasterCachesExternalHosts
+	ytsaurus.Spec.MasterCaches.MasterCachesConnectionSpec.HostAddresses = testMasterCachesExternalHosts
 	return ytsaurus
 }
 
@@ -609,12 +609,21 @@ func getMasterConnectionSpecWithFixedMasterHosts() v1.MasterConnectionSpec {
 	return spec
 }
 
+//func getMasterCachesConnectionSpec() v1.MasterCachesConnectionSpec {
+//	return v1.MasterCachesConnectionSpec{}
+//}
+
 func getMasterCachesSpec() v1.MasterCachesSpec {
-	return v1.MasterCachesSpec{}
+	return v1.MasterCachesSpec{
+		InstanceSpec: v1.InstanceSpec{
+			InstanceCount: 3,
+		},
+		HostAddressLabel: "",
+	}
 }
 
-func getMasterCachesSpecWithFixedHosts() *v1.MasterCachesSpec {
+func getMasterCachesSpecWithFixedHosts() v1.MasterCachesSpec {
 	spec := getMasterCachesSpec()
-	spec.HostAddresses = testMasterCachesExternalHosts
-	return &spec
+	spec.MasterCachesConnectionSpec.HostAddresses = testMasterCachesExternalHosts
+	return spec
 }
