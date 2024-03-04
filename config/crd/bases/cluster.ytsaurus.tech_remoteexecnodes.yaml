@@ -864,6 +864,24 @@ spec:
               rack:
                 description: Name of the node rack.
                 type: string
+              readinessProbeParams:
+                properties:
+                  failureThreshold:
+                    format: int32
+                    type: integer
+                  initialDelaySeconds:
+                    format: int32
+                    type: integer
+                  periodSeconds:
+                    format: int32
+                    type: integer
+                  successThreshold:
+                    format: int32
+                    type: integer
+                  timeoutSeconds:
+                    format: int32
+                    type: integer
+                type: object
               remoteClusterSpec:
                 description: LocalObjectReference contains enough information to let
                   you locate the reference
