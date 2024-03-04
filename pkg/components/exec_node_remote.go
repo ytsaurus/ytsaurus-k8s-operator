@@ -51,10 +51,9 @@ func NewRemoteExecNodes(
 	return &RemoteExecNode{
 		baseComponent: baseComponent{labeller: &l},
 		baseExecNode: baseExecNode{
-			server:     srv,
-			cfgen:      cfgen,
-			sidecars:   spec.Sidecars,
-			privileged: spec.Privileged,
+			server: srv,
+			cfgen:  cfgen,
+			spec:   &spec,
 		},
 	}
 }
