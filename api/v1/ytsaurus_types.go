@@ -234,6 +234,8 @@ type InstanceSpec struct {
 	MinReadyInstanceCount *int                            `json:"minReadyInstanceCount,omitempty"`
 	Locations             []LocationSpec                  `json:"locations,omitempty"`
 	VolumeClaimTemplates  []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
+	//+optional
+	RuntimeClassName *string `json:"runtimeClassName,omitempty"`
 	// Deprecated. Use Affinity.PodAntiAffinity instead.
 	EnableAntiAffinity *bool                  `json:"enableAntiAffinity,omitempty"`
 	Loggers            []TextLoggerSpec       `json:"loggers,omitempty"`

@@ -548,6 +548,11 @@ func (in *InstanceSpec) DeepCopyInto(out *InstanceSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.RuntimeClassName != nil {
+		in, out := &in.RuntimeClassName, &out.RuntimeClassName
+		*out = new(string)
+		**out = **in
+	}
 	if in.EnableAntiAffinity != nil {
 		in, out := &in.EnableAntiAffinity, &out.EnableAntiAffinity
 		*out = new(bool)

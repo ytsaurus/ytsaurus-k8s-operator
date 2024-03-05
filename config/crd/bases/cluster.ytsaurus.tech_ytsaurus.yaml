@@ -886,6 +886,8 @@ spec:
                           resources required.
                         type: object
                     type: object
+                  runtimeClassName:
+                    type: string
                   structuredLoggers:
                     items:
                       properties:
@@ -3080,6 +3082,8 @@ spec:
                             resources required.
                           type: object
                       type: object
+                    runtimeClassName:
+                      type: string
                     structuredLoggers:
                       items:
                         properties:
@@ -5280,6 +5284,8 @@ spec:
                           resources required.
                         type: object
                     type: object
+                  runtimeClassName:
+                    type: string
                   structuredLoggers:
                     items:
                       properties:
@@ -7550,6 +7556,8 @@ spec:
                             resources required.
                           type: object
                       type: object
+                    runtimeClassName:
+                      type: string
                     sidecars:
                       description: List of sidecar containers as yaml of corev1.Container.
                       items:
@@ -9777,6 +9785,8 @@ spec:
                     role:
                       default: default
                       minLength: 1
+                      type: string
+                    runtimeClassName:
                       type: string
                     serviceType:
                       default: NodePort
@@ -12062,6 +12072,8 @@ spec:
                           resources required.
                         type: object
                     type: object
+                  runtimeClassName:
+                    type: string
                   structuredLoggers:
                     items:
                       properties:
@@ -14242,6 +14254,8 @@ spec:
                           resources required.
                         type: object
                     type: object
+                  runtimeClassName:
+                    type: string
                   structuredLoggers:
                     items:
                       properties:
@@ -16420,6 +16434,8 @@ spec:
                           resources required.
                         type: object
                     type: object
+                  runtimeClassName:
+                    type: string
                   structuredLoggers:
                     items:
                       properties:
@@ -18611,6 +18627,8 @@ spec:
                     role:
                       default: default
                       minLength: 1
+                      type: string
+                    runtimeClassName:
                       type: string
                     serviceType:
                       description: Service Type string describes ingress methods for
@@ -20832,6 +20850,8 @@ spec:
                           resources required.
                         type: object
                     type: object
+                  runtimeClassName:
+                    type: string
                   structuredLoggers:
                     items:
                       properties:
@@ -23029,6 +23049,8 @@ spec:
                             resources required.
                           type: object
                       type: object
+                    runtimeClassName:
+                      type: string
                     structuredLoggers:
                       items:
                         properties:
@@ -25276,6 +25298,8 @@ spec:
                             resources required.
                           type: object
                       type: object
+                    runtimeClassName:
+                      type: string
                     structuredLoggers:
                       items:
                         properties:
@@ -27494,6 +27518,8 @@ spec:
                     role:
                       default: default
                       minLength: 1
+                      type: string
+                    runtimeClassName:
                       type: string
                     serviceType:
                       description: Service Type string describes ingress methods for
@@ -29862,6 +29888,8 @@ spec:
                           resources required.
                         type: object
                     type: object
+                  runtimeClassName:
+                    type: string
                   structuredLoggers:
                     items:
                       properties:

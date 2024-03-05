@@ -251,6 +251,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 
 	setHostnameAsFQDN := true
 	statefulSet.Spec.Template.Spec = corev1.PodSpec{
+		RuntimeClassName:  s.instanceSpec.RuntimeClassName,
 		ImagePullSecrets:  s.commonSpec.ImagePullSecrets,
 		SetHostnameAsFQDN: &setHostnameAsFQDN,
 		Containers: []corev1.Container{
