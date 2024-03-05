@@ -104,7 +104,7 @@ func (c *Chyt) createInitScript() string {
 func (c *Chyt) createInitChPublicScript() string {
 	script := []string{
 		initJobPrologue,
-		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v", c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole), c.cfgen.GetStrawberryControllerServiceAddress()),
+		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v YT_LOG_LEVEL=debug", c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole), c.cfgen.GetStrawberryControllerServiceAddress()),
 		"yt create scheduler_pool --attributes '{name=chyt; pool_tree=default}' --ignore-existing",
 		"yt clickhouse ctl create ch_public || true",
 		"yt clickhouse ctl set-option --alias ch_public pool chyt",
