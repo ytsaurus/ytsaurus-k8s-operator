@@ -816,6 +816,9 @@ spec:
                     type: array
                   minReadyInstanceCount:
                     type: integer
+                  monitoringPort:
+                    format: int32
+                    type: integer
                   nativeTransport:
                     description: Component config for native RPC bus transport.
                     properties:
@@ -3004,6 +3007,9 @@ spec:
                         type: object
                       type: array
                     minReadyInstanceCount:
+                      type: integer
+                    monitoringPort:
+                      format: int32
                       type: integer
                     name:
                       default: default
@@ -5213,6 +5219,9 @@ spec:
                       type: object
                     type: array
                   minReadyInstanceCount:
+                    type: integer
+                  monitoringPort:
+                    format: int32
                     type: integer
                   nativeTransport:
                     description: Component config for native RPC bus transport.
@@ -7476,6 +7485,9 @@ spec:
                       type: array
                     minReadyInstanceCount:
                       type: integer
+                    monitoringPort:
+                      format: int32
+                      type: integer
                     name:
                       default: default
                       minLength: 1
@@ -9711,6 +9723,9 @@ spec:
                         type: object
                       type: array
                     minReadyInstanceCount:
+                      type: integer
+                    monitoringPort:
+                      format: int32
                       type: integer
                     nativeTransport:
                       description: Component config for native RPC bus transport.
@@ -14192,6 +14207,9 @@ spec:
                     type: integer
                   minReadyInstanceCount:
                     type: integer
+                  monitoringPort:
+                    format: int32
+                    type: integer
                   nativeTransport:
                     description: Component config for native RPC bus transport.
                     properties:
@@ -16374,6 +16392,9 @@ spec:
                     type: array
                   minReadyInstanceCount:
                     type: integer
+                  monitoringPort:
+                    format: int32
+                    type: integer
                   nativeTransport:
                     description: Component config for native RPC bus transport.
                     properties:
@@ -18553,6 +18574,9 @@ spec:
                       type: object
                     type: array
                   minReadyInstanceCount:
+                    type: integer
+                  monitoringPort:
+                    format: int32
                     type: integer
                   nativeTransport:
                     description: Component config for native RPC bus transport.
@@ -20740,6 +20764,9 @@ spec:
                         type: object
                       type: array
                     minReadyInstanceCount:
+                      type: integer
+                    monitoringPort:
+                      format: int32
                       type: integer
                     nativeTransport:
                       description: Component config for native RPC bus transport.
@@ -22970,6 +22997,9 @@ spec:
                     type: array
                   minReadyInstanceCount:
                     type: integer
+                  monitoringPort:
+                    format: int32
+                    type: integer
                   nativeTransport:
                     description: Component config for native RPC bus transport.
                     properties:
@@ -25168,6 +25198,9 @@ spec:
                     maxSnapshotCountToKeep:
                       type: integer
                     minReadyInstanceCount:
+                      type: integer
+                    monitoringPort:
+                      format: int32
                       type: integer
                     nativeTransport:
                       description: Component config for native RPC bus transport.
@@ -27411,6 +27444,9 @@ spec:
                       type: array
                     minReadyInstanceCount:
                       type: integer
+                    monitoringPort:
+                      format: int32
+                      type: integer
                     name:
                       default: default
                       minLength: 1
@@ -29629,6 +29665,9 @@ spec:
                       format: int32
                       type: integer
                     minReadyInstanceCount:
+                      type: integer
+                    monitoringPort:
+                      format: int32
                       type: integer
                     nativeTransport:
                       description: Component config for native RPC bus transport.
@@ -32007,6 +32046,9 @@ spec:
                       type: object
                     type: array
                   minReadyInstanceCount:
+                    type: integer
+                  monitoringPort:
+                    format: int32
                     type: integer
                   nativeTransport:
                     description: Component config for native RPC bus transport.

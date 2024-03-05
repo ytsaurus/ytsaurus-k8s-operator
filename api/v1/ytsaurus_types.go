@@ -228,7 +228,7 @@ type InstanceSpec struct {
 	Volumes      []corev1.Volume      `json:"volumes,omitempty"`
 	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
 	//+optional
-	ReadinessProbeParams  HealthcheckProbeParams          `json:"readinessProbeParams,omitempty"`
+	ReadinessProbeParams  *HealthcheckProbeParams         `json:"readinessProbeParams,omitempty"`
 	Resources             corev1.ResourceRequirements     `json:"resources,omitempty"`
 	InstanceCount         int32                           `json:"instanceCount,omitempty"`
 	MinReadyInstanceCount *int                            `json:"minReadyInstanceCount,omitempty"`
@@ -237,12 +237,14 @@ type InstanceSpec struct {
 	//+optional
 	RuntimeClassName *string `json:"runtimeClassName,omitempty"`
 	// Deprecated. Use Affinity.PodAntiAffinity instead.
-	EnableAntiAffinity *bool                  `json:"enableAntiAffinity,omitempty"`
-	Loggers            []TextLoggerSpec       `json:"loggers,omitempty"`
-	StructuredLoggers  []StructuredLoggerSpec `json:"structuredLoggers,omitempty"`
-	Affinity           *corev1.Affinity       `json:"affinity,omitempty"`
-	NodeSelector       map[string]string      `json:"nodeSelector,omitempty"`
-	Tolerations        []corev1.Toleration    `json:"tolerations,omitempty"`
+	EnableAntiAffinity *bool `json:"enableAntiAffinity,omitempty"`
+	//+optional
+	MonitoringPort    *int32                 `json:"monitoringPort,omitempty"`
+	Loggers           []TextLoggerSpec       `json:"loggers,omitempty"`
+	StructuredLoggers []StructuredLoggerSpec `json:"structuredLoggers,omitempty"`
+	Affinity          *corev1.Affinity       `json:"affinity,omitempty"`
+	NodeSelector      map[string]string      `json:"nodeSelector,omitempty"`
+	Tolerations       []corev1.Toleration    `json:"tolerations,omitempty"`
 	// Component config for native RPC bus transport.
 	//+optional
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`

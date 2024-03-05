@@ -20,6 +20,7 @@ import (
 )
 
 const (
+	monitoringPortName     = "monitoring"
 	readinessProbeHTTPPath = "/orchid/service"
 )
 
@@ -87,6 +88,11 @@ func newServerConfigured(
 	if instanceSpec.Image != nil {
 		image = *instanceSpec.Image
 	}
+
+	if instanceSpec.MonitoringPort != nil {
+		l.MonitoringPort = *instanceSpec.MonitoringPort
+	}
+
 	var caBundle *resources.CABundle
 	if caBundleSpec := commonSpec.CABundle; caBundleSpec != nil {
 		caBundle = resources.NewCABundle(caBundleSpec.Name, consts.CABundleVolumeName, consts.CABundleMountPoint)
@@ -249,6 +255,11 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	configPostprocessingCommand := getConfigPostprocessingCommand(fileNames[0])
 	configPostprocessEnv := getConfigPostprocessEnv()
 
+	var readinessProbeParams ytv1.HealthcheckProbeParams
+	if s.instanceSpec.ReadinessProbeParams != nil {
+		readinessProbeParams = *s.instanceSpec.ReadinessProbeParams
+	}
+
 	setHostnameAsFQDN := true
 	statefulSet.Spec.Template.Spec = corev1.PodSpec{
 		RuntimeClassName:  s.instanceSpec.RuntimeClassName,
@@ -260,19 +271,26 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Name:         consts.YTServerContainerName,
 				Command:      []string{s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, fileNames[0])},
 				VolumeMounts: volumeMounts,
-				Resources:    s.instanceSpec.Resources,
+				Ports: []corev1.ContainerPort{
+					{
+						Name:          monitoringPortName,
+						ContainerPort: s.labeller.MonitoringPort,
+						Protocol:      corev1.ProtocolTCP,
+					},
+				},
+				Resources: s.instanceSpec.Resources,
 				ReadinessProbe: &corev1.Probe{
 					ProbeHandler: corev1.ProbeHandler{
 						HTTPGet: &corev1.HTTPGetAction{
-							Port: intstr.FromInt(int(s.labeller.MonitoringPort)),
+							Port: intstr.FromString(monitoringPortName),
 							Path: readinessProbeHTTPPath,
 						},
 					},
-					InitialDelaySeconds: s.instanceSpec.ReadinessProbeParams.InitialDelaySeconds,
-					TimeoutSeconds:      s.instanceSpec.ReadinessProbeParams.TimeoutSeconds,
-					PeriodSeconds:       s.instanceSpec.ReadinessProbeParams.PeriodSeconds,
-					SuccessThreshold:    s.instanceSpec.ReadinessProbeParams.SuccessThreshold,
-					FailureThreshold:    s.instanceSpec.ReadinessProbeParams.FailureThreshold,
+					InitialDelaySeconds: readinessProbeParams.InitialDelaySeconds,
+					TimeoutSeconds:      readinessProbeParams.TimeoutSeconds,
+					PeriodSeconds:       readinessProbeParams.PeriodSeconds,
+					SuccessThreshold:    readinessProbeParams.SuccessThreshold,
+					FailureThreshold:    readinessProbeParams.FailureThreshold,
 				},
 			},
 		},
