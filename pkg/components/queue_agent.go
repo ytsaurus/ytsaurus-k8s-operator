@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
@@ -44,8 +45,11 @@ func NewQueueAgent(
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: "yt-queue-agent",
 		ComponentName:  "QueueAgent",
-		MonitoringPort: consts.QueueAgentMonitoringPort,
 		Annotations:    resource.Spec.ExtraPodAnnotations,
+	}
+
+	if resource.Spec.QueueAgents.InstanceSpec.MonitoringPort == nil {
+		resource.Spec.QueueAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.QueueAgentMonitoringPort)
 	}
 
 	srv := newServer(

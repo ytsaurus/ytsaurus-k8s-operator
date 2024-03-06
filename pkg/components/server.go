@@ -88,10 +88,6 @@ func newServerConfigured(
 		image = *instanceSpec.Image
 	}
 
-	if instanceSpec.MonitoringPort != nil {
-		l.MonitoringPort = *instanceSpec.MonitoringPort
-	}
-
 	var caBundle *resources.CABundle
 	if caBundleSpec := commonSpec.CABundle; caBundleSpec != nil {
 		caBundle = resources.NewCABundle(caBundleSpec.Name, consts.CABundleVolumeName, consts.CABundleMountPoint)
@@ -129,6 +125,7 @@ func newServerConfigured(
 			proxy,
 		),
 		monitoringService: resources.NewMonitoringService(
+			*instanceSpec.MonitoringPort,
 			l,
 			proxy,
 		),
@@ -273,7 +270,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Ports: []corev1.ContainerPort{
 					{
 						Name:          consts.YTMonitoringPortName,
-						ContainerPort: s.labeller.MonitoringPort,
+						ContainerPort: *s.instanceSpec.MonitoringPort,
 						Protocol:      corev1.ProtocolTCP,
 					},
 				},

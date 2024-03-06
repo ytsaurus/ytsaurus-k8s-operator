@@ -41,8 +41,11 @@ func NewScheduler(
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelScheduler,
 		ComponentName:  "Scheduler",
-		MonitoringPort: consts.SchedulerMonitoringPort,
 		Annotations:    resource.Spec.ExtraPodAnnotations,
+	}
+
+	if resource.Spec.Schedulers.InstanceSpec.MonitoringPort == nil {
+		resource.Spec.Schedulers.InstanceSpec.MonitoringPort = ptr.Int32(consts.SchedulerMonitoringPort)
 	}
 
 	srv := newServer(

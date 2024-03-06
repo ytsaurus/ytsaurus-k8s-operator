@@ -20,7 +20,6 @@ type Labeller struct {
 	ObjectMeta     *metav1.ObjectMeta
 	ComponentLabel string
 	ComponentName  string
-	MonitoringPort int32
 	Annotations    map[string]string
 }
 

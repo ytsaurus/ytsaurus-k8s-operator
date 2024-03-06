@@ -43,8 +43,11 @@ func NewQueryTracker(
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: "yt-query-tracker",
 		ComponentName:  "QueryTracker",
-		MonitoringPort: consts.QueryTrackerMonitoringPort,
 		Annotations:    resource.Spec.ExtraPodAnnotations,
+	}
+
+	if resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort == nil {
+		resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort = ptr.Int32(consts.QueryTrackerMonitoringPort)
 	}
 
 	srv := newServer(
