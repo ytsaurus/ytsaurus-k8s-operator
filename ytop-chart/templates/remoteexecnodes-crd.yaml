@@ -898,6 +898,8 @@ spec:
                       required.
                     type: object
                 type: object
+              runtimeClassName:
+                type: string
               sidecars:
                 description: List of sidecar containers as yaml of corev1.Container.
                 items:

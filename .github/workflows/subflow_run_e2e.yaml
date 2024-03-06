@@ -26,6 +26,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Run linters
+        shell: bash
+        run: |
+          make lint
+
       - name: Set up Helm
         uses: azure/setup-helm@v1
         with:
