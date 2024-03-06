@@ -20,7 +20,6 @@ import (
 )
 
 const (
-	monitoringPortName     = "monitoring"
 	readinessProbeHTTPPath = "/orchid/service"
 )
 
@@ -273,7 +272,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				VolumeMounts: volumeMounts,
 				Ports: []corev1.ContainerPort{
 					{
-						Name:          monitoringPortName,
+						Name:          consts.YTMonitoringPortName,
 						ContainerPort: s.labeller.MonitoringPort,
 						Protocol:      corev1.ProtocolTCP,
 					},
@@ -282,7 +281,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				ReadinessProbe: &corev1.Probe{
 					ProbeHandler: corev1.ProbeHandler{
 						HTTPGet: &corev1.HTTPGetAction{
-							Port: intstr.FromString(monitoringPortName),
+							Port: intstr.FromString(consts.YTMonitoringPortName),
 							Path: readinessProbeHTTPPath,
 						},
 					},
