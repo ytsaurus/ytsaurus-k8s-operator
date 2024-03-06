@@ -45,6 +45,6 @@ func getStrawberryController() StrawberryController {
 func getChytInitCluster() ChytInitCluster {
 	return ChytInitCluster{
 		StrawberryRoot: "//sys/strawberry",
-		Families:       []string{"chyt"},
+		Families:       []string{"chyt", "jupyt"},
 	}
 }
