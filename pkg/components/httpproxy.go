@@ -14,7 +14,7 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type httpProxy struct {
+type HttpProxy struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
 
@@ -32,7 +32,7 @@ func NewHTTPProxy(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
-	spec ytv1.HTTPProxiesSpec) Component {
+	spec ytv1.HTTPProxiesSpec) *HttpProxy {
 
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
@@ -73,7 +73,7 @@ func NewHTTPProxy(
 	balancingService.SetHttpNodePort(spec.HttpNodePort)
 	balancingService.SetHttpsNodePort(spec.HttpsNodePort)
 
-	return &httpProxy{
+	return &HttpProxy{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               masterReconciler,
@@ -84,18 +84,18 @@ func NewHTTPProxy(
 	}
 }
 
-func (hp *httpProxy) IsUpdatable() bool {
+func (hp *HttpProxy) IsUpdatable() bool {
 	return true
 }
 
-func (hp *httpProxy) Fetch(ctx context.Context) error {
+func (hp *HttpProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		hp.server,
 		hp.balancingService,
 	)
 }
 
-func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(hp.ytsaurus.GetClusterState()) && hp.server.needUpdate() {
@@ -140,7 +140,7 @@ func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (hp *httpProxy) Status(ctx context.Context) ComponentStatus {
+func (hp *HttpProxy) Status(ctx context.Context) ComponentStatus {
 	status, err := hp.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -149,7 +149,7 @@ func (hp *httpProxy) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (hp *httpProxy) Sync(ctx context.Context) error {
+func (hp *HttpProxy) Sync(ctx context.Context) error {
 	_, err := hp.doSync(ctx, false)
 	return err
 }

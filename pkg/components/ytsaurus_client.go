@@ -21,12 +21,12 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type YtsaurusClient interface {
+type internalYtsaurusClient interface {
 	Component
 	GetYtClient() yt.Client
 }
 
-type ytsaurusClient struct {
+type YtsaurusClient struct {
 	localComponent
 	cfgen     *ytconfig.Generator
 	httpProxy Component
@@ -41,17 +41,17 @@ func NewYtsaurusClient(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	httpProxy Component,
-) YtsaurusClient {
+) *YtsaurusClient {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelClient,
-		ComponentName:  "YtsaurusClient",
+		ComponentName:  "internalYtsaurusClient",
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
-	return &ytsaurusClient{
+	return &YtsaurusClient{
 		localComponent: newLocalComponent(&l, ytsaurus),
 		cfgen:          cfgen,
 		httpProxy:      httpProxy,
@@ -71,11 +71,11 @@ func NewYtsaurusClient(
 	}
 }
 
-func (yc *ytsaurusClient) IsUpdatable() bool {
+func (yc *YtsaurusClient) IsUpdatable() bool {
 	return false
 }
 
-func (yc *ytsaurusClient) Fetch(ctx context.Context) error {
+func (yc *YtsaurusClient) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		yc.secret,
 		yc.initUserJob,
@@ -83,7 +83,7 @@ func (yc *ytsaurusClient) Fetch(ctx context.Context) error {
 	)
 }
 
-func (yc *ytsaurusClient) createInitUserScript() string {
+func (yc *YtsaurusClient) createInitUserScript() string {
 	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
 	initJob := initJobWithNativeDriverPrologue()
 	return initJob + "\n" + strings.Join(createUserCommand(consts.YtsaurusOperatorUserName, "", token, true), "\n")
@@ -122,7 +122,7 @@ type MasterHydra struct {
 	State                MasterState `yson:"state"`
 }
 
-func (yc *ytsaurusClient) getAllMasters(ctx context.Context) ([]MasterInfo, error) {
+func (yc *YtsaurusClient) getAllMasters(ctx context.Context) ([]MasterInfo, error) {
 	var primaryMaster MasterInfo
 	err := yc.ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection/primary_master"), &primaryMaster, getReadOnlyGetOptions())
 	if err != nil {
@@ -140,13 +140,13 @@ func (yc *ytsaurusClient) getAllMasters(ctx context.Context) ([]MasterInfo, erro
 	return append(secondaryMasters, primaryMaster), nil
 }
 
-func (yc *ytsaurusClient) getMasterHydra(ctx context.Context, path string) (MasterHydra, error) {
+func (yc *YtsaurusClient) getMasterHydra(ctx context.Context, path string) (MasterHydra, error) {
 	var masterHydra MasterHydra
 	err := yc.ytClient.GetNode(ctx, ypath.Path(path), &masterHydra, getReadOnlyGetOptions())
 	return masterHydra, err
 }
 
-func (yc *ytsaurusClient) startBuildMasterSnapshots(ctx context.Context) error {
+func (yc *YtsaurusClient) startBuildMasterSnapshots(ctx context.Context) error {
 	var err error
 
 	allMastersReadOnly := true
@@ -174,7 +174,7 @@ func (yc *ytsaurusClient) startBuildMasterSnapshots(ctx context.Context) error {
 	return err
 }
 
-func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentStatus, error) {
+func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentStatus, error) {
 	var err error
 
 	switch yc.ytsaurus.GetUpdateState() {
@@ -501,12 +501,12 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 	return SimpleStatus(SyncStatusUpdating), err
 }
 
-func (yc *ytsaurusClient) getToken() string {
+func (yc *YtsaurusClient) getToken() string {
 	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
 	return token
 }
 
-func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 	if !IsRunningStatus(yc.httpProxy.Status(ctx).SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, yc.httpProxy.GetName()), err
@@ -565,7 +565,7 @@ func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (yc *ytsaurusClient) Status(ctx context.Context) ComponentStatus {
+func (yc *YtsaurusClient) Status(ctx context.Context) ComponentStatus {
 	status, err := yc.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -574,11 +574,11 @@ func (yc *ytsaurusClient) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (yc *ytsaurusClient) Sync(ctx context.Context) error {
+func (yc *YtsaurusClient) Sync(ctx context.Context) error {
 	_, err := yc.doSync(ctx, false)
 	return err
 }
 
-func (yc *ytsaurusClient) GetYtClient() yt.Client {
+func (yc *YtsaurusClient) GetYtClient() yt.Client {
 	return yc.ytClient
 }

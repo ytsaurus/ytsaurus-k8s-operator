@@ -19,7 +19,7 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type scheduler struct {
+type Scheduler struct {
 	localServerComponent
 	cfgen         *ytconfig.Generator
 	master        Component
@@ -34,7 +34,7 @@ func NewScheduler(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
-	execNodes, tabletNodes []Component) Component {
+	execNodes, tabletNodes []Component) *Scheduler {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -56,7 +56,7 @@ func NewScheduler(
 		cfgen.GetSchedulerConfig,
 	)
 
-	return &scheduler{
+	return &Scheduler{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               master,
@@ -87,11 +87,11 @@ func NewScheduler(
 	}
 }
 
-func (s *scheduler) IsUpdatable() bool {
+func (s *Scheduler) IsUpdatable() bool {
 	return true
 }
 
-func (s *scheduler) Fetch(ctx context.Context) error {
+func (s *Scheduler) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		s.server,
 		s.initOpArchive,
@@ -100,7 +100,7 @@ func (s *scheduler) Fetch(ctx context.Context) error {
 	)
 }
 
-func (s *scheduler) Status(ctx context.Context) ComponentStatus {
+func (s *Scheduler) Status(ctx context.Context) ComponentStatus {
 	status, err := s.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -109,12 +109,12 @@ func (s *scheduler) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (s *scheduler) Sync(ctx context.Context) error {
+func (s *Scheduler) Sync(ctx context.Context) error {
 	_, err := s.doSync(ctx, false)
 	return err
 }
 
-func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(s.ytsaurus.GetClusterState()) && s.server.needUpdate() {
@@ -186,7 +186,7 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return s.initOpAchieve(ctx, dry)
 }
 
-func (s *scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (s *Scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatus, error) {
 	if !dry {
 		s.initUser.SetInitScript(s.createInitUserScript())
 	}
@@ -209,7 +209,7 @@ func (s *scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatu
 	return s.initOpArchive.Sync(ctx, dry)
 }
 
-func (s *scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentStatus, error) {
+func (s *Scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentStatus, error) {
 	var err error
 	switch s.ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
@@ -237,11 +237,11 @@ func (s *scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentSt
 	}
 }
 
-func (s *scheduler) needOpArchiveInit() bool {
+func (s *Scheduler) needOpArchiveInit() bool {
 	return s.tabletNodes != nil && len(s.tabletNodes) > 0
 }
 
-func (s *scheduler) setConditionNotNecessaryToUpdateOpArchive(ctx context.Context) {
+func (s *Scheduler) setConditionNotNecessaryToUpdateOpArchive(ctx context.Context) {
 	s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    consts.ConditionNotNecessaryToUpdateOpArchive,
 		Status:  metav1.ConditionTrue,
@@ -250,7 +250,7 @@ func (s *scheduler) setConditionNotNecessaryToUpdateOpArchive(ctx context.Contex
 	})
 }
 
-func (s *scheduler) setConditionOpArchivePreparedForUpdating(ctx context.Context) {
+func (s *Scheduler) setConditionOpArchivePreparedForUpdating(ctx context.Context) {
 	s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    consts.ConditionOpArchivePreparedForUpdating,
 		Status:  metav1.ConditionTrue,
@@ -259,7 +259,7 @@ func (s *scheduler) setConditionOpArchivePreparedForUpdating(ctx context.Context
 	})
 }
 
-func (s *scheduler) setConditionOpArchiveUpdated(ctx context.Context) {
+func (s *Scheduler) setConditionOpArchiveUpdated(ctx context.Context) {
 	s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    consts.ConditionOpArchiveUpdated,
 		Status:  metav1.ConditionTrue,
@@ -268,7 +268,7 @@ func (s *scheduler) setConditionOpArchiveUpdated(ctx context.Context) {
 	})
 }
 
-func (s *scheduler) createInitUserScript() string {
+func (s *Scheduler) createInitUserScript() string {
 	token, _ := s.secret.GetValue(consts.TokenSecretKey)
 	commands := createUserCommand("operation_archivarius", "", token, true)
 	script := []string{
@@ -279,7 +279,7 @@ func (s *scheduler) createInitUserScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (s *scheduler) prepareInitOperationArchive() {
+func (s *Scheduler) prepareInitOperationArchive() {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		fmt.Sprintf("/usr/bin/init_operation_archive --force --latest --proxy %s",

@@ -19,11 +19,11 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type queueAgent struct {
+type QueueAgent struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
 
-	ytsaurusClient YtsaurusClient
+	ytsaurusClient internalYtsaurusClient
 	master         Component
 	tabletNodes    []Component
 	initCondition  string
@@ -34,10 +34,10 @@ type queueAgent struct {
 func NewQueueAgent(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
-	yc YtsaurusClient,
+	yc internalYtsaurusClient,
 	master Component,
 	tabletNodes []Component,
-) Component {
+) *QueueAgent {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -64,7 +64,7 @@ func NewQueueAgent(
 		image = *resource.Spec.QueueAgents.InstanceSpec.Image
 	}
 
-	return &queueAgent{
+	return &QueueAgent{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               master,
@@ -87,11 +87,11 @@ func NewQueueAgent(
 	}
 }
 
-func (qa *queueAgent) IsUpdatable() bool {
+func (qa *QueueAgent) IsUpdatable() bool {
 	return true
 }
 
-func (qa *queueAgent) Fetch(ctx context.Context) error {
+func (qa *QueueAgent) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		qa.server,
 		qa.initQAState,
@@ -99,7 +99,7 @@ func (qa *queueAgent) Fetch(ctx context.Context) error {
 	)
 }
 
-func (qa *queueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(qa.ytsaurus.GetClusterState()) && qa.server.needUpdate() {
@@ -194,7 +194,7 @@ func (qa *queueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", qa.initCondition)), err
 }
 
-func (qa *queueAgent) createUser(ctx context.Context, ytClient yt.Client) (err error) {
+func (qa *QueueAgent) createUser(ctx context.Context, ytClient yt.Client) (err error) {
 	logger := log.FromContext(ctx)
 
 	token, _ := qa.secret.GetValue(consts.TokenSecretKey)
@@ -206,7 +206,7 @@ func (qa *queueAgent) createUser(ctx context.Context, ytClient yt.Client) (err e
 	return
 }
 
-func (qa *queueAgent) init(ctx context.Context, ytClient yt.Client) (err error) {
+func (qa *QueueAgent) init(ctx context.Context, ytClient yt.Client) (err error) {
 	logger := log.FromContext(ctx)
 
 	_, err = ytClient.CreateNode(
@@ -277,7 +277,7 @@ func (qa *queueAgent) init(ctx context.Context, ytClient yt.Client) (err error) 
 	return
 }
 
-func (qa *queueAgent) prepareInitQueueAgentState() {
+func (qa *QueueAgent) prepareInitQueueAgentState() {
 	path := "/usr/bin/init_queue_agent_state"
 
 	script := []string{
@@ -292,7 +292,7 @@ func (qa *queueAgent) prepareInitQueueAgentState() {
 	container.EnvFrom = []corev1.EnvFromSource{qa.secret.GetEnvSource()}
 }
 
-func (qa *queueAgent) Status(ctx context.Context) ComponentStatus {
+func (qa *QueueAgent) Status(ctx context.Context) ComponentStatus {
 	status, err := qa.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -301,7 +301,7 @@ func (qa *queueAgent) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (qa *queueAgent) Sync(ctx context.Context) error {
+func (qa *QueueAgent) Sync(ctx context.Context) error {
 	_, err := qa.doSync(ctx, false)
 	return err
 }

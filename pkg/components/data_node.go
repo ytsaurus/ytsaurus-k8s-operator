@@ -11,7 +11,7 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type dataNode struct {
+type DataNode struct {
 	localServerComponent
 	cfgen  *ytconfig.NodeGenerator
 	master Component
@@ -22,7 +22,7 @@ func NewDataNode(
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	spec ytv1.DataNodesSpec,
-) Component {
+) *DataNode {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -45,22 +45,22 @@ func NewDataNode(
 		},
 	)
 
-	return &dataNode{
+	return &DataNode{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               master,
 	}
 }
 
-func (n *dataNode) IsUpdatable() bool {
+func (n *DataNode) IsUpdatable() bool {
 	return true
 }
 
-func (n *dataNode) Fetch(ctx context.Context) error {
+func (n *DataNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, n.server)
 }
 
-func (n *dataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && n.server.needUpdate() {
@@ -91,7 +91,7 @@ func (n *dataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (n *dataNode) Status(ctx context.Context) ComponentStatus {
+func (n *DataNode) Status(ctx context.Context) ComponentStatus {
 	status, err := n.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -100,7 +100,7 @@ func (n *dataNode) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (n *dataNode) Sync(ctx context.Context) error {
+func (n *DataNode) Sync(ctx context.Context) error {
 	_, err := n.doSync(ctx, false)
 	return err
 }
