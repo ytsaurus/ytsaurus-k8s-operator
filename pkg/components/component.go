@@ -13,7 +13,8 @@ import (
 type SyncStatus string
 
 const (
-	SyncStatusBlocked         SyncStatus = "Blocked"
+	SyncStatusBlocked SyncStatus = "Blocked"
+	// SyncStatusNeedFullUpdate is deprecated, not used anymore.
 	SyncStatusNeedFullUpdate  SyncStatus = "NeedFullUpdate"
 	SyncStatusNeedLocalUpdate SyncStatus = "NeedLocalUpdate"
 	SyncStatusPending         SyncStatus = "Pending"

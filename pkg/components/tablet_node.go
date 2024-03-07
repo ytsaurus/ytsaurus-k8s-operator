@@ -79,7 +79,7 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	logger := log.FromContext(ctx)
 
 	if ytv1.IsReadyToUpdateClusterState(tn.ytsaurus.GetClusterState()) && tn.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedFullUpdate), err
+		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
 	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {

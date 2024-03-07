@@ -6,17 +6,9 @@ import (
 
 type condition string
 
-const (
-	NeedFullUpdate condition = "NeedFullUpdate"
-)
-
+// *Built conditions are kept in sync by flow automatically.
+// Developers shouldn't set them in code manually.
 var (
-	YtsaurusClientHealthy = isHealthy(YtsaurusClientStep)
-	HttpProxyHealthy      = isHealthy(HttpProxyStep)
-	MasterHealthy         = isHealthy(MasterStep)
-	DataNodeHealthy       = isHealthy(DataNodeStep)
-	SchedulerHealthy      = isHealthy(SchedulerStep)
-
 	YtsaurusClientBuilt = isBuilt(YtsaurusClientStep)
 	HttpProxyBuilt      = isBuilt(HttpProxyStep)
 	MasterBuilt         = isBuilt(MasterStep)
@@ -25,35 +17,63 @@ var (
 	QueryTrackerBuilt   = isBuilt(QueryTrackerStep)
 )
 
+var (
+	YtsaurusClientReady = isReady(YtsaurusClientStep)
+	HttpProxyReady      = isReady(HttpProxyStep)
+	MasterReady         = isReady(MasterStep)
+	DataNodeReady       = isReady(DataNodeStep)
+	SchedulerReady      = isReady(SchedulerStep)
+)
+
+// Special conditions.
+
+var (
+	NeedFullUpdate condition = "NeedFullUpdate"
+)
+
 var initialConditions = []condition{
 	isDone(BuildMasterSnapshotsStep),
 }
 
 var setTrueIfAllTrue = map[condition][]condition{
-	YtsaurusClientHealthy: {
+	YtsaurusClientReady: {
 		YtsaurusClientBuilt,
 		HttpProxyBuilt,
 		MasterBuilt,
 	},
-	MasterHealthy: {
+	MasterReady: {
 		MasterBuilt, // is it true?
 	},
-	HttpProxyHealthy: {
+	HttpProxyReady: {
 		HttpProxyBuilt,
-		MasterHealthy,
+		MasterReady,
 	},
-	DataNodeHealthy: {
+	DataNodeReady: {
 		DataNodeBuilt,
-		MasterHealthy,
+		MasterReady,
 	},
 }
 
+// Components' statuses.
 func isBuilt(name stepName) condition {
 	return condition(fmt.Sprintf("%sBuilt", name))
 }
 
-func isHealthy(name stepName) condition {
+func isReady(name stepName) condition {
 	return condition(fmt.Sprintf("%sHealthy", name))
+}
+
+// Actions statuses.
+func isBlocked(name stepName) condition {
+	return condition(fmt.Sprintf("%sBlocked", name))
+}
+
+func isRun(name stepName) condition {
+	return condition(fmt.Sprintf("%sRun", name))
+}
+
+func isUpdating(name stepName) condition {
+	return condition(fmt.Sprintf("%sUpdating", name))
 }
 
 func isDone(name stepName) condition {

@@ -1,25 +1,38 @@
 package ytflow
 
+import (
+	"context"
+)
+
 type singleComponentStep struct {
 	comp component
-	//status componentStatus
 }
 
-func newSingleComponentStep(comp component, status componentStatus) *singleComponentStep {
+func newSingleComponentStep(comp component) *singleComponentStep {
 	return &singleComponentStep{
 		comp: comp,
-		//status: status,
 	}
+}
+
+func (s *singleComponentStep) Run(ctx context.Context) error {
+	return s.comp.Sync(ctx)
 }
 
 type multiComponentStep struct {
 	comps map[string]component
-	//statuses map[string]componentStatus
 }
 
-func newMultiComponentStep(comps map[string]component, statuses map[string]componentStatus) *multiComponentStep {
+func newMultiComponentStep(comps map[string]component) *multiComponentStep {
 	return &multiComponentStep{
 		comps: comps,
-		//statuses: statuses,
 	}
+}
+
+func (s *multiComponentStep) Run(ctx context.Context) error {
+	for _, comp := range s.comps {
+		if err := comp.Sync(ctx); err != nil {
+			return err
+		}
+	}
+	return nil
 }
