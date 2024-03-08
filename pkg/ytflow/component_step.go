@@ -2,6 +2,7 @@ package ytflow
 
 import (
 	"context"
+	"sort"
 )
 
 type singleComponentStep struct {
@@ -29,7 +30,15 @@ func newMultiComponentStep(comps map[string]component) *multiComponentStep {
 }
 
 func (s *multiComponentStep) Run(ctx context.Context) error {
-	for _, comp := range s.comps {
+	// Just for the test stability we execute steps in predictable order.
+	var keys []string
+	for key := range s.comps {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		comp := s.comps[key]
 		if err := comp.Sync(ctx); err != nil {
 			return err
 		}

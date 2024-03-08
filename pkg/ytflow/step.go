@@ -9,11 +9,11 @@ type stepType interface {
 }
 
 type stepRegistry struct {
-	steps map[stepName]stepType
+	steps map[StepName]stepType
 }
 
-func buildComponentSteps(comps *componentRegistry) map[stepName]stepType {
-	steps := make(map[stepName]stepType)
+func buildComponentSteps(comps *componentRegistry) map[StepName]stepType {
+	steps := make(map[StepName]stepType)
 
 	for compName, singleComp := range comps.single {
 		steps[compNameToStepName(compName)] = newSingleComponentStep(singleComp)
@@ -25,9 +25,9 @@ func buildComponentSteps(comps *componentRegistry) map[stepName]stepType {
 	return steps
 }
 
-func buildActionSteps(comps *componentRegistry, conds conditionManagerType) map[stepName]stepType {
+func buildActionSteps(comps *componentRegistry, conds conditionManagerType) map[StepName]stepType {
 	yc := comps.single[YtsaurusClientName].(ytsaurusClient)
-	return map[stepName]stepType{
+	return map[StepName]stepType{
 		CheckFullUpdatePossibilityStep: checkFullUpdatePossibility(yc, conds),
 		EnableSafeModeStep:             enableSafeMode(yc, conds),
 		BackupTabletCellsStep:          backupTabletCells(yc, conds),
@@ -38,7 +38,7 @@ func buildActionSteps(comps *componentRegistry, conds conditionManagerType) map[
 }
 
 func buildSteps(comps *componentRegistry, conds conditionManagerType) *stepRegistry {
-	steps := make(map[stepName]stepType)
+	steps := make(map[StepName]stepType)
 
 	for name, step := range buildComponentSteps(comps) {
 		steps[name] = step

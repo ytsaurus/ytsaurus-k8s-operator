@@ -1,7 +1,7 @@
 package ytflow
 
 type ComponentName string
-type stepName string
+type StepName string
 
 const (
 	YtsaurusClientName ComponentName = "YtsaurusClient"
@@ -14,20 +14,20 @@ const (
 	QueryTrackerName   ComponentName = "QueryTracker"
 )
 
-func compNameToStepName(compName ComponentName) stepName {
-	return stepName(compName)
+func compNameToStepName(compName ComponentName) StepName {
+	return StepName(compName)
 }
 
 const (
-	CheckFullUpdatePossibilityStep stepName = "CheckFullUpdatePossibility"
-	EnableSafeModeStep             stepName = "EnableSafeMode"
-	BackupTabletCellsStep          stepName = "BackupTabletCells"
-	BuildMasterSnapshotsStep       stepName = "BuildMasterSnapshots"
-	MasterExitReadOnlyStep         stepName = "MasterExitReadOnly"
-	RecoverTabletCellsStep         stepName = "RecoverTabletCells"
-	UpdateOpArchiveStep            stepName = "UpdateOpArchive"
-	InitQueryTrackerStep           stepName = "InitQueryTracker"
-	DisableSafeModeStep            stepName = "DisableSafeMode"
+	CheckFullUpdatePossibilityStep StepName = "CheckFullUpdatePossibility"
+	EnableSafeModeStep             StepName = "EnableSafeMode"
+	BackupTabletCellsStep          StepName = "BackupTabletCells"
+	BuildMasterSnapshotsStep       StepName = "BuildMasterSnapshots"
+	MasterExitReadOnlyStep         StepName = "MasterExitReadOnly"
+	RecoverTabletCellsStep         StepName = "RecoverTabletCells"
+	UpdateOpArchiveStep            StepName = "UpdateOpArchive"
+	InitQueryTrackerStep           StepName = "InitQueryTracker"
+	DisableSafeModeStep            StepName = "DisableSafeMode"
 )
 
 var (
@@ -40,50 +40,94 @@ var (
 	QueryTrackerStep   = compNameToStepName(QueryTrackerName)
 )
 
-var dependencies = map[stepName][]condition{
-	YtsaurusClientStep: {},
-
-	CheckFullUpdatePossibilityStep: {
-		NeedFullUpdate,
-		YtsaurusClientReady,
-	},
-	EnableSafeModeStep: {
-		isDone(CheckFullUpdatePossibilityStep),
-		YtsaurusClientReady,
-	},
-	BackupTabletCellsStep: {
-		isDone(EnableSafeModeStep),
-		YtsaurusClientReady,
-	},
-	BuildMasterSnapshotsStep: {
-		isDone(BackupTabletCellsStep),
-		YtsaurusClientReady,
+// conditionDependencies simply is:
+// condName become true if all condition deps are true
+// condName become false if any of condition deps are false
+var conditionDependencies = map[conditionName][]conditionDependency{
+	NothingToDoCondName: {
+		AllComponentsBuilt,
+		// +safe mode disabled
 	},
 
-	DiscoveryStep: {},
-	HttpProxyStep: {},
+	//	YtsaurusClientReady: {
+	//		YtsaurusClientBuilt,
+	//		HttpProxyBuilt,
+	//		MasterBuilt,
+	//	},
+	MasterReadyCondName: {
+		MasterBuilt, // is it enough?
+	},
+	HttpProxyReadyCondName: {
+		HttpProxyBuilt,
+		MasterReady,
+	},
+	DataNodeReadyCondName: {
+		DataNodeBuilt,
+		MasterReady,
+	},
+	//
+	//	MasterInReadOnly: {
+	//		isDone(BuildMasterSnapshotsStep),
+	//	},
+}
+
+var stepDependencies = map[StepName][]conditionDependency{
+	YtsaurusClientStep: {
+		not(YtsaurusClientBuilt),
+	},
+
+	//CheckFullUpdatePossibilityStep: {
+	//	FullUpdateNeeded,
+	//	YtsaurusClientReady,
+	//},
+	//EnableSafeModeStep: {
+	//	isDone(CheckFullUpdatePossibilityStep),
+	//	YtsaurusClientReady,
+	//	// safe mode disabled?
+	//},
+	//BackupTabletCellsStep: {
+	//	isDone(EnableSafeModeStep),
+	//	YtsaurusClientReady,
+	//},
+	//BuildMasterSnapshotsStep: {
+	//	isDone(BackupTabletCellsStep),
+	//	YtsaurusClientReady,
+	//},
+
+	DiscoveryStep: {
+		not(DiscoveryBuilt),
+	},
+	HttpProxyStep: {
+		not(HttpProxyBuilt),
+	},
+	DataNodeStep: {
+		not(DataNodeBuilt),
+	},
 	MasterStep: {
-		isDone(BuildMasterSnapshotsStep),
+		not(MasterBuilt),
+		//MasterIsInReadOnly,
 	},
 
-	MasterExitReadOnlyStep: {
-		MasterBuilt,
-		isDone(BuildMasterSnapshotsStep),
-	},
-	RecoverTabletCellsStep: {
-		isDone(MasterExitReadOnlyStep),
-	},
-	UpdateOpArchiveStep: {
-		isDone(RecoverTabletCellsStep),
-		SchedulerBuilt,
-	},
-	InitQueryTrackerStep: {
-		isDone(UpdateOpArchiveStep),
-	},
-	DisableSafeModeStep: {
-		isDone(EnableSafeModeStep),
-		isDone(InitQueryTrackerStep),
-	},
+	//MasterExitReadOnlyStep: {
+	//	MasterBuilt,
+	//	MasterIsInReadOnly,
+	//},
+	//RecoverTabletCellsStep: {
+	//	isDone(BackupTabletCellsStep), // TabletCellsSaved — disable after recover
+	//	isDone(MasterExitReadOnlyStep),
+	//},
+	//UpdateOpArchiveStep: {
+	//	isDone(RecoverTabletCellsStep),
+	//	SchedulerBuilt,
+	//},
+	//InitQueryTrackerStep: {
+	//	isDone(UpdateOpArchiveStep),
+	//	QueryTrackerBuilt,
+	//},
+	//DisableSafeModeStep: {
+	//	isDone(InitQueryTrackerStep),
+	//	SafeModeEnabled,
+	//},
 
 	// finalize somehow?
 }

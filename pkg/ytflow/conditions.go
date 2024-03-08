@@ -1,81 +1,67 @@
 package ytflow
 
-import (
-	"fmt"
-)
-
-type condition string
+// conditionName is what we put in the Type field of k8s condition
+type conditionName string
 
 // *Built conditions are kept in sync by flow automatically.
 // Developers shouldn't set them in code manually.
 var (
-	YtsaurusClientBuilt = isBuilt(YtsaurusClientStep)
-	HttpProxyBuilt      = isBuilt(HttpProxyStep)
-	MasterBuilt         = isBuilt(MasterStep)
-	DataNodeBuilt       = isBuilt(DataNodeStep)
-	SchedulerBuilt      = isBuilt(SchedulerStep)
-	QueryTrackerBuilt   = isBuilt(QueryTrackerStep)
+	YtsaurusClientBuiltCondName = isBuiltCondName(YtsaurusClientName)
+	DiscoveryBuiltCondName      = isBuiltCondName(DiscoveryName)
+	HttpProxyBuiltCondName      = isBuiltCondName(HttpProxyName)
+	MasterBuiltCondName         = isBuiltCondName(MasterName)
+	DataNodeBuiltCondName       = isBuiltCondName(DataNodeName)
+	SchedulerBuiltCondName      = isBuiltCondName(SchedulerName)
+	QueryTrackerBuiltCondName   = isBuiltCondName(QueryTrackerName)
 )
 
 var (
-	YtsaurusClientReady = isReady(YtsaurusClientStep)
-	HttpProxyReady      = isReady(HttpProxyStep)
-	MasterReady         = isReady(MasterStep)
-	DataNodeReady       = isReady(DataNodeStep)
-	SchedulerReady      = isReady(SchedulerStep)
+	YtsaurusClientBuilt = isBuilt(YtsaurusClientName)
+	DiscoveryBuilt      = isBuilt(DiscoveryName)
+	HttpProxyBuilt      = isBuilt(HttpProxyName)
+	MasterBuilt         = isBuilt(MasterName)
+	DataNodeBuilt       = isBuilt(DataNodeName)
+	SchedulerBuilt      = isBuilt(SchedulerName)
+	QueryTrackerBuilt   = isBuilt(QueryTrackerName)
+)
+
+var (
+	YtsaurusClientReadyCondName = isReadyCondName(YtsaurusClientName)
+	DiscoveryReadyCondName      = isReadyCondName(DiscoveryName)
+	HttpProxyReadyCondName      = isReadyCondName(HttpProxyName)
+	MasterReadyCondName         = isReadyCondName(MasterName)
+	DataNodeReadyCondName       = isReadyCondName(DataNodeName)
+	SchedulerReadyCondName      = isReadyCondName(SchedulerName)
+)
+
+var (
+	YtsaurusClientReady = isReady(YtsaurusClientName)
+	DiscoveryReady      = isReady(DiscoveryName)
+	HttpProxyReady      = isReady(HttpProxyName)
+	MasterReady         = isReady(MasterName)
+	DataNodeReady       = isReady(DataNodeName)
+	SchedulerReady      = isReady(SchedulerName)
 )
 
 // Special conditions.
 
 var (
-	NeedFullUpdate condition = "NeedFullUpdate"
+	NeedFullUpdateCondName     conditionName = "NeedFullUpdate"
+	SafeModeCondName           conditionName = "SafeModeEnabled"
+	MasterReadOnlyCondName     conditionName = "MasterInReadOnly"
+	NothingToDoCondName        conditionName = "NothingToDo"
+	AllComponentsBuiltCondName conditionName = "AllComponentsBuilt"
 )
 
-var initialConditions = []condition{
-	isDone(BuildMasterSnapshotsStep),
-}
+var (
+	FullUpdateNeeded   = isTrue(NeedFullUpdateCondName)
+	SafeModeEnabled    = isTrue(SafeModeCondName)
+	SafeModeDisabled   = isFalse(SafeModeCondName)
+	MasterIsInReadOnly = isTrue(MasterReadOnlyCondName)
+	AllComponentsBuilt = isTrue(AllComponentsBuiltCondName)
+	NothingToDo        = isTrue(NothingToDoCondName)
+)
 
-var setTrueIfAllTrue = map[condition][]condition{
-	YtsaurusClientReady: {
-		YtsaurusClientBuilt,
-		HttpProxyBuilt,
-		MasterBuilt,
-	},
-	MasterReady: {
-		MasterBuilt, // is it true?
-	},
-	HttpProxyReady: {
-		HttpProxyBuilt,
-		MasterReady,
-	},
-	DataNodeReady: {
-		DataNodeBuilt,
-		MasterReady,
-	},
-}
-
-// Components' statuses.
-func isBuilt(name stepName) condition {
-	return condition(fmt.Sprintf("%sBuilt", name))
-}
-
-func isReady(name stepName) condition {
-	return condition(fmt.Sprintf("%sHealthy", name))
-}
-
-// Actions statuses.
-func isBlocked(name stepName) condition {
-	return condition(fmt.Sprintf("%sBlocked", name))
-}
-
-func isRun(name stepName) condition {
-	return condition(fmt.Sprintf("%sRun", name))
-}
-
-func isUpdating(name stepName) condition {
-	return condition(fmt.Sprintf("%sUpdating", name))
-}
-
-func isDone(name stepName) condition {
-	return condition(fmt.Sprintf("%sDone", name))
-}
+//var initialConditions = []condition{
+//	isDone(BuildMasterSnapshotsStep),
+//}

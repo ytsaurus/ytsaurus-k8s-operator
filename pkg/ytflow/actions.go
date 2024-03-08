@@ -2,14 +2,10 @@ package ytflow
 
 import (
 	"context"
-
-	"go.ytsaurus.tech/yt/go/yt"
 )
 
-// This is a temporary interface.
 type ytsaurusClient interface {
 	component
-	GetYtClient() yt.Client
 	HandlePossibilityCheck(context.Context) (bool, string, error)
 	EnableSafeMode(context.Context) error
 	DisableSafeMode(context.Context) error
@@ -18,13 +14,10 @@ type ytsaurusClient interface {
 	RemoveTableCells(context.Context) error
 	RecoverTableCells(context.Context) error
 	AreTabletCellsRemoved(context.Context) (bool, error)
-	AreTabletCellsRecovered(context.Context) (bool, error)
 
 	SaveMasterMonitoringPaths(context.Context) error
 	StartBuildingMasterSnapshots(context.Context) error
 	AreMasterSnapshotsBuilt(context.Context) (bool, error)
-
-	//ClearUpdateStatus(context.Context) error
 }
 
 func checkFullUpdatePossibility(yc ytsaurusClient, conds conditionManagerType) actionStep {
