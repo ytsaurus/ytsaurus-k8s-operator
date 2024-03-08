@@ -315,6 +315,27 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 		logger.Error(err, "Creating access control object 'nobody' in namespace 'queries' failed")
 		return
 	}
+
+	_, err = ytClient.CreateObject(
+		ctx,
+		yt.NodeAccessControlObject,
+		&yt.CreateObjectOptions{
+			Attributes: map[string]interface{}{
+				"name":      "everyone",
+				"namespace": "queries",
+				"principal_acl": []interface{}{map[string]interface{}{
+					"action":      "allow",
+					"subjects":    []string{"everyone"},
+					"permissions": []string{"use"},
+				}},
+			},
+			IgnoreExisting: true,
+		},
+	)
+	if err != nil {
+		logger.Error(err, "Creating access control object 'everyone' in namespace 'queries' failed")
+		return
+	}
 	return
 }
 

@@ -372,7 +372,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			runImpossibleUpdateAndRollback(ytsaurus, ytClient)
 		})
 
-		It("Should run with query tracker and check that access control object namespace 'queries' and object 'nobody' exists", func() {
+		It("Should run with query tracker and check that access control object namespace 'queries' and objects 'nobody' and 'everyone' exist", func() {
 			By("Creating a Ytsaurus resource")
 			ctx := context.Background()
 
@@ -399,6 +399,16 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			By("Check that access control object 'nobody' in namespace 'queries' exists")
 			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/nobody"), nil)).Should(Equal(true))
+
+			By("Check that access control object 'everyone' in namespace 'queries' exists")
+			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone"), nil)).Should(Equal(true))
+
+			By("Check that access control object 'everyone' in namespace 'queries' allows everyone")
+			everyonePrincipalAcl := []map[string]interface{}{}
+			Expect(ytClient.GetNode(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone/@principal_acl"), &everyonePrincipalAcl, nil)).Should(Succeed())
+			Expect(everyonePrincipalAcl[0]).Should(HaveKeyWithValue("action", "allow"))
+			Expect(everyonePrincipalAcl[0]).Should(HaveKeyWithValue("subjects", ContainElement("everyone")))
+			Expect(everyonePrincipalAcl[0]).Should(HaveKeyWithValue("permissions", ContainElement("use")))
 		})
 	})
 
