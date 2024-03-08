@@ -13,7 +13,7 @@ import (
 )
 
 type baseExecNode struct {
-	server     server
+	server     *server
 	cfgen      *ytconfig.NodeGenerator
 	sidecars   []string
 	privileged bool

@@ -79,7 +79,7 @@ type localComponent struct {
 // and use server. Almost all components are based on this struct.
 type localServerComponent struct {
 	localComponent
-	server server
+	server *server
 }
 
 func newLocalComponent(
@@ -108,7 +108,7 @@ func (c *localComponent) SetReadyCondition(status ComponentStatus) {
 func newLocalServerComponent(
 	labeller *labeller.Labeller,
 	ytsaurus *apiproxy.Ytsaurus,
-	server server,
+	server *server,
 ) localServerComponent {
 	return localServerComponent{
 		localComponent: localComponent{
@@ -125,7 +125,7 @@ func (c *localServerComponent) NeedSync() bool {
 	return LocalServerNeedSync(c.server, c.ytsaurus)
 }
 
-func LocalServerNeedSync(srv server, ytsaurus *apiproxy.Ytsaurus) bool {
+func LocalServerNeedSync(srv *server, ytsaurus *apiproxy.Ytsaurus) bool {
 	return (srv.configNeedsReload() && ytsaurus.IsUpdating()) ||
 		srv.needBuild()
 }

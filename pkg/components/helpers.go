@@ -118,7 +118,7 @@ func handleUpdatingClusterState(
 	ytsaurus *apiproxy.Ytsaurus,
 	cmp Component,
 	cmpBase *localComponent,
-	server server,
+	server *server,
 	dry bool,
 ) (*ComponentStatus, error) {
 	var err error
