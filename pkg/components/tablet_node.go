@@ -20,11 +20,11 @@ import (
 const SysBundle string = "sys"
 const DefaultBundle string = "default"
 
-type tabletNode struct {
+type TabletNode struct {
 	localServerComponent
 	cfgen *ytconfig.NodeGenerator
 
-	ytsaurusClient YtsaurusClient
+	ytsaurusClient internalYtsaurusClient
 
 	initBundlesCondition string
 	spec                 ytv1.TabletNodesSpec
@@ -34,10 +34,10 @@ type tabletNode struct {
 func NewTabletNode(
 	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
-	ytsaurusClient YtsaurusClient,
+	ytsaurusClient internalYtsaurusClient,
 	spec ytv1.TabletNodesSpec,
 	doInitiailization bool,
-) Component {
+) *TabletNode {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -60,7 +60,7 @@ func NewTabletNode(
 		},
 	)
 
-	return &tabletNode{
+	return &TabletNode{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
 		initBundlesCondition: "bundlesTabletNodeInitCompleted",
@@ -70,11 +70,11 @@ func NewTabletNode(
 	}
 }
 
-func (tn *tabletNode) IsUpdatable() bool {
+func (tn *TabletNode) IsUpdatable() bool {
 	return true
 }
 
-func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 	logger := log.FromContext(ctx)
 
@@ -190,7 +190,7 @@ func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", tn.initBundlesCondition)), err
 }
 
-func (tn *tabletNode) getBundleBootstrap(bundle string) *ytv1.BundleBootstrapSpec {
+func (tn *TabletNode) getBundleBootstrap(bundle string) *ytv1.BundleBootstrapSpec {
 	resource := tn.ytsaurus.GetResource()
 	if resource.Spec.Bootstrap == nil || resource.Spec.Bootstrap.TabletCellBundles == nil {
 		return nil
@@ -207,7 +207,7 @@ func (tn *tabletNode) getBundleBootstrap(bundle string) *ytv1.BundleBootstrapSpe
 	return nil
 }
 
-func (tn *tabletNode) Status(ctx context.Context) ComponentStatus {
+func (tn *TabletNode) Status(ctx context.Context) ComponentStatus {
 	status, err := tn.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -216,11 +216,11 @@ func (tn *tabletNode) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (tn *tabletNode) Sync(ctx context.Context) error {
+func (tn *TabletNode) Sync(ctx context.Context) error {
 	_, err := tn.doSync(ctx, false)
 	return err
 }
 
-func (tn *tabletNode) Fetch(ctx context.Context) error {
+func (tn *TabletNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, tn.server)
 }

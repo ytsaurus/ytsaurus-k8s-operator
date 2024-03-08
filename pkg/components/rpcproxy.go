@@ -13,7 +13,7 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type rpcProxy struct {
+type RpcProxy struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
 
@@ -28,7 +28,7 @@ func NewRPCProxy(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
-	spec ytv1.RPCProxiesSpec) Component {
+	spec ytv1.RPCProxiesSpec) *RpcProxy {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -69,7 +69,7 @@ func NewRPCProxy(
 			consts.RPCSecretMountPoint)
 	}
 
-	return &rpcProxy{
+	return &RpcProxy{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               masterReconciler,
@@ -79,11 +79,11 @@ func NewRPCProxy(
 	}
 }
 
-func (rp *rpcProxy) IsUpdatable() bool {
+func (rp *RpcProxy) IsUpdatable() bool {
 	return true
 }
 
-func (rp *rpcProxy) Fetch(ctx context.Context) error {
+func (rp *RpcProxy) Fetch(ctx context.Context) error {
 	fetchable := []resources.Fetchable{
 		rp.server,
 	}
@@ -93,7 +93,7 @@ func (rp *rpcProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, fetchable...)
 }
 
-func (rp *rpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(rp.ytsaurus.GetClusterState()) && rp.server.needUpdate() {
@@ -138,7 +138,7 @@ func (rp *rpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (rp *rpcProxy) Status(ctx context.Context) ComponentStatus {
+func (rp *RpcProxy) Status(ctx context.Context) ComponentStatus {
 	status, err := rp.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -147,7 +147,7 @@ func (rp *rpcProxy) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (rp *rpcProxy) Sync(ctx context.Context) error {
+func (rp *RpcProxy) Sync(ctx context.Context) error {
 	_, err := rp.doSync(ctx, false)
 	return err
 }

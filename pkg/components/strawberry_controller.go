@@ -16,7 +16,7 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type strawberryController struct {
+type StrawberryController struct {
 	localComponent
 	cfgen              *ytconfig.Generator
 	microservice       microservice
@@ -46,7 +46,7 @@ func NewStrawberryController(
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	scheduler Component,
-	dataNodes []Component) Component {
+	dataNodes []Component) *StrawberryController {
 	resource := ytsaurus.GetResource()
 
 	image := resource.Spec.CoreImage
@@ -87,7 +87,7 @@ func NewStrawberryController(
 		fmt.Sprintf("%s-controller", name),
 		name)
 
-	return &strawberryController{
+	return &StrawberryController{
 		localComponent: newLocalComponent(&l, ytsaurus),
 		cfgen:          cfgen,
 		microservice:   microservice,
@@ -120,11 +120,11 @@ func NewStrawberryController(
 	}
 }
 
-func (c *strawberryController) IsUpdatable() bool {
+func (c *StrawberryController) IsUpdatable() bool {
 	return true
 }
 
-func (c *strawberryController) Fetch(ctx context.Context) error {
+func (c *StrawberryController) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		c.microservice,
 		c.initUserAndUrlJob,
@@ -133,13 +133,13 @@ func (c *strawberryController) Fetch(ctx context.Context) error {
 	)
 }
 
-func (c *strawberryController) initUsers() string {
+func (c *StrawberryController) initUsers() string {
 	token, _ := c.secret.GetValue(consts.TokenSecretKey)
 	commands := createUserCommand(consts.StrawberryControllerUserName, "", token, true)
 	return strings.Join(commands, "\n")
 }
 
-func (c *strawberryController) createInitUserAndUrlScript() string {
+func (c *StrawberryController) createInitUserAndUrlScript() string {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		c.initUsers(),
@@ -151,7 +151,7 @@ func (c *strawberryController) createInitUserAndUrlScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (c *strawberryController) createInitChytClusterScript() string {
+func (c *StrawberryController) createInitChytClusterScript() string {
 	script := []string{
 		initJobPrologue,
 		fmt.Sprintf("/usr/bin/chyt-controller --config-path %s init-cluster",
@@ -161,7 +161,7 @@ func (c *strawberryController) createInitChytClusterScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (c *strawberryController) getEnvSource() []corev1.EnvFromSource {
+func (c *StrawberryController) getEnvSource() []corev1.EnvFromSource {
 	return []corev1.EnvFromSource{
 		{
 			SecretRef: &corev1.SecretEnvSource{
@@ -173,7 +173,7 @@ func (c *strawberryController) getEnvSource() []corev1.EnvFromSource {
 	}
 }
 
-func (c *strawberryController) prepareInitChytClusterJob() {
+func (c *StrawberryController) prepareInitChytClusterJob() {
 	c.initChytClusterJob.SetInitScript(c.createInitChytClusterScript())
 
 	job := c.initChytClusterJob.Build()
@@ -181,7 +181,7 @@ func (c *strawberryController) prepareInitChytClusterJob() {
 	container.EnvFrom = []corev1.EnvFromSource{c.secret.GetEnvSource()}
 }
 
-func (c *strawberryController) syncComponents(ctx context.Context) (err error) {
+func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 	service := c.microservice.buildService()
 	service.Spec.Type = "ClusterIP"
 
@@ -212,7 +212,7 @@ func (c *strawberryController) syncComponents(ctx context.Context) (err error) {
 	return c.microservice.Sync(ctx)
 }
 
-func (c *strawberryController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(c.ytsaurus.GetClusterState()) && c.microservice.needUpdate() {
@@ -287,7 +287,7 @@ func (c *strawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (c *strawberryController) Status(ctx context.Context) ComponentStatus {
+func (c *StrawberryController) Status(ctx context.Context) ComponentStatus {
 	status, err := c.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -296,7 +296,7 @@ func (c *strawberryController) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (c *strawberryController) Sync(ctx context.Context) error {
+func (c *StrawberryController) Sync(ctx context.Context) error {
 	_, err := c.doSync(ctx, false)
 	return err
 }

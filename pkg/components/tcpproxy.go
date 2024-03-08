@@ -13,7 +13,7 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type tcpProxy struct {
+type TcpProxy struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
 
@@ -27,7 +27,7 @@ func NewTCPProxy(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
-	spec ytv1.TCPProxiesSpec) Component {
+	spec ytv1.TCPProxiesSpec) *TcpProxy {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -61,7 +61,7 @@ func NewTCPProxy(
 			ytsaurus.APIProxy())
 	}
 
-	return &tcpProxy{
+	return &TcpProxy{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               masterReconciler,
@@ -70,11 +70,11 @@ func NewTCPProxy(
 	}
 }
 
-func (tp *tcpProxy) IsUpdatable() bool {
+func (tp *TcpProxy) IsUpdatable() bool {
 	return true
 }
 
-func (tp *tcpProxy) Fetch(ctx context.Context) error {
+func (tp *TcpProxy) Fetch(ctx context.Context) error {
 	fetchable := []resources.Fetchable{
 		tp.server,
 	}
@@ -84,7 +84,7 @@ func (tp *tcpProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, fetchable...)
 }
 
-func (tp *tcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(tp.ytsaurus.GetClusterState()) && tp.server.needUpdate() {
@@ -123,7 +123,7 @@ func (tp *tcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (tp *tcpProxy) Status(ctx context.Context) ComponentStatus {
+func (tp *TcpProxy) Status(ctx context.Context) ComponentStatus {
 	status, err := tp.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -132,7 +132,7 @@ func (tp *tcpProxy) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (tp *tcpProxy) Sync(ctx context.Context) error {
+func (tp *TcpProxy) Sync(ctx context.Context) error {
 	_, err := tp.doSync(ctx, false)
 	return err
 }

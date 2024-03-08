@@ -29,7 +29,7 @@ type UI struct {
 const UIClustersConfigFileName = "clusters-config.json"
 const UICustomConfigFileName = "common.js"
 
-func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) Component {
+func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *UI {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,

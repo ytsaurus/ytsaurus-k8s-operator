@@ -11,12 +11,12 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type discovery struct {
+type Discovery struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
 }
 
-func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component {
+func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Discovery {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -37,21 +37,21 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Compon
 		cfgen.GetDiscoveryConfig,
 	)
 
-	return &discovery{
+	return &Discovery{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
 	}
 }
 
-func (d *discovery) IsUpdatable() bool {
+func (d *Discovery) IsUpdatable() bool {
 	return true
 }
 
-func (d *discovery) Fetch(ctx context.Context) error {
+func (d *Discovery) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, d.server)
 }
 
-func (d *discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(d.ytsaurus.GetClusterState()) && d.server.needUpdate() {
@@ -78,7 +78,7 @@ func (d *discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (d *discovery) Status(ctx context.Context) ComponentStatus {
+func (d *Discovery) Status(ctx context.Context) ComponentStatus {
 	status, err := d.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -87,7 +87,7 @@ func (d *discovery) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (d *discovery) Sync(ctx context.Context) error {
+func (d *Discovery) Sync(ctx context.Context) error {
 	_, err := d.doSync(ctx, false)
 	return err
 }

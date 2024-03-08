@@ -16,7 +16,7 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type yqlAgent struct {
+type YqlAgent struct {
 	localServerComponent
 	cfgen           *ytconfig.Generator
 	master          Component
@@ -24,7 +24,7 @@ type yqlAgent struct {
 	secret          *resources.StringSecret
 }
 
-func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) Component {
+func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *YqlAgent {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -46,7 +46,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		cfgen.GetYQLAgentConfig,
 	)
 
-	return &yqlAgent{
+	return &YqlAgent{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               master,
@@ -66,15 +66,15 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 	}
 }
 
-func (yqla *yqlAgent) IsUpdatable() bool {
+func (yqla *YqlAgent) IsUpdatable() bool {
 	return true
 }
 
-func (yqla *yqlAgent) GetName() string {
+func (yqla *YqlAgent) GetName() string {
 	return yqla.labeller.ComponentName
 }
 
-func (yqla *yqlAgent) Fetch(ctx context.Context) error {
+func (yqla *YqlAgent) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		yqla.server,
 		yqla.initEnvironment,
@@ -82,14 +82,14 @@ func (yqla *yqlAgent) Fetch(ctx context.Context) error {
 	)
 }
 
-func (yqla *yqlAgent) initUsers() string {
+func (yqla *YqlAgent) initUsers() string {
 	token, _ := yqla.secret.GetValue(consts.TokenSecretKey)
 	commands := createUserCommand(consts.YqlUserName, "", token, true)
 	commands = append(commands, createUserCommand("yql_agent", "", "", true)...)
 	return strings.Join(commands, "\n")
 }
 
-func (yqla *yqlAgent) createInitScript() string {
+func (yqla *YqlAgent) createInitScript() string {
 	var sb strings.Builder
 	sb.WriteString("[")
 	for _, addr := range yqla.cfgen.GetYQLAgentAddresses() {
@@ -111,7 +111,7 @@ func (yqla *yqlAgent) createInitScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(yqla.ytsaurus.GetClusterState()) && yqla.server.needUpdate() {
@@ -167,7 +167,7 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	return yqla.initEnvironment.Sync(ctx, dry)
 }
 
-func (yqla *yqlAgent) Status(ctx context.Context) ComponentStatus {
+func (yqla *YqlAgent) Status(ctx context.Context) ComponentStatus {
 	status, err := yqla.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -176,7 +176,7 @@ func (yqla *yqlAgent) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (yqla *yqlAgent) Sync(ctx context.Context) error {
+func (yqla *YqlAgent) Sync(ctx context.Context) error {
 	_, err := yqla.doSync(ctx, false)
 	return err
 }
