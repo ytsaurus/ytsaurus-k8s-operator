@@ -65,7 +65,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		resource.Spec.ImagePullSecrets,
 		"default",
 		consts.ClientConfigFileName,
-		resource.Spec.CoreImage,
+		srv.image,
 		cfgen.GetNativeClientConfig)
 
 	exitReadOnlyJob := NewInitJob(
@@ -75,7 +75,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		resource.Spec.ImagePullSecrets,
 		"exit-read-only",
 		consts.ClientConfigFileName,
-		resource.Spec.CoreImage,
+		srv.image,
 		cfgen.GetNativeClientConfig,
 	)
 

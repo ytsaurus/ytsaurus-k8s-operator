@@ -59,11 +59,6 @@ func NewQueueAgent(
 		cfgen.GetQueueAgentConfig,
 	)
 
-	image := ytsaurus.GetResource().Spec.CoreImage
-	if resource.Spec.QueueAgents.InstanceSpec.Image != nil {
-		image = *resource.Spec.QueueAgents.InstanceSpec.Image
-	}
-
 	return &QueueAgent{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
@@ -78,7 +73,7 @@ func NewQueueAgent(
 			resource.Spec.ImagePullSecrets,
 			"qa-state",
 			consts.ClientConfigFileName,
-			image,
+			srv.image,
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
