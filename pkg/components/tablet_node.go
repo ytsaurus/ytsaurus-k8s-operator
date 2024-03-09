@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,10 +44,6 @@ func NewTabletNode(
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelTabletNode, spec.Name),
 		ComponentName:  cfgen.FormatComponentStringWithDefault("TabletNode", spec.Name),
-	}
-
-	if spec.InstanceSpec.MonitoringPort == nil {
-		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.TabletNodeMonitoringPort)
 	}
 
 	srv := newServer(

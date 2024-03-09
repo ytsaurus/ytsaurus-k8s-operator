@@ -9,7 +9,6 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/library/go/ptr"
 )
 
 type ControllerAgent struct {
@@ -25,10 +24,6 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelControllerAgent,
 		ComponentName:  "ControllerAgent",
-	}
-
-	if resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort == nil {
-		resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.ControllerAgentMonitoringPort)
 	}
 
 	srv := newServer(

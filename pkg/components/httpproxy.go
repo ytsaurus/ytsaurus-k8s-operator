@@ -3,7 +3,6 @@ package components
 import (
 	"context"
 
-	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
 
@@ -41,10 +40,6 @@ func NewHTTPProxy(
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelHTTPProxy, spec.Role),
 		ComponentName:  cfgen.FormatComponentStringWithDefault("HttpProxy", spec.Role),
-	}
-
-	if spec.InstanceSpec.MonitoringPort == nil {
-		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.HTTPProxyMonitoringPort)
 	}
 
 	srv := newServer(

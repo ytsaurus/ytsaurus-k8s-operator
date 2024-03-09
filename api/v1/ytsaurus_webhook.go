@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"strings"
 
+	"go.ytsaurus.tech/library/go/ptr"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,7 +54,13 @@ var _ webhook.Defaulter = &Ytsaurus{}
 func (r *Ytsaurus) Default() {
 	ytsauruslog.Info("default", "name", r.Name)
 
+	r.setMonitoringPortDefaults()
+
 	// Set anti affinity for masters
+	r.setPrimaryMasterAffinityDefaults()
+}
+
+func (r *Ytsaurus) setPrimaryMasterAffinityDefaults() {
 	if r.Spec.PrimaryMasters.Affinity == nil {
 		r.Spec.PrimaryMasters.Affinity = &corev1.Affinity{}
 	}
@@ -69,6 +76,82 @@ func (r *Ytsaurus) Default() {
 					TopologyKey: "kubernetes.io/hostname",
 				},
 			},
+		}
+	}
+}
+
+func (r *Ytsaurus) setMonitoringPortDefaults() {
+	if r.Spec.PrimaryMasters.InstanceSpec.MonitoringPort == nil {
+		r.Spec.PrimaryMasters.InstanceSpec.MonitoringPort = ptr.Int32(consts.MasterMonitoringPort)
+	}
+
+	if r.Spec.Discovery.InstanceSpec.MonitoringPort == nil {
+		r.Spec.Discovery.InstanceSpec.MonitoringPort = ptr.Int32(consts.DiscoveryMonitoringPort)
+	}
+
+	if r.Spec.Schedulers != nil {
+		if r.Spec.Schedulers.InstanceSpec.MonitoringPort == nil {
+			r.Spec.Schedulers.InstanceSpec.MonitoringPort = ptr.Int32(consts.SchedulerMonitoringPort)
+		}
+	}
+
+	if r.Spec.ControllerAgents != nil {
+		if r.Spec.ControllerAgents.InstanceSpec.MonitoringPort == nil {
+			r.Spec.ControllerAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.ControllerAgentMonitoringPort)
+		}
+	}
+
+	for i, spec := range r.Spec.HTTPProxies {
+		if spec.InstanceSpec.MonitoringPort == nil {
+			r.Spec.HTTPProxies[i].InstanceSpec.MonitoringPort = ptr.Int32(consts.HTTPProxyMonitoringPort)
+		}
+	}
+
+	for i, spec := range r.Spec.RPCProxies {
+		if spec.InstanceSpec.MonitoringPort == nil {
+			r.Spec.RPCProxies[i].InstanceSpec.MonitoringPort = ptr.Int32(consts.RPCProxyMonitoringPort)
+		}
+	}
+
+	for i, spec := range r.Spec.TCPProxies {
+		if spec.InstanceSpec.MonitoringPort == nil {
+			r.Spec.TCPProxies[i].InstanceSpec.MonitoringPort = ptr.Int32(consts.TCPProxyMonitoringPort)
+		}
+	}
+
+	for i, spec := range r.Spec.DataNodes {
+		if spec.InstanceSpec.MonitoringPort == nil {
+			r.Spec.DataNodes[i].InstanceSpec.MonitoringPort = ptr.Int32(consts.DataNodeMonitoringPort)
+		}
+	}
+
+	for i, spec := range r.Spec.ExecNodes {
+		if spec.InstanceSpec.MonitoringPort == nil {
+			r.Spec.ExecNodes[i].InstanceSpec.MonitoringPort = ptr.Int32(consts.ExecNodeMonitoringPort)
+		}
+	}
+
+	if r.Spec.QueryTrackers != nil {
+		if r.Spec.QueryTrackers.InstanceSpec.MonitoringPort == nil {
+			r.Spec.QueryTrackers.InstanceSpec.MonitoringPort = ptr.Int32(consts.QueryTrackerMonitoringPort)
+		}
+	}
+
+	for i, spec := range r.Spec.TabletNodes {
+		if spec.InstanceSpec.MonitoringPort == nil {
+			r.Spec.TabletNodes[i].InstanceSpec.MonitoringPort = ptr.Int32(consts.TabletNodeMonitoringPort)
+		}
+	}
+
+	if r.Spec.QueueAgents != nil {
+		if r.Spec.QueueAgents.InstanceSpec.MonitoringPort == nil {
+			r.Spec.QueueAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.QueueAgentMonitoringPort)
+		}
+	}
+
+	if r.Spec.YQLAgents != nil {
+		if r.Spec.YQLAgents.InstanceSpec.MonitoringPort == nil {
+			r.Spec.YQLAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.YQLAgentMonitoringPort)
 		}
 	}
 }
