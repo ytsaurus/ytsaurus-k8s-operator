@@ -3,7 +3,7 @@ kind: CustomResourceDefinition
 metadata:
   name: remoteexecnodes.cluster.ytsaurus.tech
   annotations:
-    controller-gen.kubebuilder.io/version: v0.9.2
+    controller-gen.kubebuilder.io/version: v0.14.0
   labels:
   {{- include "ytop-chart.labels" . | nindent 4 }}
 spec:
@@ -45,11 +45,13 @@ spec:
                     description: Describes node affinity scheduling rules for the pod.
                     properties:
                       preferredDuringSchedulingIgnoredDuringExecution:
-                        description: The scheduler will prefer to schedule pods to nodes
-                          that satisfy the affinity ex
+                        description: |-
+                          The scheduler will prefer to schedule pods to nodes that satisfy
+                          the affinity ex
                         items:
-                          description: An empty preferred scheduling term matches all
-                            objects with implicit weight 0 (i
+                          description: |-
+                            An empty preferred scheduling term matches all objects with implicit weight 0
+                            (i
                           properties:
                             preference:
                               description: A node selector term, associated with the
@@ -118,8 +120,9 @@ spec:
                           type: object
                         type: array
                       requiredDuringSchedulingIgnoredDuringExecution:
-                        description: If the affinity requirements specified by this
-                          field are not met at scheduling t
+                        description: |-
+                          If the affinity requirements specified by this field are not met at
+                          scheduling t
                         properties:
                           nodeSelectorTerms:
                             description: Required. A list of node selector terms. The
@@ -190,8 +193,9 @@ spec:
                     description: Describes pod affinity scheduling rules (e.g.
                     properties:
                       preferredDuringSchedulingIgnoredDuringExecution:
-                        description: The scheduler will prefer to schedule pods to nodes
-                          that satisfy the affinity ex
+                        description: |-
+                          The scheduler will prefer to schedule pods to nodes that satisfy
+                          the affinity ex
                         items:
                           description: The weights of all of the matched WeightedPodAffinityTerm
                             fields are added per-n
@@ -292,8 +296,8 @@ spec:
                               - topologyKey
                               type: object
                             weight:
-                              description: 'weight associated with matching the corresponding
-                                podAffinityTerm, in the range '
+                              description: "weight associated with matching the corresponding
+                                podAffinityTerm,\nin the range "
                               format: int32
                               type: integer
                           required:
@@ -302,11 +306,13 @@ spec:
                           type: object
                         type: array
                       requiredDuringSchedulingIgnoredDuringExecution:
-                        description: If the affinity requirements specified by this
-                          field are not met at scheduling t
+                        description: |-
+                          If the affinity requirements specified by this field are not met at
+                          scheduling t
                         items:
-                          description: Defines a set of pods (namely those matching
-                            the labelSelector relative to the g
+                          description: |-
+                            Defines a set of pods (namely those matching the labelSelector
+                            relative to the g
                           properties:
                             labelSelector:
                               description: A label query over a set of resources, in
@@ -399,8 +405,9 @@ spec:
                     description: Describes pod anti-affinity scheduling rules (e.g.
                     properties:
                       preferredDuringSchedulingIgnoredDuringExecution:
-                        description: The scheduler will prefer to schedule pods to nodes
-                          that satisfy the anti-affini
+                        description: |-
+                          The scheduler will prefer to schedule pods to nodes that satisfy
+                          the anti-affini
                         items:
                           description: The weights of all of the matched WeightedPodAffinityTerm
                             fields are added per-n
@@ -501,8 +508,8 @@ spec:
                               - topologyKey
                               type: object
                             weight:
-                              description: 'weight associated with matching the corresponding
-                                podAffinityTerm, in the range '
+                              description: "weight associated with matching the corresponding
+                                podAffinityTerm,\nin the range "
                               format: int32
                               type: integer
                           required:
@@ -511,11 +518,13 @@ spec:
                           type: object
                         type: array
                       requiredDuringSchedulingIgnoredDuringExecution:
-                        description: If the anti-affinity requirements specified by
-                          this field are not met at schedul
+                        description: |-
+                          If the anti-affinity requirements specified by this field are not met at
+                          schedul
                         items:
-                          description: Defines a set of pods (namely those matching
-                            the labelSelector relative to the g
+                          description: |-
+                            Defines a set of pods (namely those matching the labelSelector
+                            relative to the g
                           properties:
                             labelSelector:
                               description: A label query over a set of resources, in
@@ -609,16 +618,21 @@ spec:
                 description: 'Reference to ConfigMap with trusted certificates: "ca.crt".'
                 properties:
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
               configOverrides:
-                description: LocalObjectReference contains enough information to let
-                  you locate the reference
+                description: |-
+                  LocalObjectReference contains enough information to let you locate the
+                  reference
                 properties:
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
@@ -638,11 +652,14 @@ spec:
                 type: string
               imagePullSecrets:
                 items:
-                  description: LocalObjectReference contains enough information to let
-                    you locate the reference
+                  description: |-
+                    LocalObjectReference contains enough information to let you locate the
+                    reference
                   properties:
                     name:
-                      description: 'Name of the referent. More info: https://kubernetes.'
+                      description: |-
+                        Name of the referent.
+                        More info: https://kubernetes.
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
@@ -835,7 +852,9 @@ spec:
                     description: Reference to kubernetes.io/tls secret.
                     properties:
                       name:
-                        description: 'Name of the referent. More info: https://kubernetes.'
+                        description: |-
+                          Name of the referent.
+                          More info: https://kubernetes.
                         type: string
                     type: object
                     x-kubernetes-map-type: atomic
@@ -869,17 +888,35 @@ spec:
                     type: integer
                 type: object
               remoteClusterSpec:
-                description: LocalObjectReference contains enough information to let
-                  you locate the reference
+                description: |-
+                  LocalObjectReference contains enough information to let you locate the
+                  reference
                 properties:
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
               resources:
                 description: ResourceRequirements describes the compute resource requirements.
                 properties:
+                  claims:
+                    description: Claims lists the names of resources, defined in spec.
+                    items:
+                      description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                      properties:
+                        name:
+                          description: Name must match the name of one entry in pod.spec.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
                   limits:
                     additionalProperties:
                       anyOf:
@@ -967,8 +1004,9 @@ spec:
                 type: array
               tolerations:
                 items:
-                  description: The pod this Toleration is attached to tolerates any
-                    taint that matches the trip
+                  description: |-
+                    The pod this Toleration is attached to tolerates any taint that matches
+                    the trip
                   properties:
                     effect:
                       description: Effect indicates the taint effect to match. Empty
@@ -982,8 +1020,9 @@ spec:
                       description: Operator represents a key's relationship to the value.
                       type: string
                     tolerationSeconds:
-                      description: TolerationSeconds represents the period of time the
-                        toleration (which must be of
+                      description: |-
+                        TolerationSeconds represents the period of time the toleration (which must be
+                        of
                       format: int64
                       type: integer
                     value:
@@ -1023,14 +1062,15 @@ spec:
                         annotations:
                           additionalProperties:
                             type: string
-                          description: 'Annotations is an unstructured key value map
-                            stored with a resource that may be '
+                          description: |
+                            Annotations is an unstructured key value map stored with a resource that may be
                           type: object
                         labels:
                           additionalProperties:
                             type: string
-                          description: Map of string keys and values that can be used
-                            to organize and categorize (scope
+                          description: |-
+                            Map of string keys and values that can be used to organize and categorize
+                            (scope
                           type: object
                         name:
                           description: Name must be unique within a namespace.
@@ -1047,8 +1087,9 @@ spec:
                             type: string
                           type: array
                         dataSource:
-                          description: 'dataSource field can be used to specify either:
-                            * An existing VolumeSnapshot obj'
+                          description: |-
+                            dataSource field can be used to specify either:
+                            * An existing VolumeSnapshot obj
                           properties:
                             apiGroup:
                               description: APIGroup is the group for the resource being
@@ -1079,15 +1120,36 @@ spec:
                             name:
                               description: Name is the name of resource being referenced
                               type: string
+                            namespace:
+                              description: |-
+                                Namespace is the namespace of resource being referenced
+                                Note that when a namespa
+                              type: string
                           required:
                           - kind
                           - name
                           type: object
-                          x-kubernetes-map-type: atomic
                         resources:
                           description: resources represents the minimum resources the
                             volume should have.
                           properties:
+                            claims:
+                              description: Claims lists the names of resources, defined
+                                in spec.
+                              items:
+                                description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                                properties:
+                                  name:
+                                    description: Name must match the name of one entry
+                                      in pod.spec.
+                                    type: string
+                                required:
+                                - name
+                                type: object
+                              type: array
+                              x-kubernetes-list-map-keys:
+                              - name
+                              x-kubernetes-list-type: map
                             limits:
                               additionalProperties:
                                 anyOf:
@@ -1170,8 +1232,9 @@ spec:
                         be mounted.
                       type: string
                     mountPropagation:
-                      description: mountPropagation determines how mounts are propagated
-                        from the host to container
+                      description: |-
+                        mountPropagation determines how mounts are propagated from the host
+                        to container
                       type: string
                     name:
                       description: This must match the Name of a Volume.
@@ -1199,8 +1262,9 @@ spec:
                     accessed by any container '
                   properties:
                     awsElasticBlockStore:
-                      description: awsElasticBlockStore represents an AWS Disk resource
-                        that is attached to a kubel
+                      description: |-
+                        awsElasticBlockStore represents an AWS Disk resource that is attached to a
+                        kubel
                       properties:
                         fsType:
                           description: fsType is the filesystem type of the volume that
@@ -1274,8 +1338,9 @@ spec:
                         shares a pod's lifetime
                       properties:
                         monitors:
-                          description: 'monitors is Required: Monitors is a collection
-                            of Ceph monitors More info: https'
+                          description: |-
+                            monitors is Required: Monitors is a collection of Ceph monitors
+                            More info: https
                           items:
                             type: string
                           type: array
@@ -1295,13 +1360,16 @@ spec:
                             to the authentication secret for U'
                           properties:
                             name:
-                              description: 'Name of the referent. More info: https://kubernetes.'
+                              description: |-
+                                Name of the referent.
+                                More info: https://kubernetes.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
                         user:
-                          description: 'user is optional: User is the rados user name,
-                            default is admin More info: https'
+                          description: |-
+                            user is optional: User is the rados user name, default is admin
+                            More info: https
                           type: string
                       required:
                       - monitors
@@ -1321,13 +1389,16 @@ spec:
                             containing parameters used to c'
                           properties:
                             name:
-                              description: 'Name of the referent. More info: https://kubernetes.'
+                              description: |-
+                                Name of the referent.
+                                More info: https://kubernetes.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
                         volumeID:
-                          description: 'volumeID used to identify the volume in cinder.
-                            More info: https://examples.k8s.'
+                          description: |-
+                            volumeID used to identify the volume in cinder.
+                            More info: https://examples.k8s.
                           type: string
                       required:
                       - volumeID
@@ -1342,8 +1413,9 @@ spec:
                           format: int32
                           type: integer
                         items:
-                          description: items if unspecified, each key-value pair in
-                            the Data field of the referenced Co
+                          description: |-
+                            items if unspecified, each key-value pair in the Data field of the referenced
+                            Co
                           items:
                             description: Maps a string key to a path within a volume.
                             properties:
@@ -1365,7 +1437,9 @@ spec:
                             type: object
                           type: array
                         name:
-                          description: 'Name of the referent. More info: https://kubernetes.'
+                          description: |-
+                            Name of the referent.
+                            More info: https://kubernetes.
                           type: string
                         optional:
                           description: optional specify whether the ConfigMap or its
@@ -1385,11 +1459,14 @@ spec:
                           description: fsType to mount. Ex. "ext4", "xfs", "ntfs".
                           type: string
                         nodePublishSecretRef:
-                          description: nodePublishSecretRef is a reference to the secret
-                            object containing sensitive in
+                          description: |-
+                            nodePublishSecretRef is a reference to the secret object containing
+                            sensitive in
                           properties:
                             name:
-                              description: 'Name of the referent. More info: https://kubernetes.'
+                              description: |-
+                                Name of the referent.
+                                More info: https://kubernetes.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -1400,8 +1477,9 @@ spec:
                         volumeAttributes:
                           additionalProperties:
                             type: string
-                          description: volumeAttributes stores driver-specific properties
-                            that are passed to the CSI dr
+                          description: |-
+                            volumeAttributes stores driver-specific properties that are passed to the CSI
+                            dr
                           type: object
                       required:
                       - driver
@@ -1447,8 +1525,9 @@ spec:
                                   of the file to be created.'
                                 type: string
                               resourceFieldRef:
-                                description: 'Selects a resource of the container: only
-                                  resources limits and requests (limits.'
+                                description: |-
+                                  Selects a resource of the container: only resources limits and requests
+                                  (limits.
                                 properties:
                                   containerName:
                                     description: 'Container name: required for volumes,
@@ -1500,8 +1579,9 @@ spec:
                             the volume.
                           properties:
                             metadata:
-                              description: May contain labels and annotations that will
-                                be copied into the PVC when creatin
+                              description: |-
+                                May contain labels and annotations that will be copied into the PVC
+                                when creatin
                               type: object
                             spec:
                               description: The specification for the PersistentVolumeClaim.
@@ -1513,8 +1593,9 @@ spec:
                                     type: string
                                   type: array
                                 dataSource:
-                                  description: 'dataSource field can be used to specify
-                                    either: * An existing VolumeSnapshot obj'
+                                  description: |-
+                                    dataSource field can be used to specify either:
+                                    * An existing VolumeSnapshot obj
                                   properties:
                                     apiGroup:
                                       description: APIGroup is the group for the resource
@@ -1549,15 +1630,37 @@ spec:
                                       description: Name is the name of resource being
                                         referenced
                                       type: string
+                                    namespace:
+                                      description: |-
+                                        Namespace is the namespace of resource being referenced
+                                        Note that when a namespa
+                                      type: string
                                   required:
                                   - kind
                                   - name
                                   type: object
-                                  x-kubernetes-map-type: atomic
                                 resources:
                                   description: resources represents the minimum resources
                                     the volume should have.
                                   properties:
+                                    claims:
+                                      description: Claims lists the names of resources,
+                                        defined in spec.
+                                      items:
+                                        description: ResourceClaim references one entry
+                                          in PodSpec.ResourceClaims.
+                                        properties:
+                                          name:
+                                            description: Name must match the name of
+                                              one entry in pod.spec.
+                                            type: string
+                                        required:
+                                        - name
+                                        type: object
+                                      type: array
+                                      x-kubernetes-list-map-keys:
+                                      - name
+                                      x-kubernetes-list-type: map
                                     limits:
                                       additionalProperties:
                                         anyOf:
@@ -1656,15 +1759,17 @@ spec:
                             type: string
                           type: array
                         wwids:
-                          description: 'wwids Optional: FC volume world wide identifiers
-                            (wwids) Either wwids or combina'
+                          description: |-
+                            wwids Optional: FC volume world wide identifiers (wwids)
+                            Either wwids or combina
                           items:
                             type: string
                           type: array
                       type: object
                     flexVolume:
-                      description: flexVolume represents a generic volume resource that
-                        is provisioned/attached usi
+                      description: |-
+                        flexVolume represents a generic volume resource that is
+                        provisioned/attached usi
                       properties:
                         driver:
                           description: driver is the name of the driver to use for this
@@ -1683,11 +1788,14 @@ spec:
                           description: 'readOnly is Optional: defaults to false (read/write).'
                           type: boolean
                         secretRef:
-                          description: 'secretRef is Optional: secretRef is reference
-                            to the secret object containing se'
+                          description: |-
+                            secretRef is Optional: secretRef is reference to the secret object containing
+                            se
                           properties:
                             name:
-                              description: 'Name of the referent. More info: https://kubernetes.'
+                              description: |-
+                                Name of the referent.
+                                More info: https://kubernetes.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -1707,8 +1815,9 @@ spec:
                           type: string
                       type: object
                     gcePersistentDisk:
-                      description: gcePersistentDisk represents a GCE Disk resource
-                        that is attached to a kubelet's
+                      description: |-
+                        gcePersistentDisk represents a GCE Disk resource that is attached to a
+                        kubelet's
                       properties:
                         fsType:
                           description: fsType is filesystem type of the volume that
@@ -1734,8 +1843,9 @@ spec:
                         revision.
                       properties:
                         directory:
-                          description: directory is the target directory name. Must
-                            not contain or start with '..'.
+                          description: |-
+                            directory is the target directory name.
+                            Must not contain or start with '..'.
                           type: string
                         repository:
                           description: repository is the URL
@@ -1756,8 +1866,9 @@ spec:
                             topology.
                           type: string
                         path:
-                          description: 'path is the Glusterfs volume path. More info:
-                            https://examples.k8s.'
+                          description: |-
+                            path is the Glusterfs volume path.
+                            More info: https://examples.k8s.
                           type: string
                         readOnly:
                           description: readOnly here will force the Glusterfs volume
@@ -1768,22 +1879,26 @@ spec:
                       - path
                       type: object
                     hostPath:
-                      description: hostPath represents a pre-existing file or directory
-                        on the host machine that is
+                      description: |-
+                        hostPath represents a pre-existing file or directory on the host
+                        machine that is
                       properties:
                         path:
                           description: path of the directory on the host.
                           type: string
                         type:
-                          description: 'type for HostPath Volume Defaults to "" More
-                            info: https://kubernetes.'
+                          description: |-
+                            type for HostPath Volume
+                            Defaults to ""
+                            More info: https://kubernetes.
                           type: string
                       required:
                       - path
                       type: object
                     iscsi:
-                      description: iscsi represents an ISCSI Disk resource that is attached
-                        to a kubelet's host mac
+                      description: |-
+                        iscsi represents an ISCSI Disk resource that is attached to a
+                        kubelet's host mac
                       properties:
                         chapAuthDiscovery:
                           description: chapAuthDiscovery defines whether support iSCSI
@@ -1825,7 +1940,9 @@ spec:
                             and initiator authentication
                           properties:
                             name:
-                              description: 'Name of the referent. More info: https://kubernetes.'
+                              description: |-
+                                Name of the referent.
+                                More info: https://kubernetes.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -1838,16 +1955,18 @@ spec:
                       - targetPortal
                       type: object
                     name:
-                      description: name of the volume. Must be a DNS_LABEL and unique
-                        within the pod.
+                      description: |-
+                        name of the volume.
+                        Must be a DNS_LABEL and unique within the pod.
                       type: string
                     nfs:
-                      description: 'nfs represents an NFS mount on the host that shares
-                        a pod''s lifetime More info: '
+                      description: "nfs represents an NFS mount on the host that shares
+                        a pod's lifetime\nMore info: "
                       properties:
                         path:
-                          description: 'path that is exported by the NFS server. More
-                            info: https://kubernetes.'
+                          description: |-
+                            path that is exported by the NFS server.
+                            More info: https://kubernetes.
                           type: string
                         readOnly:
                           description: readOnly here will force the NFS export to be
@@ -1862,15 +1981,17 @@ spec:
                       - server
                       type: object
                     persistentVolumeClaim:
-                      description: persistentVolumeClaimVolumeSource represents a reference
-                        to a PersistentVolumeCl
+                      description: |-
+                        persistentVolumeClaimVolumeSource represents a reference to a
+                        PersistentVolumeCl
                       properties:
                         claimName:
                           description: claimName is the name of a PersistentVolumeClaim
                             in the same namespace as the po
                           type: string
                         readOnly:
-                          description: readOnly Will force the ReadOnly setting in VolumeMounts.
+                          description: |-
+                            readOnly Will force the ReadOnly setting in VolumeMounts.
                             Default false.
                           type: boolean
                       required:
@@ -1895,7 +2016,8 @@ spec:
                         and mounted on kubelets hos
                       properties:
                         fsType:
-                          description: fSType represents the filesystem type to mount
+                          description: |-
+                            fSType represents the filesystem type to mount
                             Must be a filesystem type support
                           type: string
                         readOnly:
@@ -1927,8 +2049,9 @@ spec:
                                   data to project
                                 properties:
                                   items:
-                                    description: items if unspecified, each key-value
-                                      pair in the Data field of the referenced Co
+                                    description: |-
+                                      items if unspecified, each key-value pair in the Data field of the referenced
+                                      Co
                                     items:
                                       description: Maps a string key to a path within
                                         a volume.
@@ -1951,7 +2074,9 @@ spec:
                                       type: object
                                     type: array
                                   name:
-                                    description: 'Name of the referent. More info: https://kubernetes.'
+                                    description: |-
+                                      Name of the referent.
+                                      More info: https://kubernetes.
                                     type: string
                                   optional:
                                     description: optional specify whether the ConfigMap
@@ -2000,8 +2125,9 @@ spec:
                                             path name of the file to be created.'
                                           type: string
                                         resourceFieldRef:
-                                          description: 'Selects a resource of the container:
-                                            only resources limits and requests (limits.'
+                                          description: |-
+                                            Selects a resource of the container: only resources limits and requests
+                                            (limits.
                                           properties:
                                             containerName:
                                               description: 'Container name: required
@@ -2033,8 +2159,9 @@ spec:
                                   to project
                                 properties:
                                   items:
-                                    description: items if unspecified, each key-value
-                                      pair in the Data field of the referenced Se
+                                    description: |-
+                                      items if unspecified, each key-value pair in the Data field of the referenced
+                                      Se
                                     items:
                                       description: Maps a string key to a path within
                                         a volume.
@@ -2057,7 +2184,9 @@ spec:
                                       type: object
                                     type: array
                                   name:
-                                    description: 'Name of the referent. More info: https://kubernetes.'
+                                    description: |-
+                                      Name of the referent.
+                                      More info: https://kubernetes.
                                     type: string
                                   optional:
                                     description: optional field specify whether the
@@ -2074,13 +2203,15 @@ spec:
                                       the token.
                                     type: string
                                   expirationSeconds:
-                                    description: expirationSeconds is the requested
-                                      duration of validity of the service account t
+                                    description: |-
+                                      expirationSeconds is the requested duration of validity of the service
+                                      account t
                                     format: int64
                                     type: integer
                                   path:
-                                    description: path is the path relative to the mount
-                                      point of the file to project the token in
+                                    description: |-
+                                      path is the path relative to the mount point of the file to project the
+                                      token in
                                     type: string
                                 required:
                                 - path
@@ -2093,23 +2224,27 @@ spec:
                         shares a pod's lifetime
                       properties:
                         group:
-                          description: group to map volume access to Default is no group
+                          description: |-
+                            group to map volume access to
+                            Default is no group
                           type: string
                         readOnly:
                           description: readOnly here will force the Quobyte volume to
                             be mounted with read-only permiss
                           type: boolean
                         registry:
-                          description: 'registry represents a single or multiple Quobyte
-                            Registry services specified as '
+                          description: "registry represents a single or multiple Quobyte
+                            Registry services\nspecified as "
                           type: string
                         tenant:
-                          description: tenant owning the given Quobyte volume in the
-                            Backend Used with dynamically prov
+                          description: |-
+                            tenant owning the given Quobyte volume in the Backend
+                            Used with dynamically prov
                           type: string
                         user:
-                          description: user to map volume access to Defaults to serivceaccount
-                            user
+                          description: |-
+                            user to map volume access to
+                            Defaults to serivceaccount user
                           type: string
                         volume:
                           description: volume is a string that references an already
@@ -2128,21 +2263,27 @@ spec:
                             you want to mount.
                           type: string
                         image:
-                          description: 'image is the rados image name. More info: https://examples.k8s.'
+                          description: |-
+                            image is the rados image name.
+                            More info: https://examples.k8s.
                           type: string
                         keyring:
-                          description: keyring is the path to key ring for RBDUser.
+                          description: |-
+                            keyring is the path to key ring for RBDUser.
                             Default is /etc/ceph/keyring.
                           type: string
                         monitors:
-                          description: 'monitors is a collection of Ceph monitors. More
-                            info: https://examples.k8s.'
+                          description: |-
+                            monitors is a collection of Ceph monitors.
+                            More info: https://examples.k8s.
                           items:
                             type: string
                           type: array
                         pool:
-                          description: 'pool is the rados pool name. Default is rbd.
-                            More info: https://examples.k8s.'
+                          description: |-
+                            pool is the rados pool name.
+                            Default is rbd.
+                            More info: https://examples.k8s.
                           type: string
                         readOnly:
                           description: readOnly here will force the ReadOnly setting
@@ -2153,13 +2294,17 @@ spec:
                             for RBDUser.
                           properties:
                             name:
-                              description: 'Name of the referent. More info: https://kubernetes.'
+                              description: |-
+                                Name of the referent.
+                                More info: https://kubernetes.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
                         user:
-                          description: 'user is the rados user name. Default is admin.
-                            More info: https://examples.k8s.'
+                          description: |-
+                            user is the rados user name.
+                            Default is admin.
+                            More info: https://examples.k8s.
                           type: string
                       required:
                       - image
@@ -2184,11 +2329,14 @@ spec:
                           description: readOnly Defaults to false (read/write).
                           type: boolean
                         secretRef:
-                          description: secretRef references to the secret for ScaleIO
-                            user and other sensitive informat
+                          description: |-
+                            secretRef references to the secret for ScaleIO user and other
+                            sensitive informat
                           properties:
                             name:
-                              description: 'Name of the referent. More info: https://kubernetes.'
+                              description: |-
+                                Name of the referent.
+                                More info: https://kubernetes.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -2209,8 +2357,9 @@ spec:
                             in ScaleIO.
                           type: string
                         volumeName:
-                          description: volumeName is the name of a volume already created
-                            in the ScaleIO system that is
+                          description: |-
+                            volumeName is the name of a volume already created in the ScaleIO system
+                            that is
                           type: string
                       required:
                       - gateway
@@ -2227,8 +2376,9 @@ spec:
                           format: int32
                           type: integer
                         items:
-                          description: items If unspecified, each key-value pair in
-                            the Data field of the referenced Se
+                          description: |-
+                            items If unspecified, each key-value pair in the Data field of the referenced
+                            Se
                           items:
                             description: Maps a string key to a path within a volume.
                             properties:
@@ -2269,11 +2419,14 @@ spec:
                           description: readOnly defaults to false (read/write).
                           type: boolean
                         secretRef:
-                          description: secretRef specifies the secret to use for obtaining
-                            the StorageOS API credential
+                          description: |-
+                            secretRef specifies the secret to use for obtaining the StorageOS API
+                            credential
                           properties:
                             name:
-                              description: 'Name of the referent. More info: https://kubernetes.'
+                              description: |-
+                                Name of the referent.
+                                More info: https://kubernetes.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -2319,8 +2472,9 @@ spec:
             description: RemoteExecNodesStatus defines the observed state of RemoteExecNodes
             properties:
               releaseStatus:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run'
+                description: |-
+                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                  Important: Run
                 type: string
             type: object
         type: object
