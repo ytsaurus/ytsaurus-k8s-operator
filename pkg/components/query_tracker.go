@@ -400,7 +400,7 @@ func (qt *QueryTracker) setConditionQTStatePreparedForUpdating(ctx context.Conte
 		Type:    consts.ConditionQTStatePreparedForUpdating,
 		Status:  metav1.ConditionTrue,
 		Reason:  "QTStatePreparedForUpdating",
-		Message: fmt.Sprintf("Query Tracker state prepared for updating"),
+		Message: "Query Tracker state prepared for updating",
 	})
 }
 
@@ -409,6 +409,6 @@ func (qt *QueryTracker) setConditionQTStateUpdated(ctx context.Context) {
 		Type:    consts.ConditionQTStateUpdated,
 		Status:  metav1.ConditionTrue,
 		Reason:  "QTStateUpdated",
-		Message: fmt.Sprintf("Query tracker state updated"),
+		Message: "Query tracker state updated",
 	})
 }

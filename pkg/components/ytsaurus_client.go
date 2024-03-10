@@ -216,6 +216,9 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 	case ytv1.UpdateStateWaitingForTabletCellsRemovingStart:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemovingStarted) {
 			err = yc.RemoveTabletCells(ctx)
+			if err != nil {
+				return SimpleStatus(SyncStatusUpdating), err
+			}
 
 			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionTabletCellsRemovingStarted,
@@ -329,11 +332,6 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 	}
 
 	return SimpleStatus(SyncStatusUpdating), err
-}
-
-func (yc *YtsaurusClient) getToken() string {
-	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
-	return token
 }
 
 func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
@@ -488,7 +486,7 @@ func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 	}
 
 	if !(leadingPrimaryMasterCount == 1 && followingPrimaryMasterCount+1 == len(primaryMasterAddresses)) {
-		msg = fmt.Sprintf("There is no leader or some peer is not active")
+		msg = "There is no leader or some peer is not active"
 		return false, msg, nil
 	}
 

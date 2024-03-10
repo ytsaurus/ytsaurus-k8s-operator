@@ -287,7 +287,7 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 
 func getExecNodeResourceLimits(spec *ytv1.ExecNodesSpec) ResourceLimits {
 	var resourceLimits ResourceLimits
-	resourceLimits.NodeDedicatedCpu = ptr.Float32Ptr(0)
+	resourceLimits.NodeDedicatedCpu = ptr.Float32(0)
 
 	cpuLimit := spec.Resources.Limits.Cpu()
 	cpuRequest := spec.Resources.Requests.Cpu()

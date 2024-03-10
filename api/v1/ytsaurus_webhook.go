@@ -428,13 +428,6 @@ func (r *Ytsaurus) validateInstanceSpec(instanceSpec InstanceSpec, path *field.P
 		allErrors = append(allErrors, field.Invalid(path.Child("EnableAntiAffinity"), instanceSpec.EnableAntiAffinity, "EnableAntiAffinity is deprecated, use Affinity instead"))
 	}
 
-	volumeMountPaths := make([]string, 0)
-	if instanceSpec.VolumeMounts != nil {
-		for _, volumeMount := range instanceSpec.VolumeMounts {
-			volumeMountPaths = append(volumeMountPaths, volumeMount.MountPath)
-		}
-	}
-
 	if instanceSpec.Locations != nil {
 		for locationIdx, location := range instanceSpec.Locations {
 

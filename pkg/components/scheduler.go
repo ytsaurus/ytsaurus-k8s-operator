@@ -251,7 +251,7 @@ func (s *Scheduler) setConditionNotNecessaryToUpdateOpArchive(ctx context.Contex
 		Type:    consts.ConditionNotNecessaryToUpdateOpArchive,
 		Status:  metav1.ConditionTrue,
 		Reason:  "NotNecessaryToUpdateOpArchive",
-		Message: fmt.Sprintf("Operations archive does not need to be updated"),
+		Message: "Operations archive does not need to be updated",
 	})
 }
 
@@ -260,7 +260,7 @@ func (s *Scheduler) setConditionOpArchivePreparedForUpdating(ctx context.Context
 		Type:    consts.ConditionOpArchivePreparedForUpdating,
 		Status:  metav1.ConditionTrue,
 		Reason:  "OpArchivePreparedForUpdating",
-		Message: fmt.Sprintf("Operations archive prepared for updating"),
+		Message: "Operations archive prepared for updating",
 	})
 }
 
@@ -269,7 +269,7 @@ func (s *Scheduler) setConditionOpArchiveUpdated(ctx context.Context) {
 		Type:    consts.ConditionOpArchiveUpdated,
 		Status:  metav1.ConditionTrue,
 		Reason:  "OpArchiveUpdated",
-		Message: fmt.Sprintf("Operations archive updated"),
+		Message: "Operations archive updated",
 	})
 }
 

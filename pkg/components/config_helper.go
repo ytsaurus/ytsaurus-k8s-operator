@@ -91,7 +91,7 @@ func overrideYsonConfigs(base []byte, overrides []byte) ([]byte, error) {
 
 func (h *ConfigHelper) GetFileNames() []string {
 	fileNames := []string{}
-	for fileName, _ := range h.generators {
+	for fileName := range h.generators {
 		fileNames = append(fileNames, fileName)
 	}
 	return fileNames
@@ -166,7 +166,7 @@ func (h *ConfigHelper) getCurrentConfigValue(fileName string) []byte {
 }
 
 func (h *ConfigHelper) NeedReload() (bool, error) {
-	for fileName, _ := range h.generators {
+	for fileName := range h.generators {
 		newConfig, err := h.getConfig(fileName)
 		if err != nil {
 			return false, err
@@ -183,16 +183,13 @@ func (h *ConfigHelper) NeedReload() (bool, error) {
 }
 
 func (h *ConfigHelper) NeedInit() bool {
-	if !resources.Exists(h.configMap) {
-		return true
-	}
-	return false
+	return !resources.Exists(h.configMap)
 }
 
 func (h *ConfigHelper) Build() *corev1.ConfigMap {
 	cm := h.configMap.Build()
 
-	for fileName, _ := range h.generators {
+	for fileName := range h.generators {
 		data, err := h.getConfig(fileName)
 		if err != nil {
 			return nil
