@@ -26,10 +26,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
       - name: Run linters
         shell: bash
         run: |
           make lint
+          make lint-generated
 
       - name: Set up Helm
         uses: azure/setup-helm@v1
