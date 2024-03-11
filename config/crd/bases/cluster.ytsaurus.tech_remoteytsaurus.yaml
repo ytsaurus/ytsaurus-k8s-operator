@@ -796,6 +796,8 @@ spec:
                       resources required.
                     type: object
                 type: object
+              runtimeClassName:
+                type: string
               structuredLoggers:
                 items:
                   properties:
