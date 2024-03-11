@@ -44,6 +44,10 @@ func NewScheduler(
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
+	if resource.Spec.Schedulers.InstanceSpec.MonitoringPort == nil {
+		resource.Spec.Schedulers.InstanceSpec.MonitoringPort = ptr.Int32(consts.SchedulerMonitoringPort)
+	}
+
 	srv := newServer(
 		&l,
 		ytsaurus,

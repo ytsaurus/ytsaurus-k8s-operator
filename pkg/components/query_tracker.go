@@ -46,6 +46,10 @@ func NewQueryTracker(
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
+	if resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort == nil {
+		resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort = ptr.Int32(consts.QueryTrackerMonitoringPort)
+	}
+
 	srv := newServer(
 		&l,
 		ytsaurus,
