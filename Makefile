@@ -5,7 +5,7 @@ IMG ?= controller:latest
 ENVTEST_K8S_VERSION = 1.24.2
 
 OPERATOR_IMAGE = ytsaurus/k8s-operator
-OPERATOR_TAG = 0.0.0-alpha
+OPERATOR_TAG = master-caches-test-0.3
 OPERATOR_CHART = ytop-chart
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
@@ -83,7 +83,7 @@ canonize: manifests generate fmt vet envtest ## Canonize tests.
 helm-kind-install: ## Install helm chart from sources in kind.
 	docker build -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
 	kind load docker-image ${OPERATOR_IMAGE}:${OPERATOR_TAG}
-	helm install ytsaurus $(OPERATOR_CHART)
+	helm upgrade -i ytsaurus $(OPERATOR_CHART) --set controllerManager.manager.image.repository=${OPERATOR_IMAGE} --set controllerManager.manager.image.tag=${OPERATOR_TAG}
 
 TEST_IMAGES = \
 	ytsaurus/ytsaurus-nightly:dev-23.1-5f8638fc66f6e59c7a06708ed508804986a6579f \

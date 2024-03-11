@@ -199,6 +199,10 @@ type testRow struct {
 
 var _ = Describe("Basic test for Ytsaurus controller", func() {
 	Context("When setting up the test environment", func() {
+		//It(
+		//	"Should run and update Ytsaurus with master-caches",
+		//	getSimpleUpdateScenarioMasterCaches("test-master-caches", ytv1.CoreImageSecond),
+		//)
 		It(
 			"Should run and update Ytsaurus within same major version",
 			getSimpleUpdateScenario("test-minor-update", ytv1.CoreImageSecond),
@@ -490,3 +494,56 @@ func getSimpleUpdateScenario(namespace, newImage string) func() {
 		checkClusterBaseViability(ytClient)
 	}
 }
+
+//func getSimpleUpdateScenarioMasterCaches(namespace, newImage string) func() {
+//	return func() {
+//
+//		By("Creating a Ytsaurus resource with MasterCaches")
+//		ctx := context.Background()
+//
+//		//ytsaurus := ytv1.CreateBaseYtsaurusResourceWithMasterCaches(namespace)
+//		ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+//		ytsaurus.Spec.MasterCaches = &ytv1.MasterCachesSpec{
+//			InstanceSpec: ytv1.InstanceSpec{
+//				InstanceCount: 1,
+//			},
+//		}
+//
+//		g := ytconfig.NewGenerator(ytsaurus, "local")
+//
+//		defer deleteYtsaurus(ctx, ytsaurus)
+//		runYtsaurus(ytsaurus)
+//
+//		By("Creating ytsaurus client")
+//
+//		ytClient := getYtClient(g, namespace)
+//
+//		checkClusterViability(ytClient)
+//
+//		By("Run cluster update")
+//
+//		Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)).Should(Succeed())
+//		ytsaurus.Spec.CoreImage = newImage
+//		Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+//
+//		Eventually(func() bool {
+//			ytsaurus := &ytv1.Ytsaurus{}
+//			err := k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)
+//			if err != nil {
+//				return false
+//			}
+//			return ytsaurus.Status.State == ytv1.ClusterStateUpdating
+//		}, timeout, interval).Should(BeTrue())
+//
+//		Eventually(func() bool {
+//			ytsaurus := &ytv1.Ytsaurus{}
+//			err := k8sClient.Get(ctx, types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}, ytsaurus)
+//			if err != nil {
+//				return false
+//			}
+//			return ytsaurus.Status.State == ytv1.ClusterStateRunning
+//		}, timeout*5, interval).Should(BeTrue())
+//
+//		checkClusterBaseViability(ytClient)
+//	}
+//}

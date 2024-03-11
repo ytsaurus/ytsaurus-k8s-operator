@@ -14,8 +14,7 @@ import (
 
 type masterCache struct {
 	localServerComponent
-	cfgen   *ytconfig.Generator
-	initJob *InitJob
+	cfgen *ytconfig.Generator
 }
 
 func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component {
@@ -40,20 +39,9 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Comp
 		cfgen.GetMasterCachesConfig,
 	)
 
-	initJob := NewInitJob(
-		&l,
-		ytsaurus.APIProxy(),
-		ytsaurus,
-		resource.Spec.ImagePullSecrets,
-		"default",
-		consts.ClientConfigFileName,
-		resource.Spec.CoreImage,
-		cfgen.GetNativeClientConfig)
-
 	return &masterCache{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
-		initJob:              initJob,
 	}
 }
 
@@ -69,7 +57,7 @@ func (mc *masterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(mc.ytsaurus.GetClusterState()) && mc.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedFullUpdate), err
+		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
 	if mc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -78,7 +66,7 @@ func (mc *masterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 		}
 	}
 
-	if mc.server.needSync() {
+	if mc.NeedSync() {
 		if !dry {
 			err = mc.doServerSync(ctx)
 		}
@@ -89,7 +77,7 @@ func (mc *masterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
-	return mc.initJob.Sync(ctx, dry)
+	return SimpleStatus(SyncStatusReady), err
 }
 
 func (mc *masterCache) Status(ctx context.Context) ComponentStatus {
@@ -133,11 +121,10 @@ func (mc *masterCache) addAffinity(statefulSet *appsv1.StatefulSet) {
 		selector = nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution
 	}
 
-	nodeHostnameLabel := mc.getHostAddressLabel()
 	selector.NodeSelectorTerms = append(selector.NodeSelectorTerms, corev1.NodeSelectorTerm{
 		MatchExpressions: []corev1.NodeSelectorRequirement{
 			{
-				Key:      nodeHostnameLabel,
+				Key:      mc.getHostAddressLabel(),
 				Operator: corev1.NodeSelectorOpIn,
 				Values:   masterCachesSpec.HostAddresses,
 			},

@@ -12,8 +12,8 @@ import (
 
 const (
 	YtsaurusName     = "test-ytsaurus"
-	CoreImageFirst   = "ytsaurus/ytsaurus-nightly:dev-23.1-5f8638fc66f6e59c7a06708ed508804986a6579f"
-	CoreImageSecond  = "ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de"
+	CoreImageFirst   = "ytsaurus/ytsaurus-nightly:dev-23.1-28ccaedbf353b870bedafb6e881ecf386a0a3779"
+	CoreImageSecond  = "ytsaurus/ytsaurus-nightly:dev-23.1-28ccaedbf353b870bedafb6e881ecf386a0a3779"
 	CoreImageNextVer = "ytsaurus/ytsaurus-nightly:dev-23.2-62a472c4efc2c8395d125a13ca0216720e06999d"
 )
 
@@ -220,6 +220,120 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 					},
 				},
 			},
+		},
+	}
+	return ytsaurus
+}
+
+func CreateBaseYtsaurusResourceWithMasterCaches(namespace string) *Ytsaurus {
+	ytsaurus := CreateMinimalYtsaurusResource(namespace)
+
+	masterVolumeSize, _ := resource.ParseQuantity("5Gi")
+	execNodeVolumeSize, _ := resource.ParseQuantity("3Gi")
+	execNodeCPU, _ := resource.ParseQuantity("1")
+	execNodeMemory, _ := resource.ParseQuantity("2Gi")
+
+	ytsaurus.Spec.Discovery = DiscoverySpec{
+		InstanceSpec: InstanceSpec{
+			InstanceCount: 1,
+		},
+	}
+	ytsaurus.Spec.DataNodes = []DataNodesSpec{
+		{
+			InstanceSpec: InstanceSpec{
+				InstanceCount: 3,
+				Locations: []LocationSpec{
+					{
+						LocationType: "ChunkStore",
+						Path:         "/yt/node-data/chunk-store",
+					},
+				},
+				Volumes: []corev1.Volume{
+					{
+						Name: "node-data",
+						VolumeSource: corev1.VolumeSource{
+							EmptyDir: &corev1.EmptyDirVolumeSource{
+								SizeLimit: &masterVolumeSize,
+							},
+						},
+					},
+				},
+				VolumeMounts: []corev1.VolumeMount{
+					{
+						Name:      "node-data",
+						MountPath: "/yt/node-data",
+					},
+				},
+			},
+		},
+	}
+	ytsaurus.Spec.TabletNodes = []TabletNodesSpec{
+		{
+			InstanceSpec: InstanceSpec{
+				InstanceCount: 3,
+				Loggers: []TextLoggerSpec{
+					{
+						BaseLoggerSpec: BaseLoggerSpec{
+							MinLogLevel: LogLevelDebug,
+							Name:        "debug",
+						},
+						WriterType: LogWriterTypeFile,
+					},
+				},
+			},
+		},
+	}
+	ytsaurus.Spec.ExecNodes = []ExecNodesSpec{
+		{
+			InstanceSpec: InstanceSpec{
+				InstanceCount: 1,
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    execNodeCPU,
+						corev1.ResourceMemory: execNodeMemory,
+					},
+				},
+				Loggers: []TextLoggerSpec{
+					{
+						BaseLoggerSpec: BaseLoggerSpec{
+							MinLogLevel: LogLevelDebug,
+							Name:        "debug",
+						},
+						WriterType: LogWriterTypeFile,
+					},
+				},
+				Locations: []LocationSpec{
+					{
+						LocationType: "ChunkCache",
+						Path:         "/yt/node-data/chunk-cache",
+					},
+					{
+						LocationType: "Slots",
+						Path:         "/yt/node-data/slots",
+					},
+				},
+				Volumes: []corev1.Volume{
+					{
+						Name: "node-data",
+						VolumeSource: corev1.VolumeSource{
+							EmptyDir: &corev1.EmptyDirVolumeSource{
+								SizeLimit: &execNodeVolumeSize,
+							},
+						},
+					},
+				},
+				VolumeMounts: []corev1.VolumeMount{
+					{
+						Name:      "node-data",
+						MountPath: "/yt/node-data",
+					},
+				},
+			},
+		},
+	}
+	ytsaurus.Spec.MasterCaches = &MasterCachesSpec{
+		InstanceSpec: InstanceSpec{
+			InstanceCount: 1,
 		},
 	}
 	return ytsaurus

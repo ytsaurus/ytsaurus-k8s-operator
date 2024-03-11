@@ -154,10 +154,12 @@ func (g *BaseGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCT
 	c.ClusterName = g.key.Name
 	c.DiscoveryConnection.Addresses = g.getDiscoveryAddresses()
 	g.fillClusterConnectionEncryption(c, s)
-	if len(g.getMasterCachesAddresses()) != 0 {
+	if len(g.getMasterCachesAddresses()) == 0 {
+		c.MasterCache.Addresses = g.getMasterAddresses()
+	} else {
 		c.MasterCache.Addresses = g.getMasterCachesAddresses()
-		c.MasterCache.CellID = generateCellID(g.masterConnectionSpec.CellTag)
 	}
+	c.MasterCache.CellID = generateCellID(g.masterConnectionSpec.CellTag)
 }
 
 func (g *BaseGenerator) fillCypressAnnotations(c *map[string]any) {
@@ -704,7 +706,7 @@ func (g *Generator) getMasterCachesConfigImpl() (MasterCacheServer, error) {
 		return MasterCacheServer{}, err
 	}
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
-
+	//c.ClusterConnection.MasterCache.Addresses = g.getMasterCachesAddresses()
 	return c, nil
 }
 
