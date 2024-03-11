@@ -5,7 +5,7 @@ IMG ?= controller:latest
 ENVTEST_K8S_VERSION = 1.24.2
 
 OPERATOR_IMAGE = ytsaurus/k8s-operator
-OPERATOR_TAG = 0.0.0-alpha
+OPERATOR_TAG = master-caches-test-0.3
 OPERATOR_CHART = ytop-chart
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
