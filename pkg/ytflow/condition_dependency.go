@@ -6,7 +6,7 @@ import (
 )
 
 type conditionDependency struct {
-	name condition
+	name Condition
 	val  bool
 }
 
@@ -16,26 +16,26 @@ func not(condDep conditionDependency) conditionDependency {
 		val:  !condDep.val,
 	}
 }
-func isTrue(cond condition) conditionDependency {
+func isTrue(cond Condition) conditionDependency {
 	return conditionDependency{name: cond, val: true}
 }
-func isFalse(cond condition) conditionDependency {
+func isFalse(cond Condition) conditionDependency {
 	return conditionDependency{name: cond, val: false}
 }
 
 // Components' statuses.
 func isBuilt(compName ComponentName) conditionDependency {
-	return isTrue(condition(fmt.Sprintf("%sBuilt", compName)))
+	return isTrue(Condition(fmt.Sprintf("%sBuilt", compName)))
 }
 func isReady(compName ComponentName) conditionDependency {
 	return isTrue(isReadyCondName(compName))
 }
 
-func isBuiltCondName(compName ComponentName) condition {
-	return condition(fmt.Sprintf("%sBuilt", compName))
+func isBuiltCondName(compName ComponentName) Condition {
+	return Condition(fmt.Sprintf("%sBuilt", compName))
 }
-func isReadyCondName(compName ComponentName) condition {
-	return condition(fmt.Sprintf("%sReady", compName))
+func isReadyCondName(compName ComponentName) Condition {
+	return Condition(fmt.Sprintf("%sReady", compName))
 }
 
 // Actions statuses.
@@ -55,7 +55,7 @@ func isReadyCondName(compName ComponentName) condition {
 //	return cond(fmt.Sprintf("%sDone", name))
 //}
 
-func updateConditionsByDependencies(ctx context.Context, condDeps map[condition][]conditionDependency, conds conditionManagerType) error {
+func updateConditionsByDependencies(ctx context.Context, condDeps map[Condition][]conditionDependency, conds conditionManagerType) error {
 	maxIterations := 10
 	for i := 0; i < maxIterations; i++ {
 		somethingChanged := false
@@ -64,7 +64,7 @@ func updateConditionsByDependencies(ctx context.Context, condDeps map[condition]
 
 			newValue := true
 			for _, dep := range deps {
-				if !conds.IsSatisfied(dep) {
+				if !IsSatisfied(dep, conds) {
 					newValue = false
 				}
 			}
@@ -84,4 +84,9 @@ func updateConditionsByDependencies(ctx context.Context, condDeps map[condition]
 		}
 	}
 	return fmt.Errorf("couldn't resolve dependencies in %d iterations", maxIterations)
+}
+
+func IsSatisfied(condDep conditionDependency, conds conditionManagerType) bool {
+	realValue := conds.Get(condDep.name)
+	return realValue == condDep.val
 }

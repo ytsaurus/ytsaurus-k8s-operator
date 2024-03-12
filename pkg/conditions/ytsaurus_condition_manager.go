@@ -1,4 +1,4 @@
-package ytflow
+package conditions
 
 import (
 	"context"
@@ -13,25 +13,30 @@ import (
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
-type conditionManager struct {
+// Condition is what we put in the `Type` field of k8s Condition struct.
+// For the sake of brevity we call it just Condition here, but it is really id/name.
+// Condition *value* can be true or false.
+type Condition string
+
+type ConditionManager struct {
 	client   client.Client
 	ytsaurus *ytv1.Ytsaurus
 }
 
-func newConditionManager(client client.Client, ytsaurus *ytv1.Ytsaurus) *conditionManager {
-	return &conditionManager{
+func NewConditionManager(client client.Client, ytsaurus *ytv1.Ytsaurus) *ConditionManager {
+	return &ConditionManager{
 		client:   client,
 		ytsaurus: ytsaurus,
 	}
 }
 
-func (cm *conditionManager) SetTrue(ctx context.Context, condName condition, msg string) error {
+func (cm *ConditionManager) SetTrue(ctx context.Context, condName Condition, msg string) error {
 	return cm.Set(ctx, condName, true, msg)
 }
-func (cm *conditionManager) SetFalse(ctx context.Context, condName condition, msg string) error {
+func (cm *ConditionManager) SetFalse(ctx context.Context, condName Condition, msg string) error {
 	return cm.Set(ctx, condName, false, msg)
 }
-func (cm *conditionManager) Set(ctx context.Context, condName condition, val bool, msg string) error {
+func (cm *ConditionManager) Set(ctx context.Context, condName Condition, val bool, msg string) error {
 	metacond := metav1.Condition{
 		Type: string(condName),
 		Status: map[bool]metav1.ConditionStatus{
@@ -42,29 +47,25 @@ func (cm *conditionManager) Set(ctx context.Context, condName condition, val boo
 		Reason:  string(condName),
 		Message: msg,
 	}
-	return cm.updateStatusRetryOnConflict(ctx, func(ytsaurus *ytv1.Ytsaurus) {
+	return cm.UpdateStatusRetryOnConflict(ctx, func(ytsaurus *ytv1.Ytsaurus) {
 		meta.SetStatusCondition(&ytsaurus.Status.Conditions, metacond)
 	})
 }
-func (cm *conditionManager) IsTrue(condName condition) bool {
+func (cm *ConditionManager) IsTrue(condName Condition) bool {
 	return meta.IsStatusConditionTrue(cm.ytsaurus.Status.Conditions, string(condName))
 }
-func (cm *conditionManager) IsFalse(condName condition) bool {
+func (cm *ConditionManager) IsFalse(condName Condition) bool {
 	return !cm.IsTrue(condName)
 }
-func (cm *conditionManager) Get(condName condition) bool {
+func (cm *ConditionManager) Get(condName Condition) bool {
 	if cm.IsTrue(condName) {
 		return true
 	} else {
 		return false
 	}
 }
-func (cm *conditionManager) IsSatisfied(condDep conditionDependency) bool {
-	realValue := cm.Get(condDep.name)
-	return realValue == condDep.val
-}
 
-func (cm *conditionManager) updateStatusRetryOnConflict(ctx context.Context, change func(ytsaurusResource *ytv1.Ytsaurus)) error {
+func (cm *ConditionManager) UpdateStatusRetryOnConflict(ctx context.Context, change func(ytsaurusResource *ytv1.Ytsaurus)) error {
 	tryUpdate := func(ytsaurus *ytv1.Ytsaurus) error {
 		change(ytsaurus)
 		// You have to return err itself here (not wrapped inside another error)

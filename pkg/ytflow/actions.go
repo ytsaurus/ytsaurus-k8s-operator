@@ -2,6 +2,8 @@ package ytflow
 
 import (
 	"context"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
 type ytsaurusClient interface {
@@ -10,13 +12,13 @@ type ytsaurusClient interface {
 	EnableSafeMode(context.Context) error
 	DisableSafeMode(context.Context) error
 
-	SaveTableCells(context.Context) error
-	RemoveTableCells(context.Context) error
+	GetTabletCells(context.Context) ([]ytv1.TabletCellBundleInfo, error)
+	RemoveTabletCells(context.Context) error
 	RecoverTableCells(context.Context) error
 	AreTabletCellsRemoved(context.Context) (bool, error)
 
-	SaveMasterMonitoringPaths(context.Context) error
-	StartBuildingMasterSnapshots(context.Context) error
+	GetMasterMonitoringPaths(context.Context) ([]string, error)
+	StartBuildMasterSnapshots(context.Context) error
 	AreMasterSnapshotsBuilt(context.Context) (bool, error)
 }
 
@@ -54,7 +56,14 @@ func enableSafeMode(yc ytsaurusClient, conds conditionManagerType) actionStep {
 
 func backupTabletCells(yc ytsaurusClient, conds conditionManagerType) actionStep {
 	preRun := func(ctx context.Context) (ActionPreRunStatus, error) {
-		if err := yc.SaveTableCells(ctx); err != nil {
+		cells, err := yc.GetTabletCells(ctx)
+		if err != nil {
+			return ActionPreRunStatus{}, err
+		}
+		err = conds.UpdateStatusRetryOnConflict(ctx, func(ytsaurusResource *ytv1.Ytsaurus) {
+			ytsaurusResource.Status.UpdateStatus.TabletCellBundles = cells
+		})
+		if err != nil {
 			return ActionPreRunStatus{}, err
 		}
 		return ActionPreRunStatus{
@@ -62,7 +71,7 @@ func backupTabletCells(yc ytsaurusClient, conds conditionManagerType) actionStep
 			Message:         "tablet cell bundles are stored in the resource state",
 		}, nil
 	}
-	run := yc.RemoveTableCells
+	run := yc.RemoveTabletCells
 	postRun := func(ctx context.Context) (ActionPostRunStatus, error) {
 		done, err := yc.AreTabletCellsRemoved(ctx)
 		if err != nil {
@@ -91,7 +100,14 @@ func backupTabletCells(yc ytsaurusClient, conds conditionManagerType) actionStep
 
 func buildMasterSnapshots(yc ytsaurusClient, conds conditionManagerType) actionStep {
 	preRun := func(ctx context.Context) (ActionPreRunStatus, error) {
-		if err := yc.SaveMasterMonitoringPaths(ctx); err != nil {
+		paths, err := yc.GetMasterMonitoringPaths(ctx)
+		if err != nil {
+			return ActionPreRunStatus{}, err
+		}
+		err = conds.UpdateStatusRetryOnConflict(ctx, func(ytsaurusResource *ytv1.Ytsaurus) {
+			ytsaurusResource.Status.UpdateStatus.MasterMonitoringPaths = paths
+		})
+		if err != nil {
 			return ActionPreRunStatus{}, err
 		}
 		return ActionPreRunStatus{
@@ -99,7 +115,7 @@ func buildMasterSnapshots(yc ytsaurusClient, conds conditionManagerType) actionS
 			Message:         "master monitor paths were saved in state",
 		}, nil
 	}
-	run := yc.StartBuildingMasterSnapshots
+	run := yc.StartBuildMasterSnapshots
 	postRun := func(ctx context.Context) (ActionPostRunStatus, error) {
 		done, err := yc.AreMasterSnapshotsBuilt(ctx)
 		if err != nil {

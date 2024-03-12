@@ -43,7 +43,7 @@ var (
 // conditionDependencies simply is:
 // condName become true if all condition deps are true
 // condName become false if any of condition deps are false
-var conditionDependencies = map[condition][]conditionDependency{
+var conditionDependencies = map[Condition][]conditionDependency{
 	NothingToDoCondName: {
 		AllComponentsBuilt,
 		not(SafeModeEnabled),

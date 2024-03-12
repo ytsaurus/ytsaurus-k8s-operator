@@ -315,16 +315,46 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 }
 
 func (m *Master) Status(ctx context.Context) ComponentStatus {
-	status, err := m.doSync(ctx, true)
-	if err != nil {
-		panic(err)
+	var err error
+
+	if m.server.needUpdate() {
+		return SimpleStatus(SyncStatusNeedLocalUpdate)
 	}
 
-	return status
+	if m.NeedSync() {
+		return WaitingStatus(SyncStatusPending, "components")
+	}
+
+	if !m.server.arePodsReady(ctx) {
+		return WaitingStatus(SyncStatusBlocked, "pods")
+	}
+
+	st, err := m.initJob.Sync(ctx, true)
+	if err != nil {
+		// TODO: not good
+		panic(err)
+	}
+	return st
 }
 
 func (m *Master) Sync(ctx context.Context) error {
-	_, err := m.doSync(ctx, false)
+	var err error
+
+	if m.server.needUpdate() {
+		if err = removePods(ctx, m.server, &m.localComponent); err != nil {
+			return fmt.Errorf("failed to remove pods: %w", err)
+		}
+	}
+
+	if m.NeedSync() {
+		if err = m.doServerSync(ctx); err != nil {
+			return err
+		}
+	}
+
+	m.initJob.SetInitScript(m.createInitScript())
+
+	_, err = m.initJob.Sync(ctx, false)
 	return err
 }
 

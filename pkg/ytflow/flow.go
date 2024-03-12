@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"sort"
 
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 )
 
@@ -17,13 +20,15 @@ const (
 )
 
 type conditionManagerType interface {
-	SetTrue(context.Context, condition, string) error
-	SetFalse(context.Context, condition, string) error
-	Set(context.Context, condition, bool, string) error
-	IsTrue(condition) bool
-	IsFalse(condition) bool
-	Get(condition) bool
-	IsSatisfied(conditionDependency) bool
+	SetTrue(context.Context, Condition, string) error
+	SetFalse(context.Context, Condition, string) error
+	Set(context.Context, Condition, bool, string) error
+	IsTrue(Condition) bool
+	IsFalse(Condition) bool
+	Get(Condition) bool
+
+	// Not sure if it should be public.
+	UpdateStatusRetryOnConflict(ctx context.Context, change func(ytsaurusResource *ytv1.Ytsaurus)) error
 }
 
 func Advance(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, clusterDomain string, conds conditionManagerType) (FlowStatus, error) {
@@ -50,7 +55,7 @@ func doAdvance(ctx context.Context, comps *componentRegistry, conds conditionMan
 		return "", err
 	}
 
-	if conds.IsSatisfied(NothingToDo) {
+	if IsSatisfied(NothingToDo, conds) {
 		return FlowStatusDone, nil
 	}
 
@@ -78,7 +83,7 @@ func collectRunnables(steps *stepRegistry, conds conditionManagerType) map[StepN
 		// If any of the dependencies are not satisfied, no need to run.
 		hasUnsatisfied := false
 		for _, condDep := range stepDeps {
-			if !conds.IsSatisfied(condDep) {
+			if !IsSatisfied(condDep, conds) {
 				hasUnsatisfied = true
 				break
 			}
@@ -92,6 +97,8 @@ func collectRunnables(steps *stepRegistry, conds conditionManagerType) map[StepN
 }
 
 func runSteps(ctx context.Context, steps map[StepName]stepType) error {
+	logger := log.FromContext(ctx)
+
 	// Just for the test stability we execute steps in predictable order.
 	var keys []string
 	for key := range steps {
@@ -99,6 +106,7 @@ func runSteps(ctx context.Context, steps map[StepName]stepType) error {
 	}
 	sort.Strings(keys)
 
+	logger.V(0).Info(fmt.Sprintf("going to run steps: %s", keys))
 	for _, key := range keys {
 		step := steps[StepName(key)]
 		if err := step.Run(ctx); err != nil {

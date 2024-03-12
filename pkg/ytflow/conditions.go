@@ -1,9 +1,11 @@
 package ytflow
 
-// condition is what we put in the `Type` field of k8s Condition struct.
-// For the sake of brevity we call it just condition here, but it is really id/name.
-// Condition *value* can be true or false.
-type condition string
+import (
+	"github.com/ytsaurus/yt-k8s-operator/pkg/conditions"
+)
+
+// Condition aliased for brevity.
+type Condition = conditions.Condition
 
 // *Built conditions are kept in sync by flow automatically.
 // Developers shouldn't set them in code manually.
@@ -48,17 +50,17 @@ var (
 // Special conditions.
 
 var (
-	AllComponentsBuiltCondName condition = "AllComponentsBuilt"
+	AllComponentsBuiltCondName Condition = "AllComponentsBuilt"
 
-	IsFullUpdateNeededCond           condition = "IsFullUpdateNeeded"
-	IsFullUpdatePossibleCond         condition = "IsFullUpdatePossible"
-	IsSafeModeEnabledCond            condition = "IsSafeModeEnabled"
-	AreTabletCellsNeedRecoverCond    condition = "AreTabletCellsNeedRecover"
-	IsMasterInReadOnlyCond           condition = "IsMasterInReadOnly"
-	IsOperationArchiveNeedUpdateCond condition = "IsOperationArchiveNeedUpdate"
-	IsQueryTrackerNeedInitCond       condition = "IsQueryTrackerNeedInit"
+	IsFullUpdateNeededCond           Condition = "IsFullUpdateNeeded"
+	IsFullUpdatePossibleCond         Condition = "IsFullUpdatePossible"
+	IsSafeModeEnabledCond            Condition = "IsSafeModeEnabled"
+	AreTabletCellsNeedRecoverCond    Condition = "AreTabletCellsNeedRecover"
+	IsMasterInReadOnlyCond           Condition = "IsMasterInReadOnly"
+	IsOperationArchiveNeedUpdateCond Condition = "IsOperationArchiveNeedUpdate"
+	IsQueryTrackerNeedInitCond       Condition = "IsQueryTrackerNeedInit"
 
-	NothingToDoCondName condition = "NothingToDo"
+	NothingToDoCondName Condition = "NothingToDo"
 )
 
 var (
@@ -75,6 +77,6 @@ var (
 	NothingToDo = isTrue(NothingToDoCondName)
 )
 
-//var initialConditions = []condition{
+//var initialConditions = []Condition{
 //	isDone(BuildMasterSnapshotsStep),
 //}

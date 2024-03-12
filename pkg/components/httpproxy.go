@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"fmt"
 
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
@@ -141,15 +142,54 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 }
 
 func (hp *HttpProxy) Status(ctx context.Context) ComponentStatus {
-	status, err := hp.doSync(ctx, true)
-	if err != nil {
-		panic(err)
+	if hp.server.needUpdate() {
+		return SimpleStatus(SyncStatusNeedLocalUpdate)
 	}
 
-	return status
+	if hp.NeedSync() {
+		return WaitingStatus(SyncStatusPending, "components")
+	}
+
+	if !resources.Exists(hp.balancingService) {
+		return WaitingStatus(SyncStatusPending, hp.balancingService.Name())
+	}
+
+	if !hp.server.arePodsReady(ctx) {
+		return WaitingStatus(SyncStatusBlocked, "pods")
+	}
+
+	return SimpleStatus(SyncStatusReady)
 }
 
 func (hp *HttpProxy) Sync(ctx context.Context) error {
-	_, err := hp.doSync(ctx, false)
-	return err
+	var err error
+
+	if hp.server.needUpdate() {
+		if err = removePods(ctx, hp.server, &hp.localComponent); err != nil {
+			return fmt.Errorf("failed to remove pods: %w", err)
+		}
+	}
+
+	if hp.NeedSync() {
+		statefulSet := hp.server.buildStatefulSet()
+		if hp.httpsSecret != nil {
+			hp.httpsSecret.AddVolume(&statefulSet.Spec.Template.Spec)
+			hp.httpsSecret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
+		}
+		err = hp.server.Sync(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	if !resources.Exists(hp.balancingService) {
+		s := hp.balancingService.Build()
+		s.Spec.Type = hp.serviceType
+		err = hp.balancingService.Sync(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

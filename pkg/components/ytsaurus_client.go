@@ -336,29 +336,21 @@ func (yc *YtsaurusClient) getToken() string {
 	return token
 }
 
-func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (yc *YtsaurusClient) Status(ctx context.Context) ComponentStatus {
 	var err error
-	if !IsRunningStatus(yc.httpProxy.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, yc.httpProxy.GetName()), err
-	}
+	dry := true
 
 	if yc.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			s := yc.secret.Build()
-			s.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
-			}
-			err = yc.secret.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, yc.secret.Name()), err
+		return WaitingStatus(SyncStatusPending, yc.secret.Name())
 	}
 
-	if !dry {
-		yc.initUserJob.SetInitScript(yc.createInitUserScript())
-	}
 	status, err := yc.initUserJob.Sync(ctx, dry)
-	if err != nil || status.SyncStatus != SyncStatusReady {
-		return status, err
+	if err != nil {
+		// TODO: this is not good.
+		panic(err)
+	}
+	if status.SyncStatus != SyncStatusReady {
+		return status
 	}
 
 	if yc.ytClient == nil {
@@ -378,35 +370,36 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 		})
 
 		if err != nil {
-			return WaitingStatus(SyncStatusPending, "ytClient init"), err
+			// TODO: this is not good.
+			panic(fmt.Errorf("ytClient init: %w", err))
 		}
 	}
 
-	if yc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if yc.ytsaurus.GetResource().Status.UpdateStatus.State == ytv1.UpdateStateImpossibleToStart {
-			return SimpleStatus(SyncStatusReady), err
-		}
-		if dry {
-			return SimpleStatus(SyncStatusUpdating), err
-		}
-		return yc.handleUpdatingState(ctx)
-	}
-
-	return SimpleStatus(SyncStatusReady), err
-}
-
-func (yc *YtsaurusClient) Status(ctx context.Context) ComponentStatus {
-	status, err := yc.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+	return SimpleStatus(SyncStatusReady)
 }
 
 func (yc *YtsaurusClient) Sync(ctx context.Context) error {
-	_, err := yc.doSync(ctx, false)
-	return err
+	var err error
+	dry := false
+
+	if yc.secret.NeedSync(consts.TokenSecretKey, "") {
+		s := yc.secret.Build()
+		s.StringData = map[string]string{
+			consts.TokenSecretKey: ytconfig.RandString(30),
+		}
+		if err = yc.secret.Sync(ctx); err != nil {
+			return fmt.Errorf("failed to sync ytsaurus client secret: %w", err)
+		}
+		return nil
+	}
+
+	yc.initUserJob.SetInitScript(yc.createInitUserScript())
+	_, err = yc.initUserJob.Sync(ctx, dry)
+	if err != nil {
+		return fmt.Errorf("failed to sync ytsaurus init user job: %w", err)
+	}
+	return nil
+
 }
 
 func (yc *YtsaurusClient) GetYtClient() yt.Client {
