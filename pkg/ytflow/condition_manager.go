@@ -25,13 +25,13 @@ func newConditionManager(client client.Client, ytsaurus *ytv1.Ytsaurus) *conditi
 	}
 }
 
-func (cm *conditionManager) SetTrue(ctx context.Context, condName conditionName, msg string) error {
+func (cm *conditionManager) SetTrue(ctx context.Context, condName condition, msg string) error {
 	return cm.Set(ctx, condName, true, msg)
 }
-func (cm *conditionManager) SetFalse(ctx context.Context, condName conditionName, msg string) error {
+func (cm *conditionManager) SetFalse(ctx context.Context, condName condition, msg string) error {
 	return cm.Set(ctx, condName, false, msg)
 }
-func (cm *conditionManager) Set(ctx context.Context, condName conditionName, val bool, msg string) error {
+func (cm *conditionManager) Set(ctx context.Context, condName condition, val bool, msg string) error {
 	metacond := metav1.Condition{
 		Type: string(condName),
 		Status: map[bool]metav1.ConditionStatus{
@@ -46,13 +46,13 @@ func (cm *conditionManager) Set(ctx context.Context, condName conditionName, val
 		meta.SetStatusCondition(&ytsaurus.Status.Conditions, metacond)
 	})
 }
-func (cm *conditionManager) IsTrue(condName conditionName) bool {
+func (cm *conditionManager) IsTrue(condName condition) bool {
 	return meta.IsStatusConditionTrue(cm.ytsaurus.Status.Conditions, string(condName))
 }
-func (cm *conditionManager) IsFalse(condName conditionName) bool {
+func (cm *conditionManager) IsFalse(condName condition) bool {
 	return !cm.IsTrue(condName)
 }
-func (cm *conditionManager) Get(condName conditionName) bool {
+func (cm *conditionManager) Get(condName condition) bool {
 	if cm.IsTrue(condName) {
 		return true
 	} else {

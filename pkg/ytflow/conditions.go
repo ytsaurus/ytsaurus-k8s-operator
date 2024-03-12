@@ -1,7 +1,9 @@
 package ytflow
 
-// conditionName is what we put in the Type field of k8s condition
-type conditionName string
+// condition is what we put in the `Type` field of k8s Condition struct.
+// For the sake of brevity we call it just condition here, but it is really id/name.
+// Condition *value* can be true or false.
+type condition string
 
 // *Built conditions are kept in sync by flow automatically.
 // Developers shouldn't set them in code manually.
@@ -46,20 +48,31 @@ var (
 // Special conditions.
 
 var (
-	NeedFullUpdateCondName     conditionName = "NeedFullUpdate"
-	SafeModeCondName           conditionName = "SafeModeEnabled"
-	MasterReadOnlyCondName     conditionName = "MasterInReadOnly"
-	NothingToDoCondName        conditionName = "NothingToDo"
-	AllComponentsBuiltCondName conditionName = "AllComponentsBuilt"
+	AllComponentsBuiltCondName condition = "AllComponentsBuilt"
+
+	IsFullUpdateNeededCond           condition = "IsFullUpdateNeeded"
+	IsFullUpdatePossibleCond         condition = "IsFullUpdatePossible"
+	IsSafeModeEnabledCond            condition = "IsSafeModeEnabled"
+	AreTabletCellsNeedRecoverCond    condition = "AreTabletCellsNeedRecover"
+	IsMasterInReadOnlyCond           condition = "IsMasterInReadOnly"
+	IsOperationArchiveNeedUpdateCond condition = "IsOperationArchiveNeedUpdate"
+	IsQueryTrackerNeedInitCond       condition = "IsQueryTrackerNeedInit"
+
+	NothingToDoCondName condition = "NothingToDo"
 )
 
 var (
-	FullUpdateNeeded   = isTrue(NeedFullUpdateCondName)
-	SafeModeEnabled    = isTrue(SafeModeCondName)
-	SafeModeDisabled   = isFalse(SafeModeCondName)
-	MasterIsInReadOnly = isTrue(MasterReadOnlyCondName)
 	AllComponentsBuilt = isTrue(AllComponentsBuiltCondName)
-	NothingToDo        = isTrue(NothingToDoCondName)
+
+	FullUpdateNeeded           = isTrue(IsFullUpdateNeededCond)
+	FullUpdatePossible         = isTrue(IsFullUpdatePossibleCond)
+	SafeModeEnabled            = isTrue(IsSafeModeEnabledCond)
+	TabletCellsNeedRecover     = isTrue(AreTabletCellsNeedRecoverCond)
+	MasterIsInReadOnly         = isTrue(IsMasterInReadOnlyCond)
+	OperationArchiveNeedUpdate = isTrue(IsOperationArchiveNeedUpdateCond)
+	QueryTrackerNeedsInit      = isTrue(IsQueryTrackerNeedInitCond)
+
+	NothingToDo = isTrue(NothingToDoCondName)
 )
 
 //var initialConditions = []condition{

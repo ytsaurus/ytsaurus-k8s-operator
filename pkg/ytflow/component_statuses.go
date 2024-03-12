@@ -49,7 +49,7 @@ func updateComponentsConditions(ctx context.Context, statuses *statusRegistry, c
 
 	// Actualize NeedFullUpdate
 	isFullUpdateNeeded := statuses.single[MasterName].SyncStatus == components.SyncStatusNeedLocalUpdate
-	if err := conds.Set(ctx, NeedFullUpdateCondName, isFullUpdateNeeded, ""); err != nil {
+	if err := conds.Set(ctx, IsFullUpdateNeededCond, isFullUpdateNeeded, ""); err != nil {
 		return err
 	}
 

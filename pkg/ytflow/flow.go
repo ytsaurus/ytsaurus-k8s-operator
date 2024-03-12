@@ -17,12 +17,12 @@ const (
 )
 
 type conditionManagerType interface {
-	SetTrue(context.Context, conditionName, string) error
-	SetFalse(context.Context, conditionName, string) error
-	Set(context.Context, conditionName, bool, string) error
-	IsTrue(conditionName) bool
-	IsFalse(conditionName) bool
-	Get(conditionName) bool
+	SetTrue(context.Context, condition, string) error
+	SetFalse(context.Context, condition, string) error
+	Set(context.Context, condition, bool, string) error
+	IsTrue(condition) bool
+	IsFalse(condition) bool
+	Get(condition) bool
 	IsSatisfied(conditionDependency) bool
 }
 

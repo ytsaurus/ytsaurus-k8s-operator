@@ -6,7 +6,7 @@ import (
 )
 
 type conditionDependency struct {
-	name conditionName
+	name condition
 	val  bool
 }
 
@@ -16,26 +16,26 @@ func not(condDep conditionDependency) conditionDependency {
 		val:  !condDep.val,
 	}
 }
-func isTrue(cond conditionName) conditionDependency {
+func isTrue(cond condition) conditionDependency {
 	return conditionDependency{name: cond, val: true}
 }
-func isFalse(cond conditionName) conditionDependency {
+func isFalse(cond condition) conditionDependency {
 	return conditionDependency{name: cond, val: false}
 }
 
 // Components' statuses.
 func isBuilt(compName ComponentName) conditionDependency {
-	return isTrue(conditionName(fmt.Sprintf("%sBuilt", compName)))
+	return isTrue(condition(fmt.Sprintf("%sBuilt", compName)))
 }
 func isReady(compName ComponentName) conditionDependency {
 	return isTrue(isReadyCondName(compName))
 }
 
-func isBuiltCondName(compName ComponentName) conditionName {
-	return conditionName(fmt.Sprintf("%sBuilt", compName))
+func isBuiltCondName(compName ComponentName) condition {
+	return condition(fmt.Sprintf("%sBuilt", compName))
 }
-func isReadyCondName(compName ComponentName) conditionName {
-	return conditionName(fmt.Sprintf("%sReady", compName))
+func isReadyCondName(compName ComponentName) condition {
+	return condition(fmt.Sprintf("%sReady", compName))
 }
 
 // Actions statuses.
@@ -55,7 +55,7 @@ func isReadyCondName(compName ComponentName) conditionName {
 //	return cond(fmt.Sprintf("%sDone", name))
 //}
 
-func updateConditionsByDependencies(ctx context.Context, condDeps map[conditionName][]conditionDependency, conds conditionManagerType) error {
+func updateConditionsByDependencies(ctx context.Context, condDeps map[condition][]conditionDependency, conds conditionManagerType) error {
 	maxIterations := 10
 	for i := 0; i < maxIterations; i++ {
 		somethingChanged := false

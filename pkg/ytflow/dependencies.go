@@ -43,9 +43,10 @@ var (
 // conditionDependencies simply is:
 // condName become true if all condition deps are true
 // condName become false if any of condition deps are false
-var conditionDependencies = map[conditionName][]conditionDependency{
+var conditionDependencies = map[condition][]conditionDependency{
 	NothingToDoCondName: {
 		AllComponentsBuilt,
+		not(SafeModeEnabled),
 		// +safe mode disabled
 	},
 
@@ -65,34 +66,43 @@ var conditionDependencies = map[conditionName][]conditionDependency{
 		DataNodeBuilt,
 		MasterReady,
 	},
-	//
-	//	MasterInReadOnly: {
-	//		isDone(BuildMasterSnapshotsStep),
-	//	},
 }
 
+// stepDependencies describes what conditions must be satisfied for step to run.
+// For this map to be understandable it is suggested to list dependencies in following manner:
+//   - first dependency mentions main step condition, it is expected that condition will flip after the step
+//     successfully run (often it is not-condition);
+//   - other dependencies are secondary and usually declare an order in which steps should run.
 var stepDependencies = map[StepName][]conditionDependency{
 	YtsaurusClientStep: {
 		not(YtsaurusClientBuilt),
 	},
 
-	//CheckFullUpdatePossibilityStep: {
-	//	FullUpdateNeeded,
-	//	YtsaurusClientReady,
-	//},
-	//EnableSafeModeStep: {
-	//	isDone(CheckFullUpdatePossibilityStep),
-	//	YtsaurusClientReady,
-	//	// safe mode disabled?
-	//},
-	//BackupTabletCellsStep: {
-	//	isDone(EnableSafeModeStep),
-	//	YtsaurusClientReady,
-	//},
-	//BuildMasterSnapshotsStep: {
-	//	isDone(BackupTabletCellsStep),
-	//	YtsaurusClientReady,
-	//},
+	CheckFullUpdatePossibilityStep: {
+		not(FullUpdatePossible),
+		FullUpdateNeeded,
+		YtsaurusClientReady,
+	},
+	EnableSafeModeStep: {
+		not(SafeModeEnabled),
+		FullUpdatePossible,
+		YtsaurusClientReady,
+	},
+	BackupTabletCellsStep: {
+		not(TabletCellsNeedRecover),
+		FullUpdatePossible,
+		SafeModeEnabled,
+		YtsaurusClientReady,
+	},
+	BuildMasterSnapshotsStep: {
+		// To simplify things we use MasterIsInReadOnly condition meaning
+		// "Master snapshots are built and master is in read only".
+		// Though semantically it may be more correct to have two dependant conditions.
+		not(MasterIsInReadOnly),
+		FullUpdatePossible,
+		not(TabletCellsNeedRecover),
+		YtsaurusClientReady,
+	},
 
 	DiscoveryStep: {
 		not(DiscoveryBuilt),
@@ -105,29 +115,39 @@ var stepDependencies = map[StepName][]conditionDependency{
 	},
 	MasterStep: {
 		not(MasterBuilt),
+		// TODO: set initial condition that master is in read only (which is not true)?
+		// It would be better to have OR-condition (IsInReadOnly | Initializing) here maybe?
 		//MasterIsInReadOnly,
 	},
 
-	//MasterExitReadOnlyStep: {
-	//	MasterBuilt,
-	//	MasterIsInReadOnly,
-	//},
-	//RecoverTabletCellsStep: {
-	//	isDone(BackupTabletCellsStep), // TabletCellsSaved — disable after recover
-	//	isDone(MasterExitReadOnlyStep),
-	//},
-	//UpdateOpArchiveStep: {
-	//	isDone(RecoverTabletCellsStep),
-	//	SchedulerBuilt,
-	//},
-	//InitQueryTrackerStep: {
-	//	isDone(UpdateOpArchiveStep),
-	//	QueryTrackerBuilt,
-	//},
-	//DisableSafeModeStep: {
-	//	isDone(InitQueryTrackerStep),
-	//	SafeModeEnabled,
-	//},
+	MasterExitReadOnlyStep: {
+		MasterIsInReadOnly,
+		// Currently it works as before, but maybe we just need master to be built?
+		AllComponentsBuilt,
+	},
+	RecoverTabletCellsStep: {
+		TabletCellsNeedRecover,
+		not(MasterIsInReadOnly), // we need to write in this step
+	},
+	UpdateOpArchiveStep: {
+		OperationArchiveNeedUpdate,
+		not(TabletCellsNeedRecover), // do we *really* depend on tablet cells in this job?
+		not(MasterIsInReadOnly),     // we need to write here
+		//SchedulerBuilt,              // do we need scheduler for that script or only master
+	},
+	InitQueryTrackerStep: {
+		QueryTrackerNeedsInit,
+		not(OperationArchiveNeedUpdate), // do we *really* depend on tablet cells in this job?
+		not(MasterIsInReadOnly),         // we need to write in this step
+		//QueryTrackerBuilt,       // do we need query tracker for that script or only master
+	},
+	DisableSafeModeStep: {
+		SafeModeEnabled,
+		not(MasterIsInReadOnly), // we need to write in this step
 
-	// finalize somehow?
+		// All of those should be done before unlocking the cluster from read only.
+		not(TabletCellsNeedRecover),
+		not(OperationArchiveNeedUpdate),
+		not(QueryTrackerNeedsInit),
+	},
 }
