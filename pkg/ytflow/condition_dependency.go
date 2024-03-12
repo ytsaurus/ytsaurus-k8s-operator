@@ -55,7 +55,7 @@ func isReadyCondName(compName ComponentName) Condition {
 //	return cond(fmt.Sprintf("%sDone", name))
 //}
 
-func updateConditionsByDependencies(ctx context.Context, condDeps map[Condition][]conditionDependency, conds conditionManagerType) error {
+func updateConditionsByDependencies(ctx context.Context, condDeps map[Condition][]conditionDependency, conds stateManager) error {
 	maxIterations := 10
 	for i := 0; i < maxIterations; i++ {
 		somethingChanged := false
@@ -86,7 +86,7 @@ func updateConditionsByDependencies(ctx context.Context, condDeps map[Condition]
 	return fmt.Errorf("couldn't resolve dependencies in %d iterations", maxIterations)
 }
 
-func IsSatisfied(condDep conditionDependency, conds conditionManagerType) bool {
+func IsSatisfied(condDep conditionDependency, conds stateManager) bool {
 	realValue := conds.Get(condDep.name)
 	return realValue == condDep.val
 }

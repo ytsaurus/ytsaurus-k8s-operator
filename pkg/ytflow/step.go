@@ -25,7 +25,7 @@ func buildComponentSteps(comps *componentRegistry) map[StepName]stepType {
 	return steps
 }
 
-func buildActionSteps(comps *componentRegistry, conds conditionManagerType) map[StepName]stepType {
+func buildActionSteps(comps *componentRegistry, conds stateManager) map[StepName]stepType {
 	yc := comps.single[YtsaurusClientName].(ytsaurusClient)
 	return map[StepName]stepType{
 		CheckFullUpdatePossibilityStep: checkFullUpdatePossibility(yc, conds),
@@ -37,7 +37,7 @@ func buildActionSteps(comps *componentRegistry, conds conditionManagerType) map[
 	}
 }
 
-func buildSteps(comps *componentRegistry, conds conditionManagerType) *stepRegistry {
+func buildSteps(comps *componentRegistry, conds stateManager) *stepRegistry {
 	steps := make(map[StepName]stepType)
 
 	for name, step := range buildComponentSteps(comps) {

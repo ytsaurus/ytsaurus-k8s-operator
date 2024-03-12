@@ -1,146 +1,124 @@
 package ytflow
 
-import (
-	"context"
-
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
-)
-
-type ytsaurusClient interface {
-	component
-	HandlePossibilityCheck(context.Context) (bool, string, error)
-	EnableSafeMode(context.Context) error
-	DisableSafeMode(context.Context) error
-
-	GetTabletCells(context.Context) ([]ytv1.TabletCellBundleInfo, error)
-	RemoveTabletCells(context.Context) error
-	RecoverTableCells(context.Context) error
-	AreTabletCellsRemoved(context.Context) (bool, error)
-
-	GetMasterMonitoringPaths(context.Context) ([]string, error)
-	StartBuildMasterSnapshots(context.Context) error
-	AreMasterSnapshotsBuilt(context.Context) (bool, error)
-}
-
-func checkFullUpdatePossibility(yc ytsaurusClient, conds conditionManagerType) actionStep {
-	preRun := func(ctx context.Context) (ActionPreRunStatus, error) {
-		possible, msg, err := yc.HandlePossibilityCheck(ctx)
-		if err != nil {
-			return ActionPreRunStatus{}, err
-		}
-		if !possible {
-			return ActionPreRunStatus{
-				ActionSubStatus: ActionBlocked,
-				Message:         msg,
-			}, nil
-		}
-		return ActionPreRunStatus{
-			ActionSubStatus: ActionNeedRun,
-			Message:         msg,
-		}, nil
-	}
-	return actionStep{
-		name:       CheckFullUpdatePossibilityStep,
-		preRunFunc: preRun,
-		conds:      conds,
-	}
-}
-
-func enableSafeMode(yc ytsaurusClient, conds conditionManagerType) actionStep {
-	return actionStep{
-		name:    EnableSafeModeStep,
-		runFunc: yc.EnableSafeMode,
-		conds:   conds,
-	}
-}
-
-func backupTabletCells(yc ytsaurusClient, conds conditionManagerType) actionStep {
-	preRun := func(ctx context.Context) (ActionPreRunStatus, error) {
-		cells, err := yc.GetTabletCells(ctx)
-		if err != nil {
-			return ActionPreRunStatus{}, err
-		}
-		err = conds.UpdateStatusRetryOnConflict(ctx, func(ytsaurusResource *ytv1.Ytsaurus) {
-			ytsaurusResource.Status.UpdateStatus.TabletCellBundles = cells
-		})
-		if err != nil {
-			return ActionPreRunStatus{}, err
-		}
-		return ActionPreRunStatus{
-			ActionSubStatus: ActionNeedRun,
-			Message:         "tablet cell bundles are stored in the resource state",
-		}, nil
-	}
-	run := yc.RemoveTabletCells
-	postRun := func(ctx context.Context) (ActionPostRunStatus, error) {
-		done, err := yc.AreTabletCellsRemoved(ctx)
-		if err != nil {
-			return ActionPostRunStatus{}, err
-		}
-		if done {
-			return ActionPostRunStatus{
-				ActionSubStatus: ActionDone,
-				Message:         "tablet cells were successfully removed",
-			}, nil
-		}
-		return ActionPostRunStatus{
-			ActionSubStatus: ActionUpdating,
-			Message:         "tablet cells not have been removed yet",
-		}, nil
-	}
-
-	return actionStep{
-		name:        BackupTabletCellsStep,
-		preRunFunc:  preRun,
-		runFunc:     run,
-		postRunFunc: postRun,
-		conds:       conds,
-	}
-}
-
-func buildMasterSnapshots(yc ytsaurusClient, conds conditionManagerType) actionStep {
-	preRun := func(ctx context.Context) (ActionPreRunStatus, error) {
-		paths, err := yc.GetMasterMonitoringPaths(ctx)
-		if err != nil {
-			return ActionPreRunStatus{}, err
-		}
-		err = conds.UpdateStatusRetryOnConflict(ctx, func(ytsaurusResource *ytv1.Ytsaurus) {
-			ytsaurusResource.Status.UpdateStatus.MasterMonitoringPaths = paths
-		})
-		if err != nil {
-			return ActionPreRunStatus{}, err
-		}
-		return ActionPreRunStatus{
-			ActionSubStatus: ActionNeedRun,
-			Message:         "master monitor paths were saved in state",
-		}, nil
-	}
-	run := yc.StartBuildMasterSnapshots
-	postRun := func(ctx context.Context) (ActionPostRunStatus, error) {
-		done, err := yc.AreMasterSnapshotsBuilt(ctx)
-		if err != nil {
-			return ActionPostRunStatus{}, err
-		}
-		if done {
-			return ActionPostRunStatus{
-				ActionSubStatus: ActionDone,
-				Message:         "master snapshots were successfully built",
-			}, nil
-		}
-		return ActionPostRunStatus{
-			ActionSubStatus: ActionUpdating,
-			Message:         "master snapshots haven't been not removed yet",
-		}, nil
-	}
-
-	return actionStep{
-		name:        BuildMasterSnapshotsStep,
-		preRunFunc:  preRun,
-		runFunc:     run,
-		postRunFunc: postRun,
-		conds:       conds,
-	}
-}
+//func checkFullUpdatePossibility(yc *components.YtsaurusClient, conds stateManager) actionStep {
+//	preRun := func(ctx context.Context) (ActionPreRunStatus, error) {
+//		possible, msg, err := yc.HandlePossibilityCheck(ctx)
+//		if err != nil {
+//			return ActionPreRunStatus{}, err
+//		}
+//		if !possible {
+//			return ActionPreRunStatus{
+//				ActionSubStatus: ActionBlocked,
+//				Message:         msg,
+//			}, nil
+//		}
+//		return ActionPreRunStatus{
+//			ActionSubStatus: ActionNeedRun,
+//			Message:         msg,
+//		}, nil
+//	}
+//	return actionStep{
+//		name:       CheckFullUpdatePossibilityStep,
+//		preRunFunc: preRun,
+//		conds:      conds,
+//	}
+//}
+//
+//func enableSafeMode(yc *components.YtsaurusClient, conds stateManager) actionStep {
+//	return actionStep{
+//		name:    EnableSafeModeStep,
+//		runFunc: yc.EnableSafeMode,
+//		conds:   conds,
+//	}
+//}
+//
+//func backupTabletCells(yc *components.YtsaurusClient, conds stateManager) actionStep {
+//	preRun := func(ctx context.Context) (ActionPreRunStatus, error) {
+//		cells, err := yc.GetTabletCells(ctx)
+//		if err != nil {
+//			return ActionPreRunStatus{}, err
+//		}
+//		err = conds.UpdateStatusRetryOnConflict(ctx, func(ytsaurusResource *ytv1.Ytsaurus) {
+//			ytsaurusResource.Status.UpdateStatus.TabletCellBundles = cells
+//		})
+//		if err != nil {
+//			return ActionPreRunStatus{}, err
+//		}
+//		return ActionPreRunStatus{
+//			ActionSubStatus: ActionNeedRun,
+//			Message:         "tablet cell bundles are stored in the resource state",
+//		}, nil
+//	}
+//	run := yc.RemoveTabletCells
+//	postRun := func(ctx context.Context) (ActionPostRunStatus, error) {
+//		done, err := yc.AreTabletCellsRemoved(ctx)
+//		if err != nil {
+//			return ActionPostRunStatus{}, err
+//		}
+//		if done {
+//			return ActionPostRunStatus{
+//				ActionSubStatus: ActionDone,
+//				Message:         "tablet cells were successfully removed",
+//			}, nil
+//		}
+//		return ActionPostRunStatus{
+//			ActionSubStatus: ActionUpdating,
+//			Message:         "tablet cells not have been removed yet",
+//		}, nil
+//	}
+//
+//	return actionStep{
+//		name:        BackupTabletCellsStep,
+//		preRunFunc:  preRun,
+//		runFunc:     run,
+//		postRunFunc: postRun,
+//		conds:       conds,
+//	}
+//}
+//
+//func buildMasterSnapshots(yc *components.YtsaurusClient, conds stateManager) actionStep {
+//	preRun := func(ctx context.Context) (ActionPreRunStatus, error) {
+//		paths, err := yc.GetMasterMonitoringPaths(ctx)
+//		if err != nil {
+//			return ActionPreRunStatus{}, err
+//		}
+//		err = conds.UpdateStatusRetryOnConflict(ctx, func(ytsaurusResource *ytv1.Ytsaurus) {
+//			ytsaurusResource.Status.UpdateStatus.MasterMonitoringPaths = paths
+//		})
+//		if err != nil {
+//			return ActionPreRunStatus{}, err
+//		}
+//		return ActionPreRunStatus{
+//			ActionSubStatus: ActionNeedRun,
+//			Message:         "master monitor paths were saved in state",
+//		}, nil
+//	}
+//	run := yc.StartBuildMasterSnapshots
+//	postRun := func(ctx context.Context) (ActionPostRunStatus, error) {
+//		done, err := yc.AreMasterSnapshotsBuilt(ctx)
+//		if err != nil {
+//			return ActionPostRunStatus{}, err
+//		}
+//		if done {
+//			return ActionPostRunStatus{
+//				ActionSubStatus: ActionDone,
+//				Message:         "master snapshots were successfully built",
+//			}, nil
+//		}
+//		return ActionPostRunStatus{
+//			ActionSubStatus: ActionUpdating,
+//			Message:         "master snapshots haven't been not removed yet",
+//		}, nil
+//	}
+//
+//	return actionStep{
+//		name:        BuildMasterSnapshotsStep,
+//		preRunFunc:  preRun,
+//		runFunc:     run,
+//		postRunFunc: postRun,
+//		conds:       conds,
+//	}
+//}
 
 //func masterExitReadOnly(job *components.JobStateless) actionStep {
 //	return newJobStep(
@@ -150,15 +128,15 @@ func buildMasterSnapshots(yc ytsaurusClient, conds conditionManagerType) actionS
 //	)
 //}
 
-func recoverTabletCells(yc ytsaurusClient, conds conditionManagerType) actionStep {
-	return actionStep{
-		name:    RecoverTabletCellsStep,
-		runFunc: yc.RecoverTableCells,
-		conds:   conds,
-	}
-}
-
+//func recoverTabletCells(yc *components.YtsaurusClient, conds stateManager) actionStep {
+//	return actionStep{
+//		name:    RecoverTabletCellsStep,
+//		runFunc: yc.RecoverTableCells,
+//		conds:   conds,
+//	}
+//}
 //
+////
 //func updateOpArchive(job *components.JobStateless, scheduler *components.Scheduler) actionStep {
 //	// this wrapper is lousy
 //	jobStep := newJobStep(
@@ -203,10 +181,10 @@ func recoverTabletCells(yc ytsaurusClient, conds conditionManagerType) actionSte
 //	}
 //}
 
-func disableSafeMode(yc ytsaurusClient, conds conditionManagerType) actionStep {
-	return actionStep{
-		name:    DisableSafeModeStep,
-		runFunc: yc.DisableSafeMode,
-		conds:   conds,
-	}
-}
+//func disableSafeMode(yc *components.YtsaurusClient, conds stateManager) actionStep {
+//	return actionStep{
+//		name:    DisableSafeModeStep,
+//		runFunc: yc.DisableSafeMode,
+//		conds:   conds,
+//	}
+//}

@@ -2,35 +2,54 @@ package ytflow
 
 import (
 	"context"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
-type fakeConditionManager struct {
+type fakeStateManager struct {
 	// TODO: msg
-	store map[Condition]bool
+	store           map[Condition]bool
+	bundles         []ytv1.TabletCellBundleInfo
+	monitoringPaths []string
 }
 
-func newFakeConditionManager() *fakeConditionManager {
-	return &fakeConditionManager{
+func newFakeStateManager() *fakeStateManager {
+	return &fakeStateManager{
 		store: make(map[Condition]bool),
 	}
 }
 
-func (cm *fakeConditionManager) SetTrue(ctx context.Context, cond Condition, msg string) error {
+func (cm *fakeStateManager) SetTrue(ctx context.Context, cond Condition, msg string) error {
 	return cm.Set(ctx, cond, true, msg)
 }
-func (cm *fakeConditionManager) SetFalse(ctx context.Context, cond Condition, msg string) error {
+func (cm *fakeStateManager) SetFalse(ctx context.Context, cond Condition, msg string) error {
 	return cm.Set(ctx, cond, false, msg)
 }
-func (cm *fakeConditionManager) Set(_ context.Context, cond Condition, val bool, _ string) error {
+func (cm *fakeStateManager) Set(_ context.Context, cond Condition, val bool, _ string) error {
 	cm.store[cond] = val
 	return nil
 }
-func (cm *fakeConditionManager) IsTrue(condName Condition) bool {
+func (cm *fakeStateManager) IsTrue(condName Condition) bool {
 	return cm.store[condName]
 }
-func (cm *fakeConditionManager) IsFalse(condName Condition) bool {
+func (cm *fakeStateManager) IsFalse(condName Condition) bool {
 	return !cm.IsTrue(condName)
 }
-func (cm *fakeConditionManager) Get(condName Condition) bool {
+func (cm *fakeStateManager) Get(condName Condition) bool {
 	return cm.store[condName]
+}
+
+func (cm *fakeStateManager) SetTabletCellBundles(_ context.Context, bundles []ytv1.TabletCellBundleInfo) error {
+	cm.bundles = bundles
+	return nil
+}
+func (cm *fakeStateManager) SetMasterMonitoringPaths(_ context.Context, paths []string) error {
+	cm.monitoringPaths = paths
+	return nil
+}
+func (cm *fakeStateManager) GetTabletCellBundles() []ytv1.TabletCellBundleInfo {
+	return cm.bundles
+}
+func (cm *fakeStateManager) GetMasterMonitoringPaths() []string {
+	return cm.monitoringPaths
 }

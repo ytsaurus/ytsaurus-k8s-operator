@@ -264,7 +264,7 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			}
 
 			if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnapshotsBuildingStarted) {
-				if err = yc.StartBuildMasterSnapshots(ctx); err != nil {
+				if err = yc.StartBuildMasterSnapshots(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths); err != nil {
 					return SimpleStatus(SyncStatusUpdating), err
 				}
 
@@ -276,7 +276,7 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 				})
 			}
 
-			built, err := yc.AreMasterSnapshotsBuilt(ctx)
+			built, err := yc.AreMasterSnapshotsBuilt(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
 			}
@@ -297,7 +297,7 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 	case ytv1.UpdateStateWaitingForTabletCellsRecovery:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRecovered) {
 
-			err = yc.RecoverTableCells(ctx)
+			err = yc.RecoverTableCells(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
 			}
@@ -553,8 +553,8 @@ func (yc *YtsaurusClient) AreTabletCellsRemoved(ctx context.Context) (bool, erro
 	}
 	return true, nil
 }
-func (yc *YtsaurusClient) RecoverTableCells(ctx context.Context) error {
-	for _, bundle := range yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles {
+func (yc *YtsaurusClient) RecoverTableCells(ctx context.Context, bundles []ytv1.TabletCellBundleInfo) error {
+	for _, bundle := range bundles {
 		err := CreateTabletCells(ctx, yc.ytClient, bundle.Name, bundle.TabletCellCount)
 		if err != nil {
 			return err
@@ -580,11 +580,11 @@ func (yc *YtsaurusClient) GetMasterMonitoringPaths(ctx context.Context) ([]strin
 	}
 	return monitoringPaths, nil
 }
-func (yc *YtsaurusClient) StartBuildMasterSnapshots(ctx context.Context) error {
+func (yc *YtsaurusClient) StartBuildMasterSnapshots(ctx context.Context, monitoringPaths []string) error {
 	var err error
 
 	allMastersReadOnly := true
-	for _, monitoringPath := range yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths {
+	for _, monitoringPath := range monitoringPaths {
 		masterHydra, err := yc.getMasterHydra(ctx, monitoringPath)
 		if err != nil {
 			return err
@@ -607,8 +607,8 @@ func (yc *YtsaurusClient) StartBuildMasterSnapshots(ctx context.Context) error {
 
 	return err
 }
-func (yc *YtsaurusClient) AreMasterSnapshotsBuilt(ctx context.Context) (bool, error) {
-	for _, monitoringPath := range yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths {
+func (yc *YtsaurusClient) AreMasterSnapshotsBuilt(ctx context.Context, monitoringPaths []string) (bool, error) {
+	for _, monitoringPath := range monitoringPaths {
 		var masterHydra MasterHydra
 		err := yc.ytClient.GetNode(ctx, ypath.Path(monitoringPath), &masterHydra, getReadOnlyGetOptions())
 		if err != nil {

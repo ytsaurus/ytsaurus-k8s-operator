@@ -2,6 +2,8 @@ package ytflow
 
 import (
 	"context"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
 type fakeYtsaurusClient struct {
@@ -31,15 +33,16 @@ func (yc *fakeYtsaurusClient) DisableSafeMode(context.Context) error {
 	yc.spy.record("yc.DisableSafeMode")
 	return nil
 }
-func (yc *fakeYtsaurusClient) SaveTableCells(context.Context) error {
-	yc.spy.record("yc.SaveTableCells")
+
+func (yc *fakeYtsaurusClient) GetTabletCells(context.Context) ([]ytv1.TabletCellBundleInfo, error) {
+	yc.spy.record("yc.GetTabletCells")
+	return []ytv1.TabletCellBundleInfo{}, nil
+}
+func (yc *fakeYtsaurusClient) RemoveTabletCells(context.Context) error {
+	yc.spy.record("yc.RemoveTabletCells")
 	return nil
 }
-func (yc *fakeYtsaurusClient) RemoveTableCells(context.Context) error {
-	yc.spy.record("yc.RemoveTableCells")
-	return nil
-}
-func (yc *fakeYtsaurusClient) RecoverTableCells(context.Context) error {
+func (yc *fakeYtsaurusClient) RecoverTableCells(context.Context, []ytv1.TabletCellBundleInfo) error {
 	yc.spy.record("yc.RecoverTableCells")
 	return nil
 }
@@ -47,15 +50,16 @@ func (yc *fakeYtsaurusClient) AreTabletCellsRemoved(context.Context) (bool, erro
 	yc.spy.record("yc.AreTabletCellsRemoved")
 	return true, nil
 }
-func (yc *fakeYtsaurusClient) SaveMasterMonitoringPaths(context.Context) error {
-	yc.spy.record("yc.SaveMasterMonitoringPaths")
-	return nil
+
+func (yc *fakeYtsaurusClient) GetMasterMonitoringPaths(context.Context) ([]string, error) {
+	yc.spy.record("yc.GetMasterMonitoringPaths")
+	return []string{}, nil
 }
-func (yc *fakeYtsaurusClient) StartBuildingMasterSnapshots(context.Context) error {
+func (yc *fakeYtsaurusClient) StartBuildMasterSnapshots(context.Context, []string) error {
 	yc.spy.record("yc.StartBuildingMasterSnapshots")
 	return nil
 }
-func (yc *fakeYtsaurusClient) AreMasterSnapshotsBuilt(context.Context) (bool, error) {
+func (yc *fakeYtsaurusClient) AreMasterSnapshotsBuilt(context.Context, []string) (bool, error) {
 	yc.spy.record("yc.AreMasterSnapshotsBuilt")
 	return true, nil
 }

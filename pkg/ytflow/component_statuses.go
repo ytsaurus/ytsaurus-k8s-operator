@@ -7,7 +7,7 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
 )
 
-func updateComponentsConditions(ctx context.Context, statuses *statusRegistry, conds conditionManagerType) error {
+func updateComponentsConditions(ctx context.Context, statuses *statusRegistry, conds stateManager) error {
 	allBuilt := true
 
 	// Actualize <ComponentName>Built condition for the single components.

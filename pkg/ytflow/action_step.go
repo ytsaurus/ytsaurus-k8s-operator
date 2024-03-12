@@ -36,7 +36,7 @@ type actionStep struct {
 	runFunc     func(ctx context.Context) error
 	postRunFunc func(context.Context) (ActionPostRunStatus, error)
 
-	conds conditionManagerType
+	conds stateManager
 }
 
 func (s actionStep) Run(ctx context.Context) error {

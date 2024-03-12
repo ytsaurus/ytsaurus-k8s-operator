@@ -42,10 +42,10 @@ func TestNormalFlow(t *testing.T) {
 	ctx := context.Background()
 	spy := &executionSpy{}
 	comps := buildTestComponents(spy)
-	conds := newFakeConditionManager()
+	state := newFakeStateManager()
 
 	for loops := 0; loops < 3; loops++ {
-		status, err := doAdvance(ctx, comps, conds)
+		status, err := doAdvance(ctx, comps, state)
 		require.NoError(t, err)
 		if status == FlowStatusDone {
 			break
@@ -68,7 +68,7 @@ func TestNormalFlow(t *testing.T) {
 	spy.recordedEvents = []string{}
 	comps.single[DiscoveryName].(*fakeComponent).ran = false
 	for loops := 0; loops < 3; loops++ {
-		status, err := doAdvance(ctx, comps, conds)
+		status, err := doAdvance(ctx, comps, state)
 		require.NoError(t, err)
 		if status == FlowStatusDone {
 			break

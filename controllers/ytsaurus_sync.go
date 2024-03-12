@@ -10,7 +10,7 @@ import (
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/conditions"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/state"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytflow"
 )
 
@@ -18,10 +18,9 @@ var (
 	requeueNot = ctrl.Result{Requeue: false}
 	// I'm actually not sure that this means now
 	// TODO: validate
-	requeueASAP     = ctrl.Result{Requeue: true}
-	requeueSoon     = ctrl.Result{RequeueAfter: 1 * time.Second}
-	requeueBitLater = ctrl.Result{RequeueAfter: 10 * time.Second}
-	requeueLater    = ctrl.Result{RequeueAfter: 1 * time.Minute}
+	requeueASAP  = ctrl.Result{Requeue: true}
+	requeueSoon  = ctrl.Result{RequeueAfter: 1 * time.Second}
+	requeueLater = ctrl.Result{RequeueAfter: 1 * time.Minute}
 )
 
 func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
@@ -38,8 +37,8 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 
 	ytsaurus := apiProxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
 	clusterDomain := getClusterDomain(r.Client)
-	conds := conditions.NewConditionManager(r.Client, resource)
-	flowStatus, err := ytflow.Advance(ctx, ytsaurus, clusterDomain, conds)
+	stateManager := state.NewStateManager(r.Client, resource)
+	flowStatus, err := ytflow.Advance(ctx, ytsaurus, clusterDomain, stateManager)
 
 	if err != nil {
 		logger.Error(err, "failed to advance run ytsaurus flow")
@@ -67,12 +66,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 	}
 
 	// TODO: Make cond manager support more fields to update.
-	err = conds.UpdateStatusRetryOnConflict(
-		ctx,
-		func(ytsaurusResource *ytv1.Ytsaurus) {
-			ytsaurusResource.Status.State = clusterState
-		},
-	)
+	err = stateManager.SetClusterState(ctx, clusterState)
 	if err != nil {
 		logger.Error(err, "failed to save cluster state", "state", clusterState)
 		return requeueASAP, err

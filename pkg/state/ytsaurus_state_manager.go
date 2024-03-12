@@ -1,4 +1,4 @@
-package conditions
+package state
 
 import (
 	"context"
@@ -18,25 +18,25 @@ import (
 // Condition *value* can be true or false.
 type Condition string
 
-type ConditionManager struct {
+type Manager struct {
 	client   client.Client
 	ytsaurus *ytv1.Ytsaurus
 }
 
-func NewConditionManager(client client.Client, ytsaurus *ytv1.Ytsaurus) *ConditionManager {
-	return &ConditionManager{
+func NewStateManager(client client.Client, ytsaurus *ytv1.Ytsaurus) *Manager {
+	return &Manager{
 		client:   client,
 		ytsaurus: ytsaurus,
 	}
 }
 
-func (cm *ConditionManager) SetTrue(ctx context.Context, condName Condition, msg string) error {
+func (cm *Manager) SetTrue(ctx context.Context, condName Condition, msg string) error {
 	return cm.Set(ctx, condName, true, msg)
 }
-func (cm *ConditionManager) SetFalse(ctx context.Context, condName Condition, msg string) error {
+func (cm *Manager) SetFalse(ctx context.Context, condName Condition, msg string) error {
 	return cm.Set(ctx, condName, false, msg)
 }
-func (cm *ConditionManager) Set(ctx context.Context, condName Condition, val bool, msg string) error {
+func (cm *Manager) Set(ctx context.Context, condName Condition, val bool, msg string) error {
 	metacond := metav1.Condition{
 		Type: string(condName),
 		Status: map[bool]metav1.ConditionStatus{
@@ -47,17 +47,17 @@ func (cm *ConditionManager) Set(ctx context.Context, condName Condition, val boo
 		Reason:  string(condName),
 		Message: msg,
 	}
-	return cm.UpdateStatusRetryOnConflict(ctx, func(ytsaurus *ytv1.Ytsaurus) {
+	return cm.updateStatusRetryOnConflict(ctx, func(ytsaurus *ytv1.Ytsaurus) {
 		meta.SetStatusCondition(&ytsaurus.Status.Conditions, metacond)
 	})
 }
-func (cm *ConditionManager) IsTrue(condName Condition) bool {
+func (cm *Manager) IsTrue(condName Condition) bool {
 	return meta.IsStatusConditionTrue(cm.ytsaurus.Status.Conditions, string(condName))
 }
-func (cm *ConditionManager) IsFalse(condName Condition) bool {
+func (cm *Manager) IsFalse(condName Condition) bool {
 	return !cm.IsTrue(condName)
 }
-func (cm *ConditionManager) Get(condName Condition) bool {
+func (cm *Manager) Get(condName Condition) bool {
 	if cm.IsTrue(condName) {
 		return true
 	} else {
@@ -65,7 +65,29 @@ func (cm *ConditionManager) Get(condName Condition) bool {
 	}
 }
 
-func (cm *ConditionManager) UpdateStatusRetryOnConflict(ctx context.Context, change func(ytsaurusResource *ytv1.Ytsaurus)) error {
+func (cm *Manager) SetClusterState(ctx context.Context, clusterState ytv1.ClusterState) error {
+	return cm.updateStatusRetryOnConflict(ctx, func(ytsaurus *ytv1.Ytsaurus) {
+		ytsaurus.Status.State = clusterState
+	})
+}
+func (cm *Manager) SetTabletCellBundles(ctx context.Context, cells []ytv1.TabletCellBundleInfo) error {
+	return cm.updateStatusRetryOnConflict(ctx, func(ytsaurus *ytv1.Ytsaurus) {
+		ytsaurus.Status.UpdateStatus.TabletCellBundles = cells
+	})
+}
+func (cm *Manager) SetMasterMonitoringPaths(ctx context.Context, paths []string) error {
+	return cm.updateStatusRetryOnConflict(ctx, func(ytsaurus *ytv1.Ytsaurus) {
+		ytsaurus.Status.UpdateStatus.MasterMonitoringPaths = paths
+	})
+}
+func (cm *Manager) GetTabletCellBundles() []ytv1.TabletCellBundleInfo {
+	return cm.ytsaurus.Status.UpdateStatus.TabletCellBundles
+}
+func (cm *Manager) GetMasterMonitoringPaths() []string {
+	return cm.ytsaurus.Status.UpdateStatus.MasterMonitoringPaths
+}
+
+func (cm *Manager) updateStatusRetryOnConflict(ctx context.Context, change func(ytsaurusResource *ytv1.Ytsaurus)) error {
 	tryUpdate := func(ytsaurus *ytv1.Ytsaurus) error {
 		change(ytsaurus)
 		// You have to return err itself here (not wrapped inside another error)

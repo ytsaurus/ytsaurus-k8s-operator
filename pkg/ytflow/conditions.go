@@ -1,11 +1,11 @@
 package ytflow
 
 import (
-	"github.com/ytsaurus/yt-k8s-operator/pkg/conditions"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/state"
 )
 
 // Condition aliased for brevity.
-type Condition = conditions.Condition
+type Condition = state.Condition
 
 // *Built conditions are kept in sync by flow automatically.
 // Developers shouldn't set them in code manually.
@@ -49,16 +49,23 @@ var (
 
 // Special conditions.
 
+// TODO: it is not very good to have condition and condition dependency at the same time
+// as it makes harder to search for usages.
 var (
 	AllComponentsBuiltCondName Condition = "AllComponentsBuilt"
 
 	IsFullUpdateNeededCond           Condition = "IsFullUpdateNeeded"
 	IsFullUpdatePossibleCond         Condition = "IsFullUpdatePossible"
 	IsSafeModeEnabledCond            Condition = "IsSafeModeEnabled"
-	AreTabletCellsNeedRecoverCond    Condition = "AreTabletCellsNeedRecover"
+	DoTabletCellsNeedRecoverCond     Condition = "DoTabletCellsNeedRecover"
 	IsMasterInReadOnlyCond           Condition = "IsMasterInReadOnly"
 	IsOperationArchiveNeedUpdateCond Condition = "IsOperationArchiveNeedUpdate"
 	IsQueryTrackerNeedInitCond       Condition = "IsQueryTrackerNeedInit"
+
+	// IsTabletCellsRemovalStartedCond is an intermediate condition of Tablet cell backup action
+	IsTabletCellsRemovalStartedCond Condition = "IsTabletCellsRemovalStarted"
+	// IsMasterSnapshotBuildingStartedCond is an intermediate condition of Build master snapshots action.
+	IsMasterSnapshotBuildingStartedCond Condition = "IsMasterSnapshotBuildingStarted"
 
 	NothingToDoCondName Condition = "NothingToDo"
 )
@@ -69,7 +76,7 @@ var (
 	FullUpdateNeeded           = isTrue(IsFullUpdateNeededCond)
 	FullUpdatePossible         = isTrue(IsFullUpdatePossibleCond)
 	SafeModeEnabled            = isTrue(IsSafeModeEnabledCond)
-	TabletCellsNeedRecover     = isTrue(AreTabletCellsNeedRecoverCond)
+	TabletCellsNeedRecover     = isTrue(DoTabletCellsNeedRecoverCond)
 	MasterIsInReadOnly         = isTrue(IsMasterInReadOnlyCond)
 	OperationArchiveNeedUpdate = isTrue(IsOperationArchiveNeedUpdateCond)
 	QueryTrackerNeedsInit      = isTrue(IsQueryTrackerNeedInitCond)

@@ -19,7 +19,7 @@ const (
 	FlowStatusBlocked  FlowStatus = "Blocked"
 )
 
-type conditionManagerType interface {
+type stateManager interface {
 	SetTrue(context.Context, Condition, string) error
 	SetFalse(context.Context, Condition, string) error
 	Set(context.Context, Condition, bool, string) error
@@ -27,18 +27,20 @@ type conditionManagerType interface {
 	IsFalse(Condition) bool
 	Get(Condition) bool
 
-	// Not sure if it should be public.
-	UpdateStatusRetryOnConflict(ctx context.Context, change func(ytsaurusResource *ytv1.Ytsaurus)) error
+	SetTabletCellBundles(context.Context, []ytv1.TabletCellBundleInfo) error
+	SetMasterMonitoringPaths(context.Context, []string) error
+	GetTabletCellBundles() []ytv1.TabletCellBundleInfo
+	GetMasterMonitoringPaths() []string
 }
 
-func Advance(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, clusterDomain string, conds conditionManagerType) (FlowStatus, error) {
+func Advance(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, clusterDomain string, conds stateManager) (FlowStatus, error) {
 	comps := buildComponents(ytsaurus, clusterDomain)
 	return doAdvance(ctx, comps, conds)
 }
 
 // maybe ok to have it public and move comps building in components.
 // check about components names
-func doAdvance(ctx context.Context, comps *componentRegistry, conds conditionManagerType) (FlowStatus, error) {
+func doAdvance(ctx context.Context, comps *componentRegistry, conds stateManager) (FlowStatus, error) {
 	// fetch all the components and collect all the statuses
 	statuses, err := observe(ctx, comps)
 	if err != nil {
@@ -69,7 +71,7 @@ func doAdvance(ctx context.Context, comps *componentRegistry, conds conditionMan
 	return FlowStatusUpdating, runSteps(ctx, runnableSteps)
 }
 
-func collectRunnables(steps *stepRegistry, conds conditionManagerType) map[StepName]stepType {
+func collectRunnables(steps *stepRegistry, conds stateManager) map[StepName]stepType {
 	runnable := make(map[StepName]stepType)
 	for name, step := range steps.steps {
 		stepDeps := stepDependencies[name]
