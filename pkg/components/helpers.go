@@ -3,6 +3,8 @@ package components
 import (
 	"context"
 	"fmt"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"strings"
 
 	"go.ytsaurus.tech/library/go/ptr"
@@ -166,4 +168,37 @@ func RunIfExists(path string, commands ...string) string {
 
 func SetWithIgnoreExisting(path string, value string) string {
 	return RunIfNonexistent(path, fmt.Sprintf("/usr/bin/yt set %s %s", path, value))
+}
+
+func AddAffinity(statefulSet *appsv1.StatefulSet,
+	nodeSelectorRequirementKey string,
+	nodeSelectorRequirementValues []string) {
+
+	affinity := &corev1.Affinity{}
+	if statefulSet.Spec.Template.Spec.Affinity != nil {
+		affinity = statefulSet.Spec.Template.Spec.Affinity
+	}
+
+	nodeAffinity := &corev1.NodeAffinity{}
+	if affinity.NodeAffinity != nil {
+		nodeAffinity = affinity.NodeAffinity
+	}
+
+	selector := &corev1.NodeSelector{}
+	if nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
+		selector = nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution
+	}
+
+	selector.NodeSelectorTerms = append(selector.NodeSelectorTerms, corev1.NodeSelectorTerm{
+		MatchExpressions: []corev1.NodeSelectorRequirement{
+			{
+				Key:      nodeSelectorRequirementKey,
+				Operator: corev1.NodeSelectorOpIn,
+				Values:   nodeSelectorRequirementValues,
+			},
+		},
+	})
+	nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = selector
+	affinity.NodeAffinity = nodeAffinity
+	statefulSet.Spec.Template.Spec.Affinity = affinity
 }

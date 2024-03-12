@@ -9,7 +9,6 @@ import (
 
 	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/yson"
-	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -330,44 +329,11 @@ func (m *Master) Sync(ctx context.Context) error {
 
 func (m *Master) doServerSync(ctx context.Context) error {
 	statefulSet := m.server.buildStatefulSet()
-	m.addAffinity(statefulSet)
-	return m.server.Sync(ctx)
-}
-
-func (m *Master) addAffinity(statefulSet *appsv1.StatefulSet) {
 	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
-	if len(primaryMastersSpec.HostAddresses) == 0 {
-		return
+	if len(primaryMastersSpec.HostAddresses) != 0 {
+		AddAffinity(statefulSet, m.getHostAddressLabel(), primaryMastersSpec.HostAddresses)
 	}
-
-	affinity := &corev1.Affinity{}
-	if statefulSet.Spec.Template.Spec.Affinity != nil {
-		affinity = statefulSet.Spec.Template.Spec.Affinity
-	}
-
-	nodeAffinity := &corev1.NodeAffinity{}
-	if affinity.NodeAffinity != nil {
-		nodeAffinity = affinity.NodeAffinity
-	}
-
-	selector := &corev1.NodeSelector{}
-	if nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
-		selector = nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution
-	}
-
-	nodeHostnameLabel := m.getHostAddressLabel()
-	selector.NodeSelectorTerms = append(selector.NodeSelectorTerms, corev1.NodeSelectorTerm{
-		MatchExpressions: []corev1.NodeSelectorRequirement{
-			{
-				Key:      nodeHostnameLabel,
-				Operator: corev1.NodeSelectorOpIn,
-				Values:   primaryMastersSpec.HostAddresses,
-			},
-		},
-	})
-	nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = selector
-	affinity.NodeAffinity = nodeAffinity
-	statefulSet.Spec.Template.Spec.Affinity = affinity
+	return m.server.Sync(ctx)
 }
 
 func (m *Master) getHostAddressLabel() string {

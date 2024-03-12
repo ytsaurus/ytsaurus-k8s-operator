@@ -8,8 +8,6 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 )
 
 type masterCache struct {
@@ -96,43 +94,12 @@ func (mc *masterCache) Sync(ctx context.Context) error {
 
 func (mc *masterCache) doServerSync(ctx context.Context) error {
 	statefulSet := mc.server.buildStatefulSet()
-	mc.addAffinity(statefulSet)
-	return mc.server.Sync(ctx)
-}
-
-func (mc *masterCache) addAffinity(statefulSet *appsv1.StatefulSet) {
 	masterCachesSpec := mc.ytsaurus.GetResource().Spec.MasterCaches
-	if len(masterCachesSpec.HostAddresses) == 0 {
-		return
+	if len(masterCachesSpec.HostAddresses) != 0 {
+		AddAffinity(statefulSet, mc.getHostAddressLabel(), masterCachesSpec.HostAddresses)
 	}
 
-	affinity := &corev1.Affinity{}
-	if statefulSet.Spec.Template.Spec.Affinity != nil {
-		affinity = statefulSet.Spec.Template.Spec.Affinity
-	}
-
-	nodeAffinity := &corev1.NodeAffinity{}
-	if affinity.NodeAffinity != nil {
-		nodeAffinity = affinity.NodeAffinity
-	}
-
-	selector := &corev1.NodeSelector{}
-	if nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
-		selector = nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution
-	}
-
-	selector.NodeSelectorTerms = append(selector.NodeSelectorTerms, corev1.NodeSelectorTerm{
-		MatchExpressions: []corev1.NodeSelectorRequirement{
-			{
-				Key:      mc.getHostAddressLabel(),
-				Operator: corev1.NodeSelectorOpIn,
-				Values:   masterCachesSpec.HostAddresses,
-			},
-		},
-	})
-	nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = selector
-	affinity.NodeAffinity = nodeAffinity
-	statefulSet.Spec.Template.Spec.Affinity = affinity
+	return mc.server.Sync(ctx)
 }
 
 func (mc *masterCache) getHostAddressLabel() string {
