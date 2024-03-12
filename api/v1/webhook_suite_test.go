@@ -66,6 +66,7 @@ var _ = BeforeSuite(func() {
 		WebhookInstallOptions: envtest.WebhookInstallOptions{
 			Paths: []string{filepath.Join("..", "..", "config", "webhook")},
 		},
+		AttachControlPlaneOutput: true,
 	}
 
 	// psushin: this may be required for ipv6-only hosts (like Sandbox CI).

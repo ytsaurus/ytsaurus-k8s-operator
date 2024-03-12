@@ -60,7 +60,14 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: manifests generate fmt vet envtest ## Run tests.
-	KUBEBUILDER_ATTACH_CONTROL_PLANE_OUTPUT="true" KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -v ./... -coverprofile cover.out -timeout 1800s
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
+	go test -v ./... -coverprofile cover.out -timeout 1800s
+
+.PHONY: test-e2e
+test-e2e: manifests generate fmt vet envtest ## Run e2e tests.
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
+	YTSAURUS_ENABLE_E2E_TESTS=true \
+	go test -v ./test/e2e/... -coverprofile cover.out -timeout 1800s
 
 .PHONY: lint
 lint: fmt vet generate helm ## Test formatting, uncommitted and generated files.
@@ -68,7 +75,9 @@ lint: fmt vet generate helm ## Test formatting, uncommitted and generated files.
 
 .PHONY: canonize
 canonize: manifests generate fmt vet envtest ## Canonize tests.
-	KUBEBUILDER_ATTACH_CONTROL_PLANE_OUTPUT="true" KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" CANONIZE=y go test -v ./... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
+	CANONIZE=y \
+	go test -v ./... -coverprofile cover.out
 
 .PHONY: helm-kind-install
 helm-kind-install: ## Install helm chart from sources in kind.

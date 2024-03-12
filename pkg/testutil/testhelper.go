@@ -47,7 +47,8 @@ func NewTestHelper(t *testing.T, namespace string) *TestHelper {
 		CRDInstallOptions: envtest.CRDInstallOptions{
 			MaxTime: 60 * time.Second,
 		},
-		ControlPlane: envtest.ControlPlane{},
+		ControlPlane:             envtest.ControlPlane{},
+		AttachControlPlaneOutput: true,
 	}
 
 	testCtx, testCancel := context.WithCancel(context.Background())
