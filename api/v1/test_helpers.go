@@ -14,7 +14,7 @@ const (
 	YtsaurusName     = "test-ytsaurus"
 	CoreImageFirst   = "ytsaurus/ytsaurus-nightly:dev-23.1-28ccaedbf353b870bedafb6e881ecf386a0a3779"
 	CoreImageSecond  = "ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de"
-	CoreImageNextVer = "ytsaurus/ytsaurus-nightly:dev-23.2-62a472c4efc2c8395d125a13ca0216720e06999d"
+	CoreImageNextVer = "ytsaurus/ytsaurus-nightly:dev-23.2-9c50056eacfa4fe213798a5b9ee828ae3acb1bca"
 )
 
 func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {

@@ -88,7 +88,7 @@ helm-kind-install: ## Install helm chart from sources in kind.
 TEST_IMAGES = \
 	ytsaurus/ytsaurus-nightly:dev-23.1-28ccaedbf353b870bedafb6e881ecf386a0a3779 \
 	ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de \
-	ytsaurus/ytsaurus-nightly:dev-23.2-62a472c4efc2c8395d125a13ca0216720e06999d
+	ytsaurus/ytsaurus-nightly:dev-23.2-9c50056eacfa4fe213798a5b9ee828ae3acb1bca
 .PHONY: kind-load-test-images
 kind-load-test-images:
 	$(foreach img,$(TEST_IMAGES),docker pull $(img) && kind load docker-image $(img);)
