@@ -8,14 +8,15 @@ import (
 
 type fakeStateManager struct {
 	// TODO: msg
-	store           map[Condition]bool
+	conds           map[Condition]bool
+	clusterState    ytv1.ClusterState
 	bundles         []ytv1.TabletCellBundleInfo
 	monitoringPaths []string
 }
 
 func newFakeStateManager() *fakeStateManager {
 	return &fakeStateManager{
-		store: make(map[Condition]bool),
+		conds: make(map[Condition]bool),
 	}
 }
 
@@ -26,17 +27,17 @@ func (cm *fakeStateManager) SetFalse(ctx context.Context, cond Condition, msg st
 	return cm.Set(ctx, cond, false, msg)
 }
 func (cm *fakeStateManager) Set(_ context.Context, cond Condition, val bool, _ string) error {
-	cm.store[cond] = val
+	cm.conds[cond] = val
 	return nil
 }
 func (cm *fakeStateManager) IsTrue(condName Condition) bool {
-	return cm.store[condName]
+	return cm.conds[condName]
 }
 func (cm *fakeStateManager) IsFalse(condName Condition) bool {
 	return !cm.IsTrue(condName)
 }
 func (cm *fakeStateManager) Get(condName Condition) bool {
-	return cm.store[condName]
+	return cm.conds[condName]
 }
 
 func (cm *fakeStateManager) SetTabletCellBundles(_ context.Context, bundles []ytv1.TabletCellBundleInfo) error {
@@ -52,4 +53,12 @@ func (cm *fakeStateManager) GetTabletCellBundles() []ytv1.TabletCellBundleInfo {
 }
 func (cm *fakeStateManager) GetMasterMonitoringPaths() []string {
 	return cm.monitoringPaths
+}
+
+func (cm *fakeStateManager) SetClusterState(_ context.Context, clusterState ytv1.ClusterState) error {
+	cm.clusterState = clusterState
+	return nil
+}
+func (cm *fakeStateManager) GetClusterState() ytv1.ClusterState {
+	return cm.clusterState
 }

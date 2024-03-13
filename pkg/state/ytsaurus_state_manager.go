@@ -80,6 +80,9 @@ func (cm *Manager) SetMasterMonitoringPaths(ctx context.Context, paths []string)
 		ytsaurus.Status.UpdateStatus.MasterMonitoringPaths = paths
 	})
 }
+func (cm *Manager) GetClusterState() ytv1.ClusterState {
+	return cm.ytsaurus.Status.State
+}
 func (cm *Manager) GetTabletCellBundles() []ytv1.TabletCellBundleInfo {
 	return cm.ytsaurus.Status.UpdateStatus.TabletCellBundles
 }

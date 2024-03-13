@@ -137,7 +137,7 @@ func buildMasterSnapshots(yc ytsaurusClient, state stateManager) simpleActionSte
 			if err = state.SetMasterMonitoringPaths(ctx, []string{}); err != nil {
 				return err
 			}
-			if err = state.SetTrue(ctx, IsMasterInReadOnlyCond, ""); err != nil {
+			if err = state.SetTrue(ctx, MasterCanBeRebuiltCond, ""); err != nil {
 				return err
 			}
 		}
@@ -159,7 +159,7 @@ func buildMasterSnapshots(yc ytsaurusClient, state stateManager) simpleActionSte
 
 func masterExitReadOnly(state stateManager) simpleActionStep {
 	runFunc := func(ctx context.Context) error {
-		return state.SetFalse(ctx, IsMasterInReadOnlyCond, "")
+		return state.SetFalse(ctx, MasterCanBeRebuiltCond, "")
 	}
 	return simpleActionStep{
 		runFunc: runFunc,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -27,42 +28,49 @@ type stateManager interface {
 	IsFalse(Condition) bool
 	Get(Condition) bool
 
+	// Don't really like mix of conditions and temporary data storage.
+
+	SetClusterState(context.Context, ytv1.ClusterState) error
 	SetTabletCellBundles(context.Context, []ytv1.TabletCellBundleInfo) error
 	SetMasterMonitoringPaths(context.Context, []string) error
+	GetClusterState() ytv1.ClusterState
 	GetTabletCellBundles() []ytv1.TabletCellBundleInfo
 	GetMasterMonitoringPaths() []string
 }
 
-func Advance(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, clusterDomain string, conds stateManager) (FlowStatus, error) {
+func Advance(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, clusterDomain string, state stateManager) (FlowStatus, error) {
 	comps := buildComponents(ytsaurus, clusterDomain)
-	return doAdvance(ctx, comps, conds)
+	actionSteps := buildActionSteps(comps, state)
+	return doAdvance(ctx, comps, actionSteps, state)
 }
 
 // maybe ok to have it public and move comps building in components.
 // check about components names
-func doAdvance(ctx context.Context, comps *componentRegistry, conds stateManager) (FlowStatus, error) {
+func doAdvance(ctx context.Context, comps *componentRegistry, actions map[StepName]stepType, state stateManager) (FlowStatus, error) {
+	log := log.FromContext(ctx)
+
 	// fetch all the components and collect all the statuses
 	statuses, err := observe(ctx, comps)
 	if err != nil {
 		return "", fmt.Errorf("failed to observe statuses: %w", err)
 	}
 
-	// set conditions based on statuses
-	if err = updateComponentsConditions(ctx, statuses, conds); err != nil {
+	if err = updateClusterBasedConditions(ctx, state); err != nil {
+		return "", fmt.Errorf("failed to update cluster based conditions: %w", err)
+	}
+	if err = updateComponentsBasedConditions(ctx, statuses, state); err != nil {
 		return "", fmt.Errorf("failed to update components conditions: %w", err)
 	}
-
-	// set conditions based on other conditions (while true? with limit on cycles)
-	if err = updateConditionsByDependencies(ctx, conditionDependencies, conds); err != nil {
+	if err = updateDependenciesBasedConditions(ctx, conditionDependencies, state); err != nil {
 		return "", err
 	}
 
-	if IsSatisfied(NothingToDo, conds) {
+	if IsSatisfied(NothingToDo, state) {
 		return FlowStatusDone, nil
 	}
 
-	steps := buildSteps(comps, conds)
-	runnableSteps := collectRunnables(steps, conds)
+	steps := buildSteps(comps, actions)
+	runnableSteps := collectRunnables(log, steps, state)
 	// TODO: somehow differ all done with all blocked.
 	// Need extra signal here with return after the conditions check.
 	if len(runnableSteps) == 0 {
@@ -71,9 +79,12 @@ func doAdvance(ctx context.Context, comps *componentRegistry, conds stateManager
 	return FlowStatusUpdating, runSteps(ctx, runnableSteps)
 }
 
-func collectRunnables(steps *stepRegistry, conds stateManager) map[StepName]stepType {
+func collectRunnables(log logr.Logger, steps *stepRegistry, conds stateManager) map[StepName]stepType {
 	runnable := make(map[StepName]stepType)
 	for name, step := range steps.steps {
+		//log.Info(fmt.Sprintf("[ ] %s", name))
+		// TODO: collect execution, configure logger in test
+		fmt.Printf("STEP %s\n", name)
 		stepDeps := stepDependencies[name]
 
 		// If step has no dependencies no need to run.
@@ -85,7 +96,19 @@ func collectRunnables(steps *stepRegistry, conds stateManager) map[StepName]step
 		// If any of the dependencies are not satisfied, no need to run.
 		hasUnsatisfied := false
 		for _, condDep := range stepDeps {
-			if !IsSatisfied(condDep, conds) {
+			isSatisfied := IsSatisfied(condDep, conds)
+
+			symbol := " "
+			if isSatisfied {
+				symbol = "x"
+			}
+			notSymbol := ""
+			if !condDep.val {
+				notSymbol = "!"
+			}
+			fmt.Printf("     [%s] %s%s\n", symbol, notSymbol, condDep.name)
+
+			if !isSatisfied {
 				hasUnsatisfied = true
 				break
 			}

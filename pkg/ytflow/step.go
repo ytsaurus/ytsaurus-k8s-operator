@@ -37,13 +37,13 @@ func buildActionSteps(comps *componentRegistry, conds stateManager) map[StepName
 	}
 }
 
-func buildSteps(comps *componentRegistry, conds stateManager) *stepRegistry {
+func buildSteps(comps *componentRegistry, actions map[StepName]stepType) *stepRegistry {
 	steps := make(map[StepName]stepType)
 
 	for name, step := range buildComponentSteps(comps) {
 		steps[name] = step
 	}
-	for name, step := range buildActionSteps(comps, conds) {
+	for name, step := range actions {
 		steps[name] = step
 	}
 	return &stepRegistry{

@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
 )
 
-func updateComponentsConditions(ctx context.Context, statuses *statusRegistry, conds stateManager) error {
+func updateComponentsBasedConditions(ctx context.Context, statuses *statusRegistry, conds stateManager) error {
 	allBuilt := true
 
 	// Actualize <ComponentName>Built condition for the single components.
@@ -54,4 +55,15 @@ func updateComponentsConditions(ctx context.Context, statuses *statusRegistry, c
 	}
 
 	return nil
+}
+
+func updateClusterBasedConditions(ctx context.Context, state stateManager) error {
+	if state.GetClusterState() == ytv1.ClusterStateCreated {
+		for _, dep := range initialDependencies {
+			if err := state.Set(ctx, dep.name, dep.val, "set on cluster create"); err != nil {
+				return err
+			}
+		}
+	}
+	return state.SetClusterState(ctx, ytv1.ClusterStateInitializing)
 }

@@ -40,6 +40,10 @@ var (
 	QueryTrackerStep   = compNameToStepName(QueryTrackerName)
 )
 
+var initialDependencies = []conditionDependency{
+	MasterCanBeRebuilt,
+}
+
 // conditionDependencies simply is:
 // condName become true if all condition deps are true
 // condName become false if any of condition deps are false
@@ -47,14 +51,13 @@ var conditionDependencies = map[Condition][]conditionDependency{
 	NothingToDoCondName: {
 		AllComponentsBuilt,
 		not(SafeModeEnabled),
-		// +safe mode disabled
 	},
 
-	//	YtsaurusClientReady: {
-	//		YtsaurusClientBuilt,
-	//		HttpProxyBuilt,
-	//		MasterBuilt,
-	//	},
+	YtsaurusClientReadyCondName: {
+		YtsaurusClientBuilt,
+		HttpProxyBuilt,
+		MasterBuilt,
+	},
 	MasterReadyCondName: {
 		MasterBuilt, // is it enough?
 	},
@@ -62,10 +65,10 @@ var conditionDependencies = map[Condition][]conditionDependency{
 		HttpProxyBuilt,
 		MasterReady,
 	},
-	DataNodeReadyCondName: {
-		DataNodeBuilt,
-		MasterReady,
-	},
+	//DataNodeReadyCondName: {
+	//	DataNodeBuilt,
+	//	MasterReady,
+	//},
 }
 
 // stepDependencies describes what conditions must be satisfied for step to run.
@@ -95,10 +98,7 @@ var stepDependencies = map[StepName][]conditionDependency{
 		YtsaurusClientReady,
 	},
 	BuildMasterSnapshotsStep: {
-		// To simplify things we use MasterIsInReadOnly condition meaning
-		// "Master snapshots are built and master is in read only".
-		// Though semantically it may be more correct to have two dependant conditions.
-		not(MasterIsInReadOnly),
+		not(MasterCanBeRebuilt),
 		FullUpdatePossible,
 		not(TabletCellsNeedRecover),
 		YtsaurusClientReady,
@@ -117,33 +117,38 @@ var stepDependencies = map[StepName][]conditionDependency{
 		not(MasterBuilt),
 		// TODO: set initial condition that master is in read only (which is not true)?
 		// It would be better to have OR-condition (IsInReadOnly | Initializing) here maybe?
-		//MasterIsInReadOnly,
+		// (SafeModeEnabled & MasterInReadOnly | )
+		MasterCanBeRebuilt,
 	},
 
 	MasterExitReadOnlyStep: {
-		MasterIsInReadOnly,
+		MasterCanBeRebuilt,
 		// Currently it works as before, but maybe we just need master to be built?
 		AllComponentsBuilt,
+		SafeModeEnabled,
 	},
 	RecoverTabletCellsStep: {
 		TabletCellsNeedRecover,
-		not(MasterIsInReadOnly), // we need to write in this step
+		not(MasterCanBeRebuilt), // we need to write in this step
+		SafeModeEnabled,
 	},
 	UpdateOpArchiveStep: {
 		OperationArchiveNeedUpdate,
 		not(TabletCellsNeedRecover), // do we *really* depend on tablet cells in this job?
-		not(MasterIsInReadOnly),     // we need to write here
+		not(MasterCanBeRebuilt),     // we need to write here
+		SafeModeEnabled,
 		//SchedulerBuilt,              // do we need scheduler for that script or only master
 	},
 	InitQueryTrackerStep: {
 		QueryTrackerNeedsInit,
 		not(OperationArchiveNeedUpdate), // do we *really* depend on tablet cells in this job?
-		not(MasterIsInReadOnly),         // we need to write in this step
+		not(MasterCanBeRebuilt),         // we need to write in this step
+		SafeModeEnabled,
 		//QueryTrackerBuilt,       // do we need query tracker for that script or only master
 	},
 	DisableSafeModeStep: {
 		SafeModeEnabled,
-		not(MasterIsInReadOnly), // we need to write in this step
+		not(MasterCanBeRebuilt), // we need to write in this step
 
 		// All of those should be done before unlocking the cluster from read only.
 		not(TabletCellsNeedRecover),

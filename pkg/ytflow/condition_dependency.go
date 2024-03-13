@@ -19,9 +19,10 @@ func not(condDep conditionDependency) conditionDependency {
 func isTrue(cond Condition) conditionDependency {
 	return conditionDependency{name: cond, val: true}
 }
-func isFalse(cond Condition) conditionDependency {
-	return conditionDependency{name: cond, val: false}
-}
+
+//func isFalse(cond Condition) conditionDependency {
+//	return conditionDependency{name: cond, val: false}
+//}
 
 // Components' statuses.
 func isBuilt(compName ComponentName) conditionDependency {
@@ -55,7 +56,7 @@ func isReadyCondName(compName ComponentName) Condition {
 //	return cond(fmt.Sprintf("%sDone", name))
 //}
 
-func updateConditionsByDependencies(ctx context.Context, condDeps map[Condition][]conditionDependency, conds stateManager) error {
+func updateDependenciesBasedConditions(ctx context.Context, condDeps map[Condition][]conditionDependency, conds stateManager) error {
 	maxIterations := 10
 	for i := 0; i < maxIterations; i++ {
 		somethingChanged := false

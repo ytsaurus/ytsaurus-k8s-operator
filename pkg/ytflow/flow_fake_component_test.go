@@ -7,36 +7,29 @@ import (
 )
 
 type fakeComponent struct {
-	name ComponentName
-	ran  bool
-
-	spy *executionSpy
+	name   ComponentName
+	status syncStatus
+	spy    *executionSpy
 }
 
 func newFakeComponent(name ComponentName, spy *executionSpy) *fakeComponent {
 	return &fakeComponent{
-		name: name,
-
-		spy: spy,
+		name:   name,
+		status: components.SyncStatusPending,
+		spy:    spy,
 	}
 }
 
 func (c *fakeComponent) GetName() string               { return string(c.name) }
 func (c *fakeComponent) Fetch(_ context.Context) error { return nil }
 func (c *fakeComponent) Status(_ context.Context) componentStatus {
-	if c.ran {
-		return componentStatus{
-			SyncStatus: components.SyncStatusReady,
-			Message:    "test comp sync ok",
-		}
-	}
 	return componentStatus{
-		SyncStatus: components.SyncStatusPending,
-		Message:    "test comp sync not ok",
+		SyncStatus: c.status,
+		Message:    "test comp status",
 	}
 }
 func (c *fakeComponent) Sync(_ context.Context) error {
-	c.ran = true
+	c.status = components.SyncStatusReady
 	c.spy.record(string(c.name))
 	return nil
 }

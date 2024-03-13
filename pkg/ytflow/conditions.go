@@ -58,7 +58,7 @@ var (
 	IsFullUpdatePossibleCond         Condition = "IsFullUpdatePossible"
 	IsSafeModeEnabledCond            Condition = "IsSafeModeEnabled"
 	DoTabletCellsNeedRecoverCond     Condition = "DoTabletCellsNeedRecover"
-	IsMasterInReadOnlyCond           Condition = "IsMasterInReadOnly"
+	MasterCanBeRebuiltCond           Condition = "MasterCanBeRebuilt"
 	IsOperationArchiveNeedUpdateCond Condition = "IsOperationArchiveNeedUpdate"
 	IsQueryTrackerNeedInitCond       Condition = "IsQueryTrackerNeedInit"
 
@@ -77,7 +77,7 @@ var (
 	FullUpdatePossible         = isTrue(IsFullUpdatePossibleCond)
 	SafeModeEnabled            = isTrue(IsSafeModeEnabledCond)
 	TabletCellsNeedRecover     = isTrue(DoTabletCellsNeedRecoverCond)
-	MasterIsInReadOnly         = isTrue(IsMasterInReadOnlyCond)
+	MasterCanBeRebuilt         = isTrue(MasterCanBeRebuiltCond)
 	OperationArchiveNeedUpdate = isTrue(IsOperationArchiveNeedUpdateCond)
 	QueryTrackerNeedsInit      = isTrue(IsQueryTrackerNeedInitCond)
 
