@@ -14,8 +14,8 @@ const (
 	YtsaurusName = "test-ytsaurus"
 	// Images should be in sync with TEST_IMAGES variable in Makefile
 	// todo: come up with a more elegant solution
-	CoreImageFirst   = "ytsaurus/ytsaurus-nightly:dev-23.1-28ccaedbf353b870bedafb6e881ecf386a0a3779"
-	CoreImageSecond  = "ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de"
+	CoreImageFirst   = "ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de"
+	CoreImageSecond  = "ytsaurus/ytsaurus-nightly:dev-23.1-28ccaedbf353b870bedafb6e881ecf386a0a3779"
 	CoreImageNextVer = "ytsaurus/ytsaurus-nightly:dev-23.2-9c50056eacfa4fe213798a5b9ee828ae3acb1bca"
 )
 

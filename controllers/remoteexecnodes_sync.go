@@ -26,7 +26,7 @@ func (r *RemoteExecNodesReconciler) Sync(
 		getClusterDomain(r.Client),
 		resource.Spec.CommonSpec,
 		remoteYtsaurus.Spec.MasterConnectionSpec,
-		remoteYtsaurus.Spec.MasterCachesSpec,
+		&remoteYtsaurus.Spec.MasterCachesSpec,
 	)
 
 	component := components.NewRemoteExecNodes(

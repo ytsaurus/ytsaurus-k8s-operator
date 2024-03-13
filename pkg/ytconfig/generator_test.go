@@ -609,10 +609,6 @@ func getMasterConnectionSpecWithFixedMasterHosts() v1.MasterConnectionSpec {
 	return spec
 }
 
-//func getMasterCachesConnectionSpec() v1.MasterCachesConnectionSpec {
-//	return v1.MasterCachesConnectionSpec{}
-//}
-
 func getMasterCachesSpec() v1.MasterCachesSpec {
 	return v1.MasterCachesSpec{
 		InstanceSpec: v1.InstanceSpec{
@@ -622,8 +618,8 @@ func getMasterCachesSpec() v1.MasterCachesSpec {
 	}
 }
 
-func getMasterCachesSpecWithFixedHosts() v1.MasterCachesSpec {
+func getMasterCachesSpecWithFixedHosts() *v1.MasterCachesSpec {
 	spec := getMasterCachesSpec()
 	spec.MasterCachesConnectionSpec.HostAddresses = testMasterCachesExternalHosts
-	return spec
+	return &spec
 }

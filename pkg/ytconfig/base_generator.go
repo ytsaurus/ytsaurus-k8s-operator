@@ -22,14 +22,14 @@ func NewRemoteBaseGenerator(
 	clusterDomain string,
 	commonSpec ytv1.CommonSpec,
 	masterConnectionSpec ytv1.MasterConnectionSpec,
-	masterCachesSpec ytv1.MasterCachesSpec,
+	masterCachesSpec *ytv1.MasterCachesSpec,
 ) *BaseGenerator {
 	return &BaseGenerator{
 		key:                  key,
 		clusterDomain:        clusterDomain,
 		commonSpec:           commonSpec,
 		masterConnectionSpec: masterConnectionSpec,
-		masterCachesSpec:     &masterCachesSpec,
+		masterCachesSpec:     masterCachesSpec,
 	}
 }
 

@@ -127,7 +127,6 @@ func (g *Generator) fillDriver(c *Driver) {
 
 	c.PrimaryMaster.Addresses = g.getMasterAddresses()
 	c.PrimaryMaster.CellID = generateCellID(g.ytsaurus.Spec.PrimaryMasters.CellTag)
-	//c.PrimaryMaster.Peers = g.getMasterHydraPeers()
 	g.fillPrimaryMaster(&c.PrimaryMaster)
 }
 
@@ -706,7 +705,6 @@ func (g *Generator) getMasterCachesConfigImpl() (MasterCacheServer, error) {
 		return MasterCacheServer{}, err
 	}
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
-	//c.ClusterConnection.MasterCache.Addresses = g.getMasterCachesAddresses()
 	return c, nil
 }
 
