@@ -127,9 +127,7 @@ func (g *Generator) fillDriver(c *Driver) {
 
 	c.PrimaryMaster.Addresses = g.getMasterAddresses()
 	c.PrimaryMaster.CellID = generateCellID(g.ytsaurus.Spec.PrimaryMasters.CellTag)
-
-	c.MasterCache.EnableMasterCacheDiscover = true
-	g.fillPrimaryMaster(&c.MasterCache.MasterCell)
+	g.fillPrimaryMaster(&c.PrimaryMaster)
 }
 
 func (g *BaseGenerator) fillAddressResolver(c *AddressResolver) {
@@ -155,6 +153,12 @@ func (g *BaseGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCT
 	c.ClusterName = g.key.Name
 	c.DiscoveryConnection.Addresses = g.getDiscoveryAddresses()
 	g.fillClusterConnectionEncryption(c, s)
+	if len(g.getMasterCachesAddresses()) == 0 {
+		c.MasterCache.Addresses = g.getMasterAddresses()
+	} else {
+		c.MasterCache.Addresses = g.getMasterCachesAddresses()
+	}
+	c.MasterCache.CellID = generateCellID(g.masterConnectionSpec.CellTag)
 }
 
 func (g *BaseGenerator) fillCypressAnnotations(c *map[string]any) {
@@ -692,4 +696,53 @@ func (g *Generator) GetDiscoveryConfig() ([]byte, error) {
 		return nil, err
 	}
 	return marshallYsonConfig(c)
+}
+
+func (g *Generator) getMasterCachesConfigImpl() (MasterCacheServer, error) {
+	spec := g.ytsaurus.Spec.MasterCaches
+	c, err := getMasterCachesCarcass(spec)
+	if err != nil {
+		return MasterCacheServer{}, err
+	}
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	return c, nil
+}
+
+func (g *Generator) GetMasterCachesConfig() ([]byte, error) {
+	if g.ytsaurus.Spec.MasterCaches == nil {
+		return []byte{}, nil
+	}
+	c, err := g.getMasterCachesConfigImpl()
+	if err != nil {
+		return nil, err
+	}
+	return marshallYsonConfig(c)
+}
+
+func (g *BaseGenerator) getMasterCachesPodFqdnSuffix() string {
+	return fmt.Sprintf("%s.%s.svc.%s",
+		g.GetMasterCachesServiceName(),
+		g.key.Namespace,
+		g.clusterDomain)
+}
+
+func (g *BaseGenerator) getMasterCachesAddresses() []string {
+	if g.masterCachesSpec != nil {
+		hosts := g.masterCachesSpec.HostAddresses
+		if len(hosts) == 0 {
+			masterCachesPodSuffix := g.getMasterCachesPodFqdnSuffix()
+			for _, podName := range g.GetMasterCachesPodNames() {
+				hosts = append(hosts, fmt.Sprintf("%s.%s",
+					podName,
+					masterCachesPodSuffix,
+				))
+			}
+		}
+		addresses := make([]string, len(hosts))
+		for idx, host := range hosts {
+			addresses[idx] = fmt.Sprintf("%s:%d", host, consts.MasterCachesRPCPort)
+		}
+		return addresses
+	}
+	return make([]string, 0)
 }

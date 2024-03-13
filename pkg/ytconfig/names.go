@@ -189,3 +189,20 @@ func (g *BaseGenerator) FormatComponentStringWithDefault(base string, name strin
 	}
 	return base
 }
+
+func (g *BaseGenerator) GetMasterCachesStatefulSetName() string {
+	return g.getName("msc")
+}
+
+func (g *BaseGenerator) GetMasterCachesServiceName() string {
+	return g.getName("master-caches")
+}
+
+func (g *BaseGenerator) GetMasterCachesPodNames() []string {
+	podNames := make([]string, 0, g.masterCachesSpec.InstanceSpec.InstanceCount)
+	for i := 0; i < int(g.masterCachesSpec.InstanceSpec.InstanceCount); i++ {
+		podNames = append(podNames, fmt.Sprintf("%s-%d", g.GetMasterCachesStatefulSetName(), i))
+	}
+
+	return podNames
+}

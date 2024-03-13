@@ -26,12 +26,12 @@ type DiscoveryConnection struct {
 }
 
 type MasterCache struct {
-	MasterCell
-	EnableMasterCacheDiscover bool `yson:"enable_master_cache_discovery"`
+	AddressList
+	CellID                    string `yson:"cell_id"`
+	EnableMasterCacheDiscover bool   `yson:"enable_master_cache_discovery"`
 }
 
 type Driver struct {
-	MasterCache        MasterCache        `yson:"master_cache,omitempty"`
 	TimestampProviders TimestampProviders `yson:"timestamp_provider,omitempty"`
 	PrimaryMaster      MasterCell         `yson:"primary_master,omitempty"`
 	APIVersion         int                `yson:"api_version,omitempty"`
@@ -42,6 +42,7 @@ type ClusterConnection struct {
 	PrimaryMaster       MasterCell          `yson:"primary_master"`
 	DiscoveryConnection DiscoveryConnection `yson:"discovery_connection,omitempty"`
 	BusClient           *Bus                `yson:"bus_client,omitempty"`
+	MasterCache         MasterCache         `yson:"master_cache"`
 }
 
 type AddressResolver struct {

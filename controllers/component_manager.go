@@ -131,6 +131,10 @@ func NewComponentManager(
 		allComponents = append(allComponents, strawberry)
 	}
 
+	if resource.Spec.MasterCaches != nil {
+		mc := components.NewMasterCache(cfgen, ytsaurus)
+		allComponents = append(allComponents, mc)
+	}
 	// Fetch component status.
 	var readyComponents []string
 	var notReadyComponents []string

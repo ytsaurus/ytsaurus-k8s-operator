@@ -83,12 +83,12 @@ canonize: manifests generate fmt vet envtest ## Canonize tests.
 helm-kind-install: ## Install helm chart from sources in kind.
 	docker build -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
 	kind load docker-image ${OPERATOR_IMAGE}:${OPERATOR_TAG}
-	helm install ytsaurus $(OPERATOR_CHART)
+	helm upgrade -i ytsaurus $(OPERATOR_CHART) --set controllerManager.manager.image.repository=${OPERATOR_IMAGE} --set controllerManager.manager.image.tag=${OPERATOR_TAG}
 
 TEST_IMAGES = \
-	ytsaurus/ytsaurus-nightly:dev-23.1-5f8638fc66f6e59c7a06708ed508804986a6579f \
+	ytsaurus/ytsaurus-nightly:dev-23.1-28ccaedbf353b870bedafb6e881ecf386a0a3779 \
 	ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de \
-	ytsaurus/ytsaurus-nightly:dev-23.2-62a472c4efc2c8395d125a13ca0216720e06999d
+	ytsaurus/ytsaurus-nightly:dev-23.2-9c50056eacfa4fe213798a5b9ee828ae3acb1bca
 .PHONY: kind-load-test-images
 kind-load-test-images:
 	$(foreach img,$(TEST_IMAGES),docker pull $(img) && kind load docker-image $(img);)

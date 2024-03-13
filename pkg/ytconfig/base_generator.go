@@ -14,6 +14,7 @@ type BaseGenerator struct {
 	masterConnectionSpec   ytv1.MasterConnectionSpec
 	masterInstanceCount    int32
 	discoveryInstanceCount int32
+	masterCachesSpec       *ytv1.MasterCachesSpec
 }
 
 func NewRemoteBaseGenerator(
@@ -21,12 +22,14 @@ func NewRemoteBaseGenerator(
 	clusterDomain string,
 	commonSpec ytv1.CommonSpec,
 	masterConnectionSpec ytv1.MasterConnectionSpec,
+	masterCachesSpec *ytv1.MasterCachesSpec,
 ) *BaseGenerator {
 	return &BaseGenerator{
 		key:                  key,
 		clusterDomain:        clusterDomain,
 		commonSpec:           commonSpec,
 		masterConnectionSpec: masterConnectionSpec,
+		masterCachesSpec:     masterCachesSpec,
 	}
 }
 
@@ -44,5 +47,6 @@ func NewLocalBaseGenerator(
 		masterConnectionSpec:   ytsaurus.Spec.PrimaryMasters.MasterConnectionSpec,
 		masterInstanceCount:    ytsaurus.Spec.PrimaryMasters.InstanceCount,
 		discoveryInstanceCount: ytsaurus.Spec.Discovery.InstanceCount,
+		masterCachesSpec:       ytsaurus.Spec.MasterCaches,
 	}
 }

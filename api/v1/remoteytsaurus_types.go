@@ -29,6 +29,7 @@ type RemoteYtsaurusSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	MasterConnectionSpec `json:",inline"`
+	MasterCachesSpec     `json:",inline"`
 }
 
 // RemoteYtsaurusStatus defines the observed state of RemoteYtsaurus

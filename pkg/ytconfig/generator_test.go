@@ -30,6 +30,11 @@ var (
 		"host2.external.address",
 		"host3.external.address",
 	}
+	testMasterCachesExternalHosts = []string{
+		"host1.external.address",
+		"host2.external.address",
+		"host3.external.address",
+	}
 	testBasicInstanceSpec = v1.InstanceSpec{InstanceCount: 3}
 	testStorageClassname  = "yc-network-hdd"
 	testResourceReqs      = corev1.ResourceRequirements{
@@ -101,6 +106,7 @@ func TestGetDataNodeWithoutYtsaurusConfig(t *testing.T) {
 		testClusterDomain,
 		getCommonSpec(),
 		getMasterConnectionSpecWithFixedMasterHosts(),
+		getMasterCachesSpecWithFixedHosts(),
 	)
 	cfg, err := g.GetDataNodeConfig(getDataNodeSpec())
 	require.NoError(t, err)
@@ -127,6 +133,7 @@ func TestGetExecNodeWithoutYtsaurusConfig(t *testing.T) {
 		testClusterDomain,
 		getCommonSpec(),
 		getMasterConnectionSpecWithFixedMasterHosts(),
+		getMasterCachesSpecWithFixedHosts(),
 	)
 	cfg, err := g.GetExecNodeConfig(getExecNodeSpec())
 	require.NoError(t, err)
@@ -216,6 +223,7 @@ func TestGetTabletNodeWithoutYtsaurusConfig(t *testing.T) {
 		testClusterDomain,
 		getCommonSpec(),
 		getMasterConnectionSpecWithFixedMasterHosts(),
+		getMasterCachesSpecWithFixedHosts(),
 	)
 	cfg, err := g.GetTabletNodeConfig(getTabletNodeSpec())
 	require.NoError(t, err)
@@ -246,6 +254,20 @@ func TestGetUICustomConfig(t *testing.T) {
 func TestGetYQLAgentConfig(t *testing.T) {
 	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
 	cfg, err := g.GetYQLAgentConfig()
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetMasterCachesWithFixedHostsConfig(t *testing.T) {
+	g := NewGenerator(withFixedMasterCachesHosts(getYtsaurusWithEverything()), testClusterDomain)
+	cfg, err := g.GetMasterCachesConfig()
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetMasterCachesConfig(t *testing.T) {
+	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	cfg, err := g.GetMasterCachesConfig()
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -356,6 +378,7 @@ func getYtsaurusWithEverything() *v1.Ytsaurus {
 	ytsaurus = withTCPPRoxies(ytsaurus)
 	ytsaurus = withUI(ytsaurus)
 	ytsaurus = withYQLAgent(ytsaurus)
+	ytsaurus = withMasterCaches(ytsaurus)
 	return ytsaurus
 }
 
@@ -449,8 +472,18 @@ func withUICustom(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 	return ytsaurus
 }
 
+func withMasterCaches(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
+	ytsaurus.Spec.MasterCaches = &v1.MasterCachesSpec{InstanceSpec: testBasicInstanceSpec}
+	return ytsaurus
+}
+
 func withYQLAgent(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 	ytsaurus.Spec.YQLAgents = &v1.YQLAgentSpec{InstanceSpec: testBasicInstanceSpec}
+	return ytsaurus
+}
+
+func withFixedMasterCachesHosts(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
+	ytsaurus.Spec.MasterCaches.MasterCachesConnectionSpec.HostAddresses = testMasterCachesExternalHosts
 	return ytsaurus
 }
 
@@ -574,4 +607,19 @@ func getMasterConnectionSpecWithFixedMasterHosts() v1.MasterConnectionSpec {
 	spec.HostAddresses = testMasterExternalHosts
 	spec.CellTag = 1000
 	return spec
+}
+
+func getMasterCachesSpec() v1.MasterCachesSpec {
+	return v1.MasterCachesSpec{
+		InstanceSpec: v1.InstanceSpec{
+			InstanceCount: 3,
+		},
+		HostAddressLabel: "",
+	}
+}
+
+func getMasterCachesSpecWithFixedHosts() *v1.MasterCachesSpec {
+	spec := getMasterCachesSpec()
+	spec.MasterCachesConnectionSpec.HostAddresses = testMasterCachesExternalHosts
+	return &spec
 }
