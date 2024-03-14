@@ -48,7 +48,7 @@ func diffConditions(beforeConds []Condition, afterConds []Condition) string {
 	return strings.Join(lines, "\n")
 }
 
-func reportSteps(steps *stepRegistry, runnable map[StepName]stepType) string {
+func reportSteps(steps *stepRegistry, runnable map[StepName]stepType, state stateManager) string {
 	nonRunnable := make(map[StepName]stepType)
 	for name, step := range steps.steps {
 		if _, ok := runnable[name]; !ok {
@@ -56,15 +56,30 @@ func reportSteps(steps *stepRegistry, runnable map[StepName]stepType) string {
 		}
 	}
 
+	stringifyConds := func(conds []Condition) string {
+		var deps []string
+		for _, cond := range conds {
+			depStr := ""
+			if IsSatisfied(cond, state) {
+				depStr += "[v]"
+			} else {
+				depStr += "[ ]"
+			}
+			depStr += " " + string(cond.Name)
+			deps = append(deps, depStr)
+		}
+		return strings.Join(deps, ", ")
+	}
+
 	var lines []string
 	lines = append(lines, "Runnable:")
 	for name := range runnable {
-		line := fmt.Sprintf("  %s: %s", name, stepDependencies[name])
+		line := fmt.Sprintf("  %s: %s", name, stringifyConds(stepDependencies[name]))
 		lines = append(lines, line)
 	}
 	lines = append(lines, "Non-runnable:")
 	for name := range nonRunnable {
-		line := fmt.Sprintf("  %s: %s", name, stepDependencies[name])
+		line := fmt.Sprintf("  %s: %s", name, stringifyConds(stepDependencies[name]))
 		lines = append(lines, line)
 	}
 	return strings.Join(lines, "\n")

@@ -121,6 +121,7 @@ var stepDependencies = map[StepName][]Condition{
 	RecoverTabletCellsStep: {
 		TabletCellsNeedRecover,
 		SafeModeEnabled,
+		AllComponentsSynced,
 		not(MasterIsInReadOnly), // we need to write in this step
 	},
 	UpdateOpArchiveStep: {
@@ -139,6 +140,7 @@ var stepDependencies = map[StepName][]Condition{
 	},
 	DisableSafeModeStep: {
 		SafeModeEnabled,
+		AllComponentsSynced,
 		not(MasterIsInReadOnly), // we need to write in this step
 
 		// All of those should be done before unlocking the cluster from read only.

@@ -28,6 +28,7 @@ func buildActionSteps(comps *componentRegistry, state stateManager) map[StepName
 		EnableSafeModeStep:             enableSafeMode(yc, state),
 		BackupTabletCellsStep:          backupTabletCells(yc, state),
 		BuildMasterSnapshotsStep:       buildMasterSnapshots(yc, state),
+		MasterExitReadOnlyStep:         masterExitReadOnly(state),
 		RecoverTabletCellsStep:         recoverTabletCells(yc, state),
 		UpdateOpArchiveStep:            updateOpArchive(state),
 		InitQueryTrackerStep:           initQueryTracker(state),

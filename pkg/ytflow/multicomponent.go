@@ -13,12 +13,21 @@ import (
 type multiComponent struct {
 	name     ComponentName
 	children map[string]component
+	order    []string
 }
 
 func newMultiComponent(name ComponentName, children map[string]component) *multiComponent {
+	// For the sake of tests stability we run everything in same order
+	var order []string
+	for n := range children {
+		order = append(order, n)
+	}
+	sort.Strings(order)
+
 	return &multiComponent{
 		name:     name,
 		children: children,
+		order:    order,
 	}
 }
 
@@ -27,7 +36,8 @@ func (mc *multiComponent) GetName() string {
 }
 func (mc *multiComponent) Fetch(ctx context.Context) error {
 	var errors []error
-	for name, child := range mc.children {
+	for _, name := range mc.order {
+		child := mc.children[name]
 		if err := child.Fetch(ctx); err != nil {
 			errWrapped := fmt.Errorf("fetch failed for %s: %w", name, err)
 			errors = append(errors, errWrapped)
@@ -47,7 +57,8 @@ func (mc *multiComponent) Fetch(ctx context.Context) error {
 func (mc *multiComponent) Status(ctx context.Context) componentStatus {
 	var statuses []string
 	msg := ""
-	for name, child := range mc.children {
+	for _, name := range mc.order {
+		child := mc.children[name]
 		status := child.Status(ctx)
 		// TODO (l0kix2): remove string wrapper after golang 1.20 bc there is generic Index func.
 		statuses = append(statuses, string(status.SyncStatus))
@@ -74,7 +85,8 @@ func (mc *multiComponent) Status(ctx context.Context) componentStatus {
 }
 func (mc *multiComponent) Sync(ctx context.Context) error {
 	var errors []error
-	for name, child := range mc.children {
+	for _, name := range mc.order {
+		child := mc.children[name]
 		if err := child.Sync(ctx); err != nil {
 			errWrapped := fmt.Errorf("sync failed for %s: %w", name, err)
 			errors = append(errors, errWrapped)

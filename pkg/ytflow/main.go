@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -48,8 +47,6 @@ func Advance(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, clusterDomain str
 // maybe ok to have it public and move comps building in components.
 // check about components names
 func doAdvance(ctx context.Context, comps *componentRegistry, actions map[StepName]stepType, state stateManager) (FlowStatus, error) {
-	logger := log.FromContext(ctx)
-
 	// fetch all the components and collect all the statuses
 	statuses, err := observe(ctx, comps)
 	if err != nil {
@@ -68,8 +65,8 @@ func doAdvance(ctx context.Context, comps *componentRegistry, actions map[StepNa
 	}
 
 	steps := buildSteps(comps, actions)
-	runnableSteps := collectRunnable(logger, steps, state)
-	fmt.Println(reportSteps(steps, runnableSteps))
+	runnableSteps := collectRunnable(steps, state)
+	fmt.Println(reportSteps(steps, runnableSteps, state))
 
 	if len(runnableSteps) == 0 {
 		return FlowStatusDone, nil
@@ -77,7 +74,7 @@ func doAdvance(ctx context.Context, comps *componentRegistry, actions map[StepNa
 	return FlowStatusUpdating, runSteps(ctx, runnableSteps)
 }
 
-func collectRunnable(log logr.Logger, steps *stepRegistry, conds stateManager) map[StepName]stepType {
+func collectRunnable(steps *stepRegistry, conds stateManager) map[StepName]stepType {
 	runnable := make(map[StepName]stepType)
 	for name, step := range steps.steps {
 		stepDeps := stepDependencies[name]

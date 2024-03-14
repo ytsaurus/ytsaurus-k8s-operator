@@ -51,27 +51,24 @@ func setComponentStatus(comp component, status components.SyncStatus) {
 	comp.(*fakeComponent).status = status
 }
 
-func buildTestActionSteps(spy *executionSpy) map[StepName]stepType {
-	stepNames := []StepName{
-		CheckFullUpdatePossibilityStep,
-		EnableSafeModeStep,
-		BackupTabletCellsStep,
-		BuildMasterSnapshotsStep,
-		RecoverTabletCellsStep,
-		DisableSafeModeStep,
+func setActionSuccessConds(actionStep stepType, conds ...Condition) {
+	actionStep.(*fakeActionStep).onSuccess(conds...)
+}
+
+func buildTestActionSteps(spy *executionSpy, comps *componentRegistry, state stateManager) map[StepName]stepType {
+	// To be synced with real set of actions we use real function and replace all with fakes.
+	realSteps := buildActionSteps(comps, state)
+	for name := range realSteps {
+		realSteps[name] = newFakeActionStep(name, spy, state)
 	}
-	result := make(map[StepName]stepType)
-	for _, name := range stepNames {
-		result[name] = newFakeActionStep(name, spy)
-	}
-	return result
+	return realSteps
 }
 
 func loopAdvance(comps *componentRegistry, actions map[StepName]stepType, state stateManager) error {
 	fmt.Println(">>> doAdvance loop")
 	defer fmt.Printf("<<< doAdvance end\n\n")
 
-	maxLoops := 3
+	maxLoops := 10
 	for idx := 0; idx < maxLoops; idx++ {
 		fmt.Printf("=== LOOP %d\n", idx)
 		status, err := doAdvance(context.Background(), comps, actions, state)
@@ -94,12 +91,12 @@ func TestFlows(t *testing.T) {
 	)
 	spy := &executionSpy{}
 	comps := buildTestComponents(spy)
-	actions := buildTestActionSteps(spy)
 	state := newFakeStateManager()
+	actions := buildTestActionSteps(spy, comps, state)
 	_ = state.SetClusterState(ctx, ytv1.ClusterStateCreated)
 
 	{
-		t.Log("Test cluster creating")
+		t.Log("CLUSTER CREATION")
 		require.NoError(t, loopAdvance(comps, actions, state))
 		// Expect all components created.
 		require.Equal(
@@ -117,7 +114,7 @@ func TestFlows(t *testing.T) {
 	_ = state.SetClusterState(ctx, ytv1.ClusterStateRunning)
 
 	{
-		t.Log("Test discovery only update")
+		t.Log("UPDATE DISCOVERY ONLY")
 		spy.reset()
 		setComponentStatus(comps.single[DiscoveryName], components.SyncStatusNeedLocalUpdate)
 
@@ -134,29 +131,35 @@ func TestFlows(t *testing.T) {
 	}
 	_ = state.SetClusterState(ctx, ytv1.ClusterStateRunning)
 
-	//{
-	//	spy.reset()
-	//	setComponentStatus(comps.single[MasterName], components.SyncStatusNeedLocalUpdate)
-	//
-	//	require.NoError(t, loopAdvance(comps, actions, state))
-	//
-	//	// Expect full update.
-	//	require.Equal(
-	//		t,
-	//		[]string{
-	//			"CheckFullUpdatePossibilityStep",
-	//			"EnableSafeModeStep",
-	//			"BackupTabletCellsStep",
-	//			"BuildMasterSnapshotsStep",
-	//			string(MasterName),
-	//			"MasterExitReadOnlyStep",
-	//			"RecoverTabletCellsStep",
-	//			"UpdateOpArchiveStep",
-	//			"InitQueryTrackerStep",
-	//			"DisableSafeModeStep",
-	//		},
-	//		spy.recordedEvents,
-	//	)
-	//}
+	{
+		t.Log("UPDATE MASTER ONLY")
+		spy.reset()
+		setComponentStatus(comps.single[MasterName], components.SyncStatusNeedLocalUpdate)
+		setActionSuccessConds(actions[CheckFullUpdatePossibilityStep], SafeModeCanBeEnabled)
+		setActionSuccessConds(actions[EnableSafeModeStep], SafeModeEnabled, not(SafeModeCanBeEnabled))
+		setActionSuccessConds(actions[BackupTabletCellsStep], TabletCellsNeedRecover)
+		setActionSuccessConds(actions[BuildMasterSnapshotsStep], MasterIsInReadOnly)
+		setActionSuccessConds(actions[MasterExitReadOnlyStep], not(MasterIsInReadOnly))
+
+		require.NoError(t, loopAdvance(comps, actions, state))
+
+		// Expect full update.
+		require.Equal(
+			t,
+			[]string{
+				string(CheckFullUpdatePossibilityStep),
+				string(EnableSafeModeStep),
+				string(BackupTabletCellsStep),
+				string(BuildMasterSnapshotsStep),
+				string(MasterName),
+				string(MasterExitReadOnlyStep),
+				string(RecoverTabletCellsStep),
+				//string(UpdateOpArchiveStep),
+				//string(InitQueryTrackerStep),
+				string(DisableSafeModeStep),
+			},
+			spy.recordedEvents,
+		)
+	}
 
 }
