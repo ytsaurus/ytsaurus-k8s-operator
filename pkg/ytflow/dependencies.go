@@ -40,31 +40,24 @@ var (
 	QueryTrackerStep   = compNameToStepName(QueryTrackerName)
 )
 
-var initialDependencies = []conditionDependency{
-	MasterCanBeRebuilt,
-}
-
 // conditionDependencies simply is:
 // condName become true if all condition deps are true
 // condName become false if any of condition deps are false
-var conditionDependencies = map[Condition][]conditionDependency{
-	NothingToDoCondName: {
+var conditionDependencies = map[ConditionName][]Condition{
+	NothingToDo.Name: {
 		AllComponentsBuilt,
 		not(SafeModeEnabled),
 	},
 
-	YtsaurusClientReadyCondName: {
-		YtsaurusClientBuilt,
-		HttpProxyBuilt,
-		MasterBuilt,
+	isReady(YtsaurusClientName).Name: {
+		isBuilt(YtsaurusClientName),
+		isBuilt(HttpProxyName),
+		isBuilt(MasterName),
 	},
-	MasterReadyCondName: {
-		MasterBuilt, // is it enough?
-	},
-	HttpProxyReadyCondName: {
-		HttpProxyBuilt,
-		MasterReady,
-	},
+	//HttpProxyReady.name: {
+	//	HttpProxyBuilt,
+	//	MasterBuilt,
+	//},
 	//DataNodeReadyCondName: {
 	//	DataNodeBuilt,
 	//	MasterReady,
@@ -76,79 +69,75 @@ var conditionDependencies = map[Condition][]conditionDependency{
 //   - first dependency mentions main step condition, it is expected that condition will flip after the step
 //     successfully run (often it is not-condition);
 //   - other dependencies are secondary and usually declare an order in which steps should run.
-var stepDependencies = map[StepName][]conditionDependency{
+var stepDependencies = map[StepName][]Condition{
 	YtsaurusClientStep: {
-		not(YtsaurusClientBuilt),
+		not(isBuilt(YtsaurusClientName)),
 	},
 
 	CheckFullUpdatePossibilityStep: {
-		not(FullUpdatePossible),
 		FullUpdateNeeded,
-		YtsaurusClientReady,
+		not(SafeModeEnabled),
+		//YtsaurusClientReady,  // TODO: fix that later
 	},
 	EnableSafeModeStep: {
 		not(SafeModeEnabled),
-		FullUpdatePossible,
-		YtsaurusClientReady,
+		SafeModeCanBeEnabled,
+		//YtsaurusClientReady,  // TODO: fix that later
 	},
 	BackupTabletCellsStep: {
 		not(TabletCellsNeedRecover),
-		FullUpdatePossible,
 		SafeModeEnabled,
-		YtsaurusClientReady,
+		//YtsaurusClientReady,  // TODO: fix that later
 	},
 	BuildMasterSnapshotsStep: {
-		not(MasterCanBeRebuilt),
-		FullUpdatePossible,
-		not(TabletCellsNeedRecover),
-		YtsaurusClientReady,
+		not(MasterIsInReadOnly),
+		SafeModeEnabled,
+		TabletCellsNeedRecover,
+		//YtsaurusClientReady,  // TODO: fix that later
 	},
 
 	DiscoveryStep: {
-		not(DiscoveryBuilt),
+		not(isBuilt(DiscoveryName)),
 	},
 	HttpProxyStep: {
-		not(HttpProxyBuilt),
+		not(isBuilt(HttpProxyName)),
 	},
 	DataNodeStep: {
-		not(DataNodeBuilt),
+		not(isBuilt(DataNodeName)),
 	},
 	MasterStep: {
-		not(MasterBuilt),
-		// TODO: set initial condition that master is in read only (which is not true)?
-		// It would be better to have OR-condition (IsInReadOnly | Initializing) here maybe?
-		// (SafeModeEnabled & MasterInReadOnly | )
-		MasterCanBeRebuilt,
+		not(isBuilt(MasterName)),
+		MasterCanBeSynced,
 	},
 
 	MasterExitReadOnlyStep: {
-		MasterCanBeRebuilt,
+		MasterIsInReadOnly,
+		SafeModeEnabled,
 		// Currently it works as before, but maybe we just need master to be built?
 		AllComponentsBuilt,
-		SafeModeEnabled,
 	},
 	RecoverTabletCellsStep: {
 		TabletCellsNeedRecover,
-		not(MasterCanBeRebuilt), // we need to write in this step
 		SafeModeEnabled,
+		not(MasterIsInReadOnly), // we need to write in this step
 	},
 	UpdateOpArchiveStep: {
 		OperationArchiveNeedUpdate,
-		not(TabletCellsNeedRecover), // do we *really* depend on tablet cells in this job?
-		not(MasterCanBeRebuilt),     // we need to write here
-		SafeModeEnabled,
-		//SchedulerBuilt,              // do we need scheduler for that script or only master
+		// Do we *really* depend on tablet cells in this job,
+		// or it could be done independently after exit RO?
+		not(TabletCellsNeedRecover),
+		not(MasterIsInReadOnly), // we need to write here
 	},
 	InitQueryTrackerStep: {
 		QueryTrackerNeedsInit,
-		not(OperationArchiveNeedUpdate), // do we *really* depend on tablet cells in this job?
-		not(MasterCanBeRebuilt),         // we need to write in this step
-		SafeModeEnabled,
-		//QueryTrackerBuilt,       // do we need query tracker for that script or only master
+		// Do we *really* depend on tablet cells OR UpdateOpArchiveStep in this job,
+		// or it could be done independently after exit RO?
+		not(OperationArchiveNeedUpdate),
+		not(MasterIsInReadOnly), // we need to write in this step
 	},
 	DisableSafeModeStep: {
 		SafeModeEnabled,
-		not(MasterCanBeRebuilt), // we need to write in this step
+		not(MasterIsInReadOnly), // we need to write in this step
 
 		// All of those should be done before unlocking the cluster from read only.
 		not(TabletCellsNeedRecover),

@@ -11,7 +11,7 @@ import (
 func updateComponentsBasedConditions(ctx context.Context, statuses *statusRegistry, conds stateManager) error {
 	allBuilt := true
 
-	// Actualize <ComponentName>Built condition for the single components.
+	// Actualize `built` and `needSync` conditions for the single components.
 	for compName, status := range statuses.single {
 		cond := isBuilt(compName)
 		isComponentBuilt := status.SyncStatus == components.SyncStatusReady
@@ -19,14 +19,14 @@ func updateComponentsBasedConditions(ctx context.Context, statuses *statusRegist
 			allBuilt = false
 		}
 		msg := fmt.Sprintf("%s: %s", status.SyncStatus, status.Message)
-		if err := conds.Set(ctx, cond.name, isComponentBuilt, msg); err != nil {
+		if err := conds.Set(ctx, cond.Name, isComponentBuilt, msg); err != nil {
 			return err
 		}
 	}
 
-	// Actualize <ComponentName>Built condition for the multi components.
+	// Actualize `built` and `needSync` conditions for the multi components.
 	for compName, substatuses := range statuses.multi {
-		condName := isBuiltCondName(compName)
+		condName := isBuilt(compName).Name
 
 		allSubcomponentsBuilt := true
 		msg := ""
@@ -44,26 +44,28 @@ func updateComponentsBasedConditions(ctx context.Context, statuses *statusRegist
 
 	// Actualize AllComponentsBuilt
 	// TODO: maybe message in case of not built would be useful
-	if err := conds.Set(ctx, AllComponentsBuiltCondName, allBuilt, ""); err != nil {
+	if err := conds.Set(ctx, AllComponentsBuilt.Name, allBuilt, ""); err != nil {
 		return err
 	}
 
 	// Actualize NeedFullUpdate
 	isFullUpdateNeeded := statuses.single[MasterName].SyncStatus == components.SyncStatusNeedLocalUpdate
-	if err := conds.Set(ctx, IsFullUpdateNeededCond, isFullUpdateNeeded, ""); err != nil {
+	if err := conds.Set(ctx, FullUpdateNeeded.Name, isFullUpdateNeeded, ""); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func updateClusterBasedConditions(ctx context.Context, state stateManager) error {
-	if state.GetClusterState() == ytv1.ClusterStateCreated {
-		for _, dep := range initialDependencies {
-			if err := state.Set(ctx, dep.name, dep.val, "set on cluster create"); err != nil {
-				return err
-			}
-		}
-	}
-	return state.SetClusterState(ctx, ytv1.ClusterStateInitializing)
+func updateSpecialConditions(ctx context.Context, state stateManager) error {
+	clusterCreated := state.GetClusterState() == ytv1.ClusterStateCreated
+	isInReadOnly := state.Get(MasterIsInReadOnly.Name)
+
+	// This could be improved by implementing OR for conditions deps.
+	// Since we only have master now it may not being worth it.
+	masterCanBeSynced := clusterCreated || isInReadOnly
+	return state.Set(ctx,
+		MasterCanBeSynced.Name, masterCanBeSynced,
+		fmt.Sprintf("cluster just created = %t || master is in read only = %t ", clusterCreated, isInReadOnly),
+	)
 }

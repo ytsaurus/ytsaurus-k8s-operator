@@ -21,12 +21,12 @@ const (
 )
 
 type stateManager interface {
-	SetTrue(context.Context, Condition, string) error
-	SetFalse(context.Context, Condition, string) error
-	Set(context.Context, Condition, bool, string) error
-	IsTrue(Condition) bool
-	IsFalse(Condition) bool
-	Get(Condition) bool
+	SetTrue(context.Context, ConditionName, string) error
+	SetFalse(context.Context, ConditionName, string) error
+	Set(context.Context, ConditionName, bool, string) error
+	IsTrue(ConditionName) bool
+	IsFalse(ConditionName) bool
+	Get(ConditionName) bool
 
 	// Don't really like mix of conditions and temporary data storage.
 
@@ -47,7 +47,7 @@ func Advance(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, clusterDomain str
 // maybe ok to have it public and move comps building in components.
 // check about components names
 func doAdvance(ctx context.Context, comps *componentRegistry, actions map[StepName]stepType, state stateManager) (FlowStatus, error) {
-	log := log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	// fetch all the components and collect all the statuses
 	statuses, err := observe(ctx, comps)
@@ -55,13 +55,7 @@ func doAdvance(ctx context.Context, comps *componentRegistry, actions map[StepNa
 		return "", fmt.Errorf("failed to observe statuses: %w", err)
 	}
 
-	if err = updateClusterBasedConditions(ctx, state); err != nil {
-		return "", fmt.Errorf("failed to update cluster based conditions: %w", err)
-	}
-	if err = updateComponentsBasedConditions(ctx, statuses, state); err != nil {
-		return "", fmt.Errorf("failed to update components conditions: %w", err)
-	}
-	if err = updateDependenciesBasedConditions(ctx, conditionDependencies, state); err != nil {
+	if err = updateConditions(ctx, statuses, conditionDependencies, state); err != nil {
 		return "", err
 	}
 
@@ -70,7 +64,7 @@ func doAdvance(ctx context.Context, comps *componentRegistry, actions map[StepNa
 	}
 
 	steps := buildSteps(comps, actions)
-	runnableSteps := collectRunnables(log, steps, state)
+	runnableSteps := collectRunnables(logger, steps, state)
 	// TODO: somehow differ all done with all blocked.
 	// Need extra signal here with return after the conditions check.
 	if len(runnableSteps) == 0 {
@@ -103,10 +97,10 @@ func collectRunnables(log logr.Logger, steps *stepRegistry, conds stateManager) 
 				symbol = "x"
 			}
 			notSymbol := ""
-			if !condDep.val {
+			if !condDep.Val {
 				notSymbol = "!"
 			}
-			fmt.Printf("     [%s] %s%s\n", symbol, notSymbol, condDep.name)
+			fmt.Printf("     [%s] %s%s\n", symbol, notSymbol, condDep.Name)
 
 			if !isSatisfied {
 				hasUnsatisfied = true

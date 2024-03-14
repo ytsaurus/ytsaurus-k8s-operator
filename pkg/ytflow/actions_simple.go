@@ -38,7 +38,7 @@ func checkFullUpdatePossibility(yc ytsaurusClient, state stateManager) simpleAct
 		if err != nil {
 			return err
 		}
-		return state.Set(ctx, IsFullUpdatePossibleCond, possible, msg)
+		return state.Set(ctx, SafeModeCanBeEnabled.Name, possible, msg)
 	}
 	return simpleActionStep{
 		runFunc: runFunc,
@@ -51,7 +51,10 @@ func enableSafeMode(yc ytsaurusClient, state stateManager) simpleActionStep {
 		if err != nil {
 			return err
 		}
-		return state.SetTrue(ctx, IsFullUpdatePossibleCond, "")
+		if err = state.SetTrue(ctx, SafeModeEnabled.Name, ""); err != nil {
+			return err
+		}
+		return state.SetFalse(ctx, SafeModeCanBeEnabled.Name, "disabled after safe mode was enabled")
 	}
 	return simpleActionStep{
 		runFunc: runFunc,
@@ -60,7 +63,7 @@ func enableSafeMode(yc ytsaurusClient, state stateManager) simpleActionStep {
 
 func backupTabletCells(yc ytsaurusClient, state stateManager) simpleActionStep {
 	runFunc := func(ctx context.Context) error {
-		if state.IsFalse(IsTabletCellsRemovalStartedCond) {
+		if state.IsFalse(TabletCellsRemovalStarted.Name) {
 			cells, err := yc.GetTabletCells(ctx)
 			if err != nil {
 				return err
@@ -77,7 +80,7 @@ func backupTabletCells(yc ytsaurusClient, state stateManager) simpleActionStep {
 				return err
 			}
 
-			err = state.SetTrue(ctx, IsTabletCellsRemovalStartedCond, fmt.Sprintf("%d cell bundles stored", len(cells)))
+			err = state.SetTrue(ctx, TabletCellsRemovalStarted.Name, fmt.Sprintf("%d cell bundles stored", len(cells)))
 			if err != nil {
 				return err
 			}
@@ -92,7 +95,7 @@ func backupTabletCells(yc ytsaurusClient, state stateManager) simpleActionStep {
 		}
 
 		if removed {
-			err = state.SetTrue(ctx, DoTabletCellsNeedRecoverCond, "")
+			err = state.SetTrue(ctx, TabletCellsNeedRecover.Name, "")
 			if err != nil {
 				return err
 			}
@@ -107,7 +110,7 @@ func backupTabletCells(yc ytsaurusClient, state stateManager) simpleActionStep {
 
 func buildMasterSnapshots(yc ytsaurusClient, state stateManager) simpleActionStep {
 	runFunc := func(ctx context.Context) error {
-		if state.IsFalse(IsMasterSnapshotBuildingStartedCond) {
+		if state.IsFalse(MasterSnapshotBuildingStarted.Name) {
 			paths, err := yc.GetMasterMonitoringPaths(ctx)
 			if err != nil {
 				return err
@@ -120,7 +123,7 @@ func buildMasterSnapshots(yc ytsaurusClient, state stateManager) simpleActionSte
 				return err
 			}
 
-			err = state.SetTrue(ctx, IsMasterSnapshotBuildingStartedCond, fmt.Sprintf("%d monitoring paths was stored", len(paths)))
+			err = state.SetTrue(ctx, MasterSnapshotBuildingStarted.Name, fmt.Sprintf("%d monitoring paths was stored", len(paths)))
 			if err != nil {
 				return err
 			}
@@ -137,7 +140,7 @@ func buildMasterSnapshots(yc ytsaurusClient, state stateManager) simpleActionSte
 			if err = state.SetMasterMonitoringPaths(ctx, []string{}); err != nil {
 				return err
 			}
-			if err = state.SetTrue(ctx, MasterCanBeRebuiltCond, ""); err != nil {
+			if err = state.SetTrue(ctx, MasterIsInReadOnly.Name, ""); err != nil {
 				return err
 			}
 		}
@@ -159,7 +162,7 @@ func buildMasterSnapshots(yc ytsaurusClient, state stateManager) simpleActionSte
 
 func masterExitReadOnly(state stateManager) simpleActionStep {
 	runFunc := func(ctx context.Context) error {
-		return state.SetFalse(ctx, MasterCanBeRebuiltCond, "")
+		return state.SetFalse(ctx, MasterIsInReadOnly.Name, "")
 	}
 	return simpleActionStep{
 		runFunc: runFunc,
@@ -178,7 +181,7 @@ func recoverTabletCells(yc ytsaurusClient, state stateManager) simpleActionStep 
 			return err
 		}
 
-		return state.SetFalse(ctx, DoTabletCellsNeedRecoverCond, "")
+		return state.SetFalse(ctx, TabletCellsNeedRecover.Name, "")
 	}
 
 	return simpleActionStep{
@@ -188,7 +191,7 @@ func recoverTabletCells(yc ytsaurusClient, state stateManager) simpleActionStep 
 
 func updateOpArchive(state stateManager) simpleActionStep {
 	runFunc := func(ctx context.Context) error {
-		return state.SetFalse(ctx, IsOperationArchiveNeedUpdateCond, "")
+		return state.SetFalse(ctx, OperationArchiveNeedUpdate.Name, "")
 	}
 	return simpleActionStep{
 		runFunc: runFunc,
@@ -197,7 +200,7 @@ func updateOpArchive(state stateManager) simpleActionStep {
 
 func initQueryTracker(state stateManager) simpleActionStep {
 	runFunc := func(ctx context.Context) error {
-		return state.SetFalse(ctx, IsQueryTrackerNeedInitCond, "")
+		return state.SetFalse(ctx, QueryTrackerNeedsInit.Name, "")
 	}
 	return simpleActionStep{
 		runFunc: runFunc,
@@ -254,7 +257,7 @@ func disableSafeMode(yc ytsaurusClient, state stateManager) simpleActionStep {
 		if err != nil {
 			return err
 		}
-		return state.SetFalse(ctx, IsFullUpdatePossibleCond, "")
+		return state.SetFalse(ctx, SafeModeEnabled.Name, "")
 	}
 	return simpleActionStep{
 		runFunc: runFunc,

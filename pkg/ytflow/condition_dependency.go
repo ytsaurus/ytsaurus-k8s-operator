@@ -5,58 +5,22 @@ import (
 	"fmt"
 )
 
-type conditionDependency struct {
-	name Condition
-	val  bool
+type Condition struct {
+	Name ConditionName
+	Val  bool
 }
 
-func not(condDep conditionDependency) conditionDependency {
-	return conditionDependency{
-		name: condDep.name,
-		val:  !condDep.val,
+func not(condDep Condition) Condition {
+	return Condition{
+		Name: condDep.Name,
+		Val:  !condDep.Val,
 	}
 }
-func isTrue(cond Condition) conditionDependency {
-	return conditionDependency{name: cond, val: true}
+func isTrue(cond ConditionName) Condition {
+	return Condition{Name: cond, Val: true}
 }
 
-//func isFalse(cond Condition) conditionDependency {
-//	return conditionDependency{name: cond, val: false}
-//}
-
-// Components' statuses.
-func isBuilt(compName ComponentName) conditionDependency {
-	return isTrue(Condition(fmt.Sprintf("%sBuilt", compName)))
-}
-func isReady(compName ComponentName) conditionDependency {
-	return isTrue(isReadyCondName(compName))
-}
-
-func isBuiltCondName(compName ComponentName) Condition {
-	return Condition(fmt.Sprintf("%sBuilt", compName))
-}
-func isReadyCondName(compName ComponentName) Condition {
-	return Condition(fmt.Sprintf("%sReady", compName))
-}
-
-// Actions statuses.
-//func isBlocked(name StepName) conditionDependency {
-//	return isTrue(condition(fmt.Sprintf("%sBlocked", name)))
-//}
-//
-//func isRun(name StepName) conditionDependency {
-//	return isTrue(condition(fmt.Sprintf("%sRun", name)))
-//}
-//
-//func isUpdating(name StepName) conditionDependency {
-//	return isTrue(condition(fmt.Sprintf("%sUpdating", name)))
-//}
-//
-//func isDone(name StepName) conditionDependency {
-//	return cond(fmt.Sprintf("%sDone", name))
-//}
-
-func updateDependenciesBasedConditions(ctx context.Context, condDeps map[Condition][]conditionDependency, conds stateManager) error {
+func updateDependenciesBasedConditions(ctx context.Context, condDeps map[ConditionName][]Condition, state stateManager) error {
 	maxIterations := 10
 	for i := 0; i < maxIterations; i++ {
 		somethingChanged := false
@@ -65,16 +29,16 @@ func updateDependenciesBasedConditions(ctx context.Context, condDeps map[Conditi
 
 			newValue := true
 			for _, dep := range deps {
-				if !IsSatisfied(dep, conds) {
+				if !IsSatisfied(dep, state) {
 					newValue = false
 				}
 			}
 
-			currentValue := conds.Get(condName)
+			currentValue := state.Get(condName)
 			if currentValue != newValue {
 				somethingChanged = true
 			}
-			if err := conds.Set(ctx, condName, newValue, "satisfied by deps"); err != nil {
+			if err := state.Set(ctx, condName, newValue, "satisfied by deps"); err != nil {
 				return fmt.Errorf("failed to set value %t for %s", newValue, condName)
 			}
 
@@ -87,7 +51,7 @@ func updateDependenciesBasedConditions(ctx context.Context, condDeps map[Conditi
 	return fmt.Errorf("couldn't resolve dependencies in %d iterations", maxIterations)
 }
 
-func IsSatisfied(condDep conditionDependency, conds stateManager) bool {
-	realValue := conds.Get(condDep.name)
-	return realValue == condDep.val
+func IsSatisfied(condDep Condition, conds stateManager) bool {
+	realValue := conds.Get(condDep.Name)
+	return realValue == condDep.Val
 }

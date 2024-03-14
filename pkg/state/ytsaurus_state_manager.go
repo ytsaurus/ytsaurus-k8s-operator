@@ -13,10 +13,10 @@ import (
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
-// Condition is what we put in the `Type` field of k8s Condition struct.
+// ConditionName is what we put in the `Type` field of k8s Condition struct.
 // For the sake of brevity we call it just Condition here, but it is really id/name.
 // Condition *value* can be true or false.
-type Condition string
+type ConditionName string
 
 type Manager struct {
 	client   client.Client
@@ -30,13 +30,13 @@ func NewStateManager(client client.Client, ytsaurus *ytv1.Ytsaurus) *Manager {
 	}
 }
 
-func (cm *Manager) SetTrue(ctx context.Context, condName Condition, msg string) error {
+func (cm *Manager) SetTrue(ctx context.Context, condName ConditionName, msg string) error {
 	return cm.Set(ctx, condName, true, msg)
 }
-func (cm *Manager) SetFalse(ctx context.Context, condName Condition, msg string) error {
+func (cm *Manager) SetFalse(ctx context.Context, condName ConditionName, msg string) error {
 	return cm.Set(ctx, condName, false, msg)
 }
-func (cm *Manager) Set(ctx context.Context, condName Condition, val bool, msg string) error {
+func (cm *Manager) Set(ctx context.Context, condName ConditionName, val bool, msg string) error {
 	metacond := metav1.Condition{
 		Type: string(condName),
 		Status: map[bool]metav1.ConditionStatus{
@@ -51,13 +51,13 @@ func (cm *Manager) Set(ctx context.Context, condName Condition, val bool, msg st
 		meta.SetStatusCondition(&ytsaurus.Status.Conditions, metacond)
 	})
 }
-func (cm *Manager) IsTrue(condName Condition) bool {
+func (cm *Manager) IsTrue(condName ConditionName) bool {
 	return meta.IsStatusConditionTrue(cm.ytsaurus.Status.Conditions, string(condName))
 }
-func (cm *Manager) IsFalse(condName Condition) bool {
+func (cm *Manager) IsFalse(condName ConditionName) bool {
 	return !cm.IsTrue(condName)
 }
-func (cm *Manager) Get(condName Condition) bool {
+func (cm *Manager) Get(condName ConditionName) bool {
 	if cm.IsTrue(condName) {
 		return true
 	} else {

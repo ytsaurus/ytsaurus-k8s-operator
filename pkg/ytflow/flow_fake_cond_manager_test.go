@@ -8,7 +8,7 @@ import (
 
 type fakeStateManager struct {
 	// TODO: msg
-	conds           map[Condition]bool
+	conds           map[ConditionName]bool
 	clusterState    ytv1.ClusterState
 	bundles         []ytv1.TabletCellBundleInfo
 	monitoringPaths []string
@@ -16,27 +16,27 @@ type fakeStateManager struct {
 
 func newFakeStateManager() *fakeStateManager {
 	return &fakeStateManager{
-		conds: make(map[Condition]bool),
+		conds: make(map[ConditionName]bool),
 	}
 }
 
-func (cm *fakeStateManager) SetTrue(ctx context.Context, cond Condition, msg string) error {
+func (cm *fakeStateManager) SetTrue(ctx context.Context, cond ConditionName, msg string) error {
 	return cm.Set(ctx, cond, true, msg)
 }
-func (cm *fakeStateManager) SetFalse(ctx context.Context, cond Condition, msg string) error {
+func (cm *fakeStateManager) SetFalse(ctx context.Context, cond ConditionName, msg string) error {
 	return cm.Set(ctx, cond, false, msg)
 }
-func (cm *fakeStateManager) Set(_ context.Context, cond Condition, val bool, _ string) error {
+func (cm *fakeStateManager) Set(_ context.Context, cond ConditionName, val bool, _ string) error {
 	cm.conds[cond] = val
 	return nil
 }
-func (cm *fakeStateManager) IsTrue(condName Condition) bool {
+func (cm *fakeStateManager) IsTrue(condName ConditionName) bool {
 	return cm.conds[condName]
 }
-func (cm *fakeStateManager) IsFalse(condName Condition) bool {
+func (cm *fakeStateManager) IsFalse(condName ConditionName) bool {
 	return !cm.IsTrue(condName)
 }
-func (cm *fakeStateManager) Get(condName Condition) bool {
+func (cm *fakeStateManager) Get(condName ConditionName) bool {
 	return cm.conds[condName]
 }
 

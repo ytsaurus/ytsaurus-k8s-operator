@@ -1,89 +1,59 @@
 package ytflow
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/ytsaurus/yt-k8s-operator/pkg/state"
 )
 
-// Condition aliased for brevity.
-type Condition = state.Condition
+// ConditionName aliased for brevity.
+type ConditionName = state.ConditionName
 
-// *Built conditions are kept in sync by flow automatically.
-// Developers shouldn't set them in code manually.
+// Special conditions, which are set automatically by flow code.
 var (
-	YtsaurusClientBuiltCondName = isBuiltCondName(YtsaurusClientName)
-	DiscoveryBuiltCondName      = isBuiltCondName(DiscoveryName)
-	HttpProxyBuiltCondName      = isBuiltCondName(HttpProxyName)
-	MasterBuiltCondName         = isBuiltCondName(MasterName)
-	DataNodeBuiltCondName       = isBuiltCondName(DataNodeName)
-	SchedulerBuiltCondName      = isBuiltCondName(SchedulerName)
-	QueryTrackerBuiltCondName   = isBuiltCondName(QueryTrackerName)
+	AllComponentsBuilt = isTrue("AllComponentsBuilt")
+	MasterCanBeSynced  = isTrue("MasterCanBeSynced")
+	NothingToDo        = isTrue("NothingToDo")
+	FullUpdateNeeded   = isTrue("FullUpdateNeeded")
 )
 
+// Conditions which are set automatically based on components' statuses.
+func isBuilt(compName ComponentName) Condition {
+	return isTrue(ConditionName(fmt.Sprintf("%sBuilt", compName)))
+}
+func isReady(compName ComponentName) Condition {
+	return isTrue(ConditionName(fmt.Sprintf("%sReady", compName)))
+}
+func needSync(compName ComponentName) Condition {
+	return isTrue(ConditionName(fmt.Sprintf("%sNeedSync", compName)))
+}
+
+// Conditions which are manipulated by actions.
 var (
-	YtsaurusClientBuilt = isBuilt(YtsaurusClientName)
-	DiscoveryBuilt      = isBuilt(DiscoveryName)
-	HttpProxyBuilt      = isBuilt(HttpProxyName)
-	MasterBuilt         = isBuilt(MasterName)
-	DataNodeBuilt       = isBuilt(DataNodeName)
-	SchedulerBuilt      = isBuilt(SchedulerName)
-	QueryTrackerBuilt   = isBuilt(QueryTrackerName)
+	SafeModeEnabled            = isTrue("SafeModeEnabled")
+	SafeModeCanBeEnabled       = isTrue("SafeModeCanBeEnabled")
+	TabletCellsNeedRecover     = isTrue("TabletCellsNeedRecover")
+	MasterIsInReadOnly         = isTrue("MasterIsInReadOnly")
+	OperationArchiveNeedUpdate = isTrue("OperationArchiveNeedUpdate")
+	QueryTrackerNeedsInit      = isTrue("QueryTrackerNeedsInit")
+
+	// TabletCellsRemovalStarted is an intermediate condition of Tablet cell backup action
+	TabletCellsRemovalStarted = isTrue("TabletCellsRemovalStarted")
+	// MasterSnapshotBuildingStarted is an intermediate condition of Build master snapshots action.
+	MasterSnapshotBuildingStarted = isTrue("MasterSnapshotBuildingStarted")
 )
 
-var (
-	YtsaurusClientReadyCondName = isReadyCondName(YtsaurusClientName)
-	DiscoveryReadyCondName      = isReadyCondName(DiscoveryName)
-	HttpProxyReadyCondName      = isReadyCondName(HttpProxyName)
-	MasterReadyCondName         = isReadyCondName(MasterName)
-	DataNodeReadyCondName       = isReadyCondName(DataNodeName)
-	SchedulerReadyCondName      = isReadyCondName(SchedulerName)
-)
-
-var (
-	YtsaurusClientReady = isReady(YtsaurusClientName)
-	DiscoveryReady      = isReady(DiscoveryName)
-	HttpProxyReady      = isReady(HttpProxyName)
-	MasterReady         = isReady(MasterName)
-	DataNodeReady       = isReady(DataNodeName)
-	SchedulerReady      = isReady(SchedulerName)
-)
-
-// Special conditions.
-
-// TODO: it is not very good to have condition and condition dependency at the same time
-// as it makes harder to search for usages.
-var (
-	AllComponentsBuiltCondName Condition = "AllComponentsBuilt"
-
-	IsFullUpdateNeededCond           Condition = "IsFullUpdateNeeded"
-	IsFullUpdatePossibleCond         Condition = "IsFullUpdatePossible"
-	IsSafeModeEnabledCond            Condition = "IsSafeModeEnabled"
-	DoTabletCellsNeedRecoverCond     Condition = "DoTabletCellsNeedRecover"
-	MasterCanBeRebuiltCond           Condition = "MasterCanBeRebuilt"
-	IsOperationArchiveNeedUpdateCond Condition = "IsOperationArchiveNeedUpdate"
-	IsQueryTrackerNeedInitCond       Condition = "IsQueryTrackerNeedInit"
-
-	// IsTabletCellsRemovalStartedCond is an intermediate condition of Tablet cell backup action
-	IsTabletCellsRemovalStartedCond Condition = "IsTabletCellsRemovalStarted"
-	// IsMasterSnapshotBuildingStartedCond is an intermediate condition of Build master snapshots action.
-	IsMasterSnapshotBuildingStartedCond Condition = "IsMasterSnapshotBuildingStarted"
-
-	NothingToDoCondName Condition = "NothingToDo"
-)
-
-var (
-	AllComponentsBuilt = isTrue(AllComponentsBuiltCondName)
-
-	FullUpdateNeeded           = isTrue(IsFullUpdateNeededCond)
-	FullUpdatePossible         = isTrue(IsFullUpdatePossibleCond)
-	SafeModeEnabled            = isTrue(IsSafeModeEnabledCond)
-	TabletCellsNeedRecover     = isTrue(DoTabletCellsNeedRecoverCond)
-	MasterCanBeRebuilt         = isTrue(MasterCanBeRebuiltCond)
-	OperationArchiveNeedUpdate = isTrue(IsOperationArchiveNeedUpdateCond)
-	QueryTrackerNeedsInit      = isTrue(IsQueryTrackerNeedInitCond)
-
-	NothingToDo = isTrue(NothingToDoCondName)
-)
-
-//var initialConditions = []Condition{
-//	isDone(BuildMasterSnapshotsStep),
-//}
+func updateConditions(ctx context.Context, statuses *statusRegistry, condDeps map[ConditionName][]Condition, state stateManager) error {
+	var err error
+	if err = updateSpecialConditions(ctx, state); err != nil {
+		return fmt.Errorf("failed to update cluster based conditions: %w", err)
+	}
+	if err = updateComponentsBasedConditions(ctx, statuses, state); err != nil {
+		return fmt.Errorf("failed to update components conditions: %w", err)
+	}
+	if err = updateDependenciesBasedConditions(ctx, condDeps, state); err != nil {
+		return err
+	}
+	return nil
+}
