@@ -5,11 +5,6 @@ import (
 	"fmt"
 )
 
-type Condition struct {
-	Name ConditionName
-	Val  bool
-}
-
 func not(condDep Condition) Condition {
 	return Condition{
 		Name: condDep.Name,

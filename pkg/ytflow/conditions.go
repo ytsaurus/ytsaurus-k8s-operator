@@ -10,12 +10,14 @@ import (
 // ConditionName aliased for brevity.
 type ConditionName = state.ConditionName
 
+// Condition aliased for brevity.
+type Condition = state.Condition
+
 // Special conditions, which are set automatically by flow code.
 var (
 	AllComponentsSynced = isTrue("AllComponentsSynced")
 	MasterCanBeSynced   = isTrue("MasterCanBeSynced")
 	NothingToDo         = isTrue("NothingToDo")
-	FullUpdateNeeded    = isTrue("FullUpdateNeeded")
 )
 
 // Conditions which are set automatically based on components' statuses.

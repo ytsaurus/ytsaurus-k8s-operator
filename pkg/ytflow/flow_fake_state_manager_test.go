@@ -39,7 +39,16 @@ func (cm *fakeStateManager) IsFalse(condName ConditionName) bool {
 func (cm *fakeStateManager) Get(condName ConditionName) bool {
 	return cm.conds[condName]
 }
-
+func (cm *fakeStateManager) GetConditions() []Condition {
+	var result []Condition
+	for name, val := range cm.conds {
+		result = append(result, Condition{
+			Name: name,
+			Val:  val,
+		})
+	}
+	return result
+}
 func (cm *fakeStateManager) SetTabletCellBundles(_ context.Context, bundles []ytv1.TabletCellBundleInfo) error {
 	cm.bundles = bundles
 	return nil

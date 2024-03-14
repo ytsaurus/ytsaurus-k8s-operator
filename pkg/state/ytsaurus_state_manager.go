@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -17,6 +18,25 @@ import (
 // For the sake of brevity we call it just Condition here, but it is really id/name.
 // Condition *value* can be true or false.
 type ConditionName string
+
+type Condition struct {
+	Name ConditionName
+	Val  bool
+}
+
+func NewConditionFromKube(kubeCond metav1.Condition) Condition {
+	return Condition{
+		Name: ConditionName(kubeCond.Type),
+		Val:  kubeCond.Status == metav1.ConditionTrue,
+	}
+}
+
+func (c Condition) String() string {
+	if c.Val {
+		return string(c.Name)
+	}
+	return fmt.Sprintf("!%s", c.Name)
+}
 
 type Manager struct {
 	client   client.Client
@@ -63,6 +83,13 @@ func (cm *Manager) Get(condName ConditionName) bool {
 	} else {
 		return false
 	}
+}
+func (cm *Manager) GetConditions() []Condition {
+	var result []Condition
+	for _, kubeCond := range cm.ytsaurus.Status.Conditions {
+		result = append(result, NewConditionFromKube(kubeCond))
+	}
+	return result
 }
 
 func (cm *Manager) SetClusterState(ctx context.Context, clusterState ytv1.ClusterState) error {

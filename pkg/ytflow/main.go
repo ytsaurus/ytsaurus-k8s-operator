@@ -27,6 +27,7 @@ type stateManager interface {
 	IsTrue(ConditionName) bool
 	IsFalse(ConditionName) bool
 	Get(ConditionName) bool
+	GetConditions() []Condition
 
 	// Don't really like mix of conditions and temporary data storage.
 
@@ -55,30 +56,30 @@ func doAdvance(ctx context.Context, comps *componentRegistry, actions map[StepNa
 		return "", fmt.Errorf("failed to observe statuses: %w", err)
 	}
 
+	condsBefore := state.GetConditions()
 	if err = updateConditions(ctx, statuses, conditionDependencies, state); err != nil {
 		return "", err
 	}
+	condsAfter := state.GetConditions()
+	fmt.Println("DIFF:\n" + diffConditions(condsBefore, condsAfter))
 
 	if IsSatisfied(NothingToDo, state) {
 		return FlowStatusDone, nil
 	}
 
 	steps := buildSteps(comps, actions)
-	runnableSteps := collectRunnables(logger, steps, state)
-	// TODO: somehow differ all done with all blocked.
-	// Need extra signal here with return after the conditions check.
+	runnableSteps := collectRunnable(logger, steps, state)
+	fmt.Println(reportSteps(steps, runnableSteps))
+
 	if len(runnableSteps) == 0 {
 		return FlowStatusDone, nil
 	}
 	return FlowStatusUpdating, runSteps(ctx, runnableSteps)
 }
 
-func collectRunnables(log logr.Logger, steps *stepRegistry, conds stateManager) map[StepName]stepType {
+func collectRunnable(log logr.Logger, steps *stepRegistry, conds stateManager) map[StepName]stepType {
 	runnable := make(map[StepName]stepType)
 	for name, step := range steps.steps {
-		//log.Info(fmt.Sprintf("[ ] %s", name))
-		// TODO: collect execution, configure logger in test
-		fmt.Printf("STEP %s\n", name)
 		stepDeps := stepDependencies[name]
 
 		// If step has no dependencies no need to run.
@@ -90,19 +91,7 @@ func collectRunnables(log logr.Logger, steps *stepRegistry, conds stateManager) 
 		// If any of the dependencies are not satisfied, no need to run.
 		hasUnsatisfied := false
 		for _, condDep := range stepDeps {
-			isSatisfied := IsSatisfied(condDep, conds)
-
-			symbol := " "
-			if isSatisfied {
-				symbol = "x"
-			}
-			notSymbol := ""
-			if !condDep.Val {
-				notSymbol = "!"
-			}
-			fmt.Printf("     [%s] %s%s\n", symbol, notSymbol, condDep.Name)
-
-			if !isSatisfied {
+			if !IsSatisfied(condDep, conds) {
 				hasUnsatisfied = true
 				break
 			}
