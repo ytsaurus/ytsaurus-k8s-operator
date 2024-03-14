@@ -30,20 +30,20 @@ func updateComponentsBasedConditions(ctx context.Context, statuses *statusRegist
 	// Actualize `built` and `needSync` conditions for the single components.
 	for compName, status := range statuses.single {
 		wasBuilt := state.Get(isBuilt(compName).Name)
-		built, sync := interpretSyncStatus(status.SyncStatus)
+		compIsBuilt, compNeedsSync := interpretSyncStatus(status.SyncStatus)
 		msg := fmt.Sprintf("%s: %s", status.SyncStatus, status.Message)
-		if err := state.Set(ctx, isBuilt(compName).Name, built, msg); err != nil {
+		if err := state.Set(ctx, isBuilt(compName).Name, compIsBuilt, msg); err != nil {
 			return err
 		}
-		if err := state.Set(ctx, needSync(compName).Name, sync, msg); err != nil {
+		if err := state.Set(ctx, needSync(compName).Name, compNeedsSync, msg); err != nil {
 			return err
 		}
 
-		if !wasBuilt && built {
+		if !wasBuilt && compIsBuilt {
 			becameBuilt = append(becameBuilt, compName)
 		}
 
-		if !sync {
+		if compNeedsSync {
 			allSynced = false
 		}
 	}

@@ -76,6 +76,7 @@ var stepDependencies = map[StepName][]Condition{
 
 	CheckFullUpdatePossibilityStep: {
 		// isBuilt + needSync == cluster needs to run full update routine.
+		not(SafeModeCanBeEnabled),
 		isBuilt(MasterName),
 		needSync(MasterName),
 		not(SafeModeEnabled),
@@ -88,11 +89,13 @@ var stepDependencies = map[StepName][]Condition{
 	},
 	BackupTabletCellsStep: {
 		not(TabletCellsNeedRecover),
+		needSync(MasterName),
 		SafeModeEnabled,
 		//YtsaurusClientReady,  // TODO: fix that later
 	},
 	BuildMasterSnapshotsStep: {
 		not(MasterIsInReadOnly),
+		needSync(MasterName),
 		SafeModeEnabled,
 		TabletCellsNeedRecover,
 		//YtsaurusClientReady,  // TODO: fix that later

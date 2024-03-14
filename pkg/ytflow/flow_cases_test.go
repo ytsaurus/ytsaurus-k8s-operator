@@ -140,7 +140,10 @@ func TestFlows(t *testing.T) {
 		setActionSuccessConds(actions[BackupTabletCellsStep], TabletCellsNeedRecover)
 		setActionSuccessConds(actions[BuildMasterSnapshotsStep], MasterIsInReadOnly)
 		setActionSuccessConds(actions[MasterExitReadOnlyStep], not(MasterIsInReadOnly))
+		setActionSuccessConds(actions[RecoverTabletCellsStep], not(TabletCellsNeedRecover))
+		setActionSuccessConds(actions[DisableSafeModeStep], not(SafeModeEnabled))
 
+		// TODO: debug all components sync
 		require.NoError(t, loopAdvance(comps, actions, state))
 
 		// Expect full update.
