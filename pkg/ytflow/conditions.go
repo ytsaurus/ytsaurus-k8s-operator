@@ -12,10 +12,10 @@ type ConditionName = state.ConditionName
 
 // Special conditions, which are set automatically by flow code.
 var (
-	AllComponentsBuilt = isTrue("AllComponentsBuilt")
-	MasterCanBeSynced  = isTrue("MasterCanBeSynced")
-	NothingToDo        = isTrue("NothingToDo")
-	FullUpdateNeeded   = isTrue("FullUpdateNeeded")
+	AllComponentsSynced = isTrue("AllComponentsSynced")
+	MasterCanBeSynced   = isTrue("MasterCanBeSynced")
+	NothingToDo         = isTrue("NothingToDo")
+	FullUpdateNeeded    = isTrue("FullUpdateNeeded")
 )
 
 // Conditions which are set automatically based on components' statuses.

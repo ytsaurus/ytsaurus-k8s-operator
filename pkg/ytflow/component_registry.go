@@ -21,7 +21,6 @@ type component interface {
 
 type componentRegistry struct {
 	single map[ComponentName]component
-	multi  map[ComponentName]map[string]component
 }
 
 func buildComponents(ytsaurus *apiProxy.Ytsaurus, clusterDomain string) *componentRegistry {
@@ -30,7 +29,6 @@ func buildComponents(ytsaurus *apiProxy.Ytsaurus, clusterDomain string) *compone
 	nodeCfgGen := ytconfig.NewLocalNodeGenerator(ytsaurus.GetResource(), clusterDomain)
 
 	single := make(map[ComponentName]component)
-	multi := make(map[ComponentName]map[string]component)
 
 	single[MasterName] = components.NewMaster(cfgen, ytsaurus)
 	single[DiscoveryName] = components.NewDiscovery(cfgen, ytsaurus)
@@ -43,17 +41,16 @@ func buildComponents(ytsaurus *apiProxy.Ytsaurus, clusterDomain string) *compone
 			dnds[dnd.GetName()] = dnd
 		}
 	}
-	multi[DataNodeName] = dnds
+	single[DataNodeName] = newMultiComponent(DataNodeName, dnds)
 
 	hps := make(map[string]component)
 	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {
 		hp := components.NewHTTPProxy(cfgen, ytsaurus, nil, hpSpec)
 		hps[hp.GetName()] = hp
 	}
-	multi[HttpProxyName] = hps
+	single[HttpProxyName] = newMultiComponent(HttpProxyName, hps)
 
 	return &componentRegistry{
 		single: single,
-		multi:  multi,
 	}
 }

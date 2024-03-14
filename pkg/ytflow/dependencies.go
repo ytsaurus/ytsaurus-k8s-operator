@@ -45,7 +45,7 @@ var (
 // condName become false if any of condition deps are false
 var conditionDependencies = map[ConditionName][]Condition{
 	NothingToDo.Name: {
-		AllComponentsBuilt,
+		AllComponentsSynced,
 		not(SafeModeEnabled),
 	},
 
@@ -75,7 +75,9 @@ var stepDependencies = map[StepName][]Condition{
 	},
 
 	CheckFullUpdatePossibilityStep: {
-		FullUpdateNeeded,
+		// isBuilt + needSync == cluster needs to run full update routine.
+		isBuilt(MasterName),
+		needSync(MasterName),
 		not(SafeModeEnabled),
 		//YtsaurusClientReady,  // TODO: fix that later
 	},
@@ -97,16 +99,16 @@ var stepDependencies = map[StepName][]Condition{
 	},
 
 	DiscoveryStep: {
-		not(isBuilt(DiscoveryName)),
+		needSync(DiscoveryName),
 	},
 	HttpProxyStep: {
-		not(isBuilt(HttpProxyName)),
+		needSync(HttpProxyName),
 	},
 	DataNodeStep: {
-		not(isBuilt(DataNodeName)),
+		needSync(DataNodeName),
 	},
 	MasterStep: {
-		not(isBuilt(MasterName)),
+		needSync(MasterName),
 		MasterCanBeSynced,
 	},
 
@@ -114,7 +116,7 @@ var stepDependencies = map[StepName][]Condition{
 		MasterIsInReadOnly,
 		SafeModeEnabled,
 		// Currently it works as before, but maybe we just need master to be built?
-		AllComponentsBuilt,
+		AllComponentsSynced,
 	},
 	RecoverTabletCellsStep: {
 		TabletCellsNeedRecover,

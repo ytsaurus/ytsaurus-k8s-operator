@@ -36,12 +36,13 @@ func buildTestComponents(spy *executionSpy) *componentRegistry {
 
 			MasterName:    newFakeComponent(MasterName, spy),
 			DiscoveryName: newFakeComponent(DiscoveryName, spy),
-		},
-		multi: map[ComponentName]map[string]component{
-			DataNodeName: {
-				dnda: newFakeComponent(ComponentName(dnda), spy),
-				dndb: newFakeComponent(ComponentName(dndb), spy),
-			},
+			DataNodeName: newMultiComponent(
+				DataNodeName,
+				map[string]component{
+					dnda: newFakeComponent(ComponentName(dnda), spy),
+					dndb: newFakeComponent(ComponentName(dndb), spy),
+				},
+			),
 		},
 	}
 }
@@ -98,6 +99,7 @@ func TestFlows(t *testing.T) {
 	_ = state.SetClusterState(ctx, ytv1.ClusterStateCreated)
 
 	{
+		t.Log("Test cluster creating")
 		require.NoError(t, loopAdvance(comps, actions, state))
 		// Expect all components created.
 		require.Equal(
@@ -112,8 +114,10 @@ func TestFlows(t *testing.T) {
 			spy.recordedEvents,
 		)
 	}
+	_ = state.SetClusterState(ctx, ytv1.ClusterStateRunning)
 
 	{
+		t.Log("Test discovery only update")
 		spy.reset()
 		setComponentStatus(comps.single[DiscoveryName], components.SyncStatusNeedLocalUpdate)
 
@@ -128,6 +132,7 @@ func TestFlows(t *testing.T) {
 			spy.recordedEvents,
 		)
 	}
+	_ = state.SetClusterState(ctx, ytv1.ClusterStateRunning)
 
 	//{
 	//	spy.reset()

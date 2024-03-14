@@ -16,24 +16,22 @@ func buildComponentSteps(comps *componentRegistry) map[StepName]stepType {
 	steps := make(map[StepName]stepType)
 
 	for compName, singleComp := range comps.single {
-		steps[compNameToStepName(compName)] = newSingleComponentStep(singleComp)
-	}
-
-	for compName, multiComp := range comps.multi {
-		steps[compNameToStepName(compName)] = newMultiComponentStep(multiComp)
+		steps[compNameToStepName(compName)] = newComponentStep(singleComp)
 	}
 	return steps
 }
 
-func buildActionSteps(comps *componentRegistry, conds stateManager) map[StepName]stepType {
+func buildActionSteps(comps *componentRegistry, state stateManager) map[StepName]stepType {
 	yc := comps.single[YtsaurusClientName].(ytsaurusClient)
 	return map[StepName]stepType{
-		CheckFullUpdatePossibilityStep: checkFullUpdatePossibility(yc, conds),
-		EnableSafeModeStep:             enableSafeMode(yc, conds),
-		BackupTabletCellsStep:          backupTabletCells(yc, conds),
-		BuildMasterSnapshotsStep:       buildMasterSnapshots(yc, conds),
-		RecoverTabletCellsStep:         recoverTabletCells(yc, conds),
-		DisableSafeModeStep:            disableSafeMode(yc, conds),
+		CheckFullUpdatePossibilityStep: checkFullUpdatePossibility(yc, state),
+		EnableSafeModeStep:             enableSafeMode(yc, state),
+		BackupTabletCellsStep:          backupTabletCells(yc, state),
+		BuildMasterSnapshotsStep:       buildMasterSnapshots(yc, state),
+		RecoverTabletCellsStep:         recoverTabletCells(yc, state),
+		UpdateOpArchiveStep:            updateOpArchive(state),
+		InitQueryTrackerStep:           initQueryTracker(state),
+		DisableSafeModeStep:            disableSafeMode(yc, state),
 	}
 }
 
