@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
 )
 
 type ytsaurusClient interface {
@@ -21,6 +22,20 @@ type ytsaurusClient interface {
 	GetMasterMonitoringPaths(context.Context) ([]string, error)
 	StartBuildMasterSnapshots(context.Context, []string) error
 	AreMasterSnapshotsBuilt(context.Context, []string) (bool, error)
+}
+
+type masterComponent interface {
+	GetMasterExitReadOnlyJob() *components.InitJob
+}
+
+type schedulerComponent interface {
+	GetUpdateOpArchiveJob() *components.InitJob
+	PrepareInitOperationArchive(job *components.InitJob)
+}
+
+type queryTrackerComponent interface {
+	GetInitQueryTrackerJob() *components.InitJob
+	PrepareInitQueryTrackerState(job *components.InitJob)
 }
 
 type simpleActionStep struct {
@@ -63,7 +78,9 @@ func enableSafeMode(yc ytsaurusClient, state stateManager) simpleActionStep {
 
 func backupTabletCells(yc ytsaurusClient, state stateManager) simpleActionStep {
 	runFunc := func(ctx context.Context) error {
-		if state.IsFalse(TabletCellsRemovalStarted.Name) {
+		actionStartedCond := actionStarted("backupTabletCells")
+
+		if state.IsFalse(actionStartedCond.Name) {
 			cells, err := yc.GetTabletCells(ctx)
 			if err != nil {
 				return err
@@ -80,7 +97,7 @@ func backupTabletCells(yc ytsaurusClient, state stateManager) simpleActionStep {
 				return err
 			}
 
-			err = state.SetTrue(ctx, TabletCellsRemovalStarted.Name, fmt.Sprintf("%d cell bundles stored", len(cells)))
+			err = state.SetTrue(ctx, actionStartedCond.Name, fmt.Sprintf("%d cell bundles stored", len(cells)))
 			if err != nil {
 				return err
 			}
@@ -110,7 +127,9 @@ func backupTabletCells(yc ytsaurusClient, state stateManager) simpleActionStep {
 
 func buildMasterSnapshots(yc ytsaurusClient, state stateManager) simpleActionStep {
 	runFunc := func(ctx context.Context) error {
-		if state.IsFalse(MasterSnapshotBuildingStarted.Name) {
+		actionStartedCond := actionStarted("buildMasterSnapshots")
+
+		if state.IsFalse(actionStartedCond.Name) {
 			paths, err := yc.GetMasterMonitoringPaths(ctx)
 			if err != nil {
 				return err
@@ -123,14 +142,14 @@ func buildMasterSnapshots(yc ytsaurusClient, state stateManager) simpleActionSte
 				return err
 			}
 
-			err = state.SetTrue(ctx, MasterSnapshotBuildingStarted.Name, fmt.Sprintf("%d monitoring paths was stored", len(paths)))
+			err = state.SetTrue(ctx, actionStartedCond.Name, fmt.Sprintf("%d monitoring paths was stored", len(paths)))
 			if err != nil {
 				return err
 			}
 			return nil
 		}
 
-		// At this point master snapshots build was started.
+		// At this point masterComponent snapshots build was started.
 		built, err := yc.AreMasterSnapshotsBuilt(ctx, state.GetMasterMonitoringPaths())
 		if err != nil {
 			return err
@@ -152,21 +171,15 @@ func buildMasterSnapshots(yc ytsaurusClient, state stateManager) simpleActionSte
 	}
 }
 
-//func masterExitReadOnly(job *components.JobStateless) actionStep {
-//	return newJobStep(
-//		MasterExitReadOnlyStep,
-//		job,
-//		components.CreateExitReadOnlyScript(),
-//	)
-//}
-
-func masterExitReadOnly(state stateManager) simpleActionStep {
-	runFunc := func(ctx context.Context) error {
-		return state.SetFalse(ctx, MasterIsInReadOnly.Name, "")
-	}
-	return simpleActionStep{
-		runFunc: runFunc,
-	}
+func masterExitReadOnly(master masterComponent, state stateManager) simpleActionStep {
+	return getJobStep(
+		master.GetMasterExitReadOnlyJob(),
+		func(initJob *components.InitJob) {
+			initJob.SetInitScript(components.CreateExitReadOnlyScript())
+		},
+		not(MasterIsInReadOnly),
+		state,
+	)
 }
 
 // TODO: rollback if failure happens between state saving and recover or smth
@@ -189,67 +202,54 @@ func recoverTabletCells(yc ytsaurusClient, state stateManager) simpleActionStep 
 	}
 }
 
-func updateOpArchive(state stateManager) simpleActionStep {
+// TODO: maybe wait for tablet specifically to run update operations
+// TODO: fake job if archive can't be built because of tablet nodes
+func updateOpArchive(sch schedulerComponent, state stateManager) simpleActionStep {
+	return getJobStep(
+		sch.GetUpdateOpArchiveJob(),
+		sch.PrepareInitOperationArchive,
+		not(OperationArchiveNeedUpdate),
+		state,
+	)
+}
+
+func initQueryTracker(qt queryTrackerComponent, state stateManager) simpleActionStep {
+	return getJobStep(
+		qt.GetInitQueryTrackerJob(),
+		qt.PrepareInitQueryTrackerState,
+		not(QueryTrackerNeedsInit),
+		state,
+	)
+}
+
+func getJobStep(job *components.InitJob, preRun func(initJob *components.InitJob), successCondition Condition, state stateManager) simpleActionStep {
 	runFunc := func(ctx context.Context) error {
-		return state.SetFalse(ctx, OperationArchiveNeedUpdate.Name, "")
+		if err := job.Fetch(ctx); err != nil {
+			return err
+		}
+
+		startedCondName := actionStarted(job.GetName()).Name
+		if !state.Get(startedCondName) {
+			if err := job.PrepareRestart(ctx, false); err != nil {
+				return err
+			}
+			return state.SetTrue(ctx, startedCondName, "")
+		}
+
+		preRun(job)
+		status, err := job.Sync(ctx, false)
+		if err != nil {
+			return err
+		}
+		if status.SyncStatus != components.SyncStatusReady {
+			return nil
+		}
+		return state.Set(ctx, successCondition.Name, successCondition.Val, "")
 	}
 	return simpleActionStep{
 		runFunc: runFunc,
 	}
 }
-
-func initQueryTracker(state stateManager) simpleActionStep {
-	runFunc := func(ctx context.Context) error {
-		return state.SetFalse(ctx, QueryTrackerNeedsInit.Name, "")
-	}
-	return simpleActionStep{
-		runFunc: runFunc,
-	}
-}
-
-//func updateOpArchive(job *components.JobStateless, scheduler *components.Scheduler) actionStep {
-//	// this wrapper is lousy
-//	jobStep := newJobStep(
-//		UpdateOpArchiveStep,
-//		job,
-//		scheduler.GetUpdateOpArchiveScript(),
-//	)
-//	run := func(ctx context.Context) error {
-//		job.SetInitScript(scheduler.GetUpdateOpArchiveScript())
-//		batchJob := job.Build()
-//		container := &batchJob.Spec.Template.Spec.Containers[0]
-//		container.EnvFrom = []corev1.EnvFromSource{scheduler.GetSecretEnv()}
-//		return job.Sync(ctx)
-//	}
-//	return actionStep{
-//		name:        UpdateOpArchiveStep,
-//		preRunFunc:  jobStep.preRunFunc,
-//		runFunc:     run,
-//		postRunFunc: jobStep.postRunFunc,
-//	}
-//}
-
-//func initQueryTracker(job *components.JobStateless, queryTracker *components.QueryTracker) actionStep {
-//	// this wrapper is lousy
-//	jobStep := newJobStep(
-//		InitQTStateStep,
-//		job,
-//		queryTracker.GetInitQueryTrackerJobScript(),
-//	)
-//	run := func(ctx context.Context) error {
-//		job.SetInitScript(queryTracker.GetInitQueryTrackerJobScript())
-//		batchJob := job.Build()
-//		container := &batchJob.Spec.Template.Spec.Containers[0]
-//		container.EnvFrom = []corev1.EnvFromSource{queryTracker.GetSecretEnv()}
-//		return job.Sync(ctx)
-//	}
-//	return actionStep{
-//		name:        InitQTStateStep,
-//		preRunFunc:  jobStep.preRunFunc,
-//		runFunc:     run,
-//		postRunFunc: jobStep.postRunFunc,
-//	}
-//}
 
 func disableSafeMode(yc ytsaurusClient, state stateManager) simpleActionStep {
 	runFunc := func(ctx context.Context) error {

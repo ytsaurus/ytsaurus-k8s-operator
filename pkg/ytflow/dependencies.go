@@ -131,7 +131,7 @@ var stepDependencies = map[StepName][]Condition{
 	MasterExitReadOnlyStep: {
 		MasterIsInReadOnly,
 		SafeModeEnabled,
-		// Currently it works as before, but maybe we just need master to be built?
+		// Currently it works as before, but maybe we just need masterComponent to be built?
 		AllComponentsSynced,
 	},
 	RecoverTabletCellsStep: {

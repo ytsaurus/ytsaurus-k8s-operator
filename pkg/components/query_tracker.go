@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
@@ -92,7 +91,7 @@ func (qt *QueryTracker) IsUpdatable() bool {
 func (qt *QueryTracker) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		qt.server,
-		qt.initQTState,
+		//qt.initQTState,
 		qt.secret,
 	)
 }
@@ -113,11 +112,10 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
 
-			if status, err := qt.updateQTState(ctx, dry); status != nil {
-				return *status, err
-			}
-			if qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
-				qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQTStateUpdate {
+			//if status, err := qt.updateQTState(ctx, dry); status != nil {
+			//	return *status, err
+			//}
+			if qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
 				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
 			}
 		} else {
@@ -175,13 +173,13 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		}
 	}
 
-	if !dry {
-		qt.prepareInitQueryTrackerState()
-	}
-	status, err := qt.initQTState.Sync(ctx, dry)
-	if err != nil || status.SyncStatus != SyncStatusReady {
-		return status, err
-	}
+	//if !dry {
+	//	qt.prepareInitQueryTrackerState()
+	//}
+	//status, err := qt.initQTState.Sync(ctx, dry)
+	//if err != nil || status.SyncStatus != SyncStatusReady {
+	//	return status, err
+	//}
 
 	if qt.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
 		if !dry {
@@ -332,7 +330,7 @@ func (qt *QueryTracker) Sync(ctx context.Context) error {
 	return err
 }
 
-func (qt *QueryTracker) prepareInitQueryTrackerState() {
+func (qt *QueryTracker) PrepareInitQueryTrackerState(job *InitJob) {
 	path := "/usr/bin/init_query_tracker_state"
 
 	script := []string{
@@ -341,50 +339,54 @@ func (qt *QueryTracker) prepareInitQueryTrackerState() {
 			path, path, qt.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
 	}
 
-	qt.initQTState.SetInitScript(strings.Join(script, "\n"))
-	job := qt.initQTState.Build()
-	container := &job.Spec.Template.Spec.Containers[0]
+	job.SetInitScript(strings.Join(script, "\n"))
+	batchJob := job.Build()
+	container := &batchJob.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{qt.secret.GetEnvSource()}
 }
 
-func (qt *QueryTracker) updateQTState(ctx context.Context, dry bool) (*ComponentStatus, error) {
-	var err error
-	switch qt.ytsaurus.GetUpdateState() {
-	case ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:
-		if !qt.initQTState.isRestartPrepared() {
-			return ptr.T(SimpleStatus(SyncStatusUpdating)), qt.initQTState.prepareRestart(ctx, dry)
-		}
-		if !dry {
-			qt.setConditionQTStatePreparedForUpdating(ctx)
-		}
-		return ptr.T(SimpleStatus(SyncStatusUpdating)), err
-	case ytv1.UpdateStateWaitingForQTStateUpdate:
-		if !qt.initQTState.isRestartCompleted() {
-			return nil, nil
-		}
-		if !dry {
-			qt.setConditionQTStateUpdated(ctx)
-		}
-		return ptr.T(SimpleStatus(SyncStatusUpdating)), err
-	default:
-		return nil, nil
-	}
-}
+//func (qt *QueryTracker) updateQTState(ctx context.Context, dry bool) (*ComponentStatus, error) {
+//	var err error
+//	switch qt.ytsaurus.GetUpdateState() {
+//	case ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:
+//		if !qt.initQTState.IsRestartPrepared() {
+//			return ptr.T(SimpleStatus(SyncStatusUpdating)), qt.initQTState.PrepareRestart(ctx, dry)
+//		}
+//		if !dry {
+//			qt.setConditionQTStatePreparedForUpdating(ctx)
+//		}
+//		return ptr.T(SimpleStatus(SyncStatusUpdating)), err
+//	case ytv1.UpdateStateWaitingForQTStateUpdate:
+//		if !qt.initQTState.IsRestartCompleted() {
+//			return nil, nil
+//		}
+//		if !dry {
+//			qt.setConditionQTStateUpdated(ctx)
+//		}
+//		return ptr.T(SimpleStatus(SyncStatusUpdating)), err
+//	default:
+//		return nil, nil
+//	}
+//}
 
-func (qt *QueryTracker) setConditionQTStatePreparedForUpdating(ctx context.Context) {
-	qt.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionQTStatePreparedForUpdating,
-		Status:  metav1.ConditionTrue,
-		Reason:  "QTStatePreparedForUpdating",
-		Message: fmt.Sprintf("Query Tracker state prepared for updating"),
-	})
-}
+//func (qt *QueryTracker) setConditionQTStatePreparedForUpdating(ctx context.Context) {
+//	qt.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+//		Type:    consts.ConditionQTStatePreparedForUpdating,
+//		Status:  metav1.ConditionTrue,
+//		Reason:  "QTStatePreparedForUpdating",
+//		Message: fmt.Sprintf("Query Tracker state prepared for updating"),
+//	})
+//}
+//
+//func (qt *QueryTracker) setConditionQTStateUpdated(ctx context.Context) {
+//	qt.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+//		Type:    consts.ConditionQTStateUpdated,
+//		Status:  metav1.ConditionTrue,
+//		Reason:  "QTStateUpdated",
+//		Message: fmt.Sprintf("Query tracker state updated"),
+//	})
+//}
 
-func (qt *QueryTracker) setConditionQTStateUpdated(ctx context.Context) {
-	qt.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionQTStateUpdated,
-		Status:  metav1.ConditionTrue,
-		Reason:  "QTStateUpdated",
-		Message: fmt.Sprintf("Query tracker state updated"),
-	})
+func (qt *QueryTracker) GetInitQueryTrackerJob() *InitJob {
+	return qt.initQTState
 }

@@ -36,7 +36,7 @@ func updateComponentsBasedConditions(ctx context.Context, statuses *statusRegist
 		compIsBuilt, compNeedsSync := interpretSyncStatus(status.SyncStatus)
 
 		if masterNeedsSync {
-			// Current behaviour is we sync all the components in case of master update.
+			// Current behaviour is we sync all the components in case of masterComponent update.
 			// WE may want to change this in the future, but after all diffs in spec would be considered by the operator.
 			compNeedsSync = true
 		}
@@ -87,7 +87,7 @@ func updateSpecialConditions(ctx context.Context, state stateManager) error {
 	isInSafeMode := state.Get(SafeModeEnabled.Name)
 
 	// This could be improved by implementing OR for conditions deps.
-	// Since we only have master now it may not being worth it.
+	// Since we only have masterComponent now it may not being worth it.
 	masterCanBeSynced := clusterCreated || isInReadOnly
 	var msgs []string
 	if clusterCreated {
@@ -108,7 +108,7 @@ func updateSpecialConditions(ctx context.Context, state stateManager) error {
 		return err
 	}
 
-	// Other components can be synced either after the master can be updated in full update case
+	// Other components can be synced either after the masterComponent can be updated in full update case
 	// otherwise when needed.
 	compsCanBeSynced := (masterNeedSync && masterCanBeSynced) || !masterNeedSync
 	msgs = []string{}

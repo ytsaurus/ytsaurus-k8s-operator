@@ -41,12 +41,11 @@ var (
 	MasterIsInReadOnly         = isTrue("MasterIsInReadOnly")
 	OperationArchiveNeedUpdate = isTrue("OperationArchiveNeedUpdate")
 	QueryTrackerNeedsInit      = isTrue("QueryTrackerNeedsInit")
-
-	// TabletCellsRemovalStarted is an intermediate condition of Tablet cell backup action
-	TabletCellsRemovalStarted = isTrue("TabletCellsRemovalStarted")
-	// MasterSnapshotBuildingStarted is an intermediate condition of Build master snapshots action.
-	MasterSnapshotBuildingStarted = isTrue("MasterSnapshotBuildingStarted")
 )
+
+func actionStarted(name string) Condition {
+	return isTrue(ConditionName(fmt.Sprintf("%sStarted", name)))
+}
 
 func updateConditions(ctx context.Context, statuses *statusRegistry, condDeps map[ConditionName][]Condition, state stateManager) error {
 	var err error

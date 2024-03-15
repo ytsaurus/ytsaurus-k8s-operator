@@ -12,14 +12,14 @@ func observe(ctx context.Context, comps *componentRegistry) (*statusRegistry, er
 	statuses := make(map[ComponentName]componentStatus)
 
 	// Fetch stage.
-	for _, comp := range comps.single {
+	for _, comp := range comps.components {
 		if err := comp.Fetch(ctx); err != nil {
 			return nil, err
 		}
 	}
 
 	// Status stage.
-	for name, comp := range comps.single {
+	for name, comp := range comps.components {
 		statuses[name] = comp.Status(ctx)
 	}
 

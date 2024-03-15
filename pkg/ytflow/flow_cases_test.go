@@ -33,12 +33,12 @@ var (
 
 func buildTestComponents(spy *executionSpy) *componentRegistry {
 	return &componentRegistry{
-		single: map[ComponentName]component{
+		components: map[ComponentName]component{
 			YtsaurusClientName: newFakeYtsaurusClient(spy),
 
-			MasterName:       newFakeComponent(MasterName, spy),
-			SchedulerName:    newFakeComponent(SchedulerName, spy),
-			QueryTrackerName: newFakeComponent(QueryTrackerName, spy),
+			MasterName:       newFakeMasterComponent(spy),
+			SchedulerName:    newFakeSchedulerComponent(spy),
+			QueryTrackerName: newFakeQueryTrackerComponent(spy),
 			DiscoveryName:    newFakeComponent(DiscoveryName, spy),
 			DataNodeName: newMultiComponent(
 				DataNodeName,
@@ -58,8 +58,12 @@ func buildTestComponents(spy *executionSpy) *componentRegistry {
 	}
 }
 
+type fakeComponentI interface {
+	SetStatus(status components.SyncStatus)
+}
+
 func setComponentStatus(comp component, status components.SyncStatus) {
-	comp.(*fakeComponent).status = status
+	comp.(fakeComponentI).SetStatus(status)
 }
 
 func setActionSuccessConds(actionStep stepType, conds ...Condition) {
@@ -136,7 +140,7 @@ func TestFlows(t *testing.T) {
 	{
 		t.Log("UPDATE DISCOVERY ONLY")
 		spy.reset()
-		setComponentStatus(comps.single[DiscoveryName], components.SyncStatusNeedLocalUpdate)
+		setComponentStatus(comps.components[DiscoveryName], components.SyncStatusNeedLocalUpdate)
 
 		require.NoError(t, loopAdvance(comps, actions, state))
 		// Expect only Discovery updated.
@@ -153,7 +157,7 @@ func TestFlows(t *testing.T) {
 	{
 		t.Log("UPDATE MASTER ONLY")
 		spy.reset()
-		setComponentStatus(comps.single[MasterName], components.SyncStatusNeedLocalUpdate)
+		setComponentStatus(comps.components[MasterName], components.SyncStatusNeedLocalUpdate)
 		setActionSuccessConds(actions[CheckFullUpdatePossibilityStep], SafeModeCanBeEnabled)
 		setActionSuccessConds(actions[EnableSafeModeStep], SafeModeEnabled, not(SafeModeCanBeEnabled))
 		setActionSuccessConds(actions[BackupTabletCellsStep], TabletCellsNeedRecover)
@@ -194,9 +198,9 @@ func TestFlows(t *testing.T) {
 	{
 		t.Log("UPDATE MASTER+SCHEDULER+QT")
 		spy.reset()
-		setComponentStatus(comps.single[MasterName], components.SyncStatusNeedLocalUpdate)
-		setComponentStatus(comps.single[SchedulerName], components.SyncStatusNeedLocalUpdate)
-		setComponentStatus(comps.single[QueryTrackerName], components.SyncStatusNeedLocalUpdate)
+		setComponentStatus(comps.components[MasterName], components.SyncStatusNeedLocalUpdate)
+		setComponentStatus(comps.components[SchedulerName], components.SyncStatusNeedLocalUpdate)
+		setComponentStatus(comps.components[QueryTrackerName], components.SyncStatusNeedLocalUpdate)
 		setActionSuccessConds(actions[CheckFullUpdatePossibilityStep], SafeModeCanBeEnabled)
 		setActionSuccessConds(actions[EnableSafeModeStep], SafeModeEnabled, not(SafeModeCanBeEnabled))
 		setActionSuccessConds(actions[BackupTabletCellsStep], TabletCellsNeedRecover)
@@ -237,7 +241,7 @@ func TestFlows(t *testing.T) {
 	{
 		t.Log("UPDATE DISCOVERY ONLY AGAIN")
 		spy.reset()
-		setComponentStatus(comps.single[DiscoveryName], components.SyncStatusNeedLocalUpdate)
+		setComponentStatus(comps.components[DiscoveryName], components.SyncStatusNeedLocalUpdate)
 
 		require.NoError(t, loopAdvance(comps, actions, state))
 		require.Equal(

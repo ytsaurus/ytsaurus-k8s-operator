@@ -20,7 +20,7 @@ type component interface {
 }
 
 type componentRegistry struct {
-	single map[ComponentName]component
+	components map[ComponentName]component
 }
 
 func buildComponents(ytsaurus *apiProxy.Ytsaurus, clusterDomain string) *componentRegistry {
@@ -51,6 +51,6 @@ func buildComponents(ytsaurus *apiProxy.Ytsaurus, clusterDomain string) *compone
 	single[HttpProxyName] = newMultiComponent(HttpProxyName, hps)
 
 	return &componentRegistry{
-		single: single,
+		components: single,
 	}
 }

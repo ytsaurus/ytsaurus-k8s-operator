@@ -174,7 +174,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", j.initCompletedCondition)), err
 }
 
-func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
+func (j *InitJob) PrepareRestart(ctx context.Context, dry bool) error {
 	if dry {
 		return nil
 	}
@@ -190,11 +190,11 @@ func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
 	return nil
 }
 
-func (j *InitJob) isRestartPrepared() bool {
+func (j *InitJob) IsRestartPrepared() bool {
 	return !resources.Exists(j.initJob) && j.conditionsManager.IsStatusConditionFalse(j.initCompletedCondition)
 }
 
-func (j *InitJob) isRestartCompleted() bool {
+func (j *InitJob) IsRestartCompleted() bool {
 	return j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition)
 }
 

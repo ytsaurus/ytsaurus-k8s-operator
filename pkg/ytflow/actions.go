@@ -90,7 +90,7 @@ package ytflow
 //		}
 //		return ActionPreRunStatus{
 //			ActionSubStatus: ActionNeedRun,
-//			Message:         "master monitor paths were saved in state",
+//			Message:         "masterComponent monitor paths were saved in state",
 //		}, nil
 //	}
 //	run := yc.StartBuildMasterSnapshots
@@ -102,12 +102,12 @@ package ytflow
 //		if done {
 //			return ActionPostRunStatus{
 //				ActionSubStatus: ActionDone,
-//				Message:         "master snapshots were successfully built",
+//				Message:         "masterComponent snapshots were successfully built",
 //			}, nil
 //		}
 //		return ActionPostRunStatus{
 //			ActionSubStatus: ActionUpdating,
-//			Message:         "master snapshots haven't been not removed yet",
+//			Message:         "masterComponent snapshots haven't been not removed yet",
 //		}, nil
 //	}
 //
