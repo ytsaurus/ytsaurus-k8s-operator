@@ -27,6 +27,8 @@ func (s *executionSpy) reset() {
 var (
 	dnda = fmt.Sprintf("%sA", DataNodeName)
 	dndb = fmt.Sprintf("%sB", DataNodeName)
+	hpa  = fmt.Sprintf("%sA", HttpProxyName)
+	hpb  = fmt.Sprintf("%sB", HttpProxyName)
 )
 
 func buildTestComponents(spy *executionSpy) *componentRegistry {
@@ -43,6 +45,13 @@ func buildTestComponents(spy *executionSpy) *componentRegistry {
 				map[string]component{
 					dnda: newFakeComponent(ComponentName(dnda), spy),
 					dndb: newFakeComponent(ComponentName(dndb), spy),
+				},
+			),
+			HttpProxyName: newMultiComponent(
+				HttpProxyName,
+				map[string]component{
+					hpa: newFakeComponent(ComponentName(hpa), spy),
+					hpb: newFakeComponent(ComponentName(hpb), spy),
 				},
 			),
 		},
@@ -110,6 +119,8 @@ func TestFlows(t *testing.T) {
 				dnda,
 				dndb,
 				string(DiscoveryName),
+				hpa,
+				hpb,
 				string(MasterName),
 				string(QueryTrackerName),
 				string(SchedulerName),
@@ -164,6 +175,8 @@ func TestFlows(t *testing.T) {
 				dnda,
 				dndb,
 				string(DiscoveryName),
+				hpa,
+				hpb,
 				string(MasterName),
 				string(QueryTrackerName),
 				string(SchedulerName),
@@ -192,7 +205,6 @@ func TestFlows(t *testing.T) {
 		setActionSuccessConds(actions[RecoverTabletCellsStep], not(TabletCellsNeedRecover))
 		setActionSuccessConds(actions[DisableSafeModeStep], not(SafeModeEnabled))
 
-		// TODO: debug all components sync
 		require.NoError(t, loopAdvance(comps, actions, state))
 
 		require.Equal(
@@ -206,6 +218,8 @@ func TestFlows(t *testing.T) {
 				dnda,
 				dndb,
 				string(DiscoveryName),
+				hpa,
+				hpb,
 				string(MasterName),
 				string(QueryTrackerName),
 				string(SchedulerName),
