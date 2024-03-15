@@ -11968,6 +11968,9 @@ spec:
                     type: array
                   minReadyInstanceCount:
                     type: integer
+                  monitoringPort:
+                    format: int32
+                    type: integer
                   nativeTransport:
                     description: Component config for native RPC bus transport.
                     properties:
