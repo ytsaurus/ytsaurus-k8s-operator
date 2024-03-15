@@ -34,8 +34,10 @@ func buildTestComponents(spy *executionSpy) *componentRegistry {
 		single: map[ComponentName]component{
 			YtsaurusClientName: newFakeYtsaurusClient(spy),
 
-			MasterName:    newFakeComponent(MasterName, spy),
-			DiscoveryName: newFakeComponent(DiscoveryName, spy),
+			MasterName:       newFakeComponent(MasterName, spy),
+			SchedulerName:    newFakeComponent(SchedulerName, spy),
+			QueryTrackerName: newFakeComponent(QueryTrackerName, spy),
+			DiscoveryName:    newFakeComponent(DiscoveryName, spy),
 			DataNodeName: newMultiComponent(
 				DataNodeName,
 				map[string]component{
@@ -68,7 +70,7 @@ func loopAdvance(comps *componentRegistry, actions map[StepName]stepType, state 
 	fmt.Println(">>> doAdvance loop")
 	defer fmt.Printf("<<< doAdvance end\n\n")
 
-	maxLoops := 10
+	maxLoops := 20
 	for idx := 0; idx < maxLoops; idx++ {
 		fmt.Printf("=== LOOP %d\n", idx)
 		status, err := doAdvance(context.Background(), comps, actions, state)
@@ -97,6 +99,9 @@ func TestFlows(t *testing.T) {
 
 	{
 		t.Log("CLUSTER CREATION")
+		setActionSuccessConds(actions[UpdateOpArchiveStep], not(OperationArchiveNeedUpdate))
+		setActionSuccessConds(actions[InitQueryTrackerStep], not(QueryTrackerNeedsInit))
+
 		require.NoError(t, loopAdvance(comps, actions, state))
 		// Expect all components created.
 		require.Equal(
@@ -106,7 +111,11 @@ func TestFlows(t *testing.T) {
 				dndb,
 				string(DiscoveryName),
 				string(MasterName),
+				string(QueryTrackerName),
+				string(SchedulerName),
 				string(YtsaurusClientName),
+				string(InitQueryTrackerStep),
+				string(UpdateOpArchiveStep),
 			},
 			spy.recordedEvents,
 		)
@@ -119,7 +128,6 @@ func TestFlows(t *testing.T) {
 		setComponentStatus(comps.single[DiscoveryName], components.SyncStatusNeedLocalUpdate)
 
 		require.NoError(t, loopAdvance(comps, actions, state))
-
 		// Expect only Discovery updated.
 		require.Equal(
 			t,
@@ -143,6 +151,42 @@ func TestFlows(t *testing.T) {
 		setActionSuccessConds(actions[RecoverTabletCellsStep], not(TabletCellsNeedRecover))
 		setActionSuccessConds(actions[DisableSafeModeStep], not(SafeModeEnabled))
 
+		require.NoError(t, loopAdvance(comps, actions, state))
+		// Expect full update.
+		require.Equal(
+			t,
+			[]string{
+				string(CheckFullUpdatePossibilityStep),
+				string(EnableSafeModeStep),
+				string(BackupTabletCellsStep),
+				string(BuildMasterSnapshotsStep),
+				string(MasterName),
+				//string(QueryTrackerName),
+				//string(SchedulerName),
+				string(MasterExitReadOnlyStep),
+				string(RecoverTabletCellsStep),
+				//string(UpdateOpArchiveStep),
+				//string(InitQueryTrackerStep),
+				string(DisableSafeModeStep),
+			},
+			spy.recordedEvents,
+		)
+	}
+
+	{
+		t.Log("UPDATE MASTER+SCHEDULER+QT")
+		spy.reset()
+		setComponentStatus(comps.single[MasterName], components.SyncStatusNeedLocalUpdate)
+		setComponentStatus(comps.single[SchedulerName], components.SyncStatusNeedLocalUpdate)
+		setComponentStatus(comps.single[QueryTrackerName], components.SyncStatusNeedLocalUpdate)
+		setActionSuccessConds(actions[CheckFullUpdatePossibilityStep], SafeModeCanBeEnabled)
+		setActionSuccessConds(actions[EnableSafeModeStep], SafeModeEnabled, not(SafeModeCanBeEnabled))
+		setActionSuccessConds(actions[BackupTabletCellsStep], TabletCellsNeedRecover)
+		setActionSuccessConds(actions[BuildMasterSnapshotsStep], MasterIsInReadOnly)
+		setActionSuccessConds(actions[MasterExitReadOnlyStep], not(MasterIsInReadOnly))
+		setActionSuccessConds(actions[RecoverTabletCellsStep], not(TabletCellsNeedRecover))
+		setActionSuccessConds(actions[DisableSafeModeStep], not(SafeModeEnabled))
+
 		// TODO: debug all components sync
 		require.NoError(t, loopAdvance(comps, actions, state))
 
@@ -155,10 +199,12 @@ func TestFlows(t *testing.T) {
 				string(BackupTabletCellsStep),
 				string(BuildMasterSnapshotsStep),
 				string(MasterName),
+				string(QueryTrackerName),
+				string(SchedulerName),
 				string(MasterExitReadOnlyStep),
 				string(RecoverTabletCellsStep),
-				//string(UpdateOpArchiveStep),
-				//string(InitQueryTrackerStep),
+				string(InitQueryTrackerStep),
+				string(UpdateOpArchiveStep),
 				string(DisableSafeModeStep),
 			},
 			spy.recordedEvents,

@@ -15,9 +15,11 @@ type Condition = state.Condition
 
 // Special conditions, which are set automatically by flow code.
 var (
-	AllComponentsSynced = isTrue("AllComponentsSynced")
-	MasterCanBeSynced   = isTrue("MasterCanBeSynced")
-	NothingToDo         = isTrue("NothingToDo")
+	AllComponentsSynced   = isTrue("AllComponentsSynced")
+	MasterCanBeSynced     = isTrue("MasterCanBeSynced")
+	ComponentsCanBeSynced = isTrue("ComponentsCanBeSynced")
+	TabletCellsReady      = isTrue("TabletCellsReady")
+	NothingToDo           = isTrue("NothingToDo")
 )
 
 // Conditions which are set automatically based on components' statuses.
@@ -48,14 +50,14 @@ var (
 
 func updateConditions(ctx context.Context, statuses *statusRegistry, condDeps map[ConditionName][]Condition, state stateManager) error {
 	var err error
-	if err = updateSpecialConditions(ctx, state); err != nil {
-		return fmt.Errorf("failed to update cluster based conditions: %w", err)
-	}
 	if err = updateComponentsBasedConditions(ctx, statuses, state); err != nil {
 		return fmt.Errorf("failed to update components conditions: %w", err)
 	}
 	if err = updateDependenciesBasedConditions(ctx, condDeps, state); err != nil {
 		return err
+	}
+	if err = updateSpecialConditions(ctx, state); err != nil {
+		return fmt.Errorf("failed to update cluster based conditions: %w", err)
 	}
 	return nil
 }

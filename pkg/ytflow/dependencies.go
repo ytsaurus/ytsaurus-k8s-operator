@@ -47,6 +47,8 @@ var conditionDependencies = map[ConditionName][]Condition{
 	NothingToDo.Name: {
 		AllComponentsSynced,
 		not(SafeModeEnabled),
+		not(OperationArchiveNeedUpdate),
+		not(QueryTrackerNeedsInit),
 	},
 
 	isReady(YtsaurusClientName).Name: {
@@ -103,16 +105,27 @@ var stepDependencies = map[StepName][]Condition{
 
 	DiscoveryStep: {
 		needSync(DiscoveryName),
+		ComponentsCanBeSynced,
 	},
 	HttpProxyStep: {
 		needSync(HttpProxyName),
+		ComponentsCanBeSynced,
 	},
 	DataNodeStep: {
 		needSync(DataNodeName),
+		ComponentsCanBeSynced,
 	},
 	MasterStep: {
 		needSync(MasterName),
 		MasterCanBeSynced,
+	},
+	SchedulerStep: {
+		needSync(SchedulerName),
+		ComponentsCanBeSynced,
+	},
+	QueryTrackerStep: {
+		needSync(QueryTrackerName),
+		ComponentsCanBeSynced,
 	},
 
 	MasterExitReadOnlyStep: {
@@ -129,17 +142,16 @@ var stepDependencies = map[StepName][]Condition{
 	},
 	UpdateOpArchiveStep: {
 		OperationArchiveNeedUpdate,
-		// Do we *really* depend on tablet cells in this job,
-		// or it could be done independently after exit RO?
-		not(TabletCellsNeedRecover),
 		not(MasterIsInReadOnly), // we need to write here
+		TabletCellsReady,
 	},
 	InitQueryTrackerStep: {
 		QueryTrackerNeedsInit,
+		not(MasterIsInReadOnly), // we need to write in this step
+		TabletCellsReady,
 		// Do we *really* depend on tablet cells OR UpdateOpArchiveStep in this job,
 		// or it could be done independently after exit RO?
-		not(OperationArchiveNeedUpdate),
-		not(MasterIsInReadOnly), // we need to write in this step
+		//not(OperationArchiveNeedUpdate),
 	},
 	DisableSafeModeStep: {
 		SafeModeEnabled,

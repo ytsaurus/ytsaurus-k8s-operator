@@ -65,7 +65,7 @@ func reportSteps(steps *stepRegistry, runnable map[StepName]stepType, state stat
 			} else {
 				depStr += "[ ]"
 			}
-			depStr += " " + string(cond.Name)
+			depStr += cond.String()
 			deps = append(deps, depStr)
 		}
 		return strings.Join(deps, ", ")
