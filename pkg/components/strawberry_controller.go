@@ -18,7 +18,7 @@ import (
 
 type StrawberryController struct {
 	localComponent
-	cfgen              *ytconfig.Generator
+	cfgen              ytconfig.StrawberryControllerNodeConfigGenerator
 	microservice       microservice
 	initUserAndUrlJob  *InitJob
 	initChytClusterJob *InitJob
@@ -42,7 +42,7 @@ func getControllerConfigFileName(name string) string {
 const ChytInitClusterJobConfigFileName = "chyt-init-cluster.yson"
 
 func NewStrawberryController(
-	cfgen *ytconfig.Generator,
+	cfgen ytconfig.StrawberryControllerNodeConfigGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	scheduler Component,
@@ -108,7 +108,10 @@ func NewStrawberryController(
 			"cluster",
 			ChytInitClusterJobConfigFileName,
 			image,
-			cfgen.GetChytInitClusterConfig),
+			func() ([]byte, error) {
+				return cfgen.GetChytInitClusterConfig(*resource.Spec.StrawberryController)
+			},
+		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			&l,

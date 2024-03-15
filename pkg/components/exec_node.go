@@ -17,7 +17,7 @@ type ExecNode struct {
 }
 
 func NewExecNode(
-	cfgen *ytconfig.NodeGenerator,
+	cfgen ytconfig.ExecNodeConfigGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	spec ytv1.ExecNodesSpec,
@@ -48,7 +48,6 @@ func NewExecNode(
 		localComponent: newLocalComponent(&l, ytsaurus),
 		baseExecNode: baseExecNode{
 			server:     srv,
-			cfgen:      cfgen,
 			sidecars:   spec.Sidecars,
 			privileged: spec.Privileged,
 		},

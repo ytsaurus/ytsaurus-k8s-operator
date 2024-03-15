@@ -16,7 +16,7 @@ import (
 
 type HttpProxy struct {
 	localServerComponent
-	cfgen *ytconfig.Generator
+	cfgen ytconfig.HTTPProxyNodeConfigGenerator
 
 	serviceType      corev1.ServiceType
 	master           Component
@@ -29,7 +29,7 @@ type HttpProxy struct {
 }
 
 func NewHTTPProxy(
-	cfgen *ytconfig.Generator,
+	cfgen ytconfig.HTTPProxyNodeConfigGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
 	spec ytv1.HTTPProxiesSpec) *HttpProxy {

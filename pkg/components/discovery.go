@@ -13,10 +13,10 @@ import (
 
 type Discovery struct {
 	localServerComponent
-	cfgen *ytconfig.Generator
+	cfgen ytconfig.DiscoveryNodeConfigGenerator
 }
 
-func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Discovery {
+func NewDiscovery(cfgen ytconfig.DiscoveryNodeConfigGenerator, ytsaurus *apiproxy.Ytsaurus) *Discovery {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -34,7 +34,7 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Disco
 		"ytserver-discovery.yson",
 		cfgen.GetDiscoveryStatefulSetName(),
 		cfgen.GetDiscoveryServiceName(),
-		cfgen.GetDiscoveryConfig,
+		func() ([]byte, error) { return cfgen.GetDiscoveryConfig(resource.Spec.Discovery.InstanceSpec) },
 	)
 
 	return &Discovery{

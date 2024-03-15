@@ -18,7 +18,7 @@ import (
 type Chyt struct {
 	labeller *labeller.Labeller
 	chyt     *apiproxy.Chyt
-	cfgen    *ytconfig.Generator
+	cfgen    ytconfig.ChytNodeConfigGenerator
 	ytsaurus *ytv1.Ytsaurus
 
 	secret *resources.StringSecret
@@ -29,7 +29,7 @@ type Chyt struct {
 }
 
 func NewChyt(
-	cfgen *ytconfig.Generator,
+	cfgen ytconfig.ChytNodeConfigGenerator,
 	chyt *apiproxy.Chyt,
 	ytsaurus *ytv1.Ytsaurus) *Chyt {
 

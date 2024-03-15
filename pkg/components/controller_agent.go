@@ -13,11 +13,11 @@ import (
 
 type ControllerAgent struct {
 	localServerComponent
-	cfgen  *ytconfig.Generator
+	cfgen  ytconfig.ControllerAgentConfigGenerator
 	master Component
 }
 
-func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *ControllerAgent {
+func NewControllerAgent(cfgen ytconfig.ControllerAgentConfigGenerator, ytsaurus *apiproxy.Ytsaurus, master Component) *ControllerAgent {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -35,7 +35,9 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		"ytserver-controller-agent.yson",
 		"ca",
 		"controller-agents",
-		cfgen.GetControllerAgentConfig,
+		func() ([]byte, error) {
+			return cfgen.GetControllerAgentConfig(resource.Spec.ControllerAgents.InstanceSpec)
+		},
 	)
 
 	return &ControllerAgent{

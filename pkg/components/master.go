@@ -28,14 +28,14 @@ const (
 
 type Master struct {
 	localServerComponent
-	cfgen *ytconfig.Generator
+	cfgen ytconfig.MasterNodeConfigGenerator
 
 	initJob          *InitJob
 	exitReadOnlyJob  *InitJob
 	adminCredentials corev1.Secret
 }
 
-func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
+func NewMaster(cfgen ytconfig.MasterNodeConfigGenerator, ytsaurus *apiproxy.Ytsaurus) *Master {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -54,7 +54,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		"ytserver-master.yson",
 		cfgen.GetMastersStatefulSetName(),
 		cfgen.GetMastersServiceName(),
-		cfgen.GetMasterConfig,
+		func() ([]byte, error) { return cfgen.GetMasterConfig(resource.Spec.PrimaryMasters.InstanceSpec) },
 	)
 
 	initJob := NewInitJob(

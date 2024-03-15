@@ -15,7 +15,7 @@ import (
 
 type TcpProxy struct {
 	localServerComponent
-	cfgen *ytconfig.Generator
+	cfgen ytconfig.TCPNodeConfigGenerator
 
 	master Component
 
@@ -24,7 +24,7 @@ type TcpProxy struct {
 }
 
 func NewTCPProxy(
-	cfgen *ytconfig.Generator,
+	cfgen ytconfig.TCPNodeConfigGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
 	spec ytv1.TCPProxiesSpec) *TcpProxy {

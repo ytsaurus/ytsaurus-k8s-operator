@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -12,10 +13,10 @@ import (
 
 type masterCache struct {
 	localServerComponent
-	cfgen *ytconfig.Generator
+	cfgen ytconfig.MasterCacheNodeConfigGenerator
 }
 
-func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component {
+func NewMasterCache(cfgen ytconfig.MasterCacheNodeConfigGenerator, ytsaurus *apiproxy.Ytsaurus) Component {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -34,7 +35,7 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Comp
 		"ytserver-master-cache.yson",
 		cfgen.GetMasterCachesStatefulSetName(),
 		cfgen.GetMasterCachesServiceName(),
-		cfgen.GetMasterCachesConfig,
+		func() ([]byte, error) { return cfgen.GetMasterCachesConfig(resource.Spec.MasterCaches.InstanceSpec) },
 	)
 
 	return &masterCache{

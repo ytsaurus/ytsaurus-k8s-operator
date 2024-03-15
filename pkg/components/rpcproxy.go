@@ -15,7 +15,7 @@ import (
 
 type RpcProxy struct {
 	localServerComponent
-	cfgen *ytconfig.Generator
+	cfgen ytconfig.RPCProxyNodeConfigGenerator
 
 	master Component
 
@@ -25,7 +25,7 @@ type RpcProxy struct {
 }
 
 func NewRPCProxy(
-	cfgen *ytconfig.Generator,
+	cfgen ytconfig.RPCProxyNodeConfigGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
 	spec ytv1.RPCProxiesSpec) *RpcProxy {

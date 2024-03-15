@@ -9,12 +9,10 @@ import (
 	ptr "k8s.io/utils/pointer"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
 type baseExecNode struct {
 	server     server
-	cfgen      *ytconfig.NodeGenerator
 	sidecars   []string
 	privileged bool
 }

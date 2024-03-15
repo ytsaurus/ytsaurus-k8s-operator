@@ -13,12 +13,12 @@ import (
 
 type DataNode struct {
 	localServerComponent
-	cfgen  *ytconfig.NodeGenerator
+	cfgen  ytconfig.DataNodeConfigGenerator
 	master Component
 }
 
 func NewDataNode(
-	cfgen *ytconfig.NodeGenerator,
+	cfgen ytconfig.DataNodeConfigGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	spec ytv1.DataNodesSpec,

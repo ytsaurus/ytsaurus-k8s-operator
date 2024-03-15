@@ -18,13 +18,13 @@ import (
 
 type YqlAgent struct {
 	localServerComponent
-	cfgen           *ytconfig.Generator
+	cfgen           ytconfig.YQLAgentNodeConfigGenerator
 	master          Component
 	initEnvironment *InitJob
 	secret          *resources.StringSecret
 }
 
-func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *YqlAgent {
+func NewYQLAgent(cfgen ytconfig.YQLAgentNodeConfigGenerator, ytsaurus *apiproxy.Ytsaurus, master Component) *YqlAgent {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -43,7 +43,9 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		"ytserver-yql-agent.yson",
 		cfgen.GetYQLAgentStatefulSetName(),
 		cfgen.GetYQLAgentServiceName(),
-		cfgen.GetYQLAgentConfig,
+		func() ([]byte, error) {
+			return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents.InstanceSpec)
+		},
 	)
 
 	return &YqlAgent{

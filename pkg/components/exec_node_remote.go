@@ -16,7 +16,7 @@ type RemoteExecNode struct {
 }
 
 func NewRemoteExecNodes(
-	cfgen *ytconfig.NodeGenerator,
+	cfgen ytconfig.ExecNodeConfigGenerator,
 	nodes *ytv1.RemoteExecNodes,
 	proxy apiproxy.APIProxy,
 	spec ytv1.ExecNodesSpec,
@@ -46,7 +46,6 @@ func NewRemoteExecNodes(
 		baseComponent: baseComponent{labeller: &l},
 		baseExecNode: baseExecNode{
 			server:     srv,
-			cfgen:      cfgen,
 			sidecars:   spec.Sidecars,
 			privileged: spec.Privileged,
 		},

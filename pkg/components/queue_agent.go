@@ -21,7 +21,7 @@ import (
 
 type QueueAgent struct {
 	localServerComponent
-	cfgen *ytconfig.Generator
+	cfgen ytconfig.QueueAgentNodeConfigGenerator
 
 	ytsaurusClient internalYtsaurusClient
 	master         Component
@@ -32,7 +32,7 @@ type QueueAgent struct {
 }
 
 func NewQueueAgent(
-	cfgen *ytconfig.Generator,
+	cfgen ytconfig.QueueAgentNodeConfigGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	yc internalYtsaurusClient,
 	master Component,
@@ -56,7 +56,7 @@ func NewQueueAgent(
 		"ytserver-queue-agent.yson",
 		cfgen.GetQueueAgentStatefulSetName(),
 		cfgen.GetQueueAgentServiceName(),
-		cfgen.GetQueueAgentConfig,
+		func() ([]byte, error) { return cfgen.GetQueueAgentConfig(resource.Spec.QueueAgents.InstanceSpec) },
 	)
 
 	image := ytsaurus.GetResource().Spec.CoreImage

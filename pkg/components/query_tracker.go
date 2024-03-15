@@ -22,7 +22,7 @@ import (
 
 type QueryTracker struct {
 	localServerComponent
-	cfgen *ytconfig.Generator
+	cfgen ytconfig.QueryTrackerNodeConfigGenerator
 
 	ytsaurusClient internalYtsaurusClient
 	tabletNodes    []Component
@@ -32,7 +32,7 @@ type QueryTracker struct {
 }
 
 func NewQueryTracker(
-	cfgen *ytconfig.Generator,
+	cfgen ytconfig.QueryTrackerNodeConfigGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	yc internalYtsaurusClient,
 	tabletNodes []Component,
@@ -55,7 +55,7 @@ func NewQueryTracker(
 		"ytserver-query-tracker.yson",
 		cfgen.GetQueryTrackerStatefulSetName(),
 		cfgen.GetQueryTrackerServiceName(),
-		cfgen.GetQueryTrackerConfig,
+		func() ([]byte, error) { return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers.InstanceSpec) },
 	)
 
 	image := ytsaurus.GetResource().Spec.CoreImage

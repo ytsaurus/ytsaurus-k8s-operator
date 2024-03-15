@@ -22,7 +22,7 @@ const DefaultBundle string = "default"
 
 type TabletNode struct {
 	localServerComponent
-	cfgen *ytconfig.NodeGenerator
+	cfgen ytconfig.TabletNodeConfigGenerator
 
 	ytsaurusClient internalYtsaurusClient
 
@@ -32,7 +32,7 @@ type TabletNode struct {
 }
 
 func NewTabletNode(
-	cfgen *ytconfig.NodeGenerator,
+	cfgen ytconfig.TabletNodeConfigGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	ytsaurusClient internalYtsaurusClient,
 	spec ytv1.TabletNodesSpec,

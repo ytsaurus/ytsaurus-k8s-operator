@@ -30,6 +30,24 @@ type GeneratorDescriptor struct {
 	Fmt ConfigFormat
 }
 
+var (
+	_ MasterNodeConfigGenerator      = (*Generator)(nil)
+	_ DiscoveryNodeConfigGenerator   = (*Generator)(nil)
+	_ SchedulerNodeConfigGenerator   = (*Generator)(nil)
+	_ MasterCacheNodeConfigGenerator = (*Generator)(nil)
+
+	_ HTTPProxyNodeConfigGenerator = (*Generator)(nil)
+	_ RPCProxyNodeConfigGenerator  = (*Generator)(nil)
+	_ TCPNodeConfigGenerator       = (*Generator)(nil)
+
+	_ QueryTrackerNodeConfigGenerator = (*Generator)(nil)
+	_ QueueAgentNodeConfigGenerator   = (*Generator)(nil)
+	_ YQLAgentNodeConfigGenerator     = (*Generator)(nil)
+
+	_ ChytNodeConfigGenerator                 = (*Generator)(nil)
+	_ StrawberryControllerNodeConfigGenerator = (*Generator)(nil)
+)
+
 type Generator struct {
 	BaseGenerator
 	ytsaurus *ytv1.Ytsaurus
@@ -284,7 +302,7 @@ func (g *Generator) GetStrawberryControllerConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) GetChytInitClusterConfig() ([]byte, error) {
+func (g *Generator) GetChytInitClusterConfig(_ ytv1.StrawberryControllerSpec) ([]byte, error) {
 	c := getChytInitCluster()
 	c.Proxy = g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 	return marshallYsonConfig(c)
@@ -317,7 +335,7 @@ func (g *Generator) getMasterConfigImpl() (MasterServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetMasterConfig() ([]byte, error) {
+func (g *Generator) GetMasterConfig(_ ytv1.InstanceSpec) ([]byte, error) {
 	c, err := g.getMasterConfigImpl()
 	if err != nil {
 		return nil, err
@@ -353,7 +371,7 @@ func (g *Generator) getSchedulerConfigImpl() (SchedulerServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetSchedulerConfig() ([]byte, error) {
+func (g *Generator) GetSchedulerConfig(_ ytv1.InstanceSpec) ([]byte, error) {
 	if g.ytsaurus.Spec.Schedulers == nil {
 		return []byte{}, nil
 	}
@@ -447,7 +465,7 @@ func (g *Generator) getControllerAgentConfigImpl() (ControllerAgentServer, error
 	return c, nil
 }
 
-func (g *Generator) GetControllerAgentConfig() ([]byte, error) {
+func (g *Generator) GetControllerAgentConfig(_ ytv1.InstanceSpec) ([]byte, error) {
 	if g.ytsaurus.Spec.ControllerAgents == nil {
 		return []byte{}, nil
 	}
@@ -564,7 +582,7 @@ func (g *Generator) getQueryTrackerConfigImpl() (QueryTrackerServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetQueryTrackerConfig() ([]byte, error) {
+func (g *Generator) GetQueryTrackerConfig(_ ytv1.InstanceSpec) ([]byte, error) {
 	if g.ytsaurus.Spec.QueryTrackers == nil {
 		return []byte{}, nil
 	}
@@ -590,7 +608,7 @@ func (g *Generator) getQueueAgentConfigImpl() (QueueAgentServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetQueueAgentConfig() ([]byte, error) {
+func (g *Generator) GetQueueAgentConfig(_ ytv1.InstanceSpec) ([]byte, error) {
 	if g.ytsaurus.Spec.QueueAgents == nil {
 		return []byte{}, nil
 	}
@@ -629,7 +647,7 @@ func (g *Generator) getYQLAgentConfigImpl() (YQLAgentServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetYQLAgentConfig() ([]byte, error) {
+func (g *Generator) GetYQLAgentConfig(_ ytv1.InstanceSpec) ([]byte, error) {
 	if g.ytsaurus.Spec.YQLAgents == nil {
 		return []byte{}, nil
 	}
@@ -690,7 +708,7 @@ func (g *Generator) getDiscoveryConfigImpl() (DiscoveryServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetDiscoveryConfig() ([]byte, error) {
+func (g *Generator) GetDiscoveryConfig(_ ytv1.InstanceSpec) ([]byte, error) {
 	c, err := g.getDiscoveryConfigImpl()
 	if err != nil {
 		return nil, err
@@ -708,7 +726,7 @@ func (g *Generator) getMasterCachesConfigImpl() (MasterCacheServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetMasterCachesConfig() ([]byte, error) {
+func (g *Generator) GetMasterCachesConfig(_ ytv1.InstanceSpec) ([]byte, error) {
 	if g.ytsaurus.Spec.MasterCaches == nil {
 		return []byte{}, nil
 	}

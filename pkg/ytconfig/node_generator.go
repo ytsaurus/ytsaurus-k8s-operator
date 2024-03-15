@@ -6,6 +6,12 @@ import (
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
+var (
+	_ DataNodeConfigGenerator   = (*NodeGenerator)(nil)
+	_ ExecNodeConfigGenerator   = (*NodeGenerator)(nil)
+	_ TabletNodeConfigGenerator = (*NodeGenerator)(nil)
+)
+
 type NodeGenerator struct {
 	BaseGenerator
 }
