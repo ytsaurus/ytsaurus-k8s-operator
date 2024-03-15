@@ -5,11 +5,11 @@ import (
 )
 
 type statusRegistry struct {
-	single map[ComponentName]componentStatus
+	statuses map[ComponentName]componentStatus
 }
 
 func observe(ctx context.Context, comps *componentRegistry) (*statusRegistry, error) {
-	single := make(map[ComponentName]componentStatus)
+	statuses := make(map[ComponentName]componentStatus)
 
 	// Fetch stage.
 	for _, comp := range comps.single {
@@ -20,10 +20,10 @@ func observe(ctx context.Context, comps *componentRegistry) (*statusRegistry, er
 
 	// Status stage.
 	for name, comp := range comps.single {
-		single[name] = comp.Status(ctx)
+		statuses[name] = comp.Status(ctx)
 	}
 
 	return &statusRegistry{
-		single: single,
+		statuses: statuses,
 	}, nil
 }

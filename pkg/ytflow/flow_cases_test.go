@@ -152,7 +152,6 @@ func TestFlows(t *testing.T) {
 		setActionSuccessConds(actions[DisableSafeModeStep], not(SafeModeEnabled))
 
 		require.NoError(t, loopAdvance(comps, actions, state))
-		// Expect full update.
 		require.Equal(
 			t,
 			[]string{
@@ -160,13 +159,19 @@ func TestFlows(t *testing.T) {
 				string(EnableSafeModeStep),
 				string(BackupTabletCellsStep),
 				string(BuildMasterSnapshotsStep),
+
+				// All components but ytsaurus client.
+				dnda,
+				dndb,
+				string(DiscoveryName),
 				string(MasterName),
-				//string(QueryTrackerName),
-				//string(SchedulerName),
+				string(QueryTrackerName),
+				string(SchedulerName),
+
 				string(MasterExitReadOnlyStep),
 				string(RecoverTabletCellsStep),
-				//string(UpdateOpArchiveStep),
-				//string(InitQueryTrackerStep),
+				string(InitQueryTrackerStep),
+				string(UpdateOpArchiveStep),
 				string(DisableSafeModeStep),
 			},
 			spy.recordedEvents,
@@ -190,7 +195,6 @@ func TestFlows(t *testing.T) {
 		// TODO: debug all components sync
 		require.NoError(t, loopAdvance(comps, actions, state))
 
-		// Expect full update.
 		require.Equal(
 			t,
 			[]string{
@@ -198,14 +202,34 @@ func TestFlows(t *testing.T) {
 				string(EnableSafeModeStep),
 				string(BackupTabletCellsStep),
 				string(BuildMasterSnapshotsStep),
+
+				dnda,
+				dndb,
+				string(DiscoveryName),
 				string(MasterName),
 				string(QueryTrackerName),
 				string(SchedulerName),
+
 				string(MasterExitReadOnlyStep),
 				string(RecoverTabletCellsStep),
 				string(InitQueryTrackerStep),
 				string(UpdateOpArchiveStep),
 				string(DisableSafeModeStep),
+			},
+			spy.recordedEvents,
+		)
+	}
+
+	{
+		t.Log("UPDATE DISCOVERY ONLY AGAIN")
+		spy.reset()
+		setComponentStatus(comps.single[DiscoveryName], components.SyncStatusNeedLocalUpdate)
+
+		require.NoError(t, loopAdvance(comps, actions, state))
+		require.Equal(
+			t,
+			[]string{
+				string(DiscoveryName),
 			},
 			spy.recordedEvents,
 		)

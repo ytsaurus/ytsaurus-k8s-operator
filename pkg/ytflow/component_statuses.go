@@ -28,10 +28,19 @@ func updateComponentsBasedConditions(ctx context.Context, statuses *statusRegist
 	allSynced := true
 	var becameSynced []ComponentName
 
-	// Actualize `built` and `needSync` conditions for the single components.
-	for compName, status := range statuses.single {
+	_, masterNeedsSync := interpretSyncStatus(statuses.statuses[MasterName].SyncStatus)
+
+	// Actualize `built` and `needSync` conditions.
+	for compName, status := range statuses.statuses {
 		neededSyncBefore := state.Get(needSync(compName).Name)
 		compIsBuilt, compNeedsSync := interpretSyncStatus(status.SyncStatus)
+
+		if masterNeedsSync {
+			// Current behaviour is we sync all the components in case of master update.
+			// WE may want to change this in the future, but after all diffs in spec would be considered by the operator.
+			compNeedsSync = true
+		}
+
 		msg := fmt.Sprintf("%s: %s", status.SyncStatus, status.Message)
 		if err := state.Set(ctx, isBuilt(compName).Name, compIsBuilt, msg); err != nil {
 			return err
