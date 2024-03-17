@@ -84,11 +84,11 @@ func NewGenerator(
 		UISpec:           ytsaurus.Spec.UI,
 	}
 
+	// TODO: drop dependency on ytsaurus object (@kruft)
 	baseGenerator := NewLocalBaseGenerator(ytsaurus, clusterDomain)
 	return &Generator{
 		BaseGenerator: *baseGenerator,
-		//ytsaurus:      ytsaurus,
-		cluster: c,
+		cluster:       c,
 	}
 }
 func (g *BaseGenerator) getMasterPodFqdnSuffix() string {
