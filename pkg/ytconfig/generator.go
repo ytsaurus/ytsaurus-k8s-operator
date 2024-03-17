@@ -63,7 +63,6 @@ type Cluster struct {
 
 type Generator struct {
 	BaseGenerator
-	//ytsaurus *ytv1.Ytsaurus
 
 	cluster Cluster
 }
