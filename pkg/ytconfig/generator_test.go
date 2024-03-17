@@ -81,14 +81,15 @@ var (
 
 func TestGetChytInitClusterConfig(t *testing.T) {
 	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetChytInitClusterConfig()
+	cfg, err := g.GetChytInitClusterConfig(v1.StrawberryControllerSpec{})
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
 
 func TestGetControllerAgentsConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetControllerAgentConfig()
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetControllerAgentConfig(ytsaurus.Spec.ControllerAgents)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -114,8 +115,9 @@ func TestGetDataNodeWithoutYtsaurusConfig(t *testing.T) {
 }
 
 func TestGetDiscoveryConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetDiscoveryConfig()
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetDiscoveryConfig(&ytsaurus.Spec.Discovery)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -148,15 +150,17 @@ func TestGetHTTPProxyConfig(t *testing.T) {
 }
 
 func TestGetMasterConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetMasterConfig()
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetMasterConfig(ytsaurus.Spec)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
 
 func TestGetMasterWithFixedHostsConfig(t *testing.T) {
-	g := NewGenerator(withFixedMasterHosts(getYtsaurus()), testClusterDomain)
-	cfg, err := g.GetMasterConfig()
+	ytsaurus := withFixedMasterHosts(getYtsaurus())
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetMasterConfig(ytsaurus.Spec)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -169,15 +173,17 @@ func TestGetNativeClientConfig(t *testing.T) {
 }
 
 func TestGetQueryTrackerConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetQueryTrackerConfig()
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetQueryTrackerConfig(ytsaurus.Spec.QueryTrackers)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
 
 func TestGetQueueAgentConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetQueueAgentConfig()
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetQueueAgentConfig(ytsaurus.Spec.QueueAgents)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -190,15 +196,17 @@ func TestGetRPCProxyConfig(t *testing.T) {
 }
 
 func TestGetSchedulerConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetSchedulerConfig()
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetSchedulerConfig(ytsaurus.Spec.Schedulers, ytsaurus.Spec.TabletNodes)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
 
 func TestGetSchedulerWithFixedMasterHostsConfig(t *testing.T) {
-	g := NewGenerator(withFixedMasterHosts(withScheduler(getYtsaurus())), testClusterDomain)
-	cfg, err := g.GetSchedulerConfig()
+	ytsaurus := withFixedMasterHosts(withScheduler(getYtsaurus()))
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetSchedulerConfig(ytsaurus.Spec.Schedulers, ytsaurus.Spec.TabletNodes)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -232,7 +240,7 @@ func TestGetTabletNodeWithoutYtsaurusConfig(t *testing.T) {
 
 func TestGetTCPProxyConfig(t *testing.T) {
 	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetTCPProxyConfig(getTCPProxySpec())
+	cfg, err := g.GetTCPProxyConfig(ptr.T(getTCPProxySpec()))
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -252,22 +260,25 @@ func TestGetUICustomConfig(t *testing.T) {
 }
 
 func TestGetYQLAgentConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetYQLAgentConfig()
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetYQLAgentConfig(ytsaurus.Spec.YQLAgents)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
 
 func TestGetMasterCachesWithFixedHostsConfig(t *testing.T) {
-	g := NewGenerator(withFixedMasterCachesHosts(getYtsaurusWithEverything()), testClusterDomain)
-	cfg, err := g.GetMasterCachesConfig()
+	ytsaurus := withFixedMasterCachesHosts(getYtsaurusWithEverything())
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetMasterCachesConfig(ytsaurus.Spec.MasterCaches)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
 
 func TestGetMasterCachesConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetMasterCachesConfig()
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetMasterCachesConfig(ytsaurus.Spec.MasterCaches)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }

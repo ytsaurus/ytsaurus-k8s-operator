@@ -3,6 +3,7 @@ package ytconfig
 import (
 	"fmt"
 
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 )
 
@@ -56,18 +57,26 @@ func (g *BaseGenerator) GetDiscoveryPodNames() []string {
 	return podNames
 }
 
-func (g *Generator) GetYQLAgentPodNames() []string {
-	podNames := make([]string, 0, g.ytsaurus.Spec.YQLAgents.InstanceSpec.InstanceCount)
-	for i := 0; i < int(g.ytsaurus.Spec.YQLAgents.InstanceSpec.InstanceCount); i++ {
+func (g *Generator) GetYQLAgentPodNames(spec *ytv1.YQLAgentSpec) []string {
+	if spec == nil {
+		return nil
+	}
+
+	podNames := make([]string, 0, spec.InstanceSpec.InstanceCount)
+	for i := 0; i < int(spec.InstanceSpec.InstanceCount); i++ {
 		podNames = append(podNames, fmt.Sprintf("%s-%d", g.GetYQLAgentStatefulSetName(), i))
 	}
 
 	return podNames
 }
 
-func (g *Generator) GetQueueAgentPodNames() []string {
-	podNames := make([]string, 0, g.ytsaurus.Spec.QueueAgents.InstanceSpec.InstanceCount)
-	for i := 0; i < int(g.ytsaurus.Spec.QueueAgents.InstanceSpec.InstanceCount); i++ {
+func (g *Generator) GetQueueAgentPodNames(spec *ytv1.QueueAgentSpec) []string {
+	if spec == nil {
+		return nil
+	}
+
+	podNames := make([]string, 0, spec.InstanceSpec.InstanceCount)
+	for i := 0; i < int(spec.InstanceSpec.InstanceCount); i++ {
 		podNames = append(podNames, fmt.Sprintf("%s-%d", g.GetQueueAgentStatefulSetName(), i))
 	}
 
@@ -77,14 +86,14 @@ func (g *Generator) GetQueueAgentPodNames() []string {
 func (g *Generator) GetHTTPProxiesServiceAddress(role string) string {
 	return fmt.Sprintf("%s.%s.svc.%s",
 		g.GetHTTPProxiesHeadlessServiceName(role),
-		g.ytsaurus.Namespace,
+		g.cluster.Namespace,
 		g.clusterDomain)
 }
 
 func (g *Generator) GetStrawberryControllerServiceAddress() string {
 	return fmt.Sprintf("%s.%s.svc.%s",
 		g.GetStrawberryControllerHeadlessServiceName(),
-		g.ytsaurus.Namespace,
+		g.cluster.Namespace,
 		g.clusterDomain)
 }
 
@@ -107,7 +116,7 @@ func (g *Generator) GetHTTPProxiesStatefulSetName(role string) string {
 func (g *Generator) GetHTTPProxiesAddress(role string) string {
 	return fmt.Sprintf("%s.%s.svc.%s",
 		g.GetHTTPProxiesServiceName(role),
-		g.ytsaurus.Namespace,
+		g.cluster.Namespace,
 		g.clusterDomain)
 }
 

@@ -54,7 +54,7 @@ func NewScheduler(
 		cfgen.GetSchedulerStatefulSetName(),
 		cfgen.GetSchedulerServiceName(),
 		func() ([]byte, error) {
-			return cfgen.GetSchedulerConfig(resource.Spec.Schedulers.InstanceSpec)
+			return cfgen.GetSchedulerConfig(resource.Spec.Schedulers, resource.Spec.TabletNodes)
 		},
 	)
 

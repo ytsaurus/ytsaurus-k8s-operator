@@ -48,19 +48,48 @@ var (
 	_ StrawberryControllerNodeConfigGenerator = (*Generator)(nil)
 )
 
+type Cluster struct {
+	Namespace string
+
+	Name    string
+	CellTag int16
+
+	UsePorto    bool
+	HostNetwork bool
+
+	OauthServiceSpec *ytv1.OauthServiceSpec
+	UISpec           *ytv1.UISpec
+}
+
 type Generator struct {
 	BaseGenerator
-	ytsaurus *ytv1.Ytsaurus
+	//ytsaurus *ytv1.Ytsaurus
+
+	cluster Cluster
 }
 
 func NewGenerator(
 	ytsaurus *ytv1.Ytsaurus,
 	clusterDomain string,
 ) *Generator {
+	c := Cluster{
+		Namespace: ytsaurus.Namespace,
+
+		Name:    ytsaurus.Name,
+		CellTag: ytsaurus.Spec.PrimaryMasters.CellTag,
+
+		UsePorto:    ytsaurus.Spec.UsePorto,
+		HostNetwork: ytsaurus.Spec.HostNetwork,
+
+		OauthServiceSpec: ytsaurus.Spec.OauthService,
+		UISpec:           ytsaurus.Spec.UI,
+	}
+
 	baseGenerator := NewLocalBaseGenerator(ytsaurus, clusterDomain)
 	return &Generator{
 		BaseGenerator: *baseGenerator,
-		ytsaurus:      ytsaurus,
+		//ytsaurus:      ytsaurus,
+		cluster: c,
 	}
 }
 func (g *BaseGenerator) getMasterPodFqdnSuffix() string {
@@ -114,26 +143,34 @@ func (g *BaseGenerator) getDiscoveryAddresses() []string {
 	return names
 }
 
-func (g *Generator) GetYQLAgentAddresses() []string {
-	names := make([]string, 0, g.ytsaurus.Spec.YQLAgents.InstanceCount)
-	for _, podName := range g.GetYQLAgentPodNames() {
+func (g *Generator) GetYQLAgentAddresses(spec *ytv1.YQLAgentSpec) []string {
+	if spec == nil {
+		return nil
+	}
+
+	names := make([]string, 0, spec.InstanceCount)
+	for _, podName := range g.GetYQLAgentPodNames(spec) {
 		names = append(names, fmt.Sprintf("%s.%s.%s.svc.%s:%d",
 			podName,
 			g.GetYQLAgentServiceName(),
-			g.ytsaurus.Namespace,
+			g.cluster.Namespace,
 			g.clusterDomain,
 			consts.YQLAgentRPCPort))
 	}
 	return names
 }
 
-func (g *Generator) GetQueueAgentAddresses() []string {
-	names := make([]string, 0, g.ytsaurus.Spec.QueueAgents.InstanceCount)
-	for _, podName := range g.GetQueueAgentPodNames() {
+func (g *Generator) GetQueueAgentAddresses(spec *ytv1.QueueAgentSpec) []string {
+	if spec == nil {
+		return nil
+	}
+
+	names := make([]string, 0, spec.InstanceCount)
+	for _, podName := range g.GetQueueAgentPodNames(spec) {
 		names = append(names, fmt.Sprintf("%s.%s.%s.svc.%s:%d",
 			podName,
 			g.GetQueueAgentServiceName(),
-			g.ytsaurus.Namespace,
+			g.cluster.Namespace,
 			g.clusterDomain,
 			consts.QueueAgentRPCPort))
 	}
@@ -144,7 +181,7 @@ func (g *Generator) fillDriver(c *Driver) {
 	c.TimestampProviders.Addresses = g.getMasterAddresses()
 
 	c.PrimaryMaster.Addresses = g.getMasterAddresses()
-	c.PrimaryMaster.CellID = generateCellID(g.ytsaurus.Spec.PrimaryMasters.CellTag)
+	c.PrimaryMaster.CellID = generateCellID(g.cluster.CellTag)
 	g.fillPrimaryMaster(&c.PrimaryMaster)
 }
 
@@ -297,7 +334,7 @@ func (g *Generator) GetStrawberryControllerConfig() ([]byte, error) {
 	proxy := g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 	c.LocationProxies = []string{proxy}
 	c.HTTPLocationAliases = map[string][]string{
-		proxy: []string{g.ytsaurus.Name},
+		proxy: []string{g.cluster.Name},
 	}
 	return marshallYsonConfig(c)
 }
@@ -308,19 +345,18 @@ func (g *Generator) GetChytInitClusterConfig(_ ytv1.StrawberryControllerSpec) ([
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getMasterConfigImpl() (MasterServer, error) {
-	spec := &g.ytsaurus.Spec.PrimaryMasters
-	c, err := getMasterServerCarcass(spec)
+func (g *Generator) getMasterConfigImpl(spec ytv1.YtsaurusSpec) (MasterServer, error) {
+	c, err := getMasterServerCarcass(&spec.PrimaryMasters)
 	if err != nil {
 		return MasterServer{}, err
 	}
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.PrimaryMasters.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	g.fillPrimaryMaster(&c.PrimaryMaster)
-	configureMasterServerCypressManager(g.ytsaurus.Spec, &c.CypressManager)
+	configureMasterServerCypressManager(spec, &c.CypressManager)
 
 	// COMPAT(l0kix2): remove that after we drop support for specifying host network without master host addresses.
-	if g.ytsaurus.Spec.HostNetwork && len(spec.HostAddresses) == 0 {
+	if g.cluster.HostNetwork && len(spec.PrimaryMasters.HostAddresses) == 0 {
 		// Each master deduces its index within cell by looking up his FQDN in the
 		// list of all master peers. Master peers are specified using their pod addresses,
 		// therefore we must also switch masters from identifying themselves by FQDN addresses
@@ -335,8 +371,8 @@ func (g *Generator) getMasterConfigImpl() (MasterServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetMasterConfig(_ ytv1.InstanceSpec) ([]byte, error) {
-	c, err := g.getMasterConfigImpl()
+func (g *Generator) GetMasterConfig(spec ytv1.YtsaurusSpec) ([]byte, error) {
+	c, err := g.getMasterConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -356,14 +392,13 @@ func (g *Generator) GetNativeClientConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getSchedulerConfigImpl() (SchedulerServer, error) {
-	spec := g.ytsaurus.Spec.Schedulers
+func (g *Generator) getSchedulerConfigImpl(spec *ytv1.SchedulersSpec, tabletNodesSpec []ytv1.TabletNodesSpec) (SchedulerServer, error) {
 	c, err := getSchedulerServerCarcass(spec)
 	if err != nil {
 		return SchedulerServer{}, err
 	}
 
-	if g.ytsaurus.Spec.TabletNodes == nil || len(g.ytsaurus.Spec.TabletNodes) == 0 {
+	if len(tabletNodesSpec) == 0 {
 		c.Scheduler.OperationsCleaner.EnableOperationArchivation = ptr.Bool(false)
 	}
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
@@ -371,12 +406,12 @@ func (g *Generator) getSchedulerConfigImpl() (SchedulerServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetSchedulerConfig(_ ytv1.InstanceSpec) ([]byte, error) {
-	if g.ytsaurus.Spec.Schedulers == nil {
+func (g *Generator) GetSchedulerConfig(schedulerSpec *ytv1.SchedulersSpec, tabletNodesSpec []ytv1.TabletNodesSpec) ([]byte, error) {
+	if schedulerSpec == nil {
 		return []byte{}, nil
 	}
 
-	c, err := g.getSchedulerConfigImpl()
+	c, err := g.getSchedulerConfigImpl(schedulerSpec, tabletNodesSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -392,15 +427,15 @@ func (g *Generator) getRPCProxyConfigImpl(spec *ytv1.RPCProxiesSpec) (RPCProxySe
 
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 
-	if g.ytsaurus.Spec.OauthService != nil {
+	if g.cluster.OauthServiceSpec != nil {
 		c.CypressUserManager = CypressUserManager{}
 		c.OauthService = &OauthService{
-			Host:               g.ytsaurus.Spec.OauthService.Host,
-			Port:               g.ytsaurus.Spec.OauthService.Port,
-			Secure:             g.ytsaurus.Spec.OauthService.Secure,
-			UserInfoEndpoint:   g.ytsaurus.Spec.OauthService.UserInfo.Endpoint,
-			UserInfoLoginField: g.ytsaurus.Spec.OauthService.UserInfo.LoginField,
-			UserInfoErrorField: g.ytsaurus.Spec.OauthService.UserInfo.ErrorField,
+			Host:               g.cluster.OauthServiceSpec.Host,
+			Port:               g.cluster.OauthServiceSpec.Port,
+			Secure:             g.cluster.OauthServiceSpec.Secure,
+			UserInfoEndpoint:   g.cluster.OauthServiceSpec.UserInfo.Endpoint,
+			UserInfoLoginField: g.cluster.OauthServiceSpec.UserInfo.LoginField,
+			UserInfoErrorField: g.cluster.OauthServiceSpec.UserInfo.ErrorField,
 		}
 		c.OauthTokenAuthenticator = &OauthTokenAuthenticator{}
 		c.RequireAuthentication = true
@@ -436,12 +471,12 @@ func (g *Generator) getTCPProxyConfigImpl(spec *ytv1.TCPProxiesSpec) (TCPProxySe
 	return c, nil
 }
 
-func (g *Generator) GetTCPProxyConfig(spec ytv1.TCPProxiesSpec) ([]byte, error) {
-	if g.ytsaurus.Spec.TCPProxies == nil {
+func (g *Generator) GetTCPProxyConfig(spec *ytv1.TCPProxiesSpec) ([]byte, error) {
+	if spec == nil {
 		return []byte{}, nil
 	}
 
-	c, err := g.getTCPProxyConfigImpl(&spec)
+	c, err := g.getTCPProxyConfigImpl(spec)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -449,14 +484,13 @@ func (g *Generator) GetTCPProxyConfig(spec ytv1.TCPProxiesSpec) ([]byte, error) 
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getControllerAgentConfigImpl() (ControllerAgentServer, error) {
-	spec := g.ytsaurus.Spec.ControllerAgents
+func (g *Generator) getControllerAgentConfigImpl(spec *ytv1.ControllerAgentsSpec) (ControllerAgentServer, error) {
 	c, err := getControllerAgentServerCarcass(spec)
 	if err != nil {
 		return ControllerAgentServer{}, err
 	}
 
-	c.ControllerAgent.EnableTmpfs = g.ytsaurus.Spec.UsePorto
+	c.ControllerAgent.EnableTmpfs = g.cluster.UsePorto
 	c.ControllerAgent.UseColumnarStatisticsDefault = true
 
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
@@ -465,12 +499,12 @@ func (g *Generator) getControllerAgentConfigImpl() (ControllerAgentServer, error
 	return c, nil
 }
 
-func (g *Generator) GetControllerAgentConfig(_ ytv1.InstanceSpec) ([]byte, error) {
-	if g.ytsaurus.Spec.ControllerAgents == nil {
+func (g *Generator) GetControllerAgentConfig(spec *ytv1.ControllerAgentsSpec) ([]byte, error) {
+	if spec == nil {
 		return []byte{}, nil
 	}
 
-	c, err := g.getControllerAgentConfigImpl()
+	c, err := g.getControllerAgentConfigImpl(spec)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -545,14 +579,14 @@ func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProx
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
-	if g.ytsaurus.Spec.OauthService != nil {
+	if g.cluster.OauthServiceSpec != nil {
 		c.Auth.OauthService = &OauthService{
-			Host:               g.ytsaurus.Spec.OauthService.Host,
-			Port:               g.ytsaurus.Spec.OauthService.Port,
-			Secure:             g.ytsaurus.Spec.OauthService.Secure,
-			UserInfoEndpoint:   g.ytsaurus.Spec.OauthService.UserInfo.Endpoint,
-			UserInfoLoginField: g.ytsaurus.Spec.OauthService.UserInfo.LoginField,
-			UserInfoErrorField: g.ytsaurus.Spec.OauthService.UserInfo.ErrorField,
+			Host:               g.cluster.OauthServiceSpec.Host,
+			Port:               g.cluster.OauthServiceSpec.Port,
+			Secure:             g.cluster.OauthServiceSpec.Secure,
+			UserInfoEndpoint:   g.cluster.OauthServiceSpec.UserInfo.Endpoint,
+			UserInfoLoginField: g.cluster.OauthServiceSpec.UserInfo.LoginField,
+			UserInfoErrorField: g.cluster.OauthServiceSpec.UserInfo.ErrorField,
 		}
 		c.Auth.OauthCookieAuthenticator = &OauthCookieAuthenticator{}
 		c.Auth.OauthTokenAuthenticator = &OauthTokenAuthenticator{}
@@ -570,8 +604,7 @@ func (g *Generator) GetHTTPProxyConfig(spec ytv1.HTTPProxiesSpec) ([]byte, error
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getQueryTrackerConfigImpl() (QueryTrackerServer, error) {
-	spec := g.ytsaurus.Spec.QueryTrackers
+func (g *Generator) getQueryTrackerConfigImpl(spec *ytv1.QueryTrackerSpec) (QueryTrackerServer, error) {
 	c, err := getQueryTrackerServerCarcass(spec)
 	if err != nil {
 		return c, err
@@ -582,12 +615,12 @@ func (g *Generator) getQueryTrackerConfigImpl() (QueryTrackerServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetQueryTrackerConfig(_ ytv1.InstanceSpec) ([]byte, error) {
-	if g.ytsaurus.Spec.QueryTrackers == nil {
+func (g *Generator) GetQueryTrackerConfig(spec *ytv1.QueryTrackerSpec) ([]byte, error) {
+	if spec == nil {
 		return []byte{}, nil
 	}
 
-	c, err := g.getQueryTrackerConfigImpl()
+	c, err := g.getQueryTrackerConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -595,8 +628,7 @@ func (g *Generator) GetQueryTrackerConfig(_ ytv1.InstanceSpec) ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getQueueAgentConfigImpl() (QueueAgentServer, error) {
-	spec := g.ytsaurus.Spec.QueueAgents
+func (g *Generator) getQueueAgentConfigImpl(spec *ytv1.QueueAgentSpec) (QueueAgentServer, error) {
 	c, err := getQueueAgentServerCarcass(spec)
 	if err != nil {
 		return c, err
@@ -608,12 +640,12 @@ func (g *Generator) getQueueAgentConfigImpl() (QueueAgentServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetQueueAgentConfig(_ ytv1.InstanceSpec) ([]byte, error) {
-	if g.ytsaurus.Spec.QueueAgents == nil {
+func (g *Generator) GetQueueAgentConfig(spec *ytv1.QueueAgentSpec) ([]byte, error) {
+	if spec == nil {
 		return []byte{}, nil
 	}
 
-	c, err := g.getQueueAgentConfigImpl()
+	c, err := g.getQueueAgentConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -621,8 +653,7 @@ func (g *Generator) GetQueueAgentConfig(_ ytv1.InstanceSpec) ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getYQLAgentConfigImpl() (YQLAgentServer, error) {
-	spec := g.ytsaurus.Spec.YQLAgents
+func (g *Generator) getYQLAgentConfigImpl(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	c, err := getYQLAgentServerCarcass(spec)
 	if err != nil {
 		return c, err
@@ -632,7 +663,7 @@ func (g *Generator) getYQLAgentConfigImpl() (YQLAgentServer, error) {
 
 	c.YQLAgent.GatewayConfig.ClusterMapping = []ClusterMapping{
 		{
-			Name:    g.ytsaurus.Name,
+			Name:    g.cluster.Name,
 			Cluster: g.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole),
 			Default: true,
 		},
@@ -640,18 +671,18 @@ func (g *Generator) getYQLAgentConfigImpl() (YQLAgentServer, error) {
 
 	// For backward compatibility.
 	c.YQLAgent.AdditionalClusters = map[string]string{
-		g.ytsaurus.Name: g.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole),
+		g.cluster.Name: g.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole),
 	}
-	c.YQLAgent.DefaultCluster = g.ytsaurus.Name
+	c.YQLAgent.DefaultCluster = g.cluster.Name
 
 	return c, nil
 }
 
-func (g *Generator) GetYQLAgentConfig(_ ytv1.InstanceSpec) ([]byte, error) {
-	if g.ytsaurus.Spec.YQLAgents == nil {
+func (g *Generator) GetYQLAgentConfig(spec *ytv1.YQLAgentSpec) ([]byte, error) {
+	if spec == nil {
 		return []byte{}, nil
 	}
-	c, err := g.getYQLAgentConfigImpl()
+	c, err := g.getYQLAgentConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -659,23 +690,23 @@ func (g *Generator) GetYQLAgentConfig(_ ytv1.InstanceSpec) ([]byte, error) {
 }
 
 func (g *Generator) GetUIClustersConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.UI == nil {
+	if g.cluster.UISpec == nil {
 		return []byte{}, nil
 	}
 
 	c := getUIClusterCarcass()
-	c.ID = g.ytsaurus.Name
-	c.Name = g.ytsaurus.Name
+	c.ID = g.cluster.Name
+	c.Name = g.cluster.Name
 	c.Proxy = g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
-	c.PrimaryMaster.CellTag = g.ytsaurus.Spec.PrimaryMasters.CellTag
+	c.PrimaryMaster.CellTag = g.cluster.CellTag
 
-	c.Theme = g.ytsaurus.Spec.UI.Theme
-	c.Environment = g.ytsaurus.Spec.UI.Environment
-	if g.ytsaurus.Spec.UI.Group != nil {
-		c.Group = *g.ytsaurus.Spec.UI.Group
+	c.Theme = g.cluster.UISpec.Theme
+	c.Environment = g.cluster.UISpec.Environment
+	if g.cluster.UISpec.Group != nil {
+		c.Group = *g.cluster.UISpec.Group
 	}
-	if g.ytsaurus.Spec.UI.Description != nil {
-		c.Description = *g.ytsaurus.Spec.UI.Description
+	if g.cluster.UISpec.Description != nil {
+		c.Description = *g.cluster.UISpec.Description
 	}
 
 	return marshallYsonConfig(UIClusters{
@@ -684,19 +715,18 @@ func (g *Generator) GetUIClustersConfig() ([]byte, error) {
 }
 
 func (g *Generator) GetUICustomConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.UI == nil {
+	if g.cluster.UISpec == nil {
 		return []byte{}, nil
 	}
 
 	c := UICustom{
-		OdinBaseUrl: g.ytsaurus.Spec.UI.OdinBaseUrl,
+		OdinBaseUrl: g.cluster.UISpec.OdinBaseUrl,
 	}
 
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getDiscoveryConfigImpl() (DiscoveryServer, error) {
-	spec := &g.ytsaurus.Spec.Discovery
+func (g *Generator) getDiscoveryConfigImpl(spec *ytv1.DiscoverySpec) (DiscoveryServer, error) {
 	c, err := getDiscoveryServerCarcass(spec)
 	if err != nil {
 		return c, err
@@ -708,16 +738,15 @@ func (g *Generator) getDiscoveryConfigImpl() (DiscoveryServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetDiscoveryConfig(_ ytv1.InstanceSpec) ([]byte, error) {
-	c, err := g.getDiscoveryConfigImpl()
+func (g *Generator) GetDiscoveryConfig(spec *ytv1.DiscoverySpec) ([]byte, error) {
+	c, err := g.getDiscoveryConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getMasterCachesConfigImpl() (MasterCacheServer, error) {
-	spec := g.ytsaurus.Spec.MasterCaches
+func (g *Generator) getMasterCachesConfigImpl(spec *ytv1.MasterCachesSpec) (MasterCacheServer, error) {
 	c, err := getMasterCachesCarcass(spec)
 	if err != nil {
 		return MasterCacheServer{}, err
@@ -726,11 +755,11 @@ func (g *Generator) getMasterCachesConfigImpl() (MasterCacheServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetMasterCachesConfig(_ ytv1.InstanceSpec) ([]byte, error) {
-	if g.ytsaurus.Spec.MasterCaches == nil {
+func (g *Generator) GetMasterCachesConfig(spec *ytv1.MasterCachesSpec) ([]byte, error) {
+	if spec == nil {
 		return []byte{}, nil
 	}
-	c, err := g.getMasterCachesConfigImpl()
+	c, err := g.getMasterCachesConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}

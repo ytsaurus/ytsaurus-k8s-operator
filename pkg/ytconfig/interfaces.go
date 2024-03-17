@@ -22,14 +22,14 @@ type MasterNodeConfigGenerator interface {
 	NativeClientConfigProvider
 	ClusterConnectionProvider
 
-	GetMasterConfig(ytv1.InstanceSpec) ([]byte, error)
+	GetMasterConfig(spec ytv1.YtsaurusSpec) ([]byte, error)
 
 	GetMastersStatefulSetName() string
 	GetMastersServiceName() string
 }
 
 type DiscoveryNodeConfigGenerator interface {
-	GetDiscoveryConfig(ytv1.InstanceSpec) ([]byte, error)
+	GetDiscoveryConfig(spec *ytv1.DiscoverySpec) ([]byte, error)
 
 	GetDiscoveryStatefulSetName() string
 	GetDiscoveryServiceName() string
@@ -39,18 +39,18 @@ type SchedulerNodeConfigGenerator interface {
 	NativeClientConfigProvider
 	HTTPProxiesServiceAddressProvider
 
-	GetSchedulerConfig(ytv1.InstanceSpec) ([]byte, error)
+	GetSchedulerConfig(schedulerSpec *ytv1.SchedulersSpec, tabletNodesSpec []ytv1.TabletNodesSpec) ([]byte, error)
 
 	GetSchedulerStatefulSetName() string
 	GetSchedulerServiceName() string
 }
 
 type ControllerAgentConfigGenerator interface {
-	GetControllerAgentConfig(ytv1.InstanceSpec) ([]byte, error)
+	GetControllerAgentConfig(spec *ytv1.ControllerAgentsSpec) ([]byte, error)
 }
 
 type MasterCacheNodeConfigGenerator interface {
-	GetMasterCachesConfig(ytv1.InstanceSpec) ([]byte, error)
+	GetMasterCachesConfig(spec *ytv1.MasterCachesSpec) ([]byte, error)
 
 	GetMasterCachesStatefulSetName() string
 	GetMasterCachesServiceName() string
@@ -106,7 +106,7 @@ type RPCProxyNodeConfigGenerator interface {
 type TCPNodeConfigGenerator interface {
 	CommonConfigPartsGenerator
 
-	GetTCPProxyConfig(spec ytv1.TCPProxiesSpec) ([]byte, error)
+	GetTCPProxyConfig(spec *ytv1.TCPProxiesSpec) ([]byte, error)
 
 	GetTCPProxiesStatefulSetName(string) string
 	GetTCPProxiesServiceName(string) string
@@ -117,7 +117,7 @@ type QueryTrackerNodeConfigGenerator interface {
 	NativeClientConfigProvider
 	HTTPProxiesServiceAddressProvider
 
-	GetQueryTrackerConfig(ytv1.InstanceSpec) ([]byte, error)
+	GetQueryTrackerConfig(spec *ytv1.QueryTrackerSpec) ([]byte, error)
 
 	GetQueryTrackerStatefulSetName() string
 	GetQueryTrackerServiceName() string
@@ -127,23 +127,23 @@ type QueueAgentNodeConfigGenerator interface {
 	NativeClientConfigProvider
 	HTTPProxiesServiceAddressProvider
 
-	GetQueueAgentConfig(ytv1.InstanceSpec) ([]byte, error)
+	GetQueueAgentConfig(spec *ytv1.QueueAgentSpec) ([]byte, error)
 
 	GetQueueAgentStatefulSetName() string
 	GetQueueAgentServiceName() string
 
-	GetQueueAgentAddresses() []string
+	GetQueueAgentAddresses(spec *ytv1.QueueAgentSpec) []string
 }
 
 type YQLAgentNodeConfigGenerator interface {
 	NativeClientConfigProvider
 
-	GetYQLAgentConfig(ytv1.InstanceSpec) ([]byte, error)
+	GetYQLAgentConfig(spec *ytv1.YQLAgentSpec) ([]byte, error)
 
 	GetYQLAgentStatefulSetName() string
 	GetYQLAgentServiceName() string
 
-	GetYQLAgentAddresses() []string
+	GetYQLAgentAddresses(spec *ytv1.YQLAgentSpec) []string
 }
 
 type ChytNodeConfigGenerator interface {

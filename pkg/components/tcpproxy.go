@@ -46,7 +46,7 @@ func NewTCPProxy(
 		cfgen.GetTCPProxiesStatefulSetName(spec.Role),
 		cfgen.GetTCPProxiesHeadlessServiceName(spec.Role),
 		func() ([]byte, error) {
-			return cfgen.GetTCPProxyConfig(spec)
+			return cfgen.GetTCPProxyConfig(&spec)
 		},
 	)
 

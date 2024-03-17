@@ -36,7 +36,7 @@ func NewControllerAgent(cfgen ytconfig.ControllerAgentConfigGenerator, ytsaurus 
 		"ca",
 		"controller-agents",
 		func() ([]byte, error) {
-			return cfgen.GetControllerAgentConfig(resource.Spec.ControllerAgents.InstanceSpec)
+			return cfgen.GetControllerAgentConfig(resource.Spec.ControllerAgents)
 		},
 	)
 

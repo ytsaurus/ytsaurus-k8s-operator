@@ -56,7 +56,7 @@ func NewQueueAgent(
 		"ytserver-queue-agent.yson",
 		cfgen.GetQueueAgentStatefulSetName(),
 		cfgen.GetQueueAgentServiceName(),
-		func() ([]byte, error) { return cfgen.GetQueueAgentConfig(resource.Spec.QueueAgents.InstanceSpec) },
+		func() ([]byte, error) { return cfgen.GetQueueAgentConfig(resource.Spec.QueueAgents) },
 	)
 
 	image := ytsaurus.GetResource().Spec.CoreImage
@@ -242,7 +242,7 @@ func (qa *QueueAgent) init(ctx context.Context, ytClient yt.Client) (err error) 
 		map[string]interface{}{
 			"stages": map[string]interface{}{
 				"production": map[string]interface{}{
-					"addresses": qa.cfgen.GetQueueAgentAddresses(),
+					"addresses": qa.cfgen.GetQueueAgentAddresses(qa.ytsaurus.GetResource().Spec.QueueAgents),
 				},
 			},
 			"queue_consumer_registration_manager": map[string]interface{}{

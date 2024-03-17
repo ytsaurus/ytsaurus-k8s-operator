@@ -54,7 +54,7 @@ func NewMaster(cfgen ytconfig.MasterNodeConfigGenerator, ytsaurus *apiproxy.Ytsa
 		"ytserver-master.yson",
 		cfgen.GetMastersStatefulSetName(),
 		cfgen.GetMastersServiceName(),
-		func() ([]byte, error) { return cfgen.GetMasterConfig(resource.Spec.PrimaryMasters.InstanceSpec) },
+		func() ([]byte, error) { return cfgen.GetMasterConfig(resource.Spec) },
 	)
 
 	initJob := NewInitJob(

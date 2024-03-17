@@ -2,7 +2,6 @@ package components
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -44,7 +43,7 @@ func NewYQLAgent(cfgen ytconfig.YQLAgentNodeConfigGenerator, ytsaurus *apiproxy.
 		cfgen.GetYQLAgentStatefulSetName(),
 		cfgen.GetYQLAgentServiceName(),
 		func() ([]byte, error) {
-			return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents.InstanceSpec)
+			return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents)
 		},
 	)
 
@@ -91,27 +90,27 @@ func (yqla *YqlAgent) initUsers() string {
 	return strings.Join(commands, "\n")
 }
 
-func (yqla *YqlAgent) createInitScript() string {
-	var sb strings.Builder
-	sb.WriteString("[")
-	for _, addr := range yqla.cfgen.GetYQLAgentAddresses() {
-		sb.WriteString("\"")
-		sb.WriteString(addr)
-		sb.WriteString("\";")
-	}
-	sb.WriteString("]")
-	yqlAgentAddrs := sb.String()
-	script := []string{
-		initJobWithNativeDriverPrologue(),
-		yqla.initUsers(),
-		"/usr/bin/yt add-member --member yql_agent --group superusers || true",
-		"/usr/bin/yt create document //sys/yql_agent/config --attributes '{}' --recursive --ignore-existing",
-		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent '{stages={production={channel={addresses=%v}}}}'", yqlAgentAddrs),
-		fmt.Sprintf("/usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/%s", yqla.labeller.GetClusterName()),
-	}
-
-	return strings.Join(script, "\n")
-}
+//func (yqla *YqlAgent) createInitScript() string {
+//	var sb strings.Builder
+//	sb.WriteString("[")
+//	for _, addr := range yqla.cfgen.GetYQLAgentAddresses(&yqla.Spec.YQLAgents) {
+//		sb.WriteString("\"")
+//		sb.WriteString(addr)
+//		sb.WriteString("\";")
+//	}
+//	sb.WriteString("]")
+//	yqlAgentAddrs := sb.String()
+//	script := []string{
+//		initJobWithNativeDriverPrologue(),
+//		yqla.initUsers(),
+//		"/usr/bin/yt add-member --member yql_agent --group superusers || true",
+//		"/usr/bin/yt create document //sys/yql_agent/config --attributes '{}' --recursive --ignore-existing",
+//		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent '{stages={production={channel={addresses=%v}}}}'", yqlAgentAddrs),
+//		fmt.Sprintf("/usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/%s", yqla.labeller.GetClusterName()),
+//	}
+//
+//	return strings.Join(script, "\n")
+//}
 
 func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
@@ -163,7 +162,7 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if !dry {
-		yqla.initEnvironment.SetInitScript(yqla.createInitScript())
+		//yqla.initEnvironment.SetInitScript(yqla.createInitScript())
 	}
 
 	return yqla.initEnvironment.Sync(ctx, dry)

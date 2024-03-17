@@ -55,7 +55,7 @@ func NewQueryTracker(
 		"ytserver-query-tracker.yson",
 		cfgen.GetQueryTrackerStatefulSetName(),
 		cfgen.GetQueryTrackerServiceName(),
-		func() ([]byte, error) { return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers.InstanceSpec) },
+		func() ([]byte, error) { return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers) },
 	)
 
 	image := ytsaurus.GetResource().Spec.CoreImage
