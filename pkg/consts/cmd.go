@@ -1,5 +1,9 @@
 package consts
 
+import (
+	"time"
+)
+
 const (
 	ConfigMountPoint           = "/config"
 	ConfigTemplateMountPoint   = "/config_template"
@@ -43,4 +47,8 @@ const (
 	InitScriptVolumeName     = "init-script"
 	UIVaultVolumeName        = "vault"
 	UISecretsVolumeName      = "secrets"
+)
+
+const (
+	HTTPSSecretUpdatePeriod = time.Second * 60
 )
