@@ -106,6 +106,7 @@ func main() {
 			}
 		} else {
 			managerOptions.Cache.DefaultNamespaces[watchNamespace] = cache.Config{}
+			managerOptions.LeaderElectionNamespace = watchNamespace
 		}
 	}
 
