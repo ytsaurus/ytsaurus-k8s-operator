@@ -330,6 +330,9 @@ func (m *Master) Status(ctx context.Context) ComponentStatus {
 		// TODO: not good
 		panic(err)
 	}
+	if st.SyncStatus == SyncStatusPending {
+		return WaitingStatus(SyncStatusBlocked, "initJob")
+	}
 	return st
 }
 

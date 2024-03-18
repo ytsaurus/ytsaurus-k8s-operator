@@ -73,9 +73,9 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		}
 	}
 
-	if !IsRunningStatus(n.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
-	}
+	//if !IsRunningStatus(n.master.Status(ctx).SyncStatus) {
+	//	return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
+	//}
 
 	if LocalServerNeedSync(n.server, n.ytsaurus) {
 		return n.doSyncBase(ctx, dry)

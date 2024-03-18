@@ -9,6 +9,7 @@ const (
 	DiscoveryName      ComponentName = "Discovery"
 	DataNodeName       ComponentName = "DataNode"
 	TabletNodeName     ComponentName = "TabletNode"
+	ExecNodeName       ComponentName = "ExecNode"
 	HttpProxyName      ComponentName = "HttpProxy"
 	SchedulerName      ComponentName = "Scheduler"
 	QueryTrackerName   ComponentName = "QueryTracker"
@@ -35,6 +36,8 @@ var (
 	MasterStep         = compNameToStepName(MasterName)
 	DiscoveryStep      = compNameToStepName(DiscoveryName)
 	DataNodeStep       = compNameToStepName(DataNodeName)
+	TabletNodeStep     = compNameToStepName(TabletNodeName)
+	ExecNodeStep       = compNameToStepName(ExecNodeName)
 	HttpProxyStep      = compNameToStepName(HttpProxyName)
 	SchedulerStep      = compNameToStepName(SchedulerName)
 	QueryTrackerStep   = compNameToStepName(QueryTrackerName)
@@ -113,6 +116,16 @@ var stepDependencies = map[StepName][]Condition{
 	},
 	DataNodeStep: {
 		needSync(DataNodeName),
+		ComponentsCanBeSynced,
+	},
+	TabletNodeStep: {
+		needSync(TabletNodeName),
+		isBuilt(YtsaurusClientName),
+		ComponentsCanBeSynced,
+	},
+	ExecNodeStep: {
+		needSync(ExecNodeName),
+		isBuilt(MasterName),
 		ComponentsCanBeSynced,
 	},
 	MasterStep: {

@@ -15,12 +15,11 @@ func interpretSyncStatus(st syncStatus) (isBuilt bool, needSync bool) {
 		return true, false
 	case components.SyncStatusNeedLocalUpdate:
 		return true, true
-	case components.SyncStatusPending:
-		return false, true
 	default:
+		// Pending (from scratch or smth)
 		// Updating (for example wait pods to be deleted)
 		// Blocked (for example wait pods to be created)
-		return false, false
+		return false, true
 	}
 }
 
