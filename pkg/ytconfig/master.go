@@ -28,6 +28,10 @@ type CypressManager struct {
 	DefaultJournalWriteQuorum       int `yson:"default_journal_write_quorum,omitempty"`
 }
 
+type DiscoveryServers struct {
+	AddressList
+}
+
 type MasterServer struct {
 	CommonServer
 	Snapshots        MasterSnapshots  `yson:"snapshots"`
@@ -37,6 +41,7 @@ type MasterServer struct {
 	CypressManager   CypressManager   `yson:"cypress_manager"`
 	PrimaryMaster    MasterCell       `yson:"primary_master"`
 	SecondaryMasters []MasterCell     `yson:"secondary_masters"`
+	DiscoveryServers DiscoveryServers `yson:"discovery_server"`
 }
 
 func getMasterLogging(spec *ytv1.MastersSpec) Logging {

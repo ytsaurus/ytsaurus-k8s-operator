@@ -153,4 +153,8 @@
     };
     "secondary_masters"=[
     ];
+    "discovery_server"={
+        addresses=[
+        ];
+    };
 }

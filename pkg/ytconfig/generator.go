@@ -298,6 +298,7 @@ func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, e
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	g.fillPrimaryMaster(&c.PrimaryMaster)
+	c.DiscoveryServers.Addresses = g.getDiscoveryAddresses()
 	configureMasterServerCypressManager(g.ytsaurus.Spec, &c.CypressManager)
 
 	// COMPAT(l0kix2): remove that after we drop support for specifying host network without master host addresses.
