@@ -39,7 +39,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		"ytserver-controller-agent.yson",
 		"ca",
 		"controller-agents",
-		cfgen.GetControllerAgentConfig,
+		func() ([]byte, error) { return cfgen.GetControllerAgentConfig(resource.Spec.ControllerAgents) },
 	)
 
 	return &ControllerAgent{

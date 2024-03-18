@@ -60,7 +60,7 @@ func NewQueueAgent(
 		"ytserver-queue-agent.yson",
 		cfgen.GetQueueAgentStatefulSetName(),
 		cfgen.GetQueueAgentServiceName(),
-		cfgen.GetQueueAgentConfig,
+		func() ([]byte, error) { return cfgen.GetQueueAgentConfig(resource.Spec.QueueAgents) },
 	)
 
 	image := ytsaurus.GetResource().Spec.CoreImage

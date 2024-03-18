@@ -290,8 +290,7 @@ func (g *Generator) GetChytInitClusterConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getMasterConfigImpl() (MasterServer, error) {
-	spec := &g.ytsaurus.Spec.PrimaryMasters
+func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, error) {
 	c, err := getMasterServerCarcass(spec)
 	if err != nil {
 		return MasterServer{}, err
@@ -317,8 +316,8 @@ func (g *Generator) getMasterConfigImpl() (MasterServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetMasterConfig() ([]byte, error) {
-	c, err := g.getMasterConfigImpl()
+func (g *Generator) GetMasterConfig(spec *ytv1.MastersSpec) ([]byte, error) {
+	c, err := g.getMasterConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -338,8 +337,7 @@ func (g *Generator) GetNativeClientConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getSchedulerConfigImpl() (SchedulerServer, error) {
-	spec := g.ytsaurus.Spec.Schedulers
+func (g *Generator) getSchedulerConfigImpl(spec *ytv1.SchedulersSpec) (SchedulerServer, error) {
 	c, err := getSchedulerServerCarcass(spec)
 	if err != nil {
 		return SchedulerServer{}, err
@@ -353,12 +351,12 @@ func (g *Generator) getSchedulerConfigImpl() (SchedulerServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetSchedulerConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.Schedulers == nil {
+func (g *Generator) GetSchedulerConfig(spec *ytv1.SchedulersSpec) ([]byte, error) {
+	if spec == nil {
 		return []byte{}, nil
 	}
 
-	c, err := g.getSchedulerConfigImpl()
+	c, err := g.getSchedulerConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -431,8 +429,7 @@ func (g *Generator) GetTCPProxyConfig(spec ytv1.TCPProxiesSpec) ([]byte, error) 
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getControllerAgentConfigImpl() (ControllerAgentServer, error) {
-	spec := g.ytsaurus.Spec.ControllerAgents
+func (g *Generator) getControllerAgentConfigImpl(spec *ytv1.ControllerAgentsSpec) (ControllerAgentServer, error) {
 	c, err := getControllerAgentServerCarcass(spec)
 	if err != nil {
 		return ControllerAgentServer{}, err
@@ -447,12 +444,12 @@ func (g *Generator) getControllerAgentConfigImpl() (ControllerAgentServer, error
 	return c, nil
 }
 
-func (g *Generator) GetControllerAgentConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.ControllerAgents == nil {
+func (g *Generator) GetControllerAgentConfig(spec *ytv1.ControllerAgentsSpec) ([]byte, error) {
+	if spec == nil {
 		return []byte{}, nil
 	}
 
-	c, err := g.getControllerAgentConfigImpl()
+	c, err := g.getControllerAgentConfigImpl(spec)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -552,8 +549,7 @@ func (g *Generator) GetHTTPProxyConfig(spec ytv1.HTTPProxiesSpec) ([]byte, error
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getQueryTrackerConfigImpl() (QueryTrackerServer, error) {
-	spec := g.ytsaurus.Spec.QueryTrackers
+func (g *Generator) getQueryTrackerConfigImpl(spec *ytv1.QueryTrackerSpec) (QueryTrackerServer, error) {
 	c, err := getQueryTrackerServerCarcass(spec)
 	if err != nil {
 		return c, err
@@ -564,12 +560,12 @@ func (g *Generator) getQueryTrackerConfigImpl() (QueryTrackerServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetQueryTrackerConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.QueryTrackers == nil {
+func (g *Generator) GetQueryTrackerConfig(spec *ytv1.QueryTrackerSpec) ([]byte, error) {
+	if spec == nil {
 		return []byte{}, nil
 	}
 
-	c, err := g.getQueryTrackerConfigImpl()
+	c, err := g.getQueryTrackerConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -577,8 +573,7 @@ func (g *Generator) GetQueryTrackerConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getQueueAgentConfigImpl() (QueueAgentServer, error) {
-	spec := g.ytsaurus.Spec.QueueAgents
+func (g *Generator) getQueueAgentConfigImpl(spec *ytv1.QueueAgentSpec) (QueueAgentServer, error) {
 	c, err := getQueueAgentServerCarcass(spec)
 	if err != nil {
 		return c, err
@@ -590,12 +585,12 @@ func (g *Generator) getQueueAgentConfigImpl() (QueueAgentServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetQueueAgentConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.QueueAgents == nil {
+func (g *Generator) GetQueueAgentConfig(spec *ytv1.QueueAgentSpec) ([]byte, error) {
+	if spec == nil {
 		return []byte{}, nil
 	}
 
-	c, err := g.getQueueAgentConfigImpl()
+	c, err := g.getQueueAgentConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -603,8 +598,7 @@ func (g *Generator) GetQueueAgentConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getYQLAgentConfigImpl() (YQLAgentServer, error) {
-	spec := g.ytsaurus.Spec.YQLAgents
+func (g *Generator) getYQLAgentConfigImpl(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	c, err := getYQLAgentServerCarcass(spec)
 	if err != nil {
 		return c, err
@@ -629,11 +623,11 @@ func (g *Generator) getYQLAgentConfigImpl() (YQLAgentServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetYQLAgentConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.YQLAgents == nil {
+func (g *Generator) GetYQLAgentConfig(spec *ytv1.YQLAgentSpec) ([]byte, error) {
+	if spec == nil {
 		return []byte{}, nil
 	}
-	c, err := g.getYQLAgentConfigImpl()
+	c, err := g.getYQLAgentConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -677,8 +671,7 @@ func (g *Generator) GetUICustomConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getDiscoveryConfigImpl() (DiscoveryServer, error) {
-	spec := &g.ytsaurus.Spec.Discovery
+func (g *Generator) getDiscoveryConfigImpl(spec *ytv1.DiscoverySpec) (DiscoveryServer, error) {
 	c, err := getDiscoveryServerCarcass(spec)
 	if err != nil {
 		return c, err
@@ -690,16 +683,15 @@ func (g *Generator) getDiscoveryConfigImpl() (DiscoveryServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetDiscoveryConfig() ([]byte, error) {
-	c, err := g.getDiscoveryConfigImpl()
+func (g *Generator) GetDiscoveryConfig(spec *ytv1.DiscoverySpec) ([]byte, error) {
+	c, err := g.getDiscoveryConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getMasterCachesConfigImpl() (MasterCacheServer, error) {
-	spec := g.ytsaurus.Spec.MasterCaches
+func (g *Generator) getMasterCachesConfigImpl(spec *ytv1.MasterCachesSpec) (MasterCacheServer, error) {
 	c, err := getMasterCachesCarcass(spec)
 	if err != nil {
 		return MasterCacheServer{}, err
@@ -708,11 +700,11 @@ func (g *Generator) getMasterCachesConfigImpl() (MasterCacheServer, error) {
 	return c, nil
 }
 
-func (g *Generator) GetMasterCachesConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.MasterCaches == nil {
+func (g *Generator) GetMasterCachesConfig(spec *ytv1.MasterCachesSpec) ([]byte, error) {
+	if spec == nil {
 		return []byte{}, nil
 	}
-	c, err := g.getMasterCachesConfigImpl()
+	c, err := g.getMasterCachesConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}

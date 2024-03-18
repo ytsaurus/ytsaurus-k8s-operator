@@ -57,7 +57,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		"ytserver-master.yson",
 		cfgen.GetMastersStatefulSetName(),
 		cfgen.GetMastersServiceName(),
-		cfgen.GetMasterConfig,
+		func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
 	)
 
 	initJob := NewInitJob(

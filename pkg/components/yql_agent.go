@@ -47,7 +47,9 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		"ytserver-yql-agent.yson",
 		cfgen.GetYQLAgentStatefulSetName(),
 		cfgen.GetYQLAgentServiceName(),
-		cfgen.GetYQLAgentConfig,
+		func() ([]byte, error) {
+			return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents)
+		},
 	)
 
 	return &YqlAgent{

@@ -39,7 +39,7 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Comp
 		"ytserver-master-cache.yson",
 		cfgen.GetMasterCachesStatefulSetName(),
 		cfgen.GetMasterCachesServiceName(),
-		cfgen.GetMasterCachesConfig,
+		func() ([]byte, error) { return cfgen.GetMasterCachesConfig(resource.Spec.MasterCaches) },
 	)
 
 	return &masterCache{

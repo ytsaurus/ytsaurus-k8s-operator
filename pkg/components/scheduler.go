@@ -56,7 +56,9 @@ func NewScheduler(
 		"ytserver-scheduler.yson",
 		cfgen.GetSchedulerStatefulSetName(),
 		cfgen.GetSchedulerServiceName(),
-		cfgen.GetSchedulerConfig,
+		func() ([]byte, error) {
+			return cfgen.GetSchedulerConfig(resource.Spec.Schedulers)
+		},
 	)
 
 	return &Scheduler{

@@ -38,7 +38,9 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Disco
 		"ytserver-discovery.yson",
 		cfgen.GetDiscoveryStatefulSetName(),
 		cfgen.GetDiscoveryServiceName(),
-		cfgen.GetDiscoveryConfig,
+		func() ([]byte, error) {
+			return cfgen.GetDiscoveryConfig(&resource.Spec.Discovery)
+		},
 	)
 
 	return &Discovery{
