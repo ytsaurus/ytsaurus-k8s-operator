@@ -18,15 +18,18 @@ type MonitoringService struct {
 	labeller *labeller2.Labeller
 	apiProxy apiproxy.APIProxy
 
+	monitoringTargetPort int32
+
 	oldObject corev1.Service
 	newObject corev1.Service
 }
 
-func NewMonitoringService(labeller *labeller2.Labeller, apiProxy apiproxy.APIProxy) *MonitoringService {
+func NewMonitoringService(monitoringTargetPort int32, labeller *labeller2.Labeller, apiProxy apiproxy.APIProxy) *MonitoringService {
 	return &MonitoringService{
-		name:     fmt.Sprintf("%s-monitoring", labeller.ComponentLabel),
-		labeller: labeller,
-		apiProxy: apiProxy,
+		name:                 fmt.Sprintf("%s-monitoring", labeller.ComponentLabel),
+		labeller:             labeller,
+		apiProxy:             apiProxy,
+		monitoringTargetPort: monitoringTargetPort,
 	}
 }
 
@@ -62,7 +65,7 @@ func (s *MonitoringService) Build() *corev1.Service {
 			{
 				Name:       consts.YTMonitoringPortName,
 				Port:       consts.YTMonitoringPort,
-				TargetPort: intstr.IntOrString{IntVal: s.labeller.MonitoringPort},
+				TargetPort: intstr.IntOrString{IntVal: s.monitoringTargetPort},
 			},
 		},
 	}

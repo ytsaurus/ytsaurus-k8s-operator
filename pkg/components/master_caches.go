@@ -2,12 +2,14 @@ package components
 
 import (
 	"context"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
+	"go.ytsaurus.tech/library/go/ptr"
 )
 
 type masterCache struct {
@@ -22,8 +24,11 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Comp
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelMasterCache,
 		ComponentName:  "MasterCache",
-		MonitoringPort: consts.MasterCachesMonitoringPort,
 		Annotations:    resource.Spec.ExtraPodAnnotations,
+	}
+
+	if resource.Spec.MasterCaches.InstanceSpec.MonitoringPort == nil {
+		resource.Spec.MasterCaches.InstanceSpec.MonitoringPort = ptr.Int32(consts.MasterCachesMonitoringPort)
 	}
 
 	srv := newServer(
@@ -34,7 +39,7 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Comp
 		"ytserver-master-cache.yson",
 		cfgen.GetMasterCachesStatefulSetName(),
 		cfgen.GetMasterCachesServiceName(),
-		cfgen.GetMasterCachesConfig,
+		func() ([]byte, error) { return cfgen.GetMasterCachesConfig(resource.Spec.MasterCaches) },
 	)
 
 	return &masterCache{

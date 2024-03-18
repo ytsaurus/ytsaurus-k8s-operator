@@ -50,7 +50,7 @@ func getMasterServerCarcass(spec *ytv1.MastersSpec) (MasterServer, error) {
 	var c MasterServer
 	c.UseNewHydra = true
 	c.RPCPort = consts.MasterRPCPort
-	c.MonitoringPort = consts.MasterMonitoringPort
+	c.MonitoringPort = *spec.MonitoringPort
 
 	c.HydraManager.MaxSnapshotCountToKeep = 2
 	if spec.MaxSnapshotCountToKeep != nil {

@@ -8,6 +8,7 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
+	"go.ytsaurus.tech/library/go/ptr"
 )
 
 type RemoteExecNode struct {
@@ -27,8 +28,12 @@ func NewRemoteExecNodes(
 		APIProxy:       proxy,
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelExecNode, spec.Name),
 		ComponentName:  cfgen.FormatComponentStringWithDefault("ExecNode", spec.Name),
-		MonitoringPort: consts.ExecNodeMonitoringPort,
 	}
+
+	if spec.InstanceSpec.MonitoringPort == nil {
+		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.ExecNodeMonitoringPort)
+	}
+
 	srv := newServerConfigured(
 		&l,
 		proxy,

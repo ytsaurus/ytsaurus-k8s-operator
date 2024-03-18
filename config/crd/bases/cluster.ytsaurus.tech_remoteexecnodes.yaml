@@ -828,6 +828,9 @@ spec:
                 type: array
               minReadyInstanceCount:
                 type: integer
+              monitoringPort:
+                format: int32
+                type: integer
               name:
                 default: default
                 minLength: 1

@@ -41,8 +41,11 @@ func NewScheduler(
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelScheduler,
 		ComponentName:  "Scheduler",
-		MonitoringPort: consts.SchedulerMonitoringPort,
 		Annotations:    resource.Spec.ExtraPodAnnotations,
+	}
+
+	if resource.Spec.Schedulers.InstanceSpec.MonitoringPort == nil {
+		resource.Spec.Schedulers.InstanceSpec.MonitoringPort = ptr.Int32(consts.SchedulerMonitoringPort)
 	}
 
 	srv := newServer(
@@ -53,7 +56,9 @@ func NewScheduler(
 		"ytserver-scheduler.yson",
 		cfgen.GetSchedulerStatefulSetName(),
 		cfgen.GetSchedulerServiceName(),
-		cfgen.GetSchedulerConfig,
+		func() ([]byte, error) {
+			return cfgen.GetSchedulerConfig(resource.Spec.Schedulers)
+		},
 	)
 
 	return &Scheduler{

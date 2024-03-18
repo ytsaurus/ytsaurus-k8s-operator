@@ -43,8 +43,11 @@ func NewQueryTracker(
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: "yt-query-tracker",
 		ComponentName:  "QueryTracker",
-		MonitoringPort: consts.QueryTrackerMonitoringPort,
 		Annotations:    resource.Spec.ExtraPodAnnotations,
+	}
+
+	if resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort == nil {
+		resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort = ptr.Int32(consts.QueryTrackerMonitoringPort)
 	}
 
 	srv := newServer(
@@ -55,7 +58,7 @@ func NewQueryTracker(
 		"ytserver-query-tracker.yson",
 		cfgen.GetQueryTrackerStatefulSetName(),
 		cfgen.GetQueryTrackerServiceName(),
-		cfgen.GetQueryTrackerConfig,
+		func() ([]byte, error) { return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers) },
 	)
 
 	image := ytsaurus.GetResource().Spec.CoreImage

@@ -1,10 +1,11 @@
 package ytconfig
 
 import (
+	"path"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	corev1 "k8s.io/api/core/v1"
-	"path"
 )
 
 type CypressCookieManager struct{}
@@ -101,7 +102,7 @@ func getHTTPProxyServerCarcass(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, err
 	c.Coordinator.DefaultRoleFilter = consts.DefaultHTTPProxyRole
 
 	c.RPCPort = consts.HTTPProxyRPCPort
-	c.MonitoringPort = consts.HTTPProxyMonitoringPort
+	c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
 	c.Port = consts.HTTPProxyHTTPPort
 
 	c.Role = spec.Role
@@ -142,7 +143,7 @@ func getRPCProxyServerCarcass(spec *ytv1.RPCProxiesSpec) (RPCProxyServer, error)
 	c.CypressTokenAuthenticator.Secure = true
 
 	c.RPCPort = consts.RPCProxyRPCPort
-	c.MonitoringPort = consts.RPCProxyMonitoringPort
+	c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
 
 	c.Role = spec.Role
 	c.Logging = getRPCProxyLogging(spec)
@@ -160,7 +161,7 @@ func getTCPProxyLogging(spec *ytv1.TCPProxiesSpec) Logging {
 func getTCPProxyServerCarcass(spec *ytv1.TCPProxiesSpec) (TCPProxyServer, error) {
 	var c TCPProxyServer
 
-	c.MonitoringPort = consts.TCPProxyMonitoringPort
+	c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
 
 	c.Role = spec.Role
 	c.Logging = getTCPProxyLogging(spec)

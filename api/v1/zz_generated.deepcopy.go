@@ -529,7 +529,11 @@ func (in *InstanceSpec) DeepCopyInto(out *InstanceSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	out.ReadinessProbeParams = in.ReadinessProbeParams
+	if in.ReadinessProbeParams != nil {
+		in, out := &in.ReadinessProbeParams, &out.ReadinessProbeParams
+		*out = new(HealthcheckProbeParams)
+		**out = **in
+	}
 	in.Resources.DeepCopyInto(&out.Resources)
 	if in.MinReadyInstanceCount != nil {
 		in, out := &in.MinReadyInstanceCount, &out.MinReadyInstanceCount
@@ -556,6 +560,11 @@ func (in *InstanceSpec) DeepCopyInto(out *InstanceSpec) {
 	if in.EnableAntiAffinity != nil {
 		in, out := &in.EnableAntiAffinity, &out.EnableAntiAffinity
 		*out = new(bool)
+		**out = **in
+	}
+	if in.MonitoringPort != nil {
+		in, out := &in.MonitoringPort, &out.MonitoringPort
+		*out = new(int32)
 		**out = **in
 	}
 	if in.Loggers != nil {

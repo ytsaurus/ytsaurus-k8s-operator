@@ -42,8 +42,11 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelMaster,
 		ComponentName:  "Master",
-		MonitoringPort: consts.MasterMonitoringPort,
 		Annotations:    resource.Spec.ExtraPodAnnotations,
+	}
+
+	if resource.Spec.PrimaryMasters.InstanceSpec.MonitoringPort == nil {
+		resource.Spec.PrimaryMasters.InstanceSpec.MonitoringPort = ptr.Int32(consts.MasterMonitoringPort)
 	}
 
 	srv := newServer(
@@ -54,7 +57,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		"ytserver-master.yson",
 		cfgen.GetMastersStatefulSetName(),
 		cfgen.GetMastersServiceName(),
-		cfgen.GetMasterConfig,
+		func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
 	)
 
 	initJob := NewInitJob(

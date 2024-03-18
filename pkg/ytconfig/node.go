@@ -2,9 +2,10 @@ package ytconfig
 
 import (
 	"fmt"
-	ptr "k8s.io/utils/pointer"
 	"math"
 	"strings"
+
+	ptr "k8s.io/utils/pointer"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -206,21 +207,20 @@ func findQuotaForPath(locationPath string, spec ytv1.InstanceSpec) *int64 {
 	return nil
 }
 
-func fillClusterNodeServerCarcass(n *NodeServer, spec ytv1.ClusterNodesSpec, flavor NodeFlavor) {
+func fillClusterNodeServerCarcass(n *NodeServer, flavor NodeFlavor, spec ytv1.ClusterNodesSpec, is *ytv1.InstanceSpec) {
 	switch flavor {
 	case NodeFlavorData:
 		n.RPCPort = consts.DataNodeRPCPort
-		n.MonitoringPort = consts.DataNodeMonitoringPort
 		n.SkynetHttpPort = consts.DataNodeSkynetPort
 	case NodeFlavorExec:
 		n.RPCPort = consts.ExecNodeRPCPort
-		n.MonitoringPort = consts.ExecNodeMonitoringPort
 		n.SkynetHttpPort = consts.ExecNodeSkynetPort
 	case NodeFlavorTablet:
 		n.RPCPort = consts.TabletNodeRPCPort
-		n.MonitoringPort = consts.TabletNodeMonitoringPort
 		n.SkynetHttpPort = consts.TabletNodeSkynetPort
 	}
+
+	n.MonitoringPort = *is.MonitoringPort
 
 	n.Flavors = []NodeFlavor{flavor}
 	n.Tags = spec.Tags
@@ -254,7 +254,7 @@ func getDataNodeLogging(spec *ytv1.DataNodesSpec) Logging {
 
 func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) {
 	var c DataNodeServer
-	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec, NodeFlavorData)
+	fillClusterNodeServerCarcass(&c.NodeServer, NodeFlavorData, spec.ClusterNodesSpec, &spec.InstanceSpec)
 
 	c.ResourceLimits = getDataNodeResourceLimits(spec)
 
@@ -319,7 +319,7 @@ func getExecNodeLogging(spec *ytv1.ExecNodesSpec) Logging {
 
 func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNodeServer, error) {
 	var c ExecNodeServer
-	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec, NodeFlavorExec)
+	fillClusterNodeServerCarcass(&c.NodeServer, NodeFlavorExec, spec.ClusterNodesSpec, &spec.InstanceSpec)
 
 	c.ResourceLimits = getExecNodeResourceLimits(spec)
 
@@ -398,7 +398,7 @@ func getTabletNodeLogging(spec *ytv1.TabletNodesSpec) Logging {
 
 func getTabletNodeServerCarcass(spec *ytv1.TabletNodesSpec) (TabletNodeServer, error) {
 	var c TabletNodeServer
-	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec, NodeFlavorTablet)
+	fillClusterNodeServerCarcass(&c.NodeServer, NodeFlavorTablet, spec.ClusterNodesSpec, &spec.InstanceSpec)
 
 	var cpu float32 = 0
 	c.ResourceLimits.NodeDedicatedCpu = &cpu
