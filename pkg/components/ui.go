@@ -222,80 +222,96 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 	return u.microservice.Sync(ctx)
 }
 
-func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
+func (u *UI) Status(ctx context.Context) ComponentStatus {
 	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && u.microservice.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedLocalUpdate)
 	}
 
 	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(u.ytsaurus, u) {
 
 			if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-				if !dry {
-					err = removePods(ctx, u.microservice, &u.localComponent)
-				}
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+				return WaitingStatus(SyncStatusUpdating, "pods removal")
 			}
 
 			if u.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
-				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
+				return NewComponentStatus(SyncStatusReady, "Nothing to do now")
 			}
 		} else {
-			return NewComponentStatus(SyncStatusReady, "Not updating component"), err
+			return NewComponentStatus(SyncStatusReady, "Not updating component")
 		}
 	}
 
 	if !IsRunningStatus(u.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, u.master.GetName()), err
+		return WaitingStatus(SyncStatusBlocked, u.master.GetName())
 	}
 
 	if u.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			token := ytconfig.RandString(30)
-			s := u.secret.Build()
-			s.StringData = map[string]string{
-				consts.UISecretFileName: fmt.Sprintf("{\"oauthToken\" : \"%s\"}", token),
-				consts.TokenSecretKey:   token,
-			}
-			err = u.secret.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, u.secret.Name()), err
+		return WaitingStatus(SyncStatusPending, u.secret.Name())
 	}
 
-	if !dry {
-		u.initJob.SetInitScript(u.createInitScript())
-	}
-	status, err := u.initJob.Sync(ctx, dry)
-	if err != nil || status.SyncStatus != SyncStatusReady {
-		return status, err
-	}
-
-	if u.microservice.needSync() {
-		if !dry {
-			err = u.syncComponents(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, "components"), err
-	}
-
-	if !u.microservice.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusPending, "pods"), err
-	}
-
-	return SimpleStatus(SyncStatusReady), err
-}
-
-func (u *UI) Status(ctx context.Context) ComponentStatus {
-	status, err := u.doSync(ctx, true)
+	status, err := u.initJob.Sync(ctx, true)
 	if err != nil {
 		panic(err)
 	}
+	if status.SyncStatus != SyncStatusReady {
+		return status
+	}
 
-	return status
+	if u.microservice.needSync() {
+		return WaitingStatus(SyncStatusPending, "components")
+	}
+
+	if !u.microservice.arePodsReady(ctx) {
+		return WaitingStatus(SyncStatusPending, "pods")
+	}
+
+	return SimpleStatus(SyncStatusReady)
 }
 
 func (u *UI) Sync(ctx context.Context) error {
-	_, err := u.doSync(ctx, false)
-	return err
+	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && u.microservice.needUpdate() {
+		return nil
+	}
+
+	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if IsUpdatingComponent(u.ytsaurus, u) {
+
+			if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+				return removePods(ctx, u.microservice, &u.localComponent)
+			}
+
+			if u.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+				return nil
+			}
+		} else {
+			return nil
+		}
+	}
+
+	if !IsRunningStatus(u.master.Status(ctx).SyncStatus) {
+		return nil
+	}
+
+	if u.secret.NeedSync(consts.TokenSecretKey, "") {
+		token := ytconfig.RandString(30)
+		s := u.secret.Build()
+		s.StringData = map[string]string{
+			consts.UISecretFileName: fmt.Sprintf("{\"oauthToken\" : \"%s\"}", token),
+			consts.TokenSecretKey:   token,
+		}
+		return u.secret.Sync(ctx)
+	}
+
+	u.initJob.SetInitScript(u.createInitScript())
+	status, err := u.initJob.Sync(ctx, false)
+	if err != nil || status.SyncStatus != SyncStatusReady {
+		return err
+	}
+
+	if u.microservice.needSync() {
+		return u.syncComponents(ctx)
+	}
+
+	return nil
 }
