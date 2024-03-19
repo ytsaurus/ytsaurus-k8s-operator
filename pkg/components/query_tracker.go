@@ -100,114 +100,6 @@ func (qt *QueryTracker) Fetch(ctx context.Context) error {
 	)
 }
 
-func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
-	if ytv1.IsReadyToUpdateClusterState(qt.ytsaurus.GetClusterState()) && qt.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
-	}
-
-	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(qt.ytsaurus, qt) {
-			if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(qt.ytsaurus, qt) {
-				if !dry {
-					err = removePods(ctx, qt.server, &qt.localComponent)
-				}
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
-			}
-
-			if status, err := qt.updateQTState(ctx, dry); status != nil {
-				return *status, err
-			}
-			if qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
-				qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQTStateUpdate {
-				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
-			}
-		} else {
-			return NewComponentStatus(SyncStatusReady, "Not updating component"), err
-		}
-	}
-
-	if qt.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			secretSpec := qt.secret.Build()
-			secretSpec.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
-			}
-			err = qt.secret.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, qt.secret.Name()), err
-	}
-
-	if qt.NeedSync() {
-		if !dry {
-			err = qt.server.Sync(ctx)
-		}
-
-		return WaitingStatus(SyncStatusPending, "components"), err
-	}
-
-	if !qt.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
-	}
-
-	// Wait for tablet nodes to proceed with query tracker state init.
-	if qt.tabletNodes == nil || len(qt.tabletNodes) == 0 {
-		return WaitingStatus(SyncStatusBlocked, "tablet nodes"), fmt.Errorf("cannot initialize query tracker without tablet nodes")
-	}
-
-	for _, tnd := range qt.tabletNodes {
-		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, "tablet nodes"), err
-		}
-	}
-
-	var ytClient yt.Client
-	if qt.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
-		if qt.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
-			return WaitingStatus(SyncStatusBlocked, qt.ytsaurusClient.GetName()), err
-		}
-
-		if !dry {
-			ytClient = qt.ytsaurusClient.GetYtClient()
-
-			err = qt.createUser(ctx, ytClient)
-			if err != nil {
-				return WaitingStatus(SyncStatusPending, "create qt user"), err
-			}
-		}
-	}
-
-	if !dry {
-		qt.prepareInitQueryTrackerState()
-	}
-	status, err := qt.initQTState.Sync(ctx, dry)
-	if err != nil || status.SyncStatus != SyncStatusReady {
-		return status, err
-	}
-
-	if qt.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
-		if !dry {
-			err = qt.init(ctx, ytClient)
-			if err != nil {
-				return WaitingStatus(SyncStatusPending, fmt.Sprintf("%s initialization", qt.GetName())), err
-			}
-
-			qt.ytsaurus.SetStatusCondition(metav1.Condition{
-				Type:    qt.initCondition,
-				Status:  metav1.ConditionTrue,
-				Reason:  "InitQueryTrackerCompleted",
-				Message: "Init query tracker successfully completed",
-			})
-		}
-	}
-
-	if qt.ytsaurus.IsStatusConditionTrue(qt.initCondition) {
-		return SimpleStatus(SyncStatusReady), err
-	}
-	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", qt.initCondition)), err
-}
-
 func (qt *QueryTracker) createUser(ctx context.Context, ytClient yt.Client) (err error) {
 	logger := log.FromContext(ctx)
 
@@ -343,17 +235,163 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 }
 
 func (qt *QueryTracker) Status(ctx context.Context) ComponentStatus {
-	status, err := qt.doSync(ctx, true)
+	if ytv1.IsReadyToUpdateClusterState(qt.ytsaurus.GetClusterState()) && qt.server.needUpdate() {
+		return SimpleStatus(SyncStatusNeedLocalUpdate)
+	}
+
+	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if IsUpdatingComponent(qt.ytsaurus, qt) {
+			if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(qt.ytsaurus, qt) {
+				return WaitingStatus(SyncStatusUpdating, "pods removal")
+			}
+
+			if status, err := qt.updateQTState(ctx, true); status != nil {
+				if err != nil {
+					panic(err)
+				}
+				return *status
+			}
+			if qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+				qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQTStateUpdate {
+				return NewComponentStatus(SyncStatusReady, "Nothing to do now")
+			}
+		} else {
+			return NewComponentStatus(SyncStatusReady, "Not updating component")
+		}
+	}
+
+	if qt.secret.NeedSync(consts.TokenSecretKey, "") {
+		return WaitingStatus(SyncStatusPending, qt.secret.Name())
+	}
+
+	if qt.NeedSync() {
+		return WaitingStatus(SyncStatusPending, "components")
+	}
+
+	if !qt.server.arePodsReady(ctx) {
+		return WaitingStatus(SyncStatusBlocked, "pods")
+	}
+
+	// Wait for tablet nodes to proceed with query tracker state init.
+	if qt.tabletNodes == nil || len(qt.tabletNodes) == 0 {
+		panic(fmt.Errorf("cannot initialize query tracker without tablet nodes"))
+	}
+
+	for _, tnd := range qt.tabletNodes {
+		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
+			return WaitingStatus(SyncStatusBlocked, "tablet nodes")
+		}
+	}
+
+	if qt.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
+		if qt.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
+			return WaitingStatus(SyncStatusBlocked, qt.ytsaurusClient.GetName())
+		}
+	}
+
+	status, err := qt.initQTState.Sync(ctx, true)
 	if err != nil {
 		panic(err)
 	}
+	if status.SyncStatus != SyncStatusReady {
+		return status
+	}
 
-	return status
+	if qt.ytsaurus.IsStatusConditionTrue(qt.initCondition) {
+		return SimpleStatus(SyncStatusReady)
+	}
+	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", qt.initCondition))
 }
 
 func (qt *QueryTracker) Sync(ctx context.Context) error {
-	_, err := qt.doSync(ctx, false)
-	return err
+	if ytv1.IsReadyToUpdateClusterState(qt.ytsaurus.GetClusterState()) && qt.server.needUpdate() {
+		return nil
+	}
+
+	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if IsUpdatingComponent(qt.ytsaurus, qt) {
+			if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(qt.ytsaurus, qt) {
+				return removePods(ctx, qt.server, &qt.localComponent)
+			}
+
+			if status, err := qt.updateQTState(ctx, false); status != nil {
+				return err
+			}
+			if qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+				qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQTStateUpdate {
+				return nil
+			}
+		} else {
+			return nil
+		}
+	}
+
+	if qt.secret.NeedSync(consts.TokenSecretKey, "") {
+		secretSpec := qt.secret.Build()
+		secretSpec.StringData = map[string]string{
+			consts.TokenSecretKey: ytconfig.RandString(30),
+		}
+		return qt.secret.Sync(ctx)
+	}
+
+	if qt.NeedSync() {
+		return qt.server.Sync(ctx)
+	}
+
+	if !qt.server.arePodsReady(ctx) {
+		return nil
+	}
+
+	// Wait for tablet nodes to proceed with query tracker state init.
+	if qt.tabletNodes == nil || len(qt.tabletNodes) == 0 {
+		return fmt.Errorf("cannot initialize query tracker without tablet nodes")
+	}
+
+	for _, tnd := range qt.tabletNodes {
+		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
+			return nil
+		}
+	}
+
+	var ytClient yt.Client
+	if qt.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
+		if qt.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
+			return nil
+		}
+
+		ytClient = qt.ytsaurusClient.GetYtClient()
+
+		err := qt.createUser(ctx, ytClient)
+		if err != nil {
+			return err
+		}
+	}
+
+	qt.prepareInitQueryTrackerState()
+
+	status, err := qt.initQTState.Sync(ctx, false)
+	if err != nil || status.SyncStatus != SyncStatusReady {
+		return err
+	}
+
+	if qt.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
+		err = qt.init(ctx, ytClient)
+		if err != nil {
+			return err
+		}
+
+		qt.ytsaurus.SetStatusCondition(metav1.Condition{
+			Type:    qt.initCondition,
+			Status:  metav1.ConditionTrue,
+			Reason:  "InitQueryTrackerCompleted",
+			Message: "Init query tracker successfully completed",
+		})
+	}
+
+	if qt.ytsaurus.IsStatusConditionTrue(qt.initCondition) {
+		return nil
+	}
+	return nil
 }
 
 func (qt *QueryTracker) prepareInitQueryTrackerState() {
