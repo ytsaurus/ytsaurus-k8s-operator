@@ -97,61 +97,69 @@ func (rp *RpcProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, fetchable...)
 }
 
-func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
+func (rp *RpcProxy) Status(ctx context.Context) ComponentStatus {
 	if ytv1.IsReadyToUpdateClusterState(rp.ytsaurus.GetClusterState()) && rp.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedLocalUpdate)
 	}
 
 	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.localComponent, rp.server, dry); status != nil {
-			return *status, err
+		status, err := handleUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.localComponent, rp.server, true)
+		if status != nil {
+			if err != nil {
+				panic(err)
+			}
+			return *status
 		}
 	}
 
 	if !IsRunningStatus(rp.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, rp.master.GetName()), err
+		return WaitingStatus(SyncStatusBlocked, rp.master.GetName())
 	}
 
 	if rp.NeedSync() {
-		if !dry {
-			statefulSet := rp.server.buildStatefulSet()
-			if secret := rp.tlsSecret; secret != nil {
-				secret.AddVolume(&statefulSet.Spec.Template.Spec)
-				secret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
-			}
-			err = rp.server.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return WaitingStatus(SyncStatusPending, "components")
 	}
 
 	if rp.balancingService != nil && !resources.Exists(rp.balancingService) {
-		if !dry {
-			s := rp.balancingService.Build()
-			s.Spec.Type = *rp.serviceType
-			err = rp.balancingService.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, rp.balancingService.Name()), err
+		return WaitingStatus(SyncStatusPending, rp.balancingService.Name())
 	}
 
 	if !rp.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return WaitingStatus(SyncStatusBlocked, "pods")
 	}
 
-	return SimpleStatus(SyncStatusReady), err
-}
-
-func (rp *RpcProxy) Status(ctx context.Context) ComponentStatus {
-	status, err := rp.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+	return SimpleStatus(SyncStatusReady)
 }
 
 func (rp *RpcProxy) Sync(ctx context.Context) error {
-	_, err := rp.doSync(ctx, false)
-	return err
+	if ytv1.IsReadyToUpdateClusterState(rp.ytsaurus.GetClusterState()) && rp.server.needUpdate() {
+		return nil
+	}
+
+	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		status, err := handleUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.localComponent, rp.server, false)
+		if status != nil {
+			return err
+		}
+	}
+
+	if !IsRunningStatus(rp.master.Status(ctx).SyncStatus) {
+		return nil
+	}
+
+	if rp.NeedSync() {
+		statefulSet := rp.server.buildStatefulSet()
+		if secret := rp.tlsSecret; secret != nil {
+			secret.AddVolume(&statefulSet.Spec.Template.Spec)
+			secret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
+		}
+		return rp.server.Sync(ctx)
+	}
+
+	if rp.balancingService != nil && !resources.Exists(rp.balancingService) {
+		s := rp.balancingService.Build()
+		s.Spec.Type = *rp.serviceType
+		return rp.balancingService.Sync(ctx)
+	}
+	return nil
 }
