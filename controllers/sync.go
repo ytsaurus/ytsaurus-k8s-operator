@@ -243,7 +243,7 @@ func getComponentNames(components []components.Component) []string {
 	return names
 }
 
-func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
+func (r *YtsaurusReconciler) SyncDeprecated(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
 	if !resource.Spec.IsManaged {

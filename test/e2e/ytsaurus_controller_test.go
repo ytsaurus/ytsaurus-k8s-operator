@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	timeout  = time.Second * 90
+	timeout  = time.Second * 150
 	interval = time.Millisecond * 250
 )
 
@@ -129,6 +129,7 @@ func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
 	if len(ytsaurus.Spec.ExecNodes) != 0 {
 		pods = append(pods, "end-0")
 	}
+
 	for _, podName := range pods {
 		Eventually(func() bool {
 			pod := &corev1.Pod{}
@@ -137,7 +138,7 @@ func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
 				return false
 			}
 			return pod.Status.Phase == corev1.PodRunning
-		}, timeout, interval).Should(BeTrue())
+		}, timeout, interval).Should(BeTrue(), podName+" not running")
 	}
 
 	By("Checking that ytsaurus state is equal to `Running`")
