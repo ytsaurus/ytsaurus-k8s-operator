@@ -88,55 +88,63 @@ func (tp *TcpProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, fetchable...)
 }
 
-func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
+func (tp *TcpProxy) Status(ctx context.Context) ComponentStatus {
 	if ytv1.IsReadyToUpdateClusterState(tp.ytsaurus.GetClusterState()) && tp.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedLocalUpdate)
 	}
 
 	if tp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, tp.ytsaurus, tp, &tp.localComponent, tp.server, dry); status != nil {
-			return *status, err
+		status, err := handleUpdatingClusterState(ctx, tp.ytsaurus, tp, &tp.localComponent, tp.server, true)
+		if status != nil {
+			if err != nil {
+				panic(err)
+			}
+			return *status
 		}
 	}
 
 	if !IsRunningStatus(tp.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, tp.master.GetName()), err
+		return WaitingStatus(SyncStatusBlocked, tp.master.GetName())
 	}
 
 	if tp.NeedSync() {
-		if !dry {
-			err = tp.server.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return WaitingStatus(SyncStatusPending, "components")
 	}
 
 	if tp.balancingService != nil && !resources.Exists(tp.balancingService) {
-		if !dry {
-			tp.balancingService.Build()
-			err = tp.balancingService.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, tp.balancingService.Name()), err
+		return WaitingStatus(SyncStatusPending, tp.balancingService.Name())
 	}
 
 	if !tp.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return WaitingStatus(SyncStatusBlocked, "pods")
 	}
 
-	return SimpleStatus(SyncStatusReady), err
-}
-
-func (tp *TcpProxy) Status(ctx context.Context) ComponentStatus {
-	status, err := tp.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+	return SimpleStatus(SyncStatusReady)
 }
 
 func (tp *TcpProxy) Sync(ctx context.Context) error {
-	_, err := tp.doSync(ctx, false)
-	return err
+	if ytv1.IsReadyToUpdateClusterState(tp.ytsaurus.GetClusterState()) && tp.server.needUpdate() {
+		return nil
+	}
+
+	if tp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		status, err := handleUpdatingClusterState(ctx, tp.ytsaurus, tp, &tp.localComponent, tp.server, false)
+		if status != nil {
+			return err
+		}
+	}
+
+	if !IsRunningStatus(tp.master.Status(ctx).SyncStatus) {
+		return nil
+	}
+
+	if tp.NeedSync() {
+		return tp.server.Sync(ctx)
+	}
+
+	if tp.balancingService != nil && !resources.Exists(tp.balancingService) {
+		tp.balancingService.Build()
+		return tp.balancingService.Sync(ctx)
+	}
+	return nil
 }
