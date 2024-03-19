@@ -59,14 +59,6 @@ var conditionDependencies = map[ConditionName][]Condition{
 		isBuilt(HttpProxyName),
 		isBuilt(MasterName),
 	},
-	//HttpProxyReady.name: {
-	//	HttpProxyBuilt,
-	//	MasterBuilt,
-	//},
-	//DataNodeReadyCondName: {
-	//	DataNodeBuilt,
-	//	MasterReady,
-	//},
 }
 
 // stepDependencies describes what conditions must be satisfied for step to run.
@@ -85,25 +77,21 @@ var stepDependencies = map[StepName][]Condition{
 		isBuilt(MasterName),
 		needSync(MasterName),
 		not(SafeModeEnabled),
-		//YtsaurusClientReady,  // TODO: fix that later
 	},
 	EnableSafeModeStep: {
 		not(SafeModeEnabled),
 		SafeModeCanBeEnabled,
-		//YtsaurusClientReady,  // TODO: fix that later
 	},
 	BackupTabletCellsStep: {
 		not(TabletCellsNeedRecover),
 		needSync(MasterName),
 		SafeModeEnabled,
-		//YtsaurusClientReady,  // TODO: fix that later
 	},
 	BuildMasterSnapshotsStep: {
 		not(MasterIsInReadOnly),
 		needSync(MasterName),
 		SafeModeEnabled,
 		TabletCellsNeedRecover,
-		//YtsaurusClientReady,  // TODO: fix that later
 	},
 
 	DiscoveryStep: {
@@ -162,8 +150,6 @@ var stepDependencies = map[StepName][]Condition{
 		QueryTrackerNeedsInit,
 		not(MasterIsInReadOnly), // we need to write in this step
 		TabletCellsReady,
-		// Do we *really* depend on tablet cells OR UpdateOpArchiveStep in this job,
-		// or it could be done independently after exit RO?
 		//not(OperationArchiveNeedUpdate),
 	},
 	DisableSafeModeStep: {
