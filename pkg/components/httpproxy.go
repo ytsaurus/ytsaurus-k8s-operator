@@ -99,61 +99,74 @@ func (hp *HttpProxy) Fetch(ctx context.Context) error {
 	)
 }
 
-func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
+func (hp *HttpProxy) Status(ctx context.Context) ComponentStatus {
 	if ytv1.IsReadyToUpdateClusterState(hp.ytsaurus.GetClusterState()) && hp.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedLocalUpdate)
 	}
 
 	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.localComponent, hp.server, dry); status != nil {
-			return *status, err
+		status, err := handleUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.localComponent, hp.server, true)
+		if status != nil {
+			if err != nil {
+				panic(err)
+			}
+			return *status
 		}
 	}
 
 	if !IsRunningStatus(hp.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, hp.master.GetName()), err
+		return WaitingStatus(SyncStatusBlocked, hp.master.GetName())
 	}
 
 	if hp.NeedSync() {
-		if !dry {
-			statefulSet := hp.server.buildStatefulSet()
-			if hp.httpsSecret != nil {
-				hp.httpsSecret.AddVolume(&statefulSet.Spec.Template.Spec)
-				hp.httpsSecret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
-			}
-			err = hp.server.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return WaitingStatus(SyncStatusPending, "components")
 	}
 
 	if !resources.Exists(hp.balancingService) {
-		if !dry {
-			s := hp.balancingService.Build()
-			s.Spec.Type = hp.serviceType
-			err = hp.balancingService.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, hp.balancingService.Name()), err
+		return WaitingStatus(SyncStatusPending, hp.balancingService.Name())
 	}
 
 	if !hp.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return WaitingStatus(SyncStatusBlocked, "pods")
 	}
 
-	return SimpleStatus(SyncStatusReady), err
-}
-
-func (hp *HttpProxy) Status(ctx context.Context) ComponentStatus {
-	status, err := hp.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+	return SimpleStatus(SyncStatusReady)
 }
 
 func (hp *HttpProxy) Sync(ctx context.Context) error {
-	_, err := hp.doSync(ctx, false)
-	return err
+	if ytv1.IsReadyToUpdateClusterState(hp.ytsaurus.GetClusterState()) && hp.server.needUpdate() {
+		return nil
+	}
+
+	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		status, err := handleUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.localComponent, hp.server, false)
+		if status != nil {
+			return err
+		}
+	}
+
+	if !IsRunningStatus(hp.master.Status(ctx).SyncStatus) {
+		return nil
+	}
+
+	if hp.NeedSync() {
+		statefulSet := hp.server.buildStatefulSet()
+		if hp.httpsSecret != nil {
+			hp.httpsSecret.AddVolume(&statefulSet.Spec.Template.Spec)
+			hp.httpsSecret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
+		}
+		return hp.server.Sync(ctx)
+	}
+
+	if !resources.Exists(hp.balancingService) {
+		s := hp.balancingService.Build()
+		s.Spec.Type = hp.serviceType
+		return hp.balancingService.Sync(ctx)
+	}
+
+	if !hp.server.arePodsReady(ctx) {
+		return nil
+	}
+
+	return nil
 }
