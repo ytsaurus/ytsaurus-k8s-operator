@@ -212,91 +212,122 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 	return c.microservice.Sync(ctx)
 }
 
-func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
+func (c *StrawberryController) Status(ctx context.Context) ComponentStatus {
 	if ytv1.IsReadyToUpdateClusterState(c.ytsaurus.GetClusterState()) && c.microservice.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedLocalUpdate)
 	}
 
 	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(c.ytsaurus, c) {
 			if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-				if !dry {
-					err = removePods(ctx, c.microservice, &c.localComponent)
-				}
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+				return WaitingStatus(SyncStatusUpdating, "pods removal")
 			}
 
 			if c.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
-				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
+				return NewComponentStatus(SyncStatusReady, "Nothing to do now")
 			}
 		} else {
-			return NewComponentStatus(SyncStatusReady, "Not updating component"), err
+			return NewComponentStatus(SyncStatusReady, "Not updating component")
 		}
 	}
 
 	if !IsRunningStatus(c.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, c.master.GetName()), err
+		return WaitingStatus(SyncStatusBlocked, c.master.GetName())
 	}
 
 	if !IsRunningStatus(c.scheduler.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, c.scheduler.GetName()), err
+		return WaitingStatus(SyncStatusBlocked, c.scheduler.GetName())
 	}
 
 	for _, dataNode := range c.dataNodes {
 		if !IsRunningStatus(dataNode.Status(ctx).SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, dataNode.GetName()), err
+			return WaitingStatus(SyncStatusBlocked, dataNode.GetName())
 		}
 	}
 
 	if c.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			s := c.secret.Build()
-			s.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
-			}
-			err = c.secret.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, c.secret.Name()), err
+		return WaitingStatus(SyncStatusPending, c.secret.Name())
 	}
 
-	if !dry {
-		c.initUserAndUrlJob.SetInitScript(c.createInitUserAndUrlScript())
-	}
-	status, err := c.initUserAndUrlJob.Sync(ctx, dry)
-	if err != nil || status.SyncStatus != SyncStatusReady {
-		return status, err
-	}
-
-	if !dry {
-		c.prepareInitChytClusterJob()
-	}
-	status, err = c.initChytClusterJob.Sync(ctx, dry)
-	if err != nil || status.SyncStatus != SyncStatusReady {
-		return status, err
-	}
-
-	if c.microservice.needSync() {
-		if !dry {
-			err = c.syncComponents(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, "components"), err
-	}
-
-	return SimpleStatus(SyncStatusReady), err
-}
-
-func (c *StrawberryController) Status(ctx context.Context) ComponentStatus {
-	status, err := c.doSync(ctx, true)
+	status, err := c.initUserAndUrlJob.Sync(ctx, true)
 	if err != nil {
 		panic(err)
 	}
+	if status.SyncStatus != SyncStatusReady {
+		return status
+	}
 
-	return status
+	status, err = c.initChytClusterJob.Sync(ctx, true)
+	if err != nil {
+		panic(err)
+	}
+	if status.SyncStatus != SyncStatusReady {
+		return status
+	}
+
+	if c.microservice.needSync() {
+		return WaitingStatus(SyncStatusPending, "components")
+	}
+
+	return SimpleStatus(SyncStatusReady)
 }
 
 func (c *StrawberryController) Sync(ctx context.Context) error {
-	_, err := c.doSync(ctx, false)
-	return err
+	if ytv1.IsReadyToUpdateClusterState(c.ytsaurus.GetClusterState()) && c.microservice.needUpdate() {
+		return nil
+	}
+
+	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if IsUpdatingComponent(c.ytsaurus, c) {
+			if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+				return removePods(ctx, c.microservice, &c.localComponent)
+			}
+
+			if c.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+				return nil
+			}
+		} else {
+			return nil
+		}
+	}
+
+	if !IsRunningStatus(c.master.Status(ctx).SyncStatus) {
+		return nil
+	}
+
+	if !IsRunningStatus(c.scheduler.Status(ctx).SyncStatus) {
+		return nil
+	}
+
+	for _, dataNode := range c.dataNodes {
+		if !IsRunningStatus(dataNode.Status(ctx).SyncStatus) {
+			return nil
+		}
+	}
+
+	if c.secret.NeedSync(consts.TokenSecretKey, "") {
+		s := c.secret.Build()
+		s.StringData = map[string]string{
+			consts.TokenSecretKey: ytconfig.RandString(30),
+		}
+		return c.secret.Sync(ctx)
+	}
+
+	c.initUserAndUrlJob.SetInitScript(c.createInitUserAndUrlScript())
+	status, err := c.initUserAndUrlJob.Sync(ctx, false)
+	if err != nil || status.SyncStatus != SyncStatusReady {
+		return err
+	}
+
+	c.prepareInitChytClusterJob()
+	status, err = c.initChytClusterJob.Sync(ctx, false)
+	if err != nil || status.SyncStatus != SyncStatusReady {
+		return err
+	}
+
+	if c.microservice.needSync() {
+		return c.syncComponents(ctx)
+	}
+
+	return nil
 }
