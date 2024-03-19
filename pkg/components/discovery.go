@@ -3,13 +3,14 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/library/go/ptr"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/library/go/ptr"
 )
 
 type Discovery struct {
@@ -57,43 +58,54 @@ func (d *Discovery) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, d.server)
 }
 
-func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
+func (d *Discovery) Status(ctx context.Context) ComponentStatus {
 	if ytv1.IsReadyToUpdateClusterState(d.ytsaurus.GetClusterState()) && d.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedLocalUpdate)
 	}
 
 	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, d.ytsaurus, d, &d.localComponent, d.server, dry); status != nil {
-			return *status, err
+		status, err := handleUpdatingClusterState(ctx, d.ytsaurus, d, &d.localComponent, d.server, true)
+		if status != nil {
+			if err != nil {
+				panic(err)
+			}
+			return *status
 		}
 	}
 
 	if d.NeedSync() {
-		if !dry {
-			err = d.server.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return WaitingStatus(SyncStatusPending, "components")
 	}
 
 	if !d.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return WaitingStatus(SyncStatusBlocked, "pods")
 	}
 
-	return SimpleStatus(SyncStatusReady), err
-}
-
-func (d *Discovery) Status(ctx context.Context) ComponentStatus {
-	status, err := d.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+	return SimpleStatus(SyncStatusReady)
 }
 
 func (d *Discovery) Sync(ctx context.Context) error {
-	_, err := d.doSync(ctx, false)
-	return err
+	var err error
+
+	if ytv1.IsReadyToUpdateClusterState(d.ytsaurus.GetClusterState()) && d.server.needUpdate() {
+		return nil
+	}
+
+	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		status, err := handleUpdatingClusterState(ctx, d.ytsaurus, d, &d.localComponent, d.server, false)
+		if status != nil {
+			return err
+		}
+	}
+
+	if d.NeedSync() {
+		err = d.server.Sync(ctx)
+		return err
+	}
+
+	if !d.server.arePodsReady(ctx) {
+		return nil
+	}
+
+	return nil
 }
