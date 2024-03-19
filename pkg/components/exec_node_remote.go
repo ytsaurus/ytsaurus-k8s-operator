@@ -3,12 +3,13 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/library/go/ptr"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/library/go/ptr"
 )
 
 type RemoteExecNode struct {
@@ -58,11 +59,11 @@ func NewRemoteExecNodes(
 	}
 }
 
-func (n *RemoteExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (n *RemoteExecNode) Sync(ctx context.Context) (ComponentStatus, error) {
 	var err error
 
 	if n.server.needSync() || n.server.needUpdate() {
-		return n.doSyncBase(ctx, dry)
+		return WaitingStatus(SyncStatusPending, "components"), n.SyncBase(ctx)
 	}
 
 	if !n.server.arePodsReady(ctx) {
@@ -70,8 +71,4 @@ func (n *RemoteExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus,
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (n *RemoteExecNode) Sync(ctx context.Context) (ComponentStatus, error) {
-	return n.doSync(ctx, false)
 }
