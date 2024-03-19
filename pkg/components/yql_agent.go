@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"go.ytsaurus.tech/library/go/ptr"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -117,72 +118,88 @@ func (yqla *YqlAgent) createInitScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
+func (yqla *YqlAgent) Status(ctx context.Context) ComponentStatus {
 	if ytv1.IsReadyToUpdateClusterState(yqla.ytsaurus.GetClusterState()) && yqla.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedLocalUpdate)
 	}
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.localComponent, yqla.server, dry); status != nil {
-			return *status, err
+		status, err := handleUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.localComponent, yqla.server, true)
+		if status != nil {
+			if err != nil {
+				panic(err)
+			}
+			return *status
 		}
 	}
 
 	if !IsRunningStatus(yqla.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, yqla.master.GetName()), err
+		return WaitingStatus(SyncStatusBlocked, yqla.master.GetName())
 	}
 
 	if yqla.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			s := yqla.secret.Build()
-			s.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
-			}
-			err = yqla.secret.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, yqla.secret.Name()), err
+		return WaitingStatus(SyncStatusPending, yqla.secret.Name())
 	}
 
 	if yqla.NeedSync() {
-		if !dry {
-			ss := yqla.server.buildStatefulSet()
-			container := &ss.Spec.Template.Spec.Containers[0]
-			container.EnvFrom = []corev1.EnvFromSource{yqla.secret.GetEnvSource()}
-			if yqla.ytsaurus.GetResource().Spec.UseIPv6 && !yqla.ytsaurus.GetResource().Spec.UseIPv4 {
-				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "1"}}
-			} else if !yqla.ytsaurus.GetResource().Spec.UseIPv6 && yqla.ytsaurus.GetResource().Spec.UseIPv4 {
-				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "1"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
-			} else {
-				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
-			}
-			err = yqla.server.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return WaitingStatus(SyncStatusPending, "components")
 	}
 
 	if !yqla.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return WaitingStatus(SyncStatusBlocked, "pods")
 	}
 
-	if !dry {
-		yqla.initEnvironment.SetInitScript(yqla.createInitScript())
-	}
-
-	return yqla.initEnvironment.Sync(ctx, dry)
-}
-
-func (yqla *YqlAgent) Status(ctx context.Context) ComponentStatus {
-	status, err := yqla.doSync(ctx, true)
+	st, err := yqla.initEnvironment.Sync(ctx, true)
 	if err != nil {
 		panic(err)
 	}
-
-	return status
+	return st
 }
 
 func (yqla *YqlAgent) Sync(ctx context.Context) error {
-	_, err := yqla.doSync(ctx, false)
+	if ytv1.IsReadyToUpdateClusterState(yqla.ytsaurus.GetClusterState()) && yqla.server.needUpdate() {
+		return nil
+	}
+
+	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		status, err := handleUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.localComponent, yqla.server, false)
+		if status != nil {
+			return err
+		}
+	}
+
+	if !IsRunningStatus(yqla.master.Status(ctx).SyncStatus) {
+		return nil
+	}
+
+	if yqla.secret.NeedSync(consts.TokenSecretKey, "") {
+		s := yqla.secret.Build()
+		s.StringData = map[string]string{
+			consts.TokenSecretKey: ytconfig.RandString(30),
+		}
+		return yqla.secret.Sync(ctx)
+	}
+
+	if yqla.NeedSync() {
+		ss := yqla.server.buildStatefulSet()
+		container := &ss.Spec.Template.Spec.Containers[0]
+		container.EnvFrom = []corev1.EnvFromSource{yqla.secret.GetEnvSource()}
+		if yqla.ytsaurus.GetResource().Spec.UseIPv6 && !yqla.ytsaurus.GetResource().Spec.UseIPv4 {
+			container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "1"}}
+		} else if !yqla.ytsaurus.GetResource().Spec.UseIPv6 && yqla.ytsaurus.GetResource().Spec.UseIPv4 {
+			container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "1"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
+		} else {
+			container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
+		}
+		return yqla.server.Sync(ctx)
+	}
+
+	if !yqla.server.arePodsReady(ctx) {
+		return nil
+	}
+
+	yqla.initEnvironment.SetInitScript(yqla.createInitScript())
+
+	_, err := yqla.initEnvironment.Sync(ctx, false)
 	return err
 }
