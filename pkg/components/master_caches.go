@@ -3,13 +3,14 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/library/go/ptr"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/library/go/ptr"
 )
 
 type masterCache struct {
@@ -56,45 +57,53 @@ func (mc *masterCache) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, mc.server)
 }
 
-func (mc *masterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
+func (mc *masterCache) Status(ctx context.Context) ComponentStatus {
 	if ytv1.IsReadyToUpdateClusterState(mc.ytsaurus.GetClusterState()) && mc.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedLocalUpdate)
 	}
 
 	if mc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, mc.ytsaurus, mc, &mc.localComponent, mc.server, dry); status != nil {
-			return *status, err
+		status, err := handleUpdatingClusterState(ctx, mc.ytsaurus, mc, &mc.localComponent, mc.server, true)
+		if status != nil {
+			if err != nil {
+				panic(err)
+			}
+			return *status
 		}
 	}
 
 	if mc.NeedSync() {
-		if !dry {
-			err = mc.doServerSync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return WaitingStatus(SyncStatusPending, "components")
 	}
 
 	if !mc.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return WaitingStatus(SyncStatusBlocked, "pods")
 	}
 
-	return SimpleStatus(SyncStatusReady), err
-}
-
-func (mc *masterCache) Status(ctx context.Context) ComponentStatus {
-	status, err := mc.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+	return SimpleStatus(SyncStatusReady)
 }
 
 func (mc *masterCache) Sync(ctx context.Context) error {
-	_, err := mc.doSync(ctx, false)
-	return err
+	if ytv1.IsReadyToUpdateClusterState(mc.ytsaurus.GetClusterState()) && mc.server.needUpdate() {
+		return nil
+	}
+
+	if mc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		status, err := handleUpdatingClusterState(ctx, mc.ytsaurus, mc, &mc.localComponent, mc.server, false)
+		if status != nil {
+			return err
+		}
+	}
+
+	if mc.NeedSync() {
+		return mc.doServerSync(ctx)
+	}
+
+	if !mc.server.arePodsReady(ctx) {
+		return nil
+	}
+
+	return nil
 }
 
 func (mc *masterCache) doServerSync(ctx context.Context) error {
