@@ -327,22 +327,22 @@ var _ = Describe("Tablet node test", func() {
 
 			// Failed to check if there is //sys/tablet_cell_bundles/sys.
 			err := tabletNode.Sync(context.Background())
-			Expect(err).Should(Equal(existsNetError))
+			Expect(err).Should(MatchError(existsNetError))
 			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
 
 			// Failed to create `sys` bundle.
 			err = tabletNode.Sync(context.Background())
-			Expect(err).Should(Equal(createBundleNetError))
+			Expect(err).Should(MatchError(createBundleNetError))
 			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
 
 			// Failed to get @tablet_cell_count of the `sys` bundle.
 			err = tabletNode.Sync(context.Background())
-			Expect(err).Should(Equal(getNetError))
+			Expect(err).Should(MatchError(getNetError))
 			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
 
 			// Failed to create tablet_cell in the `sys` bundle.
 			err = tabletNode.Sync(context.Background())
-			Expect(err).Should(Equal(createCellNetError))
+			Expect(err).Should(MatchError(createCellNetError))
 			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
 
 			// Failed to get @tablet_cell_count of the `default` bundle.
