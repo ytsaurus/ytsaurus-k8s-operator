@@ -336,29 +336,21 @@ func (yc *YtsaurusClient) getToken() string {
 	return token
 }
 
-func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+func (yc *YtsaurusClient) Status(ctx context.Context) ComponentStatus {
 	if !IsRunningStatus(yc.httpProxy.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, yc.httpProxy.GetName()), err
+		return WaitingStatus(SyncStatusBlocked, yc.httpProxy.GetName())
 	}
 
 	if yc.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			s := yc.secret.Build()
-			s.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
-			}
-			err = yc.secret.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, yc.secret.Name()), err
+		return WaitingStatus(SyncStatusPending, yc.secret.Name())
 	}
 
-	if !dry {
-		yc.initUserJob.SetInitScript(yc.createInitUserScript())
+	status, err := yc.initUserJob.Sync(ctx, true)
+	if err != nil {
+		panic(err)
 	}
-	status, err := yc.initUserJob.Sync(ctx, dry)
-	if err != nil || status.SyncStatus != SyncStatusReady {
-		return status, err
+	if status.SyncStatus != SyncStatusReady {
+		return status
 	}
 
 	if yc.ytClient == nil {
@@ -378,35 +370,69 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 		})
 
 		if err != nil {
-			return WaitingStatus(SyncStatusPending, "ytClient init"), err
+			return WaitingStatus(SyncStatusPending, "ytClient init")
 		}
 	}
 
 	if yc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if yc.ytsaurus.GetResource().Status.UpdateStatus.State == ytv1.UpdateStateImpossibleToStart {
-			return SimpleStatus(SyncStatusReady), err
+			return SimpleStatus(SyncStatusReady)
 		}
-		if dry {
-			return SimpleStatus(SyncStatusUpdating), err
-		}
-		return yc.handleUpdatingState(ctx)
+		return SimpleStatus(SyncStatusUpdating)
 	}
 
-	return SimpleStatus(SyncStatusReady), err
-}
-
-func (yc *YtsaurusClient) Status(ctx context.Context) ComponentStatus {
-	status, err := yc.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+	return SimpleStatus(SyncStatusReady)
 }
 
 func (yc *YtsaurusClient) Sync(ctx context.Context) error {
-	_, err := yc.doSync(ctx, false)
-	return err
+	if !IsRunningStatus(yc.httpProxy.Status(ctx).SyncStatus) {
+		return nil
+	}
+
+	if yc.secret.NeedSync(consts.TokenSecretKey, "") {
+		s := yc.secret.Build()
+		s.StringData = map[string]string{
+			consts.TokenSecretKey: ytconfig.RandString(30),
+		}
+		return yc.secret.Sync(ctx)
+	}
+
+	yc.initUserJob.SetInitScript(yc.createInitUserScript())
+	status, err := yc.initUserJob.Sync(ctx, false)
+	if err != nil || status.SyncStatus != SyncStatusReady {
+		return err
+	}
+
+	if yc.ytClient == nil {
+		token, _ := yc.secret.GetValue(consts.TokenSecretKey)
+		timeout := time.Second * 10
+		proxy, ok := os.LookupEnv("YTOP_PROXY")
+		disableProxyDiscovery := true
+		if !ok {
+			proxy = yc.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
+			disableProxyDiscovery = false
+		}
+		yc.ytClient, err = ythttp.NewClient(&yt.Config{
+			Proxy:                 proxy,
+			Token:                 token,
+			LightRequestTimeout:   &timeout,
+			DisableProxyDiscovery: disableProxyDiscovery,
+		})
+
+		if err != nil {
+			return err
+		}
+	}
+
+	if yc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if yc.ytsaurus.GetResource().Status.UpdateStatus.State == ytv1.UpdateStateImpossibleToStart {
+			return nil
+		}
+		_, err = yc.handleUpdatingState(ctx)
+		return err
+	}
+
+	return nil
 }
 
 func (yc *YtsaurusClient) GetYtClient() yt.Client {
