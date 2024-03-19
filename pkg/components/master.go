@@ -281,52 +281,66 @@ func (m *Master) createExitReadOnlyScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
+func (m *Master) Status(ctx context.Context) ComponentStatus {
 	if ytv1.IsReadyToUpdateClusterState(m.ytsaurus.GetClusterState()) && m.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedFullUpdate), err
+		return SimpleStatus(SyncStatusNeedFullUpdate)
 	}
 
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForMasterExitReadOnly {
-			st, err := m.exitReadOnly(ctx, dry)
-			return *st, err
+			st := m.exitReadOnlyStatus(ctx)
+			return *st
 		}
-		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
-			return *status, err
+		status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, true)
+		if status != nil {
+			if err != nil {
+				panic(err)
+			}
+			return *status
 		}
 	}
 
 	if m.NeedSync() {
-		if !dry {
-			err = m.doServerSync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return WaitingStatus(SyncStatusPending, "components")
 	}
 
 	if !m.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return WaitingStatus(SyncStatusBlocked, "pods")
 	}
 
-	if !dry {
-		m.initJob.SetInitScript(m.createInitScript())
-	}
-
-	return m.initJob.Sync(ctx, dry)
-}
-
-func (m *Master) Status(ctx context.Context) ComponentStatus {
-	status, err := m.doSync(ctx, true)
+	status, err := m.initJob.Sync(ctx, true)
 	if err != nil {
 		panic(err)
 	}
-
 	return status
 }
 
 func (m *Master) Sync(ctx context.Context) error {
-	_, err := m.doSync(ctx, false)
+	if ytv1.IsReadyToUpdateClusterState(m.ytsaurus.GetClusterState()) && m.server.needUpdate() {
+		return nil
+	}
+
+	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForMasterExitReadOnly {
+			return m.exitReadOnlySync(ctx)
+		}
+		status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, false)
+		if status != nil {
+			return err
+		}
+	}
+
+	if m.NeedSync() {
+		return m.doServerSync(ctx)
+	}
+
+	if !m.server.arePodsReady(ctx) {
+		return nil
+	}
+
+	m.initJob.SetInitScript(m.createInitScript())
+
+	_, err := m.initJob.Sync(ctx, false)
 	return err
 }
 
@@ -347,38 +361,54 @@ func (m *Master) getHostAddressLabel() string {
 	return defaultHostAddressLabel
 }
 
-func (m *Master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, error) {
+func (m *Master) exitReadOnlyStatus(ctx context.Context) *ComponentStatus {
 	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterExitReadOnlyPrepared) {
 		if !m.exitReadOnlyJob.isRestartPrepared() {
-			if err := m.exitReadOnlyJob.prepareRestart(ctx, dry); err != nil {
-				return ptr.T(SimpleStatus(SyncStatusUpdating)), err
+			if err := m.exitReadOnlyJob.prepareRestart(ctx, true); err != nil {
+				panic(err)
 			}
 		}
 
-		if !dry {
-			m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionTrue)
-		}
-		return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
+		return ptr.T(SimpleStatus(SyncStatusUpdating))
 	}
 
 	if !m.exitReadOnlyJob.IsCompleted() {
-		if !dry {
-			m.exitReadOnlyJob.SetInitScript(m.createExitReadOnlyScript())
+		status, err := m.exitReadOnlyJob.Sync(ctx, true)
+		if err != nil {
+			panic(err)
 		}
-		status, err := m.exitReadOnlyJob.Sync(ctx, dry)
-		return &status, err
+		return &status
 	}
 
-	if !dry {
-		m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    consts.ConditionMasterExitedReadOnly,
-			Status:  metav1.ConditionTrue,
-			Reason:  "MasterExitedReadOnly",
-			Message: "Masters exited read-only state",
-		})
-		m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionFalse)
+	return ptr.T(SimpleStatus(SyncStatusUpdating))
+}
+
+func (m *Master) exitReadOnlySync(ctx context.Context) error {
+	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterExitReadOnlyPrepared) {
+		if !m.exitReadOnlyJob.isRestartPrepared() {
+			if err := m.exitReadOnlyJob.prepareRestart(ctx, false); err != nil {
+				return err
+			}
+		}
+
+		m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionTrue)
+		return nil
 	}
-	return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
+
+	if !m.exitReadOnlyJob.IsCompleted() {
+		m.exitReadOnlyJob.SetInitScript(m.createExitReadOnlyScript())
+		_, err := m.exitReadOnlyJob.Sync(ctx, false)
+		return err
+	}
+
+	m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    consts.ConditionMasterExitedReadOnly,
+		Status:  metav1.ConditionTrue,
+		Reason:  "MasterExitedReadOnly",
+		Message: "Masters exited read-only state",
+	})
+	m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionFalse)
+	return nil
 }
 
 func (m *Master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav1.ConditionStatus) {
