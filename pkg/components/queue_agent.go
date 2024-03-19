@@ -103,101 +103,6 @@ func (qa *QueueAgent) Fetch(ctx context.Context) error {
 	)
 }
 
-func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
-	if ytv1.IsReadyToUpdateClusterState(qa.ytsaurus.GetClusterState()) && qa.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
-	}
-
-	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, qa.ytsaurus, qa, &qa.localComponent, qa.server, dry); status != nil {
-			return *status, err
-		}
-	}
-
-	if !IsRunningStatus(qa.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, qa.master.GetName()), err
-	}
-
-	// It makes no sense to start queue agents without tablet nodes.
-	if qa.tabletNodes == nil || len(qa.tabletNodes) == 0 {
-		return WaitingStatus(SyncStatusBlocked, "tablet nodes"), fmt.Errorf("cannot initialize queue agent without tablet nodes")
-	}
-	for _, tnd := range qa.tabletNodes {
-		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, tnd.GetName()), err
-		}
-	}
-
-	if qa.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			secretSpec := qa.secret.Build()
-			secretSpec.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
-			}
-			err = qa.secret.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, qa.secret.Name()), err
-	}
-
-	if qa.NeedSync() {
-		if !dry {
-			err = qa.server.Sync(ctx)
-		}
-
-		return WaitingStatus(SyncStatusPending, "components"), err
-	}
-
-	if !qa.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
-	}
-
-	var ytClient yt.Client
-	if qa.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
-		if qa.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
-			return WaitingStatus(SyncStatusBlocked, qa.ytsaurusClient.GetName()), err
-		}
-
-		if !dry {
-			ytClient = qa.ytsaurusClient.GetYtClient()
-
-			err = qa.createUser(ctx, ytClient)
-			if err != nil {
-				return WaitingStatus(SyncStatusPending, "create qa user"), err
-			}
-		}
-	}
-
-	if !dry {
-		qa.prepareInitQueueAgentState()
-	}
-	status, err := qa.initQAState.Sync(ctx, dry)
-	if err != nil || status.SyncStatus != SyncStatusReady {
-		return status, err
-	}
-
-	if qa.ytsaurus.IsStatusConditionTrue(qa.initCondition) {
-		return SimpleStatus(SyncStatusReady), err
-	}
-
-	if !dry {
-		err = qa.init(ctx, ytClient)
-		if err != nil {
-			return WaitingStatus(SyncStatusPending, fmt.Sprintf("%s initialization", qa.GetName())), err
-		}
-
-		qa.ytsaurus.SetStatusCondition(metav1.Condition{
-			Type:    qa.initCondition,
-			Status:  metav1.ConditionTrue,
-			Reason:  "InitQueueAgentCompleted",
-			Message: "Init queue agent successfully completed",
-		})
-	}
-
-	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", qa.initCondition)), err
-}
-
 func (qa *QueueAgent) createUser(ctx context.Context, ytClient yt.Client) (err error) {
 	logger := log.FromContext(ctx)
 
@@ -297,15 +202,144 @@ func (qa *QueueAgent) prepareInitQueueAgentState() {
 }
 
 func (qa *QueueAgent) Status(ctx context.Context) ComponentStatus {
-	status, err := qa.doSync(ctx, true)
+	if ytv1.IsReadyToUpdateClusterState(qa.ytsaurus.GetClusterState()) && qa.server.needUpdate() {
+		return SimpleStatus(SyncStatusNeedLocalUpdate)
+	}
+
+	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		status, err := handleUpdatingClusterState(ctx, qa.ytsaurus, qa, &qa.localComponent, qa.server, true)
+		if status != nil {
+			if err != nil {
+				panic(err)
+			}
+			return *status
+		}
+	}
+
+	if !IsRunningStatus(qa.master.Status(ctx).SyncStatus) {
+		return WaitingStatus(SyncStatusBlocked, qa.master.GetName())
+	}
+
+	// It makes no sense to start queue agents without tablet nodes.
+	if qa.tabletNodes == nil || len(qa.tabletNodes) == 0 {
+		panic(fmt.Errorf("cannot initialize queue agent without tablet nodes"))
+	}
+	for _, tnd := range qa.tabletNodes {
+		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
+			return WaitingStatus(SyncStatusBlocked, tnd.GetName())
+		}
+	}
+
+	if qa.secret.NeedSync(consts.TokenSecretKey, "") {
+		return WaitingStatus(SyncStatusPending, qa.secret.Name())
+	}
+
+	if qa.NeedSync() {
+		return WaitingStatus(SyncStatusPending, "components")
+	}
+
+	if !qa.server.arePodsReady(ctx) {
+		return WaitingStatus(SyncStatusBlocked, "pods")
+	}
+
+	if qa.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
+		if qa.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
+			return WaitingStatus(SyncStatusBlocked, qa.ytsaurusClient.GetName())
+		}
+	}
+
+	status, err := qa.initQAState.Sync(ctx, true)
 	if err != nil {
 		panic(err)
 	}
+	if status.SyncStatus != SyncStatusReady {
+		return status
+	}
 
-	return status
+	if qa.ytsaurus.IsStatusConditionTrue(qa.initCondition) {
+		return SimpleStatus(SyncStatusReady)
+	}
+
+	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", qa.initCondition))
 }
 
 func (qa *QueueAgent) Sync(ctx context.Context) error {
-	_, err := qa.doSync(ctx, false)
-	return err
+	if ytv1.IsReadyToUpdateClusterState(qa.ytsaurus.GetClusterState()) && qa.server.needUpdate() {
+		return nil
+	}
+
+	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		status, err := handleUpdatingClusterState(ctx, qa.ytsaurus, qa, &qa.localComponent, qa.server, false)
+		if status != nil {
+			return err
+		}
+	}
+
+	if !IsRunningStatus(qa.master.Status(ctx).SyncStatus) {
+		return nil
+	}
+
+	// It makes no sense to start queue agents without tablet nodes.
+	if qa.tabletNodes == nil || len(qa.tabletNodes) == 0 {
+		return fmt.Errorf("cannot initialize queue agent without tablet nodes")
+	}
+	for _, tnd := range qa.tabletNodes {
+		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
+			return nil
+		}
+	}
+
+	if qa.secret.NeedSync(consts.TokenSecretKey, "") {
+		secretSpec := qa.secret.Build()
+		secretSpec.StringData = map[string]string{
+			consts.TokenSecretKey: ytconfig.RandString(30),
+		}
+		return qa.secret.Sync(ctx)
+	}
+
+	if qa.NeedSync() {
+		return qa.server.Sync(ctx)
+	}
+
+	if !qa.server.arePodsReady(ctx) {
+		return nil
+	}
+
+	var ytClient yt.Client
+	if qa.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
+		if qa.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
+			return nil
+		}
+
+		ytClient = qa.ytsaurusClient.GetYtClient()
+
+		err := qa.createUser(ctx, ytClient)
+		if err != nil {
+			return err
+		}
+	}
+
+	qa.prepareInitQueueAgentState()
+	status, err := qa.initQAState.Sync(ctx, false)
+	if err != nil || status.SyncStatus != SyncStatusReady {
+		return err
+	}
+
+	if qa.ytsaurus.IsStatusConditionTrue(qa.initCondition) {
+		return nil
+	}
+
+	err = qa.init(ctx, ytClient)
+	if err != nil {
+		return err
+	}
+
+	qa.ytsaurus.SetStatusCondition(metav1.Condition{
+		Type:    qa.initCondition,
+		Status:  metav1.ConditionTrue,
+		Reason:  "InitQueueAgentCompleted",
+		Message: "Init queue agent successfully completed",
+	})
+
+	return nil
 }
