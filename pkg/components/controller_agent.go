@@ -3,13 +3,14 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/library/go/ptr"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/library/go/ptr"
 )
 
 type ControllerAgent struct {
@@ -57,47 +58,62 @@ func (ca *ControllerAgent) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, ca.server)
 }
 
-func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
+func (ca *ControllerAgent) Status(ctx context.Context) ComponentStatus {
 	if ytv1.IsReadyToUpdateClusterState(ca.ytsaurus.GetClusterState()) && ca.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedLocalUpdate)
 	}
 
 	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.localComponent, ca.server, dry); status != nil {
-			return *status, err
+		status, err := handleUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.localComponent, ca.server, true)
+		if status != nil {
+			if err != nil {
+				panic(err)
+			}
+			return *status
 		}
 	}
 
 	if !IsRunningStatus(ca.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, ca.master.GetName()), err
+		return WaitingStatus(SyncStatusBlocked, ca.master.GetName())
 	}
 
 	if ca.NeedSync() {
-		if !dry {
-			err = ca.server.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return WaitingStatus(SyncStatusPending, "components")
 	}
 
 	if !ca.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return WaitingStatus(SyncStatusBlocked, "pods")
 	}
 
-	return SimpleStatus(SyncStatusReady), err
-}
-
-func (ca *ControllerAgent) Status(ctx context.Context) ComponentStatus {
-	status, err := ca.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+	return SimpleStatus(SyncStatusReady)
 }
 
 func (ca *ControllerAgent) Sync(ctx context.Context) error {
-	_, err := ca.doSync(ctx, false)
-	return err
+	var err error
+
+	if ytv1.IsReadyToUpdateClusterState(ca.ytsaurus.GetClusterState()) && ca.server.needUpdate() {
+		return nil
+	}
+
+	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		status, err := handleUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.localComponent, ca.server, false)
+		if status != nil {
+			return err
+		}
+	}
+
+	if !IsRunningStatus(ca.master.Status(ctx).SyncStatus) {
+		return nil
+	}
+
+	if ca.NeedSync() {
+		err = ca.server.Sync(ctx)
+		return err
+	}
+
+	if !ca.server.arePodsReady(ctx) {
+		return nil
+	}
+
+	return nil
 }
