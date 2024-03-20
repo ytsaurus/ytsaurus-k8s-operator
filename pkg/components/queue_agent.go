@@ -44,7 +44,7 @@ func NewQueueAgent(
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: "yt-queue-agent",
-		ComponentName:  "QueueAgent",
+		ComponentName:  string(consts.QueueAgentType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
@@ -102,6 +102,8 @@ func (qa *QueueAgent) Fetch(ctx context.Context) error {
 		qa.secret,
 	)
 }
+
+func (qa *QueueAgent) GetType() consts.ComponentType { return consts.QueueAgentType }
 
 func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error

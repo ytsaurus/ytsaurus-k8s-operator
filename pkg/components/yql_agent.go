@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"go.ytsaurus.tech/library/go/ptr"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -31,7 +32,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelYqlAgent,
-		ComponentName:  "YqlAgent",
+		ComponentName:  string(consts.YqlAgentType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
@@ -75,6 +76,8 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 func (yqla *YqlAgent) IsUpdatable() bool {
 	return true
 }
+
+func (yqla *YqlAgent) GetType() consts.ComponentType { return consts.YqlAgentType }
 
 func (yqla *YqlAgent) GetName() string {
 	return yqla.labeller.ComponentName

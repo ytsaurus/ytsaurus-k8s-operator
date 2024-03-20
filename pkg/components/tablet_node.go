@@ -44,7 +44,7 @@ func NewTabletNode(
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelTabletNode, spec.Name),
-		ComponentName:  cfgen.FormatComponentStringWithDefault("TabletNode", spec.Name),
+		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.TabletNodeType), spec.Name),
 	}
 
 	if spec.InstanceSpec.MonitoringPort == nil {
@@ -77,6 +77,8 @@ func NewTabletNode(
 func (tn *TabletNode) IsUpdatable() bool {
 	return true
 }
+
+func (tn *TabletNode) GetType() consts.ComponentType { return consts.TabletNodeType }
 
 func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error

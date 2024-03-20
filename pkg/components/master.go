@@ -41,7 +41,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelMaster,
-		ComponentName:  "Master",
+		ComponentName:  string(consts.MasterType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
@@ -88,6 +88,8 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		exitReadOnlyJob:      exitReadOnlyJob,
 	}
 }
+
+func (m *Master) GetType() consts.ComponentType { return consts.MasterType }
 
 func (m *Master) IsUpdatable() bool {
 	return true

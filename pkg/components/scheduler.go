@@ -40,7 +40,7 @@ func NewScheduler(
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelScheduler,
-		ComponentName:  "Scheduler",
+		ComponentName:  string(consts.SchedulerType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
@@ -95,6 +95,8 @@ func NewScheduler(
 func (s *Scheduler) IsUpdatable() bool {
 	return true
 }
+
+func (s *Scheduler) GetType() consts.ComponentType { return consts.SchedulerType }
 
 func (s *Scheduler) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
