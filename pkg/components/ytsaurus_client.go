@@ -47,7 +47,7 @@ func NewYtsaurusClient(
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelClient,
-		ComponentName:  fmt.Sprintf("internal%s", consts.YtsaurusClientType),
+		ComponentName:  string(consts.YtsaurusClientType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
