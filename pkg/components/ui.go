@@ -146,9 +146,14 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 	}
 
 	env := []corev1.EnvVar{
+		// Deprecated since v 17.0.0
 		{
 			Name:  "YT_AUTH_CLUSTER_ID",
 			Value: ytsaurusResource.Name,
+		},
+		{
+			Name:  "ALLOW_PASSWORD_AUTH",
+			Value: "1",
 		},
 		{
 			Name:  "APP_INSTALLATION",
