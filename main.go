@@ -24,6 +24,8 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/ytsaurus/yt-k8s-operator/controllers"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -72,9 +74,13 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	managerOptions := ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
+		Scheme: scheme,
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Port: 9443,
+		}),
+		Metrics: metricsserver.Options{
+			BindAddress: metricsAddr,
+		},
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "6ab077f0.ytsaurus.tech",
@@ -93,10 +99,13 @@ func main() {
 
 	watchNamespace, ok := os.LookupEnv("WATCH_NAMESPACE")
 	if ok {
+		managerOptions.Cache.DefaultNamespaces = map[string]cache.Config{}
 		if strings.Contains(watchNamespace, ",") {
-			managerOptions.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(watchNamespace, ","))
+			for _, namespace := range strings.Split(watchNamespace, ",") {
+				managerOptions.Cache.DefaultNamespaces[namespace] = cache.Config{}
+			}
 		} else {
-			managerOptions.Namespace = watchNamespace
+			managerOptions.Cache.DefaultNamespaces[watchNamespace] = cache.Config{}
 		}
 	}
 

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"go.ytsaurus.tech/library/go/ptr"
-	"go.ytsaurus.tech/yt/go/yt"
+
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -25,8 +25,6 @@ type HttpProxy struct {
 
 	role        string
 	httpsSecret *resources.TLSSecret
-
-	ytClient yt.Client
 }
 
 func NewHTTPProxy(

@@ -112,10 +112,7 @@ func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
 	Eventually(func() bool {
 		createdYtsaurus := &ytv1.Ytsaurus{}
 		err := k8sClient.Get(ctx, ytsaurusLookupKey, createdYtsaurus)
-		if err != nil {
-			return false
-		}
-		return true
+		return err == nil
 	}, timeout, interval).Should(BeTrue())
 
 	By("Check pods are running")

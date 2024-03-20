@@ -36,12 +36,6 @@ type YtsaurusReconciler struct {
 	Recorder record.EventRecorder
 }
 
-type updateState struct {
-	status    ytv1.UpdateState
-	condition *string
-	nextState *updateState
-}
-
 // +kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=ytsaurus,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=ytsaurus/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=ytsaurus/finalizers,verbs=update
