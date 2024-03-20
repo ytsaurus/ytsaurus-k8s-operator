@@ -57,6 +57,10 @@ var (
 		LocationType: "Slots",
 		Path:         "/yt/hdd2/slots",
 	}
+	testLocationImageCache = v1.LocationSpec{
+		LocationType: "ImageCache",
+		Path:         "/yt/hdd1/images",
+	}
 	testVolumeMounts = []corev1.VolumeMount{
 		{
 			Name:      "hdd1",
@@ -126,6 +130,22 @@ func TestGetDiscoveryConfig(t *testing.T) {
 func TestGetExecNodeConfig(t *testing.T) {
 	g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
 	cfg, err := g.GetExecNodeConfig(getExecNodeSpec())
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetExecNodeConfigWithCri(t *testing.T) {
+	g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	spec := withCri(getExecNodeSpec())
+	cfg, err := g.GetExecNodeConfig(spec)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetContainerdConfig(t *testing.T) {
+	g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	spec := withCri(getExecNodeSpec())
+	cfg, err := g.GetContainerdConfig(&spec)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -561,6 +581,23 @@ func getExecNodeSpec() v1.ExecNodesSpec {
 		},
 		Name: "end-a",
 	}
+}
+
+func withCri(spec v1.ExecNodesSpec) v1.ExecNodesSpec {
+	spec.Locations = append(spec.Locations, testLocationImageCache)
+	spec.JobResources = &testResourceReqs
+	spec.JobEnvironment = &v1.JobEnvironmentSpec{
+		UserSlots: ptr.Int(42),
+		CRI: &v1.CRIJobEnvironmentSpec{
+			SandboxImage:           ptr.String("registry.k8s.io/pause:3.8"),
+			APIRetryTimeoutSeconds: ptr.Int32(120),
+			CRINamespace:           ptr.String("yt"),
+			BaseCgroup:             ptr.String("/yt"),
+		},
+		UseArtifactBinds: ptr.Bool(true),
+		DoNotSetUserId:   ptr.Bool(true),
+	}
+	return spec
 }
 
 func getTabletNodeSpec() v1.TabletNodesSpec {
