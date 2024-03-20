@@ -3,12 +3,13 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/library/go/ptr"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/library/go/ptr"
 )
 
 type ExecNode struct {
@@ -28,7 +29,7 @@ func NewExecNode(
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelExecNode, spec.Name),
-		ComponentName:  cfgen.FormatComponentStringWithDefault("ExecNode", spec.Name),
+		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.ExecNodeType), spec.Name),
 	}
 
 	if spec.InstanceSpec.MonitoringPort == nil {
@@ -63,6 +64,8 @@ func NewExecNode(
 func (n *ExecNode) IsUpdatable() bool {
 	return true
 }
+
+func (n *ExecNode) GetType() consts.ComponentType { return consts.ExecNodeType }
 
 func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error

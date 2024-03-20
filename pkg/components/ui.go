@@ -35,7 +35,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelUI,
-		ComponentName:  "UI",
+		ComponentName:  string(consts.UIType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
@@ -88,6 +88,8 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 func (u *UI) IsUpdatable() bool {
 	return true
 }
+
+func (u *UI) GetType() consts.ComponentType { return consts.UIType }
 
 func (u *UI) Fetch(ctx context.Context) error {
 

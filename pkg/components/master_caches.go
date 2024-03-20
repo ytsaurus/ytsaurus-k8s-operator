@@ -3,27 +3,28 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/library/go/ptr"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/library/go/ptr"
 )
 
-type masterCache struct {
+type MasterCache struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
 }
 
-func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component {
+func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *MasterCache {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelMasterCache,
-		ComponentName:  "MasterCache",
+		ComponentName:  string(consts.MasterCacheType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
@@ -42,21 +43,23 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Comp
 		func() ([]byte, error) { return cfgen.GetMasterCachesConfig(resource.Spec.MasterCaches) },
 	)
 
-	return &masterCache{
+	return &MasterCache{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
 	}
 }
 
-func (mc *masterCache) IsUpdatable() bool {
+func (mc *MasterCache) IsUpdatable() bool {
 	return true
 }
 
-func (mc *masterCache) Fetch(ctx context.Context) error {
+func (mc *MasterCache) GetType() consts.ComponentType { return consts.MasterCacheType }
+
+func (mc *MasterCache) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, mc.server)
 }
 
-func (mc *masterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (mc *MasterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(mc.ytsaurus.GetClusterState()) && mc.server.needUpdate() {
@@ -83,7 +86,7 @@ func (mc *masterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (mc *masterCache) Status(ctx context.Context) ComponentStatus {
+func (mc *MasterCache) Status(ctx context.Context) ComponentStatus {
 	status, err := mc.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -92,12 +95,12 @@ func (mc *masterCache) Status(ctx context.Context) ComponentStatus {
 	return status
 }
 
-func (mc *masterCache) Sync(ctx context.Context) error {
+func (mc *MasterCache) Sync(ctx context.Context) error {
 	_, err := mc.doSync(ctx, false)
 	return err
 }
 
-func (mc *masterCache) doServerSync(ctx context.Context) error {
+func (mc *MasterCache) doServerSync(ctx context.Context) error {
 	statefulSet := mc.server.buildStatefulSet()
 	masterCachesSpec := mc.ytsaurus.GetResource().Spec.MasterCaches
 	if len(masterCachesSpec.HostAddresses) != 0 {
@@ -107,7 +110,7 @@ func (mc *masterCache) doServerSync(ctx context.Context) error {
 	return mc.server.Sync(ctx)
 }
 
-func (mc *masterCache) getHostAddressLabel() string {
+func (mc *MasterCache) getHostAddressLabel() string {
 	masterCachesSpec := mc.ytsaurus.GetResource().Spec.MasterCaches
 	if masterCachesSpec.HostAddressLabel != "" {
 		return masterCachesSpec.HostAddressLabel

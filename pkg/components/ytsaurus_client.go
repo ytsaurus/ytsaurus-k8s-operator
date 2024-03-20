@@ -47,7 +47,7 @@ func NewYtsaurusClient(
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelClient,
-		ComponentName:  "internalYtsaurusClient",
+		ComponentName:  fmt.Sprintf("internal%s", consts.YtsaurusClientType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
@@ -74,6 +74,8 @@ func NewYtsaurusClient(
 func (yc *YtsaurusClient) IsUpdatable() bool {
 	return false
 }
+
+func (yc *YtsaurusClient) GetType() consts.ComponentType { return consts.YtsaurusClientType }
 
 func (yc *YtsaurusClient) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,

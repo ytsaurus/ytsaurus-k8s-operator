@@ -3,13 +3,14 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/library/go/ptr"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/library/go/ptr"
 )
 
 type ControllerAgent struct {
@@ -24,7 +25,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelControllerAgent,
-		ComponentName:  "ControllerAgent",
+		ComponentName:  string(consts.ControllerAgentType),
 	}
 
 	if resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort == nil {
@@ -52,6 +53,8 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 func (ca *ControllerAgent) IsUpdatable() bool {
 	return true
 }
+
+func (ca *ControllerAgent) GetType() consts.ComponentType { return consts.ControllerAgentType }
 
 func (ca *ControllerAgent) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, ca.server)

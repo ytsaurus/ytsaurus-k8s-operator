@@ -40,7 +40,7 @@ func NewHTTPProxy(
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelHTTPProxy, spec.Role),
-		ComponentName:  cfgen.FormatComponentStringWithDefault("HttpProxy", spec.Role),
+		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.HttpProxyType), spec.Role),
 	}
 
 	if spec.InstanceSpec.MonitoringPort == nil {
@@ -91,6 +91,8 @@ func NewHTTPProxy(
 func (hp *HttpProxy) IsUpdatable() bool {
 	return true
 }
+
+func (hp *HttpProxy) GetType() consts.ComponentType { return consts.HttpProxyType }
 
 func (hp *HttpProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,

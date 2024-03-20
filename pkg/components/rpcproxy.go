@@ -35,7 +35,7 @@ func NewRPCProxy(
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelRPCProxy, spec.Role),
-		ComponentName:  cfgen.FormatComponentStringWithDefault("RpcProxy", spec.Role),
+		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.RpcProxyType), spec.Role),
 	}
 
 	if spec.InstanceSpec.MonitoringPort == nil {
@@ -86,6 +86,8 @@ func NewRPCProxy(
 func (rp *RpcProxy) IsUpdatable() bool {
 	return true
 }
+
+func (rp *RpcProxy) GetType() consts.ComponentType { return consts.RpcProxyType }
 
 func (rp *RpcProxy) Fetch(ctx context.Context) error {
 	fetchable := []resources.Fetchable{

@@ -3,13 +3,14 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/library/go/ptr"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/library/go/ptr"
 )
 
 type Discovery struct {
@@ -23,7 +24,7 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Disco
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelDiscovery,
-		ComponentName:  "Discovery",
+		ComponentName:  string(consts.DiscoveryType),
 	}
 
 	if resource.Spec.Discovery.InstanceSpec.MonitoringPort == nil {
@@ -52,6 +53,8 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Disco
 func (d *Discovery) IsUpdatable() bool {
 	return true
 }
+
+func (d *Discovery) GetType() consts.ComponentType { return consts.DiscoveryType }
 
 func (d *Discovery) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, d.server)

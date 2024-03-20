@@ -3,13 +3,14 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/library/go/ptr"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/library/go/ptr"
 )
 
 type DataNode struct {
@@ -29,7 +30,7 @@ func NewDataNode(
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelDataNode, spec.Name),
-		ComponentName:  cfgen.FormatComponentStringWithDefault("DataNode", spec.Name),
+		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.DataNodeType), spec.Name),
 	}
 
 	if spec.InstanceSpec.MonitoringPort == nil {
@@ -59,6 +60,8 @@ func NewDataNode(
 func (n *DataNode) IsUpdatable() bool {
 	return true
 }
+
+func (n *DataNode) GetType() consts.ComponentType { return consts.DataNodeType }
 
 func (n *DataNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, n.server)

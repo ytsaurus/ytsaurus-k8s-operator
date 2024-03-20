@@ -3,12 +3,13 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/library/go/ptr"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/library/go/ptr"
 )
 
 type RemoteExecNode struct {
@@ -27,7 +28,7 @@ func NewRemoteExecNodes(
 		ObjectMeta:     &nodes.ObjectMeta,
 		APIProxy:       proxy,
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelExecNode, spec.Name),
-		ComponentName:  cfgen.FormatComponentStringWithDefault("ExecNode", spec.Name),
+		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.ExecNodeType), spec.Name),
 	}
 
 	if spec.InstanceSpec.MonitoringPort == nil {
@@ -71,6 +72,8 @@ func (n *RemoteExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus,
 
 	return SimpleStatus(SyncStatusReady), err
 }
+
+func (n *RemoteExecNode) GetType() consts.ComponentType { return consts.ExecNodeType }
 
 func (n *RemoteExecNode) Sync(ctx context.Context) (ComponentStatus, error) {
 	return n.doSync(ctx, false)

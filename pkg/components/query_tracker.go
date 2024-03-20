@@ -42,7 +42,7 @@ func NewQueryTracker(
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: "yt-query-tracker",
-		ComponentName:  "QueryTracker",
+		ComponentName:  string(consts.QueryTrackerType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
@@ -91,6 +91,8 @@ func NewQueryTracker(
 func (qt *QueryTracker) IsUpdatable() bool {
 	return true
 }
+
+func (qt *QueryTracker) GetType() consts.ComponentType { return consts.QueryTrackerType }
 
 func (qt *QueryTracker) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,

@@ -59,7 +59,7 @@ func NewStrawberryController(
 	}
 	if resource.Spec.StrawberryController != nil {
 		name = "strawberry"
-		componentName = "StrawberryController"
+		componentName = string(consts.StrawberryControllerType)
 		if resource.Spec.StrawberryController.Image != nil {
 			image = *resource.Spec.StrawberryController.Image
 		}
@@ -123,6 +123,8 @@ func NewStrawberryController(
 func (c *StrawberryController) IsUpdatable() bool {
 	return true
 }
+
+func (c *StrawberryController) GetType() consts.ComponentType { return consts.StrawberryControllerType }
 
 func (c *StrawberryController) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,

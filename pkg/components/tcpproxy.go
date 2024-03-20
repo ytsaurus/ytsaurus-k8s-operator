@@ -34,7 +34,7 @@ func NewTCPProxy(
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelTCPProxy, spec.Role),
-		ComponentName:  cfgen.FormatComponentStringWithDefault("TcpProxy", spec.Role),
+		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.TcpProxyType), spec.Role),
 	}
 
 	if spec.InstanceSpec.MonitoringPort == nil {
@@ -77,6 +77,8 @@ func NewTCPProxy(
 func (tp *TcpProxy) IsUpdatable() bool {
 	return true
 }
+
+func (tp *TcpProxy) GetType() consts.ComponentType { return consts.TcpProxyType }
 
 func (tp *TcpProxy) Fetch(ctx context.Context) error {
 	fetchable := []resources.Fetchable{
