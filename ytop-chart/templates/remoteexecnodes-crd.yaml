@@ -641,6 +641,11 @@ spec:
               enableAntiAffinity:
                 description: Deprecated. Use Affinity.PodAntiAffinity instead.
                 type: boolean
+              entrypointWrapper:
+                description: Specifies wrapper for component container command.
+                items:
+                  type: string
+                type: array
               extraPodAnnotations:
                 additionalProperties:
                   type: string
@@ -649,6 +654,7 @@ spec:
                 default: false
                 type: boolean
               image:
+                description: Overrides coreImage for component.
                 type: string
               imagePullSecrets:
                 items:

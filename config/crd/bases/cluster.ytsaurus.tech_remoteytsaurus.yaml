@@ -632,6 +632,11 @@ spec:
               enableAntiAffinity:
                 description: Deprecated. Use Affinity.PodAntiAffinity instead.
                 type: boolean
+              entrypointWrapper:
+                description: Specifies wrapper for component container command.
+                items:
+                  type: string
+                type: array
               hostAddresses:
                 items:
                   type: string
@@ -643,6 +648,7 @@ spec:
                   type: string
                 type: array
               image:
+                description: Overrides coreImage for component.
                 type: string
               instanceCount:
                 format: int32
