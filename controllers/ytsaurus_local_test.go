@@ -36,10 +36,6 @@ func TestYtsaurusFromScratch(t *testing.T) {
 	ytsaurusResource := testutil.BuildMinimalYtsaurus(namespace, ytsaurusName)
 	testutil.DeployObject(h, &ytsaurusResource)
 
-	// emulate master init job succeeded
-	testutil.MarkJobSucceeded(h, "yt-master-init-job-default")
-	testutil.MarkJobSucceeded(h, "yt-client-init-job-user")
-
 	for _, compName := range []string{
 		"discovery",
 		"master",
