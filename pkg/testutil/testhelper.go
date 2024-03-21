@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -31,10 +30,11 @@ type TestHelper struct {
 	k8sTestEnv *envtest.Environment
 	k8sClient  client.Client
 	cfg        *rest.Config
+	ticker     *time.Ticker
 	Namespace  string
 }
 
-func NewTestHelper(t *testing.T, namespace string) *TestHelper {
+func NewTestHelper(t *testing.T, namespace, CRDDirectoryPath string) *TestHelper {
 	if os.Getenv("KUBEBUILDER_ASSETS") == "" {
 		t.Fatal(
 			"KUBEBUILDER_ASSETS needed to be set for this test " +
@@ -43,13 +43,12 @@ func NewTestHelper(t *testing.T, namespace string) *TestHelper {
 		)
 	}
 	k8sTestEnv := &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd", "bases")},
+		CRDDirectoryPaths:     []string{CRDDirectoryPath},
 		ErrorIfCRDPathMissing: true,
 		CRDInstallOptions: envtest.CRDInstallOptions{
 			MaxTime: 60 * time.Second,
 		},
-		ControlPlane:             envtest.ControlPlane{},
-		AttachControlPlaneOutput: true,
+		ControlPlane: envtest.ControlPlane{},
 	}
 
 	testCtx, testCancel := context.WithCancel(context.Background())
@@ -60,6 +59,7 @@ func NewTestHelper(t *testing.T, namespace string) *TestHelper {
 		cancel:     testCancel,
 		k8sTestEnv: k8sTestEnv,
 		Namespace:  namespace,
+		ticker:     time.NewTicker(1 * time.Second),
 	}
 }
 
@@ -93,9 +93,16 @@ func (h *TestHelper) Start(reconcilerSetup func(mgr ctrl.Manager) error) {
 		err = mgr.Start(h.ctx)
 		require.NoError(t, err)
 	}()
+
+	go func() {
+		for range h.ticker.C {
+			MarkAllJobsCompleted(h)
+		}
+	}()
 }
 
 func (h *TestHelper) Stop() {
+	h.ticker.Stop()
 	// Should cancel ctx before Stop
 	// https://github.com/kubernetes-sigs/controller-runtime/issues/1571#issuecomment-945535598
 	h.cancel()
@@ -163,6 +170,19 @@ func MarkJobSucceeded(h *TestHelper, key string) {
 	FetchEventually(h, key, job)
 	job.Status.Succeeded = 1
 	UpdateObjectStatus(h, job)
+}
+
+func MarkAllJobsCompleted(h *TestHelper) {
+	jobs := &batchv1.JobList{}
+	err := h.GetK8sClient().List(context.Background(), jobs)
+	require.NoError(h.t, err)
+	for _, job := range jobs.Items {
+		if job.Status.Succeeded == 0 {
+			h.t.Logf("found job %s, marking as completed", job.Name)
+			job.Status.Succeeded = 1
+			UpdateObjectStatus(h, &job)
+		}
+	}
 }
 
 const (

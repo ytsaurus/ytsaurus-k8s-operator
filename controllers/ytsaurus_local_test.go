@@ -1,11 +1,11 @@
 package controllers_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -22,7 +22,7 @@ const (
 
 func TestYtsaurusFromScratch(t *testing.T) {
 	namespace := "ytsaurus-from-scratch"
-	h := testutil.NewTestHelper(t, namespace)
+	h := testutil.NewTestHelper(t, namespace, filepath.Join("..", "config", "crd", "bases"))
 	reconcilerSetup := func(mgr ctrl.Manager) error {
 		return (&controllers.YtsaurusReconciler{
 			Client:   mgr.GetClient(),
@@ -33,7 +33,7 @@ func TestYtsaurusFromScratch(t *testing.T) {
 	h.Start(reconcilerSetup)
 	defer h.Stop()
 
-	ytsaurusResource := buildMinimalYtsaurus(namespace, ytsaurusName)
+	ytsaurusResource := testutil.BuildMinimalYtsaurus(namespace, ytsaurusName)
 	testutil.DeployObject(h, &ytsaurusResource)
 
 	// emulate master init job succeeded
@@ -93,63 +93,4 @@ func TestYtsaurusFromScratch(t *testing.T) {
 			return state == ytv1.ClusterStateRunning
 		},
 	)
-}
-
-func buildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
-	return ytv1.Ytsaurus{
-		ObjectMeta: v1.ObjectMeta{Namespace: namespace, Name: name},
-		Spec: ytv1.YtsaurusSpec{
-			CommonSpec: ytv1.CommonSpec{
-				CoreImage:     testYtsaurusImage,
-				UseShortNames: true,
-			},
-			IsManaged:        true,
-			EnableFullUpdate: false,
-
-			Discovery: ytv1.DiscoverySpec{
-				InstanceSpec: ytv1.InstanceSpec{
-					InstanceCount: 3,
-				},
-			},
-			PrimaryMasters: ytv1.MastersSpec{
-				InstanceSpec: ytv1.InstanceSpec{
-					InstanceCount: 3,
-					Locations: []ytv1.LocationSpec{
-						{
-							LocationType: "MasterChangelogs",
-							Path:         "/yt/master-data/master-changelogs",
-						},
-						{
-							LocationType: "MasterSnapshots",
-							Path:         "/yt/master-data/master-snapshots",
-						},
-					},
-				},
-				MasterConnectionSpec: ytv1.MasterConnectionSpec{
-					CellTag: 1,
-				},
-			},
-			HTTPProxies: []ytv1.HTTPProxiesSpec{
-				{
-					InstanceSpec: ytv1.InstanceSpec{InstanceCount: 3},
-					ServiceType:  corev1.ServiceTypeNodePort,
-				},
-			},
-			DataNodes: []ytv1.DataNodesSpec{
-				{
-					InstanceSpec: ytv1.InstanceSpec{
-						InstanceCount: 5,
-						Locations: []ytv1.LocationSpec{
-							{
-								LocationType: "ChunkStore",
-								Path:         "/yt/node-data/chunk-store",
-							},
-						},
-					},
-					ClusterNodesSpec: ytv1.ClusterNodesSpec{},
-					Name:             dndsNameOne,
-				},
-			},
-		},
-	}
 }

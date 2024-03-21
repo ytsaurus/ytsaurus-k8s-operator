@@ -2,6 +2,7 @@ package controllers_test
 
 import (
 	"context"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -29,7 +30,7 @@ const (
 )
 
 func startHelperWithController(t *testing.T, namespace string) *testutil.TestHelper {
-	h := testutil.NewTestHelper(t, namespace)
+	h := testutil.NewTestHelper(t, namespace, filepath.Join("..", "config", "crd", "bases"))
 	reconcilerSetup := func(mgr ctrl.Manager) error {
 		return (&controllers.RemoteExecNodesReconciler{
 			Client:   mgr.GetClient(),
