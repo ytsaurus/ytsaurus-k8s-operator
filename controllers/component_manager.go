@@ -1,5 +1,7 @@
 package controllers
 
+// TODO: file will be deleted after this refactoring. No need to review changes.
+
 import (
 	"context"
 	"time"
@@ -40,18 +42,23 @@ func NewComponentManager(
 	cfgen := ytconfig.NewGenerator(resource, clusterDomain)
 
 	d := components.NewDiscovery(cfgen, ytsaurus)
-	m := components.NewMaster(cfgen, ytsaurus)
+	//m := components.NewMaster(cfgen, ytsaurus)
 	var hps []components.Component
 	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {
-		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
+		//hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
+		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, hpSpec))
 	}
-	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0])
+	//yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0])
+	yc := components.NewYtsaurusClient(cfgen, ytsaurus)
+
+	m := components.NewMaster(cfgen, ytsaurus, yc)
 
 	var dnds []components.Component
 	nodeCfgGen := ytconfig.NewLocalNodeGenerator(ytsaurus.GetResource(), clusterDomain)
 	if resource.Spec.DataNodes != nil && len(resource.Spec.DataNodes) > 0 {
 		for _, dndSpec := range ytsaurus.GetResource().Spec.DataNodes {
-			dnds = append(dnds, components.NewDataNode(nodeCfgGen, ytsaurus, m, dndSpec))
+			//dnds = append(dnds, components.NewDataNode(nodeCfgGen, ytsaurus, m, dndSpec))
+			dnds = append(dnds, components.NewDataNode(nodeCfgGen, ytsaurus, dndSpec))
 		}
 	}
 
@@ -64,14 +71,16 @@ func NewComponentManager(
 	allComponents = append(allComponents, hps...)
 
 	if resource.Spec.UI != nil {
-		ui := components.NewUI(cfgen, ytsaurus, m)
+		//ui := components.NewUI(cfgen, ytsaurus, m)
+		ui := components.NewUI(cfgen, ytsaurus)
 		allComponents = append(allComponents, ui)
 	}
 
 	if resource.Spec.RPCProxies != nil && len(resource.Spec.RPCProxies) > 0 {
 		var rps []components.Component
 		for _, rpSpec := range ytsaurus.GetResource().Spec.RPCProxies {
-			rps = append(rps, components.NewRPCProxy(cfgen, ytsaurus, m, rpSpec))
+			//rps = append(rps, components.NewRPCProxy(cfgen, ytsaurus, m, rpSpec))
+			rps = append(rps, components.NewRPCProxy(cfgen, ytsaurus, rpSpec))
 		}
 		allComponents = append(allComponents, rps...)
 	}
@@ -79,7 +88,8 @@ func NewComponentManager(
 	if resource.Spec.TCPProxies != nil && len(resource.Spec.TCPProxies) > 0 {
 		var tps []components.Component
 		for _, tpSpec := range ytsaurus.GetResource().Spec.TCPProxies {
-			tps = append(tps, components.NewTCPProxy(cfgen, ytsaurus, m, tpSpec))
+			//tps = append(tps, components.NewTCPProxy(cfgen, ytsaurus, m, tpSpec))
+			tps = append(tps, components.NewTCPProxy(cfgen, ytsaurus, tpSpec))
 		}
 		allComponents = append(allComponents, tps...)
 	}
@@ -87,7 +97,8 @@ func NewComponentManager(
 	var ends []components.Component
 	if resource.Spec.ExecNodes != nil && len(resource.Spec.ExecNodes) > 0 {
 		for _, endSpec := range ytsaurus.GetResource().Spec.ExecNodes {
-			ends = append(ends, components.NewExecNode(nodeCfgGen, ytsaurus, m, endSpec))
+			//ends = append(ends, components.NewExecNode(nodeCfgGen, ytsaurus, m, endSpec))
+			ends = append(ends, components.NewExecNode(nodeCfgGen, ytsaurus, endSpec))
 		}
 	}
 	allComponents = append(allComponents, ends...)
@@ -101,33 +112,38 @@ func NewComponentManager(
 	allComponents = append(allComponents, tnds...)
 
 	if resource.Spec.Schedulers != nil {
-		s = components.NewScheduler(cfgen, ytsaurus, m, ends, tnds)
+		//s = components.NewScheduler(cfgen, ytsaurus, m, ends, tnds)
+		s = components.NewScheduler(cfgen, ytsaurus, len(tnds))
 		allComponents = append(allComponents, s)
 	}
 
 	if resource.Spec.ControllerAgents != nil {
-		ca := components.NewControllerAgent(cfgen, ytsaurus, m)
+		//ca := components.NewControllerAgent(cfgen, ytsaurus, m)
+		ca := components.NewControllerAgent(cfgen, ytsaurus)
 		allComponents = append(allComponents, ca)
 	}
 
 	var q components.Component
 	if resource.Spec.QueryTrackers != nil && resource.Spec.Schedulers != nil && resource.Spec.TabletNodes != nil && len(resource.Spec.TabletNodes) > 0 {
-		q = components.NewQueryTracker(cfgen, ytsaurus, yc, tnds)
+		q = components.NewQueryTracker(cfgen, ytsaurus, yc, len(tnds))
 		allComponents = append(allComponents, q)
 	}
 
 	if resource.Spec.QueueAgents != nil && resource.Spec.TabletNodes != nil && len(resource.Spec.TabletNodes) > 0 {
-		qa := components.NewQueueAgent(cfgen, ytsaurus, yc, m, tnds)
+		//qa := components.NewQueueAgent(cfgen, ytsaurus, yc, m, tnds)
+		qa := components.NewQueueAgent(cfgen, ytsaurus, yc, len(tnds))
 		allComponents = append(allComponents, qa)
 	}
 
 	if resource.Spec.YQLAgents != nil {
-		yqla := components.NewYQLAgent(cfgen, ytsaurus, m)
+		//yqla := components.NewYQLAgent(cfgen, ytsaurus, m)
+		yqla := components.NewYQLAgent(cfgen, ytsaurus)
 		allComponents = append(allComponents, yqla)
 	}
 
 	if (resource.Spec.DeprecatedChytController != nil || resource.Spec.StrawberryController != nil) && resource.Spec.Schedulers != nil {
-		strawberry := components.NewStrawberryController(cfgen, ytsaurus, m, s, dnds)
+		//strawberry := components.NewStrawberryController(cfgen, ytsaurus, m, s, dnds)
+		strawberry := components.NewStrawberryController(cfgen, ytsaurus)
 		allComponents = append(allComponents, strawberry)
 	}
 
@@ -153,7 +169,7 @@ func NewComponentManager(
 			return nil, err
 		}
 
-		componentStatus := c.Status(ctx)
+		componentStatus := c.StatusOld(ctx)
 		c.SetReadyCondition(componentStatus)
 		syncStatus := componentStatus.SyncStatus
 
@@ -205,7 +221,7 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 
 	hasPending := false
 	for _, c := range cm.allComponents {
-		status := c.Status(ctx)
+		status := c.StatusOld(ctx)
 
 		if status.SyncStatus == components.SyncStatusPending ||
 			status.SyncStatus == components.SyncStatusUpdating {

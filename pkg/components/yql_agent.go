@@ -20,13 +20,17 @@ import (
 
 type YqlAgent struct {
 	localServerComponent
-	cfgen           *ytconfig.Generator
-	master          Component
+	cfgen *ytconfig.Generator
+	//master          Component
 	initEnvironment *InitJob
 	secret          *resources.StringSecret
 }
 
-func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *YqlAgent {
+func NewYQLAgent(
+	cfgen *ytconfig.Generator,
+	ytsaurus *apiproxy.Ytsaurus,
+	// master Component,
+) *YqlAgent {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -56,7 +60,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 	return &YqlAgent{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
-		master:               master,
+		//master:               master,
 		initEnvironment: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -133,9 +137,9 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		}
 	}
 
-	if !IsRunningStatus(yqla.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, yqla.master.GetName()), err
-	}
+	//if !IsRunningStatus(yqla.master.Status(ctx).SyncStatus) {
+	//	return WaitingStatus(SyncStatusBlocked, yqla.master.GetName()), err
+	//}
 
 	if yqla.secret.NeedSync(consts.TokenSecretKey, "") {
 		if !dry {
@@ -176,7 +180,11 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	return yqla.initEnvironment.Sync(ctx, dry)
 }
 
-func (yqla *YqlAgent) Status(ctx context.Context) ComponentStatus {
+func (yqla *YqlAgent) Status(ctx context.Context) (ComponentStatus, error) {
+	return ComponentStatus{}, nil
+}
+
+func (yqla *YqlAgent) StatusOld(ctx context.Context) ComponentStatus {
 	status, err := yqla.doSync(ctx, true)
 	if err != nil {
 		panic(err)

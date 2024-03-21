@@ -19,8 +19,8 @@ type HttpProxy struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
 
-	serviceType      corev1.ServiceType
-	master           Component
+	serviceType corev1.ServiceType
+	//master           Component
 	balancingService *resources.HTTPService
 
 	role        string
@@ -30,7 +30,7 @@ type HttpProxy struct {
 func NewHTTPProxy(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
-	masterReconciler Component,
+	//masterReconciler Component,
 	spec ytv1.HTTPProxiesSpec) *HttpProxy {
 
 	resource := ytsaurus.GetResource()
@@ -78,11 +78,11 @@ func NewHTTPProxy(
 	return &HttpProxy{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
-		master:               masterReconciler,
-		serviceType:          spec.ServiceType,
-		role:                 spec.Role,
-		httpsSecret:          httpsSecret,
-		balancingService:     balancingService,
+		//master:               masterReconciler,
+		serviceType:      spec.ServiceType,
+		role:             spec.Role,
+		httpsSecret:      httpsSecret,
+		balancingService: balancingService,
 	}
 }
 
@@ -112,9 +112,9 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 		}
 	}
 
-	if !IsRunningStatus(hp.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, hp.master.GetName()), err
-	}
+	//if !IsRunningStatus(hp.master.Status(ctx).SyncStatus) {
+	//	return WaitingStatus(SyncStatusBlocked, hp.master.GetName()), err
+	//}
 
 	if hp.NeedSync() {
 		if !dry {
@@ -144,7 +144,11 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (hp *HttpProxy) Status(ctx context.Context) ComponentStatus {
+func (hp *HttpProxy) Status(ctx context.Context) (ComponentStatus, error) {
+	return ComponentStatus{}, nil
+}
+
+func (hp *HttpProxy) StatusOld(ctx context.Context) ComponentStatus {
 	status, err := hp.doSync(ctx, true)
 	if err != nil {
 		panic(err)

@@ -25,19 +25,21 @@ type QueueAgent struct {
 	cfgen *ytconfig.Generator
 
 	ytsaurusClient internalYtsaurusClient
-	master         Component
-	tabletNodes    []Component
-	initCondition  string
-	initQAState    *InitJob
-	secret         *resources.StringSecret
+	//master           Component
+	tabletNodesCount int
+	//tabletNodes    []Component
+	initCondition string
+	initQAState   *InitJob
+	secret        *resources.StringSecret
 }
 
 func NewQueueAgent(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	yc internalYtsaurusClient,
-	master Component,
-	tabletNodes []Component,
+	//master Component,
+	tabletNodesCount int,
+	// tabletNodes []Component,
 ) *QueueAgent {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
@@ -71,10 +73,11 @@ func NewQueueAgent(
 	return &QueueAgent{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
-		master:               master,
-		tabletNodes:          tabletNodes,
-		initCondition:        "queueAgentInitCompleted",
-		ytsaurusClient:       yc,
+		//master:               master,
+		tabletNodesCount: tabletNodesCount,
+		//tabletNodes:          tabletNodes,
+		initCondition:  "queueAgentInitCompleted",
+		ytsaurusClient: yc,
 		initQAState: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -118,19 +121,20 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		}
 	}
 
-	if !IsRunningStatus(qa.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, qa.master.GetName()), err
-	}
+	//if !IsRunningStatus(qa.master.Status(ctx).SyncStatus) {
+	//	return WaitingStatus(SyncStatusBlocked, qa.master.GetName()), err
+	//}
 
 	// It makes no sense to start queue agents without tablet nodes.
-	if qa.tabletNodes == nil || len(qa.tabletNodes) == 0 {
+	// TODO: this should be in the validation hook
+	if qa.tabletNodesCount == 0 {
 		return WaitingStatus(SyncStatusBlocked, "tablet nodes"), fmt.Errorf("cannot initialize queue agent without tablet nodes")
 	}
-	for _, tnd := range qa.tabletNodes {
-		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, tnd.GetName()), err
-		}
-	}
+	//for _, tnd := range qa.tabletNodes {
+	//	if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
+	//		return WaitingStatus(SyncStatusBlocked, tnd.GetName()), err
+	//	}
+	//}
 
 	if qa.secret.NeedSync(consts.TokenSecretKey, "") {
 		if !dry {
@@ -157,9 +161,9 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 
 	var ytClient yt.Client
 	if qa.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
-		if qa.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
-			return WaitingStatus(SyncStatusBlocked, qa.ytsaurusClient.GetName()), err
-		}
+		//if qa.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
+		//	return WaitingStatus(SyncStatusBlocked, qa.ytsaurusClient.GetName()), err
+		//}
 
 		if !dry {
 			ytClient = qa.ytsaurusClient.GetYtClient()
@@ -298,7 +302,11 @@ func (qa *QueueAgent) prepareInitQueueAgentState() {
 	container.EnvFrom = []corev1.EnvFromSource{qa.secret.GetEnvSource()}
 }
 
-func (qa *QueueAgent) Status(ctx context.Context) ComponentStatus {
+func (qa *QueueAgent) Status(ctx context.Context) (ComponentStatus, error) {
+	return ComponentStatus{}, nil
+}
+
+func (qa *QueueAgent) StatusOld(ctx context.Context) ComponentStatus {
 	status, err := qa.doSync(ctx, true)
 	if err != nil {
 		panic(err)

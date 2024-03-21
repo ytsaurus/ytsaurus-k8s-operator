@@ -15,11 +15,15 @@ import (
 
 type ControllerAgent struct {
 	localServerComponent
-	cfgen  *ytconfig.Generator
-	master Component
+	cfgen *ytconfig.Generator
+	//master Component
 }
 
-func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *ControllerAgent {
+func NewControllerAgent(
+	cfgen *ytconfig.Generator,
+	ytsaurus *apiproxy.Ytsaurus,
+	// master Component,
+) *ControllerAgent {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -46,7 +50,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 	return &ControllerAgent{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
-		master:               master,
+		//master:               master,
 	}
 }
 
@@ -73,9 +77,9 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 		}
 	}
 
-	if !IsRunningStatus(ca.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, ca.master.GetName()), err
-	}
+	//if !IsRunningStatus(ca.master.Status(ctx).SyncStatus) {
+	//	return WaitingStatus(SyncStatusBlocked, ca.master.GetName()), err
+	//}
 
 	if ca.NeedSync() {
 		if !dry {
@@ -91,7 +95,11 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (ca *ControllerAgent) Status(ctx context.Context) ComponentStatus {
+func (ca *ControllerAgent) Status(ctx context.Context) (ComponentStatus, error) {
+	return ComponentStatus{}, nil
+}
+
+func (ca *ControllerAgent) StatusOld(ctx context.Context) ComponentStatus {
 	status, err := ca.doSync(ctx, true)
 	if err != nil {
 		panic(err)

@@ -110,9 +110,9 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return SimpleStatus(SyncStatusReady), err
 	}
 
-	if tn.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
-		return WaitingStatus(SyncStatusBlocked, tn.ytsaurusClient.GetName()), err
-	}
+	//if tn.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
+	//	return WaitingStatus(SyncStatusBlocked, tn.ytsaurusClient.GetName()), err
+	//}
 
 	ytClient := tn.ytsaurusClient.GetYtClient()
 
@@ -213,7 +213,11 @@ func (tn *TabletNode) getBundleBootstrap(bundle string) *ytv1.BundleBootstrapSpe
 	return nil
 }
 
-func (tn *TabletNode) Status(ctx context.Context) ComponentStatus {
+func (tn *TabletNode) Status(ctx context.Context) (ComponentStatus, error) {
+	return ComponentStatus{}, nil
+}
+
+func (tn *TabletNode) StatusOld(ctx context.Context) ComponentStatus {
 	status, err := tn.doSync(ctx, true)
 	if err != nil {
 		panic(err)

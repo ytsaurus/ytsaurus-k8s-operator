@@ -21,20 +21,23 @@ import (
 
 type Scheduler struct {
 	localServerComponent
-	cfgen         *ytconfig.Generator
-	master        Component
-	execNodes     []Component
-	tabletNodes   []Component
-	initUser      *InitJob
-	initOpArchive *InitJob
-	secret        *resources.StringSecret
+	cfgen *ytconfig.Generator
+	//master Component
+	//execNodes     []Component
+	tabletNodesCount int
+	initUser         *InitJob
+	initOpArchive    *InitJob
+	secret           *resources.StringSecret
 }
 
 func NewScheduler(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
-	master Component,
-	execNodes, tabletNodes []Component) *Scheduler {
+	tabletNodesCount int,
+	// master Component,
+	// execNodes,
+	// tabletNodes []Component,
+) *Scheduler {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -64,9 +67,10 @@ func NewScheduler(
 	return &Scheduler{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
-		master:               master,
-		execNodes:            execNodes,
-		tabletNodes:          tabletNodes,
+		tabletNodesCount:     tabletNodesCount,
+		//master:               master,
+		//execNodes:            execNodes,
+		//tabletNodes:          tabletNodes,
 		initUser: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -107,7 +111,11 @@ func (s *Scheduler) Fetch(ctx context.Context) error {
 	)
 }
 
-func (s *Scheduler) Status(ctx context.Context) ComponentStatus {
+func (s *Scheduler) Status(ctx context.Context) (ComponentStatus, error) {
+	return ComponentStatus{}, nil
+}
+
+func (s *Scheduler) StatusOld(ctx context.Context) ComponentStatus {
 	status, err := s.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -150,18 +158,18 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	if !IsRunningStatus(s.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, s.master.GetName()), err
-	}
+	//if !IsRunningStatus(s.master.Status(ctx).SyncStatus) {
+	//	return WaitingStatus(SyncStatusBlocked, s.master.GetName()), err
+	//}
 
-	if s.execNodes == nil || len(s.execNodes) > 0 {
-		for _, end := range s.execNodes {
-			if !IsRunningStatus(end.Status(ctx).SyncStatus) {
-				// It makes no sense to start scheduler without exec nodes.
-				return WaitingStatus(SyncStatusBlocked, end.GetName()), err
-			}
-		}
-	}
+	//if s.execNodes == nil || len(s.execNodes) > 0 {
+	//	for _, end := range s.execNodes {
+	//		if !IsRunningStatus(end.Status(ctx).SyncStatus) {
+	//			// It makes no sense to start scheduler without exec nodes.
+	//			return WaitingStatus(SyncStatusBlocked, end.GetName()), err
+	//		}
+	//	}
+	//}
 
 	if s.secret.NeedSync(consts.TokenSecretKey, "") {
 		if !dry {
@@ -203,12 +211,12 @@ func (s *Scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatu
 		return status, err
 	}
 
-	for _, tnd := range s.tabletNodes {
-		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
-			// Wait for tablet nodes to proceed with operations archive init.
-			return WaitingStatus(SyncStatusBlocked, tnd.GetName()), err
-		}
-	}
+	//for _, tnd := range s.tabletNodes {
+	//	if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
+	//		// Wait for tablet nodes to proceed with operations archive init.
+	//		return WaitingStatus(SyncStatusBlocked, tnd.GetName()), err
+	//	}
+	//}
 
 	if !dry {
 		s.prepareInitOperationArchive()
@@ -245,7 +253,7 @@ func (s *Scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentSt
 }
 
 func (s *Scheduler) needOpArchiveInit() bool {
-	return s.tabletNodes != nil && len(s.tabletNodes) > 0
+	return s.tabletNodesCount > 0
 }
 
 func (s *Scheduler) setConditionNotNecessaryToUpdateOpArchive(ctx context.Context) {

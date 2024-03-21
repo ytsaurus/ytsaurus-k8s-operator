@@ -25,17 +25,19 @@ type QueryTracker struct {
 	cfgen *ytconfig.Generator
 
 	ytsaurusClient internalYtsaurusClient
-	tabletNodes    []Component
-	initCondition  string
-	initQTState    *InitJob
-	secret         *resources.StringSecret
+	//tabletNodes    []Component
+	tabletNodesCount int
+	initCondition    string
+	initQTState      *InitJob
+	secret           *resources.StringSecret
 }
 
 func NewQueryTracker(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	yc internalYtsaurusClient,
-	tabletNodes []Component,
+	tabletNodesCount int,
+	// tabletNodes []Component,
 ) *QueryTracker {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
@@ -69,7 +71,7 @@ func NewQueryTracker(
 	return &QueryTracker{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
-		tabletNodes:          tabletNodes,
+		tabletNodesCount:     tabletNodesCount,
 		initCondition:        "queryTrackerInitCompleted",
 		ytsaurusClient:       yc,
 		initQTState: NewInitJob(
@@ -154,21 +156,22 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	}
 
 	// Wait for tablet nodes to proceed with query tracker state init.
-	if qt.tabletNodes == nil || len(qt.tabletNodes) == 0 {
+	// TODO: this should be done in validation hook.
+	if qt.tabletNodesCount == 0 {
 		return WaitingStatus(SyncStatusBlocked, "tablet nodes"), fmt.Errorf("cannot initialize query tracker without tablet nodes")
 	}
 
-	for _, tnd := range qt.tabletNodes {
-		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, "tablet nodes"), err
-		}
-	}
+	//for _, tnd := range qt.tabletNodes {
+	//	if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
+	//		return WaitingStatus(SyncStatusBlocked, "tablet nodes"), err
+	//	}
+	//}
 
 	var ytClient yt.Client
 	if qt.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
-		if qt.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
-			return WaitingStatus(SyncStatusBlocked, qt.ytsaurusClient.GetName()), err
-		}
+		//if qt.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
+		//	return WaitingStatus(SyncStatusBlocked, qt.ytsaurusClient.GetName()), err
+		//}
 
 		if !dry {
 			ytClient = qt.ytsaurusClient.GetYtClient()
@@ -344,7 +347,11 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 	return
 }
 
-func (qt *QueryTracker) Status(ctx context.Context) ComponentStatus {
+func (qt *QueryTracker) Status(ctx context.Context) (ComponentStatus, error) {
+	return ComponentStatus{}, nil
+}
+
+func (qt *QueryTracker) StatusOld(ctx context.Context) ComponentStatus {
 	status, err := qt.doSync(ctx, true)
 	if err != nil {
 		panic(err)

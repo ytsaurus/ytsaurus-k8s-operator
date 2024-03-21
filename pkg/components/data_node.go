@@ -15,14 +15,14 @@ import (
 
 type DataNode struct {
 	localServerComponent
-	cfgen  *ytconfig.NodeGenerator
-	master Component
+	cfgen *ytconfig.NodeGenerator
+	//master Component
 }
 
 func NewDataNode(
 	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
-	master Component,
+	//master Component,
 	spec ytv1.DataNodesSpec,
 ) *DataNode {
 	resource := ytsaurus.GetResource()
@@ -53,7 +53,7 @@ func NewDataNode(
 	return &DataNode{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
-		master:               master,
+		//master:               master,
 	}
 }
 
@@ -79,10 +79,10 @@ func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 			return *status, err
 		}
 	}
-
-	if !IsRunningStatus(n.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
-	}
+	//
+	//if !IsRunningStatus(n.master.Status(ctx).SyncStatus) {
+	//	return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
+	//}
 
 	if n.NeedSync() {
 		if !dry {
@@ -98,7 +98,11 @@ func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (n *DataNode) Status(ctx context.Context) ComponentStatus {
+func (n *DataNode) Status(ctx context.Context) (ComponentStatus, error) {
+	return ComponentStatus{}, nil
+}
+
+func (n *DataNode) StatusOld(ctx context.Context) ComponentStatus {
 	status, err := n.doSync(ctx, true)
 	if err != nil {
 		panic(err)

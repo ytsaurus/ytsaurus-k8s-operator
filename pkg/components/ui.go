@@ -22,14 +22,14 @@ type UI struct {
 	cfgen        *ytconfig.Generator
 	microservice microservice
 	initJob      *InitJob
-	master       Component
-	secret       *resources.StringSecret
+	//master       Component
+	secret *resources.StringSecret
 }
 
 const UIClustersConfigFileName = "clusters-config.json"
 const UICustomConfigFileName = "common.js"
 
-func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *UI {
+func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *UI {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -81,7 +81,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			l.GetSecretName(),
 			&l,
 			ytsaurus.APIProxy()),
-		master: master,
+		//master: master,
 	}
 }
 
@@ -254,9 +254,9 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		}
 	}
 
-	if !IsRunningStatus(u.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, u.master.GetName()), err
-	}
+	//if !IsRunningStatus(u.master.Status(ctx).SyncStatus) {
+	//	return WaitingStatus(SyncStatusBlocked, u.master.GetName()), err
+	//}
 
 	if u.secret.NeedSync(consts.TokenSecretKey, "") {
 		if !dry {
@@ -293,7 +293,11 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (u *UI) Status(ctx context.Context) ComponentStatus {
+func (u *UI) Status(ctx context.Context) (ComponentStatus, error) {
+	return ComponentStatus{}, nil
+}
+
+func (u *UI) StatusOld(ctx context.Context) ComponentStatus {
 	status, err := u.doSync(ctx, true)
 	if err != nil {
 		panic(err)

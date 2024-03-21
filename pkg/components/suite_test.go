@@ -51,8 +51,12 @@ func (fc *FakeComponent) Sync(ctx context.Context) error {
 	return nil
 }
 
-func (fc *FakeComponent) Status(ctx context.Context) ComponentStatus {
+func (fc *FakeComponent) StatusOld(ctx context.Context) ComponentStatus {
 	return fc.status
+}
+
+func (fc *FakeComponent) Status(ctx context.Context) (ComponentStatus, error) {
+	return fc.status, nil
 }
 
 func (fc *FakeComponent) IsUpdating() bool {
@@ -107,6 +111,10 @@ func (fs *FakeServer) arePodsReady(ctx context.Context) bool {
 
 func (fs *FakeServer) Sync(ctx context.Context) error {
 	return nil
+}
+
+func (fs *FakeServer) hasDiff(ctx context.Context) (bool, error) {
+	return false, nil
 }
 
 func (fs *FakeServer) buildStatefulSet() *appsv1.StatefulSet {

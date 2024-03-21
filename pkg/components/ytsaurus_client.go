@@ -28,8 +28,8 @@ type internalYtsaurusClient interface {
 
 type YtsaurusClient struct {
 	localComponent
-	cfgen     *ytconfig.Generator
-	httpProxy Component
+	cfgen *ytconfig.Generator
+	//httpProxy HttpProxy
 
 	initUserJob *InitJob
 
@@ -40,7 +40,7 @@ type YtsaurusClient struct {
 func NewYtsaurusClient(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
-	httpProxy Component,
+	// httpProxy HttpProxy,
 ) *YtsaurusClient {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
@@ -54,7 +54,7 @@ func NewYtsaurusClient(
 	return &YtsaurusClient{
 		localComponent: newLocalComponent(&l, ytsaurus),
 		cfgen:          cfgen,
-		httpProxy:      httpProxy,
+		//httpProxy:      httpProxy,
 		initUserJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -81,7 +81,7 @@ func (yc *YtsaurusClient) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		yc.secret,
 		yc.initUserJob,
-		yc.httpProxy,
+		//yc.httpProxy,
 	)
 }
 
@@ -338,9 +338,9 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
-	if !IsRunningStatus(yc.httpProxy.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, yc.httpProxy.GetName()), err
-	}
+	//if !IsRunningStatus(yc.httpProxy.Status(ctx).SyncStatus) {
+	//	return WaitingStatus(SyncStatusBlocked, yc.httpProxy.GetName()), err
+	//}
 
 	if yc.secret.NeedSync(consts.TokenSecretKey, "") {
 		if !dry {
@@ -395,7 +395,11 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (yc *YtsaurusClient) Status(ctx context.Context) ComponentStatus {
+func (yc *YtsaurusClient) Status(ctx context.Context) (ComponentStatus, error) {
+	return ComponentStatus{}, nil
+}
+
+func (yc *YtsaurusClient) StatusOld(ctx context.Context) ComponentStatus {
 	status, err := yc.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -494,6 +498,8 @@ func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 
 	return true, "Update is possible", nil
 }
+
+// TODO (l0kix2): move code to the relevant components.
 
 // Safe mode actions.
 

@@ -26,16 +26,37 @@ const (
 	defaultHostAddressLabel = "kubernetes.io/hostname"
 )
 
+var (
+	masterUpdatePossibleCond         = isTrue("MasterUpdatePossible")
+	masterSafeModeEnabledCond        = isTrue("MasterSafeModeEnabled")
+	masterSnapshotsBuildStartedCond  = isTrue("MasterSnapshotsBuildStarted")
+	masterSnapshotsBuildFinishedCond = isTrue("MasterSnapshotsBuildFinished")
+	masterExitReadOnlyPrepared       = isTrue("MasterExitReadOnlyPrepared")
+	masterExitReadOnlyFinished       = isTrue("MasterExitReadOnlyFinished")
+	masterSafeModeDisabledCond       = isTrue("MasterSafeModeDisabled")
+)
+
+type ytsaurusClientForMaster interface {
+	HandlePossibilityCheck(context.Context) (bool, string, error)
+	EnableSafeMode(context.Context) error
+	DisableSafeMode(context.Context) error
+	GetMasterMonitoringPaths(context.Context) ([]string, error)
+	StartBuildMasterSnapshots(context.Context, []string) error
+	AreMasterSnapshotsBuilt(context.Context, []string) (bool, error)
+}
+
 type Master struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
+
+	ytClient ytsaurusClientForMaster
 
 	initJob          *InitJob
 	exitReadOnlyJob  *InitJob
 	adminCredentials corev1.Secret
 }
 
-func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
+func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, ytClient ytsaurusClientForMaster) *Master {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -84,6 +105,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 	return &Master{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
+		ytClient:             ytClient,
 		initJob:              initJob,
 		exitReadOnlyJob:      exitReadOnlyJob,
 	}
@@ -318,7 +340,28 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	return m.initJob.Sync(ctx, dry)
 }
 
-func (m *Master) Status(ctx context.Context) ComponentStatus {
+func (m *Master) Status(ctx context.Context) (ComponentStatus, error) {
+	if err := m.Fetch(ctx); err != nil {
+		return ComponentStatus{}, fmt.Errorf("failed to fetch component %s: %w", m.GetName(), err)
+	}
+
+	if m.condManager.Is(not(buildFinished(m.GetName()))) {
+		return NeedSyncStatus("initial build not yet have finished"), nil
+	}
+
+	needUpdate, err := m.server.hasDiff(ctx)
+	if err != nil {
+		return ComponentStatus{}, err
+	}
+
+	if needUpdate || m.condManager.Is(updateRequired(m.GetName())) {
+		return NeedSyncStatus("component needs update"), nil
+	}
+
+	return ReadyStatus(), nil
+}
+
+func (m *Master) StatusOld(ctx context.Context) ComponentStatus {
 	status, err := m.doSync(ctx, true)
 	if err != nil {
 		panic(err)
@@ -328,8 +371,142 @@ func (m *Master) Status(ctx context.Context) ComponentStatus {
 }
 
 func (m *Master) Sync(ctx context.Context) error {
-	_, err := m.doSync(ctx, false)
-	return err
+	// 1. Initial component creation.
+	builtStartedCond := buildStarted(m.GetName())
+	if m.condManager.Is(not(builtStartedCond)) {
+		return m.runUntilNoErr(ctx, m.server.Sync, builtStartedCond)
+	}
+
+	builtCond := buildFinished(m.GetName())
+	if m.condManager.Is(not(builtCond)) {
+		return m.runUntilOk(ctx, func(ctx context.Context) (bool, error) {
+			diff, err := m.server.hasDiff(ctx)
+			return !diff, err
+		}, builtCond)
+	}
+
+	// 2. Initialization once in a lifetime of the main component
+	initCond := initializationFinished(m.GetName())
+	if m.condManager.Is(not(initCond)) {
+		return m.runUntilOk(ctx, m.handleInitialization, initCond)
+	}
+
+	// 3. Update in case of a diff until full component update is completed.
+	needUpdate, err := m.server.hasDiff(ctx)
+	if err != nil {
+		return err
+	}
+	updateRequiredCond := updateRequired(m.GetName())
+	if needUpdate {
+		if err = m.condManager.SetCond(ctx, updateRequiredCond); err != nil {
+			return err
+		}
+	}
+	if m.condManager.Is(updateRequiredCond) {
+		if m.condManager.Is(not(masterUpdatePossibleCond)) {
+			return m.runUntilOk(ctx, func(ctx context.Context) (bool, error) {
+				// TODO: put message in the condition reason
+				ok, _, err := m.ytClient.HandlePossibilityCheck(ctx)
+				if err != nil {
+					return false, err
+				}
+				return ok, nil
+			}, masterUpdatePossibleCond)
+		}
+		return m.runUntilOkWithCleanup(
+			ctx,
+			m.handleUpdate,
+			m.cleanupAfterUpdate,
+			not(updateRequiredCond),
+		)
+	}
+
+	return nil
+}
+
+func (m *Master) handleInitialization(ctx context.Context) (bool, error) {
+	m.initJob.SetInitScript(m.createInitScript())
+	st, err := m.initJob.Sync(ctx, false)
+	return st.SyncStatus == SyncStatusReady, err
+}
+
+func (m *Master) handleUpdate(ctx context.Context) (bool, error) {
+	if m.condManager.Is(not(masterSafeModeEnabledCond)) {
+		return false, m.runUntilNoErr(ctx, func(ctx context.Context) error {
+			return m.ytClient.EnableSafeMode(ctx)
+		}, masterSafeModeEnabledCond)
+	}
+	if m.condManager.Is(not(masterSnapshotsBuildStartedCond)) {
+		return false, m.runUntilNoErr(ctx, func(ctx context.Context) error {
+			monitoringPaths, err := m.ytClient.GetMasterMonitoringPaths(ctx)
+			if err != nil {
+				return err
+			}
+			if err = m.storeMasterMonitoringPaths(ctx, monitoringPaths); err != nil {
+				return err
+			}
+
+			return m.ytClient.StartBuildMasterSnapshots(ctx, monitoringPaths)
+		}, masterSnapshotsBuildStartedCond)
+	}
+	if m.condManager.Is(not(masterSnapshotsBuildFinishedCond)) {
+		return false, m.runUntilOk(ctx, func(ctx context.Context) (bool, error) {
+			paths := m.getStoredMasterMonitoringPaths()
+			return m.ytClient.AreMasterSnapshotsBuilt(ctx, paths)
+		}, masterSnapshotsBuildFinishedCond)
+	}
+	podsWereRemoved := podsRemoved(m.GetName())
+	if m.condManager.Is(not(podsWereRemoved)) {
+		return false, m.runUntilNoErr(ctx, m.server.removePods, podsWereRemoved)
+	}
+	if m.condManager.Is(not(masterExitReadOnlyPrepared)) {
+		return false, m.runUntilNoErr(ctx, func(ctx context.Context) error {
+			return m.exitReadOnlyJob.prepareRestart(ctx, false)
+		}, masterExitReadOnlyPrepared)
+	}
+	if m.condManager.Is(not(masterExitReadOnlyFinished)) {
+		return false, m.runUntilOk(ctx, func(ctx context.Context) (done bool, err error) {
+			m.exitReadOnlyJob.SetInitScript(m.createInitScript())
+			st, err := m.exitReadOnlyJob.Sync(ctx, false)
+			return st.SyncStatus == SyncStatusReady, err
+		}, masterExitReadOnlyFinished)
+	}
+	if m.condManager.Is(not(masterSafeModeDisabledCond)) {
+		return false, m.runUntilNoErr(ctx, func(ctx context.Context) error {
+			return m.ytClient.DisableSafeMode(ctx)
+		}, masterSafeModeDisabledCond)
+	}
+	return true, nil
+}
+
+func (m *Master) cleanupAfterUpdate(ctx context.Context) error {
+	for _, cond := range m.getConditionsSetByUpdate() {
+		if err := m.condManager.SetCond(ctx, not(cond)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Master) getConditionsSetByUpdate() []Condition {
+	var result []Condition
+	conds := []Condition{
+		masterUpdatePossibleCond,
+		masterSafeModeEnabledCond,
+		masterSnapshotsBuildStartedCond,
+		masterSnapshotsBuildFinishedCond,
+		podsRemoved(m.GetName()),
+		masterExitReadOnlyPrepared,
+		masterExitReadOnlyFinished,
+		masterSafeModeDisabledCond,
+		updateRequired(m.GetName()),
+	}
+	for _, cond := range conds {
+		if m.condManager.IsSatisfied(cond) {
+			result = append(result, cond)
+		}
+	}
+	return result
 }
 
 func (m *Master) doServerSync(ctx context.Context) error {
@@ -390,4 +567,12 @@ func (m *Master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav
 		Reason:  "MasterExitReadOnlyPrepared",
 		Message: "Masters are ready to exit read-only state",
 	})
+}
+
+func (m *Master) storeMasterMonitoringPaths(ctx context.Context, paths []string) error {
+	return m.stateManager.SetMasterMonitoringPaths(ctx, paths)
+}
+
+func (m *Master) getStoredMasterMonitoringPaths() []string {
+	return m.stateManager.GetMasterMonitoringPaths()
 }

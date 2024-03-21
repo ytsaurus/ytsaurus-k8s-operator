@@ -18,7 +18,7 @@ type TcpProxy struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
 
-	master Component
+	//master Component
 
 	serviceType      *v1.ServiceType
 	balancingService *resources.TCPService
@@ -27,7 +27,7 @@ type TcpProxy struct {
 func NewTCPProxy(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
-	masterReconciler Component,
+	//masterReconciler Component,
 	spec ytv1.TCPProxiesSpec) *TcpProxy {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
@@ -68,9 +68,9 @@ func NewTCPProxy(
 	return &TcpProxy{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
-		master:               masterReconciler,
-		serviceType:          spec.ServiceType,
-		balancingService:     balancingService,
+		//master:               masterReconciler,
+		serviceType:      spec.ServiceType,
+		balancingService: balancingService,
 	}
 }
 
@@ -103,9 +103,9 @@ func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	if !IsRunningStatus(tp.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, tp.master.GetName()), err
-	}
+	//if !IsRunningStatus(tp.master.Status(ctx).SyncStatus) {
+	//	return WaitingStatus(SyncStatusBlocked, tp.master.GetName()), err
+	//}
 
 	if tp.NeedSync() {
 		if !dry {
@@ -129,7 +129,11 @@ func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (tp *TcpProxy) Status(ctx context.Context) ComponentStatus {
+func (tp *TcpProxy) Status(ctx context.Context) (ComponentStatus, error) {
+	return ComponentStatus{}, nil
+}
+
+func (tp *TcpProxy) StatusOld(ctx context.Context) ComponentStatus {
 	status, err := tp.doSync(ctx, true)
 	if err != nil {
 		panic(err)

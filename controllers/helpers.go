@@ -1,11 +1,18 @@
 package controllers
 
 import (
+	"context"
+	"fmt"
 	"net"
 	"os"
 	"strings"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 )
 
 const (
@@ -29,4 +36,62 @@ func getClusterDomain(client client.Client) string {
 	clusterDomain = strings.TrimSuffix(clusterDomain, ".")
 
 	return clusterDomain
+}
+
+func logComponentStatuses(
+	ctx context.Context,
+	registry *componentRegistry,
+	statuses map[string]components.ComponentStatus,
+	componentsOrder [][]consts.ComponentType,
+	resource *ytv1.Ytsaurus,
+) {
+	logger := log.FromContext(ctx)
+
+	var readyComponents []string
+	var notReadyComponents []string
+
+	for batchIndex, typesInBatch := range componentsOrder {
+		compsInBatch := registry.listByType(typesInBatch...)
+		for _, comp := range compsInBatch {
+			name := comp.GetName()
+			status := statuses[name]
+
+			if status.SyncStatus == components.SyncStatusReady {
+				readyComponents = append(readyComponents, name)
+			} else {
+				notReadyComponents = append(notReadyComponents, name)
+			}
+
+			logger.V(1).Info(
+				fmt.Sprintf(
+					"%d.%s %s: %s",
+					batchIndex,
+					statusToSymbol(status.SyncStatus),
+					name,
+					status.Message,
+				),
+			)
+		}
+	}
+
+	// NB: This log is mentioned at https://ytsaurus.tech/docs/ru/admin-guide/install-ytsaurus
+	logger.Info("Ytsaurus sync status",
+		"notReadyComponents", notReadyComponents,
+		"readyComponents", readyComponents,
+		"updateState", resource.Status.UpdateStatus.State,
+		"clusterState", resource.Status.State)
+
+}
+
+func statusToSymbol(st components.SyncStatus) string {
+	switch st {
+	case components.SyncStatusReady:
+		return "[v]"
+	case components.SyncStatusBlocked:
+		return "[x]"
+	case components.SyncStatusUpdating:
+		return "[.]"
+	default:
+		return "[ ]"
+	}
 }

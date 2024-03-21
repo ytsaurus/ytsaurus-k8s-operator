@@ -15,13 +15,13 @@ import (
 type ExecNode struct {
 	baseExecNode
 	localComponent
-	master Component
+	//master Component
 }
 
 func NewExecNode(
 	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
-	master Component,
+	//master Component,
 	spec ytv1.ExecNodesSpec,
 ) *ExecNode {
 	resource := ytsaurus.GetResource()
@@ -57,7 +57,7 @@ func NewExecNode(
 			sidecars:   spec.Sidecars,
 			privileged: spec.Privileged,
 		},
-		master: master,
+		//master: master,
 	}
 }
 
@@ -80,9 +80,9 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		}
 	}
 
-	if !IsRunningStatus(n.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
-	}
+	//if !IsRunningStatus(n.master.Status(ctx).SyncStatus) {
+	//	return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
+	//}
 
 	if LocalServerNeedSync(n.server, n.ytsaurus) {
 		return n.doSyncBase(ctx, dry)
@@ -95,7 +95,11 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (n *ExecNode) Status(ctx context.Context) ComponentStatus {
+func (n *ExecNode) Status(ctx context.Context) (ComponentStatus, error) {
+	return ComponentStatus{}, nil
+}
+
+func (n *ExecNode) StatusOld(ctx context.Context) ComponentStatus {
 	status, err := n.doSync(ctx, true)
 	if err != nil {
 		panic(err)

@@ -24,9 +24,9 @@ type StrawberryController struct {
 	initChytClusterJob *InitJob
 	secret             *resources.StringSecret
 
-	master    Component
-	scheduler Component
-	dataNodes []Component
+	//master    Component
+	//scheduler Component
+	//dataNodes []Component
 
 	name string
 }
@@ -44,9 +44,10 @@ const ChytInitClusterJobConfigFileName = "chyt-init-cluster.yson"
 func NewStrawberryController(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
-	master Component,
-	scheduler Component,
-	dataNodes []Component) *StrawberryController {
+	// master Component,
+	// scheduler Component,
+	// dataNodes []Component
+) *StrawberryController {
 	resource := ytsaurus.GetResource()
 
 	image := resource.Spec.CoreImage
@@ -113,10 +114,10 @@ func NewStrawberryController(
 			l.GetSecretName(),
 			&l,
 			ytsaurus.APIProxy()),
-		name:      name,
-		master:    master,
-		scheduler: scheduler,
-		dataNodes: dataNodes,
+		name: name,
+		//master:    master,
+		//scheduler: scheduler,
+		//dataNodes: dataNodes,
 	}
 }
 
@@ -238,19 +239,19 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		}
 	}
 
-	if !IsRunningStatus(c.master.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, c.master.GetName()), err
-	}
-
-	if !IsRunningStatus(c.scheduler.Status(ctx).SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, c.scheduler.GetName()), err
-	}
-
-	for _, dataNode := range c.dataNodes {
-		if !IsRunningStatus(dataNode.Status(ctx).SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, dataNode.GetName()), err
-		}
-	}
+	//if !IsRunningStatus(c.master.Status(ctx).SyncStatus) {
+	//	return WaitingStatus(SyncStatusBlocked, c.master.GetName()), err
+	//}
+	//
+	//if !IsRunningStatus(c.scheduler.Status(ctx).SyncStatus) {
+	//	return WaitingStatus(SyncStatusBlocked, c.scheduler.GetName()), err
+	//}
+	//
+	//for _, dataNode := range c.dataNodes {
+	//	if !IsRunningStatus(dataNode.Status(ctx).SyncStatus) {
+	//		return WaitingStatus(SyncStatusBlocked, dataNode.GetName()), err
+	//	}
+	//}
 
 	if c.secret.NeedSync(consts.TokenSecretKey, "") {
 		if !dry {
@@ -289,7 +290,11 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (c *StrawberryController) Status(ctx context.Context) ComponentStatus {
+func (c *StrawberryController) Status(ctx context.Context) (ComponentStatus, error) {
+	return ComponentStatus{}, nil
+}
+
+func (c *StrawberryController) StatusOld(ctx context.Context) ComponentStatus {
 	status, err := c.doSync(ctx, true)
 	if err != nil {
 		panic(err)
