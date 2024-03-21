@@ -257,6 +257,10 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		readinessProbeParams = *s.instanceSpec.ReadinessProbeParams
 	}
 
+	command := make([]string, 0, 3+len(s.instanceSpec.EntrypointWrapper))
+	command = append(command, s.instanceSpec.EntrypointWrapper...)
+	command = append(command, s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, fileNames[0]))
+
 	setHostnameAsFQDN := true
 	statefulSet.Spec.Template.Spec = corev1.PodSpec{
 		RuntimeClassName:  s.instanceSpec.RuntimeClassName,
@@ -266,7 +270,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 			{
 				Image:        s.image,
 				Name:         consts.YTServerContainerName,
-				Command:      []string{s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, fileNames[0])},
+				Command:      command,
 				VolumeMounts: volumeMounts,
 				Ports: []corev1.ContainerPort{
 					{

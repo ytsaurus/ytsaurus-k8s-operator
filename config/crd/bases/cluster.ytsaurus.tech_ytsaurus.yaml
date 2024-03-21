@@ -755,7 +755,13 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
+                  entrypointWrapper:
+                    description: Specifies wrapper for component container command.
+                    items:
+                      type: string
+                    type: array
                   image:
+                    description: Overrides coreImage for component.
                     type: string
                   instanceCount:
                     format: int32
@@ -3082,7 +3088,13 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    entrypointWrapper:
+                      description: Specifies wrapper for component container command.
+                      items:
+                        type: string
+                      type: array
                     image:
+                      description: Overrides coreImage for component.
                       type: string
                     instanceCount:
                       format: int32
@@ -5421,7 +5433,13 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
+                  entrypointWrapper:
+                    description: Specifies wrapper for component container command.
+                    items:
+                      type: string
+                    type: array
                   image:
+                    description: Overrides coreImage for component.
                     type: string
                   instanceCount:
                     format: int32
@@ -7749,7 +7767,13 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    entrypointWrapper:
+                      description: Specifies wrapper for component container command.
+                      items:
+                        type: string
+                      type: array
                     image:
+                      description: Overrides coreImage for component.
                       type: string
                     instanceCount:
                       format: int32
@@ -10181,6 +10205,11 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    entrypointWrapper:
+                      description: Specifies wrapper for component container command.
+                      items:
+                        type: string
+                      type: array
                     httpNodePort:
                       format: int32
                       type: integer
@@ -10188,6 +10217,7 @@ spec:
                       format: int32
                       type: integer
                     image:
+                      description: Overrides coreImage for component.
                       type: string
                     instanceCount:
                       format: int32
@@ -12557,6 +12587,11 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
+                  entrypointWrapper:
+                    description: Specifies wrapper for component container command.
+                    items:
+                      type: string
+                    type: array
                   hostAddressesLabel:
                     type: string
                   hostAddressesMasterCaches:
@@ -12564,6 +12599,7 @@ spec:
                       type: string
                     type: array
                   image:
+                    description: Overrides coreImage for component.
                     type: string
                   instanceCount:
                     format: int32
@@ -14932,6 +14968,11 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
+                  entrypointWrapper:
+                    description: Specifies wrapper for component container command.
+                    items:
+                      type: string
+                    type: array
                   hostAddressLabel:
                     type: string
                   hostAddresses:
@@ -14939,6 +14980,7 @@ spec:
                       type: string
                     type: array
                   image:
+                    description: Overrides coreImage for component.
                     type: string
                   instanceCount:
                     format: int32
@@ -17262,7 +17304,13 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
+                  entrypointWrapper:
+                    description: Specifies wrapper for component container command.
+                    items:
+                      type: string
+                    type: array
                   image:
+                    description: Overrides coreImage for component.
                     type: string
                   instanceCount:
                     format: int32
@@ -19580,7 +19628,13 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
+                  entrypointWrapper:
+                    description: Specifies wrapper for component container command.
+                    items:
+                      type: string
+                    type: array
                   image:
+                    description: Overrides coreImage for component.
                     type: string
                   instanceCount:
                     format: int32
@@ -21905,7 +21959,13 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    entrypointWrapper:
+                      description: Specifies wrapper for component container command.
+                      items:
+                        type: string
+                      type: array
                     image:
+                      description: Overrides coreImage for component.
                       type: string
                     instanceCount:
                       format: int32
@@ -24266,7 +24326,13 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
+                  entrypointWrapper:
+                    description: Specifies wrapper for component container command.
+                    items:
+                      type: string
+                    type: array
                   image:
+                    description: Overrides coreImage for component.
                     type: string
                   instanceCount:
                     format: int32
@@ -26593,6 +26659,11 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    entrypointWrapper:
+                      description: Specifies wrapper for component container command.
+                      items:
+                        type: string
+                      type: array
                     hostAddressLabel:
                       type: string
                     hostAddresses:
@@ -26600,6 +26671,7 @@ spec:
                         type: string
                       type: array
                     image:
+                      description: Overrides coreImage for component.
                       type: string
                     instanceCount:
                       format: int32
@@ -28992,7 +29064,13 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    entrypointWrapper:
+                      description: Specifies wrapper for component container command.
+                      items:
+                        type: string
+                      type: array
                     image:
+                      description: Overrides coreImage for component.
                       type: string
                     instanceCount:
                       format: int32
@@ -31337,7 +31415,13 @@ spec:
                     enableAntiAffinity:
                       description: Deprecated. Use Affinity.PodAntiAffinity instead.
                       type: boolean
+                    entrypointWrapper:
+                      description: Specifies wrapper for component container command.
+                      items:
+                        type: string
+                      type: array
                     image:
+                      description: Overrides coreImage for component.
                       type: string
                     instanceCount:
                       format: int32
@@ -33872,7 +33956,13 @@ spec:
                   enableAntiAffinity:
                     description: Deprecated. Use Affinity.PodAntiAffinity instead.
                     type: boolean
+                  entrypointWrapper:
+                    description: Specifies wrapper for component container command.
+                    items:
+                      type: string
+                    type: array
                   image:
+                    description: Overrides coreImage for component.
                     type: string
                   instanceCount:
                     format: int32

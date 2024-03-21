@@ -224,9 +224,14 @@ type HealthcheckProbeParams struct {
 }
 
 type InstanceSpec struct {
-	Image        *string              `json:"image,omitempty"`
-	Volumes      []corev1.Volume      `json:"volumes,omitempty"`
-	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
+	// Overrides coreImage for component.
+	//+optional
+	Image *string `json:"image,omitempty"`
+	// Specifies wrapper for component container command.
+	//+optional
+	EntrypointWrapper []string             `json:"entrypointWrapper,omitempty"`
+	Volumes           []corev1.Volume      `json:"volumes,omitempty"`
+	VolumeMounts      []corev1.VolumeMount `json:"volumeMounts,omitempty"`
 	//+optional
 	ReadinessProbeParams  *HealthcheckProbeParams         `json:"readinessProbeParams,omitempty"`
 	Resources             corev1.ResourceRequirements     `json:"resources,omitempty"`
