@@ -47,7 +47,6 @@ func postRunCommon(
 	onSuccessFunc func(ctx context.Context) error,
 ) error {
 	if onSuccessCondition.Name != "" {
-		fmt.Println("DBG SET COND", onSuccessCondition)
 		if err := conds.SetCond(ctx, onSuccessCondition); err != nil {
 			return err
 		}
@@ -144,11 +143,8 @@ type StepComposite struct {
 
 func (s StepComposite) StepName() string { return s.Name }
 func (s StepComposite) Run(ctx context.Context, conds conditionManagerIface) (bool, error) {
-	fmt.Println(">>> RUN")
-	defer fmt.Printf("<<< RUN\n\n")
 	for _, step := range s.Steps {
 		st, _, err := step.Status(ctx, conds)
-		//fmt.Println("DBG STEP STATUS FOR RUN", step.StepName(), st, err)
 		if err != nil {
 			return false, err
 		}
@@ -157,7 +153,6 @@ func (s StepComposite) Run(ctx context.Context, conds conditionManagerIface) (bo
 		}
 
 		runOk, err := step.Run(ctx, conds)
-		//fmt.Println("DBG STEP RUN", step.StepName(), runOk, err)
 		if err != nil {
 			return false, err
 		}
@@ -184,7 +179,6 @@ func (s StepComposite) Status(ctx context.Context, conds conditionManagerIface) 
 
 	for _, step := range s.Steps {
 		st, msg, err = step.Status(ctx, conds)
-		//fmt.Println("DBG STEP STATUS FOR STATUS", step.StepName(), st, err)
 		if err != nil {
 			return "", msg, err
 		}
