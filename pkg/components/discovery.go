@@ -87,13 +87,8 @@ func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (d *Discovery) Status(ctx context.Context) ComponentStatus {
-	status, err := d.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (d *Discovery) Status(ctx context.Context) (ComponentStatus, error) {
+	return d.doSync(ctx, true)
 }
 
 func (d *Discovery) Sync(ctx context.Context) error {

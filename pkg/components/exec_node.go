@@ -80,7 +80,11 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		}
 	}
 
-	if !IsRunningStatus(n.master.Status(ctx).SyncStatus) {
+	masterStatus, err := n.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
 	}
 
@@ -95,13 +99,8 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (n *ExecNode) Status(ctx context.Context) ComponentStatus {
-	status, err := n.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (n *ExecNode) Status(ctx context.Context) (ComponentStatus, error) {
+	return n.doSync(ctx, true)
 }
 
 func (n *ExecNode) Sync(ctx context.Context) error {

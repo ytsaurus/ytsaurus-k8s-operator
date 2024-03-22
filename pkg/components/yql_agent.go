@@ -133,7 +133,11 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		}
 	}
 
-	if !IsRunningStatus(yqla.master.Status(ctx).SyncStatus) {
+	masterStatus, err := yqla.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, yqla.master.GetName()), err
 	}
 
@@ -176,13 +180,8 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	return yqla.initEnvironment.Sync(ctx, dry)
 }
 
-func (yqla *YqlAgent) Status(ctx context.Context) ComponentStatus {
-	status, err := yqla.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (yqla *YqlAgent) Status(ctx context.Context) (ComponentStatus, error) {
+	return yqla.doSync(ctx, true)
 }
 
 func (yqla *YqlAgent) Sync(ctx context.Context) error {

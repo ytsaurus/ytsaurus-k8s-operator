@@ -86,13 +86,8 @@ func (mc *MasterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (mc *MasterCache) Status(ctx context.Context) ComponentStatus {
-	status, err := mc.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (mc *MasterCache) Status(ctx context.Context) (ComponentStatus, error) {
+	return mc.doSync(ctx, true)
 }
 
 func (mc *MasterCache) Sync(ctx context.Context) error {

@@ -103,7 +103,11 @@ func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	if !IsRunningStatus(tp.master.Status(ctx).SyncStatus) {
+	tpStatus, err := tp.master.Status(ctx)
+	if err != nil {
+		return tpStatus, err
+	}
+	if !IsRunningStatus(tpStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, tp.master.GetName()), err
 	}
 
@@ -129,13 +133,8 @@ func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (tp *TcpProxy) Status(ctx context.Context) ComponentStatus {
-	status, err := tp.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (tp *TcpProxy) Status(ctx context.Context) (ComponentStatus, error) {
+	return tp.doSync(ctx, true)
 }
 
 func (tp *TcpProxy) Sync(ctx context.Context) error {

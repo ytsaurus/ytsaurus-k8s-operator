@@ -318,13 +318,8 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	return m.initJob.Sync(ctx, dry)
 }
 
-func (m *Master) Status(ctx context.Context) ComponentStatus {
-	status, err := m.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (m *Master) Status(ctx context.Context) (ComponentStatus, error) {
+	return m.doSync(ctx, true)
 }
 
 func (m *Master) Sync(ctx context.Context) error {

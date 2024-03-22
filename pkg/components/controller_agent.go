@@ -73,7 +73,11 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 		}
 	}
 
-	if !IsRunningStatus(ca.master.Status(ctx).SyncStatus) {
+	masterStatus, err := ca.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, ca.master.GetName()), err
 	}
 
@@ -91,13 +95,8 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (ca *ControllerAgent) Status(ctx context.Context) ComponentStatus {
-	status, err := ca.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (ca *ControllerAgent) Status(ctx context.Context) (ComponentStatus, error) {
+	return ca.doSync(ctx, true)
 }
 
 func (ca *ControllerAgent) Sync(ctx context.Context) error {

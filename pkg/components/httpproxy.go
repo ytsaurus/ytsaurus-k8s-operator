@@ -112,7 +112,11 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 		}
 	}
 
-	if !IsRunningStatus(hp.master.Status(ctx).SyncStatus) {
+	masterStatus, err := hp.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, hp.master.GetName()), err
 	}
 
@@ -144,13 +148,8 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (hp *HttpProxy) Status(ctx context.Context) ComponentStatus {
-	status, err := hp.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (hp *HttpProxy) Status(ctx context.Context) (ComponentStatus, error) {
+	return hp.doSync(ctx, true)
 }
 
 func (hp *HttpProxy) Sync(ctx context.Context) error {

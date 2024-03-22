@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -153,7 +154,11 @@ func NewComponentManager(
 			return nil, err
 		}
 
-		componentStatus := c.Status(ctx)
+		componentStatus, err := c.Status(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get component %s status: %w", c.GetName(), err)
+		}
+
 		c.SetReadyCondition(componentStatus)
 		syncStatus := componentStatus.SyncStatus
 
@@ -205,7 +210,10 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 
 	hasPending := false
 	for _, c := range cm.allComponents {
-		status := c.Status(ctx)
+		status, err := c.Status(ctx)
+		if err != nil {
+			return ctrl.Result{Requeue: true}, fmt.Errorf("failed to get status for %s: %w", c.GetName(), err)
+		}
 
 		if status.SyncStatus == components.SyncStatusPending ||
 			status.SyncStatus == components.SyncStatusUpdating {
