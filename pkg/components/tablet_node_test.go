@@ -173,11 +173,15 @@ var _ = Describe("Tablet node test", func() {
 
 			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true)
 			tabletNode.server = NewFakeServer()
-			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusBlocked))
+			status, err := tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusBlocked))
 
 			ytsaurusClient.SetStatus(SimpleStatus(SyncStatusReady))
 
-			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
+			status, err = tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
 		})
 
 		It("Tablet node Sync; pods are not ready", func() {
@@ -190,11 +194,15 @@ var _ = Describe("Tablet node test", func() {
 			fakeServer.podsReady = false
 			tabletNode.server = fakeServer
 
-			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusBlocked))
+			status, err := tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusBlocked))
 
 			fakeServer.podsReady = true
 
-			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
+			status, err = tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
 		})
 
 		It("Tablet node Sync; yt errors", func() {
@@ -328,32 +336,44 @@ var _ = Describe("Tablet node test", func() {
 			// Failed to check if there is //sys/tablet_cell_bundles/sys.
 			err := tabletNode.Sync(context.Background())
 			Expect(err).Should(Equal(existsNetError))
-			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
+			status, err := tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
 
 			// Failed to create `sys` bundle.
 			err = tabletNode.Sync(context.Background())
 			Expect(err).Should(Equal(createBundleNetError))
-			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
+			status, err = tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
 
 			// Failed to get @tablet_cell_count of the `sys` bundle.
 			err = tabletNode.Sync(context.Background())
 			Expect(err).Should(Equal(getNetError))
-			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
+			status, err = tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
 
 			// Failed to create tablet_cell in the `sys` bundle.
 			err = tabletNode.Sync(context.Background())
 			Expect(err).Should(Equal(createCellNetError))
-			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
+			status, err = tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
 
 			// Failed to get @tablet_cell_count of the `default` bundle.
 			err = tabletNode.Sync(context.Background())
 			Expect(err).Should(Equal(getNetError))
-			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusPending))
+			status, err = tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
 
 			// Then everything was successfully.
 			err = tabletNode.Sync(context.Background())
 			Expect(err).Should(Succeed())
-			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusReady))
+			status, err = tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusReady))
 		})
 
 		It("Tablet node Sync; success", func() {
@@ -408,7 +428,9 @@ var _ = Describe("Tablet node test", func() {
 			err := tabletNode.Sync(context.Background())
 			Expect(err).Should(Succeed())
 
-			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusReady))
+			status, err := tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusReady))
 		})
 
 		It("Tablet node Sync; no initialization", func() {
@@ -422,7 +444,9 @@ var _ = Describe("Tablet node test", func() {
 			err := tabletNode.Sync(context.Background())
 			Expect(err).Should(Succeed())
 
-			Expect(tabletNode.Status(context.Background()).SyncStatus).Should(Equal(SyncStatusReady))
+			status, err := tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusReady))
 		})
 	})
 })
