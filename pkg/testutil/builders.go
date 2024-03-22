@@ -31,6 +31,12 @@ func BuildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
 					MonitoringPort: ptr.Int32(consts.DiscoveryMonitoringPort),
 				},
 			},
+			Schedulers: &ytv1.SchedulersSpec{
+				InstanceSpec: ytv1.InstanceSpec{
+					InstanceCount:  1,
+					MonitoringPort: ptr.Int32(consts.SchedulerMonitoringPort),
+				},
+			},
 			PrimaryMasters: ytv1.MastersSpec{
 				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount:  3,

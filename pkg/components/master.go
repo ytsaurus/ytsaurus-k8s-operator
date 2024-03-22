@@ -27,13 +27,14 @@ const (
 )
 
 var (
-	masterUpdatePossibleCond         = isTrue("MasterUpdatePossible")
-	masterSafeModeEnabledCond        = isTrue("MasterSafeModeEnabled")
-	masterSnapshotsBuildStartedCond  = isTrue("MasterSnapshotsBuildStarted")
-	masterSnapshotsBuildFinishedCond = isTrue("MasterSnapshotsBuildFinished")
-	masterExitReadOnlyPrepared       = isTrue("MasterExitReadOnlyPrepared")
-	masterExitReadOnlyFinished       = isTrue("MasterExitReadOnlyFinished")
-	masterSafeModeDisabledCond       = isTrue("MasterSafeModeDisabled")
+	masterUpdatePossibleCond              = isTrue("MasterUpdatePossible")
+	masterSafeModeEnabledCond             = isTrue("MasterSafeModeEnabled")
+	masterSnapshotsBuildStartedCond       = isTrue("MasterSnapshotsBuildStarted")
+	masterSnapshotsBuildFinishedCond      = isTrue("MasterSnapshotsBuildFinished")
+	masterExitReadOnlyPrepareStartedCond  = isTrue("MasterExitReadOnlyPrepareStarted")
+	masterExitReadOnlyPrepareFinishedCond = isTrue("MasterExitReadOnlyPrepareFinished")
+	masterExitReadOnlyFinished            = isTrue("MasterExitReadOnlyFinished")
+	masterSafeModeDisabledCond            = isTrue("MasterSafeModeDisabled")
 )
 
 type ytsaurusClientForMaster interface {
@@ -485,11 +486,23 @@ func (m *Master) getFlow() Step {
 						},
 					},
 					StepRun{
-						Name:               "StartMasterExitReadOnly",
-						RunIfCondition:     not(masterExitReadOnlyPrepared),
-						OnSuccessCondition: masterExitReadOnlyPrepared,
+						Name:               "StartPrepareMasterExitReadOnly",
+						RunIfCondition:     not(masterExitReadOnlyPrepareStartedCond),
+						OnSuccessCondition: masterExitReadOnlyPrepareStartedCond,
 						RunFunc: func(ctx context.Context) error {
 							return m.exitReadOnlyJob.prepareRestart(ctx, false)
+						},
+					},
+					StepCheck{
+						Name:               "WaitMasterExitReadOnlyPrepared",
+						RunIfCondition:     not(masterExitReadOnlyPrepareFinishedCond),
+						OnSuccessCondition: masterExitReadOnlyPrepareFinishedCond,
+						RunFunc: func(ctx context.Context) (bool, error) {
+							return m.exitReadOnlyJob.isRestartPrepared(), nil
+						},
+						OnSuccessFunc: func(ctx context.Context) error {
+							m.exitReadOnlyJob.SetInitScript(m.createInitScript())
+							return nil
 						},
 					},
 					StepCheck{
@@ -497,7 +510,6 @@ func (m *Master) getFlow() Step {
 						RunIfCondition:     not(masterExitReadOnlyFinished),
 						OnSuccessCondition: masterExitReadOnlyFinished,
 						RunFunc: func(ctx context.Context) (ok bool, err error) {
-							m.exitReadOnlyJob.SetInitScript(m.createInitScript())
 							st, err := m.exitReadOnlyJob.Sync(ctx, false)
 							return st.SyncStatus == SyncStatusReady, err
 						},
@@ -532,7 +544,8 @@ func (m *Master) getConditionsSetByUpdate() []Condition {
 		masterSnapshotsBuildFinishedCond,
 		rebuildStarted(m.GetName()),
 		rebuildFinished(m.GetName()),
-		masterExitReadOnlyPrepared,
+		masterExitReadOnlyPrepareStartedCond,
+		masterExitReadOnlyPrepareFinishedCond,
 		masterExitReadOnlyFinished,
 		masterSafeModeDisabledCond,
 	}
