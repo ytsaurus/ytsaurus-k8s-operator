@@ -49,10 +49,6 @@ func NeedSyncStatus(message string) ComponentStatus {
 	return ComponentStatus{SyncStatus: SyncStatusNeedSync, Message: message}
 }
 
-func UpdatingStatus(message string) ComponentStatus {
-	return ComponentStatus{SyncStatus: SyncStatusUpdating, Message: message}
-}
-
 func ReadyStatus() ComponentStatus {
 	return ComponentStatus{SyncStatus: SyncStatusReady}
 }
@@ -180,7 +176,11 @@ func (c *localServerComponent) runUntilNoErr(
 	ctx context.Context,
 	run func(ctx context.Context) error,
 	onSuccess Condition,
+	dry bool,
 ) error {
+	if dry {
+		return nil
+	}
 	if err := run(ctx); err != nil {
 		return fmt.Errorf("failed to run %s for cond %s: %w", c.GetName(), onSuccess, err)
 	}
@@ -194,11 +194,21 @@ func (c *localServerComponent) runUntilOk(
 	ctx context.Context,
 	run func(ctx context.Context) (bool, error),
 	onSuccess Condition,
+	dry bool,
 ) error {
-	return c.runUntilOkWithCleanup(ctx, run, nil, onSuccess)
+	return c.runUntilOkWithCleanup(ctx, run, nil, onSuccess, dry)
 }
 
-func (c *localServerComponent) runUntilOkWithCleanup(ctx context.Context, run func(ctx context.Context) (bool, error), cleanup func(ctx context.Context) error, onSuccess Condition) error {
+func (c *localServerComponent) runUntilOkWithCleanup(
+	ctx context.Context,
+	run func(ctx context.Context) (bool, error),
+	cleanup func(ctx context.Context) error,
+	onSuccess Condition,
+	dry bool,
+) error {
+	if dry {
+		return nil
+	}
 	done, err := run(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to run %s for cond %s: %w", c.GetName(), onSuccess, err)

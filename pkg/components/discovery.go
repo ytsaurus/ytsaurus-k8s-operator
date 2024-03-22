@@ -6,7 +6,6 @@ import (
 
 	"go.ytsaurus.tech/library/go/ptr"
 
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
@@ -62,30 +61,49 @@ func (d *Discovery) Fetch(ctx context.Context) error {
 }
 
 func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
-	if ytv1.IsReadyToUpdateClusterState(d.ytsaurus.GetClusterState()) && d.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+	// Initial component creation.
+	builtStartedCond := buildStarted(d.GetName())
+	if d.condManager.Is(not(builtStartedCond)) {
+		return NeedSyncStatus("build is started"), d.runUntilNoErr(ctx, d.server.Sync, builtStartedCond, dry)
 	}
 
-	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, d.ytsaurus, d, &d.localComponent, d.server, dry); status != nil {
-			return *status, err
+	builtCond := buildFinished(d.GetName())
+	if d.condManager.Is(not(builtCond)) {
+		return NeedSyncStatus("build is not finished"), d.runUntilOk(
+			ctx,
+			func(ctx context.Context) (bool, error) {
+				diff, err := d.server.hasDiff(ctx)
+				return !diff, err
+			},
+			builtCond,
+			dry,
+		)
+	}
+
+	// Update in case of a diff.
+	needUpdate, err := d.server.hasDiff(ctx)
+	if err != nil {
+		return NeedSyncStatus(""), err
+	}
+	updateRequiredCond := updateRequired(d.GetName())
+	if needUpdate {
+		if err = d.condManager.SetCond(ctx, updateRequiredCond); err != nil {
+			return NeedSyncStatus(""), err
 		}
 	}
-
-	if d.NeedSync() {
-		if !dry {
-			err = d.server.Sync(ctx)
-		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+	if d.condManager.Is(updateRequiredCond) {
+		return NeedSyncStatus(""), d.runUntilOkWithCleanup(
+			ctx,
+			func(ctx context.Context) (bool, error) {
+				return d.handleUpdate(ctx, dry)
+			},
+			d.handlePostUpdate,
+			not(updateRequiredCond),
+			dry,
+		)
 	}
 
-	if !d.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
-	}
-
-	return SimpleStatus(SyncStatusReady), err
+	return ReadyStatus(), nil
 }
 
 func (d *Discovery) Status(ctx context.Context) (ComponentStatus, error) {
@@ -93,20 +111,7 @@ func (d *Discovery) Status(ctx context.Context) (ComponentStatus, error) {
 		return ComponentStatus{}, fmt.Errorf("failed to fetch component %s: %w", d.GetName(), err)
 	}
 
-	if d.condManager.Is(not(buildFinished(d.GetName()))) {
-		return NeedSyncStatus("initial build not yet have finished"), nil
-	}
-
-	needUpdate, err := d.server.hasDiff(ctx)
-	if err != nil {
-		return ComponentStatus{}, err
-	}
-
-	if needUpdate || d.condManager.Is(updateRequired(d.GetName())) {
-		return NeedSyncStatus("component needs update"), nil
-	}
-
-	return ReadyStatus(), nil
+	return d.doSync(ctx, true)
 }
 
 func (d *Discovery) StatusOld(ctx context.Context) ComponentStatus {
@@ -118,44 +123,14 @@ func (d *Discovery) StatusOld(ctx context.Context) ComponentStatus {
 }
 
 func (d *Discovery) Sync(ctx context.Context) error {
-	srv := d.server.(*serverImpl)
-
-	// Initial component creation.
-	builtStartedCond := buildStarted(d.GetName())
-	if d.condManager.Is(not(builtStartedCond)) {
-		return d.runUntilNoErr(ctx, d.server.Sync, builtStartedCond)
-	}
-
-	builtCond := buildFinished(d.GetName())
-	if d.condManager.Is(not(builtCond)) {
-		return d.runUntilOk(ctx, func(ctx context.Context) (bool, error) {
-			diff, err := d.server.hasDiff(ctx)
-			return !diff, err
-		}, builtCond)
-	}
-
-	// Update in case of a diff.
-	needUpdate, err := srv.hasDiff(ctx)
-	if err != nil {
-		return err
-	}
-	updateRequiredCond := updateRequired(d.GetName())
-	if needUpdate {
-		if err = d.condManager.SetCond(ctx, updateRequiredCond); err != nil {
-			return err
-		}
-	}
-	if d.condManager.Is(updateRequiredCond) {
-		return d.runUntilOkWithCleanup(ctx, d.handleUpdate, d.handlePostUpdate, not(updateRequiredCond))
-	}
-
-	return nil
+	_, err := d.doSync(ctx, false)
+	return err
 }
 
-func (d *Discovery) handleUpdate(ctx context.Context) (bool, error) {
+func (d *Discovery) handleUpdate(ctx context.Context, dry bool) (bool, error) {
 	podsWereRemoved := podsRemoved(d.GetName())
 	if d.condManager.Is(not(podsWereRemoved)) {
-		return false, d.runUntilNoErr(ctx, d.server.removePods, podsWereRemoved)
+		return false, d.runUntilNoErr(ctx, d.server.removePods, podsWereRemoved, dry)
 	}
 	return true, nil
 }
