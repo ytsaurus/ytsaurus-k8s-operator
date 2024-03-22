@@ -17,9 +17,9 @@ const (
 	SyncStatusNeedFullUpdate  SyncStatus = "NeedFullUpdate"
 	SyncStatusNeedLocalUpdate SyncStatus = "NeedLocalUpdate"
 	SyncStatusPending         SyncStatus = "Pending"
+	SyncStatusUpdating        SyncStatus = "Updating"
 
 	SyncStatusNeedSync SyncStatus = "NeedSync"
-	SyncStatusUpdating SyncStatus = "Updating"
 	SyncStatusReady    SyncStatus = "Ready"
 	SyncStatusBlocked  SyncStatus = "Blocked"
 )

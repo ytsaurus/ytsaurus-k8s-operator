@@ -93,20 +93,11 @@ func (d *Discovery) Status(ctx context.Context) (ComponentStatus, error) {
 		return ComponentStatus{}, fmt.Errorf("failed to fetch component %s: %w", d.GetName(), err)
 	}
 
-	if d.condManager.Is(not(buildFinished(d.GetName()))) {
-		return NeedSyncStatus("initial build not yet have finished"), nil
-	}
-
-	needUpdate, err := d.server.hasDiff(ctx)
-	if err != nil {
-		return ComponentStatus{}, err
-	}
-
-	if needUpdate || d.condManager.Is(updateRequired(d.GetName())) {
-		return NeedSyncStatus("component needs update"), nil
-	}
-
-	return ReadyStatus(), nil
+	st, msg, err := d.getFlow().Status(ctx, d.condManager)
+	return ComponentStatus{
+		SyncStatus: st,
+		Message:    msg,
+	}, err
 }
 
 func (d *Discovery) StatusOld(ctx context.Context) ComponentStatus {
@@ -118,49 +109,90 @@ func (d *Discovery) StatusOld(ctx context.Context) ComponentStatus {
 }
 
 func (d *Discovery) Sync(ctx context.Context) error {
-	srv := d.server.(*serverImpl)
+	_, err := d.getFlow().Run(ctx, d.condManager)
+	return err
+}
 
-	// Initial component creation.
-	builtStartedCond := buildStarted(d.GetName())
-	if d.condManager.Is(not(builtStartedCond)) {
-		return d.runUntilNoErr(ctx, d.server.Sync, builtStartedCond)
-	}
-
-	builtCond := buildFinished(d.GetName())
-	if d.condManager.Is(not(builtCond)) {
-		return d.runUntilOk(ctx, func(ctx context.Context) (bool, error) {
-			diff, err := d.server.hasDiff(ctx)
-			return !diff, err
-		}, builtCond)
-	}
-
-	// Update in case of a diff.
-	needUpdate, err := srv.hasDiff(ctx)
-	if err != nil {
-		return err
-	}
+func (d *Discovery) getFlow() Step {
+	buildStartedCond := buildStarted(d.GetName())
+	builtFinishedCond := buildFinished(d.GetName())
 	updateRequiredCond := updateRequired(d.GetName())
-	if needUpdate {
-		if err = d.condManager.SetCond(ctx, updateRequiredCond); err != nil {
-			return err
-		}
-	}
-	if d.condManager.Is(updateRequiredCond) {
-		return d.runUntilOkWithCleanup(ctx, d.handleUpdate, d.handlePostUpdate, not(updateRequiredCond))
+	rebuildStartedCond := rebuildStarted(d.GetName())
+	rebuildFinishedCond := rebuildFinished(d.GetName())
+
+	return StepComposite{
+		Steps: []Step{
+			StepRun{
+				Name:               StepStartBuild,
+				RunIfCondition:     not(buildStartedCond),
+				RunFunc:            d.server.Sync,
+				OnSuccessCondition: buildStartedCond,
+			},
+			StepCheck{
+				Name:               StepWaitBuildFinished,
+				RunIfCondition:     not(builtFinishedCond),
+				OnSuccessCondition: builtFinishedCond,
+				RunFunc: func(ctx context.Context) (ok bool, err error) {
+					diff, err := d.server.hasDiff(ctx)
+					return !diff, err
+				},
+			},
+			StepComposite{
+				Name: StepUpdate,
+				// Update should be run if either diff exists or updateRequired condition is set,
+				// because a diff should disappear in the middle of the update, but it still need
+				// to finish actions after the update.
+				StatusConditionFunc: func(ctx context.Context) (SyncStatus, string, error) {
+					diff, err := d.server.hasDiff(ctx)
+					if err != nil {
+						return "", "", err
+					}
+					if diff {
+						if err = d.condManager.SetCond(ctx, updateRequiredCond); err != nil {
+							return "", "", err
+						}
+					}
+					// Sync either if diff or is condition set
+					// in the middle of update there will be no diff, so we need a condition.
+					if diff || d.condManager.IsSatisfied(updateRequiredCond) {
+						return SyncStatusNeedSync, "", nil
+					}
+					return SyncStatusReady, "", nil
+				},
+				OnSuccessCondition: not(updateRequiredCond),
+				OnSuccessFunc:      d.cleanupAfterUpdate,
+				Steps: []Step{
+					StepRun{
+						Name:               StepStartRebuild,
+						RunIfCondition:     not(rebuildStartedCond),
+						OnSuccessCondition: rebuildStartedCond,
+						RunFunc:            d.server.removePods,
+					},
+					StepCheck{
+						Name:               StepWaitRebuildFinished,
+						RunIfCondition:     not(rebuildFinishedCond),
+						OnSuccessCondition: rebuildFinishedCond,
+						RunFunc: func(ctx context.Context) (ok bool, err error) {
+							diff, err := d.server.hasDiff(ctx)
+							return !diff, err
+						},
+					},
+				},
+			},
+		},
 	}
 
-	return nil
 }
 
 func (d *Discovery) handleUpdate(ctx context.Context) (bool, error) {
-	podsWereRemoved := podsRemoved(d.GetName())
+	podsWereRemoved := rebuildStarted(d.GetName())
 	if d.condManager.Is(not(podsWereRemoved)) {
 		return false, d.runUntilNoErr(ctx, d.server.removePods, podsWereRemoved)
 	}
 	return true, nil
 }
 
-func (d *Discovery) handlePostUpdate(ctx context.Context) error {
+func (d *Discovery) cleanupAfterUpdate(ctx context.Context) error {
 	for _, cond := range d.getConditionsSetByUpdate() {
 		if err := d.condManager.SetCond(ctx, not(cond)); err != nil {
 			return err
@@ -172,7 +204,7 @@ func (d *Discovery) handlePostUpdate(ctx context.Context) error {
 func (d *Discovery) getConditionsSetByUpdate() []Condition {
 	var result []Condition
 	conds := []Condition{
-		podsRemoved(d.GetName()),
+		rebuildStarted(d.GetName()),
 	}
 	for _, cond := range conds {
 		if d.condManager.IsSatisfied(cond) {

@@ -55,8 +55,11 @@ func initializationFinished(compName string) Condition {
 func updateRequired(compName string) Condition {
 	return isTrue(ConditionName(fmt.Sprintf("%sUpdateRequired", compName)))
 }
-func podsRemoved(compName string) Condition {
-	return isTrue(ConditionName(fmt.Sprintf("%sPodsRemoved", compName)))
+func rebuildStarted(compName string) Condition {
+	return isTrue(ConditionName(fmt.Sprintf("%sRebuildStarted", compName)))
+}
+func rebuildFinished(compName string) Condition {
+	return isTrue(ConditionName(fmt.Sprintf("%sRebuildFinished", compName)))
 }
 
 type baseStateManager struct {
