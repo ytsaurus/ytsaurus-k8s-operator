@@ -22,6 +22,7 @@ import (
 
 const (
 	ytsaurusName = "testsaurus"
+	domain       = "testdomain"
 )
 
 func testComponentFlow(
@@ -46,7 +47,6 @@ func testComponentFlow(
 	fakeRecorder := record.NewFakeRecorder(100)
 
 	ytsaurus := apiproxy.NewYtsaurus(&ytsaurusResource, h.GetK8sClient(), fakeRecorder, scheme)
-	domain := "testdomain"
 	cfgen := ytconfig.NewGenerator(&ytsaurusResource, domain)
 
 	// initial creation

@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -36,7 +37,9 @@ func not(condDep Condition) Condition {
 	}
 }
 func isTrue(cond ConditionName) Condition {
-	return Condition{Name: cond, Val: true}
+	// '^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$' for conditions.
+	replaced := strings.Replace(string(cond), "-", "_", -1)
+	return Condition{Name: ConditionName(replaced), Val: true}
 }
 
 // buildFinished means that component was fully built initally.
@@ -46,9 +49,7 @@ func buildStarted(compName string) Condition {
 func buildFinished(compName string) Condition {
 	return isTrue(ConditionName(fmt.Sprintf("%sBuildFinished", compName)))
 }
-func initializationStarted(compName string) Condition {
-	return isTrue(ConditionName(fmt.Sprintf("%sInitializationStarted", compName)))
-}
+
 func initializationFinished(compName string) Condition {
 	return isTrue(ConditionName(fmt.Sprintf("%snitializationFinished", compName)))
 }
