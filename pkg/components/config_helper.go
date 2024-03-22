@@ -10,12 +10,13 @@ import (
 	"github.com/BurntSushi/toml"
 
 	"github.com/google/go-cmp/cmp"
+	"go.ytsaurus.tech/yt/go/yson"
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/yt/go/yson"
-	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -209,6 +210,7 @@ func (h *ConfigHelper) Build() *corev1.ConfigMap {
 	for fileName := range h.generators {
 		data, err := h.getConfig(fileName)
 		if err != nil {
+			// TODO: fix suppression of the error, it will fail with NPE in places of call
 			return nil
 		}
 

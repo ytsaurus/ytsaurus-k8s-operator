@@ -88,10 +88,9 @@ func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 }
 
 func (d *Discovery) Status(ctx context.Context) (ComponentStatus, error) {
-	return d.doSync(ctx, true)
+	return flowToStatus(ctx, d, d.getFlow(), d.condManager)
 }
 
 func (d *Discovery) Sync(ctx context.Context) error {
-	_, err := d.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, d.getFlow(), d.condManager)
 }

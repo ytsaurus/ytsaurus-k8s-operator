@@ -26,16 +26,27 @@ const (
 	defaultHostAddressLabel = "kubernetes.io/hostname"
 )
 
+type ytsaurusClientForMaster interface {
+	HandlePossibilityCheck(context.Context) (bool, string, error)
+	EnableSafeMode(context.Context) error
+	DisableSafeMode(context.Context) error
+	GetMasterMonitoringPaths(context.Context) ([]string, error)
+	StartBuildMasterSnapshots(context.Context, []string) error
+	AreMasterSnapshotsBuilt(context.Context, []string) (bool, error)
+}
+
 type Master struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
+
+	ytClient ytsaurusClientForMaster
 
 	initJob          *InitJob
 	exitReadOnlyJob  *InitJob
 	adminCredentials corev1.Secret
 }
 
-func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
+func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, ytClient ytsaurusClientForMaster) *Master {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
@@ -84,6 +95,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 	return &Master{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
+		ytClient:             ytClient,
 		initJob:              initJob,
 		exitReadOnlyJob:      exitReadOnlyJob,
 	}
@@ -320,12 +332,11 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 }
 
 func (m *Master) Status(ctx context.Context) (ComponentStatus, error) {
-	return m.doSync(ctx, true)
+	return flowToStatus(ctx, m, m.getFlow(), m.condManager)
 }
 
 func (m *Master) Sync(ctx context.Context) error {
-	_, err := m.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, m.getFlow(), m.condManager)
 }
 
 func (m *Master) doServerSync(ctx context.Context) error {

@@ -108,12 +108,11 @@ func (s *Scheduler) Fetch(ctx context.Context) error {
 }
 
 func (s *Scheduler) Status(ctx context.Context) (ComponentStatus, error) {
-	return s.doSync(ctx, true)
+	return flowToStatus(ctx, s, s.getFlow(), s.condManager)
 }
 
 func (s *Scheduler) Sync(ctx context.Context) error {
-	_, err := s.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, s.getFlow(), s.condManager)
 }
 
 func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
@@ -218,7 +217,7 @@ func (s *Scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	if !dry {
-		s.prepareInitOperationsArchive()
+		s.prepareInitOperationsArchive(s.initOpArchive)
 	}
 	return s.initOpArchive.Sync(ctx, dry)
 }
@@ -303,7 +302,7 @@ export INIT_OP_ARCHIVE=/usr/bin/init_operation_archive
 fi
 `
 
-func (s *Scheduler) prepareInitOperationsArchive() {
+func (s *Scheduler) prepareInitOperationsArchive(job *InitJob) {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		setInitOpArchivePath,
@@ -312,8 +311,8 @@ func (s *Scheduler) prepareInitOperationsArchive() {
 		SetWithIgnoreExisting("//sys/cluster_nodes/@config", "'{\"%true\" = {job_agent={enable_job_reporter=%true}}}'"),
 	}
 
-	s.initOpArchive.SetInitScript(strings.Join(script, "\n"))
-	job := s.initOpArchive.Build()
-	container := &job.Spec.Template.Spec.Containers[0]
+	job.SetInitScript(strings.Join(script, "\n"))
+	batchJob := s.initOpArchive.Build()
+	container := &batchJob.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{s.secret.GetEnvSource()}
 }

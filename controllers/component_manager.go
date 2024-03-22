@@ -1,5 +1,7 @@
 package controllers
 
+// TODO: file will be deleted after this refactoring. No need to review changes.
+
 import (
 	"context"
 	"fmt"
@@ -41,7 +43,7 @@ func NewComponentManager(
 	cfgen := ytconfig.NewGenerator(resource, clusterDomain)
 
 	d := components.NewDiscovery(cfgen, ytsaurus)
-	m := components.NewMaster(cfgen, ytsaurus)
+	m := components.NewMaster(cfgen, ytsaurus, nil)
 	var hps []components.Component
 	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {
 		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))

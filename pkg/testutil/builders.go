@@ -12,6 +12,7 @@ import (
 const (
 	testYtsaurusImage = "test-ytsaurus-image"
 	dndsNameOne       = "dn-1"
+	tndsNameOne       = "tn-1"
 )
 
 func BuildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
@@ -29,6 +30,12 @@ func BuildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
 				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount:  3,
 					MonitoringPort: ptr.Int32(consts.DiscoveryMonitoringPort),
+				},
+			},
+			Schedulers: &ytv1.SchedulersSpec{
+				InstanceSpec: ytv1.InstanceSpec{
+					InstanceCount:  1,
+					MonitoringPort: ptr.Int32(consts.SchedulerMonitoringPort),
 				},
 			},
 			PrimaryMasters: ytv1.MastersSpec{
@@ -54,6 +61,14 @@ func BuildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
 				{
 					InstanceSpec: ytv1.InstanceSpec{InstanceCount: 3},
 					ServiceType:  corev1.ServiceTypeNodePort,
+				},
+			},
+			TabletNodes: []ytv1.TabletNodesSpec{
+				{
+					InstanceSpec: ytv1.InstanceSpec{
+						InstanceCount: 3,
+					},
+					Name: tndsNameOne,
 				},
 			},
 			DataNodes: []ytv1.DataNodesSpec{

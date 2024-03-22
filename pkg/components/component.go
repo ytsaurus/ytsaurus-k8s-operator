@@ -6,6 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 )
@@ -13,12 +14,14 @@ import (
 type SyncStatus string
 
 const (
-	SyncStatusBlocked         SyncStatus = "Blocked"
 	SyncStatusNeedFullUpdate  SyncStatus = "NeedFullUpdate"
 	SyncStatusNeedLocalUpdate SyncStatus = "NeedLocalUpdate"
 	SyncStatusPending         SyncStatus = "Pending"
-	SyncStatusReady           SyncStatus = "Ready"
 	SyncStatusUpdating        SyncStatus = "Updating"
+
+	SyncStatusNeedSync SyncStatus = "NeedSync"
+	SyncStatusReady    SyncStatus = "Ready"
+	SyncStatusBlocked  SyncStatus = "Blocked"
 )
 
 func IsRunningStatus(status SyncStatus) bool {
@@ -42,6 +45,18 @@ func SimpleStatus(status SyncStatus) ComponentStatus {
 	return ComponentStatus{status, string(status)}
 }
 
+func NeedSyncStatus(message string) ComponentStatus {
+	return ComponentStatus{SyncStatus: SyncStatusNeedSync, Message: message}
+}
+
+func UpdatingStatus(message string) ComponentStatus {
+	return ComponentStatus{SyncStatus: SyncStatusUpdating, Message: message}
+}
+
+func ReadyStatus() ComponentStatus {
+	return ComponentStatus{SyncStatus: SyncStatusReady}
+}
+
 type Component interface {
 	Fetch(ctx context.Context) error
 	Sync(ctx context.Context) error
@@ -51,6 +66,32 @@ type Component interface {
 
 	// TODO(nadya73): refactor it
 	IsUpdatable() bool
+}
+
+type conditionManagerIface interface {
+	SetTrue(context.Context, ConditionName) error
+	SetTrueMsg(context.Context, ConditionName, string) error
+	SetFalse(context.Context, ConditionName) error
+	SetFalseMsg(context.Context, ConditionName, string) error
+	Set(context.Context, ConditionName, bool) error
+	SetMsg(context.Context, ConditionName, bool, string) error
+	SetCond(context.Context, Condition) error
+	SetCondMany(context.Context, ...Condition) error
+	SetCondMsg(context.Context, Condition, string) error
+	IsTrue(ConditionName) bool
+	IsFalse(ConditionName) bool
+	Is(condition Condition) bool
+	IsSatisfied(condition Condition) bool
+	IsNotSatisfied(condition Condition) bool
+	All(conds ...Condition) bool
+	Any(conds ...Condition) bool
+}
+
+type stateManagerInterface interface {
+	SetTabletCellBundles(context.Context, []ytv1.TabletCellBundleInfo) error
+	GetTabletCellBundles() []ytv1.TabletCellBundleInfo
+	SetMasterMonitoringPaths(context.Context, []string) error
+	GetMasterMonitoringPaths() []string
 }
 
 // Following structs are used as a base for implementing YTsaurus components objects.
@@ -73,6 +114,11 @@ func (c *baseComponent) GetName() string {
 type localComponent struct {
 	baseComponent
 	ytsaurus *apiproxy.Ytsaurus
+
+	// currently we have it in the component, but in the future we may
+	// want to receive it from the outside of the component.
+	condManager  conditionManagerIface
+	stateManager stateManagerInterface
 }
 
 // localServerComponent is a base structs for components which have access to ytsaurus resource,
@@ -89,6 +135,8 @@ func newLocalComponent(
 	return localComponent{
 		baseComponent: baseComponent{labeller: labeller},
 		ytsaurus:      ytsaurus,
+		condManager:   newConditionManagerFromYtsaurus(ytsaurus),
+		stateManager:  newStateManagerFromYtsaurus(ytsaurus),
 	}
 }
 
@@ -111,13 +159,8 @@ func newLocalServerComponent(
 	server server,
 ) localServerComponent {
 	return localServerComponent{
-		localComponent: localComponent{
-			baseComponent: baseComponent{
-				labeller: labeller,
-			},
-			ytsaurus: ytsaurus,
-		},
-		server: server,
+		localComponent: newLocalComponent(labeller, ytsaurus),
+		server:         server,
 	}
 }
 
@@ -128,4 +171,47 @@ func (c *localServerComponent) NeedSync() bool {
 func LocalServerNeedSync(srv server, ytsaurus *apiproxy.Ytsaurus) bool {
 	return (srv.configNeedsReload() && ytsaurus.IsUpdating()) ||
 		srv.needBuild()
+}
+
+// tmp
+
+func (c *localServerComponent) runUntilNoErr(
+	ctx context.Context,
+	run func(ctx context.Context) error,
+	onSuccess Condition,
+) error {
+	if err := run(ctx); err != nil {
+		return fmt.Errorf("failed to run %s for cond %s: %w", c.GetName(), onSuccess, err)
+	}
+	if err := c.condManager.SetCondMsg(ctx, onSuccess, "run once finished successfully"); err != nil {
+		return fmt.Errorf("failed to set condition %s: %w", onSuccess, err)
+	}
+	return nil
+}
+
+func (c *localServerComponent) runUntilOk(
+	ctx context.Context,
+	run func(ctx context.Context) (bool, error),
+	onSuccess Condition,
+) error {
+	return c.runUntilOkWithCleanup(ctx, run, nil, onSuccess)
+}
+
+func (c *localServerComponent) runUntilOkWithCleanup(ctx context.Context, run func(ctx context.Context) (bool, error), cleanup func(ctx context.Context) error, onSuccess Condition) error {
+	done, err := run(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to run %s for cond %s: %w", c.GetName(), onSuccess, err)
+	}
+	if !done {
+		return nil
+	}
+	if cleanup != nil {
+		if err = cleanup(ctx); err != nil {
+			return fmt.Errorf("cleanup failed: %w", err)
+		}
+	}
+	if err = c.condManager.SetCond(ctx, onSuccess); err != nil {
+		return fmt.Errorf("failed to set conditions %s: %w", onSuccess, err)
+	}
+	return nil
 }
