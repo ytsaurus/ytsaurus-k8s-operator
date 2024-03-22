@@ -3,9 +3,12 @@ package ytconfig
 import (
 	"path"
 
+	"go.ytsaurus.tech/yt/go/yson"
+
+	corev1 "k8s.io/api/core/v1"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
-	corev1 "k8s.io/api/core/v1"
 )
 
 type CypressCookieManager struct{}
@@ -46,8 +49,9 @@ type HTTPServer struct {
 }
 
 type HTTPSServerCredentials struct {
-	CertChain  PemBlob `yson:"cert_chain,omitempty"`
-	PrivateKey PemBlob `yson:"private_key,omitempty"`
+	CertChain    PemBlob       `yson:"cert_chain,omitempty"`
+	PrivateKey   PemBlob       `yson:"private_key,omitempty"`
+	UpdatePeriod yson.Duration `yson:"update_period,omitempty"`
 }
 
 type HTTPSServer struct {
@@ -123,6 +127,7 @@ func getHTTPProxyServerCarcass(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, err
 				PrivateKey: PemBlob{
 					FileName: path.Join(consts.HTTPSSecretMountPoint, corev1.TLSPrivateKeyKey),
 				},
+				UpdatePeriod: yson.Duration(consts.HTTPSSecretUpdatePeriod),
 			},
 		}
 	}
