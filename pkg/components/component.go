@@ -45,7 +45,7 @@ func SimpleStatus(status SyncStatus) ComponentStatus {
 type Component interface {
 	Fetch(ctx context.Context) error
 	Sync(ctx context.Context) error
-	Status(ctx context.Context) ComponentStatus
+	Status(ctx context.Context) (ComponentStatus, error)
 	GetName() string
 	SetReadyCondition(status ComponentStatus)
 

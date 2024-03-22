@@ -338,7 +338,11 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
-	if !IsRunningStatus(yc.httpProxy.Status(ctx).SyncStatus) {
+	hpStatus, err := yc.httpProxy.Status(ctx)
+	if err != nil {
+		return hpStatus, err
+	}
+	if !IsRunningStatus(hpStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, yc.httpProxy.GetName()), err
 	}
 
@@ -395,13 +399,8 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (yc *YtsaurusClient) Status(ctx context.Context) ComponentStatus {
-	status, err := yc.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (yc *YtsaurusClient) Status(ctx context.Context) (ComponentStatus, error) {
+	return yc.doSync(ctx, true)
 }
 
 func (yc *YtsaurusClient) Sync(ctx context.Context) error {

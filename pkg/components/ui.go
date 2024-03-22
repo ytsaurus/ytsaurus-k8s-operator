@@ -254,7 +254,11 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		}
 	}
 
-	if !IsRunningStatus(u.master.Status(ctx).SyncStatus) {
+	masterStatus, err := u.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, u.master.GetName()), err
 	}
 
@@ -293,13 +297,8 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (u *UI) Status(ctx context.Context) ComponentStatus {
-	status, err := u.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (u *UI) Status(ctx context.Context) (ComponentStatus, error) {
+	return u.doSync(ctx, true)
 }
 
 func (u *UI) Sync(ctx context.Context) error {

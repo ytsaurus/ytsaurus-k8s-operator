@@ -51,8 +51,8 @@ func (fc *FakeComponent) Sync(ctx context.Context) error {
 	return nil
 }
 
-func (fc *FakeComponent) Status(ctx context.Context) ComponentStatus {
-	return fc.status
+func (fc *FakeComponent) Status(ctx context.Context) (ComponentStatus, error) {
+	return fc.status, nil
 }
 
 func (fc *FakeComponent) IsUpdating() bool {

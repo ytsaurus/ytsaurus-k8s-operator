@@ -159,14 +159,22 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	}
 
 	for _, tnd := range qt.tabletNodes {
-		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
+		tndStatus, err := tnd.Status(ctx)
+		if err != nil {
+			return tndStatus, err
+		}
+		if !IsRunningStatus(tndStatus.SyncStatus) {
 			return WaitingStatus(SyncStatusBlocked, "tablet nodes"), err
 		}
 	}
 
 	var ytClient yt.Client
 	if qt.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
-		if qt.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
+		ytClientStatus, err := qt.ytsaurusClient.Status(ctx)
+		if err != nil {
+			return ytClientStatus, err
+		}
+		if ytClientStatus.SyncStatus != SyncStatusReady {
 			return WaitingStatus(SyncStatusBlocked, qt.ytsaurusClient.GetName()), err
 		}
 
@@ -344,13 +352,8 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 	return
 }
 
-func (qt *QueryTracker) Status(ctx context.Context) ComponentStatus {
-	status, err := qt.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (qt *QueryTracker) Status(ctx context.Context) (ComponentStatus, error) {
+	return qt.doSync(ctx, true)
 }
 
 func (qt *QueryTracker) Sync(ctx context.Context) error {

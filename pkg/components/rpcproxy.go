@@ -112,7 +112,11 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	if !IsRunningStatus(rp.master.Status(ctx).SyncStatus) {
+	masterStatus, err := rp.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, rp.master.GetName()), err
 	}
 
@@ -144,13 +148,8 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (rp *RpcProxy) Status(ctx context.Context) ComponentStatus {
-	status, err := rp.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (rp *RpcProxy) Status(ctx context.Context) (ComponentStatus, error) {
+	return rp.doSync(ctx, true)
 }
 
 func (rp *RpcProxy) Sync(ctx context.Context) error {

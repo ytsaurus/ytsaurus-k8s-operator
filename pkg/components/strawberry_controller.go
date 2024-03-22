@@ -238,16 +238,28 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		}
 	}
 
-	if !IsRunningStatus(c.master.Status(ctx).SyncStatus) {
+	masterStatus, err := c.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, c.master.GetName()), err
 	}
 
-	if !IsRunningStatus(c.scheduler.Status(ctx).SyncStatus) {
+	schStatus, err := c.scheduler.Status(ctx)
+	if err != nil {
+		return schStatus, err
+	}
+	if !IsRunningStatus(schStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, c.scheduler.GetName()), err
 	}
 
 	for _, dataNode := range c.dataNodes {
-		if !IsRunningStatus(dataNode.Status(ctx).SyncStatus) {
+		dndStatus, err := dataNode.Status(ctx)
+		if err != nil {
+			return dndStatus, err
+		}
+		if !IsRunningStatus(dndStatus.SyncStatus) {
 			return WaitingStatus(SyncStatusBlocked, dataNode.GetName()), err
 		}
 	}
@@ -289,13 +301,8 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (c *StrawberryController) Status(ctx context.Context) ComponentStatus {
-	status, err := c.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (c *StrawberryController) Status(ctx context.Context) (ComponentStatus, error) {
+	return c.doSync(ctx, true)
 }
 
 func (c *StrawberryController) Sync(ctx context.Context) error {

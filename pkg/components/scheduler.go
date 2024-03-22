@@ -107,13 +107,8 @@ func (s *Scheduler) Fetch(ctx context.Context) error {
 	)
 }
 
-func (s *Scheduler) Status(ctx context.Context) ComponentStatus {
-	status, err := s.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (s *Scheduler) Status(ctx context.Context) (ComponentStatus, error) {
+	return s.doSync(ctx, true)
 }
 
 func (s *Scheduler) Sync(ctx context.Context) error {
@@ -150,13 +145,21 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	if !IsRunningStatus(s.master.Status(ctx).SyncStatus) {
+	masterStatus, err := s.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, s.master.GetName()), err
 	}
 
 	if s.execNodes == nil || len(s.execNodes) > 0 {
 		for _, end := range s.execNodes {
-			if !IsRunningStatus(end.Status(ctx).SyncStatus) {
+			endStatus, err := end.Status(ctx)
+			if err != nil {
+				return endStatus, err
+			}
+			if !IsRunningStatus(endStatus.SyncStatus) {
 				// It makes no sense to start scheduler without exec nodes.
 				return WaitingStatus(SyncStatusBlocked, end.GetName()), err
 			}
@@ -204,7 +207,11 @@ func (s *Scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	for _, tnd := range s.tabletNodes {
-		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
+		tndStatus, err := tnd.Status(ctx)
+		if err != nil {
+			return tndStatus, err
+		}
+		if !IsRunningStatus(tndStatus.SyncStatus) {
 			// Wait for tablet nodes to proceed with operations archive init.
 			return WaitingStatus(SyncStatusBlocked, tnd.GetName()), err
 		}
