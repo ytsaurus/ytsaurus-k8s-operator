@@ -19,6 +19,12 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
+var (
+	SchedulerUpdateOpArchivePrepareStartedCond  = isTrue("UpdateOpArchivePrepareStarted")
+	SchedulerUpdateOpArchivePrepareFinishedCond = isTrue("UpdateOpArchivePrepareFinished")
+	SchedulerUpdateOpArchiveFinishedCond        = isTrue("UpdateOpArchiveFinished")
+)
+
 type Scheduler struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
@@ -112,7 +118,15 @@ func (s *Scheduler) Fetch(ctx context.Context) error {
 }
 
 func (s *Scheduler) Status(ctx context.Context) (ComponentStatus, error) {
-	return ComponentStatus{}, nil
+	if err := s.Fetch(ctx); err != nil {
+		return ComponentStatus{}, fmt.Errorf("failed to fetch component %s: %w", s.GetName(), err)
+	}
+
+	st, msg, err := s.getFlow().Status(ctx, s.condManager)
+	return ComponentStatus{
+		SyncStatus: st,
+		Message:    msg,
+	}, err
 }
 
 func (s *Scheduler) StatusOld(ctx context.Context) ComponentStatus {
@@ -125,7 +139,7 @@ func (s *Scheduler) StatusOld(ctx context.Context) ComponentStatus {
 }
 
 func (s *Scheduler) Sync(ctx context.Context) error {
-	_, err := s.doSync(ctx, false)
+	_, err := s.getFlow().Run(ctx, s.condManager)
 	return err
 }
 
@@ -201,6 +215,143 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return s.initOpAchieve(ctx, dry)
 }
 
+func (s *Scheduler) getFlow() Step {
+	name := s.GetName()
+	buildStartedCond := buildStarted(name)
+	builtFinishedCond := buildFinished(name)
+	initCond := initializationFinished(name)
+	updateRequiredCond := updateRequired(name)
+	rebuildStartedCond := rebuildStarted(name)
+	rebuildFinishedCond := rebuildFinished(name)
+
+	return StepComposite{
+		Steps: []Step{
+			StepRun{
+				Name:               StepStartBuild,
+				RunIfCondition:     not(buildStartedCond),
+				RunFunc:            s.server.Sync,
+				OnSuccessCondition: buildStartedCond,
+			},
+			StepCheck{
+				Name:               StepWaitBuildFinished,
+				RunIfCondition:     not(builtFinishedCond),
+				OnSuccessCondition: builtFinishedCond,
+				RunFunc: func(ctx context.Context) (ok bool, err error) {
+					diff, err := s.server.hasDiff(ctx)
+					return !diff, err
+				},
+			},
+			StepCheck{
+				Name:               StepInitFinished,
+				RunIfCondition:     not(initCond),
+				OnSuccessCondition: initCond,
+				RunFunc: func(ctx context.Context) (ok bool, err error) {
+					s.initUser.SetInitScript(s.createInitUserScript())
+					st, err := s.initUser.Sync(ctx, false)
+					return st.SyncStatus == SyncStatusReady, err
+				},
+			},
+			StepComposite{
+				Name: StepUpdate,
+				// Update should be run if either diff exists or updateRequired condition is set,
+				// because a diff should disappear in the middle of the update, but it still need
+				// to finish actions after the update (master exit read only, safe mode, etc.).
+				StatusConditionFunc: func(ctx context.Context) (SyncStatus, string, error) {
+					diff, err := s.server.hasDiff(ctx)
+					if err != nil {
+						return "", "", err
+					}
+					if diff {
+						if err = s.condManager.SetCond(ctx, updateRequiredCond); err != nil {
+							return "", "", err
+						}
+					}
+					// Sync either if diff or is condition set
+					// in the middle of update there will be no diff, so we need a condition.
+					if diff || s.condManager.IsSatisfied(updateRequiredCond) {
+						return SyncStatusNeedSync, "", nil
+					}
+					return SyncStatusReady, "", nil
+				},
+				OnSuccessCondition: not(updateRequiredCond),
+				OnSuccessFunc:      s.cleanupAfterUpdate,
+				Steps: []Step{
+					StepRun{
+						Name:               StepStartRebuild,
+						RunIfCondition:     not(rebuildStartedCond),
+						OnSuccessCondition: rebuildStartedCond,
+						RunFunc:            s.server.removePods,
+					},
+					StepCheck{
+						Name:               StepWaitRebuildFinished,
+						RunIfCondition:     not(rebuildFinishedCond),
+						OnSuccessCondition: rebuildFinishedCond,
+						RunFunc: func(ctx context.Context) (ok bool, err error) {
+							diff, err := s.server.hasDiff(ctx)
+							return !diff, err
+						},
+					},
+					StepRun{
+						Name:               "StartPrepareUpdateOpArchive",
+						RunIfCondition:     not(SchedulerUpdateOpArchivePrepareStartedCond),
+						OnSuccessCondition: SchedulerUpdateOpArchivePrepareStartedCond,
+						RunFunc: func(ctx context.Context) error {
+							return s.initOpArchive.prepareRestart(ctx, false)
+						},
+					},
+					StepCheck{
+						Name:               "WaitUpdateOpArchivePrepared",
+						RunIfCondition:     not(SchedulerUpdateOpArchivePrepareFinishedCond),
+						OnSuccessCondition: SchedulerUpdateOpArchivePrepareFinishedCond,
+						RunFunc: func(ctx context.Context) (bool, error) {
+							return s.initOpArchive.isRestartPrepared(), nil
+						},
+						OnSuccessFunc: func(ctx context.Context) error {
+							s.prepareInitOperationArchive(s.initOpArchive)
+							return nil
+						},
+					},
+					StepCheck{
+						Name:               "WaitUpdateOpArchive",
+						RunIfCondition:     not(SchedulerUpdateOpArchiveFinishedCond),
+						OnSuccessCondition: SchedulerUpdateOpArchiveFinishedCond,
+						RunFunc: func(ctx context.Context) (ok bool, err error) {
+							st, err := s.initOpArchive.Sync(ctx, false)
+							return st.SyncStatus == SyncStatusReady, err
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func (s *Scheduler) cleanupAfterUpdate(ctx context.Context) error {
+	for _, cond := range s.getConditionsSetByUpdate() {
+		if err := s.condManager.SetCond(ctx, not(cond)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Scheduler) getConditionsSetByUpdate() []Condition {
+	var result []Condition
+	conds := []Condition{
+		rebuildStarted(s.GetName()),
+		rebuildFinished(s.GetName()),
+		SchedulerUpdateOpArchivePrepareStartedCond,
+		SchedulerUpdateOpArchivePrepareFinishedCond,
+		SchedulerUpdateOpArchiveFinishedCond,
+	}
+	for _, cond := range conds {
+		if s.condManager.IsSatisfied(cond) {
+			result = append(result, cond)
+		}
+	}
+	return result
+}
+
 func (s *Scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatus, error) {
 	if !dry {
 		s.initUser.SetInitScript(s.createInitUserScript())
@@ -219,7 +370,7 @@ func (s *Scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatu
 	//}
 
 	if !dry {
-		s.prepareInitOperationArchive()
+		s.prepareInitOperationArchive(s.initOpArchive)
 	}
 	return s.initOpArchive.Sync(ctx, dry)
 }
@@ -294,7 +445,7 @@ func (s *Scheduler) createInitUserScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (s *Scheduler) prepareInitOperationArchive() {
+func (s *Scheduler) prepareInitOperationArchive(job *InitJob) {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		fmt.Sprintf("/usr/bin/init_operation_archive --force --latest --proxy %s",
@@ -302,8 +453,8 @@ func (s *Scheduler) prepareInitOperationArchive() {
 		SetWithIgnoreExisting("//sys/cluster_nodes/@config", "'{\"%true\" = {job_agent={enable_job_reporter=%true}}}'"),
 	}
 
-	s.initOpArchive.SetInitScript(strings.Join(script, "\n"))
-	job := s.initOpArchive.Build()
-	container := &job.Spec.Template.Spec.Containers[0]
+	job.SetInitScript(strings.Join(script, "\n"))
+	batchJob := s.initOpArchive.Build()
+	container := &batchJob.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{s.secret.GetEnvSource()}
 }
