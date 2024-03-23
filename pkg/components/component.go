@@ -65,7 +65,7 @@ type baseComponent struct {
 // For example for master component name is "Master",
 // For data node name looks like "DataNode<NameFromSpec>".
 func (c *baseComponent) GetName() string {
-	return c.labeller.ComponentName
+	return c.labeller.ComponentFullName
 }
 
 // localComponent is a base structs for components which have access to ytsaurus resource,
@@ -98,7 +98,7 @@ func (c *localComponent) SetReadyCondition(status ComponentStatus) {
 		ready = metav1.ConditionTrue
 	}
 	c.ytsaurus.SetStatusCondition(metav1.Condition{
-		Type:    fmt.Sprintf("%sReady", c.labeller.ComponentName),
+		Type:    fmt.Sprintf("%sReady", c.labeller.ComponentFullName),
 		Status:  ready,
 		Reason:  string(status.SyncStatus),
 		Message: status.Message,

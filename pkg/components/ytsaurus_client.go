@@ -44,11 +44,11 @@ func NewYtsaurusClient(
 ) *YtsaurusClient {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
-		ObjectMeta:     &resource.ObjectMeta,
-		APIProxy:       ytsaurus.APIProxy(),
-		ComponentLabel: consts.YTComponentLabelClient,
-		ComponentName:  string(consts.YtsaurusClientType),
-		Annotations:    resource.Spec.ExtraPodAnnotations,
+		ObjectMeta:                 &resource.ObjectMeta,
+		APIProxy:                   ytsaurus.APIProxy(),
+		ComponentObjectsNamePrefix: consts.YTComponentLabelClient,
+		ComponentFullName:          string(consts.YtsaurusClientType),
+		Annotations:                resource.Spec.ExtraPodAnnotations,
 	}
 
 	return &YtsaurusClient{

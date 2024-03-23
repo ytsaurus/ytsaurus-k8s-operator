@@ -31,10 +31,10 @@ func NewTCPProxy(
 	spec ytv1.TCPProxiesSpec) *TcpProxy {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
-		ObjectMeta:     &resource.ObjectMeta,
-		APIProxy:       ytsaurus.APIProxy(),
-		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelTCPProxy, spec.Role),
-		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.TcpProxyType), spec.Role),
+		ObjectMeta:                 &resource.ObjectMeta,
+		APIProxy:                   ytsaurus.APIProxy(),
+		ComponentObjectsNamePrefix: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelTCPProxy, spec.Role),
+		ComponentFullName:          cfgen.FormatComponentStringWithDefault(string(consts.TcpProxyType), spec.Role),
 	}
 
 	if spec.InstanceSpec.MonitoringPort == nil {

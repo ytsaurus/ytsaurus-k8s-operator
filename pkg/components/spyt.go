@@ -34,11 +34,11 @@ func NewSpyt(
 	ytsaurus *ytv1.Ytsaurus) *Spyt {
 
 	l := labeller.Labeller{
-		ObjectMeta:     &spyt.GetResource().ObjectMeta,
-		APIProxy:       spyt.APIProxy(),
-		ComponentLabel: fmt.Sprintf("ytsaurus-spyt-%s", spyt.GetResource().Name),
-		ComponentName:  fmt.Sprintf("SPYT-%s", spyt.GetResource().Name),
-		Annotations:    ytsaurus.Spec.ExtraPodAnnotations,
+		ObjectMeta:                 &spyt.GetResource().ObjectMeta,
+		APIProxy:                   spyt.APIProxy(),
+		ComponentObjectsNamePrefix: fmt.Sprintf("ytsaurus-spyt-%s", spyt.GetResource().Name),
+		ComponentFullName:          fmt.Sprintf("SPYT-%s", spyt.GetResource().Name),
+		Annotations:                ytsaurus.Spec.ExtraPodAnnotations,
 	}
 
 	return &Spyt{

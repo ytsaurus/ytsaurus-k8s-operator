@@ -39,11 +39,11 @@ func NewQueryTracker(
 ) *QueryTracker {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
-		ObjectMeta:     &resource.ObjectMeta,
-		APIProxy:       ytsaurus.APIProxy(),
-		ComponentLabel: "yt-query-tracker",
-		ComponentName:  string(consts.QueryTrackerType),
-		Annotations:    resource.Spec.ExtraPodAnnotations,
+		ObjectMeta:                 &resource.ObjectMeta,
+		APIProxy:                   ytsaurus.APIProxy(),
+		ComponentObjectsNamePrefix: "yt-query-tracker",
+		ComponentFullName:          string(consts.QueryTrackerType),
+		Annotations:                resource.Spec.ExtraPodAnnotations,
 	}
 
 	if resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort == nil {

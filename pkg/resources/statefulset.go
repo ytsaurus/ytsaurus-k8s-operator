@@ -78,7 +78,7 @@ func (s *StatefulSet) getPods(ctx context.Context) *corev1.PodList {
 	podList := &corev1.PodList{}
 	err := s.proxy.ListObjects(ctx, podList, s.labeller.GetListOptions()...)
 	if err != nil {
-		logger.Error(err, "unable to list pods for component", "component", s.labeller.ComponentName)
+		logger.Error(err, "unable to list pods for component", "component", s.labeller.ComponentFullName)
 		return nil
 	}
 
@@ -94,7 +94,7 @@ func (s *StatefulSet) ArePodsRemoved(ctx context.Context) bool {
 	}
 	podsCount := len(podList.Items)
 	if podsCount != 0 {
-		logger.Info("there are pods", "podsCount", podsCount, "component", s.labeller.ComponentName)
+		logger.Info("there are pods", "podsCount", podsCount, "component", s.labeller.ComponentFullName)
 		return false
 	}
 	return true
@@ -124,7 +124,7 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, minReadyInstanceCount *i
 	if readyInstanceCount < effectiveMinReadyInstanceCount {
 		logger.Info(
 			"not enough pods are running",
-			"component", s.labeller.ComponentName,
+			"component", s.labeller.ComponentFullName,
 			"readyInstanceCount", readyInstanceCount,
 			"minReadyInstanceCount", effectiveMinReadyInstanceCount,
 			"totalInstanceCount", len(podList.Items))

@@ -41,10 +41,10 @@ func NewTabletNode(
 ) *TabletNode {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
-		ObjectMeta:     &resource.ObjectMeta,
-		APIProxy:       ytsaurus.APIProxy(),
-		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelTabletNode, spec.Name),
-		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.TabletNodeType), spec.Name),
+		ObjectMeta:                 &resource.ObjectMeta,
+		APIProxy:                   ytsaurus.APIProxy(),
+		ComponentObjectsNamePrefix: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelTabletNode, spec.Name),
+		ComponentFullName:          cfgen.FormatComponentStringWithDefault(string(consts.TabletNodeType), spec.Name),
 	}
 
 	if spec.InstanceSpec.MonitoringPort == nil {

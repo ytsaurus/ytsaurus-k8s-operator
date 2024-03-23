@@ -35,11 +35,11 @@ func NewChyt(
 	ytsaurus *ytv1.Ytsaurus) *Chyt {
 
 	l := labeller.Labeller{
-		ObjectMeta:     &chyt.GetResource().ObjectMeta,
-		APIProxy:       chyt.APIProxy(),
-		ComponentLabel: fmt.Sprintf("ytsaurus-chyt-%s", chyt.GetResource().Name),
-		ComponentName:  fmt.Sprintf("CHYT-%s", chyt.GetResource().Name),
-		Annotations:    ytsaurus.Spec.ExtraPodAnnotations,
+		ObjectMeta:                 &chyt.GetResource().ObjectMeta,
+		APIProxy:                   chyt.APIProxy(),
+		ComponentObjectsNamePrefix: fmt.Sprintf("ytsaurus-chyt-%s", chyt.GetResource().Name),
+		ComponentFullName:          fmt.Sprintf("CHYT-%s", chyt.GetResource().Name),
+		Annotations:                ytsaurus.Spec.ExtraPodAnnotations,
 	}
 
 	return &Chyt{
