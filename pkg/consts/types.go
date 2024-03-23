@@ -20,4 +20,6 @@ const (
 	UIType                   ComponentType = "UI"
 	YqlAgentType             ComponentType = "YqlAgent"
 	YtsaurusClientType       ComponentType = "YtsaurusClient"
+	SPYTType                 ComponentType = "SPYT"
+	CHYTType                 ComponentType = "CHYT"
 )

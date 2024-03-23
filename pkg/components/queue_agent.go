@@ -40,13 +40,14 @@ func NewQueueAgent(
 	tabletNodes []Component,
 ) *QueueAgent {
 	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:                 &resource.ObjectMeta,
-		APIProxy:                   ytsaurus.APIProxy(),
-		ComponentObjectsNamePrefix: "yt-queue-agent",
-		ComponentFullName:          string(consts.QueueAgentType),
-		Annotations:                resource.Spec.ExtraPodAnnotations,
-	}
+
+	l := labeller.NewLabeller(
+		&resource.ObjectMeta,
+		consts.QueueAgentType,
+		consts.YTComponentLabelQueueAgent,
+	).
+		WithAnnotations(resource.Spec.ExtraPodAnnotations).
+		Build()
 
 	if resource.Spec.QueueAgents.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.QueueAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.QueueAgentMonitoringPort)

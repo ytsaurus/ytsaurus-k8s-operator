@@ -28,13 +28,14 @@ type YqlAgent struct {
 
 func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *YqlAgent {
 	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:                 &resource.ObjectMeta,
-		APIProxy:                   ytsaurus.APIProxy(),
-		ComponentObjectsNamePrefix: consts.YTComponentLabelYqlAgent,
-		ComponentFullName:          string(consts.YqlAgentType),
-		Annotations:                resource.Spec.ExtraPodAnnotations,
-	}
+
+	l := labeller.NewLabeller(
+		&resource.ObjectMeta,
+		consts.YqlAgentType,
+		consts.YTComponentLabelYqlAgent,
+	).
+		WithAnnotations(resource.Spec.ExtraPodAnnotations).
+		Build()
 
 	if resource.Spec.YQLAgents.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.YQLAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.YQLAgentMonitoringPort)

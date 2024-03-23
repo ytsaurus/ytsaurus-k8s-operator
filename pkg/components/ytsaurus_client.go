@@ -43,13 +43,14 @@ func NewYtsaurusClient(
 	httpProxy Component,
 ) *YtsaurusClient {
 	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:                 &resource.ObjectMeta,
-		APIProxy:                   ytsaurus.APIProxy(),
-		ComponentObjectsNamePrefix: consts.YTComponentLabelClient,
-		ComponentFullName:          string(consts.YtsaurusClientType),
-		Annotations:                resource.Spec.ExtraPodAnnotations,
-	}
+
+	l := labeller.NewLabeller(
+		&resource.ObjectMeta,
+		consts.YtsaurusClientType,
+		consts.YTComponentLabelClient,
+	).
+		WithAnnotations(resource.Spec.ExtraPodAnnotations).
+		Build()
 
 	return &YtsaurusClient{
 		localComponent: newLocalComponent(&l, ytsaurus),

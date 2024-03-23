@@ -34,12 +34,14 @@ func NewHTTPProxy(
 	spec ytv1.HTTPProxiesSpec) *HttpProxy {
 
 	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:                 &resource.ObjectMeta,
-		APIProxy:                   ytsaurus.APIProxy(),
-		ComponentObjectsNamePrefix: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelHTTPProxy, spec.Role),
-		ComponentFullName:          cfgen.FormatComponentStringWithDefault(string(consts.HttpProxyType), spec.Role),
-	}
+
+	l := labeller.NewLabeller(
+		&resource.ObjectMeta,
+		consts.HttpProxyType,
+		consts.YTComponentLabelHTTPProxy,
+	).
+		WithComponentInstanceName(spec.Role).
+		Build()
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.HTTPProxyMonitoringPort)

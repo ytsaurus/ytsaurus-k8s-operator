@@ -25,12 +25,14 @@ func NewExecNode(
 	spec ytv1.ExecNodesSpec,
 ) *ExecNode {
 	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:                 &resource.ObjectMeta,
-		APIProxy:                   ytsaurus.APIProxy(),
-		ComponentObjectsNamePrefix: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelExecNode, spec.Name),
-		ComponentFullName:          cfgen.FormatComponentStringWithDefault(string(consts.ExecNodeType), spec.Name),
-	}
+
+	l := labeller.NewLabeller(
+		&resource.ObjectMeta,
+		consts.ExecNodeType,
+		consts.YTComponentLabelExecNode,
+	).
+		WithComponentInstanceName(spec.Name).
+		Build()
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.ExecNodeMonitoringPort)

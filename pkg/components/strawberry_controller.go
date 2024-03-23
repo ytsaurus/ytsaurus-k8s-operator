@@ -66,13 +66,13 @@ func NewStrawberryController(
 		}
 	}
 
-	l := labeller.Labeller{
-		ObjectMeta:                 &resource.ObjectMeta,
-		APIProxy:                   ytsaurus.APIProxy(),
-		ComponentObjectsNamePrefix: fmt.Sprintf("yt-%s-controller", name),
-		ComponentFullName:          componentName,
-		Annotations:                resource.Spec.ExtraPodAnnotations,
-	}
+	l := labeller.NewLabeller(
+		&resource.ObjectMeta,
+		consts.ComponentType(componentName),
+		fmt.Sprintf("yt-%s-controller", name),
+	).
+		WithAnnotations(resource.Spec.ExtraPodAnnotations).
+		Build()
 
 	microservice := newMicroservice(
 		&l,
