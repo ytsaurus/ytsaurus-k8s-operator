@@ -18,7 +18,7 @@ type Labeller struct {
 	ObjectMeta                 *metav1.ObjectMeta
 	ComponentObjectsNamePrefix string
 	ComponentFullName          string
-	Annotations                map[string]string
+	annotations                map[string]string
 
 	instanceName          string
 	nameBase              consts.ComponentType
@@ -42,7 +42,7 @@ func (l *Labeller) WithComponentInstanceName(instanceName string) *Labeller {
 }
 
 func (l *Labeller) WithAnnotations(annotations map[string]string) *Labeller {
-	l.Annotations = annotations
+	l.annotations = annotations
 	return l
 }
 
@@ -87,7 +87,7 @@ func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
 		Name:        name,
 		Namespace:   l.ObjectMeta.Namespace,
 		Labels:      l.GetMetaLabelMap(false),
-		Annotations: l.Annotations,
+		Annotations: l.annotations,
 	}
 }
 
@@ -96,7 +96,7 @@ func (l *Labeller) GetInitJobObjectMeta() metav1.ObjectMeta {
 		Name:        "ytsaurus-init",
 		Namespace:   l.ObjectMeta.Namespace,
 		Labels:      l.GetMetaLabelMap(true),
-		Annotations: l.Annotations,
+		Annotations: l.annotations,
 	}
 }
 
