@@ -16,11 +16,11 @@ type FetchableObject struct {
 }
 
 type Labeller struct {
-	APIProxy       apiproxy.APIProxy
-	ObjectMeta     *metav1.ObjectMeta
-	ComponentLabel string
-	ComponentName  string
-	Annotations    map[string]string
+	APIProxy                   apiproxy.APIProxy
+	ObjectMeta                 *metav1.ObjectMeta
+	ComponentObjectsNamePrefix string
+	ComponentFullName          string
+	Annotations                map[string]string
 }
 
 func (l *Labeller) GetClusterName() string {
@@ -28,11 +28,11 @@ func (l *Labeller) GetClusterName() string {
 }
 
 func (l *Labeller) GetSecretName() string {
-	return fmt.Sprintf("%s-secret", l.ComponentLabel)
+	return fmt.Sprintf("%s-secret", l.ComponentObjectsNamePrefix)
 }
 
 func (l *Labeller) GetMainConfigMapName() string {
-	return fmt.Sprintf("%s-config", l.ComponentLabel)
+	return fmt.Sprintf("%s-config", l.ComponentObjectsNamePrefix)
 }
 
 func (l *Labeller) GetSidecarConfigMapName(name string) string {
@@ -40,11 +40,11 @@ func (l *Labeller) GetSidecarConfigMapName(name string) string {
 }
 
 func (l *Labeller) GetInitJobName(name string) string {
-	return fmt.Sprintf("%s-init-job-%s", l.ComponentLabel, strings.ToLower(name))
+	return fmt.Sprintf("%s-init-job-%s", l.ComponentObjectsNamePrefix, strings.ToLower(name))
 }
 
 func (l *Labeller) GetPodsRemovingStartedCondition() string {
-	return fmt.Sprintf("%sPodsRemovingStarted", l.ComponentName)
+	return fmt.Sprintf("%sPodsRemovingStarted", l.ComponentFullName)
 }
 
 func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
@@ -66,7 +66,7 @@ func (l *Labeller) GetInitJobObjectMeta() metav1.ObjectMeta {
 }
 
 func (l *Labeller) GetYTLabelValue(isInitJob bool) string {
-	result := fmt.Sprintf("%s-%s", l.ObjectMeta.Name, l.ComponentLabel)
+	result := fmt.Sprintf("%s-%s", l.ObjectMeta.Name, l.ComponentObjectsNamePrefix)
 	if isInitJob {
 		result = fmt.Sprintf("%s-%s", result, "init-job")
 	}
@@ -87,10 +87,13 @@ func (l *Labeller) GetListOptions() []client.ListOption {
 }
 
 func (l *Labeller) GetMetaLabelMap(isInitJob bool) map[string]string {
+	// l.ObjectMeta.Name - yt-cluster-name
+	// ComponentObjectsNamePrefix - componenttype-instancename
+
 	return map[string]string{
 		"app.kubernetes.io/name":       "Ytsaurus",
 		"app.kubernetes.io/instance":   l.ObjectMeta.Name,
-		"app.kubernetes.io/component":  l.ComponentLabel,
+		"app.kubernetes.io/component":  l.ComponentObjectsNamePrefix,
 		"app.kubernetes.io/managed-by": "Ytsaurus-k8s-operator",
 		consts.YTComponentLabelName:    l.GetYTLabelValue(isInitJob),
 	}

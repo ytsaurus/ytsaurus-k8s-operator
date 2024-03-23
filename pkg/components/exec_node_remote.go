@@ -25,10 +25,10 @@ func NewRemoteExecNodes(
 	commonSpec ytv1.CommonSpec,
 ) *RemoteExecNode {
 	l := labeller.Labeller{
-		ObjectMeta:     &nodes.ObjectMeta,
-		APIProxy:       proxy,
-		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelExecNode, spec.Name),
-		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.ExecNodeType), spec.Name),
+		ObjectMeta:                 &nodes.ObjectMeta,
+		APIProxy:                   proxy,
+		ComponentObjectsNamePrefix: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelExecNode, spec.Name),
+		ComponentFullName:          cfgen.FormatComponentStringWithDefault(string(consts.ExecNodeType), spec.Name),
 	}
 
 	if spec.InstanceSpec.MonitoringPort == nil {
