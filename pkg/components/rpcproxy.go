@@ -36,7 +36,9 @@ func NewRPCProxy(
 		&resource.ObjectMeta,
 		consts.RpcProxyType,
 		consts.YTComponentLabelRPCProxy,
-	).WithComponentInstanceName(spec.Role).Build()
+	).
+		WithComponentInstanceName(spec.Role).
+		Build()
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.RPCProxyMonitoringPort)

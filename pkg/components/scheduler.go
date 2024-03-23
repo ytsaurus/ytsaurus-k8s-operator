@@ -41,7 +41,9 @@ func NewScheduler(
 		&resource.ObjectMeta,
 		consts.SchedulerType,
 		consts.YTComponentLabelScheduler,
-	).WithAnnotations(resource.Spec.ExtraPodAnnotations).Build()
+	).
+		WithAnnotations(resource.Spec.ExtraPodAnnotations).
+		Build()
 
 	if resource.Spec.Schedulers.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.Schedulers.InstanceSpec.MonitoringPort = ptr.Int32(consts.SchedulerMonitoringPort)
