@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -16,11 +15,47 @@ type FetchableObject struct {
 }
 
 type Labeller struct {
-	APIProxy                   apiproxy.APIProxy
 	ObjectMeta                 *metav1.ObjectMeta
 	ComponentObjectsNamePrefix string
 	ComponentFullName          string
 	Annotations                map[string]string
+
+	instanceName          string
+	nameBase              consts.ComponentType
+	objectsNamePrefixBase string
+}
+
+func NewLabeller(objectMeta *metav1.ObjectMeta, nameBase consts.ComponentType, objectsNamePrefixBase string) *Labeller {
+	l := &Labeller{
+		ObjectMeta: objectMeta,
+
+		nameBase:              nameBase,
+		objectsNamePrefixBase: objectsNamePrefixBase,
+	}
+
+	return l
+}
+
+func (l *Labeller) WithComponentInstanceName(instanceName string) *Labeller {
+	l.instanceName = instanceName
+	return l
+}
+
+func (l *Labeller) WithAnnotations(annotations map[string]string) *Labeller {
+	l.Annotations = annotations
+	return l
+}
+
+func (l *Labeller) Build() Labeller {
+	l.ComponentFullName = string(l.nameBase)
+	l.ComponentObjectsNamePrefix = l.objectsNamePrefixBase
+
+	if l.instanceName != "" && l.instanceName != consts.DefaultName {
+		l.ComponentFullName = fmt.Sprintf("%s-%s", l.nameBase, l.instanceName)
+		l.ComponentObjectsNamePrefix = fmt.Sprintf("%s-%s", l.objectsNamePrefixBase, l.instanceName)
+	}
+
+	return *l
 }
 
 func (l *Labeller) GetClusterName() string {

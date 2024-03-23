@@ -18,4 +18,8 @@ const (
 	YTComponentLabelYqlAgent        string = "yt-yql-agent"
 	YTComponentLabelClient          string = "yt-client"
 	YTComponentLabelMasterCache     string = "yt-master-cache"
+	YTComponentLabelQueryTracker    string = "yt-query-tracker"
+	YTComponentLabelQueueAgent      string = "yt-queue-agent"
+	YTComponentLabelSPYT            string = "ytsaurus-spyt"
+	YTComponentLabelCHYT            string = "ytsaurus-chyt"
 )

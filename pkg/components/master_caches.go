@@ -20,13 +20,14 @@ type MasterCache struct {
 
 func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *MasterCache {
 	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:                 &resource.ObjectMeta,
-		APIProxy:                   ytsaurus.APIProxy(),
-		ComponentObjectsNamePrefix: consts.YTComponentLabelMasterCache,
-		ComponentFullName:          string(consts.MasterCacheType),
-		Annotations:                resource.Spec.ExtraPodAnnotations,
-	}
+
+	l := labeller.NewLabeller(
+		&resource.ObjectMeta,
+		consts.MasterCacheType,
+		consts.YTComponentLabelMasterCache,
+	).
+		WithAnnotations(resource.Spec.ExtraPodAnnotations).
+		Build()
 
 	if resource.Spec.MasterCaches.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.MasterCaches.InstanceSpec.MonitoringPort = ptr.Int32(consts.MasterCachesMonitoringPort)

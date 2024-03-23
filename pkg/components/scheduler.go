@@ -36,13 +36,12 @@ func NewScheduler(
 	master Component,
 	execNodes, tabletNodes []Component) *Scheduler {
 	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:                 &resource.ObjectMeta,
-		APIProxy:                   ytsaurus.APIProxy(),
-		ComponentObjectsNamePrefix: consts.YTComponentLabelScheduler,
-		ComponentFullName:          string(consts.SchedulerType),
-		Annotations:                resource.Spec.ExtraPodAnnotations,
-	}
+
+	l := labeller.NewLabeller(
+		&resource.ObjectMeta,
+		consts.SchedulerType,
+		consts.YTComponentLabelScheduler,
+	).WithAnnotations(resource.Spec.ExtraPodAnnotations).Build()
 
 	if resource.Spec.Schedulers.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.Schedulers.InstanceSpec.MonitoringPort = ptr.Int32(consts.SchedulerMonitoringPort)
