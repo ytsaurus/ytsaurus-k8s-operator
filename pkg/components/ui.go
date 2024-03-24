@@ -37,6 +37,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		&resource.ObjectMeta,
 		consts.UIType,
 		consts.YTComponentLabelUI,
+		resource.Spec.UI.ExtraLabels,
 		resource.Spec.ExtraPodAnnotations,
 	)
 

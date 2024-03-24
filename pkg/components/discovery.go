@@ -25,6 +25,7 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Disco
 		&resource.ObjectMeta,
 		consts.DiscoveryType,
 		consts.YTComponentLabelDiscovery,
+		resource.Spec.Discovery.ExtraLabels,
 		ytsaurus.GetCommonSpec().ExtraPodAnnotations,
 	)
 

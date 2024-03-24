@@ -42,6 +42,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		&resource.ObjectMeta,
 		consts.MasterType,
 		consts.YTComponentLabelMaster,
+		resource.Spec.PrimaryMasters.ExtraLabels,
 		resource.Spec.ExtraPodAnnotations,
 	)
 

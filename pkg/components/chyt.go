@@ -39,6 +39,7 @@ func NewChyt(
 		consts.CHYTType,
 		consts.YTComponentLabelCHYT,
 		chyt.GetResource().Name,
+		map[string]string{},
 		ytsaurus.Spec.ExtraPodAnnotations,
 	)
 

@@ -41,6 +41,7 @@ func NewScheduler(
 		&resource.ObjectMeta,
 		consts.SchedulerType,
 		consts.YTComponentLabelScheduler,
+		resource.Spec.Schedulers.ExtraLabels,
 		resource.Spec.ExtraPodAnnotations,
 	)
 

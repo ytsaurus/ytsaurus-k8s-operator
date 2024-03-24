@@ -37,6 +37,7 @@ func NewSpyt(
 		consts.SPYTType,
 		consts.YTComponentLabelSPYT,
 		spyt.GetResource().Name,
+		map[string]string{},
 		ytsaurus.Spec.ExtraPodAnnotations,
 	)
 

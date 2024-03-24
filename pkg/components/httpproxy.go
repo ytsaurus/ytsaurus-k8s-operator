@@ -40,6 +40,7 @@ func NewHTTPProxy(
 		consts.HttpProxyType,
 		consts.YTComponentLabelHTTPProxy,
 		spec.Role,
+		spec.ExtraLabels,
 		ytsaurus.GetCommonSpec().ExtraPodAnnotations,
 	)
 

@@ -36,6 +36,7 @@ func NewTCPProxy(
 		consts.TcpProxyType,
 		consts.YTComponentLabelTCPProxy,
 		spec.Role,
+		spec.ExtraLabels,
 		ytsaurus.GetCommonSpec().ExtraPodAnnotations,
 	)
 

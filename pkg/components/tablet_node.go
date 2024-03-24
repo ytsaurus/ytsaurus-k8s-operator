@@ -46,6 +46,7 @@ func NewTabletNode(
 		consts.TabletNodeType,
 		consts.YTComponentLabelTabletNode,
 		spec.Name,
+		spec.ExtraLabels,
 		resource.Spec.ExtraPodAnnotations,
 	)
 

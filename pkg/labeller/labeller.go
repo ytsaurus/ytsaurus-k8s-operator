@@ -18,14 +18,20 @@ type Labeller struct {
 	ObjectMeta                 *metav1.ObjectMeta
 	ComponentObjectsNamePrefix string
 	ComponentFullName          string
-	annotations                map[string]string
+
+	extraLabels map[string]string
+	annotations map[string]string
 
 	instanceName string
 
 	objectsNamePrefixBase string
 }
 
-func NewLabellerForGlobalComponent(objectMeta *metav1.ObjectMeta, name consts.ComponentType, objectsNamePrefix string, annotations map[string]string) Labeller {
+func NewLabellerForGlobalComponent(objectMeta *metav1.ObjectMeta, name consts.ComponentType, objectsNamePrefix string, extraLabels, annotations map[string]string) Labeller {
+	if extraLabels == nil {
+		extraLabels = make(map[string]string)
+	}
+
 	l := Labeller{
 		ObjectMeta: objectMeta,
 
@@ -34,25 +40,22 @@ func NewLabellerForGlobalComponent(objectMeta *metav1.ObjectMeta, name consts.Co
 
 		objectsNamePrefixBase: objectsNamePrefix,
 
+		extraLabels: extraLabels,
 		annotations: annotations,
+	}
+
+	if len(l.extraLabels) > 0 {
+		for k := range l.getDefaultLabelsMap(false) {
+			delete(l.extraLabels, k)
+		}
 	}
 
 	return l
 }
 
-func NewLabellerForComponentInstance(objectMeta *metav1.ObjectMeta, nameBase consts.ComponentType, objectsNamePrefixBase, instanceName string, annotations map[string]string) Labeller {
-	l := Labeller{
-		ObjectMeta: objectMeta,
-
-		ComponentFullName:          string(nameBase),
-		ComponentObjectsNamePrefix: objectsNamePrefixBase,
-
-		instanceName: instanceName,
-
-		objectsNamePrefixBase: objectsNamePrefixBase,
-
-		annotations: annotations,
-	}
+func NewLabellerForComponentInstance(objectMeta *metav1.ObjectMeta, nameBase consts.ComponentType, objectsNamePrefixBase, instanceName string, extraLabels, annotations map[string]string) Labeller {
+	l := NewLabellerForGlobalComponent(objectMeta, nameBase, objectsNamePrefixBase, extraLabels, annotations)
+	l.instanceName = instanceName
 
 	if instanceName != "" && instanceName != consts.DefaultName {
 		l.ComponentFullName = fmt.Sprintf("%s-%s", nameBase, instanceName)
@@ -125,7 +128,7 @@ func (l *Labeller) GetListOptions() []client.ListOption {
 	}
 }
 
-func (l *Labeller) GetMetaLabelMap(isInitJob bool) map[string]string {
+func (l *Labeller) getDefaultLabelsMap(isInitJob bool) map[string]string {
 	instanceName := l.objectsNamePrefixBase
 	if l.instanceName != "" {
 		instanceName = l.instanceName
@@ -139,6 +142,15 @@ func (l *Labeller) GetMetaLabelMap(isInitJob bool) map[string]string {
 		"app.kubernetes.io/managed-by": "Ytsaurus-k8s-operator",
 		consts.YTComponentLabelName:    l.GetYTLabelValue(isInitJob),
 	}
+}
+
+func (l *Labeller) GetMetaLabelMap(isInitJob bool) map[string]string {
+	labels := l.extraLabels
+	for k, v := range l.getDefaultLabelsMap(isInitJob) {
+		labels[k] = v
+	}
+
+	return labels
 }
 
 func (l *Labeller) GetMonitoringMetaLabelMap() map[string]string {

@@ -26,6 +26,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		&resource.ObjectMeta,
 		consts.ControllerAgentType,
 		consts.YTComponentLabelControllerAgent,
+		resource.Spec.ControllerAgents.ExtraLabels,
 		ytsaurus.GetCommonSpec().ExtraPodAnnotations,
 	)
 

@@ -31,6 +31,7 @@ func NewExecNode(
 		consts.ExecNodeType,
 		consts.YTComponentLabelExecNode,
 		spec.Name,
+		spec.ExtraLabels,
 		ytsaurus.GetCommonSpec().ExtraPodAnnotations,
 	)
 

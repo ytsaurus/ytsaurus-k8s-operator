@@ -43,6 +43,7 @@ func NewQueryTracker(
 		&resource.ObjectMeta,
 		consts.QueryTrackerType,
 		consts.YTComponentLabelQueryTracker,
+		resource.Spec.QueryTrackers.ExtraLabels,
 		resource.Spec.ExtraPodAnnotations,
 	)
 

@@ -37,6 +37,7 @@ func NewRPCProxy(
 		consts.RpcProxyType,
 		consts.YTComponentLabelRPCProxy,
 		spec.Role,
+		spec.ExtraLabels,
 		ytsaurus.GetCommonSpec().ExtraPodAnnotations,
 	)
 

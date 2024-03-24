@@ -662,6 +662,10 @@ spec:
                 items:
                   type: string
                 type: array
+              extraLabels:
+                additionalProperties:
+                  type: string
+                type: object
               extraPodAnnotations:
                 additionalProperties:
                   type: string

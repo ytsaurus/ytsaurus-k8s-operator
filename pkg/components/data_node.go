@@ -32,6 +32,7 @@ func NewDataNode(
 		consts.DataNodeType,
 		consts.YTComponentLabelDataNode,
 		spec.Name,
+		spec.ExtraLabels,
 		ytsaurus.GetCommonSpec().ExtraPodAnnotations,
 	)
 

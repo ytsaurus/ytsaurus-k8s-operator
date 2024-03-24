@@ -45,6 +45,7 @@ func NewQueueAgent(
 		&resource.ObjectMeta,
 		consts.QueueAgentType,
 		consts.YTComponentLabelQueueAgent,
+		resource.Spec.QueueAgents.ExtraLabels,
 		resource.Spec.ExtraPodAnnotations,
 	)
 

@@ -48,6 +48,7 @@ func NewYtsaurusClient(
 		&resource.ObjectMeta,
 		consts.YtsaurusClientType,
 		consts.YTComponentLabelClient,
+		map[string]string{},
 		resource.Spec.ExtraPodAnnotations,
 	)
 

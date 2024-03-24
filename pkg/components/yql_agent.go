@@ -33,6 +33,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		&resource.ObjectMeta,
 		consts.YqlAgentType,
 		consts.YTComponentLabelYqlAgent,
+		resource.Spec.YQLAgents.ExtraLabels,
 		resource.Spec.ExtraPodAnnotations,
 	)
 

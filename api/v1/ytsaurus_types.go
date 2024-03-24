@@ -225,6 +225,8 @@ type HealthcheckProbeParams struct {
 }
 
 type InstanceSpec struct {
+	ExtraLabels map[string]string `json:"extraLabels,omitempty"`
+
 	// Overrides coreImage for component.
 	//+optional
 	Image *string `json:"image,omitempty"`
@@ -431,6 +433,8 @@ type DiscoverySpec struct {
 }
 
 type UISpec struct {
+	ExtraLabels map[string]string `json:"extraLabels,omitempty"`
+
 	Image *string `json:"image,omitempty"`
 	//+kubebuilder:default:=NodePort
 	ServiceType  corev1.ServiceType `json:"serviceType,omitempty"`

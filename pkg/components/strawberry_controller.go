@@ -70,6 +70,7 @@ func NewStrawberryController(
 		&resource.ObjectMeta,
 		consts.ComponentType(componentName),
 		fmt.Sprintf("yt-%s-controller", name),
+		map[string]string{},
 		resource.Spec.ExtraPodAnnotations,
 	)
 

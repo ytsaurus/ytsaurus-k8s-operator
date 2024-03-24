@@ -25,6 +25,7 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Mas
 		&resource.ObjectMeta,
 		consts.MasterCacheType,
 		consts.YTComponentLabelMasterCache,
+		resource.Spec.MasterCaches.ExtraLabels,
 		resource.Spec.ExtraPodAnnotations,
 	)
 

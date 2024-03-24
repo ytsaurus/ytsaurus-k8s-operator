@@ -8,6 +8,9 @@ spec:
   discovery:
     instanceCount: 1
 
+    extraLabels:
+      label-key: label-value
+
     # Make reusable loggers config with yaml anchor.
     loggers: &loggers
       - name: debug
@@ -31,6 +34,10 @@ spec:
   primaryMasters:
     instanceCount: 1
     cellTag: 1
+
+    extraLabels:
+      label-key: label-value
+
     loggers: *loggers
     locations:
       - locationType: MasterChangelogs
@@ -45,6 +52,8 @@ spec:
     volumeClaimTemplates:
       - metadata:
           name: master-data
+          labels:
+            key: value
         spec:
           accessModes: [ "ReadWriteOnce" ]
           resources:
