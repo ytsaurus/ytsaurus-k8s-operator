@@ -20,42 +20,46 @@ type Labeller struct {
 	ComponentFullName          string
 	annotations                map[string]string
 
-	instanceName          string
-	nameBase              consts.ComponentType
+	instanceName string
+
 	objectsNamePrefixBase string
 }
 
-func NewLabeller(objectMeta *metav1.ObjectMeta, nameBase consts.ComponentType, objectsNamePrefixBase string) *Labeller {
-	l := &Labeller{
+func NewLabellerForGlobalComponent(objectMeta *metav1.ObjectMeta, name consts.ComponentType, objectsNamePrefix string, annotations map[string]string) Labeller {
+	l := Labeller{
 		ObjectMeta: objectMeta,
 
-		nameBase:              nameBase,
+		ComponentFullName:          string(name),
+		ComponentObjectsNamePrefix: objectsNamePrefix,
+
+		objectsNamePrefixBase: objectsNamePrefix,
+
+		annotations: annotations,
+	}
+
+	return l
+}
+
+func NewLabellerForComponentInstance(objectMeta *metav1.ObjectMeta, nameBase consts.ComponentType, objectsNamePrefixBase, instanceName string, annotations map[string]string) Labeller {
+	l := Labeller{
+		ObjectMeta: objectMeta,
+
+		ComponentFullName:          string(nameBase),
+		ComponentObjectsNamePrefix: objectsNamePrefixBase,
+
+		instanceName: instanceName,
+
 		objectsNamePrefixBase: objectsNamePrefixBase,
+
+		annotations: annotations,
+	}
+
+	if instanceName != "" && instanceName != consts.DefaultName {
+		l.ComponentFullName = fmt.Sprintf("%s-%s", nameBase, instanceName)
+		l.ComponentObjectsNamePrefix = fmt.Sprintf("%s-%s", objectsNamePrefixBase, instanceName)
 	}
 
 	return l
-}
-
-func (l *Labeller) WithComponentInstanceName(instanceName string) *Labeller {
-	l.instanceName = instanceName
-	return l
-}
-
-func (l *Labeller) WithAnnotations(annotations map[string]string) *Labeller {
-	l.annotations = annotations
-	return l
-}
-
-func (l *Labeller) Build() Labeller {
-	l.ComponentFullName = string(l.nameBase)
-	l.ComponentObjectsNamePrefix = l.objectsNamePrefixBase
-
-	if l.instanceName != "" && l.instanceName != consts.DefaultName {
-		l.ComponentFullName = fmt.Sprintf("%s-%s", l.nameBase, l.instanceName)
-		l.ComponentObjectsNamePrefix = fmt.Sprintf("%s-%s", l.objectsNamePrefixBase, l.instanceName)
-	}
-
-	return *l
 }
 
 func (l *Labeller) GetClusterName() string {
@@ -124,7 +128,7 @@ func (l *Labeller) GetListOptions() []client.ListOption {
 func (l *Labeller) GetMetaLabelMap(isInitJob bool) map[string]string {
 	instanceName := l.objectsNamePrefixBase
 	if l.instanceName != "" {
-		instanceName = l.objectsNamePrefixBase
+		instanceName = l.instanceName
 	}
 
 	return map[string]string{

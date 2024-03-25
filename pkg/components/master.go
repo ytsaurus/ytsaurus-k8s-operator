@@ -38,13 +38,12 @@ type Master struct {
 func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabeller(
+	l := labeller.NewLabellerForGlobalComponent(
 		&resource.ObjectMeta,
 		consts.MasterType,
 		consts.YTComponentLabelMaster,
-	).
-		WithAnnotations(resource.Spec.ExtraPodAnnotations).
-		Build()
+		resource.Spec.ExtraPodAnnotations,
+	)
 
 	if resource.Spec.PrimaryMasters.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.PrimaryMasters.InstanceSpec.MonitoringPort = ptr.Int32(consts.MasterMonitoringPort)

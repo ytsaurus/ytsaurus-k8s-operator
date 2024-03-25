@@ -39,13 +39,12 @@ func NewQueryTracker(
 ) *QueryTracker {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabeller(
+	l := labeller.NewLabellerForGlobalComponent(
 		&resource.ObjectMeta,
 		consts.QueryTrackerType,
 		consts.YTComponentLabelQueryTracker,
-	).
-		WithAnnotations(resource.Spec.ExtraPodAnnotations).
-		Build()
+		resource.Spec.ExtraPodAnnotations,
+	)
 
 	if resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort = ptr.Int32(consts.QueryTrackerMonitoringPort)

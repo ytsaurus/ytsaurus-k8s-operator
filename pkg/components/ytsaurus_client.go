@@ -44,13 +44,12 @@ func NewYtsaurusClient(
 ) *YtsaurusClient {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabeller(
+	l := labeller.NewLabellerForGlobalComponent(
 		&resource.ObjectMeta,
 		consts.YtsaurusClientType,
 		consts.YTComponentLabelClient,
-	).
-		WithAnnotations(resource.Spec.ExtraPodAnnotations).
-		Build()
+		resource.Spec.ExtraPodAnnotations,
+	)
 
 	return &YtsaurusClient{
 		localComponent: newLocalComponent(&l, ytsaurus),

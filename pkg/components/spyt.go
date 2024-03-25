@@ -32,14 +32,13 @@ func NewSpyt(
 	spyt *apiproxy.Spyt,
 	ytsaurus *ytv1.Ytsaurus) *Spyt {
 
-	l := labeller.NewLabeller(
+	l := labeller.NewLabellerForComponentInstance(
 		&spyt.GetResource().ObjectMeta,
 		consts.SPYTType,
 		consts.YTComponentLabelSPYT,
-	).
-		WithComponentInstanceName(spyt.GetResource().Name).
-		WithAnnotations(ytsaurus.Spec.ExtraPodAnnotations).
-		Build()
+		spyt.GetResource().Name,
+		ytsaurus.Spec.ExtraPodAnnotations,
+	)
 
 	return &Spyt{
 		labeller: &l,

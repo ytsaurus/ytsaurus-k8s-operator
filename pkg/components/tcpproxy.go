@@ -31,13 +31,13 @@ func NewTCPProxy(
 	spec ytv1.TCPProxiesSpec) *TcpProxy {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabeller(
+	l := labeller.NewLabellerForComponentInstance(
 		&resource.ObjectMeta,
 		consts.TcpProxyType,
 		consts.YTComponentLabelTCPProxy,
-	).
-		WithComponentInstanceName(spec.Role).
-		Build()
+		spec.Role,
+		map[string]string{},
+	)
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.TCPProxyMonitoringPort)

@@ -27,13 +27,13 @@ func NewDataNode(
 ) *DataNode {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabeller(
+	l := labeller.NewLabellerForComponentInstance(
 		&resource.ObjectMeta,
 		consts.DataNodeType,
 		consts.YTComponentLabelDataNode,
-	).
-		WithComponentInstanceName(spec.Name).
-		Build()
+		spec.Name,
+		map[string]string{},
+	)
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.DataNodeMonitoringPort)

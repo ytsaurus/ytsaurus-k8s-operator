@@ -35,13 +35,13 @@ func NewHTTPProxy(
 
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabeller(
+	l := labeller.NewLabellerForComponentInstance(
 		&resource.ObjectMeta,
 		consts.HttpProxyType,
 		consts.YTComponentLabelHTTPProxy,
-	).
-		WithComponentInstanceName(spec.Role).
-		Build()
+		spec.Role,
+		map[string]string{},
+	)
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.HTTPProxyMonitoringPort)
