@@ -14,6 +14,7 @@ type BaseGenerator struct {
 	masterConnectionSpec   ytv1.MasterConnectionSpec
 	masterInstanceCount    int32
 	discoveryInstanceCount int32
+	dataNodesInstanceCount int32
 	masterCachesSpec       *ytv1.MasterCachesSpec
 }
 
@@ -37,6 +38,11 @@ func NewLocalBaseGenerator(
 	ytsaurus *ytv1.Ytsaurus,
 	clusterDomain string,
 ) *BaseGenerator {
+	var dataNodesInstanceCount int32
+	for _, dataNodes := range ytsaurus.Spec.DataNodes {
+		dataNodesInstanceCount += dataNodes.InstanceCount
+	}
+
 	return &BaseGenerator{
 		key: types.NamespacedName{
 			Namespace: ytsaurus.Namespace,
@@ -48,5 +54,10 @@ func NewLocalBaseGenerator(
 		masterInstanceCount:    ytsaurus.Spec.PrimaryMasters.InstanceCount,
 		discoveryInstanceCount: ytsaurus.Spec.Discovery.InstanceCount,
 		masterCachesSpec:       ytsaurus.Spec.MasterCaches,
+		dataNodesInstanceCount: dataNodesInstanceCount,
 	}
+}
+
+func (g *BaseGenerator) GetMaxReplicationFactor() int32 {
+	return g.dataNodesInstanceCount
 }

@@ -125,7 +125,7 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		if tn.doInitialization {
 			if exists, err := ytClient.NodeExists(ctx, ypath.Path(fmt.Sprintf("//sys/tablet_cell_bundles/%s", SysBundle)), nil); err == nil {
 				if !exists {
-					options := map[string]string{
+					options := map[string]any{
 						"changelog_account": "sys",
 						"snapshot_account":  "sys",
 					}
@@ -138,6 +138,13 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 						if bootstrap.SnapshotPrimaryMedium != nil {
 							options["snapshot_primary_medium"] = *bootstrap.SnapshotPrimaryMedium
 						}
+					}
+
+					if tn.cfgen.GetMaxReplicationFactor() < 3 {
+						options["changelog_replication_factor"] = 1
+						options["changelog_read_quorum"] = 1
+						options["changelog_write_quorum"] = 1
+						options["snapshot_replication_factor"] = 1
 					}
 
 					_, err = ytClient.CreateObject(ctx, yt.NodeTabletCellBundle, &yt.CreateObjectOptions{
