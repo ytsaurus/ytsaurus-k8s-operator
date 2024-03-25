@@ -44,7 +44,7 @@ const (
 	QueryTrackerMonitoringPort = 10028
 
 	YQLAgentRPCPort        = 9019
-	YQLAgentMonitoringPort = 10029
+	YQLAgentMonitoringPort = 10019
 
 	QueueAgentRPCPort        = 9030
 	QueueAgentMonitoringPort = 10030
