@@ -29,7 +29,7 @@ func NewRemoteExecNodes(
 		consts.ExecNodeType,
 		consts.YTComponentLabelExecNode,
 		spec.Name,
-		map[string]string{},
+		commonSpec.ExtraPodAnnotations,
 	)
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.ExecNodeMonitoringPort)

@@ -26,7 +26,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		&resource.ObjectMeta,
 		consts.ControllerAgentType,
 		consts.YTComponentLabelControllerAgent,
-		map[string]string{},
+		ytsaurus.GetCommonSpec().ExtraPodAnnotations,
 	)
 
 	if resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort == nil {

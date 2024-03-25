@@ -25,7 +25,7 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Disco
 		&resource.ObjectMeta,
 		consts.DiscoveryType,
 		consts.YTComponentLabelDiscovery,
-		map[string]string{},
+		ytsaurus.GetCommonSpec().ExtraPodAnnotations,
 	)
 
 	if resource.Spec.Discovery.InstanceSpec.MonitoringPort == nil {
