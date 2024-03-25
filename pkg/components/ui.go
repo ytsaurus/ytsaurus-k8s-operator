@@ -8,6 +8,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -189,10 +190,25 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 
 	deployment.Spec.Template.Spec.Containers = []corev1.Container{
 		{
-			Image:        u.microservice.getImage(),
-			Name:         consts.UIContainerName,
-			Env:          env,
-			Command:      []string{"supervisord"},
+			Image:   u.microservice.getImage(),
+			Name:    consts.UIContainerName,
+			Env:     env,
+			Command: []string{"supervisord"},
+			Ports: []corev1.ContainerPort{
+				{
+					Name:          "http",
+					ContainerPort: consts.UIHTTPPort,
+					Protocol:      corev1.ProtocolTCP,
+				},
+			},
+			ReadinessProbe: &corev1.Probe{
+				ProbeHandler: corev1.ProbeHandler{
+					HTTPGet: &corev1.HTTPGetAction{
+						Path: "/readyz", // there's not such a URL but responses with 302 Found
+						Port: intstr.FromInt32(consts.UIHTTPPort),
+					},
+				},
+			},
 			VolumeMounts: volumeMounts,
 		},
 	}
