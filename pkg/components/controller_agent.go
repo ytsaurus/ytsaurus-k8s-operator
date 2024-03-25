@@ -22,11 +22,12 @@ type ControllerAgent struct {
 func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *ControllerAgent {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabeller(
+	l := labeller.NewLabellerForGlobalComponent(
 		&resource.ObjectMeta,
 		consts.ControllerAgentType,
 		consts.YTComponentLabelControllerAgent,
-	).Build()
+		map[string]string{},
+	)
 
 	if resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.ControllerAgentMonitoringPort)

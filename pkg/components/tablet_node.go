@@ -41,13 +41,13 @@ func NewTabletNode(
 ) *TabletNode {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabeller(
+	l := labeller.NewLabellerForComponentInstance(
 		&resource.ObjectMeta,
 		consts.TabletNodeType,
 		consts.YTComponentLabelTabletNode,
-	).
-		WithComponentInstanceName(spec.Name).
-		Build()
+		spec.Name,
+		resource.Spec.ExtraPodAnnotations,
+	)
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.TabletNodeMonitoringPort)

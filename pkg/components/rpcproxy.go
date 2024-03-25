@@ -32,13 +32,13 @@ func NewRPCProxy(
 	spec ytv1.RPCProxiesSpec) *RpcProxy {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabeller(
+	l := labeller.NewLabellerForComponentInstance(
 		&resource.ObjectMeta,
 		consts.RpcProxyType,
 		consts.YTComponentLabelRPCProxy,
-	).
-		WithComponentInstanceName(spec.Role).
-		Build()
+		spec.Role,
+		map[string]string{},
+	)
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.RPCProxyMonitoringPort)

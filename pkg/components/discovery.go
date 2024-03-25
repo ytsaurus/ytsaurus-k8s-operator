@@ -21,11 +21,12 @@ type Discovery struct {
 func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Discovery {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabeller(
+	l := labeller.NewLabellerForGlobalComponent(
 		&resource.ObjectMeta,
 		consts.DiscoveryType,
 		consts.YTComponentLabelDiscovery,
-	).Build()
+		map[string]string{},
+	)
 
 	if resource.Spec.Discovery.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.Discovery.InstanceSpec.MonitoringPort = ptr.Int32(consts.DiscoveryMonitoringPort)

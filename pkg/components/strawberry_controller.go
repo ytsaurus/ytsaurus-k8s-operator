@@ -66,13 +66,12 @@ func NewStrawberryController(
 		}
 	}
 
-	l := labeller.NewLabeller(
+	l := labeller.NewLabellerForGlobalComponent(
 		&resource.ObjectMeta,
 		consts.ComponentType(componentName),
 		fmt.Sprintf("yt-%s-controller", name),
-	).
-		WithAnnotations(resource.Spec.ExtraPodAnnotations).
-		Build()
+		resource.Spec.ExtraPodAnnotations,
+	)
 
 	microservice := newMicroservice(
 		&l,

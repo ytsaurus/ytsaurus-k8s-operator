@@ -26,13 +26,13 @@ func NewExecNode(
 ) *ExecNode {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabeller(
+	l := labeller.NewLabellerForComponentInstance(
 		&resource.ObjectMeta,
 		consts.ExecNodeType,
 		consts.YTComponentLabelExecNode,
-	).
-		WithComponentInstanceName(spec.Name).
-		Build()
+		spec.Name,
+		map[string]string{},
+	)
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.ExecNodeMonitoringPort)
