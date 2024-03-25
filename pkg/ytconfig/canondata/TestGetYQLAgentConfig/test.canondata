@@ -49,7 +49,7 @@
         ];
         "flush_period"=3000;
     };
-    "monitoring_port"=10029;
+    "monitoring_port"=10019;
     "rpc_port"=9019;
     "timestamp_provider"={
         addresses=[
