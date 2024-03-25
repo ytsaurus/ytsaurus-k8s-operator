@@ -395,9 +395,13 @@ var _ = Describe("Tablet node test", func() {
 					gomock.Eq(&yt.CreateObjectOptions{
 						Attributes: map[string]interface{}{
 							"name": "sys",
-							"options": map[string]string{
-								"changelog_account": "sys",
-								"snapshot_account":  "sys",
+							"options": map[string]any{
+								"changelog_account":            "sys",
+								"snapshot_account":             "sys",
+								"changelog_replication_factor": 1,
+								"changelog_read_quorum":        1,
+								"changelog_write_quorum":       1,
+								"snapshot_replication_factor":  1,
 							},
 						}})).
 				Return(yt.NodeID(guid.New()), nil)

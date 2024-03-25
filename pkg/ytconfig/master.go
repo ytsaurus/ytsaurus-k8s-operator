@@ -80,32 +80,27 @@ func getMasterServerCarcass(spec *ytv1.MastersSpec) (MasterServer, error) {
 	return c, nil
 }
 
-func configureMasterServerCypressManager(spec ytv1.YtsaurusSpec, c *CypressManager) {
-	instanceCount := int32(0)
-	for _, dataNodes := range spec.DataNodes {
-		instanceCount += dataNodes.InstanceCount
-	}
-
+func configureMasterServerCypressManager(maxReplicationFactor int32, c *CypressManager) {
 	switch {
-	case instanceCount <= 1:
+	case maxReplicationFactor <= 1:
 		c.DefaultJournalReadQuorum = 1
 		c.DefaultJournalWriteQuorum = 1
 		c.DefaultTableReplicationFactor = 1
 		c.DefaultFileReplicationFactor = 1
 		c.DefaultJournalReplicationFactor = 1
-	case instanceCount == 2:
+	case maxReplicationFactor == 2:
 		c.DefaultJournalReadQuorum = 2
 		c.DefaultJournalWriteQuorum = 2
 		c.DefaultTableReplicationFactor = 2
 		c.DefaultFileReplicationFactor = 2
 		c.DefaultJournalReplicationFactor = 2
-	case instanceCount >= 3 && instanceCount < 5:
+	case maxReplicationFactor >= 3 && maxReplicationFactor < 5:
 		c.DefaultJournalReadQuorum = 2
 		c.DefaultJournalWriteQuorum = 2
 		c.DefaultTableReplicationFactor = 3
 		c.DefaultFileReplicationFactor = 3
 		c.DefaultJournalReplicationFactor = 3
-	case instanceCount >= 5:
+	case maxReplicationFactor >= 5:
 		c.DefaultJournalReadQuorum = 3
 		c.DefaultJournalWriteQuorum = 3
 		c.DefaultTableReplicationFactor = 3
