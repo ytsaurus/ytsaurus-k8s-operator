@@ -254,6 +254,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -288,6 +289,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -342,6 +344,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -430,6 +433,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -472,6 +476,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -579,6 +584,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -779,6 +785,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -834,6 +841,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -910,6 +918,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -944,6 +953,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -978,6 +988,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -1084,6 +1095,7 @@ _Appears in:_
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -1148,6 +1160,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `cellTag` _integer_ |  |  |  |
 | `hostAddresses` _string array_ |  |  |  |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -1187,6 +1200,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -1314,6 +1328,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -1369,6 +1384,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -1445,6 +1461,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ |  |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  | NodePort |  |
 | `httpNodePort` _integer_ |  |  |  |
@@ -1505,6 +1522,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `extraLabels` _object (keys:string, values:string)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
