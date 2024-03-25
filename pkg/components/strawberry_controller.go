@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -202,6 +203,20 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 				"--config-path",
 				path.Join(consts.ConfigMountPoint, getControllerConfigFileName(c.name)),
 				"run",
+			},
+			Ports: []corev1.ContainerPort{
+				{
+					Name:          "http",
+					ContainerPort: consts.StrawberryHTTPAPIPort,
+					Protocol:      corev1.ProtocolTCP,
+				},
+			},
+			ReadinessProbe: &corev1.Probe{
+				ProbeHandler: corev1.ProbeHandler{
+					TCPSocket: &corev1.TCPSocketAction{
+						Port: intstr.FromInt32(consts.StrawberryHTTPAPIPort),
+					},
+				},
 			},
 			VolumeMounts: volumeMounts,
 		},
