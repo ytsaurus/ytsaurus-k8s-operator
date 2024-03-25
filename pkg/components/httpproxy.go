@@ -40,7 +40,7 @@ func NewHTTPProxy(
 		consts.HttpProxyType,
 		consts.YTComponentLabelHTTPProxy,
 		spec.Role,
-		map[string]string{},
+		ytsaurus.GetCommonSpec().ExtraPodAnnotations,
 	)
 
 	if spec.InstanceSpec.MonitoringPort == nil {

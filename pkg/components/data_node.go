@@ -32,7 +32,7 @@ func NewDataNode(
 		consts.DataNodeType,
 		consts.YTComponentLabelDataNode,
 		spec.Name,
-		map[string]string{},
+		ytsaurus.GetCommonSpec().ExtraPodAnnotations,
 	)
 
 	if spec.InstanceSpec.MonitoringPort == nil {

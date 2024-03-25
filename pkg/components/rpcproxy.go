@@ -37,7 +37,7 @@ func NewRPCProxy(
 		consts.RpcProxyType,
 		consts.YTComponentLabelRPCProxy,
 		spec.Role,
-		map[string]string{},
+		ytsaurus.GetCommonSpec().ExtraPodAnnotations,
 	)
 
 	if spec.InstanceSpec.MonitoringPort == nil {

@@ -36,7 +36,7 @@ func NewTCPProxy(
 		consts.TcpProxyType,
 		consts.YTComponentLabelTCPProxy,
 		spec.Role,
-		map[string]string{},
+		ytsaurus.GetCommonSpec().ExtraPodAnnotations,
 	)
 
 	if spec.InstanceSpec.MonitoringPort == nil {

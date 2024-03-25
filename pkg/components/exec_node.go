@@ -31,7 +31,7 @@ func NewExecNode(
 		consts.ExecNodeType,
 		consts.YTComponentLabelExecNode,
 		spec.Name,
-		map[string]string{},
+		ytsaurus.GetCommonSpec().ExtraPodAnnotations,
 	)
 
 	if spec.InstanceSpec.MonitoringPort == nil {
