@@ -206,15 +206,14 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 		)
 
 		// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
-		It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", func() {
+		It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", func(ctx context.Context) {
 			namespace := "test3"
 			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
 			ytsaurusKey := types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}
 
 			By("Creating a Ytsaurus resource")
-			ctx := context.Background()
 			g := ytconfig.NewGenerator(ytsaurus, "local")
-			defer deleteYtsaurus(ctx, ytsaurus)
+			DeferCleanup(deleteYtsaurus, ytsaurus)
 			runYtsaurus(ytsaurus)
 
 			By("Creating ytsaurus client")
@@ -269,9 +268,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			Expect(msPodCreationFirstTimestamp == msPodCreationSecondTimestamp).Should(BeTrue())
 		})
 
-		It("Should run and try to update Ytsaurus with tablet cell bundle which is not in `good` health", func() {
+		It("Should run and try to update Ytsaurus with tablet cell bundle which is not in `good` health", func(ctx context.Context) {
 			By("Creating a Ytsaurus resource")
-			ctx := context.Background()
 
 			namespace := "test4"
 
@@ -279,7 +277,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			g := ytconfig.NewGenerator(ytsaurus, "local")
 
-			defer deleteYtsaurus(ctx, ytsaurus)
+			DeferCleanup(deleteYtsaurus, ytsaurus)
 			runYtsaurus(ytsaurus)
 
 			By("Creating ytsaurus client")
@@ -318,9 +316,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			runImpossibleUpdateAndRollback(ytsaurus, ytClient)
 		})
 
-		It("Should run and try to update Ytsaurus with lvc", func() {
+		It("Should run and try to update Ytsaurus with lvc", func(ctx context.Context) {
 			By("Creating a Ytsaurus resource")
-			ctx := context.Background()
 
 			namespace := "test5"
 
@@ -329,7 +326,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			g := ytconfig.NewGenerator(ytsaurus, "local")
 
-			defer deleteYtsaurus(ctx, ytsaurus)
+			DeferCleanup(deleteYtsaurus, ytsaurus)
 			runYtsaurus(ytsaurus)
 
 			By("Creating ytsaurus client")
@@ -369,9 +366,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			runImpossibleUpdateAndRollback(ytsaurus, ytClient)
 		})
 
-		It("Should run with query tracker and check that access control object namespace 'queries' and objects 'nobody' and 'everyone' exist", func() {
+		It("Should run with query tracker and check that access control object namespace 'queries' and objects 'nobody' and 'everyone' exist", func(ctx context.Context) {
 			By("Creating a Ytsaurus resource")
-			ctx := context.Background()
 
 			namespace := "querytrackeraco"
 
@@ -385,7 +381,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			g := ytconfig.NewGenerator(ytsaurus, "local")
 
-			defer deleteYtsaurus(ctx, ytsaurus)
+			DeferCleanup(deleteYtsaurus, ytsaurus)
 			runYtsaurus(ytsaurus)
 
 			By("Creating ytsaurus client")
@@ -441,17 +437,16 @@ func checkClusterViability(ytClient yt.Client) {
 	Expect(hasPermission.Action).Should(Equal(yt.ActionDeny))
 }
 
-func getSimpleUpdateScenario(namespace, newImage string) func() {
-	return func() {
+func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Context) {
+	return func(ctx context.Context) {
 
 		By("Creating a Ytsaurus resource")
-		ctx := context.Background()
 
 		ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
 
 		g := ytconfig.NewGenerator(ytsaurus, "local")
 
-		defer deleteYtsaurus(ctx, ytsaurus)
+		DeferCleanup(deleteYtsaurus, ytsaurus)
 		runYtsaurus(ytsaurus)
 
 		By("Creating ytsaurus client")
