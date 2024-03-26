@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"time"
 
@@ -43,15 +44,20 @@ func getYtClient(g *ytconfig.Generator, namespace string) yt.Client {
 
 	ytProxy := os.Getenv("E2E_YT_PROXY")
 	if ytProxy == "" {
-		httpProxyAddress := ""
+		Expect(httpProxyService.Spec.Type).To(Equal(corev1.ServiceTypeNodePort))
+		Expect(httpProxyService.Spec.IPFamilies[0]).To(Equal(corev1.IPv4Protocol))
+		nodePort := httpProxyService.Spec.Ports[0].NodePort
+
+		nodeAddress := ""
 		for _, address := range k8sNode.Status.Addresses {
-			if address.Type == corev1.NodeInternalIP {
-				httpProxyAddress = address.Address
+			if address.Type == corev1.NodeInternalIP && net.ParseIP(address.Address).To4() != nil {
+				nodeAddress = address.Address
+				break
 			}
 		}
-		port := httpProxyService.Spec.Ports[0].NodePort
-		ytProxy = fmt.Sprintf("%s:%v", httpProxyAddress, port)
+		Expect(nodeAddress).ToNot(BeEmpty())
 
+		ytProxy = fmt.Sprintf("%s:%v", nodeAddress, nodePort)
 	}
 
 	ytClient, err := ythttp.NewClient(&yt.Config{
