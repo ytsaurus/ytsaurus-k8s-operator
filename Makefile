@@ -20,6 +20,16 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
+# Tests are not ready yet for parallel runs
+GINKGO_PROCS ?= 1
+
+GINKGO_FLAGS += --vv
+GINKGO_FLAGS += --trace
+GINKGO_FLAGS += --procs="$(GINKGO_PROCS)"
+GINKGO_FLAGS += --timeout=1h
+GINKGO_FLAGS += --poll-progress-after=5m
+GINKGO_FLAGS += --poll-progress-interval=1m
+
 .PHONY: all
 all: build
 
@@ -64,10 +74,10 @@ test: manifests generate fmt vet envtest ## Run tests.
 	go test -v ./... -coverprofile cover.out -timeout 1800s
 
 .PHONY: test-e2e
-test-e2e: manifests generate fmt vet envtest ## Run e2e tests.
+test-e2e: manifests generate fmt vet envtest ginkgo ## Run e2e tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
 	YTSAURUS_ENABLE_E2E_TESTS=true \
-	go test -v ./test/e2e/... -coverprofile cover.out -timeout 1800s
+	$(GINKGO) $(GINKGO_FLAGS) ./test/e2e/... -coverprofile cover.out -timeout 1800s
 
 .PHONY: lint
 lint: golangci-lint ## Run golangci-lint linter.
