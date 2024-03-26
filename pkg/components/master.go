@@ -171,7 +171,7 @@ func (m *Master) initMedia() string {
 			panic(err)
 		}
 		// COMPAT(gritukan): Remove "medium" after some time.
-		commands = append(commands, fmt.Sprintf("/usr/bin/yt get //sys/media/%s/@name || /usr/bin/yt create domestic_medium --attr '%s' || /usr/bin/yt create medium --attr '%s'", medium.Name, string(attr), medium.Name, string(attr)))
+		commands = append(commands, fmt.Sprintf("/usr/bin/yt get //sys/media/%s/@name || /usr/bin/yt create domestic_medium --attr '%s' || /usr/bin/yt create medium --attr '%s'", medium.Name, string(attr), string(attr)))
 	}
 	return strings.Join(commands, "\n")
 }
