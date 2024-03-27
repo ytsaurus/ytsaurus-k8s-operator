@@ -331,12 +331,30 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	return m.initJob.Sync(ctx, dry)
 }
 
-func (m *Master) Status(ctx context.Context) (ComponentStatus, error) {
-	return flowToStatus(ctx, m, m.getFlow(), m.condManager)
+func (m *Master) IsBuildInitially() bool {
+	return m.condManager.Is(initializationFinished(m.GetName()))
 }
 
+func (m *Master) NeedBuild() bool {
+	return m.server.needBuild()
+}
+
+func (m *Master) IsRebuildStarted() bool {
+	return m.condManager.Is(rebuildStarted(m.GetName()))
+}
+
+func (m *Master) BuildInitial(ctx context.Context) error {
+	return flowToSync(ctx, m.getBuildFlow(), m.condManager)
+}
+
+// Status for master is only about update stage.
+func (m *Master) Status(ctx context.Context) (ComponentStatus, error) {
+	return flowToStatus(ctx, m, m.getUpdateFlow(), m.condManager)
+}
+
+// Sync for master is only about update stage.
 func (m *Master) Sync(ctx context.Context) error {
-	return flowToSync(ctx, m.getFlow(), m.condManager)
+	return flowToSync(ctx, m.getUpdateFlow(), m.condManager)
 }
 
 func (m *Master) doServerSync(ctx context.Context) error {

@@ -3,6 +3,8 @@ package components
 import (
 	"context"
 	"fmt"
+
+	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 )
 
 const (
@@ -15,7 +17,12 @@ const (
 	StepWaitRebuildFinished = "WaitRebuildFinished"
 )
 
-func flowToStatus(ctx context.Context, c Component, flow Step, condManager conditionManagerIface) (ComponentStatus, error) {
+type fetchableWithName interface {
+	resources.Fetchable
+	GetName() string
+}
+
+func flowToStatus(ctx context.Context, c fetchableWithName, flow Step, condManager conditionManagerIface) (ComponentStatus, error) {
 	if err := c.Fetch(ctx); err != nil {
 		return ComponentStatus{}, fmt.Errorf("failed to fetch component %s: %w", c.GetName(), err)
 	}

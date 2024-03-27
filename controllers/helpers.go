@@ -50,7 +50,19 @@ func logComponentStatuses(
 	var readyComponents []string
 	var notReadyComponents []string
 
-	for batchIndex, typesInBatch := range componentsOrder {
+	masterBuildStatus := getStatusForMasterBuild(registry.master)
+	logger.V(1).Info(
+		fmt.Sprintf(
+			"%d.%s %s: %s",
+			0,
+			statusToSymbol(masterBuildStatus.SyncStatus),
+			registry.master.GetName()+" Build",
+			masterBuildStatus.Message,
+		),
+	)
+
+	for batchIndex := 1; batchIndex <= len(componentsOrder); batchIndex++ {
+		typesInBatch := componentsOrder[batchIndex-1]
 		compsInBatch := registry.listByType(typesInBatch...)
 		for _, comp := range compsInBatch {
 			name := comp.GetName()

@@ -31,40 +31,36 @@ func getStatuses(
 //   - if component A needs component B for building (running jobs, using yt client, etc), it
 //     should be placed in some of the sections after component B section.
 var componentsOrder = [][]consts.ComponentType{
-	{
-		// Discovery doesn't depend on anyone.
-		consts.DiscoveryType,
-		// Proxy are placed first since it is needed for ytsaurus client to work.
-		consts.HttpProxyType,
-	},
+	// At first, we check if master is *built* (not updated) before everything else.
 	{
 		consts.YtsaurusClientType,
-	},
-	{
-		// Master uses ytsaurus client when being updated, so if both are down,
-		// ytsaurus client (and proxies) should be built first.
-		consts.MasterType,
-	},
-	{
-		consts.UIType,
+		consts.DiscoveryType,
+		consts.HttpProxyType,
 		consts.RpcProxyType,
 		consts.TcpProxyType,
 		consts.DataNodeType,
+		consts.ExecNodeType,
 		consts.MasterCacheType,
 	},
 	{
 		consts.TabletNodeType,
-		consts.ExecNodeType,
-	},
-	{
-		consts.SchedulerType,
+		consts.UIType,
 		consts.ControllerAgentType,
-		consts.QueryTrackerType,
-		consts.QueueAgentType,
 		consts.YqlAgentType,
 	},
 	{
+		consts.SchedulerType,
+		consts.QueryTrackerType,
+		consts.QueueAgentType,
+	},
+	{
 		consts.StrawberryControllerType,
+	},
+	{
+		// Here we UPDATE master after all the components, because it shouldn't be newer
+		// than others.
+		// Currently, we guarantee that only for the case when components are not redefine their images.
+		consts.MasterType,
 	},
 }
 
@@ -78,6 +74,15 @@ func syncComponents(
 		return components.ComponentStatus{}, err
 	}
 	logComponentStatuses(ctx, registry, statuses, componentsOrder, resource)
+
+	// Special check before everything other component (including master) update.
+	masterBuildStatus := getStatusForMasterBuild(registry.master)
+	switch masterBuildStatus.SyncStatus {
+	case components.SyncStatusBlocked:
+		return masterBuildStatus, nil
+	case components.SyncStatusNeedSync:
+		return masterBuildStatus, registry.master.BuildInitial(ctx)
+	}
 
 	var batchToSync []component
 	for _, typesInBatch := range componentsOrder {
@@ -125,4 +130,26 @@ func syncComponents(
 		batchStatus.Message += fmt.Sprintf("; %s=%s (%s)", compName, st.SyncStatus, st.Message)
 	}
 	return batchStatus, nil
+}
+
+func getStatusForMasterBuild(master masterComponent) components.ComponentStatus {
+	masterBuiltInitially := master.IsBuildInitially()
+	masterNeedBuild := master.NeedBuild()
+	masterRebuildStarted := master.IsRebuildStarted()
+
+	if !masterBuiltInitially {
+		// This only happens once on cluster initialization.
+		return components.NeedSyncStatus("master initial build")
+	}
+
+	if masterNeedBuild && !masterRebuildStarted {
+		// Not all the master's sub-resources are running, and it is NOT because master is in update stage
+		// (in which is reasonable to expect some not-yet-built sub-resources).
+		// So we can't proceed with update, because almost every component need working master to be updated properly.
+		return components.ComponentStatus{
+			SyncStatus: components.SyncStatusBlocked,
+			Message:    "Master is not built, cluster can't start the update",
+		}
+	}
+	return components.ReadyStatus()
 }

@@ -16,8 +16,17 @@ type component interface {
 	GetType() consts.ComponentType
 }
 
+type masterComponent interface {
+	component
+	BuildInitial(ctx context.Context) error
+	IsBuildInitially() bool
+	NeedBuild() bool
+	IsRebuildStarted() bool
+}
+
 type componentRegistry struct {
 	comps  map[string]component
+	master masterComponent
 	byType map[consts.ComponentType][]component
 }
 
@@ -25,6 +34,9 @@ func (cr *componentRegistry) add(comp component) {
 	cr.comps[comp.GetName()] = comp
 	compsOfSameType := cr.byType[comp.GetType()]
 	compsOfSameType = append(compsOfSameType, comp)
+	if comp.GetType() == consts.MasterType {
+		cr.master = comp.(masterComponent)
+	}
 }
 
 func (cr *componentRegistry) list() []component {
