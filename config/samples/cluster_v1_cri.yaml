@@ -1,8 +1,17 @@
+#
+# Documentation for YTsaurus specification:
+# https://ytsaurus.tech/docs/en/admin-guide/prepare-spec
+#
+# Automatically generated reference for all supported options:
+# https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#ytsaurusspec
+#
+
 apiVersion: cluster.ytsaurus.tech/v1
 kind: Ytsaurus
 metadata:
   name: ytsaurus
 spec:
+  # https://ytsaurus.tech/docs/en/admin-guide/releases#ytsaurus-server
   # coreImage: ytsaurus/ytsaurus-nightly:latest
   # coreImage: ytsaurus/ytsaurus:dev-relwithdebinfo
   coreImage: ytsaurus/ytsaurus:dev-23.2-relwithdebinfo
@@ -340,8 +349,9 @@ spec:
 
   yqlAgents:
     instanceCount: 1
+    # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
     # image: ytsaurus/query-tracker:dev-relwithdebinfo
-    image: ytsaurus/query-tracker:0.0.3-relwithdebinfo
+    image: ytsaurus/query-tracker:0.0.4-relwithdebinfo
 
     loggers: *loggers
 
@@ -361,8 +371,9 @@ spec:
 
   queryTrackers:
     instanceCount: 1
+    # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
     # image: ytsaurus/query-tracker:dev-relwithdebinfo
-    image: ytsaurus/query-tracker:0.0.3-relwithdebinfo
+    image: ytsaurus/query-tracker:0.0.4-relwithdebinfo
 
     loggers: *loggers
 
@@ -384,4 +395,5 @@ spec:
     resources:
       limits:
         memory: 100Mi
-    image: ytsaurus/strawberry:0.0.6
+    # https://ytsaurus.tech/docs/en/admin-guide/releases#strawberry
+    image: ytsaurus/strawberry:0.0.11
