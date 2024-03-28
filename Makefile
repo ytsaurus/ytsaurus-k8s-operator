@@ -8,6 +8,14 @@ OPERATOR_IMAGE = ytsaurus/k8s-operator
 OPERATOR_TAG = 0.0.0-alpha
 OPERATOR_CHART = ytop-chart
 
+ifdef RELEASE_VERSION
+DOCKER_BUILD_ARGS += --build-arg VERSION="$(RELEASE_VERSION)"
+else
+DOCKER_BUILD_ARGS += --build-arg VERSION="$(OPERATOR_TAG)"
+endif
+DOCKER_BUILD_ARGS += --build-arg REVISION="$(shell git rev-parse HEAD)"
+DOCKER_BUILD_ARGS += --build-arg BUILD_DATE="$(shell date --rfc-3339=seconds)"
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -102,7 +110,7 @@ canonize: manifests generate fmt vet envtest ## Canonize tests.
 
 .PHONY: helm-kind-install
 helm-kind-install: ## Install helm chart from sources in kind.
-	docker build -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
+	docker build ${DOCKER_BUILD_ARGS} -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
 	kind load docker-image ${OPERATOR_IMAGE}:${OPERATOR_TAG}
 	helm upgrade -i ytsaurus $(OPERATOR_CHART) --set controllerManager.manager.image.repository=${OPERATOR_IMAGE} --set controllerManager.manager.image.tag=${OPERATOR_TAG}
 
@@ -120,7 +128,7 @@ k8s-install-cert-manager:
 
 .PHONY: helm-minikube-install
 helm-minikube-install: helm ## Install helm chart from sources in minikube.
-	eval $$(minikube docker-env) && docker build -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
+	eval $$(minikube docker-env) && docker build ${DOCKER_BUILD_ARGS} -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
 	helm install ytsaurus ytop-chart/
 
 .PHONY: helm-uninstall
@@ -139,7 +147,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 
 .PHONY: docker-build
 docker-build: test ## Build docker image with the manager.
-	docker build -t ${IMG} .
+	docker build ${DOCKER_BUILD_ARGS} -t ${IMG} .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
@@ -177,7 +185,7 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 	$(KUSTOMIZE) build config/default | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
 
 release: manifests kustomize helmify ## Release operator docker imager and helm chart.
-	docker build -t $(OPERATOR_IMAGE):${RELEASE_VERSION} .
+	docker build ${DOCKER_BUILD_ARGS} -t $(OPERATOR_IMAGE):${RELEASE_VERSION} .
 	docker push $(OPERATOR_IMAGE):${RELEASE_VERSION}
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(OPERATOR_IMAGE):${RELEASE_VERSION}
 	$(KUSTOMIZE) build config/default | $(HELMIFY) $(OPERATOR_CHART)
