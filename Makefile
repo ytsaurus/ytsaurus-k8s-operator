@@ -58,6 +58,10 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="{\"./api/...\" , \"./controllers/...\", \"./pkg/...\"}"
+	$(MAKE) docs/api.md
+
+docs/api.md: config/crd-ref-docs/config.yaml $(CRD_REF_DOCS) $(wildcard api/v1/*_types.go)
+	$(CRD_REF_DOCS) --config $< --renderer=markdown --source-path=api/v1 --output-path=$@
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
@@ -88,7 +92,7 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes.
 
 .PHONY: lint-generated
 lint-generated: generate helm ## Check that generated files are uptodate.
-	test -z "$(shell git status --porcelain api config ytop-chart)"
+	test -z "$(shell git status --porcelain api docs/api.md config ytop-chart)"
 
 .PHONY: canonize
 canonize: manifests generate fmt vet envtest ## Canonize tests.
@@ -197,6 +201,7 @@ ENVTEST ?= $(LOCALBIN)/setup-envtest-$(ENVTEST_VERSION)
 HELMIFY ?= $(LOCALBIN)/helmify-$(HELMIFY_VERSION)
 GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
 GINKGO ?= $(LOCALBIN)/ginkgo-$(GINKGO_VERSION)
+CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs-$(CRD_REF_DOCS_VERSION)
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.3.0
@@ -205,6 +210,7 @@ ENVTEST_VERSION ?= latest
 HELMIFY_VERSION ?= v0.4.5
 GOLANGCI_LINT_VERSION ?= v1.56.2
 GINKGO_VERSION ?= $(call go-get-version,github.com/onsi/ginkgo/v2)
+CRD_REF_DOCS_VERSION ?= v0.0.12
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
@@ -235,6 +241,11 @@ $(GOLANGCI_LINT): $(LOCALBIN)
 ginkgo: $(GINKGO) ## Download ginkgo locally if necessary.
 $(GINKGO): $(LOCALBIN)
 	$(call go-install-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo,$(GINKGO_VERSION))
+
+.PHONY: crd-ref-docs
+crd-ref-docs: $(CRD_REF_DOCS) ## Download crd-ref-docs locally if necessary.
+$(CRD_REF_DOCS): $(LOCALBIN)
+	$(call go-install-tool,$(CRD_REF_DOCS),github.com/elastic/crd-ref-docs,$(CRD_REF_DOCS_VERSION))
 
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary (ideally with version)

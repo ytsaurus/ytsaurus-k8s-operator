@@ -14,11 +14,13 @@ You’ll need a Kubernetes cluster to run against. You can use [KIND](https://si
 
 You can install pre-built versions of operator via [helm chart](https://hub.docker.com/r/ytsaurus/ytop-chart).
 
+Next you need to [prepare the Ytsaurus specification](https://ytsaurus.tech/docs/en/admin-guide/prepare-spec), see provided [samples](config/samples) and [API Reference](docs/api.md).
+
 ### Running on the cluster
 1. Install Instances of Custom Resources:
 
 ```sh
-kubectl apply -f config/samples/
+kubectl apply -f config/samples/cluster_v1_demo.yaml
 ```
 
 2. Build and push your image to the location specified by `IMG`:
