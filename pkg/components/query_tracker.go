@@ -20,11 +20,11 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type queryTracker struct {
-	componentBase
-	server server
+type QueryTracker struct {
+	localServerComponent
+	cfgen *ytconfig.Generator
 
-	ytsaurusClient YtsaurusClient
+	ytsaurusClient internalYtsaurusClient
 	tabletNodes    []Component
 	initCondition  string
 	initQTState    *InitJob
@@ -34,20 +34,23 @@ type queryTracker struct {
 func NewQueryTracker(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
-	yc YtsaurusClient,
+	yc internalYtsaurusClient,
 	tabletNodes []Component,
-) Component {
+) *QueryTracker {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: "yt-query-tracker",
-		ComponentName:  "QueryTracker",
-		MonitoringPort: consts.QueryTrackerMonitoringPort,
+		ComponentName:  string(consts.QueryTrackerType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
-	server := newServer(
+	if resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort == nil {
+		resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort = ptr.Int32(consts.QueryTrackerMonitoringPort)
+	}
+
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.QueryTrackers.InstanceSpec,
@@ -55,7 +58,7 @@ func NewQueryTracker(
 		"ytserver-query-tracker.yson",
 		cfgen.GetQueryTrackerStatefulSetName(),
 		cfgen.GetQueryTrackerServiceName(),
-		cfgen.GetQueryTrackerConfig,
+		func() ([]byte, error) { return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers) },
 	)
 
 	image := ytsaurus.GetResource().Spec.CoreImage
@@ -63,16 +66,12 @@ func NewQueryTracker(
 		image = *resource.Spec.QueryTrackers.InstanceSpec.Image
 	}
 
-	return &queryTracker{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
-		},
-		server:         server,
-		tabletNodes:    tabletNodes,
-		initCondition:  "queryTrackerInitCompleted",
-		ytsaurusClient: yc,
+	return &QueryTracker{
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		cfgen:                cfgen,
+		tabletNodes:          tabletNodes,
+		initCondition:        "queryTrackerInitCompleted",
+		ytsaurusClient:       yc,
 		initQTState: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -89,11 +88,13 @@ func NewQueryTracker(
 	}
 }
 
-func (qt *queryTracker) IsUpdatable() bool {
+func (qt *QueryTracker) IsUpdatable() bool {
 	return true
 }
 
-func (qt *queryTracker) Fetch(ctx context.Context) error {
+func (qt *QueryTracker) GetType() consts.ComponentType { return consts.QueryTrackerType }
+
+func (qt *QueryTracker) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		qt.server,
 		qt.initQTState,
@@ -101,7 +102,7 @@ func (qt *queryTracker) Fetch(ctx context.Context) error {
 	)
 }
 
-func (qt *queryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(qt.ytsaurus.GetClusterState()) && qt.server.needUpdate() {
@@ -112,7 +113,7 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		if IsUpdatingComponent(qt.ytsaurus, qt) {
 			if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(qt.ytsaurus, qt) {
 				if !dry {
-					err = removePods(ctx, qt.server, &qt.componentBase)
+					err = removePods(ctx, qt.server, &qt.localComponent)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
@@ -140,7 +141,7 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		return WaitingStatus(SyncStatusPending, qt.secret.Name()), err
 	}
 
-	if qt.server.needSync() {
+	if qt.NeedSync() {
 		if !dry {
 			err = qt.server.Sync(ctx)
 		}
@@ -158,14 +159,22 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	}
 
 	for _, tnd := range qt.tabletNodes {
-		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
+		tndStatus, err := tnd.Status(ctx)
+		if err != nil {
+			return tndStatus, err
+		}
+		if !IsRunningStatus(tndStatus.SyncStatus) {
 			return WaitingStatus(SyncStatusBlocked, "tablet nodes"), err
 		}
 	}
 
 	var ytClient yt.Client
 	if qt.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
-		if qt.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
+		ytClientStatus, err := qt.ytsaurusClient.Status(ctx)
+		if err != nil {
+			return ytClientStatus, err
+		}
+		if ytClientStatus.SyncStatus != SyncStatusReady {
 			return WaitingStatus(SyncStatusBlocked, qt.ytsaurusClient.GetName()), err
 		}
 
@@ -209,7 +218,7 @@ func (qt *queryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", qt.initCondition)), err
 }
 
-func (qt *queryTracker) createUser(ctx context.Context, ytClient yt.Client) (err error) {
+func (qt *QueryTracker) createUser(ctx context.Context, ytClient yt.Client) (err error) {
 	logger := log.FromContext(ctx)
 
 	token, _ := qt.secret.GetValue(consts.TokenSecretKey)
@@ -221,7 +230,7 @@ func (qt *queryTracker) createUser(ctx context.Context, ytClient yt.Client) (err
 	return
 }
 
-func (qt *queryTracker) init(ctx context.Context, ytClient yt.Client) (err error) {
+func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error) {
 	logger := log.FromContext(ctx)
 
 	_, err = ytClient.CreateNode(
@@ -319,24 +328,40 @@ func (qt *queryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 		logger.Error(err, "Creating access control object 'nobody' in namespace 'queries' failed")
 		return
 	}
+
+	_, err = ytClient.CreateObject(
+		ctx,
+		yt.NodeAccessControlObject,
+		&yt.CreateObjectOptions{
+			Attributes: map[string]interface{}{
+				"name":      "everyone",
+				"namespace": "queries",
+				"principal_acl": []interface{}{map[string]interface{}{
+					"action":      "allow",
+					"subjects":    []string{"everyone"},
+					"permissions": []string{"use"},
+				}},
+			},
+			IgnoreExisting: true,
+		},
+	)
+	if err != nil {
+		logger.Error(err, "Creating access control object 'everyone' in namespace 'queries' failed")
+		return
+	}
 	return
 }
 
-func (qt *queryTracker) Status(ctx context.Context) ComponentStatus {
-	status, err := qt.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (qt *QueryTracker) Status(ctx context.Context) (ComponentStatus, error) {
+	return qt.doSync(ctx, true)
 }
 
-func (qt *queryTracker) Sync(ctx context.Context) error {
+func (qt *QueryTracker) Sync(ctx context.Context) error {
 	_, err := qt.doSync(ctx, false)
 	return err
 }
 
-func (qt *queryTracker) prepareInitQueryTrackerState() {
+func (qt *QueryTracker) prepareInitQueryTrackerState() {
 	path := "/usr/bin/init_query_tracker_state"
 
 	script := []string{
@@ -351,7 +376,7 @@ func (qt *queryTracker) prepareInitQueryTrackerState() {
 	container.EnvFrom = []corev1.EnvFromSource{qt.secret.GetEnvSource()}
 }
 
-func (qt *queryTracker) updateQTState(ctx context.Context, dry bool) (*ComponentStatus, error) {
+func (qt *QueryTracker) updateQTState(ctx context.Context, dry bool) (*ComponentStatus, error) {
 	var err error
 	switch qt.ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:
@@ -375,20 +400,20 @@ func (qt *queryTracker) updateQTState(ctx context.Context, dry bool) (*Component
 	}
 }
 
-func (qt *queryTracker) setConditionQTStatePreparedForUpdating(ctx context.Context) {
+func (qt *QueryTracker) setConditionQTStatePreparedForUpdating(ctx context.Context) {
 	qt.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    consts.ConditionQTStatePreparedForUpdating,
 		Status:  metav1.ConditionTrue,
 		Reason:  "QTStatePreparedForUpdating",
-		Message: fmt.Sprintf("Query Tracker state prepared for updating"),
+		Message: "Query Tracker state prepared for updating",
 	})
 }
 
-func (qt *queryTracker) setConditionQTStateUpdated(ctx context.Context) {
+func (qt *QueryTracker) setConditionQTStateUpdated(ctx context.Context) {
 	qt.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    consts.ConditionQTStateUpdated,
 		Status:  metav1.ConditionTrue,
 		Reason:  "QTStateUpdated",
-		Message: fmt.Sprintf("Query tracker state updated"),
+		Message: "Query tracker state updated",
 	})
 }

@@ -44,10 +44,15 @@ const (
 	QueryTrackerMonitoringPort = 10028
 
 	YQLAgentRPCPort        = 9019
-	YQLAgentMonitoringPort = 10029
+	YQLAgentMonitoringPort = 10019
 
 	QueueAgentRPCPort        = 9030
 	QueueAgentMonitoringPort = 10030
 
 	UIHTTPPort = 80
+
+	StrawberryHTTPAPIPort = 80
+
+	MasterCachesRPCPort        = 9018
+	MasterCachesMonitoringPort = 10018
 )

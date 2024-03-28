@@ -21,13 +21,14 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type YtsaurusClient interface {
+type internalYtsaurusClient interface {
 	Component
 	GetYtClient() yt.Client
 }
 
-type ytsaurusClient struct {
-	componentBase
+type YtsaurusClient struct {
+	localComponent
+	cfgen     *ytconfig.Generator
 	httpProxy Component
 
 	initUserJob *InitJob
@@ -40,23 +41,20 @@ func NewYtsaurusClient(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	httpProxy Component,
-) YtsaurusClient {
+) *YtsaurusClient {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelClient,
-		ComponentName:  "YtsaurusClient",
+		ComponentName:  string(consts.YtsaurusClientType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
-	return &ytsaurusClient{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
-		},
-		httpProxy: httpProxy,
+	return &YtsaurusClient{
+		localComponent: newLocalComponent(&l, ytsaurus),
+		cfgen:          cfgen,
+		httpProxy:      httpProxy,
 		initUserJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -73,11 +71,13 @@ func NewYtsaurusClient(
 	}
 }
 
-func (yc *ytsaurusClient) IsUpdatable() bool {
+func (yc *YtsaurusClient) IsUpdatable() bool {
 	return false
 }
 
-func (yc *ytsaurusClient) Fetch(ctx context.Context) error {
+func (yc *YtsaurusClient) GetType() consts.ComponentType { return consts.YtsaurusClientType }
+
+func (yc *YtsaurusClient) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		yc.secret,
 		yc.initUserJob,
@@ -85,7 +85,7 @@ func (yc *ytsaurusClient) Fetch(ctx context.Context) error {
 	)
 }
 
-func (yc *ytsaurusClient) createInitUserScript() string {
+func (yc *YtsaurusClient) createInitUserScript() string {
 	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
 	initJob := initJobWithNativeDriverPrologue()
 	return initJob + "\n" + strings.Join(createUserCommand(consts.YtsaurusOperatorUserName, "", token, true), "\n")
@@ -124,7 +124,7 @@ type MasterHydra struct {
 	State                MasterState `yson:"state"`
 }
 
-func (yc *ytsaurusClient) getAllMasters(ctx context.Context) ([]MasterInfo, error) {
+func (yc *YtsaurusClient) getAllMasters(ctx context.Context) ([]MasterInfo, error) {
 	var primaryMaster MasterInfo
 	err := yc.ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection/primary_master"), &primaryMaster, getReadOnlyGetOptions())
 	if err != nil {
@@ -142,41 +142,13 @@ func (yc *ytsaurusClient) getAllMasters(ctx context.Context) ([]MasterInfo, erro
 	return append(secondaryMasters, primaryMaster), nil
 }
 
-func (yc *ytsaurusClient) getMasterHydra(ctx context.Context, path string) (MasterHydra, error) {
+func (yc *YtsaurusClient) getMasterHydra(ctx context.Context, path string) (MasterHydra, error) {
 	var masterHydra MasterHydra
 	err := yc.ytClient.GetNode(ctx, ypath.Path(path), &masterHydra, getReadOnlyGetOptions())
 	return masterHydra, err
 }
 
-func (yc *ytsaurusClient) startBuildMasterSnapshots(ctx context.Context) error {
-	var err error
-
-	allMastersReadOnly := true
-	for _, monitoringPath := range yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths {
-		masterHydra, err := yc.getMasterHydra(ctx, monitoringPath)
-		if err != nil {
-			return err
-		}
-		if !masterHydra.ReadOnly {
-			allMastersReadOnly = false
-			break
-		}
-	}
-
-	if allMastersReadOnly {
-		// build_master_snapshot was called before, do nothing.
-		return nil
-	}
-
-	_, err = yc.ytClient.BuildMasterSnapshots(ctx, &yt.BuildMasterSnapshotsOptions{
-		WaitForSnapshotCompletion: ptr.Bool(false),
-		SetReadOnly:               ptr.Bool(true),
-	})
-
-	return err
-}
-
-func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentStatus, error) {
+func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentStatus, error) {
 	var err error
 
 	switch yc.ytsaurus.GetUpdateState() {
@@ -184,112 +156,17 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionHasPossibility) &&
 			!yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
 
-			if !yc.ytsaurus.GetResource().Spec.EnableFullUpdate {
-				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-					Type:    consts.ConditionNoPossibility,
-					Status:  metav1.ConditionTrue,
-					Reason:  "Update",
-					Message: "Full update is not enabled",
-				})
-				return SimpleStatus(SyncStatusUpdating), nil
-			}
-
-			// Check tablet cell bundles.
-			notGoodBundles, err := GetNotGoodTabletCellBundles(ctx, yc.ytClient)
-
+			ok, msg, err := yc.HandlePossibilityCheck(ctx)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
 			}
 
-			if len(notGoodBundles) > 0 {
+			if !ok {
 				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 					Type:    consts.ConditionNoPossibility,
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
-					Message: fmt.Sprintf("Tablet cell bundles (%v) aren't in 'good' health", notGoodBundles),
-				})
-				return SimpleStatus(SyncStatusUpdating), nil
-			}
-
-			// Check LVC.
-			lvcCount := 0
-			err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/lost_vital_chunks/@count"), &lvcCount, nil)
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-
-			if lvcCount > 0 {
-				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-					Type:    consts.ConditionNoPossibility,
-					Status:  metav1.ConditionTrue,
-					Reason:  "Update",
-					Message: fmt.Sprintf("There are lost vital chunks: %v", lvcCount),
-				})
-				return SimpleStatus(SyncStatusUpdating), nil
-			}
-
-			// Check QMC.
-			qmcCount := 0
-			err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/quorum_missing_chunks/@count"), &qmcCount, nil)
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-
-			if qmcCount > 0 {
-				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-					Type:    consts.ConditionNoPossibility,
-					Status:  metav1.ConditionTrue,
-					Reason:  "Update",
-					Message: fmt.Sprintf("There are quorum missing chunks: %v", qmcCount),
-				})
-				return SimpleStatus(SyncStatusUpdating), nil
-			}
-
-			// Check masters.
-			primaryMasterAddresses := make([]string, 0)
-			err = yc.ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &primaryMasterAddresses, nil)
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-
-			leadingPrimaryMasterCount := 0
-			followingPrimaryMasterCount := 0
-
-			for _, primaryMasterAddress := range primaryMasterAddresses {
-				var hydra MasterHydra
-				err := yc.ytClient.GetNode(
-					ctx,
-					ypath.Path(fmt.Sprintf("//sys/primary_masters/%v/orchid/monitoring/hydra", primaryMasterAddress)),
-					&hydra,
-					nil)
-				if err != nil {
-					return SimpleStatus(SyncStatusUpdating), err
-				}
-
-				if !hydra.Active {
-					yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-						Type:    consts.ConditionNoPossibility,
-						Status:  metav1.ConditionTrue,
-						Reason:  "Update",
-						Message: fmt.Sprintf("There is a non-active master: %v", primaryMasterAddresses),
-					})
-					return SimpleStatus(SyncStatusUpdating), nil
-				}
-
-				switch hydra.State {
-				case MasterStateLeading:
-					leadingPrimaryMasterCount += 1
-				case MasterStateFollowing:
-					followingPrimaryMasterCount += 1
-				}
-			}
-
-			if !(leadingPrimaryMasterCount == 1 && followingPrimaryMasterCount+1 == len(primaryMasterAddresses)) {
-				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-					Type:    consts.ConditionNoPossibility,
-					Status:  metav1.ConditionTrue,
-					Reason:  "Update",
-					Message: fmt.Sprintf("There is no leader or some peer is not active"),
+					Message: msg,
 				})
 				return SimpleStatus(SyncStatusUpdating), nil
 			}
@@ -298,14 +175,14 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 				Type:    consts.ConditionHasPossibility,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
-				Message: "Update is possible",
+				Message: msg,
 			})
 			return SimpleStatus(SyncStatusUpdating), nil
 		}
 
 	case ytv1.UpdateStateWaitingForSafeModeEnabled:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSafeModeEnabled) {
-			err := yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), true, nil)
+			err := yc.EnableSafeMode(ctx)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
 			}
@@ -322,13 +199,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 	case ytv1.UpdateStateWaitingForTabletCellsSaving:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsSaved) {
-			var tabletCellBundles []ytv1.TabletCellBundleInfo
-			err := yc.ytClient.ListNode(
-				ctx,
-				ypath.Path("//sys/tablet_cell_bundles"),
-				&tabletCellBundles,
-				&yt.ListNodeOptions{Attributes: []string{"tablet_cell_count"}})
-
+			tabletCellBundles, err := yc.GetTabletCells(ctx)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
 			}
@@ -346,26 +217,9 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 	case ytv1.UpdateStateWaitingForTabletCellsRemovingStart:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemovingStarted) {
-
-			var tabletCells []string
-			err := yc.ytClient.ListNode(
-				ctx,
-				ypath.Path("//sys/tablet_cells"),
-				&tabletCells,
-				nil)
-
+			err = yc.RemoveTabletCells(ctx)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
-			}
-
-			for _, tabletCell := range tabletCells {
-				err := yc.ytClient.RemoveNode(
-					ctx,
-					ypath.Path(fmt.Sprintf("//sys/tablet_cells/%s", tabletCell)),
-					nil)
-				if err != nil {
-					return SimpleStatus(SyncStatusUpdating), err
-				}
 			}
 
 			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
@@ -379,19 +233,13 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 	case ytv1.UpdateStateWaitingForTabletCellsRemoved:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemoved) {
-			var tabletCells []string
-			err := yc.ytClient.ListNode(
-				ctx,
-				ypath.Path("//sys/tablet_cells"),
-				&tabletCells,
-				nil)
-
+			removed, err := yc.AreTabletCellsRemoved(ctx)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
 			}
 
-			if len(tabletCells) != 0 {
-				return SimpleStatus(SyncStatusUpdating), err
+			if !removed {
+				return SimpleStatus(SyncStatusUpdating), nil
 			}
 
 			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
@@ -406,20 +254,10 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 	case ytv1.UpdateStateWaitingForSnapshots:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnaphotsSaved) {
 			if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnapshotsMonitoringInfoSaved) {
-
-				var monitoringPaths []string
-				mastersInfo, err := yc.getAllMasters(ctx)
+				monitoringPaths, err := yc.GetMasterMonitoringPaths(ctx)
 				if err != nil {
 					return SimpleStatus(SyncStatusUpdating), err
 				}
-
-				for _, masterInfo := range mastersInfo {
-					for _, address := range masterInfo.Addresses {
-						monitoringPath := fmt.Sprintf("//sys/cluster_masters/%s/orchid/monitoring/hydra", address)
-						monitoringPaths = append(monitoringPaths, monitoringPath)
-					}
-				}
-
 				yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths = monitoringPaths
 
 				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
@@ -431,7 +269,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			}
 
 			if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnapshotsBuildingStarted) {
-				if err = yc.startBuildMasterSnapshots(ctx); err != nil {
+				if err = yc.StartBuildMasterSnapshots(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths); err != nil {
 					return SimpleStatus(SyncStatusUpdating), err
 				}
 
@@ -443,16 +281,13 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 				})
 			}
 
-			for _, monitoringPath := range yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths {
-				var masterHydra MasterHydra
-				err = yc.ytClient.GetNode(ctx, ypath.Path(monitoringPath), &masterHydra, getReadOnlyGetOptions())
-				if err != nil {
-					return SimpleStatus(SyncStatusUpdating), err
-				}
+			built, err := yc.AreMasterSnapshotsBuilt(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths)
+			if err != nil {
+				return SimpleStatus(SyncStatusUpdating), err
+			}
 
-				if !masterHydra.LastSnapshotReadOnly {
-					return SimpleStatus(SyncStatusUpdating), err
-				}
+			if !built {
+				return SimpleStatus(SyncStatusUpdating), err
 			}
 
 			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
@@ -467,11 +302,9 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 	case ytv1.UpdateStateWaitingForTabletCellsRecovery:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRecovered) {
 
-			for _, bundle := range yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles {
-				err = CreateTabletCells(ctx, yc.ytClient, bundle.Name, bundle.TabletCellCount)
-				if err != nil {
-					return SimpleStatus(SyncStatusUpdating), err
-				}
+			err = yc.RecoverTableCells(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles)
+			if err != nil {
+				return SimpleStatus(SyncStatusUpdating), err
 			}
 
 			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
@@ -485,7 +318,7 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 	case ytv1.UpdateStateWaitingForSafeModeDisabled:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSafeModeDisabled) {
-			err := yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), false, nil)
+			err := yc.DisableSafeMode(ctx)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
 			}
@@ -503,14 +336,13 @@ func (yc *ytsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 	return SimpleStatus(SyncStatusUpdating), err
 }
 
-func (yc *ytsaurusClient) getToken() string {
-	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
-	return token
-}
-
-func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
-	if !IsRunningStatus(yc.httpProxy.Status(ctx).SyncStatus) {
+	hpStatus, err := yc.httpProxy.Status(ctx)
+	if err != nil {
+		return hpStatus, err
+	}
+	if !IsRunningStatus(hpStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, yc.httpProxy.GetName()), err
 	}
 
@@ -567,20 +399,231 @@ func (yc *ytsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (yc *ytsaurusClient) Status(ctx context.Context) ComponentStatus {
-	status, err := yc.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (yc *YtsaurusClient) Status(ctx context.Context) (ComponentStatus, error) {
+	return yc.doSync(ctx, true)
 }
 
-func (yc *ytsaurusClient) Sync(ctx context.Context) error {
+func (yc *YtsaurusClient) Sync(ctx context.Context) error {
 	_, err := yc.doSync(ctx, false)
 	return err
 }
 
-func (yc *ytsaurusClient) GetYtClient() yt.Client {
+func (yc *YtsaurusClient) GetYtClient() yt.Client {
 	return yc.ytClient
+}
+
+func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, msg string, err error) {
+	if !yc.ytsaurus.GetResource().Spec.EnableFullUpdate {
+		return false, "Full update is not enabled", nil
+	}
+
+	// Check tablet cell bundles.
+	notGoodBundles, err := GetNotGoodTabletCellBundles(ctx, yc.ytClient)
+	if err != nil {
+		return
+	}
+
+	if len(notGoodBundles) > 0 {
+		msg = fmt.Sprintf("Tablet cell bundles (%v) aren't in 'good' health", notGoodBundles)
+		return false, msg, nil
+	}
+
+	// Check LVC.
+	lvcCount := 0
+	err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/lost_vital_chunks/@count"), &lvcCount, nil)
+	if err != nil {
+		return
+	}
+
+	if lvcCount > 0 {
+		msg = fmt.Sprintf("There are lost vital chunks: %v", lvcCount)
+		return false, msg, nil
+	}
+
+	// Check QMC.
+	qmcCount := 0
+	err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/quorum_missing_chunks/@count"), &qmcCount, nil)
+	if err != nil {
+		return
+	}
+
+	if qmcCount > 0 {
+		msg = fmt.Sprintf("There are quorum missing chunks: %v", qmcCount)
+		return false, msg, nil
+	}
+
+	// Check masters.
+	primaryMasterAddresses := make([]string, 0)
+	err = yc.ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &primaryMasterAddresses, nil)
+	if err != nil {
+		return
+	}
+
+	leadingPrimaryMasterCount := 0
+	followingPrimaryMasterCount := 0
+
+	for _, primaryMasterAddress := range primaryMasterAddresses {
+		var hydra MasterHydra
+		err = yc.ytClient.GetNode(
+			ctx,
+			ypath.Path(fmt.Sprintf("//sys/primary_masters/%v/orchid/monitoring/hydra", primaryMasterAddress)),
+			&hydra,
+			nil)
+		if err != nil {
+			return
+		}
+
+		if !hydra.Active {
+			msg = fmt.Sprintf("There is a non-active master: %v", primaryMasterAddresses)
+			return false, msg, nil
+		}
+
+		switch hydra.State {
+		case MasterStateLeading:
+			leadingPrimaryMasterCount += 1
+		case MasterStateFollowing:
+			followingPrimaryMasterCount += 1
+		}
+	}
+
+	if !(leadingPrimaryMasterCount == 1 && followingPrimaryMasterCount+1 == len(primaryMasterAddresses)) {
+		msg = "There is no leader or some peer is not active"
+		return false, msg, nil
+	}
+
+	return true, "Update is possible", nil
+}
+
+// Safe mode actions.
+
+func (yc *YtsaurusClient) EnableSafeMode(ctx context.Context) error {
+	return yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), true, nil)
+}
+func (yc *YtsaurusClient) DisableSafeMode(ctx context.Context) error {
+	return yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), false, nil)
+}
+
+// Tablet cells actions.
+
+func (yc *YtsaurusClient) GetTabletCells(ctx context.Context) ([]ytv1.TabletCellBundleInfo, error) {
+	var tabletCellBundles []ytv1.TabletCellBundleInfo
+	err := yc.ytClient.ListNode(
+		ctx,
+		ypath.Path("//sys/tablet_cell_bundles"),
+		&tabletCellBundles,
+		&yt.ListNodeOptions{Attributes: []string{"tablet_cell_count"}},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+	return tabletCellBundles, nil
+}
+func (yc *YtsaurusClient) RemoveTabletCells(ctx context.Context) error {
+	var tabletCells []string
+	err := yc.ytClient.ListNode(
+		ctx,
+		ypath.Path("//sys/tablet_cells"),
+		&tabletCells,
+		nil)
+
+	if err != nil {
+		return err
+	}
+
+	for _, tabletCell := range tabletCells {
+		err = yc.ytClient.RemoveNode(
+			ctx,
+			ypath.Path(fmt.Sprintf("//sys/tablet_cells/%s", tabletCell)),
+			nil)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (yc *YtsaurusClient) AreTabletCellsRemoved(ctx context.Context) (bool, error) {
+	var tabletCells []string
+	err := yc.ytClient.ListNode(
+		ctx,
+		ypath.Path("//sys/tablet_cells"),
+		&tabletCells,
+		nil)
+
+	if err != nil {
+		return false, err
+	}
+
+	if len(tabletCells) != 0 {
+		return false, err
+	}
+	return true, nil
+}
+func (yc *YtsaurusClient) RecoverTableCells(ctx context.Context, bundles []ytv1.TabletCellBundleInfo) error {
+	for _, bundle := range bundles {
+		err := CreateTabletCells(ctx, yc.ytClient, bundle.Name, bundle.TabletCellCount)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Master actions.
+
+func (yc *YtsaurusClient) GetMasterMonitoringPaths(ctx context.Context) ([]string, error) {
+	var monitoringPaths []string
+	mastersInfo, err := yc.getAllMasters(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, masterInfo := range mastersInfo {
+		for _, address := range masterInfo.Addresses {
+			monitoringPath := fmt.Sprintf("//sys/cluster_masters/%s/orchid/monitoring/hydra", address)
+			monitoringPaths = append(monitoringPaths, monitoringPath)
+		}
+	}
+	return monitoringPaths, nil
+}
+func (yc *YtsaurusClient) StartBuildMasterSnapshots(ctx context.Context, monitoringPaths []string) error {
+	var err error
+
+	allMastersReadOnly := true
+	for _, monitoringPath := range monitoringPaths {
+		masterHydra, err := yc.getMasterHydra(ctx, monitoringPath)
+		if err != nil {
+			return err
+		}
+		if !masterHydra.ReadOnly {
+			allMastersReadOnly = false
+			break
+		}
+	}
+
+	if allMastersReadOnly {
+		// build_master_snapshot was called before, do nothing.
+		return nil
+	}
+
+	_, err = yc.ytClient.BuildMasterSnapshots(ctx, &yt.BuildMasterSnapshotsOptions{
+		WaitForSnapshotCompletion: ptr.Bool(false),
+		SetReadOnly:               ptr.Bool(true),
+	})
+
+	return err
+}
+func (yc *YtsaurusClient) AreMasterSnapshotsBuilt(ctx context.Context, monitoringPaths []string) (bool, error) {
+	for _, monitoringPath := range monitoringPaths {
+		var masterHydra MasterHydra
+		err := yc.ytClient.GetNode(ctx, ypath.Path(monitoringPath), &masterHydra, getReadOnlyGetOptions())
+		if err != nil {
+			return false, err
+		}
+
+		if !masterHydra.LastSnapshotReadOnly {
+			return false, nil
+		}
+	}
+	return true, nil
 }

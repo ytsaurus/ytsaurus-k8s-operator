@@ -11,10 +11,12 @@ import (
 )
 
 const (
-	YtsaurusName     = "test-ytsaurus"
-	CoreImageFirst   = "ytsaurus/ytsaurus-nightly:dev-23.1-5f8638fc66f6e59c7a06708ed508804986a6579f"
-	CoreImageSecond  = "ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de"
-	CoreImageNextVer = "ytsaurus/ytsaurus-nightly:dev-23.2-62a472c4efc2c8395d125a13ca0216720e06999d"
+	YtsaurusName = "test-ytsaurus"
+	// Images should be in sync with TEST_IMAGES variable in Makefile
+	// todo: come up with a more elegant solution
+	CoreImageFirst   = "ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de"
+	CoreImageSecond  = "ytsaurus/ytsaurus-nightly:dev-23.1-28ccaedbf353b870bedafb6e881ecf386a0a3779"
+	CoreImageNextVer = "ytsaurus/ytsaurus-nightly:dev-23.2-9c50056eacfa4fe213798a5b9ee828ae3acb1bca"
 )
 
 func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
@@ -26,10 +28,17 @@ func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 			Namespace: namespace,
 		},
 		Spec: YtsaurusSpec{
+			CommonSpec: CommonSpec{
+				UseShortNames: true,
+				CoreImage:     CoreImageFirst,
+			},
 			EnableFullUpdate: true,
 			IsManaged:        true,
-			UseShortNames:    true,
-			CoreImage:        CoreImageFirst,
+			Discovery: DiscoverySpec{
+				InstanceSpec: InstanceSpec{
+					InstanceCount: 1,
+				},
+			},
 			Bootstrap: &BootstrapSpec{
 				TabletCellBundles: &BundlesBootstrapSpec{
 					Sys: &BundleBootstrapSpec{
@@ -45,7 +54,9 @@ func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 				},
 			},
 			PrimaryMasters: MastersSpec{
-				CellTag: 1,
+				MasterConnectionSpec: MasterConnectionSpec{
+					CellTag: 1,
+				},
 				InstanceSpec: InstanceSpec{
 					InstanceCount: 1,
 					Locations: []LocationSpec{

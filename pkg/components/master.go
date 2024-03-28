@@ -3,12 +3,12 @@ package components
 import (
 	"context"
 	"fmt"
-	"go.ytsaurus.tech/yt/go/yt"
 	"strings"
+
+	"go.ytsaurus.tech/yt/go/yt"
 
 	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/yson"
-	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -26,27 +26,30 @@ const (
 	defaultHostAddressLabel = "kubernetes.io/hostname"
 )
 
-type master struct {
-	componentBase
-	server server
+type Master struct {
+	localServerComponent
+	cfgen *ytconfig.Generator
 
 	initJob          *InitJob
 	exitReadOnlyJob  *InitJob
 	adminCredentials corev1.Secret
 }
 
-func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component {
+func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelMaster,
-		ComponentName:  "Master",
-		MonitoringPort: consts.MasterMonitoringPort,
+		ComponentName:  string(consts.MasterType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
-	server := newServer(
+	if resource.Spec.PrimaryMasters.InstanceSpec.MonitoringPort == nil {
+		resource.Spec.PrimaryMasters.InstanceSpec.MonitoringPort = ptr.Int32(consts.MasterMonitoringPort)
+	}
+
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.PrimaryMasters.InstanceSpec,
@@ -54,7 +57,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component
 		"ytserver-master.yson",
 		cfgen.GetMastersStatefulSetName(),
 		cfgen.GetMastersServiceName(),
-		cfgen.GetMasterConfig,
+		func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
 	)
 
 	initJob := NewInitJob(
@@ -78,23 +81,21 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) Component
 		cfgen.GetNativeClientConfig,
 	)
 
-	return &master{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
-		},
-		server:          server,
-		initJob:         initJob,
-		exitReadOnlyJob: exitReadOnlyJob,
+	return &Master{
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		cfgen:                cfgen,
+		initJob:              initJob,
+		exitReadOnlyJob:      exitReadOnlyJob,
 	}
 }
 
-func (m *master) IsUpdatable() bool {
+func (m *Master) GetType() consts.ComponentType { return consts.MasterType }
+
+func (m *Master) IsUpdatable() bool {
 	return true
 }
 
-func (m *master) Fetch(ctx context.Context) error {
+func (m *Master) Fetch(ctx context.Context) error {
 	if m.ytsaurus.GetResource().Spec.AdminCredentials != nil {
 		err := m.ytsaurus.APIProxy().FetchObject(
 			ctx,
@@ -112,7 +113,7 @@ func (m *master) Fetch(ctx context.Context) error {
 	)
 }
 
-func (m *master) initAdminUser() string {
+func (m *Master) initAdminUser() string {
 	adminLogin, adminPassword := consts.DefaultAdminLogin, consts.DefaultAdminPassword
 	adminToken := consts.DefaultAdminPassword
 
@@ -140,7 +141,7 @@ type Medium struct {
 	Name string `yson:"name"`
 }
 
-func (m *master) getExtraMedia() []Medium {
+func (m *Master) getExtraMedia() []Medium {
 	mediaMap := make(map[string]Medium)
 
 	for _, d := range m.ytsaurus.GetResource().Spec.DataNodes {
@@ -162,26 +163,27 @@ func (m *master) getExtraMedia() []Medium {
 	return mediaSlice
 }
 
-func (m *master) initMedia() string {
+func (m *Master) initMedia() string {
 	var commands []string
 	for _, medium := range m.getExtraMedia() {
 		attr, err := yson.MarshalFormat(medium, yson.FormatText)
 		if err != nil {
 			panic(err)
 		}
-		commands = append(commands, fmt.Sprintf("/usr/bin/yt get //sys/media/%s/@name || /usr/bin/yt create medium --attr '%s'", medium.Name, string(attr)))
+		// COMPAT(gritukan): Remove "medium" after some time.
+		commands = append(commands, fmt.Sprintf("/usr/bin/yt get //sys/media/%s/@name || /usr/bin/yt create domestic_medium --attr '%s' || /usr/bin/yt create medium --attr '%s'", medium.Name, string(attr), string(attr)))
 	}
 	return strings.Join(commands, "\n")
 }
 
-func (m *master) initGroups() string {
+func (m *Master) initGroups() string {
 	commands := []string{
 		"/usr/bin/yt create group --attr '{name=admins}' --ignore-existing",
 	}
 	return strings.Join(commands, "\n")
 }
 
-func (m *master) initSchemaACLs() string {
+func (m *Master) initSchemaACLs() string {
 	userReadACE := yt.ACE{
 		Action:      "allow",
 		Subjects:    []string{"users"},
@@ -245,7 +247,7 @@ func (m *master) initSchemaACLs() string {
 	return strings.Join(commands, "\n")
 }
 
-func (m *master) createInitScript() string {
+func (m *Master) createInitScript() string {
 	clusterConnection, err := m.cfgen.GetClusterConnection()
 	if err != nil {
 		panic(err)
@@ -270,7 +272,7 @@ func (m *master) createInitScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (m *master) createExitReadOnlyScript() string {
+func (m *Master) createExitReadOnlyScript() string {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		"export YT_LOG_LEVEL=DEBUG",
@@ -282,7 +284,7 @@ func (m *master) createExitReadOnlyScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(m.ytsaurus.GetClusterState()) && m.server.needUpdate() {
@@ -294,12 +296,12 @@ func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 			st, err := m.exitReadOnly(ctx, dry)
 			return *st, err
 		}
-		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.componentBase, m.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	if m.server.needSync() {
+	if m.NeedSync() {
 		if !dry {
 			err = m.doServerSync(ctx)
 		}
@@ -317,63 +319,25 @@ func (m *master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	return m.initJob.Sync(ctx, dry)
 }
 
-func (m *master) Status(ctx context.Context) ComponentStatus {
-	status, err := m.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (m *Master) Status(ctx context.Context) (ComponentStatus, error) {
+	return m.doSync(ctx, true)
 }
 
-func (m *master) Sync(ctx context.Context) error {
+func (m *Master) Sync(ctx context.Context) error {
 	_, err := m.doSync(ctx, false)
 	return err
 }
 
-func (m *master) doServerSync(ctx context.Context) error {
+func (m *Master) doServerSync(ctx context.Context) error {
 	statefulSet := m.server.buildStatefulSet()
-	m.addAffinity(statefulSet)
+	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
+	if len(primaryMastersSpec.HostAddresses) != 0 {
+		AddAffinity(statefulSet, m.getHostAddressLabel(), primaryMastersSpec.HostAddresses)
+	}
 	return m.server.Sync(ctx)
 }
 
-func (m *master) addAffinity(statefulSet *appsv1.StatefulSet) {
-	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
-	if len(primaryMastersSpec.HostAddresses) == 0 {
-		return
-	}
-
-	affinity := &corev1.Affinity{}
-	if statefulSet.Spec.Template.Spec.Affinity != nil {
-		affinity = statefulSet.Spec.Template.Spec.Affinity
-	}
-
-	nodeAffinity := &corev1.NodeAffinity{}
-	if affinity.NodeAffinity != nil {
-		nodeAffinity = affinity.NodeAffinity
-	}
-
-	selector := &corev1.NodeSelector{}
-	if nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
-		selector = nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution
-	}
-
-	nodeHostnameLabel := m.getHostAddressLabel()
-	selector.NodeSelectorTerms = append(selector.NodeSelectorTerms, corev1.NodeSelectorTerm{
-		MatchExpressions: []corev1.NodeSelectorRequirement{
-			{
-				Key:      nodeHostnameLabel,
-				Operator: corev1.NodeSelectorOpIn,
-				Values:   primaryMastersSpec.HostAddresses,
-			},
-		},
-	})
-	nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = selector
-	affinity.NodeAffinity = nodeAffinity
-	statefulSet.Spec.Template.Spec.Affinity = affinity
-}
-
-func (m *master) getHostAddressLabel() string {
+func (m *Master) getHostAddressLabel() string {
 	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
 	if primaryMastersSpec.HostAddressLabel != "" {
 		return primaryMastersSpec.HostAddressLabel
@@ -381,7 +345,7 @@ func (m *master) getHostAddressLabel() string {
 	return defaultHostAddressLabel
 }
 
-func (m *master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, error) {
+func (m *Master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, error) {
 	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterExitReadOnlyPrepared) {
 		if !m.exitReadOnlyJob.isRestartPrepared() {
 			if err := m.exitReadOnlyJob.prepareRestart(ctx, dry); err != nil {
@@ -415,7 +379,7 @@ func (m *master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, 
 	return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
 }
 
-func (m *master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav1.ConditionStatus) {
+func (m *Master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav1.ConditionStatus) {
 	m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    consts.ConditionMasterExitReadOnlyPrepared,
 		Status:  status,

@@ -3,19 +3,21 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/library/go/ptr"
+
+	corev1 "k8s.io/api/core/v1"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/yt/go/yt"
-	corev1 "k8s.io/api/core/v1"
 )
 
-type httpProxy struct {
-	componentBase
-	server server
+type HttpProxy struct {
+	localServerComponent
+	cfgen *ytconfig.Generator
 
 	serviceType      corev1.ServiceType
 	master           Component
@@ -23,26 +25,27 @@ type httpProxy struct {
 
 	role        string
 	httpsSecret *resources.TLSSecret
-
-	ytClient yt.Client
 }
 
 func NewHTTPProxy(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
-	spec ytv1.HTTPProxiesSpec) Component {
+	spec ytv1.HTTPProxiesSpec) *HttpProxy {
 
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelHTTPProxy, spec.Role),
-		ComponentName:  cfgen.FormatComponentStringWithDefault("HttpProxy", spec.Role),
-		MonitoringPort: consts.HTTPProxyMonitoringPort,
+		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.HttpProxyType), spec.Role),
 	}
 
-	server := newServer(
+	if spec.InstanceSpec.MonitoringPort == nil {
+		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.HTTPProxyMonitoringPort)
+	}
+
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -72,33 +75,31 @@ func NewHTTPProxy(
 	balancingService.SetHttpNodePort(spec.HttpNodePort)
 	balancingService.SetHttpsNodePort(spec.HttpsNodePort)
 
-	return &httpProxy{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
-		},
-		server:           server,
-		master:           masterReconciler,
-		serviceType:      spec.ServiceType,
-		role:             spec.Role,
-		httpsSecret:      httpsSecret,
-		balancingService: balancingService,
+	return &HttpProxy{
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		cfgen:                cfgen,
+		master:               masterReconciler,
+		serviceType:          spec.ServiceType,
+		role:                 spec.Role,
+		httpsSecret:          httpsSecret,
+		balancingService:     balancingService,
 	}
 }
 
-func (hp *httpProxy) IsUpdatable() bool {
+func (hp *HttpProxy) IsUpdatable() bool {
 	return true
 }
 
-func (hp *httpProxy) Fetch(ctx context.Context) error {
+func (hp *HttpProxy) GetType() consts.ComponentType { return consts.HttpProxyType }
+
+func (hp *HttpProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		hp.server,
 		hp.balancingService,
 	)
 }
 
-func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(hp.ytsaurus.GetClusterState()) && hp.server.needUpdate() {
@@ -106,16 +107,20 @@ func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	}
 
 	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.componentBase, hp.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.localComponent, hp.server, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	if !IsRunningStatus(hp.master.Status(ctx).SyncStatus) {
+	masterStatus, err := hp.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, hp.master.GetName()), err
 	}
 
-	if hp.server.needSync() {
+	if hp.NeedSync() {
 		if !dry {
 			statefulSet := hp.server.buildStatefulSet()
 			if hp.httpsSecret != nil {
@@ -143,16 +148,11 @@ func (hp *httpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (hp *httpProxy) Status(ctx context.Context) ComponentStatus {
-	status, err := hp.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (hp *HttpProxy) Status(ctx context.Context) (ComponentStatus, error) {
+	return hp.doSync(ctx, true)
 }
 
-func (hp *httpProxy) Sync(ctx context.Context) error {
+func (hp *HttpProxy) Sync(ctx context.Context) error {
 	_, err := hp.doSync(ctx, false)
 	return err
 }

@@ -4,26 +4,28 @@ import (
 	"context"
 	"fmt"
 
+	"go.ytsaurus.tech/library/go/ptr"
+	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const SysBundle string = "sys"
 const DefaultBundle string = "default"
 
-type tabletNode struct {
-	componentBase
-	server server
+type TabletNode struct {
+	localServerComponent
+	cfgen *ytconfig.NodeGenerator
 
-	ytsaurusClient YtsaurusClient
+	ytsaurusClient internalYtsaurusClient
 
 	initBundlesCondition string
 	spec                 ytv1.TabletNodesSpec
@@ -31,22 +33,25 @@ type tabletNode struct {
 }
 
 func NewTabletNode(
-	cfgen *ytconfig.Generator,
+	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
-	ytsaurusClient YtsaurusClient,
+	ytsaurusClient internalYtsaurusClient,
 	spec ytv1.TabletNodesSpec,
 	doInitiailization bool,
-) Component {
+) *TabletNode {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelTabletNode, spec.Name),
-		ComponentName:  cfgen.FormatComponentStringWithDefault("TabletNode", spec.Name),
-		MonitoringPort: consts.TabletNodeMonitoringPort,
+		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.TabletNodeType), spec.Name),
 	}
 
-	server := newServer(
+	if spec.InstanceSpec.MonitoringPort == nil {
+		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.TabletNodeMonitoringPort)
+	}
+
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -59,13 +64,9 @@ func NewTabletNode(
 		},
 	)
 
-	return &tabletNode{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
-		},
-		server:               server,
+	return &TabletNode{
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		cfgen:                cfgen,
 		initBundlesCondition: "bundlesTabletNodeInitCompleted",
 		ytsaurusClient:       ytsaurusClient,
 		spec:                 spec,
@@ -73,11 +74,13 @@ func NewTabletNode(
 	}
 }
 
-func (tn *tabletNode) IsUpdatable() bool {
+func (tn *TabletNode) IsUpdatable() bool {
 	return true
 }
 
-func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (tn *TabletNode) GetType() consts.ComponentType { return consts.TabletNodeType }
+
+func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 	logger := log.FromContext(ctx)
 
@@ -86,12 +89,12 @@ func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.componentBase, tn.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.localComponent, tn.server, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	if tn.server.needSync() {
+	if tn.NeedSync() {
 		if !dry {
 			err = tn.server.Sync(ctx)
 		}
@@ -107,7 +110,11 @@ func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return SimpleStatus(SyncStatusReady), err
 	}
 
-	if tn.ytsaurusClient.Status(ctx).SyncStatus != SyncStatusReady {
+	ytClientStatus, err := tn.ytsaurusClient.Status(ctx)
+	if err != nil {
+		return ytClientStatus, err
+	}
+	if ytClientStatus.SyncStatus != SyncStatusReady {
 		return WaitingStatus(SyncStatusBlocked, tn.ytsaurusClient.GetName()), err
 	}
 
@@ -118,7 +125,7 @@ func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		if tn.doInitialization {
 			if exists, err := ytClient.NodeExists(ctx, ypath.Path(fmt.Sprintf("//sys/tablet_cell_bundles/%s", SysBundle)), nil); err == nil {
 				if !exists {
-					options := map[string]string{
+					options := map[string]any{
 						"changelog_account": "sys",
 						"snapshot_account":  "sys",
 					}
@@ -131,6 +138,13 @@ func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 						if bootstrap.SnapshotPrimaryMedium != nil {
 							options["snapshot_primary_medium"] = *bootstrap.SnapshotPrimaryMedium
 						}
+					}
+
+					if tn.cfgen.GetMaxReplicationFactor() < 3 {
+						options["changelog_replication_factor"] = 1
+						options["changelog_read_quorum"] = 1
+						options["changelog_write_quorum"] = 1
+						options["snapshot_replication_factor"] = 1
 					}
 
 					_, err = ytClient.CreateObject(ctx, yt.NodeTabletCellBundle, &yt.CreateObjectOptions{
@@ -193,7 +207,7 @@ func (tn *tabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", tn.initBundlesCondition)), err
 }
 
-func (tn *tabletNode) getBundleBootstrap(bundle string) *ytv1.BundleBootstrapSpec {
+func (tn *TabletNode) getBundleBootstrap(bundle string) *ytv1.BundleBootstrapSpec {
 	resource := tn.ytsaurus.GetResource()
 	if resource.Spec.Bootstrap == nil || resource.Spec.Bootstrap.TabletCellBundles == nil {
 		return nil
@@ -210,20 +224,15 @@ func (tn *tabletNode) getBundleBootstrap(bundle string) *ytv1.BundleBootstrapSpe
 	return nil
 }
 
-func (tn *tabletNode) Status(ctx context.Context) ComponentStatus {
-	status, err := tn.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (tn *TabletNode) Status(ctx context.Context) (ComponentStatus, error) {
+	return tn.doSync(ctx, true)
 }
 
-func (tn *tabletNode) Sync(ctx context.Context) error {
+func (tn *TabletNode) Sync(ctx context.Context) error {
 	_, err := tn.doSync(ctx, false)
 	return err
 }
 
-func (tn *tabletNode) Fetch(ctx context.Context) error {
+func (tn *TabletNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, tn.server)
 }

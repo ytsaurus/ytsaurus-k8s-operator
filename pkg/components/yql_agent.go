@@ -5,36 +5,42 @@ import (
 	"fmt"
 	"strings"
 
+	"go.ytsaurus.tech/library/go/ptr"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	corev1 "k8s.io/api/core/v1"
 )
 
-type yqlAgent struct {
-	componentBase
-	server          server
+type YqlAgent struct {
+	localServerComponent
+	cfgen           *ytconfig.Generator
 	master          Component
 	initEnvironment *InitJob
 	secret          *resources.StringSecret
 }
 
-func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) Component {
+func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *YqlAgent {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelYqlAgent,
-		ComponentName:  "YqlAgent",
-		MonitoringPort: consts.YQLAgentMonitoringPort,
+		ComponentName:  string(consts.YqlAgentType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
-	server := newServer(
+	if resource.Spec.YQLAgents.InstanceSpec.MonitoringPort == nil {
+		resource.Spec.YQLAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.YQLAgentMonitoringPort)
+	}
+
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.YQLAgents.InstanceSpec,
@@ -42,17 +48,15 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		"ytserver-yql-agent.yson",
 		cfgen.GetYQLAgentStatefulSetName(),
 		cfgen.GetYQLAgentServiceName(),
-		cfgen.GetYQLAgentConfig,
+		func() ([]byte, error) {
+			return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents)
+		},
 	)
 
-	return &yqlAgent{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
-		},
-		server: server,
-		master: master,
+	return &YqlAgent{
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		cfgen:                cfgen,
+		master:               master,
 		initEnvironment: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -69,15 +73,17 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 	}
 }
 
-func (yqla *yqlAgent) IsUpdatable() bool {
+func (yqla *YqlAgent) IsUpdatable() bool {
 	return true
 }
 
-func (yqla *yqlAgent) GetName() string {
+func (yqla *YqlAgent) GetType() consts.ComponentType { return consts.YqlAgentType }
+
+func (yqla *YqlAgent) GetName() string {
 	return yqla.labeller.ComponentName
 }
 
-func (yqla *yqlAgent) Fetch(ctx context.Context) error {
+func (yqla *YqlAgent) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		yqla.server,
 		yqla.initEnvironment,
@@ -85,14 +91,14 @@ func (yqla *yqlAgent) Fetch(ctx context.Context) error {
 	)
 }
 
-func (yqla *yqlAgent) initUsers() string {
+func (yqla *YqlAgent) initUsers() string {
 	token, _ := yqla.secret.GetValue(consts.TokenSecretKey)
 	commands := createUserCommand(consts.YqlUserName, "", token, true)
 	commands = append(commands, createUserCommand("yql_agent", "", "", true)...)
 	return strings.Join(commands, "\n")
 }
 
-func (yqla *yqlAgent) createInitScript() string {
+func (yqla *YqlAgent) createInitScript() string {
 	var sb strings.Builder
 	sb.WriteString("[")
 	for _, addr := range yqla.cfgen.GetYQLAgentAddresses() {
@@ -114,7 +120,7 @@ func (yqla *yqlAgent) createInitScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(yqla.ytsaurus.GetClusterState()) && yqla.server.needUpdate() {
@@ -122,12 +128,16 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.componentBase, yqla.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.localComponent, yqla.server, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	if !IsRunningStatus(yqla.master.Status(ctx).SyncStatus) {
+	masterStatus, err := yqla.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, yqla.master.GetName()), err
 	}
 
@@ -142,7 +152,7 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return WaitingStatus(SyncStatusPending, yqla.secret.Name()), err
 	}
 
-	if yqla.server.needSync() {
+	if yqla.NeedSync() {
 		if !dry {
 			ss := yqla.server.buildStatefulSet()
 			container := &ss.Spec.Template.Spec.Containers[0]
@@ -170,16 +180,11 @@ func (yqla *yqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	return yqla.initEnvironment.Sync(ctx, dry)
 }
 
-func (yqla *yqlAgent) Status(ctx context.Context) ComponentStatus {
-	status, err := yqla.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (yqla *YqlAgent) Status(ctx context.Context) (ComponentStatus, error) {
+	return yqla.doSync(ctx, true)
 }
 
-func (yqla *yqlAgent) Sync(ctx context.Context) error {
+func (yqla *YqlAgent) Sync(ctx context.Context) error {
 	_, err := yqla.doSync(ctx, false)
 	return err
 }

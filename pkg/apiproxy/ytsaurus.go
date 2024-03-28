@@ -38,8 +38,16 @@ func (c *Ytsaurus) GetResource() *ytv1.Ytsaurus {
 	return c.ytsaurus
 }
 
+func (c *Ytsaurus) GetCommonSpec() ytv1.CommonSpec {
+	return c.GetResource().Spec.CommonSpec
+}
+
 func (c *Ytsaurus) GetClusterState() ytv1.ClusterState {
 	return c.ytsaurus.Status.State
+}
+
+func (c *Ytsaurus) IsUpdating() bool {
+	return c.GetClusterState() == ytv1.ClusterStateUpdating
 }
 
 func (c *Ytsaurus) GetUpdateState() ytv1.UpdateState {

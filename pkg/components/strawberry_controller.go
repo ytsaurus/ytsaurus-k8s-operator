@@ -6,19 +6,22 @@ import (
 	"path"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	corev1 "k8s.io/api/core/v1"
 )
 
-type strawberryController struct {
-	componentBase
+type StrawberryController struct {
+	localComponent
+	cfgen              *ytconfig.Generator
 	microservice       microservice
-	initUserJob        *InitJob
+	initUserAndUrlJob  *InitJob
 	initChytClusterJob *InitJob
 	secret             *resources.StringSecret
 
@@ -44,7 +47,7 @@ func NewStrawberryController(
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	scheduler Component,
-	dataNodes []Component) Component {
+	dataNodes []Component) *StrawberryController {
 	resource := ytsaurus.GetResource()
 
 	image := resource.Spec.CoreImage
@@ -57,7 +60,7 @@ func NewStrawberryController(
 	}
 	if resource.Spec.StrawberryController != nil {
 		name = "strawberry"
-		componentName = "StrawberryController"
+		componentName = string(consts.StrawberryControllerType)
 		if resource.Spec.StrawberryController.Image != nil {
 			image = *resource.Spec.StrawberryController.Image
 		}
@@ -85,14 +88,11 @@ func NewStrawberryController(
 		fmt.Sprintf("%s-controller", name),
 		name)
 
-	return &strawberryController{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
-		},
-		microservice: microservice,
-		initUserJob: NewInitJob(
+	return &StrawberryController{
+		localComponent: newLocalComponent(&l, ytsaurus),
+		cfgen:          cfgen,
+		microservice:   microservice,
+		initUserAndUrlJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
@@ -121,35 +121,40 @@ func NewStrawberryController(
 	}
 }
 
-func (c *strawberryController) IsUpdatable() bool {
+func (c *StrawberryController) IsUpdatable() bool {
 	return true
 }
 
-func (c *strawberryController) Fetch(ctx context.Context) error {
+func (c *StrawberryController) GetType() consts.ComponentType { return consts.StrawberryControllerType }
+
+func (c *StrawberryController) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		c.microservice,
-		c.initUserJob,
+		c.initUserAndUrlJob,
 		c.initChytClusterJob,
 		c.secret,
 	)
 }
 
-func (c *strawberryController) initUsers() string {
+func (c *StrawberryController) initUsers() string {
 	token, _ := c.secret.GetValue(consts.TokenSecretKey)
 	commands := createUserCommand(consts.StrawberryControllerUserName, "", token, true)
 	return strings.Join(commands, "\n")
 }
 
-func (c *strawberryController) createInitUserScript() string {
+func (c *StrawberryController) createInitUserAndUrlScript() string {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		c.initUsers(),
+		RunIfNonexistent("//sys/@ui_config", "yt set //sys/@ui_config '{}'"),
+		fmt.Sprintf("yt set //sys/@ui_config/chyt_controller_base_url '\"http://%v:%v\"'",
+			c.microservice.getHttpService().Name(), consts.StrawberryHTTPAPIPort),
 	}
 
 	return strings.Join(script, "\n")
 }
 
-func (c *strawberryController) createInitChytClusterScript() string {
+func (c *StrawberryController) createInitChytClusterScript() string {
 	script := []string{
 		initJobPrologue,
 		fmt.Sprintf("/usr/bin/chyt-controller --config-path %s init-cluster",
@@ -159,7 +164,7 @@ func (c *strawberryController) createInitChytClusterScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (c *strawberryController) getEnvSource() []corev1.EnvFromSource {
+func (c *StrawberryController) getEnvSource() []corev1.EnvFromSource {
 	return []corev1.EnvFromSource{
 		{
 			SecretRef: &corev1.SecretEnvSource{
@@ -171,7 +176,7 @@ func (c *strawberryController) getEnvSource() []corev1.EnvFromSource {
 	}
 }
 
-func (c *strawberryController) prepareInitChytClusterJob() {
+func (c *StrawberryController) prepareInitChytClusterJob() {
 	c.initChytClusterJob.SetInitScript(c.createInitChytClusterScript())
 
 	job := c.initChytClusterJob.Build()
@@ -179,7 +184,7 @@ func (c *strawberryController) prepareInitChytClusterJob() {
 	container.EnvFrom = []corev1.EnvFromSource{c.secret.GetEnvSource()}
 }
 
-func (c *strawberryController) syncComponents(ctx context.Context) (err error) {
+func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 	service := c.microservice.buildService()
 	service.Spec.Type = "ClusterIP"
 
@@ -199,6 +204,20 @@ func (c *strawberryController) syncComponents(ctx context.Context) (err error) {
 				path.Join(consts.ConfigMountPoint, getControllerConfigFileName(c.name)),
 				"run",
 			},
+			Ports: []corev1.ContainerPort{
+				{
+					Name:          "http",
+					ContainerPort: consts.StrawberryHTTPAPIPort,
+					Protocol:      corev1.ProtocolTCP,
+				},
+			},
+			ReadinessProbe: &corev1.Probe{
+				ProbeHandler: corev1.ProbeHandler{
+					TCPSocket: &corev1.TCPSocketAction{
+						Port: intstr.FromInt32(consts.StrawberryHTTPAPIPort),
+					},
+				},
+			},
 			VolumeMounts: volumeMounts,
 		},
 	}
@@ -210,7 +229,7 @@ func (c *strawberryController) syncComponents(ctx context.Context) (err error) {
 	return c.microservice.Sync(ctx)
 }
 
-func (c *strawberryController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(c.ytsaurus.GetClusterState()) && c.microservice.needUpdate() {
@@ -221,7 +240,7 @@ func (c *strawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		if IsUpdatingComponent(c.ytsaurus, c) {
 			if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, c.microservice, &c.componentBase)
+					err = removePods(ctx, c.microservice, &c.localComponent)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
@@ -234,16 +253,28 @@ func (c *strawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		}
 	}
 
-	if !IsRunningStatus(c.master.Status(ctx).SyncStatus) {
+	masterStatus, err := c.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, c.master.GetName()), err
 	}
 
-	if !IsRunningStatus(c.scheduler.Status(ctx).SyncStatus) {
+	schStatus, err := c.scheduler.Status(ctx)
+	if err != nil {
+		return schStatus, err
+	}
+	if !IsRunningStatus(schStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, c.scheduler.GetName()), err
 	}
 
 	for _, dataNode := range c.dataNodes {
-		if !IsRunningStatus(dataNode.Status(ctx).SyncStatus) {
+		dndStatus, err := dataNode.Status(ctx)
+		if err != nil {
+			return dndStatus, err
+		}
+		if !IsRunningStatus(dndStatus.SyncStatus) {
 			return WaitingStatus(SyncStatusBlocked, dataNode.GetName()), err
 		}
 	}
@@ -260,9 +291,9 @@ func (c *strawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 	}
 
 	if !dry {
-		c.initUserJob.SetInitScript(c.createInitUserScript())
+		c.initUserAndUrlJob.SetInitScript(c.createInitUserAndUrlScript())
 	}
-	status, err := c.initUserJob.Sync(ctx, dry)
+	status, err := c.initUserAndUrlJob.Sync(ctx, dry)
 	if err != nil || status.SyncStatus != SyncStatusReady {
 		return status, err
 	}
@@ -285,16 +316,11 @@ func (c *strawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (c *strawberryController) Status(ctx context.Context) ComponentStatus {
-	status, err := c.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (c *StrawberryController) Status(ctx context.Context) (ComponentStatus, error) {
+	return c.doSync(ctx, true)
 }
 
-func (c *strawberryController) Sync(ctx context.Context) error {
+func (c *StrawberryController) Sync(ctx context.Context) error {
 	_, err := c.doSync(ctx, false)
 	return err
 }

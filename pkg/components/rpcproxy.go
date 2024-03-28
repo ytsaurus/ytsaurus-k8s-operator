@@ -3,18 +3,20 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/library/go/ptr"
+	v1 "k8s.io/api/core/v1"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	v1 "k8s.io/api/core/v1"
 )
 
-type rpcProxy struct {
-	componentBase
-	server server
+type RpcProxy struct {
+	localServerComponent
+	cfgen *ytconfig.Generator
 
 	master Component
 
@@ -27,17 +29,20 @@ func NewRPCProxy(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
-	spec ytv1.RPCProxiesSpec) Component {
+	spec ytv1.RPCProxiesSpec) *RpcProxy {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelRPCProxy, spec.Role),
-		ComponentName:  cfgen.FormatComponentStringWithDefault("RpcProxy", spec.Role),
-		MonitoringPort: consts.RPCProxyMonitoringPort,
+		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.RpcProxyType), spec.Role),
 	}
 
-	server := newServer(
+	if spec.InstanceSpec.MonitoringPort == nil {
+		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.RPCProxyMonitoringPort)
+	}
+
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -68,25 +73,23 @@ func NewRPCProxy(
 			consts.RPCSecretMountPoint)
 	}
 
-	return &rpcProxy{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
-		},
-		server:           server,
-		master:           masterReconciler,
-		serviceType:      spec.ServiceType,
-		balancingService: balancingService,
-		tlsSecret:        tlsSecret,
+	return &RpcProxy{
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		cfgen:                cfgen,
+		master:               masterReconciler,
+		serviceType:          spec.ServiceType,
+		balancingService:     balancingService,
+		tlsSecret:            tlsSecret,
 	}
 }
 
-func (rp *rpcProxy) IsUpdatable() bool {
+func (rp *RpcProxy) IsUpdatable() bool {
 	return true
 }
 
-func (rp *rpcProxy) Fetch(ctx context.Context) error {
+func (rp *RpcProxy) GetType() consts.ComponentType { return consts.RpcProxyType }
+
+func (rp *RpcProxy) Fetch(ctx context.Context) error {
 	fetchable := []resources.Fetchable{
 		rp.server,
 	}
@@ -96,7 +99,7 @@ func (rp *rpcProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, fetchable...)
 }
 
-func (rp *rpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(rp.ytsaurus.GetClusterState()) && rp.server.needUpdate() {
@@ -104,16 +107,20 @@ func (rp *rpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.componentBase, rp.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.localComponent, rp.server, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	if !IsRunningStatus(rp.master.Status(ctx).SyncStatus) {
+	masterStatus, err := rp.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, rp.master.GetName()), err
 	}
 
-	if rp.server.needSync() {
+	if rp.NeedSync() {
 		if !dry {
 			statefulSet := rp.server.buildStatefulSet()
 			if secret := rp.tlsSecret; secret != nil {
@@ -141,16 +148,11 @@ func (rp *rpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (rp *rpcProxy) Status(ctx context.Context) ComponentStatus {
-	status, err := rp.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (rp *RpcProxy) Status(ctx context.Context) (ComponentStatus, error) {
+	return rp.doSync(ctx, true)
 }
 
-func (rp *rpcProxy) Sync(ctx context.Context) error {
+func (rp *RpcProxy) Sync(ctx context.Context) error {
 	_, err := rp.doSync(ctx, false)
 	return err
 }

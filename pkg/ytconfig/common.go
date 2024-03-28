@@ -1,6 +1,9 @@
 package ytconfig
 
-import ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+import (
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	"go.ytsaurus.tech/yt/go/yson"
+)
 
 type AddressList struct {
 	Addresses []string `yson:"addresses"`
@@ -26,12 +29,12 @@ type DiscoveryConnection struct {
 }
 
 type MasterCache struct {
-	MasterCell
-	EnableMasterCacheDiscover bool `yson:"enable_master_cache_discovery"`
+	AddressList
+	CellID                    string `yson:"cell_id"`
+	EnableMasterCacheDiscover bool   `yson:"enable_master_cache_discovery"`
 }
 
 type Driver struct {
-	MasterCache        MasterCache        `yson:"master_cache,omitempty"`
 	TimestampProviders TimestampProviders `yson:"timestamp_provider,omitempty"`
 	PrimaryMaster      MasterCell         `yson:"primary_master,omitempty"`
 	APIVersion         int                `yson:"api_version,omitempty"`
@@ -42,6 +45,7 @@ type ClusterConnection struct {
 	PrimaryMaster       MasterCell          `yson:"primary_master"`
 	DiscoveryConnection DiscoveryConnection `yson:"discovery_connection,omitempty"`
 	BusClient           *Bus                `yson:"bus_client,omitempty"`
+	MasterCache         MasterCache         `yson:"master_cache"`
 }
 
 type AddressResolver struct {
@@ -102,6 +106,18 @@ type CommonServer struct {
 	TimestampProviders TimestampProviders `yson:"timestamp_provider"`
 	ClusterConnection  ClusterConnection  `yson:"cluster_connection"`
 	CypressAnnotations map[string]any     `yson:"cypress_annotations,omitempty"`
+}
+
+type BindMount struct {
+	ExternalPath string `yson:"external_path"`
+	InternalPath string `yson:"internal_path"`
+	ReadOnly     bool   `yson:"read_only"`
+}
+
+type RetryingChannel struct {
+	RetryBackoffTime yson.Duration `yson:"retry_backoff_time,omitempty"`
+	RetryAttempts    int32         `yson:"retry_attempts,omitempty"`
+	RetryTimeout     yson.Duration `yson:"retry_timeout,omitempty"`
 }
 
 func createLogging(spec *ytv1.InstanceSpec, componentName string, defaultLoggerSpecs []ytv1.TextLoggerSpec) Logging {

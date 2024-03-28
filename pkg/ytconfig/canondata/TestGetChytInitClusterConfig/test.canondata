@@ -3,5 +3,6 @@
     "strawberry_root"="//sys/strawberry";
     families=[
         chyt;
+        jupyt;
     ];
 }

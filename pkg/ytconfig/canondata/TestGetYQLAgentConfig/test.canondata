@@ -49,7 +49,7 @@
         ];
         "flush_period"=3000;
     };
-    "monitoring_port"=10029;
+    "monitoring_port"=10019;
     "rpc_port"=9019;
     "timestamp_provider"={
         addresses=[
@@ -76,6 +76,15 @@
                 "ds-test-1.discovery-test.fake.svc.fake.zone:9020";
                 "ds-test-2.discovery-test.fake.svc.fake.zone:9020";
             ];
+        };
+        "master_cache"={
+            addresses=[
+                "msc-test-0.master-caches-test.fake.svc.fake.zone:9018";
+                "msc-test-1.master-caches-test.fake.svc.fake.zone:9018";
+                "msc-test-2.master-caches-test.fake.svc.fake.zone:9018";
+            ];
+            "cell_id"="65726e65-ad6b7562-259-79747361";
+            "enable_master_cache_discovery"=%false;
         };
     };
     "cypress_annotations"={

@@ -2,13 +2,19 @@ package ytconfig
 
 import (
 	"fmt"
-	ptr "k8s.io/utils/pointer"
 	"math"
 	"strings"
+	"time"
+
+	"go.ytsaurus.tech/yt/go/yson"
+
+	ptr "k8s.io/utils/pointer"
+
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type NodeFlavor string
@@ -22,10 +28,10 @@ const (
 type StoreLocation struct {
 	Path                   string `yson:"path"`
 	MediumName             string `yson:"medium_name"`
-	Quota                  int64  `yson:"quota"`
-	HighWatermark          int64  `yson:"high_watermark"`
-	LowWatermark           int64  `yson:"low_watermark"`
-	DisableWritesWatermark int64  `yson:"disable_writes_watermark"`
+	Quota                  int64  `yson:"quota,omitempty"`
+	HighWatermark          int64  `yson:"high_watermark,omitempty"`
+	LowWatermark           int64  `yson:"low_watermark,omitempty"`
+	DisableWritesWatermark int64  `yson:"disable_writes_watermark,omitempty"`
 }
 
 type ResourceLimits struct {
@@ -40,8 +46,8 @@ type DiskLocation struct {
 
 type SlotLocation struct {
 	Path               string `yson:"path"`
-	DiskQuota          *int64 `yson:"disk_quota"`
-	DiskUsageWatermark int64  `yson:"disk_usage_watermark"`
+	DiskQuota          *int64 `yson:"disk_quota,omitempty"`
+	DiskUsageWatermark int64  `yson:"disk_usage_watermark,omitempty"`
 	MediumName         string `yson:"medium_name"`
 }
 
@@ -59,6 +65,7 @@ type JobEnvironmentType string
 const (
 	JobEnvironmentTypeSimple JobEnvironmentType = "simple"
 	JobEnvironmentTypePorto  JobEnvironmentType = "porto"
+	JobEnvironmentTypeCRI    JobEnvironmentType = "cri"
 )
 
 type GpuInfoSourceType string
@@ -68,18 +75,43 @@ const (
 	GpuInfoSourceTypeNvidiaSmi    GpuInfoSourceType = "nvidia_smi"
 )
 
+type CriExecutor struct {
+	RetryingChannel
+
+	RuntimeEndpoint string        `yson:"runtime_endpoint,omitempty"`
+	ImageEndpoint   string        `yson:"image_endpoint,omitempty"`
+	Namespace       string        `yson:"namespace"`
+	BaseCgroup      string        `yson:"base_cgroup"`
+	RuntimeHandler  string        `yson:"runtime_handler,omitempty"`
+	CpuPeriod       yson.Duration `yson:"cpu_period,omitempty"`
+}
+
+type CriJobEnvironment struct {
+	CriExecutor          *CriExecutor `yson:"cri_executor,omitempty"`
+	JobProxyImage        string       `yson:"job_proxy_image,omitempty"`
+	JobProxyBindMounts   []BindMount  `yson:"job_proxy_bind_mounts,omitempty"`
+	UseJobProxyFromImage *bool        `yson:"use_job_proxy_from_image,omitempty"`
+}
+
 type JobEnvironment struct {
 	Type     JobEnvironmentType `yson:"type,omitempty"`
 	StartUID int                `yson:"start_uid,omitempty"`
+
+	// FIXME(khlebnikov): Add "inline" tag into yson or remove polymorphism in config.
+	CriJobEnvironment
 }
 
 type SlotManager struct {
 	Locations      []SlotLocation `yson:"locations"`
 	JobEnvironment JobEnvironment `yson:"job_environment"`
+
+	DoNotSetUserId      *bool `yson:"do_not_set_user_id,omitempty"`
+	EnableTmpfs         *bool `yson:"enable_tmpfs,omitempty"`
+	DetachedTmpfsUmount *bool `yson:"detached_tmpfs_umount,omitempty"`
 }
 
 type JobResourceLimits struct {
-	UserSlots int `yson:"user_slots"`
+	UserSlots *int `yson:"user_slots,omitempty"`
 }
 
 type GpuInfoSource struct {
@@ -91,8 +123,8 @@ type GpuManager struct {
 }
 
 type JobController struct {
-	ResourceLimitsLegacy JobResourceLimits `yson:"resource_limits"`
-	GpuManager           GpuManager        `yson:"gpu_manager"`
+	ResourceLimitsLegacy *JobResourceLimits `yson:"resource_limits,omitempty"`
+	GpuManagerLegacy     *GpuManager        `yson:"gpu_manager,omitempty"`
 }
 
 type JobResourceManager struct {
@@ -104,11 +136,16 @@ type JobProxy struct {
 }
 
 type ExecNode struct {
-	SlotManager           SlotManager   `yson:"slot_manager"`
-	GpuManager            GpuManager    `yson:"gpu_manager"`
-	JobController         JobController `yson:"job_controller"`
-	JobProxy              JobProxy      `yson:"job_proxy"`
-	JobProxyLoggingLegacy Logging       `yson:"job_proxy_logging"`
+	SlotManager   SlotManager   `yson:"slot_manager"`
+	GpuManager    GpuManager    `yson:"gpu_manager"`
+	JobController JobController `yson:"job_controller"`
+	JobProxy      JobProxy      `yson:"job_proxy"`
+
+	JobProxyLoggingLegacy *Logging `yson:"job_proxy_logging,omitempty"`
+	DoNotSetUserIdLegacy  *bool    `yson:"do_not_set_user_id,omitempty"`
+
+	// NOTE: Non-legacy "use_artifact_binds" moved into dynamic config.
+	UseArtifactBindsLegacy *bool `yson:"use_artifact_binds,omitempty"`
 }
 
 type Cache struct {
@@ -127,9 +164,9 @@ type TabletNode struct {
 type NodeServer struct {
 	CommonServer
 	Flavors        []NodeFlavor   `yson:"flavors"`
-	ResourceLimits ResourceLimits `yson:"resource_limits, omitempty"`
-	Tags           []string       `yson:"tags, omitempty"`
-	Rack           string         `yson:"rack, omitempty"`
+	ResourceLimits ResourceLimits `yson:"resource_limits,omitempty"`
+	Tags           []string       `yson:"tags,omitempty"`
+	Rack           string         `yson:"rack,omitempty"`
 	SkynetHttpPort int32          `yson:"skynet_http_port"`
 }
 
@@ -153,7 +190,7 @@ type TabletNodeServer struct {
 	CachingObjectService Cache `yson:"caching_object_service"`
 }
 
-func findVolumeMountForPath(locationPath string, spec ytv1.InstanceSpec) *v1.VolumeMount {
+func findVolumeMountForPath(locationPath string, spec ytv1.InstanceSpec) *corev1.VolumeMount {
 	for _, mount := range spec.VolumeMounts {
 		if strings.HasPrefix(locationPath, mount.MountPath) {
 			return &mount
@@ -171,7 +208,7 @@ func findVolumeClaimTemplate(volumeName string, spec ytv1.InstanceSpec) *ytv1.Em
 	return nil
 }
 
-func findVolume(volumeName string, spec ytv1.InstanceSpec) *v1.Volume {
+func findVolume(volumeName string, spec ytv1.InstanceSpec) *corev1.Volume {
 	for _, volume := range spec.Volumes {
 		if volume.Name == volumeName {
 			return &volume
@@ -206,21 +243,20 @@ func findQuotaForPath(locationPath string, spec ytv1.InstanceSpec) *int64 {
 	return nil
 }
 
-func fillClusterNodeServerCarcass(n *NodeServer, spec ytv1.ClusterNodesSpec, flavor NodeFlavor) {
+func fillClusterNodeServerCarcass(n *NodeServer, flavor NodeFlavor, spec ytv1.ClusterNodesSpec, is *ytv1.InstanceSpec) {
 	switch flavor {
 	case NodeFlavorData:
 		n.RPCPort = consts.DataNodeRPCPort
-		n.MonitoringPort = consts.DataNodeMonitoringPort
 		n.SkynetHttpPort = consts.DataNodeSkynetPort
 	case NodeFlavorExec:
 		n.RPCPort = consts.ExecNodeRPCPort
-		n.MonitoringPort = consts.ExecNodeMonitoringPort
 		n.SkynetHttpPort = consts.ExecNodeSkynetPort
 	case NodeFlavorTablet:
 		n.RPCPort = consts.TabletNodeRPCPort
-		n.MonitoringPort = consts.TabletNodeMonitoringPort
 		n.SkynetHttpPort = consts.TabletNodeSkynetPort
 	}
+
+	n.MonitoringPort = *is.MonitoringPort
 
 	n.Flavors = []NodeFlavor{flavor}
 	n.Tags = spec.Tags
@@ -254,7 +290,7 @@ func getDataNodeLogging(spec *ytv1.DataNodesSpec) Logging {
 
 func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) {
 	var c DataNodeServer
-	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec, NodeFlavorData)
+	fillClusterNodeServerCarcass(&c.NodeServer, NodeFlavorData, spec.ClusterNodesSpec, &spec.InstanceSpec)
 
 	c.ResourceLimits = getDataNodeResourceLimits(spec)
 
@@ -285,26 +321,38 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 	return c, nil
 }
 
+func getResourceQuantity(resources *corev1.ResourceRequirements, name corev1.ResourceName) resource.Quantity {
+	if request, ok := resources.Requests[name]; ok && !request.IsZero() {
+		return request
+	}
+	if limit, ok := resources.Limits[name]; ok && !limit.IsZero() {
+		return limit
+	}
+	return resource.Quantity{}
+}
+
 func getExecNodeResourceLimits(spec *ytv1.ExecNodesSpec) ResourceLimits {
 	var resourceLimits ResourceLimits
-	resourceLimits.NodeDedicatedCpu = ptr.Float32Ptr(0)
 
-	cpuLimit := spec.Resources.Limits.Cpu()
-	cpuRequest := spec.Resources.Requests.Cpu()
-	if cpuRequest != nil && !cpuRequest.IsZero() {
-		value := float32(cpuRequest.Value())
-		resourceLimits.TotalCpu = &value
-	} else if cpuLimit != nil && !cpuLimit.IsZero() {
-		value := float32(cpuLimit.Value())
-		resourceLimits.TotalCpu = &value
+	nodeMemory := getResourceQuantity(&spec.Resources, corev1.ResourceMemory)
+	nodeCpu := getResourceQuantity(&spec.Resources, corev1.ResourceCPU)
+
+	totalMemory := nodeMemory
+	totalCpu := nodeCpu
+
+	if spec.JobResources != nil {
+		totalMemory.Add(getResourceQuantity(spec.JobResources, corev1.ResourceMemory))
+		totalCpu.Add(getResourceQuantity(spec.JobResources, corev1.ResourceCPU))
+
+		resourceLimits.NodeDedicatedCpu = ptr.Float32(float32(nodeCpu.AsApproximateFloat64()))
+	} else {
+		// TODO(khlebnikov): Add better defaults.
+		resourceLimits.NodeDedicatedCpu = ptr.Float32(0)
 	}
 
-	memoryRequest := spec.Resources.Requests.Memory()
-	memoryLimit := spec.Resources.Limits.Memory()
-	if memoryRequest != nil && !memoryRequest.IsZero() {
-		resourceLimits.TotalMemory = memoryRequest.Value()
-	} else if memoryLimit != nil && !memoryLimit.IsZero() {
-		resourceLimits.TotalMemory = memoryLimit.Value()
+	resourceLimits.TotalMemory = totalMemory.Value()
+	if !totalCpu.IsZero() {
+		resourceLimits.TotalCpu = ptr.Float32(float32(totalCpu.AsApproximateFloat64()))
 	}
 
 	return resourceLimits
@@ -317,9 +365,69 @@ func getExecNodeLogging(spec *ytv1.ExecNodesSpec) Logging {
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
-func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNodeServer, error) {
+func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonSpec) error {
+	envSpec := spec.JobEnvironment
+	jobEnv := &execNode.SlotManager.JobEnvironment
+
+	jobEnv.StartUID = consts.StartUID
+
+	if envSpec != nil && envSpec.CRI != nil {
+		jobEnv.Type = JobEnvironmentTypeCRI
+
+		if jobImage := commonSpec.JobImage; jobImage != nil {
+			jobEnv.JobProxyImage = *jobImage
+			jobEnv.UseJobProxyFromImage = ptr.Bool(false)
+		} else {
+			jobEnv.JobProxyImage = ptr.StringDeref(spec.Image, commonSpec.CoreImage)
+			jobEnv.UseJobProxyFromImage = ptr.Bool(true)
+		}
+
+		endpoint := "unix://" + getContainerdSocketPath(spec)
+
+		jobEnv.CriExecutor = &CriExecutor{
+			RuntimeEndpoint: endpoint,
+			ImageEndpoint:   endpoint,
+			Namespace:       ptr.StringDeref(envSpec.CRI.CRINamespace, consts.CRINamespace),
+			BaseCgroup:      ptr.StringDeref(envSpec.CRI.BaseCgroup, consts.CRIBaseCgroup),
+		}
+
+		if timeout := envSpec.CRI.APIRetryTimeoutSeconds; timeout != nil {
+			jobEnv.CriExecutor.RetryingChannel = RetryingChannel{
+				RetryBackoffTime: yson.Duration(time.Second),
+				RetryAttempts:    *timeout,
+				RetryTimeout:     yson.Duration(time.Duration(*timeout) * time.Second),
+			}
+		}
+
+		// NOTE: Default was "false", now it's "true" and option was moved into dynamic config.
+		execNode.UseArtifactBindsLegacy = ptr.Bool(ptr.BoolDeref(envSpec.UseArtifactBinds, true))
+		if !*execNode.UseArtifactBindsLegacy {
+			// Bind mount chunk cache into job containers if artifact are passed via symlinks.
+			for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
+				jobEnv.JobProxyBindMounts = append(jobEnv.JobProxyBindMounts, BindMount{
+					InternalPath: location.Path,
+					ExternalPath: location.Path,
+					ReadOnly:     true,
+				})
+			}
+		}
+
+		// FIXME(khlebnikov): For now running jobs as non-root is more likely broken.
+		execNode.SlotManager.DoNotSetUserId = ptr.Bool(ptr.BoolDeref(envSpec.UseArtifactBinds, true))
+
+	} else if commonSpec.UsePorto {
+		jobEnv.Type = JobEnvironmentTypePorto
+		// TODO(psushin): volume locations, root fs binds, etc.
+	} else {
+		jobEnv.Type = JobEnvironmentTypeSimple
+	}
+
+	return nil
+}
+
+func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonSpec) (ExecNodeServer, error) {
 	var c ExecNodeServer
-	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec, NodeFlavorExec)
+	fillClusterNodeServerCarcass(&c.NodeServer, NodeFlavorExec, spec.ClusterNodesSpec, &spec.InstanceSpec)
 
 	c.ResourceLimits = getExecNodeResourceLimits(spec)
 
@@ -353,20 +461,21 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 		return c, fmt.Errorf("error creating exec node config: no slot locations provided")
 	}
 
-	if c.ResourceLimits.TotalCpu != nil {
-		// Dummy heuristic.
-		c.ExecNode.JobController.ResourceLimitsLegacy.UserSlots = int(5 * *c.ResourceLimits.TotalCpu)
-	}
-
-	c.ExecNode.SlotManager.JobEnvironment.StartUID = consts.StartUID
-	if usePorto {
-		c.ExecNode.SlotManager.JobEnvironment.Type = JobEnvironmentTypePorto
-		// ToDo(psushin): volume locations, root fs binds, etc.
+	if spec.JobEnvironment != nil && spec.JobEnvironment.UserSlots != nil {
+		c.JobResourceManager.ResourceLimits.UserSlots = ptr.Int(*spec.JobEnvironment.UserSlots)
 	} else {
-		c.ExecNode.SlotManager.JobEnvironment.Type = JobEnvironmentTypeSimple
+		// Dummy heuristic.
+		jobCpu := ptr.Float32Deref(c.ResourceLimits.TotalCpu, 0) - ptr.Float32Deref(c.ResourceLimits.NodeDedicatedCpu, 0)
+		if jobCpu > 0 {
+			c.JobResourceManager.ResourceLimits.UserSlots = ptr.Int(int(5 * jobCpu))
+		}
 	}
 
-	c.ExecNode.JobController.GpuManager.GpuInfoSource.Type = GpuInfoSourceTypeNvidiaSmi
+	if err := fillJobEnvironment(&c.ExecNode, spec, commonSpec); err != nil {
+		return c, err
+	}
+
+	c.ExecNode.GpuManager.GpuInfoSource.Type = GpuInfoSourceTypeNvidiaSmi
 
 	c.Logging = getExecNodeLogging(spec)
 
@@ -381,10 +490,13 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, usePorto bool) (ExecNode
 		}
 	}
 	jobProxyLoggingBuilder.logging.FlushPeriod = 3000
-	c.ExecNode.JobProxyLoggingLegacy = jobProxyLoggingBuilder.logging
 	c.ExecNode.JobProxy.JobProxyLogging = jobProxyLoggingBuilder.logging
-	c.JobResourceManager.ResourceLimits = c.ExecNode.JobController.ResourceLimitsLegacy
-	c.ExecNode.GpuManager = c.ExecNode.JobController.GpuManager
+
+	// TODO(khlebnikov): Drop legacy fields depending on ytsaurus version.
+	c.ExecNode.JobController.ResourceLimitsLegacy = &c.JobResourceManager.ResourceLimits
+	c.ExecNode.JobController.GpuManagerLegacy = &c.ExecNode.GpuManager
+	c.ExecNode.JobProxyLoggingLegacy = &c.ExecNode.JobProxy.JobProxyLogging
+	c.ExecNode.DoNotSetUserIdLegacy = c.ExecNode.SlotManager.DoNotSetUserId
 
 	return c, nil
 }
@@ -398,7 +510,7 @@ func getTabletNodeLogging(spec *ytv1.TabletNodesSpec) Logging {
 
 func getTabletNodeServerCarcass(spec *ytv1.TabletNodesSpec) (TabletNodeServer, error) {
 	var c TabletNodeServer
-	fillClusterNodeServerCarcass(&c.NodeServer, spec.ClusterNodesSpec, NodeFlavorTablet)
+	fillClusterNodeServerCarcass(&c.NodeServer, NodeFlavorTablet, spec.ClusterNodesSpec, &spec.InstanceSpec)
 
 	var cpu float32 = 0
 	c.ResourceLimits.NodeDedicatedCpu = &cpu

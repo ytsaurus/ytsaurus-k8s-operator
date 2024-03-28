@@ -7,12 +7,13 @@ import (
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	corev1 "k8s.io/api/core/v1"
 )
 
 type Chyt struct {
@@ -104,7 +105,7 @@ func (c *Chyt) createInitScript() string {
 func (c *Chyt) createInitChPublicScript() string {
 	script := []string{
 		initJobPrologue,
-		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v", c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole), c.cfgen.GetStrawberryControllerServiceAddress()),
+		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v YT_LOG_LEVEL=debug", c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole), c.cfgen.GetStrawberryControllerServiceAddress()),
 		"yt create scheduler_pool --attributes '{name=chyt; pool_tree=default}' --ignore-existing",
 		"yt clickhouse ctl create ch_public || true",
 		"yt clickhouse ctl set-option --alias ch_public pool chyt",

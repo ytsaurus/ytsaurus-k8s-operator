@@ -3,18 +3,20 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/library/go/ptr"
+	v1 "k8s.io/api/core/v1"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	v1 "k8s.io/api/core/v1"
 )
 
-type tcpProxy struct {
-	componentBase
-	server server
+type TcpProxy struct {
+	localServerComponent
+	cfgen *ytconfig.Generator
 
 	master Component
 
@@ -26,17 +28,20 @@ func NewTCPProxy(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
-	spec ytv1.TCPProxiesSpec) Component {
+	spec ytv1.TCPProxiesSpec) *TcpProxy {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelTCPProxy, spec.Role),
-		ComponentName:  cfgen.FormatComponentStringWithDefault("TcpProxy", spec.Role),
-		MonitoringPort: consts.TCPProxyMonitoringPort,
+		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.TcpProxyType), spec.Role),
 	}
 
-	server := newServer(
+	if spec.InstanceSpec.MonitoringPort == nil {
+		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.TCPProxyMonitoringPort)
+	}
+
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -60,24 +65,22 @@ func NewTCPProxy(
 			ytsaurus.APIProxy())
 	}
 
-	return &tcpProxy{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
-		},
-		server:           server,
-		master:           masterReconciler,
-		serviceType:      spec.ServiceType,
-		balancingService: balancingService,
+	return &TcpProxy{
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		cfgen:                cfgen,
+		master:               masterReconciler,
+		serviceType:          spec.ServiceType,
+		balancingService:     balancingService,
 	}
 }
 
-func (tp *tcpProxy) IsUpdatable() bool {
+func (tp *TcpProxy) IsUpdatable() bool {
 	return true
 }
 
-func (tp *tcpProxy) Fetch(ctx context.Context) error {
+func (tp *TcpProxy) GetType() consts.ComponentType { return consts.TcpProxyType }
+
+func (tp *TcpProxy) Fetch(ctx context.Context) error {
 	fetchable := []resources.Fetchable{
 		tp.server,
 	}
@@ -87,7 +90,7 @@ func (tp *tcpProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, fetchable...)
 }
 
-func (tp *tcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(tp.ytsaurus.GetClusterState()) && tp.server.needUpdate() {
@@ -95,16 +98,20 @@ func (tp *tcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if tp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, tp.ytsaurus, tp, &tp.componentBase, tp.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, tp.ytsaurus, tp, &tp.localComponent, tp.server, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	if !IsRunningStatus(tp.master.Status(ctx).SyncStatus) {
+	tpStatus, err := tp.master.Status(ctx)
+	if err != nil {
+		return tpStatus, err
+	}
+	if !IsRunningStatus(tpStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, tp.master.GetName()), err
 	}
 
-	if tp.server.needSync() {
+	if tp.NeedSync() {
 		if !dry {
 			err = tp.server.Sync(ctx)
 		}
@@ -126,16 +133,11 @@ func (tp *tcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (tp *tcpProxy) Status(ctx context.Context) ComponentStatus {
-	status, err := tp.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (tp *TcpProxy) Status(ctx context.Context) (ComponentStatus, error) {
+	return tp.doSync(ctx, true)
 }
 
-func (tp *tcpProxy) Sync(ctx context.Context) error {
+func (tp *TcpProxy) Sync(ctx context.Context) error {
 	_, err := tp.doSync(ctx, false)
 	return err
 }

@@ -3,6 +3,8 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/library/go/ptr"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -11,28 +13,31 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type dataNode struct {
-	componentBase
-	server server
+type DataNode struct {
+	localServerComponent
+	cfgen  *ytconfig.NodeGenerator
 	master Component
 }
 
 func NewDataNode(
-	cfgen *ytconfig.Generator,
+	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	spec ytv1.DataNodesSpec,
-) Component {
+) *DataNode {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelDataNode, spec.Name),
-		ComponentName:  cfgen.FormatComponentStringWithDefault("DataNode", spec.Name),
-		MonitoringPort: consts.DataNodeMonitoringPort,
+		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.DataNodeType), spec.Name),
 	}
 
-	server := newServer(
+	if spec.InstanceSpec.MonitoringPort == nil {
+		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.DataNodeMonitoringPort)
+	}
+
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -45,43 +50,45 @@ func NewDataNode(
 		},
 	)
 
-	return &dataNode{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
-		},
-		server: server,
-		master: master,
+	return &DataNode{
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		cfgen:                cfgen,
+		master:               master,
 	}
 }
 
-func (n *dataNode) IsUpdatable() bool {
+func (n *DataNode) IsUpdatable() bool {
 	return true
 }
 
-func (n *dataNode) Fetch(ctx context.Context) error {
+func (n *DataNode) GetType() consts.ComponentType { return consts.DataNodeType }
+
+func (n *DataNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, n.server)
 }
 
-func (n *dataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && n.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedFullUpdate), err
+		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, &n.componentBase, n.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, &n.localComponent, n.server, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	if !IsRunningStatus(n.master.Status(ctx).SyncStatus) {
+	masterStatus, err := n.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
 	}
 
-	if n.server.needSync() {
+	if n.NeedSync() {
 		if !dry {
 			err = n.server.Sync(ctx)
 		}
@@ -95,16 +102,11 @@ func (n *dataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (n *dataNode) Status(ctx context.Context) ComponentStatus {
-	status, err := n.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (n *DataNode) Status(ctx context.Context) (ComponentStatus, error) {
+	return n.doSync(ctx, true)
 }
 
-func (n *dataNode) Sync(ctx context.Context) error {
+func (n *DataNode) Sync(ctx context.Context) error {
 	_, err := n.doSync(ctx, false)
 	return err
 }

@@ -64,6 +64,15 @@
                 "ds-test-2.discovery-test.fake.svc.fake.zone:9020";
             ];
         };
+        "master_cache"={
+            addresses=[
+                "msc-test-0.master-caches-test.fake.svc.fake.zone:9018";
+                "msc-test-1.master-caches-test.fake.svc.fake.zone:9018";
+                "msc-test-2.master-caches-test.fake.svc.fake.zone:9018";
+            ];
+            "cell_id"="65726e65-ad6b7562-259-79747361";
+            "enable_master_cache_discovery"=%false;
+        };
     };
     "cypress_annotations"={
         "k8s_node_name"="{K8S_NODE_NAME}";
@@ -88,10 +97,6 @@
             {
                 path="/yt/hdd1/chunk-store";
                 "medium_name"=nvme;
-                quota=0;
-                "high_watermark"=0;
-                "low_watermark"=0;
-                "disable_writes_watermark"=0;
             };
         ];
         "cache_locations"=[

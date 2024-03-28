@@ -6,18 +6,21 @@ import (
 	"path"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 type UI struct {
-	componentBase
+	localComponent
+	cfgen        *ytconfig.Generator
 	microservice microservice
 	initJob      *InitJob
 	master       Component
@@ -27,13 +30,13 @@ type UI struct {
 const UIClustersConfigFileName = "clusters-config.json"
 const UICustomConfigFileName = "common.js"
 
-func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) Component {
+func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *UI {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelUI,
-		ComponentName:  "UI",
+		ComponentName:  string(consts.UIType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
@@ -63,12 +66,9 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 	microservice.getHttpService().SetHttpNodePort(resource.Spec.UI.HttpNodePort)
 
 	return &UI{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
-		},
-		microservice: microservice,
+		localComponent: newLocalComponent(&l, ytsaurus),
+		cfgen:          cfgen,
+		microservice:   microservice,
 		initJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -89,6 +89,8 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 func (u *UI) IsUpdatable() bool {
 	return true
 }
+
+func (u *UI) GetType() consts.ComponentType { return consts.UIType }
 
 func (u *UI) Fetch(ctx context.Context) error {
 
@@ -145,9 +147,14 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 	}
 
 	env := []corev1.EnvVar{
+		// Deprecated since v 17.0.0
 		{
 			Name:  "YT_AUTH_CLUSTER_ID",
 			Value: ytsaurusResource.Name,
+		},
+		{
+			Name:  "ALLOW_PASSWORD_AUTH",
+			Value: "1",
 		},
 		{
 			Name:  "APP_INSTALLATION",
@@ -183,10 +190,25 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 
 	deployment.Spec.Template.Spec.Containers = []corev1.Container{
 		{
-			Image:        u.microservice.getImage(),
-			Name:         consts.UIContainerName,
-			Env:          env,
-			Command:      []string{"supervisord"},
+			Image:   u.microservice.getImage(),
+			Name:    consts.UIContainerName,
+			Env:     env,
+			Command: []string{"supervisord"},
+			Ports: []corev1.ContainerPort{
+				{
+					Name:          "http",
+					ContainerPort: consts.UIHTTPPort,
+					Protocol:      corev1.ProtocolTCP,
+				},
+			},
+			ReadinessProbe: &corev1.Probe{
+				ProbeHandler: corev1.ProbeHandler{
+					HTTPGet: &corev1.HTTPGetAction{
+						Path: "/readyz", // there's not such a URL but responses with 302 Found
+						Port: intstr.FromInt32(consts.UIHTTPPort),
+					},
+				},
+			},
 			VolumeMounts: volumeMounts,
 		},
 	}
@@ -235,7 +257,7 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 
 			if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, u.microservice, &u.componentBase)
+					err = removePods(ctx, u.microservice, &u.localComponent)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
@@ -248,7 +270,11 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		}
 	}
 
-	if !IsRunningStatus(u.master.Status(ctx).SyncStatus) {
+	masterStatus, err := u.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, u.master.GetName()), err
 	}
 
@@ -287,13 +313,8 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (u *UI) Status(ctx context.Context) ComponentStatus {
-	status, err := u.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (u *UI) Status(ctx context.Context) (ComponentStatus, error) {
+	return u.doSync(ctx, true)
 }
 
 func (u *UI) Sync(ctx context.Context) error {

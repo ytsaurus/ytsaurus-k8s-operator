@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"reflect"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -20,7 +21,7 @@ type Fetchable interface {
 
 func Fetch(ctx context.Context, objects ...Fetchable) error {
 	for _, obj := range objects {
-		if obj == nil {
+		if obj == nil || reflect.ValueOf(obj).IsNil() {
 			continue
 		}
 		err := obj.Fetch(ctx)
@@ -37,7 +38,7 @@ type Syncable interface {
 
 func Sync(ctx context.Context, objects ...Syncable) error {
 	for _, obj := range objects {
-		if obj == nil {
+		if obj == nil || reflect.ValueOf(obj).IsNil() {
 			continue
 		}
 		err := obj.Sync(ctx)

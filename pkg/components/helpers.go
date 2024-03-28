@@ -3,15 +3,19 @@ package components
 import (
 	"context"
 	"fmt"
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	"strings"
+
 	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
 	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"strings"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 )
 
 func CreateTabletCells(ctx context.Context, ytClient yt.Client, bundle string, tabletCellCount int) error {
@@ -115,7 +119,7 @@ func handleUpdatingClusterState(
 	ctx context.Context,
 	ytsaurus *apiproxy.Ytsaurus,
 	cmp Component,
-	cmpBase *componentBase,
+	cmpBase *localComponent,
 	server server,
 	dry bool,
 ) (*ComponentStatus, error) {
@@ -164,4 +168,37 @@ func RunIfExists(path string, commands ...string) string {
 
 func SetWithIgnoreExisting(path string, value string) string {
 	return RunIfNonexistent(path, fmt.Sprintf("/usr/bin/yt set %s %s", path, value))
+}
+
+func AddAffinity(statefulSet *appsv1.StatefulSet,
+	nodeSelectorRequirementKey string,
+	nodeSelectorRequirementValues []string) {
+
+	affinity := &corev1.Affinity{}
+	if statefulSet.Spec.Template.Spec.Affinity != nil {
+		affinity = statefulSet.Spec.Template.Spec.Affinity
+	}
+
+	nodeAffinity := &corev1.NodeAffinity{}
+	if affinity.NodeAffinity != nil {
+		nodeAffinity = affinity.NodeAffinity
+	}
+
+	selector := &corev1.NodeSelector{}
+	if nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
+		selector = nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution
+	}
+
+	selector.NodeSelectorTerms = append(selector.NodeSelectorTerms, corev1.NodeSelectorTerm{
+		MatchExpressions: []corev1.NodeSelectorRequirement{
+			{
+				Key:      nodeSelectorRequirementKey,
+				Operator: corev1.NodeSelectorOpIn,
+				Values:   nodeSelectorRequirementValues,
+			},
+		},
+	})
+	nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = selector
+	affinity.NodeAffinity = nodeAffinity
+	statefulSet.Spec.Template.Spec.Affinity = affinity
 }

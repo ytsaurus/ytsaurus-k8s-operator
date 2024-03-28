@@ -17,4 +17,9 @@
         };
     };
     "http_api_endpoint"=":80";
+    "http_location_aliases"={
+        "http-proxies-lb-test.fake.svc.fake.zone"=[
+            test;
+        ];
+    };
 }

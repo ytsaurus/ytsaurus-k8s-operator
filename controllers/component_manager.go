@@ -2,13 +2,16 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"time"
+
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-	"time"
 )
 
 type ComponentManager struct {
@@ -34,7 +37,8 @@ func NewComponentManager(
 	logger := log.FromContext(ctx)
 	resource := ytsaurus.GetResource()
 
-	cfgen := ytconfig.NewGenerator(resource, getClusterDomain(ytsaurus.APIProxy().Client()))
+	clusterDomain := getClusterDomain(ytsaurus.APIProxy().Client())
+	cfgen := ytconfig.NewGenerator(resource, clusterDomain)
 
 	d := components.NewDiscovery(cfgen, ytsaurus)
 	m := components.NewMaster(cfgen, ytsaurus)
@@ -45,9 +49,10 @@ func NewComponentManager(
 	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0])
 
 	var dnds []components.Component
+	nodeCfgGen := ytconfig.NewLocalNodeGenerator(ytsaurus.GetResource(), clusterDomain)
 	if resource.Spec.DataNodes != nil && len(resource.Spec.DataNodes) > 0 {
 		for _, dndSpec := range ytsaurus.GetResource().Spec.DataNodes {
-			dnds = append(dnds, components.NewDataNode(cfgen, ytsaurus, m, dndSpec))
+			dnds = append(dnds, components.NewDataNode(nodeCfgGen, ytsaurus, m, dndSpec))
 		}
 	}
 
@@ -83,7 +88,7 @@ func NewComponentManager(
 	var ends []components.Component
 	if resource.Spec.ExecNodes != nil && len(resource.Spec.ExecNodes) > 0 {
 		for _, endSpec := range ytsaurus.GetResource().Spec.ExecNodes {
-			ends = append(ends, components.NewExecNode(cfgen, ytsaurus, m, endSpec))
+			ends = append(ends, components.NewExecNode(nodeCfgGen, ytsaurus, m, endSpec))
 		}
 	}
 	allComponents = append(allComponents, ends...)
@@ -91,7 +96,7 @@ func NewComponentManager(
 	var tnds []components.Component
 	if resource.Spec.TabletNodes != nil && len(resource.Spec.TabletNodes) > 0 {
 		for idx, tndSpec := range ytsaurus.GetResource().Spec.TabletNodes {
-			tnds = append(tnds, components.NewTabletNode(cfgen, ytsaurus, yc, tndSpec, idx == 0))
+			tnds = append(tnds, components.NewTabletNode(nodeCfgGen, ytsaurus, yc, tndSpec, idx == 0))
 		}
 	}
 	allComponents = append(allComponents, tnds...)
@@ -127,6 +132,10 @@ func NewComponentManager(
 		allComponents = append(allComponents, strawberry)
 	}
 
+	if resource.Spec.MasterCaches != nil {
+		mc := components.NewMasterCache(cfgen, ytsaurus)
+		allComponents = append(allComponents, mc)
+	}
 	// Fetch component status.
 	var readyComponents []string
 	var notReadyComponents []string
@@ -145,7 +154,11 @@ func NewComponentManager(
 			return nil, err
 		}
 
-		componentStatus := c.Status(ctx)
+		componentStatus, err := c.Status(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get component %s status: %w", c.GetName(), err)
+		}
+
 		c.SetReadyCondition(componentStatus)
 		syncStatus := componentStatus.SyncStatus
 
@@ -197,7 +210,10 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 
 	hasPending := false
 	for _, c := range cm.allComponents {
-		status := c.Status(ctx)
+		status, err := c.Status(ctx)
+		if err != nil {
+			return ctrl.Result{Requeue: true}, fmt.Errorf("failed to get status for %s: %w", c.GetName(), err)
+		}
 
 		if status.SyncStatus == components.SyncStatusPending ||
 			status.SyncStatus == components.SyncStatusUpdating {

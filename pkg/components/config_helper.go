@@ -1,10 +1,13 @@
 package components
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
+
+	"github.com/BurntSushi/toml"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -91,7 +94,7 @@ func overrideYsonConfigs(base []byte, overrides []byte) ([]byte, error) {
 
 func (h *ConfigHelper) GetFileNames() []string {
 	fileNames := []string{}
-	for fileName, _ := range h.generators {
+	for fileName := range h.generators {
 		fileNames = append(fileNames, fileName)
 	}
 	return fileNames
@@ -135,7 +138,8 @@ func (h *ConfigHelper) getConfig(fileName string) ([]byte, error) {
 		}
 	}
 
-	if descriptor.Fmt == ytconfig.ConfigFormatJson || descriptor.Fmt == ytconfig.ConfigFormatJsonWithJsPrologue {
+	switch descriptor.Fmt {
+	case ytconfig.ConfigFormatJson, ytconfig.ConfigFormatJsonWithJsPrologue:
 		var config any
 		err := yson.Unmarshal(serializedConfig, &config)
 		if err != nil {
@@ -148,6 +152,19 @@ func (h *ConfigHelper) getConfig(fileName string) ([]byte, error) {
 		if descriptor.Fmt == ytconfig.ConfigFormatJsonWithJsPrologue {
 			serializedConfig = append([]byte(JsPrologue), serializedConfig...)
 		}
+	case ytconfig.ConfigFormatToml:
+		var config any
+		err := yson.Unmarshal(serializedConfig, &config)
+		if err != nil {
+			return nil, err
+		}
+
+		var buf bytes.Buffer
+		err = toml.NewEncoder(&buf).Encode(config)
+		if err != nil {
+			return nil, err
+		}
+		serializedConfig = buf.Bytes()
 	}
 
 	return serializedConfig, nil
@@ -166,7 +183,7 @@ func (h *ConfigHelper) getCurrentConfigValue(fileName string) []byte {
 }
 
 func (h *ConfigHelper) NeedReload() (bool, error) {
-	for fileName, _ := range h.generators {
+	for fileName := range h.generators {
 		newConfig, err := h.getConfig(fileName)
 		if err != nil {
 			return false, err
@@ -183,16 +200,13 @@ func (h *ConfigHelper) NeedReload() (bool, error) {
 }
 
 func (h *ConfigHelper) NeedInit() bool {
-	if !resources.Exists(h.configMap) {
-		return true
-	}
-	return false
+	return !resources.Exists(h.configMap)
 }
 
 func (h *ConfigHelper) Build() *corev1.ConfigMap {
 	cm := h.configMap.Build()
 
-	for fileName, _ := range h.generators {
+	for fileName := range h.generators {
 		data, err := h.getConfig(fileName)
 		if err != nil {
 			return nil

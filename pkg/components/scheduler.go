@@ -19,9 +19,9 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type scheduler struct {
-	componentBase
-	server        server
+type Scheduler struct {
+	localServerComponent
+	cfgen         *ytconfig.Generator
 	master        Component
 	execNodes     []Component
 	tabletNodes   []Component
@@ -34,18 +34,21 @@ func NewScheduler(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
-	execNodes, tabletNodes []Component) Component {
+	execNodes, tabletNodes []Component) *Scheduler {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelScheduler,
-		ComponentName:  "Scheduler",
-		MonitoringPort: consts.SchedulerMonitoringPort,
+		ComponentName:  string(consts.SchedulerType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
 
-	server := newServer(
+	if resource.Spec.Schedulers.InstanceSpec.MonitoringPort == nil {
+		resource.Spec.Schedulers.InstanceSpec.MonitoringPort = ptr.Int32(consts.SchedulerMonitoringPort)
+	}
+
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.Schedulers.InstanceSpec,
@@ -53,19 +56,17 @@ func NewScheduler(
 		"ytserver-scheduler.yson",
 		cfgen.GetSchedulerStatefulSetName(),
 		cfgen.GetSchedulerServiceName(),
-		cfgen.GetSchedulerConfig,
+		func() ([]byte, error) {
+			return cfgen.GetSchedulerConfig(resource.Spec.Schedulers)
+		},
 	)
 
-	return &scheduler{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
-		},
-		server:      server,
-		master:      master,
-		execNodes:   execNodes,
-		tabletNodes: tabletNodes,
+	return &Scheduler{
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		cfgen:                cfgen,
+		master:               master,
+		execNodes:            execNodes,
+		tabletNodes:          tabletNodes,
 		initUser: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -91,11 +92,13 @@ func NewScheduler(
 	}
 }
 
-func (s *scheduler) IsUpdatable() bool {
+func (s *Scheduler) IsUpdatable() bool {
 	return true
 }
 
-func (s *scheduler) Fetch(ctx context.Context) error {
+func (s *Scheduler) GetType() consts.ComponentType { return consts.SchedulerType }
+
+func (s *Scheduler) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		s.server,
 		s.initOpArchive,
@@ -104,21 +107,16 @@ func (s *scheduler) Fetch(ctx context.Context) error {
 	)
 }
 
-func (s *scheduler) Status(ctx context.Context) ComponentStatus {
-	status, err := s.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (s *Scheduler) Status(ctx context.Context) (ComponentStatus, error) {
+	return s.doSync(ctx, true)
 }
 
-func (s *scheduler) Sync(ctx context.Context) error {
+func (s *Scheduler) Sync(ctx context.Context) error {
 	_, err := s.doSync(ctx, false)
 	return err
 }
 
-func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(s.ytsaurus.GetClusterState()) && s.server.needUpdate() {
@@ -129,7 +127,7 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		if IsUpdatingComponent(s.ytsaurus, s) {
 			if s.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, s.server, &s.componentBase)
+					err = removePods(ctx, s.server, &s.localComponent)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
@@ -147,13 +145,21 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	if !IsRunningStatus(s.master.Status(ctx).SyncStatus) {
+	masterStatus, err := s.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, s.master.GetName()), err
 	}
 
 	if s.execNodes == nil || len(s.execNodes) > 0 {
 		for _, end := range s.execNodes {
-			if !IsRunningStatus(end.Status(ctx).SyncStatus) {
+			endStatus, err := end.Status(ctx)
+			if err != nil {
+				return endStatus, err
+			}
+			if !IsRunningStatus(endStatus.SyncStatus) {
 				// It makes no sense to start scheduler without exec nodes.
 				return WaitingStatus(SyncStatusBlocked, end.GetName()), err
 			}
@@ -171,7 +177,7 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return WaitingStatus(SyncStatusPending, s.secret.Name()), err
 	}
 
-	if s.server.needSync() {
+	if s.NeedSync() {
 		if !dry {
 			err = s.server.Sync(ctx)
 		}
@@ -190,7 +196,7 @@ func (s *scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return s.initOpAchieve(ctx, dry)
 }
 
-func (s *scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (s *Scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatus, error) {
 	if !dry {
 		s.initUser.SetInitScript(s.createInitUserScript())
 	}
@@ -201,7 +207,11 @@ func (s *scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	for _, tnd := range s.tabletNodes {
-		if !IsRunningStatus(tnd.Status(ctx).SyncStatus) {
+		tndStatus, err := tnd.Status(ctx)
+		if err != nil {
+			return tndStatus, err
+		}
+		if !IsRunningStatus(tndStatus.SyncStatus) {
 			// Wait for tablet nodes to proceed with operations archive init.
 			return WaitingStatus(SyncStatusBlocked, tnd.GetName()), err
 		}
@@ -213,7 +223,7 @@ func (s *scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatu
 	return s.initOpArchive.Sync(ctx, dry)
 }
 
-func (s *scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentStatus, error) {
+func (s *Scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentStatus, error) {
 	var err error
 	switch s.ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
@@ -241,38 +251,38 @@ func (s *scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentSt
 	}
 }
 
-func (s *scheduler) needOpArchiveInit() bool {
+func (s *Scheduler) needOpArchiveInit() bool {
 	return s.tabletNodes != nil && len(s.tabletNodes) > 0
 }
 
-func (s *scheduler) setConditionNotNecessaryToUpdateOpArchive(ctx context.Context) {
+func (s *Scheduler) setConditionNotNecessaryToUpdateOpArchive(ctx context.Context) {
 	s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    consts.ConditionNotNecessaryToUpdateOpArchive,
 		Status:  metav1.ConditionTrue,
 		Reason:  "NotNecessaryToUpdateOpArchive",
-		Message: fmt.Sprintf("Operations archive does not need to be updated"),
+		Message: "Operations archive does not need to be updated",
 	})
 }
 
-func (s *scheduler) setConditionOpArchivePreparedForUpdating(ctx context.Context) {
+func (s *Scheduler) setConditionOpArchivePreparedForUpdating(ctx context.Context) {
 	s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    consts.ConditionOpArchivePreparedForUpdating,
 		Status:  metav1.ConditionTrue,
 		Reason:  "OpArchivePreparedForUpdating",
-		Message: fmt.Sprintf("Operations archive prepared for updating"),
+		Message: "Operations archive prepared for updating",
 	})
 }
 
-func (s *scheduler) setConditionOpArchiveUpdated(ctx context.Context) {
+func (s *Scheduler) setConditionOpArchiveUpdated(ctx context.Context) {
 	s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 		Type:    consts.ConditionOpArchiveUpdated,
 		Status:  metav1.ConditionTrue,
 		Reason:  "OpArchiveUpdated",
-		Message: fmt.Sprintf("Operations archive updated"),
+		Message: "Operations archive updated",
 	})
 }
 
-func (s *scheduler) createInitUserScript() string {
+func (s *Scheduler) createInitUserScript() string {
 	token, _ := s.secret.GetValue(consts.TokenSecretKey)
 	commands := createUserCommand("operation_archivarius", "", token, true)
 	script := []string{
@@ -283,6 +293,7 @@ func (s *scheduler) createInitUserScript() string {
 	return strings.Join(script, "\n")
 }
 
+
 // omgronny: The file was renamed in ytsaurus image. Refer to
 // https://github.com/ytsaurus/ytsaurus/commit/e5348fef221110ce27bba13df5f9790649084b01
 const setInitOpArchivePath = `
@@ -292,7 +303,7 @@ export INIT_OP_ARCHIVE=/usr/bin/init_operation_archive
 fi
 `
 
-func (s *scheduler) prepareInitOperationsArchive() {
+func (s *Scheduler) prepareInitOperationArchive() {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		setInitOpArchivePath,

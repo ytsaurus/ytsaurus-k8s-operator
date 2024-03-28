@@ -1,0 +1,387 @@
+apiVersion: cluster.ytsaurus.tech/v1
+kind: Ytsaurus
+metadata:
+  name: ytsaurus
+spec:
+  # coreImage: ytsaurus/ytsaurus-nightly:latest
+  # coreImage: ytsaurus/ytsaurus:dev-relwithdebinfo
+  coreImage: ytsaurus/ytsaurus:dev-23.2-relwithdebinfo
+
+  # Default "docker_image" for jobs
+  jobImage: docker.io/library/python:3.12-slim
+
+  uiImage: ytsaurus/ui:stable
+
+  # Default "admin" password and token is "password".
+  # adminCredentials:
+  #  name: admin-credentials
+
+  # configOverrides:
+  #  name: ytsaurus-config-overrides
+
+  useIpv4: true
+  # useIpv6: true
+
+  hostNetwork: true
+
+  # Setup TLS for internal communications
+  # caBundle:
+  #  name: ytsaurus-ca-bundle
+  # nativeTransport:
+  #  tlsSecret:
+  #    name: ytsaurus-native-secret
+  #  tlsRequired: true
+  #  tlsPeerAlternativeHostName: ...
+
+  ui:
+    instanceCount: 1
+    serviceType: NodePort
+
+
+  discovery:
+    instanceCount: 1
+
+    # Make reusable loggers config with yaml anchor.
+    loggers: &loggers
+      - name: debug
+        compression: zstd
+        minLogLevel: debug
+        writerType: file
+        rotationPolicy: &rotationPolicy
+          maxTotalSizeToKeep: 1073741824 # 1GiB
+          rotationPeriodMilliseconds: 900000 # 15Min
+          maxSegmentCountToKeep: 1000
+        categoriesFilter:
+          type: exclude
+          values: ["Bus"]
+      - name: info
+        minLogLevel: info
+        writerType: file
+        rotationPolicy: *rotationPolicy
+      - name: info-stderr
+        minLogLevel: info
+        writerType: stderr
+
+    locations:
+      - locationType: Logs
+        path: /yt/discovery-logs
+
+    volumeMounts:
+      - name: discovery-logs
+        mountPath: /yt/discovery-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: discovery-logs
+        spec: &logsVolumeSpec
+          accessModes: [ "ReadWriteOnce" ]
+          resources:
+            requests:
+              storage: 10Gi
+
+
+  primaryMasters:
+    instanceCount: 1
+
+    cellTag: 1
+
+    loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/master-logs
+      - locationType: MasterChangelogs
+        path: /yt/master-data/master-changelogs
+      - locationType: MasterSnapshots
+        path: /yt/master-data/master-snapshots
+
+    volumeMounts:
+      - name: master-logs
+        mountPath: /yt/master-logs
+      - name: master-data
+        mountPath: /yt/master-data
+
+    volumeClaimTemplates:
+      - metadata:
+          name: master-data
+        spec:
+          accessModes: [ "ReadWriteOnce" ]
+          resources:
+            requests:
+              storage: 10Gi
+      - metadata:
+          name: master-logs
+        spec: *logsVolumeSpec
+
+
+  httpProxies:
+    - instanceCount: 1
+
+      loggers: *loggers
+
+      locations:
+        - locationType: Logs
+          path: /yt/http-proxy-logs
+
+      volumeMounts:
+        - name: http-proxy-logs
+          mountPath: /yt/http-proxy-logs
+
+      volumeClaimTemplates:
+        - metadata:
+            name: http-proxy-logs
+          spec: *logsVolumeSpec
+
+      serviceType: NodePort
+      # httpNodePort: ...
+      # httpsNodePort: ...
+
+      # Setup HTTPS protocol
+      # transport:
+      #   disableHttp: true
+      #   httpsSecret:
+      #     name: ytsaurus-https-wildcard
+
+
+  rpcProxies:
+    - instanceCount: 1
+
+      loggers: *loggers
+
+      locations:
+        - locationType: Logs
+          path: /yt/rpc-proxy-logs
+
+      volumeMounts:
+        - name: rpc-proxy-logs
+          mountPath: /yt/rpc-proxy-logs
+
+      volumeClaimTemplates:
+        - metadata:
+            name: rpc-proxy-logs
+          spec: *logsVolumeSpec
+
+      serviceType: NodePort
+      # nodePort: ...
+
+      # Setup TLS for RPC protocol
+      # transport:
+      #   tlsSecret:
+      #     name: ytsaurus-rpc-wildcard
+      #   tlsRequired: true
+      #   tlsPeerAlternativeHostName: ...
+
+
+  dataNodes:
+    - instanceCount: 1
+
+      loggers: *loggers
+
+      locations:
+        - locationType: Logs
+          path: /yt/data-node-logs
+        - locationType: ChunkStore
+          path: /yt/node-data/chunk-store
+
+      volumeMounts:
+        - name: data-node-logs
+          mountPath: /yt/data-node-logs
+        - name: node-data
+          mountPath: /yt/node-data
+
+      volumeClaimTemplates:
+        - metadata:
+            name: node-data
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: 20Gi
+        - metadata:
+            name: data-node-logs
+          spec: *logsVolumeSpec
+
+
+  execNodes:
+    - instanceCount: 1
+
+      loggers: *loggers
+
+      jobProxyLoggers:
+        - name: debug
+          compression: zstd
+          minLogLevel: debug
+          writerType: file
+          useTimestampSuffix: true
+          rotationPolicy: &rotationPolicyJobs
+            maxTotalSizeToKeep: 104857600  # 100Mi
+            rotationPeriodMilliseconds: 900000  # 15Min
+          categoriesFilter:
+            type: exclude
+            values: [ "Bus", "Concurrency" ]
+        - name: info
+          minLogLevel: info
+          writerType: file
+          rotationPolicy: *rotationPolicyJobs
+        - name: error
+          minLogLevel: error
+          writerType: stderr
+
+      resources:
+        # Allocate resources for exec node container
+        requests:
+          cpu: 1
+          memory: 1Gi
+        limits:
+          cpu: 10
+          memory: 10Gi
+
+      locations:
+        - locationType: Logs
+          path: /yt/exec-node-logs
+        - locationType: ChunkCache
+          path: /yt/node-data/chunk-cache
+        - locationType: Slots
+          path: /yt/node-data/slots
+        - locationType: ImageCache
+          path: /yt/node-data/image-cache
+
+      volumeMounts:
+        - name: exec-node-logs
+          mountPath: /yt/exec-node-logs
+        - name: node-data
+          mountPath: /yt/node-data
+          # mountPropagation: Bidirectional  # Enable for tmpfs in jobs
+
+      volumeClaimTemplates:
+        - metadata:
+            name: node-data
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: 20Gi
+        - metadata:
+            name: exec-node-logs
+          spec: *logsVolumeSpec
+
+      # privileged: true  # Enable for tmpfs in jobs
+
+      jobResources:
+        # Allocate resources for jobs container
+        requests:
+          cpu: 4
+          memory: 4Gi
+        limits:
+          cpu: 10
+          memory: 10Gi
+
+      jobEnvironment:
+        # Add CRI containerd sidecar
+        cri:
+          apiRetryTimeoutSeconds: 180
+
+  schedulers:
+    instanceCount: 1
+
+    loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/scheduler-logs
+
+    volumeMounts:
+      - name: scheduler-logs
+        mountPath: /yt/scheduler-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: scheduler-logs
+        spec: *logsVolumeSpec
+
+
+  controllerAgents:
+    instanceCount: 1
+
+    loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/controller-agent-logs
+
+    volumeMounts:
+      - name: controller-agent-logs
+        mountPath: /yt/controller-agent-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: controller-agent-logs
+        spec: *logsVolumeSpec
+
+
+  tabletNodes:
+    - instanceCount: 1
+
+      loggers: *loggers
+
+      locations:
+        - locationType: Logs
+          path: /yt/tablet-node-logs
+
+      volumeMounts:
+        - name: tablet-node-logs
+          mountPath: /yt/tablet-node-logs
+
+      volumeClaimTemplates:
+        - metadata:
+            name: tablet-node-logs
+          spec: *logsVolumeSpec
+
+
+  yqlAgents:
+    instanceCount: 1
+    # image: ytsaurus/query-tracker:dev-relwithdebinfo
+    image: ytsaurus/query-tracker:0.0.3-relwithdebinfo
+
+    loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/yql-agent-logs
+
+    volumeMounts:
+      - name: yql-agent-logs
+        mountPath: /yt/yql-agent-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: yql-agent-logs
+        spec: *logsVolumeSpec
+
+
+  queryTrackers:
+    instanceCount: 1
+    # image: ytsaurus/query-tracker:dev-relwithdebinfo
+    image: ytsaurus/query-tracker:0.0.3-relwithdebinfo
+
+    loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/query-tracker-logs
+
+    volumeMounts:
+      - name: query-tracker-logs
+        mountPath: /yt/query-tracker-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: query-tracker-logs
+        spec: *logsVolumeSpec
+
+
+  strawberry:
+    resources:
+      limits:
+        memory: 100Mi
+    image: ytsaurus/strawberry:0.0.6

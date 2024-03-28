@@ -76,6 +76,7 @@ const (
 	LocationTypeLogs             LocationType = "Logs"
 	LocationTypeMasterChangelogs LocationType = "MasterChangelogs"
 	LocationTypeMasterSnapshots  LocationType = "MasterSnapshots"
+	LocationTypeImageCache       LocationType = "ImageCache"
 )
 
 type LocationSpec struct {
@@ -210,33 +211,61 @@ type OauthServiceSpec struct {
 	UserInfo OauthUserInfoHandlerSpec `json:"userInfoHandler,omitempty"`
 }
 
+type HealthcheckProbeParams struct {
+	//+optional
+	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
+	//+optional
+	TimeoutSeconds int32 `json:"timeoutSeconds,omitempty"`
+	//+optional
+	PeriodSeconds int32 `json:"periodSeconds,omitempty"`
+	//+optional
+	SuccessThreshold int32 `json:"successThreshold,omitempty"`
+	//+optional
+	FailureThreshold int32 `json:"failureThreshold,omitempty"`
+}
+
 type InstanceSpec struct {
-	Image                 *string                         `json:"image,omitempty"`
-	Volumes               []corev1.Volume                 `json:"volumes,omitempty"`
-	VolumeMounts          []corev1.VolumeMount            `json:"volumeMounts,omitempty"`
+	// Overrides coreImage for component.
+	//+optional
+	Image *string `json:"image,omitempty"`
+	// Specifies wrapper for component container command.
+	//+optional
+	EntrypointWrapper []string             `json:"entrypointWrapper,omitempty"`
+	Volumes           []corev1.Volume      `json:"volumes,omitempty"`
+	VolumeMounts      []corev1.VolumeMount `json:"volumeMounts,omitempty"`
+	//+optional
+	ReadinessProbeParams  *HealthcheckProbeParams         `json:"readinessProbeParams,omitempty"`
 	Resources             corev1.ResourceRequirements     `json:"resources,omitempty"`
 	InstanceCount         int32                           `json:"instanceCount,omitempty"`
 	MinReadyInstanceCount *int                            `json:"minReadyInstanceCount,omitempty"`
 	Locations             []LocationSpec                  `json:"locations,omitempty"`
 	VolumeClaimTemplates  []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
+	//+optional
+	RuntimeClassName *string `json:"runtimeClassName,omitempty"`
 	// Deprecated. Use Affinity.PodAntiAffinity instead.
-	EnableAntiAffinity *bool                  `json:"enableAntiAffinity,omitempty"`
-	Loggers            []TextLoggerSpec       `json:"loggers,omitempty"`
-	StructuredLoggers  []StructuredLoggerSpec `json:"structuredLoggers,omitempty"`
-	Affinity           *corev1.Affinity       `json:"affinity,omitempty"`
-	NodeSelector       map[string]string      `json:"nodeSelector,omitempty"`
-	Tolerations        []corev1.Toleration    `json:"tolerations,omitempty"`
+	EnableAntiAffinity *bool `json:"enableAntiAffinity,omitempty"`
+	//+optional
+	MonitoringPort    *int32                 `json:"monitoringPort,omitempty"`
+	Loggers           []TextLoggerSpec       `json:"loggers,omitempty"`
+	StructuredLoggers []StructuredLoggerSpec `json:"structuredLoggers,omitempty"`
+	Affinity          *corev1.Affinity       `json:"affinity,omitempty"`
+	NodeSelector      map[string]string      `json:"nodeSelector,omitempty"`
+	Tolerations       []corev1.Toleration    `json:"tolerations,omitempty"`
 	// Component config for native RPC bus transport.
 	//+optional
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
 }
 
-type MastersSpec struct {
-	InstanceSpec `json:",inline"`
-	CellTag      int16 `json:"cellTag"`
+type MasterConnectionSpec struct {
+	CellTag       int16    `json:"cellTag"`
+	HostAddresses []string `json:"hostAddresses,omitempty"`
+}
 
-	HostAddresses    []string `json:"hostAddresses,omitempty"`
-	HostAddressLabel string   `json:"hostAddressLabel,omitempty"`
+type MastersSpec struct {
+	InstanceSpec         `json:",inline"`
+	MasterConnectionSpec `json:",inline"`
+
+	HostAddressLabel string `json:"hostAddressLabel,omitempty"`
 
 	MaxSnapshotCountToKeep  *int `json:"maxSnapshotCountToKeep,omitempty"`
 	MaxChangelogCountToKeep *int `json:"maxChangelogCountToKeep,omitempty"`
@@ -319,6 +348,42 @@ type DataNodesSpec struct {
 	Name string `json:"name,omitempty"`
 }
 
+type CRIJobEnvironmentSpec struct {
+	// Specifies wrapper for CRI service (i.e. containerd) command.
+	//+optional
+	EntrypointWrapper []string `json:"entrypointWrapper,omitempty"`
+	// Sandbox (pause) image.
+	//+optional
+	SandboxImage *string `json:"sandboxImage,omitempty"`
+	// Timeout for retrying CRI API calls.
+	//+optional
+	APIRetryTimeoutSeconds *int32 `json:"apiRetryTimeoutSeconds,omitempty"`
+	// CRI namespace for jobs containers.
+	//+optional
+	CRINamespace *string `json:"criNamespace,omitempty"`
+	// Base cgroup for jobs.
+	//+optional
+	BaseCgroup *string `json:"baseCgroup,omitempty"`
+}
+
+type JobEnvironmentSpec struct {
+	// Isolate job execution environment from exec node or not, by default true when possible.
+	//+optional
+	Isolated *bool `json:"isolated,omitempty"`
+	// Count of slots for user jobs on each exec node, default is 5 per CPU.
+	//+optional
+	UserSlots *int `json:"userSlots,omitempty"`
+	// CRI service configuration for running jobs in sidecar container.
+	//+optional
+	CRI *CRIJobEnvironmentSpec `json:"cri,omitempty"`
+	// Pass artifacts as read-only bind-mounts rather than symlinks.
+	//+optional
+	UseArtifactBinds *bool `json:"useArtifactBinds,omitempty"`
+	// Do not use slot user id for running jobs.
+	//+optional
+	DoNotSetUserId *bool `json:"doNotSetUserId,omitempty"`
+}
+
 type ExecNodesSpec struct {
 	// label filter (for daemonset)
 	InstanceSpec `json:",inline"`
@@ -333,6 +398,11 @@ type ExecNodesSpec struct {
 	//+optional
 	Privileged      bool             `json:"privileged"`
 	JobProxyLoggers []TextLoggerSpec `json:"jobProxyLoggers,omitempty"`
+	// Resources dedicated for running jobs.
+	//+optional
+	JobResources *corev1.ResourceRequirements `json:"jobResources,omitempty"`
+	//+optional
+	JobEnvironment *JobEnvironmentSpec `json:"jobEnvironment,omitempty"`
 }
 
 type TabletNodesSpec struct {
@@ -406,16 +476,25 @@ type DeprecatedSpytSpec struct {
 	SpytVersion  string `json:"spytVersion,omitempty"`
 }
 
-// YtsaurusSpec defines the desired state of Ytsaurus
-type YtsaurusSpec struct {
+type MasterCachesConnectionSpec struct {
+	CellTag       int16    `json:"cellTagMasterCaches"`
+	HostAddresses []string `json:"hostAddressesMasterCaches,omitempty"`
+}
+
+type MasterCachesSpec struct {
+	InstanceSpec               `json:",inline"`
+	MasterCachesConnectionSpec `json:",inline"`
+	HostAddressLabel           string `json:"hostAddressesLabel,omitempty"`
+}
+
+// CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.
+// It is inlined in these specs.
+type CommonSpec struct {
 	CoreImage string `json:"coreImage,omitempty"`
-	UIImage   string `json:"uiImage,omitempty"`
 
-	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
-	ConfigOverrides  *corev1.LocalObjectReference  `json:"configOverrides,omitempty"`
-	AdminCredentials *corev1.LocalObjectReference  `json:"adminCredentials,omitempty"`
-
-	OauthService *OauthServiceSpec `json:"oauthService,omitempty"`
+	// Default docker image for user jobs.
+	//+optional
+	JobImage *string `json:"jobImage,omitempty"`
 
 	// Reference to ConfigMap with trusted certificates: "ca.crt".
 	//+optional
@@ -424,13 +503,6 @@ type YtsaurusSpec struct {
 	// Common config for native RPC bus transport.
 	//+optional
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
-
-	//+kubebuilder:default:=true
-	//+optional
-	IsManaged bool `json:"isManaged"`
-	//+kubebuilder:default:=true
-	//+optional
-	EnableFullUpdate bool `json:"enableFullUpdate"`
 
 	//+kubebuilder:default:=false
 	//+optional
@@ -450,11 +522,33 @@ type YtsaurusSpec struct {
 
 	ExtraPodAnnotations map[string]string `json:"extraPodAnnotations,omitempty"`
 
+	ConfigOverrides  *corev1.LocalObjectReference  `json:"configOverrides,omitempty"`
+	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+}
+
+// YtsaurusSpec defines the desired state of Ytsaurus
+type YtsaurusSpec struct {
+	CommonSpec `json:",inline"`
+	UIImage    string `json:"uiImage,omitempty"`
+
+	AdminCredentials *corev1.LocalObjectReference `json:"adminCredentials,omitempty"`
+
+	OauthService *OauthServiceSpec `json:"oauthService,omitempty"`
+
+	//+kubebuilder:default:=true
+	//+optional
+	IsManaged bool `json:"isManaged"`
+	//+kubebuilder:default:=true
+	//+optional
+	EnableFullUpdate bool `json:"enableFullUpdate"`
+
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
 	Discovery        DiscoverySpec `json:"discovery,omitempty"`
 	PrimaryMasters   MastersSpec   `json:"primaryMasters,omitempty"`
 	SecondaryMasters []MastersSpec `json:"secondaryMasters,omitempty"`
+	//+optional
+	MasterCaches *MasterCachesSpec `json:"masterCaches,omitempty"`
 	// +kubebuilder:validation:MinItems:=1
 	HTTPProxies []HTTPProxiesSpec `json:"httpProxies,omitempty"`
 	RPCProxies  []RPCProxiesSpec  `json:"rpcProxies,omitempty"`
@@ -554,7 +648,7 @@ type YtsaurusStatus struct {
 // +kubebuilder:printcolumn:name="ClusterState",type="string",JSONPath=".status.state",description="State of Ytsaurus cluster"
 // +kubebuilder:printcolumn:name="UpdateState",type="string",JSONPath=".status.updateStatus.state",description="Update state of Ytsaurus cluster"
 // +kubebuilder:printcolumn:name="UpdatingComponents",type="string",JSONPath=".status.updateStatus.components",description="Updating components (for local update)"
-// +kubebuilder:resource:shortName=yt
+// +kubebuilder:resource:path=ytsaurus,shortName=yt
 // +kubebuilder:subresource:status
 
 // Ytsaurus is the Schema for the ytsaurus API

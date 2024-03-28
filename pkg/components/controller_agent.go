@@ -3,6 +3,8 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/library/go/ptr"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -11,23 +13,26 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-type controllerAgent struct {
-	componentBase
-	server server
+type ControllerAgent struct {
+	localServerComponent
+	cfgen  *ytconfig.Generator
 	master Component
 }
 
-func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) Component {
+func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *ControllerAgent {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
 		ComponentLabel: consts.YTComponentLabelControllerAgent,
-		ComponentName:  "ControllerAgent",
-		MonitoringPort: consts.ControllerAgentMonitoringPort,
+		ComponentName:  string(consts.ControllerAgentType),
 	}
 
-	server := newServer(
+	if resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort == nil {
+		resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.ControllerAgentMonitoringPort)
+	}
+
+	srv := newServer(
 		&l,
 		ytsaurus,
 		&resource.Spec.ControllerAgents.InstanceSpec,
@@ -35,29 +40,27 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		"ytserver-controller-agent.yson",
 		"ca",
 		"controller-agents",
-		cfgen.GetControllerAgentConfig,
+		func() ([]byte, error) { return cfgen.GetControllerAgentConfig(resource.Spec.ControllerAgents) },
 	)
 
-	return &controllerAgent{
-		componentBase: componentBase{
-			labeller: &l,
-			ytsaurus: ytsaurus,
-			cfgen:    cfgen,
-		},
-		server: server,
-		master: master,
+	return &ControllerAgent{
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		cfgen:                cfgen,
+		master:               master,
 	}
 }
 
-func (ca *controllerAgent) IsUpdatable() bool {
+func (ca *ControllerAgent) IsUpdatable() bool {
 	return true
 }
 
-func (ca *controllerAgent) Fetch(ctx context.Context) error {
+func (ca *ControllerAgent) GetType() consts.ComponentType { return consts.ControllerAgentType }
+
+func (ca *ControllerAgent) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, ca.server)
 }
 
-func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(ca.ytsaurus.GetClusterState()) && ca.server.needUpdate() {
@@ -65,16 +68,20 @@ func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.componentBase, ca.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.localComponent, ca.server, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	if !IsRunningStatus(ca.master.Status(ctx).SyncStatus) {
+	masterStatus, err := ca.master.Status(ctx)
+	if err != nil {
+		return masterStatus, err
+	}
+	if !IsRunningStatus(masterStatus.SyncStatus) {
 		return WaitingStatus(SyncStatusBlocked, ca.master.GetName()), err
 	}
 
-	if ca.server.needSync() {
+	if ca.NeedSync() {
 		if !dry {
 			err = ca.server.Sync(ctx)
 		}
@@ -88,16 +95,11 @@ func (ca *controllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (ca *controllerAgent) Status(ctx context.Context) ComponentStatus {
-	status, err := ca.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
+func (ca *ControllerAgent) Status(ctx context.Context) (ComponentStatus, error) {
+	return ca.doSync(ctx, true)
 }
 
-func (ca *controllerAgent) Sync(ctx context.Context) error {
+func (ca *ControllerAgent) Sync(ctx context.Context) error {
 	_, err := ca.doSync(ctx, false)
 	return err
 }

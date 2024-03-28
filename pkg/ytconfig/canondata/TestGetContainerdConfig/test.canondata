@@ -1,0 +1,32 @@
+{
+    grpc={
+        address="/yt/hdd1/images/containerd.sock";
+        gid=0;
+        uid=0;
+    };
+    plugins={
+        "io.containerd.grpc.v1.cri"={
+            cni={
+                "bin_dir"="/usr/local/lib/cni";
+                "conf_dir"="/etc/cni/net.d";
+            };
+            containerd={
+                "default_runtime_name"=runc;
+                runtimes={
+                    runc={
+                        options={
+                            SystemdCgroup=%false;
+                        };
+                        "runtime_type"="io.containerd.runc.v2";
+                        "sandbox_mode"=podsandbox;
+                    };
+                };
+            };
+            "image_pull_progress_timeout"="5m0s";
+            "restrict_oom_score_adj"=%true;
+            "sandbox_image"="registry.k8s.io/pause:3.8";
+        };
+    };
+    root="/yt/hdd1/images";
+    version=2;
+}

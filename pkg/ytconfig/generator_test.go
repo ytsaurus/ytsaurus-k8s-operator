@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"go.ytsaurus.tech/library/go/ptr"
+	"k8s.io/apimachinery/pkg/types"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -15,7 +17,13 @@ import (
 )
 
 var (
-	testClusterDomain             = "fake.zone"
+	testClusterDomain  = "fake.zone"
+	testNamespace      = "fake"
+	testYtsaurusName   = "test"
+	testNamespacedName = types.NamespacedName{
+		Namespace: testNamespace,
+		Name:      testYtsaurusName,
+	}
 	testLogRotationPeriod   int64 = 900000
 	testTotalLogSize              = 10 * int64(1<<30)
 	testMasterExternalHosts       = []string{
@@ -23,7 +31,12 @@ var (
 		"host2.external.address",
 		"host3.external.address",
 	}
-	testBasicInstanceSpec = v1.InstanceSpec{InstanceCount: 3}
+	testMasterCachesExternalHosts = []string{
+		"host1.external.address",
+		"host2.external.address",
+		"host3.external.address",
+	}
+	testBasicInstanceSpec = v1.InstanceSpec{InstanceCount: 3, MonitoringPort: ptr.Int32(12345)}
 	testStorageClassname  = "yc-network-hdd"
 	testResourceReqs      = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
@@ -43,6 +56,10 @@ var (
 	testLocationSlots = v1.LocationSpec{
 		LocationType: "Slots",
 		Path:         "/yt/hdd2/slots",
+	}
+	testLocationImageCache = v1.LocationSpec{
+		LocationType: "ImageCache",
+		Path:         "/yt/hdd1/images",
 	}
 	testVolumeMounts = []corev1.VolumeMount{
 		{
@@ -75,28 +92,72 @@ func TestGetChytInitClusterConfig(t *testing.T) {
 }
 
 func TestGetControllerAgentsConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetControllerAgentConfig()
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetControllerAgentConfig(ytsaurus.Spec.ControllerAgents)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
 
 func TestGetDataNodeConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	cfg, err := g.GetDataNodeConfig(getDataNodeSpec())
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetDataNodeWithoutYtsaurusConfig(t *testing.T) {
+	g := NewRemoteNodeGenerator(
+		testNamespacedName,
+		testClusterDomain,
+		getCommonSpec(),
+		getMasterConnectionSpecWithFixedMasterHosts(),
+		getMasterCachesSpecWithFixedHosts(),
+	)
 	cfg, err := g.GetDataNodeConfig(getDataNodeSpec())
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
 
 func TestGetDiscoveryConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetDiscoveryConfig()
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetDiscoveryConfig(&ytsaurus.Spec.Discovery)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
 
 func TestGetExecNodeConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	cfg, err := g.GetExecNodeConfig(getExecNodeSpec())
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetExecNodeConfigWithCri(t *testing.T) {
+	g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	spec := withCri(getExecNodeSpec())
+	cfg, err := g.GetExecNodeConfig(spec)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetContainerdConfig(t *testing.T) {
+	g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	spec := withCri(getExecNodeSpec())
+	cfg, err := g.GetContainerdConfig(&spec)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetExecNodeWithoutYtsaurusConfig(t *testing.T) {
+	g := NewRemoteNodeGenerator(
+		testNamespacedName,
+		testClusterDomain,
+		getCommonSpec(),
+		getMasterConnectionSpecWithFixedMasterHosts(),
+		getMasterCachesSpecWithFixedHosts(),
+	)
 	cfg, err := g.GetExecNodeConfig(getExecNodeSpec())
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
@@ -110,15 +171,17 @@ func TestGetHTTPProxyConfig(t *testing.T) {
 }
 
 func TestGetMasterConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetMasterConfig()
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetMasterConfig(&ytsaurus.Spec.PrimaryMasters)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
 
 func TestGetMasterWithFixedHostsConfig(t *testing.T) {
-	g := NewGenerator(withFixedMasterHosts(getYtsaurus()), testClusterDomain)
-	cfg, err := g.GetMasterConfig()
+	ytsaurus := withFixedMasterHosts(getYtsaurus())
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetMasterConfig(&ytsaurus.Spec.PrimaryMasters)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -131,15 +194,17 @@ func TestGetNativeClientConfig(t *testing.T) {
 }
 
 func TestGetQueryTrackerConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetQueryTrackerConfig()
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetQueryTrackerConfig(ytsaurus.Spec.QueryTrackers)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
 
 func TestGetQueueAgentConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetQueueAgentConfig()
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetQueueAgentConfig(ytsaurus.Spec.QueueAgents)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -152,15 +217,17 @@ func TestGetRPCProxyConfig(t *testing.T) {
 }
 
 func TestGetSchedulerConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetSchedulerConfig()
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetSchedulerConfig(ytsaurus.Spec.Schedulers)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
 
 func TestGetSchedulerWithFixedMasterHostsConfig(t *testing.T) {
-	g := NewGenerator(withFixedMasterHosts(withScheduler(getYtsaurus())), testClusterDomain)
-	cfg, err := g.GetSchedulerConfig()
+	ytsaurus := withFixedMasterHosts(withScheduler(getYtsaurus()))
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetSchedulerConfig(ytsaurus.Spec.Schedulers)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -173,7 +240,20 @@ func TestGetStrawberryControllerConfig(t *testing.T) {
 }
 
 func TestGetTabletNodeConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	cfg, err := g.GetTabletNodeConfig(getTabletNodeSpec())
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetTabletNodeWithoutYtsaurusConfig(t *testing.T) {
+	g := NewRemoteNodeGenerator(
+		testNamespacedName,
+		testClusterDomain,
+		getCommonSpec(),
+		getMasterConnectionSpecWithFixedMasterHosts(),
+		getMasterCachesSpecWithFixedHosts(),
+	)
 	cfg, err := g.GetTabletNodeConfig(getTabletNodeSpec())
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
@@ -201,8 +281,25 @@ func TestGetUICustomConfig(t *testing.T) {
 }
 
 func TestGetYQLAgentConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetYQLAgentConfig()
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetYQLAgentConfig(ytsaurus.Spec.YQLAgents)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetMasterCachesWithFixedHostsConfig(t *testing.T) {
+	ytsaurus := withFixedMasterCachesHosts(getYtsaurusWithEverything())
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetMasterCachesConfig(ytsaurus.Spec.MasterCaches)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetMasterCachesConfig(t *testing.T) {
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetMasterCachesConfig(ytsaurus.Spec.MasterCaches)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -210,17 +307,18 @@ func TestGetYQLAgentConfig(t *testing.T) {
 func getYtsaurus() *v1.Ytsaurus {
 	return &v1.Ytsaurus{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "fake",
-			Name:      "test",
+			Namespace: testNamespace,
+			Name:      testYtsaurusName,
 		},
 		Spec: v1.YtsaurusSpec{
-			UseIPv6: true,
+			CommonSpec: getCommonSpec(),
 
 			PrimaryMasters: v1.MastersSpec{
-				CellTag:                0,
+				MasterConnectionSpec:   getMasterConnectionSpec(),
 				MaxSnapshotCountToKeep: ptr.Int(1543),
 				InstanceSpec: v1.InstanceSpec{
-					InstanceCount: 1,
+					InstanceCount:  1,
+					MonitoringPort: ptr.Int32(consts.MasterMonitoringPort),
 
 					VolumeMounts: []corev1.VolumeMount{
 						{
@@ -313,12 +411,14 @@ func getYtsaurusWithEverything() *v1.Ytsaurus {
 	ytsaurus = withTCPPRoxies(ytsaurus)
 	ytsaurus = withUI(ytsaurus)
 	ytsaurus = withYQLAgent(ytsaurus)
+	ytsaurus = withMasterCaches(ytsaurus)
 	return ytsaurus
 }
 
 func withControllerAgents(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 	ytsaurus.Spec.ControllerAgents = &v1.ControllerAgentsSpec{InstanceSpec: testBasicInstanceSpec}
 	ytsaurus.Spec.UsePorto = true
+	ytsaurus.Spec.ControllerAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.ControllerAgentMonitoringPort)
 	return ytsaurus
 }
 
@@ -343,16 +443,19 @@ func withResolverConfigured(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 
 func withDiscovery(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 	ytsaurus.Spec.Discovery = v1.DiscoverySpec{InstanceSpec: testBasicInstanceSpec}
+	ytsaurus.Spec.Discovery.InstanceSpec.MonitoringPort = ptr.Int32(consts.DiscoveryMonitoringPort)
 	return ytsaurus
 }
 
 func withQueryTracker(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 	ytsaurus.Spec.QueryTrackers = &v1.QueryTrackerSpec{InstanceSpec: testBasicInstanceSpec}
+	ytsaurus.Spec.QueryTrackers.InstanceSpec.MonitoringPort = ptr.Int32(consts.QueryTrackerMonitoringPort)
 	return ytsaurus
 }
 
 func withQueueAgent(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 	ytsaurus.Spec.QueueAgents = &v1.QueueAgentSpec{InstanceSpec: testBasicInstanceSpec}
+	ytsaurus.Spec.QueueAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.QueueAgentMonitoringPort)
 	return ytsaurus
 }
 
@@ -367,6 +470,7 @@ func withStrawberry(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 
 func withScheduler(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 	ytsaurus.Spec.Schedulers = &v1.SchedulersSpec{InstanceSpec: testBasicInstanceSpec}
+	ytsaurus.Spec.Schedulers.InstanceSpec.MonitoringPort = ptr.Int32(consts.SchedulerMonitoringPort)
 	return ytsaurus
 }
 
@@ -383,6 +487,7 @@ func withTCPPRoxies(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 			PortCount:    20000,
 		},
 	}
+	ytsaurus.Spec.TCPProxies[0].InstanceSpec.MonitoringPort = ptr.Int32(consts.TCPProxyMonitoringPort)
 	return ytsaurus
 }
 
@@ -406,8 +511,21 @@ func withUICustom(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 	return ytsaurus
 }
 
+func withMasterCaches(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
+	ytsaurus.Spec.MasterCaches = &v1.MasterCachesSpec{InstanceSpec: testBasicInstanceSpec}
+	ytsaurus.Spec.MasterCaches.InstanceSpec.MonitoringPort = ptr.Int32(consts.MasterCachesMonitoringPort)
+	return ytsaurus
+}
+
 func withYQLAgent(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 	ytsaurus.Spec.YQLAgents = &v1.YQLAgentSpec{InstanceSpec: testBasicInstanceSpec}
+	ytsaurus.Spec.YQLAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.YQLAgentMonitoringPort)
+	return ytsaurus
+}
+
+func withFixedMasterCachesHosts(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
+	ytsaurus.Spec.MasterCaches.MasterCachesConnectionSpec.HostAddresses = testMasterCachesExternalHosts
+	ytsaurus.Spec.MasterCaches.InstanceSpec.MonitoringPort = ptr.Int32(consts.MasterCachesMonitoringPort)
 	return ytsaurus
 }
 
@@ -415,6 +533,7 @@ func getDataNodeSpec() v1.DataNodesSpec {
 	return v1.DataNodesSpec{
 		InstanceSpec: v1.InstanceSpec{
 			InstanceCount:        20,
+			MonitoringPort:       ptr.Int32(consts.DataNodeMonitoringPort),
 			Resources:            testResourceReqs,
 			Locations:            []v1.LocationSpec{testLocationChunkStore},
 			VolumeMounts:         testVolumeMounts,
@@ -430,8 +549,9 @@ func getExecNodeSpec() v1.ExecNodesSpec {
 	rotationPolicyMaxTotalSize := int64(3145728)
 	return v1.ExecNodesSpec{
 		InstanceSpec: v1.InstanceSpec{
-			InstanceCount: 50,
-			Resources:     testResourceReqs,
+			InstanceCount:  50,
+			MonitoringPort: ptr.Int32(consts.ExecNodeMonitoringPort),
+			Resources:      testResourceReqs,
 			Locations: []v1.LocationSpec{
 				testLocationChunkCache,
 				testLocationSlots,
@@ -463,11 +583,29 @@ func getExecNodeSpec() v1.ExecNodesSpec {
 	}
 }
 
+func withCri(spec v1.ExecNodesSpec) v1.ExecNodesSpec {
+	spec.Locations = append(spec.Locations, testLocationImageCache)
+	spec.JobResources = &testResourceReqs
+	spec.JobEnvironment = &v1.JobEnvironmentSpec{
+		UserSlots: ptr.Int(42),
+		CRI: &v1.CRIJobEnvironmentSpec{
+			SandboxImage:           ptr.String("registry.k8s.io/pause:3.8"),
+			APIRetryTimeoutSeconds: ptr.Int32(120),
+			CRINamespace:           ptr.String("yt"),
+			BaseCgroup:             ptr.String("/yt"),
+		},
+		UseArtifactBinds: ptr.Bool(true),
+		DoNotSetUserId:   ptr.Bool(true),
+	}
+	return spec
+}
+
 func getTabletNodeSpec() v1.TabletNodesSpec {
 	return v1.TabletNodesSpec{
 		InstanceSpec: v1.InstanceSpec{
-			InstanceCount: 100,
-			Resources:     testResourceReqs,
+			InstanceCount:  100,
+			MonitoringPort: ptr.Int32(consts.TabletNodeMonitoringPort),
+			Resources:      testResourceReqs,
 			Locations: []v1.LocationSpec{
 				testLocationChunkCache,
 				testLocationSlots,
@@ -484,7 +622,8 @@ func getHTTPProxySpec() v1.HTTPProxiesSpec {
 	httpsPort := int32(10001)
 	return v1.HTTPProxiesSpec{
 		InstanceSpec: v1.InstanceSpec{
-			InstanceCount: 3,
+			InstanceCount:  3,
+			MonitoringPort: ptr.Int32(consts.HTTPProxyMonitoringPort),
 		},
 		ServiceType: corev1.ServiceTypeNodePort,
 		Role:        "control",
@@ -499,7 +638,8 @@ func getHTTPProxySpec() v1.HTTPProxiesSpec {
 func getRPCProxySpec() v1.RPCProxiesSpec {
 	return v1.RPCProxiesSpec{
 		InstanceSpec: v1.InstanceSpec{
-			InstanceCount: 3,
+			InstanceCount:  3,
+			MonitoringPort: ptr.Int32(consts.RPCProxyMonitoringPort),
 		},
 		Role: "default",
 	}
@@ -508,8 +648,44 @@ func getRPCProxySpec() v1.RPCProxiesSpec {
 func getTCPProxySpec() v1.TCPProxiesSpec {
 	return v1.TCPProxiesSpec{
 		InstanceSpec: v1.InstanceSpec{
-			InstanceCount: 3,
+			InstanceCount:  3,
+			MonitoringPort: ptr.Int32(consts.TCPProxyMonitoringPort),
 		},
 		Role: "default",
 	}
+}
+
+func getCommonSpec() v1.CommonSpec {
+	return v1.CommonSpec{
+		UseIPv6: true,
+	}
+}
+
+func getMasterConnectionSpec() v1.MasterConnectionSpec {
+	return v1.MasterConnectionSpec{
+		CellTag: 0,
+	}
+}
+
+func getMasterConnectionSpecWithFixedMasterHosts() v1.MasterConnectionSpec {
+	spec := getMasterConnectionSpec()
+	spec.HostAddresses = testMasterExternalHosts
+	spec.CellTag = 1000
+	return spec
+}
+
+func getMasterCachesSpec() v1.MasterCachesSpec {
+	return v1.MasterCachesSpec{
+		InstanceSpec: v1.InstanceSpec{
+			InstanceCount:  3,
+			MonitoringPort: ptr.Int32(consts.MasterCachesMonitoringPort),
+		},
+		HostAddressLabel: "",
+	}
+}
+
+func getMasterCachesSpecWithFixedHosts() *v1.MasterCachesSpec {
+	spec := getMasterCachesSpec()
+	spec.MasterCachesConnectionSpec.HostAddresses = testMasterCachesExternalHosts
+	return &spec
 }
