@@ -303,7 +303,7 @@ export INIT_OP_ARCHIVE=/usr/bin/init_operation_archive
 fi
 `
 
-func (s *Scheduler) prepareInitOperationArchive() {
+func (s *Scheduler) prepareInitOperationsArchive() {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		setInitOpArchivePath,
