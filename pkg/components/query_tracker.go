@@ -39,7 +39,7 @@ func NewQueryTracker(
 ) *QueryTracker {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabellerForGlobalComponent(
+	l := labeller.NewSingletonComponentLabeller(
 		&resource.ObjectMeta,
 		consts.QueryTrackerType,
 		consts.YTComponentLabelQueryTracker,

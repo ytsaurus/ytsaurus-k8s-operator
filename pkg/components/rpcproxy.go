@@ -32,7 +32,7 @@ func NewRPCProxy(
 	spec ytv1.RPCProxiesSpec) *RpcProxy {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabellerForComponentInstance(
+	l := labeller.NewMultiComponentLabeller(
 		&resource.ObjectMeta,
 		consts.RpcProxyType,
 		consts.YTComponentLabelRPCProxy,

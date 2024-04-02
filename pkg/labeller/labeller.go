@@ -25,7 +25,7 @@ type Labeller struct {
 	objectsNamePrefixBase string
 }
 
-func NewLabellerForGlobalComponent(objectMeta *metav1.ObjectMeta, name consts.ComponentType, objectsNamePrefix string, annotations map[string]string) Labeller {
+func NewSingletonComponentLabeller(objectMeta *metav1.ObjectMeta, name consts.ComponentType, objectsNamePrefix string, annotations map[string]string) Labeller {
 	l := Labeller{
 		ObjectMeta: objectMeta,
 
@@ -40,7 +40,7 @@ func NewLabellerForGlobalComponent(objectMeta *metav1.ObjectMeta, name consts.Co
 	return l
 }
 
-func NewLabellerForComponentInstance(objectMeta *metav1.ObjectMeta, nameBase consts.ComponentType, objectsNamePrefixBase, instanceName string, annotations map[string]string) Labeller {
+func NewMultiComponentLabeller(objectMeta *metav1.ObjectMeta, nameBase consts.ComponentType, objectsNamePrefixBase, instanceName string, annotations map[string]string) Labeller {
 	l := Labeller{
 		ObjectMeta: objectMeta,
 

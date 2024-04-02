@@ -31,7 +31,7 @@ func NewTCPProxy(
 	spec ytv1.TCPProxiesSpec) *TcpProxy {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabellerForComponentInstance(
+	l := labeller.NewMultiComponentLabeller(
 		&resource.ObjectMeta,
 		consts.TcpProxyType,
 		consts.YTComponentLabelTCPProxy,

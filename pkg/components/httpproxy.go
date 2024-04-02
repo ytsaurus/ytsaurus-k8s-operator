@@ -35,7 +35,7 @@ func NewHTTPProxy(
 
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabellerForComponentInstance(
+	l := labeller.NewMultiComponentLabeller(
 		&resource.ObjectMeta,
 		consts.HttpProxyType,
 		consts.YTComponentLabelHTTPProxy,

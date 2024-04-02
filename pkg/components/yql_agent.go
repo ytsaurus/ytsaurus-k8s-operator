@@ -29,7 +29,7 @@ type YqlAgent struct {
 func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *YqlAgent {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabellerForGlobalComponent(
+	l := labeller.NewSingletonComponentLabeller(
 		&resource.ObjectMeta,
 		consts.YqlAgentType,
 		consts.YTComponentLabelYqlAgent,

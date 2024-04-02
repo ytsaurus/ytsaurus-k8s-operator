@@ -41,7 +41,7 @@ func NewTabletNode(
 ) *TabletNode {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabellerForComponentInstance(
+	l := labeller.NewMultiComponentLabeller(
 		&resource.ObjectMeta,
 		consts.TabletNodeType,
 		consts.YTComponentLabelTabletNode,

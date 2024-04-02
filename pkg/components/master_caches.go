@@ -21,7 +21,7 @@ type MasterCache struct {
 func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *MasterCache {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabellerForGlobalComponent(
+	l := labeller.NewSingletonComponentLabeller(
 		&resource.ObjectMeta,
 		consts.MasterCacheType,
 		consts.YTComponentLabelMasterCache,

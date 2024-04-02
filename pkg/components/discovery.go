@@ -21,7 +21,7 @@ type Discovery struct {
 func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Discovery {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabellerForGlobalComponent(
+	l := labeller.NewSingletonComponentLabeller(
 		&resource.ObjectMeta,
 		consts.DiscoveryType,
 		consts.YTComponentLabelDiscovery,

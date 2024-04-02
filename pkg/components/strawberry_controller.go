@@ -66,7 +66,7 @@ func NewStrawberryController(
 		}
 	}
 
-	l := labeller.NewLabellerForGlobalComponent(
+	l := labeller.NewSingletonComponentLabeller(
 		&resource.ObjectMeta,
 		consts.ComponentType(componentName),
 		fmt.Sprintf("yt-%s-controller", name),

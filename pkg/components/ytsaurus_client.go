@@ -44,7 +44,7 @@ func NewYtsaurusClient(
 ) *YtsaurusClient {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabellerForGlobalComponent(
+	l := labeller.NewSingletonComponentLabeller(
 		&resource.ObjectMeta,
 		consts.YtsaurusClientType,
 		consts.YTComponentLabelClient,

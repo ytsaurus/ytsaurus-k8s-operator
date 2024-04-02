@@ -24,7 +24,7 @@ func NewRemoteExecNodes(
 	spec ytv1.ExecNodesSpec,
 	commonSpec ytv1.CommonSpec,
 ) *RemoteExecNode {
-	l := labeller.NewLabellerForComponentInstance(
+	l := labeller.NewMultiComponentLabeller(
 		&nodes.ObjectMeta,
 		consts.ExecNodeType,
 		consts.YTComponentLabelExecNode,

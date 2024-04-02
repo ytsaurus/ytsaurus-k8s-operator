@@ -41,7 +41,7 @@ func NewQueueAgent(
 ) *QueueAgent {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabellerForGlobalComponent(
+	l := labeller.NewSingletonComponentLabeller(
 		&resource.ObjectMeta,
 		consts.QueueAgentType,
 		consts.YTComponentLabelQueueAgent,

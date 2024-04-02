@@ -37,7 +37,7 @@ func NewScheduler(
 	execNodes, tabletNodes []Component) *Scheduler {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabellerForGlobalComponent(
+	l := labeller.NewSingletonComponentLabeller(
 		&resource.ObjectMeta,
 		consts.SchedulerType,
 		consts.YTComponentLabelScheduler,

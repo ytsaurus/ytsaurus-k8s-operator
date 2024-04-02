@@ -26,7 +26,7 @@ func NewExecNode(
 ) *ExecNode {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabellerForComponentInstance(
+	l := labeller.NewMultiComponentLabeller(
 		&resource.ObjectMeta,
 		consts.ExecNodeType,
 		consts.YTComponentLabelExecNode,

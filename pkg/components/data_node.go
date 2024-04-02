@@ -27,7 +27,7 @@ func NewDataNode(
 ) *DataNode {
 	resource := ytsaurus.GetResource()
 
-	l := labeller.NewLabellerForComponentInstance(
+	l := labeller.NewMultiComponentLabeller(
 		&resource.ObjectMeta,
 		consts.DataNodeType,
 		consts.YTComponentLabelDataNode,

@@ -32,7 +32,7 @@ func NewSpyt(
 	spyt *apiproxy.Spyt,
 	ytsaurus *ytv1.Ytsaurus) *Spyt {
 
-	l := labeller.NewLabellerForComponentInstance(
+	l := labeller.NewMultiComponentLabeller(
 		&spyt.GetResource().ObjectMeta,
 		consts.SPYTType,
 		consts.YTComponentLabelSPYT,
