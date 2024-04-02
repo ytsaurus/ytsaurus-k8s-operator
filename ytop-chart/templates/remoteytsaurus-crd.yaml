@@ -621,6 +621,10 @@ spec:
                 items:
                   type: string
                 type: array
+              extraLabels:
+                additionalProperties:
+                  type: string
+                type: object
               hostAddresses:
                 items:
                   type: string

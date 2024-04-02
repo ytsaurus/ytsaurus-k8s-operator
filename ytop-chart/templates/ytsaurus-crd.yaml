@@ -770,6 +770,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  extraLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
                   image:
                     description: Overrides coreImage for component.
                     type: string
@@ -3081,6 +3085,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    extraLabels:
+                      additionalProperties:
+                        type: string
+                      type: object
                     image:
                       description: Overrides coreImage for component.
                       type: string
@@ -5416,6 +5424,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  extraLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
                   image:
                     description: Overrides coreImage for component.
                     type: string
@@ -7728,6 +7740,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    extraLabels:
+                      additionalProperties:
+                        type: string
+                      type: object
                     image:
                       description: Overrides coreImage for component.
                       type: string
@@ -10236,6 +10252,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    extraLabels:
+                      additionalProperties:
+                        type: string
+                      type: object
                     httpNodePort:
                       format: int32
                       type: integer
@@ -12611,6 +12631,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  extraLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
                   hostAddressesLabel:
                     type: string
                   hostAddressesMasterCaches:
@@ -14973,6 +14997,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  extraLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
                   hostAddressLabel:
                     type: string
                   hostAddresses:
@@ -17290,6 +17318,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  extraLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
                   image:
                     description: Overrides coreImage for component.
                     type: string
@@ -19595,6 +19627,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  extraLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
                   image:
                     description: Overrides coreImage for component.
                     type: string
@@ -21904,6 +21940,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    extraLabels:
+                      additionalProperties:
+                        type: string
+                      type: object
                     image:
                       description: Overrides coreImage for component.
                       type: string
@@ -24261,6 +24301,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  extraLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
                   image:
                     description: Overrides coreImage for component.
                     type: string
@@ -26572,6 +26616,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    extraLabels:
+                      additionalProperties:
+                        type: string
+                      type: object
                     hostAddressLabel:
                       type: string
                     hostAddresses:
@@ -28964,6 +29012,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    extraLabels:
+                      additionalProperties:
+                        type: string
+                      type: object
                     image:
                       description: Overrides coreImage for component.
                       type: string
@@ -31302,6 +31354,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    extraLabels:
+                      additionalProperties:
+                        type: string
+                      type: object
                     image:
                       description: Overrides coreImage for component.
                       type: string
@@ -33835,6 +33891,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  extraLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
                   image:
                     description: Overrides coreImage for component.
                     type: string
