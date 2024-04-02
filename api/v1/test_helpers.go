@@ -12,6 +12,11 @@ import (
 
 const (
 	YtsaurusName = "test-ytsaurus"
+	// RemoteResourceName is a name for test remote ytsaurus and nodes.
+	// It is short because of error:
+	// `Failed to create pod sandbox: failed to construct FQDN from pod hostname and cluster domain, FQDN
+	// <...> is too long (64 characters is the max, 67 characters requested)`.
+	RemoteResourceName = "tst-rmt"
 	// Images should be in sync with TEST_IMAGES variable in Makefile
 	// todo: come up with a more elegant solution
 	CoreImageFirst   = "ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de"
@@ -19,9 +24,11 @@ const (
 	CoreImageNextVer = "ytsaurus/ytsaurus-nightly:dev-23.2-9c50056eacfa4fe213798a5b9ee828ae3acb1bca"
 )
 
-func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
-	masterVolumeSize, _ := resource.ParseQuantity("5Gi")
+var (
+	masterVolumeSize, _ = resource.ParseQuantity("5Gi")
+)
 
+func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 	return &Ytsaurus{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      YtsaurusName,
@@ -121,11 +128,6 @@ func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 	ytsaurus := CreateMinimalYtsaurusResource(namespace)
 
-	masterVolumeSize, _ := resource.ParseQuantity("5Gi")
-	execNodeVolumeSize, _ := resource.ParseQuantity("3Gi")
-	execNodeCPU, _ := resource.ParseQuantity("1")
-	execNodeMemory, _ := resource.ParseQuantity("2Gi")
-
 	ytsaurus.Spec.Discovery = DiscoverySpec{
 		InstanceSpec: InstanceSpec{
 			InstanceCount: 1,
@@ -133,95 +135,17 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 	}
 	ytsaurus.Spec.DataNodes = []DataNodesSpec{
 		{
-			InstanceSpec: InstanceSpec{
-				InstanceCount: 3,
-				Locations: []LocationSpec{
-					{
-						LocationType: "ChunkStore",
-						Path:         "/yt/node-data/chunk-store",
-					},
-				},
-				Volumes: []corev1.Volume{
-					{
-						Name: "node-data",
-						VolumeSource: corev1.VolumeSource{
-							EmptyDir: &corev1.EmptyDirVolumeSource{
-								SizeLimit: &masterVolumeSize,
-							},
-						},
-					},
-				},
-				VolumeMounts: []corev1.VolumeMount{
-					{
-						Name:      "node-data",
-						MountPath: "/yt/node-data",
-					},
-				},
-			},
+			InstanceSpec: CreateDataNodeInstanceSpec(3),
 		},
 	}
 	ytsaurus.Spec.TabletNodes = []TabletNodesSpec{
 		{
-			InstanceSpec: InstanceSpec{
-				InstanceCount: 3,
-				Loggers: []TextLoggerSpec{
-					{
-						BaseLoggerSpec: BaseLoggerSpec{
-							MinLogLevel: LogLevelDebug,
-							Name:        "debug",
-						},
-						WriterType: LogWriterTypeFile,
-					},
-				},
-			},
+			InstanceSpec: CreateTabletNodeSpec(3),
 		},
 	}
 	ytsaurus.Spec.ExecNodes = []ExecNodesSpec{
 		{
-			InstanceSpec: InstanceSpec{
-				InstanceCount: 1,
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceCPU:    execNodeCPU,
-						corev1.ResourceMemory: execNodeMemory,
-					},
-				},
-				Loggers: []TextLoggerSpec{
-					{
-						BaseLoggerSpec: BaseLoggerSpec{
-							MinLogLevel: LogLevelDebug,
-							Name:        "debug",
-						},
-						WriterType: LogWriterTypeFile,
-					},
-				},
-				Locations: []LocationSpec{
-					{
-						LocationType: "ChunkCache",
-						Path:         "/yt/node-data/chunk-cache",
-					},
-					{
-						LocationType: "Slots",
-						Path:         "/yt/node-data/slots",
-					},
-				},
-				Volumes: []corev1.Volume{
-					{
-						Name: "node-data",
-						VolumeSource: corev1.VolumeSource{
-							EmptyDir: &corev1.EmptyDirVolumeSource{
-								SizeLimit: &execNodeVolumeSize,
-							},
-						},
-					},
-				},
-				VolumeMounts: []corev1.VolumeMount{
-					{
-						Name:      "node-data",
-						MountPath: "/yt/node-data",
-					},
-				},
-			},
+			InstanceSpec: CreateExecNodeInstanceSpec(),
 		},
 	}
 	return ytsaurus
@@ -244,4 +168,97 @@ func createHTTPProxiesSpec() HTTPProxiesSpec {
 		spec.HttpNodePort = &portInt32
 	}
 	return spec
+}
+
+func CreateExecNodeInstanceSpec() InstanceSpec {
+	execNodeVolumeSize, _ := resource.ParseQuantity("3Gi")
+	execNodeCPU, _ := resource.ParseQuantity("1")
+	execNodeMemory, _ := resource.ParseQuantity("2Gi")
+	return InstanceSpec{
+		InstanceCount: 1,
+		Resources: corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    execNodeCPU,
+				corev1.ResourceMemory: execNodeMemory,
+			},
+		},
+		Loggers: []TextLoggerSpec{
+			{
+				BaseLoggerSpec: BaseLoggerSpec{
+					MinLogLevel: LogLevelDebug,
+					Name:        "debug",
+				},
+				WriterType: LogWriterTypeFile,
+			},
+		},
+		Locations: []LocationSpec{
+			{
+				LocationType: "ChunkCache",
+				Path:         "/yt/node-data/chunk-cache",
+			},
+			{
+				LocationType: "Slots",
+				Path:         "/yt/node-data/slots",
+			},
+		},
+		Volumes: []corev1.Volume{
+			{
+				Name: "node-data",
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{
+						SizeLimit: &execNodeVolumeSize,
+					},
+				},
+			},
+		},
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      "node-data",
+				MountPath: "/yt/node-data",
+			},
+		},
+	}
+}
+
+func CreateDataNodeInstanceSpec(instanceCount int) InstanceSpec {
+	return InstanceSpec{
+		InstanceCount: int32(instanceCount),
+		Locations: []LocationSpec{
+			{
+				LocationType: "ChunkStore",
+				Path:         "/yt/node-data/chunk-store",
+			},
+		},
+		Volumes: []corev1.Volume{
+			{
+				Name: "node-data",
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{
+						SizeLimit: &masterVolumeSize,
+					},
+				},
+			},
+		},
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      "node-data",
+				MountPath: "/yt/node-data",
+			},
+		},
+	}
+}
+
+func CreateTabletNodeSpec(instanceCount int) InstanceSpec {
+	return InstanceSpec{
+		InstanceCount: int32(instanceCount),
+		Loggers: []TextLoggerSpec{
+			{
+				BaseLoggerSpec: BaseLoggerSpec{
+					MinLogLevel: LogLevelDebug,
+					Name:        "debug",
+				},
+				WriterType: LogWriterTypeFile,
+			},
+		},
+	}
 }
