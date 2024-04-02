@@ -164,10 +164,7 @@ func createRemoteYtsaurus(remoteYtsaurus *ytv1.RemoteYtsaurus) {
 	Eventually(func() bool {
 		createdYtsaurus := &ytv1.RemoteYtsaurus{}
 		err := k8sClient.Get(ctx, lookupKey, createdYtsaurus)
-		if err != nil {
-			return false
-		}
-		return true
+		return err == nil
 	}, timeout, interval).Should(BeTrue())
 }
 
@@ -184,10 +181,7 @@ func runRemoteExecNodes(remoteExecNodes *ytv1.RemoteExecNodes) {
 	Eventually(func() bool {
 		createdYtsaurus := &ytv1.RemoteExecNodes{}
 		err := k8sClient.Get(ctx, lookupKey, createdYtsaurus)
-		if err != nil {
-			return false
-		}
-		return true
+		return err == nil
 	}, timeout, interval).Should(BeTrue())
 
 	By("Checking that remote nodes state is equal to `Running`")
@@ -658,6 +652,7 @@ func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
 		"bbb",
 	}
 	writer, err := ytClient.WriteTable(ctx, testTablePathIn, nil)
+	Expect(err).Should(Succeed())
 	for _, key := range keys {
 		err = writer.Write(Row{Key: key})
 		Expect(err).Should(Succeed())
