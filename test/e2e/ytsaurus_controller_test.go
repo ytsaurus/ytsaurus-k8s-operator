@@ -158,7 +158,7 @@ func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
 	}, timeout*2, interval).Should(Equal(ytv1.ClusterStateRunning))
 }
 
-func runRemoteYtsaurus(remoteYtsaurus *ytv1.RemoteYtsaurus) {
+func createRemoteYtsaurus(remoteYtsaurus *ytv1.RemoteYtsaurus) {
 	Expect(k8sClient.Create(ctx, remoteYtsaurus)).Should(Succeed())
 	lookupKey := types.NamespacedName{Name: remoteYtsaurus.Name, Namespace: remoteYtsaurus.Namespace}
 	Eventually(func() bool {
@@ -520,7 +520,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			runYtsaurus(ytsaurus)
 
 			defer deleteRemoteYtsaurus(ctx, remoteYtsaurus)
-			runRemoteYtsaurus(remoteYtsaurus)
+			createRemoteYtsaurus(remoteYtsaurus)
 
 			defer deleteRemoteExecNodes(ctx, remoteNodes)
 			runRemoteExecNodes(remoteNodes)
@@ -540,11 +540,16 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				fmt.Println(job)
 			}
 
-			statuses, err := yt.ListAllJobs(ctx, ytClient, op.ID(), nil)
+			statuses, err := yt.ListAllJobs(ctx, ytClient, op.ID(), &yt.ListJobsOptions{
+				JobState: &yt.JobCompleted,
+			})
 			Ω(err).ShouldNot(HaveOccurred())
-			for _, status := range statuses {
-				fmt.Println(status.ExecAttributes)
-			}
+			Ω(len(statuses)).Should(Equal(1))
+			status := statuses[0]
+			Ω(status.Address).Should(
+				ContainSubstring("end-"+ytv1.RemoteResourceName),
+				"actual status: %s", status,
+			)
 		})
 	})
 
