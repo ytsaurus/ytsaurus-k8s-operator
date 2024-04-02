@@ -28,7 +28,7 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
-GINKGO_PROCS ?= 4
+GINKGO_PROCS ?= 1
 
 GINKGO_FLAGS += --vv
 GINKGO_FLAGS += --trace
