@@ -218,7 +218,7 @@ func (s *Scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	if !dry {
-		s.prepareInitOperationArchive()
+		s.prepareInitOperationsArchive()
 	}
 	return s.initOpArchive.Sync(ctx, dry)
 }
@@ -293,10 +293,21 @@ func (s *Scheduler) createInitUserScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (s *Scheduler) prepareInitOperationArchive() {
+
+// omgronny: The file was renamed in ytsaurus image. Refer to
+// https://github.com/ytsaurus/ytsaurus/commit/e5348fef221110ce27bba13df5f9790649084b01
+const setInitOpArchivePath = `
+export INIT_OP_ARCHIVE=/usr/bin/init_operations_archive
+if [ ! -f $INIT_OP_ARCHIVE ]; then
+export INIT_OP_ARCHIVE=/usr/bin/init_operation_archive
+fi
+`
+
+func (s *Scheduler) prepareInitOperationsArchive() {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
-		fmt.Sprintf("/usr/bin/init_operation_archive --force --latest --proxy %s",
+		setInitOpArchivePath,
+		fmt.Sprintf("$INIT_OP_ARCHIVE --force --latest --proxy %s",
 			s.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
 		SetWithIgnoreExisting("//sys/cluster_nodes/@config", "'{\"%true\" = {job_agent={enable_job_reporter=%true}}}'"),
 	}
