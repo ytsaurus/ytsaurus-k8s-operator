@@ -132,7 +132,8 @@ type JobResourceManager struct {
 }
 
 type JobProxy struct {
-	JobProxyLogging Logging `yson:"job_proxy_logging"`
+	JobProxyAuthenticationManager Auth    `yson:"job_proxy_authentication_manager"`
+	JobProxyLogging               Logging `yson:"job_proxy_logging"`
 }
 
 type ExecNode struct {
@@ -141,8 +142,9 @@ type ExecNode struct {
 	JobController JobController `yson:"job_controller"`
 	JobProxy      JobProxy      `yson:"job_proxy"`
 
-	JobProxyLoggingLegacy *Logging `yson:"job_proxy_logging,omitempty"`
-	DoNotSetUserIdLegacy  *bool    `yson:"do_not_set_user_id,omitempty"`
+	JobProxyAuthenticationManagerLegacy *Auth    `yson:"job_proxy_authentication_manager,omitempty"`
+	JobProxyLoggingLegacy               *Logging `yson:"job_proxy_logging,omitempty"`
+	DoNotSetUserIdLegacy                *bool    `yson:"do_not_set_user_id,omitempty"`
 
 	// NOTE: Non-legacy "use_artifact_binds" moved into dynamic config.
 	UseArtifactBindsLegacy *bool `yson:"use_artifact_binds,omitempty"`
@@ -492,10 +494,14 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	jobProxyLoggingBuilder.logging.FlushPeriod = 3000
 	c.ExecNode.JobProxy.JobProxyLogging = jobProxyLoggingBuilder.logging
 
+	c.ExecNode.JobProxy.JobProxyAuthenticationManager.RequireAuthentication = true
+	c.ExecNode.JobProxy.JobProxyAuthenticationManager.CypressTokenAuthenticator.Secure = true
+
 	// TODO(khlebnikov): Drop legacy fields depending on ytsaurus version.
 	c.ExecNode.JobController.ResourceLimitsLegacy = &c.JobResourceManager.ResourceLimits
 	c.ExecNode.JobController.GpuManagerLegacy = &c.ExecNode.GpuManager
 	c.ExecNode.JobProxyLoggingLegacy = &c.ExecNode.JobProxy.JobProxyLogging
+	c.ExecNode.JobProxyAuthenticationManagerLegacy = &c.ExecNode.JobProxy.JobProxyAuthenticationManager
 	c.ExecNode.DoNotSetUserIdLegacy = c.ExecNode.SlotManager.DoNotSetUserId
 
 	return c, nil
