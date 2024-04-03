@@ -95,7 +95,7 @@ func logComponentStatuses(
 		"readyComponents", readyComponents,
 		"updateState", resource.Status.UpdateStatus.State,
 		"clusterState", resource.Status.State)
-
+	return nil
 }
 
 func statusToSymbol(st components.SyncStatus) string {

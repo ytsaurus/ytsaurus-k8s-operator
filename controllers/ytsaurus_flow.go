@@ -79,7 +79,7 @@ func syncComponents(
 
 	// Special check before everything other component (including master) update.
 	masterBuildStatus, err := getStatusForMasterBuild(ctx, registry.master)
-	if err = logComponentStatuses(ctx, registry, statuses, componentsOrder, resource); err != nil {
+	if err != nil {
 		return components.ComponentStatus{}, err
 	}
 	switch masterBuildStatus.SyncStatus {
