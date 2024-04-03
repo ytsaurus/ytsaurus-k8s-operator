@@ -169,18 +169,15 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	}
 
 	var ytClient yt.Client
+	if !dry {
+		ytClient = qt.ytsaurusClient.GetYtClient()
+		if ytClient == nil {
+			return WaitingStatus(SyncStatusPending, "getting yt client"), err
+		}
+	}
+
 	if qt.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
-		ytClientStatus, err := qt.ytsaurusClient.Status(ctx)
-		if err != nil {
-			return ytClientStatus, err
-		}
-		if ytClientStatus.SyncStatus != SyncStatusReady {
-			return WaitingStatus(SyncStatusBlocked, qt.ytsaurusClient.GetName()), err
-		}
-
 		if !dry {
-			ytClient = qt.ytsaurusClient.GetYtClient()
-
 			err = qt.createUser(ctx, ytClient)
 			if err != nil {
 				return WaitingStatus(SyncStatusPending, "create qt user"), err
@@ -189,27 +186,25 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	}
 
 	if !dry {
+		err = qt.init(ctx, ytClient)
+		if err != nil {
+			return WaitingStatus(SyncStatusPending, fmt.Sprintf("%s initialization", qt.GetName())), err
+		}
+
+		qt.ytsaurus.SetStatusCondition(metav1.Condition{
+			Type:    qt.initCondition,
+			Status:  metav1.ConditionTrue,
+			Reason:  "InitQueryTrackerCompleted",
+			Message: "Init query tracker successfully completed",
+		})
+	}
+
+	if !dry {
 		qt.prepareInitQueryTrackerState()
 	}
 	status, err := qt.initQTState.Sync(ctx, dry)
 	if err != nil || status.SyncStatus != SyncStatusReady {
 		return status, err
-	}
-
-	if qt.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
-		if !dry {
-			err = qt.init(ctx, ytClient)
-			if err != nil {
-				return WaitingStatus(SyncStatusPending, fmt.Sprintf("%s initialization", qt.GetName())), err
-			}
-
-			qt.ytsaurus.SetStatusCondition(metav1.Condition{
-				Type:    qt.initCondition,
-				Status:  metav1.ConditionTrue,
-				Reason:  "InitQueryTrackerCompleted",
-				Message: "Init query tracker successfully completed",
-			})
-		}
 	}
 
 	if qt.ytsaurus.IsStatusConditionTrue(qt.initCondition) {
@@ -304,6 +299,20 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 		&yt.CreateObjectOptions{
 			Attributes: map[string]interface{}{
 				"name": "queries",
+				"acl": []interface{}{
+					map[string]interface{}{
+						"action":           "allow",
+						"subjects":         []string{"owner"},
+						"permissions":      []string{"read", "write", "administer", "remove"},
+						"inheritance_mode": "immediate_descendants_only",
+					},
+					map[string]interface{}{
+						"action":           "allow",
+						"subjects":         []string{"users"},
+						"permissions":      []string{"modify_children"},
+						"inheritance_mode": "object_only",
+					},
+				},
 			},
 			IgnoreExisting: true,
 		},
@@ -339,7 +348,7 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 				"principal_acl": []interface{}{map[string]interface{}{
 					"action":      "allow",
 					"subjects":    []string{"everyone"},
-					"permissions": []string{"use"},
+					"permissions": []string{"read", "use"},
 				}},
 			},
 			IgnoreExisting: true,
@@ -347,6 +356,27 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 	)
 	if err != nil {
 		logger.Error(err, "Creating access control object 'everyone' in namespace 'queries' failed")
+		return
+	}
+
+	_, err = ytClient.CreateObject(
+		ctx,
+		yt.NodeAccessControlObject,
+		&yt.CreateObjectOptions{
+			Attributes: map[string]interface{}{
+				"name":      "everyone-use",
+				"namespace": "queries",
+				"principal_acl": []interface{}{map[string]interface{}{
+					"action":      "allow",
+					"subjects":    []string{"everyone"},
+					"permissions": []string{"use"},
+				}},
+			},
+			IgnoreExisting: true,
+		},
+	)
+	if err != nil {
+		logger.Error(err, "Creating access control object 'everyone-use' in namespace 'queries' failed")
 		return
 	}
 	return
