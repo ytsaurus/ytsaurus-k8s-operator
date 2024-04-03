@@ -87,6 +87,23 @@ func BuildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
 					Name:             dndsNameOne,
 				},
 			},
+			ExecNodes: []ytv1.ExecNodesSpec{
+				{
+					InstanceSpec: ytv1.InstanceSpec{
+						InstanceCount: 1,
+						Locations: []ytv1.LocationSpec{
+							{
+								LocationType: "ChunkCache",
+								Path:         "/yt/node-data/chunk-cache",
+							},
+							{
+								LocationType: "Slots",
+								Path:         "/yt/node-data/slots",
+							},
+						},
+					},
+				},
+			},
 			ControllerAgents: &ytv1.ControllerAgentsSpec{
 				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount:  1,
