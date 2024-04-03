@@ -87,6 +87,12 @@ func BuildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
 					Name:             dndsNameOne,
 				},
 			},
+			ControllerAgents: &ytv1.ControllerAgentsSpec{
+				InstanceSpec: ytv1.InstanceSpec{
+					InstanceCount:  1,
+					MonitoringPort: ptr.Int32(consts.ControllerAgentMonitoringPort),
+				},
+			},
 		},
 	}
 }
