@@ -93,5 +93,4 @@ func testComponentFlow(
 		testutil.GetObject(h, shortName, sts)
 		require.Equal(t, *newImage, sts.Spec.Template.Spec.Containers[0].Image)
 	}
-
 }

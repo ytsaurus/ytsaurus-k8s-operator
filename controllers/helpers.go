@@ -44,13 +44,16 @@ func logComponentStatuses(
 	statuses map[string]components.ComponentStatus,
 	componentsOrder [][]consts.ComponentType,
 	resource *ytv1.Ytsaurus,
-) {
+) error {
 	logger := log.FromContext(ctx)
 
 	var readyComponents []string
 	var notReadyComponents []string
 
-	masterBuildStatus := getStatusForMasterBuild(registry.master)
+	masterBuildStatus, err := getStatusForMasterBuild(ctx, registry.master)
+	if err != nil {
+		return err
+	}
 	logger.V(1).Info(
 		fmt.Sprintf(
 			"%d.%s %s: %s",

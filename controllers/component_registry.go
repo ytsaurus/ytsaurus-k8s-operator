@@ -19,8 +19,8 @@ type component interface {
 type masterComponent interface {
 	component
 	BuildInitial(ctx context.Context) error
-	IsBuildInitially() bool
-	NeedBuild() bool
+	IsBuildInitially(ctx context.Context) (bool, error)
+	NeedBuild(ctx context.Context) (bool, error)
 	IsRebuildStarted() bool
 }
 

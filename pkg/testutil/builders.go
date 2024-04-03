@@ -15,6 +15,7 @@ const (
 	tndsNameOne       = "tn-1"
 )
 
+// BuildMinimalYtsaurus builds not minimal anymore, should be splitted.
 func BuildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
 	return ytv1.Ytsaurus{
 		ObjectMeta: v1.ObjectMeta{Namespace: namespace, Name: name},

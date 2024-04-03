@@ -73,10 +73,15 @@ func syncComponents(
 	if err != nil {
 		return components.ComponentStatus{}, err
 	}
-	logComponentStatuses(ctx, registry, statuses, componentsOrder, resource)
+	if err = logComponentStatuses(ctx, registry, statuses, componentsOrder, resource); err != nil {
+		return components.ComponentStatus{}, err
+	}
 
 	// Special check before everything other component (including master) update.
-	masterBuildStatus := getStatusForMasterBuild(registry.master)
+	masterBuildStatus, err := getStatusForMasterBuild(ctx, registry.master)
+	if err = logComponentStatuses(ctx, registry, statuses, componentsOrder, resource); err != nil {
+		return components.ComponentStatus{}, err
+	}
 	switch masterBuildStatus.SyncStatus {
 	case components.SyncStatusBlocked:
 		return masterBuildStatus, nil
@@ -132,14 +137,20 @@ func syncComponents(
 	return batchStatus, nil
 }
 
-func getStatusForMasterBuild(master masterComponent) components.ComponentStatus {
-	masterBuiltInitially := master.IsBuildInitially()
-	masterNeedBuild := master.NeedBuild()
+func getStatusForMasterBuild(ctx context.Context, master masterComponent) (components.ComponentStatus, error) {
+	masterBuiltInitially, err := master.IsBuildInitially(ctx)
+	if err != nil {
+		return components.ComponentStatus{}, err
+	}
+	masterNeedBuild, err := master.NeedBuild(ctx)
+	if err != nil {
+		return components.ComponentStatus{}, err
+	}
 	masterRebuildStarted := master.IsRebuildStarted()
 
 	if !masterBuiltInitially {
 		// This only happens once on cluster initialization.
-		return components.NeedSyncStatus("master initial build")
+		return components.NeedSyncStatus("master initial build"), nil
 	}
 
 	if masterNeedBuild && !masterRebuildStarted {
@@ -149,7 +160,7 @@ func getStatusForMasterBuild(master masterComponent) components.ComponentStatus 
 		return components.ComponentStatus{
 			SyncStatus: components.SyncStatusBlocked,
 			Message:    "Master is not built, cluster can't start the update",
-		}
+		}, nil
 	}
-	return components.ReadyStatus()
+	return components.ReadyStatus(), nil
 }

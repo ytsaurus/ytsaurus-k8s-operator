@@ -102,7 +102,7 @@ func (s *Scheduler) getFlow() Step {
 							return s.initOpArchive.isRestartPrepared(), nil
 						},
 						OnSuccessFunc: func(ctx context.Context) error {
-							s.prepareInitOperationArchive(s.initOpArchive)
+							s.prepareInitOperationsArchive(s.initOpArchive)
 							return nil
 						},
 					},

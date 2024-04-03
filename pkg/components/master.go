@@ -331,12 +331,18 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	return m.initJob.Sync(ctx, dry)
 }
 
-func (m *Master) IsBuildInitially() bool {
-	return m.condManager.Is(initializationFinished(m.GetName()))
+func (m *Master) IsBuildInitially(ctx context.Context) (bool, error) {
+	if err := m.Fetch(ctx); err != nil {
+		return false, fmt.Errorf("failed to fetch component %s: %w", m.GetName(), err)
+	}
+	return m.condManager.Is(initializationFinished(m.GetName())), nil
 }
 
-func (m *Master) NeedBuild() bool {
-	return m.server.needBuild()
+func (m *Master) NeedBuild(ctx context.Context) (bool, error) {
+	if err := m.Fetch(ctx); err != nil {
+		return false, fmt.Errorf("failed to fetch component %s: %w", m.GetName(), err)
+	}
+	return m.server.needBuild(), nil
 }
 
 func (m *Master) IsRebuildStarted() bool {
