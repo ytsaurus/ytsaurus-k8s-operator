@@ -13,6 +13,7 @@ func TestSchedulerFlow(t *testing.T) {
 		t,
 		"sch",
 		"scheduler",
+		"",
 		func(cfgen *ytconfig.Generator, ytsaurus *apiProxy.Ytsaurus) Component {
 			return NewScheduler(cfgen, ytsaurus, nil, nil, nil)
 		},

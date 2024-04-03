@@ -27,7 +27,7 @@ const (
 
 func testComponentFlow(
 	t *testing.T,
-	shortName, longName string,
+	shortName, longName, firstInstanceSuffix string,
 	build func(*ytconfig.Generator, *apiproxy.Ytsaurus) Component,
 	setImage func(*ytv1.Ytsaurus, *string),
 ) {
@@ -51,6 +51,7 @@ func testComponentFlow(
 
 	// initial creation
 	component := build(cfgen, ytsaurus)
+	t.Logf("Start initial build for %s", component.GetName())
 	testutil.Eventually(h, shortName+" became ready", func() bool {
 		st, err := component.Status(ctx)
 		require.NoError(t, err)
@@ -60,14 +61,15 @@ func testComponentFlow(
 		require.NoError(t, component.Sync(ctx))
 		return false
 	})
+	t.Logf("Finished initial build for %s", component.GetName())
 
-	cmData := testutil.FetchConfigMapData(h, "yt-"+longName+"-config", "ytserver-"+longName+".yson")
+	cmData := testutil.FetchConfigMapData(h, "yt-"+longName+firstInstanceSuffix+"-config", "ytserver-"+longName+".yson")
 	require.Contains(t, cmData, "ms-0.masters."+namespace+".svc."+domain+":9010")
 
 	// TODO: replace with get
 	testutil.FetchEventually(
 		h,
-		shortName,
+		shortName+firstInstanceSuffix,
 		&appsv1.StatefulSet{},
 	)
 
@@ -75,12 +77,12 @@ func testComponentFlow(
 	// TODO: update2 to be sure that first update doesn't end with wrong state
 	// after fix jobs deletion
 	for i := 1; i <= 1; i++ {
-		t.Logf("Update %s #%d", shortName, i)
+		t.Logf("Update %s #%d", shortName+firstInstanceSuffix, i)
 		newImage := ptr.String(fmt.Sprintf("new-image-%d", i))
 		setImage(&ytsaurusResource, newImage)
 
 		component = build(cfgen, ytsaurus)
-		testutil.Eventually(h, shortName+" became ready", func() bool {
+		testutil.Eventually(h, shortName+firstInstanceSuffix+" became ready", func() bool {
 			st, err := component.Status(ctx)
 			require.NoError(t, err)
 			if st.SyncStatus == SyncStatusReady {
@@ -90,7 +92,7 @@ func testComponentFlow(
 			return false
 		})
 		sts := &appsv1.StatefulSet{}
-		testutil.GetObject(h, shortName, sts)
+		testutil.GetObject(h, shortName+firstInstanceSuffix, sts)
 		require.Equal(t, *newImage, sts.Spec.Template.Spec.Containers[0].Image)
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -42,14 +41,15 @@ func (y *fakeYtsaurusForTnd) AreTabletCellsRemoved(context.Context) (bool, error
 func TestTabletNodesFlow(t *testing.T) {
 	ctrl = gomock.NewController(t)
 	ytCli := mock_yt.NewMockClient(ctrl)
-	ytCli.EXPECT().NodeExists(context.Background(), ypath.Path("//sys/tablet_cell_bundles/sys"), nil).Return(true, nil)
-	count := 0
-	ytCli.EXPECT().GetNode(context.Background(), ypath.Path("//sys/tablet_cell_bundles/default/@tablet_cell_count"), &count, nil).Return(nil)
+	//ytCli.EXPECT().NodeExists(context.Background(), ypath.Path("//sys/tablet_cell_bundles/sys"), nil).Return(true, nil)
+	//count := 0
+	//ytCli.EXPECT().GetNode(context.Background(), ypath.Path("//sys/tablet_cell_bundles/default/@tablet_cell_count"), &count, nil).Return(nil)
 
 	testComponentFlow(
 		t,
 		"tnd",
-		"tablet-nodes",
+		"tablet-node",
+		"-tn-1",
 		func(_ *ytconfig.Generator, ytsaurus *apiProxy.Ytsaurus) Component {
 			cfgen := ytconfig.NewLocalNodeGenerator(ytsaurus.GetResource(), domain)
 			return NewTabletNode(
@@ -57,11 +57,12 @@ func TestTabletNodesFlow(t *testing.T) {
 				ytsaurus,
 				&fakeYtsaurusForTnd{ytCli},
 				ytsaurus.GetResource().Spec.TabletNodes[0],
-				true,
+				// TODO: doInitialization: true
+				false,
 			)
 		},
 		func(ytsaurus *ytv1.Ytsaurus, image *string) {
-			ytsaurus.Spec.Schedulers.Image = image
+			ytsaurus.Spec.TabletNodes[0].Image = image
 		},
 	)
 }

@@ -40,6 +40,9 @@ func (tn *TabletNode) getFlow() Step {
 				RunIfCondition:     not(initCond),
 				OnSuccessCondition: initCond,
 				RunFunc: func(ctx context.Context) error {
+					if !tn.doInitialization {
+						return nil
+					}
 					return tn.initializeBundles(ctx)
 				},
 			},

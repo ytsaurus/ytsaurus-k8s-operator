@@ -13,6 +13,7 @@ func TestDiscoveryFlow(t *testing.T) {
 		t,
 		"ds",
 		"discovery",
+		"",
 		func(cfgen *ytconfig.Generator, ytsaurus *apiProxy.Ytsaurus) Component {
 			return NewDiscovery(cfgen, ytsaurus)
 		},
