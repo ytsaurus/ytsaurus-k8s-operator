@@ -56,7 +56,7 @@ func logComponentStatuses(
 	}
 	logger.V(1).Info(
 		fmt.Sprintf(
-			"%d.%s %s: %s",
+			"%d %s %s: %s",
 			0,
 			statusToSymbol(masterBuildStatus.SyncStatus),
 			registry.master.GetName()+" Build",

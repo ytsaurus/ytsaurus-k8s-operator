@@ -10,6 +10,7 @@ import (
 const (
 	StepStartBuild          = "StartBuild"
 	StepWaitBuildFinished   = "WaitBuildFinished"
+	StepInitStarted         = "InitStarted"
 	StepInitFinished        = "InitFinished"
 	StepCheckUpdateRequired = "CheckUpdateRequired"
 	StepUpdate              = "Update"

@@ -50,6 +50,9 @@ func buildFinished(compName string) Condition {
 	return isTrue(ConditionName(fmt.Sprintf("%sBuildFinished", compName)))
 }
 
+func initializationStarted(compName string) Condition {
+	return isTrue(ConditionName(fmt.Sprintf("%snitializationStarted", compName)))
+}
 func initializationFinished(compName string) Condition {
 	return isTrue(ConditionName(fmt.Sprintf("%snitializationFinished", compName)))
 }

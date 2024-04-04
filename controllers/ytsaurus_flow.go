@@ -13,9 +13,22 @@ import (
 func getStatuses(
 	ctx context.Context,
 	registry *componentRegistry,
+	order [][]consts.ComponentType,
 ) (map[string]components.ComponentStatus, error) {
+	enabledTypes := make(map[consts.ComponentType]struct{})
+	for _, batch := range order {
+		for _, compType := range batch {
+			enabledTypes[compType] = struct{}{}
+		}
+	}
+
 	statuses := make(map[string]components.ComponentStatus)
 	for _, c := range registry.list() {
+		if _, ok := enabledTypes[c.GetType()]; !ok {
+			// Don't collect statuses for not enabled components.
+			// (make sense for testing only).
+			continue
+		}
 		componentStatus, err := c.Status(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get component %s status: %w", c.GetName(), err)
@@ -33,25 +46,25 @@ func getStatuses(
 var componentsOrder = [][]consts.ComponentType{
 	// At first, we check if master is *built* (not updated) before everything else.
 	{
-		consts.YtsaurusClientType,
+		//consts.YtsaurusClientType,
 		consts.DiscoveryType,
 		consts.HttpProxyType,
-		consts.RpcProxyType,
-		consts.TcpProxyType,
+		//consts.RpcProxyType,
+		//consts.TcpProxyType,
 		consts.DataNodeType,
 		consts.ExecNodeType,
-		consts.MasterCacheType,
+		//consts.MasterCacheType,
 	},
 	{
 		consts.TabletNodeType,
-		consts.UIType,
+		//consts.UIType,
 		consts.ControllerAgentType,
-		consts.YqlAgentType,
+		//consts.YqlAgentType,
 	},
 	{
 		consts.SchedulerType,
-		consts.QueryTrackerType,
-		consts.QueueAgentType,
+		//consts.QueryTrackerType,
+		//consts.QueueAgentType,
 	},
 	{
 		consts.StrawberryControllerType,
@@ -69,7 +82,7 @@ func syncComponents(
 	registry *componentRegistry,
 	resource *ytv1.Ytsaurus,
 ) (components.ComponentStatus, error) {
-	statuses, err := getStatuses(ctx, registry)
+	statuses, err := getStatuses(ctx, registry, componentsOrder)
 	if err != nil {
 		return components.ComponentStatus{}, err
 	}

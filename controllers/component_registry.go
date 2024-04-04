@@ -32,8 +32,7 @@ type componentRegistry struct {
 
 func (cr *componentRegistry) add(comp component) {
 	cr.comps[comp.GetName()] = comp
-	compsOfSameType := cr.byType[comp.GetType()]
-	compsOfSameType = append(compsOfSameType, comp)
+	cr.byType[comp.GetType()] = append(cr.byType[comp.GetType()], comp)
 	if comp.GetType() == consts.MasterType {
 		cr.master = comp.(masterComponent)
 	}
@@ -59,7 +58,8 @@ func buildComponentRegistry(
 	ytsaurus *apiProxy.Ytsaurus,
 ) *componentRegistry {
 	registry := &componentRegistry{
-		comps: make(map[string]component),
+		comps:  make(map[string]component),
+		byType: make(map[consts.ComponentType][]component),
 	}
 
 	resource := ytsaurus.GetResource()

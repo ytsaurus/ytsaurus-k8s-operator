@@ -32,12 +32,12 @@ func statusCommon(
 	statusFunc func(ctx context.Context) (st SyncStatus, msg string, err error),
 ) (SyncStatus, string, error) {
 	if statusCondition.Name != "" && conds.IsNotSatisfied(statusCondition) {
-		return SyncStatusReady, fmt.Sprintf("condtion %s is not satisfied", statusCondition), nil
+		return SyncStatusReady, fmt.Sprintf("condition %s is not satisfied (no need to run step)", statusCondition), nil
 	}
 	if statusFunc != nil {
 		return statusFunc(ctx)
 	}
-	return SyncStatusNeedSync, fmt.Sprintf("condtion is satisfied"), nil
+	return SyncStatusNeedSync, fmt.Sprintf("condition %s is satisfied (step needs to be run)", statusCondition), nil
 }
 
 func postRunCommon(

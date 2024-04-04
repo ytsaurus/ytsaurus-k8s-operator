@@ -55,6 +55,7 @@ func (m *Master) getUpdateFlow() Step {
 	rebuildFinishedCond := rebuildFinished(name)
 	return StepComposite{
 		Name: StepUpdate,
+		// TODO: used by status, so it should be read only!
 		// Update should be run if either diff exists or updateRequired condition is set,
 		// because a diff should disappear in the middle of the update, but it still need
 		// to finish actions after the update (master exit read only, safe mode, etc.).
@@ -63,13 +64,13 @@ func (m *Master) getUpdateFlow() Step {
 			if err != nil {
 				return "", "", err
 			}
-			if !inSync {
-				if err = m.condManager.SetCond(ctx, updateRequiredCond); err != nil {
-					return "", "", err
-				}
-			}
-			//if !inSync || m.condManager.IsSatisfied(updateRequiredCond) {
-			if m.condManager.IsSatisfied(updateRequiredCond) {
+			//if !inSync {
+			//	if err = m.condManager.SetCond(ctx, updateRequiredCond); err != nil {
+			//		return "", "", err
+			//	}
+			//}
+			if !inSync || m.condManager.IsSatisfied(updateRequiredCond) {
+				//if m.condManager.IsSatisfied(updateRequiredCond) {
 				return SyncStatusNeedSync, "", nil
 			}
 			return SyncStatusReady, "", nil
@@ -91,6 +92,12 @@ func (m *Master) getUpdateFlow() Step {
 			)
 		},
 		Steps: []Step{
+			StepRun{
+				Name:               StepCheckUpdateRequired,
+				RunIfCondition:     not(updateRequiredCond),
+				OnSuccessCondition: updateRequiredCond,
+				// If update started — setting updateRequired unconditionally.
+			},
 			StepCheck{
 				Name:           "UpdatePossibleCheck",
 				RunIfCondition: not(masterUpdatePossibleCond),
