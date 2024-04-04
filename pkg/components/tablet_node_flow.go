@@ -16,14 +16,16 @@ func (tn *TabletNode) getFlow() Step {
 	name := tn.GetName()
 	initFinishedCond := initializationFinished(name)
 	return StepComposite{
-		Steps: []Step{
+		Body: []Step{
 			getStandardStartBuildStep(tn, tn.server.Sync),
 			getStandardWaitBuildFinishedStep(tn, tn.server.inSync),
 			StepRun{
-				Name:               StepInitFinished,
-				RunIfCondition:     not(initFinishedCond),
-				OnSuccessCondition: initFinishedCond,
-				RunFunc: func(ctx context.Context) error {
+				StepMeta: StepMeta{
+					Name:               StepInitFinished,
+					RunIfCondition:     not(initFinishedCond),
+					OnSuccessCondition: initFinishedCond,
+				},
+				Body: func(ctx context.Context) error {
 					if !tn.doInitialization {
 						return nil
 					}
@@ -36,10 +38,12 @@ func (tn *TabletNode) getFlow() Step {
 				tn.server.inSync,
 				[]Step{
 					StepRun{
-						Name:               "SaveTabletCellBundles",
-						RunIfCondition:     not(tnTabletCellsBackupStartedCond),
-						OnSuccessCondition: tnTabletCellsBackupStartedCond,
-						RunFunc: func(ctx context.Context) error {
+						StepMeta: StepMeta{
+							Name:               "SaveTabletCellBundles",
+							RunIfCondition:     not(tnTabletCellsBackupStartedCond),
+							OnSuccessCondition: tnTabletCellsBackupStartedCond,
+						},
+						Body: func(ctx context.Context) error {
 							bundles, err := tn.ytsaurusClient.GetTabletCells(ctx)
 							if err != nil {
 								return err
@@ -51,20 +55,24 @@ func (tn *TabletNode) getFlow() Step {
 						},
 					},
 					StepCheck{
-						Name:               "CheckTabletCellsRemoved",
-						RunIfCondition:     not(tnTabletCellsBackupFinishedCond),
-						OnSuccessCondition: tnTabletCellsBackupFinishedCond,
-						RunFunc: func(ctx context.Context) (ok bool, err error) {
+						StepMeta: StepMeta{
+							Name:               "CheckTabletCellsRemoved",
+							RunIfCondition:     not(tnTabletCellsBackupFinishedCond),
+							OnSuccessCondition: tnTabletCellsBackupFinishedCond,
+						},
+						Body: func(ctx context.Context) (ok bool, err error) {
 							return tn.ytsaurusClient.AreTabletCellsRemoved(ctx)
 						},
 					},
 					getStandardStartRebuildStep(tn, tn.server.removePods),
 					getStandardWaiRebuildFinishedStep(tn, tn.server.inSync),
 					StepRun{
-						Name:               "RecoverTableCells",
-						RunIfCondition:     not(tnTabletCellsRecoveredCond),
-						OnSuccessCondition: tnTabletCellsRecoveredCond,
-						RunFunc: func(ctx context.Context) error {
+						StepMeta: StepMeta{
+							Name:               "RecoverTableCells",
+							RunIfCondition:     not(tnTabletCellsRecoveredCond),
+							OnSuccessCondition: tnTabletCellsRecoveredCond,
+						},
+						Body: func(ctx context.Context) error {
 							bundles := tn.getStoredTabletCellBundles()
 							return tn.ytsaurusClient.RecoverTableCells(ctx, bundles)
 						},

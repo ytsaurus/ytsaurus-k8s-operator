@@ -10,26 +10,30 @@ func (yc *YtsaurusClient) getFlow() Step {
 	initFinishedCond := initializationFinished(name)
 
 	return StepComposite{
-		Steps: []Step{
+		Body: []Step{
 			getStandardStartBuildStep(yc, yc.doKubeSync),
 			getStandardWaitBuildFinishedStep(yc, yc.isInSync),
 			StepRun{
-				Name: StepInitStarted,
-				StatusFunc: func(ctx context.Context) (st SyncStatus, msg string, err error) {
-					if yc.ytClient != nil {
-						return SyncStatusReady, "", nil
-					}
-					return SyncStatusNeedSync, "yt client needs sync", nil
+				StepMeta: StepMeta{
+					Name: StepInitStarted,
+					StatusFunc: func(ctx context.Context) (st SyncStatus, msg string, err error) {
+						if yc.ytClient != nil {
+							return SyncStatusReady, "", nil
+						}
+						return SyncStatusNeedSync, "yt client needs sync", nil
+					},
+					RunIfCondition:     not(initStartedCond),
+					OnSuccessCondition: initStartedCond,
 				},
-				RunIfCondition:     not(initStartedCond),
-				OnSuccessCondition: initStartedCond,
-				RunFunc:            yc.doInit,
+				Body: yc.doInit,
 			},
 			StepCheck{
-				Name:               StepInitFinished,
-				RunIfCondition:     not(initFinishedCond),
-				OnSuccessCondition: initFinishedCond,
-				RunFunc: func(ctx context.Context) (ok bool, err error) {
+				StepMeta: StepMeta{
+					Name:               StepInitFinished,
+					RunIfCondition:     not(initFinishedCond),
+					OnSuccessCondition: initFinishedCond,
+				},
+				Body: func(ctx context.Context) (ok bool, err error) {
 					yc.initUserJob.SetInitScript(yc.createInitUserScript())
 					st, err := yc.initUserJob.Sync(ctx, false)
 					return st.SyncStatus == SyncStatusReady, err

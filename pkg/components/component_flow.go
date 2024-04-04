@@ -49,50 +49,60 @@ func getStandardStartBuildStep(c withName, build func(ctx context.Context) error
 	name := c.GetName()
 	buildStartedCond := buildStarted(name)
 	return StepRun{
-		Name:               StepStartBuild,
-		RunIfCondition:     not(buildStartedCond),
-		RunFunc:            build,
-		OnSuccessCondition: buildStartedCond,
+		StepMeta: StepMeta{
+			Name:               StepStartBuild,
+			RunIfCondition:     not(buildStartedCond),
+			OnSuccessCondition: buildStartedCond,
+		},
+		Body: build,
 	}
 }
 func getStandardWaitBuildFinishedStep(c withName, check func(ctx context.Context) (ok bool, err error)) StepCheck {
 	name := c.GetName()
 	builtFinishedCond := buildFinished(name)
 	return StepCheck{
-		Name:               StepWaitBuildFinished,
-		RunIfCondition:     not(builtFinishedCond),
-		OnSuccessCondition: builtFinishedCond,
-		RunFunc:            check,
+		StepMeta: StepMeta{
+			Name:               StepWaitBuildFinished,
+			RunIfCondition:     not(builtFinishedCond),
+			OnSuccessCondition: builtFinishedCond,
+		},
+		Body: check,
 	}
 }
 func getStandardStartRebuildStep(c withName, run func(ctx context.Context) error) StepRun {
 	name := c.GetName()
 	rebuildStartedCond := rebuildStarted(name)
 	return StepRun{
-		Name:               StepStartRebuild,
-		RunIfCondition:     not(rebuildStartedCond),
-		OnSuccessCondition: rebuildStartedCond,
-		RunFunc:            run,
+		StepMeta: StepMeta{
+			Name:               StepStartRebuild,
+			RunIfCondition:     not(rebuildStartedCond),
+			OnSuccessCondition: rebuildStartedCond,
+		},
+		Body: run,
 	}
 }
 func getStandardWaiRebuildFinishedStep(c withName, check func(ctx context.Context) (ok bool, err error)) StepCheck {
 	name := c.GetName()
 	rebuildFinishedCond := rebuildFinished(name)
 	return StepCheck{
-		Name:               StepWaitBuildFinished,
-		RunIfCondition:     not(rebuildFinishedCond),
-		OnSuccessCondition: rebuildFinishedCond,
-		RunFunc:            check,
+		StepMeta: StepMeta{
+			Name:               StepWaitRebuildFinished,
+			RunIfCondition:     not(rebuildFinishedCond),
+			OnSuccessCondition: rebuildFinishedCond,
+		},
+		Body: check,
 	}
 }
 func getStandardInitFinishedStep(c withName, check func(ctx context.Context) (ok bool, err error)) StepCheck {
 	name := c.GetName()
 	initCond := initializationFinished(name)
 	return StepCheck{
-		Name:               StepInitFinished,
-		RunIfCondition:     not(initCond),
-		OnSuccessCondition: initCond,
-		RunFunc:            check,
+		StepMeta: StepMeta{
+			Name:               StepInitFinished,
+			RunIfCondition:     not(initCond),
+			OnSuccessCondition: initCond,
+		},
+		Body: check,
 	}
 }
 func getStandardUpdateStep(
@@ -106,10 +116,12 @@ func getStandardUpdateStep(
 
 	allSteps := []Step{
 		StepRun{
-			Name:               StepCheckUpdateRequired,
-			RunIfCondition:     not(updateRequiredCond),
-			OnSuccessCondition: updateRequiredCond,
-			// If update started — setting updateRequired unconditionally.
+			StepMeta: StepMeta{
+				Name:               StepCheckUpdateRequired,
+				RunIfCondition:     not(updateRequiredCond),
+				OnSuccessCondition: updateRequiredCond,
+				// If update started — setting updateRequired unconditionally.
+			},
 		},
 	}
 	allSteps = append(allSteps, steps...)
@@ -129,26 +141,28 @@ func getStandardUpdateStep(
 	}
 
 	return StepComposite{
-		Name: StepUpdate,
-		// Update should be run if either diff exists or updateRequired condition is set,
-		// because a diff should disappear in the middle of the update, but it still needs
-		// to finish actions after the update.
-		StatusConditionFunc: func(ctx context.Context) (SyncStatus, string, error) {
-			inSync, err := check(ctx)
-			if err != nil {
-				return "", "", err
-			}
-			if !inSync || condManager.IsSatisfied(updateRequiredCond) {
-				return SyncStatusNeedSync, "", nil
-			}
-			return SyncStatusReady, "", nil
+		StepMeta: StepMeta{
+			Name: StepUpdate,
+			// Update should be run if either diff exists or updateRequired condition is set,
+			// because a diff should disappear in the middle of the update, but it still needs
+			// to finish actions after the update.
+			StatusFunc: func(ctx context.Context) (SyncStatus, string, error) {
+				inSync, err := check(ctx)
+				if err != nil {
+					return "", "", err
+				}
+				if !inSync || condManager.IsSatisfied(updateRequiredCond) {
+					return SyncStatusNeedSync, "", nil
+				}
+				return SyncStatusReady, "", nil
+			},
+			OnSuccessFunc: func(ctx context.Context) error {
+				return condManager.SetCondMany(
+					ctx,
+					onSuccessConditions...,
+				)
+			},
 		},
-		OnSuccessFunc: func(ctx context.Context) error {
-			return condManager.SetCondMany(
-				ctx,
-				onSuccessConditions...,
-			)
-		},
-		Steps: allSteps,
+		Body: allSteps,
 	}
 }

@@ -22,44 +22,7 @@ type Step interface {
 	PostRun(ctx context.Context, conds conditionManagerIface) error
 }
 
-// statusCommon is reusable part for calculation step status.
-// It decides if step is ready/blocked/need sync based on statusCondition and statusFunc
-// (ones that not provided considered as satisfied and resulted in Ready status).
-func statusCommon(
-	ctx context.Context,
-	conds conditionManagerIface,
-	statusCondition Condition,
-	statusFunc func(ctx context.Context) (st SyncStatus, msg string, err error),
-) (SyncStatus, string, error) {
-	if statusCondition.Name != "" && conds.IsNotSatisfied(statusCondition) {
-		return SyncStatusReady, fmt.Sprintf("condition %s is not satisfied (no need to run step)", statusCondition), nil
-	}
-	if statusFunc != nil {
-		return statusFunc(ctx)
-	}
-	return SyncStatusNeedSync, fmt.Sprintf("condition %s is satisfied (step needs to be run)", statusCondition), nil
-}
-
-func postRunCommon(
-	ctx context.Context,
-	conds conditionManagerIface,
-	onSuccessCondition Condition,
-	onSuccessFunc func(ctx context.Context) error,
-) error {
-	if onSuccessCondition.Name != "" {
-		if err := conds.SetCond(ctx, onSuccessCondition); err != nil {
-			return err
-		}
-	}
-	if onSuccessFunc != nil {
-		return onSuccessFunc(ctx)
-	}
-	return nil
-}
-
-// StepRun has RunFunc which only returns error, run considered successful if no error returned.
-type StepRun struct {
-	// NB: common part is copy-pasted to make usage more concise and readable.
+type StepMeta struct {
 	Name string
 	// RunIfCondition should be satisfied for step to run.
 	RunIfCondition Condition
@@ -71,79 +34,76 @@ type StepRun struct {
 	OnSuccessCondition Condition
 	// OnSuccessCondition will be called after successful execution of the step.
 	OnSuccessFunc func(ctx context.Context) error
-
-	RunFunc func(ctx context.Context) error
 }
 
-func (s StepRun) StepName() string { return s.Name }
-func (s StepRun) Status(ctx context.Context, conds conditionManagerIface) (SyncStatus, string, error) {
-	return statusCommon(ctx, conds, s.RunIfCondition, s.StatusFunc)
+func (m StepMeta) StepName() string { return m.Name }
+
+// Status decides if step is ready/blocked/need sync based on statusCondition and statusFunc
+// (ones that not provided considered as satisfied and resulted in Ready status).
+func (m StepMeta) Status(
+	ctx context.Context,
+	conds conditionManagerIface,
+) (SyncStatus, string, error) {
+	if m.RunIfCondition.Name != "" && conds.IsNotSatisfied(m.RunIfCondition) {
+		return SyncStatusReady, fmt.Sprintf("condition %s is not satisfied (no need to run step)", m.RunIfCondition), nil
+	}
+	if m.StatusFunc != nil {
+		return m.StatusFunc(ctx)
+	}
+	return SyncStatusNeedSync, fmt.Sprintf("condition %s is satisfied (step needs to be run)", m.RunIfCondition), nil
 }
-func (s StepRun) PostRun(ctx context.Context, conds conditionManagerIface) error {
-	return postRunCommon(ctx, conds, s.OnSuccessCondition, s.OnSuccessFunc)
+
+func (m StepMeta) PostRun(
+	ctx context.Context,
+	conds conditionManagerIface,
+) error {
+	if m.OnSuccessCondition.Name != "" {
+		if err := conds.SetCond(ctx, m.OnSuccessCondition); err != nil {
+			return err
+		}
+	}
+	if m.OnSuccessFunc != nil {
+		return m.OnSuccessFunc(ctx)
+	}
+	return nil
 }
+
+// StepRun has Body func which only returns error, run considered successful if no error returned.
+type StepRun struct {
+	StepMeta
+	Body func(ctx context.Context) error
+}
+
 func (s StepRun) Run(ctx context.Context, _ conditionManagerIface) (bool, error) {
-	if s.RunFunc == nil {
+	if s.Body == nil {
 		return true, nil
 	}
-	if err := s.RunFunc(ctx); err != nil {
+	if err := s.Body(ctx); err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
-// StepCheck has RunFunc which returns ok and error, run considered successful if ok is true and no error returned.
+// StepCheck has Body func which returns ok and error, run considered successful if ok is true and no error returned.
 type StepCheck struct {
-	// NB: common part is copy-pasted to make usage more concise and readable.
-	Name string
-	// RunIfCondition should be satisfied for step to run.
-	RunIfCondition Condition
-	// StatusFunc should return NeedSync status for step to run.
-	// If both RunIfCondition and StatusFunc a specified, then both should be resolved as true.
-	StatusFunc func(ctx context.Context) (st SyncStatus, msg string, err error)
-
-	// OnSuccessCondition will be set after successful execution of the step.
-	OnSuccessCondition Condition
-	// OnSuccessCondition will be called after successful execution of the step.
-	OnSuccessFunc func(ctx context.Context) error
-
-	RunFunc func(ctx context.Context) (ok bool, err error)
+	StepMeta
+	Body func(ctx context.Context) (ok bool, err error)
 }
 
-func (s StepCheck) StepName() string { return s.Name }
-func (s StepCheck) Status(ctx context.Context, conds conditionManagerIface) (SyncStatus, string, error) {
-	return statusCommon(ctx, conds, s.RunIfCondition, s.StatusFunc)
-}
-func (s StepCheck) PostRun(ctx context.Context, conds conditionManagerIface) error {
-	return postRunCommon(ctx, conds, s.OnSuccessCondition, s.OnSuccessFunc)
-}
 func (s StepCheck) Run(ctx context.Context, _ conditionManagerIface) (bool, error) {
-	if s.RunFunc == nil {
+	if s.Body == nil {
 		return true, nil
 	}
-	return s.RunFunc(ctx)
+	return s.Body(ctx)
 }
 
 type StepComposite struct {
-	// NB: common part is copy-pasted to make usage more concise and readable.
-	Name string
-	// RunIfCondition should be satisfied for step to run.
-	RunIfCondition Condition
-	// StatusConditionFunc should return NeedSync status for step to run.
-	// If both RunIfCondition and StatusConditionFunc a specified, then both should be resolved as true.
-	StatusConditionFunc func(ctx context.Context) (st SyncStatus, msg string, err error)
-
-	// OnSuccessCondition will be set after successful execution of the step.
-	OnSuccessCondition Condition
-	// OnSuccessCondition will be called after successful execution of the step.
-	OnSuccessFunc func(ctx context.Context) error
-
-	Steps []Step
+	StepMeta
+	Body []Step
 }
 
-func (s StepComposite) StepName() string { return s.Name }
 func (s StepComposite) Run(ctx context.Context, conds conditionManagerIface) (bool, error) {
-	for _, step := range s.Steps {
+	for _, step := range s.Body {
 		st, _, err := step.Status(ctx, conds)
 		if err != nil {
 			return false, err
@@ -169,15 +129,15 @@ func (s StepComposite) Run(ctx context.Context, conds conditionManagerIface) (bo
 
 // Status of StepComposite is more complex:
 //   - at first it checks if it itself need to run
-//   - and since its body is other steps — it locates first not-ready step and return its status,
+//   - and since its body consists of steps — it locates first not-ready step and return its status,
 //     so Run method would go in step list to found step and execute it.
 func (s StepComposite) Status(ctx context.Context, conds conditionManagerIface) (SyncStatus, string, error) {
-	st, msg, err := statusCommon(ctx, conds, s.RunIfCondition, s.StatusConditionFunc)
+	st, msg, err := s.StepMeta.Status(ctx, conds)
 	if st == SyncStatusReady || err != nil {
 		return st, msg, err
 	}
 
-	for _, step := range s.Steps {
+	for _, step := range s.Body {
 		st, msg, err = step.Status(ctx, conds)
 		if err != nil {
 			return "", msg, err
@@ -187,7 +147,4 @@ func (s StepComposite) Status(ctx context.Context, conds conditionManagerIface) 
 		}
 	}
 	return SyncStatusReady, "all substeps are done", nil
-}
-func (s StepComposite) PostRun(ctx context.Context, conds conditionManagerIface) error {
-	return postRunCommon(ctx, conds, s.OnSuccessCondition, s.OnSuccessFunc)
 }

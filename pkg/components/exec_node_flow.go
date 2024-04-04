@@ -2,7 +2,7 @@ package components
 
 func (n *ExecNode) getFlow() Step {
 	return StepComposite{
-		Steps: []Step{
+		Body: []Step{
 			getStandardStartBuildStep(n, n.server.Sync),
 			getStandardWaitBuildFinishedStep(n, n.server.inSync),
 			getStandardUpdateStep(

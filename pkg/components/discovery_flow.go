@@ -2,7 +2,7 @@ package components
 
 func (d *Discovery) getFlow() Step {
 	return StepComposite{
-		Steps: []Step{
+		Body: []Step{
 			getStandardStartBuildStep(d, d.server.Sync),
 			getStandardWaitBuildFinishedStep(d, d.server.inSync),
 			getStandardUpdateStep(
