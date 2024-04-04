@@ -115,10 +115,8 @@ func (m *baseStateManager) updateStatusRetryOnConflict(ctx context.Context, chan
 		change(ytsaurus)
 		// You have to return err itself here (not wrapped inside another error)
 		// so that RetryOnConflict can identify it correctly.
+		// N.B. this updates not only status sub-resource but also the main resource.
 		err := m.client.Status().Update(ctx, ytsaurus)
-		if err == nil {
-			m.ytsaurus = ytsaurus
-		}
 		return err
 	}
 
