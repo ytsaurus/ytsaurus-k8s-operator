@@ -137,6 +137,16 @@
             };
         };
         "job_proxy"={
+            "job_proxy_authentication_manager"={
+                "cypress_cookie_manager"={
+                };
+                "cypress_user_manager"={
+                };
+                "cypress_token_authenticator"={
+                    secure=%true;
+                };
+                "require_authentication"=%true;
+            };
             "job_proxy_logging"={
                 writers={
                     debug={
@@ -167,6 +177,16 @@
                 ];
                 "flush_period"=3000;
             };
+        };
+        "job_proxy_authentication_manager"={
+            "cypress_cookie_manager"={
+            };
+            "cypress_user_manager"={
+            };
+            "cypress_token_authenticator"={
+                secure=%true;
+            };
+            "require_authentication"=%true;
         };
         "job_proxy_logging"={
             writers={
