@@ -44,7 +44,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		requeue = requeueNot
 		clusterState = ytv1.ClusterStateRunning
 	case components.SyncStatusBlocked:
-		logger.Info("Components update is blocked. Human is needed. %s", st.Message)
+		logger.Info(fmt.Sprintf("Components update is blocked. Human is needed. %s", st.Message))
 		requeue = requeueLater
 		clusterState = ytv1.ClusterStateCancelUpdate
 	default:

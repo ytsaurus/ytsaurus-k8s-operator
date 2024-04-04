@@ -24,11 +24,11 @@ func getStatuses(
 
 	statuses := make(map[string]components.ComponentStatus)
 	for _, c := range registry.list() {
-		if _, ok := enabledTypes[c.GetType()]; !ok {
-			// Don't collect statuses for not enabled components.
-			// (make sense for testing only).
-			continue
-		}
+		//if _, ok := enabledTypes[c.GetType()]; !ok {
+		//	Don't collect statuses for not enabled components.
+		//	(make sense for testing only).
+		//continue
+		//}
 		componentStatus, err := c.Status(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get component %s status: %w", c.GetName(), err)
@@ -46,7 +46,7 @@ func getStatuses(
 var componentsOrder = [][]consts.ComponentType{
 	// At first, we check if master is *built* (not updated) before everything else.
 	{
-		//consts.YtsaurusClientType,
+		consts.YtsaurusClientType,
 		consts.DiscoveryType,
 		consts.HttpProxyType,
 		//consts.RpcProxyType,
