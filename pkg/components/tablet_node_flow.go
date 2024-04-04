@@ -14,31 +14,15 @@ var (
 
 func (tn *TabletNode) getFlow() Step {
 	name := tn.GetName()
-	buildStartedCond := buildStarted(name)
-	builtFinishedCond := buildFinished(name)
-	initCond := initializationFinished(name)
-	updateRequiredCond := updateRequired(name)
-	rebuildStartedCond := rebuildStarted(name)
-	rebuildFinishedCond := rebuildFinished(name)
-
+	initFinishedCond := initializationFinished(name)
 	return StepComposite{
 		Steps: []Step{
-			StepRun{
-				Name:               StepStartBuild,
-				RunIfCondition:     not(buildStartedCond),
-				RunFunc:            tn.server.Sync,
-				OnSuccessCondition: buildStartedCond,
-			},
-			StepCheck{
-				Name:               StepWaitBuildFinished,
-				RunIfCondition:     not(builtFinishedCond),
-				OnSuccessCondition: builtFinishedCond,
-				RunFunc:            tn.server.inSync,
-			},
+			getStandardStartBuildStep(tn, tn.server.Sync),
+			getStandardWaitBuildFinishedStep(tn, tn.server.inSync),
 			StepRun{
 				Name:               StepInitFinished,
-				RunIfCondition:     not(initCond),
-				OnSuccessCondition: initCond,
+				RunIfCondition:     not(initFinishedCond),
+				OnSuccessCondition: initFinishedCond,
 				RunFunc: func(ctx context.Context) error {
 					if !tn.doInitialization {
 						return nil
@@ -46,37 +30,11 @@ func (tn *TabletNode) getFlow() Step {
 					return tn.initializeBundles(ctx)
 				},
 			},
-			StepComposite{
-				Name: StepUpdate,
-				// Update should be run if either diff exists or updateRequired condition is set,
-				// because a diff should disappear in the middle of the update, but it still need
-				// to finish actions after the update (master exit read only, safe mode, etc.).
-				StatusConditionFunc: func(ctx context.Context) (SyncStatus, string, error) {
-					inSync, err := tn.server.inSync(ctx)
-					if err != nil {
-						return "", "", err
-					}
-					if !inSync {
-						if err = tn.condManager.SetCond(ctx, updateRequiredCond); err != nil {
-							return "", "", err
-						}
-					}
-					if !inSync || tn.condManager.IsSatisfied(updateRequiredCond) {
-						return SyncStatusNeedSync, "", nil
-					}
-					return SyncStatusReady, "", nil
-				},
-				OnSuccessCondition: not(updateRequiredCond),
-				OnSuccessFunc: func(ctx context.Context) error {
-					return tn.condManager.SetCondMany(ctx,
-						rebuildStarted(name),
-						rebuildFinished(name),
-						tnTabletCellsBackupStartedCond,
-						tnTabletCellsBackupFinishedCond,
-						tnTabletCellsRecoveredCond,
-					)
-				},
-				Steps: []Step{
+			getStandardUpdateStep(
+				tn,
+				tn.condManager,
+				tn.server.inSync,
+				[]Step{
 					StepRun{
 						Name:               "SaveTabletCellBundles",
 						RunIfCondition:     not(tnTabletCellsBackupStartedCond),
@@ -100,18 +58,8 @@ func (tn *TabletNode) getFlow() Step {
 							return tn.ytsaurusClient.AreTabletCellsRemoved(ctx)
 						},
 					},
-					StepRun{
-						Name:               StepStartRebuild,
-						RunIfCondition:     not(rebuildStartedCond),
-						OnSuccessCondition: rebuildStartedCond,
-						RunFunc:            tn.server.removePods,
-					},
-					StepCheck{
-						Name:               StepWaitRebuildFinished,
-						RunIfCondition:     not(rebuildFinishedCond),
-						OnSuccessCondition: rebuildFinishedCond,
-						RunFunc:            tn.server.inSync,
-					},
+					getStandardStartRebuildStep(tn, tn.server.removePods),
+					getStandardWaiRebuildFinishedStep(tn, tn.server.inSync),
 					StepRun{
 						Name:               "RecoverTableCells",
 						RunIfCondition:     not(tnTabletCellsRecoveredCond),
@@ -122,7 +70,7 @@ func (tn *TabletNode) getFlow() Step {
 						},
 					},
 				},
-			},
+			),
 		},
 	}
 }

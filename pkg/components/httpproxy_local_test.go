@@ -8,7 +8,7 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
-func TestHttpproxyFlow(t *testing.T) {
+func TestHTTPProxyFlow(t *testing.T) {
 	testComponentFlow(
 		t,
 		"hp",

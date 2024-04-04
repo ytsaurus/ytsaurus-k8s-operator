@@ -16,88 +16,25 @@ var (
 )
 
 func (m *Master) getBuildFlow() Step {
-	name := m.GetName()
-	buildStartedCond := buildStarted(name)
-	builtFinishedCond := buildFinished(name)
-	initCond := initializationFinished(name)
 	return StepComposite{
 		Steps: []Step{
-			StepRun{
-				Name:               StepStartBuild,
-				RunIfCondition:     not(buildStartedCond),
-				RunFunc:            m.doServerSync,
-				OnSuccessCondition: buildStartedCond,
-			},
-			StepCheck{
-				Name:               StepWaitBuildFinished,
-				RunIfCondition:     not(builtFinishedCond),
-				OnSuccessCondition: builtFinishedCond,
-				RunFunc:            m.server.inSync,
-			},
-			StepCheck{
-				Name:               StepInitFinished,
-				RunIfCondition:     not(initCond),
-				OnSuccessCondition: initCond,
-				RunFunc: func(ctx context.Context) (ok bool, err error) {
-					m.initJob.SetInitScript(m.createInitScript())
-					st, err := m.initJob.Sync(ctx, false)
-					return st.SyncStatus == SyncStatusReady, err
-				},
-			},
+			getStandardStartBuildStep(m, m.doServerSync),
+			getStandardWaitBuildFinishedStep(m, m.server.inSync),
+			getStandardInitFinishedStep(m, func(ctx context.Context) (ok bool, err error) {
+				m.initJob.SetInitScript(m.createInitScript())
+				st, err := m.initJob.Sync(ctx, false)
+				return st.SyncStatus == SyncStatusReady, err
+			}),
 		},
 	}
 }
 
 func (m *Master) getUpdateFlow() Step {
-	name := m.GetName()
-	updateRequiredCond := updateRequired(name)
-	rebuildStartedCond := rebuildStarted(name)
-	rebuildFinishedCond := rebuildFinished(name)
-	return StepComposite{
-		Name: StepUpdate,
-		// TODO: used by status, so it should be read only!
-		// Update should be run if either diff exists or updateRequired condition is set,
-		// because a diff should disappear in the middle of the update, but it still need
-		// to finish actions after the update (master exit read only, safe mode, etc.).
-		StatusConditionFunc: func(ctx context.Context) (SyncStatus, string, error) {
-			inSync, err := m.server.inSync(ctx)
-			if err != nil {
-				return "", "", err
-			}
-			//if !inSync {
-			//	if err = m.condManager.SetCond(ctx, updateRequiredCond); err != nil {
-			//		return "", "", err
-			//	}
-			//}
-			if !inSync || m.condManager.IsSatisfied(updateRequiredCond) {
-				//if m.condManager.IsSatisfied(updateRequiredCond) {
-				return SyncStatusNeedSync, "", nil
-			}
-			return SyncStatusReady, "", nil
-		},
-		OnSuccessCondition: not(updateRequiredCond),
-		OnSuccessFunc: func(ctx context.Context) error {
-			return m.condManager.SetCondMany(
-				ctx,
-				not(masterUpdatePossibleCond),
-				not(masterSafeModeEnabledCond),
-				not(masterSnapshotsBuildStartedCond),
-				not(masterSnapshotsBuildFinishedCond),
-				not(rebuildStarted(name)),
-				not(rebuildFinished(name)),
-				not(masterExitReadOnlyPrepareStartedCond),
-				not(masterExitReadOnlyPrepareFinishedCond),
-				not(masterExitReadOnlyFinished),
-				not(masterSafeModeDisabledCond),
-			)
-		},
-		Steps: []Step{
-			StepRun{
-				Name:               StepCheckUpdateRequired,
-				RunIfCondition:     not(updateRequiredCond),
-				OnSuccessCondition: updateRequiredCond,
-				// If update started — setting updateRequired unconditionally.
-			},
+	return getStandardUpdateStep(
+		m,
+		m.condManager,
+		m.server.inSync,
+		[]Step{
 			StepCheck{
 				Name:           "UpdatePossibleCheck",
 				RunIfCondition: not(masterUpdatePossibleCond),
@@ -141,18 +78,8 @@ func (m *Master) getUpdateFlow() Step {
 					return m.ytClient.AreMasterSnapshotsBuilt(ctx, paths)
 				},
 			},
-			StepRun{
-				Name:               StepStartRebuild,
-				RunIfCondition:     not(rebuildStartedCond),
-				OnSuccessCondition: rebuildStartedCond,
-				RunFunc:            m.server.removePods,
-			},
-			StepCheck{
-				Name:               StepWaitRebuildFinished,
-				RunIfCondition:     not(rebuildFinishedCond),
-				OnSuccessCondition: rebuildFinishedCond,
-				RunFunc:            m.server.inSync,
-			},
+			getStandardStartRebuildStep(m, m.server.removePods),
+			getStandardWaiRebuildFinishedStep(m, m.server.inSync),
 			StepRun{
 				Name:               "StartPrepareMasterExitReadOnly",
 				RunIfCondition:     not(masterExitReadOnlyPrepareStartedCond),
@@ -189,7 +116,7 @@ func (m *Master) getUpdateFlow() Step {
 				RunFunc:            m.ytClient.DisableSafeMode,
 			},
 		},
-	}
+	)
 }
 
 func (m *Master) storeMasterMonitoringPaths(ctx context.Context, paths []string) error {
