@@ -15,7 +15,7 @@ type Step interface {
 	// err is an error of status checking.
 	Status(ctx context.Context, conds conditionManagerIface) (st SyncStatus, msg string, err error)
 	// Run is a body of a step, it will be run only if Status() returns NeedSync.
-	// If ok is true and no error, run considered successful.
+	// If ok is true and no error, run considered successful and postRun executed.
 	Run(ctx context.Context, conds conditionManagerIface) (ok bool, err error)
 	// PostRun can be used for cleanup or some other post-actions,
 	// typical usage is to clean up some intermediate conditions which are set in step.
@@ -78,10 +78,8 @@ func (s StepRun) Run(ctx context.Context, _ conditionManagerIface) (bool, error)
 	if s.Body == nil {
 		return true, nil
 	}
-	if err := s.Body(ctx); err != nil {
-		return false, err
-	}
-	return true, nil
+	err := s.Body(ctx)
+	return err == nil, err
 }
 
 // StepCheck has Body func which returns ok and error, run considered successful if ok is true and no error returned.
@@ -116,13 +114,11 @@ func (s StepComposite) Run(ctx context.Context, conds conditionManagerIface) (bo
 		if err != nil {
 			return false, err
 		}
-		if !runOk {
-			return false, nil
+		if runOk {
+			err = step.PostRun(ctx, conds)
+			return err != nil, err
 		}
-
-		if err = step.PostRun(ctx, conds); err != nil {
-			return false, err
-		}
+		return false, nil
 	}
 	return true, nil
 }
@@ -146,5 +142,5 @@ func (s StepComposite) Status(ctx context.Context, conds conditionManagerIface) 
 			return st, msg, nil
 		}
 	}
-	return SyncStatusReady, "all substeps are done", nil
+	return SyncStatusReady, "all sub-steps are done", nil
 }
