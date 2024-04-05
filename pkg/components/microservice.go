@@ -183,12 +183,16 @@ func (m *microserviceImpl) podsImageCorrespondsToSpec() bool {
 }
 
 func (m *microserviceImpl) removePods(ctx context.Context) error {
-	m.builtDeployment = m.deployment.Build()
-	m.builtDeployment.Spec = m.deployment.OldObject().(*appsv1.Deployment).Spec
-	m.builtDeployment.Spec.Replicas = ptr.Int32(0)
+	m.removePodsNoSync()
 	return m.Sync(ctx)
 }
 
 func (m *microserviceImpl) getImage() string {
 	return m.image
+}
+
+func (m *microserviceImpl) removePodsNoSync() {
+	m.builtDeployment = m.deployment.Build()
+	m.builtDeployment.Spec = m.deployment.OldObject().(*appsv1.Deployment).Spec
+	m.builtDeployment.Spec.Replicas = ptr.Int32(0)
 }

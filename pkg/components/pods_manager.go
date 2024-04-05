@@ -11,6 +11,7 @@ import (
 // TODO: move to Updatable
 type podsManager interface {
 	removePods(ctx context.Context) error
+	removePodsNoSync()
 	arePodsRemoved(ctx context.Context) bool
 	arePodsReady(ctx context.Context) bool
 	podsImageCorrespondsToSpec() bool

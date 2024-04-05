@@ -371,7 +371,15 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 }
 
 func (s *serverImpl) removePods(ctx context.Context) error {
+	s.removePodsNoSync()
+	return s.Sync(ctx)
+}
+
+// TODO: rename
+// removePodsNoSync > removePods
+// removePods > removePodsAndSync
+// Not renaming now to minimize possible conflicts.
+func (s *serverImpl) removePodsNoSync() {
 	ss := s.rebuildStatefulSet()
 	ss.Spec.Replicas = ptr.Int32(0)
-	return s.Sync(ctx)
 }

@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -48,7 +49,7 @@ func (r *YtsaurusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	var ytsaurus ytv1.Ytsaurus
 	if err := r.Get(ctx, req.NamespacedName, &ytsaurus); err != nil {
-		logger.Error(err, "unable to fetch Ytsaurus")
+		logger.Info("unable to fetch Ytsaurus")
 		// we'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
 		// on deleted requests.

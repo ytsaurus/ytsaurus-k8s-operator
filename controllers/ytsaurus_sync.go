@@ -52,9 +52,10 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		clusterState = ytv1.ClusterStateUpdating
 	}
 
-	err = ytsaurus.SaveClusterState(ctx, clusterState)
+	stateManager := components.NewStateManagerFromYtsaurus(ytsaurus)
+	err = stateManager.SetClusterState(ctx, clusterState)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed to save cluster state to %s", clusterState)
+		return ctrl.Result{}, fmt.Errorf("failed to save cluster state to %s: %w", clusterState, err)
 	}
 	return requeue, nil
 }

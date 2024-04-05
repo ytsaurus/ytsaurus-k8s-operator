@@ -46,6 +46,8 @@ func logComponentStatuses(
 	resource *ytv1.Ytsaurus,
 ) error {
 	logger := log.FromContext(ctx)
+	//logLine := logger.V(1).Info
+	logLine := fmt.Println
 
 	var readyComponents []string
 	var notReadyComponents []string
@@ -54,7 +56,7 @@ func logComponentStatuses(
 	if err != nil {
 		return err
 	}
-	logger.V(1).Info(
+	logLine(
 		fmt.Sprintf(
 			"%d %s %s: %s",
 			0,
@@ -77,7 +79,7 @@ func logComponentStatuses(
 				notReadyComponents = append(notReadyComponents, name)
 			}
 
-			logger.V(1).Info(
+			logLine(
 				fmt.Sprintf(
 					"%d.%s %s: %s",
 					batchIndex,

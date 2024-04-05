@@ -135,8 +135,8 @@ func newLocalComponent(
 	return localComponent{
 		baseComponent: baseComponent{labeller: labeller},
 		ytsaurus:      ytsaurus,
-		condManager:   newConditionManagerFromYtsaurus(ytsaurus),
-		stateManager:  newStateManagerFromYtsaurus(ytsaurus),
+		condManager:   NewConditionManagerFromYtsaurus(ytsaurus),
+		stateManager:  NewStateManagerFromYtsaurus(ytsaurus),
 	}
 }
 

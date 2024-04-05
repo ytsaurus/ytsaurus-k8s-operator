@@ -55,7 +55,9 @@ func TestAPIs(t *testing.T) {
 }
 
 var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+	logger := zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true))
+	logf.SetLogger(logger)
+	ctx = logf.IntoContext(ctx, logger)
 
 	By("bootstrapping test environment")
 	cfg, err := config.GetConfig()
@@ -76,7 +78,9 @@ var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	// Cannot serialize rest config here - just load again in each process and check host to be sure.
 	return []byte(cfg.Host)
 }, func(ctx context.Context, host []byte) {
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+	logger := zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true))
+	logf.SetLogger(logger)
+	ctx = logf.IntoContext(ctx, logger)
 
 	By("bootstrapping k8s client")
 
