@@ -58,8 +58,8 @@ func logComponentStatuses(
 	}
 	logLine(
 		fmt.Sprintf(
-			"%d %s %s: %s",
-			0,
+			"%s %s %s: %s",
+			"0.",
 			statusToSymbol(masterBuildStatus.SyncStatus),
 			registry.master.GetName()+" Build",
 			masterBuildStatus.Message,
@@ -69,7 +69,7 @@ func logComponentStatuses(
 	for batchIndex := 1; batchIndex <= len(componentsOrder); batchIndex++ {
 		typesInBatch := componentsOrder[batchIndex-1]
 		compsInBatch := registry.listByType(typesInBatch...)
-		for _, comp := range compsInBatch {
+		for compIndex, comp := range compsInBatch {
 			name := comp.GetName()
 			status := statuses[name]
 
@@ -84,10 +84,15 @@ func logComponentStatuses(
 				logName = registry.master.GetName() + " Update"
 			}
 
+			batchIndexStr := "  "
+			if compIndex == 0 {
+				batchIndexStr = fmt.Sprintf("%d.", batchIndex)
+			}
+
 			logLine(
 				fmt.Sprintf(
-					"%d.%s %s: %s",
-					batchIndex,
+					"%s %s %s: %s",
+					batchIndexStr,
 					statusToSymbol(status.SyncStatus),
 					logName,
 					status.Message,

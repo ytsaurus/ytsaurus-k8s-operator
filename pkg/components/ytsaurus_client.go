@@ -408,7 +408,6 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 }
 
 func (yc *YtsaurusClient) doInit() error {
-	println("ytsaurus client init")
 	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
 	timeout := time.Second * 10
 	proxy, ok := os.LookupEnv("YTOP_PROXY")

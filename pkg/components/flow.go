@@ -45,12 +45,12 @@ func (m StepMeta) Status(
 	conds conditionManagerIface,
 ) (SyncStatus, string, error) {
 	if m.RunIfCondition.Name != "" && conds.IsNotSatisfied(m.RunIfCondition) {
-		return SyncStatusReady, fmt.Sprintf("step %s is done", m.Name), nil
+		return SyncStatusReady, fmt.Sprintf("%s ok", m.Name), nil
 	}
 	if m.StatusFunc != nil {
 		return m.StatusFunc(ctx)
 	}
-	return SyncStatusNeedSync, fmt.Sprintf("step %s need to run", m.Name), nil
+	return SyncStatusNeedSync, fmt.Sprintf("%s not done", m.Name), nil
 }
 
 func (m StepMeta) PostRun(
@@ -144,5 +144,5 @@ func (s StepComposite) Status(ctx context.Context, conds conditionManagerIface) 
 			return st, msg, nil
 		}
 	}
-	return SyncStatusReady, "all sub-steps are done", nil
+	return SyncStatusReady, "ok", nil
 }
