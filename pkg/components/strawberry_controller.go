@@ -52,7 +52,6 @@ func NewStrawberryController(
 
 	image := resource.Spec.CoreImage
 	name := "chyt"
-	componentName := "ChytController"
 	if resource.Spec.DeprecatedChytController != nil {
 		if resource.Spec.DeprecatedChytController.Image != nil {
 			image = *resource.Spec.DeprecatedChytController.Image
@@ -60,7 +59,6 @@ func NewStrawberryController(
 	}
 	if resource.Spec.StrawberryController != nil {
 		name = "strawberry"
-		componentName = string(consts.StrawberryControllerType)
 		if resource.Spec.StrawberryController.Image != nil {
 			image = *resource.Spec.StrawberryController.Image
 		}
@@ -68,7 +66,7 @@ func NewStrawberryController(
 
 	l := labeller.NewSingletonComponentLabeller(
 		&resource.ObjectMeta,
-		consts.ComponentType(componentName),
+		consts.StrawberryControllerType,
 		fmt.Sprintf("yt-%s-controller", name),
 		resource.Spec.ExtraPodAnnotations,
 	)
