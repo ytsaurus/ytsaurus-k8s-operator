@@ -65,6 +65,8 @@ func (tn *TabletNode) getFlow() Step {
 						},
 					},
 					getStandardStartRebuildStep(tn, tn.server.removePods),
+					getStandardWaitPodsRemovedStep(tn, tn.server.arePodsRemoved),
+					getStandardPodsCreateStep(tn, tn.server.Sync),
 					getStandardWaiRebuildFinishedStep(tn, tn.server.inSync),
 					StepRun{
 						StepMeta: StepMeta{

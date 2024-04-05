@@ -37,11 +37,15 @@ func (m *Master) getUpdateFlow() Step {
 		[]Step{
 			StepCheck{
 				StepMeta: StepMeta{
-					Name:           "UpdatePossibleCheck",
-					RunIfCondition: not(masterUpdatePossibleCond),
+					Name: "UpdatePossibleCheck",
 					StatusFunc: func(ctx context.Context) (SyncStatus, string, error) {
+						if m.condManager.IsSatisfied(masterUpdatePossibleCond) {
+							return SyncStatusReady, "", nil
+						}
 						possible, msg, err := m.ytClient.HandlePossibilityCheck(ctx)
-						st := SyncStatusReady
+						// N.B.: here we return NeedSync (not Ready), so empty body of step become executed
+						// and masterUpdatePossibleCond became set.
+						st := SyncStatusNeedSync
 						if !possible {
 							st = SyncStatusBlocked
 						}
@@ -87,6 +91,8 @@ func (m *Master) getUpdateFlow() Step {
 				},
 			},
 			getStandardStartRebuildStep(m, m.server.removePods),
+			getStandardWaitPodsRemovedStep(m, m.server.arePodsRemoved),
+			getStandardPodsCreateStep(m, m.doServerSync),
 			getStandardWaiRebuildFinishedStep(m, m.server.inSync),
 			StepRun{
 				StepMeta: StepMeta{
@@ -103,10 +109,6 @@ func (m *Master) getUpdateFlow() Step {
 					Name:               "WaitMasterExitReadOnlyPrepared",
 					RunIfCondition:     not(masterExitReadOnlyPrepareFinishedCond),
 					OnSuccessCondition: masterExitReadOnlyPrepareFinishedCond,
-					OnSuccessFunc: func(ctx context.Context) error {
-						m.exitReadOnlyJob.SetInitScript(m.createInitScript())
-						return nil
-					},
 				},
 				Body: func(ctx context.Context) (bool, error) {
 					return m.exitReadOnlyJob.isRestartPrepared(), nil
@@ -119,6 +121,7 @@ func (m *Master) getUpdateFlow() Step {
 					OnSuccessCondition: masterExitReadOnlyFinished,
 				},
 				Body: func(ctx context.Context) (ok bool, err error) {
+					m.exitReadOnlyJob.SetInitScript(m.createInitScript())
 					st, err := m.exitReadOnlyJob.Sync(ctx, false)
 					return st.SyncStatus == SyncStatusReady, err
 				},

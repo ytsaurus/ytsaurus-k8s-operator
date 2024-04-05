@@ -1,9 +1,5 @@
 package components
 
-import (
-	"context"
-)
-
 func (hp *HttpProxy) getFlow() Step {
 	return StepComposite{
 		Body: []Step{
@@ -14,10 +10,9 @@ func (hp *HttpProxy) getFlow() Step {
 				hp.condManager,
 				hp.serverInSync,
 				[]Step{
-					getStandardStartRebuildStep(hp, func(ctx context.Context) error {
-						hp.server.removePodsNoSync()
-						return hp.doServerSync(ctx)
-					}),
+					getStandardStartRebuildStep(hp, hp.server.removePods),
+					getStandardWaitPodsRemovedStep(hp, hp.server.arePodsRemoved),
+					getStandardPodsCreateStep(hp, hp.doServerSync),
 					getStandardWaiRebuildFinishedStep(hp, hp.serverInSync),
 				},
 			),

@@ -45,12 +45,12 @@ func (m StepMeta) Status(
 	conds conditionManagerIface,
 ) (SyncStatus, string, error) {
 	if m.RunIfCondition.Name != "" && conds.IsNotSatisfied(m.RunIfCondition) {
-		return SyncStatusReady, fmt.Sprintf("condition %s is not satisfied (no need to run step)", m.RunIfCondition), nil
+		return SyncStatusReady, fmt.Sprintf("step %s is done", m.Name), nil
 	}
 	if m.StatusFunc != nil {
 		return m.StatusFunc(ctx)
 	}
-	return SyncStatusNeedSync, fmt.Sprintf("condition %s is satisfied (step needs to be run)", m.RunIfCondition), nil
+	return SyncStatusNeedSync, fmt.Sprintf("step %s need to run", m.Name), nil
 }
 
 func (m StepMeta) PostRun(
@@ -68,7 +68,8 @@ func (m StepMeta) PostRun(
 	return nil
 }
 
-// StepRun has Body func which only returns error, run considered successful if no error returned.
+// StepRun has Body func which only returns error,
+// run considered successful if no error returned.
 type StepRun struct {
 	StepMeta
 	Body func(ctx context.Context) error
@@ -82,7 +83,8 @@ func (s StepRun) Run(ctx context.Context, _ conditionManagerIface) (bool, error)
 	return err == nil, err
 }
 
-// StepCheck has Body func which returns ok and error, run considered successful if ok is true and no error returned.
+// StepCheck has Body func which returns ok and error,
+// run considered successful if ok is true and no error returned.
 type StepCheck struct {
 	StepMeta
 	Body func(ctx context.Context) (ok bool, err error)

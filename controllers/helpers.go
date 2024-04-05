@@ -79,12 +79,17 @@ func logComponentStatuses(
 				notReadyComponents = append(notReadyComponents, name)
 			}
 
+			logName := name
+			if name == registry.master.GetName() {
+				logName = registry.master.GetName() + " Update"
+			}
+
 			logLine(
 				fmt.Sprintf(
 					"%d.%s %s: %s",
 					batchIndex,
 					statusToSymbol(status.SyncStatus),
-					name,
+					logName,
 					status.Message,
 				),
 			)

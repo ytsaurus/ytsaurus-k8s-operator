@@ -62,6 +62,12 @@ func updateRequired(compName string) Condition {
 func rebuildStarted(compName string) Condition {
 	return isTrue(ConditionName(fmt.Sprintf("%sRebuildStarted", compName)))
 }
+func podsRemoved(compName string) Condition {
+	return isTrue(ConditionName(fmt.Sprintf("%sPodsRemoved", compName)))
+}
+func podsCreated(compName string) Condition {
+	return isTrue(ConditionName(fmt.Sprintf("%sPodsCreated", compName)))
+}
 func rebuildFinished(compName string) Condition {
 	return isTrue(ConditionName(fmt.Sprintf("%sRebuildFinished", compName)))
 }

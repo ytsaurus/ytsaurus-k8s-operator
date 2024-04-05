@@ -11,6 +11,8 @@ func (d *Discovery) getFlow() Step {
 				d.server.inSync,
 				[]Step{
 					getStandardStartRebuildStep(d, d.server.removePods),
+					getStandardWaitPodsRemovedStep(d, d.server.arePodsRemoved),
+					getStandardPodsCreateStep(d, d.server.Sync),
 					getStandardWaiRebuildFinishedStep(d, d.server.inSync),
 				},
 			),

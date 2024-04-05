@@ -11,6 +11,8 @@ func (n *ExecNode) getFlow() Step {
 				n.server.inSync,
 				[]Step{
 					getStandardStartRebuildStep(n, n.server.removePods),
+					getStandardWaitPodsRemovedStep(n, n.server.arePodsRemoved),
+					getStandardPodsCreateStep(n, n.server.Sync),
 					getStandardWaiRebuildFinishedStep(n, n.server.inSync),
 				},
 			),

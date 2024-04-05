@@ -78,16 +78,19 @@ func (yc *YtsaurusClient) IsUpdatable() bool {
 func (yc *YtsaurusClient) GetType() consts.ComponentType { return consts.YtsaurusClientType }
 
 func (yc *YtsaurusClient) Fetch(ctx context.Context) error {
-	if yc.condManager.IsSatisfied(buildFinished(yc.GetName())) && yc.ytClient == nil {
-		if err := yc.doInit(); err != nil {
-			return err
-		}
-	}
-	return resources.Fetch(ctx,
+	if err := resources.Fetch(ctx,
 		yc.secret,
 		yc.initUserJob,
 		yc.httpProxy,
-	)
+	); err != nil {
+		return err
+	}
+	if yc.ytClient == nil && !yc.secret.NeedSync(consts.TokenSecretKey, "") {
+		if err := yc.doInit(); err != nil {
+			return fmt.Errorf("failed to init yt client: %w", err)
+		}
+	}
+	return nil
 }
 
 func (yc *YtsaurusClient) createInitUserScript() string {
@@ -405,6 +408,7 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 }
 
 func (yc *YtsaurusClient) doInit() error {
+	println("ytsaurus client init")
 	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
 	timeout := time.Second * 10
 	proxy, ok := os.LookupEnv("YTOP_PROXY")

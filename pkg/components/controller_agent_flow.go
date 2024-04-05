@@ -11,6 +11,8 @@ func (ca *ControllerAgent) getFlow() Step {
 				ca.server.inSync,
 				[]Step{
 					getStandardStartRebuildStep(ca, ca.server.removePods),
+					getStandardWaitPodsRemovedStep(ca, ca.server.arePodsRemoved),
+					getStandardPodsCreateStep(ca, ca.server.Sync),
 					getStandardWaiRebuildFinishedStep(ca, ca.server.inSync),
 				},
 			),

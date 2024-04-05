@@ -15,6 +15,8 @@ const (
 	StepCheckUpdateRequired = "CheckUpdateRequired"
 	StepUpdate              = "Update"
 	StepStartRebuild        = "StartRebuild"
+	StepWaitPodsRemoved     = "WaitPodsRemoved"
+	StepPodsCreate          = "PodsCreate"
 	StepWaitRebuildFinished = "WaitRebuildFinished"
 )
 
@@ -79,6 +81,32 @@ func getStandardStartRebuildStep(c withName, run func(ctx context.Context) error
 			OnSuccessCondition: rebuildStartedCond,
 		},
 		Body: run,
+	}
+}
+func getStandardWaitPodsRemovedStep(c withName, check func(ctx context.Context) bool) StepCheck {
+	name := c.GetName()
+	podsRemovedCond := podsRemoved(name)
+	return StepCheck{
+		StepMeta: StepMeta{
+			Name:               StepWaitPodsRemoved,
+			RunIfCondition:     not(podsRemovedCond),
+			OnSuccessCondition: podsRemovedCond,
+		},
+		Body: func(ctx context.Context) (ok bool, err error) {
+			return check(ctx), nil
+		},
+	}
+}
+func getStandardPodsCreateStep(c withName, build func(ctx context.Context) error) StepRun {
+	name := c.GetName()
+	podsCreatedCond := podsCreated(name)
+	return StepRun{
+		StepMeta: StepMeta{
+			Name:               StepPodsCreate,
+			RunIfCondition:     not(podsCreatedCond),
+			OnSuccessCondition: podsCreatedCond,
+		},
+		Body: build,
 	}
 }
 func getStandardWaiRebuildFinishedStep(c withName, check func(ctx context.Context) (ok bool, err error)) StepCheck {

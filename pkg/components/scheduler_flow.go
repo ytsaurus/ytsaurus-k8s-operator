@@ -13,8 +13,8 @@ var (
 func (s *Scheduler) getFlow() Step {
 	return StepComposite{
 		Body: []Step{
-			getStandardStartBuildStep(s, s.server.Sync),
-			getStandardWaitBuildFinishedStep(s, s.server.inSync),
+			getStandardStartBuildStep(s, s.doServerSync),
+			getStandardWaitBuildFinishedStep(s, s.serverInSync),
 			getStandardInitFinishedStep(s, func(ctx context.Context) (ok bool, err error) {
 				s.initUser.SetInitScript(s.createInitUserScript())
 				st, err := s.initUser.Sync(ctx, false)
@@ -23,10 +23,12 @@ func (s *Scheduler) getFlow() Step {
 			getStandardUpdateStep(
 				s,
 				s.condManager,
-				s.server.inSync,
+				s.serverInSync,
 				[]Step{
 					getStandardStartRebuildStep(s, s.server.removePods),
-					getStandardWaiRebuildFinishedStep(s, s.server.inSync),
+					getStandardWaitPodsRemovedStep(s, s.server.arePodsRemoved),
+					getStandardPodsCreateStep(s, s.doServerSync),
+					getStandardWaiRebuildFinishedStep(s, s.serverInSync),
 					StepRun{
 						StepMeta: StepMeta{
 							Name:               "StartPrepareUpdateOpArchive",
@@ -42,10 +44,6 @@ func (s *Scheduler) getFlow() Step {
 							Name:               "WaitUpdateOpArchivePrepared",
 							RunIfCondition:     not(schedulerUpdateOpArchivePrepareFinishedCond),
 							OnSuccessCondition: schedulerUpdateOpArchivePrepareFinishedCond,
-							OnSuccessFunc: func(ctx context.Context) error {
-								s.prepareInitOperationsArchive(s.initOpArchive)
-								return nil
-							},
 						},
 						Body: func(ctx context.Context) (bool, error) {
 							return s.initOpArchive.isRestartPrepared(), nil
@@ -58,6 +56,7 @@ func (s *Scheduler) getFlow() Step {
 							OnSuccessCondition: schedulerUpdateOpArchiveFinishedCond,
 						},
 						Body: func(ctx context.Context) (ok bool, err error) {
+							s.prepareInitOperationsArchive(s.initOpArchive)
 							st, err := s.initOpArchive.Sync(ctx, false)
 							return st.SyncStatus == SyncStatusReady, err
 						},

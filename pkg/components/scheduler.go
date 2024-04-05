@@ -195,6 +195,28 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return s.initOpAchieve(ctx, dry)
 }
 
+func (s *Scheduler) doServerSync(ctx context.Context) error {
+	if s.secret.NeedSync(consts.TokenSecretKey, "") {
+		secretSpec := s.secret.Build()
+		secretSpec.StringData = map[string]string{
+			consts.TokenSecretKey: ytconfig.RandString(30),
+		}
+		if err := s.secret.Sync(ctx); err != nil {
+			return err
+		}
+	}
+	return s.server.Sync(ctx)
+}
+
+func (s *Scheduler) serverInSync(ctx context.Context) (bool, error) {
+	srvInSync, err := s.server.inSync(ctx)
+	if err != nil {
+		return false, err
+	}
+	secretNeedSync := s.secret.NeedSync(consts.TokenSecretKey, "")
+	return srvInSync && !secretNeedSync, nil
+}
+
 func (s *Scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatus, error) {
 	if !dry {
 		s.initUser.SetInitScript(s.createInitUserScript())
@@ -291,7 +313,6 @@ func (s *Scheduler) createInitUserScript() string {
 
 	return strings.Join(script, "\n")
 }
-
 
 // omgronny: The file was renamed in ytsaurus image. Refer to
 // https://github.com/ytsaurus/ytsaurus/commit/e5348fef221110ce27bba13df5f9790649084b01
