@@ -29,6 +29,7 @@ func (s *Scheduler) getFlow() Step {
 					getStandardWaitPodsRemovedStep(s, s.server.arePodsRemoved),
 					getStandardPodsCreateStep(s, s.doServerSync),
 					getStandardWaiRebuildFinishedStep(s, s.serverInSync),
+					// TODO: Suppose this job should be done once in init also.
 					StepRun{
 						StepMeta: StepMeta{
 							Name:               "StartPrepareUpdateOpArchive",
