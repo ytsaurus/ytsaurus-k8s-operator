@@ -95,7 +95,8 @@ func NewStrawberryController(
 		initUserAndUrlJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
-			ytsaurus,
+			//ytsaurus,
+			nil,
 			ytsaurus.GetResource().Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,
@@ -104,7 +105,8 @@ func NewStrawberryController(
 		initChytClusterJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
-			ytsaurus,
+			//ytsaurus,
+			nil,
 			resource.Spec.ImagePullSecrets,
 			"cluster",
 			ChytInitClusterJobConfigFileName,

@@ -78,7 +78,8 @@ func NewQueueAgent(
 		initQAState: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
-			ytsaurus,
+			//ytsaurus,
+			nil,
 			resource.Spec.ImagePullSecrets,
 			"qa-state",
 			consts.ClientConfigFileName,

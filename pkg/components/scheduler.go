@@ -70,7 +70,8 @@ func NewScheduler(
 		initUser: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
-			ytsaurus,
+			//ytsaurus,
+			nil,
 			resource.Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,
@@ -79,7 +80,8 @@ func NewScheduler(
 		initOpArchive: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
-			ytsaurus,
+			//ytsaurus,
+			nil,
 			resource.Spec.ImagePullSecrets,
 			"op-archive",
 			consts.ClientConfigFileName,

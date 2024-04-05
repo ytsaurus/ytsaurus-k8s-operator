@@ -72,7 +72,8 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		initJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
-			ytsaurus,
+			//ytsaurus,
+			nil,
 			resource.Spec.ImagePullSecrets,
 			"default",
 			consts.ClientConfigFileName,

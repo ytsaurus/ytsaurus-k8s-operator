@@ -37,7 +37,7 @@ func initJobWithNativeDriverPrologue() string {
 type InitJob struct {
 	baseComponent
 	apiProxy          apiproxy.APIProxy
-	conditionsManager apiproxy.ConditionManager
+	conditionsManager conditionManagerIface
 	imagePullSecrets  []corev1.LocalObjectReference
 
 	initJob *resources.Job
@@ -53,10 +53,13 @@ type InitJob struct {
 func NewInitJob(
 	labeller *labeller.Labeller,
 	apiProxy apiproxy.APIProxy,
-	conditionsManager apiproxy.ConditionManager,
+	conditionsManager conditionManagerIface,
 	imagePullSecrets []corev1.LocalObjectReference,
 	name, configFileName, image string,
 	generator ytconfig.YsonGeneratorFunc) *InitJob {
+	condName := fmt.Sprintf("%s%sInitJobCompleted", name, labeller.ComponentName)
+	// '^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$' for conditions.
+	condName = strings.Replace(condName, "-", "_", -1)
 	return &InitJob{
 		baseComponent: baseComponent{
 			labeller: labeller,
@@ -64,7 +67,7 @@ func NewInitJob(
 		apiProxy:               apiProxy,
 		conditionsManager:      conditionsManager,
 		imagePullSecrets:       imagePullSecrets,
-		initCompletedCondition: fmt.Sprintf("%s%sInitJobCompleted", name, labeller.ComponentName),
+		initCompletedCondition: condName,
 		image:                  image,
 		initJob: resources.NewJob(
 			labeller.GetInitJobName(name),
@@ -88,7 +91,8 @@ func NewInitJob(
 }
 
 func (j *InitJob) IsCompleted() bool {
-	return j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition)
+	//return j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition)
+	return j.conditionsManager.IsTrue(ConditionName(j.initCompletedCondition))
 }
 
 func (j *InitJob) SetInitScript(script string) {
@@ -137,7 +141,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	logger := log.FromContext(ctx)
 	var err error
 
-	if j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition) {
+	if j.conditionsManager.IsTrue(ConditionName(j.initCompletedCondition)) {
 		return ComponentStatus{
 			SyncStatusReady,
 			fmt.Sprintf("%s completed", j.initJob.Name()),
@@ -163,12 +167,20 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	if !dry {
-		j.conditionsManager.SetStatusCondition(metav1.Condition{
-			Type:    j.initCompletedCondition,
-			Status:  metav1.ConditionTrue,
-			Reason:  "InitJobCompleted",
-			Message: "Init job successfully completed",
-		})
+		//j.conditionsManager.SetStatusCondition(metav1.Condition{
+		//	Type:    j.initCompletedCondition,
+		//	Status:  metav1.ConditionTrue,
+		//	Reason:  "InitJobCompleted",
+		//	Message: "Init job successfully completed",
+		//})
+		err = j.conditionsManager.SetTrueMsg(
+			ctx,
+			ConditionName(j.initCompletedCondition),
+			"Init job successfully completed",
+		)
+		if err != nil {
+			return ComponentStatus{}, err
+		}
 	}
 
 	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", j.initCompletedCondition)), err
@@ -181,21 +193,21 @@ func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
 	if err := j.removeIfExists(ctx); err != nil {
 		return err
 	}
-	j.conditionsManager.SetStatusCondition(metav1.Condition{
-		Type:    j.initCompletedCondition,
-		Status:  metav1.ConditionFalse,
-		Reason:  "InitJobNeedRestart",
-		Message: "Init job needs restart",
-	})
-	return nil
+	return j.conditionsManager.SetFalseMsg(
+		ctx,
+		ConditionName(j.initCompletedCondition),
+		"Init job needs restart",
+	)
 }
 
 func (j *InitJob) isRestartPrepared() bool {
-	return !resources.Exists(j.initJob) && j.conditionsManager.IsStatusConditionFalse(j.initCompletedCondition)
+	deleted := !resources.Exists(j.initJob)
+	noCompletedCond := j.conditionsManager.IsFalse(ConditionName(j.initCompletedCondition))
+	return deleted && noCompletedCond
 }
 
 func (j *InitJob) isRestartCompleted() bool {
-	return j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition)
+	return j.conditionsManager.IsTrue(ConditionName(j.initCompletedCondition))
 }
 
 func (j *InitJob) removeIfExists(ctx context.Context) error {

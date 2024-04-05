@@ -50,7 +50,8 @@ func NewChyt(
 		initUser: NewInitJob(
 			&l,
 			chyt.APIProxy(),
-			chyt,
+			//chyt,
+			nil,
 			ytsaurus.Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,
@@ -59,7 +60,8 @@ func NewChyt(
 		initEnvironment: NewInitJob(
 			&l,
 			chyt.APIProxy(),
-			chyt,
+			//chyt,
+			nil,
 			ytsaurus.Spec.ImagePullSecrets,
 			"release",
 			consts.ClientConfigFileName,
@@ -68,7 +70,8 @@ func NewChyt(
 		initChPublicJob: NewInitJob(
 			&l,
 			chyt.APIProxy(),
-			chyt,
+			//chyt,
+			nil,
 			ytsaurus.Spec.ImagePullSecrets,
 			"ch-public",
 			consts.ClientConfigFileName,

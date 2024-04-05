@@ -60,7 +60,8 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		initEnvironment: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
-			ytsaurus,
+			//ytsaurus,
+			nil,
 			resource.Spec.ImagePullSecrets,
 			"yql-agent-environment",
 			consts.ClientConfigFileName,

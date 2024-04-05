@@ -49,7 +49,8 @@ func NewSpyt(
 		initUser: NewInitJob(
 			&l,
 			spyt.APIProxy(),
-			spyt,
+			//spyt,
+			nil,
 			ytsaurus.Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,
@@ -58,7 +59,8 @@ func NewSpyt(
 		initEnvironment: NewInitJob(
 			&l,
 			spyt.APIProxy(),
-			spyt,
+			//spyt,
+			nil,
 			ytsaurus.Spec.ImagePullSecrets,
 			"spyt-environment",
 			consts.ClientConfigFileName,

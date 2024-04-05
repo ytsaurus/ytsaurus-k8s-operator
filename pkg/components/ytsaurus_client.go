@@ -58,7 +58,8 @@ func NewYtsaurusClient(
 		initUserJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
-			ytsaurus,
+			//ytsaurus,
+			nil,
 			ytsaurus.GetResource().Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,

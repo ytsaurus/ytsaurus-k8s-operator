@@ -71,10 +71,12 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, ytClient 
 		func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
 	)
 
+	condManager := NewConditionManagerFromYtsaurus(ytsaurus)
+
 	initJob := NewInitJob(
 		&l,
 		ytsaurus.APIProxy(),
-		ytsaurus,
+		condManager,
 		resource.Spec.ImagePullSecrets,
 		"default",
 		consts.ClientConfigFileName,
@@ -84,7 +86,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, ytClient 
 	exitReadOnlyJob := NewInitJob(
 		&l,
 		ytsaurus.APIProxy(),
-		ytsaurus,
+		condManager,
 		resource.Spec.ImagePullSecrets,
 		"exit-read-only",
 		consts.ClientConfigFileName,
