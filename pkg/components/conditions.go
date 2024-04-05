@@ -112,23 +112,26 @@ func newStateManager(client client.Client, ytsaurus *ytv1.Ytsaurus) *stateManage
 
 func (m *baseStateManager) updateStatusRetryOnConflict(ctx context.Context, change func(ytsaurusResource *ytv1.Ytsaurus)) error {
 	tryUpdate := func(ytsaurus *ytv1.Ytsaurus) error {
-		change(ytsaurus)
-
 		// N.B. Status().Update(...) updates not only status sub-resource, but also main
 		// ytsaurus resource which is the same reference in a lot of places of our code,
 		// and it bites us, because we're modifying spec (monitoring port).
 		// Not sure if it is good workaround, need to think about it,
 		// but we should get rid of overriding port and possibly using references to the main resource.
-		y := ytv1.Ytsaurus{
+		ytsaurusTemp := &ytv1.Ytsaurus{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            ytsaurus.Name,
 				Namespace:       ytsaurus.Namespace,
 				ResourceVersion: ytsaurus.ResourceVersion,
 			},
+			Status: ytsaurus.Status,
 		}
+		change(ytsaurusTemp)
+
+		err := m.client.Status().Update(ctx, ytsaurusTemp)
+		m.ytsaurus.Status = ytsaurusTemp.Status
 		// You have to return err itself here (not wrapped inside another error)
 		// so that RetryOnConflict can identify it correctly.
-		return m.client.Status().Update(ctx, &y)
+		return err
 	}
 
 	err := tryUpdate(m.ytsaurus)

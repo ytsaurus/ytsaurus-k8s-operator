@@ -32,7 +32,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 	compRegistry := buildComponentRegistry(ytsaurus)
 	st, err := syncComponents(ctx, compRegistry, ytsaurus.GetResource())
 	if err != nil {
-		return requeueASAP, fmt.Errorf("failed to sync components: %w", err)
+		return ctrl.Result{}, fmt.Errorf("failed to sync components: %w", err)
 	}
 
 	var requeue ctrl.Result
@@ -54,7 +54,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 
 	err = ytsaurus.SaveClusterState(ctx, clusterState)
 	if err != nil {
-		return requeueASAP, fmt.Errorf("failed to save cluster state to %s", clusterState)
+		return ctrl.Result{}, fmt.Errorf("failed to save cluster state to %s", clusterState)
 	}
 	return requeue, nil
 }

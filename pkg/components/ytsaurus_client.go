@@ -78,6 +78,11 @@ func (yc *YtsaurusClient) IsUpdatable() bool {
 func (yc *YtsaurusClient) GetType() consts.ComponentType { return consts.YtsaurusClientType }
 
 func (yc *YtsaurusClient) Fetch(ctx context.Context) error {
+	if yc.condManager.IsSatisfied(buildFinished(yc.GetName())) && yc.ytClient == nil {
+		if err := yc.doInit(); err != nil {
+			return err
+		}
+	}
 	return resources.Fetch(ctx,
 		yc.secret,
 		yc.initUserJob,
@@ -399,7 +404,7 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (yc *YtsaurusClient) doInit(_ context.Context) error {
+func (yc *YtsaurusClient) doInit() error {
 	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
 	timeout := time.Second * 10
 	proxy, ok := os.LookupEnv("YTOP_PROXY")
