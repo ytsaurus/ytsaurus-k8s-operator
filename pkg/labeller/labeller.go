@@ -15,18 +15,31 @@ type FetchableObject struct {
 }
 
 type Labeller struct {
-	ObjectMeta                 *metav1.ObjectMeta
-	ComponentObjectsNamePrefix string
-	ComponentFullName          string
-	annotations                map[string]string
+	ObjectMeta *metav1.ObjectMeta
 
+	// objectsNamePrefixBase holds a role-dependant prefix of generated names for k8s objects (sts, configmap, etc)
+	objectsNamePrefixBase string
+
+	// instanceName is used only for multi-instance components like data node or exec node groups and
+	// holds the name of a component group
 	instanceName string
 
-	objectsNamePrefixBase string
+	// ComponentObjectsNamePrefix holds object names **full** prefix which consists of the role-dependant prefix
+	// and (for multi-instance components) the name of component group
+	ComponentObjectsNamePrefix string
+
+	ComponentFullName string
+
+	annotations map[string]string
 }
 
-func NewSingletonComponentLabeller(objectMeta *metav1.ObjectMeta, name consts.ComponentType, objectsNamePrefix string, annotations map[string]string) Labeller {
-	l := Labeller{
+func NewSingletonComponentLabeller(
+	objectMeta *metav1.ObjectMeta,
+	name consts.ComponentType,
+	objectsNamePrefix string,
+	annotations map[string]string,
+) Labeller {
+	return Labeller{
 		ObjectMeta: objectMeta,
 
 		ComponentFullName:          string(name),
@@ -36,16 +49,28 @@ func NewSingletonComponentLabeller(objectMeta *metav1.ObjectMeta, name consts.Co
 
 		annotations: annotations,
 	}
-
-	return l
 }
 
-func NewMultiComponentLabeller(objectMeta *metav1.ObjectMeta, nameBase consts.ComponentType, objectsNamePrefixBase, instanceName string, annotations map[string]string) Labeller {
-	l := Labeller{
+func NewMultiComponentLabeller(
+	objectMeta *metav1.ObjectMeta,
+	nameBase consts.ComponentType,
+	objectsNamePrefixBase,
+	instanceName string,
+	annotations map[string]string,
+) Labeller {
+	componentFullName := string(nameBase)
+	componentObjectsNamePrefix := objectsNamePrefixBase
+
+	if instanceName != "" && instanceName != consts.DefaultName {
+		componentFullName = fmt.Sprintf("%s-%s", nameBase, instanceName)
+		componentObjectsNamePrefix = fmt.Sprintf("%s-%s", objectsNamePrefixBase, instanceName)
+	}
+
+	return Labeller{
 		ObjectMeta: objectMeta,
 
-		ComponentFullName:          string(nameBase),
-		ComponentObjectsNamePrefix: objectsNamePrefixBase,
+		ComponentFullName:          componentFullName,
+		ComponentObjectsNamePrefix: componentObjectsNamePrefix,
 
 		instanceName: instanceName,
 
@@ -53,13 +78,6 @@ func NewMultiComponentLabeller(objectMeta *metav1.ObjectMeta, nameBase consts.Co
 
 		annotations: annotations,
 	}
-
-	if instanceName != "" && instanceName != consts.DefaultName {
-		l.ComponentFullName = fmt.Sprintf("%s-%s", nameBase, instanceName)
-		l.ComponentObjectsNamePrefix = fmt.Sprintf("%s-%s", objectsNamePrefixBase, instanceName)
-	}
-
-	return l
 }
 
 func (l *Labeller) GetClusterName() string {
