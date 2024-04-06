@@ -1,11 +1,26 @@
 
-# Image URL to use all building/pushing image targets
-IMG ?= controller:latest
-# ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
+# Image URL to use all building/pushing image targets.
+IMG ?= ${OPERATOR_IMAGE}:${OPERATOR_TAG}
+
+## Name of kind cluster for all kind-* targets
+KIND_CLUSTER_NAME ?= ${USER}-yt-kind
+export KIND_CLUSTER_NAME
+
+## K8s namespace for sample cluster.
+YTSAURUS_NAMESPACE ?= ytsaurus
+
+## YTsaurus spec for sample cluster.
+YTSAURUS_SPEC ?= config/samples/cluster_v1_cri.yaml
+
+## Version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.24.2
 
+## YTsaurus operator image name.
 OPERATOR_IMAGE = ytsaurus/k8s-operator
+
+## YTsaurus operator image tag.
 OPERATOR_TAG = 0.0.0-alpha
+
 OPERATOR_CHART = ytop-chart
 
 ifdef RELEASE_VERSION
@@ -28,6 +43,7 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
+## Tests parallelism.
 GINKGO_PROCS ?= 1
 
 GINKGO_FLAGS += --vv
@@ -37,10 +53,10 @@ GINKGO_FLAGS += --timeout=1h
 GINKGO_FLAGS += --poll-progress-after=5m
 GINKGO_FLAGS += --poll-progress-interval=1m
 
-.PHONY: all
-all: build
-
 ##@ General
+
+.PHONY: all
+all: lint build helm-chart test ## Default target: make build, run linters and unit tests.
 
 # The help target prints out all targets with their descriptions organized
 # beneath their categories. The categories are represented by '##@' and the
@@ -56,19 +72,20 @@ all: build
 .PHONY: help
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = " \??= "; printf "\n\033[1m%s\033[0m\n", "Options:"} /^## .*/ {C=C substr($$0, 4) " "} /^[A-Z0-9_]* \??= .*/ && C { printf "  \033[36m%s\033[0m = %*s %s\n", $$1, -50+length($$1), $$2, C} /^[^#]/ { C="" }  END {  }  ' $(MAKEFILE_LIST)
 
 ##@ Development
 
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd:maxDescLen=80 webhook paths="{\"./api/...\" , \"./controllers/...\", \"./pkg/...\"}" output:crd:artifacts:config=config/crd/bases
+	$(MAKE) docs/api.md
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="{\"./api/...\" , \"./controllers/...\", \"./pkg/...\"}"
-	$(MAKE) docs/api.md
 
-docs/api.md: config/crd-ref-docs/config.yaml $(CRD_REF_DOCS) $(wildcard api/v1/*_types.go)
+docs/api.md: config/crd-ref-docs/config.yaml $(wildcard api/v1/*_types.go) | crd-ref-docs
 	$(CRD_REF_DOCS) --config $< --renderer=markdown --source-path=api/v1 --output-path=$@
 
 .PHONY: fmt
@@ -99,20 +116,30 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes.
 	$(GOLANGCI_LINT) run --fix
 
 .PHONY: lint-generated
-lint-generated: generate helm ## Check that generated files are uptodate.
+lint-generated: generate helm-chart ## Check that generated files are uptodate and committed.
 	test -z "$(shell git status --porcelain api docs/api.md config ytop-chart)"
 
 .PHONY: canonize
-canonize: manifests generate fmt vet envtest ## Canonize tests.
+canonize: manifests generate fmt vet envtest ## Canonize test results.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
 	CANONIZE=y \
 	go test -v ./... -coverprofile cover.out
 
-.PHONY: helm-kind-install
-helm-kind-install: ## Install helm chart from sources in kind.
-	docker build ${DOCKER_BUILD_ARGS} -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
-	kind load docker-image ${OPERATOR_IMAGE}:${OPERATOR_TAG}
-	helm upgrade -i ytsaurus $(OPERATOR_CHART) --set controllerManager.manager.image.repository=${OPERATOR_IMAGE} --set controllerManager.manager.image.tag=${OPERATOR_TAG}
+##@ K8s operations
+
+.PHONY: kind-create-cluster
+kind-create-cluster: kind ## Create kind kubernetes cluster.
+	@if ! $(KIND) get clusters | grep -q $(KIND_CLUSTER_NAME); then \
+		$(KIND) create cluster --name $(KIND_CLUSTER_NAME) -v 100 --wait 120s  --retain; \
+	fi
+	$(KUBECTL) config use-context kind-$(KIND_CLUSTER_NAME)
+	$(MAKE) k8s-install-cert-manager
+
+.PHONY: kind-delete-cluster
+kind-delete-cluster: kind ## Delete kind kubernetes cluster.
+	@if $(KIND) get clusters | grep -q $(KIND_CLUSTER_NAME); then \
+		$(KIND) delete cluster --name $(KIND_CLUSTER_NAME); \
+	fi
 
 TEST_IMAGES = \
 	ytsaurus/ytsaurus-nightly:dev-23.1-28ccaedbf353b870bedafb6e881ecf386a0a3779 \
@@ -120,20 +147,59 @@ TEST_IMAGES = \
 	ytsaurus/ytsaurus-nightly:dev-23.2-9c50056eacfa4fe213798a5b9ee828ae3acb1bca
 .PHONY: kind-load-test-images
 kind-load-test-images:
-	$(foreach img,$(TEST_IMAGES),docker pull $(img) && kind load docker-image $(img);)
+	$(foreach img,$(TEST_IMAGES),docker pull -q $(img) && $(KIND) load docker-image --name $(KIND_CLUSTER_NAME) $(img);)
 
 .PHONY: k8s-install-cert-manager
 k8s-install-cert-manager:
-	$(KUBECTL) apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
+	@if ! $(KUBECTL) get namespace/cert-manager &>/dev/null; then \
+		$(KUBECTL) apply --server-side -f "https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MANAGER_VERSION)/cert-manager.yaml"; \
+		$(KUBECTL) -n cert-manager wait --timeout=60s --for=condition=available --all deployment; \
+	fi
+
+.PHONY: helm-install
+helm-install: ## Install helm chart from sources.
+	helm upgrade --install --wait ytsaurus $(OPERATOR_CHART) \
+		--set controllerManager.manager.image.repository=${OPERATOR_IMAGE} \
+		--set controllerManager.manager.image.tag=${OPERATOR_TAG}
+
+.PHONY: helm-kind-install
+helm-kind-install: helm-chart docker-build ## Build docker image, load into kind and install helm chart.
+	$(KIND) load docker-image --name $(KIND_CLUSTER_NAME) ${OPERATOR_IMAGE}:${OPERATOR_TAG}
+	$(MAKE) helm-install
 
 .PHONY: helm-minikube-install
-helm-minikube-install: helm ## Install helm chart from sources in minikube.
+helm-minikube-install: helm-chart ## Build docker image in minikube and install helm chart.
 	eval $$(minikube docker-env) && docker build ${DOCKER_BUILD_ARGS} -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
-	helm install ytsaurus ytop-chart/
+	$(MAKE) helm-install
 
 .PHONY: helm-uninstall
-helm-uninstall: ## Uninstal kind tests env.
+helm-uninstall: ## Uninstal helm chart.
 	helm uninstall ytsaurus
+
+kind-deploy-ytsaurus: ## Deploy sample ytsaurus cluster and all requirements.
+	$(MAKE) kind-create-cluster
+	$(MAKE) helm-kind-install
+	-$(KUBECTL) create namespace $(YTSAURUS_NAMESPACE)
+	$(KUBECTL) apply --server-side -n $(YTSAURUS_NAMESPACE) -f $(YTSAURUS_SPEC)
+	$(KUBECTL) wait -n $(YTSAURUS_NAMESPACE) --timeout=10m --for=jsonpath='{.status.state}=Running' --all ytsaurus
+	@printf "\nYTsaurus UI: http://%s:%s\nlogin/password: admin/password\nto setup env for yt cli run: . <(make kind-yt-env)\n" \
+		$(call KIND_NODE_ADDR,${KIND_CLUSTER_NAME}-control-plane) \
+		$(call KIND_SERVICE_NODEPORT,${YTSAURUS_NAMESPACE},ytsaurus-ui,0)
+
+kind-undeploy-ytsaurus: ## Undeploy sample ytsaurus cluster.
+	-$(KUBECTL) -n $(YTSAURUS_NAMESPACE) delete ytsaurus --all
+	-$(KUBECTL) -n $(YTSAURUS_NAMESPACE) delete pods --all --force
+	$(KUBECTL) delete namespace $(YTSAURUS_NAMESPACE)
+
+KIND_NODE_ADDR = $(shell docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(1))
+KIND_SERVICE_NODEPORT = $(shell $(KUBECTL) -n $(1) get service $(2) -o jsonpath="{.spec.ports[$(3)].nodePort}")
+
+KIND_YT_ENV += YT_PROXY=http://$(call KIND_NODE_ADDR,${KIND_CLUSTER_NAME}-control-plane):$(call KIND_SERVICE_NODEPORT,${YTSAURUS_NAMESPACE},http-proxies-lb,0)
+KIND_YT_ENV += YT_TOKEN=password
+KIND_YT_ENV += YT_CONFIG_PATCHES="{ proxy={ enable_proxy_discovery=%false; }; operation_tracker={ always_show_job_stderr=%true; }; }"
+
+kind-yt-env: ## Print yt cli environment for sample ytsaurus cluster.
+	@printf "export \"%s\"\n" $(KIND_YT_ENV)
 
 ##@ Build
 
@@ -146,15 +212,15 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
 .PHONY: docker-build
-docker-build: test ## Build docker image with the manager.
+docker-build: ## Build docker image with the manager.
 	docker build ${DOCKER_BUILD_ARGS} -t ${IMG} .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
 
-.PHONY: helm
-helm: manifests kustomize helmify build ## Generate helm chart.
+.PHONY: helm-chart
+helm-chart: manifests kustomize helmify ## Generate helm chart.
 	$(KUSTOMIZE) build config/default | $(HELMIFY) $(OPERATOR_CHART)
 
 ##@ Deployment
@@ -184,11 +250,11 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
 
-release: manifests kustomize helmify ## Release operator docker imager and helm chart.
+release: ## Release operator docker imager and helm chart.
 	docker build ${DOCKER_BUILD_ARGS} -t $(OPERATOR_IMAGE):${RELEASE_VERSION} .
 	docker push $(OPERATOR_IMAGE):${RELEASE_VERSION}
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(OPERATOR_IMAGE):${RELEASE_VERSION}
-	$(KUSTOMIZE) build config/default | $(HELMIFY) $(OPERATOR_CHART)
+	$(MAKE) helm-chart
 	sed -iE "s/appVersion: \".*\"/appVersion: \"${RELEASE_VERSION}\"/" $(OPERATOR_CHART)/Chart.yaml
 	sed -iE "s/version:.*/version: ${RELEASE_VERSION}/" $(OPERATOR_CHART)/Chart.yaml
 	helm package $(OPERATOR_CHART)
@@ -196,12 +262,12 @@ release: manifests kustomize helmify ## Release operator docker imager and helm 
 
 ##@ Build Dependencies
 
-## Location to install dependencies to
+## Location to install dependencies to.
 LOCALBIN ?= $(shell pwd)/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
-## Tool Binaries
+# Tool Binaries
 KUBECTL ?= kubectl
 KUSTOMIZE ?= $(LOCALBIN)/kustomize-$(KUSTOMIZE_VERSION)
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen-$(CONTROLLER_GEN_VERSION)
@@ -210,15 +276,20 @@ HELMIFY ?= $(LOCALBIN)/helmify-$(HELMIFY_VERSION)
 GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
 GINKGO ?= $(LOCALBIN)/ginkgo-$(GINKGO_VERSION)
 CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs-$(CRD_REF_DOCS_VERSION)
+KIND ?= $(LOCALBIN)/kind-$(KIND_VERSION)
 
-## Tool Versions
+# Tool Versions
 KUSTOMIZE_VERSION ?= v5.3.0
 CONTROLLER_GEN_VERSION ?= v0.14.0
 ENVTEST_VERSION ?= latest
 HELMIFY_VERSION ?= v0.4.5
+## golangci-lint version.
 GOLANGCI_LINT_VERSION ?= v1.56.2
 GINKGO_VERSION ?= $(call go-get-version,github.com/onsi/ginkgo/v2)
 CRD_REF_DOCS_VERSION ?= v0.0.12
+## kind version.
+KIND_VERSION ?= v0.22.0
+CERT_MANAGER_VERSION ?= v1.14.4
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
@@ -254,6 +325,11 @@ $(GINKGO): $(LOCALBIN)
 crd-ref-docs: $(CRD_REF_DOCS) ## Download crd-ref-docs locally if necessary.
 $(CRD_REF_DOCS): $(LOCALBIN)
 	$(call go-install-tool,$(CRD_REF_DOCS),github.com/elastic/crd-ref-docs,$(CRD_REF_DOCS_VERSION))
+
+.PHONY: kind
+kind: $(KIND) ## Download kind locally if necessary.
+$(KIND): $(LOCALBIN)
+	$(call go-install-tool,$(KIND),sigs.k8s.io/kind,$(KIND_VERSION))
 
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary (ideally with version)
