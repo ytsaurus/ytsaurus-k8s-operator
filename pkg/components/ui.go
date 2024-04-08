@@ -147,7 +147,6 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 	}
 
 	env := []corev1.EnvVar{
-		// Deprecated since v 17.0.0
 		{
 			Name:  "ALLOW_PASSWORD_AUTH",
 			Value: "1",
