@@ -639,7 +639,7 @@ spec:
               coreImage:
                 type: string
               enableAntiAffinity:
-                description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                 type: boolean
               entrypointWrapper:
                 description: Specifies wrapper for component container command.

@@ -265,7 +265,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -299,7 +299,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -353,7 +353,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -441,7 +441,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -483,7 +483,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -590,7 +590,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -790,7 +790,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -845,7 +845,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -921,7 +921,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -955,7 +955,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -989,7 +989,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -1095,7 +1095,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -1159,7 +1159,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -1198,7 +1198,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -1325,7 +1325,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -1380,7 +1380,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
@@ -1516,7 +1516,7 @@ _Appears in:_
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `runtimeClassName` _string_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated. Use Affinity.PodAntiAffinity instead. |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |

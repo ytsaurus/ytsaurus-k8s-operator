@@ -242,7 +242,7 @@ type InstanceSpec struct {
 	VolumeClaimTemplates  []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
 	//+optional
 	RuntimeClassName *string `json:"runtimeClassName,omitempty"`
-	// Deprecated. Use Affinity.PodAntiAffinity instead.
+	// Deprecated: use Affinity.PodAntiAffinity instead.
 	EnableAntiAffinity *bool `json:"enableAntiAffinity,omitempty"`
 	//+optional
 	MonitoringPort    *int32                 `json:"monitoringPort,omitempty"`

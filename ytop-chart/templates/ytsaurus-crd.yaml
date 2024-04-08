@@ -763,7 +763,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
@@ -3074,7 +3074,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                      description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
                     entrypointWrapper:
                       description: Specifies wrapper for component container command.
@@ -5409,7 +5409,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
@@ -7721,7 +7721,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                      description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
                     entrypointWrapper:
                       description: Specifies wrapper for component container command.
@@ -10229,7 +10229,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                      description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
                     entrypointWrapper:
                       description: Specifies wrapper for component container command.
@@ -12604,7 +12604,7 @@ spec:
                   cellTagMasterCaches:
                     type: integer
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
@@ -14966,7 +14966,7 @@ spec:
                   cellTag:
                     type: integer
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
@@ -17283,7 +17283,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
@@ -19588,7 +19588,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
@@ -21897,7 +21897,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                      description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
                     entrypointWrapper:
                       description: Specifies wrapper for component container command.
@@ -24254,7 +24254,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
@@ -26565,7 +26565,7 @@ spec:
                     cellTag:
                       type: integer
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                      description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
                     entrypointWrapper:
                       description: Specifies wrapper for component container command.
@@ -28957,7 +28957,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                      description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
                     entrypointWrapper:
                       description: Specifies wrapper for component container command.
@@ -31295,7 +31295,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                      description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
                     entrypointWrapper:
                       description: Specifies wrapper for component container command.
@@ -33824,7 +33824,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
