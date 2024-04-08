@@ -52,11 +52,11 @@ func getMasterServerCarcass(spec *ytv1.MastersSpec) (MasterServer, error) {
 	c.RPCPort = consts.MasterRPCPort
 	c.MonitoringPort = *spec.MonitoringPort
 
-	c.HydraManager.MaxSnapshotCountToKeep = 2
+	c.HydraManager.MaxSnapshotCountToKeep = 10
 	if spec.MaxSnapshotCountToKeep != nil {
 		c.HydraManager.MaxSnapshotCountToKeep = *spec.MaxSnapshotCountToKeep
 	}
-	c.HydraManager.MaxChangelogCountToKeep = 2
+	c.HydraManager.MaxChangelogCountToKeep = 10
 	if spec.MaxChangelogCountToKeep != nil {
 		c.HydraManager.MaxChangelogCountToKeep = *spec.MaxChangelogCountToKeep
 	}
