@@ -97,7 +97,7 @@ func newServerConfigured(
 	var tlsSecret *resources.TLSSecret
 	transportSpec := instanceSpec.NativeTransport
 	if transportSpec == nil {
-		//FIXME(khlebnikov): do not mount common bus secret into all servers
+		// FIXME(khlebnikov): do not mount common bus secret into all servers
 		transportSpec = commonSpec.NativeTransport
 	}
 	if transportSpec != nil && transportSpec.TLSSecret != nil {

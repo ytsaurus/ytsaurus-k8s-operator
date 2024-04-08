@@ -3,7 +3,7 @@ package v1
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -158,7 +158,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 				{
 					InstanceSpec: InstanceSpec{
 						EnableAntiAffinity: &trueEnableAntiAffinity,
-						VolumeMounts: []v1.VolumeMount{
+						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      "123",
 								MountPath: "/yt",
@@ -176,7 +176,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 				{
 					InstanceSpec: InstanceSpec{
 						EnableAntiAffinity: &falseEnableAntiAffinity,
-						VolumeMounts: []v1.VolumeMount{
+						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      "123",
 								MountPath: "/yt",
@@ -200,7 +200,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			ytsaurus.Spec.PrimaryMasters = MastersSpec{
 				InstanceSpec: InstanceSpec{
 					EnableAntiAffinity: &trueEnableAntiAffinity,
-					VolumeMounts: []v1.VolumeMount{
+					VolumeMounts: []corev1.VolumeMount{
 						{
 							Name:      "123",
 							MountPath: "/yt",
@@ -226,7 +226,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(err.Error()).To(ContainSubstring("EnableAntiAffinity is deprecated, use Affinity instead"))
 
 			errorDetails := statusErr.ErrStatus.Details
-			Expect(len(errorDetails.Causes)).To(Equal(4))
+			Expect(errorDetails.Causes).To(HaveLen(4))
 			for _, cause := range errorDetails.Causes {
 				Expect(cause.Type).To(Equal(metav1.CauseTypeFieldValueInvalid))
 				Expect(cause.Message).To(ContainSubstring("EnableAntiAffinity is deprecated, use Affinity instead"))
@@ -294,7 +294,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 
 		It("Check volumeMounts for locations", func() {
 			ytsaurus := CreateBaseYtsaurusResource(namespace)
-			ytsaurus.Spec.PrimaryMasters.VolumeMounts = []v1.VolumeMount{}
+			ytsaurus.Spec.PrimaryMasters.VolumeMounts = []corev1.VolumeMount{}
 
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("location path is not in any volume mount")))
 		})

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -34,7 +34,7 @@ type TestHelper struct {
 	Namespace  string
 }
 
-func NewTestHelper(t *testing.T, namespace, CRDDirectoryPath string) *TestHelper {
+func NewTestHelper(t *testing.T, namespace, crdDirectoryPath string) *TestHelper {
 	if os.Getenv("KUBEBUILDER_ASSETS") == "" {
 		t.Fatal(
 			"KUBEBUILDER_ASSETS needed to be set for this test " +
@@ -43,7 +43,7 @@ func NewTestHelper(t *testing.T, namespace, CRDDirectoryPath string) *TestHelper
 		)
 	}
 	k8sTestEnv := &envtest.Environment{
-		CRDDirectoryPaths:     []string{CRDDirectoryPath},
+		CRDDirectoryPaths:     []string{crdDirectoryPath},
 		ErrorIfCRDPathMissing: true,
 		CRDInstallOptions: envtest.CRDInstallOptions{
 			MaxTime: 60 * time.Second,
@@ -152,7 +152,6 @@ func DeployObject(h *TestHelper, object client.Object) {
 func UpdateObject(h *TestHelper, emptyObject, newObject client.Object) {
 	k8sCli := h.GetK8sClient()
 
-	//key := client.ObjectKey{Name: newObject.GetName(), Namespace: newObject.GetNamespace()}
 	GetObject(h, newObject.GetName(), emptyObject)
 
 	newObject.SetResourceVersion(emptyObject.GetResourceVersion())
@@ -176,11 +175,12 @@ func MarkAllJobsCompleted(h *TestHelper) {
 	jobs := &batchv1.JobList{}
 	err := h.GetK8sClient().List(context.Background(), jobs)
 	require.NoError(h.t, err)
-	for _, job := range jobs.Items {
+	for i := range jobs.Items {
+		job := &jobs.Items[i]
 		if job.Status.Succeeded == 0 {
 			h.t.Logf("found job %s, marking as completed", job.Name)
 			job.Status.Succeeded = 1
-			UpdateObjectStatus(h, &job)
+			UpdateObjectStatus(h, job)
 		}
 	}
 }
@@ -208,7 +208,7 @@ func FetchAndCheckEventually(h *TestHelper, key string, obj client.Object, condD
 		func() bool {
 			err := k8sCli.Get(context.Background(), h.GetObjectKey(key), obj)
 			if err != nil {
-				if errors.IsNotFound(err) {
+				if apierrors.IsNotFound(err) {
 					h.t.Logf("object %v not found.", key)
 					return false
 				}

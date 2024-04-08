@@ -190,18 +190,14 @@ func runRemoteExecNodes(remoteExecNodes *ytv1.RemoteExecNodes) {
 
 	By("Checking that remote nodes state is equal to `Running`")
 	Eventually(
-		func() bool {
+		func() (*ytv1.RemoteExecNodes, error) {
 			nodes := &ytv1.RemoteExecNodes{}
 			err := k8sClient.Get(ctx, lookupKey, nodes)
-			if err != nil {
-				return false
-			}
-			return nodes.Status.ReleaseStatus == ytv1.RemoteExecNodeReleaseStatusRunning
+			return nodes, err
 		},
 		reactionTimeout*2,
 		pollInterval,
-	)
-
+	).Should(HaveField("Status.ReleaseStatus", ytv1.RemoteExecNodeReleaseStatusRunning))
 }
 
 func deleteRemoteExecNodes(ctx context.Context, remoteExecNodes *ytv1.RemoteExecNodes) {
@@ -276,7 +272,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			var masters []string
 			err := ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &masters, nil)
 			Expect(err).Should(Succeed())
-			Expect(len(masters)).Should(Equal(1))
+			Expect(masters).Should(HaveLen(1))
 			onlyMaster := masters[0]
 			_, err = ytClient.CopyNode(
 				ctx,
@@ -302,7 +298,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			msPod = getMasterPod(g.GetMasterPodNames()[0], namespace)
 			msPodCreationSecondTimestamp := msPod.CreationTimestamp
 			fmt.Fprintf(GinkgoWriter, "ms pods ts: \n%v\n%v\n", msPodCreationFirstTimestamp, msPodCreationSecondTimestamp)
-			Expect(msPodCreationFirstTimestamp == msPodCreationSecondTimestamp).Should(BeTrue())
+			Expect(msPodCreationFirstTimestamp.Equal(&msPodCreationSecondTimestamp)).Should(BeTrue())
 		})
 
 		It("Should run and try to update Ytsaurus with tablet cell bundle which is not in `good` health", func(ctx context.Context) {
@@ -379,15 +375,15 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			Eventually(func(g Gomega) {
 				writer, err := ytClient.WriteTable(ctx, ypath.Path("//tmp/a"), nil)
-				g.Expect(err).Should(BeNil())
+				g.Expect(err).ShouldNot(HaveOccurred())
 				g.Expect(writer.Write(testRow{A: "123"})).Should(Succeed())
 				g.Expect(writer.Commit()).Should(Succeed())
 			}, reactionTimeout, pollInterval).Should(Succeed())
 
 			By("Ban all data nodes")
 			for i := 0; i < int(ytsaurus.Spec.DataNodes[0].InstanceCount); i++ {
-				Expect(ytClient.SetNode(ctx, ypath.Path(fmt.Sprintf(
-					"//sys/cluster_nodes/dnd-%v.data-nodes.%v.svc.cluster.local:9012/@banned", i, namespace)), true, nil))
+				node_path := ypath.Path(fmt.Sprintf("//sys/cluster_nodes/dnd-%v.data-nodes.%v.svc.cluster.local:9012/@banned", i, namespace))
+				Expect(ytClient.SetNode(ctx, node_path, true, nil)).Should(Succeed())
 			}
 
 			By("Waiting for lvc > 0")
@@ -425,16 +421,16 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			ytClient := getYtClient(g, namespace)
 
 			By("Check that access control object namespace 'queries' exists")
-			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries"), nil)).Should(Equal(true))
+			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries"), nil)).Should(BeTrue())
 
 			By("Check that access control object 'nobody' in namespace 'queries' exists")
-			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/nobody"), nil)).Should(Equal(true))
+			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/nobody"), nil)).Should(BeTrue())
 
 			By("Check that access control object 'everyone' in namespace 'queries' exists")
-			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone"), nil)).Should(Equal(true))
+			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone"), nil)).Should(BeTrue())
 
 			By("Check that access control object 'everyone-use' in namespace 'queries' exists")
-			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone-use"), nil)).Should(Equal(true))
+			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone-use"), nil)).Should(BeTrue())
 
 			By("Check that access control object namespace 'queries' allows users to create children and owners to do everything")
 			queriesAcl := []map[string]interface{}{}
@@ -543,7 +539,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			result, err := ytClient.ListJobs(ctx, op.ID(), &yt.ListJobsOptions{
 				JobState: &yt.JobCompleted,
 			})
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).ShouldNot(HaveOccurred())
 			for _, job := range result.Jobs {
 				fmt.Println(job)
 			}
@@ -551,10 +547,10 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			statuses, err := yt.ListAllJobs(ctx, ytClient, op.ID(), &yt.ListJobsOptions{
 				JobState: &yt.JobCompleted,
 			})
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(len(statuses)).Should(Equal(1))
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(statuses).Should(HaveLen(1))
 			status := statuses[0]
-			Ω(status.Address).Should(
+			Expect(status.Address).Should(
 				ContainSubstring("end-"+ytv1.RemoteResourceName),
 				"actual status: %s", status,
 			)
