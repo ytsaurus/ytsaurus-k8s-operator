@@ -6,5 +6,3 @@ version: 0.0.0-alpha
 appVersion: "0.0.0-alpha"
 sources:
   - https://github.com/ytsaurus/yt-k8s-operator
-# c.HydraManager.MaxSnapshotCountToKeep
-# c.HydraManager.MaxChangelogCountToKeep
