@@ -20,14 +20,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	mock_yt "github.com/ytsaurus/yt-k8s-operator/pkg/mock"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
 var _ = Describe("Tablet node test", func() {
-	var ytsaurusSpec *v1.Ytsaurus
+	var ytsaurusSpec *ytv1.Ytsaurus
 	ytsaurusName := "ytsaurus"
 	namespace := "default"
 	var mockYtClient *mock_yt.MockClient
@@ -39,7 +39,7 @@ var _ = Describe("Tablet node test", func() {
 
 		masterVolumeSize, _ := resource.ParseQuantity("1Gi")
 
-		ytsaurusSpec = &v1.Ytsaurus{
+		ytsaurusSpec = &ytv1.Ytsaurus{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Ytsaurus",
 				APIVersion: "cluster.ytsaurus.tech/v1",
@@ -48,22 +48,22 @@ var _ = Describe("Tablet node test", func() {
 				Name:      ytsaurusName,
 				Namespace: namespace,
 			},
-			Spec: v1.YtsaurusSpec{
-				CommonSpec: v1.CommonSpec{
+			Spec: ytv1.YtsaurusSpec{
+				CommonSpec: ytv1.CommonSpec{
 					CoreImage: "ytsaurus/ytsaurus:latest",
 				},
-				Discovery: v1.DiscoverySpec{
-					InstanceSpec: v1.InstanceSpec{
+				Discovery: ytv1.DiscoverySpec{
+					InstanceSpec: ytv1.InstanceSpec{
 						InstanceCount: 1,
 					},
 				},
-				PrimaryMasters: v1.MastersSpec{
-					MasterConnectionSpec: v1.MasterConnectionSpec{
+				PrimaryMasters: ytv1.MastersSpec{
+					MasterConnectionSpec: ytv1.MasterConnectionSpec{
 						CellTag: 1,
 					},
-					InstanceSpec: v1.InstanceSpec{
+					InstanceSpec: ytv1.InstanceSpec{
 						InstanceCount: 1,
-						Locations: []v1.LocationSpec{
+						Locations: []ytv1.LocationSpec{
 							{
 								LocationType: "MasterChangelogs",
 								Path:         "/yt/master-data/master-changelogs",
@@ -91,22 +91,22 @@ var _ = Describe("Tablet node test", func() {
 						},
 					},
 				},
-				HTTPProxies: []v1.HTTPProxiesSpec{
+				HTTPProxies: []ytv1.HTTPProxiesSpec{
 					{
 						ServiceType: "NodePort",
-						InstanceSpec: v1.InstanceSpec{
+						InstanceSpec: ytv1.InstanceSpec{
 							InstanceCount: 1,
 						},
 					},
 				},
-				UI: &v1.UISpec{
+				UI: &ytv1.UISpec{
 					InstanceCount: 1,
 				},
-				DataNodes: []v1.DataNodesSpec{
+				DataNodes: []ytv1.DataNodesSpec{
 					{
-						InstanceSpec: v1.InstanceSpec{
+						InstanceSpec: ytv1.InstanceSpec{
 							InstanceCount: 1,
-							Locations: []v1.LocationSpec{
+							Locations: []ytv1.LocationSpec{
 								{
 									LocationType: "ChunkStore",
 									Path:         "/yt/node-data/chunk-store",
@@ -131,9 +131,9 @@ var _ = Describe("Tablet node test", func() {
 						},
 					},
 				},
-				TabletNodes: []v1.TabletNodesSpec{
+				TabletNodes: []ytv1.TabletNodesSpec{
 					{
-						InstanceSpec: v1.InstanceSpec{
+						InstanceSpec: ytv1.InstanceSpec{
 							InstanceCount: 1,
 						},
 					},
@@ -147,7 +147,7 @@ var _ = Describe("Tablet node test", func() {
 
 		BeforeEach(func() {
 			scheme = runtime.NewScheme()
-			Expect(v1.AddToScheme(scheme)).To(Succeed())
+			Expect(ytv1.AddToScheme(scheme)).To(Succeed())
 			Expect(corev1.AddToScheme(scheme)).To(Succeed())
 
 			client = fake.NewClientBuilder().
@@ -157,7 +157,7 @@ var _ = Describe("Tablet node test", func() {
 		})
 
 		It("Check Ytsaurus spec", func() {
-			ytsaurusSpecCopy := &v1.Ytsaurus{}
+			ytsaurusSpecCopy := &ytv1.Ytsaurus{}
 			ytsaurusLookupKey := types.NamespacedName{Name: ytsaurusName, Namespace: namespace}
 			Expect(client.Get(context.Background(), ytsaurusLookupKey, ytsaurusSpecCopy)).Should(Succeed())
 			Expect(ytsaurusSpecCopy).Should(Equal(ytsaurusSpec))

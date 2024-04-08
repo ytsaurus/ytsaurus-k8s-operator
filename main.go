@@ -39,7 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	clusterv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -51,7 +51,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(clusterv1.AddToScheme(scheme))
+	utilruntime.Must(ytv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -125,7 +125,7 @@ func main() {
 	}
 
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err = (&clusterv1.Ytsaurus{}).SetupWebhookWithManager(mgr); err != nil {
+		if err = (&ytv1.Ytsaurus{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Ytsaurus")
 			os.Exit(1)
 		}
@@ -141,7 +141,7 @@ func main() {
 	}
 
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err = (&clusterv1.Spyt{}).SetupWebhookWithManager(mgr); err != nil {
+		if err = (&ytv1.Spyt{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Spyt")
 			os.Exit(1)
 		}
@@ -155,7 +155,7 @@ func main() {
 		os.Exit(1)
 	}
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err = (&clusterv1.Chyt{}).SetupWebhookWithManager(mgr); err != nil {
+		if err = (&ytv1.Chyt{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Chyt")
 			os.Exit(1)
 		}

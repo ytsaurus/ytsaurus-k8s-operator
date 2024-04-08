@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"go.ytsaurus.tech/library/go/ptr"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -20,7 +20,7 @@ type RpcProxy struct {
 
 	master Component
 
-	serviceType      *v1.ServiceType
+	serviceType      *corev1.ServiceType
 	balancingService *resources.RPCService
 	tlsSecret        *resources.TLSSecret
 }

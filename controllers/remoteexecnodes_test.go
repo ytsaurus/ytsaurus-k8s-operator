@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ptr "k8s.io/utils/pointer"
@@ -55,7 +55,7 @@ func TestRemoteExecNodesFromScratch(t *testing.T) {
 	testutil.DeployObject(h, &nodes)
 	waitRemoteExecNodesDeployed(h, remoteExecNodesName)
 
-	testutil.FetchEventually(h, statefulSetName, &v1.StatefulSet{})
+	testutil.FetchEventually(h, statefulSetName, &appsv1.StatefulSet{})
 
 	ysonNodeConfig := testutil.FetchConfigMapData(h, execNodeConfigMapName, execNodeConfigMapYsonKey)
 	require.NotEmpty(t, ysonNodeConfig)
@@ -110,7 +110,7 @@ func TestRemoteExecNodesImageUpdate(t *testing.T) {
 	testutil.DeployObject(h, &nodes)
 	waitRemoteExecNodesDeployed(h, remoteExecNodesName)
 
-	testutil.FetchEventually(h, statefulSetName, &v1.StatefulSet{})
+	testutil.FetchEventually(h, statefulSetName, &appsv1.StatefulSet{})
 
 	updatedImage := testYtsaurusImage + "-changed"
 	nodes.Spec.Image = &updatedImage
@@ -119,10 +119,10 @@ func TestRemoteExecNodesImageUpdate(t *testing.T) {
 	testutil.FetchAndCheckEventually(
 		h,
 		statefulSetName,
-		&v1.StatefulSet{},
+		&appsv1.StatefulSet{},
 		"image updated in sts spec",
 		func(obj client.Object) bool {
-			sts := obj.(*v1.StatefulSet)
+			sts := obj.(*appsv1.StatefulSet)
 			return sts.Spec.Template.Spec.Containers[0].Image == updatedImage
 		},
 	)
@@ -141,7 +141,7 @@ func TestRemoteExecNodesChangeInstanceCount(t *testing.T) {
 	testutil.DeployObject(h, &nodes)
 	waitRemoteExecNodesDeployed(h, remoteExecNodesName)
 
-	testutil.FetchEventually(h, statefulSetName, &v1.StatefulSet{})
+	testutil.FetchEventually(h, statefulSetName, &appsv1.StatefulSet{})
 
 	newInstanceCount := int32(3)
 	nodes.Spec.InstanceCount = newInstanceCount
@@ -150,10 +150,10 @@ func TestRemoteExecNodesChangeInstanceCount(t *testing.T) {
 	testutil.FetchAndCheckEventually(
 		h,
 		statefulSetName,
-		&v1.StatefulSet{},
+		&appsv1.StatefulSet{},
 		"expected replicas count",
 		func(obj client.Object) bool {
-			sts := obj.(*v1.StatefulSet)
+			sts := obj.(*appsv1.StatefulSet)
 			return *sts.Spec.Replicas == newInstanceCount
 		},
 	)

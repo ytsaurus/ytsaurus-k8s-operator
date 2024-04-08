@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -65,7 +65,7 @@ func (c *apiProxy) Client() client.Client {
 
 func (c *apiProxy) FetchObject(ctx context.Context, name string, obj client.Object) error {
 	err := c.client.Get(ctx, c.getObjectKey(name), obj)
-	if err == nil || !errors.IsNotFound(err) {
+	if err == nil || !apierrors.IsNotFound(err) {
 		return err
 	}
 
