@@ -1,0 +1,23 @@
+on:
+  workflow_call:
+
+jobs:
+  check:
+    name: Run checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout sources
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Run unit tests
+        shell: bash
+        run: |
+          make test

@@ -6,14 +6,18 @@ on:
       - main
 
 jobs:
-  check:
-    name: Run checks
+  check-unit:
+    name: Run unit tests
+    uses: ./.github/workflows/subflow_run_unit_tests.yaml
+
+  check-e2e:
+    name: Run e2e tests
     with:
       release: true
     secrets:
       DOCKER_HUB_LOGIN: ${{ secrets.DOCKER_HUB_LOGIN }}
       DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
-    uses: ./.github/workflows/subflow_run_e2e.yaml
+    uses: ./.github/workflows/subflow_run_e2e_tests.yaml
 
   send-notifications:
     name: Send notifications
