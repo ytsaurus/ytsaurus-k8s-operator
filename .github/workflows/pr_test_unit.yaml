@@ -1,0 +1,9 @@
+name: Run unit tests
+
+on:
+  pull_request:
+
+jobs:
+  check:
+    name: Run unit tests
+    uses: ./.github/workflows/subflow_run_unit_tests.yaml
