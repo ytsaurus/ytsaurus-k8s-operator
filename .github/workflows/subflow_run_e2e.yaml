@@ -49,7 +49,7 @@ jobs:
       - name: Run e2e tests
         shell: bash
         run: |
-          make kind-create
+          make kind-create-cluster
           make helm-kind-install
           kubectl get pod
           make kind-load-test-images
