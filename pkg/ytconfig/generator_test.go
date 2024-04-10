@@ -5,8 +5,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
-	"go.ytsaurus.tech/library/go/ptr"
 	"k8s.io/apimachinery/pkg/types"
+
+	"go.ytsaurus.tech/library/go/ptr"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -216,6 +217,13 @@ func TestGetRPCProxyConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetRPCProxyWithoutOauthConfig(t *testing.T) {
+	g := NewGenerator(getYtsaurus(), testClusterDomain)
+	cfg, err := g.GetRPCProxyConfig(getRPCProxySpec())
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetSchedulerConfig(t *testing.T) {
 	ytsaurus := getYtsaurusWithEverything()
 	g := NewGenerator(ytsaurus, testClusterDomain)
@@ -408,7 +416,7 @@ func getYtsaurusWithEverything() *v1.Ytsaurus {
 	ytsaurus = withQueueAgent(ytsaurus)
 	ytsaurus = withStrawberry(ytsaurus)
 	ytsaurus = withScheduler(ytsaurus)
-	ytsaurus = withTCPPRoxies(ytsaurus)
+	ytsaurus = withTCPProxies(ytsaurus)
 	ytsaurus = withUI(ytsaurus)
 	ytsaurus = withYQLAgent(ytsaurus)
 	ytsaurus = withMasterCaches(ytsaurus)
@@ -479,7 +487,7 @@ func withFixedMasterHosts(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 	return ytsaurus
 }
 
-func withTCPPRoxies(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
+func withTCPProxies(ytsaurus *v1.Ytsaurus) *v1.Ytsaurus {
 	ytsaurus.Spec.TCPProxies = []v1.TCPProxiesSpec{
 		{
 			InstanceSpec: testBasicInstanceSpec,
