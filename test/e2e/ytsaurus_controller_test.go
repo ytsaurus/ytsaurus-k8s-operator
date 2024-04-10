@@ -14,13 +14,14 @@ import (
 	"go.ytsaurus.tech/yt/go/mapreduce"
 	"go.ytsaurus.tech/yt/go/mapreduce/spec"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
 	"go.ytsaurus.tech/yt/go/yt/ythttp"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
@@ -35,46 +36,58 @@ const (
 	upgradeTimeout   = time.Minute * 5
 )
 
-func getYtClient(g *ytconfig.Generator, namespace string) yt.Client {
-	httpProxyService := corev1.Service{}
-	Expect(k8sClient.Get(ctx,
-		types.NamespacedName{Name: g.GetHTTPProxiesServiceName(consts.DefaultHTTPProxyRole), Namespace: namespace},
-		&httpProxyService),
-	).Should(Succeed())
+var getYtClient = getYtHTTPClient
 
-	k8sNode := corev1.Node{}
-
-	Expect(k8sClient.Get(ctx,
-		types.NamespacedName{Name: getKindControlPlaneName(), Namespace: namespace},
-		&k8sNode),
-	).Should(Succeed())
-
-	ytProxy := os.Getenv("E2E_YT_PROXY")
-	if ytProxy == "" {
-		Expect(httpProxyService.Spec.Type).To(Equal(corev1.ServiceTypeNodePort))
-		Expect(httpProxyService.Spec.IPFamilies[0]).To(Equal(corev1.IPv4Protocol))
-		nodePort := httpProxyService.Spec.Ports[0].NodePort
-
-		nodeAddress := ""
-		for _, address := range k8sNode.Status.Addresses {
-			if address.Type == corev1.NodeInternalIP && net.ParseIP(address.Address).To4() != nil {
-				nodeAddress = address.Address
-				break
-			}
-		}
-		Expect(nodeAddress).ToNot(BeEmpty())
-
-		ytProxy = fmt.Sprintf("%s:%v", nodeAddress, nodePort)
-	}
-
+func getYtHTTPClient(g *ytconfig.Generator, namespace string) yt.Client {
 	ytClient, err := ythttp.NewClient(&yt.Config{
-		Proxy:                 ytProxy,
+		Proxy:                 getHTTPProxyAddress(g, namespace),
 		Token:                 consts.DefaultAdminPassword,
 		DisableProxyDiscovery: true,
 	})
 	Expect(err).Should(Succeed())
 
 	return ytClient
+}
+
+func getHTTPProxyAddress(g *ytconfig.Generator, namespace string) string {
+	proxy := os.Getenv("E2E_YT_HTTP_PROXY")
+	if proxy != "" {
+		return proxy
+	}
+
+	if os.Getenv("E2E_YT_PROXY") != "" {
+		panic("E2E_YT_PROXY is deprecated, use E2E_YT_HTTP_PROXY")
+	}
+
+	return getServiceAddress(g.GetHTTPProxiesServiceName(consts.DefaultHTTPProxyRole), namespace)
+}
+
+func getServiceAddress(svcName string, namespace string) string {
+	svc := corev1.Service{}
+	Expect(k8sClient.Get(ctx,
+		types.NamespacedName{Name: svcName, Namespace: namespace},
+		&svc),
+	).Should(Succeed())
+
+	k8sNode := corev1.Node{}
+	Expect(k8sClient.Get(ctx,
+		types.NamespacedName{Name: getKindControlPlaneName(), Namespace: namespace},
+		&k8sNode),
+	).Should(Succeed())
+
+	Expect(svc.Spec.Type).To(Equal(corev1.ServiceTypeNodePort))
+	Expect(svc.Spec.IPFamilies[0]).To(Equal(corev1.IPv4Protocol))
+	nodePort := svc.Spec.Ports[0].NodePort
+
+	nodeAddress := ""
+	for _, address := range k8sNode.Status.Addresses {
+		if address.Type == corev1.NodeInternalIP && net.ParseIP(address.Address).To4() != nil {
+			nodeAddress = address.Address
+			break
+		}
+	}
+	Expect(nodeAddress).ToNot(BeEmpty())
+	return fmt.Sprintf("%s:%v", nodeAddress, nodePort)
 }
 
 func getKindControlPlaneName() string {
