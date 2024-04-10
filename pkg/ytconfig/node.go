@@ -378,11 +378,11 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 
 		if jobImage := commonSpec.JobImage; jobImage != nil {
 			jobEnv.JobProxyImage = *jobImage
-			jobEnv.UseJobProxyFromImage = ptr.Bool(false)
 		} else {
 			jobEnv.JobProxyImage = ptr.StringDeref(spec.Image, commonSpec.CoreImage)
-			jobEnv.UseJobProxyFromImage = ptr.Bool(true)
 		}
+
+		jobEnv.UseJobProxyFromImage = ptr.Bool(false)
 
 		endpoint := "unix://" + getContainerdSocketPath(spec)
 
