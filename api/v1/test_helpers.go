@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 
@@ -111,6 +112,9 @@ func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 			HTTPProxies: []HTTPProxiesSpec{
 				createHTTPProxiesSpec(),
 			},
+			RPCProxies: []RPCProxiesSpec{
+				createRPCProxiesSpec(),
+			},
 			Schedulers: &SchedulersSpec{
 				InstanceSpec: InstanceSpec{
 					InstanceCount: 1,
@@ -152,22 +156,36 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 }
 
 func createHTTPProxiesSpec() HTTPProxiesSpec {
-	spec := HTTPProxiesSpec{
+	return HTTPProxiesSpec{
 		ServiceType: "NodePort",
 		InstanceSpec: InstanceSpec{
 			InstanceCount: 1,
 		},
+		HttpNodePort: getPortFromEnv("E2E_HTTP_PROXY_INTERNAL_PORT"),
 	}
-	portStr := os.Getenv("E2E_HTTP_PROXY_INTERNAL_PORT")
+}
+
+func createRPCProxiesSpec() RPCProxiesSpec {
+	stype := corev1.ServiceTypeNodePort
+	return RPCProxiesSpec{
+		ServiceType: &stype,
+		InstanceSpec: InstanceSpec{
+			InstanceCount: 1,
+		},
+		NodePort: getPortFromEnv("E2E_RPC_PROXY_INTERNAL_PORT"),
+	}
+}
+
+func getPortFromEnv(envvar string) *int32 {
+	portStr := os.Getenv(envvar)
 	if portStr != "" {
 		port, err := strconv.Atoi(portStr)
 		if err != nil {
-			panic("Invalid E2E_HTTP_PROXY_INTERNAL_PORT value")
+			panic(fmt.Sprintf("Invalid %s value", envvar))
 		}
-		portInt32 := int32(port)
-		spec.HttpNodePort = &portInt32
+		return ptr.Int32(int32(port))
 	}
-	return spec
+	return nil
 }
 
 func CreateExecNodeInstanceSpec() InstanceSpec {

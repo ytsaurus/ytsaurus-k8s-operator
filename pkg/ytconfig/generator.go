@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"path"
 
-	"go.ytsaurus.tech/yt/go/yson"
 	corev1 "k8s.io/api/core/v1"
 	ptr "k8s.io/utils/pointer"
+
+	"go.ytsaurus.tech/yt/go/yson"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -374,8 +375,8 @@ func (g *Generator) getRPCProxyConfigImpl(spec *ytv1.RPCProxiesSpec) (RPCProxySe
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 
 	if g.ytsaurus.Spec.OauthService != nil {
-		c.CypressUserManager = CypressUserManager{}
-		c.OauthService = &OauthService{
+		c.Auth.CypressUserManager = CypressUserManager{}
+		c.Auth.OauthService = &OauthService{
 			Host:               g.ytsaurus.Spec.OauthService.Host,
 			Port:               g.ytsaurus.Spec.OauthService.Port,
 			Secure:             g.ytsaurus.Spec.OauthService.Secure,
@@ -383,8 +384,8 @@ func (g *Generator) getRPCProxyConfigImpl(spec *ytv1.RPCProxiesSpec) (RPCProxySe
 			UserInfoLoginField: g.ytsaurus.Spec.OauthService.UserInfo.LoginField,
 			UserInfoErrorField: g.ytsaurus.Spec.OauthService.UserInfo.ErrorField,
 		}
-		c.OauthTokenAuthenticator = &OauthTokenAuthenticator{}
-		c.RequireAuthentication = true
+		c.Auth.OauthTokenAuthenticator = &OauthTokenAuthenticator{}
+		c.Auth.RequireAuthentication = true
 	}
 
 	return c, nil

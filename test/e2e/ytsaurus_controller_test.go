@@ -13,14 +13,17 @@ import (
 
 	"go.ytsaurus.tech/yt/go/mapreduce"
 	"go.ytsaurus.tech/yt/go/mapreduce/spec"
+	"go.ytsaurus.tech/yt/go/yt/ytrpc"
+	"go.ytsaurus.tech/yt/go/yterrors"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
 	"go.ytsaurus.tech/yt/go/yt/ythttp"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
@@ -35,46 +38,67 @@ const (
 	upgradeTimeout   = time.Minute * 5
 )
 
-func getYtClient(g *ytconfig.Generator, namespace string) yt.Client {
-	httpProxyService := corev1.Service{}
-	Expect(k8sClient.Get(ctx,
-		types.NamespacedName{Name: g.GetHTTPProxiesServiceName(consts.DefaultHTTPProxyRole), Namespace: namespace},
-		&httpProxyService),
-	).Should(Succeed())
+var getYtClient = getYtHTTPClient
 
-	k8sNode := corev1.Node{}
-
-	Expect(k8sClient.Get(ctx,
-		types.NamespacedName{Name: getKindControlPlaneName(), Namespace: namespace},
-		&k8sNode),
-	).Should(Succeed())
-
-	ytProxy := os.Getenv("E2E_YT_PROXY")
-	if ytProxy == "" {
-		Expect(httpProxyService.Spec.Type).To(Equal(corev1.ServiceTypeNodePort))
-		Expect(httpProxyService.Spec.IPFamilies[0]).To(Equal(corev1.IPv4Protocol))
-		nodePort := httpProxyService.Spec.Ports[0].NodePort
-
-		nodeAddress := ""
-		for _, address := range k8sNode.Status.Addresses {
-			if address.Type == corev1.NodeInternalIP && net.ParseIP(address.Address).To4() != nil {
-				nodeAddress = address.Address
-				break
-			}
-		}
-		Expect(nodeAddress).ToNot(BeEmpty())
-
-		ytProxy = fmt.Sprintf("%s:%v", nodeAddress, nodePort)
-	}
-
+func getYtHTTPClient(g *ytconfig.Generator, namespace string) yt.Client {
 	ytClient, err := ythttp.NewClient(&yt.Config{
-		Proxy:                 ytProxy,
+		Proxy:                 getHTTPProxyAddress(g, namespace),
 		Token:                 consts.DefaultAdminPassword,
 		DisableProxyDiscovery: true,
 	})
 	Expect(err).Should(Succeed())
 
 	return ytClient
+}
+
+func getHTTPProxyAddress(g *ytconfig.Generator, namespace string) string {
+	proxy := os.Getenv("E2E_YT_HTTP_PROXY")
+	if proxy != "" {
+		return proxy
+	}
+
+	if os.Getenv("E2E_YT_PROXY") != "" {
+		panic("E2E_YT_PROXY is deprecated, use E2E_YT_HTTP_PROXY")
+	}
+
+	return getServiceAddress(g.GetHTTPProxiesServiceName(consts.DefaultHTTPProxyRole), namespace)
+}
+
+func getRPCProxyAddress(g *ytconfig.Generator, namespace string) string {
+	proxy := os.Getenv("E2E_YT_RPC_PROXY")
+	if proxy != "" {
+		return proxy
+	}
+
+	return getServiceAddress(g.GetRPCProxiesServiceName(consts.DefaultName), namespace)
+}
+
+func getServiceAddress(svcName string, namespace string) string {
+	svc := corev1.Service{}
+	Expect(k8sClient.Get(ctx,
+		types.NamespacedName{Name: svcName, Namespace: namespace},
+		&svc),
+	).Should(Succeed())
+
+	k8sNode := corev1.Node{}
+	Expect(k8sClient.Get(ctx,
+		types.NamespacedName{Name: getKindControlPlaneName(), Namespace: namespace},
+		&k8sNode),
+	).Should(Succeed())
+
+	Expect(svc.Spec.Type).To(Equal(corev1.ServiceTypeNodePort))
+	Expect(svc.Spec.IPFamilies[0]).To(Equal(corev1.IPv4Protocol))
+	nodePort := svc.Spec.Ports[0].NodePort
+
+	nodeAddress := ""
+	for _, address := range k8sNode.Status.Addresses {
+		if address.Type == corev1.NodeInternalIP && net.ParseIP(address.Address).To4() != nil {
+			nodeAddress = address.Address
+			break
+		}
+	}
+	Expect(nodeAddress).ToNot(BeEmpty())
+	return fmt.Sprintf("%s:%v", nodeAddress, nodePort)
 }
 
 func getKindControlPlaneName() string {
@@ -546,8 +570,25 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				"actual status: %s", status,
 			)
 		})
-	})
 
+		It(
+			"Rpc proxies should require authentication",
+			func(ctx context.Context) {
+				namespace := "testrpc"
+				ytsaurus := deployBaseYtsaurusResource(namespace)
+				g := ytconfig.NewGenerator(ytsaurus, "local")
+
+				cli, err := ytrpc.NewClient(&yt.Config{
+					RPCProxy:              getRPCProxyAddress(g, namespace),
+					DisableProxyDiscovery: true,
+				})
+				Expect(err).Should(Succeed())
+
+				_, err = cli.NodeExists(context.Background(), ypath.Path("/"), nil)
+				Expect(yterrors.ContainsErrorCode(err, yterrors.CodeRPCAuthenticationError)).Should(BeTrue())
+			},
+		)
+	})
 })
 
 func checkClusterBaseViability(ytClient yt.Client) {
@@ -580,24 +621,27 @@ func checkClusterViability(ytClient yt.Client) {
 	Expect(hasPermission.Action).Should(Equal(yt.ActionDeny))
 }
 
+func deployBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
+	By("Creating a Ytsaurus resource")
+
+	ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+	g := ytconfig.NewGenerator(ytsaurus, "local")
+
+	DeferCleanup(deleteYtsaurus, ytsaurus)
+	runYtsaurus(ytsaurus)
+
+	By("Creating ytsaurus client")
+
+	ytClient := getYtClient(g, namespace)
+
+	checkClusterViability(ytClient)
+	return ytsaurus
+}
+
 func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Context) {
 	return func(ctx context.Context) {
-
-		By("Creating a Ytsaurus resource")
-
-		ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+		ytsaurus := deployBaseYtsaurusResource(namespace)
 		name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
-
-		g := ytconfig.NewGenerator(ytsaurus, "local")
-
-		DeferCleanup(deleteYtsaurus, ytsaurus)
-		runYtsaurus(ytsaurus)
-
-		By("Creating ytsaurus client")
-
-		ytClient := getYtClient(g, namespace)
-
-		checkClusterViability(ytClient)
 
 		By("Run cluster update")
 
@@ -611,6 +655,8 @@ func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Contex
 
 		EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterState(ytv1.ClusterStateRunning))
 
+		g := ytconfig.NewGenerator(ytsaurus, "local")
+		ytClient := getYtClient(g, namespace)
 		checkClusterBaseViability(ytClient)
 	}
 }
