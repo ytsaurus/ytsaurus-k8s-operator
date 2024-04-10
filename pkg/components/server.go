@@ -261,11 +261,11 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	command = append(command, s.instanceSpec.EntrypointWrapper...)
 	command = append(command, s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, fileNames[0]))
 
-	setHostnameAsFQDN := true
 	statefulSet.Spec.Template.Spec = corev1.PodSpec{
-		RuntimeClassName:  s.instanceSpec.RuntimeClassName,
-		ImagePullSecrets:  s.commonSpec.ImagePullSecrets,
-		SetHostnameAsFQDN: &setHostnameAsFQDN,
+		RuntimeClassName:   s.instanceSpec.RuntimeClassName,
+		ImagePullSecrets:   s.commonSpec.ImagePullSecrets,
+		SetHostnameAsFQDN:  ptr.Bool(true),
+		EnableServiceLinks: ptr.Bool(false),
 		Containers: []corev1.Container{
 			{
 				Image:        s.image,
