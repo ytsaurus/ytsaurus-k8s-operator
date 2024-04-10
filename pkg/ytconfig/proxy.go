@@ -77,13 +77,12 @@ type NativeClient struct {
 
 type RPCProxyServer struct {
 	CommonServer
-	Role string `yson:"role"`
-	Auth Auth   `yson:"auth"`
-	//CypressUserManager        CypressUserManager        `yson:"cypress_user_manager"`
-	//CypressTokenAuthenticator CypressTokenAuthenticator `yson:"cypress_token_authenticator"`
-	//OauthService              *OauthService             `yson:"oauth_service,omitempty"`
-	//OauthTokenAuthenticator   *OauthTokenAuthenticator  `yson:"oauth_token_authenticator,omitempty"`
-	//RequireAuthentication     bool                      `yson:"require_authentication"`
+	Role                      string                    `yson:"role"`
+	CypressUserManager        CypressUserManager        `yson:"cypress_user_manager"`
+	CypressTokenAuthenticator CypressTokenAuthenticator `yson:"cypress_token_authenticator"`
+	OauthService              *OauthService             `yson:"oauth_service,omitempty"`
+	OauthTokenAuthenticator   *OauthTokenAuthenticator  `yson:"oauth_token_authenticator,omitempty"`
+	RequireAuthentication     *bool                     `yson:"require_authentication,omitempty"`
 }
 
 type TCPProxyServer struct {
@@ -146,8 +145,7 @@ func getRPCProxyLogging(spec *ytv1.RPCProxiesSpec) Logging {
 func getRPCProxyServerCarcass(spec *ytv1.RPCProxiesSpec) (RPCProxyServer, error) {
 	var c RPCProxyServer
 
-	c.Auth.RequireAuthentication = true
-	c.Auth.CypressTokenAuthenticator.Secure = true
+	c.CypressTokenAuthenticator.Secure = true
 
 	c.RPCPort = consts.RPCProxyRPCPort
 	c.MonitoringPort = *spec.InstanceSpec.MonitoringPort

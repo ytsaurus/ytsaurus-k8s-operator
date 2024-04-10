@@ -375,8 +375,8 @@ func (g *Generator) getRPCProxyConfigImpl(spec *ytv1.RPCProxiesSpec) (RPCProxySe
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 
 	if g.ytsaurus.Spec.OauthService != nil {
-		c.Auth.CypressUserManager = CypressUserManager{}
-		c.Auth.OauthService = &OauthService{
+		c.CypressUserManager = CypressUserManager{}
+		c.OauthService = &OauthService{
 			Host:               g.ytsaurus.Spec.OauthService.Host,
 			Port:               g.ytsaurus.Spec.OauthService.Port,
 			Secure:             g.ytsaurus.Spec.OauthService.Secure,
@@ -384,8 +384,8 @@ func (g *Generator) getRPCProxyConfigImpl(spec *ytv1.RPCProxiesSpec) (RPCProxySe
 			UserInfoLoginField: g.ytsaurus.Spec.OauthService.UserInfo.LoginField,
 			UserInfoErrorField: g.ytsaurus.Spec.OauthService.UserInfo.ErrorField,
 		}
-		c.Auth.OauthTokenAuthenticator = &OauthTokenAuthenticator{}
-		c.Auth.RequireAuthentication = true
+		c.OauthTokenAuthenticator = &OauthTokenAuthenticator{}
+		c.RequireAuthentication = ptr.Bool(true)
 	}
 
 	return c, nil
