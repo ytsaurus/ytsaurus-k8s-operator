@@ -117,7 +117,7 @@
                     namespace=yt;
                     "base_cgroup"="/yt";
                 };
-                "use_job_proxy_from_image"=%true;
+                "use_job_proxy_from_image"=%false;
             };
             "do_not_set_user_id"=%true;
         };
