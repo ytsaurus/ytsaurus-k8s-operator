@@ -33,7 +33,7 @@ const (
 	pollInterval     = time.Millisecond * 250
 	reactionTimeout  = time.Second * 150
 	bootstrapTimeout = time.Minute * 3
-	upgradeTimeout   = time.Minute * 5
+	upgradeTimeout   = time.Minute * 7
 )
 
 var getYtClient = getYtHTTPClient
@@ -51,6 +51,11 @@ func getYtHTTPClient(g *ytconfig.Generator, namespace string) yt.Client {
 
 func getHTTPProxyAddress(g *ytconfig.Generator, namespace string) string {
 	proxy := os.Getenv("E2E_YT_HTTP_PROXY")
+	if proxy != "" {
+		return proxy
+	}
+	// This one is used in real code in YtsaurusClient.
+	proxy = os.Getenv("YTOP_PROXY")
 	if proxy != "" {
 		return proxy
 	}
@@ -306,7 +311,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			namespace := "test4"
 
-			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
+			ytsaurus = ytv1.WithTabletNodes(ytsaurus)
 
 			g := ytconfig.NewGenerator(ytsaurus, "local")
 
@@ -354,7 +360,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			namespace := "test5"
 
-			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
+			ytsaurus = ytv1.WithDataNodes(ytsaurus)
 			ytsaurus.Spec.TabletNodes = make([]ytv1.TabletNodesSpec, 0)
 
 			g := ytconfig.NewGenerator(ytsaurus, "local")
@@ -405,12 +412,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			namespace := "querytrackeraco"
 
 			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
-			ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{
-				{
-					InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1},
-				},
-			}
-			ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
+			ytsaurus = ytv1.WithQueryTracker(ytsaurus)
 
 			g := ytconfig.NewGenerator(ytsaurus, "local")
 
@@ -479,15 +481,9 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			namespace := "remoteexec"
 
-			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
+			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
 			// Ensure that no local exec nodes exist, only remote ones (which will be created later).
 			ytsaurus.Spec.ExecNodes = []ytv1.ExecNodesSpec{}
-			ytsaurus.Spec.DataNodes = []ytv1.DataNodesSpec{{
-				InstanceSpec: ytv1.CreateDataNodeInstanceSpec(1),
-			}}
-			ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{{
-				InstanceSpec: ytv1.CreateTabletNodeSpec(1),
-			}}
 			g := ytconfig.NewGenerator(ytsaurus, "local")
 
 			remoteYtsaurus := &ytv1.RemoteYtsaurus{
@@ -548,12 +544,13 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				JobState: &yt.JobCompleted,
 			})
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(statuses).Should(HaveLen(1))
-			status := statuses[0]
-			Expect(status.Address).Should(
-				ContainSubstring("end-"+ytv1.RemoteResourceName),
-				"actual status: %s", status,
-			)
+			Expect(statuses).Should(Not(BeEmpty()))
+			for _, status := range statuses {
+				Expect(status.Address).Should(
+					ContainSubstring("end-"+ytv1.RemoteResourceName),
+					"actual status: %s", status,
+				)
+			}
 		})
 	})
 

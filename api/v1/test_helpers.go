@@ -47,20 +47,6 @@ func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 					InstanceCount: 1,
 				},
 			},
-			Bootstrap: &BootstrapSpec{
-				TabletCellBundles: &BundlesBootstrapSpec{
-					Sys: &BundleBootstrapSpec{
-						TabletCellCount:        2,
-						ChangelogPrimaryMedium: ptr.String("default"),
-						SnapshotPrimaryMedium:  ptr.String("default"),
-					},
-					Default: &BundleBootstrapSpec{
-						TabletCellCount:        2,
-						ChangelogPrimaryMedium: ptr.String("default"),
-						SnapshotPrimaryMedium:  ptr.String("default"),
-					},
-				},
-			},
 			PrimaryMasters: MastersSpec{
 				MasterConnectionSpec: MasterConnectionSpec{
 					CellTag: 1,
@@ -112,41 +98,97 @@ func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 			HTTPProxies: []HTTPProxiesSpec{
 				createHTTPProxiesSpec(),
 			},
-			Schedulers: &SchedulersSpec{
-				InstanceSpec: InstanceSpec{
-					InstanceCount: 1,
-				},
-			},
-			ControllerAgents: &ControllerAgentsSpec{
-				InstanceSpec: InstanceSpec{
-					InstanceCount: 1,
-				},
-			},
 		},
 	}
 }
 
 func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 	ytsaurus := CreateMinimalYtsaurusResource(namespace)
+	ytsaurus = WithBootstrap(ytsaurus)
+	ytsaurus = WithScheduler(ytsaurus)
+	ytsaurus = WithControllerAgents(ytsaurus)
+	ytsaurus = WithDataNodes(ytsaurus)
+	ytsaurus = WithTabletNodes(ytsaurus)
+	ytsaurus = WithExecNodes(ytsaurus)
+	return ytsaurus
+}
 
-	ytsaurus.Spec.Discovery = DiscoverySpec{
+// TODO (l0kix2): merge with ytconfig build spec helpers.
+func WithDataNodes(ytsaurus *Ytsaurus) *Ytsaurus {
+	return WithDataNodesCount(ytsaurus, 3)
+}
+
+func WithDataNodesCount(ytsaurus *Ytsaurus, count int) *Ytsaurus {
+	ytsaurus.Spec.DataNodes = []DataNodesSpec{
+		{
+			InstanceSpec: CreateDataNodeInstanceSpec(count),
+		},
+	}
+	return ytsaurus
+}
+
+func WithTabletNodes(ytsaurus *Ytsaurus) *Ytsaurus {
+	return WithTabletNodesCount(ytsaurus, 3)
+}
+
+func WithTabletNodesCount(ytsaurus *Ytsaurus, count int) *Ytsaurus {
+	ytsaurus.Spec.TabletNodes = []TabletNodesSpec{
+		{
+			InstanceSpec: CreateTabletNodeSpec(count),
+		},
+	}
+	return ytsaurus
+}
+
+func WithExecNodes(ytsaurus *Ytsaurus) *Ytsaurus {
+	ytsaurus.Spec.ExecNodes = []ExecNodesSpec{
+		{
+			InstanceSpec: CreateExecNodeInstanceSpec(),
+		},
+	}
+	return ytsaurus
+}
+
+func WithScheduler(ytsaurus *Ytsaurus) *Ytsaurus {
+	ytsaurus.Spec.Schedulers = &SchedulersSpec{
 		InstanceSpec: InstanceSpec{
 			InstanceCount: 1,
 		},
 	}
-	ytsaurus.Spec.DataNodes = []DataNodesSpec{
-		{
-			InstanceSpec: CreateDataNodeInstanceSpec(3),
+	return ytsaurus
+}
+
+func WithControllerAgents(ytsaurus *Ytsaurus) *Ytsaurus {
+	ytsaurus.Spec.ControllerAgents = &ControllerAgentsSpec{
+		InstanceSpec: InstanceSpec{
+			InstanceCount: 1,
 		},
 	}
-	ytsaurus.Spec.TabletNodes = []TabletNodesSpec{
-		{
-			InstanceSpec: CreateTabletNodeSpec(3),
+	return ytsaurus
+}
+
+func WithBootstrap(ytsaurus *Ytsaurus) *Ytsaurus {
+	ytsaurus.Spec.Bootstrap = &BootstrapSpec{
+		TabletCellBundles: &BundlesBootstrapSpec{
+			Sys: &BundleBootstrapSpec{
+				TabletCellCount:        2,
+				ChangelogPrimaryMedium: ptr.String("default"),
+				SnapshotPrimaryMedium:  ptr.String("default"),
+			},
+			Default: &BundleBootstrapSpec{
+				TabletCellCount:        2,
+				ChangelogPrimaryMedium: ptr.String("default"),
+				SnapshotPrimaryMedium:  ptr.String("default"),
+			},
 		},
 	}
-	ytsaurus.Spec.ExecNodes = []ExecNodesSpec{
-		{
-			InstanceSpec: CreateExecNodeInstanceSpec(),
+	return ytsaurus
+}
+
+func WithQueryTracker(ytsaurus *Ytsaurus) *Ytsaurus {
+	ytsaurus.Spec.QueryTrackers = &QueryTrackerSpec{
+		InstanceSpec: InstanceSpec{
+			InstanceCount: 1,
 		},
 	}
 	return ytsaurus
