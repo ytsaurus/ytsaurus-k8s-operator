@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"path"
 
-	"go.ytsaurus.tech/yt/go/yson"
 	corev1 "k8s.io/api/core/v1"
 	ptr "k8s.io/utils/pointer"
+
+	"go.ytsaurus.tech/yt/go/yson"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -384,7 +385,7 @@ func (g *Generator) getRPCProxyConfigImpl(spec *ytv1.RPCProxiesSpec) (RPCProxySe
 			UserInfoErrorField: g.ytsaurus.Spec.OauthService.UserInfo.ErrorField,
 		}
 		c.OauthTokenAuthenticator = &OauthTokenAuthenticator{}
-		c.RequireAuthentication = true
+		c.RequireAuthentication = ptr.Bool(true)
 	}
 
 	return c, nil

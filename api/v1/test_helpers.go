@@ -194,6 +194,13 @@ func WithQueryTracker(ytsaurus *Ytsaurus) *Ytsaurus {
 	return ytsaurus
 }
 
+func WithRPCProxies(ytsaurus *Ytsaurus) *Ytsaurus {
+	ytsaurus.Spec.RPCProxies = []RPCProxiesSpec{
+		createRPCProxiesSpec(),
+	}
+	return ytsaurus
+}
+
 func createHTTPProxiesSpec() HTTPProxiesSpec {
 	return HTTPProxiesSpec{
 		ServiceType: "NodePort",
@@ -201,6 +208,17 @@ func createHTTPProxiesSpec() HTTPProxiesSpec {
 			InstanceCount: 1,
 		},
 		HttpNodePort: getPortFromEnv("E2E_HTTP_PROXY_INTERNAL_PORT"),
+	}
+}
+
+func createRPCProxiesSpec() RPCProxiesSpec {
+	stype := corev1.ServiceTypeNodePort
+	return RPCProxiesSpec{
+		ServiceType: &stype,
+		InstanceSpec: InstanceSpec{
+			InstanceCount: 1,
+		},
+		NodePort: getPortFromEnv("E2E_RPC_PROXY_INTERNAL_PORT"),
 	}
 }
 

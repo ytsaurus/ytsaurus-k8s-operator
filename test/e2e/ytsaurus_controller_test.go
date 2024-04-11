@@ -13,6 +13,8 @@ import (
 
 	"go.ytsaurus.tech/yt/go/mapreduce"
 	"go.ytsaurus.tech/yt/go/mapreduce/spec"
+	"go.ytsaurus.tech/yt/go/yt/ytrpc"
+	"go.ytsaurus.tech/yt/go/yterrors"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,6 +67,15 @@ func getHTTPProxyAddress(g *ytconfig.Generator, namespace string) string {
 	}
 
 	return getServiceAddress(g.GetHTTPProxiesServiceName(consts.DefaultHTTPProxyRole), namespace)
+}
+
+func getRPCProxyAddress(g *ytconfig.Generator, namespace string) string {
+	proxy := os.Getenv("E2E_YT_RPC_PROXY")
+	if proxy != "" {
+		return proxy
+	}
+
+	return getServiceAddress(g.GetRPCProxiesServiceName(consts.DefaultName), namespace)
 }
 
 func getServiceAddress(svcName string, namespace string) string {
@@ -552,6 +563,30 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				)
 			}
 		})
+
+		It(
+			"Rpc proxies should require authentication",
+			func(ctx context.Context) {
+				namespace := "testrpc"
+				ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
+				ytsaurus = ytv1.WithRPCProxies(ytsaurus)
+				DeferCleanup(deleteYtsaurus, ytsaurus)
+				deployAndCheck(ytsaurus, namespace)
+
+				// Just in case, so dirty dev environment wouldn't interfere.
+				Expect(os.Unsetenv("YT_TOKEN")).Should(Succeed())
+				g := ytconfig.NewGenerator(ytsaurus, "local")
+				cli, err := ytrpc.NewClient(&yt.Config{
+					// N.B.: no credentials are passed here.
+					RPCProxy:              getRPCProxyAddress(g, namespace),
+					DisableProxyDiscovery: true,
+				})
+				Expect(err).Should(Succeed())
+
+				_, err = cli.NodeExists(context.Background(), ypath.Path("/"), nil)
+				Expect(yterrors.ContainsErrorCode(err, yterrors.CodeRPCAuthenticationError)).Should(BeTrue())
+			},
+		)
 	})
 
 })
@@ -586,37 +621,36 @@ func checkClusterViability(ytClient yt.Client) {
 	Expect(hasPermission.Action).Should(Equal(yt.ActionDeny))
 }
 
+func deployAndCheck(ytsaurus *ytv1.Ytsaurus, namespace string) {
+	g := ytconfig.NewGenerator(ytsaurus, "local")
+	runYtsaurus(ytsaurus)
+
+	By("Creating ytsaurus client")
+	ytClient := getYtClient(g, namespace)
+	checkClusterViability(ytClient)
+}
+
 func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Context) {
 	return func(ctx context.Context) {
-
 		By("Creating a Ytsaurus resource")
 
 		ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
-		name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
-
-		g := ytconfig.NewGenerator(ytsaurus, "local")
-
 		DeferCleanup(deleteYtsaurus, ytsaurus)
-		runYtsaurus(ytsaurus)
-
-		By("Creating ytsaurus client")
-
-		ytClient := getYtClient(g, namespace)
-
-		checkClusterViability(ytClient)
+		name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
+		deployAndCheck(ytsaurus, namespace)
 
 		By("Run cluster update")
 
 		Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
 		ytsaurus.Spec.CoreImage = newImage
 		Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
-
 		EventuallyYtsaurus(ctx, name, reactionTimeout).Should(HaveClusterState(ytv1.ClusterStateUpdating))
 
 		By("Wait cluster update complete")
 
 		EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterState(ytv1.ClusterStateRunning))
-
+		g := ytconfig.NewGenerator(ytsaurus, "local")
+		ytClient := getYtClient(g, namespace)
 		checkClusterBaseViability(ytClient)
 	}
 }
