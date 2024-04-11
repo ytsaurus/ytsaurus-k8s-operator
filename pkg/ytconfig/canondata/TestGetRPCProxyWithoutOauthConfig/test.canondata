@@ -80,5 +80,4 @@
     "cypress_token_authenticator"={
         secure=%true;
     };
-    "require_authentication"=%false;
 }
