@@ -22,7 +22,7 @@ jobs:
   send-notifications:
     name: Send notifications
     needs:
-      - check
+      - check-e2e
     runs-on: trampoline
     if: ${{ failure() }}
     steps:
