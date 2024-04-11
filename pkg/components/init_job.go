@@ -181,6 +181,11 @@ func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
 	if err := j.removeIfExists(ctx); err != nil {
 		return err
 	}
+
+	if err := j.configHelper.RemoveConfigMapIfExists(ctx); err != nil {
+		return err
+	}
+
 	j.conditionsManager.SetStatusCondition(metav1.Condition{
 		Type:    j.initCompletedCondition,
 		Status:  metav1.ConditionFalse,
@@ -191,7 +196,9 @@ func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
 }
 
 func (j *InitJob) isRestartPrepared() bool {
-	return !resources.Exists(j.initJob) && j.conditionsManager.IsStatusConditionFalse(j.initCompletedCondition)
+	exists := resources.Exists(j.initJob)
+	isCondFalse := j.conditionsManager.IsStatusConditionFalse(j.initCompletedCondition)
+	return !exists && isCondFalse
 }
 
 func (j *InitJob) isRestartCompleted() bool {
