@@ -59,7 +59,7 @@ func NewTestHelper(t *testing.T, namespace, crdDirectoryPath string) *TestHelper
 		cancel:     testCancel,
 		k8sTestEnv: k8sTestEnv,
 		Namespace:  namespace,
-		ticker:     time.NewTicker(1 * time.Second),
+		ticker:     time.NewTicker(200 * time.Millisecond),
 	}
 }
 
@@ -181,6 +181,20 @@ func MarkAllJobsCompleted(h *TestHelper) {
 			h.t.Logf("found job %s, marking as completed", job.Name)
 			job.Status.Succeeded = 1
 			UpdateObjectStatus(h, job)
+		}
+		if !job.DeletionTimestamp.IsZero() {
+			h.t.Logf(
+				"found job %s, with deletion ts %s and finalizers: %s. Deleting as gc would do in real cluster.",
+				job.Name,
+				job.DeletionTimestamp,
+				job.Finalizers,
+			)
+			job.Finalizers = []string{}
+			UpdateObject(h, &batchv1.Job{}, job)
+			err = h.k8sClient.Delete(context.Background(), job)
+			if err != nil && !apierrors.IsNotFound(err) {
+				panic(fmt.Sprintf("failed to delete job %s", job))
+			}
 		}
 	}
 }
