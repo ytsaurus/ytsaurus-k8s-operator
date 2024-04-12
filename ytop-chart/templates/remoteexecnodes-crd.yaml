@@ -646,6 +646,10 @@ spec:
                 items:
                   type: string
                 type: array
+              ephemeralCluster:
+                default: false
+                description: Allow prioritizing performance over data safety.
+                type: boolean
               extraPodAnnotations:
                 additionalProperties:
                   type: string

@@ -8,7 +8,8 @@ import (
 )
 
 type MasterChangelogs struct {
-	Path string `yson:"path"`
+	Path     string    `yson:"path"`
+	IOEngine *IOEngine `yson:"io_engine,omitempty"`
 }
 
 type MasterSnapshots struct {

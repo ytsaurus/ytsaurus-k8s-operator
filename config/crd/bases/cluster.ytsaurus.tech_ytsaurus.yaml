@@ -7159,6 +7159,10 @@ spec:
               enableFullUpdate:
                 default: true
                 type: boolean
+              ephemeralCluster:
+                default: false
+                description: Allow prioritizing performance over data safety.
+                type: boolean
               execNodes:
                 items:
                   properties:

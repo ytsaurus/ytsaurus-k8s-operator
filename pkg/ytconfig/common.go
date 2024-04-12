@@ -120,6 +120,10 @@ type RetryingChannel struct {
 	RetryTimeout     yson.Duration `yson:"retry_timeout,omitempty"`
 }
 
+type IOEngine struct {
+	EnableSync *bool `yson:"enable_sync,omitempty"`
+}
+
 func createLogging(spec *ytv1.InstanceSpec, componentName string, defaultLoggerSpecs []ytv1.TextLoggerSpec) Logging {
 	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), componentName)
 	if spec.Loggers != nil && len(spec.Loggers) > 0 {

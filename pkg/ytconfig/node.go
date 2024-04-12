@@ -26,12 +26,13 @@ const (
 )
 
 type StoreLocation struct {
-	Path                   string `yson:"path"`
-	MediumName             string `yson:"medium_name"`
-	Quota                  int64  `yson:"quota,omitempty"`
-	HighWatermark          int64  `yson:"high_watermark,omitempty"`
-	LowWatermark           int64  `yson:"low_watermark,omitempty"`
-	DisableWritesWatermark int64  `yson:"disable_writes_watermark,omitempty"`
+	Path                   string    `yson:"path"`
+	IOEngine               *IOEngine `yson:"io_config,omitempty"`
+	MediumName             string    `yson:"medium_name"`
+	Quota                  int64     `yson:"quota,omitempty"`
+	HighWatermark          int64     `yson:"high_watermark,omitempty"`
+	LowWatermark           int64     `yson:"low_watermark,omitempty"`
+	DisableWritesWatermark int64     `yson:"disable_writes_watermark,omitempty"`
 }
 
 type ResourceLimits struct {
@@ -40,8 +41,9 @@ type ResourceLimits struct {
 	NodeDedicatedCpu *float32 `yson:"node_dedicated_cpu,omitempty"`
 }
 
-type DiskLocation struct {
-	Path string `yson:"path"`
+type CacheLocation struct {
+	Path     string    `yson:"path"`
+	IOEngine *IOEngine `yson:"io_config,omitempty"`
 }
 
 type SlotLocation struct {
@@ -53,7 +55,7 @@ type SlotLocation struct {
 
 type DataNode struct {
 	StoreLocations []StoreLocation `yson:"store_locations"`
-	CacheLocations []DiskLocation  `yson:"cache_locations"`
+	CacheLocations []CacheLocation `yson:"cache_locations"`
 	BlockCache     BlockCache      `yson:"block_cache"`
 	BlocksExtCache Cache           `yson:"blocks_ext_cache"`
 	ChunkMetaCache Cache           `yson:"chunk_meta_cache"`
@@ -434,7 +436,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	c.ResourceLimits = getExecNodeResourceLimits(spec)
 
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
-		c.DataNode.CacheLocations = append(c.DataNode.CacheLocations, DiskLocation{
+		c.DataNode.CacheLocations = append(c.DataNode.CacheLocations, CacheLocation{
 			Path: location.Path,
 		})
 	}
