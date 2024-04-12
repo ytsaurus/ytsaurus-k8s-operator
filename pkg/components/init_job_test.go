@@ -135,3 +135,43 @@ func TestJobRestart(t *testing.T) {
 		waitTick,
 	)
 }
+
+func TestJobScriptUpdateOnJobRestart(t *testing.T) {
+	ctx := context.Background()
+
+	namespace := "testjobscript"
+	h, ytsaurus, _ := prepareTest(t, namespace)
+	// TODO: separate helper so no need to remember to call stop
+	defer h.Stop()
+
+	job := newTestJob(ytsaurus)
+	job.SetInitScript(scriptBefore)
+	syncJobUntilReady(t, job)
+
+	err := job.prepareRestart(ctx, false)
+	require.NoError(t, err)
+
+	require.Eventually(
+		t,
+		func() bool {
+			job = newTestJob(ytsaurus)
+			err = job.Fetch(ctx)
+			require.NoError(t, err)
+			return job.isRestartPrepared()
+		},
+		waitTimeout,
+		waitTick,
+	)
+
+	// Imagine that new version of operator wants to set new init script for job.
+	job = newTestJob(ytsaurus)
+	job.SetInitScript(scriptAfter)
+	syncJobUntilReady(t, job)
+
+	cmData := testutil.FetchConfigMapData(
+		h,
+		"dummy-ms-init-job-config",
+		consts.InitClusterScriptFileName,
+	)
+	require.Equal(t, scriptAfter, cmData)
+}
