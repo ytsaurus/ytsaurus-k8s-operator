@@ -178,6 +178,15 @@ func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
 	if dry {
 		return nil
 	}
+	if resources.Exists(j.configHelper.configMap) {
+		if err := j.apiProxy.DeleteObject(
+			ctx,
+			j.configHelper.configMap.OldObject(),
+		); err != nil {
+			return err
+		}
+	}
+
 	if err := j.removeIfExists(ctx); err != nil {
 		return err
 	}
@@ -191,7 +200,7 @@ func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
 }
 
 func (j *InitJob) isRestartPrepared() bool {
-	return !resources.Exists(j.initJob) && j.conditionsManager.IsStatusConditionFalse(j.initCompletedCondition)
+	return !resources.Exists(j.initJob) && !resources.Exists(j.configHelper.configMap) && j.conditionsManager.IsStatusConditionFalse(j.initCompletedCondition)
 }
 
 func (j *InitJob) isRestartCompleted() bool {
