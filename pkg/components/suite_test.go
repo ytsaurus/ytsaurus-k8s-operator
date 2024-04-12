@@ -8,20 +8,21 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"go.ytsaurus.tech/yt/go/yt"
 	appsv1 "k8s.io/api/apps/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"go.ytsaurus.tech/yt/go/yt"
+
 	mock_yt "github.com/ytsaurus/yt-k8s-operator/pkg/mock"
 )
 
-var ctrl *gomock.Controller
+var mockCtrl *gomock.Controller
 
 func TestComponents(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	ctrl = gomock.NewController(t)
+	mockCtrl = gomock.NewController(t)
 
 	RunSpecs(t, "Components fake suite")
 }
