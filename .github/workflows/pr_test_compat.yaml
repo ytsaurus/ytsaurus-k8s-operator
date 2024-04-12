@@ -1,0 +1,9 @@
+name: Run compat tests
+
+on:
+  pull_request:
+
+jobs:
+  check:
+    name: Run compat tests
+    uses: ./.github/workflows/subflow_run_compat_tests.yaml

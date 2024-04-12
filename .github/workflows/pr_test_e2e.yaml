@@ -6,6 +6,4 @@ on:
 jobs:
   check:
     name: Run e2e tests
-    with:
-      release: false
     uses: ./.github/workflows/subflow_run_e2e_tests.yaml

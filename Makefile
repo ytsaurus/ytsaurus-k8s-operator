@@ -149,6 +149,12 @@ TEST_IMAGES = \
 kind-load-test-images:
 	$(foreach img,$(TEST_IMAGES),docker pull -q $(img) && $(KIND) load docker-image --name $(KIND_CLUSTER_NAME) $(img);)
 
+SAMPLE_IMAGES = \
+	ytsaurus/ytsaurus:stable-23.1.0-relwithdebinfo
+.PHONY: kind-load-sample-images
+kind-load-sample-images:
+	$(foreach img,$(SAMPLE_IMAGES),docker pull -q $(img) && $(KIND) load docker-image --name $(KIND_CLUSTER_NAME) $(img);)
+
 .PHONY: k8s-install-cert-manager
 k8s-install-cert-manager:
 	@if ! $(KUBECTL) get namespace/cert-manager &>/dev/null; then \
