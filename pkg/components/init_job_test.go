@@ -20,7 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/tools/record"
-	ctrlrt "sigs.k8s.io/controller-runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -39,7 +39,7 @@ var (
 
 func prepareTest(t *testing.T, namespace string) (*testutil.TestHelper, *apiproxy.Ytsaurus, *ytconfig.Generator) {
 	h := testutil.NewTestHelper(t, namespace, filepath.Join("..", "..", "config", "crd", "bases"))
-	h.Start(func(mgr ctrlrt.Manager) error { return nil })
+	h.Start(func(mgr ctrl.Manager) error { return nil })
 
 	ytsaurusResource := testutil.BuildMinimalYtsaurus(namespace, ytsaurusName)
 	// Deploy of ytsaurus spec is required, so it could set valid owner references for child resources.

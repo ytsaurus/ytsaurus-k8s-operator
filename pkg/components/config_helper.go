@@ -8,7 +8,7 @@ import (
 	"reflect"
 
 	"github.com/BurntSushi/toml"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -247,7 +247,7 @@ func (h *ConfigHelper) Fetch(ctx context.Context) error {
 
 func (h *ConfigHelper) RemoveConfigMapIfExists(ctx context.Context) error {
 	err := h.apiProxy.DeleteObject(ctx, h.configMap.OldObject())
-	if err != nil && !errors.IsNotFound(err) {
+	if err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
 	return nil
