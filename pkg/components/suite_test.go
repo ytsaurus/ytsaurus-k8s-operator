@@ -16,12 +16,12 @@ import (
 	mock_yt "github.com/ytsaurus/yt-k8s-operator/pkg/mock"
 )
 
-var ctrl *gomock.Controller
+var mockCtrl *gomock.Controller
 
 func TestComponents(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	ctrl = gomock.NewController(t)
+	mockCtrl = gomock.NewController(t)
 
 	RunSpecs(t, "Components fake suite")
 }
