@@ -10,8 +10,7 @@ jobs:
   release:
     name: Run release
     runs-on: ubuntu-latest
-    env:
-      HOME: /root
+
     steps:
       - name: checkout sources
         uses: actions/checkout@v3
