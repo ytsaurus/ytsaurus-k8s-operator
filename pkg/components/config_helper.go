@@ -10,12 +10,13 @@ import (
 	"github.com/BurntSushi/toml"
 
 	"github.com/google/go-cmp/cmp"
+	"go.ytsaurus.tech/yt/go/yson"
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	"go.ytsaurus.tech/yt/go/yson"
-	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -241,4 +242,19 @@ func (h *ConfigHelper) Fetch(ctx context.Context) error {
 		}
 	}
 	return h.configMap.Fetch(ctx)
+}
+
+func (h *ConfigHelper) RemoveIfExists(ctx context.Context) error {
+	if !resources.Exists(h.configMap) {
+		return nil
+	}
+
+	return h.apiProxy.DeleteObject(
+		ctx,
+		h.configMap.OldObject(),
+	)
+}
+
+func (h *ConfigHelper) Exists() bool {
+	return resources.Exists(h.configMap)
 }
