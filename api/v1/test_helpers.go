@@ -49,8 +49,9 @@ func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 		},
 		Spec: YtsaurusSpec{
 			CommonSpec: CommonSpec{
-				UseShortNames: true,
-				CoreImage:     CoreImageFirst,
+				EphemeralCluster: true,
+				UseShortNames:    true,
+				CoreImage:        CoreImageFirst,
 			},
 			EnableFullUpdate: true,
 			IsManaged:        true,
