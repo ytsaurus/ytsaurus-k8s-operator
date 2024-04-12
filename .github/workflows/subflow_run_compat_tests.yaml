@@ -32,12 +32,9 @@ jobs:
         run: |
           make build
 
-      - name: Run e2e tests
+      - name: Run compat tests
         shell: bash
         run: |
           make kind-create-cluster
-          make helm-kind-install
-          kubectl get pod
-          make kind-load-test-images
-          make test-e2e
-          make helm-uninstall
+          make kind-load-sample-images 
+          ./compat_test.sh --from-version 0.4.1 --to-version trunk
