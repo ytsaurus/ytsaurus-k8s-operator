@@ -29,6 +29,18 @@ var (
 	masterVolumeSize, _ = resource.ParseQuantity("5Gi")
 )
 
+func createLoggersSpec() []TextLoggerSpec {
+	return []TextLoggerSpec{
+		{
+			BaseLoggerSpec: BaseLoggerSpec{
+				MinLogLevel: LogLevelInfo,
+				Name:        "info-stderr",
+			},
+			WriterType: LogWriterTypeStderr,
+		},
+	}
+}
+
 func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 	return &Ytsaurus{
 		ObjectMeta: metav1.ObjectMeta{
@@ -84,15 +96,7 @@ func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 							MountPath: "/yt/master-data",
 						},
 					},
-					Loggers: []TextLoggerSpec{
-						{
-							BaseLoggerSpec: BaseLoggerSpec{
-								MinLogLevel: LogLevelDebug,
-								Name:        "debug",
-							},
-							WriterType: LogWriterTypeFile,
-						},
-					},
+					Loggers: createLoggersSpec(),
 				},
 			},
 			HTTPProxies: []HTTPProxiesSpec{
@@ -246,15 +250,7 @@ func CreateExecNodeInstanceSpec() InstanceSpec {
 				corev1.ResourceMemory: execNodeMemory,
 			},
 		},
-		Loggers: []TextLoggerSpec{
-			{
-				BaseLoggerSpec: BaseLoggerSpec{
-					MinLogLevel: LogLevelDebug,
-					Name:        "debug",
-				},
-				WriterType: LogWriterTypeFile,
-			},
-		},
+		Loggers: createLoggersSpec(),
 		Locations: []LocationSpec{
 			{
 				LocationType: "ChunkCache",
@@ -315,14 +311,6 @@ func CreateDataNodeInstanceSpec(instanceCount int) InstanceSpec {
 func CreateTabletNodeSpec(instanceCount int) InstanceSpec {
 	return InstanceSpec{
 		InstanceCount: int32(instanceCount),
-		Loggers: []TextLoggerSpec{
-			{
-				BaseLoggerSpec: BaseLoggerSpec{
-					MinLogLevel: LogLevelDebug,
-					Name:        "debug",
-				},
-				WriterType: LogWriterTypeFile,
-			},
-		},
+		Loggers:       createLoggersSpec(),
 	}
 }
