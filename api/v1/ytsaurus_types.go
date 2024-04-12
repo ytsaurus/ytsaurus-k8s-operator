@@ -504,6 +504,11 @@ type CommonSpec struct {
 	//+optional
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
 
+	// Allow prioritizing performance over data safety. Useful for tests and experiments.
+	//+kubebuilder:default:=false
+	//+optional
+	EphemeralCluster bool `json:"ephemeralCluster,omitempty"`
+
 	//+kubebuilder:default:=false
 	//+optional
 	UseIPv6 bool `json:"useIpv6"`

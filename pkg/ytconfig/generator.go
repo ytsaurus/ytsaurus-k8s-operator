@@ -124,6 +124,15 @@ func (g *Generator) GetQueueAgentAddresses() []string {
 	return names
 }
 
+func (g *BaseGenerator) fillIOEngine(ioEngine **IOEngine) {
+	if g.commonSpec.EphemeralCluster {
+		if *ioEngine == nil {
+			*ioEngine = &IOEngine{}
+		}
+		(*ioEngine).EnableSync = ptr.Bool(false)
+	}
+}
+
 func (g *Generator) fillDriver(c *Driver) {
 	c.TimestampProviders.Addresses = g.getMasterAddresses()
 
@@ -297,6 +306,7 @@ func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, e
 	if err != nil {
 		return MasterServer{}, err
 	}
+	g.fillIOEngine(&c.Changelogs.IOEngine)
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	g.fillPrimaryMaster(&c.PrimaryMaster)
@@ -465,6 +475,10 @@ func (g *NodeGenerator) getDataNodeConfigImpl(spec *ytv1.DataNodesSpec) (DataNod
 		return DataNodeServer{}, err
 	}
 
+	for i := range c.DataNode.StoreLocations {
+		g.fillIOEngine(&c.DataNode.StoreLocations[i].IOEngine)
+	}
+
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	return c, nil
@@ -482,6 +496,9 @@ func (g *NodeGenerator) getExecNodeConfigImpl(spec *ytv1.ExecNodesSpec) (ExecNod
 	c, err := getExecNodeServerCarcass(spec, &g.commonSpec)
 	if err != nil {
 		return c, err
+	}
+	for i := range c.DataNode.CacheLocations {
+		g.fillIOEngine(&c.DataNode.CacheLocations[i].IOEngine)
 	}
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
