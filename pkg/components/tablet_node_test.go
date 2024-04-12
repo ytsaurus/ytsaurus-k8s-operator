@@ -35,7 +35,7 @@ var _ = Describe("Tablet node test", func() {
 	var client client.WithWatch
 
 	BeforeEach(func() {
-		mockYtClient = mock_yt.NewMockClient(ctrl)
+		mockYtClient = mock_yt.NewMockClient(mockCtrl)
 
 		masterVolumeSize, _ := resource.ParseQuantity("1Gi")
 
