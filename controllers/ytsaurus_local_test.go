@@ -90,3 +90,49 @@ func TestYtsaurusFromScratch(t *testing.T) {
 		},
 	)
 }
+
+func TestYtsaurusUpdateStatelessComponent(t *testing.T) {
+	namespace := "upd-master-image"
+	h := testutil.NewTestHelper(t, namespace, filepath.Join("..", "config", "crd", "bases"))
+	reconcilerSetup := func(mgr ctrl.Manager) error {
+		return (&controllers.YtsaurusReconciler{
+			Client:   mgr.GetClient(),
+			Scheme:   mgr.GetScheme(),
+			Recorder: mgr.GetEventRecorderFor("ytsaurus-controller"),
+		}).SetupWithManager(mgr)
+	}
+	h.Start(reconcilerSetup)
+	defer h.Stop()
+
+	ytsaurusResource := testutil.BuildMinimalYtsaurus(namespace, ytsaurusName)
+	testutil.DeployObject(h, &ytsaurusResource)
+
+	testutil.FetchAndCheckEventually(
+		h,
+		ytsaurusName,
+		&ytv1.Ytsaurus{},
+		"cluster state is updating",
+		func(obj client.Object) bool {
+			state := obj.(*ytv1.Ytsaurus).Status.State
+			return state == ytv1.ClusterStateUpdating
+		},
+	)
+
+	imageUpdated := testYtsaurusImage + "-updated"
+	ytsaurusResource.Spec.Discovery.Image = &imageUpdated
+	t.Log("[ Updating discovery with disabled full update ]")
+	ytsaurusResource.Spec.EnableFullUpdate = false
+	testutil.UpdateObject(h, &ytv1.Ytsaurus{}, &ytsaurusResource)
+
+	t.Log("[ Wait for YTsaurus Running status ]")
+	testutil.FetchAndCheckEventually(
+		h,
+		ytsaurusName,
+		&ytv1.Ytsaurus{},
+		"cluster state is running",
+		func(obj client.Object) bool {
+			state := obj.(*ytv1.Ytsaurus).Status.State
+			return state == ytv1.ClusterStateRunning
+		},
+	)
+}
