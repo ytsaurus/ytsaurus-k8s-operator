@@ -266,6 +266,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 		It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", func(ctx context.Context) {
 			namespace := "test3"
 			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
+			ytsaurus.Spec.EnableFullUpdate = false
 			ytsaurusKey := types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}
 
 			By("Creating a Ytsaurus resource")

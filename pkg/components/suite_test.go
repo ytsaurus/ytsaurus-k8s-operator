@@ -13,6 +13,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	mock_yt "github.com/ytsaurus/yt-k8s-operator/pkg/mock"
 )
 
@@ -32,11 +33,16 @@ var _ = BeforeSuite(func() {
 
 type FakeComponent struct {
 	name   string
+	ctype  consts.ComponentType
 	status ComponentStatus
 }
 
-func NewFakeComponent(name string) *FakeComponent {
-	return &FakeComponent{name: name, status: SimpleStatus(SyncStatusReady)}
+func NewFakeComponent(name string, ctype consts.ComponentType) *FakeComponent {
+	return &FakeComponent{
+		name:   name,
+		ctype:  ctype,
+		status: SimpleStatus(SyncStatusReady),
+	}
 }
 
 func (fc *FakeComponent) IsUpdatable() bool {
@@ -61,6 +67,9 @@ func (fc *FakeComponent) IsUpdating() bool {
 
 func (fc *FakeComponent) GetName() string {
 	return fc.name
+}
+func (fc *FakeComponent) GetType() consts.ComponentType {
+	return fc.ctype
 }
 
 func (fc *FakeComponent) SetReadyCondition(status ComponentStatus) {}
@@ -132,7 +141,7 @@ type FakeYtsaurusClient struct {
 
 func NewFakeYtsaurusClient(client *mock_yt.MockClient) *FakeYtsaurusClient {
 	return &FakeYtsaurusClient{
-		FakeComponent: *NewFakeComponent("ytsaurus_client"),
+		FakeComponent: *NewFakeComponent("ytsaurus_client", consts.YtsaurusClientType),
 		client:        client,
 	}
 }

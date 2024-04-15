@@ -547,6 +547,8 @@ type YtsaurusSpec struct {
 	//+optional
 	EnableFullUpdate bool `json:"enableFullUpdate"`
 
+	UpdateStrategy UpdateStrategy `json:"updateStrategy"`
+
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
 	Discovery        DiscoverySpec `json:"discovery,omitempty"`
@@ -613,6 +615,17 @@ const (
 	UpdateStateWaitingForSafeModeDisabled         UpdateState = "WaitingForSafeModeDisabled"
 )
 
+type UpdateStrategy string
+
+const (
+	UpdateStrategyNone            UpdateStrategy = ""
+	UpdateStrategyBlocked         UpdateStrategy = "Blocked"
+	UpdateStrategyFull            UpdateStrategy = "Full"
+	UpdateStrategyStateless       UpdateStrategy = "Stateless"
+	UpdateStrategyMasterOnly      UpdateStrategy = "MasterOnly"
+	UpdateStrategyTabletNodesOnly UpdateStrategy = "TabletNodesOnly"
+)
+
 type TabletCellBundleInfo struct {
 	Name            string `yson:",value" json:"name"`
 	TabletCellCount int    `yson:"tablet_cell_count,attr" json:"tabletCellCount"`
@@ -622,6 +635,7 @@ type UpdateStatus struct {
 	//+kubebuilder:default:=None
 	State                 UpdateState            `json:"state,omitempty"`
 	Components            []string               `json:"components,omitempty"`
+	Strategy              UpdateStrategy         `json:"strategy,omitempty"`
 	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
 	TabletCellBundles     []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
 	MasterMonitoringPaths []string               `json:"masterMonitoringPaths,omitempty"`

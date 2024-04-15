@@ -33433,6 +33433,8 @@ spec:
                 type: object
               uiImage:
                 type: string
+              updateStrategy:
+                type: string
               useIpv4:
                 default: false
                 type: boolean
@@ -35769,6 +35771,8 @@ spec:
                       type: object
                     type: array
                 type: object
+            required:
+            - updateStrategy
             type: object
           status:
             description: YtsaurusStatus defines the observed state of Ytsaurus
@@ -35889,6 +35893,8 @@ spec:
                     type: array
                   state:
                     default: None
+                    type: string
+                  strategy:
                     type: string
                   tabletCellBundles:
                     items:

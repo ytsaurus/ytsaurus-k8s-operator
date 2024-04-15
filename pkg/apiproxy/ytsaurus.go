@@ -54,6 +54,10 @@ func (c *Ytsaurus) GetUpdateState() ytv1.UpdateState {
 	return c.ytsaurus.Status.UpdateStatus.State
 }
 
+func (c *Ytsaurus) GetUpdateStrategy() ytv1.UpdateStrategy {
+	return c.ytsaurus.Status.UpdateStatus.Strategy
+}
+
 func (c *Ytsaurus) GetLocalUpdatingComponents() []string {
 	return c.ytsaurus.Status.UpdateStatus.Components
 }
@@ -73,6 +77,7 @@ func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
 	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
 	c.ytsaurus.Status.UpdateStatus.MasterMonitoringPaths = make([]string, 0)
 	c.ytsaurus.Status.UpdateStatus.Components = nil
+	c.ytsaurus.Status.UpdateStatus.Strategy = ytv1.UpdateStrategyNone
 	return c.apiProxy.UpdateStatus(ctx)
 }
 
@@ -82,9 +87,10 @@ func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {
 	logger.Info(fmt.Sprintf("Ytsaurus update: %s", message))
 }
 
-func (c *Ytsaurus) SaveUpdatingClusterState(ctx context.Context, components []string) error {
+func (c *Ytsaurus) SaveUpdatingClusterState(ctx context.Context, strategy ytv1.UpdateStrategy, components []string) error {
 	logger := log.FromContext(ctx)
 	c.ytsaurus.Status.State = ytv1.ClusterStateUpdating
+	c.ytsaurus.Status.UpdateStatus.Strategy = strategy
 	c.ytsaurus.Status.UpdateStatus.Components = components
 
 	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
