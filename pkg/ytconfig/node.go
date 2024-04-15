@@ -48,9 +48,10 @@ type CacheLocation struct {
 
 type SlotLocation struct {
 	Path               string `yson:"path"`
-	DiskQuota          *int64 `yson:"disk_quota,omitempty"`
-	DiskUsageWatermark int64  `yson:"disk_usage_watermark,omitempty"`
 	MediumName         string `yson:"medium_name"`
+	DiskQuota          *int64 `yson:"disk_quota,omitempty"`
+	DiskUsageWatermark *int64 `yson:"disk_usage_watermark,omitempty"`
+	EnableDiskQuota    *bool  `yson:"enable_disk_quota,omitempty"`
 }
 
 type DataNode struct {
@@ -450,14 +451,20 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 			Path:       location.Path,
 			MediumName: location.Medium,
 		}
-		quota := findQuotaForPath(location.Path, spec.InstanceSpec)
-		if quota != nil {
+
+		if quota := findQuotaForPath(location.Path, spec.InstanceSpec); quota != nil {
 			slotLocation.DiskQuota = quota
 
 			// These are just simple heuristics.
-			gb := float64(1024 * 1024 * 1024)
-			slotLocation.DiskUsageWatermark = int64(math.Min(0.1*float64(*quota), float64(10)*gb))
+			slotLocation.DiskUsageWatermark = ptr.Int64(min(*quota/10, consts.MaxSlotLocationReserve))
+		} else {
+			// Do not reserve anything if total disk size is unknown.
+			slotLocation.DiskUsageWatermark = ptr.Int64(0)
 		}
+
+		// Disk quota isn't generally available for k8s volumes yet.
+		slotLocation.EnableDiskQuota = ptr.Bool(false)
+
 		c.ExecNode.SlotManager.Locations = append(c.ExecNode.SlotManager.Locations, slotLocation)
 	}
 
