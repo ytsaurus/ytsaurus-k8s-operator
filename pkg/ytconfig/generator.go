@@ -447,7 +447,7 @@ func (g *Generator) getControllerAgentConfigImpl(spec *ytv1.ControllerAgentsSpec
 		return ControllerAgentServer{}, err
 	}
 
-	c.ControllerAgent.EnableTmpfs = g.ytsaurus.Spec.UsePorto
+	c.ControllerAgent.EnableTmpfs = true
 	c.ControllerAgent.UseColumnarStatisticsDefault = true
 
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)

@@ -419,11 +419,29 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 		// FIXME(khlebnikov): For now running jobs as non-root is more likely broken.
 		execNode.SlotManager.DoNotSetUserId = ptr.Bool(ptr.BoolDeref(envSpec.DoNotSetUserId, true))
 
+		// Enable tmpfs if exec node can mount and propagate into job container.
+		execNode.SlotManager.EnableTmpfs = ptr.Bool(func() bool {
+			if !spec.Privileged {
+				return false
+			}
+			if !ptr.BoolDeref(envSpec.Isolated, true) {
+				return true
+			}
+			for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeSlots) {
+				mount := findVolumeMountForPath(location.Path, spec.InstanceSpec)
+				if mount == nil || mount.MountPropagation == nil || *mount.MountPropagation != corev1.MountPropagationBidirectional {
+					return false
+				}
+			}
+			return true
+		}())
 	} else if commonSpec.UsePorto {
 		jobEnv.Type = JobEnvironmentTypePorto
+		execNode.SlotManager.EnableTmpfs = ptr.Bool(true)
 		// TODO(psushin): volume locations, root fs binds, etc.
 	} else {
 		jobEnv.Type = JobEnvironmentTypeSimple
+		execNode.SlotManager.EnableTmpfs = ptr.Bool(spec.Privileged)
 	}
 
 	return nil
