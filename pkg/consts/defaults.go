@@ -21,3 +21,5 @@ const StartUID = 19500
 const DefaultHTTPProxyRole = "default"
 const DefaultName = "default"
 const DefaultMedium = "default"
+
+const MaxSlotLocationReserve = 10 << 30 // 10GiB

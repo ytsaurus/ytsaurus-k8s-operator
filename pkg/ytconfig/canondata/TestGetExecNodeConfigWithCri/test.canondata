@@ -103,6 +103,8 @@
                 {
                     path="/yt/hdd2/slots";
                     "medium_name"="";
+                    "disk_usage_watermark"=0;
+                    "enable_disk_quota"=%false;
                 };
             ];
             "job_environment"={
