@@ -109,6 +109,7 @@
                 type=porto;
                 "start_uid"=19500;
             };
+            "enable_tmpfs"=%true;
         };
         "gpu_manager"={
             "gpu_info_source"={
