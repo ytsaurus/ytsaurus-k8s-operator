@@ -92,7 +92,7 @@ func TestYtsaurusFromScratch(t *testing.T) {
 }
 
 func TestYtsaurusUpdateStatelessComponent(t *testing.T) {
-	namespace := "upd-master-image"
+	namespace := "upd-discovery"
 	h := testutil.NewTestHelper(t, namespace, filepath.Join("..", "config", "crd", "bases"))
 	reconcilerSetup := func(mgr ctrl.Manager) error {
 		return (&controllers.YtsaurusReconciler{
