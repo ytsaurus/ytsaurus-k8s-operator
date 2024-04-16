@@ -138,10 +138,23 @@ func (h *TestHelper) createNamespace() {
 	require.NoError(h.t, err)
 }
 
+func (h *TestHelper) Log(args ...any) {
+	h.t.Log(args...)
+}
+
+func (h *TestHelper) Logf(format string, args ...any) {
+	h.t.Logf(format, args...)
+}
+
 // helpers
 func GetObject(h *TestHelper, key string, emptyObject client.Object) {
 	k8sCli := h.GetK8sClient()
 	err := k8sCli.Get(context.Background(), h.GetObjectKey(key), emptyObject)
+	require.NoError(h.t, err)
+}
+func ListObjects(h *TestHelper, emptyList client.ObjectList) {
+	k8sCli := h.GetK8sClient()
+	err := k8sCli.List(context.Background(), emptyList)
 	require.NoError(h.t, err)
 }
 func DeployObject(h *TestHelper, object client.Object) {
