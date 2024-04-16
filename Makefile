@@ -22,6 +22,10 @@ OPERATOR_IMAGE = ytsaurus/k8s-operator
 OPERATOR_TAG = 0.0.0-alpha
 
 OPERATOR_CHART = ytop-chart
+OPERATOR_INSTANCE = ytsaurus-dev
+
+## K8s namespace for YTsaurus operator.
+OPERATOR_NAMESPACE = ytsaurus-operator
 
 ifdef RELEASE_VERSION
 DOCKER_BUILD_ARGS += --build-arg VERSION="$(RELEASE_VERSION)"
@@ -164,9 +168,11 @@ k8s-install-cert-manager:
 
 .PHONY: helm-install
 helm-install: ## Install helm chart from sources.
-	helm upgrade --install --wait ytsaurus $(OPERATOR_CHART) \
+	$(HELM) upgrade --install --wait $(OPERATOR_INSTANCE) $(OPERATOR_CHART) \
+		-n $(OPERATOR_NAMESPACE) --create-namespace \
 		--set controllerManager.manager.image.repository=${OPERATOR_IMAGE} \
 		--set controllerManager.manager.image.tag=${OPERATOR_TAG}
+	$(KUBECTL) -n $(OPERATOR_NAMESPACE) rollout restart deployment -l app.kubernetes.io/instance=$(OPERATOR_INSTANCE)
 
 .PHONY: helm-kind-install
 helm-kind-install: helm-chart docker-build ## Build docker image, load into kind and install helm chart.
@@ -180,7 +186,7 @@ helm-minikube-install: helm-chart ## Build docker image in minikube and install 
 
 .PHONY: helm-uninstall
 helm-uninstall: ## Uninstal helm chart.
-	helm uninstall ytsaurus
+	$(HELM) uninstall -n $(OPERATOR_NAMESPACE) $(OPERATOR_INSTANCE)
 
 kind-deploy-ytsaurus: ## Deploy sample ytsaurus cluster and all requirements.
 	$(MAKE) kind-create-cluster
@@ -188,9 +194,7 @@ kind-deploy-ytsaurus: ## Deploy sample ytsaurus cluster and all requirements.
 	-$(KUBECTL) create namespace $(YTSAURUS_NAMESPACE)
 	$(KUBECTL) apply --server-side -n $(YTSAURUS_NAMESPACE) -f $(YTSAURUS_SPEC)
 	$(KUBECTL) wait -n $(YTSAURUS_NAMESPACE) --timeout=10m --for=jsonpath='{.status.state}=Running' --all ytsaurus
-	@printf "\nYTsaurus UI: http://%s:%s\nlogin/password: admin/password\nto setup env for yt cli run: . <(make kind-yt-env)\n" \
-		$(call KIND_NODE_ADDR,${KIND_CLUSTER_NAME}-control-plane) \
-		$(call KIND_SERVICE_NODEPORT,${YTSAURUS_NAMESPACE},ytsaurus-ui,0)
+	$(MAKE) kind-yt-info
 
 kind-undeploy-ytsaurus: ## Undeploy sample ytsaurus cluster.
 	-$(KUBECTL) -n $(YTSAURUS_NAMESPACE) delete ytsaurus --all
@@ -206,6 +210,11 @@ KIND_YT_ENV += YT_CONFIG_PATCHES="{ proxy={ enable_proxy_discovery=%false; }; op
 
 kind-yt-env: ## Print yt cli environment for sample ytsaurus cluster.
 	@printf "export \"%s\"\n" $(KIND_YT_ENV)
+
+kind-yt-info:
+	@printf "YTsaurus UI: http://%s:%s\nlogin/password: admin/password\nto setup env for yt cli run: . <(make kind-yt-env)\n" \
+		$(call KIND_NODE_ADDR,${KIND_CLUSTER_NAME}-control-plane) \
+		$(call KIND_SERVICE_NODEPORT,${YTSAURUS_NAMESPACE},ytsaurus-ui,0)
 
 ##@ Build
 
@@ -275,6 +284,7 @@ $(LOCALBIN):
 
 # Tool Binaries
 KUBECTL ?= kubectl
+HELM ?= helm
 KUSTOMIZE ?= $(LOCALBIN)/kustomize-$(KUSTOMIZE_VERSION)
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen-$(CONTROLLER_GEN_VERSION)
 ENVTEST ?= $(LOCALBIN)/setup-envtest-$(ENVTEST_VERSION)
