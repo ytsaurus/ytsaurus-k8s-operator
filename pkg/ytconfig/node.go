@@ -417,7 +417,7 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 		}
 
 		// FIXME(khlebnikov): For now running jobs as non-root is more likely broken.
-		execNode.SlotManager.DoNotSetUserId = ptr.Bool(ptr.BoolDeref(envSpec.UseArtifactBinds, true))
+		execNode.SlotManager.DoNotSetUserId = ptr.Bool(ptr.BoolDeref(envSpec.DoNotSetUserId, true))
 
 	} else if commonSpec.UsePorto {
 		jobEnv.Type = JobEnvironmentTypePorto
