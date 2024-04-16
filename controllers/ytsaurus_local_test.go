@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
@@ -123,4 +124,33 @@ func TestYtsaurusUpdateStatelessComponent(t *testing.T) {
 	sts := appsv1.StatefulSet{}
 	testutil.GetObject(h, "ds", &sts)
 	require.Equal(t, imageUpdated, sts.Spec.Template.Spec.Containers[0].Image)
+}
+
+func TestYtsaurusUpdateMasterBlocked(t *testing.T) {
+	namespace := "upd-master"
+	h := prepareTest(t, namespace)
+	defer h.Stop()
+
+	ytsaurusResource := testutil.BuildMinimalYtsaurus(namespace, ytsaurusName)
+	testutil.DeployObject(h, &ytsaurusResource)
+
+	waitClusterState(h, ytv1.ClusterStateRunning)
+
+	imageUpdated := testYtsaurusImage + "-updated"
+	ytsaurusResource.Spec.PrimaryMasters.Image = &imageUpdated
+	t.Log("[ Updating master with disabled full update (should block) ]")
+	ytsaurusResource.Spec.EnableFullUpdate = false
+	testutil.UpdateObject(h, &ytv1.Ytsaurus{}, &ytsaurusResource)
+
+	// It is a bit hard to test if something NOT happened, so we just wait a little and check if update happened.
+	t.Log("[ Sleep for 5 seconds]")
+	time.Sleep(5 * time.Second)
+
+	t.Log("[ Check that cluster is running but not updated ]")
+	ytsaurus := ytv1.Ytsaurus{}
+	testutil.GetObject(h, ytsaurusName, &ytsaurus)
+	require.Equal(t, ytv1.ClusterStateRunning, ytsaurus.Status.State)
+	sts := appsv1.StatefulSet{}
+	testutil.GetObject(h, "ms", &sts)
+	require.NotEqual(t, imageUpdated, sts.Spec.Template.Spec.Containers[0].Image)
 }
