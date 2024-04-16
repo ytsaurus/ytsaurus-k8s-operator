@@ -15,7 +15,6 @@ type SyncStatus string
 
 const (
 	SyncStatusBlocked         SyncStatus = "Blocked"
-	SyncStatusNeedFullUpdate  SyncStatus = "NeedFullUpdate"
 	SyncStatusNeedLocalUpdate SyncStatus = "NeedLocalUpdate"
 	SyncStatusPending         SyncStatus = "Pending"
 	SyncStatusReady           SyncStatus = "Ready"
@@ -23,7 +22,7 @@ const (
 )
 
 func IsRunningStatus(status SyncStatus) bool {
-	return status == SyncStatusReady || status == SyncStatusNeedLocalUpdate || status == SyncStatusNeedFullUpdate
+	return status == SyncStatusReady || status == SyncStatusNeedLocalUpdate
 }
 
 type ComponentStatus struct {
