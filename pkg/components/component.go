@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 )
 
@@ -47,6 +48,7 @@ type Component interface {
 	Sync(ctx context.Context) error
 	Status(ctx context.Context) (ComponentStatus, error)
 	GetName() string
+	GetType() consts.ComponentType
 	SetReadyCondition(status ComponentStatus)
 
 	// TODO(nadya73): refactor it
