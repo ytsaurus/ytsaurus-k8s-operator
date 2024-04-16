@@ -546,6 +546,10 @@ type YtsaurusSpec struct {
 	//+kubebuilder:default:=true
 	//+optional
 	EnableFullUpdate bool `json:"enableFullUpdate"`
+	//+optional
+	// UpdateStrategy is an experimental field. Behaviour may change.
+	// If UpdateStrategy is not empty EnableFullUpdate is ignored.
+	UpdateStrategy UpdateStrategy `json:"updateStrategy"`
 
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
@@ -618,10 +622,22 @@ type TabletCellBundleInfo struct {
 	TabletCellCount int    `yson:"tablet_cell_count,attr" json:"tabletCellCount"`
 }
 
+type UpdateStrategy string
+
+const (
+	UpdateStrategyNone            UpdateStrategy = ""
+	UpdateStrategyBlocked         UpdateStrategy = "Blocked"
+	UpdateStrategyStatelessOnly   UpdateStrategy = "StatelessOnly"
+	UpdateStrategyMasterOnly      UpdateStrategy = "MasterOnly"
+	UpdateStrategyTabletNodesOnly UpdateStrategy = "TabletNodesOnly"
+	UpdateStrategyFull            UpdateStrategy = "Full"
+)
+
 type UpdateStatus struct {
 	//+kubebuilder:default:=None
 	State                 UpdateState            `json:"state,omitempty"`
 	Components            []string               `json:"components,omitempty"`
+	Strategy              UpdateStrategy         `json:"updateStrategy,omitempty"`
 	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
 	TabletCellBundles     []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
 	MasterMonitoringPaths []string               `json:"masterMonitoringPaths,omitempty"`

@@ -33220,6 +33220,10 @@ spec:
                 type: object
               uiImage:
                 type: string
+              updateStrategy:
+                description: UpdateStrategy is an experimental field. Behaviour may
+                  change.
+                type: string
               useIpv4:
                 default: false
                 type: boolean
@@ -35670,6 +35674,8 @@ spec:
                       - tabletCellCount
                       type: object
                     type: array
+                  updateStrategy:
+                    type: string
                 type: object
             type: object
         type: object

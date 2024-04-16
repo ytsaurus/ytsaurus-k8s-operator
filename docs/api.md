@@ -1489,9 +1489,24 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `state` _[UpdateState](#updatestate)_ |  | None |  |
 | `components` _string array_ |  |  |  |
+| `updateStrategy` _[UpdateStrategy](#updatestrategy)_ |  |  |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
 | `tabletCellBundles` _[TabletCellBundleInfo](#tabletcellbundleinfo) array_ |  |  |  |
 | `masterMonitoringPaths` _string array_ |  |  |  |
+
+
+#### UpdateStrategy
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [UpdateStatus](#updatestatus)
+- [YtsaurusSpec](#ytsaurusspec)
+
 
 
 #### YQLAgentSpec
@@ -1577,6 +1592,7 @@ _Appears in:_
 | `oauthService` _[OauthServiceSpec](#oauthservicespec)_ |  |  |  |
 | `isManaged` _boolean_ |  | true |  |
 | `enableFullUpdate` _boolean_ |  | true |  |
+| `updateStrategy` _[UpdateStrategy](#updatestrategy)_ | UpdateStrategy is an experimental field. Behaviour may change.<br />If UpdateStrategy is not empty EnableFullUpdate is ignored. |  |  |
 | `bootstrap` _[BootstrapSpec](#bootstrapspec)_ |  |  |  |
 | `discovery` _[DiscoverySpec](#discoveryspec)_ |  |  |  |
 | `primaryMasters` _[MastersSpec](#mastersspec)_ |  |  |  |
