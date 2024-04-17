@@ -12,6 +12,7 @@ import (
 	"go.ytsaurus.tech/yt/go/yt/ythttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ptr "k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -150,6 +151,7 @@ func (yc *YtsaurusClient) getMasterHydra(ctx context.Context, path string) (Mast
 
 func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentStatus, error) {
 	var err error
+	logger := log.FromContext(ctx)
 
 	switch yc.ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStatePossibilityCheck:
@@ -162,6 +164,7 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			}
 
 			if !ok {
+				logger.Info("possibility check has failed: " + msg)
 				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 					Type:    consts.ConditionNoPossibility,
 					Status:  metav1.ConditionTrue,
@@ -429,11 +432,7 @@ func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 	}
 
 	// Check LVC.
-	lvcCount := 0
-	err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/lost_vital_chunks/@count"), &lvcCount, nil)
-	if err != nil {
-		return
-	}
+	lvcCount, err := GetLVCCount(ctx, yc.ytClient)
 
 	if lvcCount > 0 {
 		msg = fmt.Sprintf("There are lost vital chunks: %v", lvcCount)

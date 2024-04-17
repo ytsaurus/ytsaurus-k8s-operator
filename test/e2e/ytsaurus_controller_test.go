@@ -606,6 +606,15 @@ func checkClusterBaseViability(ytClient yt.Client) {
 		}
 		return len(notGoodBundles) == 0
 	}, reactionTimeout, pollInterval).Should(BeTrue())
+
+	By("Check that lvc == 0")
+	Eventually(func() bool {
+		lvcCount, err := components.GetLVCCount(ctx, ytClient)
+		if err != nil {
+			return false
+		}
+		return lvcCount == 0
+	}, upgradeTimeout, pollInterval).Should(BeTrue())
 }
 
 func checkClusterViability(ytClient yt.Client) {

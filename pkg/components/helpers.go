@@ -3,9 +3,10 @@ package components
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"strings"
 
 	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/ypath"
@@ -68,6 +69,12 @@ func GetNotGoodTabletCellBundles(ctx context.Context, ytClient yt.Client) ([]str
 	}
 
 	return notGoodBundles, err
+}
+
+func GetLVCCount(ctx context.Context, ytClient yt.Client) (int, error) {
+	lvcCount := 0
+	err := ytClient.GetNode(ctx, ypath.Path("//sys/lost_vital_chunks/@count"), &lvcCount, nil)
+	return lvcCount, err
 }
 
 func CreateUser(ctx context.Context, ytClient yt.Client, userName, token string, isSuperuser bool) error {
