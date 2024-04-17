@@ -15,7 +15,7 @@ import (
 	apiProxy "github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 )
 
-func (r *YtsaurusReconciler) handleEverything(
+func (r *YtsaurusReconciler) handleFullStrategy(
 	ctx context.Context,
 	ytsaurus *apiProxy.Ytsaurus,
 	componentManager *ComponentManager,
@@ -161,7 +161,7 @@ func (r *YtsaurusReconciler) handleEverything(
 	return nil, nil
 }
 
-func (r *YtsaurusReconciler) handleStateless(
+func (r *YtsaurusReconciler) handleStatelessStrategy(
 	ctx context.Context,
 	ytsaurus *apiProxy.Ytsaurus,
 	componentManager *ComponentManager,
@@ -233,7 +233,7 @@ func (r *YtsaurusReconciler) handleStateless(
 	return nil, nil
 }
 
-func (r *YtsaurusReconciler) handleMasterOnly(
+func (r *YtsaurusReconciler) handleMasterOnlyStrategy(
 	ctx context.Context,
 	ytsaurus *apiProxy.Ytsaurus,
 	componentManager *ComponentManager,
@@ -309,7 +309,7 @@ func (r *YtsaurusReconciler) handleMasterOnly(
 	return nil, nil
 }
 
-func (r *YtsaurusReconciler) handleTabletNodesOnly(
+func (r *YtsaurusReconciler) handleTabletNodesOnlyStrategy(
 	ctx context.Context,
 	ytsaurus *apiProxy.Ytsaurus,
 	componentManager *ComponentManager,
@@ -398,25 +398,22 @@ func getComponentNames(components []components.Component) []string {
 }
 
 type updateMeta struct {
-	flow ytv1.UpdateFlow
-	// componentNames is a list of component names that will be updated. It is built according to the update selector.
+	strategy       ytv1.UpdateStrategy
 	componentNames []string
 }
 
-// chooseUpdateFlow considers spec and decides if operator should proceed with update or block.
+// chooseUpdateStrategy considers spec decides if operator should proceed with update or block.
 // Block case is indicated with non-empty blockMsg.
-// If update is not blocked, updateMeta containing a chosen flow and the component names to update returned.
-func chooseUpdateFlow(spec ytv1.YtsaurusSpec, needUpdate []components.Component) (meta updateMeta, blockMsg string) {
+// If update is not blocked, updateMeta containing a chosen strategy and the component names to update returned.
+func chooseUpdateStrategy(spec ytv1.YtsaurusSpec, needUpdate []components.Component) (meta updateMeta, blockMsg string) {
 	isFullUpdateEnabled := spec.EnableFullUpdate
-	configuredSelector := spec.UpdateSelector
+	configuredStrategy := spec.UpdateStrategy
 
 	masterNeedsUpdate := false
 	tabletNodesNeedUpdate := false
-	execNodesNeedUpdate := false
 	statelessNeedUpdate := false
 	var masterNames []string
 	var tabletNodeNames []string
-	var execNodeNames []string
 	var statelessNames []string
 	for _, comp := range needUpdate {
 		if comp.GetType() == consts.MasterType {
@@ -429,10 +426,6 @@ func chooseUpdateFlow(spec ytv1.YtsaurusSpec, needUpdate []components.Component)
 			tabletNodeNames = append(tabletNodeNames, comp.GetName())
 			continue
 		}
-		if comp.GetType() == consts.ExecNodeType {
-			execNodesNeedUpdate = true
-			execNodeNames = append(execNodeNames, comp.GetName())
-		}
 		statelessNames = append(statelessNames, comp.GetName())
 		statelessNeedUpdate = true
 	}
@@ -441,67 +434,59 @@ func chooseUpdateFlow(spec ytv1.YtsaurusSpec, needUpdate []components.Component)
 	allNamesNeedingUpdate := getComponentNames(needUpdate)
 
 	// Fallback to EnableFullUpdate field.
-	if configuredSelector == ytv1.UpdateSelectorUnspecified {
+	if configuredStrategy == ytv1.UpdateStrategyNone {
 		if statefulNeedUpdate {
 			if isFullUpdateEnabled {
-				return updateMeta{flow: ytv1.UpdateFlowFull, componentNames: nil}, ""
+				return updateMeta{strategy: ytv1.UpdateStrategyFull, componentNames: nil}, ""
 			} else {
-				return updateMeta{flow: "", componentNames: nil}, "Full update is not allowed by enableFullUpdate field, ignoring it"
+				return updateMeta{strategy: "", componentNames: nil}, "Full update is not allowed by enableFullUpdate field, ignoring it"
 			}
 		}
-		return updateMeta{flow: ytv1.UpdateFlowStateless, componentNames: allNamesNeedingUpdate}, ""
+		return updateMeta{strategy: ytv1.UpdateStrategyStatelessOnly, componentNames: allNamesNeedingUpdate}, ""
 	}
 
-	switch configuredSelector {
-	case ytv1.UpdateSelectorNothing:
-		return updateMeta{}, "All updates are blocked by updateSelector field."
-	case ytv1.UpdateSelectorEverything:
+	switch configuredStrategy {
+	case ytv1.UpdateStrategyBlocked:
+		return updateMeta{}, "All updates are blocked by updateStrategy field."
+	case ytv1.UpdateStrategyFull:
 		if statefulNeedUpdate {
 			return updateMeta{
-				flow:           ytv1.UpdateFlowFull,
+				strategy:       ytv1.UpdateStrategyFull,
 				componentNames: nil,
 			}, ""
 		} else {
 			return updateMeta{
-				flow:           ytv1.UpdateFlowStateless,
+				strategy:       ytv1.UpdateStrategyStatelessOnly,
 				componentNames: allNamesNeedingUpdate,
 			}, ""
 		}
-	case ytv1.UpdateSelectorMasterOnly:
+	case ytv1.UpdateStrategyMasterOnly:
 		if !masterNeedsUpdate {
-			return updateMeta{}, "Only Master update is allowed by updateSelector, but it doesn't need update"
+			return updateMeta{}, "Only Master update is allowed by updateStrategy, but it doesn't need update"
 		}
 		return updateMeta{
-			flow:           ytv1.UpdateFlowMaster,
+			strategy:       ytv1.UpdateStrategyMasterOnly,
 			componentNames: masterNames,
 		}, ""
-	case ytv1.UpdateSelectorTabletNodesOnly:
+	case ytv1.UpdateStrategyTabletNodesOnly:
 		if !tabletNodesNeedUpdate {
-			return updateMeta{}, "Only Tablet nodes update is allowed by updateSelector, but they don't need update"
+			return updateMeta{}, "Only Tablet nodes update is allowed by updateStrategy, but they don't need update"
 		}
 		return updateMeta{
-			flow:           ytv1.UpdateFlowTabletNodes,
+			strategy:       ytv1.UpdateStrategyTabletNodesOnly,
 			componentNames: tabletNodeNames,
 		}, ""
-	case ytv1.UpdateSelectorExecNodesOnly:
-		if !execNodesNeedUpdate {
-			return updateMeta{}, "Only Exec nodes update is allowed by updateSelector, but they don't need update"
-		}
-		return updateMeta{
-			flow:           ytv1.UpdateFlowStateless,
-			componentNames: execNodeNames,
-		}, ""
-	case ytv1.UpdateSelectorStatelessOnly:
+	case ytv1.UpdateStrategyStatelessOnly:
 		if !statelessNeedUpdate {
-			return updateMeta{}, "Only stateless components update is allowed by updateSelector, but they don't need update"
+			return updateMeta{}, "Only stateless components update is allowed by configuration, but they don't need update"
 		}
 		return updateMeta{
-			flow:           ytv1.UpdateFlowStateless,
+			strategy:       ytv1.UpdateStrategyStatelessOnly,
 			componentNames: statelessNames,
 		}, ""
 	default:
 		// TODO: just validate it in hook
-		return updateMeta{}, fmt.Sprintf("Unexpected update selector %s", configuredSelector)
+		return updateMeta{}, fmt.Sprintf("Unexpected update strategy %s", configuredStrategy)
 	}
 }
 
@@ -545,16 +530,16 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			return ctrl.Result{Requeue: true}, err
 
 		case componentManager.needUpdate() != nil:
-			meta, blockMsg := chooseUpdateFlow(ytsaurus.GetResource().Spec, componentManager.needUpdate())
+			meta, blockMsg := chooseUpdateStrategy(ytsaurus.GetResource().Spec, componentManager.needUpdate())
 			if blockMsg != "" {
 				logger.Info(blockMsg)
 				return ctrl.Result{Requeue: true}, nil
 			}
 			logger.Info("Ytsaurus needs components update",
 				"components", meta.componentNames,
-				"flow", meta.flow,
+				"strategy", meta.strategy,
 			)
-			err = ytsaurus.SaveUpdatingClusterState(ctx, meta.flow, meta.componentNames)
+			err = ytsaurus.SaveUpdatingClusterState(ctx, meta.strategy, meta.componentNames)
 			if err != nil {
 				return ctrl.Result{}, err
 			}
@@ -565,15 +550,15 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		var result *ctrl.Result
 		var err error
 
-		switch ytsaurus.GetUpdateFlow() {
-		case ytv1.UpdateFlowFull:
-			result, err = r.handleEverything(ctx, ytsaurus, componentManager)
-		case ytv1.UpdateFlowStateless:
-			result, err = r.handleStateless(ctx, ytsaurus, componentManager)
-		case ytv1.UpdateFlowMaster:
-			result, err = r.handleMasterOnly(ctx, ytsaurus, componentManager)
-		case ytv1.UpdateFlowTabletNodes:
-			result, err = r.handleTabletNodesOnly(ctx, ytsaurus, componentManager)
+		switch ytsaurus.GetUpdateStrategy() {
+		case ytv1.UpdateStrategyFull:
+			result, err = r.handleFullStrategy(ctx, ytsaurus, componentManager)
+		case ytv1.UpdateStrategyStatelessOnly:
+			result, err = r.handleStatelessStrategy(ctx, ytsaurus, componentManager)
+		case ytv1.UpdateStrategyMasterOnly:
+			result, err = r.handleMasterOnlyStrategy(ctx, ytsaurus, componentManager)
+		case ytv1.UpdateStrategyTabletNodesOnly:
+			result, err = r.handleTabletNodesOnlyStrategy(ctx, ytsaurus, componentManager)
 		}
 
 		if result != nil {
