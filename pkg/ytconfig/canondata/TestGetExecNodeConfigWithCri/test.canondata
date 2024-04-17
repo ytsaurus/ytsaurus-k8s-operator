@@ -180,6 +180,7 @@
                 ];
                 "flush_period"=3000;
             };
+            "forward_all_environment_variables"=%true;
         };
         "job_proxy_authentication_manager"={
             "cypress_cookie_manager"={
@@ -222,6 +223,7 @@
             "flush_period"=3000;
         };
         "do_not_set_user_id"=%true;
+        "forward_all_environment_variables"=%true;
         "use_artifact_binds"=%true;
     };
     "data_node"={

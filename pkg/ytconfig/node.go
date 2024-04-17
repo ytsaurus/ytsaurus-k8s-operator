@@ -135,8 +135,9 @@ type JobResourceManager struct {
 }
 
 type JobProxy struct {
-	JobProxyAuthenticationManager Auth    `yson:"job_proxy_authentication_manager"`
-	JobProxyLogging               Logging `yson:"job_proxy_logging"`
+	JobProxyAuthenticationManager  Auth    `yson:"job_proxy_authentication_manager"`
+	JobProxyLogging                Logging `yson:"job_proxy_logging"`
+	ForwardAllEnvironmentVariables *bool   `yson:"forward_all_environment_variables,omitempty"`
 }
 
 type ExecNode struct {
@@ -145,9 +146,10 @@ type ExecNode struct {
 	JobController JobController `yson:"job_controller"`
 	JobProxy      JobProxy      `yson:"job_proxy"`
 
-	JobProxyAuthenticationManagerLegacy *Auth    `yson:"job_proxy_authentication_manager,omitempty"`
-	JobProxyLoggingLegacy               *Logging `yson:"job_proxy_logging,omitempty"`
-	DoNotSetUserIdLegacy                *bool    `yson:"do_not_set_user_id,omitempty"`
+	JobProxyAuthenticationManagerLegacy  *Auth    `yson:"job_proxy_authentication_manager,omitempty"`
+	JobProxyLoggingLegacy                *Logging `yson:"job_proxy_logging,omitempty"`
+	DoNotSetUserIdLegacy                 *bool    `yson:"do_not_set_user_id,omitempty"`
+	ForwardAllEnvironmentVariablesLegacy *bool    `yson:"forward_all_environment_variables,omitempty"`
 
 	// NOTE: Non-legacy "use_artifact_binds" moved into dynamic config.
 	UseArtifactBindsLegacy *bool `yson:"use_artifact_binds,omitempty"`
@@ -436,6 +438,9 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 			}
 			return true
 		}())
+
+		// Forward environment variables set in docker image from job proxy to user job process.
+		execNode.JobProxy.ForwardAllEnvironmentVariables = ptr.Bool(true)
 	} else if commonSpec.UsePorto {
 		jobEnv.Type = JobEnvironmentTypePorto
 		execNode.SlotManager.EnableTmpfs = ptr.Bool(true)
@@ -530,6 +535,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	c.ExecNode.JobProxyLoggingLegacy = &c.ExecNode.JobProxy.JobProxyLogging
 	c.ExecNode.JobProxyAuthenticationManagerLegacy = &c.ExecNode.JobProxy.JobProxyAuthenticationManager
 	c.ExecNode.DoNotSetUserIdLegacy = c.ExecNode.SlotManager.DoNotSetUserId
+	c.ExecNode.ForwardAllEnvironmentVariablesLegacy = c.ExecNode.JobProxy.ForwardAllEnvironmentVariables
 
 	return c, nil
 }
