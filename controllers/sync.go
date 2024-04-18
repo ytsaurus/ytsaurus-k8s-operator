@@ -441,7 +441,7 @@ func chooseUpdateFlow(spec ytv1.YtsaurusSpec, needUpdate []components.Component)
 	allNamesNeedingUpdate := getComponentNames(needUpdate)
 
 	// Fallback to EnableFullUpdate field.
-	if configuredSelector == ytv1.UpdateSelectorUnspecified {
+	if configuredSelector == ytv1.UpdateSelectorNone {
 		if statefulNeedUpdate {
 			if isFullUpdateEnabled {
 				return updateMeta{flow: ytv1.UpdateFlowFull, componentNames: nil}, ""
