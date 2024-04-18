@@ -398,23 +398,25 @@ func getComponentNames(components []components.Component) []string {
 }
 
 type updateMeta struct {
-	selector ytv1.UpdateSelector
+	flow ytv1.UpdateFlow
 	// componentNames is a list of component names that will be updated. It is built according to the update selector.
 	componentNames []string
 }
 
-// chooseUpdateSelector considers spec decides if operator should proceed with update or block.
+// chooseUpdateFlow considers spec and decides if operator should proceed with update or block.
 // Block case is indicated with non-empty blockMsg.
-// If update is not blocked, updateMeta containing a chosen selector and the component names to update returned.
-func chooseUpdateSelector(spec ytv1.YtsaurusSpec, needUpdate []components.Component) (meta updateMeta, blockMsg string) {
+// If update is not blocked, updateMeta containing a chosen flow and the component names to update returned.
+func chooseUpdateFlow(spec ytv1.YtsaurusSpec, needUpdate []components.Component) (meta updateMeta, blockMsg string) {
 	isFullUpdateEnabled := spec.EnableFullUpdate
 	configuredSelector := spec.UpdateSelector
 
 	masterNeedsUpdate := false
 	tabletNodesNeedUpdate := false
+	execNodesNeedUpdate := false
 	statelessNeedUpdate := false
 	var masterNames []string
 	var tabletNodeNames []string
+	var execNodeNames []string
 	var statelessNames []string
 	for _, comp := range needUpdate {
 		if comp.GetType() == consts.MasterType {
@@ -427,6 +429,10 @@ func chooseUpdateSelector(spec ytv1.YtsaurusSpec, needUpdate []components.Compon
 			tabletNodeNames = append(tabletNodeNames, comp.GetName())
 			continue
 		}
+		if comp.GetType() == consts.ExecNodeType {
+			execNodesNeedUpdate = true
+			execNodeNames = append(execNodeNames, comp.GetName())
+		}
 		statelessNames = append(statelessNames, comp.GetName())
 		statelessNeedUpdate = true
 	}
@@ -438,12 +444,12 @@ func chooseUpdateSelector(spec ytv1.YtsaurusSpec, needUpdate []components.Compon
 	if configuredSelector == ytv1.UpdateSelectorNone {
 		if statefulNeedUpdate {
 			if isFullUpdateEnabled {
-				return updateMeta{selector: ytv1.UpdateSelectorEverything, componentNames: nil}, ""
+				return updateMeta{flow: ytv1.UpdateFlowFull, componentNames: nil}, ""
 			} else {
-				return updateMeta{selector: "", componentNames: nil}, "Full update is not allowed by enableFullUpdate field, ignoring it"
+				return updateMeta{flow: "", componentNames: nil}, "Full update is not allowed by enableFullUpdate field, ignoring it"
 			}
 		}
-		return updateMeta{selector: ytv1.UpdateSelectorStatelessOnly, componentNames: allNamesNeedingUpdate}, ""
+		return updateMeta{flow: ytv1.UpdateFlowStateless, componentNames: allNamesNeedingUpdate}, ""
 	}
 
 	switch configuredSelector {
@@ -452,12 +458,12 @@ func chooseUpdateSelector(spec ytv1.YtsaurusSpec, needUpdate []components.Compon
 	case ytv1.UpdateSelectorEverything:
 		if statefulNeedUpdate {
 			return updateMeta{
-				selector:       ytv1.UpdateSelectorEverything,
+				flow:           ytv1.UpdateFlowFull,
 				componentNames: nil,
 			}, ""
 		} else {
 			return updateMeta{
-				selector:       ytv1.UpdateSelectorStatelessOnly,
+				flow:           ytv1.UpdateFlowStateless,
 				componentNames: allNamesNeedingUpdate,
 			}, ""
 		}
@@ -466,7 +472,7 @@ func chooseUpdateSelector(spec ytv1.YtsaurusSpec, needUpdate []components.Compon
 			return updateMeta{}, "Only Master update is allowed by updateSelector, but it doesn't need update"
 		}
 		return updateMeta{
-			selector:       ytv1.UpdateSelectorMasterOnly,
+			flow:           ytv1.UpdateFlowMaster,
 			componentNames: masterNames,
 		}, ""
 	case ytv1.UpdateSelectorTabletNodesOnly:
@@ -474,15 +480,23 @@ func chooseUpdateSelector(spec ytv1.YtsaurusSpec, needUpdate []components.Compon
 			return updateMeta{}, "Only Tablet nodes update is allowed by updateSelector, but they don't need update"
 		}
 		return updateMeta{
-			selector:       ytv1.UpdateSelectorTabletNodesOnly,
+			flow:           ytv1.UpdateFlowTabletNodes,
 			componentNames: tabletNodeNames,
+		}, ""
+	case ytv1.UpdateSelectorExecNodesOnly:
+		if !execNodesNeedUpdate {
+			return updateMeta{}, "Only Exec nodes update is allowed by updateSelector, but they don't need update"
+		}
+		return updateMeta{
+			flow:           ytv1.UpdateFlowStateless,
+			componentNames: execNodeNames,
 		}, ""
 	case ytv1.UpdateSelectorStatelessOnly:
 		if !statelessNeedUpdate {
 			return updateMeta{}, "Only stateless components update is allowed by updateSelector, but they don't need update"
 		}
 		return updateMeta{
-			selector:       ytv1.UpdateSelectorStatelessOnly,
+			flow:           ytv1.UpdateFlowStateless,
 			componentNames: statelessNames,
 		}, ""
 	default:
@@ -531,16 +545,16 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			return ctrl.Result{Requeue: true}, err
 
 		case componentManager.needUpdate() != nil:
-			meta, blockMsg := chooseUpdateSelector(ytsaurus.GetResource().Spec, componentManager.needUpdate())
+			meta, blockMsg := chooseUpdateFlow(ytsaurus.GetResource().Spec, componentManager.needUpdate())
 			if blockMsg != "" {
 				logger.Info(blockMsg)
 				return ctrl.Result{Requeue: true}, nil
 			}
 			logger.Info("Ytsaurus needs components update",
 				"components", meta.componentNames,
-				"selector", meta.selector,
+				"flow", meta.flow,
 			)
-			err = ytsaurus.SaveUpdatingClusterState(ctx, meta.selector, meta.componentNames)
+			err = ytsaurus.SaveUpdatingClusterState(ctx, meta.flow, meta.componentNames)
 			if err != nil {
 				return ctrl.Result{}, err
 			}
@@ -551,14 +565,14 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		var result *ctrl.Result
 		var err error
 
-		switch ytsaurus.GetUpdateSelector() {
-		case ytv1.UpdateSelectorEverything:
+		switch ytsaurus.GetUpdateFlow() {
+		case ytv1.UpdateFlowFull:
 			result, err = r.handleEverything(ctx, ytsaurus, componentManager)
-		case ytv1.UpdateSelectorStatelessOnly:
+		case ytv1.UpdateFlowStateless:
 			result, err = r.handleStateless(ctx, ytsaurus, componentManager)
-		case ytv1.UpdateSelectorMasterOnly:
+		case ytv1.UpdateFlowMaster:
 			result, err = r.handleMasterOnly(ctx, ytsaurus, componentManager)
-		case ytv1.UpdateSelectorTabletNodesOnly:
+		case ytv1.UpdateFlowTabletNodes:
 			result, err = r.handleTabletNodesOnly(ctx, ytsaurus, componentManager)
 		}
 
