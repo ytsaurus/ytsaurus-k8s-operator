@@ -1461,7 +1461,7 @@ _Appears in:_
 | `group` _string_ |  |  |  |
 
 
-#### UpdateSelector
+#### UpdateFlow
 
 _Underlying type:_ _string_
 
@@ -1471,6 +1471,18 @@ _Underlying type:_ _string_
 
 _Appears in:_
 - [UpdateStatus](#updatestatus)
+
+
+
+#### UpdateSelector
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
 - [YtsaurusSpec](#ytsaurusspec)
 
 
@@ -1503,7 +1515,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `state` _[UpdateState](#updatestate)_ |  | None |  |
 | `components` _string array_ |  |  |  |
-| `selector` _[UpdateSelector](#updateselector)_ |  |  |  |
+| `flow` _[UpdateFlow](#updateflow)_ |  |  |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
 | `tabletCellBundles` _[TabletCellBundleInfo](#tabletcellbundleinfo) array_ |  |  |  |
 | `masterMonitoringPaths` _string array_ |  |  |  |

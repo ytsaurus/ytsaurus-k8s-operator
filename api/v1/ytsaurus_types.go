@@ -643,11 +643,21 @@ const (
 	UpdateSelectorEverything UpdateSelector = "Everything"
 )
 
+type UpdateFlow string
+
+const (
+	UpdateFlowNone        UpdateFlow = ""
+	UpdateFlowStateless   UpdateFlow = "Stateless"
+	UpdateFlowMaster      UpdateFlow = "Master"
+	UpdateFlowTabletNodes UpdateFlow = "TabletNodes"
+	UpdateFlowFull        UpdateFlow = "Full"
+)
+
 type UpdateStatus struct {
 	//+kubebuilder:default:=None
 	State                 UpdateState            `json:"state,omitempty"`
 	Components            []string               `json:"components,omitempty"`
-	Selector              UpdateSelector         `json:"selector,omitempty"`
+	Flow                  UpdateFlow             `json:"flow,omitempty"`
 	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
 	TabletCellBundles     []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
 	MasterMonitoringPaths []string               `json:"masterMonitoringPaths,omitempty"`
