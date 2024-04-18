@@ -547,9 +547,9 @@ type YtsaurusSpec struct {
 	//+optional
 	EnableFullUpdate bool `json:"enableFullUpdate"`
 	//+optional
-	// UpdateStrategy is an experimental field. Behaviour may change.
-	// If UpdateStrategy is not empty EnableFullUpdate is ignored.
-	UpdateStrategy UpdateStrategy `json:"updateStrategy"`
+	// UpdateSelector is an experimental field. Behaviour may change.
+	// If UpdateSelector is not empty EnableFullUpdate is ignored.
+	UpdateSelector UpdateSelector `json:"updateSelector"`
 
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
@@ -622,22 +622,33 @@ type TabletCellBundleInfo struct {
 	TabletCellCount int    `yson:"tablet_cell_count,attr" json:"tabletCellCount"`
 }
 
-type UpdateStrategy string
+type UpdateSelector string
 
 const (
-	UpdateStrategyNone            UpdateStrategy = ""
-	UpdateStrategyBlocked         UpdateStrategy = "Blocked"
-	UpdateStrategyStatelessOnly   UpdateStrategy = "StatelessOnly"
-	UpdateStrategyMasterOnly      UpdateStrategy = "MasterOnly"
-	UpdateStrategyTabletNodesOnly UpdateStrategy = "TabletNodesOnly"
-	UpdateStrategyFull            UpdateStrategy = "Full"
+	UpdateSelectorNone            UpdateSelector = ""
+	UpdateSelectorNothing         UpdateSelector = "Nothing"
+	UpdateSelectorStatelessOnly   UpdateSelector = "StatelessOnly"
+	UpdateSelectorMasterOnly      UpdateSelector = "MasterOnly"
+	UpdateSelectorTabletNodesOnly UpdateSelector = "TabletNodesOnly"
+	UpdateSelectorExecNodesOnly   UpdateSelector = "ExecNodesOnly"
+	UpdateSelectorEverything      UpdateSelector = "Everything"
+)
+
+type UpdateFlow string
+
+const (
+	UpdateFlowNone        UpdateFlow = ""
+	UpdateFlowStateless   UpdateFlow = "Stateless"
+	UpdateFlowMaster      UpdateFlow = "Master"
+	UpdateFlowTabletNodes UpdateFlow = "TabletNodes"
+	UpdateFlowFull        UpdateFlow = "Full"
 )
 
 type UpdateStatus struct {
 	//+kubebuilder:default:=None
 	State                 UpdateState            `json:"state,omitempty"`
 	Components            []string               `json:"components,omitempty"`
-	Strategy              UpdateStrategy         `json:"updateStrategy,omitempty"`
+	Flow                  UpdateFlow             `json:"flow,omitempty"`
 	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
 	TabletCellBundles     []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
 	MasterMonitoringPaths []string               `json:"masterMonitoringPaths,omitempty"`

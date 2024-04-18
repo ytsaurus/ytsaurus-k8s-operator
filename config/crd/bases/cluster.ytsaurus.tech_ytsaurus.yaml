@@ -33433,8 +33433,8 @@ spec:
                 type: object
               uiImage:
                 type: string
-              updateStrategy:
-                description: UpdateStrategy is an experimental field. Behaviour may
+              updateSelector:
+                description: UpdateSelector is an experimental field. Behaviour may
                   change.
                 type: string
               useIpv4:
@@ -35887,6 +35887,8 @@ spec:
                       - type
                       type: object
                     type: array
+                  flow:
+                    type: string
                   masterMonitoringPaths:
                     items:
                       type: string
@@ -35906,8 +35908,6 @@ spec:
                       - tabletCellCount
                       type: object
                     type: array
-                  updateStrategy:
-                    type: string
                 type: object
             type: object
         type: object
