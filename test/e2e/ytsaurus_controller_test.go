@@ -633,25 +633,29 @@ func deployAndCheck(ytsaurus *ytv1.Ytsaurus, namespace string) {
 func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Context) {
 	return func(ctx context.Context) {
 		By("Creating a Ytsaurus resource")
-
 		ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
 		DeferCleanup(deleteYtsaurus, ytsaurus)
 		name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
 		deployAndCheck(ytsaurus, namespace)
 
 		By("Run cluster update")
-
+		podsBeforeUpdate := getComponentPods(ctx, namespace)
 		Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
 		ytsaurus.Spec.CoreImage = newImage
 		Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
 		EventuallyYtsaurus(ctx, name, reactionTimeout).Should(HaveClusterState(ytv1.ClusterStateUpdating))
 
 		By("Wait cluster update complete")
-
 		EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterState(ytv1.ClusterStateRunning))
 		g := ytconfig.NewGenerator(ytsaurus, "local")
 		ytClient := getYtClient(g, namespace)
 		checkClusterBaseViability(ytClient)
+
+		podsAfterFullUpdate := getComponentPods(ctx, namespace)
+		podDiff := diffPodsCreation(podsBeforeUpdate, podsAfterFullUpdate)
+		Expect(podDiff.created.IsEmpty()).To(BeTrue(), "unexpected pod diff created %v", podDiff.created)
+		Expect(podDiff.deleted.IsEmpty()).To(BeTrue(), "unexpected pod diff deleted %v", podDiff.deleted)
+		Expect(podDiff.recreated.Equal(NewStringSetFromMap(podsBeforeUpdate))).To(BeTrue(), "unexpected pod diff recreated %v", podDiff.recreated)
 	}
 }
 
