@@ -35663,6 +35663,8 @@ spec:
                     items:
                       type: string
                     type: array
+                  selector:
+                    type: string
                   state:
                     default: None
                     type: string
