@@ -319,6 +319,25 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				deployAndCheck(ytsaurus, namespace)
 				podsBeforeUpdate := getComponentPods(ctx, namespace)
 
+				By("Run cluster update with selector:ExecNodesOnly")
+				Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
+				ytsaurus.Spec.UpdateSelector = ytv1.UpdateSelectorExecNodesOnly
+				ytsaurus.Spec.Discovery.InstanceCount += 1
+				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+				EventuallyYtsaurus(ctx, name, reactionTimeout).Should(HaveClusterUpdatingComponents("ExecNode"))
+
+				By("Wait cluster update with selector:ExecNodesOnly complete")
+				EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterState(ytv1.ClusterStateRunning))
+				ytClient := createYtsaurusClient(ytsaurus, namespace)
+				checkClusterBaseViability(ytClient)
+
+				podsAfterEndUpdate := getComponentPods(ctx, namespace)
+				podDiff := diffPodsCreation(podsBeforeUpdate, podsAfterEndUpdate)
+				Expect(podDiff.created.IsEmpty()).To(BeTrue(), "unexpected pod diff created %v", podDiff.created)
+				Expect(podDiff.deleted.IsEmpty()).To(BeTrue(), "unexpected pod diff deleted %v", podDiff.deleted)
+				Expect(podDiff.recreated.Equal(NewStringSetFromItems("end-0"))).To(
+					BeTrue(), "unexpected pod diff recreated %v", podDiff.recreated)
+
 				By("Run cluster update with selector:TabletNodesOnly")
 				Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
 				ytsaurus.Spec.UpdateSelector = ytv1.UpdateSelectorTabletNodesOnly
@@ -328,11 +347,10 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 				By("Wait cluster update with selector:TabletNodesOnly complete")
 				EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterState(ytv1.ClusterStateRunning))
-				ytClient := createYtsaurusClient(ytsaurus, namespace)
 				checkClusterBaseViability(ytClient)
 
 				podsAfterTndUpdate := getComponentPods(ctx, namespace)
-				podDiff := diffPodsCreation(podsBeforeUpdate, podsAfterTndUpdate)
+				podDiff = diffPodsCreation(podsAfterEndUpdate, podsAfterTndUpdate)
 				Expect(podDiff.created.IsEmpty()).To(BeTrue(), "unexpected pod diff created %v", podDiff.created)
 				Expect(podDiff.deleted.IsEmpty()).To(BeTrue(), "unexpected pod diff deleted %v", podDiff.deleted)
 				Expect(podDiff.recreated.Equal(NewStringSetFromItems("tnd-0", "tnd-1", "tnd-2"))).To(
