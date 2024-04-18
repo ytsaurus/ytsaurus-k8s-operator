@@ -10,7 +10,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	"go.ytsaurus.tech/yt/go/mapreduce"
 	"go.ytsaurus.tech/yt/go/mapreduce/spec"
 	"go.ytsaurus.tech/yt/go/yt/ytrpc"
@@ -262,6 +261,123 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			"Should run and update Ytsaurus to the next major version",
 			Label("update"),
 			getSimpleUpdateScenario("test-major-update", ytv1.CoreImageNextVer),
+		)
+		It(
+			"Should be updated according to UpdateStrategy=Full",
+			func(ctx context.Context) {
+				namespace := "teststratfull"
+
+				By("Creating a Ytsaurus resource")
+				ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+				DeferCleanup(deleteYtsaurus, ytsaurus)
+				name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
+				deployAndCheck(ytsaurus, namespace)
+				podsBeforeUpdate := getComponentPods(ctx, namespace)
+
+				By("Run cluster update with strategy blocked")
+				Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
+				ytsaurus.Spec.UpdateStrategy = ytv1.UpdateStrategyBlocked
+				// We want change in all yson configs, new discovery instance will trigger that.
+				ytsaurus.Spec.Discovery.InstanceCount += 1
+				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+
+				By("Ensure cluster doesn't start updating for 5 seconds")
+				ConsistentlyYtsaurus(ctx, name, 5*time.Second).Should(HaveClusterState(ytv1.ClusterStateRunning))
+				podsAfterBlockedUpdate := getComponentPods(ctx, namespace)
+				Expect(podsBeforeUpdate).To(
+					Equal(podsAfterBlockedUpdate),
+					"pods shouldn't be recreated when update is blocked",
+				)
+
+				By("Update cluster update with strategy full")
+				Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
+				ytsaurus.Spec.UpdateStrategy = ytv1.UpdateStrategyFull
+				ytsaurus.Spec.Discovery.InstanceCount += 1
+				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+				EventuallyYtsaurus(ctx, name, reactionTimeout).Should(HaveClusterUpdatingComponents())
+
+				By("Wait cluster update with full update complete")
+				EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterState(ytv1.ClusterStateRunning))
+				podsAfterFullUpdate := getComponentPods(ctx, namespace)
+
+				podDiff := diffPodsCreation(podsBeforeUpdate, podsAfterFullUpdate)
+				Expect(podDiff.created.Equal(NewStringSetFromItems("ds-1", "ds-2"))).To(BeTrue(), "unexpected pod diff created %v", podDiff.created)
+				Expect(podDiff.deleted.IsEmpty()).To(BeTrue(), "unexpected pod diff deleted %v", podDiff.deleted)
+				Expect(podDiff.recreated.Equal(NewStringSetFromMap(podsBeforeUpdate))).To(BeTrue(), "unexpected pod diff recreated %v", podDiff.recreated)
+			},
+		)
+		It(
+			"Should be updated according to UpdateStrategy TabletNodesOnly MasterOnly StatelessOnly",
+			func(ctx context.Context) {
+				namespace := "teststratother"
+
+				By("Creating a Ytsaurus resource")
+				ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+				DeferCleanup(deleteYtsaurus, ytsaurus)
+				name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
+
+				deployAndCheck(ytsaurus, namespace)
+				podsBeforeUpdate := getComponentPods(ctx, namespace)
+
+				By("Run cluster update with strategy tablet nodes only")
+				Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
+				ytsaurus.Spec.UpdateStrategy = ytv1.UpdateStrategyTabletNodesOnly
+				ytsaurus.Spec.Discovery.InstanceCount += 1
+				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+				EventuallyYtsaurus(ctx, name, reactionTimeout).Should(HaveClusterUpdatingComponents("TabletNode"))
+
+				By("Wait cluster update with tablet nodes strategy complete")
+				EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterState(ytv1.ClusterStateRunning))
+				ytClient := createYtsaurusClient(ytsaurus, namespace)
+				checkClusterBaseViability(ytClient)
+
+				podsAfterTndUpdate := getComponentPods(ctx, namespace)
+				podDiff := diffPodsCreation(podsBeforeUpdate, podsAfterTndUpdate)
+				Expect(podDiff.created.IsEmpty()).To(BeTrue(), "unexpected pod diff created %v", podDiff.created)
+				Expect(podDiff.deleted.IsEmpty()).To(BeTrue(), "unexpected pod diff deleted %v", podDiff.deleted)
+				Expect(podDiff.recreated.Equal(NewStringSetFromItems("tnd-0", "tnd-1", "tnd-2"))).To(
+					BeTrue(), "unexpected pod diff recreated %v", podDiff.recreated)
+
+				By("Run cluster update with strategy master only")
+				Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
+				ytsaurus.Spec.UpdateStrategy = ytv1.UpdateStrategyMasterOnly
+				ytsaurus.Spec.Discovery.InstanceCount += 1
+				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+				EventuallyYtsaurus(ctx, name, reactionTimeout).Should(HaveClusterUpdatingComponents("Master"))
+
+				By("Wait cluster update with master only complete")
+				EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterState(ytv1.ClusterStateRunning))
+				checkClusterBaseViability(ytClient)
+				podsAfterMasterUpdate := getComponentPods(ctx, namespace)
+				podDiff = diffPodsCreation(podsAfterTndUpdate, podsAfterMasterUpdate)
+				Expect(podDiff.created.IsEmpty()).To(BeTrue(), "unexpected pod diff created %v", podDiff.created)
+				Expect(podDiff.deleted.IsEmpty()).To(BeTrue(), "unexpected pod diff deleted %v", podDiff.deleted)
+				Expect(podDiff.recreated.Equal(NewStringSetFromItems("ms-0"))).To(
+					BeTrue(), "unexpected pod diff recreated %v", podDiff.recreated)
+
+				By("Run cluster update with strategy stateless only")
+				Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
+				ytsaurus.Spec.UpdateStrategy = ytv1.UpdateStrategyStatelessOnly
+				ytsaurus.Spec.Discovery.InstanceCount += 1
+				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+				EventuallyYtsaurus(ctx, name, reactionTimeout).Should(
+					HaveClusterUpdatingComponents("Discovery", "DataNode", "HttpProxy", "ExecNode", "Scheduler", "ControllerAgent"),
+				)
+				By("Wait cluster update with stateless strategy complete")
+				EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterState(ytv1.ClusterStateRunning))
+				checkClusterBaseViability(ytClient)
+				podsAfterStatelessUpdate := getComponentPods(ctx, namespace)
+				podDiff = diffPodsCreation(podsAfterMasterUpdate, podsAfterStatelessUpdate)
+				// Only with StatelessOnly strategy those pending ds pods should be finally created.
+				Expect(podDiff.created.Equal(NewStringSetFromItems("ds-1", "ds-2", "ds-3"))).To(
+					BeTrue(), "unexpected pod diff created %v", podDiff.created)
+				Expect(podDiff.deleted.IsEmpty()).To(BeTrue(), "unexpected pod diff deleted %v", podDiff.deleted)
+				statelessUpdatedPods := NewStringSetFromMap(podsAfterStatelessUpdate).Difference(
+					NewStringSetFromItems("ms-0", "tnd-0", "tnd-1", "tnd-2", "ds-1", "ds-2", "ds-3"))
+				Expect(podDiff.recreated.Equal(
+					statelessUpdatedPods),
+				).To(BeTrue(), "unexpected pod diff recreated %v", podDiff.recreated)
+			},
 		)
 
 		// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
@@ -600,7 +716,6 @@ func checkClusterBaseViability(ytClient yt.Client) {
 	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
 
 	By("Check that tablet cell bundles are in `good` health")
-
 	Eventually(func() bool {
 		notGoodBundles, err := components.GetNotGoodTabletCellBundles(ctx, ytClient)
 		if err != nil {
@@ -624,12 +739,16 @@ func checkClusterViability(ytClient yt.Client) {
 }
 
 func deployAndCheck(ytsaurus *ytv1.Ytsaurus, namespace string) {
-	g := ytconfig.NewGenerator(ytsaurus, "local")
 	runYtsaurus(ytsaurus)
 
-	By("Creating ytsaurus client")
-	ytClient := getYtClient(g, namespace)
+	ytClient := createYtsaurusClient(ytsaurus, namespace)
 	checkClusterViability(ytClient)
+}
+
+func createYtsaurusClient(ytsaurus *ytv1.Ytsaurus, namespace string) yt.Client {
+	By("Creating ytsaurus client")
+	g := ytconfig.NewGenerator(ytsaurus, "local")
+	return getYtClient(g, namespace)
 }
 
 func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Context) {
