@@ -146,8 +146,8 @@ func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 			changed = true
 		}
 
-		if prevStatus.UpdateStatus.Strategy != newStatus.UpdateStatus.Strategy {
-			log.Info("UpdateStatus", "strategy", newStatus.UpdateStatus.Strategy)
+		if prevStatus.UpdateStatus.Flow != newStatus.UpdateStatus.Flow {
+			log.Info("UpdateStatus", "flow", newStatus.UpdateStatus.Flow)
 			changed = true
 		}
 
