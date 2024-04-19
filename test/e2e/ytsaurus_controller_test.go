@@ -307,9 +307,9 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			},
 		)
 		It(
-			"Should be updated according to UpdateSelector=TabletNodesOnly,MasterOnly,ExecNodesOnly,StatelessOnly",
+			"Should be updated according to UpdateSelector=TabletNodesOnly,ExecNodesOnly",
 			func(ctx context.Context) {
-				namespace := "testslctother"
+				namespace := "testslctnodes"
 
 				By("Creating a Ytsaurus resource")
 				ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
@@ -355,6 +355,20 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				Expect(podDiff.deleted.IsEmpty()).To(BeTrue(), "unexpected pod diff deleted %v", podDiff.deleted)
 				Expect(podDiff.recreated.Equal(NewStringSetFromItems("tnd-0", "tnd-1", "tnd-2"))).To(
 					BeTrue(), "unexpected pod diff recreated %v", podDiff.recreated)
+			},
+		)
+		It(
+			"Should be updated according to UpdateSelector=MasterOnly,StatelessOnly",
+			func(ctx context.Context) {
+				namespace := "testslctother"
+
+				By("Creating a Ytsaurus resource")
+				ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+				DeferCleanup(deleteYtsaurus, ytsaurus)
+				name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
+
+				deployAndCheck(ytsaurus, namespace)
+				podsBeforeUpdate := getComponentPods(ctx, namespace)
 
 				By("Run cluster update with selector:MasterOnly")
 				Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
@@ -365,9 +379,10 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 				By("Wait cluster update with selector:MasterOnly complete")
 				EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterState(ytv1.ClusterStateRunning))
+				ytClient := createYtsaurusClient(ytsaurus, namespace)
 				checkClusterBaseViability(ytClient)
 				podsAfterMasterUpdate := getComponentPods(ctx, namespace)
-				podDiff = diffPodsCreation(podsAfterTndUpdate, podsAfterMasterUpdate)
+				podDiff := diffPodsCreation(podsBeforeUpdate, podsAfterMasterUpdate)
 				Expect(podDiff.created.IsEmpty()).To(BeTrue(), "unexpected pod diff created %v", podDiff.created)
 				Expect(podDiff.deleted.IsEmpty()).To(BeTrue(), "unexpected pod diff deleted %v", podDiff.deleted)
 				Expect(podDiff.recreated.Equal(NewStringSetFromItems("ms-0"))).To(
@@ -387,17 +402,16 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				podsAfterStatelessUpdate := getComponentPods(ctx, namespace)
 				podDiff = diffPodsCreation(podsAfterMasterUpdate, podsAfterStatelessUpdate)
 				// Only with StatelessOnly strategy those pending ds pods should be finally created.
-				Expect(podDiff.created.Equal(NewStringSetFromItems("ds-1", "ds-2", "ds-3", "ds-4"))).To(
+				Expect(podDiff.created.Equal(NewStringSetFromItems("ds-1", "ds-2"))).To(
 					BeTrue(), "unexpected pod diff created %v", podDiff.created)
 				Expect(podDiff.deleted.IsEmpty()).To(BeTrue(), "unexpected pod diff deleted %v", podDiff.deleted)
 				statelessUpdatedPods := NewStringSetFromMap(podsAfterStatelessUpdate).Difference(
-					NewStringSetFromItems("ms-0", "tnd-0", "tnd-1", "tnd-2", "ds-1", "ds-2", "ds-3", "ds-4"))
+					NewStringSetFromItems("ms-0", "tnd-0", "tnd-1", "tnd-2", "ds-1", "ds-2"))
 				Expect(podDiff.recreated.Equal(
 					statelessUpdatedPods),
 				).To(BeTrue(), "unexpected pod diff recreated %v", podDiff.recreated)
 			},
 		)
-
 		// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
 		It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", func(ctx context.Context) {
 			namespace := "test3"
