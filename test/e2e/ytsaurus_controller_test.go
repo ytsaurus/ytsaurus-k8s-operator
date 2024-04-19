@@ -387,11 +387,11 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				podsAfterStatelessUpdate := getComponentPods(ctx, namespace)
 				podDiff = diffPodsCreation(podsAfterMasterUpdate, podsAfterStatelessUpdate)
 				// Only with StatelessOnly strategy those pending ds pods should be finally created.
-				Expect(podDiff.created.Equal(NewStringSetFromItems("ds-1", "ds-2", "ds-3"))).To(
+				Expect(podDiff.created.Equal(NewStringSetFromItems("ds-1", "ds-2", "ds-3", "ds-4"))).To(
 					BeTrue(), "unexpected pod diff created %v", podDiff.created)
 				Expect(podDiff.deleted.IsEmpty()).To(BeTrue(), "unexpected pod diff deleted %v", podDiff.deleted)
 				statelessUpdatedPods := NewStringSetFromMap(podsAfterStatelessUpdate).Difference(
-					NewStringSetFromItems("ms-0", "tnd-0", "tnd-1", "tnd-2", "ds-1", "ds-2", "ds-3"))
+					NewStringSetFromItems("ms-0", "tnd-0", "tnd-1", "tnd-2", "ds-1", "ds-2", "ds-3", "ds-4"))
 				Expect(podDiff.recreated.Equal(
 					statelessUpdatedPods),
 				).To(BeTrue(), "unexpected pod diff recreated %v", podDiff.recreated)
