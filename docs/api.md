@@ -1461,6 +1461,32 @@ _Appears in:_
 | `group` _string_ |  |  |  |
 
 
+#### UpdateFlow
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [UpdateStatus](#updatestatus)
+
+
+
+#### UpdateSelector
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [YtsaurusSpec](#ytsaurusspec)
+
+
+
 #### UpdateState
 
 _Underlying type:_ _string_
@@ -1489,6 +1515,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `state` _[UpdateState](#updatestate)_ |  | None |  |
 | `components` _string array_ |  |  |  |
+| `flow` _[UpdateFlow](#updateflow)_ | Flow is an internal field that is needed to persist the chosen flow until the end of an update.<br />Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage<br />executes steps corresponding to that update flow. |  |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
 | `tabletCellBundles` _[TabletCellBundleInfo](#tabletcellbundleinfo) array_ |  |  |  |
 | `masterMonitoringPaths` _string array_ |  |  |  |
@@ -1577,6 +1604,7 @@ _Appears in:_
 | `oauthService` _[OauthServiceSpec](#oauthservicespec)_ |  |  |  |
 | `isManaged` _boolean_ |  | true |  |
 | `enableFullUpdate` _boolean_ |  | true |  |
+| `updateSelector` _[UpdateSelector](#updateselector)_ | UpdateSelector is an experimental field. Behaviour may change.<br />If UpdateSelector is not empty EnableFullUpdate is ignored. |  |  |
 | `bootstrap` _[BootstrapSpec](#bootstrapspec)_ |  |  |  |
 | `discovery` _[DiscoverySpec](#discoveryspec)_ |  |  |  |
 | `primaryMasters` _[MastersSpec](#mastersspec)_ |  |  |  |

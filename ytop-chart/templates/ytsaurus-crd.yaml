@@ -33220,6 +33220,10 @@ spec:
                 type: object
               uiImage:
                 type: string
+              updateSelector:
+                description: UpdateSelector is an experimental field. Behaviour may
+                  change.
+                type: string
               useIpv4:
                 default: false
                 type: boolean
@@ -35651,6 +35655,10 @@ spec:
                       - type
                       type: object
                     type: array
+                  flow:
+                    description: Flow is an internal field that is needed to persist
+                      the chosen flow until the en
+                    type: string
                   masterMonitoringPaths:
                     items:
                       type: string
