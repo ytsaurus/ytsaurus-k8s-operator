@@ -53,6 +53,13 @@ func NewRPCProxy(
 		func() ([]byte, error) {
 			return cfgen.GetRPCProxyConfig(spec)
 		},
+		WithComponentContainerPorts([]corev1.ContainerPort{
+			{
+				Name:          "rpc-proxy",
+				ContainerPort: consts.RPCProxyRPCPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		}),
 	)
 
 	var balancingService *resources.RPCService = nil

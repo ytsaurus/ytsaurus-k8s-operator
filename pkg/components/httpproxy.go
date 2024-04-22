@@ -56,6 +56,19 @@ func NewHTTPProxy(
 		func() ([]byte, error) {
 			return cfgen.GetHTTPProxyConfig(spec)
 		},
+		WithComponentContainerPorts([]corev1.ContainerPort{
+			{
+				Name:          "http-proxy-http",
+				ContainerPort: consts.HTTPProxyHTTPPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+			{
+				Name:          "http-proxy-https",
+				ContainerPort: consts.HTTPProxyHTTPSPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		}),
+		WithReadinessProbeHTTPPath("/ping"),
 	)
 
 	var httpsSecret *resources.TLSSecret

@@ -55,6 +55,9 @@ type serverImpl struct {
 	configHelper      *ConfigHelper
 
 	builtStatefulSet *appsv1.StatefulSet
+
+	readinessProbeHTTPPath  string
+	componentContainerPorts []corev1.ContainerPort
 }
 
 func newServer(
@@ -63,6 +66,7 @@ func newServer(
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
 	generator ytconfig.YsonGeneratorFunc,
+	options ...Option,
 ) server {
 	proxy := ytsaurus.APIProxy()
 	commonSpec := ytsaurus.GetCommonSpec()
@@ -73,6 +77,7 @@ func newServer(
 		instanceSpec,
 		binaryPath, configFileName, statefulSetName, serviceName,
 		generator,
+		options...,
 	)
 }
 
@@ -83,6 +88,7 @@ func newServerConfigured(
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
 	generator ytconfig.YsonGeneratorFunc,
+	options ...Option,
 ) server {
 	image := commonSpec.CoreImage
 	if instanceSpec.Image != nil {
@@ -107,7 +113,7 @@ func newServerConfigured(
 			consts.BusSecretMountPoint)
 	}
 
-	return &serverImpl{
+	srv := &serverImpl{
 		labeller:     l,
 		image:        image,
 		proxy:        proxy,
@@ -143,7 +149,22 @@ func newServerConfigured(
 					Fmt: ytconfig.ConfigFormatYson,
 				},
 			}),
+
+		readinessProbeHTTPPath: readinessProbeHTTPPath,
+		componentContainerPorts: []corev1.ContainerPort{
+			{
+				Name:          serverAPIPortName,
+				ContainerPort: *instanceSpec.MonitoringPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		},
 	}
+
+	for _, opt := range options {
+		opt.apply(srv)
+	}
+
+	return srv
 }
 
 func (s *serverImpl) Fetch(ctx context.Context) error {
@@ -272,19 +293,13 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Name:         consts.YTServerContainerName,
 				Command:      command,
 				VolumeMounts: volumeMounts,
-				Ports: []corev1.ContainerPort{
-					{
-						Name:          serverAPIPortName,
-						ContainerPort: *s.instanceSpec.MonitoringPort,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
-				Resources: s.instanceSpec.Resources,
+				Ports:        s.componentContainerPorts,
+				Resources:    s.instanceSpec.Resources,
 				ReadinessProbe: &corev1.Probe{
 					ProbeHandler: corev1.ProbeHandler{
 						HTTPGet: &corev1.HTTPGetAction{
 							Port: intstr.FromString(serverAPIPortName),
-							Path: readinessProbeHTTPPath,
+							Path: s.readinessProbeHTTPPath,
 						},
 					},
 					InitialDelaySeconds: readinessProbeParams.InitialDelaySeconds,
