@@ -255,10 +255,12 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 	Context("When setting up the test environment", func() {
 		It(
 			"Should run and update Ytsaurus within same major version",
+			Label("update"),
 			getSimpleUpdateScenario("test-minor-update", ytv1.CoreImageSecond),
 		)
 		It(
 			"Should run and update Ytsaurus to the next major version",
+			Label("update"),
 			getSimpleUpdateScenario("test-major-update", ytv1.CoreImageNextVer),
 		)
 
