@@ -56,6 +56,7 @@ GINKGO_FLAGS += --procs="$(GINKGO_PROCS)"
 GINKGO_FLAGS += --timeout=1h
 GINKGO_FLAGS += --poll-progress-after=5m
 GINKGO_FLAGS += --poll-progress-interval=1m
+GINKGO_FLAGS += --label-filter="$(GINKGO_LABEL_FILTER)"
 
 ##@ General
 

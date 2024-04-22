@@ -1,5 +1,9 @@
 on:
   workflow_call:
+    inputs:
+      e2e_filter:
+        required: false
+        type: string
 
 jobs:
   check:
@@ -34,6 +38,8 @@ jobs:
 
       - name: Run e2e tests
         shell: bash
+        env:
+          GINKGO_LABEL_FILTER: ${{ inputs.e2e_filter }}
         run: |
           make kind-create-cluster
           make helm-kind-install

@@ -5,5 +5,7 @@ on:
 
 jobs:
   check:
-    name: Run e2e tests
+    name: Run e2e tests for non-update scenarios
     uses: ./.github/workflows/subflow_run_e2e_tests.yaml
+    with:
+      e2e_filter: "!update"
