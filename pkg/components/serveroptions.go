@@ -30,9 +30,7 @@ type ComponentContainerPorts struct {
 }
 
 func (c ComponentContainerPorts) apply(srv *serverImpl) {
-	for _, port := range c.ports {
-		srv.componentContainerPorts = append(srv.componentContainerPorts, port)
-	}
+	srv.componentContainerPorts = append(srv.componentContainerPorts, c.ports...)
 }
 
 func WithComponentContainerPorts(ports []corev1.ContainerPort) Option {
