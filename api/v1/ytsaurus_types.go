@@ -625,13 +625,22 @@ type TabletCellBundleInfo struct {
 type UpdateSelector string
 
 const (
-	UpdateSelectorNone            UpdateSelector = ""
-	UpdateSelectorNothing         UpdateSelector = "Nothing"
-	UpdateSelectorStatelessOnly   UpdateSelector = "StatelessOnly"
-	UpdateSelectorMasterOnly      UpdateSelector = "MasterOnly"
+	// UpdateSelectorUnspecified means that selector is disabled and would be ignored completely.
+	UpdateSelectorUnspecified UpdateSelector = ""
+	// UpdateSelectorNothing means that no component could be updated.
+	UpdateSelectorNothing UpdateSelector = "Nothing"
+	// UpdateSelectorStatelessOnly means that only stateless components (everything but master and tablet nodes)
+	// could be updated.
+	UpdateSelectorStatelessOnly UpdateSelector = "StatelessOnly"
+	// UpdateSelectorMasterOnly means that only master could be updated.
+	UpdateSelectorMasterOnly UpdateSelector = "MasterOnly"
+	// UpdateSelectorTabletNodesOnly means that only tablet nodes could be updated
 	UpdateSelectorTabletNodesOnly UpdateSelector = "TabletNodesOnly"
-	UpdateSelectorExecNodesOnly   UpdateSelector = "ExecNodesOnly"
-	UpdateSelectorEverything      UpdateSelector = "Everything"
+	// UpdateSelectorExecNodesOnly means that only tablet nodes could be updated
+	UpdateSelectorExecNodesOnly UpdateSelector = "ExecNodesOnly"
+	// UpdateSelectorEverything means that all components could be updated.
+	// With this setting and if master or tablet nodes need update all the components would be updated.
+	UpdateSelectorEverything UpdateSelector = "Everything"
 )
 
 type UpdateFlow string
@@ -646,8 +655,11 @@ const (
 
 type UpdateStatus struct {
 	//+kubebuilder:default:=None
-	State                 UpdateState            `json:"state,omitempty"`
-	Components            []string               `json:"components,omitempty"`
+	State      UpdateState `json:"state,omitempty"`
+	Components []string    `json:"components,omitempty"`
+	// Flow is an internal field that is needed to persist the chosen flow until the end of an update.
+	// Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage
+	// executes steps corresponding to that update flow.
 	Flow                  UpdateFlow             `json:"flow,omitempty"`
 	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
 	TabletCellBundles     []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
