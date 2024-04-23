@@ -263,7 +263,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			getSimpleUpdateScenario("test-major-update", ytv1.CoreImageNextVer),
 		)
 		It(
-			"Should be updated according to UpdateSelector=Everything", func(ctx context.Context) {
+			"Should be updated according to UpdateSelector=Everything", Label("update"), func(ctx context.Context) {
 				namespace := "testslcteverything"
 
 				By("Creating a Ytsaurus resource")
@@ -306,7 +306,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			},
 		)
 		It(
-			"Should be updated according to UpdateSelector=TabletNodesOnly,ExecNodesOnly", func(ctx context.Context) {
+			"Should be updated according to UpdateSelector=TabletNodesOnly,ExecNodesOnly", Label("update"), func(ctx context.Context) {
 				namespace := "testslctnodes"
 
 				By("Creating a Ytsaurus resource")
@@ -356,7 +356,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			},
 		)
 		It(
-			"Should be updated according to UpdateSelector=MasterOnly,StatelessOnly", func(ctx context.Context) {
+			"Should be updated according to UpdateSelector=MasterOnly,StatelessOnly", Label("update"), func(ctx context.Context) {
 				namespace := "testslctother"
 
 				By("Creating a Ytsaurus resource")
