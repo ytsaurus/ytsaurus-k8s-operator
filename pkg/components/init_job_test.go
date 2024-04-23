@@ -84,7 +84,7 @@ func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
 		ptr.T(labeller.NewSingletonComponentLabeller(&metav1.ObjectMeta{
 			Name:      k8sName,
 			Namespace: ytsaurus.GetResource().Namespace,
-		}, "ms", k8sName, nil)),
+		}, "ms", "ms", nil)),
 		ytsaurus.APIProxy(),
 		ytsaurus,
 		[]corev1.LocalObjectReference{},
