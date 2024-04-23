@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"go.ytsaurus.tech/library/go/ptr"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -75,14 +76,15 @@ func syncJobUntilReady(t *testing.T, job *InitJob) {
 func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
 	k8sName := "dummy-name"
 	return NewInitJob(
-		&labeller.Labeller{
-			ObjectMeta: &metav1.ObjectMeta{
-				Name:      k8sName,
-				Namespace: ytsaurus.GetResource().Namespace,
-			},
-			ComponentLabel: "ms",
-			ComponentName:  k8sName,
-		},
+		// &labeller.Labeller{
+		//	ObjectMeta: ,
+		//	ComponentLabel: "ms",
+		//	ComponentName:  k8sName,
+		// },
+		ptr.T(labeller.NewSingletonComponentLabeller(&metav1.ObjectMeta{
+			Name:      k8sName,
+			Namespace: ytsaurus.GetResource().Namespace,
+		}, "ms", k8sName, nil)),
 		ytsaurus.APIProxy(),
 		ytsaurus,
 		[]corev1.LocalObjectReference{},

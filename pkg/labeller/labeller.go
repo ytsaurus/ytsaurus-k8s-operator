@@ -144,16 +144,23 @@ func (l *Labeller) GetListOptions() []client.ListOption {
 }
 
 func (l *Labeller) GetMetaLabelMap(isInitJob bool) map[string]string {
-	instanceName := l.objectsNamePrefixBase
-	if l.instanceName != "" {
-		instanceName = l.instanceName
-	}
+	// instanceName := l.objectsNamePrefixBase
+	// if l.instanceName != "" {
+	// 	instanceName = l.instanceName
+	// }
 
+	// return map[string]string{
+	// 	"app.kubernetes.io/name":       "Ytsaurus",
+	// 	"app.kubernetes.io/component":  l.objectsNamePrefixBase,
+	// 	"app.kubernetes.io/instance":   instanceName,
+	//	"app.kubernetes.io/part-of":    l.ObjectMeta.Name,
+	//	"app.kubernetes.io/managed-by": "Ytsaurus-k8s-operator",
+	//	consts.YTComponentLabelName:    l.GetYTLabelValue(isInitJob),
+	// }
 	return map[string]string{
 		"app.kubernetes.io/name":       "Ytsaurus",
-		"app.kubernetes.io/component":  l.objectsNamePrefixBase,
-		"app.kubernetes.io/instance":   instanceName,
-		"app.kubernetes.io/part-of":    l.ObjectMeta.Name,
+		"app.kubernetes.io/instance":   l.ObjectMeta.Name,
+		"app.kubernetes.io/component":  l.ComponentObjectsNamePrefix,
 		"app.kubernetes.io/managed-by": "Ytsaurus-k8s-operator",
 		consts.YTComponentLabelName:    l.GetYTLabelValue(isInitJob),
 	}
