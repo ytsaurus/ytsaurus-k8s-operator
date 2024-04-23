@@ -20,7 +20,6 @@ import (
 )
 
 const (
-	serverAPIPortName      = "http"
 	readinessProbeHTTPPath = "/orchid/service"
 )
 
@@ -56,8 +55,10 @@ type serverImpl struct {
 
 	builtStatefulSet *appsv1.StatefulSet
 
-	readinessProbeHTTPPath  string
 	componentContainerPorts []corev1.ContainerPort
+
+	readinessProbePort     intstr.IntOrString
+	readinessProbeHTTPPath string
 }
 
 func newServer(
@@ -150,14 +151,16 @@ func newServerConfigured(
 				},
 			}),
 
-		readinessProbeHTTPPath: readinessProbeHTTPPath,
 		componentContainerPorts: []corev1.ContainerPort{
 			{
-				Name:          serverAPIPortName,
+				Name:          consts.YTMonitoringContainerPortName,
 				ContainerPort: *instanceSpec.MonitoringPort,
 				Protocol:      corev1.ProtocolTCP,
 			},
 		},
+
+		readinessProbePort:     intstr.FromString(consts.YTMonitoringContainerPortName),
+		readinessProbeHTTPPath: readinessProbeHTTPPath,
 	}
 
 	for _, opt := range options {
@@ -298,7 +301,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				ReadinessProbe: &corev1.Probe{
 					ProbeHandler: corev1.ProbeHandler{
 						HTTPGet: &corev1.HTTPGetAction{
-							Port: intstr.FromString(serverAPIPortName),
+							Port: s.readinessProbePort,
 							Path: s.readinessProbeHTTPPath,
 						},
 					},

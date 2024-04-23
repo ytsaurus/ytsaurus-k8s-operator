@@ -1,26 +1,37 @@
 package components
 
-import corev1 "k8s.io/api/core/v1"
+import (
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+)
 
 type Option interface {
 	apply(srv *serverImpl)
 }
 
 var (
-	_ Option = &ReadinessProbeHTTPPath{}
+	_ Option = &CustomReadinessProbeEndpoint{}
 	_ Option = &ComponentContainerPorts{}
 )
 
-type ReadinessProbeHTTPPath struct {
-	path string
+type CustomReadinessProbeEndpoint struct {
+	port *intstr.IntOrString
+	path *string
 }
 
-func (r ReadinessProbeHTTPPath) apply(srv *serverImpl) {
-	srv.readinessProbeHTTPPath = r.path
+func (c CustomReadinessProbeEndpoint) apply(srv *serverImpl) {
+	if c.port != nil {
+		srv.readinessProbePort = *c.port
+	}
+
+	if c.path != nil {
+		srv.readinessProbeHTTPPath = *c.path
+	}
 }
 
-func WithReadinessProbeHTTPPath(path string) Option {
-	return ReadinessProbeHTTPPath{
+func WithCustomReadinessProbeEndpoint(port *intstr.IntOrString, path *string) Option {
+	return CustomReadinessProbeEndpoint{
+		port: port,
 		path: path,
 	}
 }

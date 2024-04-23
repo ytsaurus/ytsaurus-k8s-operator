@@ -55,7 +55,7 @@ func NewRPCProxy(
 		},
 		WithComponentContainerPorts([]corev1.ContainerPort{
 			{
-				Name:          "rpc-proxy",
+				Name:          "rpc",
 				ContainerPort: consts.RPCProxyRPCPort,
 				Protocol:      corev1.ProtocolTCP,
 			},

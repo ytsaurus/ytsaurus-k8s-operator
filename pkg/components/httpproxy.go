@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"go.ytsaurus.tech/library/go/ptr"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -58,17 +59,17 @@ func NewHTTPProxy(
 		},
 		WithComponentContainerPorts([]corev1.ContainerPort{
 			{
-				Name:          "http-proxy-http",
+				Name:          "http",
 				ContainerPort: consts.HTTPProxyHTTPPort,
 				Protocol:      corev1.ProtocolTCP,
 			},
 			{
-				Name:          "http-proxy-https",
+				Name:          "https",
 				ContainerPort: consts.HTTPProxyHTTPSPort,
 				Protocol:      corev1.ProtocolTCP,
 			},
 		}),
-		WithReadinessProbeHTTPPath("/ping"),
+		WithCustomReadinessProbeEndpoint(ptr.T(intstr.FromInt32(consts.HTTPProxyHTTPPort)), ptr.T("/ping")),
 	)
 
 	var httpsSecret *resources.TLSSecret
