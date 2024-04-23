@@ -500,7 +500,6 @@ func chooseUpdateFlow(spec ytv1.YtsaurusSpec, needUpdate []components.Component)
 			componentNames: statelessNames,
 		}, ""
 	default:
-		// TODO: just validate it in hook
 		return updateMeta{}, fmt.Sprintf("Unexpected update selector %s", configuredSelector)
 	}
 }
