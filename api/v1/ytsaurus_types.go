@@ -546,8 +546,8 @@ type YtsaurusSpec struct {
 	//+kubebuilder:default:=true
 	//+optional
 	EnableFullUpdate bool `json:"enableFullUpdate"`
-	//+kubebuilder:validation:Enum=Nothing;StatelessOnly;MasterOnly;TabletNodesOnly;ExecNodesOnly;Everything
 	//+optional
+	//+kubebuilder:validation:Enum={"","Nothing","StatelessOnly","MasterOnly","TabletNodesOnly","ExecNodesOnly","Everything"}
 	// UpdateSelector is an experimental field. Behaviour may change.
 	// If UpdateSelector is not empty EnableFullUpdate is ignored.
 	UpdateSelector UpdateSelector `json:"updateSelector"`

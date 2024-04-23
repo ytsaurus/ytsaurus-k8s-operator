@@ -33437,6 +33437,7 @@ spec:
                 description: UpdateSelector is an experimental field. Behaviour may
                   change.
                 enum:
+                - ""
                 - Nothing
                 - StatelessOnly
                 - MasterOnly
