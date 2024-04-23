@@ -33223,6 +33223,13 @@ spec:
               updateSelector:
                 description: UpdateSelector is an experimental field. Behaviour may
                   change.
+                enum:
+                - Nothing
+                - StatelessOnly
+                - MasterOnly
+                - TabletNodesOnly
+                - ExecNodesOnly
+                - Everything
                 type: string
               useIpv4:
                 default: false

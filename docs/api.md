@@ -1604,7 +1604,7 @@ _Appears in:_
 | `oauthService` _[OauthServiceSpec](#oauthservicespec)_ |  |  |  |
 | `isManaged` _boolean_ |  | true |  |
 | `enableFullUpdate` _boolean_ |  | true |  |
-| `updateSelector` _[UpdateSelector](#updateselector)_ | UpdateSelector is an experimental field. Behaviour may change.<br />If UpdateSelector is not empty EnableFullUpdate is ignored. |  |  |
+| `updateSelector` _[UpdateSelector](#updateselector)_ | UpdateSelector is an experimental field. Behaviour may change.<br />If UpdateSelector is not empty EnableFullUpdate is ignored. |  | Enum: [Nothing StatelessOnly MasterOnly TabletNodesOnly ExecNodesOnly Everything] <br /> |
 | `bootstrap` _[BootstrapSpec](#bootstrapspec)_ |  |  |  |
 | `discovery` _[DiscoverySpec](#discoveryspec)_ |  |  |  |
 | `primaryMasters` _[MastersSpec](#mastersspec)_ |  |  |  |
