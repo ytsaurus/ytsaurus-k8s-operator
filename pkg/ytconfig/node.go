@@ -26,12 +26,13 @@ const (
 )
 
 type StoreLocation struct {
-	Path                   string `yson:"path"`
-	MediumName             string `yson:"medium_name"`
-	Quota                  int64  `yson:"quota,omitempty"`
-	HighWatermark          int64  `yson:"high_watermark,omitempty"`
-	LowWatermark           int64  `yson:"low_watermark,omitempty"`
-	DisableWritesWatermark int64  `yson:"disable_writes_watermark,omitempty"`
+	Path                   string    `yson:"path"`
+	IOEngine               *IOEngine `yson:"io_config,omitempty"`
+	MediumName             string    `yson:"medium_name"`
+	Quota                  int64     `yson:"quota,omitempty"`
+	HighWatermark          int64     `yson:"high_watermark,omitempty"`
+	LowWatermark           int64     `yson:"low_watermark,omitempty"`
+	DisableWritesWatermark int64     `yson:"disable_writes_watermark,omitempty"`
 }
 
 type ResourceLimits struct {
@@ -40,20 +41,22 @@ type ResourceLimits struct {
 	NodeDedicatedCpu *float32 `yson:"node_dedicated_cpu,omitempty"`
 }
 
-type DiskLocation struct {
-	Path string `yson:"path"`
+type CacheLocation struct {
+	Path     string    `yson:"path"`
+	IOEngine *IOEngine `yson:"io_config,omitempty"`
 }
 
 type SlotLocation struct {
 	Path               string `yson:"path"`
-	DiskQuota          *int64 `yson:"disk_quota,omitempty"`
-	DiskUsageWatermark int64  `yson:"disk_usage_watermark,omitempty"`
 	MediumName         string `yson:"medium_name"`
+	DiskQuota          *int64 `yson:"disk_quota,omitempty"`
+	DiskUsageWatermark *int64 `yson:"disk_usage_watermark,omitempty"`
+	EnableDiskQuota    *bool  `yson:"enable_disk_quota,omitempty"`
 }
 
 type DataNode struct {
 	StoreLocations []StoreLocation `yson:"store_locations"`
-	CacheLocations []DiskLocation  `yson:"cache_locations"`
+	CacheLocations []CacheLocation `yson:"cache_locations"`
 	BlockCache     BlockCache      `yson:"block_cache"`
 	BlocksExtCache Cache           `yson:"blocks_ext_cache"`
 	ChunkMetaCache Cache           `yson:"chunk_meta_cache"`
@@ -132,8 +135,9 @@ type JobResourceManager struct {
 }
 
 type JobProxy struct {
-	JobProxyAuthenticationManager Auth    `yson:"job_proxy_authentication_manager"`
-	JobProxyLogging               Logging `yson:"job_proxy_logging"`
+	JobProxyAuthenticationManager  Auth    `yson:"job_proxy_authentication_manager"`
+	JobProxyLogging                Logging `yson:"job_proxy_logging"`
+	ForwardAllEnvironmentVariables *bool   `yson:"forward_all_environment_variables,omitempty"`
 }
 
 type ExecNode struct {
@@ -142,9 +146,10 @@ type ExecNode struct {
 	JobController JobController `yson:"job_controller"`
 	JobProxy      JobProxy      `yson:"job_proxy"`
 
-	JobProxyAuthenticationManagerLegacy *Auth    `yson:"job_proxy_authentication_manager,omitempty"`
-	JobProxyLoggingLegacy               *Logging `yson:"job_proxy_logging,omitempty"`
-	DoNotSetUserIdLegacy                *bool    `yson:"do_not_set_user_id,omitempty"`
+	JobProxyAuthenticationManagerLegacy  *Auth    `yson:"job_proxy_authentication_manager,omitempty"`
+	JobProxyLoggingLegacy                *Logging `yson:"job_proxy_logging,omitempty"`
+	DoNotSetUserIdLegacy                 *bool    `yson:"do_not_set_user_id,omitempty"`
+	ForwardAllEnvironmentVariablesLegacy *bool    `yson:"forward_all_environment_variables,omitempty"`
 
 	// NOTE: Non-legacy "use_artifact_binds" moved into dynamic config.
 	UseArtifactBindsLegacy *bool `yson:"use_artifact_binds,omitempty"`
@@ -378,11 +383,11 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 
 		if jobImage := commonSpec.JobImage; jobImage != nil {
 			jobEnv.JobProxyImage = *jobImage
-			jobEnv.UseJobProxyFromImage = ptr.Bool(false)
 		} else {
 			jobEnv.JobProxyImage = ptr.StringDeref(spec.Image, commonSpec.CoreImage)
-			jobEnv.UseJobProxyFromImage = ptr.Bool(true)
 		}
+
+		jobEnv.UseJobProxyFromImage = ptr.Bool(false)
 
 		endpoint := "unix://" + getContainerdSocketPath(spec)
 
@@ -415,13 +420,34 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 		}
 
 		// FIXME(khlebnikov): For now running jobs as non-root is more likely broken.
-		execNode.SlotManager.DoNotSetUserId = ptr.Bool(ptr.BoolDeref(envSpec.UseArtifactBinds, true))
+		execNode.SlotManager.DoNotSetUserId = ptr.Bool(ptr.BoolDeref(envSpec.DoNotSetUserId, true))
 
+		// Enable tmpfs if exec node can mount and propagate into job container.
+		execNode.SlotManager.EnableTmpfs = ptr.Bool(func() bool {
+			if !spec.Privileged {
+				return false
+			}
+			if !ptr.BoolDeref(envSpec.Isolated, true) {
+				return true
+			}
+			for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeSlots) {
+				mount := findVolumeMountForPath(location.Path, spec.InstanceSpec)
+				if mount == nil || mount.MountPropagation == nil || *mount.MountPropagation != corev1.MountPropagationBidirectional {
+					return false
+				}
+			}
+			return true
+		}())
+
+		// Forward environment variables set in docker image from job proxy to user job process.
+		execNode.JobProxy.ForwardAllEnvironmentVariables = ptr.Bool(true)
 	} else if commonSpec.UsePorto {
 		jobEnv.Type = JobEnvironmentTypePorto
+		execNode.SlotManager.EnableTmpfs = ptr.Bool(true)
 		// TODO(psushin): volume locations, root fs binds, etc.
 	} else {
 		jobEnv.Type = JobEnvironmentTypeSimple
+		execNode.SlotManager.EnableTmpfs = ptr.Bool(spec.Privileged)
 	}
 
 	return nil
@@ -434,7 +460,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	c.ResourceLimits = getExecNodeResourceLimits(spec)
 
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
-		c.DataNode.CacheLocations = append(c.DataNode.CacheLocations, DiskLocation{
+		c.DataNode.CacheLocations = append(c.DataNode.CacheLocations, CacheLocation{
 			Path: location.Path,
 		})
 	}
@@ -448,14 +474,20 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 			Path:       location.Path,
 			MediumName: location.Medium,
 		}
-		quota := findQuotaForPath(location.Path, spec.InstanceSpec)
-		if quota != nil {
+
+		if quota := findQuotaForPath(location.Path, spec.InstanceSpec); quota != nil {
 			slotLocation.DiskQuota = quota
 
 			// These are just simple heuristics.
-			gb := float64(1024 * 1024 * 1024)
-			slotLocation.DiskUsageWatermark = int64(math.Min(0.1*float64(*quota), float64(10)*gb))
+			slotLocation.DiskUsageWatermark = ptr.Int64(min(*quota/10, consts.MaxSlotLocationReserve))
+		} else {
+			// Do not reserve anything if total disk size is unknown.
+			slotLocation.DiskUsageWatermark = ptr.Int64(0)
 		}
+
+		// Disk quota isn't generally available for k8s volumes yet.
+		slotLocation.EnableDiskQuota = ptr.Bool(false)
+
 		c.ExecNode.SlotManager.Locations = append(c.ExecNode.SlotManager.Locations, slotLocation)
 	}
 
@@ -503,6 +535,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	c.ExecNode.JobProxyLoggingLegacy = &c.ExecNode.JobProxy.JobProxyLogging
 	c.ExecNode.JobProxyAuthenticationManagerLegacy = &c.ExecNode.JobProxy.JobProxyAuthenticationManager
 	c.ExecNode.DoNotSetUserIdLegacy = c.ExecNode.SlotManager.DoNotSetUserId
+	c.ExecNode.ForwardAllEnvironmentVariablesLegacy = c.ExecNode.JobProxy.ForwardAllEnvironmentVariables
 
 	return c, nil
 }

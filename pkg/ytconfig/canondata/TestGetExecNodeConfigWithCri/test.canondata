@@ -103,6 +103,8 @@
                 {
                     path="/yt/hdd2/slots";
                     "medium_name"="";
+                    "disk_usage_watermark"=0;
+                    "enable_disk_quota"=%false;
                 };
             ];
             "job_environment"={
@@ -117,9 +119,10 @@
                     namespace=yt;
                     "base_cgroup"="/yt";
                 };
-                "use_job_proxy_from_image"=%true;
+                "use_job_proxy_from_image"=%false;
             };
             "do_not_set_user_id"=%true;
+            "enable_tmpfs"=%false;
         };
         "gpu_manager"={
             "gpu_info_source"={
@@ -177,6 +180,7 @@
                 ];
                 "flush_period"=3000;
             };
+            "forward_all_environment_variables"=%true;
         };
         "job_proxy_authentication_manager"={
             "cypress_cookie_manager"={
@@ -219,6 +223,7 @@
             "flush_period"=3000;
         };
         "do_not_set_user_id"=%true;
+        "forward_all_environment_variables"=%true;
         "use_artifact_binds"=%true;
     };
     "data_node"={

@@ -1,8 +1,9 @@
 package ytconfig
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
-	"math/rand"
 	"strings"
 
 	"github.com/google/uuid"
@@ -39,11 +40,10 @@ func generateCellID(cellTag int16) string {
 }
 
 func RandString(n int) string {
-	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
 	b := make([]byte, n)
-	for i := range b {
-		b[i] = letterBytes[rand.Int63()%int64(len(letterBytes))]
+	_, err := rand.Read(b)
+	if err != nil {
+		panic(err)
 	}
-	return string(b)
+	return base64.RawURLEncoding.EncodeToString(b)
 }

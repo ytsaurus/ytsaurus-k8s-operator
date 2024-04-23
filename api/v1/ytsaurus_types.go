@@ -242,7 +242,7 @@ type InstanceSpec struct {
 	VolumeClaimTemplates  []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
 	//+optional
 	RuntimeClassName *string `json:"runtimeClassName,omitempty"`
-	// Deprecated. Use Affinity.PodAntiAffinity instead.
+	// Deprecated: use Affinity.PodAntiAffinity instead.
 	EnableAntiAffinity *bool `json:"enableAntiAffinity,omitempty"`
 	//+optional
 	MonitoringPort    *int32                 `json:"monitoringPort,omitempty"`
@@ -504,6 +504,11 @@ type CommonSpec struct {
 	//+optional
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
 
+	// Allow prioritizing performance over data safety. Useful for tests and experiments.
+	//+kubebuilder:default:=false
+	//+optional
+	EphemeralCluster bool `json:"ephemeralCluster,omitempty"`
+
 	//+kubebuilder:default:=false
 	//+optional
 	UseIPv6 bool `json:"useIpv6"`
@@ -541,6 +546,10 @@ type YtsaurusSpec struct {
 	//+kubebuilder:default:=true
 	//+optional
 	EnableFullUpdate bool `json:"enableFullUpdate"`
+	//+optional
+	// UpdateSelector is an experimental field. Behaviour may change.
+	// If UpdateSelector is not empty EnableFullUpdate is ignored.
+	UpdateSelector UpdateSelector `json:"updateSelector"`
 
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
@@ -613,10 +622,45 @@ type TabletCellBundleInfo struct {
 	TabletCellCount int    `yson:"tablet_cell_count,attr" json:"tabletCellCount"`
 }
 
+type UpdateSelector string
+
+const (
+	// UpdateSelectorUnspecified means that selector is disabled and would be ignored completely.
+	UpdateSelectorUnspecified UpdateSelector = ""
+	// UpdateSelectorNothing means that no component could be updated.
+	UpdateSelectorNothing UpdateSelector = "Nothing"
+	// UpdateSelectorStatelessOnly means that only stateless components (everything but master and tablet nodes)
+	// could be updated.
+	UpdateSelectorStatelessOnly UpdateSelector = "StatelessOnly"
+	// UpdateSelectorMasterOnly means that only master could be updated.
+	UpdateSelectorMasterOnly UpdateSelector = "MasterOnly"
+	// UpdateSelectorTabletNodesOnly means that only tablet nodes could be updated
+	UpdateSelectorTabletNodesOnly UpdateSelector = "TabletNodesOnly"
+	// UpdateSelectorExecNodesOnly means that only tablet nodes could be updated
+	UpdateSelectorExecNodesOnly UpdateSelector = "ExecNodesOnly"
+	// UpdateSelectorEverything means that all components could be updated.
+	// With this setting and if master or tablet nodes need update all the components would be updated.
+	UpdateSelectorEverything UpdateSelector = "Everything"
+)
+
+type UpdateFlow string
+
+const (
+	UpdateFlowNone        UpdateFlow = ""
+	UpdateFlowStateless   UpdateFlow = "Stateless"
+	UpdateFlowMaster      UpdateFlow = "Master"
+	UpdateFlowTabletNodes UpdateFlow = "TabletNodes"
+	UpdateFlowFull        UpdateFlow = "Full"
+)
+
 type UpdateStatus struct {
 	//+kubebuilder:default:=None
-	State                 UpdateState            `json:"state,omitempty"`
-	Components            []string               `json:"components,omitempty"`
+	State      UpdateState `json:"state,omitempty"`
+	Components []string    `json:"components,omitempty"`
+	// Flow is an internal field that is needed to persist the chosen flow until the end of an update.
+	// Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage
+	// executes steps corresponding to that update flow.
+	Flow                  UpdateFlow             `json:"flow,omitempty"`
 	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
 	TabletCellBundles     []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
 	MasterMonitoringPaths []string               `json:"masterMonitoringPaths,omitempty"`

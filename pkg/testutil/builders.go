@@ -2,7 +2,7 @@ package testutil
 
 import (
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ptr "k8s.io/utils/pointer"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -16,7 +16,7 @@ const (
 
 func BuildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
 	return ytv1.Ytsaurus{
-		ObjectMeta: v1.ObjectMeta{Namespace: namespace, Name: name},
+		ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: name},
 		Spec: ytv1.YtsaurusSpec{
 			CommonSpec: ytv1.CommonSpec{
 				CoreImage:     testYtsaurusImage,

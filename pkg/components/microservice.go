@@ -3,7 +3,7 @@ package components
 import (
 	"context"
 
-	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	ptr "k8s.io/utils/pointer"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -102,7 +102,7 @@ func (m *microserviceImpl) needSync() bool {
 		needReload = false
 	}
 	return m.configHelper.NeedInit() ||
-		(m.ytsaurus.GetClusterState() == v1.ClusterStateUpdating && needReload) ||
+		(m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && needReload) ||
 		!resources.Exists(m.service) ||
 		m.deployment.NeedSync(m.instanceCount)
 }

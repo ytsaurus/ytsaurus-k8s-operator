@@ -97,7 +97,7 @@ func newServerConfigured(
 	var tlsSecret *resources.TLSSecret
 	transportSpec := instanceSpec.NativeTransport
 	if transportSpec == nil {
-		//FIXME(khlebnikov): do not mount common bus secret into all servers
+		// FIXME(khlebnikov): do not mount common bus secret into all servers
 		transportSpec = commonSpec.NativeTransport
 	}
 	if transportSpec != nil && transportSpec.TLSSecret != nil {
@@ -261,11 +261,11 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	command = append(command, s.instanceSpec.EntrypointWrapper...)
 	command = append(command, s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, fileNames[0]))
 
-	setHostnameAsFQDN := true
 	statefulSet.Spec.Template.Spec = corev1.PodSpec{
-		RuntimeClassName:  s.instanceSpec.RuntimeClassName,
-		ImagePullSecrets:  s.commonSpec.ImagePullSecrets,
-		SetHostnameAsFQDN: &setHostnameAsFQDN,
+		RuntimeClassName:   s.instanceSpec.RuntimeClassName,
+		ImagePullSecrets:   s.commonSpec.ImagePullSecrets,
+		SetHostnameAsFQDN:  ptr.Bool(true),
+		EnableServiceLinks: ptr.Bool(false),
 		Containers: []corev1.Container{
 			{
 				Image:        s.image,

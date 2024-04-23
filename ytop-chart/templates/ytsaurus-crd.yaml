@@ -763,7 +763,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
@@ -3074,7 +3074,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                      description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
                     entrypointWrapper:
                       description: Specifies wrapper for component container command.
@@ -5409,7 +5409,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
@@ -7121,6 +7121,10 @@ spec:
               enableFullUpdate:
                 default: true
                 type: boolean
+              ephemeralCluster:
+                default: false
+                description: Allow prioritizing performance over data safety.
+                type: boolean
               execNodes:
                 items:
                   properties:
@@ -7721,7 +7725,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                      description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
                     entrypointWrapper:
                       description: Specifies wrapper for component container command.
@@ -10229,7 +10233,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                      description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
                     entrypointWrapper:
                       description: Specifies wrapper for component container command.
@@ -12604,7 +12608,7 @@ spec:
                   cellTagMasterCaches:
                     type: integer
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
@@ -14966,7 +14970,7 @@ spec:
                   cellTag:
                     type: integer
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
@@ -17283,7 +17287,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
@@ -19588,7 +19592,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
@@ -21897,7 +21901,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                      description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
                     entrypointWrapper:
                       description: Specifies wrapper for component container command.
@@ -24254,7 +24258,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
@@ -26565,7 +26569,7 @@ spec:
                     cellTag:
                       type: integer
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                      description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
                     entrypointWrapper:
                       description: Specifies wrapper for component container command.
@@ -28957,7 +28961,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                      description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
                     entrypointWrapper:
                       description: Specifies wrapper for component container command.
@@ -31295,7 +31299,7 @@ spec:
                           type: object
                       type: object
                     enableAntiAffinity:
-                      description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                      description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
                     entrypointWrapper:
                       description: Specifies wrapper for component container command.
@@ -33216,6 +33220,10 @@ spec:
                 type: object
               uiImage:
                 type: string
+              updateSelector:
+                description: UpdateSelector is an experimental field. Behaviour may
+                  change.
+                type: string
               useIpv4:
                 default: false
                 type: boolean
@@ -33824,7 +33832,7 @@ spec:
                         type: object
                     type: object
                   enableAntiAffinity:
-                    description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
                   entrypointWrapper:
                     description: Specifies wrapper for component container command.
@@ -35647,6 +35655,10 @@ spec:
                       - type
                       type: object
                     type: array
+                  flow:
+                    description: Flow is an internal field that is needed to persist
+                      the chosen flow until the en
+                    type: string
                   masterMonitoringPaths:
                     items:
                       type: string

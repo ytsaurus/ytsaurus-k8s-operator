@@ -20,14 +20,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	v1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	mock_yt "github.com/ytsaurus/yt-k8s-operator/pkg/mock"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
 var _ = Describe("Tablet node test", func() {
-	var ytsaurusSpec *v1.Ytsaurus
+	var ytsaurusSpec *ytv1.Ytsaurus
 	ytsaurusName := "ytsaurus"
 	namespace := "default"
 	var mockYtClient *mock_yt.MockClient
@@ -35,11 +35,11 @@ var _ = Describe("Tablet node test", func() {
 	var client client.WithWatch
 
 	BeforeEach(func() {
-		mockYtClient = mock_yt.NewMockClient(ctrl)
+		mockYtClient = mock_yt.NewMockClient(mockCtrl)
 
 		masterVolumeSize, _ := resource.ParseQuantity("1Gi")
 
-		ytsaurusSpec = &v1.Ytsaurus{
+		ytsaurusSpec = &ytv1.Ytsaurus{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Ytsaurus",
 				APIVersion: "cluster.ytsaurus.tech/v1",
@@ -48,22 +48,22 @@ var _ = Describe("Tablet node test", func() {
 				Name:      ytsaurusName,
 				Namespace: namespace,
 			},
-			Spec: v1.YtsaurusSpec{
-				CommonSpec: v1.CommonSpec{
+			Spec: ytv1.YtsaurusSpec{
+				CommonSpec: ytv1.CommonSpec{
 					CoreImage: "ytsaurus/ytsaurus:latest",
 				},
-				Discovery: v1.DiscoverySpec{
-					InstanceSpec: v1.InstanceSpec{
+				Discovery: ytv1.DiscoverySpec{
+					InstanceSpec: ytv1.InstanceSpec{
 						InstanceCount: 1,
 					},
 				},
-				PrimaryMasters: v1.MastersSpec{
-					MasterConnectionSpec: v1.MasterConnectionSpec{
+				PrimaryMasters: ytv1.MastersSpec{
+					MasterConnectionSpec: ytv1.MasterConnectionSpec{
 						CellTag: 1,
 					},
-					InstanceSpec: v1.InstanceSpec{
+					InstanceSpec: ytv1.InstanceSpec{
 						InstanceCount: 1,
-						Locations: []v1.LocationSpec{
+						Locations: []ytv1.LocationSpec{
 							{
 								LocationType: "MasterChangelogs",
 								Path:         "/yt/master-data/master-changelogs",
@@ -91,22 +91,22 @@ var _ = Describe("Tablet node test", func() {
 						},
 					},
 				},
-				HTTPProxies: []v1.HTTPProxiesSpec{
+				HTTPProxies: []ytv1.HTTPProxiesSpec{
 					{
 						ServiceType: "NodePort",
-						InstanceSpec: v1.InstanceSpec{
+						InstanceSpec: ytv1.InstanceSpec{
 							InstanceCount: 1,
 						},
 					},
 				},
-				UI: &v1.UISpec{
+				UI: &ytv1.UISpec{
 					InstanceCount: 1,
 				},
-				DataNodes: []v1.DataNodesSpec{
+				DataNodes: []ytv1.DataNodesSpec{
 					{
-						InstanceSpec: v1.InstanceSpec{
+						InstanceSpec: ytv1.InstanceSpec{
 							InstanceCount: 1,
-							Locations: []v1.LocationSpec{
+							Locations: []ytv1.LocationSpec{
 								{
 									LocationType: "ChunkStore",
 									Path:         "/yt/node-data/chunk-store",
@@ -131,9 +131,9 @@ var _ = Describe("Tablet node test", func() {
 						},
 					},
 				},
-				TabletNodes: []v1.TabletNodesSpec{
+				TabletNodes: []ytv1.TabletNodesSpec{
 					{
-						InstanceSpec: v1.InstanceSpec{
+						InstanceSpec: ytv1.InstanceSpec{
 							InstanceCount: 1,
 						},
 					},
@@ -147,7 +147,7 @@ var _ = Describe("Tablet node test", func() {
 
 		BeforeEach(func() {
 			scheme = runtime.NewScheme()
-			Expect(v1.AddToScheme(scheme)).To(Succeed())
+			Expect(ytv1.AddToScheme(scheme)).To(Succeed())
 			Expect(corev1.AddToScheme(scheme)).To(Succeed())
 
 			client = fake.NewClientBuilder().
@@ -157,7 +157,7 @@ var _ = Describe("Tablet node test", func() {
 		})
 
 		It("Check Ytsaurus spec", func() {
-			ytsaurusSpecCopy := &v1.Ytsaurus{}
+			ytsaurusSpecCopy := &ytv1.Ytsaurus{}
 			ytsaurusLookupKey := types.NamespacedName{Name: ytsaurusName, Namespace: namespace}
 			Expect(client.Get(context.Background(), ytsaurusLookupKey, ytsaurusSpecCopy)).Should(Succeed())
 			Expect(ytsaurusSpecCopy).Should(Equal(ytsaurusSpec))
@@ -214,6 +214,12 @@ var _ = Describe("Tablet node test", func() {
 			createBundleNetError := net.UnknownNetworkError("create bundle: some net error")
 			getNetError := net.UnknownNetworkError("get: some net error")
 			createCellNetError := net.UnknownNetworkError("create cell: some net error")
+
+			nodeCfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, "cluster_domain")
+			tabletNode := NewTabletNode(nodeCfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true)
+			tabletNode.server = NewFakeServer()
+
+			By("Failed to check if there is //sys/tablet_cell_bundles/sys.")
 			gomock.InOrder(
 				mockYtClient.EXPECT().
 					NodeExists(
@@ -221,6 +227,15 @@ var _ = Describe("Tablet node test", func() {
 						gomock.Any(),
 						gomock.Nil()).
 					Return(false, existsNetError),
+			)
+			err := tabletNode.Sync(context.Background())
+			Expect(err).Should(Equal(existsNetError))
+			status, err := tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
+
+			By("Failed to create `sys` bundle.")
+			gomock.InOrder(
 				mockYtClient.EXPECT().
 					NodeExists(
 						gomock.Any(),
@@ -233,6 +248,15 @@ var _ = Describe("Tablet node test", func() {
 						gomock.Eq(yt.NodeTabletCellBundle),
 						gomock.Any()).
 					Return(yt.NodeID(guid.New()), createBundleNetError),
+			)
+			err = tabletNode.Sync(context.Background())
+			Expect(err).Should(Equal(createBundleNetError))
+			status, err = tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
+
+			By("Failed to get @tablet_cell_count of the `sys` bundle.")
+			gomock.InOrder(
 				mockYtClient.EXPECT().
 					NodeExists(
 						gomock.Any(),
@@ -248,16 +272,53 @@ var _ = Describe("Tablet node test", func() {
 				mockYtClient.EXPECT().
 					GetNode(
 						gomock.Any(),
+						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@options")),
+						gomock.Any(),
+						gomock.Nil()).
+					Return(nil).Times(1),
+				mockYtClient.EXPECT().
+					SetNode(
+						gomock.Any(),
+						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@options")),
+						gomock.Any(),
+						gomock.Nil()).
+					Return(nil).Times(1),
+				mockYtClient.EXPECT().
+					GetNode(
+						gomock.Any(),
 						gomock.Eq(ypath.Path(fmt.Sprintf("//sys/tablet_cell_bundles/%s/@tablet_cell_count", "default"))),
 						gomock.Any(),
 						nil).
 					Return(getNetError),
+			)
+			err = tabletNode.Sync(context.Background())
+			Expect(err).Should(Equal(getNetError))
+			status, err = tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
+
+			By("Failed to create tablet_cell in the `sys` bundle.")
+			gomock.InOrder(
 				mockYtClient.EXPECT().
 					NodeExists(
 						gomock.Any(),
 						gomock.Any(),
 						gomock.Nil()).
 					Return(true, nil).Times(1),
+				mockYtClient.EXPECT().
+					GetNode(
+						gomock.Any(),
+						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@options")),
+						gomock.Any(),
+						gomock.Nil()).
+					Return(nil).Times(1),
+				mockYtClient.EXPECT().
+					SetNode(
+						gomock.Any(),
+						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@options")),
+						gomock.Any(),
+						gomock.Nil()).
+					Return(nil).Times(1),
 				mockYtClient.EXPECT().
 					GetNode(
 						gomock.Any(),
@@ -272,12 +333,36 @@ var _ = Describe("Tablet node test", func() {
 						gomock.Eq(yt.NodeType("tablet_cell")),
 						gomock.Any()).
 					Return(yt.NodeID(guid.New()), createCellNetError),
+			)
+			err = tabletNode.Sync(context.Background())
+			Expect(err).Should(Equal(createCellNetError))
+			status, err = tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
+			gomock.InOrder()
+
+			By("Failed to get @tablet_cell_count of the `default` bundle.")
+			gomock.InOrder(
 				mockYtClient.EXPECT().
 					NodeExists(
 						gomock.Any(),
 						gomock.Any(),
 						gomock.Nil()).
 					Return(true, nil).Times(1),
+				mockYtClient.EXPECT().
+					GetNode(
+						gomock.Any(),
+						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@options")),
+						gomock.Any(),
+						gomock.Nil()).
+					Return(nil).Times(1),
+				mockYtClient.EXPECT().
+					SetNode(
+						gomock.Any(),
+						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@options")),
+						gomock.Any(),
+						gomock.Nil()).
+					Return(nil).Times(1),
 				mockYtClient.EXPECT().
 					GetNode(
 						gomock.Any(),
@@ -299,12 +384,35 @@ var _ = Describe("Tablet node test", func() {
 						gomock.Any(),
 						nil).
 					Return(getNetError).Times(1),
+			)
+			err = tabletNode.Sync(context.Background())
+			Expect(err).Should(Equal(getNetError))
+			status, err = tabletNode.Status(context.Background())
+			Expect(err).Should(Succeed())
+			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
+
+			By("Then everything was successfully.")
+			gomock.InOrder(
 				mockYtClient.EXPECT().
 					NodeExists(
 						gomock.Any(),
 						gomock.Any(),
 						gomock.Nil()).
 					Return(true, nil).Times(1),
+				mockYtClient.EXPECT().
+					GetNode(
+						gomock.Any(),
+						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@options")),
+						gomock.Any(),
+						gomock.Nil()).
+					Return(nil).Times(1),
+				mockYtClient.EXPECT().
+					SetNode(
+						gomock.Any(),
+						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@options")),
+						gomock.Any(),
+						gomock.Nil()).
+					Return(nil).Times(1),
 				mockYtClient.EXPECT().
 					GetNode(
 						gomock.Any(),
@@ -328,47 +436,6 @@ var _ = Describe("Tablet node test", func() {
 						gomock.Any()).
 					Return(yt.NodeID(guid.New()), nil).Times(1),
 			)
-
-			nodeCfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, "cluster_domain")
-			tabletNode := NewTabletNode(nodeCfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true)
-			tabletNode.server = NewFakeServer()
-
-			// Failed to check if there is //sys/tablet_cell_bundles/sys.
-			err := tabletNode.Sync(context.Background())
-			Expect(err).Should(Equal(existsNetError))
-			status, err := tabletNode.Status(context.Background())
-			Expect(err).Should(Succeed())
-			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
-
-			// Failed to create `sys` bundle.
-			err = tabletNode.Sync(context.Background())
-			Expect(err).Should(Equal(createBundleNetError))
-			status, err = tabletNode.Status(context.Background())
-			Expect(err).Should(Succeed())
-			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
-
-			// Failed to get @tablet_cell_count of the `sys` bundle.
-			err = tabletNode.Sync(context.Background())
-			Expect(err).Should(Equal(getNetError))
-			status, err = tabletNode.Status(context.Background())
-			Expect(err).Should(Succeed())
-			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
-
-			// Failed to create tablet_cell in the `sys` bundle.
-			err = tabletNode.Sync(context.Background())
-			Expect(err).Should(Equal(createCellNetError))
-			status, err = tabletNode.Status(context.Background())
-			Expect(err).Should(Succeed())
-			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
-
-			// Failed to get @tablet_cell_count of the `default` bundle.
-			err = tabletNode.Sync(context.Background())
-			Expect(err).Should(Equal(getNetError))
-			status, err = tabletNode.Status(context.Background())
-			Expect(err).Should(Succeed())
-			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
-
-			// Then everything was successfully.
 			err = tabletNode.Sync(context.Background())
 			Expect(err).Should(Succeed())
 			status, err = tabletNode.Status(context.Background())
@@ -405,6 +472,22 @@ var _ = Describe("Tablet node test", func() {
 							},
 						}})).
 				Return(yt.NodeID(guid.New()), nil)
+
+			mockYtClient.EXPECT().
+				GetNode(
+					gomock.Any(),
+					gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@options")),
+					gomock.Any(),
+					gomock.Nil()).
+				Return(nil)
+
+			mockYtClient.EXPECT().
+				SetNode(
+					gomock.Any(),
+					gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@options")),
+					gomock.Any(),
+					gomock.Nil()).
+				Return(nil)
 
 			for _, bundle := range []string{"default", "sys"} {
 				mockYtClient.EXPECT().

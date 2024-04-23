@@ -655,13 +655,17 @@ spec:
               coreImage:
                 type: string
               enableAntiAffinity:
-                description: Deprecated. Use Affinity.PodAntiAffinity instead.
+                description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                 type: boolean
               entrypointWrapper:
                 description: Specifies wrapper for component container command.
                 items:
                   type: string
                 type: array
+              ephemeralCluster:
+                default: false
+                description: Allow prioritizing performance over data safety.
+                type: boolean
               extraPodAnnotations:
                 additionalProperties:
                   type: string

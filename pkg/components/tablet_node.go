@@ -84,10 +84,9 @@ func (tn *TabletNode) GetType() consts.ComponentType { return consts.TabletNodeT
 
 func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
-	logger := log.FromContext(ctx)
 
 	if ytv1.IsReadyToUpdateClusterState(tn.ytsaurus.GetClusterState()) && tn.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedFullUpdate), err
+		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
 	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -120,89 +119,10 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return WaitingStatus(SyncStatusBlocked, tn.ytsaurusClient.GetName()), err
 	}
 
-	ytClient := tn.ytsaurusClient.GetYtClient()
-
-	if !dry {
-		// TODO: refactor it
-		if tn.doInitialization {
-			if exists, err := ytClient.NodeExists(ctx, ypath.Path(fmt.Sprintf("//sys/tablet_cell_bundles/%s", SysBundle)), nil); err == nil {
-				if !exists {
-					options := map[string]any{
-						"changelog_account": "sys",
-						"snapshot_account":  "sys",
-					}
-
-					bootstrap := tn.getBundleBootstrap(SysBundle)
-					if bootstrap != nil {
-						if bootstrap.ChangelogPrimaryMedium != nil {
-							options["changelog_primary_medium"] = *bootstrap.ChangelogPrimaryMedium
-						}
-						if bootstrap.SnapshotPrimaryMedium != nil {
-							options["snapshot_primary_medium"] = *bootstrap.SnapshotPrimaryMedium
-						}
-					}
-
-					if tn.cfgen.GetMaxReplicationFactor() < 3 {
-						options["changelog_replication_factor"] = 1
-						options["changelog_read_quorum"] = 1
-						options["changelog_write_quorum"] = 1
-						options["snapshot_replication_factor"] = 1
-					}
-
-					_, err = ytClient.CreateObject(ctx, yt.NodeTabletCellBundle, &yt.CreateObjectOptions{
-						Attributes: map[string]interface{}{
-							"name":    SysBundle,
-							"options": options,
-						},
-					})
-
-					if err != nil {
-						logger.Error(err, "Creating tablet_cell_bundle failed")
-						return WaitingStatus(SyncStatusPending, "tablet_cell_bundle creation"), err
-					}
-				}
-			} else {
-				return WaitingStatus(SyncStatusPending, "tablet_cell_bundle creation"), err
-			}
-
-			defaultBundleBootstrap := tn.getBundleBootstrap(DefaultBundle)
-			if defaultBundleBootstrap != nil {
-				path := ypath.Path(fmt.Sprintf("//sys/tablet_cell_bundles/%s", DefaultBundle))
-				if defaultBundleBootstrap.ChangelogPrimaryMedium != nil {
-					err := ytClient.SetNode(ctx, path.Attr("options/changelog_primary_medium"), *defaultBundleBootstrap.ChangelogPrimaryMedium, nil)
-					if err != nil {
-						logger.Error(err, "Setting changelog_primary_medium for `default` bundle failed")
-						return WaitingStatus(SyncStatusPending, "setting changelog_primary_medium"), err
-					}
-				}
-
-				if defaultBundleBootstrap.SnapshotPrimaryMedium != nil {
-					err := ytClient.SetNode(ctx, path.Attr("options/snapshot_primary_medium"), *defaultBundleBootstrap.SnapshotPrimaryMedium, nil)
-					if err != nil {
-						logger.Error(err, "Setting snapshot_primary_medium for `default` bundle failed")
-						return WaitingStatus(SyncStatusPending, "setting snapshot_primary_medium"), err
-					}
-				}
-			}
-
-			for _, bundle := range []string{DefaultBundle, SysBundle} {
-				tabletCellCount := 1
-				bootstrap := tn.getBundleBootstrap(bundle)
-				if bootstrap != nil {
-					tabletCellCount = bootstrap.TabletCellCount
-				}
-				err = CreateTabletCells(ctx, ytClient, bundle, tabletCellCount)
-				if err != nil {
-					return WaitingStatus(SyncStatusPending, "tablet cells creation"), err
-				}
-			}
-
-			tn.ytsaurus.SetStatusCondition(metav1.Condition{
-				Type:    tn.initBundlesCondition,
-				Status:  metav1.ConditionTrue,
-				Reason:  "InitBundlesCompleted",
-				Message: "Init bundles successfully completed",
-			})
+	if !dry && tn.doInitialization {
+		tabletBundleStatus, err := tn.initBundles(ctx)
+		if err != nil {
+			return tabletBundleStatus, err
 		}
 	}
 
@@ -224,6 +144,100 @@ func (tn *TabletNode) getBundleBootstrap(bundle string) *ytv1.BundleBootstrapSpe
 	}
 
 	return nil
+}
+
+func (tn *TabletNode) getBundleOptions(bundle string) map[string]any {
+	options := map[string]any{}
+
+	if bundle == SysBundle {
+		options["changelog_account"] = "sys"
+		options["snapshot_account"] = "sys"
+	}
+
+	bootstrap := tn.getBundleBootstrap(bundle)
+	if bootstrap != nil {
+		if bootstrap.ChangelogPrimaryMedium != nil {
+			options["changelog_primary_medium"] = *bootstrap.ChangelogPrimaryMedium
+		}
+		if bootstrap.SnapshotPrimaryMedium != nil {
+			options["snapshot_primary_medium"] = *bootstrap.SnapshotPrimaryMedium
+		}
+	}
+
+	if tn.cfgen.GetMaxReplicationFactor() < 3 {
+		options["changelog_replication_factor"] = 1
+		options["changelog_read_quorum"] = 1
+		options["changelog_write_quorum"] = 1
+		options["snapshot_replication_factor"] = 1
+	}
+
+	return options
+}
+
+func (tn *TabletNode) initBundles(ctx context.Context) (ComponentStatus, error) {
+	ytClient := tn.ytsaurusClient.GetYtClient()
+	logger := log.FromContext(ctx)
+
+	sysBundleExists, err := ytClient.NodeExists(ctx, ypath.Path("//sys/tablet_cell_bundles").Child(SysBundle), nil)
+	if err != nil {
+		return WaitingStatus(SyncStatusPending, "tablet_cell_bundle creation"), err
+	}
+	if !sysBundleExists {
+		options := tn.getBundleOptions(SysBundle)
+		_, err = ytClient.CreateObject(ctx, yt.NodeTabletCellBundle, &yt.CreateObjectOptions{
+			Attributes: map[string]interface{}{
+				"name":    SysBundle,
+				"options": options,
+			},
+		})
+
+		if err != nil {
+			logger.Error(err, "Creating tablet_cell_bundle failed")
+			return WaitingStatus(SyncStatusPending, "tablet_cell_bundle creation"), err
+		}
+	}
+
+	{
+		options := tn.getBundleOptions(DefaultBundle)
+		if len(options) != 0 {
+			path := ypath.Path("//sys/tablet_cell_bundles").Child(DefaultBundle)
+			bundleOptions := map[string]any{}
+			err = ytClient.GetNode(ctx, path.Attr("options"), &bundleOptions, nil)
+			if err != nil {
+				logger.Error(err, "Getting options for `default` bundle failed")
+				return WaitingStatus(SyncStatusPending, "getting default bundle options"), err
+			}
+			for option, value := range options {
+				bundleOptions[option] = value
+			}
+			err = ytClient.SetNode(ctx, path.Attr("options"), bundleOptions, nil)
+			if err != nil {
+				logger.Error(err, "Setting options for `default` bundle failed", "options", options)
+				return WaitingStatus(SyncStatusPending, "setting default bundle options"), err
+			}
+		}
+	}
+
+	for _, bundle := range []string{DefaultBundle, SysBundle} {
+		tabletCellCount := 1
+		bootstrap := tn.getBundleBootstrap(bundle)
+		if bootstrap != nil {
+			tabletCellCount = bootstrap.TabletCellCount
+		}
+		err = CreateTabletCells(ctx, ytClient, bundle, tabletCellCount)
+		if err != nil {
+			return WaitingStatus(SyncStatusPending, "tablet cells creation"), err
+		}
+	}
+
+	tn.ytsaurus.SetStatusCondition(metav1.Condition{
+		Type:    tn.initBundlesCondition,
+		Status:  metav1.ConditionTrue,
+		Reason:  "InitBundlesCompleted",
+		Message: "Init bundles successfully completed",
+	})
+
+	return SimpleStatus(SyncStatusReady), nil
 }
 
 func (tn *TabletNode) Status(ctx context.Context) (ComponentStatus, error) {

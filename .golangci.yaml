@@ -1,2 +1,244 @@
 run:
   timeout: 5m
+  allow-parallel-runners: true
+  skip-files:
+    - "^zz_generated.*"
+
+
+output:
+  sort-results: true
+
+
+# References:
+# https://golangci-lint.run/usage/linters/
+# https://gist.github.com/maratori/47a4d00457a92aa426dbd48a18776322
+# https://github.com/kubernetes/kubernetes/blob/master/hack/golangci-hints.yaml
+
+linters:
+  presets:
+    # - bugs
+    # - performance
+  enable: # please keep this alphabetized
+    ## enabled by default
+    - errcheck # checking for unchecked errors, these unchecked errors can be critical bugs in some cases
+    - gosimple # specializes in simplifying a code
+    - govet # reports suspicious constructs, such as Printf calls whose arguments do not align with the format string
+    - ineffassign # detects when assignments to existing variables are not used
+    - staticcheck # is a go vet on steroids, applying a ton of static analysis checks
+    - typecheck # like the front-end of a Go compiler, parses and type-checks Go code
+    - unused # checks for unused constants, variables, functions and types
+
+    ## preset "bugs"
+    - asasalint # checks for pass []any as any in variadic func(...any)
+    - asciicheck # checks that your code does not contain non-ASCII identifiers
+    - bidichk # checks for dangerous unicode character sequences
+    - bodyclose # checks whether HTTP response body is closed successfully
+    - contextcheck # check whether the function uses a non-inherited context
+    - durationcheck # checks for two durations multiplied together
+    - errchkjson # checks types passed to the json encoding functions
+    # - errorlint # finds code that will cause problems with the error wrapping scheme introduced in Go 1.13
+    # - exhaustive # checks exhaustiveness of enum switch statements
+    - exportloopref # checks for pointers to enclosing loop variables
+    - gocheckcompilerdirectives # validates go compiler directive comments (//go:)
+    - gochecksumtype # checks exhaustiveness on Go "sum types"
+    - gosec # inspects source code for security problems
+    - gosmopolitan # report certain i18n/l10n anti-patterns in your Go codebase
+    - loggercheck # checks key value pairs for common logger libraries (kitlog,klog,logr,zap)
+    - makezero # finds slice declarations with non-zero initial length
+    - musttag # enforces field tags in (un)marshaled structs
+    - nilerr # finds the code that returns nil even if it checks that the error is not nil
+    - noctx # finds sending http request without context.Context
+    - protogetter # reports direct reads from proto message fields when getters should be used
+    - reassign # checks that package variables are not reassigned
+    - rowserrcheck # checks whether Err of rows is checked successfully
+    - spancheck # checks for mistakes with OpenTelemetry/Census spans
+    - sqlclosecheck # checks that sql.Rows and sql.Stmt are closed
+    - testifylint # checks usage of github.com/stretchr/testify
+
+    ## preset "complexity"
+    # - cyclop # checks function and package cyclomatic complexity
+    # - funlen # tool for detection of long functions
+    # - gocognit # computes and checks the cognitive complexity of functions
+    # - gocyclo # computes and checks the cyclomatic complexity of functions
+    # - nestif # reports deeply nested if statements
+
+    ## preset "performance"
+    # - prealloc # finds slice declarations that could potentially be preallocated
+
+    # - copyloopvar # detects places where loop variables are copied
+    - decorder # checks declaration order and count of types, constants, variables and functions
+    - dogsled # checks assignments with too many blank identifiers (e.g. x, _, _, _, := f())
+    # - dupl # tool for code clone detection
+    - errname # checks that sentinel errors are prefixed with the Err and error types are suffixed with the Error
+    - execinquery # checks query string in Query function which reads your Go src files and warning it finds
+    - forbidigo # forbids identifiers
+    - ginkgolinter # enforces standards of using ginkgo and gomega
+    # - gochecknoglobals # checks that no global variables exist
+    # - gochecknoinits # checks that no init functions are present in Go code
+    # - goconst # finds repeated strings that could be replaced by a constant
+    - gocritic # provides diagnostics that check for bugs, performance and style issues
+    # - godot # checks if comments end in a period
+    # - goimports # in addition to fixing imports, goimports also formats your code in the same style as gofmt
+    # - gomnd # detects magic numbers
+    - gomoddirectives # manages the use of 'replace', 'retract', and 'excludes' directives in go.mod
+    - gomodguard # allow and block lists linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations
+    - goprintffuncname # checks that printf-like functions are named with f at the end
+    - importas # enforces consistent import aliases (not useful without config)
+    - interfacebloat # checks the number of methods inside an interface
+    # - intrange # finds places where for loops could make use of an integer range
+    # - lll # reports long lines
+    - mirror # reports wrong mirror patterns of bytes/strings usage
+    - misspell # finds commonly misspelled english words in comments
+    # - nakedret # finds naked returns in functions greater than a specified function length
+    # - nilnil # checks that there is no simultaneous return of nil error and an invalid value
+    - nolintlint # reports ill-formed or insufficient nolint directives
+    # - nonamedreturns # reports all named returns
+    - nosprintfhostport # checks for misuse of Sprintf to construct a host with port in a URL
+    # - perfsprint # checks that fmt.Sprintf can be replaced with a faster alternative
+    - predeclared # finds code that shadows one of Go's predeclared identifiers
+    - promlinter # checks Prometheus metrics naming via promlint
+    # - revive # fast, configurable, extensible, flexible, and beautiful linter for Go, drop-in replacement of golint
+    - sloglint # ensure consistent code style when using log/slog
+    - stylecheck # is a replacement for golint
+    # - tagalign # check that struct tags are well aligned
+    - tagliatelle # checks the struct tags
+    - tenv # detects using os.Setenv instead of t.Setenv since Go1.17
+    - testableexamples # checks if examples are testable (have an expected output)
+    # - testpackage # makes you use a separate _test package
+    - tparallel # detects inappropriate usage of t.Parallel() method in your Go test codes
+    # - unconvert # removes unnecessary type conversions
+    # - unparam # reports unused function parameters
+    - usestdlibvars # detects the possibility to use variables/constants from the Go standard library
+    - wastedassign # finds wasted assignment statements
+    # - whitespace # detects leading and trailing whitespace
+    # - wrapcheck # checks that errors returned from external packages are wrapped
+    # - wsl # add or remove empty lines
+
+linters-settings:
+  cyclop:
+    # The maximal code complexity to report.
+    # Default: 10
+    max-complexity: 30
+    # The maximal average package complexity.
+    # If it's higher than 0.0 (float) the check is enabled
+    # Default: 0.0
+    package-average: 10.0
+
+  errcheck:
+    # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
+    # Such cases aren't reported by default.
+    # Default: false
+    # check-type-assertions: true
+
+  forbidigo:
+    # Instead of matching the literal source code,
+    # use type information to replace expressions with strings that contain the package name
+    # and (for methods and fields) the type name.
+    # This makes it possible to handle import renaming and forbid struct fields and methods.
+    # Default: false
+    analyze-types: true
+    forbid:
+      - p: ^gomega\.BeTrue$
+        pkg: ^github.com/onsi/gomega$
+        msg: "it does not produce a good failure message - use BeTrueBecause with an explicit printf-style failure message instead, or plain Go: if ... { ginkgo.Fail(...) }"
+      - p: ^gomega\.BeFalse$
+        pkg: ^github.com/onsi/gomega$
+        msg: "it does not produce a good failure message - use BeFalseBecause with an explicit printf-style failure message instead, or plain Go: if ... { ginkgo.Fail(...) }"
+
+  gocritic:
+    # Enable all checks.
+    # Default: false
+    enable-all: true
+
+  gosec:
+    excludes:
+      - G101 # hard coded credentials - thinks paths are secrets
+
+  importas:
+    # Do not allow unaliased imports of aliased packages.
+    # Default: false
+    no-unaliased: true
+    # Do not allow non-required aliases.
+    # Default: false
+    # no-extra-aliases: true
+    # List of aliases
+    # Default: []
+    alias:
+      # Kubernetes
+      - pkg: k8s.io/api/(\w+)/(v[\w\d]+)
+        alias: $1$2
+      - pkg: k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
+        alias: apiextensionsv1
+      - pkg: k8s.io/apimachinery/pkg/apis/meta/v1
+        alias: metav1
+      - pkg: k8s.io/apimachinery/pkg/api/errors
+        alias: apierrors
+      - pkg: k8s.io/apimachinery/pkg/util/errors
+        alias: kerrors
+      - pkg: k8s.io/component-base/logs/api/v1
+        alias: logsv1
+      - pkg: k8s.io/utils/pointer
+        alias: ptr
+      # Controller Runtime
+      - pkg: sigs.k8s.io/controller-runtime
+        alias: ctrl
+      # - pkg: sigs.k8s.io/controller-runtime/pkg/log
+      #   alias: logf
+      # YTsaurus
+      - pkg: github.com/ytsaurus/yt-k8s-operator/api/v1
+        alias: ytv1
+
+  staticcheck:
+    checks:
+      - "all"
+
+  stylecheck:
+    checks:
+      - "all"
+      - "-ST1003" # abbrev capitalization
+      - "-ST1016" # method receiver name
+
+  tagalign:
+    # Align tags for adjacent fields
+    # align: false
+    # Order tags
+    # sort: false
+    order:
+      - yson
+      - json
+
+  lll:
+    # Max line length, lines longer will be reported.
+    # '\t' is counted as 1 character by default, and can be changed with the tab-width option.
+    # Default: 120.
+    line-length: 180
+
+
+issues:
+  max-same-issues: 0  # disable
+  max-issues-per-linter: 0 # disable
+  exclude-rules:
+    - linters:
+        - gocritic
+      text: "ifElseChain: rewrite if-else to switch statement"
+
+    - path: "main\\.go"
+      linters:
+        - gochecknoglobals
+
+    - path: "api/v1/test_helpers.go"
+      linters:
+        - gosec
+
+    - path: "_test\\.go"
+      linters:
+        # - dupl
+        # - funlen
+        - contextcheck
+        # - errcheck
+        - forbidigo
+        - gochecknoglobals
+        - goconst
+        - gosec
+        - noctx
+        - wrapcheck

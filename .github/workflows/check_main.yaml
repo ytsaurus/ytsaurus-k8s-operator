@@ -6,19 +6,46 @@ on:
       - main
 
 jobs:
-  check:
-    name: Run checks
-    with:
-      release: true
-    secrets:
-      DOCKER_HUB_LOGIN: ${{ secrets.DOCKER_HUB_LOGIN }}
-      DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
-    uses: ./.github/workflows/subflow_run_e2e.yaml
+  check-unit:
+    name: Run unit tests
+    uses: ./.github/workflows/subflow_run_unit_tests.yaml
+
+  check-e2e:
+    name: Run e2e tests
+    needs:
+      - check-unit
+    uses: ./.github/workflows/subflow_run_e2e_tests.yaml
+
+  check-compat:
+    name: Run compat tests
+    needs:
+      - check-e2e
+    uses: ./.github/workflows/subflow_run_compat_tests.yaml
+
+  release-nightly:
+    name: Release nightly image
+    needs:
+      - check-compat
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Docker Hub login
+        run: |
+          echo '${{ secrets.DOCKER_HUB_PASSWORD }}' | docker login --username ${{ secrets.DOCKER_HUB_LOGIN}} --password-stdin
+
+      - name: Docker
+        shell: bash
+        run: |
+          make release RELEASE_VERSION=0.0.$(git rev-list --count HEAD)-dev-${GITHUB_SHA} OPERATOR_IMAGE=ytsaurus/k8s-operator-nightly OPERATOR_CHART=ytop-chart-nightly
 
   send-notifications:
     name: Send notifications
     needs:
-      - check
+      - release-nightly
     runs-on: trampoline
     if: ${{ failure() }}
     steps:

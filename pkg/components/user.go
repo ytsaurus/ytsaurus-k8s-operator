@@ -7,7 +7,7 @@ import (
 
 func sha256String(value string) string {
 	hash := sha256.New()
-	//TODO(psushin): handle errors.
+	// TODO(psushin): handle errors.
 	hash.Write([]byte(value))
 	bs := hash.Sum(nil)
 	return fmt.Sprintf("%x", bs)

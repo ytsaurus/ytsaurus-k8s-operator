@@ -4,15 +4,15 @@ import (
 	"fmt"
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"path"
 )
 
-func createVolumeClaims(specVolumeClaimTemplates []ytv1.EmbeddedPersistentVolumeClaim) []v1.PersistentVolumeClaim {
-	volumeClaims := make([]v1.PersistentVolumeClaim, 0, len(specVolumeClaimTemplates))
+func createVolumeClaims(specVolumeClaimTemplates []ytv1.EmbeddedPersistentVolumeClaim) []corev1.PersistentVolumeClaim {
+	volumeClaims := make([]corev1.PersistentVolumeClaim, 0, len(specVolumeClaimTemplates))
 	for _, volumeClaim := range specVolumeClaimTemplates {
-		volumeClaims = append(volumeClaims, v1.PersistentVolumeClaim{
+		volumeClaims = append(volumeClaims, corev1.PersistentVolumeClaim{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        volumeClaim.Name,
 				Labels:      volumeClaim.Labels,
@@ -24,36 +24,36 @@ func createVolumeClaims(specVolumeClaimTemplates []ytv1.EmbeddedPersistentVolume
 	return volumeClaims
 }
 
-func createConfigTemplateVolumeMount() v1.VolumeMount {
-	return v1.VolumeMount{
+func createConfigTemplateVolumeMount() corev1.VolumeMount {
+	return corev1.VolumeMount{
 		Name:      consts.ConfigTemplateVolumeName,
 		MountPath: consts.ConfigTemplateMountPoint,
 		ReadOnly:  true,
 	}
 }
 
-func createConfigVolumeMount() v1.VolumeMount {
-	return v1.VolumeMount{
+func createConfigVolumeMount() corev1.VolumeMount {
+	return corev1.VolumeMount{
 		Name:      consts.ConfigVolumeName,
 		MountPath: consts.ConfigMountPoint,
 		ReadOnly:  false,
 	}
 }
 
-func createVolumeMounts(specVolumeMounts []v1.VolumeMount) []v1.VolumeMount {
-	volumeMounts := make([]v1.VolumeMount, 0, len(specVolumeMounts)+1)
+func createVolumeMounts(specVolumeMounts []corev1.VolumeMount) []corev1.VolumeMount {
+	volumeMounts := make([]corev1.VolumeMount, 0, len(specVolumeMounts)+1)
 	volumeMounts = append(volumeMounts, specVolumeMounts...)
 	volumeMounts = append(volumeMounts, createConfigTemplateVolumeMount())
 	volumeMounts = append(volumeMounts, createConfigVolumeMount())
 	return volumeMounts
 }
 
-func createConfigVolume(volumeName string, configMapName string, mode *int32) v1.Volume {
-	return v1.Volume{
+func createConfigVolume(volumeName string, configMapName string, mode *int32) corev1.Volume {
+	return corev1.Volume{
 		Name: volumeName,
-		VolumeSource: v1.VolumeSource{
-			ConfigMap: &v1.ConfigMapVolumeSource{
-				LocalObjectReference: v1.LocalObjectReference{
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
 					Name: configMapName,
 				},
 				DefaultMode: mode,
@@ -62,17 +62,17 @@ func createConfigVolume(volumeName string, configMapName string, mode *int32) v1
 	}
 }
 
-func createConfigEmptyDir() v1.Volume {
-	return v1.Volume{
+func createConfigEmptyDir() corev1.Volume {
+	return corev1.Volume{
 		Name: consts.ConfigVolumeName,
-		VolumeSource: v1.VolumeSource{
-			EmptyDir: &v1.EmptyDirVolumeSource{},
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
 	}
 }
 
-func createServerVolumes(specVolumes []v1.Volume, configMapName string) []v1.Volume {
-	volumes := make([]v1.Volume, 0, len(specVolumes)+1)
+func createServerVolumes(specVolumes []corev1.Volume, configMapName string) []corev1.Volume {
+	volumes := make([]corev1.Volume, 0, len(specVolumes)+1)
 	volumes = append(volumes, specVolumes...)
 
 	volumes = append(volumes, createConfigVolume(consts.ConfigTemplateVolumeName, configMapName, nil))
@@ -118,28 +118,28 @@ func getConfigPostprocessingCommand(configFileName string) string {
 	return command
 }
 
-func getConfigPostprocessEnv() []v1.EnvVar {
-	return []v1.EnvVar{
+func getConfigPostprocessEnv() []corev1.EnvVar {
+	return []corev1.EnvVar{
 		{
 			Name: "K8S_POD_NAME",
-			ValueFrom: &v1.EnvVarSource{
-				FieldRef: &v1.ObjectFieldSelector{
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
 					FieldPath: "metadata.name",
 				},
 			},
 		},
 		{
 			Name: "K8S_POD_NAMESPACE",
-			ValueFrom: &v1.EnvVarSource{
-				FieldRef: &v1.ObjectFieldSelector{
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
 					FieldPath: "metadata.namespace",
 				},
 			},
 		},
 		{
 			Name: "K8S_NODE_NAME",
-			ValueFrom: &v1.EnvVarSource{
-				FieldRef: &v1.ObjectFieldSelector{
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
 					FieldPath: "spec.nodeName",
 				},
 			},

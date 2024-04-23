@@ -1,0 +1,49 @@
+on:
+  workflow_call:
+    inputs:
+      e2e_filter:
+        required: false
+        type: string
+
+jobs:
+  check:
+    name: Run checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+
+      - name: checkout sources
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.11.2
+
+      - name: Build
+        shell: bash
+        run: |
+          make build
+
+      - name: Run e2e tests
+        shell: bash
+        env:
+          GINKGO_LABEL_FILTER: ${{ inputs.e2e_filter }}
+        run: |
+          make kind-create-cluster
+          make helm-kind-install
+          kubectl get pod
+          make kind-load-test-images
+          make test-e2e
+          make helm-uninstall

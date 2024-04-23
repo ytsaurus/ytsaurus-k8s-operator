@@ -112,12 +112,15 @@
                 {
                     path="/yt/hdd2/slots";
                     "medium_name"="";
+                    "disk_usage_watermark"=0;
+                    "enable_disk_quota"=%false;
                 };
             ];
             "job_environment"={
                 type=simple;
                 "start_uid"=19500;
             };
+            "enable_tmpfs"=%false;
         };
         "gpu_manager"={
             "gpu_info_source"={

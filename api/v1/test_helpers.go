@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 
@@ -28,6 +29,18 @@ var (
 	masterVolumeSize, _ = resource.ParseQuantity("5Gi")
 )
 
+func createLoggersSpec() []TextLoggerSpec {
+	return []TextLoggerSpec{
+		{
+			BaseLoggerSpec: BaseLoggerSpec{
+				MinLogLevel: LogLevelInfo,
+				Name:        "info-stderr",
+			},
+			WriterType: LogWriterTypeStderr,
+		},
+	}
+}
+
 func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 	return &Ytsaurus{
 		ObjectMeta: metav1.ObjectMeta{
@@ -36,28 +49,15 @@ func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 		},
 		Spec: YtsaurusSpec{
 			CommonSpec: CommonSpec{
-				UseShortNames: true,
-				CoreImage:     CoreImageFirst,
+				EphemeralCluster: true,
+				UseShortNames:    true,
+				CoreImage:        CoreImageFirst,
 			},
 			EnableFullUpdate: true,
 			IsManaged:        true,
 			Discovery: DiscoverySpec{
 				InstanceSpec: InstanceSpec{
 					InstanceCount: 1,
-				},
-			},
-			Bootstrap: &BootstrapSpec{
-				TabletCellBundles: &BundlesBootstrapSpec{
-					Sys: &BundleBootstrapSpec{
-						TabletCellCount:        2,
-						ChangelogPrimaryMedium: ptr.String("default"),
-						SnapshotPrimaryMedium:  ptr.String("default"),
-					},
-					Default: &BundleBootstrapSpec{
-						TabletCellCount:        2,
-						ChangelogPrimaryMedium: ptr.String("default"),
-						SnapshotPrimaryMedium:  ptr.String("default"),
-					},
 				},
 			},
 			PrimaryMasters: MastersSpec{
@@ -97,29 +97,11 @@ func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 							MountPath: "/yt/master-data",
 						},
 					},
-					Loggers: []TextLoggerSpec{
-						{
-							BaseLoggerSpec: BaseLoggerSpec{
-								MinLogLevel: LogLevelDebug,
-								Name:        "debug",
-							},
-							WriterType: LogWriterTypeFile,
-						},
-					},
+					Loggers: createLoggersSpec(),
 				},
 			},
 			HTTPProxies: []HTTPProxiesSpec{
 				createHTTPProxiesSpec(),
-			},
-			Schedulers: &SchedulersSpec{
-				InstanceSpec: InstanceSpec{
-					InstanceCount: 1,
-				},
-			},
-			ControllerAgents: &ControllerAgentsSpec{
-				InstanceSpec: InstanceSpec{
-					InstanceCount: 1,
-				},
 			},
 		},
 	}
@@ -127,22 +109,43 @@ func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 
 func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 	ytsaurus := CreateMinimalYtsaurusResource(namespace)
+	ytsaurus = WithBootstrap(ytsaurus)
+	ytsaurus = WithScheduler(ytsaurus)
+	ytsaurus = WithControllerAgents(ytsaurus)
+	ytsaurus = WithDataNodes(ytsaurus)
+	ytsaurus = WithTabletNodes(ytsaurus)
+	ytsaurus = WithExecNodes(ytsaurus)
+	return ytsaurus
+}
 
-	ytsaurus.Spec.Discovery = DiscoverySpec{
-		InstanceSpec: InstanceSpec{
-			InstanceCount: 1,
-		},
-	}
+// TODO (l0kix2): merge with ytconfig build spec helpers.
+func WithDataNodes(ytsaurus *Ytsaurus) *Ytsaurus {
+	return WithDataNodesCount(ytsaurus, 3)
+}
+
+func WithDataNodesCount(ytsaurus *Ytsaurus, count int) *Ytsaurus {
 	ytsaurus.Spec.DataNodes = []DataNodesSpec{
 		{
-			InstanceSpec: CreateDataNodeInstanceSpec(3),
+			InstanceSpec: CreateDataNodeInstanceSpec(count),
 		},
 	}
+	return ytsaurus
+}
+
+func WithTabletNodes(ytsaurus *Ytsaurus) *Ytsaurus {
+	return WithTabletNodesCount(ytsaurus, 3)
+}
+
+func WithTabletNodesCount(ytsaurus *Ytsaurus, count int) *Ytsaurus {
 	ytsaurus.Spec.TabletNodes = []TabletNodesSpec{
 		{
-			InstanceSpec: CreateTabletNodeSpec(3),
+			InstanceSpec: CreateTabletNodeSpec(count),
 		},
 	}
+	return ytsaurus
+}
+
+func WithExecNodes(ytsaurus *Ytsaurus) *Ytsaurus {
 	ytsaurus.Spec.ExecNodes = []ExecNodesSpec{
 		{
 			InstanceSpec: CreateExecNodeInstanceSpec(),
@@ -151,23 +154,89 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 	return ytsaurus
 }
 
-func createHTTPProxiesSpec() HTTPProxiesSpec {
-	spec := HTTPProxiesSpec{
-		ServiceType: "NodePort",
+func WithScheduler(ytsaurus *Ytsaurus) *Ytsaurus {
+	ytsaurus.Spec.Schedulers = &SchedulersSpec{
 		InstanceSpec: InstanceSpec{
 			InstanceCount: 1,
 		},
 	}
-	portStr := os.Getenv("E2E_HTTP_PROXY_INTERNAL_PORT")
+	return ytsaurus
+}
+
+func WithControllerAgents(ytsaurus *Ytsaurus) *Ytsaurus {
+	ytsaurus.Spec.ControllerAgents = &ControllerAgentsSpec{
+		InstanceSpec: InstanceSpec{
+			InstanceCount: 1,
+		},
+	}
+	return ytsaurus
+}
+
+func WithBootstrap(ytsaurus *Ytsaurus) *Ytsaurus {
+	ytsaurus.Spec.Bootstrap = &BootstrapSpec{
+		TabletCellBundles: &BundlesBootstrapSpec{
+			Sys: &BundleBootstrapSpec{
+				TabletCellCount:        2,
+				ChangelogPrimaryMedium: ptr.String("default"),
+				SnapshotPrimaryMedium:  ptr.String("default"),
+			},
+			Default: &BundleBootstrapSpec{
+				TabletCellCount:        2,
+				ChangelogPrimaryMedium: ptr.String("default"),
+				SnapshotPrimaryMedium:  ptr.String("default"),
+			},
+		},
+	}
+	return ytsaurus
+}
+
+func WithQueryTracker(ytsaurus *Ytsaurus) *Ytsaurus {
+	ytsaurus.Spec.QueryTrackers = &QueryTrackerSpec{
+		InstanceSpec: InstanceSpec{
+			InstanceCount: 1,
+		},
+	}
+	return ytsaurus
+}
+
+func WithRPCProxies(ytsaurus *Ytsaurus) *Ytsaurus {
+	ytsaurus.Spec.RPCProxies = []RPCProxiesSpec{
+		createRPCProxiesSpec(),
+	}
+	return ytsaurus
+}
+
+func createHTTPProxiesSpec() HTTPProxiesSpec {
+	return HTTPProxiesSpec{
+		ServiceType: "NodePort",
+		InstanceSpec: InstanceSpec{
+			InstanceCount: 1,
+		},
+		HttpNodePort: getPortFromEnv("E2E_HTTP_PROXY_INTERNAL_PORT"),
+	}
+}
+
+func createRPCProxiesSpec() RPCProxiesSpec {
+	stype := corev1.ServiceTypeNodePort
+	return RPCProxiesSpec{
+		ServiceType: &stype,
+		InstanceSpec: InstanceSpec{
+			InstanceCount: 1,
+		},
+		NodePort: getPortFromEnv("E2E_RPC_PROXY_INTERNAL_PORT"),
+	}
+}
+
+func getPortFromEnv(envvar string) *int32 {
+	portStr := os.Getenv(envvar)
 	if portStr != "" {
 		port, err := strconv.Atoi(portStr)
 		if err != nil {
-			panic("Invalid E2E_HTTP_PROXY_INTERNAL_PORT value")
+			panic(fmt.Sprintf("Invalid %s value", envvar))
 		}
-		portInt32 := int32(port)
-		spec.HttpNodePort = &portInt32
+		return ptr.Int32(int32(port))
 	}
-	return spec
+	return nil
 }
 
 func CreateExecNodeInstanceSpec() InstanceSpec {
@@ -182,15 +251,7 @@ func CreateExecNodeInstanceSpec() InstanceSpec {
 				corev1.ResourceMemory: execNodeMemory,
 			},
 		},
-		Loggers: []TextLoggerSpec{
-			{
-				BaseLoggerSpec: BaseLoggerSpec{
-					MinLogLevel: LogLevelDebug,
-					Name:        "debug",
-				},
-				WriterType: LogWriterTypeFile,
-			},
-		},
+		Loggers: createLoggersSpec(),
 		Locations: []LocationSpec{
 			{
 				LocationType: "ChunkCache",
@@ -251,14 +312,6 @@ func CreateDataNodeInstanceSpec(instanceCount int) InstanceSpec {
 func CreateTabletNodeSpec(instanceCount int) InstanceSpec {
 	return InstanceSpec{
 		InstanceCount: int32(instanceCount),
-		Loggers: []TextLoggerSpec{
-			{
-				BaseLoggerSpec: BaseLoggerSpec{
-					MinLogLevel: LogLevelDebug,
-					Name:        "debug",
-				},
-				WriterType: LogWriterTypeFile,
-			},
-		},
+		Loggers:       createLoggersSpec(),
 	}
 }

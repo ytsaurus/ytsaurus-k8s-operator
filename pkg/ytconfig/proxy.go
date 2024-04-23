@@ -82,7 +82,7 @@ type RPCProxyServer struct {
 	CypressTokenAuthenticator CypressTokenAuthenticator `yson:"cypress_token_authenticator"`
 	OauthService              *OauthService             `yson:"oauth_service,omitempty"`
 	OauthTokenAuthenticator   *OauthTokenAuthenticator  `yson:"oauth_token_authenticator,omitempty"`
-	RequireAuthentication     bool                      `yson:"require_authentication"`
+	RequireAuthentication     *bool                     `yson:"require_authentication,omitempty"`
 }
 
 type TCPProxyServer struct {

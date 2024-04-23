@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 )
 
@@ -14,7 +15,6 @@ type SyncStatus string
 
 const (
 	SyncStatusBlocked         SyncStatus = "Blocked"
-	SyncStatusNeedFullUpdate  SyncStatus = "NeedFullUpdate"
 	SyncStatusNeedLocalUpdate SyncStatus = "NeedLocalUpdate"
 	SyncStatusPending         SyncStatus = "Pending"
 	SyncStatusReady           SyncStatus = "Ready"
@@ -22,7 +22,7 @@ const (
 )
 
 func IsRunningStatus(status SyncStatus) bool {
-	return status == SyncStatusReady || status == SyncStatusNeedLocalUpdate || status == SyncStatusNeedFullUpdate
+	return status == SyncStatusReady || status == SyncStatusNeedLocalUpdate
 }
 
 type ComponentStatus struct {
@@ -47,6 +47,7 @@ type Component interface {
 	Sync(ctx context.Context) error
 	Status(ctx context.Context) (ComponentStatus, error)
 	GetName() string
+	GetType() consts.ComponentType
 	SetReadyCondition(status ComponentStatus)
 
 	// TODO(nadya73): refactor it

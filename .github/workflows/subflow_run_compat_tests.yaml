@@ -1,0 +1,40 @@
+on:
+  workflow_call:
+
+jobs:
+  check:
+    name: Run checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+
+      - name: checkout sources
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.11.2
+
+      - name: Build
+        shell: bash
+        run: |
+          make build
+
+      - name: Run compat tests
+        shell: bash
+        run: |
+          make kind-create-cluster
+          make kind-load-sample-images 
+          ./compat_test.sh --from-version 0.4.1 --to-version trunk

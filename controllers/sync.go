@@ -243,6 +243,37 @@ func getComponentNames(components []components.Component) []string {
 	return names
 }
 
+// chooseUpdateStrategy considers spec decides if operator should proceed with update or block.
+// Block is indicated with non-empty blockMsg.
+// Component names which are chosen for update are return in names slice.
+// Nil names slice means "full update".
+func chooseUpdateStrategy(spec ytv1.YtsaurusSpec, needUpdate []components.Component) (names []string, blockMsg string) {
+	isFullUpdateEnabled := spec.EnableFullUpdate
+
+	masterNeedsUpdate := false
+	tabletNodesNeedUpdate := false
+	for _, comp := range needUpdate {
+		if comp.GetType() == consts.MasterType {
+			masterNeedsUpdate = true
+			continue
+		}
+		if comp.GetType() == consts.TabletNodeType {
+			tabletNodesNeedUpdate = true
+			continue
+		}
+	}
+	statefulNeedUpdate := masterNeedsUpdate || tabletNodesNeedUpdate
+
+	if statefulNeedUpdate {
+		if isFullUpdateEnabled {
+			return nil, ""
+		} else {
+			return nil, "Full update is not allowed by enableFullUpdate field, ignoring it"
+		}
+	}
+	return getComponentNames(needUpdate), ""
+}
+
 func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
@@ -282,18 +313,13 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateReconfiguration)
 			return ctrl.Result{Requeue: true}, err
 
-		case componentManager.needFullUpdate():
-			logger.Info("Ytsaurus needs full update")
-			if !ytsaurus.GetResource().Spec.EnableFullUpdate {
-				logger.Info("Full update isn't allowed, ignore it")
+		case componentManager.needUpdate() != nil:
+			componentNames, blockMsg := chooseUpdateStrategy(ytsaurus.GetResource().Spec, componentManager.needUpdate())
+			if blockMsg != "" {
+				logger.Info(blockMsg)
 				return ctrl.Result{}, nil
 			}
-			err := ytsaurus.SaveUpdatingClusterState(ctx, nil)
-			return ctrl.Result{Requeue: true}, err
-
-		case componentManager.needLocalUpdate() != nil:
-			componentNames := getComponentNames(componentManager.needLocalUpdate())
-			logger.Info("Ytsaurus needs local components update", "components", componentNames)
+			logger.Info("Ytsaurus needs components update", "components", componentNames)
 			err := ytsaurus.SaveUpdatingClusterState(ctx, componentNames)
 			return ctrl.Result{Requeue: true}, err
 		}
