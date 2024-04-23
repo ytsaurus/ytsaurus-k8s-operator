@@ -178,7 +178,7 @@ func (g *BaseGenerator) fillCypressAnnotations(c *map[string]any) {
 		"k8s_pod_namespace": "{K8S_POD_NAMESPACE}",
 		"k8s_node_name":     "{K8S_NODE_NAME}",
 		// for CMS and UI сompatibility
-		"physical_host":     "{K8S_NODE_NAME}",
+		"physical_host": "{K8S_NODE_NAME}",
 	}
 }
 
