@@ -253,13 +253,10 @@ type testRow struct {
 var _ = Describe("Basic test for Ytsaurus controller", func() {
 	Context("When setting up the test environment", func() {
 		It(
-			"Should run and update Ytsaurus within same major version",
-			Label("update"),
-			getSimpleUpdateScenario("test-minor-update", ytv1.CoreImageSecond),
+			"Should run and update Ytsaurus within same major version", Label("basic"), getSimpleUpdateScenario("test-minor-update", ytv1.CoreImageSecond),
 		)
 		It(
 			"Should run and update Ytsaurus to the next major version",
-			Label("update"),
 			getSimpleUpdateScenario("test-major-update", ytv1.CoreImageNextVer),
 		)
 		It(
@@ -356,7 +353,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			},
 		)
 		It(
-			"Should be updated according to UpdateSelector=MasterOnly,StatelessOnly", func(ctx context.Context) {
+			"Should be updated according to UpdateSelector=MasterOnly,StatelessOnly", Label("basic"), func(ctx context.Context) {
 				namespace := "testslctother"
 
 				By("Creating a Ytsaurus resource")
@@ -564,7 +561,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			runImpossibleUpdateAndRollback(ytsaurus, ytClient)
 		})
 
-		It("Should run with query tracker and check that access control objects set up correctly", func(ctx context.Context) {
+		It("Should run with query tracker and check that access control objects set up correctly", Label("basic"), func(ctx context.Context) {
 			By("Creating a Ytsaurus resource")
 
 			namespace := "querytrackeraco"
