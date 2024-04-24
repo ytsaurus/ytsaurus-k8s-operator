@@ -533,6 +533,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		}
 
 	case ytv1.ClusterStateRunning:
+		needUpdate := componentManager.needUpdate()
 		switch {
 		case !componentManager.needSync():
 			logger.Info("Ytsaurus is running and happy")
@@ -543,14 +544,19 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateReconfiguration)
 			return ctrl.Result{Requeue: true}, err
 
-		case componentManager.needUpdate() != nil:
-			meta, blockMsg := chooseUpdateFlow(ytsaurus.GetResource().Spec, componentManager.needUpdate())
+		case needUpdate != nil:
+			var needUpdateNames []string
+			for _, c := range needUpdate {
+				needUpdateNames = append(needUpdateNames, c.GetName())
+			}
+			logger = logger.WithValues("componentsForUpdateAll", needUpdateNames)
+			meta, blockMsg := chooseUpdateFlow(ytsaurus.GetResource().Spec, needUpdate)
 			if blockMsg != "" {
 				logger.Info(blockMsg)
 				return ctrl.Result{Requeue: true}, nil
 			}
 			logger.Info("Ytsaurus needs components update",
-				"components", meta.componentNames,
+				"componentsForUpdateSelected", meta.componentNames,
 				"flow", meta.flow,
 			)
 			err = ytsaurus.SaveUpdatingClusterState(ctx, meta.flow, meta.componentNames)
