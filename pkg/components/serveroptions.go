@@ -5,47 +5,29 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-type Option interface {
-	apply(srv *serverImpl)
+type options struct {
+	containerPorts []corev1.ContainerPort
+
+	readinessProbeEndpointPort intstr.IntOrString
+	readinessProbeEndpointPath string
 }
 
-var (
-	_ Option = &CustomReadinessProbeEndpoint{}
-	_ Option = &ComponentContainerPorts{}
-)
+type Option func(opts *options)
 
-type CustomReadinessProbeEndpoint struct {
-	port *intstr.IntOrString
-	path *string
-}
+func WithCustomReadinessProbeEndpoint(port *int32, path *string) Option {
+	return func(opts *options) {
+		if port != nil {
+			opts.readinessProbeEndpointPort = intstr.FromInt32(*port)
+		}
 
-func (c CustomReadinessProbeEndpoint) apply(srv *serverImpl) {
-	if c.port != nil {
-		srv.readinessProbePort = *c.port
+		if path != nil {
+			opts.readinessProbeEndpointPath = *path
+		}
 	}
-
-	if c.path != nil {
-		srv.readinessProbeHTTPPath = *c.path
-	}
-}
-
-func WithCustomReadinessProbeEndpoint(port *intstr.IntOrString, path *string) Option {
-	return CustomReadinessProbeEndpoint{
-		port: port,
-		path: path,
-	}
-}
-
-type ComponentContainerPorts struct {
-	ports []corev1.ContainerPort
-}
-
-func (c ComponentContainerPorts) apply(srv *serverImpl) {
-	srv.componentContainerPorts = append(srv.componentContainerPorts, c.ports...)
 }
 
 func WithContainerPorts(ports ...corev1.ContainerPort) Option {
-	return ComponentContainerPorts{
-		ports: ports,
+	return func(opts *options) {
+		opts.containerPorts = append(opts.containerPorts, ports...)
 	}
 }

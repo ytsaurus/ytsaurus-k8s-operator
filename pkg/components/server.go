@@ -89,7 +89,7 @@ func newServerConfigured(
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
 	generator ytconfig.YsonGeneratorFunc,
-	options ...Option,
+	optFuncs ...Option,
 ) server {
 	image := commonSpec.CoreImage
 	if instanceSpec.Image != nil {
@@ -114,7 +114,23 @@ func newServerConfigured(
 			consts.BusSecretMountPoint)
 	}
 
-	srv := &serverImpl{
+	opts := &options{
+		containerPorts: []corev1.ContainerPort{
+			{
+				Name:          consts.YTMonitoringContainerPortName,
+				ContainerPort: *instanceSpec.MonitoringPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		},
+		readinessProbeEndpointPort: intstr.FromString(consts.YTMonitoringContainerPortName),
+		readinessProbeEndpointPath: readinessProbeHTTPPath,
+	}
+
+	for _, fn := range optFuncs {
+		fn(opts)
+	}
+
+	return &serverImpl{
 		labeller:     l,
 		image:        image,
 		proxy:        proxy,
@@ -151,23 +167,11 @@ func newServerConfigured(
 				},
 			}),
 
-		componentContainerPorts: []corev1.ContainerPort{
-			{
-				Name:          consts.YTMonitoringContainerPortName,
-				ContainerPort: *instanceSpec.MonitoringPort,
-				Protocol:      corev1.ProtocolTCP,
-			},
-		},
+		componentContainerPorts: opts.containerPorts,
 
-		readinessProbePort:     intstr.FromString(consts.YTMonitoringContainerPortName),
-		readinessProbeHTTPPath: readinessProbeHTTPPath,
+		readinessProbePort:     opts.readinessProbeEndpointPort,
+		readinessProbeHTTPPath: opts.readinessProbeEndpointPath,
 	}
-
-	for _, opt := range options {
-		opt.apply(srv)
-	}
-
-	return srv
 }
 
 func (s *serverImpl) Fetch(ctx context.Context) error {
