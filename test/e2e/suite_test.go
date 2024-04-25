@@ -141,6 +141,16 @@ func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 			changed = true
 		}
 
+		if len(prevStatus.UpdateStatus.Components) != len(newStatus.UpdateStatus.Components) {
+			log.Info("UpdateStatus", "components", newStatus.UpdateStatus.Components)
+			changed = true
+		}
+
+		if prevStatus.UpdateStatus.Flow != newStatus.UpdateStatus.Flow {
+			log.Info("UpdateStatus", "flow", newStatus.UpdateStatus.Flow)
+			changed = true
+		}
+
 		for _, cond := range newStatus.UpdateStatus.Conditions {
 			if prevCond, found := updateConditions[cond.Type]; !found || !reflect.DeepEqual(cond, prevCond) {
 				log.Info("UpdateCondition", "type", cond.Type, "status", cond.Status, "reason", cond.Reason, "message", cond.Message)
@@ -166,6 +176,18 @@ func EventuallyYtsaurus(ctx context.Context, name types.NamespacedName, timeout 
 	}, timeout, pollInterval)
 }
 
+func ConsistentlyYtsaurus(ctx context.Context, name types.NamespacedName, timeout time.Duration) AsyncAssertion {
+	var ytsaurus ytv1.Ytsaurus
+	trackStatus := NewYtsaurusStatusTracker()
+	return Consistently(ctx, func(ctx context.Context) (*ytv1.Ytsaurus, error) {
+		err := k8sClient.Get(ctx, name, &ytsaurus)
+		if err == nil {
+			trackStatus(&ytsaurus)
+		}
+		return &ytsaurus, err
+	}, timeout, pollInterval)
+}
+
 func HaveClusterState(state ytv1.ClusterState) otypes.GomegaMatcher {
 	return HaveField("Status.State", state)
 }
@@ -174,5 +196,12 @@ func HaveClusterUpdateState(updateState ytv1.UpdateState) otypes.GomegaMatcher {
 	return And(
 		HaveClusterState(ytv1.ClusterStateUpdating),
 		HaveField("Status.UpdateStatus.State", updateState),
+	)
+}
+
+func HaveClusterUpdatingComponents(components ...string) otypes.GomegaMatcher {
+	return And(
+		HaveClusterState(ytv1.ClusterStateUpdating),
+		HaveField("Status.UpdateStatus.Components", components),
 	)
 }
