@@ -413,10 +413,6 @@ func (yc *YtsaurusClient) GetYtClient() yt.Client {
 }
 
 func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, msg string, err error) {
-	if !yc.ytsaurus.GetResource().Spec.EnableFullUpdate {
-		return false, "Full update is not enabled", nil
-	}
-
 	// Check tablet cell bundles.
 	notGoodBundles, err := GetNotGoodTabletCellBundles(ctx, yc.ytClient)
 	if err != nil {
