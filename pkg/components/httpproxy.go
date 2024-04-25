@@ -72,7 +72,7 @@ func NewHTTPProxy(
 				Protocol:      corev1.ProtocolTCP,
 			},
 		),
-		WithCustomReadinessProbeEndpointPort(int32(consts.HTTPProxyHTTPPort)),
+		WithCustomReadinessProbeEndpointPort(consts.HTTPProxyHTTPPort),
 		WithCustomReadinessProbeEndpointPath("/ping"),
 	)
 
