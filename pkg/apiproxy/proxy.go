@@ -3,6 +3,7 @@ package apiproxy
 import (
 	"context"
 	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -94,6 +95,7 @@ func (c *apiProxy) RecordNormal(reason, message string) {
 }
 
 func (c *apiProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object) error {
+	println("SyncObject", oldObj.GetObjectKind(), oldObj.GetResourceVersion(), newObj.GetResourceVersion())
 	var err error
 	if newObj.GetName() == "" {
 		return fmt.Errorf("cannot sync uninitialized object, object type %T", oldObj)
@@ -175,5 +177,14 @@ func (c *apiProxy) createAndReferenceObject(ctx context.Context, obj client.Obje
 }
 
 func (c *apiProxy) UpdateStatus(ctx context.Context) error {
-	return c.client.Status().Update(ctx, c.object)
+	versionBefore := c.object.GetResourceVersion()
+	err := c.client.Status().Update(ctx, c.object)
+	if apierrors.IsConflict(err) {
+		println("DBG CONFLICT VER BEFORE", versionBefore)
+		//key := c.getObjectKey(c.object.GetName())
+		//err = c.client.Get(ctx, key, c.object)
+		println("DBG CONFLICT GET ERR", err)
+		println("DBG CONFLICT VER AFTER", c.object.GetResourceVersion())
+	}
+	return err
 }

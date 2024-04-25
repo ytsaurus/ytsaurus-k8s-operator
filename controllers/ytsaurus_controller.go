@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -54,7 +55,7 @@ func (r *YtsaurusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		// on deleted requests.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	logger.V(1).Info("found Ytsaurus cluster")
+	logger.V(1).Info("found Ytsaurus cluster", "version", ytsaurus.GetResourceVersion())
 
 	return r.Sync(ctx, &ytsaurus)
 }

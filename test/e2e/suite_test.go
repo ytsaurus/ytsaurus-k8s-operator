@@ -146,6 +146,16 @@ func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 			changed = true
 		}
 
+		if len(prevStatus.UpdateStatus.TabletCellBundles) != len(newStatus.UpdateStatus.TabletCellBundles) {
+			log.Info("UpdateStatus", "tablet_cell_bundles", newStatus.UpdateStatus.TabletCellBundles)
+			changed = true
+		}
+
+		if len(prevStatus.UpdateStatus.MasterMonitoringPaths) != len(newStatus.UpdateStatus.MasterMonitoringPaths) {
+			log.Info("UpdateStatus", "master_monitoring_paths", newStatus.UpdateStatus.MasterMonitoringPaths)
+			changed = true
+		}
+
 		if prevStatus.UpdateStatus.Flow != newStatus.UpdateStatus.Flow {
 			log.Info("UpdateStatus", "flow", newStatus.UpdateStatus.Flow)
 			changed = true
