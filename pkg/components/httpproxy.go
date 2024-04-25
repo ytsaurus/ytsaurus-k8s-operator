@@ -57,18 +57,23 @@ func NewHTTPProxy(
 		func() ([]byte, error) {
 			return cfgen.GetHTTPProxyConfig(spec)
 		},
-		WithComponentContainerPorts([]corev1.ContainerPort{
-			{
+		WithContainerPorts(
+			corev1.ContainerPort{
+				Name:          consts.YTRPCPortName,
+				ContainerPort: consts.HTTPProxyRPCPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+			corev1.ContainerPort{
 				Name:          "http",
 				ContainerPort: consts.HTTPProxyHTTPPort,
 				Protocol:      corev1.ProtocolTCP,
 			},
-			{
+			corev1.ContainerPort{
 				Name:          "https",
 				ContainerPort: consts.HTTPProxyHTTPSPort,
 				Protocol:      corev1.ProtocolTCP,
 			},
-		}),
+		),
 		WithCustomReadinessProbeEndpoint(ptr.T(intstr.FromInt32(consts.HTTPProxyHTTPPort)), ptr.T("/ping")),
 	)
 

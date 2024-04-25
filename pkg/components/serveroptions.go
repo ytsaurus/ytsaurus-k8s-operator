@@ -44,7 +44,7 @@ func (c ComponentContainerPorts) apply(srv *serverImpl) {
 	srv.componentContainerPorts = append(srv.componentContainerPorts, c.ports...)
 }
 
-func WithComponentContainerPorts(ports []corev1.ContainerPort) Option {
+func WithContainerPorts(ports ...corev1.ContainerPort) Option {
 	return ComponentContainerPorts{
 		ports: ports,
 	}

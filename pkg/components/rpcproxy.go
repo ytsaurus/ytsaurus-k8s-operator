@@ -53,12 +53,10 @@ func NewRPCProxy(
 		func() ([]byte, error) {
 			return cfgen.GetRPCProxyConfig(spec)
 		},
-		WithComponentContainerPorts([]corev1.ContainerPort{
-			{
-				Name:          "rpc",
-				ContainerPort: consts.RPCProxyRPCPort,
-				Protocol:      corev1.ProtocolTCP,
-			},
+		WithContainerPorts(corev1.ContainerPort{
+			Name:          consts.YTRPCPortName,
+			ContainerPort: consts.RPCProxyRPCPort,
+			Protocol:      corev1.ProtocolTCP,
 		}),
 	)
 
