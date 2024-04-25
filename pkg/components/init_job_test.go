@@ -76,11 +76,6 @@ func syncJobUntilReady(t *testing.T, job *InitJob) {
 func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
 	k8sName := "dummy-name"
 	return NewInitJob(
-		// &labeller.Labeller{
-		//	ObjectMeta: ,
-		//	ComponentLabel: "ms",
-		//	ComponentName:  k8sName,
-		// },
 		ptr.T(labeller.NewSingletonComponentLabeller(&metav1.ObjectMeta{
 			Name:      k8sName,
 			Namespace: ytsaurus.GetResource().Namespace,
