@@ -72,7 +72,8 @@ func NewHTTPProxy(
 				Protocol:      corev1.ProtocolTCP,
 			},
 		),
-		WithCustomReadinessProbeEndpoint(ptr.T(int32(consts.HTTPProxyHTTPPort)), ptr.T("/ping")),
+		WithCustomReadinessProbeEndpointPort(int32(consts.HTTPProxyHTTPPort)),
+		WithCustomReadinessProbeEndpointPath("/ping"),
 	)
 
 	var httpsSecret *resources.TLSSecret

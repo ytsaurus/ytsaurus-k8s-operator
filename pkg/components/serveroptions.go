@@ -14,15 +14,15 @@ type options struct {
 
 type Option func(opts *options)
 
-func WithCustomReadinessProbeEndpoint(port *int32, path *string) Option {
+func WithCustomReadinessProbeEndpointPort(port int32) Option {
 	return func(opts *options) {
-		if port != nil {
-			opts.readinessProbeEndpointPort = intstr.FromInt32(*port)
-		}
+		opts.readinessProbeEndpointPort = intstr.FromInt32(port)
+	}
+}
 
-		if path != nil {
-			opts.readinessProbeEndpointPath = *path
-		}
+func WithCustomReadinessProbeEndpointPath(path string) Option {
+	return func(opts *options) {
+		opts.readinessProbeEndpointPath = path
 	}
 }
 
