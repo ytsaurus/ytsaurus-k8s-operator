@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"go.ytsaurus.tech/library/go/ptr"
+	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -48,6 +49,11 @@ func NewDataNode(
 		func() ([]byte, error) {
 			return cfgen.GetDataNodeConfig(spec)
 		},
+		WithContainerPorts(corev1.ContainerPort{
+			Name:          consts.YTRPCPortName,
+			ContainerPort: consts.DataNodeRPCPort,
+			Protocol:      corev1.ProtocolTCP,
+		}),
 	)
 
 	return &DataNode{

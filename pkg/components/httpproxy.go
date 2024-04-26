@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"go.ytsaurus.tech/library/go/ptr"
-
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -56,6 +55,25 @@ func NewHTTPProxy(
 		func() ([]byte, error) {
 			return cfgen.GetHTTPProxyConfig(spec)
 		},
+		WithContainerPorts(
+			corev1.ContainerPort{
+				Name:          consts.YTRPCPortName,
+				ContainerPort: consts.HTTPProxyRPCPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+			corev1.ContainerPort{
+				Name:          "http",
+				ContainerPort: consts.HTTPProxyHTTPPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+			corev1.ContainerPort{
+				Name:          "https",
+				ContainerPort: consts.HTTPProxyHTTPSPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		),
+		WithCustomReadinessProbeEndpointPort(consts.HTTPProxyHTTPPort),
+		WithCustomReadinessProbeEndpointPath("/ping"),
 	)
 
 	var httpsSecret *resources.TLSSecret

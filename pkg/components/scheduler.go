@@ -59,6 +59,11 @@ func NewScheduler(
 		func() ([]byte, error) {
 			return cfgen.GetSchedulerConfig(resource.Spec.Schedulers)
 		},
+		WithContainerPorts(corev1.ContainerPort{
+			Name:          consts.YTRPCPortName,
+			ContainerPort: consts.SchedulerRPCPort,
+			Protocol:      corev1.ProtocolTCP,
+		}),
 	)
 
 	return &Scheduler{

@@ -55,6 +55,11 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		cfgen.GetMastersStatefulSetName(),
 		cfgen.GetMastersServiceName(),
 		func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
+		WithContainerPorts(corev1.ContainerPort{
+			Name:          consts.YTRPCPortName,
+			ContainerPort: consts.MasterRPCPort,
+			Protocol:      corev1.ProtocolTCP,
+		}),
 	)
 
 	initJob := NewInitJob(
