@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"go.ytsaurus.tech/library/go/ptr"
+	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -42,6 +43,11 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		"ca",
 		"controller-agents",
 		func() ([]byte, error) { return cfgen.GetControllerAgentConfig(resource.Spec.ControllerAgents) },
+		WithContainerPorts(corev1.ContainerPort{
+			Name:          consts.YTRPCPortName,
+			ContainerPort: consts.ControllerAgentRPCPort,
+			Protocol:      corev1.ProtocolTCP,
+		}),
 	)
 
 	return &ControllerAgent{

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"go.ytsaurus.tech/library/go/ptr"
+	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -41,6 +42,11 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Mas
 		cfgen.GetMasterCachesStatefulSetName(),
 		cfgen.GetMasterCachesServiceName(),
 		func() ([]byte, error) { return cfgen.GetMasterCachesConfig(resource.Spec.MasterCaches) },
+		WithContainerPorts(corev1.ContainerPort{
+			Name:          consts.YTRPCPortName,
+			ContainerPort: consts.MasterCachesRPCPort,
+			Protocol:      corev1.ProtocolTCP,
+		}),
 	)
 
 	return &MasterCache{

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"go.ytsaurus.tech/library/go/ptr"
+	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -43,6 +44,11 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Disco
 		func() ([]byte, error) {
 			return cfgen.GetDiscoveryConfig(&resource.Spec.Discovery)
 		},
+		WithContainerPorts(corev1.ContainerPort{
+			Name:          consts.YTRPCPortName,
+			ContainerPort: consts.DiscoveryRPCPort,
+			Protocol:      corev1.ProtocolTCP,
+		}),
 	)
 
 	return &Discovery{

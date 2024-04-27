@@ -20,7 +20,6 @@ import (
 )
 
 const (
-	serverAPIPortName      = "http"
 	readinessProbeHTTPPath = "/orchid/service"
 )
 
@@ -55,6 +54,11 @@ type serverImpl struct {
 	configHelper      *ConfigHelper
 
 	builtStatefulSet *appsv1.StatefulSet
+
+	componentContainerPorts []corev1.ContainerPort
+
+	readinessProbePort     intstr.IntOrString
+	readinessProbeHTTPPath string
 }
 
 func newServer(
@@ -63,6 +67,7 @@ func newServer(
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
 	generator ytconfig.YsonGeneratorFunc,
+	options ...Option,
 ) server {
 	proxy := ytsaurus.APIProxy()
 	commonSpec := ytsaurus.GetCommonSpec()
@@ -73,6 +78,7 @@ func newServer(
 		instanceSpec,
 		binaryPath, configFileName, statefulSetName, serviceName,
 		generator,
+		options...,
 	)
 }
 
@@ -83,6 +89,7 @@ func newServerConfigured(
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName, statefulSetName, serviceName string,
 	generator ytconfig.YsonGeneratorFunc,
+	optFuncs ...Option,
 ) server {
 	image := commonSpec.CoreImage
 	if instanceSpec.Image != nil {
@@ -105,6 +112,22 @@ func newServerConfigured(
 			transportSpec.TLSSecret.Name,
 			consts.BusSecretVolumeName,
 			consts.BusSecretMountPoint)
+	}
+
+	opts := &options{
+		containerPorts: []corev1.ContainerPort{
+			{
+				Name:          consts.YTMonitoringContainerPortName,
+				ContainerPort: *instanceSpec.MonitoringPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		},
+		readinessProbeEndpointPort: intstr.FromString(consts.YTMonitoringContainerPortName),
+		readinessProbeEndpointPath: readinessProbeHTTPPath,
+	}
+
+	for _, fn := range optFuncs {
+		fn(opts)
 	}
 
 	return &serverImpl{
@@ -143,6 +166,11 @@ func newServerConfigured(
 					Fmt: ytconfig.ConfigFormatYson,
 				},
 			}),
+
+		componentContainerPorts: opts.containerPorts,
+
+		readinessProbePort:     opts.readinessProbeEndpointPort,
+		readinessProbeHTTPPath: opts.readinessProbeEndpointPath,
 	}
 }
 
@@ -272,19 +300,13 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Name:         consts.YTServerContainerName,
 				Command:      command,
 				VolumeMounts: volumeMounts,
-				Ports: []corev1.ContainerPort{
-					{
-						Name:          serverAPIPortName,
-						ContainerPort: *s.instanceSpec.MonitoringPort,
-						Protocol:      corev1.ProtocolTCP,
-					},
-				},
-				Resources: s.instanceSpec.Resources,
+				Ports:        s.componentContainerPorts,
+				Resources:    s.instanceSpec.Resources,
 				ReadinessProbe: &corev1.Probe{
 					ProbeHandler: corev1.ProbeHandler{
 						HTTPGet: &corev1.HTTPGetAction{
-							Port: intstr.FromString(serverAPIPortName),
-							Path: readinessProbeHTTPPath,
+							Port: s.readinessProbePort,
+							Path: s.readinessProbeHTTPPath,
 						},
 					},
 					InitialDelaySeconds: readinessProbeParams.InitialDelaySeconds,

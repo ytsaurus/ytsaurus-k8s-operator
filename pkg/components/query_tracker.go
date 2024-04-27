@@ -59,6 +59,11 @@ func NewQueryTracker(
 		cfgen.GetQueryTrackerStatefulSetName(),
 		cfgen.GetQueryTrackerServiceName(),
 		func() ([]byte, error) { return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers) },
+		WithContainerPorts(corev1.ContainerPort{
+			Name:          consts.YTRPCPortName,
+			ContainerPort: consts.QueryTrackerRPCPort,
+			Protocol:      corev1.ProtocolTCP,
+		}),
 	)
 
 	image := ytsaurus.GetResource().Spec.CoreImage

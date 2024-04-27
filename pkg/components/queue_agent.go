@@ -61,6 +61,11 @@ func NewQueueAgent(
 		cfgen.GetQueueAgentStatefulSetName(),
 		cfgen.GetQueueAgentServiceName(),
 		func() ([]byte, error) { return cfgen.GetQueueAgentConfig(resource.Spec.QueueAgents) },
+		WithContainerPorts(corev1.ContainerPort{
+			Name:          consts.YTRPCPortName,
+			ContainerPort: consts.QueueAgentRPCPort,
+			Protocol:      corev1.ProtocolTCP,
+		}),
 	)
 
 	image := ytsaurus.GetResource().Spec.CoreImage

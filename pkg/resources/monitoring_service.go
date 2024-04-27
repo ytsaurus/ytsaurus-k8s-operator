@@ -63,7 +63,7 @@ func (s *MonitoringService) Build() *corev1.Service {
 		Selector: s.labeller.GetSelectorLabelMap(),
 		Ports: []corev1.ServicePort{
 			{
-				Name:       consts.YTMonitoringPortName,
+				Name:       consts.YTMonitoringServicePortName,
 				Port:       consts.YTMonitoringPort,
 				TargetPort: intstr.IntOrString{IntVal: s.monitoringTargetPort},
 			},
