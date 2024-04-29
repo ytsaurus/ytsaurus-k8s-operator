@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	defaultClusterDomain = "cluster.local"
+	DefaultClusterDomain = "cluster.local"
 )
 
 func getClusterDomain(client client.Client) string {
@@ -21,7 +21,7 @@ func getClusterDomain(client client.Client) string {
 
 	cname, err := net.LookupCNAME(apiSvc)
 	if err != nil {
-		return defaultClusterDomain
+		return DefaultClusterDomain
 	}
 
 	clusterDomain := strings.TrimPrefix(cname, apiSvc)

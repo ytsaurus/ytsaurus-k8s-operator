@@ -119,6 +119,8 @@ func TestYtsaurusUpdateStatelessComponent(t *testing.T) {
 	ytsaurusResource.Spec.EnableFullUpdate = false
 	testutil.UpdateObject(h, &ytv1.Ytsaurus{}, &ytsaurusResource)
 
+	t.Log("[ Sleep for 5 seconds]")
+	time.Sleep(5 * time.Second)
 	waitClusterState(h, ytv1.ClusterStateRunning)
 
 	sts := appsv1.StatefulSet{}

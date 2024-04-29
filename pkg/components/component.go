@@ -48,6 +48,7 @@ type Component interface {
 	Status(ctx context.Context) (ComponentStatus, error)
 	GetName() string
 	GetType() consts.ComponentType
+	GetMetaLabelMap(isInitJob bool) map[string]string
 	SetReadyCondition(status ComponentStatus)
 
 	// TODO(nadya73): refactor it
@@ -67,6 +68,10 @@ type baseComponent struct {
 // For data node name looks like "DataNode<NameFromSpec>".
 func (c *baseComponent) GetName() string {
 	return c.labeller.ComponentFullName
+}
+
+func (c *baseComponent) GetMetaLabelMap(isInitJob bool) map[string]string {
+	return c.labeller.GetMetaLabelMap(isInitJob)
 }
 
 // localComponent is a base structs for components which have access to ytsaurus resource,

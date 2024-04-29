@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -71,6 +72,21 @@ func (fc *FakeComponent) GetName() string {
 
 func (fc *FakeComponent) GetType() consts.ComponentType {
 	return fc.compType
+}
+
+func (fc *FakeComponent) GetMetaLabelMap(isInitJob bool) map[string]string {
+	ytComponentLabelValue := fmt.Sprintf("%s-%s", fc.GetName(), fc.GetName())
+	if isInitJob {
+		ytComponentLabelValue = fmt.Sprintf("%s-%s", ytComponentLabelValue, "init-job")
+	}
+
+	return map[string]string{
+		"app.kubernetes.io/name":       "Ytsaurus",
+		"app.kubernetes.io/instance":   fc.GetName(),
+		"app.kubernetes.io/component":  fc.GetName(),
+		"app.kubernetes.io/managed-by": "Ytsaurus-k8s-operator",
+		consts.YTComponentLabelName:    ytComponentLabelValue,
+	}
 }
 
 func (fc *FakeComponent) SetReadyCondition(status ComponentStatus) {}
