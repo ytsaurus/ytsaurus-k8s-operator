@@ -457,6 +457,10 @@ type UISpec struct {
 	Theme       string  `json:"theme,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Group       *string `json:"group,omitempty"`
+	// When this is set to false, UI will use backend for downloading instead of proxy.
+	// If this is set to true or omitted, UI use proxies, which is a default behaviour.
+	//+optional
+	DirectDownload *bool `json:"directDownload,omitempty"`
 }
 
 type QueryTrackerSpec struct {
