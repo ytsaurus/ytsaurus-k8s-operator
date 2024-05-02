@@ -153,6 +153,13 @@ func (g *BaseGenerator) fillAddressResolver(c *AddressResolver) {
 	c.Retries = &retries
 }
 
+func (g *BaseGenerator) fillSolomonExporter(c *SolomonExporter) {
+	c.Host = ptr.String("{POD_SHORT_HOSTNAME}")
+	c.InstanceTags = map[string]string{
+		"k8s_pod_name": "{K8S_POD_NAME}",
+	}
+}
+
 func (g *BaseGenerator) fillPrimaryMaster(c *MasterCell) {
 	c.Addresses = g.getMasterAddresses()
 	c.Peers = g.getMasterHydraPeers()
@@ -185,6 +192,7 @@ func (g *BaseGenerator) fillCypressAnnotations(c *map[string]any) {
 func (g *BaseGenerator) fillCommonService(c *CommonServer, s *ytv1.InstanceSpec) {
 	// ToDo(psushin): enable porto resource tracker?
 	g.fillAddressResolver(&c.AddressResolver)
+	g.fillSolomonExporter(&c.SolomonExporter)
 	g.fillClusterConnection(&c.ClusterConnection, s.NativeTransport)
 	g.fillCypressAnnotations(&c.CypressAnnotations)
 	c.TimestampProviders.Addresses = g.getMasterAddresses()

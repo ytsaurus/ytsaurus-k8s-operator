@@ -56,6 +56,11 @@ type AddressResolver struct {
 	LocalhostNameOverride *string `yson:"localhost_name_override,omitempty"`
 }
 
+type SolomonExporter struct {
+	Host         *string           `yson:"host,omitempty"`
+	InstanceTags map[string]string `yson:"instance_tags,omitempty"`
+}
+
 type PemBlob struct {
 	FileName string `yson:"file_name,omitempty"`
 	Value    string `yson:"value,omitempty"`
@@ -95,6 +100,7 @@ type BusServer struct {
 // BasicServer is used as a basic config for basic components, such as clocks or discovery.
 type BasicServer struct {
 	AddressResolver AddressResolver `yson:"address_resolver"`
+	SolomonExporter SolomonExporter `yson:"solomon_exporter"`
 	Logging         Logging         `yson:"logging"`
 	MonitoringPort  int32           `yson:"monitoring_port"`
 	RPCPort         int32           `yson:"rpc_port"`
