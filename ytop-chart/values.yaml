@@ -33,7 +33,7 @@ controllerManager:
         drop:
         - ALL
     env:
-      watchNamespace: ""
+      watchNamespace: nil
       ytLogLevel: DEBUG
     image:
       repository: ytsaurus/k8s-operator
