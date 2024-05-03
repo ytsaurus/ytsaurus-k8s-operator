@@ -43,6 +43,8 @@ spec:
         env:
           - name: YT_LOG_LEVEL
             value: DEBUG
+          - name: WATCH_NAMESPACE
+            value: ""
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

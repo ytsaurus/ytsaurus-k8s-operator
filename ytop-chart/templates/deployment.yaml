@@ -28,10 +28,6 @@ spec:
           value: {{ quote .Values.controllerManager.manager.env.ytLogLevel }}
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}
-        {{- if .Values.controllerManager.manager.watchNamespace }}
-        - name: WATCH_NAMESPACE
-          value: {{ .Values.controllerManager.manager.watchNamespace }}
-        {{- end }}
         image: {{ .Values.controllerManager.manager.image.repository }}:{{ .Values.controllerManager.manager.image.tag
           | default .Chart.AppVersion }}
         livenessProbe:
