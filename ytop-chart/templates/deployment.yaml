@@ -26,6 +26,8 @@ spec:
         env:
         - name: YT_LOG_LEVEL
           value: {{ quote .Values.controllerManager.manager.env.ytLogLevel }}
+        - name: WATCH_NAMESPACE
+          value: {{ quote .Values.controllerManager.manager.env.watchNamespace }}
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}
         image: {{ .Values.controllerManager.manager.image.repository }}:{{ .Values.controllerManager.manager.image.tag
