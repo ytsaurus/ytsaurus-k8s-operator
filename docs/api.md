@@ -859,6 +859,7 @@ _Appears in:_
 | `hostAddressLabel` _string_ |  |  |  |
 | `maxSnapshotCountToKeep` _integer_ |  |  |  |
 | `maxChangelogCountToKeep` _integer_ |  |  |  |
+| `sidecars` _string array_ |  |  |  |
 
 
 #### OauthServiceSpec

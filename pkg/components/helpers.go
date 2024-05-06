@@ -3,9 +3,12 @@ package components
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"strings"
+
+	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"go.ytsaurus.tech/library/go/ptr"
 	"go.ytsaurus.tech/yt/go/ypath"
@@ -201,4 +204,15 @@ func AddAffinity(statefulSet *appsv1.StatefulSet,
 	nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = selector
 	affinity.NodeAffinity = nodeAffinity
 	statefulSet.Spec.Template.Spec.Affinity = affinity
+}
+
+func AddSidecarsToPodSpec(sidecar []string, podSpec *corev1.PodSpec) error {
+	for _, sidecarSpec := range sidecar {
+		sidecar := corev1.Container{}
+		if err := yaml.Unmarshal([]byte(sidecarSpec), &sidecar); err != nil {
+			return err
+		}
+		podSpec.Containers = append(podSpec.Containers, sidecar)
+	}
+	return nil
 }

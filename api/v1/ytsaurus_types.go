@@ -269,6 +269,8 @@ type MastersSpec struct {
 
 	MaxSnapshotCountToKeep  *int `json:"maxSnapshotCountToKeep,omitempty"`
 	MaxChangelogCountToKeep *int `json:"maxChangelogCountToKeep,omitempty"`
+
+	Sidecars []string `json:"sidecars,omitempty"`
 }
 
 type HTTPTransportSpec struct {
