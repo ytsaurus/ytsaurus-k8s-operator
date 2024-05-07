@@ -44,7 +44,7 @@ spec:
           - name: YT_LOG_LEVEL
             value: DEBUG
           - name: WATCH_NAMESPACE
-            value: "nil"
+            value: ""
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

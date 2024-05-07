@@ -99,7 +99,7 @@ func main() {
 	watchNamespace, ok := os.LookupEnv("WATCH_NAMESPACE")
 	// We can't setup managerOptions.Cache.DefaultNamespaces = map[cache.AllNamespaces]cache.Config{} due to
 	// https://github.com/kubernetes-sigs/controller-runtime/issues/2628
-	if ok && watchNamespace != "nil" {
+	if ok && watchNamespace != "" {
 		managerOptions.Cache.DefaultNamespaces = map[string]cache.Config{}
 		if strings.Contains(watchNamespace, ",") {
 			for _, namespace := range strings.Split(watchNamespace, ",") {
