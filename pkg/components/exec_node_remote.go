@@ -54,12 +54,31 @@ func NewRemoteExecNodes(
 			Protocol:      corev1.ProtocolTCP,
 		}),
 	)
+
+	var sidecarConfig *ConfigHelper
+	if spec.JobEnvironment != nil && spec.JobEnvironment.CRI != nil {
+		sidecarConfig = NewConfigHelper(
+			&l,
+			proxy,
+			l.GetSidecarConfigMapName(consts.JobsContainerName),
+			commonSpec.ConfigOverrides,
+			map[string]ytconfig.GeneratorDescriptor{
+				consts.ContainerdConfigFileName: {
+					F: func() ([]byte, error) {
+						return cfgen.GetContainerdConfig(&spec)
+					},
+					Fmt: ytconfig.ConfigFormatToml,
+				},
+			})
+	}
+
 	return &RemoteExecNode{
 		baseComponent: baseComponent{labeller: &l},
 		baseExecNode: baseExecNode{
-			server: srv,
-			cfgen:  cfgen,
-			spec:   &spec,
+			server:        srv,
+			cfgen:         cfgen,
+			spec:          &spec,
+			sidecarConfig: sidecarConfig,
 		},
 	}
 }
