@@ -156,7 +156,7 @@ func (g *BaseGenerator) fillAddressResolver(c *AddressResolver) {
 func (g *BaseGenerator) fillSolomonExporter(c *SolomonExporter) {
 	c.Host = ptr.String("{POD_SHORT_HOSTNAME}")
 	c.InstanceTags = map[string]string{
-		"k8s_pod_name": "{K8S_POD_NAME}",
+		"pod": "{K8S_POD_NAME}",
 	}
 }
 

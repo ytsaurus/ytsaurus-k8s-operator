@@ -7,7 +7,7 @@
     "solomon_exporter"={
         host="{POD_SHORT_HOSTNAME}";
         "instance_tags"={
-            "k8s_pod_name"="{K8S_POD_NAME}";
+            pod="{K8S_POD_NAME}";
         };
     };
     logging={

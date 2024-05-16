@@ -33,7 +33,7 @@ else
 DOCKER_BUILD_ARGS += --build-arg VERSION="$(OPERATOR_TAG)"
 endif
 DOCKER_BUILD_ARGS += --build-arg REVISION="$(shell git rev-parse HEAD)"
-DOCKER_BUILD_ARGS += --build-arg BUILD_DATE="$(shell date -Iseconds)"
+DOCKER_BUILD_ARGS += --build-arg BUILD_DATE="$(shell date --rfc-3339=seconds)"
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
