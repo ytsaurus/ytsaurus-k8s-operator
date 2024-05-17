@@ -6,8 +6,11 @@ IMG ?= ${OPERATOR_IMAGE}:${OPERATOR_TAG}
 KIND_CLUSTER_NAME ?= ${USER}-yt-kind
 export KIND_CLUSTER_NAME
 
+## K8s context for kind cluster
+KIND_KUBE_CONTEXT = kind-$(KIND_CLUSTER_NAME)
+
 ## K8s namespace for sample cluster.
-YTSAURUS_NAMESPACE ?= ytsaurus
+YTSAURUS_NAMESPACE ?= ytsaurus-dev
 
 ## YTsaurus spec for sample cluster.
 YTSAURUS_SPEC ?= config/samples/cluster_v1_cri.yaml
@@ -137,8 +140,12 @@ kind-create-cluster: kind ## Create kind kubernetes cluster.
 	@if ! $(KIND) get clusters | grep -q $(KIND_CLUSTER_NAME); then \
 		$(KIND) create cluster --name $(KIND_CLUSTER_NAME) -v 100 --wait 120s  --retain; \
 	fi
-	$(KUBECTL) config use-context kind-$(KIND_CLUSTER_NAME)
 	$(MAKE) k8s-install-cert-manager
+
+.PHONY: kind-use-context
+kind-use-context: ## Switch kubectl default context and namespace.
+	$(KUBECTL) config set-context $(KIND_KUBE_CONTEXT) --namespace $(YTSAURUS_NAMESPACE)
+	$(KUBECTL) config use-context $(KIND_KUBE_CONTEXT)
 
 .PHONY: kind-delete-cluster
 kind-delete-cluster: kind ## Delete kind kubernetes cluster.
@@ -189,6 +196,7 @@ helm-minikube-install: helm-chart ## Build docker image in minikube and install 
 helm-uninstall: ## Uninstal helm chart.
 	$(HELM) uninstall -n $(OPERATOR_NAMESPACE) $(OPERATOR_INSTANCE)
 
+.PHONY: kind-deploy-ytsaurus
 kind-deploy-ytsaurus: ## Deploy sample ytsaurus cluster and all requirements.
 	$(MAKE) kind-create-cluster
 	$(MAKE) helm-kind-install
@@ -197,7 +205,9 @@ kind-deploy-ytsaurus: ## Deploy sample ytsaurus cluster and all requirements.
 	$(KUBECTL) wait -n $(YTSAURUS_NAMESPACE) --timeout=10m --for=jsonpath='{.status.state}=Running' --all ytsaurus
 	$(MAKE) kind-yt-info
 
+.PHONY: kind-undeploy-ytsaurus
 kind-undeploy-ytsaurus: ## Undeploy sample ytsaurus cluster.
+	$(KUBECTL) get namespace $(YTSAURUS_NAMESPACE)
 	-$(KUBECTL) -n $(YTSAURUS_NAMESPACE) delete ytsaurus --all
 	-$(KUBECTL) -n $(YTSAURUS_NAMESPACE) delete pods --all --force
 	$(KUBECTL) delete namespace $(YTSAURUS_NAMESPACE)
@@ -213,6 +223,7 @@ kind-yt-env: ## Print yt cli environment for sample ytsaurus cluster.
 	@printf "export \"%s\"\n" $(KIND_YT_ENV)
 
 kind-yt-info:
+	@printf "Kind k8s context: $(KIND_KUBE_CONTEXT) namespace: $(YTSAURUS_NAMESPACE)\nto set kubectl default context run: make kind-use-context\n\n"
 	@printf "YTsaurus UI: http://%s:%s\nlogin/password: admin/password\nto setup env for yt cli run: . <(make kind-yt-env)\n" \
 		$(call KIND_NODE_ADDR,${KIND_CLUSTER_NAME}-control-plane) \
 		$(call KIND_SERVICE_NODEPORT,${YTSAURUS_NAMESPACE},ytsaurus-ui,0)
@@ -287,8 +298,8 @@ $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
 # Tool Binaries
-KUBECTL ?= kubectl
-HELM ?= helm
+KUBECTL ?= kubectl --context $(KIND_KUBE_CONTEXT)
+HELM ?= helm --kube-context $(KIND_KUBE_CONTEXT)
 KUSTOMIZE ?= $(LOCALBIN)/kustomize-$(KUSTOMIZE_VERSION)
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen-$(CONTROLLER_GEN_VERSION)
 ENVTEST ?= $(LOCALBIN)/setup-envtest-$(ENVTEST_VERSION)
