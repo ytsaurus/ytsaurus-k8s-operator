@@ -2,8 +2,11 @@ package controllers_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net"
+	"net/http"
 	"os"
 	"sort"
 	"time"
@@ -731,6 +734,62 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				Expect(yterrors.ContainsErrorCode(err, yterrors.CodeRPCAuthenticationError)).Should(BeTrue())
 			},
 		)
+
+		It("Sensors should be annotated with host", func(ctx context.Context) {
+			namespace := "testsolomon"
+			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
+			ytsaurus.Spec.HostNetwork = true
+			DeferCleanup(deleteYtsaurus, ytsaurus)
+			deployAndCheck(ytsaurus, namespace)
+
+			By("Creating ytsaurus client")
+			g := ytconfig.NewGenerator(ytsaurus, "local")
+			ytClient := getYtClient(g, namespace)
+
+			primaryMasters := make([]string, 0)
+			Expect(ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &primaryMasters, nil)).Should(Succeed())
+			Expect(primaryMasters).Should(Not(BeEmpty()))
+
+			masterAddress := primaryMasters[0]
+
+			monitoringPort := 0
+			Expect(ytClient.GetNode(ctx, ypath.Path(fmt.Sprintf("//sys/primary_masters/%v/orchid/config/monitoring_port", masterAddress)), &monitoringPort, nil)).Should(Succeed())
+
+			msPod := getMasterPod(g.GetMasterPodNames()[0], namespace)
+			fmt.Fprintf(GinkgoWriter, "podIP: %v\n", msPod.Status.PodIP)
+
+			rsp, err := http.Get(fmt.Sprintf(
+				"http://%v:%v/solomon/all",
+				msPod.Status.PodIP,
+				monitoringPort))
+			Expect(err).Should(Succeed())
+			Expect(rsp.StatusCode).Should(Equal(http.StatusOK))
+
+			body, err := io.ReadAll(rsp.Body)
+			Expect(err).Should(Succeed())
+
+			Expect(json.Valid(body)).Should(BeTrue())
+
+			var parsedBody map[string]any
+			Expect(json.Unmarshal(body, &parsedBody)).Should(Succeed())
+
+			sensors, ok := parsedBody["sensors"].([]any)
+			Expect(ok).Should(BeTrue())
+			Expect(sensors).ShouldNot(BeEmpty())
+
+			sensor, ok := sensors[0].(map[string]any)
+			Expect(ok).Should(BeTrue())
+			Expect("labels").Should(BeKeyOf(sensor))
+
+			labels, ok := sensor["labels"].(map[string]any)
+			Expect(ok).Should(BeTrue())
+			Expect("host").Should(BeKeyOf(labels))
+			Expect("pod").Should(BeKeyOf(labels))
+			// We don not check the actual value, since it is something weird in our testing setup.
+			Expect(labels["host"]).ShouldNot(BeEmpty())
+			Expect(labels["pod"]).Should(Equal("ms-0"))
+			fmt.Fprintf(GinkgoWriter, "host=%v, pod=%v\n", labels["host"], labels["pod"])
+		})
 	})
 
 })

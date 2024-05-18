@@ -4,6 +4,12 @@
         "enable_ipv6"=%true;
         retries=1000;
     };
+    "solomon_exporter"={
+        host="{POD_SHORT_HOSTNAME}";
+        "instance_tags"={
+            pod="{K8S_POD_NAME}";
+        };
+    };
     logging={
         writers={
             debug={

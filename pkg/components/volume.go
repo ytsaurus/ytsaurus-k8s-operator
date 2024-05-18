@@ -104,11 +104,19 @@ func getConfigPostprocessingCommand(configFileName string) string {
 		return fmt.Sprintf("sed -i -s \"s/{%v}/${%v}/g\" %v; ", envVar, envVar, configPath)
 	}
 
+	substitutePlaceholderWithCommand := func(placeholder string, command string) string {
+		// Replace placeholder {placeholder} with the output of the given command.
+		return fmt.Sprintf("sed -i -s \"s/{%v}/$(%v)/g\" %v; ", placeholder, command, configPath)
+	}
+
 	postprocessScript := fmt.Sprintf("cp %v %v; ", configTemplatePath, configPath)
 
 	for _, envVar := range getConfigPostprocessEnv() {
 		postprocessScript += substituteEnvCommand(envVar.Name)
 	}
+
+	postprocessScript += substitutePlaceholderWithCommand("POD_FQDN", "hostname -f")
+	postprocessScript += substitutePlaceholderWithCommand("POD_SHORT_HOSTNAME", "hostname -s")
 
 	command += fmt.Sprintf("echo '%v' > %v; ", postprocessScript, postprocessScriptPath)
 	command += fmt.Sprintf("chmod +x '%v'; ", postprocessScriptPath)
