@@ -15175,6 +15175,10 @@ spec:
                     type: object
                   runtimeClassName:
                     type: string
+                  sidecars:
+                    items:
+                      type: string
+                    type: array
                   structuredLoggers:
                     items:
                       properties:
@@ -26775,6 +26779,10 @@ spec:
                       type: object
                     runtimeClassName:
                       type: string
+                    sidecars:
+                      items:
+                        type: string
+                      type: array
                     structuredLoggers:
                       items:
                         properties:

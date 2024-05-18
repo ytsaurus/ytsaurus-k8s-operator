@@ -6,7 +6,6 @@ import (
 	"path"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/yaml"
 	ptr "k8s.io/utils/pointer"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -94,12 +93,8 @@ func (n *baseExecNode) doBuildBase() error {
 			})
 	}
 
-	for _, sidecarSpec := range n.spec.Sidecars {
-		sidecar := corev1.Container{}
-		if err := yaml.Unmarshal([]byte(sidecarSpec), &sidecar); err != nil {
-			return err
-		}
-		podSpec.Containers = append(podSpec.Containers, sidecar)
+	if err := AddSidecarsToPodSpec(n.spec.Sidecars, podSpec); err != nil {
+		return err
 	}
 
 	if n.sidecarConfig != nil {

@@ -401,6 +401,10 @@ func getYtsaurus() *ytv1.Ytsaurus {
 						},
 					},
 				},
+
+				Sidecars: []string{
+					"{name: sleep, image: fakeimage:stable, command: [/bin/sleep], args: [inf]}",
+				},
 			},
 		},
 	}
