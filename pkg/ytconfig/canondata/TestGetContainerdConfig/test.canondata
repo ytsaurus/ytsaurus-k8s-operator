@@ -23,6 +23,9 @@
                 };
             };
             "image_pull_progress_timeout"="5m0s";
+            registry={
+                "config_path"=#;
+            };
             "restrict_oom_score_adj"=%true;
             "sandbox_image"="registry.k8s.io/pause:3.8";
         };

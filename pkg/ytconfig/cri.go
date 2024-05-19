@@ -58,6 +58,10 @@ func (g *NodeGenerator) GetContainerdConfig(spec *ytv1.ExecNodesSpec) ([]byte, e
 						},
 					},
 				},
+
+				"registry": map[string]any{
+					"config_path": criSpec.RegistryConfigPath,
+				},
 			},
 		},
 	}

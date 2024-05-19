@@ -7760,6 +7760,9 @@ spec:
                               items:
                                 type: string
                               type: array
+                            registryConfigPath:
+                              description: 'See: https://github.com/containerd/containerd/blob/main/docs/hosts.md'
+                              type: string
                             sandboxImage:
                               description: Sandbox (pause) image.
                               type: string

@@ -366,6 +366,9 @@ type CRIJobEnvironmentSpec struct {
 	// Base cgroup for jobs.
 	//+optional
 	BaseCgroup *string `json:"baseCgroup,omitempty"`
+	// See: https://github.com/containerd/containerd/blob/main/docs/hosts.md
+	//+optional
+	RegistryConfigPath *string `json:"registryConfigPath,omitempty"`
 }
 
 type JobEnvironmentSpec struct {
