@@ -1,12 +1,121 @@
 apiVersion: cluster.ytsaurus.tech/v1
 kind: RemoteExecNodes
 metadata:
-  labels:
-    app.kubernetes.io/name: remoteexecnodes
-    app.kubernetes.io/instance: remoteexecnodes-sample
-    app.kubernetes.io/part-of: yt-k8s-operator
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: yt-k8s-operator
-  name: remoteexecnodes-sample
+  name: remote-exec-nodes
 spec:
-  # TODO(user): Add fields here
+  remoteClusterSpec:
+    name: remote-ytsaurus
+
+  # FIXME: Move cluster options into RemoteYtsaurus.
+  coreImage: ytsaurus/ytsaurus:dev-23.2-relwithdebinfo
+
+  jobImage: docker.io/library/python:3.12-slim
+
+  # configOverrides:
+  #  name: ytsaurus-config-overrides
+
+  useIpv4: true
+  # useIpv6: true
+
+  # hostNetwork: true
+
+  name: remote
+  instanceCount: 1
+
+  loggers: &loggers
+    - name: debug
+      compression: zstd
+      minLogLevel: debug
+      writerType: file
+      rotationPolicy: &rotationPolicy
+        maxTotalSizeToKeep: 1073741824 # 1GiB
+        rotationPeriodMilliseconds: 900000 # 15Min
+        maxSegmentCountToKeep: 1000
+      categoriesFilter:
+        type: exclude
+        values: ["Bus"]
+    - name: info
+      minLogLevel: info
+      writerType: file
+      rotationPolicy: *rotationPolicy
+    - name: info-stderr
+      minLogLevel: info
+      writerType: stderr
+
+  jobProxyLoggers:
+    - name: debug
+      compression: zstd
+      minLogLevel: debug
+      writerType: file
+      useTimestampSuffix: true
+      rotationPolicy: &rotationPolicyJobs
+        maxTotalSizeToKeep: 104857600  # 100Mi
+        rotationPeriodMilliseconds: 900000  # 15Min
+      categoriesFilter:
+        type: exclude
+        values: [ "Bus", "Concurrency" ]
+    - name: info
+      minLogLevel: info
+      writerType: file
+      rotationPolicy: *rotationPolicyJobs
+    - name: error
+      minLogLevel: error
+      writerType: stderr
+
+  resources:
+    # Allocate resources for exec node container
+    requests:
+      cpu: 1
+      memory: 1Gi
+    limits:
+      cpu: 10
+      memory: 10Gi
+
+  locations:
+    - locationType: Logs
+      path: /yt/exec-node-logs
+    - locationType: ChunkCache
+      path: /yt/node-data/chunk-cache
+    - locationType: Slots
+      path: /yt/node-data/slots
+    - locationType: ImageCache
+      path: /yt/node-data/image-cache
+
+  volumeMounts:
+    - name: exec-node-logs
+      mountPath: /yt/exec-node-logs
+    - name: node-data
+      mountPath: /yt/node-data
+      # mountPropagation: Bidirectional  # Enable for tmpfs in jobs
+
+  volumeClaimTemplates:
+    - metadata:
+        name: node-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 20Gi
+    - metadata:
+        name: exec-node-logs
+      spec: &logsVolumeSpec
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+
+  # privileged: true  # Enable for tmpfs in jobs
+
+  jobResources:
+    # Allocate resources for jobs container
+    requests:
+      cpu: 4
+      memory: 4Gi
+    limits:
+      cpu: 10
+      memory: 10Gi
+
+  jobEnvironment:
+    # Add CRI containerd sidecar
+    cri:
+      apiRetryTimeoutSeconds: 180
