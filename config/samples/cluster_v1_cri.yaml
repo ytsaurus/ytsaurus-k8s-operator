@@ -261,6 +261,16 @@ spec:
         - name: node-data
           mountPath: /yt/node-data
           # mountPropagation: Bidirectional  # Enable for tmpfs in jobs
+        # Bind mount and use containerd registry config from node.
+        # - name: config-registry
+        #   mountPath: /config/registry
+        #   readOnly: true
+
+      volumes:
+        # - name: config-registry
+        #   hostPath:
+        #     path: /etc/containerd/certs.d
+        #     type: Directory
 
       volumeClaimTemplates:
         - metadata:
@@ -289,6 +299,7 @@ spec:
         # Add CRI containerd sidecar
         cri:
           apiRetryTimeoutSeconds: 180
+          # registryConfigPath: /config/registry
 
   schedulers:
     instanceCount: 1

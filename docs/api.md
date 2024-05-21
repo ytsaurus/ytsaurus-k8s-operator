@@ -108,6 +108,7 @@ _Appears in:_
 | `apiRetryTimeoutSeconds` _integer_ | Timeout for retrying CRI API calls. |  |  |
 | `criNamespace` _string_ | CRI namespace for jobs containers. |  |  |
 | `baseCgroup` _string_ | Base cgroup for jobs. |  |  |
+| `registryConfigPath` _string_ | See: https://github.com/containerd/containerd/blob/main/docs/hosts.md |  |  |
 
 
 #### CategoriesFilter
