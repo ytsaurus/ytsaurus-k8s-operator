@@ -194,7 +194,7 @@ func (tn *TabletNode) initializeBundles(ctx context.Context) error {
 		if defaultBundleBootstrap.SnapshotPrimaryMedium != nil {
 			err := ytClient.SetNode(ctx, path.Attr("options/snapshot_primary_medium"), *defaultBundleBootstrap.SnapshotPrimaryMedium, nil)
 			if err != nil {
-				return fmt.Errorf("Setting snapshot_primary_medium for `default` bundle failed: %w", err)
+				return fmt.Errorf("setting snapshot_primary_medium for `default` bundle failed: %w", err)
 			}
 		}
 	}
@@ -212,13 +212,6 @@ func (tn *TabletNode) initializeBundles(ctx context.Context) error {
 	}
 
 	return nil
-
-	//tn.ytsaurus.SetStatusCondition(metav1.Condition{
-	//	Type:    tn.initBundlesCondition,
-	//	Status:  metav1.ConditionTrue,
-	//	Reason:  "InitBundlesCompleted",
-	//	Message: "Init bundles successfully completed",
-	//})
 
 }
 

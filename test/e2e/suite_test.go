@@ -65,7 +65,7 @@ func TestAPIs(t *testing.T) {
 var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	logger := zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true))
 	logf.SetLogger(logger)
-	ctx = logf.IntoContext(ctx, logger)
+	logf.IntoContext(ctx, logger)
 
 	By("bootstrapping test environment")
 	cfg, err := config.GetConfig()
@@ -88,7 +88,7 @@ var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 }, func(ctx context.Context, host []byte) {
 	logger := zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true))
 	logf.SetLogger(logger)
-	ctx = logf.IntoContext(ctx, logger)
+	logf.IntoContext(ctx, logger)
 
 	By("bootstrapping k8s client")
 

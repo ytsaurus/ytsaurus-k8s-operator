@@ -3,7 +3,7 @@ package components
 func (mc *MasterCache) getFlow() Step {
 	return StepComposite{
 		Body: []Step{
-			getStandardStartBuildStep(mc, mc.server.Sync),
+			getStandardStartBuildStep(mc, mc.doServerSync),
 			getStandardWaitBuildFinishedStep(mc, mc.server.inSync),
 			getStandardUpdateStep(
 				mc,
@@ -12,7 +12,7 @@ func (mc *MasterCache) getFlow() Step {
 				[]Step{
 					getStandardStartRebuildStep(mc, mc.server.removePods),
 					getStandardWaitPodsRemovedStep(mc, mc.server.arePodsRemoved),
-					getStandardPodsCreateStep(mc, mc.server.Sync),
+					getStandardPodsCreateStep(mc, mc.doServerSync),
 					getStandardWaiRebuildFinishedStep(mc, mc.server.inSync),
 				},
 			),

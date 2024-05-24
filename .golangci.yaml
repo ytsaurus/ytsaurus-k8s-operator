@@ -26,7 +26,8 @@ linters:
     - ineffassign # detects when assignments to existing variables are not used
     - staticcheck # is a go vet on steroids, applying a ton of static analysis checks
     - typecheck # like the front-end of a Go compiler, parses and type-checks Go code
-    - unused # checks for unused constants, variables, functions and types
+# TODO: uncomment later when code would be deleted
+#    - unused # checks for unused constants, variables, functions and types
 
     ## preset "bugs"
     - asasalint # checks for pass []any as any in variadic func(...any)
@@ -113,6 +114,8 @@ linters:
     # - whitespace # detects leading and trailing whitespace
     # - wrapcheck # checks that errors returned from external packages are wrapped
     # - wsl # add or remove empty lines
+  disable:
+     - unused
 
 linters-settings:
   cyclop:

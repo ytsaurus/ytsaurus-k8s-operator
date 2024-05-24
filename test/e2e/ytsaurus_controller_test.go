@@ -259,7 +259,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			"Should run and update Ytsaurus within same major version", Label("basic"), getSimpleUpdateScenario("test-minor-update", ytv1.CoreImageSecond),
 		)
 		It(
-			"Should run and update Ytsaurus to the next major version",
+			"Should run and update Ytsaurus to the next major version", Label("basic"),
 			getSimpleUpdateScenario("test-major-update", ytv1.CoreImageNextVer),
 		)
 		It(
@@ -356,7 +356,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			},
 		)
 		It(
-			"Should be updated according to UpdateSelector=MasterOnly,StatelessOnly", Label("basic"), func(ctx context.Context) {
+			"Should be updated according to UpdateSelector=MasterOnly,StatelessOnly", /*Label("basic")*/
+			func(ctx context.Context) {
 				namespace := "testslctother"
 
 				By("Creating a Ytsaurus resource")

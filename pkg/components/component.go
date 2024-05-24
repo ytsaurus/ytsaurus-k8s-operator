@@ -70,6 +70,10 @@ type Component interface {
 	IsUpdatable() bool
 }
 
+// TODO: refactor manager so it would receive storage interface and
+// be struct itself.
+//
+//nolint:interfacebloat
 type conditionManagerIface interface {
 	SetTrue(context.Context, ConditionName) error
 	SetTrueMsg(context.Context, ConditionName, string) error

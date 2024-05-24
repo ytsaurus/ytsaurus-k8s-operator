@@ -37,13 +37,14 @@ func (cr *componentRegistry) add(comp component) {
 		cr.master = comp.(masterComponent)
 	}
 }
-func (cr *componentRegistry) list() []component {
-	var result []component
-	for _, comp := range cr.comps {
-		result = append(result, comp)
-	}
-	return result
-}
+
+//	func (cr *componentRegistry) list() []component {
+//		var result []component
+//		for _, comp := range cr.comps {
+//			result = append(result, comp)
+//		}
+//		return result
+//	}
 func (cr *componentRegistry) listByType(types ...consts.ComponentType) []component {
 	var result []component
 	for _, compType := range types {
