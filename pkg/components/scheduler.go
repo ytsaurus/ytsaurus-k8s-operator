@@ -113,12 +113,11 @@ func (s *Scheduler) Fetch(ctx context.Context) error {
 }
 
 func (s *Scheduler) Status(ctx context.Context) (ComponentStatus, error) {
-	return s.doSync(ctx, true)
+	return flowToStatus(ctx, s, s.getFlow(), s.condManager)
 }
 
 func (s *Scheduler) Sync(ctx context.Context) error {
-	_, err := s.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, s.getFlow(), s.condManager)
 }
 
 func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
@@ -201,6 +200,28 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return s.initOpAchieve(ctx, dry)
 }
 
+func (s *Scheduler) doServerSync(ctx context.Context) error {
+	if s.secret.NeedSync(consts.TokenSecretKey, "") {
+		secretSpec := s.secret.Build()
+		secretSpec.StringData = map[string]string{
+			consts.TokenSecretKey: ytconfig.RandString(30),
+		}
+		if err := s.secret.Sync(ctx); err != nil {
+			return err
+		}
+	}
+	return s.server.Sync(ctx)
+}
+
+func (s *Scheduler) serverInSync(ctx context.Context) (bool, error) {
+	srvInSync, err := s.server.inSync(ctx)
+	if err != nil {
+		return false, err
+	}
+	secretNeedSync := s.secret.NeedSync(consts.TokenSecretKey, "")
+	return srvInSync && !secretNeedSync, nil
+}
+
 func (s *Scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatus, error) {
 	if !dry {
 		s.initUser.SetInitScript(s.createInitUserScript())
@@ -223,7 +244,7 @@ func (s *Scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	if !dry {
-		s.prepareInitOperationsArchive()
+		s.prepareInitOperationsArchive(s.initOpArchive)
 	}
 	return s.initOpArchive.Sync(ctx, dry)
 }
@@ -307,7 +328,7 @@ export INIT_OP_ARCHIVE=/usr/bin/init_operation_archive
 fi
 `
 
-func (s *Scheduler) prepareInitOperationsArchive() {
+func (s *Scheduler) prepareInitOperationsArchive(job *InitJob) {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		setInitOpArchivePath,
@@ -316,8 +337,8 @@ func (s *Scheduler) prepareInitOperationsArchive() {
 		SetWithIgnoreExisting("//sys/cluster_nodes/@config", "'{\"%true\" = {job_agent={enable_job_reporter=%true}}}'"),
 	}
 
-	s.initOpArchive.SetInitScript(strings.Join(script, "\n"))
-	job := s.initOpArchive.Build()
-	container := &job.Spec.Template.Spec.Containers[0]
+	job.SetInitScript(strings.Join(script, "\n"))
+	batchJob := s.initOpArchive.Build()
+	container := &batchJob.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{s.secret.GetEnvSource()}
 }

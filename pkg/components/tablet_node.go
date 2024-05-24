@@ -22,11 +22,24 @@ import (
 const SysBundle string = "sys"
 const DefaultBundle string = "default"
 
+type ytsaurusClientForTabletNodes interface {
+	GetYtClient() yt.Client
+
+	GetTabletCells(context.Context) ([]ytv1.TabletCellBundleInfo, error)
+	RemoveTabletCells(context.Context) error
+	RecoverTableCells(context.Context, []ytv1.TabletCellBundleInfo) error
+	AreTabletCellsRemoved(context.Context) (bool, error)
+
+	// TODO (l0kix2): remove later.
+	Status(ctx context.Context) (ComponentStatus, error)
+	GetName() string
+}
+
 type TabletNode struct {
 	localServerComponent
 	cfgen *ytconfig.NodeGenerator
 
-	ytsaurusClient internalYtsaurusClient
+	ytsaurusClient ytsaurusClientForTabletNodes
 
 	initBundlesCondition string
 	spec                 ytv1.TabletNodesSpec
@@ -36,7 +49,7 @@ type TabletNode struct {
 func NewTabletNode(
 	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
-	ytsaurusClient internalYtsaurusClient,
+	ytsaurusClient ytsaurusClientForTabletNodes,
 	spec ytv1.TabletNodesSpec,
 	doInitiailization bool,
 ) *TabletNode {
@@ -131,6 +144,82 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", tn.initBundlesCondition)), err
+}
+
+func (tn *TabletNode) initializeBundles(ctx context.Context) error {
+	ytClient := tn.ytsaurusClient.GetYtClient()
+
+	if exists, err := ytClient.NodeExists(ctx, ypath.Path(fmt.Sprintf("//sys/tablet_cell_bundles/%s", SysBundle)), nil); err == nil {
+		if !exists {
+			options := map[string]string{
+				"changelog_account": "sys",
+				"snapshot_account":  "sys",
+			}
+
+			bootstrap := tn.getBundleBootstrap(SysBundle)
+			if bootstrap != nil {
+				if bootstrap.ChangelogPrimaryMedium != nil {
+					options["changelog_primary_medium"] = *bootstrap.ChangelogPrimaryMedium
+				}
+				if bootstrap.SnapshotPrimaryMedium != nil {
+					options["snapshot_primary_medium"] = *bootstrap.SnapshotPrimaryMedium
+				}
+			}
+
+			_, err = ytClient.CreateObject(ctx, yt.NodeTabletCellBundle, &yt.CreateObjectOptions{
+				Attributes: map[string]interface{}{
+					"name":    SysBundle,
+					"options": options,
+				},
+			})
+
+			if err != nil {
+				return fmt.Errorf("creating tablet_cell_bundle failed: %w", err)
+			}
+		}
+	} else {
+		return err
+	}
+
+	defaultBundleBootstrap := tn.getBundleBootstrap(DefaultBundle)
+	if defaultBundleBootstrap != nil {
+		path := ypath.Path(fmt.Sprintf("//sys/tablet_cell_bundles/%s", DefaultBundle))
+		if defaultBundleBootstrap.ChangelogPrimaryMedium != nil {
+			err := ytClient.SetNode(ctx, path.Attr("options/changelog_primary_medium"), *defaultBundleBootstrap.ChangelogPrimaryMedium, nil)
+			if err != nil {
+				return fmt.Errorf("setting changelog_primary_medium for `default` bundle failed: %w", err)
+			}
+		}
+
+		if defaultBundleBootstrap.SnapshotPrimaryMedium != nil {
+			err := ytClient.SetNode(ctx, path.Attr("options/snapshot_primary_medium"), *defaultBundleBootstrap.SnapshotPrimaryMedium, nil)
+			if err != nil {
+				return fmt.Errorf("Setting snapshot_primary_medium for `default` bundle failed: %w", err)
+			}
+		}
+	}
+
+	for _, bundle := range []string{DefaultBundle, SysBundle} {
+		tabletCellCount := 1
+		bootstrap := tn.getBundleBootstrap(bundle)
+		if bootstrap != nil {
+			tabletCellCount = bootstrap.TabletCellCount
+		}
+		err := CreateTabletCells(ctx, ytClient, bundle, tabletCellCount)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+
+	//tn.ytsaurus.SetStatusCondition(metav1.Condition{
+	//	Type:    tn.initBundlesCondition,
+	//	Status:  metav1.ConditionTrue,
+	//	Reason:  "InitBundlesCompleted",
+	//	Message: "Init bundles successfully completed",
+	//})
+
 }
 
 func (tn *TabletNode) getBundleBootstrap(bundle string) *ytv1.BundleBootstrapSpec {
@@ -245,14 +334,12 @@ func (tn *TabletNode) initBundles(ctx context.Context) (ComponentStatus, error) 
 }
 
 func (tn *TabletNode) Status(ctx context.Context) (ComponentStatus, error) {
-	return tn.doSync(ctx, true)
+	return flowToStatus(ctx, tn, tn.getFlow(), tn.condManager)
 }
 
 func (tn *TabletNode) Sync(ctx context.Context) error {
-	_, err := tn.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, tn.getFlow(), tn.condManager)
 }
-
 func (tn *TabletNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, tn.server)
 }

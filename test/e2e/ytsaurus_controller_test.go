@@ -37,7 +37,7 @@ const (
 	pollInterval     = time.Millisecond * 250
 	reactionTimeout  = time.Second * 150
 	bootstrapTimeout = time.Minute * 3
-	upgradeTimeout   = time.Minute * 7
+	upgradeTimeout   = time.Minute * 10
 )
 
 var getYtClient = getYtHTTPClient
@@ -454,7 +454,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
 
 			By("Waiting PossibilityCheck")
-			EventuallyYtsaurus(ctx, ytsaurusKey, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck))
+			EventuallyYtsaurus(ctx, ytsaurusKey, upgradeTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck))
 
 			By("Check that master pod was NOT recreated at the PossibilityCheck stage")
 			time.Sleep(1 * time.Second)

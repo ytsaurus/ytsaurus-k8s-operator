@@ -189,7 +189,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if !dry {
-		qa.prepareInitQueueAgentState()
+		qa.prepareInitQueueAgentState(qa.initQAState)
 	}
 	status, err := qa.initQAState.Sync(ctx, dry)
 	if err != nil || status.SyncStatus != SyncStatusReady {
@@ -215,6 +215,28 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", qa.initCondition)), err
+}
+
+func (qa *QueueAgent) doServerSync(ctx context.Context) error {
+	if qa.secret.NeedSync(consts.TokenSecretKey, "") {
+		secretSpec := qa.secret.Build()
+		secretSpec.StringData = map[string]string{
+			consts.TokenSecretKey: ytconfig.RandString(30),
+		}
+		if err := qa.secret.Sync(ctx); err != nil {
+			return err
+		}
+	}
+	return qa.server.Sync(ctx)
+}
+
+func (qa *QueueAgent) serverInSync(ctx context.Context) (bool, error) {
+	srvInSync, err := qa.server.inSync(ctx)
+	if err != nil {
+		return false, err
+	}
+	secretNeedSync := qa.secret.NeedSync(consts.TokenSecretKey, "")
+	return srvInSync && !secretNeedSync, nil
 }
 
 func (qa *QueueAgent) createUser(ctx context.Context, ytClient yt.Client) (err error) {
@@ -300,7 +322,7 @@ func (qa *QueueAgent) init(ctx context.Context, ytClient yt.Client) (err error) 
 	return
 }
 
-func (qa *QueueAgent) prepareInitQueueAgentState() {
+func (qa *QueueAgent) prepareInitQueueAgentState(job *InitJob) {
 	path := "/usr/bin/init_queue_agent_state"
 
 	script := []string{
@@ -310,16 +332,15 @@ func (qa *QueueAgent) prepareInitQueueAgentState() {
 	}
 
 	qa.initQAState.SetInitScript(strings.Join(script, "\n"))
-	job := qa.initQAState.Build()
-	container := &job.Spec.Template.Spec.Containers[0]
+	batchJob := job.Build()
+	container := &batchJob.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{qa.secret.GetEnvSource()}
 }
 
 func (qa *QueueAgent) Status(ctx context.Context) (ComponentStatus, error) {
-	return qa.doSync(ctx, true)
+	return flowToStatus(ctx, qa, qa.getFlow(), qa.condManager)
 }
 
 func (qa *QueueAgent) Sync(ctx context.Context) error {
-	_, err := qa.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, qa.getFlow(), qa.condManager)
 }

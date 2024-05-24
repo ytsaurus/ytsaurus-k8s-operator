@@ -316,11 +316,30 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 	return SimpleStatus(SyncStatusReady), err
 }
 
+func (c *StrawberryController) doServerSync(ctx context.Context) error {
+	if c.secret.NeedSync(consts.TokenSecretKey, "") {
+		s := c.secret.Build()
+		s.StringData = map[string]string{
+			consts.TokenSecretKey: ytconfig.RandString(30),
+		}
+		if err := c.secret.Sync(ctx); err != nil {
+			return err
+		}
+	}
+	return c.syncComponents(ctx)
+}
+
+func (c *StrawberryController) serverInSync(ctx context.Context) (bool, error) {
+	// TODO: check diff between microservice needSync & server in sync
+	srvInSync := c.microservice.needSync()
+	secretNeedSync := c.secret.NeedSync(consts.TokenSecretKey, "")
+	return srvInSync && !secretNeedSync, nil
+}
+
 func (c *StrawberryController) Status(ctx context.Context) (ComponentStatus, error) {
-	return c.doSync(ctx, true)
+	return flowToStatus(ctx, c, c.getFlow(), c.condManager)
 }
 
 func (c *StrawberryController) Sync(ctx context.Context) error {
-	_, err := c.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, c.getFlow(), c.condManager)
 }

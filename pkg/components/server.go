@@ -34,6 +34,7 @@ type server interface {
 	needSync() bool
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
+	inSync(ctx context.Context) (bool, error)
 }
 
 type serverImpl struct {
@@ -247,6 +248,36 @@ func (s *serverImpl) needUpdate() bool {
 		return false
 	}
 	return needReload
+}
+
+// hasDiff checks if any is different from the desired state.
+// Currently, it only triggered if
+//   - any of sub-resources are missing,
+//   - sts have actual image
+//   - config needs reload
+//
+// In the future we want it to check more.
+func (s *serverImpl) hasDiff(ctx context.Context) (bool, error) {
+	if !s.exists() {
+		return true, nil
+	}
+	if !s.arePodsReady(ctx) {
+		return true, nil
+	}
+	if !s.podsImageCorrespondsToSpec() {
+		return true, nil
+	}
+
+	needReload, err := s.configHelper.NeedReload()
+	if err != nil {
+		return false, err
+	}
+	return needReload, nil
+}
+
+func (s *serverImpl) inSync(ctx context.Context) (bool, error) {
+	diff, err := s.hasDiff(ctx)
+	return !diff, err
 }
 
 func (s *serverImpl) arePodsReady(ctx context.Context) bool {

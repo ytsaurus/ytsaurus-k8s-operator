@@ -153,11 +153,35 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return SimpleStatus(SyncStatusReady), err
 }
 
+func (rp *RpcProxy) doServerSync(ctx context.Context) error {
+	statefulSet := rp.server.buildStatefulSet()
+	if secret := rp.tlsSecret; secret != nil {
+		secret.AddVolume(&statefulSet.Spec.Template.Spec)
+		secret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
+	}
+	err := rp.server.Sync(ctx)
+	if err != nil {
+		return err
+	}
+
+	s := rp.balancingService.Build()
+	s.Spec.Type = *rp.serviceType
+	return rp.balancingService.Sync(ctx)
+}
+
+func (rp *RpcProxy) serverInSync(ctx context.Context) (bool, error) {
+	srvInSync, err := rp.server.inSync(ctx)
+	if err != nil {
+		return false, err
+	}
+	balancerExists := resources.Exists(rp.balancingService)
+	return srvInSync && balancerExists, nil
+}
+
 func (rp *RpcProxy) Status(ctx context.Context) (ComponentStatus, error) {
-	return rp.doSync(ctx, true)
+	return flowToStatus(ctx, rp, rp.getFlow(), rp.condManager)
 }
 
 func (rp *RpcProxy) Sync(ctx context.Context) error {
-	_, err := rp.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, rp.getFlow(), rp.condManager)
 }

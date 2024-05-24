@@ -186,11 +186,42 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	return yqla.initEnvironment.Sync(ctx, dry)
 }
 
+func (yqla *YqlAgent) doServerSync(ctx context.Context) error {
+	if yqla.secret.NeedSync(consts.TokenSecretKey, "") {
+		secretSpec := yqla.secret.Build()
+		secretSpec.StringData = map[string]string{
+			consts.TokenSecretKey: ytconfig.RandString(30),
+		}
+		if err := yqla.secret.Sync(ctx); err != nil {
+			return err
+		}
+	}
+	ss := yqla.server.buildStatefulSet()
+	container := &ss.Spec.Template.Spec.Containers[0]
+	container.EnvFrom = []corev1.EnvFromSource{yqla.secret.GetEnvSource()}
+	if yqla.ytsaurus.GetResource().Spec.UseIPv6 && !yqla.ytsaurus.GetResource().Spec.UseIPv4 {
+		container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "1"}}
+	} else if !yqla.ytsaurus.GetResource().Spec.UseIPv6 && yqla.ytsaurus.GetResource().Spec.UseIPv4 {
+		container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "1"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
+	} else {
+		container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
+	}
+	return yqla.server.Sync(ctx)
+}
+
+func (yqla *YqlAgent) serverInSync(ctx context.Context) (bool, error) {
+	srvInSync, err := yqla.server.inSync(ctx)
+	if err != nil {
+		return false, err
+	}
+	secretNeedSync := yqla.secret.NeedSync(consts.TokenSecretKey, "")
+	return srvInSync && !secretNeedSync, nil
+}
+
 func (yqla *YqlAgent) Status(ctx context.Context) (ComponentStatus, error) {
-	return yqla.doSync(ctx, true)
+	return flowToStatus(ctx, yqla, yqla.getFlow(), yqla.condManager)
 }
 
 func (yqla *YqlAgent) Sync(ctx context.Context) error {
-	_, err := yqla.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, yqla.getFlow(), yqla.condManager)
 }

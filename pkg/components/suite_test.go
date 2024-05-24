@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	mock_yt "github.com/ytsaurus/yt-k8s-operator/pkg/mock"
 )
 
@@ -119,6 +120,10 @@ func (fs *FakeServer) Sync(ctx context.Context) error {
 	return nil
 }
 
+func (fs *FakeServer) inSync(ctx context.Context) (bool, error) {
+	return true, nil
+}
+
 func (fs *FakeServer) buildStatefulSet() *appsv1.StatefulSet {
 	return nil
 }
@@ -149,6 +154,19 @@ func NewFakeYtsaurusClient(client *mock_yt.MockClient) *FakeYtsaurusClient {
 
 func (fyc *FakeYtsaurusClient) GetYtClient() yt.Client {
 	return fyc.client
+}
+
+func (fyc *FakeYtsaurusClient) GetTabletCells(context.Context) ([]ytv1.TabletCellBundleInfo, error) {
+	return []ytv1.TabletCellBundleInfo{}, nil
+}
+func (fyc *FakeYtsaurusClient) RemoveTabletCells(context.Context) error {
+	return nil
+}
+func (fyc *FakeYtsaurusClient) RecoverTableCells(context.Context, []ytv1.TabletCellBundleInfo) error {
+	return nil
+}
+func (fyc *FakeYtsaurusClient) AreTabletCellsRemoved(context.Context) (bool, error) {
+	return true, nil
 }
 
 func (fyc *FakeYtsaurusClient) SetStatus(status ComponentStatus) {

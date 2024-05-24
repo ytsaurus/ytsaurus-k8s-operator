@@ -313,11 +313,32 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	return SimpleStatus(SyncStatusReady), err
 }
 
+func (u *UI) doServerSync(ctx context.Context) error {
+	if u.secret.NeedSync(consts.TokenSecretKey, "") {
+		token := ytconfig.RandString(30)
+		s := u.secret.Build()
+		s.StringData = map[string]string{
+			consts.UISecretFileName: fmt.Sprintf("{\"oauthToken\" : \"%s\"}", token),
+			consts.TokenSecretKey:   token,
+		}
+		if err := u.secret.Sync(ctx); err != nil {
+			return err
+		}
+	}
+	return u.syncComponents(ctx)
+}
+
+func (u *UI) serverInSync(ctx context.Context) (bool, error) {
+	// TODO: check diff between microservice needSync & server in sync
+	srvInSync := u.microservice.needSync()
+	secretNeedSync := u.secret.NeedSync(consts.TokenSecretKey, "")
+	return srvInSync && !secretNeedSync, nil
+}
+
 func (u *UI) Status(ctx context.Context) (ComponentStatus, error) {
-	return u.doSync(ctx, true)
+	return flowToStatus(ctx, u, u.getFlow(), u.condManager)
 }
 
 func (u *UI) Sync(ctx context.Context) error {
-	_, err := u.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, u.getFlow(), u.condManager)
 }

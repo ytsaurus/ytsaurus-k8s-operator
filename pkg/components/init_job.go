@@ -139,8 +139,8 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 
 	if j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition) {
 		return ComponentStatus{
-			SyncStatusReady,
-			fmt.Sprintf("%s completed", j.initJob.Name()),
+			SyncStatus: SyncStatusReady,
+			Message:    fmt.Sprintf("%s completed", j.initJob.Name()),
 		}, err
 	}
 

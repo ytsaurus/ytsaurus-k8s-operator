@@ -109,10 +109,9 @@ func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 }
 
 func (n *DataNode) Status(ctx context.Context) (ComponentStatus, error) {
-	return n.doSync(ctx, true)
+	return flowToStatus(ctx, n, n.getFlow(), n.condManager)
 }
 
 func (n *DataNode) Sync(ctx context.Context) error {
-	_, err := n.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, n.getFlow(), n.condManager)
 }

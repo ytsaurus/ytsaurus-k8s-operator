@@ -210,6 +210,7 @@ func (h *ConfigHelper) Build() *corev1.ConfigMap {
 	for fileName := range h.generators {
 		data, err := h.getConfig(fileName)
 		if err != nil {
+			// TODO: fix suppression of the error, it will fail with NPE in places of call
 			return nil
 		}
 

@@ -133,11 +133,28 @@ func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	return SimpleStatus(SyncStatusReady), err
 }
 
+func (tp *TcpProxy) doServerSync(ctx context.Context) error {
+	err := tp.server.Sync(ctx)
+	if err != nil {
+		return err
+	}
+	tp.balancingService.Build()
+	return tp.balancingService.Sync(ctx)
+}
+
+func (tp *TcpProxy) serverInSync(ctx context.Context) (bool, error) {
+	srvInSync, err := tp.server.inSync(ctx)
+	if err != nil {
+		return false, err
+	}
+	balancerExists := resources.Exists(tp.balancingService)
+	return srvInSync && balancerExists, nil
+}
+
 func (tp *TcpProxy) Status(ctx context.Context) (ComponentStatus, error) {
-	return tp.doSync(ctx, true)
+	return flowToStatus(ctx, tp, tp.getFlow(), tp.condManager)
 }
 
 func (tp *TcpProxy) Sync(ctx context.Context) error {
-	_, err := tp.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, tp.getFlow(), tp.condManager)
 }

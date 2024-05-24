@@ -93,12 +93,11 @@ func (mc *MasterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 }
 
 func (mc *MasterCache) Status(ctx context.Context) (ComponentStatus, error) {
-	return mc.doSync(ctx, true)
+	return flowToStatus(ctx, mc, mc.getFlow(), mc.condManager)
 }
 
 func (mc *MasterCache) Sync(ctx context.Context) error {
-	_, err := mc.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, mc.getFlow(), mc.condManager)
 }
 
 func (mc *MasterCache) doServerSync(ctx context.Context) error {

@@ -78,11 +78,19 @@ func (yc *YtsaurusClient) IsUpdatable() bool {
 func (yc *YtsaurusClient) GetType() consts.ComponentType { return consts.YtsaurusClientType }
 
 func (yc *YtsaurusClient) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx,
+	if err := resources.Fetch(ctx,
 		yc.secret,
 		yc.initUserJob,
 		yc.httpProxy,
-	)
+	); err != nil {
+		return err
+	}
+	if yc.ytClient == nil && !yc.secret.NeedSync(consts.TokenSecretKey, "") {
+		if err := yc.doInit(); err != nil {
+			return fmt.Errorf("failed to init yt client: %w", err)
+		}
+	}
+	return nil
 }
 
 func (yc *YtsaurusClient) createInitUserScript() string {
@@ -399,13 +407,43 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 	return SimpleStatus(SyncStatusReady), err
 }
 
+func (yc *YtsaurusClient) doInit() error {
+	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
+	timeout := time.Second * 10
+	proxy, ok := os.LookupEnv("YTOP_PROXY")
+	disableProxyDiscovery := true
+	if !ok {
+		proxy = yc.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
+		disableProxyDiscovery = false
+	}
+	var err error
+	yc.ytClient, err = ythttp.NewClient(&yt.Config{
+		Proxy:                 proxy,
+		Token:                 token,
+		LightRequestTimeout:   &timeout,
+		DisableProxyDiscovery: disableProxyDiscovery,
+	})
+	return err
+}
+
+func (yc *YtsaurusClient) doKubeSync(ctx context.Context) error {
+	s := yc.secret.Build()
+	s.StringData = map[string]string{
+		consts.TokenSecretKey: ytconfig.RandString(30),
+	}
+	return yc.secret.Sync(ctx)
+}
+
+func (yc *YtsaurusClient) isInSync(_ context.Context) (bool, error) {
+	return !yc.secret.NeedSync(consts.TokenSecretKey, ""), nil
+}
+
 func (yc *YtsaurusClient) Status(ctx context.Context) (ComponentStatus, error) {
-	return yc.doSync(ctx, true)
+	return flowToStatus(ctx, yc, yc.getFlow(), yc.condManager)
 }
 
 func (yc *YtsaurusClient) Sync(ctx context.Context) error {
-	_, err := yc.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, yc.getFlow(), yc.condManager)
 }
 
 func (yc *YtsaurusClient) GetYtClient() yt.Client {

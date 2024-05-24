@@ -1,5 +1,7 @@
 package controllers
 
+// TODO: file will be deleted after this refactoring. No need to review changes.
+
 import (
 	"context"
 	"fmt"
@@ -504,7 +506,7 @@ func chooseUpdateFlow(spec ytv1.YtsaurusSpec, needUpdate []components.Component)
 	}
 }
 
-func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
+func (r *YtsaurusReconciler) SyncOld(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
 	if !resource.Spec.IsManaged {

@@ -102,10 +102,10 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 }
 
 func (ca *ControllerAgent) Status(ctx context.Context) (ComponentStatus, error) {
-	return ca.doSync(ctx, true)
+	return flowToStatus(ctx, ca, ca.getFlow(), ca.condManager)
 }
 
 func (ca *ControllerAgent) Sync(ctx context.Context) error {
-	_, err := ca.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, ca.getFlow(), ca.condManager)
+
 }

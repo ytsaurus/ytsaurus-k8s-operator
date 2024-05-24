@@ -205,7 +205,7 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	}
 
 	if !dry {
-		qt.prepareInitQueryTrackerState()
+		qt.prepareInitQueryTrackerState(qt.initQTState)
 	}
 	status, err := qt.initQTState.Sync(ctx, dry)
 	if err != nil || status.SyncStatus != SyncStatusReady {
@@ -216,6 +216,28 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		return SimpleStatus(SyncStatusReady), err
 	}
 	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", qt.initCondition)), err
+}
+
+func (qt *QueryTracker) doServerSync(ctx context.Context) error {
+	if qt.secret.NeedSync(consts.TokenSecretKey, "") {
+		secretSpec := qt.secret.Build()
+		secretSpec.StringData = map[string]string{
+			consts.TokenSecretKey: ytconfig.RandString(30),
+		}
+		if err := qt.secret.Sync(ctx); err != nil {
+			return err
+		}
+	}
+	return qt.server.Sync(ctx)
+}
+
+func (qt *QueryTracker) serverInSync(ctx context.Context) (bool, error) {
+	srvInSync, err := qt.server.inSync(ctx)
+	if err != nil {
+		return false, err
+	}
+	secretNeedSync := qt.secret.NeedSync(consts.TokenSecretKey, "")
+	return srvInSync && !secretNeedSync, nil
 }
 
 func (qt *QueryTracker) createUser(ctx context.Context, ytClient yt.Client) (err error) {
@@ -388,15 +410,14 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 }
 
 func (qt *QueryTracker) Status(ctx context.Context) (ComponentStatus, error) {
-	return qt.doSync(ctx, true)
+	return flowToStatus(ctx, qt, qt.getFlow(), qt.condManager)
 }
 
 func (qt *QueryTracker) Sync(ctx context.Context) error {
-	_, err := qt.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, qt.getFlow(), qt.condManager)
 }
 
-func (qt *QueryTracker) prepareInitQueryTrackerState() {
+func (qt *QueryTracker) prepareInitQueryTrackerState(initJob *InitJob) {
 	path := "/usr/bin/init_query_tracker_state"
 
 	script := []string{
@@ -405,9 +426,9 @@ func (qt *QueryTracker) prepareInitQueryTrackerState() {
 			path, path, qt.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
 	}
 
-	qt.initQTState.SetInitScript(strings.Join(script, "\n"))
-	job := qt.initQTState.Build()
-	container := &job.Spec.Template.Spec.Containers[0]
+	initJob.SetInitScript(strings.Join(script, "\n"))
+	batchJob := initJob.Build()
+	container := &batchJob.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{qt.secret.GetEnvSource()}
 }
 

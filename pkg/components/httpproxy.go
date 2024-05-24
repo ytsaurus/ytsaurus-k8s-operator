@@ -166,11 +166,35 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	return SimpleStatus(SyncStatusReady), err
 }
 
+func (hp *HttpProxy) doServerSync(ctx context.Context) error {
+	statefulSet := hp.server.buildStatefulSet()
+	if hp.httpsSecret != nil {
+		hp.httpsSecret.AddVolume(&statefulSet.Spec.Template.Spec)
+		hp.httpsSecret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
+	}
+	err := hp.server.Sync(ctx)
+	if err != nil {
+		return err
+	}
+
+	s := hp.balancingService.Build()
+	s.Spec.Type = hp.serviceType
+	return hp.balancingService.Sync(ctx)
+}
+
+func (hp *HttpProxy) serverInSync(ctx context.Context) (bool, error) {
+	srvInSync, err := hp.server.inSync(ctx)
+	if err != nil {
+		return false, err
+	}
+	balancerExists := resources.Exists(hp.balancingService)
+	return srvInSync && balancerExists, nil
+}
+
 func (hp *HttpProxy) Status(ctx context.Context) (ComponentStatus, error) {
-	return hp.doSync(ctx, true)
+	return flowToStatus(ctx, hp, hp.getFlow(), hp.condManager)
 }
 
 func (hp *HttpProxy) Sync(ctx context.Context) error {
-	_, err := hp.doSync(ctx, false)
-	return err
+	return flowToSync(ctx, hp.getFlow(), hp.condManager)
 }
