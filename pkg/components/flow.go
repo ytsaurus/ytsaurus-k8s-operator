@@ -13,13 +13,13 @@ type Step interface {
 	// If st == Blocked — run is impossible.
 	// msg is an optional human-readable explanation of status.
 	// err is an error of status checking.
-	Status(ctx context.Context, conds conditionManagerIface) (ComponentStatus, error)
+	Status(ctx context.Context, conds *ConditionManager) (ComponentStatus, error)
 	// Run is a body of a step, it will be run only if Status() returns NeedSync.
 	// If ok is true and no error, run considered successful and postRun executed.
-	Run(ctx context.Context, conds conditionManagerIface) (ok bool, err error)
+	Run(ctx context.Context, conds *ConditionManager) (ok bool, err error)
 	// PostRun can be used for cleanup or some other post-actions,
 	// typical usage is to clean up some intermediate conditions which are set in step.
-	PostRun(ctx context.Context, conds conditionManagerIface) error
+	PostRun(ctx context.Context, conds *ConditionManager) error
 }
 
 type StepMeta struct {
@@ -42,7 +42,7 @@ func (m StepMeta) StepName() string { return m.Name }
 // (ones that not provided considered as satisfied and resulted in Ready status).
 func (m StepMeta) Status(
 	ctx context.Context,
-	conds conditionManagerIface,
+	conds *ConditionManager,
 ) (ComponentStatus, error) {
 	if m.RunIfCondition.Name != "" && conds.IsNotSatisfied(m.RunIfCondition) {
 		return ComponentStatus{
@@ -68,7 +68,7 @@ func (m StepMeta) Status(
 
 func (m StepMeta) PostRun(
 	ctx context.Context,
-	conds conditionManagerIface,
+	conds *ConditionManager,
 ) error {
 	if m.OnSuccessCondition.Name != "" {
 		if err := conds.SetCond(ctx, m.OnSuccessCondition); err != nil {
@@ -88,7 +88,7 @@ type StepRun struct {
 	Body func(ctx context.Context) error
 }
 
-func (s StepRun) Run(ctx context.Context, _ conditionManagerIface) (bool, error) {
+func (s StepRun) Run(ctx context.Context, _ *ConditionManager) (bool, error) {
 	if s.Body == nil {
 		return true, nil
 	}
@@ -103,7 +103,7 @@ type StepCheck struct {
 	Body func(ctx context.Context) (ok bool, err error)
 }
 
-func (s StepCheck) Run(ctx context.Context, _ conditionManagerIface) (bool, error) {
+func (s StepCheck) Run(ctx context.Context, _ *ConditionManager) (bool, error) {
 	if s.Body == nil {
 		return true, nil
 	}
@@ -115,7 +115,7 @@ type StepComposite struct {
 	Body []Step
 }
 
-func (s StepComposite) Run(ctx context.Context, conds conditionManagerIface) (bool, error) {
+func (s StepComposite) Run(ctx context.Context, conds *ConditionManager) (bool, error) {
 	for _, step := range s.Body {
 		st, err := step.Status(ctx, conds)
 		if err != nil {
@@ -142,7 +142,7 @@ func (s StepComposite) Run(ctx context.Context, conds conditionManagerIface) (bo
 //   - at first it checks if it itself need to run
 //   - and since its body consists of steps — it locates first not-ready step and return its status,
 //     so Run method would go in step list to found step and execute it.
-func (s StepComposite) Status(ctx context.Context, conds conditionManagerIface) (ComponentStatus, error) {
+func (s StepComposite) Status(ctx context.Context, conds *ConditionManager) (ComponentStatus, error) {
 	st, err := s.StepMeta.Status(ctx, conds)
 	if st.SyncStatus == SyncStatusReady || err != nil {
 		return st, err

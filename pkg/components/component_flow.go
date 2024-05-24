@@ -29,7 +29,7 @@ type fetchableWithName interface {
 	withName
 }
 
-func flowToStatus(ctx context.Context, c fetchableWithName, flow Step, condManager conditionManagerIface) (ComponentStatus, error) {
+func flowToStatus(ctx context.Context, c fetchableWithName, flow Step, condManager *ConditionManager) (ComponentStatus, error) {
 	if err := c.Fetch(ctx); err != nil {
 		return ComponentStatus{}, fmt.Errorf("failed to fetch component %s: %w", c.GetName(), err)
 	}
@@ -37,7 +37,7 @@ func flowToStatus(ctx context.Context, c fetchableWithName, flow Step, condManag
 	return flow.Status(ctx, condManager)
 }
 
-func flowToSync(ctx context.Context, flow Step, condManager conditionManagerIface) error {
+func flowToSync(ctx context.Context, flow Step, condManager *ConditionManager) error {
 	_, err := flow.Run(ctx, condManager)
 	return err
 }
@@ -131,7 +131,7 @@ func getStandardInitFinishedStep(c withName, check func(ctx context.Context) (ok
 }
 func getStandardUpdateStep(
 	c withName,
-	condManager conditionManagerIface,
+	condManager *ConditionManager,
 	check func(ctx context.Context) (bool, error),
 	steps []Step,
 ) StepComposite {

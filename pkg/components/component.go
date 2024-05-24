@@ -6,7 +6,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
@@ -70,36 +69,6 @@ type Component interface {
 	IsUpdatable() bool
 }
 
-// TODO: refactor manager so it would receive storage interface and
-// be struct itself.
-//
-//nolint:interfacebloat
-type conditionManagerIface interface {
-	SetTrue(context.Context, ConditionName) error
-	SetTrueMsg(context.Context, ConditionName, string) error
-	SetFalse(context.Context, ConditionName) error
-	SetFalseMsg(context.Context, ConditionName, string) error
-	Set(context.Context, ConditionName, bool) error
-	SetMsg(context.Context, ConditionName, bool, string) error
-	SetCond(context.Context, Condition) error
-	SetCondMany(context.Context, ...Condition) error
-	SetCondMsg(context.Context, Condition, string) error
-	IsTrue(ConditionName) bool
-	IsFalse(ConditionName) bool
-	Is(condition Condition) bool
-	IsSatisfied(condition Condition) bool
-	IsNotSatisfied(condition Condition) bool
-	All(conds ...Condition) bool
-	Any(conds ...Condition) bool
-}
-
-type stateManagerInterface interface {
-	SetTabletCellBundles(context.Context, []ytv1.TabletCellBundleInfo) error
-	GetTabletCellBundles() []ytv1.TabletCellBundleInfo
-	SetMasterMonitoringPaths(context.Context, []string) error
-	GetMasterMonitoringPaths() []string
-}
-
 // Following structs are used as a base for implementing YTsaurus components objects.
 // baseComponent is a base struct intendend for use in the simplest components and remote components
 // (the ones that don't have access to the ytsaurus resource).
@@ -123,8 +92,8 @@ type localComponent struct {
 
 	// currently we have it in the component, but in the future we may
 	// want to receive it from the outside of the component.
-	condManager  conditionManagerIface
-	stateManager stateManagerInterface
+	condManager  *ConditionManager
+	stateManager *StateManager
 }
 
 // localServerComponent is a base structs for components which have access to ytsaurus resource,
