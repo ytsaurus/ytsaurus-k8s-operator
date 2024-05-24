@@ -30,35 +30,36 @@ func getStatuses(
 }
 
 // componentsOrder is an order in which components will be built.
-// The main rules are:
-//   - if component A needs component B for building (running jobs, using yt client, etc), it
-//     should be placed in some of the sections after component B section.
+// batches of components are supported, but since we have status update conflict
+// almost every second reconciliation, we start with truly linear flow: one component at a time.
 var componentsOrder = [][]consts.ComponentType{
-	// At first, we check if master is *built* (not updated) before everything else.
-	{
-		consts.YtsaurusClientType,
-		consts.DiscoveryType,
-		consts.HttpProxyType,
-		consts.RpcProxyType,
-		consts.TcpProxyType,
-		consts.DataNodeType,
-		consts.ExecNodeType,
-		consts.MasterCacheType,
-	},
-	{
-		consts.TabletNodeType,
-		consts.UIType,
-		consts.ControllerAgentType,
-		consts.YqlAgentType,
-	},
-	{
-		consts.SchedulerType,
-		consts.QueryTrackerType,
-		consts.QueueAgentType,
-	},
-	{
-		consts.StrawberryControllerType,
-	},
+	// This is not declared here, but
+	// at first, we check if master is *built* (not updated) before everything else.
+	// batch #1
+	{consts.YtsaurusClientType},
+	{consts.DiscoveryType},
+	{consts.HttpProxyType},
+	{consts.RpcProxyType},
+	{consts.TcpProxyType},
+	{consts.DataNodeType},
+	{consts.ExecNodeType},
+	{consts.MasterCacheType},
+
+	// batch #2
+	{consts.TabletNodeType},
+	{consts.UIType},
+	{consts.ControllerAgentType},
+	{consts.YqlAgentType},
+
+	// batch #3
+	{consts.SchedulerType},
+	{consts.QueryTrackerType},
+	{consts.QueueAgentType},
+
+	// batch #4
+	{consts.StrawberryControllerType},
+
+	// batch #5
 	{
 		// Here we UPDATE master after all the components, because it shouldn't be newer
 		// than others.
