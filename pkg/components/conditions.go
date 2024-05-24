@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -119,49 +116,51 @@ func NewStateManager(client client.Client, ytsaurus *ytv1.Ytsaurus) *StateManage
 // TODO: refactor this for managers to receive interface which can persist state on resource
 // to reuse for other CRDS & don't have such wide interfaces for managers.
 func (m *baseStateManager) updateStatusRetryOnConflict(ctx context.Context, change func(ytsaurusResource *ytv1.Ytsaurus)) error {
-	tryUpdate := func(ytsaurus *ytv1.Ytsaurus) error {
-		// N.B. Status().Update(...) updates not only status sub-resource, but also main
-		// ytsaurus resource which is the same reference in a lot of places of our code,
-		// and it bites us, because we're modifying spec (monitoring port).
-		// Not sure if it is good workaround, need to think about it,
-		// but we should get rid of overriding port and possibly using references to the main resource.
-		ytsaurusTemp := &ytv1.Ytsaurus{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:            ytsaurus.Name,
-				Namespace:       ytsaurus.Namespace,
-				ResourceVersion: ytsaurus.ResourceVersion,
-			},
-			Status: ytsaurus.Status,
-		}
-		change(ytsaurusTemp)
+	//tryUpdate := func(ytsaurus *ytv1.Ytsaurus) error {
+	//	// N.B. Status().Update(...) updates not only status sub-resource, but also main
+	//	// ytsaurus resource which is the same reference in a lot of places of our code,
+	//	// and it bites us, because we're modifying spec (monitoring port).
+	//	// Not sure if it is good workaround, need to think about it,
+	//	// but we should get rid of overriding port and possibly using references to the main resource.
+	//	ytsaurusTemp := &ytv1.Ytsaurus{
+	//		ObjectMeta: metav1.ObjectMeta{
+	//			Name:            ytsaurus.Name,
+	//			Namespace:       ytsaurus.Namespace,
+	//			ResourceVersion: ytsaurus.ResourceVersion,
+	//		},
+	//		Status: ytsaurus.Status,
+	//	}
+	//	change(ytsaurusTemp)
+	//
+	//	err := m.client.Status().Update(ctx, ytsaurusTemp)
+	//	m.ytsaurus.Status = ytsaurusTemp.Status
+	//	// You have to return err itself here (not wrapped inside another error)
+	//	// so that RetryOnConflict can identify it correctly.
+	//	return err
+	//}
 
-		err := m.client.Status().Update(ctx, ytsaurusTemp)
-		m.ytsaurus.Status = ytsaurusTemp.Status
-		// You have to return err itself here (not wrapped inside another error)
-		// so that RetryOnConflict can identify it correctly.
-		return err
-	}
-
-	err := tryUpdate(m.ytsaurus)
-	if err == nil || !apierrors.IsConflict(err) {
-		return err
-	}
-
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		// Fetch the resource here; you need to refetch it on every try, since
-		// if you got a conflict on the last update attempt then you need to get
-		// the current version before making your own changes.
-		ytsaurus := ytv1.Ytsaurus{}
-		name := types.NamespacedName{
-			Namespace: m.ytsaurus.Namespace,
-			Name:      m.ytsaurus.Name,
-		}
-		if err = m.client.Get(ctx, name, &ytsaurus); err != nil {
-			return err
-		}
-
-		return tryUpdate(&ytsaurus)
-	})
+	change(m.ytsaurus)
+	return m.client.Status().Update(ctx, m.ytsaurus)
+	//err := tryUpdate(m.ytsaurus)
+	//if err == nil || !apierrors.IsConflict(err) {
+	//	return err
+	//}
+	//
+	//return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+	//	// Fetch the resource here; you need to refetch it on every try, since
+	//	// if you got a conflict on the last update attempt then you need to get
+	//	// the current version before making your own changes.
+	//	ytsaurus := ytv1.Ytsaurus{}
+	//	name := types.NamespacedName{
+	//		Namespace: m.ytsaurus.Namespace,
+	//		Name:      m.ytsaurus.Name,
+	//	}
+	//	if err = m.client.Get(ctx, name, &ytsaurus); err != nil {
+	//		return err
+	//	}
+	//
+	//	return tryUpdate(&ytsaurus)
+	//})
 }
 
 func (cm *ConditionManager) SetTrue(ctx context.Context, condName ConditionName) error {
