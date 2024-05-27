@@ -268,8 +268,9 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 		map[string]interface{}{
 			"stages": map[string]interface{}{
 				"production": map[string]interface{}{
-					"root": "//sys/query_tracker",
-					"user": "query_tracker",
+					"root":    "//sys/query_tracker",
+					"user":    "query_tracker",
+					"channel": map[string]interface{}{"addresses": qt.cfgen.GetQueryTrackerAddresses()},
 				},
 			},
 		},

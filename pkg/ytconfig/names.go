@@ -56,6 +56,15 @@ func (g *BaseGenerator) GetDiscoveryPodNames() []string {
 	return podNames
 }
 
+func (g *Generator) GetQueryTrackerPodNames() []string {
+	podNames := make([]string, 0, g.ytsaurus.Spec.QueryTrackers.InstanceSpec.InstanceCount)
+	for i := 0; i < int(g.ytsaurus.Spec.QueryTrackers.InstanceSpec.InstanceCount); i++ {
+		podNames = append(podNames, fmt.Sprintf("%s-%d", g.GetQueryTrackerStatefulSetName(), i))
+	}
+
+	return podNames
+}
+
 func (g *Generator) GetYQLAgentPodNames() []string {
 	podNames := make([]string, 0, g.ytsaurus.Spec.YQLAgents.InstanceSpec.InstanceCount)
 	for i := 0; i < int(g.ytsaurus.Spec.YQLAgents.InstanceSpec.InstanceCount); i++ {

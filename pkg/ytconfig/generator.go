@@ -111,6 +111,19 @@ func (g *Generator) GetYQLAgentAddresses() []string {
 	return names
 }
 
+func (g *Generator) GetQueryTrackerAddresses() []string {
+	names := make([]string, 0, g.ytsaurus.Spec.QueryTrackers.InstanceCount)
+	for _, podName := range g.GetQueryTrackerPodNames() {
+		names = append(names, fmt.Sprintf("%s.%s.%s.svc.%s:%d",
+			podName,
+			g.GetQueryTrackerServiceName(),
+			g.ytsaurus.Namespace,
+			g.clusterDomain,
+			consts.QueryTrackerRPCPort))
+	}
+	return names
+}
+
 func (g *Generator) GetQueueAgentAddresses() []string {
 	names := make([]string, 0, g.ytsaurus.Spec.QueueAgents.InstanceCount)
 	for _, podName := range g.GetQueueAgentPodNames() {
