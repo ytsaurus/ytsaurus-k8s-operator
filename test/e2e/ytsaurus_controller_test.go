@@ -592,6 +592,9 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			By("Check that access control object 'everyone-use' in namespace 'queries' exists")
 			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone-use"), nil)).Should(BeTrue())
 
+			By("Check that access control object 'everyone-share' in namespace 'queries' exists")
+			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone-share"), nil)).Should(BeTrue())
+
 			By("Check that access control object namespace 'queries' allows users to create children and owners to do everything")
 			queriesAcl := []map[string]interface{}{}
 			Expect(ytClient.GetNode(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/@acl"), &queriesAcl, nil)).Should(Succeed())
@@ -614,6 +617,17 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			everyonePrincipalAcl := []map[string]interface{}{}
 			Expect(ytClient.GetNode(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone/@principal_acl"), &everyonePrincipalAcl, nil)).Should(Succeed())
 			Expect(everyonePrincipalAcl).Should(ConsistOf(
+				SatisfyAll(
+					HaveKeyWithValue("action", "allow"),
+					HaveKeyWithValue("subjects", ConsistOf("everyone")),
+					HaveKeyWithValue("permissions", ConsistOf("read", "use")),
+				),
+			))
+
+			By("Check that access control object 'everyone-share' in namespace 'queries' allows everyone to read and use")
+			everyoneSharePrincipalAcl := []map[string]interface{}{}
+			Expect(ytClient.GetNode(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone-share/@principal_acl"), &everyoneSharePrincipalAcl, nil)).Should(Succeed())
+			Expect(everyoneSharePrincipalAcl).Should(ConsistOf(
 				SatisfyAll(
 					HaveKeyWithValue("action", "allow"),
 					HaveKeyWithValue("subjects", ConsistOf("everyone")),
