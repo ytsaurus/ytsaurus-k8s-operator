@@ -25,8 +25,8 @@ jobs:
 
   release-nightly:
     name: Release nightly image
-    needs:
-      - check-compat
+#    needs:
+#      - check-compat
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
