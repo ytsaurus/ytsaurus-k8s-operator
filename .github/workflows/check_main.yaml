@@ -6,27 +6,26 @@ on:
       - main
 
 jobs:
-# Temporary remove tests from run to configure ghcr upload
-#  check-unit:
-#    name: Run unit tests
-#    uses: ./.github/workflows/subflow_run_unit_tests.yaml
-#
-#  check-e2e:
-#    name: Run e2e tests
-#    needs:
-#      - check-unit
-#    uses: ./.github/workflows/subflow_run_e2e_tests.yaml
-#
-#  check-compat:
-#    name: Run compat tests
-#    needs:
-#      - check-e2e
-#    uses: ./.github/workflows/subflow_run_compat_tests.yaml
+  check-unit:
+    name: Run unit tests
+    uses: ./.github/workflows/subflow_run_unit_tests.yaml
+
+  check-e2e:
+    name: Run e2e tests
+    needs:
+      - check-unit
+    uses: ./.github/workflows/subflow_run_e2e_tests.yaml
+
+  check-compat:
+    name: Run compat tests
+    needs:
+      - check-e2e
+    uses: ./.github/workflows/subflow_run_compat_tests.yaml
 
   release-nightly:
     name: Release nightly image
-#    needs:
-#      - check-compat
+    needs:
+      - check-compat
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
