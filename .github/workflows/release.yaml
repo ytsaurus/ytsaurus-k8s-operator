@@ -49,6 +49,8 @@ jobs:
 
       - name: Release
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           make release RELEASE_VERSION=${{ steps.tag.outputs.RELEASE_VERSION }}
 
