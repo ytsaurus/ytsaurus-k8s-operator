@@ -283,6 +283,7 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 release: kustomize ## Release operator docker image and helm chart.
 	docker build ${DOCKER_BUILD_ARGS} -t $(OPERATOR_IMAGE):${RELEASE_VERSION} .
 	docker push $(OPERATOR_IMAGE):${RELEASE_VERSION}
+	docker tag $(OPERATOR_IMAGE):${RELEASE_VERSION} ghcr.io/$(OPERATOR_IMAGE):${RELEASE_VERSION}
 	docker push ghcr.io/$(OPERATOR_IMAGE):${RELEASE_VERSION}
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(OPERATOR_IMAGE):${RELEASE_VERSION}
 	$(MAKE) helm-chart
