@@ -280,15 +280,17 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
 
-release: kustomize ## Release operator docker imager and helm chart.
+release: kustomize ## Release operator docker image and helm chart.
 	docker build ${DOCKER_BUILD_ARGS} -t $(OPERATOR_IMAGE):${RELEASE_VERSION} .
 	docker push $(OPERATOR_IMAGE):${RELEASE_VERSION}
+	docker push ghcr.io/$(OPERATOR_IMAGE):${RELEASE_VERSION}
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(OPERATOR_IMAGE):${RELEASE_VERSION}
 	$(MAKE) helm-chart
 	sed -iE "s/appVersion: \".*\"/appVersion: \"${RELEASE_VERSION}\"/" $(OPERATOR_CHART)/Chart.yaml
 	sed -iE "s/version:.*/version: ${RELEASE_VERSION}/" $(OPERATOR_CHART)/Chart.yaml
 	helm package $(OPERATOR_CHART)
 	helm push $(OPERATOR_CHART)-${RELEASE_VERSION}.tgz oci://registry-1.docker.io/ytsaurus
+	helm push $(OPERATOR_CHART)-${RELEASE_VERSION}.tgz oci://ghcr.io/ytsaurus
 
 ##@ Build Dependencies
 
