@@ -6,21 +6,22 @@ on:
       - main
 
 jobs:
-  check-unit:
-    name: Run unit tests
-    uses: ./.github/workflows/subflow_run_unit_tests.yaml
-
-  check-e2e:
-    name: Run e2e tests
-    needs:
-      - check-unit
-    uses: ./.github/workflows/subflow_run_e2e_tests.yaml
-
-  check-compat:
-    name: Run compat tests
-    needs:
-      - check-e2e
-    uses: ./.github/workflows/subflow_run_compat_tests.yaml
+# Temporary remove tests from run to configure ghcr upload
+#  check-unit:
+#    name: Run unit tests
+#    uses: ./.github/workflows/subflow_run_unit_tests.yaml
+#
+#  check-e2e:
+#    name: Run e2e tests
+#    needs:
+#      - check-unit
+#    uses: ./.github/workflows/subflow_run_e2e_tests.yaml
+#
+#  check-compat:
+#    name: Run compat tests
+#    needs:
+#      - check-e2e
+#    uses: ./.github/workflows/subflow_run_compat_tests.yaml
 
   release-nightly:
     name: Release nightly image
@@ -36,6 +37,16 @@ jobs:
       - name: Docker Hub login
         run: |
           echo '${{ secrets.DOCKER_HUB_PASSWORD }}' | docker login --username ${{ secrets.DOCKER_HUB_LOGIN}} --password-stdin
+
+      # Uses the `docker/login-action` action to log in to the Container registry
+      # using the account and password that will publish the packages.
+      # Once published, the packages are scoped to the account defined here.
+      - name: Guthub Packages Login
+        uses: docker/login-action@v3.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Docker
         shell: bash
