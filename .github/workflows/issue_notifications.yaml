@@ -7,7 +7,7 @@ on:
 jobs:
   telegram:
     name: Telegram
-    runs-on: trampoline
+    runs-on: ubuntu-latest
     steps:
       - name: Send to notification chat
         uses: appleboy/telegram-action@master

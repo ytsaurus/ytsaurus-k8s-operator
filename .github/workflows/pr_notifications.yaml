@@ -11,7 +11,7 @@ jobs:
   pr-notifications:
     name: Send PR notifications
     if: github.event.pull_request.draft == false
-    runs-on: trampoline
+    runs-on: ubuntu-latest
     steps:
       - name: Send to notification chat
         uses: appleboy/telegram-action@master
