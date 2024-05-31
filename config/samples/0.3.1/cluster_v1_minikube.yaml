@@ -3,8 +3,8 @@ kind: Ytsaurus
 metadata:
   name: minisaurus
 spec:
-  coreImage: ytsaurus/ytsaurus-nightly:dev-23.1-35ba9c721c7e267d1f03cf9a9b28f6f007e21e6e
-  uiImage: ytsaurus/ui:stable
+  coreImage: mirror.gcr.io/ytsaurus/ytsaurus-nightly:dev-23.1-35ba9c721c7e267d1f03cf9a9b28f6f007e21e6e
+  uiImage: mirror.gcr.io/ytsaurus/ui:stable
 
   discovery:
     instanceCount: 1

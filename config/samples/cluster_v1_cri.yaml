@@ -12,14 +12,12 @@ metadata:
   name: ytsaurus
 spec:
   # https://ytsaurus.tech/docs/en/admin-guide/releases#ytsaurus-server
-  # coreImage: ytsaurus/ytsaurus-nightly:latest
-  # coreImage: ytsaurus/ytsaurus:dev-relwithdebinfo
-  coreImage: ytsaurus/ytsaurus:dev-23.2-relwithdebinfo
+  coreImage: ghcr.io/ytsaurus/ytsaurus:dev-23.2-relwithdebinfo
 
   # Default "docker_image" for jobs
-  jobImage: docker.io/library/python:3.12-slim
+  jobImage: mirror.gcr.io/library/python:3.12-slim
 
-  uiImage: ytsaurus/ui:stable
+  uiImage: ghcr.io/ytsaurus/ui:stable
 
   # Default "admin" password and token is "password".
   # adminCredentials:
@@ -361,8 +359,7 @@ spec:
   yqlAgents:
     instanceCount: 1
     # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
-    # image: ytsaurus/query-tracker:dev-relwithdebinfo
-    image: ytsaurus/query-tracker:0.0.4-relwithdebinfo
+    image: ghcr.io/ytsaurus/query-tracker:0.0.6-relwithdebinfo
 
     loggers: *loggers
 
@@ -383,8 +380,7 @@ spec:
   queryTrackers:
     instanceCount: 1
     # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
-    # image: ytsaurus/query-tracker:dev-relwithdebinfo
-    image: ytsaurus/query-tracker:0.0.4-relwithdebinfo
+    image: ghcr.io/ytsaurus/query-tracker:0.0.6-relwithdebinfo
 
     loggers: *loggers
 
@@ -407,4 +403,4 @@ spec:
       limits:
         memory: 100Mi
     # https://ytsaurus.tech/docs/en/admin-guide/releases#strawberry
-    image: ytsaurus/strawberry:0.0.11
+    image: ghcr.io/ytsaurus/strawberry:0.0.11
