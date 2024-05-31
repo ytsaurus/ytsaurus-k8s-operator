@@ -3,8 +3,8 @@ kind: Ytsaurus
 metadata:
   name: ytdemo
 spec:
-  coreImage: ytsaurus/ytsaurus:stable-23.1.0-relwithdebinfo
-  uiImage: ytsaurus/ui:stable
+  coreImage: mirror.gcr.io/ytsaurus/ytsaurus:stable-23.1.0-relwithdebinfo
+  uiImage: mirror.gcr.io/ytsaurus/ui:stable
 
   adminCredentials:
     name: ytadminsec
@@ -87,11 +87,11 @@ spec:
 
   queryTrackers:
     instanceCount: 1
-    image: ytsaurus/query-tracker-nightly:dev-66906-ce55146bc191ec5c82efcde5d6e0d592fc0ec50a-relwithdebinfo
+    image: mirror.gcr.io/ytsaurus/query-tracker-nightly:dev-66906-ce55146bc191ec5c82efcde5d6e0d592fc0ec50a-relwithdebinfo
 
   yqlAgents:
     instanceCount: 1
-    image: ytsaurus/query-tracker-nightly:dev-66906-ce55146bc191ec5c82efcde5d6e0d592fc0ec50a-relwithdebinfo
+    image: mirror.gcr.io/ytsaurus/query-tracker-nightly:dev-66906-ce55146bc191ec5c82efcde5d6e0d592fc0ec50a-relwithdebinfo
 
   schedulers:
     instanceCount: 1
@@ -104,7 +104,7 @@ spec:
     instanceCount: 1
  
   strawberry:
-    image: ytsaurus/strawberry:0.0.5
+    image: mirror.gcr.io/ytsaurus/strawberry:0.0.5
     resources:
       limits:
         memory: 100Mi
@@ -118,7 +118,7 @@ spec:
   ytsaurus:
     name:
       ytdemo
-  image: ytsaurus/spyt:1.72.0
+  image: mirror.gcr.io/ytsaurus/spyt:1.72.0
 
 ---
 apiVersion: cluster.ytsaurus.tech/v1
@@ -129,6 +129,6 @@ spec:
   ytsaurus:
     name:
       ytdemo
-  image: ytsaurus/chyt:2.10.0-relwithdebinfo
+  image: mirror.gcr.io/ytsaurus/chyt:2.10.0-relwithdebinfo
   makeDefault: true
 

@@ -12,4 +12,4 @@ spec:
   ytsaurus:
     name:
       minisaurus
-  image: ytsaurus/spyt:1.71.0
+  image: ghcr.io/ytsaurus/spyt:1.78.0

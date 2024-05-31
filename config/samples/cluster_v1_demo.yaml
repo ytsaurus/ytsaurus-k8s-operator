@@ -3,8 +3,8 @@ kind: Ytsaurus
 metadata:
   name: ytdemo
 spec:
-  coreImage: ytsaurus/ytsaurus:stable-23.1.0-relwithdebinfo
-  uiImage: ytsaurus/ui:stable
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-23.2.0-relwithdebinfo
+  uiImage: ghcr.io/ytsaurus/ui:stable
 
   adminCredentials:
     name: ytadminsec
@@ -106,11 +106,11 @@ spec:
     - instanceCount: 3
 
   queryTrackers:
-    image: ytsaurus/query-tracker:0.0.1-relwithdebinfo
+    image: ghcr.io/ytsaurus/query-tracker:0.0.6-relwithdebinfo
     instanceCount: 1
 
   yqlAgents:
-    image: ytsaurus/query-tracker:0.0.1-relwithdebinfo
+    image: ghcr.io/ytsaurus/query-tracker:0.0.6-relwithdebinfo
     instanceCount: 1
 
   schedulers:
@@ -124,7 +124,7 @@ spec:
     instanceCount: 1
  
   strawberry:
-    image: ytsaurus/strawberry:0.0.5
+    image: ghcr.io/ytsaurus/strawberry:0.0.11
     resources:
       limits:
         memory: 100Mi
