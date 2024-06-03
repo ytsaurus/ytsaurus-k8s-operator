@@ -384,6 +384,27 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 		logger.Error(err, "Creating access control object 'everyone-use' in namespace 'queries' failed")
 		return
 	}
+
+	_, err = ytClient.CreateObject(
+		ctx,
+		yt.NodeAccessControlObject,
+		&yt.CreateObjectOptions{
+			Attributes: map[string]interface{}{
+				"name":      "everyone-share",
+				"namespace": "queries",
+				"principal_acl": []interface{}{map[string]interface{}{
+					"action":      "allow",
+					"subjects":    []string{"everyone"},
+					"permissions": []string{"read", "use"},
+				}},
+			},
+			IgnoreExisting: true,
+		},
+	)
+	if err != nil {
+		logger.Error(err, "Creating access control object 'everyone-share' in namespace 'queries' failed")
+		return
+	}
 	return
 }
 
