@@ -12,7 +12,8 @@ metadata:
   name: ytsaurus
 spec:
   # https://ytsaurus.tech/docs/en/admin-guide/releases#ytsaurus-server
-  coreImage: ghcr.io/ytsaurus/ytsaurus:dev-23.2-relwithdebinfo
+  # https://github.com/ytsaurus/ytsaurus/pkgs/container/ytsaurus
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-23.2.0-relwithdebinfo
 
   # Default "docker_image" for jobs
   jobImage: mirror.gcr.io/library/python:3.12-slim
