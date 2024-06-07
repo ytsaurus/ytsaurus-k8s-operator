@@ -564,6 +564,26 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			runImpossibleUpdateAndRollback(ytsaurus, ytClient)
 		})
 
+		It("Should run with query tracker and check that query tracker rpc address set up correctly", Label("basic"), func(ctx context.Context) {
+			By("Creating a Ytsaurus resource")
+
+			namespace := "querytrackeraddress"
+
+			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+			ytsaurus = ytv1.WithQueryTracker(ytsaurus)
+
+			g := ytconfig.NewGenerator(ytsaurus, "local")
+
+			DeferCleanup(deleteYtsaurus, ytsaurus)
+			runYtsaurus(ytsaurus)
+
+			By("Creating ytsaurus client")
+			ytClient := getYtClient(g, namespace)
+
+			By("Check that query tracker channel exists in cluster_connection")
+			Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/@cluster_connection/query_tracker/stages/production/channel"), nil)).Should(BeTrue())
+		})
+
 		It("Should run with query tracker and check that access control objects set up correctly", Label("basic"), func(ctx context.Context) {
 			By("Creating a Ytsaurus resource")
 
