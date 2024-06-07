@@ -6,6 +6,9 @@ IMG ?= ${OPERATOR_IMAGE}:${OPERATOR_TAG}
 KIND_CLUSTER_NAME ?= ${USER}-yt-kind
 export KIND_CLUSTER_NAME
 
+## Path to kind cluster config.
+KIND_CLUSTER_CONFIG =
+
 ## K8s context for kind cluster
 KIND_KUBE_CONTEXT = kind-$(KIND_CLUSTER_NAME)
 
@@ -135,12 +138,21 @@ canonize: manifests generate fmt vet envtest ## Canonize test results.
 
 ##@ K8s operations
 
+KIND_CLUSTER_CREATE_FLAGS = -v 100 --wait 120s  --retain
+ifneq (${KIND_CLUSTER_CONFIG},)
+  KIND_CLUSTER_CREATE_FLAGS  += --config ${KIND_CLUSTER_CONFIG}
+endif
+
 .PHONY: kind-create-cluster
 kind-create-cluster: kind ## Create kind kubernetes cluster.
 	@if ! $(KIND) get clusters | grep -q $(KIND_CLUSTER_NAME); then \
-		$(KIND) create cluster --name $(KIND_CLUSTER_NAME) -v 100 --wait 120s  --retain; \
+		$(KIND) create cluster --name $(KIND_CLUSTER_NAME) $(KIND_CLUSTER_CREATE_FLAGS); \
 	fi
 	$(MAKE) k8s-install-cert-manager
+
+.PHONY: kind-create-cluster-with-registry
+kind-create-cluster-with-registry:
+	$(MAKE) kind-create-cluster KIND_CLUSTER_CONFIG=config/kind/kind-with-registry.yaml
 
 .PHONY: kind-use-context
 kind-use-context: ## Switch kubectl default context and namespace.
@@ -152,6 +164,39 @@ kind-delete-cluster: kind ## Delete kind kubernetes cluster.
 	@if $(KIND) get clusters | grep -q $(KIND_CLUSTER_NAME); then \
 		$(KIND) delete cluster --name $(KIND_CLUSTER_NAME); \
 	fi
+
+# https://github.com/containerd/containerd/blob/main/docs/hosts.md
+# https://distribution.github.io/distribution/about/configuration/
+# https://kind.sigs.k8s.io/docs/user/local-registry/
+
+REGISTRY_CONFIG_DIR=config/registry
+
+REGISTRY_LOCAL_PORT = 5000
+REGISTRY_LOCAL_ADDR = localhost:${REGISTRY_LOCAL_PORT}
+REGISTRY_LOCAL_NAME = ${USER}-registry-localhost-${REGISTRY_LOCAL_PORT}
+
+define REGISTRY_LOCAL_CONFIG
+server = "http://${REGISTRY_LOCAL_NAME}:5000"
+
+[host."http://${REGISTRY_LOCAL_NAME}:5000"]
+  capabilities = ["pull", "resolve", "push"]
+  skip_verify = true
+endef
+export REGISTRY_LOCAL_CONFIG
+
+kind-create-local-registry: ## Create local docker registry for kind kubernetes cluster.
+	docker run --name ${REGISTRY_LOCAL_NAME} -d --restart=always \
+		--mount type=volume,src=${REGISTRY_LOCAL_NAME},dst=/var/lib/registry \
+		-p "127.0.0.1:${REGISTRY_LOCAL_PORT}:5000" \
+		registry:2
+	docker network connect "kind" ${REGISTRY_LOCAL_NAME}
+	mkdir -p ${REGISTRY_CONFIG_DIR}/${REGISTRY_LOCAL_ADDR}
+	echo "$$REGISTRY_LOCAL_CONFIG" >${REGISTRY_CONFIG_DIR}/${REGISTRY_LOCAL_ADDR}/hosts.toml
+
+kind-delete-local-registry: ## Delete local docker registry.
+	docker rm -f ${REGISTRY_LOCAL_NAME}
+	docker volume rm ${REGISTRY_LOCAL_NAME}
+	rm -fr "${REGISTRY_CONFIG_DIR}/${REGISTRY_LOCAL_ADDR}"
 
 TEST_IMAGES = \
 	ytsaurus/ytsaurus-nightly:dev-23.1-28ccaedbf353b870bedafb6e881ecf386a0a3779 \
