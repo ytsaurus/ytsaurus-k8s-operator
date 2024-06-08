@@ -45,6 +45,12 @@ var (
 			corev1.ResourceMemory: *resource.NewQuantity(5*1024*1024*1024, resource.BinarySI),
 		},
 	}
+	testJobResourceReqs = corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    *resource.NewQuantity(99, resource.BinarySI),
+			corev1.ResourceMemory: *resource.NewQuantity(99*1024*1024*1024, resource.BinarySI),
+		},
+	}
 	testLocationChunkStore = ytv1.LocationSpec{
 		LocationType: "ChunkStore",
 		Path:         "/yt/hdd1/chunk-store",
@@ -129,23 +135,66 @@ func TestGetDiscoveryConfig(t *testing.T) {
 }
 
 func TestGetExecNodeConfig(t *testing.T) {
-	g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetExecNodeConfig(getExecNodeSpec())
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
+	cases := map[string]struct {
+		JobResources *corev1.ResourceRequirements
+	}{
+		"without-job-resources": {
+			JobResources: nil,
+		},
+		"with-job-resources": {
+			JobResources: &testJobResourceReqs,
+		},
+	}
+
+	for name, test := range cases {
+		t.Run(name, func(t *testing.T) {
+			g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
+			cfg, err := g.GetExecNodeConfig(getExecNodeSpec(test.JobResources))
+			require.NoError(t, err)
+			canonize.Assert(t, cfg)
+		})
+	}
 }
 
 func TestGetExecNodeConfigWithCri(t *testing.T) {
 	g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	spec := withCri(getExecNodeSpec())
-	cfg, err := g.GetExecNodeConfig(spec)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
+
+	cases := map[string]struct {
+		JobResources *corev1.ResourceRequirements
+		Isolated     bool
+	}{
+		"isolated-containers-without-job-resources": {
+			JobResources: nil,
+			Isolated:     true,
+		},
+		"isolated-containers-with-job-resources": {
+			JobResources: &testJobResourceReqs,
+			Isolated:     true,
+		},
+		"single-container-without-job-resources": {
+			JobResources: nil,
+			Isolated:     false,
+		},
+		"single-container-with-job-resources": {
+			JobResources: &testJobResourceReqs,
+			Isolated:     false,
+		},
+	}
+
+	for name, test := range cases {
+		t.Run(name, func(t *testing.T) {
+			spec := withCri(getExecNodeSpec(nil), test.JobResources, test.Isolated)
+			cfg, err := g.GetExecNodeConfig(spec)
+			require.NoError(t, err)
+			canonize.Assert(t, cfg)
+		})
+	}
 }
 
 func TestGetContainerdConfig(t *testing.T) {
 	g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	spec := withCri(getExecNodeSpec())
+
+	spec := withCri(getExecNodeSpec(nil), nil, false)
 	cfg, err := g.GetContainerdConfig(&spec)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
@@ -159,7 +208,7 @@ func TestGetExecNodeWithoutYtsaurusConfig(t *testing.T) {
 		getMasterConnectionSpecWithFixedMasterHosts(),
 		getMasterCachesSpecWithFixedHosts(),
 	)
-	cfg, err := g.GetExecNodeConfig(getExecNodeSpec())
+	cfg, err := g.GetExecNodeConfig(getExecNodeSpec(nil))
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -556,7 +605,7 @@ func getDataNodeSpec() ytv1.DataNodesSpec {
 	}
 }
 
-func getExecNodeSpec() ytv1.ExecNodesSpec {
+func getExecNodeSpec(jobResources *corev1.ResourceRequirements) ytv1.ExecNodesSpec {
 	rotationPolicyMS := int64(900000)
 	rotationPolicyMaxTotalSize := int64(3145728)
 	return ytv1.ExecNodesSpec{
@@ -571,6 +620,7 @@ func getExecNodeSpec() ytv1.ExecNodesSpec {
 			VolumeMounts:         testVolumeMounts,
 			VolumeClaimTemplates: testVolumeClaimTemplates,
 		},
+		JobResources:     jobResources,
 		ClusterNodesSpec: testClusterNodeSpec,
 		JobProxyLoggers: []ytv1.TextLoggerSpec{
 			{
@@ -595,9 +645,9 @@ func getExecNodeSpec() ytv1.ExecNodesSpec {
 	}
 }
 
-func withCri(spec ytv1.ExecNodesSpec) ytv1.ExecNodesSpec {
+func withCri(spec ytv1.ExecNodesSpec, jobResources *corev1.ResourceRequirements, isolated bool) ytv1.ExecNodesSpec {
 	spec.Locations = append(spec.Locations, testLocationImageCache)
-	spec.JobResources = &testResourceReqs
+	spec.JobResources = jobResources
 	spec.JobEnvironment = &ytv1.JobEnvironmentSpec{
 		UserSlots: ptr.Int(42),
 		CRI: &ytv1.CRIJobEnvironmentSpec{
@@ -608,6 +658,7 @@ func withCri(spec ytv1.ExecNodesSpec) ytv1.ExecNodesSpec {
 		},
 		UseArtifactBinds: ptr.Bool(true),
 		DoNotSetUserId:   ptr.Bool(true),
+		Isolated:         ptr.Bool(isolated),
 	}
 	return spec
 }
