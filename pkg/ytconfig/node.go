@@ -89,11 +89,26 @@ type CriExecutor struct {
 	CpuPeriod       yson.Duration `yson:"cpu_period,omitempty"`
 }
 
+type CriImageCache struct {
+	Capacity *int64 `yson:"capacity,omitempty"`
+
+	ManagedPrefixes   []string `yson:"managed_prefixes,omitempty"`
+	UnmanagedPrefixes []string `yson:"managed_prefixes,omitempty"`
+	PinnedImages      []string `yson:"pinned_image,omitempty"`
+
+	AlwaysPullLatest                *bool         `yson:"always_pull_latest,omitempty"`
+	PullPeriod                      yson.Duration `yson:"pullPeriod,omitempty"`
+	ImageSizeEstimation             *int64        `yson:"image_size_estimation,omitempty"`
+	ImageCompressionRatioEstimation *float32      `yson:"image_compression_ratio_estimation,omitempty"`
+	YoungerSizeFraction             *float32      `yson:"younger_size_fraction,omitempty"`
+}
+
 type CriJobEnvironment struct {
-	CriExecutor          *CriExecutor `yson:"cri_executor,omitempty"`
-	JobProxyImage        string       `yson:"job_proxy_image,omitempty"`
-	JobProxyBindMounts   []BindMount  `yson:"job_proxy_bind_mounts,omitempty"`
-	UseJobProxyFromImage *bool        `yson:"use_job_proxy_from_image,omitempty"`
+	CriExecutor          *CriExecutor   `yson:"cri_executor,omitempty"`
+	CriImageCache        *CriImageCache `yson:"cri_image_cache,omitempty"`
+	JobProxyImage        string         `yson:"job_proxy_image,omitempty"`
+	JobProxyBindMounts   []BindMount    `yson:"job_proxy_bind_mounts,omitempty"`
+	UseJobProxyFromImage *bool          `yson:"use_job_proxy_from_image,omitempty"`
 }
 
 type JobEnvironment struct {
@@ -401,6 +416,20 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 				RetryBackoffTime: yson.Duration(time.Second),
 				RetryAttempts:    *timeout,
 				RetryTimeout:     yson.Duration(time.Duration(*timeout) * time.Second),
+			}
+		}
+
+		if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeImageCache); location != nil {
+			jobEnv.CriImageCache = &CriImageCache{
+				Capacity:            findQuotaForLocation(*location, spec.InstanceSpec),
+				ImageSizeEstimation: envSpec.CRI.ImageSizeEstimation,
+				AlwaysPullLatest:    envSpec.CRI.AlwaysPullLatestImage,
+			}
+			if ratio := envSpec.CRI.ImageCompressionRatioEstimation; ratio != nil {
+				jobEnv.CriImageCache.ImageCompressionRatioEstimation = ptr.Float32(float32(*ratio))
+			}
+			if period := envSpec.CRI.ImagePullPeriodSeconds; period != nil {
+				jobEnv.CriImageCache.PullPeriod = yson.Duration(time.Duration(*period) * time.Second)
 			}
 		}
 

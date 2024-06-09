@@ -109,6 +109,10 @@ _Appears in:_
 | `criNamespace` _string_ | CRI namespace for jobs containers. |  |  |
 | `baseCgroup` _string_ | Base cgroup for jobs. |  |  |
 | `registryConfigPath` _string_ | See: https://github.com/containerd/containerd/blob/main/docs/hosts.md |  |  |
+| `imageSizeEstimation` _integer_ | Initial estimation for space required for pulling image into cache. |  |  |
+| `imageCompressionRatioEstimation` _integer_ | Multiplier for image size to account space used by unpacked images. |  |  |
+| `alwaysPullLatestImage` _boolean_ | Always pull "latest" images. |  |  |
+| `imagePullPeriodSeconds` _integer_ | Pull images periodically. |  |  |
 
 
 #### CategoriesFilter
