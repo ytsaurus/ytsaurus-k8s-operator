@@ -39,6 +39,16 @@ containerdConfigPatches:
 # https://kind.sigs.k8s.io/docs/user/configuration/#nodes
 nodes:
 - role: control-plane
+  # https://kind.sigs.k8s.io/docs/user/configuration#kubeadm-config-patches
+  # https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#etcd-flags
+  # https://etcd.io/docs/v3.5/op-guide/configuration/#command-line-flags
+  kubeadmConfigPatches:
+  - |
+    kind: ClusterConfiguration
+    etcd:
+      local:
+        extraArgs:
+          unsafe-no-fsync: "true"
   extraMounts:
   - &registry-config
     hostPath: "config/registry"
