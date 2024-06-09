@@ -127,6 +127,9 @@
                     namespace=yt;
                     "base_cgroup"="/yt";
                 };
+                "cri_image_cache"={
+                    capacity=4294967296;
+                };
                 "use_job_proxy_from_image"=%false;
             };
             "do_not_set_user_id"=%true;

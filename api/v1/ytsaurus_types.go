@@ -375,6 +375,18 @@ type CRIJobEnvironmentSpec struct {
 	// See: https://github.com/containerd/containerd/blob/main/docs/hosts.md
 	//+optional
 	RegistryConfigPath *string `json:"registryConfigPath,omitempty"`
+	// Initial estimation for space required for pulling image into cache.
+	//+optional
+	ImageSizeEstimation *int64 `json:"imageSizeEstimation,omitempty"`
+	// Multiplier for image size to account space used by unpacked images.
+	//+optional
+	ImageCompressionRatioEstimation *int32 `json:"imageCompressionRatioEstimation,omitempty"`
+	// Always pull "latest" images.
+	//+optional
+	AlwaysPullLatestImage *bool `json:"alwaysPullLatestImage,omitempty"`
+	// Pull images periodically.
+	//+optional
+	ImagePullPeriodSeconds *int32 `json:"imagePullPeriodSeconds,omitempty"`
 }
 
 type JobEnvironmentSpec struct {

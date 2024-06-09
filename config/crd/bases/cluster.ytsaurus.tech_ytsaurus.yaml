@@ -7812,6 +7812,9 @@ spec:
                           description: CRI service configuration for running jobs
                             in sidecar container.
                           properties:
+                            alwaysPullLatestImage:
+                              description: Always pull "latest" images.
+                              type: boolean
                             apiRetryTimeoutSeconds:
                               description: Timeout for retrying CRI API calls.
                               format: int32
@@ -7828,6 +7831,20 @@ spec:
                               items:
                                 type: string
                               type: array
+                            imageCompressionRatioEstimation:
+                              description: Multiplier for image size to account space
+                                used by unpacked images.
+                              format: int32
+                              type: integer
+                            imagePullPeriodSeconds:
+                              description: Pull images periodically.
+                              format: int32
+                              type: integer
+                            imageSizeEstimation:
+                              description: Initial estimation for space required for
+                                pulling image into cache.
+                              format: int64
+                              type: integer
                             registryConfigPath:
                               description: 'See: https://github.com/containerd/containerd/blob/main/docs/hosts.md'
                               type: string
