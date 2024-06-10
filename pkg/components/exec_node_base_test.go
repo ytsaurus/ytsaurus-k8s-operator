@@ -42,11 +42,6 @@ var (
 		},
 	}
 
-	testLocationChunkStore = ytv1.LocationSpec{
-		LocationType: "ChunkStore",
-		Path:         "/yt/hdd1/chunk-store",
-		Medium:       "nvme",
-	}
 	testLocationChunkCache = ytv1.LocationSpec{
 		LocationType: "ChunkCache",
 		Path:         "/yt/hdd1/chunk-cache",
@@ -94,7 +89,7 @@ func getMasterConnectionSpec() ytv1.MasterConnectionSpec {
 	}
 }
 
-func GetYtsaurus() *ytv1.Ytsaurus {
+func getYtsaurus() *ytv1.Ytsaurus {
 	return &ytv1.Ytsaurus{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: testNamespace,
@@ -251,14 +246,14 @@ func withCri(spec ytv1.ExecNodesSpec, jobResources *corev1.ResourceRequirements,
 }
 
 func TestDoBuildExecNodeBase(t *testing.T) {
-	yt := GetYtsaurus()
+	yt := getYtsaurus()
 	ytsaurus := apiProxy.NewYtsaurus(yt, nil, nil, nil)
 
 	l := labeller.Labeller{
 		ObjectMeta:     ptr.T(ytsaurus.GetResource().ObjectMeta),
 		APIProxy:       ytsaurus.APIProxy(),
-		ComponentLabel: "end-test",
-		ComponentName:  "ExecNode",
+		ComponentLabel: consts.YTComponentLabelExecNode,
+		ComponentName:  consts.YTComponentLabelExecNode,
 	}
 
 	g := ytconfig.NewLocalNodeGenerator(yt, testClusterDomain)
@@ -295,8 +290,8 @@ func TestDoBuildExecNodeBase(t *testing.T) {
 				ptr.T(execNodeSpec.InstanceSpec),
 				"/usr/bin/ytserver-node",
 				"ytserver-exec-node.yson",
-				"end-test",
-				"end-test",
+				consts.YTComponentLabelExecNode,
+				consts.YTComponentLabelExecNode,
 				func() ([]byte, error) {
 					return g.GetExecNodeConfig(execNodeSpec)
 				},
