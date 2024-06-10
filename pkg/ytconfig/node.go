@@ -224,8 +224,12 @@ func findVolume(volumeName string, spec ytv1.InstanceSpec) *corev1.Volume {
 	return nil
 }
 
-func findQuotaForPath(locationPath string, spec ytv1.InstanceSpec) *int64 {
-	mount := findVolumeMountForPath(locationPath, spec)
+func findQuotaForLocation(location ytv1.LocationSpec, spec ytv1.InstanceSpec) *int64 {
+	if quota := location.Quota; quota != nil {
+		return ptr.Int64(quota.Value())
+	}
+
+	mount := findVolumeMountForPath(location.Path, spec)
 	if mount == nil {
 		return nil
 	}
@@ -233,17 +237,11 @@ func findQuotaForPath(locationPath string, spec ytv1.InstanceSpec) *int64 {
 	if claim := findVolumeClaimTemplate(mount.Name, spec); claim != nil {
 		storage := claim.Spec.Resources.Requests.Storage()
 		if storage != nil {
-			value := storage.Value()
-			return &value
-		} else {
-			return nil
+			return ptr.Int64(storage.Value())
 		}
-	}
-
-	if volume := findVolume(mount.Name, spec); volume != nil {
+	} else if volume := findVolume(mount.Name, spec); volume != nil {
 		if volume.EmptyDir != nil && volume.EmptyDir.SizeLimit != nil {
-			value := volume.EmptyDir.SizeLimit.Value()
-			return &value
+			return ptr.Int64(volume.EmptyDir.SizeLimit.Value())
 		}
 	}
 
@@ -302,7 +300,7 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 	c.ResourceLimits = getDataNodeResourceLimits(spec)
 
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkStore) {
-		quota := findQuotaForPath(location.Path, spec.InstanceSpec)
+		quota := findQuotaForLocation(location, spec.InstanceSpec)
 		storeLocation := StoreLocation{
 			MediumName: location.Medium,
 			Path:       location.Path,
@@ -475,7 +473,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 			MediumName: location.Medium,
 		}
 
-		if quota := findQuotaForPath(location.Path, spec.InstanceSpec); quota != nil {
+		if quota := findQuotaForLocation(location, spec.InstanceSpec); quota != nil {
 			slotLocation.DiskQuota = quota
 
 			// These are just simple heuristics.

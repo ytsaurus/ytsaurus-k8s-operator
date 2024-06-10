@@ -60,13 +60,17 @@ var (
 		LocationType: "ChunkCache",
 		Path:         "/yt/hdd1/chunk-cache",
 	}
-	testLocationSlots = ytv1.LocationSpec{
+	testLocationSlotsQuota = resource.MustParse("5Gi")
+	testLocationSlots      = ytv1.LocationSpec{
 		LocationType: "Slots",
 		Path:         "/yt/hdd2/slots",
+		Quota:        &testLocationSlotsQuota,
 	}
-	testLocationImageCache = ytv1.LocationSpec{
+	testLocationImageCacheQuota = resource.MustParse("4Gi")
+	testLocationImageCache      = ytv1.LocationSpec{
 		LocationType: "ImageCache",
 		Path:         "/yt/hdd1/images",
+		Quota:        &testLocationImageCacheQuota,
 	}
 	testVolumeMounts = []corev1.VolumeMount{
 		{
@@ -82,6 +86,11 @@ var (
 			Spec: corev1.PersistentVolumeClaimSpec{
 				AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 				StorageClassName: &testStorageClassname,
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceStorage: resource.MustParse("10Gi"),
+					},
+				},
 			},
 		},
 	}

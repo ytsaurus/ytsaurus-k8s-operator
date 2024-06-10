@@ -789,6 +789,14 @@ spec:
                         path:
                           minLength: 1
                           type: string
+                        quota:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Disk space quota, default is size of related
+                            volume.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                       type: object
                     type: array
                   loggers:
@@ -3100,6 +3108,14 @@ spec:
                           path:
                             minLength: 1
                             type: string
+                          quota:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Disk space quota, default is size of related
+                              volume.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                         type: object
                       type: array
                     loggers:
@@ -5435,6 +5451,14 @@ spec:
                         path:
                           minLength: 1
                           type: string
+                        quota:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Disk space quota, default is size of related
+                            volume.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                       type: object
                     type: array
                   loggers:
@@ -7909,6 +7933,14 @@ spec:
                           path:
                             minLength: 1
                             type: string
+                          quota:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Disk space quota, default is size of related
+                              volume.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                         type: object
                       type: array
                     loggers:
@@ -10268,6 +10300,14 @@ spec:
                           path:
                             minLength: 1
                             type: string
+                          quota:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Disk space quota, default is size of related
+                              volume.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                         type: object
                       type: array
                     loggers:
@@ -12643,6 +12683,14 @@ spec:
                         path:
                           minLength: 1
                           type: string
+                        quota:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Disk space quota, default is size of related
+                            volume.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                       type: object
                     type: array
                   loggers:
@@ -15005,6 +15053,14 @@ spec:
                         path:
                           minLength: 1
                           type: string
+                        quota:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Disk space quota, default is size of related
+                            volume.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                       type: object
                     type: array
                   loggers:
@@ -17320,6 +17376,14 @@ spec:
                         path:
                           minLength: 1
                           type: string
+                        quota:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Disk space quota, default is size of related
+                            volume.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                       type: object
                     type: array
                   loggers:
@@ -19625,6 +19689,14 @@ spec:
                         path:
                           minLength: 1
                           type: string
+                        quota:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Disk space quota, default is size of related
+                            volume.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                       type: object
                     type: array
                   loggers:
@@ -21934,6 +22006,14 @@ spec:
                           path:
                             minLength: 1
                             type: string
+                          quota:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Disk space quota, default is size of related
+                              volume.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                         type: object
                       type: array
                     loggers:
@@ -24291,6 +24371,14 @@ spec:
                         path:
                           minLength: 1
                           type: string
+                        quota:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Disk space quota, default is size of related
+                            volume.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                       type: object
                     type: array
                   loggers:
@@ -26608,6 +26696,14 @@ spec:
                           path:
                             minLength: 1
                             type: string
+                          quota:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Disk space quota, default is size of related
+                              volume.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                         type: object
                       type: array
                     loggers:
@@ -28998,6 +29094,14 @@ spec:
                           path:
                             minLength: 1
                             type: string
+                          quota:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Disk space quota, default is size of related
+                              volume.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                         type: object
                       type: array
                     loggers:
@@ -31336,6 +31440,14 @@ spec:
                           path:
                             minLength: 1
                             type: string
+                          quota:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Disk space quota, default is size of related
+                              volume.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                         type: object
                       type: array
                     loggers:
@@ -33877,6 +33989,14 @@ spec:
                         path:
                           minLength: 1
                           type: string
+                        quota:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Disk space quota, default is size of related
+                            volume.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                       type: object
                     type: array
                   loggers:

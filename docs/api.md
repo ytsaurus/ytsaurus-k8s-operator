@@ -655,6 +655,7 @@ _Appears in:_
 | `locationType` _[LocationType](#locationtype)_ |  |  |  |
 | `path` _string_ |  |  | MinLength: 1 <br /> |
 | `medium` _string_ |  | default |  |
+| `quota` _[Quantity](#quantity)_ | Disk space quota, default is size of related volume. |  |  |
 
 
 #### LocationType

@@ -119,7 +119,8 @@
                 {
                     path="/yt/hdd2/slots";
                     "medium_name"="";
-                    "disk_usage_watermark"=0;
+                    "disk_quota"=5368709120;
+                    "disk_usage_watermark"=536870912;
                     "enable_disk_quota"=%false;
                 };
             ];
