@@ -93,7 +93,7 @@ spec:
             rotationPeriodMilliseconds: 900000
           categoriesFilter:
             type: exclude
-            values: [ "Bus" ]
+            values: [ "Bus", "Concurrency" ]
         - name: info
           minLogLevel: info
           writerType: file
