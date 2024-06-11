@@ -69,7 +69,7 @@ spec:
           maxSegmentCountToKeep: 1000
         categoriesFilter:
           type: exclude
-          values: ["Bus"]
+          values: [ "Bus", "Concurrency" ]
       - name: info
         minLogLevel: info
         writerType: file
