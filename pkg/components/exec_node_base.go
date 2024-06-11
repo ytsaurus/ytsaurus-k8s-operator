@@ -146,7 +146,7 @@ func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSp
 	}
 
 	if n.spec.JobResources != nil {
-		jobsContainer.Resources = *n.spec.JobResources
+		jobsContainer.Resources = *n.spec.JobResources.DeepCopy()
 	} else {
 		// Without dedicated job resources enforce same limits as for node.
 		jobsContainer.Resources.Limits = n.spec.Resources.Limits

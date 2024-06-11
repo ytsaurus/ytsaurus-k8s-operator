@@ -90,8 +90,8 @@
         exec;
     ];
     "resource_limits"={
-        "total_memory"=10737418240;
-        "total_cpu"=40.000000;
+        "total_memory"=111669149696;
+        "total_cpu"=119.000000;
         "node_dedicated_cpu"=20.000000;
     };
     tags=[
@@ -101,7 +101,7 @@
     "skynet_http_port"=11029;
     "job_resource_manager"={
         "resource_limits"={
-            "user_slots"=42;
+            "user_slots"=495;
         };
     };
     "exec_node"={
@@ -115,21 +115,10 @@
                 };
             ];
             "job_environment"={
-                type=cri;
+                type=porto;
                 "start_uid"=19500;
-                "cri_executor"={
-                    "retry_backoff_time"=1000;
-                    "retry_attempts"=120;
-                    "retry_timeout"=120000;
-                    "runtime_endpoint"="unix:///yt/hdd1/images/containerd.sock";
-                    "image_endpoint"="unix:///yt/hdd1/images/containerd.sock";
-                    namespace=yt;
-                    "base_cgroup"="/yt";
-                };
-                "use_job_proxy_from_image"=%false;
             };
-            "do_not_set_user_id"=%true;
-            "enable_tmpfs"=%false;
+            "enable_tmpfs"=%true;
         };
         "gpu_manager"={
             "gpu_info_source"={
@@ -138,7 +127,7 @@
         };
         "job_controller"={
             "resource_limits"={
-                "user_slots"=42;
+                "user_slots"=495;
             };
             "gpu_manager"={
                 "gpu_info_source"={
@@ -187,7 +176,6 @@
                 ];
                 "flush_period"=3000;
             };
-            "forward_all_environment_variables"=%true;
         };
         "job_proxy_authentication_manager"={
             "cypress_cookie_manager"={
@@ -229,9 +217,6 @@
             ];
             "flush_period"=3000;
         };
-        "do_not_set_user_id"=%true;
-        "forward_all_environment_variables"=%true;
-        "use_artifact_binds"=%true;
     };
     "data_node"={
         "store_locations"=[

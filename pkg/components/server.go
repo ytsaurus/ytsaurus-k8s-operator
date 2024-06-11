@@ -301,7 +301,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Command:      command,
 				VolumeMounts: volumeMounts,
 				Ports:        s.componentContainerPorts,
-				Resources:    s.instanceSpec.Resources,
+				Resources:    *s.instanceSpec.Resources.DeepCopy(),
 				ReadinessProbe: &corev1.Probe{
 					ProbeHandler: corev1.ProbeHandler{
 						HTTPGet: &corev1.HTTPGetAction{
