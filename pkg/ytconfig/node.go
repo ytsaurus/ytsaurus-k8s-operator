@@ -236,7 +236,7 @@ func findQuotaForLocation(location ytv1.LocationSpec, spec ytv1.InstanceSpec) *i
 
 	if claim := findVolumeClaimTemplate(mount.Name, spec); claim != nil {
 		storage := claim.Spec.Resources.Requests.Storage()
-		if storage != nil {
+		if storage != nil && !storage.IsZero() {
 			return ptr.Int64(storage.Value())
 		}
 	} else if volume := findVolume(mount.Name, spec); volume != nil {
