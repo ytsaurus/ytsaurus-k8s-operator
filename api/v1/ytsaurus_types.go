@@ -19,6 +19,8 @@ package v1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -86,6 +88,10 @@ type LocationSpec struct {
 
 	//+kubebuilder:default:=default
 	Medium string `json:"medium,omitempty"`
+
+	// Disk space quota, default is size of related volume.
+	//+optional
+	Quota *resource.Quantity `json:"quota,omitempty"`
 }
 
 // LogLevel string describes possible Ytsaurus logging level.
