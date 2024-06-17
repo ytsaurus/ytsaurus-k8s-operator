@@ -73,6 +73,10 @@ func (n *baseExecNode) doBuildBase() error {
 	}
 	setContainerPrivileged(&podSpec.Containers[0])
 
+	if envSpec := n.spec.JobEnvironment; envSpec != nil && envSpec.CRI != nil {
+		n.addEnvironmentForCRITools(&podSpec.Containers[0])
+	}
+
 	for i := range podSpec.InitContainers {
 		setContainerPrivileged(&podSpec.InitContainers[i])
 	}
@@ -107,6 +111,15 @@ func (n *baseExecNode) doBuildBase() error {
 	return nil
 }
 
+func (n *baseExecNode) addEnvironmentForCRITools(container *corev1.Container) {
+	socketPath := ytconfig.GetContainerdSocketPath(n.spec)
+	container.Env = append(container.Env, []corev1.EnvVar{
+		{Name: "CONTAINERD_ADDRESS", Value: socketPath},                     // ctr
+		{Name: "CONTAINERD_NAMESPACE", Value: "k8s.io"},                     // ctr
+		{Name: "CONTAINER_RUNTIME_ENDPOINT", Value: "unix://" + socketPath}, // crictl
+	}...)
+}
+
 func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSpec *corev1.PodSpec) {
 	configPath := path.Join(consts.ContainerdConfigMountPoint, consts.ContainerdConfigFileName)
 
@@ -127,6 +140,8 @@ func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSp
 			Privileged: ptr.Bool(true),
 		},
 	}
+
+	n.addEnvironmentForCRITools(&jobsContainer)
 
 	jobsContainer.VolumeMounts = append(jobsContainer.VolumeMounts,
 		corev1.VolumeMount{
