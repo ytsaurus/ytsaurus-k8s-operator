@@ -337,7 +337,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		NodeSelector: s.instanceSpec.NodeSelector,
 		Tolerations:  s.instanceSpec.Tolerations,
 	}
-	if s.commonSpec.HostNetwork {
+	if ptr.BoolDeref(s.instanceSpec.HostNetwork, s.commonSpec.HostNetwork) {
 		statefulSet.Spec.Template.Spec.HostNetwork = true
 		statefulSet.Spec.Template.Spec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
 	}

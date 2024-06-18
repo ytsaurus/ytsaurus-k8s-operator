@@ -770,6 +770,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  hostNetwork:
+                    description: Use the host's network namespace, this overrides global
+                      option.
+                    type: boolean
                   image:
                     description: Overrides coreImage for component.
                     type: string
@@ -3089,6 +3093,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    hostNetwork:
+                      description: Use the host's network namespace, this overrides
+                        global option.
+                      type: boolean
                     image:
                       description: Overrides coreImage for component.
                       type: string
@@ -5432,6 +5440,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  hostNetwork:
+                    description: Use the host's network namespace, this overrides global
+                      option.
+                    type: boolean
                   image:
                     description: Overrides coreImage for component.
                     type: string
@@ -7756,6 +7768,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    hostNetwork:
+                      description: Use the host's network namespace, this overrides
+                        global option.
+                      type: boolean
                     image:
                       description: Overrides coreImage for component.
                       type: string
@@ -9684,6 +9700,7 @@ spec:
                 type: object
               hostNetwork:
                 default: false
+                description: Use the host's network namespace for all components.
                 type: boolean
               httpProxies:
                 items:
@@ -10292,6 +10309,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    hostNetwork:
+                      description: Use the host's network namespace, this overrides
+                        global option.
+                      type: boolean
                     httpNodePort:
                       format: int32
                       type: integer
@@ -12681,6 +12702,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  hostNetwork:
+                    description: Use the host's network namespace, this overrides global
+                      option.
+                    type: boolean
                   image:
                     description: Overrides coreImage for component.
                     type: string
@@ -15051,6 +15076,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  hostNetwork:
+                    description: Use the host's network namespace, this overrides global
+                      option.
+                    type: boolean
                   image:
                     description: Overrides coreImage for component.
                     type: string
@@ -17374,6 +17403,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  hostNetwork:
+                    description: Use the host's network namespace, this overrides global
+                      option.
+                    type: boolean
                   image:
                     description: Overrides coreImage for component.
                     type: string
@@ -19687,6 +19720,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  hostNetwork:
+                    description: Use the host's network namespace, this overrides global
+                      option.
+                    type: boolean
                   image:
                     description: Overrides coreImage for component.
                     type: string
@@ -22004,6 +22041,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    hostNetwork:
+                      description: Use the host's network namespace, this overrides
+                        global option.
+                      type: boolean
                     image:
                       description: Overrides coreImage for component.
                       type: string
@@ -24369,6 +24410,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  hostNetwork:
+                    description: Use the host's network namespace, this overrides global
+                      option.
+                    type: boolean
                   image:
                     description: Overrides coreImage for component.
                     type: string
@@ -26694,6 +26739,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    hostNetwork:
+                      description: Use the host's network namespace, this overrides
+                        global option.
+                      type: boolean
                     image:
                       description: Overrides coreImage for component.
                       type: string
@@ -29092,6 +29141,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    hostNetwork:
+                      description: Use the host's network namespace, this overrides
+                        global option.
+                      type: boolean
                     image:
                       description: Overrides coreImage for component.
                       type: string
@@ -31438,6 +31491,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    hostNetwork:
+                      description: Use the host's network namespace, this overrides
+                        global option.
+                      type: boolean
                     image:
                       description: Overrides coreImage for component.
                       type: string
@@ -33987,6 +34044,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  hostNetwork:
+                    description: Use the host's network namespace, this overrides global
+                      option.
+                    type: boolean
                   image:
                     description: Overrides coreImage for component.
                     type: string

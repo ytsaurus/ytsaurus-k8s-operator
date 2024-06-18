@@ -250,6 +250,9 @@ type InstanceSpec struct {
 	RuntimeClassName *string `json:"runtimeClassName,omitempty"`
 	// Deprecated: use Affinity.PodAntiAffinity instead.
 	EnableAntiAffinity *bool `json:"enableAntiAffinity,omitempty"`
+	// Use the host's network namespace, this overrides global option.
+	//+optional
+	HostNetwork *bool `json:"hostNetwork,omitempty"`
 	//+optional
 	MonitoringPort    *int32                 `json:"monitoringPort,omitempty"`
 	Loggers           []TextLoggerSpec       `json:"loggers,omitempty"`
@@ -541,12 +544,14 @@ type CommonSpec struct {
 	//+kubebuilder:default:=true
 	//+optional
 	UseShortNames bool `json:"useShortNames"`
-	//+kubebuilder:default:=false
-	//+optional
-	UsePorto bool `json:"usePorto"`
+	// Use the host's network namespace for all components.
 	//+kubebuilder:default:=false
 	//+optional
 	HostNetwork bool `json:"hostNetwork"`
+
+	//+kubebuilder:default:=false
+	//+optional
+	UsePorto bool `json:"usePorto"`
 
 	ExtraPodAnnotations map[string]string `json:"extraPodAnnotations,omitempty"`
 

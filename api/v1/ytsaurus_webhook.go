@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	ptr "k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -127,7 +128,7 @@ func (r *Ytsaurus) validateHostAddresses(masterSpec MastersSpec, fieldPath *fiel
 	var allErrors field.ErrorList
 
 	hostAddressesFieldPath := fieldPath.Child("hostAddresses")
-	if !r.Spec.HostNetwork && len(masterSpec.HostAddresses) != 0 {
+	if !ptr.BoolDeref(masterSpec.HostNetwork, r.Spec.HostNetwork) && len(masterSpec.HostAddresses) != 0 {
 		allErrors = append(
 			allErrors,
 			field.Required(
