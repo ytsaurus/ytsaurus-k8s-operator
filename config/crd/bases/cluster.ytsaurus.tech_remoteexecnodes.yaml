@@ -1000,6 +1000,14 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              podAnnotations:
+                additionalProperties:
+                  type: string
+                type: object
+              podLabels:
+                additionalProperties:
+                  type: string
+                type: object
               privileged:
                 default: true
                 type: boolean
