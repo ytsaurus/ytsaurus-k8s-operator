@@ -241,7 +241,7 @@ func validateSidecars(sidecars []string, path *field.Path) field.ErrorList {
 	names := make(map[string]bool)
 	for i, sidecarSpec := range sidecars {
 		sidecar := corev1.Container{}
-		if err := yaml.Unmarshal([]byte(sidecarSpec), &sidecar); err != nil {
+		if err := yaml.UnmarshalStrict([]byte(sidecarSpec), &sidecar); err != nil {
 			allErrors = append(allErrors, field.Invalid(path.Index(i), sidecarSpec, err.Error()))
 		}
 		if _, exists := names[sidecar.Name]; exists {
@@ -275,6 +275,9 @@ func (r *Ytsaurus) validateExecNodes(*Ytsaurus) field.ErrorList {
 			allErrors = append(allErrors, field.NotFound(path.Child("locations"), LocationTypeSlots))
 		}
 
+		if en.InitContainers != nil {
+			allErrors = append(allErrors, validateSidecars(en.InitContainers, path.Child("initContainers"))...)
+		}
 		if en.Sidecars != nil {
 			allErrors = append(allErrors, validateSidecars(en.Sidecars, path.Child("sidecars"))...)
 		}
