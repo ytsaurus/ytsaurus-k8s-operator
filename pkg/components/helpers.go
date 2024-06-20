@@ -209,10 +209,22 @@ func AddAffinity(statefulSet *appsv1.StatefulSet,
 func AddSidecarsToPodSpec(sidecar []string, podSpec *corev1.PodSpec) error {
 	for _, sidecarSpec := range sidecar {
 		sidecar := corev1.Container{}
-		if err := yaml.Unmarshal([]byte(sidecarSpec), &sidecar); err != nil {
+		if err := yaml.UnmarshalStrict([]byte(sidecarSpec), &sidecar); err != nil {
 			return err
 		}
 		podSpec.Containers = append(podSpec.Containers, sidecar)
 	}
+	return nil
+}
+
+func AddInitContainersToPodSpec(initContainers []string, podSpec *corev1.PodSpec) error {
+	containers := make([]corev1.Container, len(initContainers), len(initContainers)+len(podSpec.InitContainers))
+	for i, spec := range initContainers {
+		if err := yaml.UnmarshalStrict([]byte(spec), &containers[i]); err != nil {
+			return err
+		}
+	}
+	// Insert new containers into head
+	podSpec.InitContainers = append(containers, podSpec.InitContainers...)
 	return nil
 }

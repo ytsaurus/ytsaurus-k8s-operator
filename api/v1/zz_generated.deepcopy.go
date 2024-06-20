@@ -490,6 +490,11 @@ func (in *ExecNodesSpec) DeepCopyInto(out *ExecNodesSpec) {
 	*out = *in
 	in.InstanceSpec.DeepCopyInto(&out.InstanceSpec)
 	in.ClusterNodesSpec.DeepCopyInto(&out.ClusterNodesSpec)
+	if in.InitContainers != nil {
+		in, out := &in.InitContainers, &out.InitContainers
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.Sidecars != nil {
 		in, out := &in.Sidecars, &out.Sidecars
 		*out = make([]string, len(*in))

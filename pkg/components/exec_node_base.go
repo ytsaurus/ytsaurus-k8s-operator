@@ -44,6 +44,39 @@ func (n *baseExecNode) doBuildBase() error {
 	statefulSet := n.server.buildStatefulSet()
 	podSpec := &statefulSet.Spec.Template.Spec
 
+	if len(podSpec.Containers) != 1 {
+		log.Panicf("Number of exec node containers is expected to be 1, actual %v", len(podSpec.Containers))
+	}
+
+	if err := AddInitContainersToPodSpec(n.spec.InitContainers, podSpec); err != nil {
+		return err
+	}
+
+	if err := AddSidecarsToPodSpec(n.spec.Sidecars, podSpec); err != nil {
+		return err
+	}
+
+	setContainerPrivileged := func(ct *corev1.Container) {
+		if ct.SecurityContext == nil {
+			ct.SecurityContext = &corev1.SecurityContext{}
+		}
+		if ct.SecurityContext.Privileged == nil {
+			ct.SecurityContext.Privileged = ptr.Bool(n.spec.Privileged)
+		}
+	}
+
+	for i := range podSpec.InitContainers {
+		setContainerPrivileged(&podSpec.InitContainers[i])
+	}
+
+	for i := range podSpec.Containers {
+		setContainerPrivileged(&podSpec.Containers[i])
+
+		if envSpec := n.spec.JobEnvironment; envSpec != nil && envSpec.CRI != nil {
+			n.addEnvironmentForCRITools(&podSpec.Containers[i])
+		}
+	}
+
 	// Pour job resources into node container if jobs are not isolated.
 	if n.spec.JobResources != nil && !n.IsJobEnvironmentIsolated() {
 		addResourceList := func(list, newList corev1.ResourceList) {
@@ -61,26 +94,6 @@ func (n *baseExecNode) doBuildBase() error {
 		addResourceList(podSpec.Containers[0].Resources.Limits, n.spec.JobResources.Limits)
 	}
 
-	setContainerPrivileged := func(ct *corev1.Container) {
-		if ct.SecurityContext == nil {
-			ct.SecurityContext = &corev1.SecurityContext{}
-		}
-		ct.SecurityContext.Privileged = ptr.Bool(n.spec.Privileged)
-	}
-
-	if len(podSpec.Containers) != 1 {
-		log.Panicf("Number of exec node containers is expected to be 1, actual %v", len(podSpec.Containers))
-	}
-	setContainerPrivileged(&podSpec.Containers[0])
-
-	if envSpec := n.spec.JobEnvironment; envSpec != nil && envSpec.CRI != nil {
-		n.addEnvironmentForCRITools(&podSpec.Containers[0])
-	}
-
-	for i := range podSpec.InitContainers {
-		setContainerPrivileged(&podSpec.InitContainers[i])
-	}
-
 	if n.IsJobEnvironmentIsolated() {
 		// Add sidecar container for running jobs.
 		if envSpec := n.spec.JobEnvironment; envSpec != nil && envSpec.CRI != nil {
@@ -95,10 +108,6 @@ func (n *baseExecNode) doBuildBase() error {
 				MountPath: consts.ContainerdConfigMountPoint,
 				ReadOnly:  true,
 			})
-	}
-
-	if err := AddSidecarsToPodSpec(n.spec.Sidecars, podSpec); err != nil {
-		return err
 	}
 
 	if n.sidecarConfig != nil {

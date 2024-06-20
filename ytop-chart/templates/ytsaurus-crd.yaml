@@ -7799,6 +7799,11 @@ spec:
                     image:
                       description: Overrides coreImage for component.
                       type: string
+                    initContainers:
+                      description: List of init containers as yaml of core/v1 Container.
+                      items:
+                        type: string
+                      type: array
                     instanceCount:
                       format: int32
                       type: integer
@@ -8187,7 +8192,7 @@ spec:
                     runtimeClassName:
                       type: string
                     sidecars:
-                      description: List of sidecar containers as yaml of corev1.Container.
+                      description: List of sidecar containers as yaml of core/v1 Container.
                       items:
                         type: string
                       type: array
@@ -15337,6 +15342,7 @@ spec:
                   runtimeClassName:
                     type: string
                   sidecars:
+                    description: List of sidecar containers as yaml of core/v1 Container.
                     items:
                       type: string
                     type: array
@@ -27041,6 +27047,7 @@ spec:
                     runtimeClassName:
                       type: string
                     sidecars:
+                      description: List of sidecar containers as yaml of core/v1 Container.
                       items:
                         type: string
                       type: array

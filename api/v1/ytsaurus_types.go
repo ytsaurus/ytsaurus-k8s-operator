@@ -281,6 +281,7 @@ type MastersSpec struct {
 	MaxSnapshotCountToKeep  *int `json:"maxSnapshotCountToKeep,omitempty"`
 	MaxChangelogCountToKeep *int `json:"maxChangelogCountToKeep,omitempty"`
 
+	// List of sidecar containers as yaml of core/v1 Container.
 	Sidecars []string `json:"sidecars,omitempty"`
 }
 
@@ -420,7 +421,9 @@ type ExecNodesSpec struct {
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name,omitempty"`
-	// List of sidecar containers as yaml of corev1.Container.
+	// List of init containers as yaml of core/v1 Container.
+	InitContainers []string `json:"initContainers,omitempty"`
+	// List of sidecar containers as yaml of core/v1 Container.
 	Sidecars []string `json:"sidecars,omitempty"`
 	//+kubebuilder:default:=true
 	//+optional

@@ -470,7 +470,8 @@ _Appears in:_
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
 | `name` _string_ |  | default | MinLength: 1 <br /> |
-| `sidecars` _string array_ | List of sidecar containers as yaml of corev1.Container. |  |  |
+| `initContainers` _string array_ | List of init containers as yaml of core/v1 Container. |  |  |
+| `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
 | `privileged` _boolean_ |  | true |  |
 | `jobProxyLoggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `jobResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for running jobs. |  |  |
@@ -889,7 +890,7 @@ _Appears in:_
 | `hostAddressLabel` _string_ |  |  |  |
 | `maxSnapshotCountToKeep` _integer_ |  |  |  |
 | `maxChangelogCountToKeep` _integer_ |  |  |  |
-| `sidecars` _string array_ |  |  |  |
+| `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
 
 
 #### OauthServiceSpec
@@ -1151,7 +1152,8 @@ _Appears in:_
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
 | `name` _string_ |  | default | MinLength: 1 <br /> |
-| `sidecars` _string array_ | List of sidecar containers as yaml of corev1.Container. |  |  |
+| `initContainers` _string array_ | List of init containers as yaml of core/v1 Container. |  |  |
+| `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
 | `privileged` _boolean_ |  | true |  |
 | `jobProxyLoggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `jobResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for running jobs. |  |  |
