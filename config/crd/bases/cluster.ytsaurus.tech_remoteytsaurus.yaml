@@ -647,6 +647,10 @@ spec:
                 items:
                   type: string
                 type: array
+              hostNetwork:
+                description: Use the host's network namespace, this overrides global
+                  option.
+                type: boolean
               image:
                 description: Overrides coreImage for component.
                 type: string

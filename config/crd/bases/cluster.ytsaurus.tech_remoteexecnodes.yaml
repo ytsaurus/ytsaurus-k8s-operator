@@ -672,6 +672,7 @@ spec:
                 type: object
               hostNetwork:
                 default: false
+                description: Use the host's network namespace for all components.
                 type: boolean
               image:
                 description: Overrides coreImage for component.

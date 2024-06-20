@@ -648,6 +648,11 @@ func (in *InstanceSpec) DeepCopyInto(out *InstanceSpec) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.HostNetwork != nil {
+		in, out := &in.HostNetwork, &out.HostNetwork
+		*out = new(bool)
+		**out = **in
+	}
 	if in.MonitoringPort != nil {
 		in, out := &in.MonitoringPort, &out.MonitoringPort
 		*out = new(int32)
