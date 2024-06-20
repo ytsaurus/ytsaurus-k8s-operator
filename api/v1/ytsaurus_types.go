@@ -257,6 +257,8 @@ type InstanceSpec struct {
 	Affinity          *corev1.Affinity       `json:"affinity,omitempty"`
 	NodeSelector      map[string]string      `json:"nodeSelector,omitempty"`
 	Tolerations       []corev1.Toleration    `json:"tolerations,omitempty"`
+	PodLabels         map[string]string      `json:"podLabels,omitempty"`
+	PodAnnotations    map[string]string      `json:"podAnnotations,omitempty"`
 	// Component config for native RPC bus transport.
 	//+optional
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`

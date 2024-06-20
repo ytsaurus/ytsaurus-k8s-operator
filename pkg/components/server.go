@@ -10,6 +10,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -268,6 +269,15 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	volumeMounts := createVolumeMounts(s.instanceSpec.VolumeMounts)
 
 	statefulSet := s.statefulSet.Build()
+
+	for key, value := range s.instanceSpec.PodLabels {
+		metav1.SetMetaDataLabel(&statefulSet.Spec.Template.ObjectMeta, key, value)
+	}
+
+	for key, value := range s.instanceSpec.PodAnnotations {
+		metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, key, value)
+	}
+
 	statefulSet.Spec.Replicas = &s.instanceSpec.InstanceCount
 	statefulSet.Spec.ServiceName = s.headlessService.Name()
 	statefulSet.Spec.VolumeClaimTemplates = createVolumeClaims(s.instanceSpec.VolumeClaimTemplates)

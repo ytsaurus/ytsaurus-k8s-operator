@@ -895,6 +895,14 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                  podAnnotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
                   readinessProbeParams:
                     properties:
                       failureThreshold:
@@ -3237,6 +3245,14 @@ spec:
                           x-kubernetes-map-type: atomic
                       type: object
                     nodeSelector:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    podAnnotations:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    podLabels:
                       additionalProperties:
                         type: string
                       type: object
@@ -5586,6 +5602,14 @@ spec:
                         x-kubernetes-map-type: atomic
                     type: object
                   nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podAnnotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podLabels:
                     additionalProperties:
                       type: string
                     type: object
@@ -8114,6 +8138,14 @@ spec:
                       additionalProperties:
                         type: string
                       type: object
+                    podAnnotations:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    podLabels:
+                      additionalProperties:
+                        type: string
+                      type: object
                     privileged:
                       default: true
                       type: boolean
@@ -10487,6 +10519,14 @@ spec:
                           x-kubernetes-map-type: atomic
                       type: object
                     nodeSelector:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    podAnnotations:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    podLabels:
                       additionalProperties:
                         type: string
                       type: object
@@ -12883,6 +12923,14 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                  podAnnotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
                   readinessProbeParams:
                     properties:
                       failureThreshold:
@@ -15276,6 +15324,14 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                  podAnnotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
                   readinessProbeParams:
                     properties:
                       failureThreshold:
@@ -17614,6 +17670,14 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                  podAnnotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
                   readinessProbeParams:
                     properties:
                       failureThreshold:
@@ -19943,6 +20007,14 @@ spec:
                         x-kubernetes-map-type: atomic
                     type: object
                   nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podAnnotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podLabels:
                     additionalProperties:
                       type: string
                     type: object
@@ -22285,6 +22357,14 @@ spec:
                       format: int32
                       type: integer
                     nodeSelector:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    podAnnotations:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    podLabels:
                       additionalProperties:
                         type: string
                       type: object
@@ -24660,6 +24740,14 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                  podAnnotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
                   readinessProbeParams:
                     properties:
                       failureThreshold:
@@ -27008,6 +27096,14 @@ spec:
                           x-kubernetes-map-type: atomic
                       type: object
                     nodeSelector:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    podAnnotations:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    podLabels:
                       additionalProperties:
                         type: string
                       type: object
@@ -29422,6 +29518,14 @@ spec:
                       additionalProperties:
                         type: string
                       type: object
+                    podAnnotations:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    podLabels:
+                      additionalProperties:
+                        type: string
+                      type: object
                     rack:
                       description: Name of the node rack.
                       type: string
@@ -31778,6 +31882,14 @@ spec:
                           x-kubernetes-map-type: atomic
                       type: object
                     nodeSelector:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    podAnnotations:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    podLabels:
                       additionalProperties:
                         type: string
                       type: object
@@ -34335,6 +34447,14 @@ spec:
                         x-kubernetes-map-type: atomic
                     type: object
                   nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podAnnotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podLabels:
                     additionalProperties:
                       type: string
                     type: object
