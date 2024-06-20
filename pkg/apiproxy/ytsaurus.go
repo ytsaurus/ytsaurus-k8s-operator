@@ -1,8 +1,10 @@
 package apiproxy
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"slices"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -70,6 +72,7 @@ func (c *Ytsaurus) SetUpdateStatusCondition(ctx context.Context, condition metav
 	logger := log.FromContext(ctx)
 	logger.Info("Setting update status condition", "condition", condition)
 	meta.SetStatusCondition(&c.ytsaurus.Status.UpdateStatus.Conditions, condition)
+	sortConditions(c.ytsaurus.Status.UpdateStatus.Conditions)
 }
 
 func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
@@ -124,6 +127,7 @@ func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateS
 
 func (c *Ytsaurus) SetStatusCondition(condition metav1.Condition) {
 	meta.SetStatusCondition(&c.ytsaurus.Status.Conditions, condition)
+	sortConditions(c.ytsaurus.Status.Conditions)
 }
 
 func (c *Ytsaurus) IsStatusConditionTrue(conditionType string) bool {
@@ -132,4 +136,14 @@ func (c *Ytsaurus) IsStatusConditionTrue(conditionType string) bool {
 
 func (c *Ytsaurus) IsStatusConditionFalse(conditionType string) bool {
 	return meta.IsStatusConditionFalse(c.ytsaurus.Status.Conditions, conditionType)
+}
+
+func sortConditions(conditions []metav1.Condition) {
+	slices.SortStableFunc(conditions, func(a, b metav1.Condition) int {
+	    statusOrder := []metav1.ConditionStatus{metav1.ConditionTrue, metav1.ConditionFalse, metav1.ConditionUnknown}
+	    if diff := cmp.Compare(slices.Index(statusOrder, a.Status), slices.Index(statusOrder, b.Status)); diff != 0 {
+		return diff
+	    }
+	    return a.LastTransitionTime.Compare(b.LastTransitionTime.Time)
+	})
 }
