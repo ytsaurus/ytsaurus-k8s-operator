@@ -99,10 +99,11 @@ type LocationSpec struct {
 type LogLevel string
 
 const (
-	LogLevelTrace LogLevel = "trace"
-	LogLevelDebug LogLevel = "debug"
-	LogLevelInfo  LogLevel = "info"
-	LogLevelError LogLevel = "error"
+	LogLevelTrace   LogLevel = "trace"
+	LogLevelDebug   LogLevel = "debug"
+	LogLevelInfo    LogLevel = "info"
+	LogLevelWarning LogLevel = "warning"
+	LogLevelError   LogLevel = "error"
 )
 
 // LogWriterType string describes types of possible log writers.
@@ -159,7 +160,7 @@ type BaseLoggerSpec struct {
 	//+kubebuilder:default:=plain_text
 	//+kubebuilder:validation:Enum=plain_text;json;yson
 	Format LogFormat `json:"format,omitempty"`
-	//+kubebuilder:validation:Enum=trace;debug;info;error
+	//+kubebuilder:validation:Enum=trace;debug;info;warning;error
 	//+kubebuilder:default:=info
 	MinLogLevel LogLevel `json:"minLogLevel,omitempty"`
 	//+kubebuilder:default:=none
