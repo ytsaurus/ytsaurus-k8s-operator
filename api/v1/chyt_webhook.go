@@ -33,19 +33,6 @@ func (r *Chyt) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-
-//+kubebuilder:webhook:path=/mutate-cluster-ytsaurus-tech-v1-chyt,mutating=true,failurePolicy=fail,sideEffects=None,groups=cluster.ytsaurus.tech,resources=chyts,verbs=create;update,versions=v1,name=mchyt.kb.io,admissionReviewVersions=v1
-
-var _ webhook.Defaulter = &Chyt{}
-
-// Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *Chyt) Default() {
-	chytlog.Info("default", "name", r.Name)
-
-	// TODO(user): fill in your defaulting logic.
-}
-
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-cluster-ytsaurus-tech-v1-chyt,mutating=false,failurePolicy=fail,sideEffects=None,groups=cluster.ytsaurus.tech,resources=chyts,verbs=create;update,versions=v1,name=vchyt.kb.io,admissionReviewVersions=v1
 

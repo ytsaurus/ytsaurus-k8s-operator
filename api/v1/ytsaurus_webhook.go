@@ -21,15 +21,17 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	ptr "k8s.io/utils/pointer" //nolint:staticcheck
+
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
@@ -43,36 +45,6 @@ func (r *Ytsaurus) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
-}
-
-// TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-
-//+kubebuilder:webhook:path=/mutate-cluster-ytsaurus-tech-v1-ytsaurus,mutating=true,failurePolicy=fail,sideEffects=None,groups=cluster.ytsaurus.tech,resources=ytsaurus,verbs=create;update,versions=v1,name=mytsaurus.kb.io,admissionReviewVersions=v1
-
-var _ webhook.Defaulter = &Ytsaurus{}
-
-// Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *Ytsaurus) Default() {
-	ytsauruslog.Info("default", "name", r.Name)
-
-	// Set anti affinity for masters
-	if r.Spec.PrimaryMasters.Affinity == nil {
-		r.Spec.PrimaryMasters.Affinity = &corev1.Affinity{}
-	}
-	if r.Spec.PrimaryMasters.Affinity.PodAntiAffinity == nil {
-		r.Spec.PrimaryMasters.Affinity.PodAntiAffinity = &corev1.PodAntiAffinity{
-			RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
-				{
-					LabelSelector: &metav1.LabelSelector{
-						MatchLabels: map[string]string{
-							consts.YTComponentLabelName: fmt.Sprintf("%s-%s", r.Name, "yt-master"),
-						},
-					},
-					TopologyKey: "kubernetes.io/hostname",
-				},
-			},
-		}
-	}
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -107,6 +79,13 @@ func (r *Ytsaurus) validatePrimaryMasters(old *Ytsaurus) field.ErrorList {
 
 	if old != nil && old.Spec.PrimaryMasters.CellTag != r.Spec.PrimaryMasters.CellTag {
 		allErrors = append(allErrors, field.Invalid(path.Child("cellTag"), r.Spec.PrimaryMasters.CellTag, "Could not be changed"))
+	}
+
+	if r.Spec.PrimaryMasters.InstanceCount > 1 && !r.Spec.EphemeralCluster {
+		affinity := r.Spec.PrimaryMasters.Affinity
+		if affinity == nil || affinity.PodAntiAffinity == nil {
+			allErrors = append(allErrors, field.Required(path.Child("affinity").Child("podAntiAffinity"), "Masters should be placed on different nodes"))
+		}
 	}
 
 	return allErrors
