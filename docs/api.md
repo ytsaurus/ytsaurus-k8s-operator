@@ -33,7 +33,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `name` _string_ |  |  | MinLength: 1 <br /> |
 | `format` _[LogFormat](#logformat)_ |  | plain_text | Enum: [plain_text json yson] <br /> |
-| `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info error] <br /> |
+| `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info warning error] <br /> |
 | `compression` _[LogCompression](#logcompression)_ |  | none | Enum: [none gzip zstd] <br /> |
 | `useTimestampSuffix` _boolean_ |  | false |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
@@ -1347,7 +1347,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `name` _string_ |  |  | MinLength: 1 <br /> |
 | `format` _[LogFormat](#logformat)_ |  | plain_text | Enum: [plain_text json yson] <br /> |
-| `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info error] <br /> |
+| `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info warning error] <br /> |
 | `compression` _[LogCompression](#logcompression)_ |  | none | Enum: [none gzip zstd] <br /> |
 | `useTimestampSuffix` _boolean_ |  | false |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
@@ -1483,7 +1483,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `name` _string_ |  |  | MinLength: 1 <br /> |
 | `format` _[LogFormat](#logformat)_ |  | plain_text | Enum: [plain_text json yson] <br /> |
-| `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info error] <br /> |
+| `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info warning error] <br /> |
 | `compression` _[LogCompression](#logcompression)_ |  | none | Enum: [none gzip zstd] <br /> |
 | `useTimestampSuffix` _boolean_ |  | false |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
