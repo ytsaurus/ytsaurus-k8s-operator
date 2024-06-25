@@ -777,6 +777,11 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string
@@ -791,6 +796,14 @@ spec:
                             volume.
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
+                        watermark:
+                          default: 10
+                          description: Location watermark threshold in percents of
+                            volume size.
+                          format: int32
+                          maximum: 50
+                          minimum: 1
+                          type: integer
                       type: object
                     type: array
                   loggers:
@@ -3132,6 +3145,11 @@ spec:
                             description: LocationType string describes types of disk
                               locations for YT components.
                             type: string
+                          maxTrashMilliseconds:
+                            description: Max TTL of trash in milliseconds.
+                            format: int64
+                            minimum: 60000
+                            type: integer
                           medium:
                             default: default
                             type: string
@@ -3146,6 +3164,14 @@ spec:
                               volume.
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
+                          watermark:
+                            default: 10
+                            description: Location watermark threshold in percents
+                              of volume size.
+                            format: int32
+                            maximum: 50
+                            minimum: 1
+                            type: integer
                         type: object
                       type: array
                     loggers:
@@ -5499,6 +5525,11 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string
@@ -5513,6 +5544,14 @@ spec:
                             volume.
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
+                        watermark:
+                          default: 10
+                          description: Location watermark threshold in percents of
+                            volume size.
+                          format: int32
+                          maximum: 50
+                          minimum: 1
+                          type: integer
                       type: object
                     type: array
                   loggers:
@@ -8040,6 +8079,11 @@ spec:
                             description: LocationType string describes types of disk
                               locations for YT components.
                             type: string
+                          maxTrashMilliseconds:
+                            description: Max TTL of trash in milliseconds.
+                            format: int64
+                            minimum: 60000
+                            type: integer
                           medium:
                             default: default
                             type: string
@@ -8054,6 +8098,14 @@ spec:
                               volume.
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
+                          watermark:
+                            default: 10
+                            description: Location watermark threshold in percents
+                              of volume size.
+                            format: int32
+                            maximum: 50
+                            minimum: 1
+                            type: integer
                         type: object
                       type: array
                     loggers:
@@ -10435,6 +10487,11 @@ spec:
                             description: LocationType string describes types of disk
                               locations for YT components.
                             type: string
+                          maxTrashMilliseconds:
+                            description: Max TTL of trash in milliseconds.
+                            format: int64
+                            minimum: 60000
+                            type: integer
                           medium:
                             default: default
                             type: string
@@ -10449,6 +10506,14 @@ spec:
                               volume.
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
+                          watermark:
+                            default: 10
+                            description: Location watermark threshold in percents
+                              of volume size.
+                            format: int32
+                            maximum: 50
+                            minimum: 1
+                            type: integer
                         type: object
                       type: array
                     loggers:
@@ -12842,6 +12907,11 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string
@@ -12856,6 +12926,14 @@ spec:
                             volume.
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
+                        watermark:
+                          default: 10
+                          description: Location watermark threshold in percents of
+                            volume size.
+                          format: int32
+                          maximum: 50
+                          minimum: 1
+                          type: integer
                       type: object
                     type: array
                   loggers:
@@ -15245,6 +15323,11 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string
@@ -15259,6 +15342,14 @@ spec:
                             volume.
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
+                        watermark:
+                          default: 10
+                          description: Location watermark threshold in percents of
+                            volume size.
+                          format: int32
+                          maximum: 50
+                          minimum: 1
+                          type: integer
                       type: object
                     type: array
                   loggers:
@@ -17602,6 +17693,11 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string
@@ -17616,6 +17712,14 @@ spec:
                             volume.
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
+                        watermark:
+                          default: 10
+                          description: Location watermark threshold in percents of
+                            volume size.
+                          format: int32
+                          maximum: 50
+                          minimum: 1
+                          type: integer
                       type: object
                     type: array
                   loggers:
@@ -19948,6 +20052,11 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string
@@ -19962,6 +20071,14 @@ spec:
                             volume.
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
+                        watermark:
+                          default: 10
+                          description: Location watermark threshold in percents of
+                            volume size.
+                          format: int32
+                          maximum: 50
+                          minimum: 1
+                          type: integer
                       type: object
                     type: array
                   loggers:
@@ -22301,6 +22418,11 @@ spec:
                             description: LocationType string describes types of disk
                               locations for YT components.
                             type: string
+                          maxTrashMilliseconds:
+                            description: Max TTL of trash in milliseconds.
+                            format: int64
+                            minimum: 60000
+                            type: integer
                           medium:
                             default: default
                             type: string
@@ -22315,6 +22437,14 @@ spec:
                               volume.
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
+                          watermark:
+                            default: 10
+                            description: Location watermark threshold in percents
+                              of volume size.
+                            format: int32
+                            maximum: 50
+                            minimum: 1
+                            type: integer
                         type: object
                       type: array
                     loggers:
@@ -24690,6 +24820,11 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string
@@ -24704,6 +24839,14 @@ spec:
                             volume.
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
+                        watermark:
+                          default: 10
+                          description: Location watermark threshold in percents of
+                            volume size.
+                          format: int32
+                          maximum: 50
+                          minimum: 1
+                          type: integer
                       type: object
                     type: array
                   loggers:
@@ -27051,6 +27194,11 @@ spec:
                             description: LocationType string describes types of disk
                               locations for YT components.
                             type: string
+                          maxTrashMilliseconds:
+                            description: Max TTL of trash in milliseconds.
+                            format: int64
+                            minimum: 60000
+                            type: integer
                           medium:
                             default: default
                             type: string
@@ -27065,6 +27213,14 @@ spec:
                               volume.
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
+                          watermark:
+                            default: 10
+                            description: Location watermark threshold in percents
+                              of volume size.
+                            format: int32
+                            maximum: 50
+                            minimum: 1
+                            type: integer
                         type: object
                       type: array
                     loggers:
@@ -29477,6 +29633,11 @@ spec:
                             description: LocationType string describes types of disk
                               locations for YT components.
                             type: string
+                          maxTrashMilliseconds:
+                            description: Max TTL of trash in milliseconds.
+                            format: int64
+                            minimum: 60000
+                            type: integer
                           medium:
                             default: default
                             type: string
@@ -29491,6 +29652,14 @@ spec:
                               volume.
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
+                          watermark:
+                            default: 10
+                            description: Location watermark threshold in percents
+                              of volume size.
+                            format: int32
+                            maximum: 50
+                            minimum: 1
+                            type: integer
                         type: object
                       type: array
                     loggers:
@@ -31850,6 +32019,11 @@ spec:
                             description: LocationType string describes types of disk
                               locations for YT components.
                             type: string
+                          maxTrashMilliseconds:
+                            description: Max TTL of trash in milliseconds.
+                            format: int64
+                            minimum: 60000
+                            type: integer
                           medium:
                             default: default
                             type: string
@@ -31864,6 +32038,14 @@ spec:
                               volume.
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
+                          watermark:
+                            default: 10
+                            description: Location watermark threshold in percents
+                              of volume size.
+                            format: int32
+                            maximum: 50
+                            minimum: 1
+                            type: integer
                         type: object
                       type: array
                     loggers:
@@ -34425,6 +34607,11 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string
@@ -34439,6 +34626,14 @@ spec:
                             volume.
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
+                        watermark:
+                          default: 10
+                          description: Location watermark threshold in percents of
+                            volume size.
+                          format: int32
+                          maximum: 50
+                          minimum: 1
+                          type: integer
                       type: object
                     type: array
                   loggers:

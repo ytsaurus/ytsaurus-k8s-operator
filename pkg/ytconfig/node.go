@@ -33,6 +33,8 @@ type StoreLocation struct {
 	HighWatermark          int64     `yson:"high_watermark,omitempty"`
 	LowWatermark           int64     `yson:"low_watermark,omitempty"`
 	DisableWritesWatermark int64     `yson:"disable_writes_watermark,omitempty"`
+	TrashCleanupWatermark  int64     `yson:"trash_cleanup_watermark"`
+	MaxTrashTtl            *int64    `yson:"max_trash_ttl,omitempty"`
 }
 
 type ResourceLimits struct {
@@ -325,9 +327,11 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 
 			// These are just simple heuristics.
 			gb := float64(1024 * 1024 * 1024)
-			storeLocation.LowWatermark = int64(math.Min(0.1*float64(storeLocation.Quota), float64(5)*gb))
+			storeLocation.LowWatermark = int64(math.Max(float64(location.Watermark)/100*float64(storeLocation.Quota), float64(5)*gb))
 			storeLocation.HighWatermark = storeLocation.LowWatermark / 2
 			storeLocation.DisableWritesWatermark = storeLocation.HighWatermark / 2
+			storeLocation.TrashCleanupWatermark = storeLocation.LowWatermark
+			storeLocation.MaxTrashTtl = location.MaxTrashMilliseconds
 		}
 		c.DataNode.StoreLocations = append(c.DataNode.StoreLocations, storeLocation)
 	}

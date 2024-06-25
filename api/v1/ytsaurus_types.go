@@ -92,6 +92,14 @@ type LocationSpec struct {
 	// Disk space quota, default is size of related volume.
 	//+optional
 	Quota *resource.Quantity `json:"quota,omitempty"`
+	// Location watermark threshold in percents of volume size.
+	//+kubebuilder:default:=10
+	//+kubebuilder:validation:Minimum:=1
+	//+kubebuilder:validation:Maximum:=50
+	Watermark int32 `json:"watermark,omitempty"`
+	// Max TTL of trash in milliseconds.
+	//+kubebuilder:validation:Minimum:=60000
+	MaxTrashMilliseconds *int64 `json:"maxTrashMilliseconds,omitempty"`
 }
 
 // LogLevel string describes possible Ytsaurus logging level.
