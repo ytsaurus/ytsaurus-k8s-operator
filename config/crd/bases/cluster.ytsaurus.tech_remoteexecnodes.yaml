@@ -1141,6 +1141,10 @@ spec:
                 type: object
               runtimeClassName:
                 type: string
+              secureCluster:
+                default: false
+                description: Always use TLS/HTTPS for connections inside cluster.
+                type: boolean
               setHostnameAsFqdn:
                 default: true
                 description: SetHostnameAsFQDN indicates whether to set the hostname

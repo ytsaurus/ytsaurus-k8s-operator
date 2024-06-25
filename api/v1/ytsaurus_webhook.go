@@ -61,6 +61,35 @@ func (r *Ytsaurus) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 //////////////////////////////////////////////////
 
+func validateCommonSpec(spec *CommonSpec) field.ErrorList {
+	var allErrors field.ErrorList
+
+	path := field.NewPath("spec").Child("nativeTransport")
+	nt := spec.NativeTransport
+	if nt == nil {
+		nt = &RPCTransportSpec{}
+	}
+
+	secretPath := path.Child("tlsSecret")
+	if nt.TLSSecret == nil && nt.TLSRequired {
+		allErrors = append(allErrors, field.Required(secretPath, "TLS certificate for native transport is required"))
+	}
+
+	if spec.SecureCluster {
+		if nt.TLSSecret == nil {
+			allErrors = append(allErrors, field.Required(secretPath, "Secure cluster requires TLS certificate for native transport"))
+		}
+		if !nt.TLSRequired {
+			allErrors = append(allErrors, field.Forbidden(path.Child("tlsRequired"), "Secure cluster must require TLS for native transport"))
+		}
+		if nt.TLSInsecure {
+			allErrors = append(allErrors, field.Forbidden(path.Child("tlsInsecure"), "Secure cluster requires TLS certificate validation"))
+		}
+	}
+
+	return allErrors
+}
+
 func (r *ytsaurusValidator) validateDiscovery(newYtsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
@@ -154,6 +183,21 @@ func (r *ytsaurusValidator) validateHTTPProxies(newYtsaurus *Ytsaurus) field.Err
 		}
 		httpRoles[hp.Role] = true
 
+		if hp.Transport.HTTPSSecret == nil {
+			secretPath := path.Child("transport").Child("httpsSecret")
+			if hp.Transport.DisableHTTP {
+				allErrors = append(allErrors, field.Required(secretPath, "HTTPS-only proxy requires TLS certificate"))
+			}
+			if newYtsaurus.Spec.SecureCluster {
+				allErrors = append(allErrors, field.Required(secretPath, "Secure cluster requires TLS certificate for all HTTP proxies"))
+			}
+		}
+
+		if !hp.Transport.DisableHTTP && newYtsaurus.Spec.SecureCluster && hp.Role == consts.DefaultHTTPProxyRole {
+			insecurePath := path.Child("transport").Child("disableHttp")
+			allErrors = append(allErrors, field.Forbidden(insecurePath, "Secure cluster requires HTTPS-only proxies for default role"))
+		}
+
 		allErrors = append(allErrors, r.validateInstanceSpec(hp.InstanceSpec, path)...)
 	}
 
@@ -176,6 +220,21 @@ func (r *ytsaurusValidator) validateRPCProxies(newYtsaurus *Ytsaurus) field.Erro
 			allErrors = append(allErrors, field.Duplicate(path.Child("role"), rp.Role))
 		}
 		rpcRoles[rp.Role] = true
+
+		if rp.Transport.TLSSecret == nil {
+			secretPath := path.Child("transport").Child("tlsSecret")
+			if rp.Transport.TLSRequired {
+				allErrors = append(allErrors, field.Required(secretPath, "TLS-only RPC proxy requires certificate"))
+			}
+			if newYtsaurus.Spec.SecureCluster {
+				allErrors = append(allErrors, field.Required(secretPath, "Secure cluster demands TLS certificate for RPC proxies"))
+			}
+		}
+
+		if rp.Transport.TLSInsecure && newYtsaurus.Spec.SecureCluster {
+			insecurePath := path.Child("transport").Child("tlsInsecure")
+			allErrors = append(allErrors, field.Forbidden(insecurePath, "Secure cluster requires TLS certificate validation"))
+		}
 
 		allErrors = append(allErrors, r.validateInstanceSpec(rp.InstanceSpec, path)...)
 	}
@@ -481,6 +540,7 @@ func (r *ytsaurusValidator) validateExistsYtsaurus(ctx context.Context, newYtsau
 func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, oldYtsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
+	allErrors = append(allErrors, validateCommonSpec(&newYtsaurus.Spec.CommonSpec)...)
 	allErrors = append(allErrors, r.validateDiscovery(newYtsaurus)...)
 	allErrors = append(allErrors, r.validatePrimaryMasters(newYtsaurus, oldYtsaurus)...)
 	allErrors = append(allErrors, r.validateSecondaryMasters(newYtsaurus)...)

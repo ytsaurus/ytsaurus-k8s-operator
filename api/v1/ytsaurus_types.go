@@ -564,6 +564,11 @@ type CommonSpec struct {
 	//+optional
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
 
+	// Always use TLS/HTTPS for connections inside cluster.
+	//+kubebuilder:default:=false
+	//+optional
+	SecureCluster bool `json:"secureCluster"`
+
 	// Allow prioritizing performance over data safety. Useful for tests and experiments.
 	//+kubebuilder:default:=false
 	//+optional

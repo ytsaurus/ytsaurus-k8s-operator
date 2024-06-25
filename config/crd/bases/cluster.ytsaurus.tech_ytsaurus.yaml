@@ -29423,6 +29423,10 @@ spec:
                   - cellTag
                   type: object
                 type: array
+              secureCluster:
+                default: false
+                description: Always use TLS/HTTPS for connections inside cluster.
+                type: boolean
               spyt:
                 properties:
                   sparkVersion:

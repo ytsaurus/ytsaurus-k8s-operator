@@ -135,7 +135,7 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		container.Env = []corev1.EnvVar{
 			{
 				Name:  "YT_PROXY",
-				Value: s.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+				Value: s.cfgen.GetHTTPProxyUrl(consts.DefaultHTTPProxyRole),
 			},
 			{
 				Name:  "YT_TOKEN",
