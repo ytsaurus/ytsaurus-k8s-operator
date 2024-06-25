@@ -120,6 +120,18 @@ func (g *Generator) GetHTTPProxiesAddress(role string) string {
 		g.clusterDomain)
 }
 
+func (g *Generator) UseHTTPSProxy() bool {
+	return g.ytsaurus.Spec.SecureCluster
+}
+
+func (g *Generator) GetHTTPProxyUrl(role string) string {
+	schema := ""
+	if g.UseHTTPSProxy() {
+		schema = "https://"
+	}
+	return schema + g.GetHTTPProxiesAddress(role)
+}
+
 func (g *Generator) GetSchedulerStatefulSetName() string {
 	return g.getName("sch")
 }
