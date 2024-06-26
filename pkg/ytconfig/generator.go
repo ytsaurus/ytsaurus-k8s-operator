@@ -5,7 +5,7 @@ import (
 	"path"
 
 	corev1 "k8s.io/api/core/v1"
-	ptr "k8s.io/utils/pointer"
+	ptr "k8s.io/utils/pointer" //nolint:staticcheck
 
 	"go.ytsaurus.tech/yt/go/yson"
 
