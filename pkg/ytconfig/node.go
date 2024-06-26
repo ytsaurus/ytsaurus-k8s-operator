@@ -8,13 +8,14 @@ import (
 
 	"go.ytsaurus.tech/yt/go/yson"
 
-	ptr "k8s.io/utils/pointer"
+	ptr "k8s.io/utils/pointer" //nolint:staticcheck
 
 	"k8s.io/apimachinery/pkg/api/resource"
 
+	corev1 "k8s.io/api/core/v1"
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
-	corev1 "k8s.io/api/core/v1"
 )
 
 type NodeFlavor string
