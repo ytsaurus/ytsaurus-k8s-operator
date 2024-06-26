@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 
 	"go.ytsaurus.tech/library/go/ptr"
 
@@ -86,7 +87,7 @@ var (
 			Spec: corev1.PersistentVolumeClaimSpec{
 				AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 				StorageClassName: &testStorageClassname,
-				Resources: corev1.ResourceRequirements{
+				Resources: corev1.VolumeResourceRequirements{
 					Requests: corev1.ResourceList{
 						corev1.ResourceStorage: resource.MustParse("10Gi"),
 					},
@@ -411,7 +412,7 @@ func getYtsaurus() *ytv1.Ytsaurus {
 							},
 							Spec: corev1.PersistentVolumeClaimSpec{
 								AccessModes: []corev1.PersistentVolumeAccessMode{"ReadWriteOnce"},
-								Resources: corev1.ResourceRequirements{
+								Resources: corev1.VolumeResourceRequirements{
 									Requests: corev1.ResourceList{
 										corev1.ResourceStorage: resource.MustParse("20Gi"),
 									},
