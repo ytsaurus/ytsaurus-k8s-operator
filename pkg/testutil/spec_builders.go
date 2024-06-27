@@ -8,7 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ptr "k8s.io/utils/pointer"
+	ptr "k8s.io/utils/pointer" //nolint:staticcheck
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
