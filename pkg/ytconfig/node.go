@@ -325,9 +325,14 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 		if quota != nil {
 			storeLocation.Quota = *quota
 
+			if location.LowWatermark != nil {
+				storeLocation.LowWatermark = location.LowWatermark.Value()
+			} else {
+				gb := float64(1024 * 1024 * 1024)
+				storeLocation.LowWatermark = int64(math.Min(0.1*float64(storeLocation.Quota), float64(25)*gb))
+			}
+
 			// These are just simple heuristics.
-			gb := float64(1024 * 1024 * 1024)
-			storeLocation.LowWatermark = int64(math.Max(float64(location.Watermark)/100*float64(storeLocation.Quota), float64(5)*gb))
 			storeLocation.HighWatermark = storeLocation.LowWatermark / 2
 			storeLocation.DisableWritesWatermark = storeLocation.HighWatermark / 2
 			storeLocation.TrashCleanupWatermark = storeLocation.LowWatermark

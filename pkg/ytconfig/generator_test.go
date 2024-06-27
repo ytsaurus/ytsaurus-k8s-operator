@@ -63,13 +63,14 @@ var (
 		Medium:               "nvme",
 		MaxTrashMilliseconds: &testMaxTrashMilliseconds,
 	}
-	testLocationChunkStoreQuota     = resource.MustParse("100Gi")
-	testLocationChunkStoreWatermark = ytv1.LocationSpec{
+	testLocationChunkStoreQuota        = resource.MustParse("1Ti")
+	testLocationChunkStoreLowWatermark = resource.MustParse("50Gi")
+	testLocationChunkStoreWatermark    = ytv1.LocationSpec{
 		LocationType: "ChunkStore",
 		Path:         "/yt/hdd1/chunk-store",
 		Medium:       "nvme",
 		Quota:        &testLocationChunkStoreQuota,
-		Watermark:    20,
+		LowWatermark: &testLocationChunkStoreLowWatermark,
 	}
 	testLocationChunkCache = ytv1.LocationSpec{
 		LocationType: "ChunkCache",

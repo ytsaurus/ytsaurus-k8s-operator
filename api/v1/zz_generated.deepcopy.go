@@ -775,6 +775,11 @@ func (in *LocationSpec) DeepCopyInto(out *LocationSpec) {
 		x := (*in).DeepCopy()
 		*out = &x
 	}
+	if in.LowWatermark != nil {
+		in, out := &in.LowWatermark, &out.LowWatermark
+		x := (*in).DeepCopy()
+		*out = &x
+	}
 	if in.MaxTrashMilliseconds != nil {
 		in, out := &in.MaxTrashMilliseconds, &out.MaxTrashMilliseconds
 		*out = new(int64)
