@@ -6,7 +6,7 @@ import (
 	"path"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
-	ptr "k8s.io/utils/pointer"
+	ptr "k8s.io/utils/pointer" //nolint:staticcheck
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"

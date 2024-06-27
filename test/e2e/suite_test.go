@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	ptr "k8s.io/utils/pointer"
+	ptr "k8s.io/utils/pointer" //nolint:staticcheck
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

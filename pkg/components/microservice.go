@@ -3,15 +3,17 @@ package components
 import (
 	"context"
 
+	ptr "k8s.io/utils/pointer" //nolint:staticcheck
+
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
-	ptr "k8s.io/utils/pointer"
+
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // microservice manages common resources of YTsaurus service component
