@@ -33,19 +33,6 @@ func (r *Spyt) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-
-//+kubebuilder:webhook:path=/mutate-cluster-ytsaurus-tech-v1-spyt,mutating=true,failurePolicy=fail,sideEffects=None,groups=cluster.ytsaurus.tech,resources=spyts,verbs=create;update,versions=v1,name=mspyt.kb.io,admissionReviewVersions=v1
-
-var _ webhook.Defaulter = &Spyt{}
-
-// Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *Spyt) Default() {
-	spytlog.Info("default", "name", r.Name)
-
-	// TODO(user): fill in your defaulting logic.
-}
-
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-cluster-ytsaurus-tech-v1-spyt,mutating=false,failurePolicy=fail,sideEffects=None,groups=cluster.ytsaurus.tech,resources=spyts,verbs=create;update,versions=v1,name=vspyt.kb.io,admissionReviewVersions=v1
 
