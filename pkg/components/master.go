@@ -46,10 +46,6 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		resource.Spec.PrimaryMasters.InstanceSpec.MonitoringPort = ptr.Int32(consts.MasterMonitoringPort)
 	}
 
-	if resource.Spec.PrimaryMasters.InstanceSpec.SetHostnameAsFQDN == nil {
-		resource.Spec.PrimaryMasters.InstanceSpec.SetHostnameAsFQDN = ptr.Bool(true)
-	}
-
 	srv := newServer(
 		&l,
 		ytsaurus,

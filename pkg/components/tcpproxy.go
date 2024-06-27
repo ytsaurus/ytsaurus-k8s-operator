@@ -41,10 +41,6 @@ func NewTCPProxy(
 		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.TCPProxyMonitoringPort)
 	}
 
-	if spec.InstanceSpec.SetHostnameAsFQDN == nil {
-		spec.InstanceSpec.SetHostnameAsFQDN = ptr.Bool(true)
-	}
-
 	srv := newServer(
 		&l,
 		ytsaurus,

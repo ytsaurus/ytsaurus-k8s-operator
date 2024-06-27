@@ -33,10 +33,6 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Mas
 		resource.Spec.MasterCaches.InstanceSpec.MonitoringPort = ptr.Int32(consts.MasterCachesMonitoringPort)
 	}
 
-	if resource.Spec.MasterCaches.InstanceSpec.SetHostnameAsFQDN == nil {
-		resource.Spec.MasterCaches.InstanceSpec.SetHostnameAsFQDN = ptr.Bool(true)
-	}
-
 	srv := newServer(
 		&l,
 		ytsaurus,

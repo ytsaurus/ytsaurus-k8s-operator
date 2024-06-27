@@ -48,10 +48,6 @@ func NewScheduler(
 		resource.Spec.Schedulers.InstanceSpec.MonitoringPort = ptr.Int32(consts.SchedulerMonitoringPort)
 	}
 
-	if resource.Spec.Schedulers.InstanceSpec.SetHostnameAsFQDN == nil {
-		resource.Spec.Schedulers.InstanceSpec.SetHostnameAsFQDN = ptr.Bool(true)
-	}
-
 	srv := newServer(
 		&l,
 		ytsaurus,

@@ -32,10 +32,6 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Disco
 		resource.Spec.Discovery.InstanceSpec.MonitoringPort = ptr.Int32(consts.DiscoveryMonitoringPort)
 	}
 
-	if resource.Spec.Discovery.InstanceSpec.SetHostnameAsFQDN == nil {
-		resource.Spec.Discovery.InstanceSpec.SetHostnameAsFQDN = ptr.Bool(true)
-	}
-
 	srv := newServer(
 		&l,
 		ytsaurus,

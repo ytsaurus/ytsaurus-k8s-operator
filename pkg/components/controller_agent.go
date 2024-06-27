@@ -33,10 +33,6 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.ControllerAgentMonitoringPort)
 	}
 
-	if resource.Spec.ControllerAgents.SetHostnameAsFQDN == nil {
-		resource.Spec.ControllerAgents.SetHostnameAsFQDN = ptr.Bool(true)
-	}
-
 	srv := newServer(
 		&l,
 		ytsaurus,

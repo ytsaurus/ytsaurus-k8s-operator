@@ -38,10 +38,6 @@ func NewDataNode(
 		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.DataNodeMonitoringPort)
 	}
 
-	if spec.SetHostnameAsFQDN == nil {
-		spec.SetHostnameAsFQDN = ptr.Bool(true)
-	}
-
 	srv := newServer(
 		&l,
 		ytsaurus,

@@ -264,7 +264,7 @@ type InstanceSpec struct {
 	PodLabels         map[string]string      `json:"podLabels,omitempty"`
 	PodAnnotations    map[string]string      `json:"podAnnotations,omitempty"`
 	// SetHostnameAsFQDN indicates whether to set the hostname as FQDN.
-	//+optional
+	//+kubebuilder:default:=true
 	SetHostnameAsFQDN *bool `json:"setHostnameAsFqdn,omitempty"`
 	// Component config for native RPC bus transport.
 	//+optional
