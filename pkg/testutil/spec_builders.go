@@ -232,7 +232,7 @@ func createRPCProxiesSpec() ytv1.RPCProxiesSpec {
 func getPortFromEnv(envvar string) *int32 {
 	portStr := os.Getenv(envvar)
 	if portStr != "" {
-		port, err := strconv.Atoi(portStr)
+		port, err := strconv.ParseInt(portStr, 10, 32)
 		if err != nil {
 			panic(fmt.Sprintf("Invalid %s value", envvar))
 		}
