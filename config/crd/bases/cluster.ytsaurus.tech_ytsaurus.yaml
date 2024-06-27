@@ -971,6 +971,7 @@ spec:
                   runtimeClassName:
                     type: string
                   setHostnameAsFqdn:
+                    default: true
                     description: SetHostnameAsFQDN indicates whether to set the hostname
                       as FQDN.
                     type: boolean
@@ -3337,6 +3338,7 @@ spec:
                     runtimeClassName:
                       type: string
                     setHostnameAsFqdn:
+                      default: true
                       description: SetHostnameAsFQDN indicates whether to set the
                         hostname as FQDN.
                       type: boolean
@@ -5701,6 +5703,7 @@ spec:
                   runtimeClassName:
                     type: string
                   setHostnameAsFqdn:
+                    default: true
                     description: SetHostnameAsFQDN indicates whether to set the hostname
                       as FQDN.
                     type: boolean
@@ -8256,6 +8259,7 @@ spec:
                     runtimeClassName:
                       type: string
                     setHostnameAsFqdn:
+                      default: true
                       description: SetHostnameAsFQDN indicates whether to set the
                         hostname as FQDN.
                       type: boolean
@@ -10654,6 +10658,7 @@ spec:
                         a service
                       type: string
                     setHostnameAsFqdn:
+                      default: true
                       description: SetHostnameAsFQDN indicates whether to set the
                         hostname as FQDN.
                       type: boolean
@@ -13056,6 +13061,7 @@ spec:
                   runtimeClassName:
                     type: string
                   setHostnameAsFqdn:
+                    default: true
                     description: SetHostnameAsFQDN indicates whether to set the hostname
                       as FQDN.
                     type: boolean
@@ -15467,6 +15473,7 @@ spec:
                   runtimeClassName:
                     type: string
                   setHostnameAsFqdn:
+                    default: true
                     description: SetHostnameAsFQDN indicates whether to set the hostname
                       as FQDN.
                     type: boolean
@@ -17824,6 +17831,7 @@ spec:
                   runtimeClassName:
                     type: string
                   setHostnameAsFqdn:
+                    default: true
                     description: SetHostnameAsFQDN indicates whether to set the hostname
                       as FQDN.
                     type: boolean
@@ -20174,6 +20182,7 @@ spec:
                   runtimeClassName:
                     type: string
                   setHostnameAsFqdn:
+                    default: true
                     description: SetHostnameAsFQDN indicates whether to set the hostname
                       as FQDN.
                     type: boolean
@@ -22542,6 +22551,7 @@ spec:
                         a service
                       type: string
                     setHostnameAsFqdn:
+                      default: true
                       description: SetHostnameAsFQDN indicates whether to set the
                         hostname as FQDN.
                       type: boolean
@@ -24924,6 +24934,7 @@ spec:
                   runtimeClassName:
                     type: string
                   setHostnameAsFqdn:
+                    default: true
                     description: SetHostnameAsFQDN indicates whether to set the hostname
                       as FQDN.
                     type: boolean
@@ -27293,6 +27304,7 @@ spec:
                     runtimeClassName:
                       type: string
                     setHostnameAsFqdn:
+                      default: true
                       description: SetHostnameAsFQDN indicates whether to set the
                         hostname as FQDN.
                       type: boolean
@@ -29726,6 +29738,7 @@ spec:
                     runtimeClassName:
                       type: string
                     setHostnameAsFqdn:
+                      default: true
                       description: SetHostnameAsFQDN indicates whether to set the
                         hostname as FQDN.
                       type: boolean
@@ -32113,6 +32126,7 @@ spec:
                         a service
                       type: string
                     setHostnameAsFqdn:
+                      default: true
                       description: SetHostnameAsFQDN indicates whether to set the
                         hostname as FQDN.
                       type: boolean
@@ -34675,6 +34689,7 @@ spec:
                   runtimeClassName:
                     type: string
                   setHostnameAsFqdn:
+                    default: true
                     description: SetHostnameAsFQDN indicates whether to set the hostname
                       as FQDN.
                     type: boolean

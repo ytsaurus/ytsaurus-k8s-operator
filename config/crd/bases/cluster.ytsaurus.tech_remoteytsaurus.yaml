@@ -853,6 +853,7 @@ spec:
               runtimeClassName:
                 type: string
               setHostnameAsFqdn:
+                default: true
                 description: SetHostnameAsFQDN indicates whether to set the hostname
                   as FQDN.
                 type: boolean
