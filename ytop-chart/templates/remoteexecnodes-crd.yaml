@@ -1093,6 +1093,11 @@ spec:
                 type: object
               runtimeClassName:
                 type: string
+              setHostnameAsFqdn:
+                default: true
+                description: SetHostnameAsFQDN indicates whether to set the hostname
+                  as FQDN.
+                type: boolean
               sidecars:
                 description: List of sidecar containers as yaml of core/v1 Container.
                 items:

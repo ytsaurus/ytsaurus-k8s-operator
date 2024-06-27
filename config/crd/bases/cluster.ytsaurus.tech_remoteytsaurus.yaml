@@ -868,6 +868,11 @@ spec:
                 type: object
               runtimeClassName:
                 type: string
+              setHostnameAsFqdn:
+                default: true
+                description: SetHostnameAsFQDN indicates whether to set the hostname
+                  as FQDN.
+                type: boolean
               structuredLoggers:
                 items:
                   properties:

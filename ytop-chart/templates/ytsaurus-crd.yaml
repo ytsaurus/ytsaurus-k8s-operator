@@ -995,6 +995,11 @@ spec:
                     type: object
                   runtimeClassName:
                     type: string
+                  setHostnameAsFqdn:
+                    default: true
+                    description: SetHostnameAsFQDN indicates whether to set the hostname
+                      as FQDN.
+                    type: boolean
                   structuredLoggers:
                     items:
                       properties:
@@ -3356,6 +3361,11 @@ spec:
                       type: object
                     runtimeClassName:
                       type: string
+                    setHostnameAsFqdn:
+                      default: true
+                      description: SetHostnameAsFQDN indicates whether to set the hostname
+                        as FQDN.
+                      type: boolean
                     structuredLoggers:
                       items:
                         properties:
@@ -5725,6 +5735,11 @@ spec:
                     type: object
                   runtimeClassName:
                     type: string
+                  setHostnameAsFqdn:
+                    default: true
+                    description: SetHostnameAsFQDN indicates whether to set the hostname
+                      as FQDN.
+                    type: boolean
                   structuredLoggers:
                     items:
                       properties:
@@ -8275,6 +8290,11 @@ spec:
                       type: object
                     runtimeClassName:
                       type: string
+                    setHostnameAsFqdn:
+                      default: true
+                      description: SetHostnameAsFQDN indicates whether to set the hostname
+                        as FQDN.
+                      type: boolean
                     sidecars:
                       description: List of sidecar containers as yaml of core/v1 Container.
                       items:
@@ -10676,6 +10696,11 @@ spec:
                       description: Service Type string describes ingress methods for
                         a service
                       type: string
+                    setHostnameAsFqdn:
+                      default: true
+                      description: SetHostnameAsFQDN indicates whether to set the hostname
+                        as FQDN.
+                      type: boolean
                     structuredLoggers:
                       items:
                         properties:
@@ -13083,6 +13108,11 @@ spec:
                     type: object
                   runtimeClassName:
                     type: string
+                  setHostnameAsFqdn:
+                    default: true
+                    description: SetHostnameAsFQDN indicates whether to set the hostname
+                      as FQDN.
+                    type: boolean
                   structuredLoggers:
                     items:
                       properties:
@@ -15491,6 +15521,11 @@ spec:
                     type: object
                   runtimeClassName:
                     type: string
+                  setHostnameAsFqdn:
+                    default: true
+                    description: SetHostnameAsFQDN indicates whether to set the hostname
+                      as FQDN.
+                    type: boolean
                   sidecars:
                     description: List of sidecar containers as yaml of core/v1 Container.
                     items:
@@ -17845,6 +17880,11 @@ spec:
                     type: object
                   runtimeClassName:
                     type: string
+                  setHostnameAsFqdn:
+                    default: true
+                    description: SetHostnameAsFQDN indicates whether to set the hostname
+                      as FQDN.
+                    type: boolean
                   structuredLoggers:
                     items:
                       properties:
@@ -20192,6 +20232,11 @@ spec:
                     type: object
                   runtimeClassName:
                     type: string
+                  setHostnameAsFqdn:
+                    default: true
+                    description: SetHostnameAsFQDN indicates whether to set the hostname
+                      as FQDN.
+                    type: boolean
                   structuredLoggers:
                     items:
                       properties:
@@ -22555,6 +22600,11 @@ spec:
                       description: Service Type string describes ingress methods for
                         a service
                       type: string
+                    setHostnameAsFqdn:
+                      default: true
+                      description: SetHostnameAsFQDN indicates whether to set the hostname
+                        as FQDN.
+                      type: boolean
                     structuredLoggers:
                       items:
                         properties:
@@ -24942,6 +24992,11 @@ spec:
                     type: object
                   runtimeClassName:
                     type: string
+                  setHostnameAsFqdn:
+                    default: true
+                    description: SetHostnameAsFQDN indicates whether to set the hostname
+                      as FQDN.
+                    type: boolean
                   structuredLoggers:
                     items:
                       properties:
@@ -27306,6 +27361,11 @@ spec:
                       type: object
                     runtimeClassName:
                       type: string
+                    setHostnameAsFqdn:
+                      default: true
+                      description: SetHostnameAsFQDN indicates whether to set the hostname
+                        as FQDN.
+                      type: boolean
                     sidecars:
                       description: List of sidecar containers as yaml of core/v1 Container.
                       items:
@@ -29742,6 +29802,11 @@ spec:
                       type: object
                     runtimeClassName:
                       type: string
+                    setHostnameAsFqdn:
+                      default: true
+                      description: SetHostnameAsFQDN indicates whether to set the hostname
+                        as FQDN.
+                      type: boolean
                     structuredLoggers:
                       items:
                         properties:
@@ -32132,6 +32197,11 @@ spec:
                       description: Service Type string describes ingress methods for
                         a service
                       type: string
+                    setHostnameAsFqdn:
+                      default: true
+                      description: SetHostnameAsFQDN indicates whether to set the hostname
+                        as FQDN.
+                      type: boolean
                     structuredLoggers:
                       items:
                         properties:
@@ -34697,6 +34767,11 @@ spec:
                     type: object
                   runtimeClassName:
                     type: string
+                  setHostnameAsFqdn:
+                    default: true
+                    description: SetHostnameAsFQDN indicates whether to set the hostname
+                      as FQDN.
+                    type: boolean
                   structuredLoggers:
                     items:
                       properties:
