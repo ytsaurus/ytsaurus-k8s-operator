@@ -108,6 +108,7 @@
                 "high_watermark"=536870912;
                 "low_watermark"=1073741824;
                 "disable_writes_watermark"=268435456;
+                "trash_cleanup_watermark"=1073741824;
             };
         ];
         "cache_locations"=[

@@ -92,6 +92,12 @@ type LocationSpec struct {
 	// Disk space quota, default is size of related volume.
 	//+optional
 	Quota *resource.Quantity `json:"quota,omitempty"`
+	// Limit above which the volume is considered to be non-full.
+	//+optional
+	LowWatermark *resource.Quantity `json:"lowWatermark,omitempty"`
+	// Max TTL of trash in milliseconds.
+	//+kubebuilder:validation:Minimum:=60000
+	MaxTrashMilliseconds *int64 `json:"maxTrashMilliseconds,omitempty"`
 }
 
 // LogLevel string describes possible Ytsaurus logging level.

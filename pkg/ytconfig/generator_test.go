@@ -56,6 +56,22 @@ var (
 		Path:         "/yt/hdd1/chunk-store",
 		Medium:       "nvme",
 	}
+	testMaxTrashMilliseconds       int64 = 60000
+	testLocationChunkStoreMaxTrash       = ytv1.LocationSpec{
+		LocationType:         "ChunkStore",
+		Path:                 "/yt/hdd1/chunk-store",
+		Medium:               "nvme",
+		MaxTrashMilliseconds: &testMaxTrashMilliseconds,
+	}
+	testLocationChunkStoreQuota        = resource.MustParse("1Ti")
+	testLocationChunkStoreLowWatermark = resource.MustParse("50Gi")
+	testLocationChunkStoreWatermark    = ytv1.LocationSpec{
+		LocationType: "ChunkStore",
+		Path:         "/yt/hdd1/chunk-store",
+		Medium:       "nvme",
+		Quota:        &testLocationChunkStoreQuota,
+		LowWatermark: &testLocationChunkStoreLowWatermark,
+	}
 	testLocationChunkCache = ytv1.LocationSpec{
 		LocationType: "ChunkCache",
 		Path:         "/yt/hdd1/chunk-cache",
@@ -116,10 +132,28 @@ func TestGetControllerAgentsConfig(t *testing.T) {
 }
 
 func TestGetDataNodeConfig(t *testing.T) {
-	g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetDataNodeConfig(getDataNodeSpec())
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
+	cases := map[string]struct {
+		Location ytv1.LocationSpec
+	}{
+		"without-trash-ttl": {
+			Location: testLocationChunkStore,
+		},
+		"with-trash-ttl": {
+			Location: testLocationChunkStoreMaxTrash,
+		},
+		"with-watermark": {
+			Location: testLocationChunkStoreWatermark,
+		},
+	}
+
+	for name, test := range cases {
+		t.Run(name, func(t *testing.T) {
+			g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
+			cfg, err := g.GetDataNodeConfig(getDataNodeSpec(test.Location))
+			require.NoError(t, err)
+			canonize.Assert(t, cfg)
+		})
+	}
 }
 
 func TestGetDataNodeWithoutYtsaurusConfig(t *testing.T) {
@@ -130,7 +164,7 @@ func TestGetDataNodeWithoutYtsaurusConfig(t *testing.T) {
 		getMasterConnectionSpecWithFixedMasterHosts(),
 		getMasterCachesSpecWithFixedHosts(),
 	)
-	cfg, err := g.GetDataNodeConfig(getDataNodeSpec())
+	cfg, err := g.GetDataNodeConfig(getDataNodeSpec(testLocationChunkStore))
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -599,13 +633,13 @@ func withFixedMasterCachesHosts(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	return ytsaurus
 }
 
-func getDataNodeSpec() ytv1.DataNodesSpec {
+func getDataNodeSpec(locations ...ytv1.LocationSpec) ytv1.DataNodesSpec {
 	return ytv1.DataNodesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:        20,
 			MonitoringPort:       ptr.Int32(consts.DataNodeMonitoringPort),
 			Resources:            testResourceReqs,
-			Locations:            []ytv1.LocationSpec{testLocationChunkStore},
+			Locations:            locations,
 			VolumeMounts:         testVolumeMounts,
 			VolumeClaimTemplates: testVolumeClaimTemplates,
 		},

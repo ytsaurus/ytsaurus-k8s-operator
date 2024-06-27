@@ -793,6 +793,19 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        lowWatermark:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Limit above which the volume is considered
+                            to be non-full.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string
@@ -3173,6 +3186,19 @@ spec:
                             description: LocationType string describes types of disk
                               locations for YT components.
                             type: string
+                          lowWatermark:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Limit above which the volume is considered
+                              to be non-full.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          maxTrashMilliseconds:
+                            description: Max TTL of trash in milliseconds.
+                            format: int64
+                            minimum: 60000
+                            type: integer
                           medium:
                             default: default
                             type: string
@@ -5565,6 +5591,19 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        lowWatermark:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Limit above which the volume is considered
+                            to be non-full.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string
@@ -8131,6 +8170,19 @@ spec:
                             description: LocationType string describes types of disk
                               locations for YT components.
                             type: string
+                          lowWatermark:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Limit above which the volume is considered
+                              to be non-full.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          maxTrashMilliseconds:
+                            description: Max TTL of trash in milliseconds.
+                            format: int64
+                            minimum: 60000
+                            type: integer
                           medium:
                             default: default
                             type: string
@@ -10551,6 +10603,19 @@ spec:
                             description: LocationType string describes types of disk
                               locations for YT components.
                             type: string
+                          lowWatermark:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Limit above which the volume is considered
+                              to be non-full.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          maxTrashMilliseconds:
+                            description: Max TTL of trash in milliseconds.
+                            format: int64
+                            minimum: 60000
+                            type: integer
                           medium:
                             default: default
                             type: string
@@ -12983,6 +13048,19 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        lowWatermark:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Limit above which the volume is considered
+                            to be non-full.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string
@@ -15411,6 +15489,19 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        lowWatermark:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Limit above which the volume is considered
+                            to be non-full.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string
@@ -17793,6 +17884,19 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        lowWatermark:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Limit above which the volume is considered
+                            to be non-full.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string
@@ -20164,6 +20268,19 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        lowWatermark:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Limit above which the volume is considered
+                            to be non-full.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string
@@ -22542,6 +22659,19 @@ spec:
                             description: LocationType string describes types of disk
                               locations for YT components.
                             type: string
+                          lowWatermark:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Limit above which the volume is considered
+                              to be non-full.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          maxTrashMilliseconds:
+                            description: Max TTL of trash in milliseconds.
+                            format: int64
+                            minimum: 60000
+                            type: integer
                           medium:
                             default: default
                             type: string
@@ -24956,6 +25086,19 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        lowWatermark:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Limit above which the volume is considered
+                            to be non-full.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string
@@ -27342,6 +27485,19 @@ spec:
                             description: LocationType string describes types of disk
                               locations for YT components.
                             type: string
+                          lowWatermark:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Limit above which the volume is considered
+                              to be non-full.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          maxTrashMilliseconds:
+                            description: Max TTL of trash in milliseconds.
+                            format: int64
+                            minimum: 60000
+                            type: integer
                           medium:
                             default: default
                             type: string
@@ -29793,6 +29949,19 @@ spec:
                             description: LocationType string describes types of disk
                               locations for YT components.
                             type: string
+                          lowWatermark:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Limit above which the volume is considered
+                              to be non-full.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          maxTrashMilliseconds:
+                            description: Max TTL of trash in milliseconds.
+                            format: int64
+                            minimum: 60000
+                            type: integer
                           medium:
                             default: default
                             type: string
@@ -32191,6 +32360,19 @@ spec:
                             description: LocationType string describes types of disk
                               locations for YT components.
                             type: string
+                          lowWatermark:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Limit above which the volume is considered
+                              to be non-full.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          maxTrashMilliseconds:
+                            description: Max TTL of trash in milliseconds.
+                            format: int64
+                            minimum: 60000
+                            type: integer
                           medium:
                             default: default
                             type: string
@@ -34791,6 +34973,19 @@ spec:
                           description: LocationType string describes types of disk
                             locations for YT components.
                           type: string
+                        lowWatermark:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Limit above which the volume is considered
+                            to be non-full.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
                         medium:
                           default: default
                           type: string

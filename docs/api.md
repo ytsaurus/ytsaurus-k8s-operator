@@ -685,6 +685,8 @@ _Appears in:_
 | `path` _string_ |  |  | MinLength: 1 <br /> |
 | `medium` _string_ |  | default |  |
 | `quota` _[Quantity](#quantity)_ | Disk space quota, default is size of related volume. |  |  |
+| `lowWatermark` _[Quantity](#quantity)_ | Limit above which the volume is considered to be non-full. |  |  |
+| `maxTrashMilliseconds` _integer_ | Max TTL of trash in milliseconds. |  | Minimum: 60000 <br /> |
 
 
 #### LocationType
