@@ -2,8 +2,9 @@ package ytconfig
 
 import (
 	"fmt"
-	"go.ytsaurus.tech/library/go/ptr"
 	"path"
+
+	"go.ytsaurus.tech/library/go/ptr"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )

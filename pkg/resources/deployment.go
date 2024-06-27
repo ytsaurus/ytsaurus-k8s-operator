@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
 	labeller2 "github.com/ytsaurus/yt-k8s-operator/pkg/labeller"
 	appsv1 "k8s.io/api/apps/v1"

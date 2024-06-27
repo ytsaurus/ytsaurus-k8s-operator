@@ -124,7 +124,6 @@ func getMasterPod(name, namespace string) corev1.Pod {
 }
 
 func deleteYtsaurus(ctx context.Context, ytsaurus *ytv1.Ytsaurus) {
-
 	if err := k8sClient.Delete(ctx, ytsaurus); err != nil {
 		log.Error(err, "Deleting ytsaurus failed")
 	}

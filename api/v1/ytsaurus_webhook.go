@@ -430,7 +430,6 @@ func (r *Ytsaurus) validateInstanceSpec(instanceSpec InstanceSpec, path *field.P
 
 	if instanceSpec.Locations != nil {
 		for locationIdx, location := range instanceSpec.Locations {
-
 			inVolumeMount := false
 			for _, volumeMount := range instanceSpec.VolumeMounts {
 				if strings.HasPrefix(location.Path, volumeMount.MountPath) {

@@ -31,7 +31,6 @@ func CreateTabletCells(ctx context.Context, ytClient yt.Client, bundle string, t
 		ypath.Path(fmt.Sprintf("//sys/tablet_cell_bundles/%s/@tablet_cell_count", bundle)),
 		&initTabletCellCount,
 		nil); err != nil {
-
 		logger.Error(err, "Getting table_cell_count failed")
 		return err
 	}
@@ -176,7 +175,6 @@ func SetWithIgnoreExisting(path string, value string) string {
 func AddAffinity(statefulSet *appsv1.StatefulSet,
 	nodeSelectorRequirementKey string,
 	nodeSelectorRequirementValues []string) {
-
 	affinity := &corev1.Affinity{}
 	if statefulSet.Spec.Template.Spec.Affinity != nil {
 		affinity = statefulSet.Spec.Template.Spec.Affinity

@@ -155,7 +155,6 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 	case ytv1.UpdateStatePossibilityCheck:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionHasPossibility) &&
 			!yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
-
 			ok, msg, err := yc.HandlePossibilityCheck(ctx)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
@@ -301,7 +300,6 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 	case ytv1.UpdateStateWaitingForTabletCellsRecovery:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRecovered) {
-
 			err = yc.RecoverTableCells(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
