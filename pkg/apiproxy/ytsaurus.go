@@ -140,10 +140,10 @@ func (c *Ytsaurus) IsStatusConditionFalse(conditionType string) bool {
 
 func sortConditions(conditions []metav1.Condition) {
 	slices.SortStableFunc(conditions, func(a, b metav1.Condition) int {
-	    statusOrder := []metav1.ConditionStatus{metav1.ConditionTrue, metav1.ConditionFalse, metav1.ConditionUnknown}
-	    if diff := cmp.Compare(slices.Index(statusOrder, a.Status), slices.Index(statusOrder, b.Status)); diff != 0 {
-		return diff
-	    }
-	    return a.LastTransitionTime.Compare(b.LastTransitionTime.Time)
+		statusOrder := []metav1.ConditionStatus{metav1.ConditionTrue, metav1.ConditionFalse, metav1.ConditionUnknown}
+		if diff := cmp.Compare(slices.Index(statusOrder, a.Status), slices.Index(statusOrder, b.Status)); diff != 0 {
+			return diff
+		}
+		return a.LastTransitionTime.Compare(b.LastTransitionTime.Time)
 	})
 }

@@ -710,6 +710,11 @@ func (in *InstanceSpec) DeepCopyInto(out *InstanceSpec) {
 			(*out)[key] = val
 		}
 	}
+	if in.SetHostnameAsFQDN != nil {
+		in, out := &in.SetHostnameAsFQDN, &out.SetHostnameAsFQDN
+		*out = new(bool)
+		**out = **in
+	}
 	if in.NativeTransport != nil {
 		in, out := &in.NativeTransport, &out.NativeTransport
 		*out = new(RPCTransportSpec)

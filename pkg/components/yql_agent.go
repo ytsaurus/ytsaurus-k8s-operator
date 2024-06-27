@@ -40,6 +40,10 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		resource.Spec.YQLAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.YQLAgentMonitoringPort)
 	}
 
+	if resource.Spec.YQLAgents.InstanceSpec.SetHostnameAsFQDN == nil {
+		resource.Spec.YQLAgents.InstanceSpec.SetHostnameAsFQDN = ptr.Bool(true)
+	}
+
 	srv := newServer(
 		&l,
 		ytsaurus,

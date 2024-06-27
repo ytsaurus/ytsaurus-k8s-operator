@@ -42,6 +42,10 @@ func NewRPCProxy(
 		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.RPCProxyMonitoringPort)
 	}
 
+	if spec.InstanceSpec.SetHostnameAsFQDN == nil {
+		spec.InstanceSpec.SetHostnameAsFQDN = ptr.Bool(true)
+	}
+
 	srv := newServer(
 		&l,
 		ytsaurus,

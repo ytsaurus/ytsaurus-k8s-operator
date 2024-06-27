@@ -52,6 +52,10 @@ func NewQueueAgent(
 		resource.Spec.QueueAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.QueueAgentMonitoringPort)
 	}
 
+	if resource.Spec.QueueAgents.InstanceSpec.SetHostnameAsFQDN == nil {
+		resource.Spec.QueueAgents.InstanceSpec.SetHostnameAsFQDN = ptr.Bool(true)
+	}
+
 	srv := newServer(
 		&l,
 		ytsaurus,

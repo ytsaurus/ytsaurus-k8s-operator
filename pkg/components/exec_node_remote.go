@@ -36,6 +36,10 @@ func NewRemoteExecNodes(
 		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.ExecNodeMonitoringPort)
 	}
 
+	if spec.SetHostnameAsFQDN == nil {
+		spec.SetHostnameAsFQDN = ptr.Bool(true)
+	}
+
 	srv := newServerConfigured(
 		&l,
 		proxy,
