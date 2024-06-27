@@ -1,4 +1,4 @@
-package v1
+package testutil
 
 import (
 	"fmt"
@@ -9,6 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ptr "k8s.io/utils/pointer"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
 const (
@@ -29,44 +31,44 @@ var (
 	masterVolumeSize, _ = resource.ParseQuantity("5Gi")
 )
 
-func createLoggersSpec() []TextLoggerSpec {
-	return []TextLoggerSpec{
+func createLoggersSpec() []ytv1.TextLoggerSpec {
+	return []ytv1.TextLoggerSpec{
 		{
-			BaseLoggerSpec: BaseLoggerSpec{
-				MinLogLevel: LogLevelInfo,
+			BaseLoggerSpec: ytv1.BaseLoggerSpec{
+				MinLogLevel: ytv1.LogLevelInfo,
 				Name:        "info-stderr",
 			},
-			WriterType: LogWriterTypeStderr,
+			WriterType: ytv1.LogWriterTypeStderr,
 		},
 	}
 }
 
-func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
-	return &Ytsaurus{
+func CreateMinimalYtsaurusResource(namespace string) *ytv1.Ytsaurus {
+	return &ytv1.Ytsaurus{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      YtsaurusName,
 			Namespace: namespace,
 		},
-		Spec: YtsaurusSpec{
-			CommonSpec: CommonSpec{
+		Spec: ytv1.YtsaurusSpec{
+			CommonSpec: ytv1.CommonSpec{
 				EphemeralCluster: true,
 				UseShortNames:    true,
 				CoreImage:        CoreImageFirst,
 			},
 			EnableFullUpdate: true,
 			IsManaged:        true,
-			Discovery: DiscoverySpec{
-				InstanceSpec: InstanceSpec{
+			Discovery: ytv1.DiscoverySpec{
+				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount: 1,
 				},
 			},
-			PrimaryMasters: MastersSpec{
-				MasterConnectionSpec: MasterConnectionSpec{
+			PrimaryMasters: ytv1.MastersSpec{
+				MasterConnectionSpec: ytv1.MasterConnectionSpec{
 					CellTag: 1,
 				},
-				InstanceSpec: InstanceSpec{
+				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount: 1,
-					Locations: []LocationSpec{
+					Locations: []ytv1.LocationSpec{
 						{
 							LocationType: "MasterChangelogs",
 							Path:         "/yt/master-data/master-changelogs",
@@ -76,9 +78,9 @@ func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 							Path:         "/yt/master-data/master-snapshots",
 						},
 					},
-					VolumeClaimTemplates: []EmbeddedPersistentVolumeClaim{
+					VolumeClaimTemplates: []ytv1.EmbeddedPersistentVolumeClaim{
 						{
-							EmbeddedObjectMetadata: EmbeddedObjectMetadata{
+							EmbeddedObjectMetadata: ytv1.EmbeddedObjectMetadata{
 								Name: "master-data",
 							},
 							Spec: corev1.PersistentVolumeClaimSpec{
@@ -100,14 +102,14 @@ func CreateMinimalYtsaurusResource(namespace string) *Ytsaurus {
 					Loggers: createLoggersSpec(),
 				},
 			},
-			HTTPProxies: []HTTPProxiesSpec{
+			HTTPProxies: []ytv1.HTTPProxiesSpec{
 				createHTTPProxiesSpec(),
 			},
 		},
 	}
 }
 
-func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
+func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 	ytsaurus := CreateMinimalYtsaurusResource(namespace)
 	ytsaurus = WithBootstrap(ytsaurus)
 	ytsaurus = WithScheduler(ytsaurus)
@@ -119,12 +121,12 @@ func CreateBaseYtsaurusResource(namespace string) *Ytsaurus {
 }
 
 // TODO (l0kix2): merge with ytconfig build spec helpers.
-func WithDataNodes(ytsaurus *Ytsaurus) *Ytsaurus {
+func WithDataNodes(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	return WithDataNodesCount(ytsaurus, 3)
 }
 
-func WithDataNodesCount(ytsaurus *Ytsaurus, count int) *Ytsaurus {
-	ytsaurus.Spec.DataNodes = []DataNodesSpec{
+func WithDataNodesCount(ytsaurus *ytv1.Ytsaurus, count int) *ytv1.Ytsaurus {
+	ytsaurus.Spec.DataNodes = []ytv1.DataNodesSpec{
 		{
 			InstanceSpec: CreateDataNodeInstanceSpec(count),
 		},
@@ -132,12 +134,12 @@ func WithDataNodesCount(ytsaurus *Ytsaurus, count int) *Ytsaurus {
 	return ytsaurus
 }
 
-func WithTabletNodes(ytsaurus *Ytsaurus) *Ytsaurus {
+func WithTabletNodes(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	return WithTabletNodesCount(ytsaurus, 3)
 }
 
-func WithTabletNodesCount(ytsaurus *Ytsaurus, count int) *Ytsaurus {
-	ytsaurus.Spec.TabletNodes = []TabletNodesSpec{
+func WithTabletNodesCount(ytsaurus *ytv1.Ytsaurus, count int) *ytv1.Ytsaurus {
+	ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{
 		{
 			InstanceSpec: CreateTabletNodeSpec(count),
 		},
@@ -145,8 +147,8 @@ func WithTabletNodesCount(ytsaurus *Ytsaurus, count int) *Ytsaurus {
 	return ytsaurus
 }
 
-func WithExecNodes(ytsaurus *Ytsaurus) *Ytsaurus {
-	ytsaurus.Spec.ExecNodes = []ExecNodesSpec{
+func WithExecNodes(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
+	ytsaurus.Spec.ExecNodes = []ytv1.ExecNodesSpec{
 		{
 			InstanceSpec: CreateExecNodeInstanceSpec(),
 		},
@@ -154,33 +156,33 @@ func WithExecNodes(ytsaurus *Ytsaurus) *Ytsaurus {
 	return ytsaurus
 }
 
-func WithScheduler(ytsaurus *Ytsaurus) *Ytsaurus {
-	ytsaurus.Spec.Schedulers = &SchedulersSpec{
-		InstanceSpec: InstanceSpec{
+func WithScheduler(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
+	ytsaurus.Spec.Schedulers = &ytv1.SchedulersSpec{
+		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
 		},
 	}
 	return ytsaurus
 }
 
-func WithControllerAgents(ytsaurus *Ytsaurus) *Ytsaurus {
-	ytsaurus.Spec.ControllerAgents = &ControllerAgentsSpec{
-		InstanceSpec: InstanceSpec{
+func WithControllerAgents(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
+	ytsaurus.Spec.ControllerAgents = &ytv1.ControllerAgentsSpec{
+		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
 		},
 	}
 	return ytsaurus
 }
 
-func WithBootstrap(ytsaurus *Ytsaurus) *Ytsaurus {
-	ytsaurus.Spec.Bootstrap = &BootstrapSpec{
-		TabletCellBundles: &BundlesBootstrapSpec{
-			Sys: &BundleBootstrapSpec{
+func WithBootstrap(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
+	ytsaurus.Spec.Bootstrap = &ytv1.BootstrapSpec{
+		TabletCellBundles: &ytv1.BundlesBootstrapSpec{
+			Sys: &ytv1.BundleBootstrapSpec{
 				TabletCellCount:        2,
 				ChangelogPrimaryMedium: ptr.String("default"),
 				SnapshotPrimaryMedium:  ptr.String("default"),
 			},
-			Default: &BundleBootstrapSpec{
+			Default: &ytv1.BundleBootstrapSpec{
 				TabletCellCount:        2,
 				ChangelogPrimaryMedium: ptr.String("default"),
 				SnapshotPrimaryMedium:  ptr.String("default"),
@@ -190,37 +192,37 @@ func WithBootstrap(ytsaurus *Ytsaurus) *Ytsaurus {
 	return ytsaurus
 }
 
-func WithQueryTracker(ytsaurus *Ytsaurus) *Ytsaurus {
-	ytsaurus.Spec.QueryTrackers = &QueryTrackerSpec{
-		InstanceSpec: InstanceSpec{
+func WithQueryTracker(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
+	ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
+		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
 		},
 	}
 	return ytsaurus
 }
 
-func WithRPCProxies(ytsaurus *Ytsaurus) *Ytsaurus {
-	ytsaurus.Spec.RPCProxies = []RPCProxiesSpec{
+func WithRPCProxies(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
+	ytsaurus.Spec.RPCProxies = []ytv1.RPCProxiesSpec{
 		createRPCProxiesSpec(),
 	}
 	return ytsaurus
 }
 
-func createHTTPProxiesSpec() HTTPProxiesSpec {
-	return HTTPProxiesSpec{
+func createHTTPProxiesSpec() ytv1.HTTPProxiesSpec {
+	return ytv1.HTTPProxiesSpec{
 		ServiceType: "NodePort",
-		InstanceSpec: InstanceSpec{
+		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
 		},
 		HttpNodePort: getPortFromEnv("E2E_HTTP_PROXY_INTERNAL_PORT"),
 	}
 }
 
-func createRPCProxiesSpec() RPCProxiesSpec {
+func createRPCProxiesSpec() ytv1.RPCProxiesSpec {
 	stype := corev1.ServiceTypeNodePort
-	return RPCProxiesSpec{
+	return ytv1.RPCProxiesSpec{
 		ServiceType: &stype,
-		InstanceSpec: InstanceSpec{
+		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
 		},
 		NodePort: getPortFromEnv("E2E_RPC_PROXY_INTERNAL_PORT"),
@@ -230,7 +232,7 @@ func createRPCProxiesSpec() RPCProxiesSpec {
 func getPortFromEnv(envvar string) *int32 {
 	portStr := os.Getenv(envvar)
 	if portStr != "" {
-		port, err := strconv.Atoi(portStr)
+		port, err := strconv.ParseInt(portStr, 10, 32)
 		if err != nil {
 			panic(fmt.Sprintf("Invalid %s value", envvar))
 		}
@@ -239,11 +241,11 @@ func getPortFromEnv(envvar string) *int32 {
 	return nil
 }
 
-func CreateExecNodeInstanceSpec() InstanceSpec {
+func CreateExecNodeInstanceSpec() ytv1.InstanceSpec {
 	execNodeVolumeSize, _ := resource.ParseQuantity("3Gi")
 	execNodeCPU, _ := resource.ParseQuantity("1")
 	execNodeMemory, _ := resource.ParseQuantity("2Gi")
-	return InstanceSpec{
+	return ytv1.InstanceSpec{
 		InstanceCount: 1,
 		Resources: corev1.ResourceRequirements{
 			Requests: corev1.ResourceList{
@@ -252,7 +254,7 @@ func CreateExecNodeInstanceSpec() InstanceSpec {
 			},
 		},
 		Loggers: createLoggersSpec(),
-		Locations: []LocationSpec{
+		Locations: []ytv1.LocationSpec{
 			{
 				LocationType: "ChunkCache",
 				Path:         "/yt/node-data/chunk-cache",
@@ -281,10 +283,10 @@ func CreateExecNodeInstanceSpec() InstanceSpec {
 	}
 }
 
-func CreateDataNodeInstanceSpec(instanceCount int) InstanceSpec {
-	return InstanceSpec{
+func CreateDataNodeInstanceSpec(instanceCount int) ytv1.InstanceSpec {
+	return ytv1.InstanceSpec{
 		InstanceCount: int32(instanceCount),
-		Locations: []LocationSpec{
+		Locations: []ytv1.LocationSpec{
 			{
 				LocationType: "ChunkStore",
 				Path:         "/yt/node-data/chunk-store",
@@ -309,8 +311,8 @@ func CreateDataNodeInstanceSpec(instanceCount int) InstanceSpec {
 	}
 }
 
-func CreateTabletNodeSpec(instanceCount int) InstanceSpec {
-	return InstanceSpec{
+func CreateTabletNodeSpec(instanceCount int) ytv1.InstanceSpec {
+	return ytv1.InstanceSpec{
 		InstanceCount: int32(instanceCount),
 		Loggers:       createLoggersSpec(),
 	}

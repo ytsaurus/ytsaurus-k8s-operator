@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1
+package webhooks
 
 import (
 	"context"
@@ -39,6 +39,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
 
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
@@ -84,7 +86,7 @@ var _ = BeforeSuite(func() {
 	Expect(cfg).NotTo(BeNil())
 
 	scheme := runtime.NewScheme()
-	err = AddToScheme(scheme)
+	err = ytv1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	err = admissionv1beta1.AddToScheme(scheme)
@@ -112,13 +114,13 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	err = (&Ytsaurus{}).SetupWebhookWithManager(mgr)
+	err = (&ytv1.Ytsaurus{}).SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = (&Spyt{}).SetupWebhookWithManager(mgr)
+	err = (&ytv1.Spyt{}).SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = (&Chyt{}).SetupWebhookWithManager(mgr)
+	err = (&ytv1.Chyt{}).SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:webhook

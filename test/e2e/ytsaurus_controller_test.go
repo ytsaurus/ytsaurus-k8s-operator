@@ -30,6 +30,7 @@ import (
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/components"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/yt-k8s-operator/pkg/testutil"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/ytconfig"
 )
 
@@ -229,7 +230,7 @@ func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client)
 
 	By("Run cluster impossible update")
 	Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
-	ytsaurus.Spec.CoreImage = ytv1.CoreImageSecond
+	ytsaurus.Spec.CoreImage = testutil.CoreImageSecond
 	Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
 
 	EventuallyYtsaurus(ctx, name, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStateImpossibleToStart))
@@ -237,7 +238,7 @@ func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client)
 	By("Set previous core image")
 	Eventually(func(g Gomega) {
 		g.Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
-		ytsaurus.Spec.CoreImage = ytv1.CoreImageFirst
+		ytsaurus.Spec.CoreImage = testutil.CoreImageFirst
 		g.Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
 	}, reactionTimeout, pollInterval).Should(Succeed())
 
@@ -256,18 +257,18 @@ type testRow struct {
 var _ = Describe("Basic test for Ytsaurus controller", func() {
 	Context("When setting up the test environment", func() {
 		It(
-			"Should run and update Ytsaurus within same major version", Label("basic"), getSimpleUpdateScenario("test-minor-update", ytv1.CoreImageSecond),
+			"Should run and update Ytsaurus within same major version", Label("basic"), getSimpleUpdateScenario("test-minor-update", testutil.CoreImageSecond),
 		)
 		It(
 			"Should run and update Ytsaurus to the next major version",
-			getSimpleUpdateScenario("test-major-update", ytv1.CoreImageNextVer),
+			getSimpleUpdateScenario("test-major-update", testutil.CoreImageNextVer),
 		)
 		It(
 			"Should be updated according to UpdateSelector=Everything", func(ctx context.Context) {
 				namespace := "testslcteverything"
 
 				By("Creating a Ytsaurus resource")
-				ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 				DeferCleanup(deleteYtsaurus, ytsaurus)
 				name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
 				deployAndCheck(ytsaurus, namespace)
@@ -310,7 +311,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				namespace := "testslctnodes"
 
 				By("Creating a Ytsaurus resource")
-				ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 				DeferCleanup(deleteYtsaurus, ytsaurus)
 				name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
 
@@ -360,7 +361,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				namespace := "testslctother"
 
 				By("Creating a Ytsaurus resource")
-				ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 				DeferCleanup(deleteYtsaurus, ytsaurus)
 				name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
 
@@ -412,8 +413,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 		// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
 		It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", func(ctx context.Context) {
 			namespace := "test3"
-			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
-			ytsaurusKey := types.NamespacedName{Name: ytv1.YtsaurusName, Namespace: namespace}
+			ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
+			ytsaurusKey := types.NamespacedName{Name: testutil.YtsaurusName, Namespace: namespace}
 
 			By("Creating a Ytsaurus resource")
 			g := ytconfig.NewGenerator(ytsaurus, "local")
@@ -469,8 +470,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			namespace := "test4"
 
-			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
-			ytsaurus = ytv1.WithTabletNodes(ytsaurus)
+			ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
+			ytsaurus = testutil.WithTabletNodes(ytsaurus)
 
 			g := ytconfig.NewGenerator(ytsaurus, "local")
 
@@ -518,8 +519,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			namespace := "test5"
 
-			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
-			ytsaurus = ytv1.WithDataNodes(ytsaurus)
+			ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
+			ytsaurus = testutil.WithDataNodes(ytsaurus)
 			ytsaurus.Spec.TabletNodes = make([]ytv1.TabletNodesSpec, 0)
 
 			g := ytconfig.NewGenerator(ytsaurus, "local")
@@ -569,8 +570,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			namespace := "querytrackeraddress"
 
-			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
-			ytsaurus = ytv1.WithQueryTracker(ytsaurus)
+			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+			ytsaurus = testutil.WithQueryTracker(ytsaurus)
 
 			g := ytconfig.NewGenerator(ytsaurus, "local")
 
@@ -589,8 +590,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			namespace := "querytrackeraco"
 
-			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
-			ytsaurus = ytv1.WithQueryTracker(ytsaurus)
+			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+			ytsaurus = testutil.WithQueryTracker(ytsaurus)
 
 			g := ytconfig.NewGenerator(ytsaurus, "local")
 
@@ -673,14 +674,14 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			namespace := "remoteexec"
 
-			ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 			// Ensure that no local exec nodes exist, only remote ones (which will be created later).
 			ytsaurus.Spec.ExecNodes = []ytv1.ExecNodesSpec{}
 			g := ytconfig.NewGenerator(ytsaurus, "local")
 
 			remoteYtsaurus := &ytv1.RemoteYtsaurus{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      ytv1.RemoteResourceName,
+					Name:      testutil.RemoteResourceName,
 					Namespace: namespace,
 				},
 				Spec: ytv1.RemoteYtsaurusSpec{
@@ -694,16 +695,16 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			}
 
 			remoteNodes := &ytv1.RemoteExecNodes{
-				ObjectMeta: metav1.ObjectMeta{Name: ytv1.RemoteResourceName, Namespace: namespace},
+				ObjectMeta: metav1.ObjectMeta{Name: testutil.RemoteResourceName, Namespace: namespace},
 				Spec: ytv1.RemoteExecNodesSpec{
 					RemoteClusterSpec: &corev1.LocalObjectReference{
-						Name: ytv1.RemoteResourceName,
+						Name: testutil.RemoteResourceName,
 					},
 					CommonSpec: ytv1.CommonSpec{
-						CoreImage: ytv1.CoreImageFirst,
+						CoreImage: testutil.CoreImageFirst,
 					},
 					ExecNodesSpec: ytv1.ExecNodesSpec{
-						InstanceSpec: ytv1.CreateExecNodeInstanceSpec(),
+						InstanceSpec: testutil.CreateExecNodeInstanceSpec(),
 					},
 				},
 			}
@@ -739,7 +740,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			Expect(statuses).Should(Not(BeEmpty()))
 			for _, status := range statuses {
 				Expect(status.Address).Should(
-					ContainSubstring("end-"+ytv1.RemoteResourceName),
+					ContainSubstring("end-"+testutil.RemoteResourceName),
 					"actual status: %s", status,
 				)
 			}
@@ -749,8 +750,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			"Rpc proxies should require authentication",
 			func(ctx context.Context) {
 				namespace := "testrpc"
-				ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
-				ytsaurus = ytv1.WithRPCProxies(ytsaurus)
+				ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
+				ytsaurus = testutil.WithRPCProxies(ytsaurus)
 				DeferCleanup(deleteYtsaurus, ytsaurus)
 				deployAndCheck(ytsaurus, namespace)
 
@@ -771,7 +772,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 		It("Sensors should be annotated with host", func(ctx context.Context) {
 			namespace := "testsolomon"
-			ytsaurus := ytv1.CreateMinimalYtsaurusResource(namespace)
+			ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
 			ytsaurus.Spec.HostNetwork = true
 			DeferCleanup(deleteYtsaurus, ytsaurus)
 			deployAndCheck(ytsaurus, namespace)
@@ -873,7 +874,7 @@ func createYtsaurusClient(ytsaurus *ytv1.Ytsaurus, namespace string) yt.Client {
 func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Context) {
 	return func(ctx context.Context) {
 		By("Creating a Ytsaurus resource")
-		ytsaurus := ytv1.CreateBaseYtsaurusResource(namespace)
+		ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 		DeferCleanup(deleteYtsaurus, ytsaurus)
 		name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
 		deployAndCheck(ytsaurus, namespace)
