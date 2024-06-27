@@ -18,9 +18,10 @@ package main
 
 import (
 	"flag"
-	"go.uber.org/zap/zapcore"
 	"os"
 	"strings"
+
+	"go.uber.org/zap/zapcore"
 
 	"github.com/ytsaurus/yt-k8s-operator/controllers"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"

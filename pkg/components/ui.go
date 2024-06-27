@@ -93,7 +93,6 @@ func (u *UI) IsUpdatable() bool {
 func (u *UI) GetType() consts.ComponentType { return consts.UIType }
 
 func (u *UI) Fetch(ctx context.Context) error {
-
 	return resources.Fetch(ctx,
 		u.microservice,
 		u.initJob,
@@ -254,7 +253,6 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 
 	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(u.ytsaurus, u) {
-
 			if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
 					err = removePods(ctx, u.microservice, &u.localComponent)

@@ -31,7 +31,6 @@ func NewHTTPProxy(
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
 	spec ytv1.HTTPProxiesSpec) *HttpProxy {
-
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,

@@ -32,7 +32,6 @@ func NewSpyt(
 	cfgen *ytconfig.Generator,
 	spyt *apiproxy.Spyt,
 	ytsaurus *ytv1.Ytsaurus) *Spyt {
-
 	l := labeller.Labeller{
 		ObjectMeta:     &spyt.GetResource().ObjectMeta,
 		APIProxy:       spyt.APIProxy(),

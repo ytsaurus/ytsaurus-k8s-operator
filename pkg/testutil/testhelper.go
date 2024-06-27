@@ -280,7 +280,6 @@ func FetchAndCheckConfigMapContainsEventually(h *TestHelper, objectKey, cmKey, e
 	require.Contains(h.t, cmData, cmKey)
 	ysonContent := cmData[cmKey]
 	require.Contains(h.t, ysonContent, expectSubstr)
-
 }
 
 func FetchConfigMapData(h *TestHelper, objectKey, mapKey string) string {

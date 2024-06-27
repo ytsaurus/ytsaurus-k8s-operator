@@ -33,7 +33,6 @@ func NewChyt(
 	cfgen *ytconfig.Generator,
 	chyt *apiproxy.Chyt,
 	ytsaurus *ytv1.Ytsaurus) *Chyt {
-
 	l := labeller.Labeller{
 		ObjectMeta:     &chyt.GetResource().ObjectMeta,
 		APIProxy:       chyt.APIProxy(),

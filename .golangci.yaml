@@ -78,7 +78,7 @@ linters:
     # - goconst # finds repeated strings that could be replaced by a constant
     - gocritic # provides diagnostics that check for bugs, performance and style issues
     # - godot # checks if comments end in a period
-    # - goimports # in addition to fixing imports, goimports also formats your code in the same style as gofmt
+    - goimports # in addition to fixing imports, goimports also formats your code in the same style as gofmt
     # - gomnd # detects magic numbers
     - gomoddirectives # manages the use of 'replace', 'retract', and 'excludes' directives in go.mod
     - gomodguard # allow and block lists linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations
@@ -110,7 +110,7 @@ linters:
     # - unparam # reports unused function parameters
     - usestdlibvars # detects the possibility to use variables/constants from the Go standard library
     - wastedassign # finds wasted assignment statements
-    # - whitespace # detects leading and trailing whitespace
+    - whitespace # detects leading and trailing whitespace
     # - wrapcheck # checks that errors returned from external packages are wrapped
     # - wsl # add or remove empty lines
 

@@ -17,7 +17,6 @@ func GetContainerdSocketPath(spec *ytv1.ExecNodesSpec) string {
 }
 
 func (g *NodeGenerator) GetContainerdConfig(spec *ytv1.ExecNodesSpec) ([]byte, error) {
-
 	criSpec := spec.JobEnvironment.CRI
 
 	var rootPath *string
