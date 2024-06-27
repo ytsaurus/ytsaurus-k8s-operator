@@ -679,7 +679,7 @@ _Appears in:_
 | `path` _string_ |  |  | MinLength: 1 <br /> |
 | `medium` _string_ |  | default |  |
 | `quota` _[Quantity](#quantity)_ | Disk space quota, default is size of related volume. |  |  |
-| `watermark` _integer_ | Location watermark threshold in percents of volume size. | 10 | Maximum: 50 <br />Minimum: 1 <br /> |
+| `watermark` _integer_ | Value, as a percentage of the volume size, for watermarks calculation. | 10 | Maximum: 50 <br />Minimum: 1 <br /> |
 | `maxTrashMilliseconds` _integer_ | Max TTL of trash in milliseconds. |  | Minimum: 60000 <br /> |
 
 

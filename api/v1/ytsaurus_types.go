@@ -92,7 +92,7 @@ type LocationSpec struct {
 	// Disk space quota, default is size of related volume.
 	//+optional
 	Quota *resource.Quantity `json:"quota,omitempty"`
-	// Location watermark threshold in percents of volume size.
+	// Value, as a percentage of the volume size, for watermarks calculation.
 	//+kubebuilder:default:=10
 	//+kubebuilder:validation:Minimum:=1
 	//+kubebuilder:validation:Maximum:=50

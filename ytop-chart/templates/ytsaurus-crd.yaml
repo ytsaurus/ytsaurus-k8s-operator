@@ -808,8 +808,8 @@ spec:
                           x-kubernetes-int-or-string: true
                         watermark:
                           default: 10
-                          description: Location watermark threshold in percents of volume
-                            size.
+                          description: Value, as a percentage of the volume size, for
+                            watermarks calculation.
                           format: int32
                           maximum: 50
                           minimum: 1
@@ -3154,8 +3154,8 @@ spec:
                             x-kubernetes-int-or-string: true
                           watermark:
                             default: 10
-                            description: Location watermark threshold in percents of
-                              volume size.
+                            description: Value, as a percentage of the volume size,
+                              for watermarks calculation.
                             format: int32
                             maximum: 50
                             minimum: 1
@@ -5524,8 +5524,8 @@ spec:
                           x-kubernetes-int-or-string: true
                         watermark:
                           default: 10
-                          description: Location watermark threshold in percents of volume
-                            size.
+                          description: Value, as a percentage of the volume size, for
+                            watermarks calculation.
                           format: int32
                           maximum: 50
                           minimum: 1
@@ -8056,8 +8056,8 @@ spec:
                             x-kubernetes-int-or-string: true
                           watermark:
                             default: 10
-                            description: Location watermark threshold in percents of
-                              volume size.
+                            description: Value, as a percentage of the volume size,
+                              for watermarks calculation.
                             format: int32
                             maximum: 50
                             minimum: 1
@@ -10451,8 +10451,8 @@ spec:
                             x-kubernetes-int-or-string: true
                           watermark:
                             default: 10
-                            description: Location watermark threshold in percents of
-                              volume size.
+                            description: Value, as a percentage of the volume size,
+                              for watermarks calculation.
                             format: int32
                             maximum: 50
                             minimum: 1
@@ -12861,8 +12861,8 @@ spec:
                           x-kubernetes-int-or-string: true
                         watermark:
                           default: 10
-                          description: Location watermark threshold in percents of volume
-                            size.
+                          description: Value, as a percentage of the volume size, for
+                            watermarks calculation.
                           format: int32
                           maximum: 50
                           minimum: 1
@@ -15258,8 +15258,8 @@ spec:
                           x-kubernetes-int-or-string: true
                         watermark:
                           default: 10
-                          description: Location watermark threshold in percents of volume
-                            size.
+                          description: Value, as a percentage of the volume size, for
+                            watermarks calculation.
                           format: int32
                           maximum: 50
                           minimum: 1
@@ -17609,8 +17609,8 @@ spec:
                           x-kubernetes-int-or-string: true
                         watermark:
                           default: 10
-                          description: Location watermark threshold in percents of volume
-                            size.
+                          description: Value, as a percentage of the volume size, for
+                            watermarks calculation.
                           format: int32
                           maximum: 50
                           minimum: 1
@@ -19949,8 +19949,8 @@ spec:
                           x-kubernetes-int-or-string: true
                         watermark:
                           default: 10
-                          description: Location watermark threshold in percents of volume
-                            size.
+                          description: Value, as a percentage of the volume size, for
+                            watermarks calculation.
                           format: int32
                           maximum: 50
                           minimum: 1
@@ -22293,8 +22293,8 @@ spec:
                             x-kubernetes-int-or-string: true
                           watermark:
                             default: 10
-                            description: Location watermark threshold in percents of
-                              volume size.
+                            description: Value, as a percentage of the volume size,
+                              for watermarks calculation.
                             format: int32
                             maximum: 50
                             minimum: 1
@@ -24685,8 +24685,8 @@ spec:
                           x-kubernetes-int-or-string: true
                         watermark:
                           default: 10
-                          description: Location watermark threshold in percents of volume
-                            size.
+                          description: Value, as a percentage of the volume size, for
+                            watermarks calculation.
                           format: int32
                           maximum: 50
                           minimum: 1
@@ -27037,8 +27037,8 @@ spec:
                             x-kubernetes-int-or-string: true
                           watermark:
                             default: 10
-                            description: Location watermark threshold in percents of
-                              volume size.
+                            description: Value, as a percentage of the volume size,
+                              for watermarks calculation.
                             format: int32
                             maximum: 50
                             minimum: 1
@@ -29463,8 +29463,8 @@ spec:
                             x-kubernetes-int-or-string: true
                           watermark:
                             default: 10
-                            description: Location watermark threshold in percents of
-                              volume size.
+                            description: Value, as a percentage of the volume size,
+                              for watermarks calculation.
                             format: int32
                             maximum: 50
                             minimum: 1
@@ -31836,8 +31836,8 @@ spec:
                             x-kubernetes-int-or-string: true
                           watermark:
                             default: 10
-                            description: Location watermark threshold in percents of
-                              volume size.
+                            description: Value, as a percentage of the volume size,
+                              for watermarks calculation.
                             format: int32
                             maximum: 50
                             minimum: 1
@@ -34412,8 +34412,8 @@ spec:
                           x-kubernetes-int-or-string: true
                         watermark:
                           default: 10
-                          description: Location watermark threshold in percents of volume
-                            size.
+                          description: Value, as a percentage of the volume size, for
+                            watermarks calculation.
                           format: int32
                           maximum: 50
                           minimum: 1
