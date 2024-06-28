@@ -36,6 +36,11 @@ func getUIClusterCarcass() UICluster {
 	}
 }
 
+type UICustomSettings struct {
+	DirectDownload *bool `yson:"directDownload,omitempty"`
+}
+
 type UICustom struct {
-	OdinBaseUrl *string `yson:"odinBaseUrl,omitempty"`
+	OdinBaseUrl *string           `yson:"odinBaseUrl,omitempty"`
+	Settings    *UICustomSettings `yson:"uiSettings,omitempty"`
 }

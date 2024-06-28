@@ -33926,6 +33926,10 @@ spec:
                 properties:
                   description:
                     type: string
+                  directDownload:
+                    description: When this is set to false, UI will use backend for
+                      downloading instead of proxy.
+                    type: boolean
                   environment:
                     default: testing
                     type: string

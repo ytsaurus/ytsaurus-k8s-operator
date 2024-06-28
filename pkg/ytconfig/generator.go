@@ -699,6 +699,16 @@ func (g *Generator) GetUIClustersConfig() ([]byte, error) {
 	})
 }
 
+func (g *Generator) GetUICustomSettings() *UICustomSettings {
+	directDownload := g.ytsaurus.Spec.UI.DirectDownload
+	if directDownload == nil {
+		return nil
+	}
+	return &UICustomSettings{
+		DirectDownload: directDownload,
+	}
+}
+
 func (g *Generator) GetUICustomConfig() ([]byte, error) {
 	if g.ytsaurus.Spec.UI == nil {
 		return []byte{}, nil
@@ -706,6 +716,7 @@ func (g *Generator) GetUICustomConfig() ([]byte, error) {
 
 	c := UICustom{
 		OdinBaseUrl: g.ytsaurus.Spec.UI.OdinBaseUrl,
+		Settings:    g.GetUICustomSettings(),
 	}
 
 	return marshallYsonConfig(c)
