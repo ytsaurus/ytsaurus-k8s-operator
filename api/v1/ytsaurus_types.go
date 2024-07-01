@@ -272,6 +272,9 @@ type InstanceSpec struct {
 	// SetHostnameAsFQDN indicates whether to set the hostname as FQDN.
 	//+kubebuilder:default:=true
 	SetHostnameAsFQDN *bool `json:"setHostnameAsFqdn,omitempty"`
+	// Optional duration in seconds the pod needs to terminate gracefully.
+	//+optional
+	TerminationGracePeriodSeconds *int64 `json:"terminationGracePeriodSeconds,omitempty"`
 	// Component config for native RPC bus transport.
 	//+optional
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
