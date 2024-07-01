@@ -304,6 +304,9 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		ImagePullSecrets:   s.commonSpec.ImagePullSecrets,
 		SetHostnameAsFQDN:  s.instanceSpec.SetHostnameAsFQDN,
 		EnableServiceLinks: ptr.Bool(false),
+
+		TerminationGracePeriodSeconds: s.instanceSpec.TerminationGracePeriodSeconds,
+
 		Containers: []corev1.Container{
 			{
 				Image:        s.image,

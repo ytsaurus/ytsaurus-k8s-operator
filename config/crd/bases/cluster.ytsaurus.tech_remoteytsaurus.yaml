@@ -939,6 +939,11 @@ spec:
                       type: boolean
                   type: object
                 type: array
+              terminationGracePeriodSeconds:
+                description: Optional duration in seconds the pod needs to terminate
+                  gracefully.
+                format: int64
+                type: integer
               tolerations:
                 items:
                   description: |-

@@ -1057,6 +1057,11 @@ spec:
                           type: boolean
                       type: object
                     type: array
+                  terminationGracePeriodSeconds:
+                    description: Optional duration in seconds the pod needs to terminate
+                      gracefully.
+                    format: int64
+                    type: integer
                   tolerations:
                     items:
                       description: |-
@@ -3462,6 +3467,11 @@ spec:
                       items:
                         type: string
                       type: array
+                    terminationGracePeriodSeconds:
+                      description: Optional duration in seconds the pod needs to terminate
+                        gracefully.
+                      format: int64
+                      type: integer
                     tolerations:
                       items:
                         description: |-
@@ -5855,6 +5865,11 @@ spec:
                           type: boolean
                       type: object
                     type: array
+                  terminationGracePeriodSeconds:
+                    description: Optional duration in seconds the pod needs to terminate
+                      gracefully.
+                    format: int64
+                    type: integer
                   tolerations:
                     items:
                       description: |-
@@ -8454,6 +8469,11 @@ spec:
                       items:
                         type: string
                       type: array
+                    terminationGracePeriodSeconds:
+                      description: Optional duration in seconds the pod needs to terminate
+                        gracefully.
+                      format: int64
+                      type: integer
                     tolerations:
                       items:
                         description: |-
@@ -10876,6 +10896,11 @@ spec:
                             type: boolean
                         type: object
                       type: array
+                    terminationGracePeriodSeconds:
+                      description: Optional duration in seconds the pod needs to terminate
+                        gracefully.
+                      format: int64
+                      type: integer
                     tolerations:
                       items:
                         description: |-
@@ -13312,6 +13337,11 @@ spec:
                           type: boolean
                       type: object
                     type: array
+                  terminationGracePeriodSeconds:
+                    description: Optional duration in seconds the pod needs to terminate
+                      gracefully.
+                    format: int64
+                    type: integer
                   tolerations:
                     items:
                       description: |-
@@ -15762,6 +15792,11 @@ spec:
                           type: boolean
                       type: object
                     type: array
+                  terminationGracePeriodSeconds:
+                    description: Optional duration in seconds the pod needs to terminate
+                      gracefully.
+                    format: int64
+                    type: integer
                   tolerations:
                     items:
                       description: |-
@@ -18148,6 +18183,11 @@ spec:
                           type: boolean
                       type: object
                     type: array
+                  terminationGracePeriodSeconds:
+                    description: Optional duration in seconds the pod needs to terminate
+                      gracefully.
+                    format: int64
+                    type: integer
                   tolerations:
                     items:
                       description: |-
@@ -20532,6 +20572,11 @@ spec:
                           type: boolean
                       type: object
                     type: array
+                  terminationGracePeriodSeconds:
+                    description: Optional duration in seconds the pod needs to terminate
+                      gracefully.
+                    format: int64
+                    type: integer
                   tolerations:
                     items:
                       description: |-
@@ -22934,6 +22979,11 @@ spec:
                             type: boolean
                         type: object
                       type: array
+                    terminationGracePeriodSeconds:
+                      description: Optional duration in seconds the pod needs to terminate
+                        gracefully.
+                      format: int64
+                      type: integer
                     tolerations:
                       items:
                         description: |-
@@ -25350,6 +25400,11 @@ spec:
                           type: boolean
                       type: object
                     type: array
+                  terminationGracePeriodSeconds:
+                    description: Optional duration in seconds the pod needs to terminate
+                      gracefully.
+                    format: int64
+                    type: integer
                   tolerations:
                     items:
                       description: |-
@@ -27758,6 +27813,11 @@ spec:
                             type: boolean
                         type: object
                       type: array
+                    terminationGracePeriodSeconds:
+                      description: Optional duration in seconds the pod needs to terminate
+                        gracefully.
+                      format: int64
+                      type: integer
                     tolerations:
                       items:
                         description: |-
@@ -30225,6 +30285,11 @@ spec:
                       items:
                         type: string
                       type: array
+                    terminationGracePeriodSeconds:
+                      description: Optional duration in seconds the pod needs to terminate
+                        gracefully.
+                      format: int64
+                      type: integer
                     tolerations:
                       items:
                         description: |-
@@ -32641,6 +32706,11 @@ spec:
                             type: boolean
                         type: object
                       type: array
+                    terminationGracePeriodSeconds:
+                      description: Optional duration in seconds the pod needs to terminate
+                        gracefully.
+                      format: int64
+                      type: integer
                     tolerations:
                       items:
                         description: |-
@@ -35241,6 +35311,11 @@ spec:
                           type: boolean
                       type: object
                     type: array
+                  terminationGracePeriodSeconds:
+                    description: Optional duration in seconds the pod needs to terminate
+                      gracefully.
+                    format: int64
+                    type: integer
                   tolerations:
                     items:
                       description: |-
