@@ -319,5 +319,12 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.primaryMasters.hostAddresses: Invalid value")))
 		})
 
+		It("should deny the creation of another YTsaurus CRD", func() {
+			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+
+			ytsaurus = testutil.CreateBaseYtsaurusResource(namespace)
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("Ytsaurus \"default\" is already exists")))
+		})
 	})
 })

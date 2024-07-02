@@ -17,7 +17,12 @@ limitations under the License.
 package v1
 
 import (
+	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -451,6 +456,32 @@ func (r *Ytsaurus) validateInstanceSpec(instanceSpec InstanceSpec, path *field.P
 	return allErrors
 }
 
+func (r *Ytsaurus) validateExistsYTsaurus(ytsaurus *Ytsaurus) field.ErrorList {
+	var allErrors field.ErrorList
+
+	cfg, err := config.GetConfig()
+	if err != nil {
+		allErrors = append(allErrors, field.InternalError(field.NewPath("config"), err))
+		return allErrors
+	}
+	k8sClient, err := client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	if err != nil {
+		allErrors = append(allErrors, field.InternalError(field.NewPath("k8s client"), err))
+		return allErrors
+	}
+
+	ytsaurusLookupKey := types.NamespacedName{Name: ytsaurus.Name, Namespace: ytsaurus.Namespace}
+	existsYtsaurus := &Ytsaurus{}
+	ctx := context.Background()
+	err = k8sClient.Get(ctx, ytsaurusLookupKey, existsYtsaurus)
+	if err == nil {
+		allErrors = append(allErrors, field.Forbidden(nil, fmt.Sprintf("Ytsaurus %s already exists in namespace %s", ytsaurus.Name, ytsaurus.Namespace)))
+	} else if !apierrors.IsNotFound(err) {
+		allErrors = append(allErrors, field.InternalError(field.NewPath("k8s client"), err))
+	}
+	return allErrors
+}
+
 func (r *Ytsaurus) validateYtsaurus(old *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
@@ -472,6 +503,7 @@ func (r *Ytsaurus) validateYtsaurus(old *Ytsaurus) field.ErrorList {
 	allErrors = append(allErrors, r.validateSpyt(old)...)
 	allErrors = append(allErrors, r.validateYQLAgents(old)...)
 	allErrors = append(allErrors, r.validateUi(old)...)
+	allErrors = append(allErrors, r.validateExistsYTsaurus(old)...)
 
 	return allErrors
 }
