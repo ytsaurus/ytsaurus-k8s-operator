@@ -6,7 +6,7 @@ import (
 	"path"
 
 	corev1 "k8s.io/api/core/v1"
-	ptr "k8s.io/utils/pointer" //nolint:staticcheck
+	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 
@@ -61,7 +61,7 @@ func (n *baseExecNode) doBuildBase() error {
 			ct.SecurityContext = &corev1.SecurityContext{}
 		}
 		if ct.SecurityContext.Privileged == nil {
-			ct.SecurityContext.Privileged = ptr.Bool(n.spec.Privileged)
+			ct.SecurityContext.Privileged = ptr.To(n.spec.Privileged)
 		}
 	}
 
@@ -146,7 +146,7 @@ func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSp
 		Args:         []string{"--config", configPath},
 		VolumeMounts: createVolumeMounts(n.spec.VolumeMounts),
 		SecurityContext: &corev1.SecurityContext{
-			Privileged: ptr.Bool(true),
+			Privileged: ptr.To(true),
 		},
 	}
 

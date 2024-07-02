@@ -14,7 +14,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.25.0
-	go.ytsaurus.tech/library/go/ptr v0.0.1
 	go.ytsaurus.tech/yt/go v0.0.16
 	k8s.io/api v0.28.3
 	k8s.io/apimachinery v0.30.2
@@ -71,6 +70,7 @@ require (
 	go.ytsaurus.tech/library/go/blockcodecs v0.0.2 // indirect
 	go.ytsaurus.tech/library/go/core/log v0.0.3 // indirect
 	go.ytsaurus.tech/library/go/core/xerrors v0.0.3 // indirect
+	go.ytsaurus.tech/library/go/ptr v0.0.1 // indirect
 	go.ytsaurus.tech/library/go/x/xreflect v0.0.2 // indirect
 	go.ytsaurus.tech/library/go/x/xruntime v0.0.3 // indirect
 	golang.org/x/crypto v0.21.0 // indirect

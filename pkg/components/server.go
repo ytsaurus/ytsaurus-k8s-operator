@@ -6,7 +6,7 @@ import (
 	"path"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
-	ptr "k8s.io/utils/pointer" //nolint:staticcheck
+	"k8s.io/utils/ptr"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -303,7 +303,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		RuntimeClassName:   s.instanceSpec.RuntimeClassName,
 		ImagePullSecrets:   s.commonSpec.ImagePullSecrets,
 		SetHostnameAsFQDN:  s.instanceSpec.SetHostnameAsFQDN,
-		EnableServiceLinks: ptr.Bool(false),
+		EnableServiceLinks: ptr.To(false),
 
 		TerminationGracePeriodSeconds: s.instanceSpec.TerminationGracePeriodSeconds,
 
@@ -350,7 +350,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		NodeSelector: s.instanceSpec.NodeSelector,
 		Tolerations:  s.instanceSpec.Tolerations,
 	}
-	if ptr.BoolDeref(s.instanceSpec.HostNetwork, s.commonSpec.HostNetwork) {
+	if ptr.Deref(s.instanceSpec.HostNetwork, s.commonSpec.HostNetwork) {
 		statefulSet.Spec.Template.Spec.HostNetwork = true
 		statefulSet.Spec.Template.Spec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
 	}
@@ -376,6 +376,6 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 
 func (s *serverImpl) removePods(ctx context.Context) error {
 	ss := s.rebuildStatefulSet()
-	ss.Spec.Replicas = ptr.Int32(0)
+	ss.Spec.Replicas = ptr.To(int32(0))
 	return s.Sync(ctx)
 }

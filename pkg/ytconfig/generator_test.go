@@ -7,7 +7,7 @@ import (
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
 	"k8s.io/apimachinery/pkg/types"
 
-	"go.ytsaurus.tech/library/go/ptr"
+	"k8s.io/utils/ptr"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -37,7 +37,7 @@ var (
 		"host2.external.address",
 		"host3.external.address",
 	}
-	testBasicInstanceSpec = ytv1.InstanceSpec{InstanceCount: 3, MonitoringPort: ptr.Int32(12345)}
+	testBasicInstanceSpec = ytv1.InstanceSpec{InstanceCount: 3, MonitoringPort: ptr.To(int32(12345))}
 	testStorageClassname  = "yc-network-hdd"
 	testResourceReqs      = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
@@ -422,10 +422,10 @@ func getYtsaurus() *ytv1.Ytsaurus {
 
 			PrimaryMasters: ytv1.MastersSpec{
 				MasterConnectionSpec:   getMasterConnectionSpec(),
-				MaxSnapshotCountToKeep: ptr.Int(1543),
+				MaxSnapshotCountToKeep: ptr.To(1543),
 				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount:  1,
-					MonitoringPort: ptr.Int32(consts.MasterMonitoringPort),
+					MonitoringPort: ptr.To(int32(consts.MasterMonitoringPort)),
 
 					VolumeMounts: []corev1.VolumeMount{
 						{
@@ -529,7 +529,7 @@ func getYtsaurusWithEverything() *ytv1.Ytsaurus {
 func withControllerAgents(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.ControllerAgents = &ytv1.ControllerAgentsSpec{InstanceSpec: testBasicInstanceSpec}
 	ytsaurus.Spec.UsePorto = true
-	ytsaurus.Spec.ControllerAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.ControllerAgentMonitoringPort)
+	ytsaurus.Spec.ControllerAgents.InstanceSpec.MonitoringPort = ptr.To(int32(consts.ControllerAgentMonitoringPort))
 	return ytsaurus
 }
 
@@ -554,19 +554,19 @@ func withResolverConfigured(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 
 func withDiscovery(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.Discovery = ytv1.DiscoverySpec{InstanceSpec: testBasicInstanceSpec}
-	ytsaurus.Spec.Discovery.InstanceSpec.MonitoringPort = ptr.Int32(consts.DiscoveryMonitoringPort)
+	ytsaurus.Spec.Discovery.InstanceSpec.MonitoringPort = ptr.To(int32(consts.DiscoveryMonitoringPort))
 	return ytsaurus
 }
 
 func withQueryTracker(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{InstanceSpec: testBasicInstanceSpec}
-	ytsaurus.Spec.QueryTrackers.InstanceSpec.MonitoringPort = ptr.Int32(consts.QueryTrackerMonitoringPort)
+	ytsaurus.Spec.QueryTrackers.InstanceSpec.MonitoringPort = ptr.To(int32(consts.QueryTrackerMonitoringPort))
 	return ytsaurus
 }
 
 func withQueueAgent(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: testBasicInstanceSpec}
-	ytsaurus.Spec.QueueAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.QueueAgentMonitoringPort)
+	ytsaurus.Spec.QueueAgents.InstanceSpec.MonitoringPort = ptr.To(int32(consts.QueueAgentMonitoringPort))
 	return ytsaurus
 }
 
@@ -581,7 +581,7 @@ func withStrawberry(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 
 func withScheduler(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.Schedulers = &ytv1.SchedulersSpec{InstanceSpec: testBasicInstanceSpec}
-	ytsaurus.Spec.Schedulers.InstanceSpec.MonitoringPort = ptr.Int32(consts.SchedulerMonitoringPort)
+	ytsaurus.Spec.Schedulers.InstanceSpec.MonitoringPort = ptr.To(int32(consts.SchedulerMonitoringPort))
 	return ytsaurus
 }
 
@@ -598,7 +598,7 @@ func withTCPProxies(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 			PortCount:    20000,
 		},
 	}
-	ytsaurus.Spec.TCPProxies[0].InstanceSpec.MonitoringPort = ptr.Int32(consts.TCPProxyMonitoringPort)
+	ytsaurus.Spec.TCPProxies[0].InstanceSpec.MonitoringPort = ptr.To(int32(consts.TCPProxyMonitoringPort))
 	return ytsaurus
 }
 
@@ -633,19 +633,19 @@ func withUICustomSettings(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 
 func withMasterCaches(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.MasterCaches = &ytv1.MasterCachesSpec{InstanceSpec: testBasicInstanceSpec}
-	ytsaurus.Spec.MasterCaches.InstanceSpec.MonitoringPort = ptr.Int32(consts.MasterCachesMonitoringPort)
+	ytsaurus.Spec.MasterCaches.InstanceSpec.MonitoringPort = ptr.To(int32(consts.MasterCachesMonitoringPort))
 	return ytsaurus
 }
 
 func withYQLAgent(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.YQLAgents = &ytv1.YQLAgentSpec{InstanceSpec: testBasicInstanceSpec}
-	ytsaurus.Spec.YQLAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.YQLAgentMonitoringPort)
+	ytsaurus.Spec.YQLAgents.InstanceSpec.MonitoringPort = ptr.To(int32(consts.YQLAgentMonitoringPort))
 	return ytsaurus
 }
 
 func withFixedMasterCachesHosts(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.MasterCaches.MasterCachesConnectionSpec.HostAddresses = testMasterCachesExternalHosts
-	ytsaurus.Spec.MasterCaches.InstanceSpec.MonitoringPort = ptr.Int32(consts.MasterCachesMonitoringPort)
+	ytsaurus.Spec.MasterCaches.InstanceSpec.MonitoringPort = ptr.To(int32(consts.MasterCachesMonitoringPort))
 	return ytsaurus
 }
 
@@ -653,7 +653,7 @@ func getDataNodeSpec(locations ...ytv1.LocationSpec) ytv1.DataNodesSpec {
 	return ytv1.DataNodesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:        20,
-			MonitoringPort:       ptr.Int32(consts.DataNodeMonitoringPort),
+			MonitoringPort:       ptr.To(int32(consts.DataNodeMonitoringPort)),
 			Resources:            testResourceReqs,
 			Locations:            locations,
 			VolumeMounts:         testVolumeMounts,
@@ -670,7 +670,7 @@ func getExecNodeSpec(jobResources *corev1.ResourceRequirements) ytv1.ExecNodesSp
 	return ytv1.ExecNodesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:  50,
-			MonitoringPort: ptr.Int32(consts.ExecNodeMonitoringPort),
+			MonitoringPort: ptr.To(int32(consts.ExecNodeMonitoringPort)),
 			Resources:      testResourceReqs,
 			Locations: []ytv1.LocationSpec{
 				testLocationChunkCache,
@@ -708,16 +708,16 @@ func withCri(spec ytv1.ExecNodesSpec, jobResources *corev1.ResourceRequirements,
 	spec.Locations = append(spec.Locations, testLocationImageCache)
 	spec.JobResources = jobResources
 	spec.JobEnvironment = &ytv1.JobEnvironmentSpec{
-		UserSlots: ptr.Int(42),
+		UserSlots: ptr.To(int(42)),
 		CRI: &ytv1.CRIJobEnvironmentSpec{
-			SandboxImage:           ptr.String("registry.k8s.io/pause:3.8"),
-			APIRetryTimeoutSeconds: ptr.Int32(120),
-			CRINamespace:           ptr.String("yt"),
-			BaseCgroup:             ptr.String("/yt"),
+			SandboxImage:           ptr.To("registry.k8s.io/pause:3.8"),
+			APIRetryTimeoutSeconds: ptr.To(int32(120)),
+			CRINamespace:           ptr.To("yt"),
+			BaseCgroup:             ptr.To("/yt"),
 		},
-		UseArtifactBinds: ptr.Bool(true),
-		DoNotSetUserId:   ptr.Bool(true),
-		Isolated:         ptr.Bool(isolated),
+		UseArtifactBinds: ptr.To(true),
+		DoNotSetUserId:   ptr.To(true),
+		Isolated:         ptr.To(isolated),
 	}
 	return spec
 }
@@ -726,7 +726,7 @@ func getTabletNodeSpec() ytv1.TabletNodesSpec {
 	return ytv1.TabletNodesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:  100,
-			MonitoringPort: ptr.Int32(consts.TabletNodeMonitoringPort),
+			MonitoringPort: ptr.To(int32(consts.TabletNodeMonitoringPort)),
 			Resources:      testResourceReqs,
 			Locations: []ytv1.LocationSpec{
 				testLocationChunkCache,
@@ -745,7 +745,7 @@ func getHTTPProxySpec() ytv1.HTTPProxiesSpec {
 	return ytv1.HTTPProxiesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:  3,
-			MonitoringPort: ptr.Int32(consts.HTTPProxyMonitoringPort),
+			MonitoringPort: ptr.To(int32(consts.HTTPProxyMonitoringPort)),
 		},
 		ServiceType: corev1.ServiceTypeNodePort,
 		Role:        "control",
@@ -761,7 +761,7 @@ func getRPCProxySpec() ytv1.RPCProxiesSpec {
 	return ytv1.RPCProxiesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:  3,
-			MonitoringPort: ptr.Int32(consts.RPCProxyMonitoringPort),
+			MonitoringPort: ptr.To(int32(consts.RPCProxyMonitoringPort)),
 		},
 		Role: "default",
 	}
@@ -771,7 +771,7 @@ func getTCPProxySpec() ytv1.TCPProxiesSpec {
 	return ytv1.TCPProxiesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:  3,
-			MonitoringPort: ptr.Int32(consts.TCPProxyMonitoringPort),
+			MonitoringPort: ptr.To(int32(consts.TCPProxyMonitoringPort)),
 		},
 		Role: "default",
 	}
@@ -800,7 +800,7 @@ func getMasterCachesSpec() ytv1.MasterCachesSpec {
 	return ytv1.MasterCachesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:  3,
-			MonitoringPort: ptr.Int32(consts.MasterCachesMonitoringPort),
+			MonitoringPort: ptr.To(int32(consts.MasterCachesMonitoringPort)),
 		},
 		HostAddressLabel: "",
 	}

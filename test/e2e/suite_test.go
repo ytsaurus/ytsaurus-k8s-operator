@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	ptr "k8s.io/utils/pointer" //nolint:staticcheck
+	"k8s.io/utils/ptr"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -72,7 +72,7 @@ var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	testEnv := &envtest.Environment{
 		CRDDirectoryPaths:        []string{filepath.Join("..", "..", "config", "crd", "bases")},
 		ErrorIfCRDPathMissing:    true,
-		UseExistingCluster:       ptr.Bool(true),
+		UseExistingCluster:       ptr.To(true),
 		AttachControlPlaneOutput: true,
 		Config:                   cfg,
 	}

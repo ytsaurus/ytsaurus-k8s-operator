@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"go.ytsaurus.tech/library/go/ptr"
+	"k8s.io/utils/ptr"
+
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
@@ -47,7 +48,7 @@ func NewQueryTracker(
 	}
 
 	if resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort == nil {
-		resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort = ptr.Int32(consts.QueryTrackerMonitoringPort)
+		resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort = ptr.To(int32(consts.QueryTrackerMonitoringPort))
 	}
 
 	srv := newServer(
@@ -438,12 +439,12 @@ func (qt *QueryTracker) updateQTState(ctx context.Context, dry bool) (*Component
 	switch qt.ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:
 		if !qt.initQTState.isRestartPrepared() {
-			return ptr.T(SimpleStatus(SyncStatusUpdating)), qt.initQTState.prepareRestart(ctx, dry)
+			return ptr.To(SimpleStatus(SyncStatusUpdating)), qt.initQTState.prepareRestart(ctx, dry)
 		}
 		if !dry {
 			qt.setConditionQTStatePreparedForUpdating(ctx)
 		}
-		return ptr.T(SimpleStatus(SyncStatusUpdating)), err
+		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
 	case ytv1.UpdateStateWaitingForQTStateUpdate:
 		if !qt.initQTState.isRestartCompleted() {
 			return nil, nil
@@ -451,7 +452,7 @@ func (qt *QueryTracker) updateQTState(ctx context.Context, dry bool) (*Component
 		if !dry {
 			qt.setConditionQTStateUpdated(ctx)
 		}
-		return ptr.T(SimpleStatus(SyncStatusUpdating)), err
+		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
 	default:
 		return nil, nil
 	}

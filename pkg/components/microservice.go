@@ -3,7 +3,7 @@ package components
 import (
 	"context"
 
-	ptr "k8s.io/utils/pointer" //nolint:staticcheck
+	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 
@@ -185,7 +185,7 @@ func (m *microserviceImpl) podsImageCorrespondsToSpec() bool {
 func (m *microserviceImpl) removePods(ctx context.Context) error {
 	m.builtDeployment = m.deployment.Build()
 	m.builtDeployment.Spec = m.deployment.OldObject().(*appsv1.Deployment).Spec
-	m.builtDeployment.Spec.Replicas = ptr.Int32(0)
+	m.builtDeployment.Spec.Replicas = ptr.To(int32(0))
 	return m.Sync(ctx)
 }
 

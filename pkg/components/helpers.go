@@ -10,7 +10,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/yaml"
 
-	"go.ytsaurus.tech/library/go/ptr"
+	"k8s.io/utils/ptr"
+
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
@@ -132,14 +133,14 @@ func handleUpdatingClusterState(
 			if !dry {
 				err = removePods(ctx, server, cmpBase)
 			}
-			return ptr.T(WaitingStatus(SyncStatusUpdating, "pods removal")), err
+			return ptr.To(WaitingStatus(SyncStatusUpdating, "pods removal")), err
 		}
 
 		if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
-			return ptr.T(NewComponentStatus(SyncStatusReady, "Nothing to do now")), err
+			return ptr.To(NewComponentStatus(SyncStatusReady, "Nothing to do now")), err
 		}
 	} else {
-		return ptr.T(NewComponentStatus(SyncStatusReady, "Not updating component")), err
+		return ptr.To(NewComponentStatus(SyncStatusReady, "Not updating component")), err
 	}
 	return nil, err
 }

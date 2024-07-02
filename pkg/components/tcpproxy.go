@@ -3,7 +3,8 @@ package components
 import (
 	"context"
 
-	"go.ytsaurus.tech/library/go/ptr"
+	"k8s.io/utils/ptr"
+
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
@@ -38,7 +39,7 @@ func NewTCPProxy(
 	}
 
 	if spec.InstanceSpec.MonitoringPort == nil {
-		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.TCPProxyMonitoringPort)
+		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.TCPProxyMonitoringPort))
 	}
 
 	srv := newServer(

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path"
 
-	"go.ytsaurus.tech/library/go/ptr"
+	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
@@ -126,7 +126,7 @@ func createBaseLoggingRule(spec ytv1.BaseLoggerSpec) LoggingRule {
 func createLoggingRule(spec ytv1.TextLoggerSpec) LoggingRule {
 	loggingRule := createBaseLoggingRule(spec.BaseLoggerSpec)
 
-	loggingRule.Family = ptr.T(LogFamilyPlainText)
+	loggingRule.Family = ptr.To(LogFamilyPlainText)
 
 	if spec.CategoriesFilter != nil {
 		switch spec.CategoriesFilter.Type {
@@ -142,7 +142,7 @@ func createLoggingRule(spec ytv1.TextLoggerSpec) LoggingRule {
 
 func createStructuredLoggingRule(spec ytv1.StructuredLoggerSpec) LoggingRule {
 	loggingRule := createBaseLoggingRule(spec.BaseLoggerSpec)
-	loggingRule.Family = ptr.T(LogFamilyStructured)
+	loggingRule.Family = ptr.To(LogFamilyStructured)
 	loggingRule.IncludeCategories = []string{spec.Category}
 
 	return loggingRule
