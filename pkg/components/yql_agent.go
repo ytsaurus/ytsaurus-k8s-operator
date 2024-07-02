@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"go.ytsaurus.tech/library/go/ptr"
+	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 
@@ -37,7 +37,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 	}
 
 	if resource.Spec.YQLAgents.InstanceSpec.MonitoringPort == nil {
-		resource.Spec.YQLAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.YQLAgentMonitoringPort)
+		resource.Spec.YQLAgents.InstanceSpec.MonitoringPort = ptr.To(int32(consts.YQLAgentMonitoringPort))
 	}
 
 	srv := newServer(

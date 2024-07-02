@@ -8,7 +8,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ptr "k8s.io/utils/pointer" //nolint:staticcheck
+
+	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 )
@@ -179,13 +180,13 @@ func WithBootstrap(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 		TabletCellBundles: &ytv1.BundlesBootstrapSpec{
 			Sys: &ytv1.BundleBootstrapSpec{
 				TabletCellCount:        2,
-				ChangelogPrimaryMedium: ptr.String("default"),
-				SnapshotPrimaryMedium:  ptr.String("default"),
+				ChangelogPrimaryMedium: ptr.To("default"),
+				SnapshotPrimaryMedium:  ptr.To("default"),
 			},
 			Default: &ytv1.BundleBootstrapSpec{
 				TabletCellCount:        2,
-				ChangelogPrimaryMedium: ptr.String("default"),
-				SnapshotPrimaryMedium:  ptr.String("default"),
+				ChangelogPrimaryMedium: ptr.To("default"),
+				SnapshotPrimaryMedium:  ptr.To("default"),
 			},
 		},
 	}
@@ -236,7 +237,7 @@ func getPortFromEnv(envvar string) *int32 {
 		if err != nil {
 			panic(fmt.Sprintf("Invalid %s value", envvar))
 		}
-		return ptr.Int32(int32(port))
+		return ptr.To(int32(port))
 	}
 	return nil
 }

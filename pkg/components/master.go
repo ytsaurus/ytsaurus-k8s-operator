@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"go.ytsaurus.tech/library/go/ptr"
+	"k8s.io/utils/ptr"
+
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
@@ -43,7 +44,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 	}
 
 	if resource.Spec.PrimaryMasters.InstanceSpec.MonitoringPort == nil {
-		resource.Spec.PrimaryMasters.InstanceSpec.MonitoringPort = ptr.Int32(consts.MasterMonitoringPort)
+		resource.Spec.PrimaryMasters.InstanceSpec.MonitoringPort = ptr.To(int32(consts.MasterMonitoringPort))
 	}
 
 	srv := newServer(
@@ -357,14 +358,14 @@ func (m *Master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, 
 	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterExitReadOnlyPrepared) {
 		if !m.exitReadOnlyJob.isRestartPrepared() {
 			if err := m.exitReadOnlyJob.prepareRestart(ctx, dry); err != nil {
-				return ptr.T(SimpleStatus(SyncStatusUpdating)), err
+				return ptr.To(SimpleStatus(SyncStatusUpdating)), err
 			}
 		}
 
 		if !dry {
 			m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionTrue)
 		}
-		return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
+		return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
 	}
 
 	if !m.exitReadOnlyJob.IsCompleted() {
@@ -384,7 +385,7 @@ func (m *Master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, 
 		})
 		m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionFalse)
 	}
-	return ptr.T(SimpleStatus(SyncStatusUpdating)), nil
+	return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
 }
 
 func (m *Master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav1.ConditionStatus) {

@@ -3,8 +3,8 @@ package components
 import (
 	"context"
 
-	"go.ytsaurus.tech/library/go/ptr"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -29,7 +29,7 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Disco
 	}
 
 	if resource.Spec.Discovery.InstanceSpec.MonitoringPort == nil {
-		resource.Spec.Discovery.InstanceSpec.MonitoringPort = ptr.Int32(consts.DiscoveryMonitoringPort)
+		resource.Spec.Discovery.InstanceSpec.MonitoringPort = ptr.To(int32(consts.DiscoveryMonitoringPort))
 	}
 
 	srv := newServer(

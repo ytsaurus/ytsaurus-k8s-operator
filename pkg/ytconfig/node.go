@@ -8,7 +8,7 @@ import (
 
 	"go.ytsaurus.tech/yt/go/yson"
 
-	ptr "k8s.io/utils/pointer" //nolint:staticcheck
+	"k8s.io/utils/ptr"
 
 	"k8s.io/apimachinery/pkg/api/resource"
 
@@ -244,7 +244,7 @@ func findVolume(volumeName string, spec ytv1.InstanceSpec) *corev1.Volume {
 
 func findQuotaForLocation(location ytv1.LocationSpec, spec ytv1.InstanceSpec) *int64 {
 	if quota := location.Quota; quota != nil {
-		return ptr.Int64(quota.Value())
+		return ptr.To(quota.Value())
 	}
 
 	mount := findVolumeMountForPath(location.Path, spec)
@@ -255,11 +255,11 @@ func findQuotaForLocation(location ytv1.LocationSpec, spec ytv1.InstanceSpec) *i
 	if claim := findVolumeClaimTemplate(mount.Name, spec); claim != nil {
 		storage := claim.Spec.Resources.Requests.Storage()
 		if storage != nil && !storage.IsZero() {
-			return ptr.Int64(storage.Value())
+			return ptr.To(storage.Value())
 		}
 	} else if volume := findVolume(mount.Name, spec); volume != nil {
 		if volume.EmptyDir != nil && volume.EmptyDir.SizeLimit != nil {
-			return ptr.Int64(volume.EmptyDir.SizeLimit.Value())
+			return ptr.To(volume.EmptyDir.SizeLimit.Value())
 		}
 	}
 
@@ -374,15 +374,15 @@ func getExecNodeResourceLimits(spec *ytv1.ExecNodesSpec) ResourceLimits {
 		totalMemory.Add(getResourceQuantity(spec.JobResources, corev1.ResourceMemory))
 		totalCpu.Add(getResourceQuantity(spec.JobResources, corev1.ResourceCPU))
 
-		resourceLimits.NodeDedicatedCpu = ptr.Float32(float32(nodeCpu.AsApproximateFloat64()))
+		resourceLimits.NodeDedicatedCpu = ptr.To(float32(nodeCpu.AsApproximateFloat64()))
 	} else {
 		// TODO(khlebnikov): Add better defaults.
-		resourceLimits.NodeDedicatedCpu = ptr.Float32(0)
+		resourceLimits.NodeDedicatedCpu = ptr.To(float32(0))
 	}
 
 	resourceLimits.TotalMemory = totalMemory.Value()
 	if !totalCpu.IsZero() {
-		resourceLimits.TotalCpu = ptr.Float32(float32(totalCpu.AsApproximateFloat64()))
+		resourceLimits.TotalCpu = ptr.To(float32(totalCpu.AsApproximateFloat64()))
 	}
 
 	return resourceLimits
@@ -407,18 +407,18 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 		if jobImage := commonSpec.JobImage; jobImage != nil {
 			jobEnv.JobProxyImage = *jobImage
 		} else {
-			jobEnv.JobProxyImage = ptr.StringDeref(spec.Image, commonSpec.CoreImage)
+			jobEnv.JobProxyImage = ptr.Deref(spec.Image, commonSpec.CoreImage)
 		}
 
-		jobEnv.UseJobProxyFromImage = ptr.Bool(false)
+		jobEnv.UseJobProxyFromImage = ptr.To(false)
 
 		endpoint := "unix://" + GetContainerdSocketPath(spec)
 
 		jobEnv.CriExecutor = &CriExecutor{
 			RuntimeEndpoint: endpoint,
 			ImageEndpoint:   endpoint,
-			Namespace:       ptr.StringDeref(envSpec.CRI.CRINamespace, consts.CRINamespace),
-			BaseCgroup:      ptr.StringDeref(envSpec.CRI.BaseCgroup, consts.CRIBaseCgroup),
+			Namespace:       ptr.Deref(envSpec.CRI.CRINamespace, consts.CRINamespace),
+			BaseCgroup:      ptr.Deref(envSpec.CRI.BaseCgroup, consts.CRIBaseCgroup),
 		}
 
 		if timeout := envSpec.CRI.APIRetryTimeoutSeconds; timeout != nil {
@@ -436,7 +436,7 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 				AlwaysPullLatest:    envSpec.CRI.AlwaysPullLatestImage,
 			}
 			if ratio := envSpec.CRI.ImageCompressionRatioEstimation; ratio != nil {
-				jobEnv.CriImageCache.ImageCompressionRatioEstimation = ptr.Float32(float32(*ratio))
+				jobEnv.CriImageCache.ImageCompressionRatioEstimation = ptr.To(float32(*ratio))
 			}
 			if period := envSpec.CRI.ImagePullPeriodSeconds; period != nil {
 				jobEnv.CriImageCache.PullPeriod = yson.Duration(time.Duration(*period) * time.Second)
@@ -444,7 +444,7 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 		}
 
 		// NOTE: Default was "false", now it's "true" and option was moved into dynamic config.
-		execNode.UseArtifactBindsLegacy = ptr.Bool(ptr.BoolDeref(envSpec.UseArtifactBinds, true))
+		execNode.UseArtifactBindsLegacy = ptr.To(ptr.Deref(envSpec.UseArtifactBinds, true))
 		if !*execNode.UseArtifactBindsLegacy {
 			// Bind mount chunk cache into job containers if artifact are passed via symlinks.
 			for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
@@ -457,14 +457,14 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 		}
 
 		// FIXME(khlebnikov): For now running jobs as non-root is more likely broken.
-		execNode.SlotManager.DoNotSetUserId = ptr.Bool(ptr.BoolDeref(envSpec.DoNotSetUserId, true))
+		execNode.SlotManager.DoNotSetUserId = ptr.To(ptr.Deref(envSpec.DoNotSetUserId, true))
 
 		// Enable tmpfs if exec node can mount and propagate into job container.
-		execNode.SlotManager.EnableTmpfs = ptr.Bool(func() bool {
+		execNode.SlotManager.EnableTmpfs = ptr.To(func() bool {
 			if !spec.Privileged {
 				return false
 			}
-			if !ptr.BoolDeref(envSpec.Isolated, true) {
+			if !ptr.Deref(envSpec.Isolated, true) {
 				return true
 			}
 			for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeSlots) {
@@ -477,14 +477,14 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 		}())
 
 		// Forward environment variables set in docker image from job proxy to user job process.
-		execNode.JobProxy.ForwardAllEnvironmentVariables = ptr.Bool(true)
+		execNode.JobProxy.ForwardAllEnvironmentVariables = ptr.To(true)
 	} else if commonSpec.UsePorto {
 		jobEnv.Type = JobEnvironmentTypePorto
-		execNode.SlotManager.EnableTmpfs = ptr.Bool(true)
+		execNode.SlotManager.EnableTmpfs = ptr.To(true)
 		// TODO(psushin): volume locations, root fs binds, etc.
 	} else {
 		jobEnv.Type = JobEnvironmentTypeSimple
-		execNode.SlotManager.EnableTmpfs = ptr.Bool(spec.Privileged)
+		execNode.SlotManager.EnableTmpfs = ptr.To(spec.Privileged)
 	}
 
 	return nil
@@ -516,14 +516,14 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 			slotLocation.DiskQuota = quota
 
 			// These are just simple heuristics.
-			slotLocation.DiskUsageWatermark = ptr.Int64(min(*quota/10, consts.MaxSlotLocationReserve))
+			slotLocation.DiskUsageWatermark = ptr.To(min(*quota/10, consts.MaxSlotLocationReserve))
 		} else {
 			// Do not reserve anything if total disk size is unknown.
-			slotLocation.DiskUsageWatermark = ptr.Int64(0)
+			slotLocation.DiskUsageWatermark = ptr.To(int64(0))
 		}
 
 		// Disk quota isn't generally available for k8s volumes yet.
-		slotLocation.EnableDiskQuota = ptr.Bool(false)
+		slotLocation.EnableDiskQuota = ptr.To(false)
 
 		c.ExecNode.SlotManager.Locations = append(c.ExecNode.SlotManager.Locations, slotLocation)
 	}
@@ -533,12 +533,12 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	}
 
 	if spec.JobEnvironment != nil && spec.JobEnvironment.UserSlots != nil {
-		c.JobResourceManager.ResourceLimits.UserSlots = ptr.Int(*spec.JobEnvironment.UserSlots)
+		c.JobResourceManager.ResourceLimits.UserSlots = ptr.To(*spec.JobEnvironment.UserSlots)
 	} else {
 		// Dummy heuristic.
-		jobCpu := ptr.Float32Deref(c.ResourceLimits.TotalCpu, 0) - ptr.Float32Deref(c.ResourceLimits.NodeDedicatedCpu, 0)
+		jobCpu := ptr.Deref(c.ResourceLimits.TotalCpu, 0) - ptr.Deref(c.ResourceLimits.NodeDedicatedCpu, 0)
 		if jobCpu > 0 {
-			c.JobResourceManager.ResourceLimits.UserSlots = ptr.Int(int(5 * jobCpu))
+			c.JobResourceManager.ResourceLimits.UserSlots = ptr.To(int(5 * jobCpu))
 		}
 	}
 

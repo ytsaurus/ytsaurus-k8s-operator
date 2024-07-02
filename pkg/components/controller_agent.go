@@ -3,8 +3,8 @@ package components
 import (
 	"context"
 
-	"go.ytsaurus.tech/library/go/ptr"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -30,7 +30,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 	}
 
 	if resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort == nil {
-		resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort = ptr.Int32(consts.ControllerAgentMonitoringPort)
+		resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort = ptr.To(int32(consts.ControllerAgentMonitoringPort))
 	}
 
 	srv := newServer(

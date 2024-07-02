@@ -11,7 +11,8 @@ import (
 	"go.ytsaurus.tech/yt/go/yt"
 	"go.ytsaurus.tech/yt/go/yt/ythttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ptr "k8s.io/utils/pointer" //nolint:staticcheck
+
+	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -601,8 +602,8 @@ func (yc *YtsaurusClient) StartBuildMasterSnapshots(ctx context.Context, monitor
 	}
 
 	_, err = yc.ytClient.BuildMasterSnapshots(ctx, &yt.BuildMasterSnapshotsOptions{
-		WaitForSnapshotCompletion: ptr.Bool(false),
-		SetReadOnly:               ptr.Bool(true),
+		WaitForSnapshotCompletion: ptr.To(false),
+		SetReadOnly:               ptr.To(true),
 	})
 
 	return err

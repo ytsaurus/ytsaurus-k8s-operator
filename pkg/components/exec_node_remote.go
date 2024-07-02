@@ -3,8 +3,8 @@ package components
 import (
 	"context"
 
-	"go.ytsaurus.tech/library/go/ptr"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
 	"github.com/ytsaurus/yt-k8s-operator/pkg/apiproxy"
@@ -33,7 +33,7 @@ func NewRemoteExecNodes(
 	}
 
 	if spec.InstanceSpec.MonitoringPort == nil {
-		spec.InstanceSpec.MonitoringPort = ptr.Int32(consts.ExecNodeMonitoringPort)
+		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.ExecNodeMonitoringPort))
 	}
 
 	srv := newServerConfigured(

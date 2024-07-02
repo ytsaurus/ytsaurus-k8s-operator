@@ -177,8 +177,6 @@ linters-settings:
         alias: kerrors
       - pkg: k8s.io/component-base/logs/api/v1
         alias: logsv1
-      - pkg: k8s.io/utils/pointer
-        alias: ptr
       # Controller Runtime
       - pkg: sigs.k8s.io/controller-runtime
         alias: ctrl
