@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -460,6 +459,11 @@ func (r *Ytsaurus) validateInstanceSpec(instanceSpec InstanceSpec, path *field.P
 func (r *Ytsaurus) validateExistsYTsaurus(ytsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
+	// if ytsaurus is nil, there no such object in the given namespace, we can proceed
+	if ytsaurus == nil {
+		return allErrors
+	}
+
 	cfg, err := config.GetConfig()
 	if err != nil {
 		allErrors = append(allErrors, field.InternalError(field.NewPath("config"), err))
@@ -471,12 +475,11 @@ func (r *Ytsaurus) validateExistsYTsaurus(ytsaurus *Ytsaurus) field.ErrorList {
 		return allErrors
 	}
 
-	ytsaurusLookupKey := types.NamespacedName{Name: ytsaurus.Name, Namespace: ytsaurus.Namespace}
-	existsYtsaurus := &Ytsaurus{}
-	ctx := context.Background()
-	err = k8sClient.Get(ctx, ytsaurusLookupKey, existsYtsaurus)
+	var ytsaurusList YtsaurusList
+
+	err = k8sClient.List(context.TODO(), &ytsaurusList, &client.ListOptions{Namespace: ytsaurus.Namespace})
 	if err == nil {
-		allErrors = append(allErrors, field.Forbidden(nil, fmt.Sprintf("Ytsaurus %s already exists in namespace %s", ytsaurus.Name, ytsaurus.Namespace)))
+		allErrors = append(allErrors, field.Forbidden(nil, fmt.Sprintf("A Ytsaurus object already exists in namespace %s", ytsaurus.Namespace)))
 	} else if !apierrors.IsNotFound(err) {
 		allErrors = append(allErrors, field.InternalError(field.NewPath("k8s client"), err))
 	}
