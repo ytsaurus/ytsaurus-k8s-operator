@@ -485,6 +485,10 @@ type UISpec struct {
 	Resources          corev1.ResourceRequirements `json:"resources,omitempty"`
 	InstanceCount      int32                       `json:"instanceCount,omitempty"`
 
+	// If defined it will be used for direct heavy url/commands like: read_table, write_table, etc.
+	//+optional
+	ExternalProxy *string `json:"externalProxy,omitempty"`
+	// Odin is a service for monitoring the availability of YTsaurus clusters.
 	//+optional
 	OdinBaseUrl *string `json:"odinBaseUrl,omitempty"`
 

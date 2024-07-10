@@ -1544,7 +1544,8 @@ _Appears in:_
 | `useInsecureCookies` _boolean_ |  | true |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
 | `instanceCount` _integer_ |  |  |  |
-| `odinBaseUrl` _string_ |  |  |  |
+| `externalProxy` _string_ | If defined it will be used for direct heavy url/commands like: read_table, write_table, etc. |  |  |
+| `odinBaseUrl` _string_ | Odin is a service for monitoring the availability of YTsaurus clusters. |  |  |
 | `extraEnvVariables` _[EnvVar](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#envvar-v1-core) array_ |  |  |  |
 | `environment` _string_ |  | testing |  |
 | `theme` _string_ |  | lavander |  |

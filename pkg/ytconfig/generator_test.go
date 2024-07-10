@@ -373,6 +373,13 @@ func TestGetUIClustersConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetUIClustersConfigWithSettings(t *testing.T) {
+	g := NewGenerator(withUICustom(getYtsaurus()), testClusterDomain)
+	cfg, err := g.GetUIClustersConfig()
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetUICustomConfig(t *testing.T) {
 	g := NewGenerator(withUICustom(getYtsaurus()), testClusterDomain)
 	cfg, err := g.GetUICustomConfig()
@@ -616,8 +623,10 @@ func withUI(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 
 func withUICustom(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	odinUrl := "http://odin-webservice.odin.svc.cluster.local"
+	externalProxy := "https://my-external-proxy.example.com"
 	ytsaurus.Spec.UI = &ytv1.UISpec{
-		OdinBaseUrl: &odinUrl,
+		ExternalProxy: &externalProxy,
+		OdinBaseUrl:   &odinUrl,
 	}
 	return ytsaurus
 }

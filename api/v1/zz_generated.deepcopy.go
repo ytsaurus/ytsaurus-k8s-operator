@@ -1480,6 +1480,11 @@ func (in *UISpec) DeepCopyInto(out *UISpec) {
 		**out = **in
 	}
 	in.Resources.DeepCopyInto(&out.Resources)
+	if in.ExternalProxy != nil {
+		in, out := &in.ExternalProxy, &out.ExternalProxy
+		*out = new(string)
+		**out = **in
+	}
 	if in.OdinBaseUrl != nil {
 		in, out := &in.OdinBaseUrl, &out.OdinBaseUrl
 		*out = new(string)

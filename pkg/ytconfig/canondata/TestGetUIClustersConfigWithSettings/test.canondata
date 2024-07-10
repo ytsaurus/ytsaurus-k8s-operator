@@ -1,0 +1,19 @@
+{
+    clusters=[
+        {
+            id=test;
+            name=test;
+            proxy="http-proxies-lb-test.fake.svc.fake.zone";
+            externalProxy="https://my-external-proxy.example.com";
+            secure=%false;
+            authentication=basic;
+            group="My YTsaurus clusters";
+            theme="";
+            environment="";
+            description="My first YTsaurus. Handle with care.";
+            primaryMaster={
+                cellTag=0;
+            };
+        };
+    ];
+}
