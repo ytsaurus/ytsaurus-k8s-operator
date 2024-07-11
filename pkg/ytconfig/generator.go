@@ -684,6 +684,7 @@ func (g *Generator) GetUIClustersConfig() ([]byte, error) {
 	c.ID = g.ytsaurus.Name
 	c.Name = g.ytsaurus.Name
 	c.Proxy = g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
+	c.ExternalProxy = g.ytsaurus.Spec.UI.ExternalProxy
 	c.PrimaryMaster.CellTag = g.ytsaurus.Spec.PrimaryMasters.CellTag
 
 	c.Theme = g.ytsaurus.Spec.UI.Theme

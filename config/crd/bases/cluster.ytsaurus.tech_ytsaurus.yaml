@@ -34214,6 +34214,10 @@ spec:
                   environment:
                     default: testing
                     type: string
+                  externalProxy:
+                    description: 'If defined it will be used for direct heavy url/commands
+                      like: read_table, write'
+                    type: string
                   extraEnvVariables:
                     items:
                       description: EnvVar represents an environment variable present
@@ -34327,6 +34331,8 @@ spec:
                     format: int32
                     type: integer
                   odinBaseUrl:
+                    description: Odin is a service for monitoring the availability
+                      of YTsaurus clusters.
                     type: string
                   resources:
                     description: ResourceRequirements describes the compute resource
