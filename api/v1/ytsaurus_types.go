@@ -479,11 +479,12 @@ type UISpec struct {
 	//+kubebuilder:default:=NodePort
 	ServiceType  corev1.ServiceType `json:"serviceType,omitempty"`
 	HttpNodePort *int32             `json:"httpNodePort,omitempty"`
-	//+kubebuilder:default:=true
+	// Use secure connection to the cluster's http-proxies.
+	//+kubebuilder:default:=false
 	//+optional
-	UseInsecureCookies bool                        `json:"useInsecureCookies"`
-	Resources          corev1.ResourceRequirements `json:"resources,omitempty"`
-	InstanceCount      int32                       `json:"instanceCount,omitempty"`
+	Secure        bool                        `json:"secure"`
+	Resources     corev1.ResourceRequirements `json:"resources,omitempty"`
+	InstanceCount int32                       `json:"instanceCount,omitempty"`
 
 	// If defined it will be used for direct heavy url/commands like: read_table, write_table, etc.
 	//+optional

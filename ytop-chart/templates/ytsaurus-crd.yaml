@@ -34163,6 +34163,10 @@ spec:
                           resources required.
                         type: object
                     type: object
+                  secure:
+                    default: false
+                    description: Use secure connection to the cluster's http-proxies.
+                    type: boolean
                   serviceType:
                     default: NodePort
                     description: Service Type string describes ingress methods for a
@@ -34171,9 +34175,6 @@ spec:
                   theme:
                     default: lavander
                     type: string
-                  useInsecureCookies:
-                    default: true
-                    type: boolean
                 type: object
               uiImage:
                 type: string

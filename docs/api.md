@@ -1541,7 +1541,7 @@ _Appears in:_
 | `image` _string_ |  |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  | NodePort |  |
 | `httpNodePort` _integer_ |  |  |  |
-| `useInsecureCookies` _boolean_ |  | true |  |
+| `secure` _boolean_ | Use secure connection to the cluster's http-proxies. | false |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
 | `instanceCount` _integer_ |  |  |  |
 | `externalProxy` _string_ | If defined it will be used for direct heavy url/commands like: read_table, write_table, etc. |  |  |

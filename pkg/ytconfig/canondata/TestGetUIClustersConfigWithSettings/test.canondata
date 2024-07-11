@@ -5,7 +5,7 @@
             name=test;
             proxy="http-proxies-lb-test.fake.svc.fake.zone";
             externalProxy="https://my-external-proxy.example.com";
-            secure=%false;
+            secure=%true;
             authentication=basic;
             group="My YTsaurus clusters";
             theme="";

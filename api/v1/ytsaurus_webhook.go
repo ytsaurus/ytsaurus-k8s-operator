@@ -398,6 +398,26 @@ func (r *Ytsaurus) validateYQLAgents(*Ytsaurus) field.ErrorList {
 	return allErrors
 }
 
+func (r *Ytsaurus) validateUi(*Ytsaurus) field.ErrorList {
+	var allErrors field.ErrorList
+
+	if r.Spec.UI != nil && r.Spec.UI.Secure {
+		for i, hp := range r.Spec.HTTPProxies {
+			if hp.Role != consts.DefaultHTTPProxyRole {
+				continue
+			}
+			if hp.Transport.HTTPSSecret == nil {
+				allErrors = append(allErrors, field.Required(
+					field.NewPath("spec").Child("httpProxies").Index(i).Child("transport").Child("httpsSecret"),
+					fmt.Sprintf("configured HTTPS for proxy with `%s` role is required for ui.secure", consts.DefaultHTTPProxyRole)))
+			}
+			break
+		}
+	}
+
+	return allErrors
+}
+
 //////////////////////////////////////////////////
 
 func (r *Ytsaurus) validateInstanceSpec(instanceSpec InstanceSpec, path *field.Path) field.ErrorList {
@@ -446,6 +466,7 @@ func (r *Ytsaurus) validateYtsaurus(old *Ytsaurus) field.ErrorList {
 	allErrors = append(allErrors, r.validateQueueAgents(old)...)
 	allErrors = append(allErrors, r.validateSpyt(old)...)
 	allErrors = append(allErrors, r.validateYQLAgents(old)...)
+	allErrors = append(allErrors, r.validateUi(old)...)
 
 	return allErrors
 }
