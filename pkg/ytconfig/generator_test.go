@@ -26,7 +26,7 @@ var (
 		Name:      testYtsaurusName,
 	}
 	testLogRotationPeriod   int64 = 900000
-	testTotalLogSize              = 10 * int64(1<<30)
+	testTotalLogSize              = resource.MustParse("10Gi")
 	testMasterExternalHosts       = []string{
 		"host1.external.address",
 		"host2.external.address",
@@ -675,7 +675,7 @@ func getDataNodeSpec(locations ...ytv1.LocationSpec) ytv1.DataNodesSpec {
 
 func getExecNodeSpec(jobResources *corev1.ResourceRequirements) ytv1.ExecNodesSpec {
 	rotationPolicyMS := int64(900000)
-	rotationPolicyMaxTotalSize := int64(3145728)
+	rotationPolicyMaxTotalSize := resource.MustParse("3145728")
 	return ytv1.ExecNodesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:  50,

@@ -154,10 +154,10 @@ type CategoriesFilter struct {
 }
 
 type LogRotationPolicy struct {
-	RotationPeriodMilliseconds *int64 `json:"rotationPeriodMilliseconds,omitempty" yson:"rotation_period,omitempty"`
-	MaxSegmentSize             *int64 `json:"maxSegmentSize,omitempty" yson:"max_segment_size,omitempty"`
-	MaxTotalSizeToKeep         *int64 `json:"maxTotalSizeToKeep,omitempty" yson:"max_total_size_to_keep,omitempty"`
-	MaxSegmentCountToKeep      *int64 `json:"maxSegmentCountToKeep,omitempty" yson:"max_segment_count_to_keep,omitempty"`
+	RotationPeriodMilliseconds *int64             `json:"rotationPeriodMilliseconds,omitempty"`
+	MaxSegmentSize             *resource.Quantity `json:"maxSegmentSize,omitempty"`
+	MaxTotalSizeToKeep         *resource.Quantity `json:"maxTotalSizeToKeep,omitempty"`
+	MaxSegmentCountToKeep      *int64             `json:"maxSegmentCountToKeep,omitempty"`
 }
 
 type BaseLoggerSpec struct {

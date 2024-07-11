@@ -63,6 +63,13 @@ type LoggingRule struct {
 	Family            *LogFamily    `yson:"family,omitempty"`
 }
 
+type LogRotationPolicy struct {
+	RotationPeriodMilliseconds *int64 `yson:"rotation_period,omitempty"`
+	MaxSegmentSize             *int64 `yson:"max_segment_size,omitempty"`
+	MaxTotalSizeToKeep         *int64 `yson:"max_total_size_to_keep,omitempty"`
+	MaxSegmentCountToKeep      *int64 `yson:"max_segment_count_to_keep,omitempty"`
+}
+
 type LoggingWriter struct {
 	WriterType ytv1.LogWriterType `yson:"type,omitempty"`
 	FileName   string             `yson:"file_name,omitempty"`
@@ -73,7 +80,7 @@ type LoggingWriter struct {
 	UseTimestampSuffix   bool   `yson:"use_timestamp_suffix,omitempty"`
 	EnableSystemMessages bool   `yson:"enable_system_messages,omitempty"`
 
-	RotationPolicy *ytv1.LogRotationPolicy `yson:"rotation_policy,omitempty"`
+	RotationPolicy *LogRotationPolicy `yson:"rotation_policy,omitempty"`
 }
 
 type Logging struct {
@@ -171,7 +178,19 @@ func createBaseLoggingWriter(componentName string, loggingDirectory string, writ
 	}
 
 	loggingWriter.UseTimestampSuffix = loggerSpec.UseTimestampSuffix
-	loggingWriter.RotationPolicy = loggerSpec.RotationPolicy
+
+	if loggerSpec.RotationPolicy != nil {
+		loggingWriter.RotationPolicy = &LogRotationPolicy{
+			RotationPeriodMilliseconds: loggerSpec.RotationPolicy.RotationPeriodMilliseconds,
+			MaxSegmentCountToKeep:      loggerSpec.RotationPolicy.MaxSegmentCountToKeep,
+		}
+		if loggerSpec.RotationPolicy.MaxSegmentSize != nil {
+			loggingWriter.RotationPolicy.MaxSegmentSize = ptr.To(loggerSpec.RotationPolicy.MaxSegmentSize.Value())
+		}
+		if loggerSpec.RotationPolicy.MaxTotalSizeToKeep != nil {
+			loggingWriter.RotationPolicy.MaxTotalSizeToKeep = ptr.To(loggerSpec.RotationPolicy.MaxTotalSizeToKeep.Value())
+		}
+	}
 	return loggingWriter
 }
 
