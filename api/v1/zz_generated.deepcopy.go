@@ -817,13 +817,13 @@ func (in *LogRotationPolicy) DeepCopyInto(out *LogRotationPolicy) {
 	}
 	if in.MaxSegmentSize != nil {
 		in, out := &in.MaxSegmentSize, &out.MaxSegmentSize
-		*out = new(int64)
-		**out = **in
+		x := (*in).DeepCopy()
+		*out = &x
 	}
 	if in.MaxTotalSizeToKeep != nil {
 		in, out := &in.MaxTotalSizeToKeep, &out.MaxTotalSizeToKeep
-		*out = new(int64)
-		**out = **in
+		x := (*in).DeepCopy()
+		*out = &x
 	}
 	if in.MaxSegmentCountToKeep != nil {
 		in, out := &in.MaxSegmentCountToKeep, &out.MaxSegmentCountToKeep

@@ -769,8 +769,8 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `rotationPeriodMilliseconds` _integer_ |  |  |  |
-| `maxSegmentSize` _integer_ |  |  |  |
-| `maxTotalSizeToKeep` _integer_ |  |  |  |
+| `maxSegmentSize` _[Quantity](#quantity)_ |  |  |  |
+| `maxTotalSizeToKeep` _[Quantity](#quantity)_ |  |  |  |
 | `maxSegmentCountToKeep` _integer_ |  |  |  |
 
 
