@@ -1541,6 +1541,7 @@ _Appears in:_
 | `image` _string_ |  |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  | NodePort |  |
 | `httpNodePort` _integer_ |  |  |  |
+| `useInsecureCookies` _boolean_ | If defined allows insecure (over http) authentication.<br />Deprecated: use `secure` instead. |  |  |
 | `secure` _boolean_ | Use secure connection to the cluster's http-proxies. | false |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
 | `instanceCount` _integer_ |  |  |  |

@@ -34388,6 +34388,9 @@ spec:
                   theme:
                     default: lavander
                     type: string
+                  useInsecureCookies:
+                    description: If defined allows insecure (over http) authentication.
+                    type: boolean
                 type: object
               uiImage:
                 type: string
