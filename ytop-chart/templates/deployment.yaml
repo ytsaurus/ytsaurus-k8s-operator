@@ -7,6 +7,7 @@ metadata:
   {{- include "ytop-chart.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.controllerManager.replicas }}
+  revisionHistoryLimit: {{ .Values.controllerManager.revisionHistoryLimit }}
   selector:
     matchLabels:
       control-plane: controller-manager
