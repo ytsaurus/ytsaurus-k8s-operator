@@ -73,4 +73,6 @@ spec:
             cpu: 10m
             memory: 64Mi
       serviceAccountName: controller-manager
+      nodeSelector: {}
+      tolerations: []
       terminationGracePeriodSeconds: 10

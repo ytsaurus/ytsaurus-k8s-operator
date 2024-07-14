@@ -77,6 +77,7 @@ spec:
         - mountPath: /etc/certs/tls
           name: metrics-cert
           readOnly: true
+      nodeSelector: {{- toYaml .Values.controllerManager.nodeSelector | nindent 8 }}
       securityContext:
         runAsNonRoot: true
       serviceAccountName: {{ include "ytop-chart.fullname" . }}-controller-manager

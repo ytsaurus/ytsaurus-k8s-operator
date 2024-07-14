@@ -45,6 +45,7 @@ controllerManager:
       requests:
         cpu: 10m
         memory: 64Mi
+  nodeSelector: {}
   replicas: 1
   revisionHistoryLimit: 10
   serviceAccount:
