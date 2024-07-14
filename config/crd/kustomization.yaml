@@ -15,8 +15,8 @@ patches:
 - path: patches/webhook_in_ytsaurus.yaml
 - path: patches/webhook_in_spyts.yaml
 - path: patches/webhook_in_chyts.yaml
-#- patches/webhook_in_remoteytsauruses.yaml
-#- patches/webhook_in_remoteexecnodes.yaml
+- path: patches/webhook_in_remoteytsaurus.yaml
+- path: patches/webhook_in_remoteexecnodes.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
@@ -24,8 +24,8 @@ patches:
 - path: patches/cainjection_in_ytsaurus.yaml
 - path: patches/cainjection_in_spyts.yaml
 - path: patches/cainjection_in_chyts.yaml
-#- patches/cainjection_in_remoteytsauruses.yaml
-#- patches/cainjection_in_remoteexecnodes.yaml
+- path: patches/cainjection_in_remoteytsaurus.yaml
+- path: patches/cainjection_in_remoteexecnodes.yaml
 #+kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.

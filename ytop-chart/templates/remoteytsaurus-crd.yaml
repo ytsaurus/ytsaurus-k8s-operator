@@ -3,10 +3,22 @@ kind: CustomResourceDefinition
 metadata:
   name: remoteytsaurus.cluster.ytsaurus.tech
   annotations:
+    cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "ytop-chart.fullname"
+      . }}-webhook-cert'
     controller-gen.kubebuilder.io/version: v0.14.0
   labels:
   {{- include "ytop-chart.labels" . | nindent 4 }}
 spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        service:
+          name: '{{ include "ytop-chart.fullname" . }}-webhook-service'
+          namespace: '{{ .Release.Namespace }}'
+          path: /convert
+      conversionReviewVersions:
+      - v1
   group: cluster.ytsaurus.tech
   names:
     categories:
