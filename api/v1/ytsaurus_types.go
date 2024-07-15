@@ -743,12 +743,12 @@ type YtsaurusStatus struct {
 //+kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 
-// +kubebuilder:object:root=true
-// +kubebuilder:printcolumn:name="ClusterState",type="string",JSONPath=".status.state",description="State of Ytsaurus cluster"
-// +kubebuilder:printcolumn:name="UpdateState",type="string",JSONPath=".status.updateStatus.state",description="Update state of Ytsaurus cluster"
-// +kubebuilder:printcolumn:name="UpdatingComponents",type="string",JSONPath=".status.updateStatus.components",description="Updating components (for local update)"
-// +kubebuilder:resource:path=ytsaurus,shortName=yt
-// +kubebuilder:subresource:status
+//+kubebuilder:object:root=true
+//+kubebuilder:printcolumn:name="ClusterState",type="string",JSONPath=".status.state",description="State of Ytsaurus cluster"
+//+kubebuilder:printcolumn:name="UpdateState",type="string",JSONPath=".status.updateStatus.state",description="Update state of Ytsaurus cluster"
+//+kubebuilder:printcolumn:name="UpdatingComponents",type="string",JSONPath=".status.updateStatus.components",description="Updating components (for local update)"
+//+kubebuilder:resource:path=ytsaurus,shortName=yt,categories=ytsaurus-all;yt-all
+//+kubebuilder:subresource:status
 
 // Ytsaurus is the Schema for the ytsaurus API
 type Ytsaurus struct {

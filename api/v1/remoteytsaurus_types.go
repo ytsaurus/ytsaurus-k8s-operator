@@ -39,7 +39,7 @@ type RemoteYtsaurusStatus struct {
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:resource:path=remoteytsaurus
+//+kubebuilder:resource:path=remoteytsaurus,categories=ytsaurus-all;yt-all
 //+kubebuilder:subresource:status
 
 // RemoteYtsaurus is the Schema for the remoteytsauruses API
