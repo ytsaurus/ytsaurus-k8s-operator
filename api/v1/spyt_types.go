@@ -52,7 +52,8 @@ type SpytStatus struct {
 //+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=spyts/finalizers,verbs=update
 
 //+kubebuilder:object:root=true
-// +kubebuilder:printcolumn:name="ReleaseStatus",type="string",JSONPath=".status.releaseStatus",description="Status of release"
+//+kubebuilder:printcolumn:name="ReleaseStatus",type="string",JSONPath=".status.releaseStatus",description="Status of release"
+//+kubebuilder:resource:categories=ytsaurus-all;yt-all
 //+kubebuilder:subresource:status
 
 // Spyt is the Schema for the spyts API

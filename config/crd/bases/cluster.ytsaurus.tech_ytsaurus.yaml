@@ -8,6 +8,9 @@ metadata:
 spec:
   group: cluster.ytsaurus.tech
   names:
+    categories:
+    - ytsaurus-all
+    - yt-all
     kind: Ytsaurus
     listKind: YtsaurusList
     plural: ytsaurus

@@ -50,6 +50,7 @@ type RemoteExecNodesStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:printcolumn:name="ReleaseStatus",type="string",JSONPath=".status.releaseStatus",description="Release status"
+//+kubebuilder:resource:categories=ytsaurus-all;yt-all
 //+kubebuilder:subresource:status
 
 // RemoteExecNodes is the Schema for the remoteexecnodes API

@@ -9,6 +9,9 @@ metadata:
 spec:
   group: cluster.ytsaurus.tech
   names:
+    categories:
+    - ytsaurus-all
+    - yt-all
     kind: RemoteYtsaurus
     listKind: RemoteYtsaurusList
     plural: remoteytsaurus
