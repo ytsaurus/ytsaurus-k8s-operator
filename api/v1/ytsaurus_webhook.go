@@ -45,15 +45,15 @@ import (
 // log is for logging in this package.
 var ytsauruslog = logf.Log.WithName("ytsaurus-resource")
 
-type YtsaurusValidator struct {
+type ytsaurusValidator struct {
 	Ytsaurus *Ytsaurus
 	Client   client.Client
 }
 
 func (r *Ytsaurus) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	validator := &YtsaurusValidator{
+	validator := &ytsaurusValidator{
 		Ytsaurus: r,
-		Client:   mgr.GetClient(), // This client is configured with the correct scheme
+		Client:   mgr.GetClient(),
 	}
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
@@ -532,13 +532,13 @@ func (r *Ytsaurus) evaluateYtsaurusValidation(ctx context.Context, old *Ytsaurus
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *YtsaurusValidator) ValidateCreate(ctx context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (r *ytsaurusValidator) ValidateCreate(ctx context.Context, _ runtime.Object) (admission.Warnings, error) {
 	ytsauruslog.Info("validate create", "name", r.Ytsaurus.Name)
 	return nil, r.Ytsaurus.evaluateYtsaurusValidation(ctx, nil)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *YtsaurusValidator) ValidateUpdate(ctx context.Context, oldObject, _ runtime.Object) (admission.Warnings, error) {
+func (r *ytsaurusValidator) ValidateUpdate(ctx context.Context, oldObject, _ runtime.Object) (admission.Warnings, error) {
 	ytsauruslog.Info("validate update", "name", r.Ytsaurus.Name)
 	old, ok := oldObject.(*Ytsaurus)
 	if !ok {
@@ -548,7 +548,7 @@ func (r *YtsaurusValidator) ValidateUpdate(ctx context.Context, oldObject, _ run
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *YtsaurusValidator) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (r *ytsaurusValidator) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	ytsauruslog.Info("validate delete", "name", r.Ytsaurus.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
