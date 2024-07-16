@@ -37,7 +37,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
@@ -46,16 +45,24 @@ import (
 // log is for logging in this package.
 var ytsauruslog = logf.Log.WithName("ytsaurus-resource")
 
+type YtsaurusValidator struct {
+	Ytsaurus *Ytsaurus
+	Client   client.Client
+}
+
 func (r *Ytsaurus) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	validator := &YtsaurusValidator{
+		Ytsaurus: r,
+		Client:   mgr.GetClient(), // This client is configured with the correct scheme
+	}
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(validator).
 		Complete()
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-cluster-ytsaurus-tech-v1-ytsaurus,mutating=false,failurePolicy=fail,sideEffects=None,groups=cluster.ytsaurus.tech,resources=ytsaurus,verbs=create;update,versions=v1,name=vytsaurus.kb.io,admissionReviewVersions=v1
-
-var _ webhook.Validator = &Ytsaurus{}
 
 //////////////////////////////////////////////////
 
@@ -456,7 +463,7 @@ func (r *Ytsaurus) validateInstanceSpec(instanceSpec InstanceSpec, path *field.P
 	return allErrors
 }
 
-func (r *Ytsaurus) validateExistsYTsaurus(ytsaurus *Ytsaurus) field.ErrorList {
+func (r *Ytsaurus) validateExistsYTsaurus(ctx context.Context, ytsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
 	// if ytsaurus is nil, there no such object in the given namespace, we can proceed
@@ -477,7 +484,7 @@ func (r *Ytsaurus) validateExistsYTsaurus(ytsaurus *Ytsaurus) field.ErrorList {
 
 	var ytsaurusList YtsaurusList
 
-	err = k8sClient.List(context.TODO(), &ytsaurusList, &client.ListOptions{Namespace: ytsaurus.Namespace})
+	err = k8sClient.List(ctx, &ytsaurusList, &client.ListOptions{Namespace: ytsaurus.Namespace})
 	if err == nil {
 		allErrors = append(allErrors, field.Forbidden(nil, fmt.Sprintf("A Ytsaurus object already exists in namespace %s", ytsaurus.Namespace)))
 	} else if !apierrors.IsNotFound(err) {
@@ -486,7 +493,7 @@ func (r *Ytsaurus) validateExistsYTsaurus(ytsaurus *Ytsaurus) field.ErrorList {
 	return allErrors
 }
 
-func (r *Ytsaurus) validateYtsaurus(old *Ytsaurus) field.ErrorList {
+func (r *Ytsaurus) validateYtsaurus(ctx context.Context, old *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
 	allErrors = append(allErrors, r.validateDiscovery(old)...)
@@ -507,13 +514,13 @@ func (r *Ytsaurus) validateYtsaurus(old *Ytsaurus) field.ErrorList {
 	allErrors = append(allErrors, r.validateSpyt(old)...)
 	allErrors = append(allErrors, r.validateYQLAgents(old)...)
 	allErrors = append(allErrors, r.validateUi(old)...)
-	allErrors = append(allErrors, r.validateExistsYTsaurus(old)...)
+	allErrors = append(allErrors, r.validateExistsYTsaurus(ctx, old)...)
 
 	return allErrors
 }
 
-func (r *Ytsaurus) evaluateYtsaurusValidation(old *Ytsaurus) error {
-	allErrors := r.validateYtsaurus(old)
+func (r *Ytsaurus) evaluateYtsaurusValidation(ctx context.Context, old *Ytsaurus) error {
+	allErrors := r.validateYtsaurus(ctx, old)
 	if len(allErrors) == 0 {
 		return nil
 	}
@@ -525,25 +532,24 @@ func (r *Ytsaurus) evaluateYtsaurusValidation(old *Ytsaurus) error {
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Ytsaurus) ValidateCreate() (admission.Warnings, error) {
-	ytsauruslog.Info("validate create", "name", r.Name)
-
-	return nil, r.evaluateYtsaurusValidation(nil)
+func (r *YtsaurusValidator) ValidateCreate(ctx context.Context, _ runtime.Object) (admission.Warnings, error) {
+	ytsauruslog.Info("validate create", "name", r.Ytsaurus.Name)
+	return nil, r.Ytsaurus.evaluateYtsaurusValidation(ctx, nil)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Ytsaurus) ValidateUpdate(oldObject runtime.Object) (admission.Warnings, error) {
-	ytsauruslog.Info("validate update", "name", r.Name)
+func (r *YtsaurusValidator) ValidateUpdate(ctx context.Context, oldObject, _ runtime.Object) (admission.Warnings, error) {
+	ytsauruslog.Info("validate update", "name", r.Ytsaurus.Name)
 	old, ok := oldObject.(*Ytsaurus)
 	if !ok {
 		return nil, fmt.Errorf("expected a Ytsaurus but got a %T", oldObject)
 	}
-	return nil, r.evaluateYtsaurusValidation(old)
+	return nil, r.Ytsaurus.evaluateYtsaurusValidation(ctx, old)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Ytsaurus) ValidateDelete() (admission.Warnings, error) {
-	ytsauruslog.Info("validate delete", "name", r.Name)
+func (r *YtsaurusValidator) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+	ytsauruslog.Info("validate delete", "name", r.Ytsaurus.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil, nil
