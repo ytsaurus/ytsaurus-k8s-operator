@@ -1,3 +1,4 @@
+{{- if not .Values.issuerRef.name }}
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
@@ -6,3 +7,4 @@ metadata:
   {{- include "ytop-chart.labels" . | nindent 4 }}
 spec:
   selfSigned: {}
+{{- end }}

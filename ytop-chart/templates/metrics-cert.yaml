@@ -11,6 +11,6 @@ spec:
   - '{{ include "ytop-chart.fullname" . }}-controller-manager-metrics-service.{{ .Release.Namespace
     }}.svc.{{ .Values.kubernetesClusterDomain }}'
   issuerRef:
-    kind: Issuer
-    name: '{{ include "ytop-chart.fullname" . }}-selfsigned-issuer'
+    kind: '{{ .Values.issuerRef.kind }}'
+    name: '{{ include "ytop-chart.issuerRefName" . }}'
   secretName: yt-operator-metrics-cert

@@ -1,0 +1,8 @@
+controllerManager:
+  strategy:
+    type: RollingUpdate
+  affinity: {}
+  tolerations: []
+issuerRef:
+  kind: Issuer
+  name: ""

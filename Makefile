@@ -292,8 +292,21 @@ docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
 
 .PHONY: helm-chart
-helm-chart: manifests kustomize helmify ## Generate helm chart.
-	$(KUSTOMIZE) build config/default | $(HELMIFY) $(OPERATOR_CHART)
+helm-chart: manifests kustomize helmify envsubst yq ## Generate helm chart.
+	rm -rf $(OPERATOR_CHART)
+	$(KUSTOMIZE) build config/helm | $(HELMIFY) $(OPERATOR_CHART)
+	name="$(OPERATOR_CHART)" version="$(RELEASE_VERSION)" $(ENVSUBST) < config/helm/Chart.yaml > $(OPERATOR_CHART)/Chart.yaml
+	sed -e '/replicas:/a\'$$'\n''  strategy: {{- toYaml .Values.controllerManager.strategy | nindent 4 }}' \
+		-e '/nodeSelector:/a\'$$'\n''      tolerations: {{- toYaml .Values.controllerManager.tolerations | nindent 8 }}' \
+		-e '/nodeSelector:/a\'$$'\n''      affinity: {{- toYaml .Values.controllerManager.affinity | nindent 8 }}' \
+		-i '.bak' $(OPERATOR_CHART)/templates/deployment.yaml && \
+	rm $(OPERATOR_CHART)/templates/deployment.yaml.bak
+	sed -e '1 i\'$$'\n''{{- if not .Values.issuerRef.name }}' \
+		-e '$$a \'$$'\n''\'$$'\n''{{- end }}'  \
+		-i '.bak' $(OPERATOR_CHART)/templates/selfsigned-issuer.yaml && \
+	rm $(OPERATOR_CHART)/templates/selfsigned-issuer.yaml.bak
+	cat config/helm/templates/_helpers.tpl >> $(OPERATOR_CHART)/templates/_helpers.tpl
+	$(YQ) eval-all '. as $$item ireduce ({}; . * $$item )' -i $(OPERATOR_CHART)/values.yaml config/helm/values.yaml
 
 ##@ Deployment
 
@@ -332,8 +345,6 @@ release: kustomize ## Release operator docker image and helm chart.
 	docker push ghcr.io/$(OPERATOR_IMAGE):${RELEASE_VERSION}
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(OPERATOR_IMAGE):${RELEASE_VERSION}
 	$(MAKE) helm-chart
-	sed -iE "s/appVersion: \".*\"/appVersion: \"${RELEASE_VERSION}\"/" $(OPERATOR_CHART)/Chart.yaml
-	sed -iE "s/version:.*/version: ${RELEASE_VERSION}/" $(OPERATOR_CHART)/Chart.yaml
 	helm package $(OPERATOR_CHART)
 	helm push $(OPERATOR_CHART)-${RELEASE_VERSION}.tgz oci://registry-1.docker.io/ytsaurus
 	helm push $(OPERATOR_CHART)-${RELEASE_VERSION}.tgz oci://ghcr.io/ytsaurus
@@ -356,6 +367,8 @@ GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
 GINKGO ?= $(LOCALBIN)/ginkgo-$(GINKGO_VERSION)
 CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs-$(CRD_REF_DOCS_VERSION)
 KIND ?= $(LOCALBIN)/kind-$(KIND_VERSION)
+ENVSUBST ?= $(LOCALBIN)/envsubst-$(ENVSUBST_VERSION)
+YQ ?= $(LOCALBIN)/yq-$(YQ_VERSION)
 
 # Tool Versions
 KUSTOMIZE_VERSION ?= v5.3.0
@@ -369,6 +382,8 @@ CRD_REF_DOCS_VERSION ?= v0.0.12
 ## kind version.
 KIND_VERSION ?= v0.22.0
 CERT_MANAGER_VERSION ?= v1.14.4
+ENVSUBST_VERSION ?= v1.4.2
+YQ_VERSION ?= v4.44.2
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
@@ -409,6 +424,16 @@ $(CRD_REF_DOCS): $(LOCALBIN)
 kind: $(KIND) ## Download kind locally if necessary.
 $(KIND): $(LOCALBIN)
 	$(call go-install-tool,$(KIND),sigs.k8s.io/kind,$(KIND_VERSION))
+
+.PHONY: envsubst
+envsubst: $(ENVSUBST) ## Download envsubst locally if necessary.
+$(ENVSUBST): $(LOCALBIN)
+	$(call go-install-tool,$(ENVSUBST),github.com/a8m/envsubst/cmd/envsubst,$(ENVSUBST_VERSION))
+
+.PHONY: yq
+yq: $(YQ) ## Download yq locally if necessary.
+$(YQ): $(LOCALBIN)
+	$(call go-install-tool,$(YQ),github.com/mikefarah/yq/v4,$(YQ_VERSION))
 
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary (ideally with version)

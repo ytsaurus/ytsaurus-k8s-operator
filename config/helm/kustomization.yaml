@@ -1,0 +1,7 @@
+resources:
+- ../default
+
+patches:
+  - target:
+      kind: Certificate
+    path: certificate_patch.yaml
