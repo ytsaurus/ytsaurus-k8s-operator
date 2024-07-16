@@ -299,12 +299,9 @@ helm-chart: manifests kustomize helmify envsubst yq ## Generate helm chart.
 	sed -e '/replicas:/a\'$$'\n''  strategy: {{- toYaml .Values.controllerManager.strategy | nindent 4 }}' \
 		-e '/nodeSelector:/a\'$$'\n''      tolerations: {{- toYaml .Values.controllerManager.tolerations | nindent 8 }}' \
 		-e '/nodeSelector:/a\'$$'\n''      affinity: {{- toYaml .Values.controllerManager.affinity | nindent 8 }}' \
-		-i '.bak' $(OPERATOR_CHART)/templates/deployment.yaml && \
+		-i.bak $(OPERATOR_CHART)/templates/deployment.yaml && \
 	rm $(OPERATOR_CHART)/templates/deployment.yaml.bak
-	sed -e '1 i\'$$'\n''{{- if not .Values.issuerRef.name }}' \
-		-e '$$a \'$$'\n''\'$$'\n''{{- end }}'  \
-		-i '.bak' $(OPERATOR_CHART)/templates/selfsigned-issuer.yaml && \
-	rm $(OPERATOR_CHART)/templates/selfsigned-issuer.yaml.bak
+	echo -e '{{- if not .Values.issuerRef.name }}\n'"$$(cat $(OPERATOR_CHART)/templates/selfsigned-issuer.yaml)"'\n{{- end }}' > $(OPERATOR_CHART)/templates/selfsigned-issuer.yaml
 	cat config/helm/templates/_helpers.tpl >> $(OPERATOR_CHART)/templates/_helpers.tpl
 	$(YQ) eval-all '. as $$item ireduce ({}; . * $$item )' -i $(OPERATOR_CHART)/values.yaml config/helm/values.yaml
 
