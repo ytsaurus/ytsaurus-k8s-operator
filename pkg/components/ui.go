@@ -25,6 +25,7 @@ type UI struct {
 	initJob      *InitJob
 	master       Component
 	secret       *resources.StringSecret
+	caBundle     *resources.CABundle
 }
 
 const UIClustersConfigFileName = "clusters-config.json"
@@ -43,6 +44,11 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 	image := resource.Spec.UIImage
 	if resource.Spec.UI.Image != nil {
 		image = *resource.Spec.UI.Image
+	}
+
+	var caBundle *resources.CABundle
+	if caBundleSpec := resource.Spec.CABundle; caBundleSpec != nil {
+		caBundle = resources.NewCABundle(caBundleSpec.Name, consts.CABundleVolumeName, consts.CABundleMountPoint)
 	}
 
 	microservice := newMicroservice(
@@ -82,7 +88,8 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			l.GetSecretName(),
 			&l,
 			ytsaurus.APIProxy()),
-		master: master,
+		caBundle: caBundle,
+		master:   master,
 	}
 }
 
@@ -161,10 +168,17 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 		},
 	}
 
-	if ytsaurusResource.Spec.UI.UseInsecureCookies {
+	if !ytsaurusResource.Spec.UI.Secure {
 		env = append(env, corev1.EnvVar{
 			Name:  "YT_AUTH_ALLOW_INSECURE",
 			Value: "1",
+		})
+	}
+
+	if u.caBundle != nil {
+		env = append(env, corev1.EnvVar{
+			Name:  "NODE_EXTRA_CA_CERTS",
+			Value: fmt.Sprintf("%s/ca.crt", u.caBundle.MountPath),
 		})
 	}
 
@@ -239,6 +253,13 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 				},
 			},
 		},
+	}
+
+	if u.caBundle != nil {
+		u.caBundle.AddVolume(&deployment.Spec.Template.Spec)
+		for i := range deployment.Spec.Template.Spec.Containers {
+			u.caBundle.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[i])
+		}
 	}
 
 	return u.microservice.Sync(ctx)

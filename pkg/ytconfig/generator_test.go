@@ -627,6 +627,7 @@ func withUICustom(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.UI = &ytv1.UISpec{
 		ExternalProxy: &externalProxy,
 		OdinBaseUrl:   &odinUrl,
+		Secure:        true,
 	}
 	return ytsaurus
 }
