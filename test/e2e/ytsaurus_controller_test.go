@@ -795,22 +795,28 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 					"for some time (and for some reason) and we don't want to interfere before map creation")
 				time.Sleep(3 * time.Second)
 
-				getDsPod := func() (*corev1.Pod, error) {
+				dsPodName := "ds-0"
+				msPodName := "ms-0"
+
+				getPodByName := func(name string) (*corev1.Pod, error) {
 					ds0Name := types.NamespacedName{Name: "ds-0", Namespace: namespace}
 					dsPod := &corev1.Pod{}
 					err := k8sClient.Get(ctx, ds0Name, dsPod)
 					return dsPod, err
 				}
-				pod, err := getDsPod()
+				dsPod, err := getPodByName(dsPodName)
 				Expect(err).Should(Succeed())
-				dsPodCreatedBefore := pod.CreationTimestamp.Time
+				msPod, err := getPodByName(msPodName)
+				Expect(err).Should(Succeed())
+				dsPodCreatedBefore := dsPod.CreationTimestamp.Time
 				log.Info("ds created before", "ts", dsPodCreatedBefore)
+				msPodCreatedBefore := msPod.CreationTimestamp.Time
 
 				discoveryOverride := "{resource_limits = {total_memory = 123456789;};}"
 				createConfigOverridesMap(namespace, coName, "ytserver-discovery.yson", discoveryOverride)
 
 				Eventually(ctx, func() bool {
-					pod, err := getDsPod()
+					pod, err := getPodByName(dsPodName)
 					if apierrors.IsNotFound(err) {
 						return false
 					}
@@ -820,6 +826,12 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				}).WithTimeout(30 * time.Second).
 					WithPolling(300 * time.Millisecond).
 					Should(BeTrueBecause("ds pod should be recreated on configOverrides creation"))
+
+				msPod, err = getPodByName(msPodName)
+				Expect(err).Should(Succeed())
+				Expect(msPod.CreationTimestamp.Time).Should(
+					Equal(msPodCreatedBefore), "ms pods shouldn't be recreated",
+				)
 			},
 		)
 
