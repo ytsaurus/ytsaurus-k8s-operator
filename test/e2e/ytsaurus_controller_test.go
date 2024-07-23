@@ -17,7 +17,7 @@ import (
 	"go.ytsaurus.tech/yt/go/mapreduce/spec"
 	"go.ytsaurus.tech/yt/go/yt/ytrpc"
 	"go.ytsaurus.tech/yt/go/yterrors"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -811,7 +811,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 				Eventually(ctx, func() bool {
 					pod, err := getDsPod()
-					if errors.IsNotFound(err) {
+					if apierrors.IsNotFound(err) {
 						return false
 					}
 					dsPodCreatedAfter := pod.CreationTimestamp
