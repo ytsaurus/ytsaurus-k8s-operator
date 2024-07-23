@@ -527,9 +527,12 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 	case ytv1.ClusterStateInitializing:
 		// Ytsaurus has finished initializing, and is running now.
 		if !componentManager.needSync() {
-			logger.Info("Ytsaurus has synced and is running now")
-			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
-			return ctrl.Result{Requeue: true}, err
+			err = ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			logger.Info("Ytsaurus is running and happy")
+			return ctrl.Result{}, nil
 		}
 
 	case ytv1.ClusterStateRunning:
