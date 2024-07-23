@@ -799,7 +799,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				msPodName := "ms-0"
 
 				getPodByName := func(name string) (*corev1.Pod, error) {
-					ds0Name := types.NamespacedName{Name: "ds-0", Namespace: namespace}
+					ds0Name := types.NamespacedName{Name: name, Namespace: namespace}
 					dsPod := &corev1.Pod{}
 					err := k8sClient.Get(ctx, ds0Name, dsPod)
 					return dsPod, err
