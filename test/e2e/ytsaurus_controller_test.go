@@ -17,6 +17,7 @@ import (
 	"go.ytsaurus.tech/yt/go/mapreduce/spec"
 	"go.ytsaurus.tech/yt/go/yt/ytrpc"
 	"go.ytsaurus.tech/yt/go/yterrors"
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -247,6 +248,17 @@ func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client)
 	By("Check that cluster alive after update")
 	res := make([]string, 0)
 	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
+}
+
+func createConfigOverridesMap(namespace, name, key, value string) {
+	resource := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Data: map[string]string{key: value},
+	}
+	Expect(k8sClient.Create(ctx, &resource)).Should(Succeed())
 }
 
 type testRow struct {
@@ -766,6 +778,48 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 				_, err = cli.NodeExists(context.Background(), ypath.Path("/"), nil)
 				Expect(yterrors.ContainsErrorCode(err, yterrors.CodeRPCAuthenticationError)).Should(BeTrue())
+			},
+		)
+
+		It(
+			"ConfigOverrides update shout trigger reconciliation",
+			func(ctx context.Context) {
+				namespace := "test-overrides"
+				coName := "config-overrides"
+				ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
+				ytsaurus.Spec.ConfigOverrides = &corev1.LocalObjectReference{Name: coName}
+				DeferCleanup(deleteYtsaurus, ytsaurus)
+
+				deployAndCheck(ytsaurus, namespace)
+				log.Info("sleep a little, because after cluster is running some reconciliations still may happen " +
+					"for some time (and for some reason) and we don't want to interfere before map creation")
+				time.Sleep(3 * time.Second)
+
+				getDsPod := func() (*corev1.Pod, error) {
+					ds0Name := types.NamespacedName{Name: "ds-0", Namespace: namespace}
+					dsPod := &corev1.Pod{}
+					err := k8sClient.Get(ctx, ds0Name, dsPod)
+					return dsPod, err
+				}
+				pod, err := getDsPod()
+				Expect(err).Should(Succeed())
+				dsPodCreatedBefore := pod.CreationTimestamp.Time
+				log.Info("ds created before", "ts", dsPodCreatedBefore)
+
+				discoveryOverride := "{resource_limits = {total_memory = 123456789;};}"
+				createConfigOverridesMap(namespace, coName, "ytserver-discovery.yson", discoveryOverride)
+
+				Eventually(ctx, func() bool {
+					pod, err := getDsPod()
+					if errors.IsNotFound(err) {
+						return false
+					}
+					dsPodCreatedAfter := pod.CreationTimestamp
+					log.Info("ds created after", "ts", dsPodCreatedAfter)
+					return dsPodCreatedAfter.After(dsPodCreatedBefore)
+				}).WithTimeout(30 * time.Second).
+					WithPolling(300 * time.Millisecond).
+					Should(BeTrueBecause("ds pod should be recreated on configOverrides creation"))
 			},
 		)
 
