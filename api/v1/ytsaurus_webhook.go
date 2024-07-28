@@ -21,11 +21,8 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/client-go/kubernetes/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
-
 	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -46,14 +43,14 @@ import (
 var ytsauruslog = logf.Log.WithName("ytsaurus-resource")
 
 type ytsaurusValidator struct {
-	Ytsaurus *Ytsaurus
-	Client   client.Client
+	Scheme *runtime.Scheme
+	Client client.Client
 }
 
 func (r *Ytsaurus) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	validator := &ytsaurusValidator{
-		Ytsaurus: r,
-		Client:   mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Client: mgr.GetClient(),
 	}
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
@@ -115,7 +112,6 @@ func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus *Ytsaurus) fiel
 	return allErrors
 }
 
-// r.Ytsaurus should be changed to newYtsaurus that will be passed as first argument instead of MasterSpec
 func (r *ytsaurusValidator) validateHostAddresses(newYtsaurus *Ytsaurus, fieldPath *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
@@ -464,42 +460,39 @@ func (r *ytsaurusValidator) validateInstanceSpec(instanceSpec InstanceSpec, path
 	return allErrors
 }
 
-func (r *ytsaurusValidator) validateExistsYtsaurus(ctx context.Context, ytsaurus *Ytsaurus) field.ErrorList {
+func (r *ytsaurusValidator) validateExistsYtsaurus(ctx context.Context, newYtsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
-
-	// if ytsaurus is nil, there no such object in the given namespace, we can proceed
-	if ytsaurus == nil {
-		return allErrors
-	}
-
-	cfg, err := config.GetConfig()
-	if err != nil {
-		allErrors = append(allErrors, field.InternalError(field.NewPath("config"), err))
-		return allErrors
-	}
-	k8sClient, err := client.New(cfg, client.Options{Scheme: scheme.Scheme})
-	if err != nil {
-		allErrors = append(allErrors, field.InternalError(field.NewPath("k8s client"), err))
-		return allErrors
-	}
 
 	var ytsaurusList YtsaurusList
 
-	err = k8sClient.List(ctx, &ytsaurusList, &client.ListOptions{Namespace: ytsaurus.Namespace})
-	fmt.Printf("validateExistsYTsaurus,ytsaurusList: %v, %v", ytsaurusList, err)
-	if err == nil {
-		allErrors = append(allErrors, field.Forbidden(nil, fmt.Sprintf("A Ytsaurus object already exists in namespace %s", ytsaurus.Namespace)))
-	} else if !apierrors.IsNotFound(err) {
-		allErrors = append(allErrors, field.InternalError(field.NewPath("k8s client"), err))
+	err := r.Client.List(ctx, &ytsaurusList, &client.ListOptions{Namespace: newYtsaurus.Namespace})
+	ytsauruslog.Info("validateExistsYTsaurus", "ytsaurusList", ytsaurusList)
+	// ytsauruslog.Info("validateExistsYTsaurus2", "error", err)
+
+	if err != nil && !apierrors.IsNotFound(err) {
+		allErrors = append(allErrors, field.InternalError(field.NewPath("k8sClient"), err))
+		return allErrors
 	}
+
+	for _, ytsaurus := range ytsaurusList.Items {
+		if ytsaurus.Name == newYtsaurus.Name {
+			// The object already exists and has the same name, so it's an update operation
+			return allErrors
+		}
+	}
+
+	if len(ytsaurusList.Items) > 0 {
+		allErrors = append(allErrors, field.Forbidden(field.NewPath("metadata").Child("namespace"), fmt.Sprintf("A Ytsaurus object already exists in namespace %s", newYtsaurus.Namespace)))
+	}
+
 	return allErrors
 }
 
-func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, old *Ytsaurus) field.ErrorList {
+func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, oldYtsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
 	allErrors = append(allErrors, r.validateDiscovery(newYtsaurus)...)
-	allErrors = append(allErrors, r.validatePrimaryMasters(newYtsaurus, old)...)
+	allErrors = append(allErrors, r.validatePrimaryMasters(newYtsaurus, oldYtsaurus)...)
 	allErrors = append(allErrors, r.validateSecondaryMasters(newYtsaurus)...)
 	allErrors = append(allErrors, r.validateHTTPProxies(newYtsaurus)...)
 	allErrors = append(allErrors, r.validateRPCProxies(newYtsaurus)...)
@@ -516,7 +509,7 @@ func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, o
 	allErrors = append(allErrors, r.validateSpyt(newYtsaurus)...)
 	allErrors = append(allErrors, r.validateYQLAgents(newYtsaurus)...)
 	allErrors = append(allErrors, r.validateUi(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateExistsYtsaurus(ctx, old)...)
+	allErrors = append(allErrors, r.validateExistsYtsaurus(ctx, newYtsaurus)...)
 
 	return allErrors
 }
@@ -545,11 +538,11 @@ func (r *ytsaurusValidator) ValidateCreate(ctx context.Context, obj runtime.Obje
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *ytsaurusValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	ytsauruslog.Info("validate update", "name", r.Ytsaurus.Name)
 	oldYtsaurus, ok := oldObj.(*Ytsaurus)
 	if !ok {
 		return nil, fmt.Errorf("expected a Ytsaurus but got a %T", oldYtsaurus)
 	}
+	ytsauruslog.Info("validate update", "name", oldYtsaurus.Name)
 	newYtsaurus, ok := newObj.(*Ytsaurus)
 	if !ok {
 		return nil, fmt.Errorf("expected a Ytsaurus but got a %T", newYtsaurus)
