@@ -467,7 +467,6 @@ func (r *ytsaurusValidator) validateExistsYtsaurus(ctx context.Context, newYtsau
 
 	err := r.Client.List(ctx, &ytsaurusList, &client.ListOptions{Namespace: newYtsaurus.Namespace})
 	ytsauruslog.Info("validateExistsYTsaurus", "ytsaurusList", ytsaurusList)
-	// ytsauruslog.Info("validateExistsYTsaurus2", "error", err)
 
 	if err != nil && !apierrors.IsNotFound(err) {
 		allErrors = append(allErrors, field.InternalError(field.NewPath("k8sClient"), err))

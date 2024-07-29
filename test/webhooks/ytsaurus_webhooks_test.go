@@ -320,11 +320,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 
 		It("should deny the creation of another YTsaurus CRD in the same namespace", func() {
 			ytsaurus1 := testutil.CreateBaseYtsaurusResource(namespace)
-			// Expect(k8sClient.Create(ctx, ytsaurus1)).Should(Succeed())
 			Expect(k8sClient.Create(ctx, ytsaurus1)).Should(MatchError(ContainSubstring("already exists")))
-
-			// ytsaurus2 := testutil.CreateBaseYtsaurusResource(namespace)
-			// Expect(k8sClient.Create(ctx, ytsaurus2)).Should(MatchError(ContainSubstring("already exists")))
 		})
 	})
 })
