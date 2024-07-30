@@ -168,7 +168,7 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 		},
 	}
 
-	if !ytsaurusResource.Spec.UI.Secure {
+	if ytsaurusResource.Spec.UI.UseInsecureCookies {
 		env = append(env, corev1.EnvVar{
 			Name:  "YT_AUTH_ALLOW_INSECURE",
 			Value: "1",
