@@ -1,4 +1,4 @@
-# yt-k8s-operator
+# ytsaurus-k8s-operator
 
 YTsaurus is a distributed storage and processing platform for big data with support for MapReduce model, a distributed file system and a NoSQL key-value database.
 
@@ -26,13 +26,13 @@ kubectl apply -f config/samples/cluster_v1_demo.yaml
 2. Build and push your image to the location specified by `IMG`:
 
 ```sh
-make docker-build docker-push IMG=<some-registry>/yt-k8s-operator:tag
+make docker-build docker-push IMG=<some-registry>/ytsaurus-k8s-operator:tag
 ```
 
 3. Deploy the controller to the cluster with the image specified by `IMG`:
 
 ```sh
-make deploy IMG=<some-registry>/yt-k8s-operator:tag
+make deploy IMG=<some-registry>/ytsaurus-k8s-operator:tag
 ```
 
 ### Uninstall CRDs

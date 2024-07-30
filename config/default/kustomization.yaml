@@ -1,12 +1,12 @@
 # Adds namespace to all resources.
-namespace: yt-k8s-operator-system
+namespace: ytsaurus-k8s-operator-system
 
 # Value of this field is prepended to the
 # names of all resources, e.g. a deployment named
 # "wordpress" becomes "alices-wordpress".
 # Note that it should also match with the prefix (text before '-') of the namespace
 # field above.
-namePrefix: yt-k8s-operator-
+namePrefix: ytsaurus-k8s-operator-
 
 bases:
 - ../crd

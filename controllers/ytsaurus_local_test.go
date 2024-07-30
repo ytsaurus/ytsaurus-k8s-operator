@@ -12,9 +12,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
-	"github.com/ytsaurus/yt-k8s-operator/controllers"
-	"github.com/ytsaurus/yt-k8s-operator/pkg/testutil"
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 )
 
 const (
