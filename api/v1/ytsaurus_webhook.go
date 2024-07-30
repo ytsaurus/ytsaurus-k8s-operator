@@ -401,22 +401,17 @@ func (r *Ytsaurus) validateYQLAgents(*Ytsaurus) field.ErrorList {
 func (r *Ytsaurus) validateUi(*Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
-	if r.Spec.UI != nil {
-		if r.Spec.UI.UseInsecureCookies != nil && !*r.Spec.UI.UseInsecureCookies && !r.Spec.UI.Secure {
-			allErrors = append(allErrors, field.Invalid(field.NewPath("spec", "ui", "useInsecureCookies"), r.Spec.UI.UseInsecureCookies, "useInsecureCookies is deprecated, use secure instead"))
-		}
-		if r.Spec.UI.Secure {
-			for i, hp := range r.Spec.HTTPProxies {
-				if hp.Role != consts.DefaultHTTPProxyRole {
-					continue
-				}
-				if hp.Transport.HTTPSSecret == nil {
-					allErrors = append(allErrors, field.Required(
-						field.NewPath("spec", "httpProxies").Index(i).Child("transport", "httpsSecret"),
-						fmt.Sprintf("configured HTTPS for proxy with `%s` role is required for ui.secure", consts.DefaultHTTPProxyRole)))
-				}
-				break
+	if r.Spec.UI != nil && r.Spec.UI.Secure {
+		for i, hp := range r.Spec.HTTPProxies {
+			if hp.Role != consts.DefaultHTTPProxyRole {
+				continue
 			}
+			if hp.Transport.HTTPSSecret == nil {
+				allErrors = append(allErrors, field.Required(
+					field.NewPath("spec", "httpProxies").Index(i).Child("transport", "httpsSecret"),
+					fmt.Sprintf("configured HTTPS for proxy with `%s` role is required for ui.secure", consts.DefaultHTTPProxyRole)))
+			}
+			break
 		}
 	}
 

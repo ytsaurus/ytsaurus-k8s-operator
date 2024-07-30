@@ -34353,6 +34353,7 @@ spec:
                     default: lavander
                     type: string
                   useInsecureCookies:
+                    default: true
                     description: If defined allows insecure (over http) authentication.
                     type: boolean
                 type: object

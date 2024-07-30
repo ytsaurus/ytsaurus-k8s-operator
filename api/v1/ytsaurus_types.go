@@ -480,9 +480,9 @@ type UISpec struct {
 	ServiceType  corev1.ServiceType `json:"serviceType,omitempty"`
 	HttpNodePort *int32             `json:"httpNodePort,omitempty"`
 	// If defined allows insecure (over http) authentication.
-	// Deprecated: use `secure` instead.
+	//+kubebuilder:default:=true
 	//+optional
-	UseInsecureCookies *bool `json:"useInsecureCookies"`
+	UseInsecureCookies bool `json:"useInsecureCookies"`
 	// Use secure connection to the cluster's http-proxies.
 	//+kubebuilder:default:=false
 	//+optional
