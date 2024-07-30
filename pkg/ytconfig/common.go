@@ -1,7 +1,7 @@
 package ytconfig
 
 import (
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"go.ytsaurus.tech/yt/go/yson"
 )
 

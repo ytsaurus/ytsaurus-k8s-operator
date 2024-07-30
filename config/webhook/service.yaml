@@ -6,8 +6,8 @@ metadata:
     app.kubernetes.io/name: service
     app.kubernetes.io/instance: webhook-service
     app.kubernetes.io/component: webhook
-    app.kubernetes.io/created-by: yt-k8s-operator
-    app.kubernetes.io/part-of: yt-k8s-operator
+    app.kubernetes.io/created-by: ytsaurus-k8s-operator
+    app.kubernetes.io/part-of: ytsaurus-k8s-operator
     app.kubernetes.io/managed-by: kustomize
   name: webhook-service
   namespace: system

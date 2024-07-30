@@ -1,4 +1,4 @@
-module github.com/ytsaurus/yt-k8s-operator
+module github.com/ytsaurus/ytsaurus-k8s-operator
 
 go 1.22.2
 

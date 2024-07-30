@@ -3,7 +3,7 @@ package ytconfig
 import (
 	"fmt"
 
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 func (g *BaseGenerator) getName(shortName string) string {

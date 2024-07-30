@@ -6,8 +6,8 @@ metadata:
     app.kubernetes.io/name: clusterrole
     app.kubernetes.io/instance: spyt-viewer-role
     app.kubernetes.io/component: rbac
-    app.kubernetes.io/created-by: yt-k8s-operator
-    app.kubernetes.io/part-of: yt-k8s-operator
+    app.kubernetes.io/created-by: ytsaurus-k8s-operator
+    app.kubernetes.io/part-of: ytsaurus-k8s-operator
     app.kubernetes.io/managed-by: kustomize
   name: spyt-viewer-role
 rules:

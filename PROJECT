@@ -5,8 +5,8 @@
 domain: ytsaurus.tech
 layout:
 - go.kubebuilder.io/v3
-projectName: yt-k8s-operator
-repo: github.com/ytsaurus/yt-k8s-operator
+projectName: ytsaurus-k8s-operator
+repo: github.com/ytsaurus/ytsaurus-k8s-operator
 resources:
 - api:
     crdVersion: v1
@@ -15,7 +15,7 @@ resources:
   domain: ytsaurus.tech
   group: cluster
   kind: Ytsaurus
-  path: github.com/ytsaurus/yt-k8s-operator/api/v1
+  path: github.com/ytsaurus/ytsaurus-k8s-operator/api/v1
   version: v1
   webhooks:
     defaulting: true
@@ -28,7 +28,7 @@ resources:
   domain: ytsaurus.tech
   group: cluster
   kind: Spyt
-  path: github.com/ytsaurus/yt-k8s-operator/api/v1
+  path: github.com/ytsaurus/ytsaurus-k8s-operator/api/v1
   version: v1
   webhooks:
     defaulting: true
@@ -41,7 +41,7 @@ resources:
   domain: ytsaurus.tech
   group: cluster
   kind: Chyt
-  path: github.com/ytsaurus/yt-k8s-operator/api/v1
+  path: github.com/ytsaurus/ytsaurus-k8s-operator/api/v1
   version: v1
   webhooks:
     defaulting: true
@@ -53,7 +53,7 @@ resources:
   domain: ytsaurus.tech
   group: cluster
   kind: RemoteYtsaurus
-  path: github.com/ytsaurus/yt-k8s-operator/api/v1
+  path: github.com/ytsaurus/ytsaurus-k8s-operator/api/v1
   version: v1
 - api:
     crdVersion: v1
@@ -62,6 +62,6 @@ resources:
   domain: ytsaurus.tech
   group: cluster
   kind: RemoteExecNodes
-  path: github.com/ytsaurus/yt-k8s-operator/api/v1
+  path: github.com/ytsaurus/ytsaurus-k8s-operator/api/v1
   version: v1
 version: "3"

@@ -34,7 +34,7 @@ ARG BUILD_DATE=UNSET
 
 LABEL org.opencontainers.image.title="YTsaurus Operator for Kubernetes"
 LABEL org.opencontainers.image.url="https://ytsaurus.tech"
-LABEL org.opencontainers.image.source="https://github.com/ytsaurus/yt-k8s-operator/"
+LABEL org.opencontainers.image.source="https://github.com/ytsaurus/ytsaurus-k8s-operator/"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.version="${VERSION}"
 LABEL org.opencontainers.image.revision="${REVISION}"

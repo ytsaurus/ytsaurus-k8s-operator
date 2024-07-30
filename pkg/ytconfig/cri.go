@@ -3,9 +3,9 @@ package ytconfig
 import (
 	"path"
 
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 func GetContainerdSocketPath(spec *ytv1.ExecNodesSpec) string {

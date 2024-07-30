@@ -4,7 +4,7 @@
 # https://ytsaurus.tech/docs/en/admin-guide/prepare-spec
 #
 # Automatically generated reference for all supported options:
-# https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#ytsaurusspec
+# https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#ytsaurusspec
 #
 
 apiVersion: cluster.ytsaurus.tech/v1
@@ -48,13 +48,13 @@ spec:
   #  tlsPeerAlternativeHostName: ...
 
   ui:
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#uispec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#uispec
     instanceCount: 1
     serviceType: NodePort
 
 
   discovery:
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#discoveryspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#discoveryspec
     instanceCount: 1
 
     # Make reusable loggers config with yaml anchor.
@@ -98,7 +98,7 @@ spec:
 
   primaryMasters:
     # https://ytsaurus.tech/docs/en/admin-guide/components#master
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#mastersspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#mastersspec
     instanceCount: 1
 
     cellTag: 1
@@ -134,7 +134,7 @@ spec:
 
   httpProxies:
     # https://ytsaurus.tech/docs/en/admin-guide/components#proxy
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#httpproxiesspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#httpproxiesspec
     - instanceCount: 1
 
       loggers: *loggers
@@ -165,7 +165,7 @@ spec:
 
   rpcProxies:
     # https://ytsaurus.tech/docs/en/admin-guide/components#proxy
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#rpcproxiesspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#rpcproxiesspec
     - instanceCount: 1
 
       loggers: *loggers
@@ -196,7 +196,7 @@ spec:
 
   dataNodes:
     # https://ytsaurus.tech/docs/en/admin-guide/components#data-nodes
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#datanodesspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#datanodesspec
     # Could be 1, but that is still broken sometimes due to hard-coded replication_factor=2|3.
     - instanceCount: 3
 
@@ -229,7 +229,7 @@ spec:
 
   execNodes:
     # https://ytsaurus.tech/docs/en/admin-guide/components#exec-nodes
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#execnodesspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#execnodesspec
     - instanceCount: 1
 
       loggers: *loggers
@@ -321,7 +321,7 @@ spec:
 
   schedulers:
     # https://ytsaurus.tech/docs/en/admin-guide/components#scheduler
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#schedulersspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#schedulersspec
     instanceCount: 1
 
     loggers: *loggers
@@ -342,7 +342,7 @@ spec:
 
   controllerAgents:
     # https://ytsaurus.tech/docs/en/admin-guide/components#scheduler
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#controlleragentsspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#controlleragentsspec
     instanceCount: 1
 
     loggers: *loggers
@@ -363,7 +363,7 @@ spec:
 
   tabletNodes:
     # https://ytsaurus.tech/docs/en/admin-guide/components#tablet-nodes
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#tabletnodesspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#tabletnodesspec
     - instanceCount: 1
 
       loggers: *loggers
@@ -384,7 +384,7 @@ spec:
 
   yqlAgents:
     # https://ytsaurus.tech/docs/en/admin-guide/components#yql-agent
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#yqlagentspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#yqlagentspec
     instanceCount: 1
 
     # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
@@ -408,7 +408,7 @@ spec:
 
   queryTrackers:
     # https://ytsaurus.tech/docs/en/admin-guide/components#yql-agent
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#queueagentspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#queueagentspec
     instanceCount: 1
 
     # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
@@ -432,7 +432,7 @@ spec:
 
   strawberry:
     # https://ytsaurus.tech/docs/en/admin-guide/chyt
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#strawberrycontrollerspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#strawberrycontrollerspec
 
     # https://ytsaurus.tech/docs/en/admin-guide/releases#strawberry
     image: ghcr.io/ytsaurus/strawberry:0.0.11

@@ -3,7 +3,7 @@ package ytconfig
 import (
 	"k8s.io/apimachinery/pkg/types"
 
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
 
 type BaseGenerator struct {
