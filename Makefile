@@ -361,7 +361,7 @@ KIND ?= $(LOCALBIN)/kind-$(KIND_VERSION)
 KUSTOMIZE_VERSION ?= v5.3.0
 CONTROLLER_GEN_VERSION ?= v0.14.0
 ENVTEST_VERSION ?= latest
-HELMIFY_VERSION ?= v0.4.5
+HELMIFY_VERSION ?= v0.4.13
 ## golangci-lint version.
 GOLANGCI_LINT_VERSION ?= v1.56.2
 GINKGO_VERSION ?= $(call go-get-version,github.com/onsi/ginkgo/v2)
