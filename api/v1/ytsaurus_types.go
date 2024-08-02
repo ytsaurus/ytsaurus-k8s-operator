@@ -174,7 +174,7 @@ type BaseLoggerSpec struct {
 	Compression LogCompression `json:"compression,omitempty"`
 	//+kubebuilder:default:=false
 	//+optional
-	UseTimestampSuffix bool               `json:"useTimestampSuffix"`
+	UseTimestampSuffix bool               `json:"useTimestampSuffix,omitempty"`
 	RotationPolicy     *LogRotationPolicy `json:"rotationPolicy,omitempty"`
 }
 
@@ -440,7 +440,7 @@ type ExecNodesSpec struct {
 	Sidecars []string `json:"sidecars,omitempty"`
 	//+kubebuilder:default:=true
 	//+optional
-	Privileged      bool             `json:"privileged"`
+	Privileged      bool             `json:"privileged,omitempty"`
 	JobProxyLoggers []TextLoggerSpec `json:"jobProxyLoggers,omitempty"`
 	// Resources dedicated for running jobs.
 	//+optional
@@ -482,11 +482,11 @@ type UISpec struct {
 	// If defined allows insecure (over http) authentication.
 	//+kubebuilder:default:=true
 	//+optional
-	UseInsecureCookies bool `json:"useInsecureCookies"`
+	UseInsecureCookies bool `json:"useInsecureCookies,omitempty"`
 	// Use secure connection to the cluster's http-proxies.
 	//+kubebuilder:default:=false
 	//+optional
-	Secure        bool                        `json:"secure"`
+	Secure        bool                        `json:"secure,omitempty"`
 	Resources     corev1.ResourceRequirements `json:"resources,omitempty"`
 	InstanceCount int32                       `json:"instanceCount,omitempty"`
 
@@ -568,21 +568,21 @@ type CommonSpec struct {
 
 	//+kubebuilder:default:=false
 	//+optional
-	UseIPv6 bool `json:"useIpv6"`
+	UseIPv6 bool `json:"useIpv6,omitempty"`
 	//+kubebuilder:default:=false
 	//+optional
-	UseIPv4 bool `json:"useIpv4"`
+	UseIPv4 bool `json:"useIpv4,omitempty"`
 	//+kubebuilder:default:=true
 	//+optional
-	UseShortNames bool `json:"useShortNames"`
+	UseShortNames bool `json:"useShortNames,omitempty"`
 	// Use the host's network namespace for all components.
 	//+kubebuilder:default:=false
 	//+optional
-	HostNetwork bool `json:"hostNetwork"`
+	HostNetwork bool `json:"hostNetwork,omitempty"`
 
 	//+kubebuilder:default:=false
 	//+optional
-	UsePorto bool `json:"usePorto"`
+	UsePorto bool `json:"usePorto,omitempty"`
 
 	ExtraPodAnnotations map[string]string `json:"extraPodAnnotations,omitempty"`
 
@@ -601,15 +601,15 @@ type YtsaurusSpec struct {
 
 	//+kubebuilder:default:=true
 	//+optional
-	IsManaged bool `json:"isManaged"`
+	IsManaged bool `json:"isManaged,omitempty"`
 	//+kubebuilder:default:=true
 	//+optional
-	EnableFullUpdate bool `json:"enableFullUpdate"`
+	EnableFullUpdate bool `json:"enableFullUpdate,omitempty"`
 	//+optional
 	//+kubebuilder:validation:Enum={"","Nothing","StatelessOnly","MasterOnly","TabletNodesOnly","ExecNodesOnly","Everything"}
 	// UpdateSelector is an experimental field. Behaviour may change.
 	// If UpdateSelector is not empty EnableFullUpdate is ignored.
-	UpdateSelector UpdateSelector `json:"updateSelector"`
+	UpdateSelector UpdateSelector `json:"updateSelector,omitempty"`
 
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
