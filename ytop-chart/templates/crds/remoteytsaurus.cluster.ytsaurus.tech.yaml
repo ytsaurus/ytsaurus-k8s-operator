@@ -1,13 +1,11 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: remoteytsaurus.cluster.ytsaurus.tech
   annotations:
     cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "ytop-chart.fullname"
       . }}-webhook-cert'
     controller-gen.kubebuilder.io/version: v0.14.0
-  labels:
-  {{- include "ytop-chart.labels" . | nindent 4 }}
+  name: remoteytsaurus.cluster.ytsaurus.tech
 spec:
   conversion:
     strategy: Webhook
@@ -52,7 +50,8 @@ spec:
                 description: Affinity is a group of affinity scheduling rules.
                 properties:
                   nodeAffinity:
-                    description: Describes node affinity scheduling rules for the pod.
+                    description: Describes node affinity scheduling rules for the
+                      pod.
                     properties:
                       preferredDuringSchedulingIgnoredDuringExecution:
                         description: |-
@@ -71,8 +70,9 @@ spec:
                                   description: A list of node selector requirements
                                     by node's labels.
                                   items:
-                                    description: A node selector requirement is a selector
-                                      that contains values, a key, and an op
+                                    description: A node selector requirement is a
+                                      selector that contains values, a key, and an
+                                      op
                                     properties:
                                       key:
                                         description: The label key that the selector
@@ -96,8 +96,9 @@ spec:
                                   description: A list of node selector requirements
                                     by node's fields.
                                   items:
-                                    description: A node selector requirement is a selector
-                                      that contains values, a key, and an op
+                                    description: A node selector requirement is a
+                                      selector that contains values, a key, and an
+                                      op
                                     properties:
                                       key:
                                         description: The label key that the selector
@@ -135,8 +136,8 @@ spec:
                           scheduling t
                         properties:
                           nodeSelectorTerms:
-                            description: Required. A list of node selector terms. The
-                              terms are ORed.
+                            description: Required. A list of node selector terms.
+                              The terms are ORed.
                             items:
                               description: A null or empty node selector term matches
                                 no objects.
@@ -145,8 +146,9 @@ spec:
                                   description: A list of node selector requirements
                                     by node's labels.
                                   items:
-                                    description: A node selector requirement is a selector
-                                      that contains values, a key, and an op
+                                    description: A node selector requirement is a
+                                      selector that contains values, a key, and an
+                                      op
                                     properties:
                                       key:
                                         description: The label key that the selector
@@ -170,8 +172,9 @@ spec:
                                   description: A list of node selector requirements
                                     by node's fields.
                                   items:
-                                    description: A node selector requirement is a selector
-                                      that contains values, a key, and an op
+                                    description: A node selector requirement is a
+                                      selector that contains values, a key, and an
+                                      op
                                     properties:
                                       key:
                                         description: The label key that the selector
@@ -222,13 +225,13 @@ spec:
                                       description: matchExpressions is a list of label
                                         selector requirements.
                                       items:
-                                        description: A label selector requirement is
-                                          a selector that contains values, a key, and
-                                          an o
+                                        description: A label selector requirement
+                                          is a selector that contains values, a key,
+                                          and an o
                                         properties:
                                           key:
-                                            description: key is the label key that the
-                                              selector applies to.
+                                            description: key is the label key that
+                                              the selector applies to.
                                             type: string
                                           operator:
                                             description: operator represents a key's
@@ -263,13 +266,13 @@ spec:
                                       description: matchExpressions is a list of label
                                         selector requirements.
                                       items:
-                                        description: A label selector requirement is
-                                          a selector that contains values, a key, and
-                                          an o
+                                        description: A label selector requirement
+                                          is a selector that contains values, a key,
+                                          and an o
                                         properties:
                                           key:
-                                            description: key is the label key that the
-                                              selector applies to.
+                                            description: key is the label key that
+                                              the selector applies to.
                                             type: string
                                           operator:
                                             description: operator represents a key's
@@ -297,8 +300,8 @@ spec:
                                   type: object
                                   x-kubernetes-map-type: atomic
                                 namespaces:
-                                  description: namespaces specifies a static list of
-                                    namespace names that the term applies to.
+                                  description: namespaces specifies a static list
+                                    of namespace names that the term applies to.
                                   items:
                                     type: string
                                   type: array
@@ -329,26 +332,28 @@ spec:
                             relative to the g
                           properties:
                             labelSelector:
-                              description: A label query over a set of resources, in
-                                this case pods.
+                              description: A label query over a set of resources,
+                                in this case pods.
                               properties:
                                 matchExpressions:
-                                  description: matchExpressions is a list of label selector
-                                    requirements.
+                                  description: matchExpressions is a list of label
+                                    selector requirements.
                                   items:
-                                    description: A label selector requirement is a selector
-                                      that contains values, a key, and an o
+                                    description: A label selector requirement is a
+                                      selector that contains values, a key, and an
+                                      o
                                     properties:
                                       key:
-                                        description: key is the label key that the selector
-                                          applies to.
+                                        description: key is the label key that the
+                                          selector applies to.
                                         type: string
                                       operator:
                                         description: operator represents a key's relationship
                                           to a set of values.
                                         type: string
                                       values:
-                                        description: values is an array of string values.
+                                        description: values is an array of string
+                                          values.
                                         items:
                                           type: string
                                         type: array
@@ -362,7 +367,8 @@ spec:
                                 matchLabels:
                                   additionalProperties:
                                     type: string
-                                  description: matchLabels is a map of {key,value} pairs.
+                                  description: matchLabels is a map of {key,value}
+                                    pairs.
                                   type: object
                               type: object
                               x-kubernetes-map-type: atomic
@@ -371,22 +377,24 @@ spec:
                                 that the term applies to.
                               properties:
                                 matchExpressions:
-                                  description: matchExpressions is a list of label selector
-                                    requirements.
+                                  description: matchExpressions is a list of label
+                                    selector requirements.
                                   items:
-                                    description: A label selector requirement is a selector
-                                      that contains values, a key, and an o
+                                    description: A label selector requirement is a
+                                      selector that contains values, a key, and an
+                                      o
                                     properties:
                                       key:
-                                        description: key is the label key that the selector
-                                          applies to.
+                                        description: key is the label key that the
+                                          selector applies to.
                                         type: string
                                       operator:
                                         description: operator represents a key's relationship
                                           to a set of values.
                                         type: string
                                       values:
-                                        description: values is an array of string values.
+                                        description: values is an array of string
+                                          values.
                                         items:
                                           type: string
                                         type: array
@@ -400,7 +408,8 @@ spec:
                                 matchLabels:
                                   additionalProperties:
                                     type: string
-                                  description: matchLabels is a map of {key,value} pairs.
+                                  description: matchLabels is a map of {key,value}
+                                    pairs.
                                   type: object
                               type: object
                               x-kubernetes-map-type: atomic
@@ -442,13 +451,13 @@ spec:
                                       description: matchExpressions is a list of label
                                         selector requirements.
                                       items:
-                                        description: A label selector requirement is
-                                          a selector that contains values, a key, and
-                                          an o
+                                        description: A label selector requirement
+                                          is a selector that contains values, a key,
+                                          and an o
                                         properties:
                                           key:
-                                            description: key is the label key that the
-                                              selector applies to.
+                                            description: key is the label key that
+                                              the selector applies to.
                                             type: string
                                           operator:
                                             description: operator represents a key's
@@ -483,13 +492,13 @@ spec:
                                       description: matchExpressions is a list of label
                                         selector requirements.
                                       items:
-                                        description: A label selector requirement is
-                                          a selector that contains values, a key, and
-                                          an o
+                                        description: A label selector requirement
+                                          is a selector that contains values, a key,
+                                          and an o
                                         properties:
                                           key:
-                                            description: key is the label key that the
-                                              selector applies to.
+                                            description: key is the label key that
+                                              the selector applies to.
                                             type: string
                                           operator:
                                             description: operator represents a key's
@@ -517,8 +526,8 @@ spec:
                                   type: object
                                   x-kubernetes-map-type: atomic
                                 namespaces:
-                                  description: namespaces specifies a static list of
-                                    namespace names that the term applies to.
+                                  description: namespaces specifies a static list
+                                    of namespace names that the term applies to.
                                   items:
                                     type: string
                                   type: array
@@ -549,26 +558,28 @@ spec:
                             relative to the g
                           properties:
                             labelSelector:
-                              description: A label query over a set of resources, in
-                                this case pods.
+                              description: A label query over a set of resources,
+                                in this case pods.
                               properties:
                                 matchExpressions:
-                                  description: matchExpressions is a list of label selector
-                                    requirements.
+                                  description: matchExpressions is a list of label
+                                    selector requirements.
                                   items:
-                                    description: A label selector requirement is a selector
-                                      that contains values, a key, and an o
+                                    description: A label selector requirement is a
+                                      selector that contains values, a key, and an
+                                      o
                                     properties:
                                       key:
-                                        description: key is the label key that the selector
-                                          applies to.
+                                        description: key is the label key that the
+                                          selector applies to.
                                         type: string
                                       operator:
                                         description: operator represents a key's relationship
                                           to a set of values.
                                         type: string
                                       values:
-                                        description: values is an array of string values.
+                                        description: values is an array of string
+                                          values.
                                         items:
                                           type: string
                                         type: array
@@ -582,7 +593,8 @@ spec:
                                 matchLabels:
                                   additionalProperties:
                                     type: string
-                                  description: matchLabels is a map of {key,value} pairs.
+                                  description: matchLabels is a map of {key,value}
+                                    pairs.
                                   type: object
                               type: object
                               x-kubernetes-map-type: atomic
@@ -591,22 +603,24 @@ spec:
                                 that the term applies to.
                               properties:
                                 matchExpressions:
-                                  description: matchExpressions is a list of label selector
-                                    requirements.
+                                  description: matchExpressions is a list of label
+                                    selector requirements.
                                   items:
-                                    description: A label selector requirement is a selector
-                                      that contains values, a key, and an o
+                                    description: A label selector requirement is a
+                                      selector that contains values, a key, and an
+                                      o
                                     properties:
                                       key:
-                                        description: key is the label key that the selector
-                                          applies to.
+                                        description: key is the label key that the
+                                          selector applies to.
                                         type: string
                                       operator:
                                         description: operator represents a key's relationship
                                           to a set of values.
                                         type: string
                                       values:
-                                        description: values is an array of string values.
+                                        description: values is an array of string
+                                          values.
                                         items:
                                           type: string
                                         type: array
@@ -620,7 +634,8 @@ spec:
                                 matchLabels:
                                   additionalProperties:
                                     type: string
-                                  description: matchLabels is a map of {key,value} pairs.
+                                  description: matchLabels is a map of {key,value}
+                                    pairs.
                                   type: object
                               type: object
                               x-kubernetes-map-type: atomic
@@ -713,8 +728,8 @@ spec:
                     categoriesFilter:
                       properties:
                         type:
-                          description: CategoriesFilterType string describes types of
-                            possible log CategoriesFilter.
+                          description: CategoriesFilterType string describes types
+                            of possible log CategoriesFilter.
                           enum:
                           - exclude
                           - include
@@ -880,8 +895,8 @@ spec:
                       - type: string
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
-                    description: Requests describes the minimum amount of compute resources
-                      required.
+                    description: Requests describes the minimum amount of compute
+                      resources required.
                     type: object
                 type: object
               runtimeClassName:
@@ -970,7 +985,8 @@ spec:
                         to.
                       type: string
                     operator:
-                      description: Operator represents a key's relationship to the value.
+                      description: Operator represents a key's relationship to the
+                        value.
                       type: string
                     tolerationSeconds:
                       description: |-
@@ -979,7 +995,8 @@ spec:
                       format: int64
                       type: integer
                     value:
-                      description: Value is the taint value the toleration matches to.
+                      description: Value is the taint value the toleration matches
+                        to.
                       type: string
                   type: object
                 type: array
@@ -989,16 +1006,16 @@ spec:
                     of k8s.io/api/core/v1.
                   properties:
                     apiVersion:
-                      description: APIVersion defines the versioned schema of this representation
-                        of an object.
+                      description: APIVersion defines the versioned schema of this
+                        representation of an object.
                       type: string
                     kind:
                       description: Kind is a string value representing the REST resource
                         this object represents.
                       type: string
                     metadata:
-                      description: EmbeddedMetadata contains metadata relevant to an
-                        EmbeddedResource.
+                      description: EmbeddedMetadata contains metadata relevant to
+                        an EmbeddedResource.
                       properties:
                         annotations:
                           additionalProperties:
@@ -1033,8 +1050,8 @@ spec:
                             * An existing VolumeSnapshot obj
                           properties:
                             apiGroup:
-                              description: APIGroup is the group for the resource being
-                                referenced.
+                              description: APIGroup is the group for the resource
+                                being referenced.
                               type: string
                             kind:
                               description: Kind is the type of resource being referenced
@@ -1052,8 +1069,8 @@ spec:
                             to populate the volume with data, '
                           properties:
                             apiGroup:
-                              description: APIGroup is the group for the resource being
-                                referenced.
+                              description: APIGroup is the group for the resource
+                                being referenced.
                               type: string
                             kind:
                               description: Kind is the type of resource being referenced
@@ -1071,14 +1088,15 @@ spec:
                           - name
                           type: object
                         resources:
-                          description: resources represents the minimum resources the
-                            volume should have.
+                          description: resources represents the minimum resources
+                            the volume should have.
                           properties:
                             claims:
                               description: Claims lists the names of resources, defined
                                 in spec.
                               items:
-                                description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                                description: ResourceClaim references one entry in
+                                  PodSpec.ResourceClaims.
                                 properties:
                                   name:
                                     description: Name must match the name of one entry
@@ -1098,8 +1116,8 @@ spec:
                                 - type: string
                                 pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                 x-kubernetes-int-or-string: true
-                              description: Limits describes the maximum amount of compute
-                                resources allowed.
+                              description: Limits describes the maximum amount of
+                                compute resources allowed.
                               type: object
                             requests:
                               additionalProperties:
@@ -1159,16 +1177,16 @@ spec:
                             by the claim.
                           type: string
                         volumeName:
-                          description: volumeName is the binding reference to the PersistentVolume
-                            backing this claim.
+                          description: volumeName is the binding reference to the
+                            PersistentVolume backing this claim.
                           type: string
                       type: object
                   type: object
                 type: array
               volumeMounts:
                 items:
-                  description: VolumeMount describes a mounting of a Volume within a
-                    container.
+                  description: VolumeMount describes a mounting of a Volume within
+                    a container.
                   properties:
                     mountPath:
                       description: Path within the container at which the volume should
@@ -1183,16 +1201,16 @@ spec:
                       description: This must match the Name of a Volume.
                       type: string
                     readOnly:
-                      description: Mounted read-only if true, read-write otherwise (false
-                        or unspecified).
+                      description: Mounted read-only if true, read-write otherwise
+                        (false or unspecified).
                       type: boolean
                     subPath:
                       description: Path within the volume from which the container's
                         volume should be mounted.
                       type: string
                     subPathExpr:
-                      description: Expanded path within the volume from which the container's
-                        volume should be moun
+                      description: Expanded path within the volume from which the
+                        container's volume should be moun
                       type: string
                   required:
                   - mountPath
@@ -1201,8 +1219,8 @@ spec:
                 type: array
               volumes:
                 items:
-                  description: 'Volume represents a named volume in a pod that may be
-                    accessed by any container '
+                  description: 'Volume represents a named volume in a pod that may
+                    be accessed by any container '
                   properties:
                     awsElasticBlockStore:
                       description: |-
@@ -1210,8 +1228,8 @@ spec:
                         kubel
                       properties:
                         fsType:
-                          description: fsType is the filesystem type of the volume that
-                            you want to mount.
+                          description: fsType is the filesystem type of the volume
+                            that you want to mount.
                           type: string
                         partition:
                           description: partition is the partition in the volume that
@@ -1219,8 +1237,8 @@ spec:
                           format: int32
                           type: integer
                         readOnly:
-                          description: readOnly value true will force the readOnly setting
-                            in VolumeMounts.
+                          description: readOnly value true will force the readOnly
+                            setting in VolumeMounts.
                           type: boolean
                         volumeID:
                           description: volumeID is unique ID of the persistent disk
@@ -1230,8 +1248,8 @@ spec:
                       - volumeID
                       type: object
                     azureDisk:
-                      description: 'azureDisk represents an Azure Data Disk mount on
-                        the host and bind mount to the '
+                      description: 'azureDisk represents an Azure Data Disk mount
+                        on the host and bind mount to the '
                       properties:
                         cachingMode:
                           description: 'cachingMode is the Host Caching mode: None,
@@ -1242,14 +1260,15 @@ spec:
                             blob storage
                           type: string
                         diskURI:
-                          description: diskURI is the URI of data disk in the blob storage
+                          description: diskURI is the URI of data disk in the blob
+                            storage
                           type: string
                         fsType:
                           description: fsType is Filesystem type to mount.
                           type: string
                         kind:
-                          description: 'kind expected values are Shared: multiple blob
-                            disks per storage account  Dedica'
+                          description: 'kind expected values are Shared: multiple
+                            blob disks per storage account  Dedica'
                           type: string
                         readOnly:
                           description: readOnly Defaults to false (read/write).
@@ -1295,8 +1314,8 @@ spec:
                           description: 'readOnly is Optional: Defaults to false (read/write).'
                           type: boolean
                         secretFile:
-                          description: 'secretFile is Optional: SecretFile is the path
-                            to key ring for User, default is '
+                          description: 'secretFile is Optional: SecretFile is the
+                            path to key ring for User, default is '
                           type: string
                         secretRef:
                           description: 'secretRef is Optional: SecretRef is reference
@@ -1318,8 +1337,8 @@ spec:
                       - monitors
                       type: object
                     cinder:
-                      description: cinder represents a cinder volume attached and mounted
-                        on kubelets host machine.
+                      description: cinder represents a cinder volume attached and
+                        mounted on kubelets host machine.
                       properties:
                         fsType:
                           description: fsType is the filesystem type to mount.
@@ -1328,8 +1347,8 @@ spec:
                           description: readOnly defaults to false (read/write).
                           type: boolean
                         secretRef:
-                          description: 'secretRef is optional: points to a secret object
-                            containing parameters used to c'
+                          description: 'secretRef is optional: points to a secret
+                            object containing parameters used to c'
                           properties:
                             name:
                               description: |-
@@ -1351,8 +1370,8 @@ spec:
                         this volume
                       properties:
                         defaultMode:
-                          description: 'defaultMode is optional: mode bits used to set
-                            permissions on created files by d'
+                          description: 'defaultMode is optional: mode bits used to
+                            set permissions on created files by d'
                           format: int32
                           type: integer
                         items:
@@ -1366,13 +1385,13 @@ spec:
                                 description: key is the key to project.
                                 type: string
                               mode:
-                                description: 'mode is Optional: mode bits used to set
-                                  permissions on this file.'
+                                description: 'mode is Optional: mode bits used to
+                                  set permissions on this file.'
                                 format: int32
                                 type: integer
                               path:
-                                description: path is the relative path of the file to
-                                  map the key to.
+                                description: path is the relative path of the file
+                                  to map the key to.
                                 type: string
                             required:
                             - key
@@ -1464,8 +1483,8 @@ spec:
                                 format: int32
                                 type: integer
                               path:
-                                description: 'Required: Path is  the relative path name
-                                  of the file to be created.'
+                                description: 'Required: Path is  the relative path
+                                  name of the file to be created.'
                                 type: string
                               resourceFieldRef:
                                 description: |-
@@ -1497,8 +1516,8 @@ spec:
                           type: array
                       type: object
                     emptyDir:
-                      description: emptyDir represents a temporary directory that shares
-                        a pod's lifetime.
+                      description: emptyDir represents a temporary directory that
+                        shares a pod's lifetime.
                       properties:
                         medium:
                           description: medium represents what type of storage medium
@@ -1518,8 +1537,8 @@ spec:
                         a cluster storage driver.
                       properties:
                         volumeClaimTemplate:
-                          description: Will be used to create a stand-alone PVC to provision
-                            the volume.
+                          description: Will be used to create a stand-alone PVC to
+                            provision the volume.
                           properties:
                             metadata:
                               description: |-
@@ -1558,8 +1577,8 @@ spec:
                                   type: object
                                   x-kubernetes-map-type: atomic
                                 dataSourceRef:
-                                  description: 'dataSourceRef specifies the object from
-                                    which to populate the volume with data, '
+                                  description: 'dataSourceRef specifies the object
+                                    from which to populate the volume with data, '
                                   properties:
                                     apiGroup:
                                       description: APIGroup is the group for the resource
@@ -1590,12 +1609,12 @@ spec:
                                       description: Claims lists the names of resources,
                                         defined in spec.
                                       items:
-                                        description: ResourceClaim references one entry
-                                          in PodSpec.ResourceClaims.
+                                        description: ResourceClaim references one
+                                          entry in PodSpec.ResourceClaims.
                                         properties:
                                           name:
-                                            description: Name must match the name of
-                                              one entry in pod.spec.
+                                            description: Name must match the name
+                                              of one entry in pod.spec.
                                             type: string
                                         required:
                                         - name
@@ -1621,8 +1640,8 @@ spec:
                                         - type: string
                                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                         x-kubernetes-int-or-string: true
-                                      description: Requests describes the minimum amount
-                                        of compute resources required.
+                                      description: Requests describes the minimum
+                                        amount of compute resources required.
                                       type: object
                                   type: object
                                 selector:
@@ -1633,13 +1652,13 @@ spec:
                                       description: matchExpressions is a list of label
                                         selector requirements.
                                       items:
-                                        description: A label selector requirement is
-                                          a selector that contains values, a key, and
-                                          an o
+                                        description: A label selector requirement
+                                          is a selector that contains values, a key,
+                                          and an o
                                         properties:
                                           key:
-                                            description: key is the label key that the
-                                              selector applies to.
+                                            description: key is the label key that
+                                              the selector applies to.
                                             type: string
                                           operator:
                                             description: operator represents a key's
@@ -1667,16 +1686,16 @@ spec:
                                   type: object
                                   x-kubernetes-map-type: atomic
                                 storageClassName:
-                                  description: storageClassName is the name of the StorageClass
-                                    required by the claim.
+                                  description: storageClassName is the name of the
+                                    StorageClass required by the claim.
                                   type: string
                                 volumeMode:
                                   description: volumeMode defines what type of volume
                                     is required by the claim.
                                   type: string
                                 volumeName:
-                                  description: volumeName is the binding reference to
-                                    the PersistentVolume backing this claim.
+                                  description: volumeName is the binding reference
+                                    to the PersistentVolume backing this claim.
                                   type: string
                               type: object
                           required:
@@ -1684,8 +1703,8 @@ spec:
                           type: object
                       type: object
                     fc:
-                      description: fc represents a Fibre Channel resource that is attached
-                        to a kubelet's host mach
+                      description: fc represents a Fibre Channel resource that is
+                        attached to a kubelet's host mach
                       properties:
                         fsType:
                           description: fsType is the filesystem type to mount.
@@ -1717,8 +1736,8 @@ spec:
                         provisioned/attached usi
                       properties:
                         driver:
-                          description: driver is the name of the driver to use for this
-                            volume.
+                          description: driver is the name of the driver to use for
+                            this volume.
                           type: string
                         fsType:
                           description: fsType is the filesystem type to mount.
@@ -1748,8 +1767,8 @@ spec:
                       - driver
                       type: object
                     flocker:
-                      description: flocker represents a Flocker volume attached to a
-                        kubelet's host machine.
+                      description: flocker represents a Flocker volume attached to
+                        a kubelet's host machine.
                       properties:
                         datasetName:
                           description: datasetName is Name of the dataset stored as
@@ -1774,7 +1793,8 @@ spec:
                           format: int32
                           type: integer
                         pdName:
-                          description: pdName is unique name of the PD resource in GCE.
+                          description: pdName is unique name of the PD resource in
+                            GCE.
                           type: string
                         readOnly:
                           description: readOnly here will force the ReadOnly setting
@@ -1807,8 +1827,8 @@ spec:
                         that shares a pod's lifetime.
                       properties:
                         endpoints:
-                          description: endpoints is the endpoint name that details Glusterfs
-                            topology.
+                          description: endpoints is the endpoint name that details
+                            Glusterfs topology.
                           type: string
                         path:
                           description: |-
@@ -1854,11 +1874,12 @@ spec:
                             Session CHAP authentication
                           type: boolean
                         fsType:
-                          description: fsType is the filesystem type of the volume that
-                            you want to mount.
+                          description: fsType is the filesystem type of the volume
+                            that you want to mount.
                           type: string
                         initiatorName:
-                          description: initiatorName is the custom iSCSI Initiator Name.
+                          description: initiatorName is the custom iSCSI Initiator
+                            Name.
                           type: string
                         iqn:
                           description: iqn is the target iSCSI Qualified Name.
@@ -1914,12 +1935,12 @@ spec:
                             More info: https://kubernetes.
                           type: string
                         readOnly:
-                          description: readOnly here will force the NFS export to be
-                            mounted with read-only permissions
+                          description: readOnly here will force the NFS export to
+                            be mounted with read-only permissions
                           type: boolean
                         server:
-                          description: server is the hostname or IP address of the NFS
-                            server.
+                          description: server is the hostname or IP address of the
+                            NFS server.
                           type: string
                       required:
                       - path
@@ -2038,18 +2059,18 @@ spec:
                                       file
                                     items:
                                       description: DownwardAPIVolumeFile represents
-                                        information to create the file containing the
-                                        p
+                                        information to create the file containing
+                                        the p
                                       properties:
                                         fieldRef:
-                                          description: 'Required: Selects a field of
-                                            the pod: only annotations, labels, name
-                                            and namespa'
+                                          description: 'Required: Selects a field
+                                            of the pod: only annotations, labels,
+                                            name and namespa'
                                           properties:
                                             apiVersion:
                                               description: Version of the schema the
-                                                FieldPath is written in terms of, defaults
-                                                to "v1".
+                                                FieldPath is written in terms of,
+                                                defaults to "v1".
                                               type: string
                                             fieldPath:
                                               description: Path of the field to select
@@ -2061,8 +2082,8 @@ spec:
                                           x-kubernetes-map-type: atomic
                                         mode:
                                           description: 'Optional: mode bits used to
-                                            set permissions on this file, must be an
-                                            octal value'
+                                            set permissions on this file, must be
+                                            an octal value'
                                           format: int32
                                           type: integer
                                         path:
@@ -2083,12 +2104,13 @@ spec:
                                               - type: integer
                                               - type: string
                                               description: Specifies the output format
-                                                of the exposed resources, defaults to
-                                                "1"
+                                                of the exposed resources, defaults
+                                                to "1"
                                               pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                               x-kubernetes-int-or-string: true
                                             resource:
-                                              description: 'Required: resource to select'
+                                              description: 'Required: resource to
+                                                select'
                                               type: string
                                           required:
                                           - resource
@@ -2144,8 +2166,8 @@ spec:
                                   the serviceAccountToken data to project
                                 properties:
                                   audience:
-                                    description: audience is the intended audience of
-                                      the token.
+                                    description: audience is the intended audience
+                                      of the token.
                                     type: string
                                   expirationSeconds:
                                     description: |-
@@ -2165,8 +2187,8 @@ spec:
                           type: array
                       type: object
                     quobyte:
-                      description: quobyte represents a Quobyte mount on the host that
-                        shares a pod's lifetime
+                      description: quobyte represents a Quobyte mount on the host
+                        that shares a pod's lifetime
                       properties:
                         group:
                           description: |-
@@ -2174,8 +2196,8 @@ spec:
                             Default is no group
                           type: string
                         readOnly:
-                          description: readOnly here will force the Quobyte volume to
-                            be mounted with read-only permiss
+                          description: readOnly here will force the Quobyte volume
+                            to be mounted with read-only permiss
                           type: boolean
                         registry:
                           description: "registry represents a single or multiple Quobyte
@@ -2204,8 +2226,8 @@ spec:
                         host that shares a pod's lifeti
                       properties:
                         fsType:
-                          description: fsType is the filesystem type of the volume that
-                            you want to mount.
+                          description: fsType is the filesystem type of the volume
+                            that you want to mount.
                           type: string
                         image:
                           description: |-
@@ -2256,19 +2278,19 @@ spec:
                       - monitors
                       type: object
                     scaleIO:
-                      description: scaleIO represents a ScaleIO persistent volume attached
-                        and mounted on Kubernete
+                      description: scaleIO represents a ScaleIO persistent volume
+                        attached and mounted on Kubernete
                       properties:
                         fsType:
                           description: fsType is the filesystem type to mount.
                           type: string
                         gateway:
-                          description: gateway is the host address of the ScaleIO API
-                            Gateway.
+                          description: gateway is the host address of the ScaleIO
+                            API Gateway.
                           type: string
                         protectionDomain:
-                          description: protectionDomain is the name of the ScaleIO Protection
-                            Domain for the configured
+                          description: protectionDomain is the name of the ScaleIO
+                            Protection Domain for the configured
                           type: string
                         readOnly:
                           description: readOnly Defaults to false (read/write).
@@ -2298,8 +2320,8 @@ spec:
                             with the protection domain.
                           type: string
                         system:
-                          description: system is the name of the storage system as configured
-                            in ScaleIO.
+                          description: system is the name of the storage system as
+                            configured in ScaleIO.
                           type: string
                         volumeName:
                           description: |-
@@ -2312,12 +2334,12 @@ spec:
                       - system
                       type: object
                     secret:
-                      description: secret represents a secret that should populate this
-                        volume.
+                      description: secret represents a secret that should populate
+                        this volume.
                       properties:
                         defaultMode:
-                          description: 'defaultMode is Optional: mode bits used to set
-                            permissions on created files by d'
+                          description: 'defaultMode is Optional: mode bits used to
+                            set permissions on created files by d'
                           format: int32
                           type: integer
                         items:
@@ -2331,13 +2353,13 @@ spec:
                                 description: key is the key to project.
                                 type: string
                               mode:
-                                description: 'mode is Optional: mode bits used to set
-                                  permissions on this file.'
+                                description: 'mode is Optional: mode bits used to
+                                  set permissions on this file.'
                                 format: int32
                                 type: integer
                               path:
-                                description: path is the relative path of the file to
-                                  map the key to.
+                                description: path is the relative path of the file
+                                  to map the key to.
                                 type: string
                             required:
                             - key
@@ -2349,8 +2371,8 @@ spec:
                             its keys must be defined
                           type: boolean
                         secretName:
-                          description: secretName is the name of the secret in the pod's
-                            namespace to use.
+                          description: secretName is the name of the secret in the
+                            pod's namespace to use.
                           type: string
                       type: object
                     storageos:
@@ -2380,8 +2402,8 @@ spec:
                             StorageOS volume.
                           type: string
                         volumeNamespace:
-                          description: volumeNamespace specifies the scope of the volume
-                            within StorageOS.
+                          description: volumeNamespace specifies the scope of the
+                            volume within StorageOS.
                           type: string
                       type: object
                     vsphereVolume:
@@ -2392,8 +2414,8 @@ spec:
                           description: fsType is filesystem type to mount.
                           type: string
                         storagePolicyID:
-                          description: storagePolicyID is the storage Policy Based Management
-                            (SPBM) profile ID associa
+                          description: storagePolicyID is the storage Policy Based
+                            Management (SPBM) profile ID associa
                           type: string
                         storagePolicyName:
                           description: storagePolicyName is the storage Policy Based
@@ -2422,9 +2444,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
