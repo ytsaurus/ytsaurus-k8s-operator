@@ -1479,11 +1479,6 @@ func (in *UISpec) DeepCopyInto(out *UISpec) {
 		*out = new(int32)
 		**out = **in
 	}
-	if in.UseInsecureCookies != nil {
-		in, out := &in.UseInsecureCookies, &out.UseInsecureCookies
-		*out = new(bool)
-		**out = **in
-	}
 	in.Resources.DeepCopyInto(&out.Resources)
 	if in.ExternalProxy != nil {
 		in, out := &in.ExternalProxy, &out.ExternalProxy

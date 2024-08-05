@@ -23,7 +23,7 @@ import (
 
 	"go.uber.org/zap/zapcore"
 
-	"github.com/ytsaurus/yt-k8s-operator/controllers"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
@@ -39,7 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	ytv1 "github.com/ytsaurus/yt-k8s-operator/api/v1"
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	//+kubebuilder:scaffold:imports
 )
 

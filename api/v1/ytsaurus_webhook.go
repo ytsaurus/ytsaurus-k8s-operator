@@ -36,7 +36,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 // log is for logging in this package.
@@ -408,24 +408,21 @@ func (r *ytsaurusValidator) validateYQLAgents(newYtsaurus *Ytsaurus) field.Error
 func (r *ytsaurusValidator) validateUi(newYtsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
-	if newYtsaurus.Spec.UI != nil {
-		if newYtsaurus.Spec.UI.UseInsecureCookies != nil && !*newYtsaurus.Spec.UI.UseInsecureCookies && !newYtsaurus.Spec.UI.Secure {
-			allErrors = append(allErrors, field.Invalid(field.NewPath("spec", "ui", "useInsecureCookies"), newYtsaurus.Spec.UI.UseInsecureCookies, "useInsecureCookies is deprecated, use secure instead"))
-		}
-		if newYtsaurus.Spec.UI.Secure {
-			for i, hp := range newYtsaurus.Spec.HTTPProxies {
-				if hp.Role != consts.DefaultHTTPProxyRole {
-					continue
-				}
-				if hp.Transport.HTTPSSecret == nil {
-					allErrors = append(allErrors, field.Required(
-						field.NewPath("spec", "httpProxies").Index(i).Child("transport", "httpsSecret"),
-						fmt.Sprintf("configured HTTPS for proxy with `%s` role is required for ui.secure", consts.DefaultHTTPProxyRole)))
-				}
-				break
-			}
-		}
-	}
+var allErrors field.ErrorList
+
+if newYtsaurus.Spec.UI != nil && newYtsaurus.Spec.UI.Secure {
+  for i, hp := range newYtsaurus.Spec.HTTPProxies {
+    if hp.Role != consts.DefaultHTTPProxyRole {
+      continue
+    }
+    if hp.Transport.HTTPSSecret == nil {
+      allErrors = append(allErrors, field.Required(
+        field.NewPath("spec", "httpProxies").Index(i).Child("transport", "httpsSecret"),
+        fmt.Sprintf("configured HTTPS for proxy with `%s` role is required for ui.secure", consts.DefaultHTTPProxyRole)))
+    }
+    break
+  }
+}
 
 	return allErrors
 }

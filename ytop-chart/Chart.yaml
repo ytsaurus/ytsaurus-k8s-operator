@@ -5,4 +5,4 @@ type: application
 version: 0.0.0-alpha
 appVersion: "0.0.0-alpha"
 sources:
-  - https://github.com/ytsaurus/yt-k8s-operator
+  - https://github.com/ytsaurus/ytsaurus-k8s-operator

@@ -13,8 +13,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/ytsaurus/yt-k8s-operator/pkg/consts"
-	mock_yt "github.com/ytsaurus/yt-k8s-operator/pkg/mock"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	mock_yt "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/mock"
 )
 
 var mockCtrl *gomock.Controller
