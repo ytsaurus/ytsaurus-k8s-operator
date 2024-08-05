@@ -43,13 +43,11 @@ import (
 var ytsauruslog = logf.Log.WithName("ytsaurus-resource")
 
 type ytsaurusValidator struct {
-	Scheme *runtime.Scheme
 	Client client.Client
 }
 
 func (r *Ytsaurus) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	validator := &ytsaurusValidator{
-		Scheme: mgr.GetScheme(),
 		Client: mgr.GetClient(),
 	}
 	return ctrl.NewWebhookManagedBy(mgr).
@@ -464,7 +462,6 @@ func (r *ytsaurusValidator) validateExistsYtsaurus(ctx context.Context, newYtsau
 	var allErrors field.ErrorList
 
 	var ytsaurusList YtsaurusList
-
 	err := r.Client.List(ctx, &ytsaurusList, &client.ListOptions{Namespace: newYtsaurus.Namespace})
 	ytsauruslog.Info("validateExistsYTsaurus", "ytsaurusList", ytsaurusList)
 
@@ -473,15 +470,14 @@ func (r *ytsaurusValidator) validateExistsYtsaurus(ctx context.Context, newYtsau
 		return allErrors
 	}
 
-	for _, ytsaurus := range ytsaurusList.Items {
-		if ytsaurus.Name == newYtsaurus.Name {
-			// The object already exists and has the same name, so it's an update operation
-			return allErrors
-		}
-	}
-
-	if len(ytsaurusList.Items) > 0 {
-		allErrors = append(allErrors, field.Forbidden(field.NewPath("metadata").Child("namespace"), fmt.Sprintf("A Ytsaurus object already exists in namespace %s", newYtsaurus.Namespace)))
+	// if ytsaurus is already exists and it's the same one, it is an update operation
+	if len(ytsaurusList.Items) == 1 && ytsaurusList.Items[0].Name == newYtsaurus.Name {
+		return allErrors
+	} else if len(ytsaurusList.Items) == 0 {
+		// it's the creation operation for the first ytsaurus object
+		return allErrors
+	} else {
+		allErrors = append(allErrors, field.Forbidden(field.NewPath("metadata").Child("namespace"), fmt.Sprintf("A Ytsaurus object already exists in the given namespace %s", newYtsaurus.Namespace)))
 	}
 
 	return allErrors
