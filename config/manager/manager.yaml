@@ -17,6 +17,7 @@ spec:
     matchLabels:
       control-plane: controller-manager
   replicas: 1
+  revisionHistoryLimit: 10
   template:
     metadata:
       annotations:
