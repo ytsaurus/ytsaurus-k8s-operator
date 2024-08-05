@@ -3,13 +3,12 @@ package webhooks
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-
-	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 )
 
 var _ = Describe("Test for Ytsaurus webhooks", func() {
@@ -319,5 +318,9 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.primaryMasters.hostAddresses: Invalid value")))
 		})
 
+		It("should deny the creation of another YTsaurus CRD in the same namespace", func() {
+			ytsaurus1 := testutil.CreateBaseYtsaurusResource(namespace)
+			Expect(k8sClient.Create(ctx, ytsaurus1)).Should(MatchError(ContainSubstring("already exists")))
+		})
 	})
 })
