@@ -413,7 +413,7 @@ $(ENVSUBST): $(LOCALBIN)
 	$(call go-install-tool,$(ENVSUBST),github.com/a8m/envsubst/cmd/envsubst,$(ENVSUBST_VERSION))
 
 .PHONY: kubectl-slice
-kubectl-slice: $(KUBECTL_SLICE) ## Download yq locally if necessary.
+kubectl-slice: $(KUBECTL_SLICE) ## Download kubectl-slice locally if necessary.
 $(KUBECTL_SLICE): $(LOCALBIN)
 	$(call go-install-tool,$(KUBECTL_SLICE),github.com/patrickdappollonio/kubectl-slice,$(KUBECTL_SLICE_VERSION))
 
