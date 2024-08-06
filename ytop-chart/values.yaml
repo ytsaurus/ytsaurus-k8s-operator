@@ -45,10 +45,15 @@ controllerManager:
       requests:
         cpu: 10m
         memory: 64Mi
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
   replicas: 1
   revisionHistoryLimit: 10
   serviceAccount:
     annotations: {}
+  strategy:
+    type: RollingUpdate
 kubernetesClusterDomain: cluster.local
 managerConfig:
   controllerManagerConfigYaml: |-

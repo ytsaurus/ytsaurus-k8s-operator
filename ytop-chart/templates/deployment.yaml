@@ -7,6 +7,7 @@ metadata:
   {{- include "ytop-chart.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.controllerManager.replicas }}
+  strategy: {{- toYaml .Values.controllerManager.strategy | nindent 4 }}
   revisionHistoryLimit: {{ .Values.controllerManager.revisionHistoryLimit }}
   selector:
     matchLabels:
@@ -77,6 +78,9 @@ spec:
         - mountPath: /etc/certs/tls
           name: metrics-cert
           readOnly: true
+      nodeSelector: {{- toYaml .Values.controllerManager.nodeSelector | nindent 8 }}
+      tolerations: {{- toYaml .Values.controllerManager.tolerations | nindent 8 }}
+      affinity: {{- toYaml .Values.controllerManager.affinity | nindent 8 }}
       securityContext:
         runAsNonRoot: true
       serviceAccountName: {{ include "ytop-chart.fullname" . }}-controller-manager
