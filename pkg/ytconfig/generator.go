@@ -157,9 +157,11 @@ func (g *Generator) fillDriver(c *Driver) {
 
 func (g *BaseGenerator) fillAddressResolver(c *AddressResolver) {
 	var retries = 1000
-
 	c.EnableIPv4 = g.commonSpec.UseIPv4
 	c.EnableIPv6 = g.commonSpec.UseIPv6
+	c.KeepSocket = g.commonSpec.KeepSocket
+	c.ForceTcp = g.commonSpec.ForceTcp
+
 	if !c.EnableIPv6 && !c.EnableIPv4 {
 		// In case when nothing is specified, we prefer IPv4 due to compatibility reasons.
 		c.EnableIPv4 = true
@@ -310,7 +312,9 @@ func (g *Generator) GetClusterConnection() ([]byte, error) {
 }
 
 func (g *Generator) GetStrawberryControllerConfig() ([]byte, error) {
-	c := getStrawberryController()
+	var resolver AddressResolver
+	g.fillAddressResolver(&resolver)
+	c := getStrawberryController(&resolver)
 	proxy := g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 	c.LocationProxies = []string{proxy}
 	c.HTTPLocationAliases = map[string][]string{

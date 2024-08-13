@@ -51,6 +51,8 @@ type ClusterConnection struct {
 type AddressResolver struct {
 	EnableIPv4 bool `yson:"enable_ipv4"`
 	EnableIPv6 bool `yson:"enable_ipv6"`
+	KeepSocket bool `yson:"keep_socket"`
+	ForceTcp   bool `yson:"force_tcp"`
 	Retries    *int `yson:"retries,omitempty"`
 
 	LocalhostNameOverride *string `yson:"localhost_name_override,omitempty"`

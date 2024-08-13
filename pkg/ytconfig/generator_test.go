@@ -556,6 +556,8 @@ func withOauthSpec(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 func withResolverConfigured(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.UseIPv4 = true
 	ytsaurus.Spec.UseIPv6 = false
+	ytsaurus.Spec.KeepSocket = true
+	ytsaurus.Spec.ForceTcp = false
 	return ytsaurus
 }
 
@@ -789,7 +791,9 @@ func getTCPProxySpec() ytv1.TCPProxiesSpec {
 
 func getCommonSpec() ytv1.CommonSpec {
 	return ytv1.CommonSpec{
-		UseIPv6: true,
+		UseIPv6:    true,
+		KeepSocket: true,
+		ForceTcp:   false,
 	}
 }
 
