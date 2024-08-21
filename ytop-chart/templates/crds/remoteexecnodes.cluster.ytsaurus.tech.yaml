@@ -701,7 +701,6 @@ spec:
                   type: string
                 type: object
               forceTcp:
-                default: false
                 type: boolean
               hostNetwork:
                 default: false
@@ -916,7 +915,6 @@ spec:
                     type: object
                 type: object
               keepSocket:
-                default: true
                 type: boolean
               locations:
                 items:

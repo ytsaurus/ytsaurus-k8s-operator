@@ -402,6 +402,18 @@ func TestGetYQLAgentConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestResolverOptionsKeepSocketAndForceTCP(t *testing.T) {
+	ytsaurus := getYtsaurusWithEverything()
+	forceTCP := true
+	keepSocket := true
+	ytsaurus.Spec.CommonSpec.ForceTCP = &forceTCP
+	ytsaurus.Spec.CommonSpec.KeepSocket = &keepSocket
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetMasterConfig(&ytsaurus.Spec.PrimaryMasters)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetMasterCachesWithFixedHostsConfig(t *testing.T) {
 	ytsaurus := withFixedMasterCachesHosts(getYtsaurusWithEverything())
 	g := NewGenerator(ytsaurus, testClusterDomain)
@@ -556,8 +568,6 @@ func withOauthSpec(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 func withResolverConfigured(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.UseIPv4 = true
 	ytsaurus.Spec.UseIPv6 = false
-	ytsaurus.Spec.KeepSocket = true
-	ytsaurus.Spec.ForceTcp = false
 	return ytsaurus
 }
 
@@ -791,9 +801,7 @@ func getTCPProxySpec() ytv1.TCPProxiesSpec {
 
 func getCommonSpec() ytv1.CommonSpec {
 	return ytv1.CommonSpec{
-		UseIPv6:    true,
-		KeepSocket: true,
-		ForceTcp:   false,
+		UseIPv6: true,
 	}
 }
 

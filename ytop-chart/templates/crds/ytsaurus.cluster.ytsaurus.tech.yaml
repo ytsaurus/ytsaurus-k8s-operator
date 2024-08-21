@@ -10036,7 +10036,6 @@ spec:
                   type: string
                 type: object
               forceTcp:
-                default: false
                 type: boolean
               hostNetwork:
                 default: false
@@ -12510,7 +12509,6 @@ spec:
                 description: Default docker image for user jobs.
                 type: string
               keepSocket:
-                default: true
                 type: boolean
               masterCaches:
                 properties:

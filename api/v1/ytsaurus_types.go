@@ -571,12 +571,10 @@ type CommonSpec struct {
 	//+kubebuilder:default:=false
 	//+optional
 	UseIPv4 bool `json:"useIpv4"`
-	//+kubebuilder:default:=true
 	//+optional
-	KeepSocket bool `json:"keepSocket"`
-	//+kubebuilder:default:=false
+	KeepSocket *bool `json:"keepSocket,omitempty"`
 	//+optional
-	ForceTcp bool `json:"forceTcp"`
+	ForceTCP *bool `json:"forceTcp,omitempty"`
 
 	//+kubebuilder:default:=true
 	//+optional

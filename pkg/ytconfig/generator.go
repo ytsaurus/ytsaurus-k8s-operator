@@ -160,7 +160,7 @@ func (g *BaseGenerator) fillAddressResolver(c *AddressResolver) {
 	c.EnableIPv4 = g.commonSpec.UseIPv4
 	c.EnableIPv6 = g.commonSpec.UseIPv6
 	c.KeepSocket = g.commonSpec.KeepSocket
-	c.ForceTcp = g.commonSpec.ForceTcp
+	c.ForceTCP = g.commonSpec.ForceTCP
 
 	if !c.EnableIPv6 && !c.EnableIPv4 {
 		// In case when nothing is specified, we prefer IPv4 due to compatibility reasons.
