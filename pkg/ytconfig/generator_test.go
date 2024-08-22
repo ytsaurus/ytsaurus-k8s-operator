@@ -402,6 +402,16 @@ func TestGetYQLAgentConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestResolverOptionsKeepSocketAndForceTCP(t *testing.T) {
+	ytsaurus := getYtsaurusWithEverything()
+	ytsaurus.Spec.CommonSpec.ForceTCP = ptr.To(true)
+	ytsaurus.Spec.CommonSpec.KeepSocket = ptr.To(true)
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetMasterConfig(&ytsaurus.Spec.PrimaryMasters)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetMasterCachesWithFixedHostsConfig(t *testing.T) {
 	ytsaurus := withFixedMasterCachesHosts(getYtsaurusWithEverything())
 	g := NewGenerator(ytsaurus, testClusterDomain)

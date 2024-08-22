@@ -689,6 +689,8 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              forceTcp:
+                type: boolean
               hostNetwork:
                 default: false
                 description: Use the host's network namespace for all components.
@@ -901,6 +903,8 @@ spec:
                       resources required.
                     type: object
                 type: object
+              keepSocket:
+                type: boolean
               locations:
                 items:
                   properties:

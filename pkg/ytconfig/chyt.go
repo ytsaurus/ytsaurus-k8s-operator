@@ -27,7 +27,18 @@ type ChytInitCluster struct {
 	Families       []string `yson:"families"`
 }
 
-func getStrawberryController() StrawberryController {
+type ChytConfig struct {
+	AddressResolver AddressResolver `yson:"address_resolver"`
+}
+
+func getStrawberryController(resolver AddressResolver) (StrawberryController, error) {
+	chytConfig := ChytConfig{
+		AddressResolver: resolver,
+	}
+	chytYsonConfig, err := marshallYsonConfig(chytConfig)
+	if err != nil {
+		return StrawberryController{}, err
+	}
 	return StrawberryController{
 		Strawberry: Strawberry{
 			Root:  "//sys/strawberry",
@@ -36,10 +47,10 @@ func getStrawberryController() StrawberryController {
 			RobotUsername: consts.StrawberryControllerUserName,
 		},
 		Controllers: map[string]yson.RawValue{
-			"chyt": yson.RawValue("{address_resolver={enable_ipv4=%true;enable_ipv6=%true;retries=1000}}"),
+			"chyt": chytYsonConfig,
 		},
 		HTTPAPIEndpoint: fmt.Sprintf(":%v", consts.StrawberryHTTPAPIPort),
-	}
+	}, nil
 }
 
 func getChytInitCluster() ChytInitCluster {

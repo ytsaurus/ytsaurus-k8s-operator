@@ -345,6 +345,16 @@ func (in *CommonSpec) DeepCopyInto(out *CommonSpec) {
 		*out = new(RPCTransportSpec)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.KeepSocket != nil {
+		in, out := &in.KeepSocket, &out.KeepSocket
+		*out = new(bool)
+		**out = **in
+	}
+	if in.ForceTCP != nil {
+		in, out := &in.ForceTCP, &out.ForceTCP
+		*out = new(bool)
+		**out = **in
+	}
 	if in.ExtraPodAnnotations != nil {
 		in, out := &in.ExtraPodAnnotations, &out.ExtraPodAnnotations
 		*out = make(map[string]string, len(*in))
