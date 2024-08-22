@@ -404,10 +404,8 @@ func TestGetYQLAgentConfig(t *testing.T) {
 
 func TestResolverOptionsKeepSocketAndForceTCP(t *testing.T) {
 	ytsaurus := getYtsaurusWithEverything()
-	forceTCP := true
-	keepSocket := true
-	ytsaurus.Spec.CommonSpec.ForceTCP = &forceTCP
-	ytsaurus.Spec.CommonSpec.KeepSocket = &keepSocket
+	ytsaurus.Spec.CommonSpec.ForceTCP = ptr.To(true)
+	ytsaurus.Spec.CommonSpec.KeepSocket = ptr.To(true)
 	g := NewGenerator(ytsaurus, testClusterDomain)
 	cfg, err := g.GetMasterConfig(&ytsaurus.Spec.PrimaryMasters)
 	require.NoError(t, err)

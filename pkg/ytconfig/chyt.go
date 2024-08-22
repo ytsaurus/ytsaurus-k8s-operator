@@ -31,13 +31,13 @@ type ChytConfig struct {
 	AddressResolver AddressResolver `yson:"address_resolver"`
 }
 
-func getStrawberryController(resolver *AddressResolver) StrawberryController {
+func getStrawberryController(resolver AddressResolver) (StrawberryController, error) {
 	chytConfig := ChytConfig{
-		AddressResolver: *resolver,
+		AddressResolver: resolver,
 	}
 	chytYsonConfig, err := marshallYsonConfig(chytConfig)
 	if err != nil {
-		chytYsonConfig = yson.RawValue("{address_resolver={enable_ipv4=%true;enable_ipv6=%true;retries=1000}}")
+		return StrawberryController{}, err
 	}
 	return StrawberryController{
 		Strawberry: Strawberry{
@@ -50,7 +50,7 @@ func getStrawberryController(resolver *AddressResolver) StrawberryController {
 			"chyt": chytYsonConfig,
 		},
 		HTTPAPIEndpoint: fmt.Sprintf(":%v", consts.StrawberryHTTPAPIPort),
-	}
+	}, nil
 }
 
 func getChytInitCluster() ChytInitCluster {

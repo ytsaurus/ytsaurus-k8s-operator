@@ -314,7 +314,10 @@ func (g *Generator) GetClusterConnection() ([]byte, error) {
 func (g *Generator) GetStrawberryControllerConfig() ([]byte, error) {
 	var resolver AddressResolver
 	g.fillAddressResolver(&resolver)
-	c := getStrawberryController(&resolver)
+	c, err := getStrawberryController(resolver)
+	if err != nil {
+		return nil, err
+	}
 	proxy := g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 	c.LocationProxies = []string{proxy}
 	c.HTTPLocationAliases = map[string][]string{
