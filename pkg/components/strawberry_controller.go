@@ -67,8 +67,10 @@ func NewStrawberryController(
 	}
 
 	l := labeller.Labeller{
-		ObjectMeta:     &resource.ObjectMeta,
-		APIProxy:       ytsaurus.APIProxy(),
+		ObjectMeta:    &resource.ObjectMeta,
+		APIProxy:      ytsaurus.APIProxy(),
+		ComponentType: consts.YTComponentLabelStrawberry,
+		// TODO(achulkov2): Pass the value above here instead after DeprecatedChytController is removed.
 		ComponentLabel: fmt.Sprintf("yt-%s-controller", name),
 		ComponentName:  componentName,
 		Annotations:    resource.Spec.ExtraPodAnnotations,

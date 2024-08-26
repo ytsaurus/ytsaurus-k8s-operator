@@ -42,7 +42,7 @@ func NewQueryTracker(
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
-		ComponentLabel: "yt-query-tracker",
+		ComponentLabel: consts.YTComponentLabelQueryTracker,
 		ComponentName:  string(consts.QueryTrackerType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}

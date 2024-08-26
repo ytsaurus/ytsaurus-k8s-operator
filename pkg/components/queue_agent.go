@@ -44,7 +44,7 @@ func NewQueueAgent(
 	l := labeller.Labeller{
 		ObjectMeta:     &resource.ObjectMeta,
 		APIProxy:       ytsaurus.APIProxy(),
-		ComponentLabel: "yt-queue-agent",
+		ComponentLabel: consts.YTComponentLabelQueueAgent,
 		ComponentName:  string(consts.QueueAgentType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}

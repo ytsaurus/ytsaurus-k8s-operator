@@ -2,7 +2,6 @@ package components
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -35,8 +34,9 @@ func NewSpyt(
 	l := labeller.Labeller{
 		ObjectMeta:     &spyt.GetResource().ObjectMeta,
 		APIProxy:       spyt.APIProxy(),
-		ComponentLabel: fmt.Sprintf("ytsaurus-spyt-%s", spyt.GetResource().Name),
-		ComponentName:  fmt.Sprintf("SPYT-%s", spyt.GetResource().Name),
+		ComponentType:  consts.YTComponentLabelSpyt,
+		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelSpyt, spyt.GetResource().Name),
+		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.SpytType), spyt.GetResource().Name),
 		Annotations:    ytsaurus.Spec.ExtraPodAnnotations,
 	}
 

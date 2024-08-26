@@ -36,8 +36,9 @@ func NewChyt(
 	l := labeller.Labeller{
 		ObjectMeta:     &chyt.GetResource().ObjectMeta,
 		APIProxy:       chyt.APIProxy(),
-		ComponentLabel: fmt.Sprintf("ytsaurus-chyt-%s", chyt.GetResource().Name),
-		ComponentName:  fmt.Sprintf("CHYT-%s", chyt.GetResource().Name),
+		ComponentType:  consts.YTComponentLabelChyt,
+		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelChyt, chyt.GetResource().Name),
+		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.ChytType), chyt.GetResource().Name),
 		Annotations:    ytsaurus.Spec.ExtraPodAnnotations,
 	}
 

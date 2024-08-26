@@ -1,5 +1,7 @@
 package consts
 
+const YTClusterLabelName = "yt_cluster"
+const YTComponentTypeLabelName = "yt_component_type"
 const YTComponentLabelName = "yt_component"
 const YTMetricsLabelName = "yt_metrics"
 
@@ -18,4 +20,9 @@ const (
 	YTComponentLabelYqlAgent        string = "yt-yql-agent"
 	YTComponentLabelClient          string = "yt-client"
 	YTComponentLabelMasterCache     string = "yt-master-cache"
+	YTComponentLabelQueueAgent      string = "yt-queue-agent"
+	YTComponentLabelQueryTracker    string = "yt-query-tracker"
+	YTComponentLabelChyt            string = "yt-chyt"
+	YTComponentLabelSpyt            string = "yt-spyt"
+	YTComponentLabelStrawberry      string = "yt-strawberry-controller"
 )

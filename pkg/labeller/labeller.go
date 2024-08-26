@@ -18,6 +18,7 @@ type FetchableObject struct {
 type Labeller struct {
 	APIProxy       apiproxy.APIProxy
 	ObjectMeta     *metav1.ObjectMeta
+	ComponentType  string
 	ComponentLabel string
 	ComponentName  string
 	Annotations    map[string]string
@@ -25,6 +26,13 @@ type Labeller struct {
 
 func (l *Labeller) GetClusterName() string {
 	return l.ObjectMeta.Name
+}
+
+func (l *Labeller) GetComponentType() string {
+	if l.ComponentType != "" {
+		return l.ComponentType
+	}
+	return l.ComponentLabel
 }
 
 func (l *Labeller) GetSecretName() string {
@@ -65,17 +73,24 @@ func (l *Labeller) GetInitJobObjectMeta() metav1.ObjectMeta {
 	}
 }
 
-func (l *Labeller) GetYTLabelValue(isInitJob bool) string {
-	result := fmt.Sprintf("%s-%s", l.ObjectMeta.Name, l.ComponentLabel)
+func (l *Labeller) GetInstanceLabelValue(isInitJob bool) string {
+	result := fmt.Sprintf("%s-%s", l.GetClusterName(), l.ComponentLabel)
 	if isInitJob {
 		result = fmt.Sprintf("%s-%s", result, "init-job")
 	}
 	return result
 }
 
+func (l *Labeller) GetComponentTypeLabelValue(isInitJob bool) string {
+	if isInitJob {
+		return fmt.Sprintf("%s-%s", l.GetComponentType(), "init-job")
+	}
+	return l.GetComponentType()
+}
+
 func (l *Labeller) GetSelectorLabelMap() map[string]string {
 	return map[string]string{
-		consts.YTComponentLabelName: l.GetYTLabelValue(false),
+		consts.YTComponentLabelName: l.GetInstanceLabelValue(false),
 	}
 }
 
@@ -88,11 +103,29 @@ func (l *Labeller) GetListOptions() []client.ListOption {
 
 func (l *Labeller) GetMetaLabelMap(isInitJob bool) map[string]string {
 	return map[string]string{
-		"app.kubernetes.io/name":       "Ytsaurus",
-		"app.kubernetes.io/instance":   l.ObjectMeta.Name,
-		"app.kubernetes.io/component":  l.ComponentLabel,
-		"app.kubernetes.io/managed-by": "Ytsaurus-k8s-operator",
-		consts.YTComponentLabelName:    l.GetYTLabelValue(isInitJob),
+		// This is supposed to be the name of the application.
+		// It makes sense to separate init jobs from the main components.
+		"app.kubernetes.io/name": l.GetComponentTypeLabelValue(isInitJob),
+		// This is supposed to be a unique name identifying the instance
+		// of an application, so it contains both the cluster name and
+		// the name from the spec (for components with multiple groups).
+		"app.kubernetes.io/instance": l.GetInstanceLabelValue(isInitJob),
+		// This is supposed to be the name of a higher level application
+		// that this app is part of.
+		"app.kubernetes.io/part-of": "ytsaurus",
+		// This is weird IMO, but let's keep it for now, as it might be used
+		// by some code already. It is the same as instance, but without the
+		// cluster name.
+		"app.kubernetes.io/component": l.ComponentLabel,
+		// Uppercase looks awful, even though it is more typical for k8s.
+		"app.kubernetes.io/managed-by": "ytsaurus-k8s-operator",
+		// It is nice to have the cluster name as a label.
+		consts.YTClusterLabelName: l.GetClusterName(),
+		// Useful to distinguish between different component types.
+		consts.YTComponentTypeLabelName: l.GetComponentTypeLabelValue(isInitJob),
+		// This label is used to check pods for readiness during updates.
+		// The name isn't quite right, but we keep it for backwards compatibility.
+		consts.YTComponentLabelName: l.GetInstanceLabelValue(isInitJob),
 	}
 }
 

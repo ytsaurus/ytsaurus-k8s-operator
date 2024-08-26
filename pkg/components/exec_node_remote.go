@@ -28,6 +28,7 @@ func NewRemoteExecNodes(
 	l := labeller.Labeller{
 		ObjectMeta:     &nodes.ObjectMeta,
 		APIProxy:       proxy,
+		ComponentType:  consts.YTComponentLabelExecNode,
 		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelExecNode, spec.Name),
 		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.ExecNodeType), spec.Name),
 	}
