@@ -226,7 +226,6 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 			VolumeMounts: volumeMounts,
 		},
 	}
-	deployment.Spec.Template.Spec.Tolerations = c.microservice.getTolerations()
 
 	deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
 		createConfigVolume(consts.ConfigVolumeName, c.labeller.GetMainConfigMapName(), nil),

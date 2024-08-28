@@ -31,7 +31,6 @@ type microservice interface {
 	buildDeployment() *appsv1.Deployment
 	buildService() *corev1.Service
 	buildConfig() *corev1.ConfigMap
-	getTolerations() []corev1.Toleration
 }
 
 type microserviceImpl struct {
@@ -133,7 +132,6 @@ func (m *microserviceImpl) rebuildDeployment() *appsv1.Deployment {
 			Image: m.image,
 		},
 	}
-	m.builtDeployment.Spec.Template.Spec.Tolerations = m.tolerations
 	return m.builtDeployment
 }
 
@@ -196,8 +194,4 @@ func (m *microserviceImpl) removePods(ctx context.Context) error {
 
 func (m *microserviceImpl) getImage() string {
 	return m.image
-}
-
-func (m *microserviceImpl) getTolerations() []corev1.Toleration {
-	return m.tolerations
 }
