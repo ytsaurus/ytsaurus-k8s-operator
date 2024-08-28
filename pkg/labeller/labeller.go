@@ -88,6 +88,11 @@ func (l *Labeller) GetComponentTypeLabelValue(isInitJob bool) string {
 	return l.GetComponentType()
 }
 
+func (l *Labeller) GetPartOfLabelValue() string {
+	// TODO(achulkov2): Change this from `yt` to `ytsaurus` at the same time as all other label values.
+	return fmt.Sprintf("yt-%s", l.GetClusterName())
+}
+
 func (l *Labeller) GetSelectorLabelMap() map[string]string {
 	return map[string]string{
 		consts.YTComponentLabelName: l.GetInstanceLabelValue(false),
@@ -103,28 +108,25 @@ func (l *Labeller) GetListOptions() []client.ListOption {
 
 func (l *Labeller) GetMetaLabelMap(isInitJob bool) map[string]string {
 	return map[string]string{
-		// This is supposed to be the name of the application.
-		// It makes sense to separate init jobs from the main components.
+		// This is supposed to be the name of the application. It makes
+		// sense to separate init jobs from the main components. It does
+		// not contain the name of the instance group for easier monitoring
+		// configuration.
+		// Template: yt-<component_type>[-init-job].
 		"app.kubernetes.io/name": l.GetComponentTypeLabelValue(isInitJob),
-		// This is supposed to be a unique name identifying the instance
-		// of an application, so it contains both the cluster name and
-		// the name from the spec (for components with multiple groups).
-		"app.kubernetes.io/instance": l.GetInstanceLabelValue(isInitJob),
-		// This is supposed to be the name of a higher level application
-		// that this app is part of.
-		"app.kubernetes.io/part-of": "ytsaurus",
-		// This is weird IMO, but let's keep it for now, as it might be used
-		// by some code already. It is the same as instance, but without the
-		// cluster name.
+		// Template: yt-<component_type>-<instance_group>.
 		"app.kubernetes.io/component": l.ComponentLabel,
+		// This is supposed to be the name of a higher level application
+		// that this app is part of: yt-<cluster_name>.
+		"app.kubernetes.io/part-of": l.GetPartOfLabelValue(),
 		// Uppercase looks awful, even though it is more typical for k8s.
 		"app.kubernetes.io/managed-by": "ytsaurus-k8s-operator",
 		// It is nice to have the cluster name as a label.
+		// Template: <cluster_name>.
 		consts.YTClusterLabelName: l.GetClusterName(),
-		// Useful to distinguish between different component types.
-		consts.YTComponentTypeLabelName: l.GetComponentTypeLabelValue(isInitJob),
 		// This label is used to check pods for readiness during updates.
 		// The name isn't quite right, but we keep it for backwards compatibility.
+		// Template: <cluster_name>-yt-<component_type>-<instance_group>[-init-job].
 		consts.YTComponentLabelName: l.GetInstanceLabelValue(isInitJob),
 	}
 }

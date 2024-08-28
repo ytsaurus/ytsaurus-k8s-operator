@@ -1,10 +1,11 @@
 package consts
 
-const YTClusterLabelName = "yt_cluster"
-const YTComponentTypeLabelName = "yt_component_type"
+const YTClusterLabelName = "ytsaurus.tech/cluster-name"
 const YTComponentLabelName = "yt_component"
 const YTMetricsLabelName = "yt_metrics"
 
+// TODO(achulkov2): We should probably use `ytsaurus` instead of `yt` everywhere, but
+// it will be an inconvenient change that requires all statefulsets to be recreated.
 const (
 	YTComponentLabelDiscovery       string = "yt-discovery"
 	YTComponentLabelMaster          string = "yt-master"
