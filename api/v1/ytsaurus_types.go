@@ -515,8 +515,9 @@ type QueryTrackerSpec struct {
 }
 
 type StrawberryControllerSpec struct {
-	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
-	Image     *string                     `json:"image,omitempty"`
+	Resources   corev1.ResourceRequirements `json:"resources,omitempty"`
+	Image       *string                     `json:"image,omitempty"`
+	Tolerations []corev1.Toleration         `json:"tolerations,omitempty"`
 }
 
 type YQLAgentSpec struct {

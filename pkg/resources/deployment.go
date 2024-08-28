@@ -13,13 +13,13 @@ import (
 )
 
 type Deployment struct {
-	name     string
-	labeller *labeller2.Labeller
-	ytsaurus *apiproxy.Ytsaurus
-
-	oldObject appsv1.Deployment
-	newObject appsv1.Deployment
-	built     bool
+	name        string
+	labeller    *labeller2.Labeller
+	ytsaurus    *apiproxy.Ytsaurus
+	tolerations []corev1.Toleration
+	oldObject   appsv1.Deployment
+	newObject   appsv1.Deployment
+	built       bool
 }
 
 func NewDeployment(
@@ -59,6 +59,7 @@ func (d *Deployment) Build() *appsv1.Deployment {
 				},
 				Spec: corev1.PodSpec{
 					ImagePullSecrets: d.ytsaurus.GetResource().Spec.ImagePullSecrets,
+					Tolerations:      d.tolerations,
 				},
 			},
 		}
