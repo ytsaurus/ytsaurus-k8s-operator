@@ -1348,6 +1348,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
 | `image` _string_ |  |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
 
 
 #### StructuredLoggerSpec
@@ -1557,6 +1558,7 @@ _Appears in:_
 | `description` _string_ |  |  |  |
 | `group` _string_ |  |  |  |
 | `directDownload` _boolean_ | When this is set to false, UI will use backend for downloading instead of proxy.<br />If this is set to true or omitted, UI use proxies, which is a default behaviour. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
 
 
 #### UpdateFlow
