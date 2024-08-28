@@ -53,7 +53,6 @@ func NewStrawberryController(
 	image := resource.Spec.CoreImage
 	name := "chyt"
 	componentName := "ChytController"
-	var tolerations []corev1.Toleration
 	if resource.Spec.DeprecatedChytController != nil {
 		if resource.Spec.DeprecatedChytController.Image != nil {
 			image = *resource.Spec.DeprecatedChytController.Image
@@ -64,9 +63,6 @@ func NewStrawberryController(
 		componentName = string(consts.StrawberryControllerType)
 		if resource.Spec.StrawberryController.Image != nil {
 			image = *resource.Spec.StrawberryController.Image
-		}
-		if len(resource.Spec.StrawberryController.Tolerations) != 0 {
-			tolerations = resource.Spec.StrawberryController.Tolerations
 		}
 	}
 
@@ -91,7 +87,7 @@ func NewStrawberryController(
 		},
 		fmt.Sprintf("%s-controller", name),
 		name,
-		tolerations)
+		resource.Spec.StrawberryController.Tolerations)
 
 	return &StrawberryController{
 		localComponent: newLocalComponent(&l, ytsaurus),

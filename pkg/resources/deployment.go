@@ -25,11 +25,13 @@ type Deployment struct {
 func NewDeployment(
 	name string,
 	labeller *labeller2.Labeller,
-	ytsaurus *apiproxy.Ytsaurus) *Deployment {
+	ytsaurus *apiproxy.Ytsaurus,
+	tolerations []corev1.Toleration) *Deployment {
 	return &Deployment{
-		name:     name,
-		labeller: labeller,
-		ytsaurus: ytsaurus,
+		name:        name,
+		labeller:    labeller,
+		ytsaurus:    ytsaurus,
+		tolerations: tolerations,
 	}
 }
 

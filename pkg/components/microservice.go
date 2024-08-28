@@ -46,7 +46,6 @@ type microserviceImpl struct {
 	builtDeployment *appsv1.Deployment
 	builtService    *corev1.Service
 	builtConfig     *corev1.ConfigMap
-	tolerations     []corev1.Toleration
 }
 
 func newMicroservice(
@@ -62,7 +61,6 @@ func newMicroservice(
 		image:         image,
 		instanceCount: instanceCount,
 		ytsaurus:      ytsaurus,
-		tolerations:   tolerations,
 		service: resources.NewHTTPService(
 			serviceName,
 			nil,
@@ -71,7 +69,8 @@ func newMicroservice(
 		deployment: resources.NewDeployment(
 			deploymentName,
 			labeller,
-			ytsaurus),
+			ytsaurus,
+			tolerations),
 		configHelper: NewConfigHelper(
 			labeller,
 			ytsaurus.APIProxy(),

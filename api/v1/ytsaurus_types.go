@@ -507,7 +507,8 @@ type UISpec struct {
 	// When this is set to false, UI will use backend for downloading instead of proxy.
 	// If this is set to true or omitted, UI use proxies, which is a default behaviour.
 	//+optional
-	DirectDownload *bool `json:"directDownload,omitempty"`
+	DirectDownload *bool               `json:"directDownload,omitempty"`
+	Tolerations    []corev1.Toleration `json:"tolerations,omitempty"`
 }
 
 type QueryTrackerSpec struct {
