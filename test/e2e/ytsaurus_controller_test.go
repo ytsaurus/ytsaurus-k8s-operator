@@ -210,7 +210,7 @@ func runRemoteExecNodes(remoteExecNodes *ytv1.RemoteExecNodes) {
 		return err == nil
 	}, reactionTimeout, pollInterval).Should(BeTrue())
 
-	By("Checking that remote nodes state is equal to `Running`")
+	By("Checking that remote exec nodes state is equal to `Running`")
 	Eventually(
 		func() (*ytv1.RemoteExecNodes, error) {
 			nodes := &ytv1.RemoteExecNodes{}
@@ -227,6 +227,33 @@ func deleteRemoteExecNodes(ctx context.Context, remoteExecNodes *ytv1.RemoteExec
 		log.Error(err, "Deleting remote ytsaurus failed")
 	}
 }
+
+// func runRemoteDataNodes(remoteDataNodes *ytv1.RemoteDataNodes) {
+//	Expect(k8sClient.Create(ctx, remoteDataNodes)).Should(Succeed())
+//	lookupKey := types.NamespacedName{Name: remoteDataNodes.Name, Namespace: remoteDataNodes.Namespace}
+//	Eventually(func() bool {
+//		createdYtsaurus := &ytv1.RemoteDataNodes{}
+//		err := k8sClient.Get(ctx, lookupKey, createdYtsaurus)
+//		return err == nil
+//	}, reactionTimeout, pollInterval).Should(BeTrue())
+//
+//	By("Checking that remote data nodes state is equal to `Running`")
+//	Eventually(
+//		func() (*ytv1.RemoteDataNodes, error) {
+//			nodes := &ytv1.RemoteDataNodes{}
+//			err := k8sClient.Get(ctx, lookupKey, nodes)
+//			return nodes, err
+//		},
+//		reactionTimeout*2,
+//		pollInterval,
+//	).Should(HaveField("Status.ReleaseStatus", ytv1.RemoteDataNodeReleaseStatusRunning))
+//}
+//
+// func deleteRemoteDataNodes(ctx context.Context, remoteDataNodes *ytv1.RemoteDataNodes) {
+//	if err := k8sClient.Delete(ctx, remoteDataNodes); err != nil {
+//		log.Error(err, "Deleting remote ytsaurus failed")
+//	}
+//}
 
 func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client) {
 	name := types.NamespacedName{Name: ytsaurus.Name, Namespace: ytsaurus.Namespace}
