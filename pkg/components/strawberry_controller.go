@@ -86,7 +86,8 @@ func NewStrawberryController(
 			},
 		},
 		fmt.Sprintf("%s-controller", name),
-		name)
+		name,
+		resource.Spec.StrawberryController.Tolerations)
 
 	return &StrawberryController{
 		localComponent: newLocalComponent(&l, ytsaurus),

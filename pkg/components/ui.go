@@ -40,7 +40,6 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		ComponentName:  string(consts.UIType),
 		Annotations:    resource.Spec.ExtraPodAnnotations,
 	}
-
 	image := resource.Spec.UIImage
 	if resource.Spec.UI.Image != nil {
 		image = *resource.Spec.UI.Image
@@ -67,7 +66,8 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			},
 		},
 		"ytsaurus-ui-deployment",
-		"ytsaurus-ui")
+		"ytsaurus-ui",
+		resource.Spec.UI.Tolerations)
 
 	microservice.getHttpService().SetHttpNodePort(resource.Spec.UI.HttpNodePort)
 
