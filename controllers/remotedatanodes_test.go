@@ -22,7 +22,7 @@ import (
 
 const (
 	remoteDataNodesName      = "test-remote-data-nodes"
-	statefulSetNameDataNodes = "dn-test-remote-data-nodes"
+	statefulSetNameDataNodes = "dnd-test-remote-data-nodes"
 	dataNodeConfigMapName    = "yt-data-node-config"
 	dataNodeConfigMapYsonKey = "ytserver-data-node.yson"
 )

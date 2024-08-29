@@ -22,7 +22,7 @@ import (
 
 const (
 	remoteExecNodesName      = "test-remote-exec-nodes"
-	statefulSetName          = "end-test-remote-exec-nodes"
+	statefulSetNameExecNodes = "end-test-remote-exec-nodes"
 	execNodeConfigMapName    = "yt-exec-node-config"
 	execNodeConfigMapYsonKey = "ytserver-exec-node.yson"
 )
@@ -52,7 +52,7 @@ func TestRemoteExecNodesFromScratch(t *testing.T) {
 	testutil.DeployObject(h, &nodes)
 	waitRemoteExecNodesDeployed(h, remoteExecNodesName)
 
-	testutil.FetchEventually(h, statefulSetName, &appsv1.StatefulSet{})
+	testutil.FetchEventually(h, statefulSetNameExecNodes, &appsv1.StatefulSet{})
 
 	ysonNodeConfig := testutil.FetchConfigMapData(h, execNodeConfigMapName, execNodeConfigMapYsonKey)
 	require.NotEmpty(t, ysonNodeConfig)
@@ -111,7 +111,7 @@ func TestRemoteExecNodesImageUpdate(t *testing.T) {
 	testutil.DeployObject(h, &nodes)
 	waitRemoteExecNodesDeployed(h, remoteExecNodesName)
 
-	testutil.FetchEventually(h, statefulSetName, &appsv1.StatefulSet{})
+	testutil.FetchEventually(h, statefulSetNameExecNodes, &appsv1.StatefulSet{})
 
 	updatedImage := testYtsaurusImage + "-changed"
 	nodes.Spec.Image = &updatedImage
@@ -119,7 +119,7 @@ func TestRemoteExecNodesImageUpdate(t *testing.T) {
 
 	testutil.FetchAndCheckEventually(
 		h,
-		statefulSetName,
+		statefulSetNameExecNodes,
 		&appsv1.StatefulSet{},
 		"image updated in sts spec",
 		func(obj client.Object) bool {
@@ -144,7 +144,7 @@ func TestRemoteExecNodesChangeInstanceCount(t *testing.T) {
 	testutil.DeployObject(h, &nodes)
 	waitRemoteExecNodesDeployed(h, remoteExecNodesName)
 
-	testutil.FetchEventually(h, statefulSetName, &appsv1.StatefulSet{})
+	testutil.FetchEventually(h, statefulSetNameExecNodes, &appsv1.StatefulSet{})
 
 	newInstanceCount := int32(3)
 	nodes.Spec.InstanceCount = newInstanceCount
@@ -152,7 +152,7 @@ func TestRemoteExecNodesChangeInstanceCount(t *testing.T) {
 
 	testutil.FetchAndCheckEventually(
 		h,
-		statefulSetName,
+		statefulSetNameExecNodes,
 		&appsv1.StatefulSet{},
 		"expected replicas count",
 		func(obj client.Object) bool {
