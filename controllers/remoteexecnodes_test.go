@@ -29,7 +29,7 @@ const (
 
 func setupRemoteExecNodesReconciler(controllerName string) func(mgr ctrl.Manager) error {
 	return func(mgr ctrl.Manager) error {
-		return (&controllers.RemoteDataNodesReconciler{
+		return (&controllers.RemoteExecNodesReconciler{
 			Client:   mgr.GetClient(),
 			Scheme:   mgr.GetScheme(),
 			Recorder: mgr.GetEventRecorderFor(controllerName),
