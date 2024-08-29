@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	defaultClusterDomain = "cluster.local"
+	defaultClusterDomain   = "cluster.local"
+	remoteClusterSpecField = "remoteClusterSpec"
 )
 
 func getClusterDomain(client client.Client) string {
