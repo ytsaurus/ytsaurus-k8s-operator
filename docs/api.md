@@ -1135,7 +1135,7 @@ _Appears in:_
 
 
 
-RemoteDataNodes is the Schema for the RemoteDatanodes API
+RemoteDataNodes is the Schema for the remotedatanodes API
 
 
 

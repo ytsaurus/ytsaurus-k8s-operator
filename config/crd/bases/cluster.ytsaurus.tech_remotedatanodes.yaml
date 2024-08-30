@@ -25,7 +25,7 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: RemoteDataNodes is the Schema for the RemoteDatanodes API
+        description: RemoteDataNodes is the Schema for the remotedatanodes API
         properties:
           apiVersion:
             description: APIVersion defines the versioned schema of this representation

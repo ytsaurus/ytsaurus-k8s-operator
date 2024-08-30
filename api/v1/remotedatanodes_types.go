@@ -53,7 +53,7 @@ type RemoteDataNodesStatus struct {
 //+kubebuilder:resource:categories=ytsaurus-all;yt-all
 //+kubebuilder:subresource:status
 
-// RemoteDataNodes is the Schema for the RemoteDatanodes API
+// RemoteDataNodes is the Schema for the remotedatanodes API
 type RemoteDataNodes struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
