@@ -7,6 +7,7 @@ resources:
 - bases/cluster.ytsaurus.tech_chyts.yaml
 - bases/cluster.ytsaurus.tech_remoteytsaurus.yaml
 - bases/cluster.ytsaurus.tech_remoteexecnodes.yaml
+- bases/cluster.ytsaurus.tech_remotedatanodes.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patches:
