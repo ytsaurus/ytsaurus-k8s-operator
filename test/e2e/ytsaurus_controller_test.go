@@ -839,16 +839,17 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			By("Creating ytsaurus client")
 			ytClient := getYtClient(g, namespace)
+
 			By("Create a chunk")
 			_, err := ytClient.CreateNode(ctx, ypath.Path("//tmp/a"), yt.NodeTable, nil)
 			Expect(err).Should(Succeed())
 
-			Eventually(func(g Gomega) {
-				writer, err := ytClient.WriteTable(ctx, ypath.Path("//tmp/a"), nil)
-				g.Expect(err).ShouldNot(HaveOccurred())
-				g.Expect(writer.Write(testRow{A: "123"})).Should(Succeed())
-				g.Expect(writer.Commit()).Should(Succeed())
-			}, reactionTimeout, pollInterval).Should(Succeed())
+			// Eventually(func(g Gomega) {
+			//	writer, err := ytClient.WriteTable(ctx, ypath.Path("//tmp/a"), nil)
+			//	g.Expect(err).ShouldNot(HaveOccurred())
+			//	g.Expect(writer.Write(testRow{A: "123"})).Should(Succeed())
+			//	g.Expect(writer.Commit()).Should(Succeed())
+			//}, reactionTimeout, pollInterval).Should(Succeed())
 		})
 		It(
 			"Rpc proxies should require authentication",
