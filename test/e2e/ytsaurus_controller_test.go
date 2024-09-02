@@ -19,9 +19,8 @@ import (
 	"go.ytsaurus.tech/yt/go/mapreduce/spec"
 	"go.ytsaurus.tech/yt/go/yt/ytrpc"
 	"go.ytsaurus.tech/yt/go/yterrors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -793,9 +792,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			namespace := "remotedata"
 
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
-			// Ensure that no local data nodes exist, only remote ones (which will be created later).
-			ytsaurus.Spec.DataNodes = []ytv1.DataNodesSpec{}
+			// We have to create only the minimal YT - with master and discovery servers
+			ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
 			g := ytconfig.NewGenerator(ytsaurus, "local")
 
 			remoteYtsaurus := &ytv1.RemoteYtsaurus{
@@ -823,7 +821,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 						CoreImage: testutil.CoreImageFirst,
 					},
 					DataNodesSpec: ytv1.DataNodesSpec{
-						InstanceSpec: testutil.CreateDataNodeInstanceSpec(1),
+						InstanceSpec: testutil.CreateDataNodeInstanceSpec(3),
 					},
 				},
 			}
@@ -840,16 +838,16 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			By("Creating ytsaurus client")
 			ytClient := getYtClient(g, namespace)
 
-			By("Create a chunk")
-			_, err := ytClient.CreateNode(ctx, ypath.Path("//tmp/a"), yt.NodeTable, nil)
-			Expect(err).Should(Succeed())
+			By("Create a chunk on a remote data node")
+			_, errCreateNode := ytClient.CreateNode(ctx, ypath.Path("//tmp/a"), yt.NodeTable, &yt.CreateNodeOptions{})
+			Expect(errCreateNode).Should(Succeed())
 
-			// Eventually(func(g Gomega) {
-			//	writer, err := ytClient.WriteTable(ctx, ypath.Path("//tmp/a"), nil)
-			//	g.Expect(err).ShouldNot(HaveOccurred())
-			//	g.Expect(writer.Write(testRow{A: "123"})).Should(Succeed())
-			//	g.Expect(writer.Commit()).Should(Succeed())
-			//}, reactionTimeout, pollInterval).Should(Succeed())
+			Eventually(func(g Gomega) {
+				writer, err := ytClient.WriteTable(ctx, ypath.Path("//tmp/a"), nil)
+				g.Expect(err).ShouldNot(HaveOccurred())
+				g.Expect(writer.Write(testRow{A: "123"})).Should(Succeed())
+				g.Expect(writer.Commit()).Should(Succeed())
+			}, reactionTimeout, pollInterval).Should(Succeed())
 		})
 		It(
 			"Rpc proxies should require authentication",
