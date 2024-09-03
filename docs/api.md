@@ -1726,7 +1726,6 @@ _Appears in:_
 | `controllerAgents` _[ControllerAgentsSpec](#controlleragentsspec)_ |  |  |  |
 | `tabletNodes` _[TabletNodesSpec](#tabletnodesspec) array_ |  |  |  |
 | `strawberry` _[StrawberryControllerSpec](#strawberrycontrollerspec)_ |  |  |  |
-| `chyt` _[StrawberryControllerSpec](#strawberrycontrollerspec)_ |  |  |  |
 | `queryTrackers` _[QueryTrackerSpec](#querytrackerspec)_ |  |  |  |
 | `spyt` _[DeprecatedSpytSpec](#deprecatedspytspec)_ |  |  |  |
 | `yqlAgents` _[YQLAgentSpec](#yqlagentspec)_ |  |  |  |

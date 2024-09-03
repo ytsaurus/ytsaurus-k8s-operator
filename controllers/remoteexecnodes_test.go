@@ -282,7 +282,7 @@ func buildExecNodePod(h *testutil.TestHelper) corev1.Pod {
 				consts.YTComponentLabelName: strings.Join(
 					[]string{
 						remoteExecNodesName,
-						consts.YTComponentLabelExecNode,
+						consts.ComponentLabel(consts.ExecNodeType),
 					},
 					"-",
 				),

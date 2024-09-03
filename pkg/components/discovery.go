@@ -22,10 +22,9 @@ type Discovery struct {
 func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Discovery {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
-		ObjectMeta:     &resource.ObjectMeta,
-		APIProxy:       ytsaurus.APIProxy(),
-		ComponentLabel: consts.YTComponentLabelDiscovery,
-		ComponentName:  string(consts.DiscoveryType),
+		ObjectMeta:    &resource.ObjectMeta,
+		APIProxy:      ytsaurus.APIProxy(),
+		ComponentType: consts.DiscoveryType,
 	}
 
 	if resource.Spec.Discovery.InstanceSpec.MonitoringPort == nil {

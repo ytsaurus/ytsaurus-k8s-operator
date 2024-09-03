@@ -123,15 +123,21 @@ func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 
 // TODO (l0kix2): merge with ytconfig build spec helpers.
 func WithDataNodes(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
-	return WithDataNodesCount(ytsaurus, 3)
+	return WithDataNodesCount(ytsaurus, 3, nil)
 }
 
-func WithDataNodesCount(ytsaurus *ytv1.Ytsaurus, count int) *ytv1.Ytsaurus {
-	ytsaurus.Spec.DataNodes = []ytv1.DataNodesSpec{
-		{
-			InstanceSpec: CreateDataNodeInstanceSpec(count),
-		},
+func WithNamedDataNodes(ytsaurus *ytv1.Ytsaurus, name *string) *ytv1.Ytsaurus {
+	return WithDataNodesCount(ytsaurus, 3, name)
+}
+
+func WithDataNodesCount(ytsaurus *ytv1.Ytsaurus, count int, name *string) *ytv1.Ytsaurus {
+	dataNodeSpec := ytv1.DataNodesSpec{
+		InstanceSpec: CreateDataNodeInstanceSpec(count),
 	}
+	if name != nil {
+		dataNodeSpec.Name = *name
+	}
+	ytsaurus.Spec.DataNodes = append(ytsaurus.Spec.DataNodes, dataNodeSpec)
 	return ytsaurus
 }
 

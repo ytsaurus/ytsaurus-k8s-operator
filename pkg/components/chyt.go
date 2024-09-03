@@ -34,12 +34,11 @@ func NewChyt(
 	chyt *apiproxy.Chyt,
 	ytsaurus *ytv1.Ytsaurus) *Chyt {
 	l := labeller.Labeller{
-		ObjectMeta:     &chyt.GetResource().ObjectMeta,
-		APIProxy:       chyt.APIProxy(),
-		ComponentType:  consts.YTComponentLabelChyt,
-		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelChyt, chyt.GetResource().Name),
-		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.ChytType), chyt.GetResource().Name),
-		Annotations:    ytsaurus.Spec.ExtraPodAnnotations,
+		ObjectMeta:        &chyt.GetResource().ObjectMeta,
+		APIProxy:          chyt.APIProxy(),
+		ComponentType:     consts.ChytType,
+		ComponentNamePart: chyt.GetResource().Name,
+		Annotations:       ytsaurus.Spec.ExtraPodAnnotations,
 	}
 
 	return &Chyt{

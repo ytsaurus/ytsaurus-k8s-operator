@@ -28,11 +28,10 @@ func NewDataNode(
 ) *DataNode {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
-		ObjectMeta:     &resource.ObjectMeta,
-		APIProxy:       ytsaurus.APIProxy(),
-		ComponentType:  consts.YTComponentLabelDataNode,
-		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelDataNode, spec.Name),
-		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.DataNodeType), spec.Name),
+		ObjectMeta:        &resource.ObjectMeta,
+		APIProxy:          ytsaurus.APIProxy(),
+		ComponentType:     consts.DataNodeType,
+		ComponentNamePart: spec.Name,
 	}
 
 	if spec.InstanceSpec.MonitoringPort == nil {

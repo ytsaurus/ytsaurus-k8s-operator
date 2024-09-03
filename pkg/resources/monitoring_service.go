@@ -26,7 +26,7 @@ type MonitoringService struct {
 
 func NewMonitoringService(monitoringTargetPort int32, labeller *labeller2.Labeller, apiProxy apiproxy.APIProxy) *MonitoringService {
 	return &MonitoringService{
-		name:                 fmt.Sprintf("%s-monitoring", labeller.ComponentLabel),
+		name:                 fmt.Sprintf("%s-monitoring", labeller.GetFullComponentLabel()),
 		labeller:             labeller,
 		apiProxy:             apiProxy,
 		monitoringTargetPort: monitoringTargetPort,

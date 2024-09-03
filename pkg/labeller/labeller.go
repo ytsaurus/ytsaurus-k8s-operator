@@ -16,43 +16,65 @@ type FetchableObject struct {
 }
 
 type Labeller struct {
-	APIProxy       apiproxy.APIProxy
-	ObjectMeta     *metav1.ObjectMeta
-	ComponentType  string
-	ComponentLabel string
-	ComponentName  string
-	Annotations    map[string]string
+	APIProxy      apiproxy.APIProxy
+	ObjectMeta    *metav1.ObjectMeta
+	ComponentType consts.ComponentType
+	// An optional name identifying a group of instances of the type above.
+	// Role for proxies, instance group name for nodes, may be empty.
+	ComponentNamePart string
+	Annotations       map[string]string
 }
 
 func (l *Labeller) GetClusterName() string {
 	return l.ObjectMeta.Name
 }
 
-func (l *Labeller) GetComponentType() string {
-	if l.ComponentType != "" {
-		return l.ComponentType
+// GetComponentName Returns CamelCase component type without name part.
+func (l *Labeller) GetComponentName() string {
+	return string(l.ComponentType)
+}
+
+// GetFullComponentName Returns CamelCase component type with name part.
+func (l *Labeller) GetFullComponentName() string {
+	if l.ComponentNamePart != "" {
+		return consts.FormatComponentStringWithDefault(l.GetComponentName(), l.ComponentNamePart)
 	}
-	return l.ComponentLabel
+
+	return l.GetComponentName()
+}
+
+// GetComponentLabel Returns lower case hyphenated component type without name part.
+func (l *Labeller) GetComponentLabel() string {
+	return consts.ComponentLabel(l.ComponentType)
+}
+
+// GetFullComponentLabel Returns lower case hyphenated component type with name part.
+func (l *Labeller) GetFullComponentLabel() string {
+	if l.ComponentNamePart != "" {
+		return consts.FormatComponentStringWithDefault(l.GetComponentLabel(), l.ComponentNamePart)
+	}
+
+	return l.GetComponentLabel()
 }
 
 func (l *Labeller) GetSecretName() string {
-	return fmt.Sprintf("%s-secret", l.ComponentLabel)
+	return fmt.Sprintf("%s-secret", l.GetFullComponentLabel())
 }
 
 func (l *Labeller) GetMainConfigMapName() string {
-	return fmt.Sprintf("%s-config", l.ComponentLabel)
+	return fmt.Sprintf("%s-config", l.GetFullComponentLabel())
 }
 
 func (l *Labeller) GetSidecarConfigMapName(name string) string {
-	return fmt.Sprintf("%s-%s-config", l.ComponentLabel, name)
+	return fmt.Sprintf("%s-%s-config", l.GetFullComponentLabel(), name)
 }
 
 func (l *Labeller) GetInitJobName(name string) string {
-	return fmt.Sprintf("%s-init-job-%s", l.ComponentLabel, strings.ToLower(name))
+	return fmt.Sprintf("%s-init-job-%s", l.GetFullComponentLabel(), strings.ToLower(name))
 }
 
 func (l *Labeller) GetPodsRemovingStartedCondition() string {
-	return fmt.Sprintf("%sPodsRemovingStarted", l.ComponentName)
+	return fmt.Sprintf("%sPodsRemovingStarted", l.GetFullComponentName())
 }
 
 func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
@@ -74,7 +96,7 @@ func (l *Labeller) GetInitJobObjectMeta() metav1.ObjectMeta {
 }
 
 func (l *Labeller) GetInstanceLabelValue(isInitJob bool) string {
-	result := fmt.Sprintf("%s-%s", l.GetClusterName(), l.ComponentLabel)
+	result := fmt.Sprintf("%s-%s", l.GetClusterName(), l.GetFullComponentLabel())
 	if isInitJob {
 		result = fmt.Sprintf("%s-%s", result, "init-job")
 	}
@@ -83,9 +105,9 @@ func (l *Labeller) GetInstanceLabelValue(isInitJob bool) string {
 
 func (l *Labeller) GetComponentTypeLabelValue(isInitJob bool) string {
 	if isInitJob {
-		return fmt.Sprintf("%s-%s", l.GetComponentType(), "init-job")
+		return fmt.Sprintf("%s-%s", l.GetComponentLabel(), "init-job")
 	}
-	return l.GetComponentType()
+	return l.GetComponentLabel()
 }
 
 func (l *Labeller) GetPartOfLabelValue() string {
@@ -115,7 +137,7 @@ func (l *Labeller) GetMetaLabelMap(isInitJob bool) map[string]string {
 		// Template: yt-<component_type>[-init-job].
 		"app.kubernetes.io/name": l.GetComponentTypeLabelValue(isInitJob),
 		// Template: yt-<component_type>-<instance_group>.
-		"app.kubernetes.io/component": l.ComponentLabel,
+		"app.kubernetes.io/component": l.GetFullComponentLabel(),
 		// This is supposed to be the name of a higher level application
 		// that this app is part of: yt-<cluster_name>.
 		"app.kubernetes.io/part-of": l.GetPartOfLabelValue(),

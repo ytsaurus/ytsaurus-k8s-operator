@@ -42,11 +42,10 @@ func NewQueueAgent(
 ) *QueueAgent {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
-		ObjectMeta:     &resource.ObjectMeta,
-		APIProxy:       ytsaurus.APIProxy(),
-		ComponentLabel: consts.YTComponentLabelQueueAgent,
-		ComponentName:  string(consts.QueueAgentType),
-		Annotations:    resource.Spec.ExtraPodAnnotations,
+		ObjectMeta:    &resource.ObjectMeta,
+		APIProxy:      ytsaurus.APIProxy(),
+		ComponentType: consts.QueueAgentType,
+		Annotations:   resource.Spec.ExtraPodAnnotations,
 	}
 
 	if resource.Spec.QueueAgents.InstanceSpec.MonitoringPort == nil {

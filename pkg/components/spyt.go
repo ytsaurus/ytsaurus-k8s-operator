@@ -32,12 +32,11 @@ func NewSpyt(
 	spyt *apiproxy.Spyt,
 	ytsaurus *ytv1.Ytsaurus) *Spyt {
 	l := labeller.Labeller{
-		ObjectMeta:     &spyt.GetResource().ObjectMeta,
-		APIProxy:       spyt.APIProxy(),
-		ComponentType:  consts.YTComponentLabelSpyt,
-		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelSpyt, spyt.GetResource().Name),
-		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.SpytType), spyt.GetResource().Name),
-		Annotations:    ytsaurus.Spec.ExtraPodAnnotations,
+		ObjectMeta:        &spyt.GetResource().ObjectMeta,
+		APIProxy:          spyt.APIProxy(),
+		ComponentType:     consts.SpytType,
+		ComponentNamePart: spyt.GetResource().Name,
+		Annotations:       ytsaurus.Spec.ExtraPodAnnotations,
 	}
 
 	return &Spyt{

@@ -33,11 +33,10 @@ func NewRPCProxy(
 	spec ytv1.RPCProxiesSpec) *RpcProxy {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
-		ObjectMeta:     &resource.ObjectMeta,
-		APIProxy:       ytsaurus.APIProxy(),
-		ComponentType:  consts.YTComponentLabelRPCProxy,
-		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelRPCProxy, spec.Role),
-		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.RpcProxyType), spec.Role),
+		ObjectMeta:        &resource.ObjectMeta,
+		APIProxy:          ytsaurus.APIProxy(),
+		ComponentType:     consts.RpcProxyType,
+		ComponentNamePart: spec.Role,
 	}
 
 	if spec.InstanceSpec.MonitoringPort == nil {

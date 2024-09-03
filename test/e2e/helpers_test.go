@@ -32,6 +32,13 @@ func getComponentPods(ctx context.Context, namespace string) map[string]corev1.P
 	return result
 }
 
+func getAllPods(ctx context.Context, namespace string) []corev1.Pod {
+	podList := corev1.PodList{}
+	err := k8sClient.List(ctx, &podList, ctrlcli.InNamespace(namespace))
+	Expect(err).Should(Succeed())
+	return podList.Items
+}
+
 type StringSet mapset.Set[string]
 
 func NewStringSet() StringSet {
