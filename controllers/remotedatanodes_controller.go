@@ -35,16 +35,16 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
 
-// RemoteExecNodesReconciler reconciles a RemoteExecNodes object
-type RemoteExecNodesReconciler struct {
+// RemoteDataNodesReconciler reconciles a RemoteDataNodes object
+type RemoteDataNodesReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
 }
 
-//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=remoteexecnodes,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=remoteexecnodes/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=remoteexecnodes/finalizers,verbs=update
+//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=remotedatanodes,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=remotedatanodes/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=remotedatanodes/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps,resources=statefulset,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=statefulset/status,verbs=get
 //+kubebuilder:rbac:groups=core,resources=pod,verbs=get;list;watch;create;update;patch;delete
@@ -53,16 +53,16 @@ type RemoteExecNodesReconciler struct {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
-// the RemoteExecNodes object against the actual cluster state, and then
+// the RemoteDataNodes object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.4/pkg/reconcile
-func (r *RemoteExecNodesReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *RemoteDataNodesReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	var nodes ytv1.RemoteExecNodes
+	var nodes ytv1.RemoteDataNodes
 	if err := r.Get(ctx, req.NamespacedName, &nodes); err != nil {
 		logger.Error(err, "unable to fetch remote nodes")
 		// We'll ignore not-found errors, since they can't be fixed by an immediate
@@ -81,20 +81,20 @@ func (r *RemoteExecNodesReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *RemoteExecNodesReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *RemoteDataNodesReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// See https://book.kubebuilder.io/reference/watching-resources/externally-managed for the reference implementation
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &ytv1.RemoteExecNodes{}, remoteClusterSpecField, func(rawObj client.Object) []string {
-		remoteExecNodes := rawObj.(*ytv1.RemoteExecNodes)
-		if remoteExecNodes.Spec.RemoteClusterSpec == nil {
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &ytv1.RemoteDataNodes{}, remoteClusterSpecField, func(rawObj client.Object) []string {
+		RemoteDataNodes := rawObj.(*ytv1.RemoteDataNodes)
+		if RemoteDataNodes.Spec.RemoteClusterSpec == nil {
 			return nil
 		}
-		return []string{remoteExecNodes.Spec.RemoteClusterSpec.Name}
+		return []string{RemoteDataNodes.Spec.RemoteClusterSpec.Name}
 	}); err != nil {
 		return err
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&ytv1.RemoteExecNodes{}).
+		For(&ytv1.RemoteDataNodes{}).
 		Watches(
 			&ytv1.RemoteYtsaurus{},
 			handler.EnqueueRequestsFromMapFunc(r.findRemoteNodesForRemoteYtsaurus),
@@ -103,20 +103,20 @@ func (r *RemoteExecNodesReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *RemoteExecNodesReconciler) findRemoteNodesForRemoteYtsaurus(ctx context.Context, remoteYtsaurus client.Object) []reconcile.Request {
+func (r *RemoteDataNodesReconciler) findRemoteNodesForRemoteYtsaurus(ctx context.Context, remoteYtsaurus client.Object) []reconcile.Request {
 	// See https://book.kubebuilder.io/reference/watching-resources/externally-managed for the reference implementation
-	attachedRemoteExecNodes := &ytv1.RemoteExecNodesList{}
+	attachedRemoteDataNodes := &ytv1.RemoteDataNodesList{}
 	listOps := &client.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector(remoteClusterSpecField, remoteYtsaurus.GetName()),
 		Namespace:     remoteYtsaurus.GetNamespace(),
 	}
-	err := r.List(ctx, attachedRemoteExecNodes, listOps)
+	err := r.List(ctx, attachedRemoteDataNodes, listOps)
 	if err != nil {
 		return []reconcile.Request{}
 	}
 
-	requests := make([]reconcile.Request, len(attachedRemoteExecNodes.Items))
-	for i, item := range attachedRemoteExecNodes.Items {
+	requests := make([]reconcile.Request, len(attachedRemoteDataNodes.Items))
+	for i, item := range attachedRemoteDataNodes.Items {
 		requests[i] = reconcile.Request{
 			NamespacedName: types.NamespacedName{
 				Name:      item.GetName(),

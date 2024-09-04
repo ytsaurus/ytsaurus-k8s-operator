@@ -19,9 +19,8 @@ import (
 	"go.ytsaurus.tech/yt/go/mapreduce/spec"
 	"go.ytsaurus.tech/yt/go/yt/ytrpc"
 	"go.ytsaurus.tech/yt/go/yterrors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -210,7 +209,7 @@ func runRemoteExecNodes(remoteExecNodes *ytv1.RemoteExecNodes) {
 		return err == nil
 	}, reactionTimeout, pollInterval).Should(BeTrue())
 
-	By("Checking that remote nodes state is equal to `Running`")
+	By("Checking that remote exec nodes state is equal to `Running`")
 	Eventually(
 		func() (*ytv1.RemoteExecNodes, error) {
 			nodes := &ytv1.RemoteExecNodes{}
@@ -224,6 +223,33 @@ func runRemoteExecNodes(remoteExecNodes *ytv1.RemoteExecNodes) {
 
 func deleteRemoteExecNodes(ctx context.Context, remoteExecNodes *ytv1.RemoteExecNodes) {
 	if err := k8sClient.Delete(ctx, remoteExecNodes); err != nil {
+		log.Error(err, "Deleting remote ytsaurus failed")
+	}
+}
+
+func runRemoteDataNodes(remoteDataNodes *ytv1.RemoteDataNodes) {
+	Expect(k8sClient.Create(ctx, remoteDataNodes)).Should(Succeed())
+	lookupKey := types.NamespacedName{Name: remoteDataNodes.Name, Namespace: remoteDataNodes.Namespace}
+	Eventually(func() bool {
+		createdYtsaurus := &ytv1.RemoteDataNodes{}
+		err := k8sClient.Get(ctx, lookupKey, createdYtsaurus)
+		return err == nil
+	}, reactionTimeout, pollInterval).Should(BeTrue())
+
+	By("Checking that remote data nodes state is equal to `Running`")
+	Eventually(
+		func() (*ytv1.RemoteDataNodes, error) {
+			nodes := &ytv1.RemoteDataNodes{}
+			err := k8sClient.Get(ctx, lookupKey, nodes)
+			return nodes, err
+		},
+		reactionTimeout*2,
+		pollInterval,
+	).Should(HaveField("Status.ReleaseStatus", ytv1.RemoteDataNodeReleaseStatusRunning))
+}
+
+func deleteRemoteDataNodes(ctx context.Context, remoteDataNodes *ytv1.RemoteDataNodes) {
+	if err := k8sClient.Delete(ctx, remoteDataNodes); err != nil {
 		log.Error(err, "Deleting remote ytsaurus failed")
 	}
 }
@@ -760,6 +786,69 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			}
 		})
 
+		It("Should create ytsaurus with remote data nodes and write to a table", func() {
+			By("Creating a Ytsaurus resource")
+			ctx := context.Background()
+
+			namespace := "remotedata"
+
+			// We have to create only the minimal YT - with master and discovery servers
+			ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
+			g := ytconfig.NewGenerator(ytsaurus, "local")
+
+			remoteYtsaurus := &ytv1.RemoteYtsaurus{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testutil.RemoteResourceName,
+					Namespace: namespace,
+				},
+				Spec: ytv1.RemoteYtsaurusSpec{
+					MasterConnectionSpec: ytv1.MasterConnectionSpec{
+						CellTag: ytsaurus.Spec.PrimaryMasters.CellTag,
+						HostAddresses: []string{
+							"ms-0.masters.remotedata.svc.cluster.local",
+						},
+					},
+				},
+			}
+
+			remoteNodes := &ytv1.RemoteDataNodes{
+				ObjectMeta: metav1.ObjectMeta{Name: testutil.RemoteResourceName, Namespace: namespace},
+				Spec: ytv1.RemoteDataNodesSpec{
+					RemoteClusterSpec: &corev1.LocalObjectReference{
+						Name: testutil.RemoteResourceName,
+					},
+					CommonSpec: ytv1.CommonSpec{
+						CoreImage: testutil.CoreImageFirst,
+					},
+					DataNodesSpec: ytv1.DataNodesSpec{
+						InstanceSpec: testutil.CreateDataNodeInstanceSpec(3),
+					},
+				},
+			}
+
+			defer deleteYtsaurus(ctx, ytsaurus)
+			runYtsaurus(ytsaurus)
+
+			defer deleteRemoteYtsaurus(ctx, remoteYtsaurus)
+			createRemoteYtsaurus(remoteYtsaurus)
+
+			defer deleteRemoteDataNodes(ctx, remoteNodes)
+			runRemoteDataNodes(remoteNodes)
+
+			By("Creating ytsaurus client")
+			ytClient := getYtClient(g, namespace)
+
+			By("Create a chunk on a remote data node")
+			_, errCreateNode := ytClient.CreateNode(ctx, ypath.Path("//tmp/a"), yt.NodeTable, &yt.CreateNodeOptions{})
+			Expect(errCreateNode).Should(Succeed())
+
+			Eventually(func(g Gomega) {
+				writer, err := ytClient.WriteTable(ctx, ypath.Path("//tmp/a"), nil)
+				g.Expect(err).ShouldNot(HaveOccurred())
+				g.Expect(writer.Write(testRow{A: "123"})).Should(Succeed())
+				g.Expect(writer.Commit()).Should(Succeed())
+			}, reactionTimeout, pollInterval).Should(Succeed())
+		})
 		It(
 			"Rpc proxies should require authentication",
 			func(ctx context.Context) {

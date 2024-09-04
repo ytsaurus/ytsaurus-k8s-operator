@@ -21,60 +21,60 @@ import (
 )
 
 const (
-	remoteExecNodesName      = "test-remote-exec-nodes"
-	statefulSetNameExecNodes = "end-test-remote-exec-nodes"
-	execNodeConfigMapName    = "yt-exec-node-config"
-	execNodeConfigMapYsonKey = "ytserver-exec-node.yson"
+	remoteDataNodesName      = "test-remote-data-nodes"
+	statefulSetNameDataNodes = "dnd-test-remote-data-nodes"
+	dataNodeConfigMapName    = "yt-data-node-config"
+	dataNodeConfigMapYsonKey = "ytserver-data-node.yson"
 )
 
-func setupRemoteExecNodesReconciler() func(mgr ctrl.Manager) error {
+func setupRemoteDataNodesReconciler() func(mgr ctrl.Manager) error {
 	return func(mgr ctrl.Manager) error {
-		return (&controllers.RemoteExecNodesReconciler{
+		return (&controllers.RemoteDataNodesReconciler{
 			Client:   mgr.GetClient(),
 			Scheme:   mgr.GetScheme(),
-			Recorder: mgr.GetEventRecorderFor("remoteexecnodes-controller"),
+			Recorder: mgr.GetEventRecorderFor("remotedatanodes-controller"),
 		}).SetupWithManager(mgr)
 	}
 }
 
-// TestRemoteExecNodesFromScratch ensures that remote exec nodes resources are
+// TestRemoteDataNodesFromScratch ensures that remote data nodes resources are
 // created with correct connection to the specified remote Ytsaurus.
-func TestRemoteExecNodesFromScratch(t *testing.T) {
-	h := startHelperWithController(t, "remote-exec-nodes-test-from-scratch",
-		setupRemoteExecNodesReconciler(),
+func TestRemoteDataNodesFromScratch(t *testing.T) {
+	h := startHelperWithController(t, "remote-data-nodes-test-from-scratch",
+		setupRemoteDataNodesReconciler(),
 	)
 	defer h.Stop()
 
 	remoteYtsaurusSpec := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
 	testutil.DeployObject(h, &remoteYtsaurusSpec)
 	waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
-	nodes := buildRemoteExecNodes(h, remoteYtsaurusName, remoteExecNodesName)
+	nodes := buildRemoteDataNodes(h, remoteYtsaurusName, remoteDataNodesName)
 	testutil.DeployObject(h, &nodes)
-	waitRemoteExecNodesDeployed(h, remoteExecNodesName)
+	waitRemoteDataNodesDeployed(h, remoteDataNodesName)
 
-	testutil.FetchEventually(h, statefulSetNameExecNodes, &appsv1.StatefulSet{})
+	testutil.FetchEventually(h, statefulSetNameDataNodes, &appsv1.StatefulSet{})
 
-	ysonNodeConfig := testutil.FetchConfigMapData(h, execNodeConfigMapName, execNodeConfigMapYsonKey)
+	ysonNodeConfig := testutil.FetchConfigMapData(h, dataNodeConfigMapName, dataNodeConfigMapYsonKey)
 	require.NotEmpty(t, ysonNodeConfig)
 	require.Contains(t, ysonNodeConfig, remoteYtsaurusHostname)
 }
 
-// TestRemoteExecNodesYtsaurusChanges ensures that if remote Ytsaurus CRD changes its hostnames
+// TestRemoteDataNodesYtsaurusChanges ensures that if remote Ytsaurus CRD changes its hostnames
 // remote nodes changes its configs accordingly.
-func TestRemoteExecNodesYtsaurusChanges(t *testing.T) {
-	h := startHelperWithController(t, "remote-exec-nodes-test-host-change",
-		setupRemoteExecNodesReconciler(),
+func TestRemoteDataNodesYtsaurusChanges(t *testing.T) {
+	h := startHelperWithController(t, "remote-data-nodes-test-host-change",
+		setupRemoteDataNodesReconciler(),
 	)
 	defer h.Stop()
 
 	remoteYtsaurus := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
 	testutil.DeployObject(h, &remoteYtsaurus)
 	waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
-	nodes := buildRemoteExecNodes(h, remoteYtsaurusName, remoteExecNodesName)
+	nodes := buildRemoteDataNodes(h, remoteYtsaurusName, remoteDataNodesName)
 	testutil.DeployObject(h, &nodes)
-	waitRemoteExecNodesDeployed(h, remoteExecNodesName)
+	waitRemoteDataNodesDeployed(h, remoteDataNodesName)
 
-	ysonNodeConfig := testutil.FetchConfigMapData(h, execNodeConfigMapName, execNodeConfigMapYsonKey)
+	ysonNodeConfig := testutil.FetchConfigMapData(h, dataNodeConfigMapName, dataNodeConfigMapYsonKey)
 	require.NotEmpty(t, ysonNodeConfig)
 	require.Contains(t, ysonNodeConfig, remoteYtsaurusHostname)
 
@@ -85,41 +85,41 @@ func TestRemoteExecNodesYtsaurusChanges(t *testing.T) {
 
 	testutil.FetchAndCheckEventually(
 		h,
-		execNodeConfigMapName,
+		dataNodeConfigMapName,
 		&corev1.ConfigMap{},
 		"config map exists and contains changed hostname",
 		func(obj client.Object) bool {
 			data := obj.(*corev1.ConfigMap).Data
-			ysonNodeConfig = data[execNodeConfigMapYsonKey]
+			ysonNodeConfig = data[dataNodeConfigMapYsonKey]
 			return strings.Contains(ysonNodeConfig, hostnameChanged)
 		},
 	)
 }
 
-// TestRemoteExecNodesImageUpdate ensures that if remote exec nodes images changes, controller
+// TestRemoteDataNodesImageUpdate ensures that if remote data nodes images changes, controller
 // sets new image for nodes' stateful set.
-func TestRemoteExecNodesImageUpdate(t *testing.T) {
-	h := startHelperWithController(t, "remote-exec-nodes-test-image-update",
-		setupRemoteExecNodesReconciler(),
+func TestRemoteDataNodesImageUpdate(t *testing.T) {
+	h := startHelperWithController(t, "remote-data-nodes-test-image-update",
+		setupRemoteDataNodesReconciler(),
 	)
 	defer h.Stop()
 
 	remoteYtsaurusSpec := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
 	testutil.DeployObject(h, &remoteYtsaurusSpec)
 	waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
-	nodes := buildRemoteExecNodes(h, remoteYtsaurusName, remoteExecNodesName)
+	nodes := buildRemoteDataNodes(h, remoteYtsaurusName, remoteDataNodesName)
 	testutil.DeployObject(h, &nodes)
-	waitRemoteExecNodesDeployed(h, remoteExecNodesName)
+	waitRemoteDataNodesDeployed(h, remoteDataNodesName)
 
-	testutil.FetchEventually(h, statefulSetNameExecNodes, &appsv1.StatefulSet{})
+	testutil.FetchEventually(h, statefulSetNameDataNodes, &appsv1.StatefulSet{})
 
 	updatedImage := testYtsaurusImage + "-changed"
 	nodes.Spec.Image = &updatedImage
-	testutil.UpdateObject(h, &ytv1.RemoteExecNodes{}, &nodes)
+	testutil.UpdateObject(h, &ytv1.RemoteDataNodes{}, &nodes)
 
 	testutil.FetchAndCheckEventually(
 		h,
-		statefulSetNameExecNodes,
+		statefulSetNameDataNodes,
 		&appsv1.StatefulSet{},
 		"image updated in sts spec",
 		func(obj client.Object) bool {
@@ -129,30 +129,30 @@ func TestRemoteExecNodesImageUpdate(t *testing.T) {
 	)
 }
 
-// TestRemoteExecNodesChangeInstanceCount ensures that if remote nodes instance count changed in spec,
+// TestRemoteDataNodesChangeInstanceCount ensures that if remote nodes instance count changed in spec,
 // it is reflected in stateful set spec.
-func TestRemoteExecNodesChangeInstanceCount(t *testing.T) {
-	h := startHelperWithController(t, "remote-exec-nodes-test-change-instance-count",
-		setupRemoteExecNodesReconciler(),
+func TestRemoteDataNodesChangeInstanceCount(t *testing.T) {
+	h := startHelperWithController(t, "remote-data-nodes-test-change-instance-count",
+		setupRemoteDataNodesReconciler(),
 	)
 	defer h.Stop()
 
 	remoteYtsaurusSpec := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
 	testutil.DeployObject(h, &remoteYtsaurusSpec)
 	waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
-	nodes := buildRemoteExecNodes(h, remoteYtsaurusName, remoteExecNodesName)
+	nodes := buildRemoteDataNodes(h, remoteYtsaurusName, remoteDataNodesName)
 	testutil.DeployObject(h, &nodes)
-	waitRemoteExecNodesDeployed(h, remoteExecNodesName)
+	waitRemoteDataNodesDeployed(h, remoteDataNodesName)
 
-	testutil.FetchEventually(h, statefulSetNameExecNodes, &appsv1.StatefulSet{})
+	testutil.FetchEventually(h, statefulSetNameDataNodes, &appsv1.StatefulSet{})
 
 	newInstanceCount := int32(3)
 	nodes.Spec.InstanceCount = newInstanceCount
-	testutil.UpdateObject(h, &ytv1.RemoteExecNodes{}, &nodes)
+	testutil.UpdateObject(h, &ytv1.RemoteDataNodes{}, &nodes)
 
 	testutil.FetchAndCheckEventually(
 		h,
-		statefulSetNameExecNodes,
+		statefulSetNameDataNodes,
 		&appsv1.StatefulSet{},
 		"expected replicas count",
 		func(obj client.Object) bool {
@@ -162,39 +162,38 @@ func TestRemoteExecNodesChangeInstanceCount(t *testing.T) {
 	)
 }
 
-// TestRemoteExecNodesStatusRunningZeroPods ensures that remote exec nodes CRD reaches correct release status
+// TestRemoteDataNodesStatusRunningZeroPods ensures that remote data nodes CRD reaches correct release status
 // in zero pods case.
-func TestRemoteExecNodesStatusRunningZeroPods(t *testing.T) {
-	h := startHelperWithController(t, "remote-exec-nodes-test-status-running-zero-pods",
-		setupRemoteExecNodesReconciler(),
+func TestRemoteDataNodesStatusRunningZeroPods(t *testing.T) {
+	h := startHelperWithController(t, "remote-data-nodes-test-status-running-zero-pods",
+		setupRemoteDataNodesReconciler(),
 	)
 	defer h.Stop()
 
 	remoteYtsaurusSpec := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
 	testutil.DeployObject(h, &remoteYtsaurusSpec)
 	waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
-	nodes := buildRemoteExecNodes(h, remoteYtsaurusName, remoteExecNodesName)
+	nodes := buildRemoteDataNodes(h, remoteYtsaurusName, remoteDataNodesName)
 	testutil.DeployObject(h, &nodes)
-	waitRemoteExecNodesDeployed(h, remoteExecNodesName)
+	waitRemoteDataNodesDeployed(h, remoteDataNodesName)
 
 	testutil.FetchAndCheckEventually(
 		h,
-		remoteExecNodesName,
-		&ytv1.RemoteExecNodes{},
+		remoteDataNodesName,
+		&ytv1.RemoteDataNodes{},
 		"remote nodes status running",
 		func(obj client.Object) bool {
-			remoteNodes := obj.(*ytv1.RemoteExecNodes)
-			return remoteNodes.Status.ReleaseStatus == ytv1.RemoteExecNodeReleaseStatusRunning
+			remoteNodes := obj.(*ytv1.RemoteDataNodes)
+			return remoteNodes.Status.ReleaseStatus == ytv1.RemoteDataNodeReleaseStatusRunning
 		},
 	)
 }
 
-// TestRemoteExecNodesStatusRunningZeroPods ensures that remote exec nodes CRD reaches correct release status
+// TestRemoteDataNodesStatusRunningZeroPods ensures that remote data nodes CRD reaches correct release status
 // in non-zero pods case.
-func TestRemoteExecNodesStatusRunningWithPods(t *testing.T) {
-	// h := startHelperWithController(t, "remote-exec-nodes-test-status-running-with-pods")
-	h := startHelperWithController(t, "remote-exec-nodes-test-status-running-with-pods",
-		setupRemoteExecNodesReconciler(),
+func TestRemoteDataNodesStatusRunningWithPods(t *testing.T) {
+	h := startHelperWithController(t, "remote-data-nodes-test-status-running-with-pods",
+		setupRemoteDataNodesReconciler(),
 	)
 	defer h.Stop()
 
@@ -203,25 +202,25 @@ func TestRemoteExecNodesStatusRunningWithPods(t *testing.T) {
 	waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
 
 	// For some reason ArePodsReady check is ok with having zero pods while MinReadyInstanceCount = 1,
-	// so here we are creating pending pods before remote exec nodes deploy to obtain Pending status for test purposes.
+	// so here we are creating pending pods before remote data nodes deploy to obtain Pending status for test purposes.
 	// Will investigate and possibly fix ArePodsReady behaviour later.
-	pod := buildExecNodePod(h)
+	pod := buildDataNodePod(h)
 	testutil.DeployObject(h, &pod)
 
-	nodes := buildRemoteExecNodes(h, remoteYtsaurusName, remoteExecNodesName)
+	nodes := buildRemoteDataNodes(h, remoteYtsaurusName, remoteDataNodesName)
 	nodes.Spec.InstanceSpec.InstanceCount = 1
 	nodes.Spec.InstanceSpec.MinReadyInstanceCount = ptr.To(1)
 	testutil.DeployObject(h, &nodes)
-	waitRemoteExecNodesDeployed(h, remoteExecNodesName)
+	waitRemoteDataNodesDeployed(h, remoteDataNodesName)
 
 	testutil.FetchAndCheckEventually(
 		h,
-		remoteExecNodesName,
-		&ytv1.RemoteExecNodes{},
-		"remote exec nodes status pending",
+		remoteDataNodesName,
+		&ytv1.RemoteDataNodes{},
+		"remote data nodes status pending",
 		func(obj client.Object) bool {
-			remoteNodes := obj.(*ytv1.RemoteExecNodes)
-			return remoteNodes.Status.ReleaseStatus == ytv1.RemoteExecNodeReleaseStatusPending
+			remoteNodes := obj.(*ytv1.RemoteDataNodes)
+			return remoteNodes.Status.ReleaseStatus == ytv1.RemoteDataNodeReleaseStatusPending
 		},
 	)
 
@@ -231,34 +230,34 @@ func TestRemoteExecNodesStatusRunningWithPods(t *testing.T) {
 
 	testutil.FetchAndCheckEventually(
 		h,
-		remoteExecNodesName,
-		&ytv1.RemoteExecNodes{},
+		remoteDataNodesName,
+		&ytv1.RemoteDataNodes{},
 		"remote nodes status running",
 		func(obj client.Object) bool {
-			remoteNodes := obj.(*ytv1.RemoteExecNodes)
-			return remoteNodes.Status.ReleaseStatus == ytv1.RemoteExecNodeReleaseStatusRunning
+			remoteNodes := obj.(*ytv1.RemoteDataNodes)
+			return remoteNodes.Status.ReleaseStatus == ytv1.RemoteDataNodeReleaseStatusRunning
 		},
 	)
 }
 
-func buildRemoteExecNodes(h *testutil.TestHelper, remoteYtsaurusName, remoteExecNodesName string) ytv1.RemoteExecNodes {
-	return ytv1.RemoteExecNodes{
-		ObjectMeta: h.GetObjectMeta(remoteExecNodesName),
-		Spec: ytv1.RemoteExecNodesSpec{
+func buildRemoteDataNodes(h *testutil.TestHelper, remoteYtsaurusName, remoteDataNodesName string) ytv1.RemoteDataNodes {
+	return ytv1.RemoteDataNodes{
+		ObjectMeta: h.GetObjectMeta(remoteDataNodesName),
+		Spec: ytv1.RemoteDataNodesSpec{
 			RemoteClusterSpec: &(corev1.LocalObjectReference{
 				Name: remoteYtsaurusName,
 			}),
-			ExecNodesSpec: ytv1.ExecNodesSpec{
+			DataNodesSpec: ytv1.DataNodesSpec{
 				InstanceSpec: ytv1.InstanceSpec{
 					Image: ptr.To(testYtsaurusImage),
 					Locations: []ytv1.LocationSpec{
 						{
-							LocationType: ytv1.LocationTypeChunkCache,
-							Path:         "/yt/hdd1/chunk-cache",
+							LocationType: ytv1.LocationTypeChunkStore,
+							Path:         "/yt/hdd1/chunk-store",
 						},
 						{
-							LocationType: ytv1.LocationTypeSlots,
-							Path:         "/yt/hdd2/slots",
+							LocationType: ytv1.LocationTypeChunkStore,
+							Path:         "/yt/hdd2/chunk-store",
 						},
 					},
 				},
@@ -267,16 +266,16 @@ func buildRemoteExecNodes(h *testutil.TestHelper, remoteYtsaurusName, remoteExec
 	}
 }
 
-func buildExecNodePod(h *testutil.TestHelper) corev1.Pod {
+func buildDataNodePod(h *testutil.TestHelper) corev1.Pod {
 	return corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "end-0",
+			Name:      "dn-0",
 			Namespace: h.Namespace,
 			Labels: map[string]string{
 				consts.YTComponentLabelName: strings.Join(
 					[]string{
-						remoteExecNodesName,
-						consts.ComponentLabel(consts.ExecNodeType),
+						remoteDataNodesName,
+						consts.ComponentLabel(consts.DataNodeType),
 					},
 					"-",
 				),
@@ -292,6 +291,6 @@ func buildExecNodePod(h *testutil.TestHelper) corev1.Pod {
 	}
 }
 
-func waitRemoteExecNodesDeployed(h *testutil.TestHelper, remoteExecNodesName string) {
-	testutil.FetchEventually(h, remoteExecNodesName, &ytv1.RemoteExecNodes{})
+func waitRemoteDataNodesDeployed(h *testutil.TestHelper, remoteDataNodesName string) {
+	testutil.FetchEventually(h, remoteDataNodesName, &ytv1.RemoteDataNodes{})
 }

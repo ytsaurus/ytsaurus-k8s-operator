@@ -55,7 +55,7 @@ type Component interface {
 }
 
 // Following structs are used as a base for implementing YTsaurus components objects.
-// baseComponent is a base struct intendend for use in the simplest components and remote components
+// baseComponent is a base struct intended for use in the simplest components and remote components
 // (the ones that don't have access to the ytsaurus resource).
 type baseComponent struct {
 	labeller *labeller.Labeller
