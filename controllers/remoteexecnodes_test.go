@@ -27,12 +27,12 @@ const (
 	execNodeConfigMapYsonKey = "ytserver-exec-node.yson"
 )
 
-func setupRemoteExecNodesReconciler(controllerName string) func(mgr ctrl.Manager) error {
+func setupRemoteExecNodesReconciler() func(mgr ctrl.Manager) error {
 	return func(mgr ctrl.Manager) error {
 		return (&controllers.RemoteExecNodesReconciler{
 			Client:   mgr.GetClient(),
 			Scheme:   mgr.GetScheme(),
-			Recorder: mgr.GetEventRecorderFor(controllerName),
+			Recorder: mgr.GetEventRecorderFor("remoteexecnodes-controller"),
 		}).SetupWithManager(mgr)
 	}
 }
@@ -41,7 +41,7 @@ func setupRemoteExecNodesReconciler(controllerName string) func(mgr ctrl.Manager
 // created with correct connection to the specified remote Ytsaurus.
 func TestRemoteExecNodesFromScratch(t *testing.T) {
 	h := startHelperWithController(t, "remote-exec-nodes-test-from-scratch",
-		setupRemoteExecNodesReconciler("remoteexecnodes-controller"),
+		setupRemoteExecNodesReconciler(),
 	)
 	defer h.Stop()
 
@@ -63,7 +63,7 @@ func TestRemoteExecNodesFromScratch(t *testing.T) {
 // remote nodes changes its configs accordingly.
 func TestRemoteExecNodesYtsaurusChanges(t *testing.T) {
 	h := startHelperWithController(t, "remote-exec-nodes-test-host-change",
-		setupRemoteExecNodesReconciler("remoteexecnodes-controller"),
+		setupRemoteExecNodesReconciler(),
 	)
 	defer h.Stop()
 
@@ -100,7 +100,7 @@ func TestRemoteExecNodesYtsaurusChanges(t *testing.T) {
 // sets new image for nodes' stateful set.
 func TestRemoteExecNodesImageUpdate(t *testing.T) {
 	h := startHelperWithController(t, "remote-exec-nodes-test-image-update",
-		setupRemoteExecNodesReconciler("remoteexecnodes-controller"),
+		setupRemoteExecNodesReconciler(),
 	)
 	defer h.Stop()
 
@@ -133,7 +133,7 @@ func TestRemoteExecNodesImageUpdate(t *testing.T) {
 // it is reflected in stateful set spec.
 func TestRemoteExecNodesChangeInstanceCount(t *testing.T) {
 	h := startHelperWithController(t, "remote-exec-nodes-test-change-instance-count",
-		setupRemoteExecNodesReconciler("remotedatanodes-controller"),
+		setupRemoteExecNodesReconciler(),
 	)
 	defer h.Stop()
 
@@ -166,7 +166,7 @@ func TestRemoteExecNodesChangeInstanceCount(t *testing.T) {
 // in zero pods case.
 func TestRemoteExecNodesStatusRunningZeroPods(t *testing.T) {
 	h := startHelperWithController(t, "remote-exec-nodes-test-status-running-zero-pods",
-		setupRemoteExecNodesReconciler("remotedatanodes-controller"),
+		setupRemoteExecNodesReconciler(),
 	)
 	defer h.Stop()
 
@@ -194,7 +194,7 @@ func TestRemoteExecNodesStatusRunningZeroPods(t *testing.T) {
 func TestRemoteExecNodesStatusRunningWithPods(t *testing.T) {
 	// h := startHelperWithController(t, "remote-exec-nodes-test-status-running-with-pods")
 	h := startHelperWithController(t, "remote-exec-nodes-test-status-running-with-pods",
-		setupRemoteExecNodesReconciler("remoteexecnodes-controller"),
+		setupRemoteExecNodesReconciler(),
 	)
 	defer h.Stop()
 

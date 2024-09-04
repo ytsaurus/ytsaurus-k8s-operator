@@ -27,12 +27,12 @@ const (
 	dataNodeConfigMapYsonKey = "ytserver-data-node.yson"
 )
 
-func setupRemoteDataNodesReconciler(controllerName string) func(mgr ctrl.Manager) error {
+func setupRemoteDataNodesReconciler() func(mgr ctrl.Manager) error {
 	return func(mgr ctrl.Manager) error {
 		return (&controllers.RemoteDataNodesReconciler{
 			Client:   mgr.GetClient(),
 			Scheme:   mgr.GetScheme(),
-			Recorder: mgr.GetEventRecorderFor(controllerName),
+			Recorder: mgr.GetEventRecorderFor("remotedatanodes-controller"),
 		}).SetupWithManager(mgr)
 	}
 }
@@ -41,7 +41,7 @@ func setupRemoteDataNodesReconciler(controllerName string) func(mgr ctrl.Manager
 // created with correct connection to the specified remote Ytsaurus.
 func TestRemoteDataNodesFromScratch(t *testing.T) {
 	h := startHelperWithController(t, "remote-data-nodes-test-from-scratch",
-		setupRemoteDataNodesReconciler("remotedatanodes-controller"),
+		setupRemoteDataNodesReconciler(),
 	)
 	defer h.Stop()
 
@@ -63,7 +63,7 @@ func TestRemoteDataNodesFromScratch(t *testing.T) {
 // remote nodes changes its configs accordingly.
 func TestRemoteDataNodesYtsaurusChanges(t *testing.T) {
 	h := startHelperWithController(t, "remote-data-nodes-test-host-change",
-		setupRemoteDataNodesReconciler("remotedatanodes-controller"),
+		setupRemoteDataNodesReconciler(),
 	)
 	defer h.Stop()
 
@@ -100,7 +100,7 @@ func TestRemoteDataNodesYtsaurusChanges(t *testing.T) {
 // sets new image for nodes' stateful set.
 func TestRemoteDataNodesImageUpdate(t *testing.T) {
 	h := startHelperWithController(t, "remote-data-nodes-test-image-update",
-		setupRemoteDataNodesReconciler("remotedatanodes-controller"),
+		setupRemoteDataNodesReconciler(),
 	)
 	defer h.Stop()
 
@@ -133,7 +133,7 @@ func TestRemoteDataNodesImageUpdate(t *testing.T) {
 // it is reflected in stateful set spec.
 func TestRemoteDataNodesChangeInstanceCount(t *testing.T) {
 	h := startHelperWithController(t, "remote-data-nodes-test-change-instance-count",
-		setupRemoteDataNodesReconciler("remotedatanodes-controller"),
+		setupRemoteDataNodesReconciler(),
 	)
 	defer h.Stop()
 
@@ -166,7 +166,7 @@ func TestRemoteDataNodesChangeInstanceCount(t *testing.T) {
 // in zero pods case.
 func TestRemoteDataNodesStatusRunningZeroPods(t *testing.T) {
 	h := startHelperWithController(t, "remote-data-nodes-test-status-running-zero-pods",
-		setupRemoteDataNodesReconciler("remotedatanodes-controller"),
+		setupRemoteDataNodesReconciler(),
 	)
 	defer h.Stop()
 
@@ -193,7 +193,7 @@ func TestRemoteDataNodesStatusRunningZeroPods(t *testing.T) {
 // in non-zero pods case.
 func TestRemoteDataNodesStatusRunningWithPods(t *testing.T) {
 	h := startHelperWithController(t, "remote-data-nodes-test-status-running-with-pods",
-		setupRemoteDataNodesReconciler("remotedatanodes-controller"),
+		setupRemoteDataNodesReconciler(),
 	)
 	defer h.Stop()
 

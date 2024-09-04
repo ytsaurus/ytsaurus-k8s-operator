@@ -10,11 +10,14 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
 type RemoteDataNode struct {
-	baseDataNode
+	server server
+	cfgen  *ytconfig.NodeGenerator
+	spec   *ytv1.DataNodesSpec
 	baseComponent
 }
 
@@ -54,17 +57,11 @@ func NewRemoteDataNodes(
 			Protocol:      corev1.ProtocolTCP,
 		}),
 	)
-
-	var sidecarConfig *ConfigHelper
-
 	return &RemoteDataNode{
 		baseComponent: baseComponent{labeller: &l},
-		baseDataNode: baseDataNode{
-			server:        srv,
-			cfgen:         cfgen,
-			spec:          &spec,
-			sidecarConfig: sidecarConfig,
-		},
+		server:        srv,
+		cfgen:         cfgen,
+		spec:          &spec,
 	}
 }
 
@@ -72,7 +69,10 @@ func (n *RemoteDataNode) doSync(ctx context.Context, dry bool) (ComponentStatus,
 	var err error
 
 	if n.server.needSync() || n.server.needUpdate() {
-		return n.doSyncBase(ctx, dry)
+		if !dry {
+			err = n.server.Sync(ctx)
+		}
+		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
 	if !n.server.arePodsReady(ctx) {
@@ -86,4 +86,8 @@ func (n *RemoteDataNode) GetType() consts.ComponentType { return consts.DataNode
 
 func (n *RemoteDataNode) Sync(ctx context.Context) (ComponentStatus, error) {
 	return n.doSync(ctx, false)
+}
+
+func (n *RemoteDataNode) Fetch(ctx context.Context) error {
+	return resources.Fetch(ctx, n.server)
 }
