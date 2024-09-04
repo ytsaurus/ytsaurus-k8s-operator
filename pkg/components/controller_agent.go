@@ -23,10 +23,9 @@ type ControllerAgent struct {
 func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *ControllerAgent {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
-		ObjectMeta:     &resource.ObjectMeta,
-		APIProxy:       ytsaurus.APIProxy(),
-		ComponentLabel: consts.YTComponentLabelControllerAgent,
-		ComponentName:  string(consts.ControllerAgentType),
+		ObjectMeta:    &resource.ObjectMeta,
+		APIProxy:      ytsaurus.APIProxy(),
+		ComponentType: consts.ControllerAgentType,
 	}
 
 	if resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort == nil {

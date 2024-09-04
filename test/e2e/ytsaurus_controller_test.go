@@ -11,6 +11,8 @@ import (
 	"sort"
 	"time"
 
+	"k8s.io/utils/ptr"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.ytsaurus.tech/yt/go/mapreduce"
@@ -163,9 +165,10 @@ func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
 	if ytsaurus.Spec.Discovery.InstanceCount != 0 {
 		pods = append(pods, "ds-0")
 	}
-	if len(ytsaurus.Spec.DataNodes) != 0 {
-		pods = append(pods, "dnd-0")
+	for _, dataNodeGroup := range ytsaurus.Spec.DataNodes {
+		pods = append(pods, fmt.Sprintf("%v-0", consts.FormatComponentStringWithDefault("dnd", dataNodeGroup.Name)))
 	}
+
 	if len(ytsaurus.Spec.ExecNodes) != 0 {
 		pods = append(pods, "end-0")
 	}
@@ -923,6 +926,67 @@ func checkClusterViability(ytClient yt.Client) {
 	Expect(hasPermission.Action).Should(Equal(yt.ActionDeny))
 }
 
+func checkPodLabelCount(pods []corev1.Pod, labelKey string, labelValue string, expectedCount int) {
+	podCount := 0
+	for _, pod := range pods {
+		if pod.Labels[labelKey] == labelValue {
+			podCount++
+		}
+	}
+	Expect(podCount).Should(Equal(expectedCount))
+}
+
+func checkPodLabels(ctx context.Context, namespace string) {
+	cluster := testutil.YtsaurusName
+	pods := getAllPods(ctx, namespace)
+
+	for _, pod := range pods {
+		fmt.Fprintf(GinkgoWriter, "PodName: %v, Labels: %v\n", pod.Name, pod.ObjectMeta.Labels)
+	}
+
+	Expect(pods).Should(ContainElement(And(
+		HaveField("Name", "dnd-0"),
+		HaveField("Labels", And(
+			HaveKeyWithValue("app.kubernetes.io/name", "yt-data-node"),
+			HaveKeyWithValue("app.kubernetes.io/component", "yt-data-node"),
+			HaveKeyWithValue("yt_component", fmt.Sprintf("%v-yt-data-node", cluster)),
+			HaveKeyWithValue("app.kubernetes.io/managed-by", "ytsaurus-k8s-operator"),
+			HaveKeyWithValue("app.kubernetes.io/part-of", fmt.Sprintf("yt-%v", cluster)),
+			HaveKeyWithValue("ytsaurus.tech/cluster-name", cluster),
+		)),
+	)))
+	Expect(pods).Should(ContainElement(And(
+		HaveField("Name", "dnd-dn-t-1"),
+		HaveField("Labels", And(
+			HaveKeyWithValue("app.kubernetes.io/name", "yt-data-node"),
+			HaveKeyWithValue("app.kubernetes.io/component", "yt-data-node-dn-t"),
+			HaveKeyWithValue("yt_component", fmt.Sprintf("%v-yt-data-node-dn-t", cluster)),
+			HaveKeyWithValue("app.kubernetes.io/managed-by", "ytsaurus-k8s-operator"),
+			HaveKeyWithValue("app.kubernetes.io/part-of", fmt.Sprintf("yt-%v", cluster)),
+			HaveKeyWithValue("ytsaurus.tech/cluster-name", cluster),
+		)),
+	)))
+	checkPodLabelCount(pods, "app.kubernetes.io/name", "yt-data-node", 6)
+	checkPodLabelCount(pods, "app.kubernetes.io/component", "yt-data-node", 3)
+	checkPodLabelCount(pods, "app.kubernetes.io/component", "yt-data-node-dn-t", 3)
+
+	Expect(pods).Should(ContainElement(And(
+		HaveField("Name", "ms-0"),
+		HaveField("Labels", And(
+			HaveKeyWithValue("app.kubernetes.io/name", "yt-master"),
+			HaveKeyWithValue("app.kubernetes.io/component", "yt-master"),
+			HaveKeyWithValue("yt_component", fmt.Sprintf("%v-yt-master", cluster)),
+			HaveKeyWithValue("app.kubernetes.io/managed-by", "ytsaurus-k8s-operator"),
+			HaveKeyWithValue("app.kubernetes.io/part-of", fmt.Sprintf("yt-%v", cluster)),
+			HaveKeyWithValue("ytsaurus.tech/cluster-name", cluster),
+		)),
+	)))
+	checkPodLabelCount(pods, "app.kubernetes.io/name", "yt-master", 1)
+
+	// Init jobs have their own suffixes.
+	checkPodLabelCount(pods, "app.kubernetes.io/name", "yt-scheduler", 1)
+}
+
 func deployAndCheck(ytsaurus *ytv1.Ytsaurus, namespace string) {
 	runYtsaurus(ytsaurus)
 
@@ -940,6 +1004,7 @@ func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Contex
 	return func(ctx context.Context) {
 		By("Creating a Ytsaurus resource")
 		ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+		testutil.WithNamedDataNodes(ytsaurus, ptr.To("dn-t"))
 		DeferCleanup(deleteYtsaurus, ytsaurus)
 		name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
 		deployAndCheck(ytsaurus, namespace)
@@ -947,6 +1012,9 @@ func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Contex
 		By("Run cluster update")
 		podsBeforeUpdate := getComponentPods(ctx, namespace)
 		Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
+
+		checkPodLabels(ctx, namespace)
+
 		ytsaurus.Spec.CoreImage = newImage
 		Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
 		EventuallyYtsaurus(ctx, name, reactionTimeout).Should(HaveClusterState(ytv1.ClusterStateUpdating))

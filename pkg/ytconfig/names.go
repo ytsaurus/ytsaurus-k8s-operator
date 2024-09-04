@@ -102,15 +102,15 @@ func (g *Generator) GetStrawberryControllerHeadlessServiceName() string {
 }
 
 func (g *Generator) GetHTTPProxiesServiceName(role string) string {
-	return g.getName(fmt.Sprintf("%s-lb", g.FormatComponentStringWithDefault("http-proxies", role)))
+	return g.getName(fmt.Sprintf("%s-lb", consts.FormatComponentStringWithDefault("http-proxies", role)))
 }
 
 func (g *Generator) GetHTTPProxiesHeadlessServiceName(role string) string {
-	return g.getName(g.FormatComponentStringWithDefault("http-proxies", role))
+	return g.getName(consts.FormatComponentStringWithDefault("http-proxies", role))
 }
 
 func (g *Generator) GetHTTPProxiesStatefulSetName(role string) string {
-	return g.getName(g.FormatComponentStringWithDefault("hp", role))
+	return g.getName(consts.FormatComponentStringWithDefault("hp", role))
 }
 
 func (g *Generator) GetHTTPProxiesAddress(role string) string {
@@ -129,27 +129,27 @@ func (g *Generator) GetSchedulerServiceName() string {
 }
 
 func (g *Generator) GetRPCProxiesStatefulSetName(role string) string {
-	return g.getName(g.FormatComponentStringWithDefault("rp", role))
+	return g.getName(consts.FormatComponentStringWithDefault("rp", role))
 }
 
 func (g *Generator) GetRPCProxiesServiceName(role string) string {
-	return g.getName(fmt.Sprintf("%s-lb", g.FormatComponentStringWithDefault("rpc-proxies", role)))
+	return g.getName(fmt.Sprintf("%s-lb", consts.FormatComponentStringWithDefault("rpc-proxies", role)))
 }
 
 func (g *Generator) GetRPCProxiesHeadlessServiceName(role string) string {
-	return g.getName(g.FormatComponentStringWithDefault("rpc-proxies", role))
+	return g.getName(consts.FormatComponentStringWithDefault("rpc-proxies", role))
 }
 
 func (g *Generator) GetTCPProxiesStatefulSetName(role string) string {
-	return g.getName(g.FormatComponentStringWithDefault("tp", role))
+	return g.getName(consts.FormatComponentStringWithDefault("tp", role))
 }
 
 func (g *Generator) GetTCPProxiesServiceName(role string) string {
-	return g.getName(fmt.Sprintf("%s-lb", g.FormatComponentStringWithDefault("tcp-proxies", role)))
+	return g.getName(fmt.Sprintf("%s-lb", consts.FormatComponentStringWithDefault("tcp-proxies", role)))
 }
 
 func (g *Generator) GetTCPProxiesHeadlessServiceName(role string) string {
-	return g.getName(g.FormatComponentStringWithDefault("tcp-proxies", role))
+	return g.getName(consts.FormatComponentStringWithDefault("tcp-proxies", role))
 }
 
 func (g *Generator) GetQueryTrackerStatefulSetName() string {
@@ -169,34 +169,27 @@ func (g *Generator) GetQueueAgentServiceName() string {
 }
 
 func (g *NodeGenerator) GetDataNodesStatefulSetName(name string) string {
-	return g.getName(g.FormatComponentStringWithDefault("dnd", name))
+	return g.getName(consts.FormatComponentStringWithDefault("dnd", name))
 }
 
 func (g *NodeGenerator) GetDataNodesServiceName(name string) string {
-	return g.getName(g.FormatComponentStringWithDefault("data-nodes", name))
+	return g.getName(consts.FormatComponentStringWithDefault("data-nodes", name))
 }
 
 func (g *NodeGenerator) GetExecNodesStatefulSetName(name string) string {
-	return g.getName(g.FormatComponentStringWithDefault("end", name))
+	return g.getName(consts.FormatComponentStringWithDefault("end", name))
 }
 
 func (g *NodeGenerator) GetExecNodesServiceName(name string) string {
-	return g.getName(g.FormatComponentStringWithDefault("exec-nodes", name))
+	return g.getName(consts.FormatComponentStringWithDefault("exec-nodes", name))
 }
 
 func (g *NodeGenerator) GetTabletNodesStatefulSetName(name string) string {
-	return g.getName(g.FormatComponentStringWithDefault("tnd", name))
+	return g.getName(consts.FormatComponentStringWithDefault("tnd", name))
 }
 
 func (g *NodeGenerator) GetTabletNodesServiceName(name string) string {
-	return g.getName(g.FormatComponentStringWithDefault("tablet-nodes", name))
-}
-
-func (g *BaseGenerator) FormatComponentStringWithDefault(base string, name string) string {
-	if name != consts.DefaultName {
-		return fmt.Sprintf("%s-%s", base, name)
-	}
-	return base
+	return g.getName(consts.FormatComponentStringWithDefault("tablet-nodes", name))
 }
 
 func (g *BaseGenerator) GetMasterCachesStatefulSetName() string {

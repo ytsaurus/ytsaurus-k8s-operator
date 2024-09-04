@@ -1750,11 +1750,6 @@ func (in *YtsaurusSpec) DeepCopyInto(out *YtsaurusSpec) {
 		*out = new(StrawberryControllerSpec)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.DeprecatedChytController != nil {
-		in, out := &in.DeprecatedChytController, &out.DeprecatedChytController
-		*out = new(StrawberryControllerSpec)
-		(*in).DeepCopyInto(*out)
-	}
 	if in.QueryTrackers != nil {
 		in, out := &in.QueryTrackers, &out.QueryTrackers
 		*out = new(QueryTrackerSpec)

@@ -36,11 +36,10 @@ type Master struct {
 func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 	resource := ytsaurus.GetResource()
 	l := labeller.Labeller{
-		ObjectMeta:     &resource.ObjectMeta,
-		APIProxy:       ytsaurus.APIProxy(),
-		ComponentLabel: consts.YTComponentLabelMaster,
-		ComponentName:  string(consts.MasterType),
-		Annotations:    resource.Spec.ExtraPodAnnotations,
+		ObjectMeta:    &resource.ObjectMeta,
+		APIProxy:      ytsaurus.APIProxy(),
+		ComponentType: consts.MasterType,
+		Annotations:   resource.Spec.ExtraPodAnnotations,
 	}
 
 	if resource.Spec.PrimaryMasters.InstanceSpec.MonitoringPort == nil {

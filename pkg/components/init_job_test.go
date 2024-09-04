@@ -80,8 +80,7 @@ func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
 				Name:      k8sName,
 				Namespace: ytsaurus.GetResource().Namespace,
 			},
-			ComponentLabel: "ms",
-			ComponentName:  k8sName,
+			ComponentType: consts.MasterType,
 		},
 		ytsaurus.APIProxy(),
 		ytsaurus,
@@ -170,7 +169,7 @@ func TestJobScriptUpdateOnJobRestart(t *testing.T) {
 
 	cmData := testutil.FetchConfigMapData(
 		h,
-		"dummy-ms-init-job-config",
+		"dummy-yt-master-init-job-config",
 		consts.InitClusterScriptFileName,
 	)
 	require.Equal(t, scriptAfter, cmData)

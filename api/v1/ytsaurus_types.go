@@ -635,12 +635,11 @@ type YtsaurusSpec struct {
 	ControllerAgents *ControllerAgentsSpec `json:"controllerAgents,omitempty"`
 	TabletNodes      []TabletNodesSpec     `json:"tabletNodes,omitempty"`
 
-	StrawberryController     *StrawberryControllerSpec `json:"strawberry,omitempty"`
-	DeprecatedChytController *StrawberryControllerSpec `json:"chyt,omitempty"`
-	QueryTrackers            *QueryTrackerSpec         `json:"queryTrackers,omitempty"`
-	Spyt                     *DeprecatedSpytSpec       `json:"spyt,omitempty"`
-	YQLAgents                *YQLAgentSpec             `json:"yqlAgents,omitempty"`
-	QueueAgents              *QueueAgentSpec           `json:"queueAgents,omitempty"`
+	StrawberryController *StrawberryControllerSpec `json:"strawberry,omitempty"`
+	QueryTrackers        *QueryTrackerSpec         `json:"queryTrackers,omitempty"`
+	Spyt                 *DeprecatedSpytSpec       `json:"spyt,omitempty"`
+	YQLAgents            *YQLAgentSpec             `json:"yqlAgents,omitempty"`
+	QueueAgents          *QueueAgentSpec           `json:"queueAgents,omitempty"`
 
 	UI *UISpec `json:"ui,omitempty"`
 }
