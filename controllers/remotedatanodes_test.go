@@ -275,7 +275,7 @@ func buildDataNodePod(h *testutil.TestHelper) corev1.Pod {
 				consts.YTComponentLabelName: strings.Join(
 					[]string{
 						remoteDataNodesName,
-						consts.YTComponentLabelDataNode,
+						consts.ComponentLabel(consts.DataNodeType),
 					},
 					"-",
 				),

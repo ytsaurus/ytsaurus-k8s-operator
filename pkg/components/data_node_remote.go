@@ -29,10 +29,10 @@ func NewRemoteDataNodes(
 	commonSpec ytv1.CommonSpec,
 ) *RemoteDataNode {
 	l := labeller.Labeller{
-		ObjectMeta:     &nodes.ObjectMeta,
-		APIProxy:       proxy,
-		ComponentLabel: cfgen.FormatComponentStringWithDefault(consts.YTComponentLabelDataNode, spec.Name),
-		ComponentName:  cfgen.FormatComponentStringWithDefault(string(consts.DataNodeType), spec.Name),
+		ObjectMeta:        &nodes.ObjectMeta,
+		APIProxy:          proxy,
+		ComponentType:     consts.DataNodeType,
+		ComponentNamePart: spec.Name,
 	}
 
 	if spec.InstanceSpec.MonitoringPort == nil {
