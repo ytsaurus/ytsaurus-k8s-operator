@@ -10,9 +10,9 @@ The flow:
 5) run e2e tests with `make test-e2e`
 
 ## Development
-In the development, kind cluster (with preloaded images) can be created once and reused between e2e runs. To achieve that just use `make install` to install CRD's instead of `make helm-kind-install`.
+In the development, kind cluster (with preloaded images) can be created once and reused between e2e runs. 
 
-Also, it is possible to run the YTsaurus operator main process outside of k8s cluster, for example, to be able to use a debugger. To have such a configuration, a developer should set `E2E_HTTP_PROXY_INTERNAL_PORT` env variable (for example `E2E_HTTP_PROXY_INTERNAL_PORT=9000`) 
+Also, it is possible to run the YTsaurus operator main process outside of k8s cluster, for example, to be able to use a debugger. To achieve that use `make install` to install only CRD's instead of `make helm-kind-install` which would install helm chart. Also to have such a configuration, a developer should set `E2E_HTTP_PROXY_INTERNAL_PORT` env variable (for example `E2E_HTTP_PROXY_INTERNAL_PORT=9000`) 
 and `YTOP_PROXY` env variable with matching port (for example `YTOP_PROXY=127.0.0.1:9000`) before running the e2e tests.   
 This way HTTP proxies of YTsaurus clusters will listen the specified port, and the YTsaurus operator code launched outside of the k8s cluster will use this port to connect to the proxy.
 
