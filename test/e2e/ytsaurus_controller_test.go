@@ -1097,6 +1097,7 @@ func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Contex
 		DeferCleanup(deleteYtsaurus, ytsaurus)
 		name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
 		deployAndCheck(ytsaurus, namespace)
+		oldGeneration := ytsaurus.ObjectMeta.Generation
 
 		By("Run cluster update")
 		podsBeforeUpdate := getComponentPods(ctx, namespace)
@@ -1119,6 +1120,7 @@ func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Contex
 		Expect(podDiff.created.IsEmpty()).To(BeTrue(), "unexpected pod diff created %v", podDiff.created)
 		Expect(podDiff.deleted.IsEmpty()).To(BeTrue(), "unexpected pod diff deleted %v", podDiff.deleted)
 		Expect(podDiff.recreated.Equal(NewStringSetFromMap(podsBeforeUpdate))).To(BeTrue(), "unexpected pod diff recreated %v", podDiff.recreated)
+		Expect(ytsaurus.ObjectMeta.Generation).To(Equal(oldGeneration + 1))
 	}
 }
 

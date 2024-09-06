@@ -734,8 +734,9 @@ type UpdateStatus struct {
 // YtsaurusStatus defines the observed state of Ytsaurus
 type YtsaurusStatus struct {
 	//+kubebuilder:default:=Created
-	State      ClusterState       `json:"state,omitempty"`
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	State              ClusterState       `json:"state,omitempty"`
+	Conditions         []metav1.Condition `json:"conditions,omitempty"`
+	ObservedGeneration int64              `json:"observedGeneration,omitempty"`
 
 	UpdateStatus UpdateStatus `json:"updateStatus,omitempty"`
 }
