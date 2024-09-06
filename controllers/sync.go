@@ -529,7 +529,11 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		if !componentManager.needSync() {
 			logger.Info("Ytsaurus has synced and is running now")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
-			return ctrl.Result{Requeue: true}, err
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			err = ytsaurus.SaveObserverGeneration(ctx, resource.ObjectMeta.Generation)
+			return ctrl.Result{}, err
 		}
 
 	case ytv1.ClusterStateRunning:
@@ -595,6 +599,8 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		}
 
 		logger.Info("Ytsaurus update was canceled, ytsaurus is running now")
+		// We don't update observed generation because the update was not really finished,
+		// and it's still the old version running.
 		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
 		return ctrl.Result{}, err
 
@@ -609,12 +615,20 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 
 		logger.Info("Ytsaurus update was finished and Ytsaurus is running now")
 		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		err = ytsaurus.SaveObserverGeneration(ctx, resource.ObjectMeta.Generation)
 		return ctrl.Result{}, err
 
 	case ytv1.ClusterStateReconfiguration:
 		if !componentManager.needInit() {
 			logger.Info("Ytsaurus has reconfigured and is running now")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			err = ytsaurus.SaveObserverGeneration(ctx, resource.ObjectMeta.Generation)
 			return ctrl.Result{}, err
 		}
 	}

@@ -37068,6 +37068,9 @@ spec:
                   - type
                   type: object
                 type: array
+              observedGeneration:
+                format: int64
+                type: integer
               state:
                 default: Created
                 type: string
