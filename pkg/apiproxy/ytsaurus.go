@@ -116,11 +116,9 @@ func (c *Ytsaurus) SaveClusterState(ctx context.Context, clusterState ytv1.Clust
 }
 
 func (c *Ytsaurus) SaveObserverGeneration(ctx context.Context, generation int64) error {
-	logger := log.FromContext(ctx)
 	c.ytsaurus.Status.ObservedGeneration = generation
 	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
-		logger.Error(err, "unable to update Ytsaurus cluster status")
-		return err
+		return fmt.Errorf("failed to save observed generation in status: %w", err)
 	}
 
 	return nil

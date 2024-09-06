@@ -530,10 +530,10 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			logger.Info("Ytsaurus has synced and is running now")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
 			if err != nil {
-				return ctrl.Result{}, err
+				return ctrl.Result{Requeue: true}, err
 			}
 			err = ytsaurus.SaveObserverGeneration(ctx, resource.ObjectMeta.Generation)
-			return ctrl.Result{}, err
+			return ctrl.Result{Requeue: true}, err
 		}
 
 	case ytv1.ClusterStateRunning:
