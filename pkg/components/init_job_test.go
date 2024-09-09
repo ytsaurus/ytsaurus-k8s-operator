@@ -88,6 +88,7 @@ func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
 		"dummy",
 		consts.ClientConfigFileName,
 		"dummy-image",
+		nil,
 		func() ([]byte, error) { return []byte("dummy-cfg"), nil },
 	)
 }

@@ -82,6 +82,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			"default",
 			consts.ClientConfigFileName,
 			resource.Spec.CoreImage,
+			resource.Spec.UI.Image,
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

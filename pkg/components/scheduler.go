@@ -80,6 +80,7 @@ func NewScheduler(
 			"user",
 			consts.ClientConfigFileName,
 			resource.Spec.CoreImage,
+			resource.Spec.Schedulers.InstanceSpec.Image,
 			cfgen.GetNativeClientConfig),
 		initOpArchive: NewInitJob(
 			&l,
@@ -89,6 +90,7 @@ func NewScheduler(
 			"op-archive",
 			consts.ClientConfigFileName,
 			resource.Spec.CoreImage,
+			resource.Spec.Schedulers.InstanceSpec.Image,
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

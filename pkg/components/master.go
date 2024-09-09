@@ -70,6 +70,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		"default",
 		consts.ClientConfigFileName,
 		resource.Spec.CoreImage,
+		resource.Spec.PrimaryMasters.InstanceSpec.Image,
 		cfgen.GetNativeClientConfig)
 
 	exitReadOnlyJob := NewInitJob(
@@ -80,6 +81,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		"exit-read-only",
 		consts.ClientConfigFileName,
 		resource.Spec.CoreImage,
+		resource.Spec.PrimaryMasters.InstanceSpec.Image,
 		cfgen.GetNativeClientConfig,
 	)
 

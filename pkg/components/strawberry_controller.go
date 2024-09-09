@@ -82,6 +82,7 @@ func NewStrawberryController(
 			"user",
 			consts.ClientConfigFileName,
 			resource.Spec.CoreImage,
+			resource.Spec.StrawberryController.Image,
 			cfgen.GetNativeClientConfig),
 		initChytClusterJob: NewInitJob(
 			&l,
@@ -91,6 +92,7 @@ func NewStrawberryController(
 			"cluster",
 			ChytInitClusterJobConfigFileName,
 			image,
+			resource.Spec.StrawberryController.Image,
 			cfgen.GetChytInitClusterConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

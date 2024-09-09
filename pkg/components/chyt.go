@@ -54,6 +54,7 @@ func NewChyt(
 			"user",
 			consts.ClientConfigFileName,
 			ytsaurus.Spec.CoreImage,
+			nil,
 			cfgen.GetNativeClientConfig),
 		initEnvironment: NewInitJob(
 			&l,
@@ -63,6 +64,7 @@ func NewChyt(
 			"release",
 			consts.ClientConfigFileName,
 			chyt.GetResource().Spec.Image,
+			nil,
 			cfgen.GetNativeClientConfig),
 		initChPublicJob: NewInitJob(
 			&l,
@@ -72,6 +74,7 @@ func NewChyt(
 			"ch-public",
 			consts.ClientConfigFileName,
 			chyt.GetResource().Spec.Image,
+			nil,
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
