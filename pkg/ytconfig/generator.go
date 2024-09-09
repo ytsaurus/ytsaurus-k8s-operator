@@ -481,6 +481,11 @@ func (g *Generator) getControllerAgentConfigImpl(spec *ytv1.ControllerAgentsSpec
 	c.ControllerAgent.EnableTmpfs = true
 	c.ControllerAgent.UseColumnarStatisticsDefault = true
 
+	c.ControllerAgent.AlertManager.LowCpuUsageAlertStatisics = []string{
+		"/job/cpu/system",
+		"/job/cpu/user",
+	}
+
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 

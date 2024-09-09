@@ -18,9 +18,15 @@ type SchedulerServer struct {
 	Scheduler Scheduler `yson:"scheduler"`
 }
 
+type AlertManager struct {
+	LowCpuUsageAlertStatisics []string `yson:"low_cpu_usage_alert_statistics,omitempty"`
+}
+
 type ControllerAgent struct {
 	EnableTmpfs                  bool `yson:"enable_tmpfs"`
 	UseColumnarStatisticsDefault bool `yson:"use_columnar_statistics_default"`
+
+	AlertManager AlertManager `yson:"alert_manager"`
 }
 
 type ControllerAgentServer struct {
