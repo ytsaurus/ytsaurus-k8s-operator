@@ -28,6 +28,7 @@ OPERATOR_IMAGE = ytsaurus/k8s-operator
 OPERATOR_TAG = 0.0.0-alpha
 
 OPERATOR_CHART = ytop-chart
+OPERATOR_CHART_NAME = ytop-chart
 OPERATOR_CHART_CRDS = $(OPERATOR_CHART)/templates/crds
 OPERATOR_INSTANCE = ytsaurus-dev
 
@@ -295,7 +296,7 @@ docker-push: ## Push docker image with the manager.
 .PHONY: helm-chart
 helm-chart: manifests kustomize envsubst kubectl-slice ## Generate helm chart.
 	$(KUSTOMIZE) build config/helm | name="$(OPERATOR_CHART)" $(ENVSUBST) | $(KUBECTL_SLICE) -q -o $(OPERATOR_CHART_CRDS) -t "{{.metadata.name}}.yaml" --prune
-	name="$(OPERATOR_CHART)" version="$(RELEASE_VERSION)" $(ENVSUBST) < config/helm/Chart.yaml > $(OPERATOR_CHART)/Chart.yaml
+	name="$(OPERATOR_CHART_NAME)" version="$(RELEASE_VERSION)" $(ENVSUBST) < config/helm/Chart.yaml > $(OPERATOR_CHART)/Chart.yaml
 
 ##@ Deployment
 
@@ -335,8 +336,8 @@ release: kustomize ## Release operator docker image and helm chart.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(OPERATOR_IMAGE):${RELEASE_VERSION}
 	$(MAKE) helm-chart
 	helm package $(OPERATOR_CHART)
-	helm push $(OPERATOR_CHART)-${RELEASE_VERSION}.tgz oci://registry-1.docker.io/ytsaurus
-	helm push $(OPERATOR_CHART)-${RELEASE_VERSION}.tgz oci://ghcr.io/ytsaurus
+	helm push $(OPERATOR_CHART_NAME)-${RELEASE_VERSION}.tgz oci://registry-1.docker.io/ytsaurus
+	helm push $(OPERATOR_CHART_NAME)-${RELEASE_VERSION}.tgz oci://ghcr.io/ytsaurus
 
 ##@ Build Dependencies
 
