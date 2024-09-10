@@ -37,7 +37,7 @@ controllerManager:
       ytLogLevel: DEBUG
     image:
       repository: ytsaurus/k8s-operator
-      tag: 0.0.0-alpha
+      tag: ""
     resources:
       limits:
         cpu: 500m
