@@ -68,7 +68,9 @@ func NewStrawberryController(
 		},
 		"strawberry-controller",
 		"strawberry",
-		resource.Spec.StrawberryController.Tolerations)
+		resource.Spec.StrawberryController.Tolerations,
+		resource.Spec.StrawberryController.NodeSelector,
+	)
 
 	return &StrawberryController{
 		localComponent: newLocalComponent(&l, ytsaurus),
