@@ -52,7 +52,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          make release RELEASE_VERSION=0.0.$(git rev-list --count HEAD)-dev-${GITHUB_SHA} OPERATOR_IMAGE=ytsaurus/k8s-operator-nightly OPERATOR_CHART_NAME=ytop-chart-nightly
+          make release RELEASE_VERSION=0.0.$(git rev-list --count HEAD)-dev-${GITHUB_SHA} RELEASE_SUFFIX=-nightly
 
   send-notifications:
     name: Send notifications

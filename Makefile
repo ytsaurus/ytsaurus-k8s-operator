@@ -22,13 +22,15 @@ YTSAURUS_SPEC ?= config/samples/cluster_v1_cri.yaml
 ENVTEST_K8S_VERSION = 1.24.2
 
 ## YTsaurus operator image name.
-OPERATOR_IMAGE = ytsaurus/k8s-operator
+OPERATOR_IMAGE_DEFAULT = ytsaurus/k8s-operator
+OPERATOR_IMAGE = $(OPERATOR_IMAGE_DEFAULT)$(RELEASE_SUFFIX)
 
 ## YTsaurus operator image tag.
 OPERATOR_TAG = 0.0.0-alpha
 
 OPERATOR_CHART = ytop-chart
-OPERATOR_CHART_NAME = ytop-chart
+OPERATOR_CHART_NAME_DEFAULT = ytop-chart
+OPERATOR_CHART_NAME = $(OPERATOR_CHART_NAME_DEFAULT)$(RELEASE_SUFFIX)
 OPERATOR_CHART_CRDS = $(OPERATOR_CHART)/templates/crds
 OPERATOR_INSTANCE = ytsaurus-dev
 
@@ -297,6 +299,7 @@ docker-push: ## Push docker image with the manager.
 helm-chart: manifests kustomize envsubst kubectl-slice ## Generate helm chart.
 	$(KUSTOMIZE) build config/helm | name="$(OPERATOR_CHART)" $(ENVSUBST) | $(KUBECTL_SLICE) -q -o $(OPERATOR_CHART_CRDS) -t "{{.metadata.name}}.yaml" --prune
 	name="$(OPERATOR_CHART_NAME)" version="$(RELEASE_VERSION)" $(ENVSUBST) < config/helm/Chart.yaml > $(OPERATOR_CHART)/Chart.yaml
+	ytop_image_repo="$(OPERATOR_IMAGE)" $(ENVSUBST) < config/helm/values.yaml > $(OPERATOR_CHART)/values.yaml
 
 ##@ Deployment
 
