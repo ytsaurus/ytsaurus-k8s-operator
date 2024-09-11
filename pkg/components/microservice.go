@@ -55,7 +55,9 @@ func newMicroservice(
 	instanceCount int32,
 	generators map[string]ytconfig.GeneratorDescriptor,
 	deploymentName, serviceName string,
-	tolerations []corev1.Toleration) microservice {
+	tolerations []corev1.Toleration,
+	nodeSelector map[string]string,
+) microservice {
 	return &microserviceImpl{
 		labeller:      labeller,
 		image:         image,
@@ -70,7 +72,9 @@ func newMicroservice(
 			deploymentName,
 			labeller,
 			ytsaurus,
-			tolerations),
+			tolerations,
+			nodeSelector,
+		),
 		configHelper: NewConfigHelper(
 			labeller,
 			ytsaurus.APIProxy(),
