@@ -87,8 +87,7 @@ func NewQueueAgent(
 			resource.Spec.ImagePullSecrets,
 			"qa-state",
 			consts.ClientConfigFileName,
-			image,
-			resource.Spec.QueueAgents.InstanceSpec.Image,
+			SelectTrueImage(image, resource.Spec.QueueAgents.InstanceSpec.Image),
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

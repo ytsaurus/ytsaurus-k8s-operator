@@ -55,13 +55,9 @@ func NewInitJob(
 	apiProxy apiproxy.APIProxy,
 	conditionsManager apiproxy.ConditionManager,
 	imagePullSecrets []corev1.LocalObjectReference,
-	name, configFileName, image string,
-	instanceImage *string,
+	name, configFileName,
+	image string,
 	generator ytconfig.YsonGeneratorFunc) *InitJob {
-	trueImage := image
-	if instanceImage != nil {
-		trueImage = *instanceImage
-	}
 	return &InitJob{
 		baseComponent: baseComponent{
 			labeller: labeller,
@@ -70,7 +66,7 @@ func NewInitJob(
 		conditionsManager:      conditionsManager,
 		imagePullSecrets:       imagePullSecrets,
 		initCompletedCondition: fmt.Sprintf("%s%sInitJobCompleted", name, labeller.GetFullComponentName()),
-		image:                  trueImage,
+		image:                  image,
 		initJob: resources.NewJob(
 			labeller.GetInitJobName(name),
 			labeller,

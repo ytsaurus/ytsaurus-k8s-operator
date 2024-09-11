@@ -63,7 +63,6 @@ func NewYtsaurusClient(
 			"user",
 			consts.ClientConfigFileName,
 			resource.Spec.CoreImage,
-			nil,
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
