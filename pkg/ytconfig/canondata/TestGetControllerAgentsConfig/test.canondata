@@ -89,5 +89,11 @@
     "controller_agent"={
         "enable_tmpfs"=%true;
         "use_columnar_statistics_default"=%true;
+        "alert_manager"={
+            "low_cpu_usage_alert_statistics"=[
+                "/job/cpu/system";
+                "/job/cpu/user";
+            ];
+        };
     };
 }
