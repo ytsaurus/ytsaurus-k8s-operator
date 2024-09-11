@@ -29430,6 +29430,10 @@ spec:
                 properties:
                   image:
                     type: string
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -34494,6 +34498,10 @@ spec:
                   instanceCount:
                     format: int32
                     type: integer
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
                   odinBaseUrl:
                     description: Odin is a service for monitoring the availability
                       of YTsaurus clusters.
