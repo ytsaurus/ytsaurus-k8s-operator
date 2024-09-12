@@ -1,39 +1,41 @@
-name: Build and test
-
 on:
-  push:
-    branches:
-      - main
+  workflow_call:
+    inputs:
+      release_version:
+        required: true
+        type: string
+      release_suffix:
+        required: false
+        type: string
 
 jobs:
-  check-unit:
-    name: Run unit tests
-    uses: ./.github/workflows/subflow_run_unit_tests.yaml
-
-  check-e2e:
-    name: Run e2e tests
-    needs:
-      - check-unit
-    uses: ./.github/workflows/subflow_run_e2e_tests.yaml
-
-  check-compat:
-    name: Run compat tests
-    needs:
-      - check-e2e
-    uses: ./.github/workflows/subflow_run_compat_tests.yaml
-
-  release-nightly:
-    name: Release nightly image
-    needs:
-      - check-compat
+  release:
+    name: Run release
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout sources
+      - name: checkout sources
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.11.2
+
+      - name: Build
+        shell: bash
+        run: |
+          make build
+
       - name: Docker Hub login
+        shell: bash
         run: |
           echo '${{ secrets.DOCKER_HUB_PASSWORD }}' | docker login --username ${{ secrets.DOCKER_HUB_LOGIN}} --password-stdin
 
@@ -47,17 +49,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Docker
+      - name: Release
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          make release RELEASE_VERSION=0.0.$(git rev-list --count HEAD)-dev-${GITHUB_SHA} OPERATOR_IMAGE=ytsaurus/k8s-operator-nightly OPERATOR_CHART_NAME=ytop-chart-nightly
+          make release RELEASE_VERSION=${{ inputs.release_version }} RELEASE_SUFFIX=${{ inputs.release_suffix }}
 
   send-notifications:
     name: Send notifications
-    needs:
-      - release-nightly
     runs-on: ubuntu-latest
     if: ${{ failure() }}
     steps:
@@ -69,9 +69,8 @@ jobs:
           disable_web_page_preview: true
           format: markdown
           message: |
-            Workflow *${{github.workflow}}* failed: ${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}.
-            Commit: ${{github.event.head_commit.sha}}
-            Message:
+            Workflow *${{github.workflow}}* failed: ${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}. Commit:
             ```
             ${{github.event.head_commit.message}}
             ```
+

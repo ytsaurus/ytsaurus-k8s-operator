@@ -32,6 +32,13 @@ OPERATOR_CHART_NAME = ytop-chart
 OPERATOR_CHART_CRDS = $(OPERATOR_CHART)/templates/crds
 OPERATOR_INSTANCE = ytsaurus-dev
 
+ifdef RELEASE_SUFFIX
+	OPERATOR_IMAGE_RELEASE=$(OPERATOR_IMAGE)$(RELEASE_SUFFIX)
+	OPERATOR_CHART_NAME_RELEASE=$(OPERATOR_CHART_NAME)$(RELEASE_SUFFIX)
+else
+	OPERATOR_IMAGE_RELEASE=$(OPERATOR_IMAGE)
+	OPERATOR_CHART_NAME_RELEASE=$(OPERATOR_CHART_NAME)
+endif
 ## K8s namespace for YTsaurus operator.
 OPERATOR_NAMESPACE = ytsaurus-operator
 
@@ -296,7 +303,7 @@ docker-push: ## Push docker image with the manager.
 .PHONY: helm-chart
 helm-chart: manifests kustomize envsubst kubectl-slice ## Generate helm chart.
 	$(KUSTOMIZE) build config/helm | name="$(OPERATOR_CHART)" $(ENVSUBST) | $(KUBECTL_SLICE) -q -o $(OPERATOR_CHART_CRDS) -t "{{.metadata.name}}.yaml" --prune
-	name="$(OPERATOR_CHART_NAME)" version="$(RELEASE_VERSION)" $(ENVSUBST) < config/helm/Chart.yaml > $(OPERATOR_CHART)/Chart.yaml
+	name="$(OPERATOR_CHART_NAME_RELEASE)" version="$(RELEASE_VERSION)" $(ENVSUBST) < config/helm/Chart.yaml > $(OPERATOR_CHART)/Chart.yaml
 
 ##@ Deployment
 
@@ -328,16 +335,18 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
 
-release: kustomize ## Release operator docker image and helm chart.
-	docker build ${DOCKER_BUILD_ARGS} -t $(OPERATOR_IMAGE):${RELEASE_VERSION} .
-	docker push $(OPERATOR_IMAGE):${RELEASE_VERSION}
-	docker tag $(OPERATOR_IMAGE):${RELEASE_VERSION} ghcr.io/$(OPERATOR_IMAGE):${RELEASE_VERSION}
-	docker push ghcr.io/$(OPERATOR_IMAGE):${RELEASE_VERSION}
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(OPERATOR_IMAGE):${RELEASE_VERSION}
+release: kustomize yq  ## Release operator docker image and helm chart.
+	docker build ${DOCKER_BUILD_ARGS} -t $(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION} .
+	docker push $(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION}
+	docker tag $(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION} ghcr.io/$(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION}
+	docker push ghcr.io/$(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION}
+
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION}
 	$(MAKE) helm-chart
+	$(YQ) -i -P '.controllerManager.manager.image.repository = "$(OPERATOR_IMAGE_RELEASE)"' ytop-chart/values.yaml
 	helm package $(OPERATOR_CHART)
-	helm push $(OPERATOR_CHART_NAME)-${RELEASE_VERSION}.tgz oci://registry-1.docker.io/ytsaurus
-	helm push $(OPERATOR_CHART_NAME)-${RELEASE_VERSION}.tgz oci://ghcr.io/ytsaurus
+	helm push $(OPERATOR_CHART_NAME_RELEASE)-${RELEASE_VERSION}.tgz oci://registry-1.docker.io/ytsaurus
+	helm push $(OPERATOR_CHART_NAME_RELEASE)-${RELEASE_VERSION}.tgz oci://ghcr.io/ytsaurus
 
 ##@ Build Dependencies
 
@@ -358,6 +367,7 @@ CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs-$(CRD_REF_DOCS_VERSION)
 KIND ?= $(LOCALBIN)/kind-$(KIND_VERSION)
 ENVSUBST ?= $(LOCALBIN)/envsubst-$(ENVSUBST_VERSION)
 KUBECTL_SLICE ?= $(LOCALBIN)/kubectl-slice-$(KUBECTL_SLICE_VERSION)
+YQ ?= $(LOCALBIN)/yq-$(YQ_VERSION)
 
 # Tool Versions
 KUSTOMIZE_VERSION ?= v5.3.0
@@ -372,6 +382,7 @@ KIND_VERSION ?= v0.22.0
 CERT_MANAGER_VERSION ?= v1.14.4
 ENVSUBST_VERSION ?= v1.4.2
 KUBECTL_SLICE_VERSION ?= v1.3.1
+YQ_VERSION ?= v4.44.3
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
@@ -417,6 +428,11 @@ $(ENVSUBST): $(LOCALBIN)
 kubectl-slice: $(KUBECTL_SLICE) ## Download kubectl-slice locally if necessary.
 $(KUBECTL_SLICE): $(LOCALBIN)
 	$(call go-install-tool,$(KUBECTL_SLICE),github.com/patrickdappollonio/kubectl-slice,$(KUBECTL_SLICE_VERSION))
+
+.PHONY: yq
+yq: $(YQ)
+$(YQ): $(LOCALBIN)
+	$(call go-install-tool,$(YQ),github.com/mikefarah/yq/v4,$(YQ_VERSION))
 
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary (ideally with version)
