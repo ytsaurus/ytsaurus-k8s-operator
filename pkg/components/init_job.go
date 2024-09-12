@@ -45,7 +45,9 @@ type InitJob struct {
 	configHelper           *ConfigHelper
 	initCompletedCondition string
 
-	image string
+	image        string
+	tolerations  []corev1.Toleration
+	nodeSelector map[string]string
 
 	builtJob *batchv1.Job
 }
@@ -56,7 +58,10 @@ func NewInitJob(
 	conditionsManager apiproxy.ConditionManager,
 	imagePullSecrets []corev1.LocalObjectReference,
 	name, configFileName, image string,
-	generator ytconfig.YsonGeneratorFunc) *InitJob {
+	generator ytconfig.YsonGeneratorFunc,
+	tolerations []corev1.Toleration,
+	nodeSelector map[string]string,
+) *InitJob {
 	return &InitJob{
 		baseComponent: baseComponent{
 			labeller: labeller,
@@ -66,10 +71,13 @@ func NewInitJob(
 		imagePullSecrets:       imagePullSecrets,
 		initCompletedCondition: fmt.Sprintf("%s%sInitJobCompleted", name, labeller.GetFullComponentName()),
 		image:                  image,
+		tolerations:            tolerations,
+		nodeSelector:           nodeSelector,
 		initJob: resources.NewJob(
 			labeller.GetInitJobName(name),
 			labeller,
-			apiProxy),
+			apiProxy,
+		),
 		configHelper: NewConfigHelper(
 			labeller,
 			apiProxy,
@@ -120,6 +128,8 @@ func (j *InitJob) Build() *batchv1.Job {
 				createConfigVolume(consts.ConfigVolumeName, j.configHelper.GetConfigMapName(), &defaultMode),
 			},
 			RestartPolicy: corev1.RestartPolicyOnFailure,
+			Tolerations:   j.tolerations,
+			NodeSelector:  j.nodeSelector,
 		},
 	}
 	j.builtJob = job

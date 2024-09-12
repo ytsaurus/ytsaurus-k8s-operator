@@ -69,7 +69,10 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 			"yql-agent-environment",
 			consts.ClientConfigFileName,
 			getImageWithDefault(resource.Spec.YQLAgents.Image, resource.Spec.CoreImage),
-			cfgen.GetNativeClientConfig),
+			cfgen.GetNativeClientConfig,
+			getTolerationsWithDefault(resource.Spec.YQLAgents.Tolerations, resource.Spec.Tolerations),
+			getNodeSelectorWithDefault(resource.Spec.YQLAgents.NodeSelector, resource.Spec.NodeSelector),
+		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			&l,

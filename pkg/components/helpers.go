@@ -234,3 +234,17 @@ func getImageWithDefault(componentImage *string, defaultImage string) string {
 	}
 	return defaultImage
 }
+
+func getTolerationsWithDefault(componentTolerations, defaultTolerations []corev1.Toleration) []corev1.Toleration {
+	if len(componentTolerations) != 0 {
+		return componentTolerations
+	}
+	return defaultTolerations
+}
+
+func getNodeSelectorWithDefault(componentNodeSelector, defaultNodeSelector map[string]string) map[string]string {
+	if len(componentNodeSelector) != 0 {
+		return componentNodeSelector
+	}
+	return defaultNodeSelector
+}

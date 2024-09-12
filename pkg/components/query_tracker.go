@@ -80,7 +80,10 @@ func NewQueryTracker(
 			"qt-state",
 			consts.ClientConfigFileName,
 			getImageWithDefault(resource.Spec.QueryTrackers.InstanceSpec.Image, resource.Spec.CoreImage),
-			cfgen.GetNativeClientConfig),
+			cfgen.GetNativeClientConfig,
+			getTolerationsWithDefault(resource.Spec.QueryTrackers.Tolerations, resource.Spec.Tolerations),
+			getNodeSelectorWithDefault(resource.Spec.QueryTrackers.NodeSelector, resource.Spec.NodeSelector),
+		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			&l,

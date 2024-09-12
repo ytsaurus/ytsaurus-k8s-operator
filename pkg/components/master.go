@@ -70,7 +70,10 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		"default",
 		consts.ClientConfigFileName,
 		getImageWithDefault(resource.Spec.PrimaryMasters.InstanceSpec.Image, resource.Spec.CoreImage),
-		cfgen.GetNativeClientConfig)
+		cfgen.GetNativeClientConfig,
+		getTolerationsWithDefault(resource.Spec.PrimaryMasters.Tolerations, resource.Spec.Tolerations),
+		getNodeSelectorWithDefault(resource.Spec.PrimaryMasters.NodeSelector, resource.Spec.NodeSelector),
+	)
 
 	exitReadOnlyJob := NewInitJob(
 		&l,
@@ -81,6 +84,8 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		consts.ClientConfigFileName,
 		getImageWithDefault(resource.Spec.PrimaryMasters.InstanceSpec.Image, resource.Spec.CoreImage),
 		cfgen.GetNativeClientConfig,
+		getTolerationsWithDefault(resource.Spec.PrimaryMasters.Tolerations, resource.Spec.Tolerations),
+		getNodeSelectorWithDefault(resource.Spec.PrimaryMasters.NodeSelector, resource.Spec.NodeSelector),
 	)
 
 	return &Master{

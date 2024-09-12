@@ -80,7 +80,10 @@ func NewScheduler(
 			"user",
 			consts.ClientConfigFileName,
 			getImageWithDefault(resource.Spec.Schedulers.InstanceSpec.Image, resource.Spec.CoreImage),
-			cfgen.GetNativeClientConfig),
+			cfgen.GetNativeClientConfig,
+			getTolerationsWithDefault(resource.Spec.Schedulers.Tolerations, resource.Spec.Tolerations),
+			getNodeSelectorWithDefault(resource.Spec.Schedulers.NodeSelector, resource.Spec.NodeSelector),
+		),
 		initOpArchive: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -89,7 +92,10 @@ func NewScheduler(
 			"op-archive",
 			consts.ClientConfigFileName,
 			getImageWithDefault(resource.Spec.Schedulers.InstanceSpec.Image, resource.Spec.CoreImage),
-			cfgen.GetNativeClientConfig),
+			cfgen.GetNativeClientConfig,
+			getTolerationsWithDefault(resource.Spec.Schedulers.Tolerations, resource.Spec.Tolerations),
+			getNodeSelectorWithDefault(resource.Spec.Schedulers.NodeSelector, resource.Spec.NodeSelector),
+		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			&l,
