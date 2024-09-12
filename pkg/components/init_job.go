@@ -45,7 +45,9 @@ type InitJob struct {
 	configHelper           *ConfigHelper
 	initCompletedCondition string
 
-	image string
+	image        string
+	tolerations  []corev1.Toleration
+	nodeSelector map[string]string
 
 	builtJob *batchv1.Job
 }
@@ -69,12 +71,12 @@ func NewInitJob(
 		imagePullSecrets:       imagePullSecrets,
 		initCompletedCondition: fmt.Sprintf("%s%sInitJobCompleted", name, labeller.GetFullComponentName()),
 		image:                  image,
+		tolerations:            tolerations,
+		nodeSelector:           nodeSelector,
 		initJob: resources.NewJob(
 			labeller.GetInitJobName(name),
 			labeller,
 			apiProxy,
-			tolerations,
-			nodeSelector,
 		),
 		configHelper: NewConfigHelper(
 			labeller,
@@ -126,6 +128,8 @@ func (j *InitJob) Build() *batchv1.Job {
 				createConfigVolume(consts.ConfigVolumeName, j.configHelper.GetConfigMapName(), &defaultMode),
 			},
 			RestartPolicy: corev1.RestartPolicyOnFailure,
+			Tolerations:   j.tolerations,
+			NodeSelector:  j.nodeSelector,
 		},
 	}
 	j.builtJob = job

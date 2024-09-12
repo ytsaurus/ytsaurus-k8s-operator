@@ -4,7 +4,6 @@ import (
 	"context"
 
 	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -12,29 +11,19 @@ import (
 )
 
 type Job struct {
-	name         string
-	l            *labeller.Labeller
-	apiProxy     apiproxy.APIProxy
-	tolerations  []corev1.Toleration
-	nodeSelector map[string]string
+	name     string
+	l        *labeller.Labeller
+	apiProxy apiproxy.APIProxy
 
 	oldObject batchv1.Job
 	newObject batchv1.Job
 }
 
-func NewJob(
-	name string,
-	l *labeller.Labeller,
-	apiProxy apiproxy.APIProxy,
-	tolerations []corev1.Toleration,
-	nodeSelector map[string]string,
-) *Job {
+func NewJob(name string, l *labeller.Labeller, apiProxy apiproxy.APIProxy) *Job {
 	return &Job{
-		name:         name,
-		l:            l,
-		apiProxy:     apiProxy,
-		tolerations:  tolerations,
-		nodeSelector: nodeSelector,
+		name:     name,
+		l:        l,
+		apiProxy: apiProxy,
 	}
 }
 
@@ -61,12 +50,6 @@ func (j *Job) Build() *batchv1.Job {
 	j.newObject.Spec = batchv1.JobSpec{
 		TTLSecondsAfterFinished: &ttlSeconds,
 		BackoffLimit:            &backoffLimit,
-		Template: corev1.PodTemplateSpec{
-			Spec: corev1.PodSpec{
-				NodeSelector: j.nodeSelector,
-				Tolerations:  j.tolerations,
-			},
-		},
 	}
 
 	return &j.newObject
