@@ -69,8 +69,9 @@ jobs:
           disable_web_page_preview: true
           format: markdown
           message: |
-            Workflow *${{github.workflow}}* failed: ${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}. Commit:
+            Workflow *${{github.workflow}}* failed: ${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}.
+            Commit: ${{github.event.head_commit.sha}}
+            Message:
             ```
             ${{github.event.head_commit.message}}
             ```
-
