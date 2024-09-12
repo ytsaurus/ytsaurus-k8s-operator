@@ -68,7 +68,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 			resource.Spec.ImagePullSecrets,
 			"yql-agent-environment",
 			consts.ClientConfigFileName,
-			SelectTrueImage(resource.Spec.CoreImage, resource.Spec.YQLAgents.Image),
+			getImageWithDefault(resource.Spec.YQLAgents.Image, resource.Spec.CoreImage),
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

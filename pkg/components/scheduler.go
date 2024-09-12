@@ -79,7 +79,7 @@ func NewScheduler(
 			resource.Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,
-			SelectTrueImage(resource.Spec.CoreImage, resource.Spec.Schedulers.InstanceSpec.Image),
+			getImageWithDefault(resource.Spec.Schedulers.InstanceSpec.Image, resource.Spec.CoreImage),
 			cfgen.GetNativeClientConfig),
 		initOpArchive: NewInitJob(
 			&l,
@@ -88,7 +88,7 @@ func NewScheduler(
 			resource.Spec.ImagePullSecrets,
 			"op-archive",
 			consts.ClientConfigFileName,
-			SelectTrueImage(resource.Spec.CoreImage, resource.Spec.Schedulers.InstanceSpec.Image),
+			getImageWithDefault(resource.Spec.Schedulers.InstanceSpec.Image, resource.Spec.CoreImage),
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

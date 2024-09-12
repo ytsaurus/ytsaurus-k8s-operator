@@ -66,11 +66,6 @@ func NewQueryTracker(
 		}),
 	)
 
-	image := ytsaurus.GetResource().Spec.CoreImage
-	if resource.Spec.QueryTrackers.InstanceSpec.Image != nil {
-		image = *resource.Spec.QueryTrackers.InstanceSpec.Image
-	}
-
 	return &QueryTracker{
 		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
 		cfgen:                cfgen,
@@ -84,7 +79,7 @@ func NewQueryTracker(
 			resource.Spec.ImagePullSecrets,
 			"qt-state",
 			consts.ClientConfigFileName,
-			SelectTrueImage(image, resource.Spec.QueryTrackers.InstanceSpec.Image),
+			getImageWithDefault(resource.Spec.QueryTrackers.InstanceSpec.Image, resource.Spec.CoreImage),
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

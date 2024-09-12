@@ -81,7 +81,7 @@ func NewStrawberryController(
 			ytsaurus.GetResource().Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,
-			SelectTrueImage(resource.Spec.CoreImage, resource.Spec.StrawberryController.Image),
+			getImageWithDefault(resource.Spec.StrawberryController.Image, resource.Spec.CoreImage),
 			cfgen.GetNativeClientConfig),
 		initChytClusterJob: NewInitJob(
 			&l,
@@ -90,7 +90,7 @@ func NewStrawberryController(
 			resource.Spec.ImagePullSecrets,
 			"cluster",
 			ChytInitClusterJobConfigFileName,
-			SelectTrueImage(resource.Spec.CoreImage, resource.Spec.StrawberryController.Image),
+			getImageWithDefault(resource.Spec.StrawberryController.Image, resource.Spec.CoreImage),
 			cfgen.GetChytInitClusterConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

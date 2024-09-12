@@ -228,9 +228,9 @@ func AddInitContainersToPodSpec(initContainers []string, podSpec *corev1.PodSpec
 	return nil
 }
 
-func SelectTrueImage(coreImage string, instanceImage *string) string {
-	if instanceImage != nil {
-		return *instanceImage
+func getImageWithDefault(componentImage *string, defaultImage string) string {
+	if componentImage != nil {
+		return *componentImage
 	}
-	return coreImage
+	return defaultImage
 }

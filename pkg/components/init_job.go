@@ -55,8 +55,7 @@ func NewInitJob(
 	apiProxy apiproxy.APIProxy,
 	conditionsManager apiproxy.ConditionManager,
 	imagePullSecrets []corev1.LocalObjectReference,
-	name, configFileName,
-	image string,
+	name, configFileName, image string,
 	generator ytconfig.YsonGeneratorFunc) *InitJob {
 	return &InitJob{
 		baseComponent: baseComponent{
