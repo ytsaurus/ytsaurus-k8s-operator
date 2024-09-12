@@ -83,7 +83,10 @@ func NewQueueAgent(
 			"qa-state",
 			consts.ClientConfigFileName,
 			getImageWithDefault(resource.Spec.QueueAgents.InstanceSpec.Image, resource.Spec.CoreImage),
-			cfgen.GetNativeClientConfig),
+			cfgen.GetNativeClientConfig,
+			getTolerationsWithDefault(resource.Spec.QueueAgents.Tolerations, resource.Spec.Tolerations),
+			getNodeSelectorWithDefault(resource.Spec.QueueAgents.NodeSelector, resource.Spec.NodeSelector),
+		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			&l,

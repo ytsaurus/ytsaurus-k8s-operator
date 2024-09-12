@@ -84,7 +84,10 @@ func NewStrawberryController(
 			"user",
 			consts.ClientConfigFileName,
 			getImageWithDefault(resource.Spec.StrawberryController.Image, resource.Spec.CoreImage),
-			cfgen.GetNativeClientConfig),
+			cfgen.GetNativeClientConfig,
+			getTolerationsWithDefault(resource.Spec.StrawberryController.Tolerations, resource.Spec.Tolerations),
+			getNodeSelectorWithDefault(resource.Spec.StrawberryController.NodeSelector, resource.Spec.NodeSelector),
+		),
 		initChytClusterJob: NewInitJob(
 			&l,
 			ytsaurus.APIProxy(),
@@ -93,7 +96,10 @@ func NewStrawberryController(
 			"cluster",
 			ChytInitClusterJobConfigFileName,
 			getImageWithDefault(resource.Spec.StrawberryController.Image, resource.Spec.CoreImage),
-			cfgen.GetChytInitClusterConfig),
+			cfgen.GetChytInitClusterConfig,
+			getTolerationsWithDefault(resource.Spec.StrawberryController.Tolerations, resource.Spec.Tolerations),
+			getNodeSelectorWithDefault(resource.Spec.StrawberryController.NodeSelector, resource.Spec.NodeSelector),
+		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			&l,

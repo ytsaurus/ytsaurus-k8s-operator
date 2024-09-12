@@ -56,7 +56,10 @@ func NewInitJob(
 	conditionsManager apiproxy.ConditionManager,
 	imagePullSecrets []corev1.LocalObjectReference,
 	name, configFileName, image string,
-	generator ytconfig.YsonGeneratorFunc) *InitJob {
+	generator ytconfig.YsonGeneratorFunc,
+	tolerations []corev1.Toleration,
+	nodeSelector map[string]string,
+) *InitJob {
 	return &InitJob{
 		baseComponent: baseComponent{
 			labeller: labeller,
@@ -69,7 +72,10 @@ func NewInitJob(
 		initJob: resources.NewJob(
 			labeller.GetInitJobName(name),
 			labeller,
-			apiProxy),
+			apiProxy,
+			tolerations,
+			nodeSelector,
+		),
 		configHelper: NewConfigHelper(
 			labeller,
 			apiProxy,

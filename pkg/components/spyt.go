@@ -52,7 +52,10 @@ func NewSpyt(
 			"user",
 			consts.ClientConfigFileName,
 			ytsaurus.Spec.CoreImage,
-			cfgen.GetNativeClientConfig),
+			cfgen.GetNativeClientConfig,
+			ytsaurus.Spec.Tolerations,
+			ytsaurus.Spec.NodeSelector,
+		),
 		initEnvironment: NewInitJob(
 			&l,
 			spyt.APIProxy(),
@@ -61,7 +64,10 @@ func NewSpyt(
 			"spyt-environment",
 			consts.ClientConfigFileName,
 			spyt.GetResource().Spec.Image,
-			cfgen.GetNativeClientConfig),
+			cfgen.GetNativeClientConfig,
+			ytsaurus.Spec.Tolerations,
+			ytsaurus.Spec.NodeSelector,
+		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			&l,

@@ -14898,6 +14898,10 @@ spec:
                     type: object
                     x-kubernetes-map-type: atomic
                 type: object
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
               oauthService:
                 properties:
                   host:
@@ -34380,6 +34384,36 @@ spec:
                   required:
                   - minPort
                   - portCount
+                  type: object
+                type: array
+              tolerations:
+                items:
+                  description: |-
+                    The pod this Toleration is attached to tolerates any taint that matches
+                    the trip
+                  properties:
+                    effect:
+                      description: Effect indicates the taint effect to match. Empty
+                        means match all taint effects.
+                      type: string
+                    key:
+                      description: Key is the taint key that the toleration applies
+                        to.
+                      type: string
+                    operator:
+                      description: Operator represents a key's relationship to the
+                        value.
+                      type: string
+                    tolerationSeconds:
+                      description: |-
+                        TolerationSeconds represents the period of time the toleration (which must be
+                        of
+                      format: int64
+                      type: integer
+                    value:
+                      description: Value is the taint value the toleration matches
+                        to.
+                      type: string
                   type: object
                 type: array
               ui:

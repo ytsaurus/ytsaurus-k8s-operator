@@ -619,6 +619,9 @@ type YtsaurusSpec struct {
 	// If UpdateSelector is not empty EnableFullUpdate is ignored.
 	UpdateSelector UpdateSelector `json:"updateSelector"`
 
+	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
+	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
+
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
 	Discovery        DiscoverySpec `json:"discovery,omitempty"`
