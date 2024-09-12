@@ -1,0 +1,15 @@
+name: Build and test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Run release
+    uses: ./.github/workflows/subflow_release.yaml
+    with:
+      release_version: 0.0.$(git rev-list --count HEAD)-dev-${GITHUB_SHA}
+      release_suffix: "-nightly"
