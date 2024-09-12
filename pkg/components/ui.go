@@ -83,7 +83,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			resource.Spec.ImagePullSecrets,
 			"default",
 			consts.ClientConfigFileName,
-			resource.Spec.CoreImage,
+			getImageWithDefault(resource.Spec.UI.Image, resource.Spec.CoreImage),
 			cfgen.GetNativeClientConfig),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
