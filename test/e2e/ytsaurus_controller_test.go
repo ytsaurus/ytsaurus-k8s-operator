@@ -11,6 +11,7 @@ import (
 	"sort"
 	"time"
 
+	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/utils/ptr"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -23,6 +24,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	ctrlcli "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
@@ -1083,6 +1085,16 @@ func deployAndCheck(ytsaurus *ytv1.Ytsaurus, namespace string) {
 	checkClusterViability(ytClient)
 }
 
+func checkJobTolerations(namespace string) {
+	var jobs batchv1.JobList
+	err := k8sClient.List(context.Background(), &jobs, ctrlcli.InNamespace(namespace))
+	Expect(err).Should(Succeed())
+
+	for _, job := range jobs.Items {
+		Expect(job.Spec.Template.Spec.Tolerations).Should(Equal([]corev1.Toleration{testutil.TestToleration}))
+	}
+}
+
 func createYtsaurusClient(ytsaurus *ytv1.Ytsaurus, namespace string) yt.Client {
 	By("Creating ytsaurus client")
 	g := ytconfig.NewGenerator(ytsaurus, "local")
@@ -1097,6 +1109,7 @@ func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Contex
 		DeferCleanup(deleteYtsaurus, ytsaurus)
 		name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
 		deployAndCheck(ytsaurus, namespace)
+		checkJobTolerations(namespace)
 		oldGeneration := ytsaurus.ObjectMeta.Generation
 
 		By("Run cluster update")

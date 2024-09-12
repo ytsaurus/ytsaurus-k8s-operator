@@ -28,6 +28,11 @@ const (
 	CoreImageNextVer = "ytsaurus/ytsaurus-nightly:dev-23.2-9c50056eacfa4fe213798a5b9ee828ae3acb1bca"
 )
 
+var TestToleration = corev1.Toleration{
+	Key:   "test-toleration-key",
+	Value: "test-toleration-value",
+}
+
 var (
 	masterVolumeSize, _ = resource.ParseQuantity("5Gi")
 )
@@ -45,12 +50,16 @@ func createLoggersSpec() []ytv1.TextLoggerSpec {
 }
 
 func CreateMinimalYtsaurusResource(namespace string) *ytv1.Ytsaurus {
+
 	return &ytv1.Ytsaurus{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      YtsaurusName,
 			Namespace: namespace,
 		},
 		Spec: ytv1.YtsaurusSpec{
+			Tolerations: []corev1.Toleration{
+				TestToleration,
+			},
 			CommonSpec: ytv1.CommonSpec{
 				EphemeralCluster: true,
 				UseShortNames:    true,
