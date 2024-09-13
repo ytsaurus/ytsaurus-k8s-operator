@@ -96,7 +96,7 @@ func NewStrawberryController(
 			resource.Spec.ImagePullSecrets,
 			"cluster",
 			ChytInitClusterJobConfigFileName,
-			resource.Spec.CoreImage,
+			image,
 			cfgen.GetChytInitClusterConfig,
 			getTolerationsWithDefault(resource.Spec.StrawberryController.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.StrawberryController.NodeSelector, resource.Spec.NodeSelector),
