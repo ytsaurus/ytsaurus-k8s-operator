@@ -43,6 +43,7 @@ func NewStrawberryController(
 	dataNodes []Component) *StrawberryController {
 	resource := ytsaurus.GetResource()
 
+	// TODO: strawberry has a different image and can't be nil/fallback on CoreImage.
 	image := resource.Spec.CoreImage
 	if resource.Spec.StrawberryController.Image != nil {
 		image = *resource.Spec.StrawberryController.Image
@@ -83,7 +84,7 @@ func NewStrawberryController(
 			ytsaurus.GetResource().Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,
-			getImageWithDefault(resource.Spec.StrawberryController.Image, resource.Spec.CoreImage),
+			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig,
 			getTolerationsWithDefault(resource.Spec.StrawberryController.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.StrawberryController.NodeSelector, resource.Spec.NodeSelector),
@@ -95,7 +96,7 @@ func NewStrawberryController(
 			resource.Spec.ImagePullSecrets,
 			"cluster",
 			ChytInitClusterJobConfigFileName,
-			getImageWithDefault(resource.Spec.StrawberryController.Image, resource.Spec.CoreImage),
+			resource.Spec.CoreImage,
 			cfgen.GetChytInitClusterConfig,
 			getTolerationsWithDefault(resource.Spec.StrawberryController.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.StrawberryController.NodeSelector, resource.Spec.NodeSelector),
