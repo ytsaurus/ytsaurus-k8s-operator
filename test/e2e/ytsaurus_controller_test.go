@@ -1097,7 +1097,7 @@ func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Contex
 		DeferCleanup(deleteYtsaurus, ytsaurus)
 		name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
 		deployAndCheck(ytsaurus, namespace)
-		oldGeneration := ytsaurus.ObjectMeta.Generation
+		oldGeneration := ytsaurus.Status.ObservedGeneration
 
 		By("Run cluster update")
 		podsBeforeUpdate := getComponentPods(ctx, namespace)
@@ -1117,10 +1117,14 @@ func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Contex
 
 		podsAfterFullUpdate := getComponentPods(ctx, namespace)
 		podDiff := diffPodsCreation(podsBeforeUpdate, podsAfterFullUpdate)
+		newYt := ytv1.Ytsaurus{}
+		_ = k8sClient.Get(ctx, name, &newYt)
+
 		Expect(podDiff.created.IsEmpty()).To(BeTrue(), "unexpected pod diff created %v", podDiff.created)
 		Expect(podDiff.deleted.IsEmpty()).To(BeTrue(), "unexpected pod diff deleted %v", podDiff.deleted)
 		Expect(podDiff.recreated.Equal(NewStringSetFromMap(podsBeforeUpdate))).To(BeTrue(), "unexpected pod diff recreated %v", podDiff.recreated)
-		Expect(ytsaurus.ObjectMeta.Generation).To(Equal(oldGeneration + 1))
+		// The generation have updated twice: created and then updated.
+		Expect(newYt.Status.ObservedGeneration).To(Equal(oldGeneration + 2))
 	}
 }
 
