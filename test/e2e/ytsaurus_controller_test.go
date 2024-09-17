@@ -1123,7 +1123,6 @@ func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Contex
 		Expect(podDiff.created.IsEmpty()).To(BeTrue(), "unexpected pod diff created %v", podDiff.created)
 		Expect(podDiff.deleted.IsEmpty()).To(BeTrue(), "unexpected pod diff deleted %v", podDiff.deleted)
 		Expect(podDiff.recreated.Equal(NewStringSetFromMap(podsBeforeUpdate))).To(BeTrue(), "unexpected pod diff recreated %v", podDiff.recreated)
-		// The generation have updated twice: created and then updated.
 		Expect(newYt.Status.ObservedGeneration).To(Equal(newYt.Generation))
 	}
 }
