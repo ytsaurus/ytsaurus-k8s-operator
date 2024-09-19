@@ -44,8 +44,7 @@ type ChytSpec struct {
 	//+kubebuilder:default:=false
 	MakeDefault bool `json:"makeDefault"`
 	// Create ch_public clique, which is used by default when running CHYT queries.
-	//+kubebuilder:default:=false
-	CreatePublicClique bool `json:"createPublicClique"`
+	CreatePublicClique *bool `json:"createPublicClique,omitempty"`
 }
 
 // ChytStatus defines the observed state of Chyt

@@ -41,7 +41,6 @@ spec:
             description: ChytSpec defines the desired state of Chyt
             properties:
               createPublicClique:
-                default: false
                 description: Create ch_public clique, which is used by default when
                   running CHYT queries.
                 type: boolean
@@ -78,7 +77,6 @@ spec:
                 type: object
                 x-kubernetes-map-type: atomic
             required:
-            - createPublicClique
             - makeDefault
             type: object
           status:

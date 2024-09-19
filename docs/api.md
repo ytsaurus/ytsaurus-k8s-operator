@@ -182,7 +182,7 @@ _Appears in:_
 | `ytsaurus` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `image` _string_ |  |  |  |
 | `makeDefault` _boolean_ | Mark specified image as default for cliques. | false |  |
-| `createPublicClique` _boolean_ | Create ch_public clique, which is used by default when running CHYT queries. | false |  |
+| `createPublicClique` _boolean_ | Create ch_public clique, which is used by default when running CHYT queries. |  |  |
 
 
 
