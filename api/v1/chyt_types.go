@@ -40,8 +40,11 @@ type ChytSpec struct {
 
 	Ytsaurus *corev1.LocalObjectReference `json:"ytsaurus,omitempty"`
 	Image    string                       `json:"image,omitempty"`
+	// Mark specified image as default for cliques.
 	//+kubebuilder:default:=false
 	MakeDefault bool `json:"makeDefault"`
+	// Create ch_public clique, which is used by default when running CHYT queries.
+	CreatePublicClique *bool `json:"createPublicClique,omitempty"`
 }
 
 // ChytStatus defines the observed state of Chyt

@@ -40,6 +40,10 @@ spec:
           spec:
             description: ChytSpec defines the desired state of Chyt
             properties:
+              createPublicClique:
+                description: Create ch_public clique, which is used by default when
+                  running CHYT queries.
+                type: boolean
               image:
                 type: string
               imagePullSecrets:
@@ -58,6 +62,7 @@ spec:
                 type: array
               makeDefault:
                 default: false
+                description: Mark specified image as default for cliques.
                 type: boolean
               ytsaurus:
                 description: |-

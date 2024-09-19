@@ -8,3 +8,4 @@ spec:
       minisaurus
   image: ghcr.io/ytsaurus/chyt:2.14.0-relwithdebinfo
   makeDefault: true
+  createPublicClique: true

@@ -188,7 +188,8 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return status, err
 	}
 
-	if c.ytsaurus.Spec.StrawberryController != nil && c.chyt.GetResource().Spec.MakeDefault {
+	createPublicClique := c.chyt.GetResource().Spec.CreatePublicClique
+	if c.ytsaurus.Spec.StrawberryController != nil && createPublicClique != nil && *createPublicClique {
 		if !dry {
 			c.prepareChPublicJob()
 		}
