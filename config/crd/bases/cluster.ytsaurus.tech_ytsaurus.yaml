@@ -29432,6 +29432,14 @@ spec:
                 type: object
               strawberry:
                 properties:
+                  controllerFamilies:
+                    items:
+                      type: string
+                    type: array
+                  defaultFamily:
+                    type: string
+                  externalProxy:
+                    type: string
                   image:
                     type: string
                   nodeSelector:

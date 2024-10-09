@@ -23,3 +23,9 @@ const DefaultName = "default"
 const DefaultMedium = "default"
 
 const MaxSlotLocationReserve = 10 << 30 // 10GiB
+
+const DefaultStrawberryControllerFamily = "chyt"
+
+func GetDefaultStrawberryControllerFamilies() []string {
+	return []string{"chyt", "jupyt"}
+}
