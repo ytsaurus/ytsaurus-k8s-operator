@@ -81,13 +81,8 @@ func getStrawberryController(conFamConfig StrawberryControllerFamiliesConfig, re
 }
 
 func getStrawberryInitCluster(conFamConfig StrawberryControllerFamiliesConfig) StrawberryInitCluster {
-	families := make([]string, 0, len(conFamConfig.ControllerFamilies))
-	for _, family := range conFamConfig.ControllerFamilies {
-		families = append(families, family)
-	}
-
 	return StrawberryInitCluster{
 		StrawberryRoot: "//sys/strawberry",
-		Families:       families,
+		Families:       conFamConfig.ControllerFamilies,
 	}
 }
