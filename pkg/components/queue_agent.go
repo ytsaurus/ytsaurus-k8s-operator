@@ -300,11 +300,26 @@ func (qa *QueueAgent) init(ctx context.Context, ytClient yt.Client) (err error) 
 
 func (qa *QueueAgent) prepareInitQueueAgentState() {
 	path := "/usr/bin/init_queue_agent_state"
+	proxy := qa.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)
 
+	existenceCheck := fmt.Sprintf(
+		`if [[ ! -f \"%s\" ]] && echo "%s doesn't exist, nothing to do" && exit 0`,
+		path,
+		path,
+	)
+	oldVersionInvokation := fmt.Sprintf("%s --create-registration-table --create-replicated-table-mapping-table --recursive --ignore-existing --proxy %s;",
+		path,
+		proxy,
+	)
+	newVersionInvokation := fmt.Sprintf("%s --create-registration-table --create-replicated-table-mapping-table --recursive --ignore-existing --latest --proxy %s;",
+		path,
+		proxy,
+	)
 	script := []string{
 		initJobWithNativeDriverPrologue(),
-		fmt.Sprintf("if [[ -f \"%s\" ]]; then %s --create-registration-table --create-replicated-table-mapping-table --recursive --ignore-existing --proxy %s; fi",
-			path, path, qa.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
+		existenceCheck,
+		`[[ "$YTSAURUS_VERSION" < "24.1" ]] &&` + oldVersionInvokation,
+		`[[ "$YTSAURUS_VERSION" >= "24.2" ]] &&` + newVersionInvokation,
 	}
 
 	qa.initQAState.SetInitScript(strings.Join(script, "\n"))

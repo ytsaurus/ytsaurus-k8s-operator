@@ -632,6 +632,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 
 			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 			ytsaurus = testutil.WithQueryTracker(ytsaurus)
+			ytsaurus = testutil.WithQueueAgent(ytsaurus)
 
 			g := ytconfig.NewGenerator(ytsaurus, "local")
 
