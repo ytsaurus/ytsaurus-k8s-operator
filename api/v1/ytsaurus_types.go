@@ -517,10 +517,13 @@ type QueryTrackerSpec struct {
 }
 
 type StrawberryControllerSpec struct {
-	Resources    corev1.ResourceRequirements `json:"resources,omitempty"`
-	Image        *string                     `json:"image,omitempty"`
-	Tolerations  []corev1.Toleration         `json:"tolerations,omitempty"`
-	NodeSelector map[string]string           `json:"nodeSelector,omitempty"`
+	Resources          corev1.ResourceRequirements `json:"resources,omitempty"`
+	Image              *string                     `json:"image,omitempty"`
+	Tolerations        []corev1.Toleration         `json:"tolerations,omitempty"`
+	NodeSelector       map[string]string           `json:"nodeSelector,omitempty"`
+	ExternalProxy      *string                     `json:"externalProxy,omitempty"`
+	ControllerFamilies []string                    `json:"controllerFamilies,omitempty"`
+	DefaultFamily      *string                     `json:"defaultFamily,omitempty"`
 }
 
 type YQLAgentSpec struct {

@@ -311,10 +311,28 @@ func (g *Generator) GetClusterConnection() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
+func (g *Generator) fillStrawberryControllerFamiliesConfig(c *StrawberryControllerFamiliesConfig, s *ytv1.StrawberryControllerSpec) {
+	if s.ControllerFamilies != nil {
+		c.ControllerFamilies = s.ControllerFamilies
+	} else {
+		c.ControllerFamilies = consts.GetDefaultStrawberryControllerFamilies()
+	}
+	if s.DefaultFamily != nil {
+		c.DefaultFamily = *s.DefaultFamily
+	} else {
+		c.DefaultFamily = consts.DefaultStrawberryControllerFamily
+	}
+	c.ExternalProxy = s.ExternalProxy
+}
+
 func (g *Generator) GetStrawberryControllerConfig() ([]byte, error) {
 	var resolver AddressResolver
 	g.fillAddressResolver(&resolver)
-	c, err := getStrawberryController(resolver)
+
+	var conFamConfig StrawberryControllerFamiliesConfig
+	g.fillStrawberryControllerFamiliesConfig(&conFamConfig, g.ytsaurus.Spec.StrawberryController)
+
+	c, err := getStrawberryController(conFamConfig, resolver)
 	if err != nil {
 		return nil, err
 	}
@@ -326,8 +344,10 @@ func (g *Generator) GetStrawberryControllerConfig() ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) GetChytInitClusterConfig() ([]byte, error) {
-	c := getChytInitCluster()
+func (g *Generator) GetStrawberryInitClusterConfig() ([]byte, error) {
+	var conFamConfig StrawberryControllerFamiliesConfig
+	g.fillStrawberryControllerFamiliesConfig(&conFamConfig, g.ytsaurus.Spec.StrawberryController)
+	c := getStrawberryInitCluster(conFamConfig)
 	c.Proxy = g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 	return marshallYsonConfig(c)
 }

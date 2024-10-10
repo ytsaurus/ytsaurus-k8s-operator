@@ -58,6 +58,12 @@ type AddressResolver struct {
 	LocalhostNameOverride *string `yson:"localhost_name_override,omitempty"`
 }
 
+type StrawberryControllerFamiliesConfig struct {
+	ControllerFamilies []string `yson:"controller_families,omitempty"`
+	DefaultFamily      string   `yson:"default_family,omitempty"`
+	ExternalProxy      *string  `yson:"external_proxy,omitempty"`
+}
+
 type SolomonExporter struct {
 	Host         *string           `yson:"host,omitempty"`
 	InstanceTags map[string]string `yson:"instance_tags,omitempty"`

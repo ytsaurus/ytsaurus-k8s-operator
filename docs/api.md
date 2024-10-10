@@ -1471,6 +1471,9 @@ _Appears in:_
 | `image` _string_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
+| `externalProxy` _string_ |  |  |  |
+| `controllerFamilies` _string array_ |  |  |  |
+| `defaultFamily` _string_ |  |  |  |
 
 
 #### StructuredLoggerSpec
