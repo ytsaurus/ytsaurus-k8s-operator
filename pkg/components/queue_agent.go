@@ -300,11 +300,37 @@ func (qa *QueueAgent) init(ctx context.Context, ytClient yt.Client) (err error) 
 
 func (qa *QueueAgent) prepareInitQueueAgentState() {
 	path := "/usr/bin/init_queue_agent_state"
+	proxy := qa.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)
+
+	// Somewhere in 24.1 this script has changed signature and since it is not tied to some version we can check
+	// we will try to call it new way and fallback to old way on error.
+	// COMPAT(l0kix2): Remove after 23.1 not supported in the yt operator.
+	oldVersionInvokation := fmt.Sprintf("%s --create-registration-table --create-replicated-table-mapping-table --recursive --ignore-existing --proxy %s",
+		path,
+		proxy,
+	)
+	newVersionInvokation := fmt.Sprintf("%s --latest --proxy %s",
+		path,
+		proxy,
+	)
 
 	script := []string{
 		initJobWithNativeDriverPrologue(),
-		fmt.Sprintf("if [[ -f \"%s\" ]]; then %s --create-registration-table --create-replicated-table-mapping-table --recursive --ignore-existing --proxy %s; fi",
-			path, path, qa.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
+		fmt.Sprintf(`if [ ! -f %s ]; then`, path),
+		fmt.Sprintf(`echo "%s doesn't exist, nothing to do"`, path),
+		`exit 0`,
+		`fi`,
+		// Temporary turning off exiting on non-zero status, since we expect this command may fail on
+		// unexpected arguments in the older server versions.
+		// In case arguments are valid and other error occurs it is not a problem, since new binary will fail with
+		// the old arguments later anyway.
+		`set +e`,
+		newVersionInvokation,
+		`if [ $? -ne 0 ]; then`,
+		`set -e`,
+		`echo "Binary execution failed. Running with an old set of arguments"`,
+		oldVersionInvokation,
+		`fi`,
 	}
 
 	qa.initQAState.SetInitScript(strings.Join(script, "\n"))
