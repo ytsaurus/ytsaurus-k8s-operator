@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/pmezard/go-difflib/difflib"
@@ -35,9 +36,10 @@ func Assert(t *testing.T, data []byte) {
 		t.FailNow()
 		return
 	}
+	canonDataTrimmed := strings.TrimSpace(string(canonData))
 
 	diff := difflib.UnifiedDiff{
-		A:        difflib.SplitLines(string(canonData)),
+		A:        difflib.SplitLines(canonDataTrimmed),
 		B:        difflib.SplitLines(string(data)),
 		FromFile: "old",
 		ToFile:   "new",
