@@ -56,7 +56,7 @@ func getStrawberryController(conFamConfig StrawberryControllerFamiliesConfig, re
 	if conFamConfig.ExternalProxy != nil {
 		httpControllerMappings = make(map[string]string, len(conFamConfig.ControllerFamilies))
 		for _, cFamily := range conFamConfig.ControllerFamilies {
-			if cFamily == conFamConfig.DefaultFamily {
+			if cFamily == conFamConfig.DefaultRouteFamily {
 				httpControllerMappings["*"] = cFamily
 			} else {
 				host := fmt.Sprintf("%s.%s", cFamily, *conFamConfig.ExternalProxy)
@@ -64,7 +64,7 @@ func getStrawberryController(conFamConfig StrawberryControllerFamiliesConfig, re
 			}
 		}
 	} else {
-		httpControllerMappings = map[string]string{"*": conFamConfig.DefaultFamily}
+		httpControllerMappings = map[string]string{"*": conFamConfig.DefaultRouteFamily}
 	}
 
 	return StrawberryController{

@@ -317,10 +317,10 @@ func (g *Generator) fillStrawberryControllerFamiliesConfig(c *StrawberryControll
 	} else {
 		c.ControllerFamilies = consts.GetDefaultStrawberryControllerFamilies()
 	}
-	if s.DefaultFamily != nil {
-		c.DefaultFamily = *s.DefaultFamily
+	if s.DefaultRouteFamily != nil {
+		c.DefaultRouteFamily = *s.DefaultRouteFamily
 	} else {
-		c.DefaultFamily = consts.DefaultStrawberryControllerFamily
+		c.DefaultRouteFamily = consts.DefaultStrawberryControllerFamily
 	}
 	c.ExternalProxy = s.ExternalProxy
 }

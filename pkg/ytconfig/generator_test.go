@@ -356,8 +356,8 @@ func TestGetStrawberryControllerConfigWithCustomFamilies(t *testing.T) {
 		g.ytsaurus.Spec.StrawberryController.ControllerFamilies,
 		"superservice1", "superservice2", "superservice3",
 	)
-	defaultFamily := "superservice2"
-	g.ytsaurus.Spec.StrawberryController.DefaultFamily = &defaultFamily
+	defaultRouteFamily := "superservice2"
+	g.ytsaurus.Spec.StrawberryController.DefaultRouteFamily = &defaultRouteFamily
 	cfg, err := g.GetStrawberryControllerConfig()
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)

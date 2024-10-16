@@ -60,7 +60,7 @@ type AddressResolver struct {
 
 type StrawberryControllerFamiliesConfig struct {
 	ControllerFamilies []string `yson:"controller_families,omitempty"`
-	DefaultFamily      string   `yson:"default_family,omitempty"`
+	DefaultRouteFamily string   `yson:"default_route_family,omitempty"`
 	ExternalProxy      *string  `yson:"external_proxy,omitempty"`
 }
 

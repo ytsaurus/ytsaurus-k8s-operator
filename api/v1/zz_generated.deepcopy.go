@@ -1499,8 +1499,8 @@ func (in *StrawberryControllerSpec) DeepCopyInto(out *StrawberryControllerSpec) 
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.DefaultFamily != nil {
-		in, out := &in.DefaultFamily, &out.DefaultFamily
+	if in.DefaultRouteFamily != nil {
+		in, out := &in.DefaultRouteFamily, &out.DefaultRouteFamily
 		*out = new(string)
 		**out = **in
 	}

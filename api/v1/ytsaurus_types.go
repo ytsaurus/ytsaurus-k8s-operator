@@ -523,7 +523,7 @@ type StrawberryControllerSpec struct {
 	NodeSelector       map[string]string           `json:"nodeSelector,omitempty"`
 	ExternalProxy      *string                     `json:"externalProxy,omitempty"`
 	ControllerFamilies []string                    `json:"controllerFamilies,omitempty"`
-	DefaultFamily      *string                     `json:"defaultFamily,omitempty"`
+	DefaultRouteFamily *string                     `json:"defaultRouteFamily,omitempty"`
 }
 
 type YQLAgentSpec struct {

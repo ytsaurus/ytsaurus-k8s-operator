@@ -29447,7 +29447,7 @@ spec:
                     items:
                       type: string
                     type: array
-                  defaultFamily:
+                  defaultRouteFamily:
                     type: string
                   externalProxy:
                     type: string
