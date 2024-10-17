@@ -13,8 +13,8 @@ const (
 	envDoCanonize          = "CANONIZE"
 	canonDirName           = "canondata"
 	canonFileName          = "test.canondata"
-	defaultFilePermissions = 0644
-	defaultDirPermissions  = 0755
+	defaultFilePermissions = 0o644
+	defaultDirPermissions  = 0o755
 )
 
 func Assert(t *testing.T, data []byte) {

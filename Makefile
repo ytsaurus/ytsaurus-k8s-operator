@@ -374,7 +374,7 @@ KUSTOMIZE_VERSION ?= v5.3.0
 CONTROLLER_GEN_VERSION ?= v0.14.0
 ENVTEST_VERSION ?= latest
 ## golangci-lint version.
-GOLANGCI_LINT_VERSION ?= v1.56.2
+GOLANGCI_LINT_VERSION ?= v1.61.0
 GINKGO_VERSION ?= $(call go-get-version,github.com/onsi/ginkgo/v2)
 CRD_REF_DOCS_VERSION ?= v0.0.12
 ## kind version.

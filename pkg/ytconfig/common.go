@@ -134,7 +134,7 @@ type IOEngine struct {
 
 func createLogging(spec *ytv1.InstanceSpec, componentName string, defaultLoggerSpecs []ytv1.TextLoggerSpec) Logging {
 	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), componentName)
-	if spec.Loggers != nil && len(spec.Loggers) > 0 {
+	if len(spec.Loggers) > 0 {
 		for _, loggerSpec := range spec.Loggers {
 			loggingBuilder.addLogger(loggerSpec)
 		}
@@ -143,7 +143,7 @@ func createLogging(spec *ytv1.InstanceSpec, componentName string, defaultLoggerS
 			loggingBuilder.addLogger(defaultLoggerSpec)
 		}
 	}
-	if spec.StructuredLoggers != nil && len(spec.StructuredLoggers) > 0 {
+	if len(spec.StructuredLoggers) > 0 {
 		for _, loggerSpec := range spec.StructuredLoggers {
 			loggingBuilder.addStructuredLogger(loggerSpec)
 		}

@@ -164,16 +164,14 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return WaitingStatus(SyncStatusBlocked, s.master.GetName()), err
 	}
 
-	if s.execNodes == nil || len(s.execNodes) > 0 {
-		for _, end := range s.execNodes {
-			endStatus, err := end.Status(ctx)
-			if err != nil {
-				return endStatus, err
-			}
-			if !IsRunningStatus(endStatus.SyncStatus) {
-				// It makes no sense to start scheduler without exec nodes.
-				return WaitingStatus(SyncStatusBlocked, end.GetName()), err
-			}
+	for _, end := range s.execNodes {
+		endStatus, err := end.Status(ctx)
+		if err != nil {
+			return endStatus, err
+		}
+		if !IsRunningStatus(endStatus.SyncStatus) {
+			// It makes no sense to start scheduler without exec nodes.
+			return WaitingStatus(SyncStatusBlocked, end.GetName()), err
 		}
 	}
 
@@ -263,7 +261,7 @@ func (s *Scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentSt
 }
 
 func (s *Scheduler) needOpArchiveInit() bool {
-	return s.tabletNodes != nil && len(s.tabletNodes) > 0
+	return len(s.tabletNodes) > 0
 }
 
 func (s *Scheduler) setConditionNotNecessaryToUpdateOpArchive(ctx context.Context) {
