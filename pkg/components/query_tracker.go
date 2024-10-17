@@ -157,7 +157,7 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	}
 
 	// Wait for tablet nodes to proceed with query tracker state init.
-	if qt.tabletNodes == nil || len(qt.tabletNodes) == 0 {
+	if len(qt.tabletNodes) == 0 {
 		return WaitingStatus(SyncStatusBlocked, "tablet nodes"), fmt.Errorf("cannot initialize query tracker without tablet nodes")
 	}
 

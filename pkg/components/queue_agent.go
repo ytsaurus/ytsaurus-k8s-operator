@@ -130,7 +130,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	// It makes no sense to start queue agents without tablet nodes.
-	if qa.tabletNodes == nil || len(qa.tabletNodes) == 0 {
+	if len(qa.tabletNodes) == 0 {
 		return WaitingStatus(SyncStatusBlocked, "tablet nodes"), fmt.Errorf("cannot initialize queue agent without tablet nodes")
 	}
 	for _, tnd := range qa.tabletNodes {

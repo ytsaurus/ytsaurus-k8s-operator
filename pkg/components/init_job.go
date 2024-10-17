@@ -108,7 +108,7 @@ func (j *InitJob) Build() *batchv1.Job {
 	if j.builtJob != nil {
 		return j.builtJob
 	}
-	var defaultMode int32 = 0500
+	var defaultMode int32 = 0o500
 	job := j.initJob.Build()
 	job.Spec.Template = corev1.PodTemplateSpec{
 		ObjectMeta: j.baseComponent.labeller.GetInitJobObjectMeta(),
