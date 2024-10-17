@@ -1,37 +1,80 @@
+#
+# This configuration is for experiments and is not suited to production as is.
+#
+# Documentation for YTsaurus specification:
+# https://ytsaurus.tech/docs/en/admin-guide/prepare-spec
+#
+# Automatically generated reference for all supported options:
+# https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#ytsaurusspec
+#
+# CA bundle management requires trust-manager:
+# helm upgrade -i trust-manager jetstack/trust-manager --namespace cert-manager --wait
+#
+# How to access via yt cli:
+# kubectl -n ytsaurus-dev get configmaps ytsaurus-ca-bundle -o jsonpath='{.data.ca\.crt}' > ytsaurus-ca-bundle.crt
+# YT_CONFIG_PATCHES='{ proxy={ ca_bundle_path="ytsaurus-ca-bundle.crt" }; }'
+# YT_PROXY="https://..."
+# yt list /
+#
+
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: minisaurus
+  name: ytsaurus-dev
 
 ---
 apiVersion: cluster.ytsaurus.tech/v1
 kind: Ytsaurus
 metadata:
-  namespace: minisaurus
-  name: minisaurus
+  namespace: ytsaurus-dev
+  name: ytsaurus
 spec:
+  # https://ytsaurus.tech/docs/en/admin-guide/releases#ytsaurus-server
+  # https://github.com/ytsaurus/ytsaurus/pkgs/container/ytsaurus
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-23.2.0-relwithdebinfo
+
+  # Default "docker_image" for jobs
+  jobImage: mirror.gcr.io/library/python:3.12-slim
+
+  # https://github.com/ytsaurus/ytsaurus-ui/
   uiImage: ghcr.io/ytsaurus/ui:stable
 
-  useIpv4: true
-  useIpv6: true
+  # Default "admin" password and token is "password".
+  adminCredentials:
+    name: ytsaurus-admin-credentials
 
   configOverrides:
-    name: minisaurus-overrides
+    name: ytsaurus-config-overrides
 
-  adminCredentials:
-    name: ytadminsec
+  # Allow prioritizing performance over data safety. Useful for tests and experiments.
+  ephemeralCluster: true
 
+  useIpv4: true
+  # useIpv6: true
+
+  # To run all components in host network you need at least max(instanceCount) worker nodes due to port clash.
+  # hostNetwork: true
+
+  # Install certificate for internal CA.
   caBundle:
-    name: minisaurus-ca-bundle
+    name: ytsaurus-ca-bundle
 
+  # Setup TLS for internal communications.
   nativeTransport:
     tlsSecret:
-      name: minisaurus-native-secret
+      name: ytsaurus-native-cert
     tlsRequired: true
-    tlsPeerAlternativeHostName: "minisaurus.svc.cluster.local"
+    tlsPeerAlternativeHostName: "ytsaurus-dev.svc.cluster.local"
+
+
+  ui:
+    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#uispec
+    instanceCount: 1
+    serviceType: NodePort
+
 
   discovery:
+    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#discoveryspec
     instanceCount: 1
 
     # Make reusable loggers config with yaml anchor.
@@ -41,8 +84,9 @@ spec:
         minLogLevel: debug
         writerType: file
         rotationPolicy: &rotationPolicy
-          maxTotalSizeToKeep: 10000000
-          rotationPeriodMilliseconds: 900000
+          maxTotalSizeToKeep: 1073741824 # 1GiB
+          rotationPeriodMilliseconds: 900000 # 15Min
+          maxSegmentCountToKeep: 1000
         categoriesFilter:
           type: exclude
           values: [ "Bus", "Concurrency" ]
@@ -50,21 +94,48 @@ spec:
         minLogLevel: info
         writerType: file
         rotationPolicy: *rotationPolicy
-      - name: error
-        minLogLevel: error
+      - name: info-stderr
+        minLogLevel: info
         writerType: stderr
 
-  primaryMasters:
-    instanceCount: 1
-    cellTag: 1
-    loggers: *loggers
     locations:
+      - locationType: Logs
+        path: /yt/discovery-logs
+
+    volumeMounts:
+      - name: discovery-logs
+        mountPath: /yt/discovery-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: discovery-logs
+        spec: &logsVolumeSpec
+          accessModes: [ "ReadWriteOnce" ]
+          resources:
+            requests:
+              storage: 10Gi
+
+
+  primaryMasters:
+    # https://ytsaurus.tech/docs/en/admin-guide/components#master
+    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#mastersspec
+    instanceCount: 1
+
+    cellTag: 1
+
+    loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/master-logs
       - locationType: MasterChangelogs
         path: /yt/master-data/master-changelogs
       - locationType: MasterSnapshots
         path: /yt/master-data/master-snapshots
 
     volumeMounts:
+      - name: master-logs
+        mountPath: /yt/master-logs
       - name: master-data
         mountPath: /yt/master-data
 
@@ -75,51 +146,93 @@ spec:
           accessModes: [ "ReadWriteOnce" ]
           resources:
             requests:
-              storage: 5Gi
+              storage: 10Gi
+      - metadata:
+          name: master-logs
+        spec: *logsVolumeSpec
+
 
   httpProxies:
-    - serviceType: NodePort
-      loggers: *loggers
-      instanceCount: 1
-      role: default
-      transport:
-        httpsSecret:
-          name: minisaurus-https-secret
-    - serviceType: NodePort
-      loggers: *loggers
-      instanceCount: 1
-      role: control
-      transport:
-        httpsSecret:
-          name: minisaurus-https-control-secret
-        disableHttp: true
-
-  rpcProxies:
+    # https://ytsaurus.tech/docs/en/admin-guide/components#proxy
+    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#httpproxiesspec
     - instanceCount: 1
-      loggers: *loggers
-      role: default
-      transport:
-        tlsSecret:
-          name: minisaurus-rpc-secret
-        tlsRequired: true
-    - instanceCount: 1
-      loggers: *loggers
-      role: heavy
-      transport:
-        tlsSecret:
-          name: minisaurus-rpc-heavy-secret
 
-  dataNodes:
-    - instanceCount: 1
       loggers: *loggers
-
-      volumeMounts:
-        - name: node-data
-          mountPath: /yt/node-data
 
       locations:
+        - locationType: Logs
+          path: /yt/http-proxy-logs
+
+      volumeMounts:
+        - name: http-proxy-logs
+          mountPath: /yt/http-proxy-logs
+
+      volumeClaimTemplates:
+        - metadata:
+            name: http-proxy-logs
+          spec: *logsVolumeSpec
+
+      serviceType: NodePort
+      # httpNodePort: ...
+      # httpsNodePort: ...
+
+      # Setup HTTPS protocol
+      transport:
+        disableHttp: true
+        httpsSecret:
+          name: ytsaurus-https-cert
+
+
+  rpcProxies:
+    # https://ytsaurus.tech/docs/en/admin-guide/components#proxy
+    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#rpcproxiesspec
+    - instanceCount: 1
+
+      loggers: *loggers
+
+      locations:
+        - locationType: Logs
+          path: /yt/rpc-proxy-logs
+
+      volumeMounts:
+        - name: rpc-proxy-logs
+          mountPath: /yt/rpc-proxy-logs
+
+      volumeClaimTemplates:
+        - metadata:
+            name: rpc-proxy-logs
+          spec: *logsVolumeSpec
+
+      serviceType: NodePort
+      # nodePort: ...
+
+      # Setup TLS for RPC protocol
+      transport:
+        tlsSecret:
+          name: ytsaurus-rpc-cert
+        tlsRequired: true
+        # tlsPeerAlternativeHostName: ...
+
+
+  dataNodes:
+    # https://ytsaurus.tech/docs/en/admin-guide/components#data-nodes
+    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#datanodesspec
+    # Could be 1, but that is still broken sometimes due to hard-coded replication_factor=2|3.
+    - instanceCount: 3
+
+      loggers: *loggers
+
+      locations:
+        - locationType: Logs
+          path: /yt/data-node-logs
         - locationType: ChunkStore
           path: /yt/node-data/chunk-store
+
+      volumeMounts:
+        - name: data-node-logs
+          mountPath: /yt/data-node-logs
+        - name: node-data
+          mountPath: /yt/node-data
 
       volumeClaimTemplates:
         - metadata:
@@ -128,49 +241,232 @@ spec:
             accessModes: [ "ReadWriteOnce" ]
             resources:
               requests:
-                storage: 5Gi
+                storage: 20Gi
+        - metadata:
+            name: data-node-logs
+          spec: *logsVolumeSpec
+
 
   execNodes:
+    # https://ytsaurus.tech/docs/en/admin-guide/components#exec-nodes
+    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#execnodesspec
     - instanceCount: 1
+
       loggers: *loggers
+
+      jobProxyLoggers:
+        - name: debug
+          compression: zstd
+          minLogLevel: debug
+          writerType: file
+          useTimestampSuffix: true
+          rotationPolicy: &rotationPolicyJobs
+            maxTotalSizeToKeep: 104857600  # 100Mi
+            rotationPeriodMilliseconds: 900000  # 15Min
+          categoriesFilter:
+            type: exclude
+            values: [ "Bus", "Concurrency" ]
+        - name: info
+          minLogLevel: info
+          writerType: file
+          rotationPolicy: *rotationPolicyJobs
+        - name: error
+          minLogLevel: error
+          writerType: stderr
+
       resources:
-        limits:
+        # Allocate resources for exec node container
+        requests:
           cpu: 1
-          memory: 2Gi
-
-      volumeMounts:
-        - name: node-data
-          mountPath: /yt/node-data
-
-      volumes:
-        - name: node-data
-          emptyDir:
-            sizeLimit: 5Gi
+          memory: 1Gi
+        limits:
+          cpu: 10
+          memory: 10Gi
 
       locations:
+        - locationType: Logs
+          path: /yt/exec-node-logs
         - locationType: ChunkCache
           path: /yt/node-data/chunk-cache
         - locationType: Slots
           path: /yt/node-data/slots
+        - locationType: ImageCache
+          path: /yt/node-data/image-cache
+
+      volumeMounts:
+        - name: exec-node-logs
+          mountPath: /yt/exec-node-logs
+        - name: node-data
+          mountPath: /yt/node-data
+          # mountPropagation: Bidirectional  # Enable for tmpfs in jobs
+        # Bind mount and use containerd registry config from node.
+        # - name: config-registry
+        #   mountPath: /config/registry
+        #   readOnly: true
+
+      volumes:
+        # - name: config-registry
+        #   hostPath:
+        #     path: /etc/containerd/certs.d
+        #     type: Directory
+
+      volumeClaimTemplates:
+        - metadata:
+            name: node-data
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: 20Gi
+        - metadata:
+            name: exec-node-logs
+          spec: *logsVolumeSpec
+
+      # privileged: true  # Enable for tmpfs in jobs
+
+      jobResources:
+        # Allocate resources for jobs container
+        requests:
+          cpu: 4
+          memory: 4Gi
+        limits:
+          cpu: 10
+          memory: 10Gi
+
+      jobEnvironment:
+        # Add CRI containerd sidecar
+        cri:
+          apiRetryTimeoutSeconds: 180
+          # registryConfigPath: /config/registry
 
   schedulers:
+    # https://ytsaurus.tech/docs/en/admin-guide/components#scheduler
+    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#schedulersspec
     instanceCount: 1
+
     loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/scheduler-logs
+
+    volumeMounts:
+      - name: scheduler-logs
+        mountPath: /yt/scheduler-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: scheduler-logs
+        spec: *logsVolumeSpec
+
 
   controllerAgents:
+    # https://ytsaurus.tech/docs/en/admin-guide/components#scheduler
+    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#controlleragentsspec
     instanceCount: 1
+
     loggers: *loggers
 
-  ui:
-    serviceType: NodePort
+    locations:
+      - locationType: Logs
+        path: /yt/controller-agent-logs
+
+    volumeMounts:
+      - name: controller-agent-logs
+        mountPath: /yt/controller-agent-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: controller-agent-logs
+        spec: *logsVolumeSpec
+
+
+  tabletNodes:
+    # https://ytsaurus.tech/docs/en/admin-guide/components#tablet-nodes
+    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#tabletnodesspec
+    - instanceCount: 1
+
+      loggers: *loggers
+
+      locations:
+        - locationType: Logs
+          path: /yt/tablet-node-logs
+
+      volumeMounts:
+        - name: tablet-node-logs
+          mountPath: /yt/tablet-node-logs
+
+      volumeClaimTemplates:
+        - metadata:
+            name: tablet-node-logs
+          spec: *logsVolumeSpec
+
+
+  yqlAgents:
+    # https://ytsaurus.tech/docs/en/admin-guide/components#yql-agent
+    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#yqlagentspec
     instanceCount: 1
+
+    # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
+    image: ghcr.io/ytsaurus/query-tracker:0.0.6-relwithdebinfo
+
+    loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/yql-agent-logs
+
+    volumeMounts:
+      - name: yql-agent-logs
+        mountPath: /yt/yql-agent-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: yql-agent-logs
+        spec: *logsVolumeSpec
+
+
+  queryTrackers:
+    # https://ytsaurus.tech/docs/en/admin-guide/components#yql-agent
+    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#queueagentspec
+    instanceCount: 1
+
+    # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
+    image: ghcr.io/ytsaurus/query-tracker:0.0.6-relwithdebinfo
+
+    loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/query-tracker-logs
+
+    volumeMounts:
+      - name: query-tracker-logs
+        mountPath: /yt/query-tracker-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: query-tracker-logs
+        spec: *logsVolumeSpec
+
+
+  strawberry:
+    # https://ytsaurus.tech/docs/en/admin-guide/chyt
+    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#strawberrycontrollerspec
+
+    # https://ytsaurus.tech/docs/en/admin-guide/releases#strawberry
+    image: ghcr.io/ytsaurus/strawberry:0.0.11
+
+    resources:
+      limits:
+        memory: 100Mi
 
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  namespace: minisaurus
-  name: ytadminsec
+  namespace: ytsaurus-dev
+  name: ytsaurus-admin-credentials
 type: Opaque
 data:
   login: YWRtaW4=         # admin
@@ -181,16 +477,19 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  namespace: minisaurus
-  name: minisaurus-overrides
+  namespace: ytsaurus-dev
+  name: ytsaurus-config-overrides
 data:
 
 ---
+#
+# Bootstrap internal CA
+#
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   namespace: cert-manager
-  name: minisaurus-selfsigned-issuer
+  name: ytsaurus-selfsigned-issuer
 spec:
   selfSigned: {}
 
@@ -199,123 +498,94 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   namespace: cert-manager
-  name: minisaurus-ca
+  name: ytsaurus-ca
 spec:
   isCA: true
-  commonName: minisaurus-ca
+  commonName: ytsaurus-ca
   subject:
     organizations:
-      - Minisaurus CA
-  secretName: minisaurus-ca-secret
+      - ytsaurus CA
+  secretName: ytsaurus-ca-secret
   issuerRef:
     kind: Issuer
-    name: minisaurus-selfsigned-issuer
+    name: ytsaurus-selfsigned-issuer
 
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   namespace: cert-manager
-  name: minisaurus-ca-issuer
+  name: ytsaurus-ca-issuer
 spec:
   ca:
-    secretName: minisaurus-ca-secret
+    secretName: ytsaurus-ca-secret
 
 ---
 apiVersion: trust.cert-manager.io/v1alpha1
 kind: Bundle
 metadata:
-  namespace: minisaurus
-  name: minisaurus-ca-bundle
+  namespace: ytsaurus-dev
+  name: ytsaurus-ca-bundle
 spec:
   sources:
   - useDefaultCAs: false
   - secret:
-      name: "minisaurus-ca-secret"
+      name: "ytsaurus-ca-secret"
       key: "tls.crt"
   target:
     configMap:
       key: "ca.crt"
     namespaceSelector:
       matchLabels:
-        kubernetes.io/metadata.name: minisaurus
+        kubernetes.io/metadata.name: ytsaurus-dev
+
+---
+#
+# Issue cluster certificates.
+#
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  namespace: ytsaurus-dev
+  name: ytsaurus-native-cert
+spec:
+  dnsNames:
+  - "ytsaurus-dev.svc.cluster.local"
+  - "*.masters.ytsaurus-dev.svc.cluster.local"
+  - "*.discovery.ytsaurus-dev.svc.cluster.local"
+  issuerRef:
+    kind: ClusterIssuer
+    name: ytsaurus-ca-issuer
+  secretName: ytsaurus-native-cert
 
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  namespace: minisaurus
-  name: minisaurus-https-cert
+  namespace: ytsaurus-dev
+  name: ytsaurus-https-cert
 spec:
   dnsNames:
-  - "*.minisaurus.svc"
-  - "*.minisaurus.svc.cluster.local"
-  - "*.http-proxies.minisaurus.svc"
-  - "*.http-proxies.minisaurus.svc.cluster.local"
+  - "*.ytsaurus-dev.svc"
+  - "*.ytsaurus-dev.svc.cluster.local"
+  - "*.http-proxies.ytsaurus-dev.svc"
+  - "*.http-proxies.ytsaurus-dev.svc.cluster.local"
   issuerRef:
     kind: ClusterIssuer
-    name: minisaurus-ca-issuer
-  secretName: minisaurus-https-secret
+    name: ytsaurus-ca-issuer
+  secretName: ytsaurus-https-cert
 
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  namespace: minisaurus
-  name: minisaurus-native-cert
+  namespace: ytsaurus-dev
+  name: ytsaurus-rpc-cert
 spec:
   dnsNames:
-  - "minisaurus.svc.cluster.local"
-  - "*.masters.minisaurus.svc.cluster.local"
-  - "*.discovery.minisaurus.svc.cluster.local"
+  - "*.rpc-proxies.ytsaurus-dev.svc"
+  - "*.rpc-proxies.ytsaurus-dev.svc.cluster.local"
   issuerRef:
     kind: ClusterIssuer
-    name: minisaurus-ca-issuer
-  secretName: minisaurus-native-secret
-
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  namespace: minisaurus
-  name: minisaurus-https-control-cert
-spec:
-  dnsNames:
-  - "*.minisaurus.svc"
-  - "*.minisaurus.svc.cluster.local"
-  - "*.http-proxies-control.minisaurus.svc"
-  - "*.http-proxies-control.minisaurus.svc.cluster.local"
-  issuerRef:
-    kind: ClusterIssuer
-    name: minisaurus-ca-issuer
-  secretName: minisaurus-https-control-secret
-
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  namespace: minisaurus
-  name: minisaurus-rpc-cert
-spec:
-  dnsNames:
-  - "*.rpc-proxies.minisaurus.svc"
-  - "*.rpc-proxies.minisaurus.svc.cluster.local"
-  issuerRef:
-    kind: ClusterIssuer
-    name: minisaurus-ca-issuer
-  secretName: minisaurus-rpc-secret
-
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  namespace: minisaurus
-  name: minisaurus-rpc-heavy-cert
-spec:
-  dnsNames:
-  - "*.rpc-proxies-heavy.minisaurus.svc"
-  - "*.rpc-proxies-heavy.minisaurus.svc.cluster.local"
-  issuerRef:
-    kind: ClusterIssuer
-    name: minisaurus-ca-issuer
-  secretName: minisaurus-rpc-heavy-secret
+    name: ytsaurus-ca-issuer
+  secretName: ytsaurus-rpc-cert
