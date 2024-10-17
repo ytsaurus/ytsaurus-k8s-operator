@@ -1,8 +1,6 @@
 run:
   timeout: 5m
   allow-parallel-runners: true
-  skip-files:
-    - "^zz_generated.*"
 
 
 output:
@@ -38,7 +36,7 @@ linters:
     - errchkjson # checks types passed to the json encoding functions
     # - errorlint # finds code that will cause problems with the error wrapping scheme introduced in Go 1.13
     # - exhaustive # checks exhaustiveness of enum switch statements
-    - exportloopref # checks for pointers to enclosing loop variables
+    # - exportloopref # Snce Go1.22 (loopvar) this linter is no longer relevant. Replaced by copyloopvar.
     - gocheckcompilerdirectives # validates go compiler directive comments (//go:)
     - gochecksumtype # checks exhaustiveness on Go "sum types"
     - gosec # inspects source code for security problems
@@ -54,6 +52,7 @@ linters:
     - spancheck # checks for mistakes with OpenTelemetry/Census spans
     - sqlclosecheck # checks that sql.Rows and sql.Stmt are closed
     - testifylint # checks usage of github.com/stretchr/testify
+    - zerologlint # Detects the wrong usage of zerolog
 
     ## preset "complexity"
     # - cyclop # checks function and package cyclomatic complexity
@@ -63,14 +62,16 @@ linters:
     # - nestif # reports deeply nested if statements
 
     ## preset "performance"
+    # - perfsprint # Checks that fmt.Sprintf can be replaced with a faster alternative
     # - prealloc # finds slice declarations that could potentially be preallocated
 
-    # - copyloopvar # detects places where loop variables are copied
+    ## preset "style", "format" and others
+    - copyloopvar # detects places where loop variables are copied
     - decorder # checks declaration order and count of types, constants, variables and functions
     - dogsled # checks assignments with too many blank identifiers (e.g. x, _, _, _, := f())
     # - dupl # tool for code clone detection
     - errname # checks that sentinel errors are prefixed with the Err and error types are suffixed with the Error
-    - execinquery # checks query string in Query function which reads your Go src files and warning it finds
+    # - execinquery # checks query string in Query function which reads your Go src files and warning it finds
     - forbidigo # forbids identifiers
     - ginkgolinter # enforces standards of using ginkgo and gomega
     # - gochecknoglobals # checks that no global variables exist
@@ -84,6 +85,7 @@ linters:
     - gomodguard # allow and block lists linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations
     - goprintffuncname # checks that printf-like functions are named with f at the end
     - importas # enforces consistent import aliases (not useful without config)
+    - inamedparam # Reports interfaces with unnamed method parameters
     - interfacebloat # checks the number of methods inside an interface
     # - intrange # finds places where for loops could make use of an integer range
     # - lll # reports long lines
@@ -149,6 +151,16 @@ linters-settings:
     # Enable all checks.
     # Default: false
     enable-all: true
+    disabled-checks:
+      - sprintfQuotedString
+      - importShadow
+      - paramTypeCombine
+      - appendCombine
+    settings:
+      hugeParam:
+        sizeThreshold: 4096
+      rangeValCopy:
+        sizeThreshold: 4096
 
   gosec:
     excludes:
@@ -215,6 +227,8 @@ linters-settings:
 issues:
   max-same-issues: 0  # disable
   max-issues-per-linter: 0 # disable
+  exclude-files:
+      - "^zz_generated.*"
   exclude-rules:
     - linters:
         - gocritic
