@@ -192,7 +192,6 @@ func TestRemoteExecNodesStatusRunningZeroPods(t *testing.T) {
 // TestRemoteExecNodesStatusRunningZeroPods ensures that remote exec nodes CRD reaches correct release status
 // in non-zero pods case.
 func TestRemoteExecNodesStatusRunningWithPods(t *testing.T) {
-	// h := startHelperWithController(t, "remote-exec-nodes-test-status-running-with-pods")
 	h := startHelperWithController(t, "remote-exec-nodes-test-status-running-with-pods",
 		setupRemoteExecNodesReconciler(),
 	)
@@ -273,13 +272,7 @@ func buildExecNodePod(h *testutil.TestHelper) corev1.Pod {
 			Name:      "end-0",
 			Namespace: h.Namespace,
 			Labels: map[string]string{
-				consts.YTComponentLabelName: strings.Join(
-					[]string{
-						remoteExecNodesName,
-						consts.ComponentLabel(consts.ExecNodeType),
-					},
-					"-",
-				),
+				consts.YTComponentLabelName: remoteExecNodesName + "-" + consts.ComponentLabel(consts.ExecNodeType),
 			},
 		},
 		Spec: corev1.PodSpec{

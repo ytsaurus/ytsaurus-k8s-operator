@@ -49,7 +49,7 @@ func NewComponentManager(
 
 	var dnds []components.Component
 	nodeCfgGen := ytconfig.NewLocalNodeGenerator(ytsaurus.GetResource(), clusterDomain)
-	if resource.Spec.DataNodes != nil && len(resource.Spec.DataNodes) > 0 {
+	if len(resource.Spec.DataNodes) > 0 {
 		for _, dndSpec := range ytsaurus.GetResource().Spec.DataNodes {
 			dnds = append(dnds, components.NewDataNode(nodeCfgGen, ytsaurus, m, dndSpec))
 		}
@@ -68,7 +68,7 @@ func NewComponentManager(
 		allComponents = append(allComponents, ui)
 	}
 
-	if resource.Spec.RPCProxies != nil && len(resource.Spec.RPCProxies) > 0 {
+	if len(resource.Spec.RPCProxies) > 0 {
 		var rps []components.Component
 		for _, rpSpec := range ytsaurus.GetResource().Spec.RPCProxies {
 			rps = append(rps, components.NewRPCProxy(cfgen, ytsaurus, m, rpSpec))
@@ -76,7 +76,7 @@ func NewComponentManager(
 		allComponents = append(allComponents, rps...)
 	}
 
-	if resource.Spec.TCPProxies != nil && len(resource.Spec.TCPProxies) > 0 {
+	if len(resource.Spec.TCPProxies) > 0 {
 		var tps []components.Component
 		for _, tpSpec := range ytsaurus.GetResource().Spec.TCPProxies {
 			tps = append(tps, components.NewTCPProxy(cfgen, ytsaurus, m, tpSpec))
@@ -85,7 +85,7 @@ func NewComponentManager(
 	}
 
 	var ends []components.Component
-	if resource.Spec.ExecNodes != nil && len(resource.Spec.ExecNodes) > 0 {
+	if len(resource.Spec.ExecNodes) > 0 {
 		for _, endSpec := range ytsaurus.GetResource().Spec.ExecNodes {
 			ends = append(ends, components.NewExecNode(nodeCfgGen, ytsaurus, m, endSpec))
 		}
@@ -93,7 +93,7 @@ func NewComponentManager(
 	allComponents = append(allComponents, ends...)
 
 	var tnds []components.Component
-	if resource.Spec.TabletNodes != nil && len(resource.Spec.TabletNodes) > 0 {
+	if len(resource.Spec.TabletNodes) > 0 {
 		for idx, tndSpec := range ytsaurus.GetResource().Spec.TabletNodes {
 			tnds = append(tnds, components.NewTabletNode(nodeCfgGen, ytsaurus, yc, tndSpec, idx == 0))
 		}
@@ -111,12 +111,12 @@ func NewComponentManager(
 	}
 
 	var q components.Component
-	if resource.Spec.QueryTrackers != nil && resource.Spec.Schedulers != nil && resource.Spec.TabletNodes != nil && len(resource.Spec.TabletNodes) > 0 {
+	if resource.Spec.QueryTrackers != nil && resource.Spec.Schedulers != nil && len(resource.Spec.TabletNodes) > 0 {
 		q = components.NewQueryTracker(cfgen, ytsaurus, yc, tnds)
 		allComponents = append(allComponents, q)
 	}
 
-	if resource.Spec.QueueAgents != nil && resource.Spec.TabletNodes != nil && len(resource.Spec.TabletNodes) > 0 {
+	if resource.Spec.QueueAgents != nil && len(resource.Spec.TabletNodes) > 0 {
 		qa := components.NewQueueAgent(cfgen, ytsaurus, yc, m, tnds)
 		allComponents = append(allComponents, qa)
 	}

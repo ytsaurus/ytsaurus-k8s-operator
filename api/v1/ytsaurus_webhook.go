@@ -103,7 +103,6 @@ func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus *Ytsaurus) fiel
 	for i, sm := range newYtsaurus.Spec.SecondaryMasters {
 		path := field.NewPath("spec").Child("secondaryMasters").Index(i)
 		allErrors = append(allErrors, r.validateInstanceSpec(sm.InstanceSpec, path)...)
-		// allErrors = append(allErrors, r.validateHostAddresses(newYtsaurus.Spec.PrimaryMasters, path)...)
 		allErrors = append(allErrors, r.validateHostAddresses(newYtsaurus, path)...)
 	}
 
@@ -270,7 +269,7 @@ func (r *ytsaurusValidator) validateExecNodes(newYtsaurus *Ytsaurus) field.Error
 		}
 	}
 
-	if newYtsaurus.Spec.ExecNodes != nil && len(newYtsaurus.Spec.ExecNodes) > 0 {
+	if len(newYtsaurus.Spec.ExecNodes) > 0 {
 		if newYtsaurus.Spec.Schedulers == nil {
 			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"), "execNodes doesn't make sense without schedulers"))
 		}
@@ -352,7 +351,7 @@ func (r *ytsaurusValidator) validateQueryTrackers(newYtsaurus *Ytsaurus) field.E
 		path := field.NewPath("spec").Child("queryTrackers")
 		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.QueryTrackers.InstanceSpec, path)...)
 
-		if newYtsaurus.Spec.TabletNodes == nil || len(newYtsaurus.Spec.TabletNodes) == 0 {
+		if len(newYtsaurus.Spec.TabletNodes) == 0 {
 			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("tabletNodes"), "tabletNodes are required for queryTrackers"))
 		}
 
@@ -371,7 +370,7 @@ func (r *ytsaurusValidator) validateQueueAgents(newYtsaurus *Ytsaurus) field.Err
 		path := field.NewPath("spec").Child("queueAgents")
 		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.QueueAgents.InstanceSpec, path)...)
 
-		if newYtsaurus.Spec.TabletNodes == nil || len(newYtsaurus.Spec.TabletNodes) == 0 {
+		if len(newYtsaurus.Spec.TabletNodes) == 0 {
 			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("tabletNodes"), "tabletNodes are required for queueAgents"))
 		}
 	}

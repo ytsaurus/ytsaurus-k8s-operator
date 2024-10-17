@@ -551,7 +551,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	c.Logging = getExecNodeLogging(spec)
 
 	jobProxyLoggingBuilder := newJobProxyLoggingBuilder()
-	if spec.JobProxyLoggers != nil && len(spec.JobProxyLoggers) > 0 {
+	if len(spec.JobProxyLoggers) > 0 {
 		for _, loggerSpec := range spec.JobProxyLoggers {
 			jobProxyLoggingBuilder.addLogger(loggerSpec)
 		}

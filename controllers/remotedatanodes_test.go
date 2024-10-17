@@ -272,13 +272,7 @@ func buildDataNodePod(h *testutil.TestHelper) corev1.Pod {
 			Name:      "dn-0",
 			Namespace: h.Namespace,
 			Labels: map[string]string{
-				consts.YTComponentLabelName: strings.Join(
-					[]string{
-						remoteDataNodesName,
-						consts.ComponentLabel(consts.DataNodeType),
-					},
-					"-",
-				),
+				consts.YTComponentLabelName: remoteDataNodesName + "-" + consts.ComponentLabel(consts.DataNodeType),
 			},
 		},
 		Spec: corev1.PodSpec{

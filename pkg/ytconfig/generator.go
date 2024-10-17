@@ -195,8 +195,8 @@ func (g *BaseGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCT
 	c.MasterCache.CellID = generateCellID(g.masterConnectionSpec.CellTag)
 }
 
-func (g *BaseGenerator) fillCypressAnnotations(c *map[string]any) {
-	*c = map[string]any{
+func (g *BaseGenerator) fillCypressAnnotations(c *CommonServer) {
+	c.CypressAnnotations = map[string]any{
 		"k8s_pod_name":      "{K8S_POD_NAME}",
 		"k8s_pod_namespace": "{K8S_POD_NAMESPACE}",
 		"k8s_node_name":     "{K8S_NODE_NAME}",
@@ -210,7 +210,7 @@ func (g *BaseGenerator) fillCommonService(c *CommonServer, s *ytv1.InstanceSpec)
 	g.fillAddressResolver(&c.AddressResolver)
 	g.fillSolomonExporter(&c.SolomonExporter)
 	g.fillClusterConnection(&c.ClusterConnection, s.NativeTransport)
-	g.fillCypressAnnotations(&c.CypressAnnotations)
+	g.fillCypressAnnotations(c)
 	c.TimestampProviders.Addresses = g.getMasterAddresses()
 }
 
@@ -386,7 +386,7 @@ func (g *Generator) getSchedulerConfigImpl(spec *ytv1.SchedulersSpec) (Scheduler
 		return SchedulerServer{}, err
 	}
 
-	if g.ytsaurus.Spec.TabletNodes == nil || len(g.ytsaurus.Spec.TabletNodes) == 0 {
+	if len(g.ytsaurus.Spec.TabletNodes) == 0 {
 		c.Scheduler.OperationsCleaner.EnableOperationArchivation = ptr.To(false)
 	}
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)

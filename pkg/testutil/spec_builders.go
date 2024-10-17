@@ -130,7 +130,7 @@ func WithNamedDataNodes(ytsaurus *ytv1.Ytsaurus, name *string) *ytv1.Ytsaurus {
 	return WithDataNodesCount(ytsaurus, 3, name)
 }
 
-func WithDataNodesCount(ytsaurus *ytv1.Ytsaurus, count int, name *string) *ytv1.Ytsaurus {
+func WithDataNodesCount(ytsaurus *ytv1.Ytsaurus, count int32, name *string) *ytv1.Ytsaurus {
 	dataNodeSpec := ytv1.DataNodesSpec{
 		InstanceSpec: CreateDataNodeInstanceSpec(count),
 	}
@@ -145,7 +145,7 @@ func WithTabletNodes(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	return WithTabletNodesCount(ytsaurus, 3)
 }
 
-func WithTabletNodesCount(ytsaurus *ytv1.Ytsaurus, count int) *ytv1.Ytsaurus {
+func WithTabletNodesCount(ytsaurus *ytv1.Ytsaurus, count int32) *ytv1.Ytsaurus {
 	ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{
 		{
 			InstanceSpec: CreateTabletNodeSpec(count),
@@ -301,9 +301,9 @@ func CreateExecNodeInstanceSpec() ytv1.InstanceSpec {
 	}
 }
 
-func CreateDataNodeInstanceSpec(instanceCount int) ytv1.InstanceSpec {
+func CreateDataNodeInstanceSpec(instanceCount int32) ytv1.InstanceSpec {
 	return ytv1.InstanceSpec{
-		InstanceCount: int32(instanceCount),
+		InstanceCount: instanceCount,
 		Locations: []ytv1.LocationSpec{
 			{
 				LocationType: "ChunkStore",
@@ -329,9 +329,9 @@ func CreateDataNodeInstanceSpec(instanceCount int) ytv1.InstanceSpec {
 	}
 }
 
-func CreateTabletNodeSpec(instanceCount int) ytv1.InstanceSpec {
+func CreateTabletNodeSpec(instanceCount int32) ytv1.InstanceSpec {
 	return ytv1.InstanceSpec{
-		InstanceCount: int32(instanceCount),
+		InstanceCount: instanceCount,
 		Loggers:       createLoggersSpec(),
 	}
 }
