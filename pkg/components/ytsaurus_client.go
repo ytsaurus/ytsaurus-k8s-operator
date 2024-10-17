@@ -377,6 +377,7 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 		}
 		yc.ytClient, err = ythttp.NewClient(&yt.Config{
 			Proxy:                 proxy,
+			UseTLS:                yc.cfgen.UseHTTPSProxy(),
 			Token:                 token,
 			LightRequestTimeout:   &timeout,
 			DisableProxyDiscovery: disableProxyDiscovery,
