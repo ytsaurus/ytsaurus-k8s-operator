@@ -113,7 +113,7 @@ func (c *Chyt) createInitScript() string {
 func (c *Chyt) createInitChPublicScript() string {
 	script := []string{
 		initJobPrologue,
-		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v YT_LOG_LEVEL=debug", c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole), c.cfgen.GetStrawberryControllerServiceAddress()),
+		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v YT_LOG_LEVEL=debug", c.cfgen.GetHTTPProxyUrl(consts.DefaultHTTPProxyRole), c.cfgen.GetStrawberryControllerServiceAddress()),
 		"yt create scheduler_pool --attributes '{name=chyt; pool_tree=default}' --ignore-existing",
 		"yt clickhouse ctl create ch_public || true",
 		"yt clickhouse ctl set-option --alias ch_public pool chyt",
@@ -173,7 +173,7 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		container.Env = []corev1.EnvVar{
 			{
 				Name:  "YT_PROXY",
-				Value: c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+				Value: c.cfgen.GetHTTPProxyUrl(consts.DefaultHTTPProxyRole),
 			},
 			{
 				Name:  "YT_TOKEN",
