@@ -26,5 +26,6 @@
     };
     "http_controller_mappings"={
         "*"=chyt;
+        "jupyt.some.domain"=jupyt;
     };
 }
