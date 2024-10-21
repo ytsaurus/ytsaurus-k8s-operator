@@ -67,11 +67,11 @@ func (r *ChytReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	var ytsaurus ytv1.Ytsaurus
 	ytsaurusName := types.NamespacedName{Name: chyt.Spec.Ytsaurus.Name, Namespace: req.Namespace}
 	if err := r.Get(ctx, ytsaurusName, &ytsaurus); err != nil {
-		logger.Error(err, "unable to fetch Ytsaurus for spyt")
+		logger.Error(err, "unable to fetch Ytsaurus for chyt")
 		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
 
-	logger.V(1).Info("found Spyt")
+	logger.V(1).Info("found Chyt")
 
 	return r.Sync(ctx, &chyt, &ytsaurus)
 }
