@@ -614,7 +614,7 @@ type YtsaurusSpec struct {
 	//+optional
 	EnableFullUpdate bool `json:"enableFullUpdate"`
 	//+optional
-	//+kubebuilder:validation:Enum={"","Nothing","StatelessOnly","MasterOnly","TabletNodesOnly","ExecNodesOnly","Everything"}
+	//+kubebuilder:validation:Enum={"","Nothing","MasterOnly","DataNodesOnly","TabletNodesOnly","ExecNodesOnly","StatelessOnly","Everything"}
 	// UpdateSelector is an experimental field. Behaviour may change.
 	// If UpdateSelector is not empty EnableFullUpdate is ignored.
 	UpdateSelector UpdateSelector `json:"updateSelector"`
@@ -699,15 +699,17 @@ const (
 	UpdateSelectorUnspecified UpdateSelector = ""
 	// UpdateSelectorNothing means that no component could be updated.
 	UpdateSelectorNothing UpdateSelector = "Nothing"
-	// UpdateSelectorStatelessOnly means that only stateless components (everything but master and tablet nodes)
-	// could be updated.
-	UpdateSelectorStatelessOnly UpdateSelector = "StatelessOnly"
 	// UpdateSelectorMasterOnly means that only master could be updated.
 	UpdateSelectorMasterOnly UpdateSelector = "MasterOnly"
+	// UpdateSelectorTabletNodesOnly means that only data nodes could be updated
+	UpdateSelectorDataNodesOnly UpdateSelector = "DataNodesOnly"
 	// UpdateSelectorTabletNodesOnly means that only tablet nodes could be updated
 	UpdateSelectorTabletNodesOnly UpdateSelector = "TabletNodesOnly"
 	// UpdateSelectorExecNodesOnly means that only tablet nodes could be updated
 	UpdateSelectorExecNodesOnly UpdateSelector = "ExecNodesOnly"
+	// UpdateSelectorStatelessOnly means that only stateless components (everything but master, data nodes, and tablet nodes)
+	// could be updated.
+	UpdateSelectorStatelessOnly UpdateSelector = "StatelessOnly"
 	// UpdateSelectorEverything means that all components could be updated.
 	// With this setting and if master or tablet nodes need update all the components would be updated.
 	UpdateSelectorEverything UpdateSelector = "Everything"
