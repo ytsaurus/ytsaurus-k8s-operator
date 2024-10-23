@@ -34637,10 +34637,11 @@ spec:
                 enum:
                 - ""
                 - Nothing
-                - StatelessOnly
                 - MasterOnly
+                - DataNodesOnly
                 - TabletNodesOnly
                 - ExecNodesOnly
+                - StatelessOnly
                 - Everything
                 type: string
               useIpv4:
