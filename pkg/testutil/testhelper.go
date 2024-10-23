@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -165,10 +166,11 @@ func DeployObject(h *TestHelper, object client.Object) {
 func UpdateObject(h *TestHelper, emptyObject, newObject client.Object) {
 	k8sCli := h.GetK8sClient()
 
-	GetObject(h, newObject.GetName(), emptyObject)
-
-	newObject.SetResourceVersion(emptyObject.GetResourceVersion())
-	err := k8sCli.Update(context.Background(), newObject)
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		GetObject(h, newObject.GetName(), emptyObject)
+		newObject.SetResourceVersion(emptyObject.GetResourceVersion())
+		return k8sCli.Update(context.Background(), newObject)
+	})
 	require.NoError(h.t, err)
 }
 func UpdateObjectStatus(h *TestHelper, newObject client.Object) {
