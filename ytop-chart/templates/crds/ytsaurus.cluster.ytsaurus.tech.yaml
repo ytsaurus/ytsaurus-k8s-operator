@@ -37123,6 +37123,8 @@ spec:
                   type: object
                 type: array
               observedGeneration:
+                description: Reflects resource generation which was used for updating
+                  status.
                 format: int64
                 type: integer
               state:

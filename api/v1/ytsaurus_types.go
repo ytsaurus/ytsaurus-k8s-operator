@@ -741,11 +741,11 @@ type UpdateStatus struct {
 // YtsaurusStatus defines the observed state of Ytsaurus
 type YtsaurusStatus struct {
 	//+kubebuilder:default:=Created
-	State              ClusterState       `json:"state,omitempty"`
-	Conditions         []metav1.Condition `json:"conditions,omitempty"`
-	ObservedGeneration int64              `json:"observedGeneration,omitempty"`
-
-	UpdateStatus UpdateStatus `json:"updateStatus,omitempty"`
+	State      ClusterState       `json:"state,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	// Reflects resource generation which was used for updating status.
+	ObservedGeneration int64        `json:"observedGeneration,omitempty"`
+	UpdateStatus       UpdateStatus `json:"updateStatus,omitempty"`
 }
 
 //+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=ytsaurus,verbs=get;list;watch;create;update;patch;delete
