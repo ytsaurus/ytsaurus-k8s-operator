@@ -13,6 +13,8 @@ Package v1 contains API Schema definitions for the cluster v1 API group
 - [RemoteDataNodes](#remotedatanodes)
 - [RemoteDataNodesList](#remotedatanodeslist)
 - [RemoteExecNodes](#remoteexecnodes)
+- [RemoteTabletNodes](#remotetabletnodes)
+- [RemoteTabletNodesList](#remotetabletnodeslist)
 - [RemoteYtsaurus](#remoteytsaurus)
 - [Spyt](#spyt)
 - [Ytsaurus](#ytsaurus)
@@ -200,6 +202,7 @@ _Appears in:_
 - [ExecNodesSpec](#execnodesspec)
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [TabletNodesSpec](#tabletnodesspec)
 
 | Field | Description | Default | Validation |
@@ -233,6 +236,7 @@ It is inlined in these specs.
 _Appears in:_
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [YtsaurusSpec](#ytsaurusspec)
 
 | Field | Description | Default | Validation |
@@ -434,6 +438,7 @@ _Appears in:_
 - [RPCProxiesSpec](#rpcproxiesspec)
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
@@ -578,6 +583,7 @@ _Appears in:_
 - [RPCProxiesSpec](#rpcproxiesspec)
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
@@ -614,6 +620,7 @@ _Appears in:_
 - [RPCProxiesSpec](#rpcproxiesspec)
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
@@ -691,6 +698,7 @@ _Appears in:_
 - [RPCProxiesSpec](#rpcproxiesspec)
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
@@ -1104,6 +1112,7 @@ _Appears in:_
 - [RPCProxiesSpec](#rpcproxiesspec)
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
@@ -1313,6 +1322,116 @@ _Appears in:_
 
 
 
+#### RemoteTabletNodeReleaseStatus
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [RemoteTabletNodesStatus](#remotetabletnodesstatus)
+
+
+
+#### RemoteTabletNodes
+
+
+
+RemoteTabletNodes is the Schema for the remotetabletnodes API
+
+
+
+_Appears in:_
+- [RemoteTabletNodesList](#remotetabletnodeslist)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `RemoteTabletNodes` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[RemoteTabletNodesSpec](#remotetabletnodesspec)_ |  |  |  |
+
+
+#### RemoteTabletNodesList
+
+
+
+RemoteTabletNodesList contains a list of RemoteTabletNodes
+
+
+
+
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `RemoteTabletNodesList` | | |
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `items` _[RemoteTabletNodes](#remotetabletnodes) array_ |  |  |  |
+
+
+#### RemoteTabletNodesSpec
+
+
+
+RemoteTabletNodesSpec defines the desired state of RemoteTabletNodes
+
+
+
+_Appears in:_
+- [RemoteTabletNodes](#remotetabletnodes)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
+| `coreImage` _string_ |  |  |  |
+| `jobImage` _string_ | Default docker image for user jobs. |  |  |
+| `caBundle` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Reference to ConfigMap with trusted certificates: "ca.crt". |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
+| `ephemeralCluster` _boolean_ | Allow prioritizing performance over data safety. Useful for tests and experiments. | false |  |
+| `useIpv6` _boolean_ |  | false |  |
+| `useIpv4` _boolean_ |  | false |  |
+| `keepSocket` _boolean_ |  |  |  |
+| `forceTcp` _boolean_ |  |  |  |
+| `useShortNames` _boolean_ |  | true |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
+| `usePorto` _boolean_ |  | false |  |
+| `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
+| `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
+| `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
+| `instanceCount` _integer_ |  |  |  |
+| `minReadyInstanceCount` _integer_ |  |  |  |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `runtimeClassName` _string_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
+| `monitoringPort` _integer_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ |  |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `tags` _string array_ | List of the node tags. |  |  |
+| `rack` _string_ | Name of the node rack. |  |  |
+| `name` _string_ |  | default | MinLength: 1 <br /> |
+
+
+
+
 #### RemoteYtsaurus
 
 
@@ -1495,6 +1614,7 @@ _Appears in:_
 - [RPCProxiesSpec](#rpcproxiesspec)
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
@@ -1581,6 +1701,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [YtsaurusSpec](#ytsaurusspec)
 
 | Field | Description | Default | Validation |
@@ -1636,6 +1757,7 @@ _Appears in:_
 - [RPCProxiesSpec](#rpcproxiesspec)
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
