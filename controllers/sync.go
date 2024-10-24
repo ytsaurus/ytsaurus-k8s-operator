@@ -516,10 +516,6 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		if !componentManager.needSync() {
 			logger.Info("Ytsaurus has synced and is running now")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
-			if err != nil {
-				return ctrl.Result{Requeue: true}, err
-			}
-			err = ytsaurus.SaveObserverGeneration(ctx, resource.ObjectMeta.Generation)
 			return ctrl.Result{Requeue: true}, err
 		}
 
@@ -528,10 +524,16 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		switch {
 		case !componentManager.needSync():
 			logger.Info("Ytsaurus is running and happy")
+			// Have passed final check - update observed generation.
+			if ytsaurus.SyncObservedGeneration() {
+				err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
+				return ctrl.Result{}, err
+			}
 			return ctrl.Result{}, nil
 
 		case componentManager.needInit():
 			logger.Info("Ytsaurus needs initialization of some components")
+			ytsaurus.SyncObservedGeneration()
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateReconfiguration)
 			return ctrl.Result{Requeue: true}, err
 
@@ -550,6 +552,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 				"componentsForUpdateSelected", meta.componentNames,
 				"flow", meta.flow,
 			)
+			ytsaurus.SyncObservedGeneration()
 			err = ytsaurus.SaveUpdatingClusterState(ctx, meta.flow, meta.componentNames)
 			if err != nil {
 				return ctrl.Result{}, err
@@ -602,21 +605,15 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 
 		logger.Info("Ytsaurus update was finished and Ytsaurus is running now")
 		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		err = ytsaurus.SaveObserverGeneration(ctx, resource.ObjectMeta.Generation)
-		return ctrl.Result{}, err
+		// Requeue once again to do final check and maybe update observed generation.
+		return ctrl.Result{Requeue: true}, err
 
 	case ytv1.ClusterStateReconfiguration:
 		if !componentManager.needInit() {
 			logger.Info("Ytsaurus has reconfigured and is running now")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
-			if err != nil {
-				return ctrl.Result{}, err
-			}
-			err = ytsaurus.SaveObserverGeneration(ctx, resource.ObjectMeta.Generation)
-			return ctrl.Result{}, err
+			// Requeue once again to do final check and maybe update observed generation.
+			return ctrl.Result{Requeue: true}, err
 		}
 	}
 
