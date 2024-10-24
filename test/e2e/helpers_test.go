@@ -3,7 +3,6 @@ package controllers_test
 import (
 	"context"
 
-	mapset "github.com/deckarep/golang-set/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -39,58 +38,25 @@ func getAllPods(ctx context.Context, namespace string) []corev1.Pod {
 	return podList.Items
 }
 
-type StringSet mapset.Set[string]
-
-func NewStringSet() StringSet {
-	return mapset.NewSet[string]()
+type changedObjects struct {
+	Deleted, Updated, Created []string
 }
 
-func NewStringSetFromItems(slice ...string) StringSet {
-	set := NewStringSet()
-	for _, item := range slice {
-		set.Add(item)
-	}
-	return set
-}
-
-func NewStringSetFromMap[T any](data map[string]T) StringSet {
-	set := NewStringSet()
-	for key := range data {
-		set.Add(key)
-	}
-	return set
-}
-
-type podsCreationDiff struct {
-	created   StringSet
-	deleted   StringSet
-	recreated StringSet
-}
-
-func newPodsCreationDiff() podsCreationDiff {
-	return podsCreationDiff{
-		created:   NewStringSet(),
-		deleted:   NewStringSet(),
-		recreated: NewStringSet(),
-	}
-}
-
-func diffPodsCreation(before, after map[string]corev1.Pod) podsCreationDiff {
-	diff := newPodsCreationDiff()
-	for podName := range before {
-		if _, existNow := after[podName]; !existNow {
-			diff.deleted.Add(podName)
+func getChangedPods(before, after map[string]corev1.Pod) changedObjects {
+	var ret changedObjects
+	for name := range before {
+		if _, found := after[name]; !found {
+			ret.Deleted = append(ret.Deleted, name)
 		}
 	}
-	for podName, podAfter := range after {
-		podBefore, wasBefore := before[podName]
-		if !wasBefore {
-			diff.created.Add(podName)
-			continue
-		}
-		if podBefore.CreationTimestamp.Before(&podAfter.CreationTimestamp) {
-			diff.recreated.Add(podName)
+	for name, podAfter := range after {
+		if !podAfter.DeletionTimestamp.IsZero() {
+			ret.Deleted = append(ret.Deleted, name)
+		} else if podBefore, found := before[name]; !found {
+			ret.Created = append(ret.Created, name)
+		} else if !podAfter.CreationTimestamp.Equal(&podBefore.CreationTimestamp) {
+			ret.Updated = append(ret.Updated, name)
 		}
 	}
-	return diff
+	return ret
 }
