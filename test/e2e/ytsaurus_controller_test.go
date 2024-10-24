@@ -223,7 +223,7 @@ func runRemoteExecNodes(remoteExecNodes *ytv1.RemoteExecNodes) {
 
 func deleteRemoteExecNodes(ctx context.Context, remoteExecNodes *ytv1.RemoteExecNodes) {
 	if err := k8sClient.Delete(ctx, remoteExecNodes); err != nil {
-		log.Error(err, "Deleting remote ytsaurus failed")
+		log.Error(err, "Deleting remote exec nodes failed")
 	}
 }
 
@@ -250,7 +250,34 @@ func runRemoteDataNodes(remoteDataNodes *ytv1.RemoteDataNodes) {
 
 func deleteRemoteDataNodes(ctx context.Context, remoteDataNodes *ytv1.RemoteDataNodes) {
 	if err := k8sClient.Delete(ctx, remoteDataNodes); err != nil {
-		log.Error(err, "Deleting remote ytsaurus failed")
+		log.Error(err, "Deleting remote data nodes failed")
+	}
+}
+
+func runRemoteTabletNodes(remoteTabletNodes *ytv1.RemoteTabletNodes) {
+	Expect(k8sClient.Create(ctx, remoteTabletNodes)).Should(Succeed())
+	lookupKey := types.NamespacedName{Name: remoteTabletNodes.Name, Namespace: remoteTabletNodes.Namespace}
+	Eventually(func() bool {
+		createdYtsaurus := &ytv1.RemoteTabletNodes{}
+		err := k8sClient.Get(ctx, lookupKey, createdYtsaurus)
+		return err == nil
+	}, reactionTimeout, pollInterval).Should(BeTrue())
+
+	By("Checking that remote tablet nodes state is equal to `Running`")
+	Eventually(
+		func() (*ytv1.RemoteTabletNodes, error) {
+			nodes := &ytv1.RemoteTabletNodes{}
+			err := k8sClient.Get(ctx, lookupKey, nodes)
+			return nodes, err
+		},
+		reactionTimeout*2,
+		pollInterval,
+	).Should(HaveField("Status.ReleaseStatus", ytv1.RemoteTabletNodeReleaseStatusRunning))
+}
+
+func deleteRemoteTabletNodes(ctx context.Context, remoteTabletNodes *ytv1.RemoteTabletNodes) {
+	if err := k8sClient.Delete(ctx, remoteTabletNodes); err != nil {
+		log.Error(err, "Deleting remote tablet nodes failed")
 	}
 }
 
@@ -980,6 +1007,72 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			Expect(labels["host"]).ShouldNot(BeEmpty())
 			Expect(labels["pod"]).Should(Equal("ms-0"))
 			fmt.Fprintf(GinkgoWriter, "host=%v, pod=%v\n", labels["host"], labels["pod"])
+		})
+
+		It("Should create ytsaurus with remote tablet nodes and write to a table", func() {
+			By("Creating a Ytsaurus resource")
+			ctx := context.Background()
+
+			namespace := "remotetablet"
+
+			// We have to create only the minimal YT - with master and discovery servers
+			ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
+			g := ytconfig.NewGenerator(ytsaurus, "local")
+
+			remoteYtsaurus := &ytv1.RemoteYtsaurus{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testutil.RemoteResourceName,
+					Namespace: namespace,
+				},
+				Spec: ytv1.RemoteYtsaurusSpec{
+					MasterConnectionSpec: ytv1.MasterConnectionSpec{
+						CellTag: ytsaurus.Spec.PrimaryMasters.CellTag,
+						HostAddresses: []string{
+							"ms-0.masters.remotetablet.svc.cluster.local",
+						},
+					},
+				},
+			}
+
+			remoteNodes := &ytv1.RemoteTabletNodes{
+				ObjectMeta: metav1.ObjectMeta{Name: testutil.RemoteResourceName, Namespace: namespace},
+				Spec: ytv1.RemoteTabletNodesSpec{
+					RemoteClusterSpec: &corev1.LocalObjectReference{
+						Name: testutil.RemoteResourceName,
+					},
+					CommonSpec: ytv1.CommonSpec{
+						CoreImage: testutil.CoreImageFirst,
+					},
+					TabletNodesSpec: ytv1.TabletNodesSpec{
+						InstanceSpec: testutil.CreateTabletNodeSpec(3),
+					},
+				},
+			}
+
+			defer deleteYtsaurus(ctx, ytsaurus)
+			runYtsaurus(ytsaurus)
+
+			defer deleteRemoteYtsaurus(ctx, remoteYtsaurus)
+			createRemoteYtsaurus(remoteYtsaurus)
+
+			defer deleteRemoteTabletNodes(ctx, remoteNodes)
+			runRemoteTabletNodes(remoteNodes)
+
+			By("Creating ytsaurus client")
+			ytClient := getYtClient(g, namespace)
+
+			By("Create a chunk on a remote tablet node")
+
+			_, errCreateNode := ytClient.CreateNode(ctx, ypath.Path("//tmp/a"), yt.NodeTable, &yt.CreateNodeOptions{})
+			Expect(errCreateNode).Should(Succeed())
+
+			Eventually(func(g Gomega) {
+
+				writer, err := ytClient.WriteTable(ctx, ypath.Path("//tmp/a"), nil)
+				g.Expect(err).ShouldNot(HaveOccurred())
+				g.Expect(writer.Write(testRow{A: "tablet_123"})).Should(Succeed())
+				g.Expect(writer.Commit()).Should(Succeed())
+			}, reactionTimeout, pollInterval).Should(Succeed())
 		})
 	})
 

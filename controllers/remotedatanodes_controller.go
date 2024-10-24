@@ -64,7 +64,7 @@ func (r *RemoteDataNodesReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	var nodes ytv1.RemoteDataNodes
 	if err := r.Get(ctx, req.NamespacedName, &nodes); err != nil {
-		logger.Error(err, "unable to fetch remote nodes")
+		logger.Error(err, "unable to fetch remote data nodes")
 		// We'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
 		// on deleted requests.
