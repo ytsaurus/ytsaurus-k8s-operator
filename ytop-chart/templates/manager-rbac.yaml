@@ -293,6 +293,32 @@ rules:
   - pod/status
   verbs:
   - get
+- apiGroups:
+    - cluster.ytsaurus.tech
+  resources:
+    - remotetabletnodes
+  verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+- apiGroups:
+    - cluster.ytsaurus.tech
+  resources:
+    - remotetabletnodes/finalizers
+  verbs:
+    - update
+- apiGroups:
+    - cluster.ytsaurus.tech
+  resources:
+    - remotetabletnodes/status
+  verbs:
+    - get
+    - patch
+    - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
