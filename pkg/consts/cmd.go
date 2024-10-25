@@ -23,6 +23,7 @@ const (
 	PrepareLocationsContainerName  = "prepare-locations"
 	PrepareSecretContainerName     = "prepare-secret"
 	UIContainerName                = "yt-ui"
+	StrawberryContainerName        = "strawberry"
 )
 
 const (
