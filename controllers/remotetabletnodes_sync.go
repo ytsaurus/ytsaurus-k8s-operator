@@ -57,10 +57,10 @@ func (r *RemoteTabletNodesReconciler) Sync(
 		requeue = false
 	}
 
-	logger.Info("Setting status for remote data nodes", "status", resource.Status.ReleaseStatus)
+	logger.Info("Setting status for remote tablet nodes", "status", resource.Status.ReleaseStatus)
 	err = r.Client.Status().Update(ctx, resource)
 	if err != nil {
-		logger.Error(err, "failed to update status for remote data nodes")
+		logger.Error(err, "failed to update status for remote tablet nodes")
 		return ctrl.Result{Requeue: true}, err
 	}
 
