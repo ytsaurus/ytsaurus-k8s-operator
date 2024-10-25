@@ -331,7 +331,8 @@ func CreateDataNodeInstanceSpec(instanceCount int32) ytv1.InstanceSpec {
 
 func CreateTabletNodeSpec(instanceCount int32) ytv1.InstanceSpec {
 	return ytv1.InstanceSpec{
-		InstanceCount: instanceCount,
-		Loggers:       createLoggersSpec(),
+		InstanceCount:     instanceCount,
+		Loggers:           createLoggersSpec(),
+		SetHostnameAsFQDN: ptr.To(true),
 	}
 }
