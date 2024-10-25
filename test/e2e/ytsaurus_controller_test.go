@@ -1070,7 +1070,25 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				},
 			})
 			Expect(errCreateNode).Should(Succeed())
+			for {
+				var healthStatus string
+				// Retrieve the health status
+				err := ytClient.GetNode(ctx, ypath.Path("//sys/tablet_cell_bundles/default/@health"), &healthStatus, nil)
+				if err != nil {
+					fmt.Printf("Error fetching health status: %v\n", err)
+					time.Sleep(10 * time.Second) // Wait before retrying
+					continue
+				}
 
+				// Check if health status is "good"
+				if healthStatus == "good" {
+					fmt.Println("Tablet cell bundle health is 'good'. Proceeding...")
+					break
+				}
+
+				fmt.Println("Health status not 'good'. Waiting...")
+				time.Sleep(10 * time.Second) // Wait before checking again
+			}
 			By("Mounting the dynamic table")
 			errMount := ytClient.MountTable(ctx, ypath.Path("//sys/test-tnd-remote"), &yt.MountTableOptions{})
 			Expect(errMount).Should(Succeed())
