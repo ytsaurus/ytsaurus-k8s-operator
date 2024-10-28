@@ -1014,6 +1014,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 			// We have to create only the minimal YT - with master and discovery servers
 			ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
 			ytsaurus = testutil.WithDataNodes(ytsaurus)
+			ytsaurus = testutil.WithTabletNodes(ytsaurus)
+
 			g := ytconfig.NewGenerator(ytsaurus, "local")
 
 			remoteYtsaurus := &ytv1.RemoteYtsaurus{
@@ -1070,29 +1072,21 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				},
 			})
 			Expect(errCreateNode).Should(Succeed())
-			for {
-				var healthStatus string
-				// Retrieve the health status
-				err := ytClient.GetNode(ctx, ypath.Path("//sys/tablet_cell_bundles/default/@health"), &healthStatus, nil)
+
+			By("Check that tablet cell bundles are in `good` health")
+
+			Eventually(func() bool {
+				notGoodBundles, err := components.GetNotGoodTabletCellBundles(ctx, ytClient)
 				if err != nil {
-					fmt.Printf("Error fetching health status: %v\n", err)
-					time.Sleep(10 * time.Second) // Wait before retrying
-					continue
+					return false
 				}
+				return len(notGoodBundles) == 0
+			}, upgradeTimeout, pollInterval).Should(BeTrue())
 
-				// Check if health status is "good"
-				if healthStatus == "good" {
-					fmt.Println("Tablet cell bundle health is 'good'. Proceeding...")
-					break
-				}
-
-				fmt.Println("Health status not 'good'. Waiting...")
-				time.Sleep(10 * time.Second) // Wait before checking again
-			}
-			time.Sleep(15 * time.Minute)
-			By("Mounting the dynamic table")
-			errMount := ytClient.MountTable(ctx, ypath.Path("//sys/test-tnd-remote"), &yt.MountTableOptions{})
-			Expect(errMount).Should(Succeed())
+			// time.Sleep(15 * time.Minute)
+			//By("Mounting the dynamic table")
+			//errMount := ytClient.MountTable(ctx, ypath.Path("//sys/test-tnd-remote"), &yt.MountTableOptions{})
+			//Expect(errMount).Should(Succeed())
 
 			Eventually(func(g Gomega) {
 

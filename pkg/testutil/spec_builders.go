@@ -26,7 +26,6 @@ const (
 	CoreImageFirst   = "ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de"
 	CoreImageSecond  = "ytsaurus/ytsaurus-nightly:dev-23.1-28ccaedbf353b870bedafb6e881ecf386a0a3779"
 	CoreImageNextVer = "ytsaurus/ytsaurus-nightly:dev-23.2-9c50056eacfa4fe213798a5b9ee828ae3acb1bca"
-	CoreTest         = "ytsaurus/ytsaurus-nightly:dev-24.1-70488-b2288d8da74ef24a565a3c5888fb61b8453e69c0-relwithdebinfo"
 )
 
 var (
@@ -55,7 +54,7 @@ func CreateMinimalYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 			CommonSpec: ytv1.CommonSpec{
 				EphemeralCluster: true,
 				UseShortNames:    true,
-				CoreImage:        CoreTest,
+				CoreImage:        CoreImageFirst,
 			},
 			EnableFullUpdate: true,
 			IsManaged:        true,
