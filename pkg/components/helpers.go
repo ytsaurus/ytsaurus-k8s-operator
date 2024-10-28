@@ -73,6 +73,30 @@ func GetNotGoodTabletCellBundles(ctx context.Context, ytClient yt.Client) ([]str
 	return notGoodBundles, err
 }
 
+func WaitTabletStateMounted(ctx context.Context, ytClient yt.Client, path ypath.Path) (bool, error) {
+	var currentState string
+	err := ytClient.GetNode(ctx, path.Attr("tablet_state"), &currentState, nil)
+	if err != nil {
+		return false, err
+	}
+	if currentState == yt.TabletMounted {
+		return true, nil
+	}
+	return false, nil
+}
+
+func WaitTabletCellHealth(ctx context.Context, ytClient yt.Client, cellID yt.NodeID) (bool, error) {
+	var cellHealth string
+	err := ytClient.GetNode(ctx, ypath.Path(fmt.Sprintf("//sys/tablet_cells/%s/@health", cellID)), &cellHealth, nil)
+	if err != nil {
+		return false, err
+	}
+	if cellHealth == "good" {
+		return true, nil
+	}
+	return false, nil
+}
+
 func CreateUser(ctx context.Context, ytClient yt.Client, userName, token string, isSuperuser bool) error {
 	var err error
 	_, err = ytClient.CreateObject(ctx, yt.NodeUser, &yt.CreateObjectOptions{

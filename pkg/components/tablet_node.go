@@ -20,8 +20,10 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
-const SysBundle string = "sys"
-const DefaultBundle string = "default"
+const (
+	SysBundle     string = "sys"
+	DefaultBundle string = "default"
+)
 
 type TabletNode struct {
 	localServerComponent
