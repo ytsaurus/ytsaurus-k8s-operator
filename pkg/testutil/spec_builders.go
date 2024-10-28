@@ -23,9 +23,9 @@ const (
 	RemoteResourceName = "tst-rmt"
 	// Images should be in sync with TEST_IMAGES variable in Makefile
 	// todo: come up with a more elegant solution
-	CoreImageFirst   = "ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.1-2024-10-24-76c8ef23198921f79b3be0339607c60acdee66bf-relwithdebinfo"
-	CoreImageSecond  = "ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.1-2024-10-24-402ec2ecc3dc01860cd32adf70c5434218cd7b11-relwithdebinfo"
-	CoreImageNextVer = "ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2024-10-24-6016c4e56d2e6c48edd97781697d1a2f7fa9356c-relwithdebinfo"
+	CoreImageFirst   = "ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de"
+	CoreImageSecond  = "ytsaurus/ytsaurus-nightly:dev-23.1-28ccaedbf353b870bedafb6e881ecf386a0a3779"
+	CoreImageNextVer = "ytsaurus/ytsaurus-nightly:dev-23.2-9c50056eacfa4fe213798a5b9ee828ae3acb1bca"
 )
 
 var (
