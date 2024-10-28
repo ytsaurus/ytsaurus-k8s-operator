@@ -1089,6 +1089,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				fmt.Println("Health status not 'good'. Waiting...")
 				time.Sleep(10 * time.Second) // Wait before checking again
 			}
+			time.Sleep(15 * time.Minute)
 			By("Mounting the dynamic table")
 			errMount := ytClient.MountTable(ctx, ypath.Path("//sys/test-tnd-remote"), &yt.MountTableOptions{})
 			Expect(errMount).Should(Succeed())
