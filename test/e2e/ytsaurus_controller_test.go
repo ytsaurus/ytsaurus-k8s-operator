@@ -461,7 +461,7 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				ytsaurus.Spec.Discovery.InstanceCount += 1
 				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
 				EventuallyYtsaurus(ctx, name, reactionTimeout).Should(
-					HaveClusterUpdatingComponents("Discovery", "DataNode", "HttpProxy", "ExecNode", "Scheduler", "ControllerAgent"),
+					HaveClusterUpdatingComponents("Discovery", "HttpProxy", "ExecNode", "Scheduler", "ControllerAgent"),
 				)
 				By("Wait cluster update with selector:StatelessOnly complete")
 				EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterState(ytv1.ClusterStateRunning))
@@ -472,10 +472,8 @@ var _ = Describe("Basic test for Ytsaurus controller", func() {
 				Expect(podDiff.created.Equal(NewStringSetFromItems("ds-1", "ds-2"))).To(
 					BeTrue(), "unexpected pod diff created %v", podDiff.created)
 				Expect(podDiff.deleted.IsEmpty()).To(BeTrue(), "unexpected pod diff deleted %v", podDiff.deleted)
-				statelessUpdatedPods := NewStringSetFromMap(podsAfterStatelessUpdate).Difference(
-					NewStringSetFromItems("ms-0", "tnd-0", "tnd-1", "tnd-2", "ds-1", "ds-2"))
 				Expect(podDiff.recreated.Equal(
-					statelessUpdatedPods),
+					NewStringSetFromItems("ca-0", "end-0", "sch-0", "hp-0", "ds-0")),
 				).To(BeTrue(), "unexpected pod diff recreated %v", podDiff.recreated)
 			},
 		)
