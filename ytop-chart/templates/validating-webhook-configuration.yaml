@@ -16,6 +16,11 @@ webhooks:
       path: /validate-cluster-ytsaurus-tech-v1-chyt
   failurePolicy: Fail
   name: vchyt.kb.io
+  {{- if .Values.controllerManager.manager.namespacedScope }}
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: {{ .Release.Namespace }}
+  {{- end }}
   rules:
   - apiGroups:
     - cluster.ytsaurus.tech
@@ -36,6 +41,11 @@ webhooks:
       path: /validate-cluster-ytsaurus-tech-v1-spyt
   failurePolicy: Fail
   name: vspyt.kb.io
+  {{- if .Values.controllerManager.manager.namespacedScope }}
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: {{ .Release.Namespace }}
+  {{- end }}
   rules:
   - apiGroups:
     - cluster.ytsaurus.tech
@@ -56,6 +66,11 @@ webhooks:
       path: /validate-cluster-ytsaurus-tech-v1-ytsaurus
   failurePolicy: Fail
   name: vytsaurus.kb.io
+  {{- if .Values.controllerManager.manager.namespacedScope }}
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: {{ .Release.Namespace }}
+  {{- end }}
   rules:
   - apiGroups:
     - cluster.ytsaurus.tech
