@@ -184,7 +184,7 @@ func TestRemoteDataNodesStatusRunningZeroPods(t *testing.T) {
 		"remote nodes status running",
 		func(obj client.Object) bool {
 			remoteNodes := obj.(*ytv1.RemoteDataNodes)
-			return remoteNodes.Status.ReleaseStatus == ytv1.RemoteDataNodeReleaseStatusRunning
+			return remoteNodes.Status.ReleaseStatus == ytv1.RemoteNodeReleaseStatusRunning
 		},
 	)
 }
@@ -220,7 +220,7 @@ func TestRemoteDataNodesStatusRunningWithPods(t *testing.T) {
 		"remote data nodes status pending",
 		func(obj client.Object) bool {
 			remoteNodes := obj.(*ytv1.RemoteDataNodes)
-			return remoteNodes.Status.ReleaseStatus == ytv1.RemoteDataNodeReleaseStatusPending
+			return remoteNodes.Status.ReleaseStatus == ytv1.RemoteNodeReleaseStatusPending
 		},
 	)
 
@@ -235,7 +235,7 @@ func TestRemoteDataNodesStatusRunningWithPods(t *testing.T) {
 		"remote nodes status running",
 		func(obj client.Object) bool {
 			remoteNodes := obj.(*ytv1.RemoteDataNodes)
-			return remoteNodes.Status.ReleaseStatus == ytv1.RemoteDataNodeReleaseStatusRunning
+			return remoteNodes.Status.ReleaseStatus == ytv1.RemoteNodeReleaseStatusRunning
 		},
 	)
 }

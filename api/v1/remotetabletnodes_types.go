@@ -28,16 +28,9 @@ type RemoteTabletNodesSpec struct {
 	TabletNodesSpec   `json:",inline"`
 }
 
-type RemoteTabletNodeReleaseStatus string
-
-const (
-	RemoteTabletNodeReleaseStatusPending RemoteTabletNodeReleaseStatus = "Pending"
-	RemoteTabletNodeReleaseStatusRunning RemoteTabletNodeReleaseStatus = "Running"
-)
-
 // RemoteTabletNodesStatus defines the observed state of RemoteTabletNodes
 type RemoteTabletNodesStatus struct {
-	ReleaseStatus RemoteTabletNodeReleaseStatus `json:"releaseStatus,omitempty"`
+	CommonRemoteNodeStatus `json:",inline"`
 }
 
 //+kubebuilder:object:root=true

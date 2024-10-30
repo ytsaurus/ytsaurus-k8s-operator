@@ -273,6 +273,25 @@ _Appears in:_
 | `CancelUpdate` |  |
 
 
+#### CommonRemoteNodeStatus
+
+
+
+CommonRemoteNodeStatus is a set of fields shared between `Remote*NodesStatus`.
+It is inlined in these specs.
+
+
+
+_Appears in:_
+- [RemoteDataNodesStatus](#remotedatanodesstatus)
+- [RemoteExecNodesStatus](#remoteexecnodesstatus)
+- [RemoteTabletNodesStatus](#remotetabletnodesstatus)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `releaseStatus` _[RemoteNodeReleaseStatus](#remotenodereleasestatus)_ |  |  |  |
+
+
 #### CommonSpec
 
 
@@ -1207,23 +1226,6 @@ _Appears in:_
 | `tlsPeerAlternativeHostName` _string_ | Define alternative host name for certificate verification. |  |  |
 
 
-#### RemoteDataNodeReleaseStatus
-
-_Underlying type:_ _string_
-
-
-
-
-
-_Appears in:_
-- [RemoteDataNodesStatus](#remotedatanodesstatus)
-
-| Field | Description |
-| --- | --- |
-| `Pending` |  |
-| `Running` |  |
-
-
 #### RemoteDataNodes
 
 
@@ -1333,24 +1335,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `releaseStatus` _[RemoteDataNodeReleaseStatus](#remotedatanodereleasestatus)_ | INSERT ADDITIONAL STATUS FIELD - define observed state of cluster<br />Important: Run "make" to regenerate code after modifying this file |  |  |
-
-
-#### RemoteExecNodeReleaseStatus
-
-_Underlying type:_ _string_
-
-
-
-
-
-_Appears in:_
-- [RemoteExecNodesStatus](#remoteexecnodesstatus)
-
-| Field | Description |
-| --- | --- |
-| `Pending` |  |
-| `Running` |  |
+| `releaseStatus` _[RemoteNodeReleaseStatus](#remotenodereleasestatus)_ |  |  |  |
 
 
 #### RemoteExecNodes
@@ -1449,10 +1434,10 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `releaseStatus` _[RemoteExecNodeReleaseStatus](#remoteexecnodereleasestatus)_ | INSERT ADDITIONAL STATUS FIELD - define observed state of cluster<br />Important: Run "make" to regenerate code after modifying this file |  |  |
+| `releaseStatus` _[RemoteNodeReleaseStatus](#remotenodereleasestatus)_ |  |  |  |
 
 
-#### RemoteTabletNodeReleaseStatus
+#### RemoteNodeReleaseStatus
 
 _Underlying type:_ _string_
 
@@ -1461,6 +1446,9 @@ _Underlying type:_ _string_
 
 
 _Appears in:_
+- [CommonRemoteNodeStatus](#commonremotenodestatus)
+- [RemoteDataNodesStatus](#remotedatanodesstatus)
+- [RemoteExecNodesStatus](#remoteexecnodesstatus)
 - [RemoteTabletNodesStatus](#remotetabletnodesstatus)
 
 | Field | Description |
@@ -1578,7 +1566,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `releaseStatus` _[RemoteTabletNodeReleaseStatus](#remotetabletnodereleasestatus)_ | INSERT ADDITIONAL STATUS FIELD - define observed state of cluster<br />Important: Run "make" to regenerate code after modifying this file |  |  |
+| `releaseStatus` _[RemoteNodeReleaseStatus](#remotenodereleasestatus)_ |  |  |  |
 
 
 #### RemoteYtsaurus

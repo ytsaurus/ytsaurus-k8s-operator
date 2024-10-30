@@ -221,7 +221,7 @@ func runRemoteExecNodes(remoteExecNodes *ytv1.RemoteExecNodes) {
 		},
 		reactionTimeout*2,
 		pollInterval,
-	).Should(HaveField("Status.ReleaseStatus", ytv1.RemoteExecNodeReleaseStatusRunning))
+	).Should(HaveField("Status.ReleaseStatus", ytv1.RemoteNodeReleaseStatusRunning))
 }
 
 func deleteRemoteExecNodes(ctx context.Context, remoteExecNodes *ytv1.RemoteExecNodes) {
@@ -248,7 +248,7 @@ func runRemoteDataNodes(remoteDataNodes *ytv1.RemoteDataNodes) {
 		},
 		reactionTimeout*2,
 		pollInterval,
-	).Should(HaveField("Status.ReleaseStatus", ytv1.RemoteDataNodeReleaseStatusRunning))
+	).Should(HaveField("Status.ReleaseStatus", ytv1.RemoteNodeReleaseStatusRunning))
 }
 
 func deleteRemoteDataNodes(ctx context.Context, remoteDataNodes *ytv1.RemoteDataNodes) {
@@ -275,7 +275,7 @@ func runRemoteTabletNodes(remoteTabletNodes *ytv1.RemoteTabletNodes) {
 		},
 		reactionTimeout*2,
 		pollInterval,
-	).Should(HaveField("Status.ReleaseStatus", ytv1.RemoteTabletNodeReleaseStatusRunning))
+	).Should(HaveField("Status.ReleaseStatus", ytv1.RemoteNodeReleaseStatusRunning))
 }
 
 func deleteRemoteTabletNodes(ctx context.Context, remoteTabletNodes *ytv1.RemoteTabletNodes) {

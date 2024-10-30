@@ -595,6 +595,19 @@ type CommonSpec struct {
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 }
 
+type RemoteNodeReleaseStatus string
+
+const (
+	RemoteNodeReleaseStatusPending RemoteNodeReleaseStatus = "Pending"
+	RemoteNodeReleaseStatusRunning RemoteNodeReleaseStatus = "Running"
+)
+
+// CommonRemoteNodeStatus is a set of fields shared between `Remote*NodesStatus`.
+// It is inlined in these specs.
+type CommonRemoteNodeStatus struct {
+	ReleaseStatus RemoteNodeReleaseStatus `json:"releaseStatus,omitempty"`
+}
+
 // YtsaurusSpec defines the desired state of Ytsaurus
 type YtsaurusSpec struct {
 	CommonSpec `json:",inline"`
