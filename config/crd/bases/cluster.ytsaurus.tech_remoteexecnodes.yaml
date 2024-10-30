@@ -2701,9 +2701,6 @@ spec:
             description: RemoteExecNodesStatus defines the observed state of RemoteExecNodes
             properties:
               releaseStatus:
-                description: |-
-                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-                  Important: Run
                 type: string
             type: object
         type: object

@@ -2519,9 +2519,6 @@ spec:
             description: RemoteDataNodesStatus defines the observed state of RemoteDataNodes
             properties:
               releaseStatus:
-                description: |-
-                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-                  Important: Run
                 type: string
             type: object
         type: object
