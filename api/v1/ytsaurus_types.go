@@ -605,7 +605,9 @@ const (
 // CommonRemoteNodeStatus is a set of fields shared between `Remote*NodesStatus`.
 // It is inlined in these specs.
 type CommonRemoteNodeStatus struct {
-	ReleaseStatus RemoteNodeReleaseStatus `json:"releaseStatus,omitempty"`
+	// Reflects resource generation which was used for updating status.
+	ObservedGeneration int64                   `json:"observedGeneration,omitempty"`
+	ReleaseStatus      RemoteNodeReleaseStatus `json:"releaseStatus,omitempty"`
 }
 
 // YtsaurusSpec defines the desired state of Ytsaurus

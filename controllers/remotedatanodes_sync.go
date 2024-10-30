@@ -56,6 +56,7 @@ func (r *RemoteDataNodesReconciler) Sync(
 		resource.Status.ReleaseStatus = ytv1.RemoteNodeReleaseStatusRunning
 		requeue = false
 	}
+	resource.Status.ObservedGeneration = resource.Generation
 
 	logger.Info("Setting status for remote data nodes", "status", resource.Status.ReleaseStatus)
 	err = r.Client.Status().Update(ctx, resource)
