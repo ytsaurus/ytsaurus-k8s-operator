@@ -50,10 +50,10 @@ func (r *RemoteTabletNodesReconciler) Sync(
 
 	var requeue bool
 	if status.SyncStatus != components.SyncStatusReady {
-		resource.Status.ReleaseStatus = ytv1.RemoteTabletNodeReleaseStatusPending
+		resource.Status.ReleaseStatus = ytv1.RemoteNodeReleaseStatusPending
 		requeue = true
 	} else {
-		resource.Status.ReleaseStatus = ytv1.RemoteTabletNodeReleaseStatusRunning
+		resource.Status.ReleaseStatus = ytv1.RemoteNodeReleaseStatusRunning
 		requeue = false
 	}
 

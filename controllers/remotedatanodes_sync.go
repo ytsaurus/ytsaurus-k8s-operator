@@ -50,10 +50,10 @@ func (r *RemoteDataNodesReconciler) Sync(
 
 	var requeue bool
 	if status.SyncStatus != components.SyncStatusReady {
-		resource.Status.ReleaseStatus = ytv1.RemoteDataNodeReleaseStatusPending
+		resource.Status.ReleaseStatus = ytv1.RemoteNodeReleaseStatusPending
 		requeue = true
 	} else {
-		resource.Status.ReleaseStatus = ytv1.RemoteDataNodeReleaseStatusRunning
+		resource.Status.ReleaseStatus = ytv1.RemoteNodeReleaseStatusRunning
 		requeue = false
 	}
 

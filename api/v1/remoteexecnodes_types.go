@@ -28,16 +28,9 @@ type RemoteExecNodesSpec struct {
 	ExecNodesSpec     `json:",inline"`
 }
 
-type RemoteExecNodeReleaseStatus string
-
-const (
-	RemoteExecNodeReleaseStatusPending RemoteExecNodeReleaseStatus = "Pending"
-	RemoteExecNodeReleaseStatusRunning RemoteExecNodeReleaseStatus = "Running"
-)
-
 // RemoteExecNodesStatus defines the observed state of RemoteExecNodes
 type RemoteExecNodesStatus struct {
-	ReleaseStatus RemoteExecNodeReleaseStatus `json:"releaseStatus,omitempty"`
+	CommonRemoteNodeStatus `json:",inline"`
 }
 
 //+kubebuilder:object:root=true
