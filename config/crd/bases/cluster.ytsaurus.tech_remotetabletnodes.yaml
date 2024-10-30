@@ -2508,9 +2508,6 @@ spec:
             description: RemoteTabletNodesStatus defines the observed state of RemoteTabletNodes
             properties:
               releaseStatus:
-                description: |-
-                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-                  Important: Run
                 type: string
             type: object
         type: object

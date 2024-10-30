@@ -21,14 +21,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // RemoteTabletNodesSpec defines the desired state of RemoteTabletNodes
 type RemoteTabletNodesSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	RemoteClusterSpec *corev1.LocalObjectReference `json:"remoteClusterSpec"`
 	CommonSpec        `json:",inline"`
 	TabletNodesSpec   `json:",inline"`
@@ -43,8 +37,6 @@ const (
 
 // RemoteTabletNodesStatus defines the observed state of RemoteTabletNodes
 type RemoteTabletNodesStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 	ReleaseStatus RemoteTabletNodeReleaseStatus `json:"releaseStatus,omitempty"`
 }
 
