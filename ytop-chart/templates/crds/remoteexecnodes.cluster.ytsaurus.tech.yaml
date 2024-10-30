@@ -2711,6 +2711,11 @@ spec:
           status:
             description: RemoteExecNodesStatus defines the observed state of RemoteExecNodes
             properties:
+              observedGeneration:
+                description: Reflects resource generation which was used for updating
+                  status.
+                format: int64
+                type: integer
               releaseStatus:
                 type: string
             type: object
