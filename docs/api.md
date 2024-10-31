@@ -147,6 +147,10 @@ CategoriesFilterType string describes types of possible log CategoriesFilter.
 _Appears in:_
 - [CategoriesFilter](#categoriesfilter)
 
+| Field | Description |
+| --- | --- |
+| `exclude` |  |
+| `include` |  |
 
 
 #### Chyt
@@ -165,6 +169,27 @@ Chyt is the Schema for the chyts API
 | `kind` _string_ | `Chyt` | | |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
 | `spec` _[ChytSpec](#chytspec)_ |  |  |  |
+| `status` _[ChytStatus](#chytstatus)_ |  |  |  |
+
+
+#### ChytReleaseStatus
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [ChytStatus](#chytstatus)
+
+| Field | Description |
+| --- | --- |
+| `CreatingUserSecret` |  |
+| `CreatingUser` |  |
+| `UploadingIntoCypress` |  |
+| `CreatingChPublicClique` |  |
+| `Finished` |  |
 
 
 #### ChytSpec
@@ -187,6 +212,21 @@ _Appears in:_
 | `createPublicClique` _boolean_ | Create ch_public clique, which is used by default when running CHYT queries. |  |  |
 
 
+#### ChytStatus
+
+
+
+ChytStatus defines the observed state of Chyt
+
+
+
+_Appears in:_
+- [Chyt](#chyt)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
+| `releaseStatus` _[ChytReleaseStatus](#chytreleasestatus)_ |  |  |  |
 
 
 #### ClusterNodesSpec
@@ -222,6 +262,15 @@ _Underlying type:_ _string_
 _Appears in:_
 - [YtsaurusStatus](#ytsaurusstatus)
 
+| Field | Description |
+| --- | --- |
+| `Created` |  |
+| `Initializing` |  |
+| `Running` |  |
+| `Reconfiguration` |  |
+| `Updating` |  |
+| `UpdateFinishing` |  |
+| `CancelUpdate` |  |
 
 
 #### CommonSpec
@@ -710,8 +759,8 @@ _Appears in:_
 | `locationType` _[LocationType](#locationtype)_ |  |  |  |
 | `path` _string_ |  |  | MinLength: 1 <br /> |
 | `medium` _string_ |  | default |  |
-| `quota` _[Quantity](#quantity)_ | Disk space quota, default is size of related volume. |  |  |
-| `lowWatermark` _[Quantity](#quantity)_ | Limit above which the volume is considered to be non-full. |  |  |
+| `quota` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | Disk space quota, default is size of related volume. |  |  |
+| `lowWatermark` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | Limit above which the volume is considered to be non-full. |  |  |
 | `maxTrashMilliseconds` _integer_ | Max TTL of trash in milliseconds. |  | Minimum: 60000 <br /> |
 
 
@@ -726,6 +775,15 @@ LocationType string describes types of disk locations for YT components.
 _Appears in:_
 - [LocationSpec](#locationspec)
 
+| Field | Description |
+| --- | --- |
+| `ChunkStore` |  |
+| `ChunkCache` |  |
+| `Slots` |  |
+| `Logs` |  |
+| `MasterChangelogs` |  |
+| `MasterSnapshots` |  |
+| `ImageCache` |  |
 
 
 #### LogCompression
@@ -741,6 +799,11 @@ _Appears in:_
 - [StructuredLoggerSpec](#structuredloggerspec)
 - [TextLoggerSpec](#textloggerspec)
 
+| Field | Description |
+| --- | --- |
+| `none` |  |
+| `gzip` |  |
+| `zstd` |  |
 
 
 #### LogFormat
@@ -756,6 +819,11 @@ _Appears in:_
 - [StructuredLoggerSpec](#structuredloggerspec)
 - [TextLoggerSpec](#textloggerspec)
 
+| Field | Description |
+| --- | --- |
+| `plain_text` |  |
+| `yson` |  |
+| `json` |  |
 
 
 #### LogLevel
@@ -771,6 +839,13 @@ _Appears in:_
 - [StructuredLoggerSpec](#structuredloggerspec)
 - [TextLoggerSpec](#textloggerspec)
 
+| Field | Description |
+| --- | --- |
+| `trace` |  |
+| `debug` |  |
+| `info` |  |
+| `warning` |  |
+| `error` |  |
 
 
 #### LogRotationPolicy
@@ -789,8 +864,8 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `rotationPeriodMilliseconds` _integer_ |  |  |  |
-| `maxSegmentSize` _[Quantity](#quantity)_ |  |  |  |
-| `maxTotalSizeToKeep` _[Quantity](#quantity)_ |  |  |  |
+| `maxSegmentSize` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ |  |  |  |
+| `maxTotalSizeToKeep` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ |  |  |  |
 | `maxSegmentCountToKeep` _integer_ |  |  |  |
 
 
@@ -805,6 +880,10 @@ LogWriterType string describes types of possible log writers.
 _Appears in:_
 - [TextLoggerSpec](#textloggerspec)
 
+| Field | Description |
+| --- | --- |
+| `file` |  |
+| `stderr` |  |
 
 
 #### MasterCachesConnectionSpec
@@ -1139,6 +1218,10 @@ _Underlying type:_ _string_
 _Appears in:_
 - [RemoteDataNodesStatus](#remotedatanodesstatus)
 
+| Field | Description |
+| --- | --- |
+| `Pending` |  |
+| `Running` |  |
 
 
 #### RemoteDataNodes
@@ -1158,6 +1241,7 @@ _Appears in:_
 | `kind` _string_ | `RemoteDataNodes` | | |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
 | `spec` _[RemoteDataNodesSpec](#remotedatanodesspec)_ |  |  |  |
+| `status` _[RemoteDataNodesStatus](#remotedatanodesstatus)_ |  |  |  |
 
 
 #### RemoteDataNodesList
@@ -1236,6 +1320,37 @@ _Appears in:_
 | `name` _string_ |  | default | MinLength: 1 <br /> |
 
 
+#### RemoteDataNodesStatus
+
+
+
+RemoteDataNodesStatus defines the observed state of RemoteDataNodes
+
+
+
+_Appears in:_
+- [RemoteDataNodes](#remotedatanodes)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `releaseStatus` _[RemoteDataNodeReleaseStatus](#remotedatanodereleasestatus)_ | INSERT ADDITIONAL STATUS FIELD - define observed state of cluster<br />Important: Run "make" to regenerate code after modifying this file |  |  |
+
+
+#### RemoteExecNodeReleaseStatus
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [RemoteExecNodesStatus](#remoteexecnodesstatus)
+
+| Field | Description |
+| --- | --- |
+| `Pending` |  |
+| `Running` |  |
 
 
 #### RemoteExecNodes
@@ -1254,6 +1369,7 @@ RemoteExecNodes is the Schema for the remoteexecnodes API
 | `kind` _string_ | `RemoteExecNodes` | | |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
 | `spec` _[RemoteExecNodesSpec](#remoteexecnodesspec)_ |  |  |  |
+| `status` _[RemoteExecNodesStatus](#remoteexecnodesstatus)_ |  |  |  |
 
 
 #### RemoteExecNodesSpec
@@ -1320,6 +1436,20 @@ _Appears in:_
 | `jobEnvironment` _[JobEnvironmentSpec](#jobenvironmentspec)_ |  |  |  |
 
 
+#### RemoteExecNodesStatus
+
+
+
+RemoteExecNodesStatus defines the observed state of RemoteExecNodes
+
+
+
+_Appears in:_
+- [RemoteExecNodes](#remoteexecnodes)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `releaseStatus` _[RemoteExecNodeReleaseStatus](#remoteexecnodereleasestatus)_ | INSERT ADDITIONAL STATUS FIELD - define observed state of cluster<br />Important: Run "make" to regenerate code after modifying this file |  |  |
 
 
 #### RemoteTabletNodeReleaseStatus
@@ -1333,6 +1463,10 @@ _Underlying type:_ _string_
 _Appears in:_
 - [RemoteTabletNodesStatus](#remotetabletnodesstatus)
 
+| Field | Description |
+| --- | --- |
+| `Pending` |  |
+| `Running` |  |
 
 
 #### RemoteTabletNodes
@@ -1352,6 +1486,7 @@ _Appears in:_
 | `kind` _string_ | `RemoteTabletNodes` | | |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
 | `spec` _[RemoteTabletNodesSpec](#remotetabletnodesspec)_ |  |  |  |
+| `status` _[RemoteTabletNodesStatus](#remotetabletnodesstatus)_ |  |  |  |
 
 
 #### RemoteTabletNodesList
@@ -1430,6 +1565,20 @@ _Appears in:_
 | `name` _string_ |  | default | MinLength: 1 <br /> |
 
 
+#### RemoteTabletNodesStatus
+
+
+
+RemoteTabletNodesStatus defines the observed state of RemoteTabletNodes
+
+
+
+_Appears in:_
+- [RemoteTabletNodes](#remotetabletnodes)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `releaseStatus` _[RemoteTabletNodeReleaseStatus](#remotetabletnodereleasestatus)_ | INSERT ADDITIONAL STATUS FIELD - define observed state of cluster<br />Important: Run "make" to regenerate code after modifying this file |  |  |
 
 
 #### RemoteYtsaurus
@@ -1448,6 +1597,7 @@ RemoteYtsaurus is the Schema for the remoteytsauruses API
 | `kind` _string_ | `RemoteYtsaurus` | | |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
 | `spec` _[RemoteYtsaurusSpec](#remoteytsaurusspec)_ |  |  |  |
+| `status` _[RemoteYtsaurusStatus](#remoteytsaurusstatus)_ |  |  |  |
 
 
 #### RemoteYtsaurusSpec
@@ -1493,6 +1643,17 @@ _Appears in:_
 | `hostAddressesMasterCaches` _string array_ |  |  |  |
 | `hostAddressesLabel` _string_ |  |  |  |
 
+
+#### RemoteYtsaurusStatus
+
+
+
+RemoteYtsaurusStatus defines the observed state of RemoteYtsaurus
+
+
+
+_Appears in:_
+- [RemoteYtsaurus](#remoteytsaurus)
 
 
 
@@ -1551,6 +1712,26 @@ Spyt is the Schema for the spyts API
 | `kind` _string_ | `Spyt` | | |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
 | `spec` _[SpytSpec](#spytspec)_ |  |  |  |
+| `status` _[SpytStatus](#spytstatus)_ |  |  |  |
+
+
+#### SpytReleaseStatus
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [SpytStatus](#spytstatus)
+
+| Field | Description |
+| --- | --- |
+| `CreatingUserSecret` |  |
+| `CreatingUser` |  |
+| `UploadingIntoCypress` |  |
+| `Finished` |  |
 
 
 #### SpytSpec
@@ -1571,6 +1752,21 @@ _Appears in:_
 | `image` _string_ |  |  |  |
 
 
+#### SpytStatus
+
+
+
+SpytStatus defines the observed state of Spyt
+
+
+
+_Appears in:_
+- [Spyt](#spyt)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
+| `releaseStatus` _[SpytReleaseStatus](#spytreleasestatus)_ |  |  |  |
 
 
 #### StrawberryControllerSpec
@@ -1819,6 +2015,13 @@ _Underlying type:_ _string_
 _Appears in:_
 - [UpdateStatus](#updatestatus)
 
+| Field | Description |
+| --- | --- |
+| `` |  |
+| `Stateless` |  |
+| `Master` |  |
+| `TabletNodes` |  |
+| `Full` |  |
 
 
 #### UpdateSelector
@@ -1832,6 +2035,16 @@ _Underlying type:_ _string_
 _Appears in:_
 - [YtsaurusSpec](#ytsaurusspec)
 
+| Field | Description |
+| --- | --- |
+| `` | UpdateSelectorUnspecified means that selector is disabled and would be ignored completely.<br /> |
+| `Nothing` | UpdateSelectorNothing means that no component could be updated.<br /> |
+| `MasterOnly` | UpdateSelectorMasterOnly means that only master could be updated.<br /> |
+| `DataNodesOnly` | UpdateSelectorTabletNodesOnly means that only data nodes could be updated<br /> |
+| `TabletNodesOnly` | UpdateSelectorTabletNodesOnly means that only tablet nodes could be updated<br /> |
+| `ExecNodesOnly` | UpdateSelectorExecNodesOnly means that only tablet nodes could be updated<br /> |
+| `StatelessOnly` | UpdateSelectorStatelessOnly means that only stateless components (everything but master, data nodes, and tablet nodes)<br />could be updated.<br /> |
+| `Everything` | UpdateSelectorEverything means that all components could be updated.<br />With this setting and if master or tablet nodes need update all the components would be updated.<br /> |
 
 
 #### UpdateState
@@ -1845,6 +2058,25 @@ _Underlying type:_ _string_
 _Appears in:_
 - [UpdateStatus](#updatestatus)
 
+| Field | Description |
+| --- | --- |
+| `None` |  |
+| `PossibilityCheck` |  |
+| `ImpossibleToStart` |  |
+| `WaitingForSafeModeEnabled` |  |
+| `WaitingForTabletCellsSaving` |  |
+| `WaitingForTabletCellsRemovingStart` |  |
+| `WaitingForTabletCellsRemoved` |  |
+| `WaitingForSnapshots` |  |
+| `WaitingForPodsRemoval` |  |
+| `WaitingForPodsCreation` |  |
+| `WaitingForMasterExitReadOnly` |  |
+| `WaitingForTabletCellsRecovery` |  |
+| `WaitingForOpArchiveUpdatingPrepare` |  |
+| `WaitingForOpArchiveUpdate` |  |
+| `WaitingForQTStateUpdatingPrepare` |  |
+| `WaitingForQTStateUpdate` |  |
+| `WaitingForSafeModeDisabled` |  |
 
 
 #### UpdateStatus
@@ -1923,6 +2155,7 @@ Ytsaurus is the Schema for the ytsaurus API
 | `kind` _string_ | `Ytsaurus` | | |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
 | `spec` _[YtsaurusSpec](#ytsaurusspec)_ |  |  |  |
+| `status` _[YtsaurusStatus](#ytsaurusstatus)_ |  |  |  |
 
 
 #### YtsaurusSpec
@@ -1982,5 +2215,22 @@ _Appears in:_
 | `ui` _[UISpec](#uispec)_ |  |  |  |
 
 
+#### YtsaurusStatus
+
+
+
+YtsaurusStatus defines the observed state of Ytsaurus
+
+
+
+_Appears in:_
+- [Ytsaurus](#ytsaurus)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `state` _[ClusterState](#clusterstate)_ |  | Created |  |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
+| `observedGeneration` _integer_ | Reflects resource generation which was used for updating status. |  |  |
+| `updateStatus` _[UpdateStatus](#updatestatus)_ |  |  |  |
 
 

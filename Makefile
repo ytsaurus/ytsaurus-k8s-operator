@@ -377,7 +377,7 @@ ENVTEST_VERSION ?= latest
 ## golangci-lint version.
 GOLANGCI_LINT_VERSION ?= v1.61.0
 GINKGO_VERSION ?= $(call go-get-version,github.com/onsi/ginkgo/v2)
-CRD_REF_DOCS_VERSION ?= v0.0.12
+CRD_REF_DOCS_VERSION ?= v0.1.0
 ## kind version.
 KIND_VERSION ?= v0.22.0
 CERT_MANAGER_VERSION ?= v1.14.4
