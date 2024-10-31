@@ -30,9 +30,10 @@ import (
 	. "github.com/onsi/gomega"
 	otypes "github.com/onsi/gomega/types"
 
-	"k8s.io/client-go/kubernetes/scheme"
-
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -92,12 +93,15 @@ var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg.Host).To(Equal(string(host)))
 
-	err = ytv1.AddToScheme(scheme.Scheme)
+	scheme := runtime.NewScheme()
+
+	err = clientgoscheme.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	//+kubebuilder:scaffold:scheme
+	err = ytv1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
 
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 })
