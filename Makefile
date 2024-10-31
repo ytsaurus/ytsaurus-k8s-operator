@@ -62,16 +62,29 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
+## Enable debug options.
+DEBUG =
+
 ## Tests parallelism.
-GINKGO_PROCS ?= 1
+GINKGO_PROCS ?= 2
+
+## Filter tests by labels.
+GINKGO_LABEL_FILTER =
 
 GINKGO_FLAGS += --vv
 GINKGO_FLAGS += --trace
 GINKGO_FLAGS += --procs="$(GINKGO_PROCS)"
 GINKGO_FLAGS += --timeout=1h
-GINKGO_FLAGS += --poll-progress-after=5m
+GINKGO_FLAGS += --poll-progress-after=2m
 GINKGO_FLAGS += --poll-progress-interval=1m
-GINKGO_FLAGS += --label-filter="$(GINKGO_LABEL_FILTER)"
+
+ifneq ($(GINKGO_LABEL_FILTER),)
+	GINKGO_FLAGS += --label-filter="$(GINKGO_LABEL_FILTER)"
+endif
+
+ifneq ($(DEBUG),)
+	GINKGO_FLAGS += --fail-fast
+endif
 
 ##@ General
 
@@ -92,7 +105,7 @@ all: lint build helm-chart test ## Default target: make build, run linters and u
 .PHONY: help
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
-	@awk 'BEGIN {FS = " \??= "; printf "\n\033[1m%s\033[0m\n", "Options:"} /^## .*/ {C=C substr($$0, 4) " "} /^[A-Z0-9_]* \??= .*/ && C { printf "  \033[36m%s\033[0m = %*s %s\n", $$1, -50+length($$1), $$2, C} /^[^#]/ { C="" }  END {  }  ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = " \??= *"; printf "\n\033[1m%s\033[0m\n", "Options:"} /^## .*/ {C=C substr($$0, 4) " "} /^[A-Z0-9_]* \??=.*/ && C { printf "  \033[36m%s\033[0m = %*s %s\n", $$1, -50+length($$1), $$2, C} /^[^#]/ { C="" }  END {  }  ' $(MAKEFILE_LIST)
 
 ##@ Development
 
