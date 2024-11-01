@@ -27,6 +27,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	. "github.com/onsi/ginkgo/v2"
+	gtypes "github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
 	otypes "github.com/onsi/gomega/types"
 
@@ -43,6 +44,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	//+kubebuilder:scaffold:imports
@@ -106,6 +108,14 @@ var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 })
+
+func ShouldPreserveArtifacts() bool {
+	suiteConfig, _ := GinkgoConfiguration()
+	if !suiteConfig.FailFast {
+		return false
+	}
+	return CurrentSpecReport().State.Is(gtypes.SpecStateFailed | gtypes.SpecStateTimedout)
+}
 
 var _ = BeforeEach(func() {
 	var cancel context.CancelFunc
@@ -182,21 +192,35 @@ func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 	}
 }
 
-func GetYtsaurus(ctx context.Context, ytsaurus *ytv1.Ytsaurus) Assertion {
-	name := client.ObjectKeyFromObject(ytsaurus)
-	err := k8sClient.Get(ctx, name, ytsaurus)
+func GetObjectGVK(object client.Object) schema.GroupVersionKind {
+	gvks, _, err := k8sClient.Scheme().ObjectKinds(object)
 	Expect(err).ToNot(HaveOccurred())
-	return Expect(ytsaurus)
+	return gvks[0]
 }
 
-func UpdateYtsaurus(ctx context.Context, ytsaurus *ytv1.Ytsaurus) {
-	var current ytv1.Ytsaurus
-	name := client.ObjectKeyFromObject(ytsaurus)
+func CurrentlyObject[T client.Object](ctx context.Context, object T) Assertion {
+	key := client.ObjectKeyFromObject(object)
+	err := k8sClient.Get(ctx, key, object)
+	Expect(err).ToNot(HaveOccurred())
+	return Expect(object)
+}
+
+func EventuallyObject[T client.Object](ctx context.Context, object T, timeout time.Duration) AsyncAssertion {
+	key := client.ObjectKeyFromObject(object)
+	return Eventually(ctx, func(ctx context.Context) (T, error) {
+		err := k8sClient.Get(ctx, key, object)
+		return object, err
+	}, timeout, pollInterval)
+}
+
+func UpdateObject(ctx context.Context, object client.Object) {
+	current := object.DeepCopyObject().(client.Object)
+	key := client.ObjectKeyFromObject(object)
 	err := clientgoretry.RetryOnConflict(clientgoretry.DefaultRetry, func() error {
-		Expect(k8sClient.Get(ctx, name, &current)).To(Succeed())
+		Expect(k8sClient.Get(ctx, key, current)).To(Succeed())
 		// Fetch current resource version: any status update changes it too.
-		ytsaurus.SetResourceVersion(current.GetResourceVersion())
-		return k8sClient.Update(ctx, ytsaurus)
+		object.SetResourceVersion(current.GetResourceVersion())
+		return k8sClient.Update(ctx, object)
 	})
 	Expect(err).ToNot(HaveOccurred())
 }
@@ -275,4 +299,8 @@ func HaveClusterUpdatingComponents(components ...string) otypes.GomegaMatcher {
 		HaveField("Status.UpdateStatus.Components", components),
 	)
 	// FIXME(khlebnikov): Flow initial state is None which is weird.
+}
+
+func HaveRemoteNodeReleaseStatusRunning() otypes.GomegaMatcher {
+	return HaveField("Status.ReleaseStatus", ytv1.RemoteNodeReleaseStatusRunning)
 }
