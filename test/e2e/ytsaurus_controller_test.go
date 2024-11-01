@@ -9,10 +9,13 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"golang.org/x/exp/maps"
 	"k8s.io/utils/ptr"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -28,9 +31,7 @@ import (
 	"go.ytsaurus.tech/yt/go/yterrors"
 
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
@@ -89,13 +90,13 @@ func getRPCProxyAddress(g *ytconfig.Generator, namespace string) string {
 func getServiceAddress(svcName string, namespace string) string {
 	svc := corev1.Service{}
 	Expect(k8sClient.Get(ctx,
-		types.NamespacedName{Name: svcName, Namespace: namespace},
+		client.ObjectKey{Name: svcName, Namespace: namespace},
 		&svc),
 	).Should(Succeed())
 
 	k8sNode := corev1.Node{}
 	Expect(k8sClient.Get(ctx,
-		types.NamespacedName{Name: getKindControlPlaneName(), Namespace: namespace},
+		client.ObjectKey{Name: getKindControlPlaneName(), Namespace: namespace},
 		&k8sNode),
 	).Should(Succeed())
 
@@ -124,176 +125,21 @@ func getKindControlPlaneName() string {
 
 func getMasterPod(name, namespace string) corev1.Pod {
 	msPod := corev1.Pod{}
-	err := k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &msPod)
+	err := k8sClient.Get(ctx, client.ObjectKey{Name: name, Namespace: namespace}, &msPod)
 	Expect(err).Should(Succeed())
 	return msPod
-}
-
-func deleteYtsaurus(ctx context.Context, ytsaurus *ytv1.Ytsaurus) {
-	if err := k8sClient.Delete(ctx, ytsaurus); err != nil {
-		log.Error(err, "Deleting ytsaurus failed")
-	}
-
-	pvc := &corev1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "master-data-ms-0",
-			Namespace: ytsaurus.Namespace,
-		},
-	}
-
-	if err := k8sClient.Delete(ctx, pvc); err != nil {
-		log.Error(err, "Deleting ytsaurus pvc failed")
-	}
-
-	if err := k8sClient.Delete(ctx, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ytsaurus.Namespace}}); err != nil {
-		log.Error(err, "Deleting namespace failed")
-	}
-}
-
-func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
-	Expect(k8sClient.Create(ctx, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ytsaurus.Namespace}})).Should(Succeed())
-
-	Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
-
-	ytsaurusLookupKey := types.NamespacedName{Name: ytsaurus.Name, Namespace: ytsaurus.Namespace}
-
-	Eventually(func() bool {
-		createdYtsaurus := &ytv1.Ytsaurus{}
-		err := k8sClient.Get(ctx, ytsaurusLookupKey, createdYtsaurus)
-		return err == nil
-	}, reactionTimeout, pollInterval).Should(BeTrue())
-
-	pods := []string{"ms-0", "hp-0"}
-	if ytsaurus.Spec.Discovery.InstanceCount != 0 {
-		pods = append(pods, "ds-0")
-	}
-	for _, dataNodeGroup := range ytsaurus.Spec.DataNodes {
-		pods = append(pods, fmt.Sprintf("%v-0", consts.FormatComponentStringWithDefault("dnd", dataNodeGroup.Name)))
-	}
-
-	if len(ytsaurus.Spec.ExecNodes) != 0 {
-		pods = append(pods, "end-0")
-	}
-
-	By("Checking that ytsaurus state is equal to `Running`")
-	EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
-
-	By("Check pods are running")
-	for _, podName := range pods {
-		pod := &corev1.Pod{}
-		err := k8sClient.Get(ctx, types.NamespacedName{Name: podName, Namespace: ytsaurus.Namespace}, pod)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(pod.Status.Phase).To(Equal(corev1.PodRunning))
-	}
-}
-
-func createRemoteYtsaurus(remoteYtsaurus *ytv1.RemoteYtsaurus) {
-	Expect(k8sClient.Create(ctx, remoteYtsaurus)).Should(Succeed())
-	lookupKey := types.NamespacedName{Name: remoteYtsaurus.Name, Namespace: remoteYtsaurus.Namespace}
-	Eventually(func() bool {
-		createdYtsaurus := &ytv1.RemoteYtsaurus{}
-		err := k8sClient.Get(ctx, lookupKey, createdYtsaurus)
-		return err == nil
-	}, reactionTimeout, pollInterval).Should(BeTrue())
-}
-
-func deleteRemoteYtsaurus(ctx context.Context, remoteYtsaurus *ytv1.RemoteYtsaurus) {
-	if err := k8sClient.Delete(ctx, remoteYtsaurus); err != nil {
-		log.Error(err, "Deleting remote ytsaurus failed")
-	}
-}
-
-func runRemoteExecNodes(remoteExecNodes *ytv1.RemoteExecNodes) {
-	Expect(k8sClient.Create(ctx, remoteExecNodes)).Should(Succeed())
-	lookupKey := types.NamespacedName{Name: remoteExecNodes.Name, Namespace: remoteExecNodes.Namespace}
-	Eventually(func() bool {
-		createdYtsaurus := &ytv1.RemoteExecNodes{}
-		err := k8sClient.Get(ctx, lookupKey, createdYtsaurus)
-		return err == nil
-	}, reactionTimeout, pollInterval).Should(BeTrue())
-
-	By("Checking that remote exec nodes state is equal to `Running`")
-	Eventually(
-		func() (*ytv1.RemoteExecNodes, error) {
-			nodes := &ytv1.RemoteExecNodes{}
-			err := k8sClient.Get(ctx, lookupKey, nodes)
-			return nodes, err
-		},
-		reactionTimeout*2,
-		pollInterval,
-	).Should(HaveField("Status.ReleaseStatus", ytv1.RemoteNodeReleaseStatusRunning))
-}
-
-func deleteRemoteExecNodes(ctx context.Context, remoteExecNodes *ytv1.RemoteExecNodes) {
-	if err := k8sClient.Delete(ctx, remoteExecNodes); err != nil {
-		log.Error(err, "Deleting remote exec nodes failed")
-	}
-}
-
-func runRemoteDataNodes(remoteDataNodes *ytv1.RemoteDataNodes) {
-	Expect(k8sClient.Create(ctx, remoteDataNodes)).Should(Succeed())
-	lookupKey := types.NamespacedName{Name: remoteDataNodes.Name, Namespace: remoteDataNodes.Namespace}
-	Eventually(func() bool {
-		createdYtsaurus := &ytv1.RemoteDataNodes{}
-		err := k8sClient.Get(ctx, lookupKey, createdYtsaurus)
-		return err == nil
-	}, reactionTimeout, pollInterval).Should(BeTrue())
-
-	By("Checking that remote data nodes state is equal to `Running`")
-	Eventually(
-		func() (*ytv1.RemoteDataNodes, error) {
-			nodes := &ytv1.RemoteDataNodes{}
-			err := k8sClient.Get(ctx, lookupKey, nodes)
-			return nodes, err
-		},
-		reactionTimeout*2,
-		pollInterval,
-	).Should(HaveField("Status.ReleaseStatus", ytv1.RemoteNodeReleaseStatusRunning))
-}
-
-func deleteRemoteDataNodes(ctx context.Context, remoteDataNodes *ytv1.RemoteDataNodes) {
-	if err := k8sClient.Delete(ctx, remoteDataNodes); err != nil {
-		log.Error(err, "Deleting remote data nodes failed")
-	}
-}
-
-func runRemoteTabletNodes(remoteTabletNodes *ytv1.RemoteTabletNodes) {
-	Expect(k8sClient.Create(ctx, remoteTabletNodes)).Should(Succeed())
-	lookupKey := types.NamespacedName{Name: remoteTabletNodes.Name, Namespace: remoteTabletNodes.Namespace}
-	Eventually(func() bool {
-		createdYtsaurus := &ytv1.RemoteTabletNodes{}
-		err := k8sClient.Get(ctx, lookupKey, createdYtsaurus)
-		return err == nil
-	}, reactionTimeout, pollInterval).Should(BeTrue())
-
-	By("Checking that remote tablet nodes state is equal to `Running`")
-	Eventually(
-		func() (*ytv1.RemoteTabletNodes, error) {
-			nodes := &ytv1.RemoteTabletNodes{}
-			err := k8sClient.Get(ctx, lookupKey, nodes)
-			return nodes, err
-		},
-		reactionTimeout*2,
-		pollInterval,
-	).Should(HaveField("Status.ReleaseStatus", ytv1.RemoteNodeReleaseStatusRunning))
-}
-
-func deleteRemoteTabletNodes(ctx context.Context, remoteTabletNodes *ytv1.RemoteTabletNodes) {
-	if err := k8sClient.Delete(ctx, remoteTabletNodes); err != nil {
-		log.Error(err, "Deleting remote tablet nodes failed")
-	}
 }
 
 func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client) {
 	By("Run cluster impossible update")
 	ytsaurus.Spec.CoreImage = testutil.CoreImageSecond
-	UpdateYtsaurus(ctx, ytsaurus)
+	UpdateObject(ctx, ytsaurus)
 
 	EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStateImpossibleToStart))
 
 	By("Set previous core image")
 	ytsaurus.Spec.CoreImage = testutil.CoreImageFirst
-	UpdateYtsaurus(ctx, ytsaurus)
+	UpdateObject(ctx, ytsaurus)
 
 	By("Wait for running")
 	EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
@@ -303,53 +149,153 @@ func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client)
 	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
 }
 
-func createConfigOverridesMap(namespace, name, key, value string) {
-	resource := corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Data: map[string]string{key: value},
-	}
-	Expect(k8sClient.Create(ctx, &resource)).Should(Succeed())
-}
-
 type testRow struct {
 	A string `yson:"a"`
 }
 
 var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() {
+	var namespace string
+	var objects []client.Object
+	var name client.ObjectKey
+	var ytsaurus *ytv1.Ytsaurus
+	var ytClient yt.Client
+	var g *ytconfig.Generator
+
+	// NOTE: execution order for each test spec:
+	// - BeforeEach 	(configuration)
+	// - JustBeforeEach 	(creation)
+	// - It			(test itself)
+	// - JustAfterEach	(diagnosis)
+	// - AfterEach, DeferCleanup	(cleanup)
+	//
+	// See:
+	// https://onsi.github.io/ginkgo/#separating-creation-and-configuration-justbeforeeach
+	// https://onsi.github.io/ginkgo/#spec-cleanup-aftereach-and-defercleanup
+	// https://onsi.github.io/ginkgo/#separating-diagnostics-collection-and-teardown-justaftereach
+
+	BeforeEach(func() {
+		By("Creating namespace")
+		currentSpec := CurrentSpecReport()
+		namespaceObject := corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				GenerateName: "test-e2e-",
+				Labels: map[string]string{
+					"app.kubernetes.io/component": "test",
+					"app.kubernetes.io/name":      "test-" + strings.Join(currentSpec.Labels(), "-"),
+				},
+				Annotations: map[string]string{
+					"kubernetes.io/description": currentSpec.LeafNodeText,
+				},
+			},
+		}
+		Expect(k8sClient.Create(ctx, &namespaceObject)).Should(Succeed())
+		namespace = namespaceObject.Name // Fetch unique namespace name
+
+		By("Creating minimal Ytsaurus spec")
+		ytsaurus = testutil.CreateMinimalYtsaurusResource(namespace)
+		objects = []client.Object{ytsaurus}
+
+		name = client.ObjectKey{
+			Name:      ytsaurus.Name,
+			Namespace: namespace,
+		}
+	})
+
+	JustBeforeEach(func(ctx context.Context) {
+
+		By("Creating resource objects")
+		for _, object := range objects {
+			By(fmt.Sprintf("Creating %v %v", GetObjectGVK(object), object.GetName()))
+			object.SetNamespace(namespace)
+			Expect(k8sClient.Create(ctx, object)).Should(Succeed())
+		}
+
+		By("Checking that Ytsaurus state is equal to `Running`")
+		EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
+
+		g = ytconfig.NewGenerator(ytsaurus, "local")
+
+		ytClient = createYtsaurusClient(ytsaurus, namespace)
+		checkClusterViability(ytClient)
+	})
+
+	AfterEach(func(ctx context.Context) {
+		if ShouldPreserveArtifacts() {
+			log.Info("Preserving artifacts", "namespace", namespace)
+			return
+		}
+
+		By("Deleting resource objects")
+		for _, object := range objects {
+			By(fmt.Sprintf("Deleting %v %v", GetObjectGVK(object), object.GetName()))
+			if err := k8sClient.Delete(ctx, object); err != nil {
+				log.Error(err, "Cannot delete", "object", object.GetName())
+			}
+		}
+
+		By("Deleting namespace")
+		namespaceObject := corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: namespace,
+			},
+		}
+		Expect(k8sClient.Delete(ctx, &namespaceObject)).Should(Succeed())
+	})
 
 	Context("Update scenarios", Label("update"), func() {
+		var podsBeforeUpdate map[string]corev1.Pod
 
-		Context("Updating Ytsaurus image", func() {
-
-			It("Should run and update Ytsaurus within same major version", Label("basic"),
-				getSimpleUpdateScenario("test-minor-update", testutil.CoreImageSecond),
-			)
-
-			It("Should run and update Ytsaurus to the next major version",
-				getSimpleUpdateScenario("test-major-update", testutil.CoreImageNextVer),
-			)
+		BeforeEach(func() {
+			By("Adding base components")
+			testutil.WithBaseYtsaurusComponents(ytsaurus)
 		})
+
+		JustBeforeEach(func() {
+			By("Getting pods before actions")
+			podsBeforeUpdate = getComponentPods(ctx, namespace)
+		})
+
+		DescribeTableSubtree("Updating Ytsaurus image",
+			func(newImage string) {
+				BeforeEach(func() {
+					testutil.WithNamedDataNodes(ytsaurus, ptr.To("dn-t"))
+				})
+
+				It("Triggers cluster update", func(ctx context.Context) {
+					checkPodLabels(ctx, namespace)
+
+					ytsaurus.Spec.CoreImage = newImage
+					UpdateObject(ctx, ytsaurus)
+
+					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+					Expect(ytsaurus).Should(HaveClusterUpdateFlow(ytv1.UpdateFlowFull))
+
+					By("Waiting cluster update completes")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+					checkClusterBaseViability(ytClient)
+
+					podsAfterFullUpdate := getComponentPods(ctx, namespace)
+					pods := getChangedPods(podsBeforeUpdate, podsAfterFullUpdate)
+					Expect(pods.Created).To(BeEmpty(), "created")
+					Expect(pods.Deleted).To(BeEmpty(), "deleted")
+					Expect(pods.Updated).To(ConsistOf(maps.Keys(podsBeforeUpdate)), "updated")
+
+					CurrentlyObject(ctx, ytsaurus).Should(HaveObservedGeneration())
+				})
+			},
+			Entry("When update Ytsaurus within same major version", Label("basic"), testutil.CoreImageSecond),
+			Entry("When update Ytsaurus to the next major version", testutil.CoreImageNextVer),
+		)
 
 		Context("Test UpdateSelector", Label("selector"), func() {
 
 			It("Should be updated according to UpdateSelector=Everything", func(ctx context.Context) {
-				namespace := "testslcteverything"
-
-				By("Creating a Ytsaurus resource")
-				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
-				DeferCleanup(deleteYtsaurus, ytsaurus)
-				name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
-				deployAndCheck(ytsaurus, namespace)
-				podsBeforeUpdate := getComponentPods(ctx, namespace)
 
 				By("Run cluster update with selector: nothing")
 				ytsaurus.Spec.UpdateSelector = ytv1.UpdateSelectorNothing
 				// We want change in all yson configs, new discovery instance will trigger that.
 				ytsaurus.Spec.Discovery.InstanceCount += 1
-				UpdateYtsaurus(ctx, ytsaurus)
+				UpdateObject(ctx, ytsaurus)
 
 				By("Ensure cluster doesn't start updating for 5 seconds")
 				ConsistentlyYtsaurus(ctx, name, 5*time.Second).Should(HaveClusterStateRunning())
@@ -362,7 +308,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Update cluster update with strategy full")
 				ytsaurus.Spec.UpdateSelector = ytv1.UpdateSelectorEverything
 				ytsaurus.Spec.Discovery.InstanceCount += 1
-				UpdateYtsaurus(ctx, ytsaurus)
+				UpdateObject(ctx, ytsaurus)
+
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents())
 
@@ -377,25 +324,17 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			})
 
 			It("Should be updated according to UpdateSelector=TabletNodesOnly,ExecNodesOnly", func(ctx context.Context) {
-				namespace := "testslctnodes"
-
-				By("Creating a Ytsaurus resource")
-				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
-				DeferCleanup(deleteYtsaurus, ytsaurus)
-
-				deployAndCheck(ytsaurus, namespace)
-				podsBeforeUpdate := getComponentPods(ctx, namespace)
 
 				By("Run cluster update with selector:ExecNodesOnly")
 				ytsaurus.Spec.UpdateSelector = ytv1.UpdateSelectorExecNodesOnly
 				ytsaurus.Spec.Discovery.InstanceCount += 1
-				UpdateYtsaurus(ctx, ytsaurus)
+				UpdateObject(ctx, ytsaurus)
+
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("ExecNode"))
 
 				By("Wait cluster update with selector:ExecNodesOnly complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
-				ytClient := createYtsaurusClient(ytsaurus, namespace)
 				checkClusterBaseViability(ytClient)
 
 				podsAfterEndUpdate := getComponentPods(ctx, namespace)
@@ -407,7 +346,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Run cluster update with selector:TabletNodesOnly")
 				ytsaurus.Spec.UpdateSelector = ytv1.UpdateSelectorTabletNodesOnly
 				ytsaurus.Spec.Discovery.InstanceCount += 1
-				UpdateYtsaurus(ctx, ytsaurus)
+				UpdateObject(ctx, ytsaurus)
+
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("TabletNode"))
 
@@ -423,25 +363,17 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			})
 
 			It("Should be updated according to UpdateSelector=MasterOnly,StatelessOnly", Label("basic"), func(ctx context.Context) {
-				namespace := "testslctother"
-
-				By("Creating a Ytsaurus resource")
-				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
-				DeferCleanup(deleteYtsaurus, ytsaurus)
-
-				deployAndCheck(ytsaurus, namespace)
-				podsBeforeUpdate := getComponentPods(ctx, namespace)
 
 				By("Run cluster update with selector:MasterOnly")
 				ytsaurus.Spec.UpdateSelector = ytv1.UpdateSelectorMasterOnly
 				ytsaurus.Spec.Discovery.InstanceCount += 1
-				UpdateYtsaurus(ctx, ytsaurus)
+				UpdateObject(ctx, ytsaurus)
+
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("Master"))
 
 				By("Wait cluster update with selector:MasterOnly complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
-				ytClient := createYtsaurusClient(ytsaurus, namespace)
 				checkClusterBaseViability(ytClient)
 				podsAfterMasterUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterMasterUpdate)
@@ -452,7 +384,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Run cluster update with selector:StatelessOnly")
 				ytsaurus.Spec.UpdateSelector = ytv1.UpdateSelectorStatelessOnly
 				ytsaurus.Spec.Discovery.InstanceCount += 1
-				UpdateYtsaurus(ctx, ytsaurus)
+				UpdateObject(ctx, ytsaurus)
+
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(
 					"Discovery",
@@ -461,6 +394,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					"Scheduler",
 					"ControllerAgent",
 				))
+
 				By("Wait cluster update with selector:StatelessOnly complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 				checkClusterBaseViability(ytClient)
@@ -475,56 +409,41 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}) // update selector
 
 		Context("With config overrides", Label("overrides"), func() {
+			var overrides *corev1.ConfigMap
+
+			BeforeEach(func() {
+				overrides = &corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "config-overrides",
+						Namespace: namespace,
+					},
+				}
+				objects = append(objects, overrides)
+
+				ytsaurus.Spec.ConfigOverrides = &corev1.LocalObjectReference{
+					Name: overrides.Name,
+				}
+			})
 
 			It("ConfigOverrides update shout trigger reconciliation", func(ctx context.Context) {
-				namespace := "test-overrides"
-				coName := "config-overrides"
-				ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
-				ytsaurus.Spec.ConfigOverrides = &corev1.LocalObjectReference{Name: coName}
-				DeferCleanup(deleteYtsaurus, ytsaurus)
-
-				deployAndCheck(ytsaurus, namespace)
-				log.Info("sleep a little, because after cluster is running some reconciliations still may happen " +
-					"for some time (and for some reason) and we don't want to interfere before map creation")
-				time.Sleep(3 * time.Second)
-
-				dsPodName := "ds-0"
-				msPodName := "ms-0"
-
-				getPodByName := func(name string) (*corev1.Pod, error) {
-					ds0Name := types.NamespacedName{Name: name, Namespace: namespace}
-					dsPod := &corev1.Pod{}
-					err := k8sClient.Get(ctx, ds0Name, dsPod)
-					return dsPod, err
+				By("Updating config overrides")
+				overrides.Data = map[string]string{
+					"ytserver-discovery.yson": "{resource_limits = {total_memory = 123456789;};}",
 				}
-				dsPod, err := getPodByName(dsPodName)
-				Expect(err).Should(Succeed())
-				msPod, err := getPodByName(msPodName)
-				Expect(err).Should(Succeed())
-				dsPodCreatedBefore := dsPod.CreationTimestamp.Time
-				log.Info("ds created before", "ts", dsPodCreatedBefore)
-				msPodCreatedBefore := msPod.CreationTimestamp.Time
+				UpdateObject(ctx, overrides)
 
-				discoveryOverride := "{resource_limits = {total_memory = 123456789;};}"
-				createConfigOverridesMap(namespace, coName, "ytserver-discovery.yson", discoveryOverride)
+				By("Waiting cluster update starts")
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterStateUpdating())
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("Discovery"))
 
-				Eventually(ctx, func() bool {
-					pod, err := getPodByName(dsPodName)
-					if apierrors.IsNotFound(err) {
-						return false
-					}
-					dsPodCreatedAfter := pod.CreationTimestamp
-					log.Info("ds created after", "ts", dsPodCreatedAfter)
-					return dsPodCreatedAfter.After(dsPodCreatedBefore)
-				}).WithTimeout(30 * time.Second).
-					WithPolling(300 * time.Millisecond).
-					Should(BeTrueBecause("ds pod should be recreated on configOverrides creation"))
+				By("Waiting cluster update completes")
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 
-				msPod, err = getPodByName(msPodName)
-				Expect(err).Should(Succeed())
-				Expect(msPod.CreationTimestamp.Time).Should(
-					Equal(msPodCreatedBefore), "ms pods shouldn't be recreated",
-				)
+				podsAfterUpdate := getComponentPods(ctx, namespace)
+				pods := getChangedPods(podsBeforeUpdate, podsAfterUpdate)
+				Expect(pods.Created).To(BeEmpty(), "created")
+				Expect(pods.Deleted).To(BeEmpty(), "deleted")
+				Expect(pods.Updated).To(ConsistOf("ds-0"), "updated")
 			})
 
 		}) // update overrides
@@ -533,20 +452,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
 			It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", func(ctx context.Context) {
-				namespace := "test3"
-				ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
-
-				By("Creating a Ytsaurus resource")
-				g := ytconfig.NewGenerator(ytsaurus, "local")
-				DeferCleanup(deleteYtsaurus, ytsaurus)
-				runYtsaurus(ytsaurus)
-
-				By("Creating ytsaurus client")
-				ytClient := getYtClient(g, namespace)
-
-				By("Check that cluster alive")
-				res := make([]string, 0)
-				Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
 
 				By("Store master pod creation time")
 				msPod := getMasterPod(g.GetMasterPodNames()[0], namespace)
@@ -571,7 +476,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytsaurus.Spec.PrimaryMasters.HostAddresses = []string{
 					getKindControlPlaneName(),
 				}
-				UpdateYtsaurus(ctx, ytsaurus)
+				UpdateObject(ctx, ytsaurus)
 
 				By("Waiting PossibilityCheck")
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck))
@@ -580,7 +485,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				time.Sleep(1 * time.Second)
 				msPod = getMasterPod(g.GetMasterPodNames()[0], namespace)
 				msPodCreationSecondTimestamp := msPod.CreationTimestamp
-				fmt.Fprintf(GinkgoWriter, "ms pods ts: \n%v\n%v\n", msPodCreationFirstTimestamp, msPodCreationSecondTimestamp)
+				log.Info("ms pods ts", "first", msPodCreationFirstTimestamp, "second", msPodCreationSecondTimestamp)
 				Expect(msPodCreationFirstTimestamp.Equal(&msPodCreationSecondTimestamp)).Should(BeTrue())
 			})
 
@@ -588,29 +493,13 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		Context("With tablet nodes", Label("tablet"), func() {
 
-			It("Should run and try to update Ytsaurus with tablet cell bundle which is not in `good` health", func(ctx context.Context) {
-				By("Creating a Ytsaurus resource")
-
-				namespace := "test4"
-
-				ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
+			BeforeEach(func() {
 				ytsaurus = testutil.WithTabletNodes(ytsaurus)
+			})
 
-				g := ytconfig.NewGenerator(ytsaurus, "local")
-
-				DeferCleanup(deleteYtsaurus, ytsaurus)
-				runYtsaurus(ytsaurus)
-
-				By("Creating ytsaurus client")
-				ytClient := getYtClient(g, namespace)
-
-				By("Check that cluster alive")
-
-				res := make([]string, 0)
-				Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
+			It("Should run and try to update Ytsaurus with tablet cell bundle which is not in `good` health", func(ctx context.Context) {
 
 				By("Check that tablet cell bundles are in `good` health")
-
 				Eventually(func() bool {
 					notGoodBundles, err := components.GetNotGoodTabletCellBundles(ctx, ytClient)
 					if err != nil {
@@ -641,26 +530,15 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		Context("With data nodes", Label("data"), func() {
 
+			BeforeEach(func() {
+				Expect(ytsaurus.Spec.DataNodes).ToNot(BeEmpty())
+
+				// FIXME: Why?
+				By("Removing tablet nodes")
+				ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{}
+			})
+
 			It("Should run and try to update Ytsaurus with lvc", func(ctx context.Context) {
-				By("Creating a Ytsaurus resource")
-
-				namespace := "test5"
-
-				ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
-				ytsaurus = testutil.WithDataNodes(ytsaurus)
-				ytsaurus.Spec.TabletNodes = make([]ytv1.TabletNodesSpec, 0)
-
-				g := ytconfig.NewGenerator(ytsaurus, "local")
-
-				DeferCleanup(deleteYtsaurus, ytsaurus)
-				runYtsaurus(ytsaurus)
-
-				By("Creating ytsaurus client")
-				ytClient := getYtClient(g, namespace)
-
-				By("Check that cluster alive")
-				res := make([]string, 0)
-				Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
 
 				By("Create a chunk")
 				_, err := ytClient.CreateNode(ctx, ypath.Path("//tmp/a"), yt.NodeTable, nil)
@@ -696,22 +574,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		Context("With query tracker", Label("query-tracker"), func() {
 
-			It("Should run with query tracker and check that query tracker rpc address set up correctly", Label("basic"), func(ctx context.Context) {
-				By("Creating a Ytsaurus resource")
-
-				namespace := "querytrackeraddress"
-
-				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+			BeforeEach(func() {
 				ytsaurus = testutil.WithQueryTracker(ytsaurus)
+			})
 
-				g := ytconfig.NewGenerator(ytsaurus, "local")
-
-				DeferCleanup(deleteYtsaurus, ytsaurus)
-				runYtsaurus(ytsaurus)
-
-				By("Creating ytsaurus client")
-				ytClient := getYtClient(g, namespace)
-
+			It("Should run with query tracker and check that query tracker rpc address set up correctly", Label("basic"), func(ctx context.Context) {
 				By("Check that query tracker channel exists in cluster_connection")
 				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/@cluster_connection/query_tracker/stages/production/channel"), nil)).Should(BeTrue())
 			})
@@ -719,23 +586,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}) // update query-tracker
 
 		Context("With queue agent", Label("queue-agent"), func() {
-
-			It("Should run with query tracker and check that access control objects set up correctly", Label("basic"), func(ctx context.Context) {
-				By("Creating a Ytsaurus resource")
-
-				namespace := "querytrackeraco"
-
-				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+			BeforeEach(func() {
 				ytsaurus = testutil.WithQueryTracker(ytsaurus)
 				ytsaurus = testutil.WithQueueAgent(ytsaurus)
+			})
 
-				g := ytconfig.NewGenerator(ytsaurus, "local")
-
-				DeferCleanup(deleteYtsaurus, ytsaurus)
-				runYtsaurus(ytsaurus)
-
-				By("Creating ytsaurus client")
-				ytClient := getYtClient(g, namespace)
+			It("Should run with query tracker and check that access control objects set up correctly", Label("basic"), func(ctx context.Context) {
 
 				By("Check that access control object namespace 'queries' exists")
 				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries"), nil)).Should(BeTrue())
@@ -809,37 +665,50 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	}) // update
 
 	Context("Remote ytsaurus tests", Label("remote"), func() {
+		var remoteYtsaurus *ytv1.RemoteYtsaurus
+		var remoteNodes client.Object
+
+		BeforeEach(func() {
+			remoteYtsaurus = &ytv1.RemoteYtsaurus{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testutil.RemoteResourceName,
+					Namespace: namespace,
+				},
+				Spec: ytv1.RemoteYtsaurusSpec{
+					MasterConnectionSpec: ytv1.MasterConnectionSpec{
+						CellTag: ytsaurus.Spec.PrimaryMasters.CellTag,
+						HostAddresses: []string{
+							fmt.Sprintf("ms-0.masters.%s.svc.cluster.local", namespace),
+						},
+					},
+				},
+			}
+			objects = append(objects, remoteYtsaurus)
+			remoteNodes = nil
+		})
+
+		JustBeforeEach(func() {
+			By("Waiting remote nodes are Running")
+			Expect(remoteNodes).ToNot(BeNil())
+			// FIXME(khlebnikov): Why timeout is so large?
+			EventuallyObject(ctx, remoteNodes, reactionTimeout*2).Should(HaveRemoteNodeReleaseStatusRunning())
+			Expect(remoteNodes).To(HaveObservedGeneration())
+		})
 
 		Context("With remote exec nodes", Label("exec"), func() {
+			BeforeEach(func() {
+				ytsaurus = testutil.WithBaseYtsaurusComponents(ytsaurus)
 
-			It("Should create ytsaurus with remote exec nodes and execute a job", func() {
-				By("Creating a Ytsaurus resource")
-				ctx := context.Background()
+				By("Adding remote exec nodes")
 
-				namespace := "remoteexec"
-
-				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 				// Ensure that no local exec nodes exist, only remote ones (which will be created later).
 				ytsaurus.Spec.ExecNodes = []ytv1.ExecNodesSpec{}
-				g := ytconfig.NewGenerator(ytsaurus, "local")
 
-				remoteYtsaurus := &ytv1.RemoteYtsaurus{
+				remoteNodes = &ytv1.RemoteExecNodes{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      testutil.RemoteResourceName,
 						Namespace: namespace,
 					},
-					Spec: ytv1.RemoteYtsaurusSpec{
-						MasterConnectionSpec: ytv1.MasterConnectionSpec{
-							CellTag: ytsaurus.Spec.PrimaryMasters.CellTag,
-							HostAddresses: []string{
-								"ms-0.masters.remoteexec.svc.cluster.local",
-							},
-						},
-					},
-				}
-
-				remoteNodes := &ytv1.RemoteExecNodes{
-					ObjectMeta: metav1.ObjectMeta{Name: testutil.RemoteResourceName, Namespace: namespace},
 					Spec: ytv1.RemoteExecNodesSpec{
 						RemoteClusterSpec: &corev1.LocalObjectReference{
 							Name: testutil.RemoteResourceName,
@@ -852,18 +721,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						},
 					},
 				}
+				objects = append(objects, remoteNodes)
+			})
 
-				defer deleteYtsaurus(ctx, ytsaurus)
-				runYtsaurus(ytsaurus)
-
-				defer deleteRemoteYtsaurus(ctx, remoteYtsaurus)
-				createRemoteYtsaurus(remoteYtsaurus)
-
-				defer deleteRemoteExecNodes(ctx, remoteNodes)
-				runRemoteExecNodes(remoteNodes)
-
-				By("Creating ytsaurus client")
-				ytClient := getYtClient(g, namespace)
+			It("Should create ytsaurus with remote exec nodes and execute a job", func(ctx context.Context) {
 
 				By("Running sort operation to ensure exec node works")
 				op := runAndCheckSortOperation(ytClient)
@@ -893,34 +754,13 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}) // remote exec
 
 		Context("With remote data nodes", Label("data"), func() {
-
-			It("Should create ytsaurus with remote data nodes and write to a table", func() {
-				By("Creating a Ytsaurus resource")
-				ctx := context.Background()
-
-				namespace := "remotedata"
-
-				// We have to create only the minimal YT - with master and discovery servers
-				ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
-				g := ytconfig.NewGenerator(ytsaurus, "local")
-
-				remoteYtsaurus := &ytv1.RemoteYtsaurus{
+			BeforeEach(func() {
+				By("Adding remote data nodes")
+				remoteNodes = &ytv1.RemoteDataNodes{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      testutil.RemoteResourceName,
 						Namespace: namespace,
 					},
-					Spec: ytv1.RemoteYtsaurusSpec{
-						MasterConnectionSpec: ytv1.MasterConnectionSpec{
-							CellTag: ytsaurus.Spec.PrimaryMasters.CellTag,
-							HostAddresses: []string{
-								"ms-0.masters.remotedata.svc.cluster.local",
-							},
-						},
-					},
-				}
-
-				remoteNodes := &ytv1.RemoteDataNodes{
-					ObjectMeta: metav1.ObjectMeta{Name: testutil.RemoteResourceName, Namespace: namespace},
 					Spec: ytv1.RemoteDataNodesSpec{
 						RemoteClusterSpec: &corev1.LocalObjectReference{
 							Name: testutil.RemoteResourceName,
@@ -933,18 +773,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						},
 					},
 				}
+				objects = append(objects, remoteNodes)
+			})
 
-				defer deleteYtsaurus(ctx, ytsaurus)
-				runYtsaurus(ytsaurus)
-
-				defer deleteRemoteYtsaurus(ctx, remoteYtsaurus)
-				createRemoteYtsaurus(remoteYtsaurus)
-
-				defer deleteRemoteDataNodes(ctx, remoteNodes)
-				runRemoteDataNodes(remoteNodes)
-
-				By("Creating ytsaurus client")
-				ytClient := getYtClient(g, namespace)
+			It("Should create ytsaurus with remote data nodes and write to a table", func(ctx context.Context) {
 
 				By("Create a chunk on a remote data node")
 				_, errCreateNode := ytClient.CreateNode(ctx, ypath.Path("//tmp/a"), yt.NodeTable, &yt.CreateNodeOptions{})
@@ -961,46 +793,16 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}) // remote data
 
 		Context("With remote tablet nodes", Label("tablet"), func() {
-
-			It("Should create ytsaurus with remote tablet nodes and write to a table", func() {
-				By("Creating a Ytsaurus resource")
-				ctx := context.Background()
-
-				namespace := "remotetnd"
-				dynamicTableTest := "//sys/test-tnd-remote"
-
-				type newOperation struct {
-					ID       string `yson:"id,key"`
-					Status   string `yson:"status"`
-					Restarts uint64 `yson:"restarts"`
-				}
-
-				newSchema, err := schema.Infer(newOperation{})
-				Expect(err).Should(Succeed())
-
+			BeforeEach(func() {
 				// We have to create the minimal YT - with master, discovery servers and data-nodes
-				ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
 				ytsaurus = testutil.WithDataNodes(ytsaurus)
 
-				g := ytconfig.NewGenerator(ytsaurus, "local")
-
-				remoteYtsaurus := &ytv1.RemoteYtsaurus{
+				By("Adding remote tablet nodes")
+				remoteNodes = &ytv1.RemoteTabletNodes{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      testutil.RemoteResourceName,
 						Namespace: namespace,
 					},
-					Spec: ytv1.RemoteYtsaurusSpec{
-						MasterConnectionSpec: ytv1.MasterConnectionSpec{
-							CellTag: ytsaurus.Spec.PrimaryMasters.CellTag,
-							HostAddresses: []string{
-								fmt.Sprintf("ms-0.masters.%s.svc.cluster.local", namespace),
-							},
-						},
-					},
-				}
-
-				remoteNodes := &ytv1.RemoteTabletNodes{
-					ObjectMeta: metav1.ObjectMeta{Name: testutil.RemoteResourceName, Namespace: namespace},
 					Spec: ytv1.RemoteTabletNodesSpec{
 						RemoteClusterSpec: &corev1.LocalObjectReference{
 							Name: testutil.RemoteResourceName,
@@ -1013,18 +815,21 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						},
 					},
 				}
+				objects = append(objects, remoteNodes)
+			})
 
-				defer deleteYtsaurus(ctx, ytsaurus)
-				runYtsaurus(ytsaurus)
+			It("Should create ytsaurus with remote tablet nodes and write to a table", func(ctx context.Context) {
 
-				defer deleteRemoteYtsaurus(ctx, remoteYtsaurus)
-				createRemoteYtsaurus(remoteYtsaurus)
+				dynamicTableTest := "//sys/test-tnd-remote"
 
-				defer deleteRemoteTabletNodes(ctx, remoteNodes)
-				runRemoteTabletNodes(remoteNodes)
+				type newOperation struct {
+					ID       string `yson:"id,key"`
+					Status   string `yson:"status"`
+					Restarts uint64 `yson:"restarts"`
+				}
 
-				By("Creating ytsaurus client")
-				ytClient := getYtClient(g, namespace)
+				newSchema, err := schema.Infer(newOperation{})
+				Expect(err).Should(Succeed())
 
 				By("Creating a tablet cell in the default bundle client")
 				tabletCellID, errCreateTabletCell := ytClient.CreateObject(ctx, "tablet_cell", &yt.CreateObjectOptions{
@@ -1092,16 +897,13 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		Context("With RPC proxy", Label("rpc-proxy"), func() {
 
-			It("Rpc proxies should require authentication", func(ctx context.Context) {
-				namespace := "testrpc"
-				ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
+			BeforeEach(func() {
 				ytsaurus = testutil.WithRPCProxies(ytsaurus)
-				DeferCleanup(deleteYtsaurus, ytsaurus)
-				deployAndCheck(ytsaurus, namespace)
+			})
 
+			It("Rpc proxies should require authentication", func(ctx context.Context) {
 				// Just in case, so dirty dev environment wouldn't interfere.
 				Expect(os.Unsetenv("YT_TOKEN")).Should(Succeed())
-				g := ytconfig.NewGenerator(ytsaurus, "local")
 				cli, err := ytrpc.NewClient(&yt.Config{
 					// N.B.: no credentials are passed here.
 					RPCProxy:              getRPCProxyAddress(g, namespace),
@@ -1117,18 +919,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		Context("With host network", Label("host-network"), func() {
 
-			It("Sensors should be annotated with host", func(ctx context.Context) {
-				namespace := "testsolomon"
-				ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
+			BeforeEach(func() {
 				ytsaurus.Spec.HostNetwork = true
-				DeferCleanup(deleteYtsaurus, ytsaurus)
-				deployAndCheck(ytsaurus, namespace)
+			})
 
-				By("Creating ytsaurus client")
-				g := ytconfig.NewGenerator(ytsaurus, "local")
-				ytClient := getYtClient(g, namespace)
-
-				primaryMasters := make([]string, 0)
+			It("Sensors should be annotated with host", func(ctx context.Context) {
+				var primaryMasters []string
 				Expect(ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &primaryMasters, nil)).Should(Succeed())
 				Expect(primaryMasters).Should(Not(BeEmpty()))
 
@@ -1138,7 +934,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytClient.GetNode(ctx, ypath.Path(fmt.Sprintf("//sys/primary_masters/%v/orchid/config/monitoring_port", masterAddress)), &monitoringPort, nil)).Should(Succeed())
 
 				msPod := getMasterPod(g.GetMasterPodNames()[0], namespace)
-				fmt.Fprintf(GinkgoWriter, "podIP: %v\n", msPod.Status.PodIP)
+				log.Info("Pod", "ip", msPod.Status.PodIP)
 
 				rsp, err := http.Get(fmt.Sprintf(
 					"http://%v:%v/solomon/all",
@@ -1170,7 +966,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				// We don not check the actual value, since it is something weird in our testing setup.
 				Expect(labels["host"]).ShouldNot(BeEmpty())
 				Expect(labels["pod"]).Should(Equal("ms-0"))
-				fmt.Fprintf(GinkgoWriter, "host=%v, pod=%v\n", labels["host"], labels["pod"])
+				log.Info("Result", "host", labels["host"], "pod", labels["pod"])
 			})
 
 		}) // integration host-network
@@ -1222,7 +1018,7 @@ func checkPodLabels(ctx context.Context, namespace string) {
 	pods := getAllPods(ctx, namespace)
 
 	for _, pod := range pods {
-		fmt.Fprintf(GinkgoWriter, "PodName: %v, Labels: %v\n", pod.Name, pod.ObjectMeta.Labels)
+		log.Info("Pod", "name", pod.Name, "labels", pod.Labels)
 	}
 
 	Expect(pods).Should(ContainElement(And(
@@ -1268,57 +1064,10 @@ func checkPodLabels(ctx context.Context, namespace string) {
 	checkPodLabelCount(pods, "app.kubernetes.io/name", "yt-scheduler", 1)
 }
 
-func deployAndCheck(ytsaurus *ytv1.Ytsaurus, namespace string) {
-	runYtsaurus(ytsaurus)
-
-	ytClient := createYtsaurusClient(ytsaurus, namespace)
-	checkClusterViability(ytClient)
-}
-
 func createYtsaurusClient(ytsaurus *ytv1.Ytsaurus, namespace string) yt.Client {
 	By("Creating ytsaurus client")
 	g := ytconfig.NewGenerator(ytsaurus, "local")
 	return getYtClient(g, namespace)
-}
-
-func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Context) {
-	return func(ctx context.Context) {
-		By("Creating a Ytsaurus resource")
-		ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
-		testutil.WithNamedDataNodes(ytsaurus, ptr.To("dn-t"))
-		DeferCleanup(deleteYtsaurus, ytsaurus)
-		name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
-		deployAndCheck(ytsaurus, namespace)
-
-		By("Run cluster update")
-		podsBeforeUpdate := getComponentPods(ctx, namespace)
-
-		checkPodLabels(ctx, namespace)
-
-		ytsaurus.Spec.CoreImage = newImage
-		UpdateYtsaurus(ctx, ytsaurus)
-
-		EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-		Expect(ytsaurus).Should(HaveClusterUpdateFlow(ytv1.UpdateFlowFull))
-
-		By("Wait cluster update complete")
-		EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
-		g := ytconfig.NewGenerator(ytsaurus, "local")
-		ytClient := getYtClient(g, namespace)
-		checkClusterBaseViability(ytClient)
-
-		podsAfterFullUpdate := getComponentPods(ctx, namespace)
-		pods := getChangedPods(podsBeforeUpdate, podsAfterFullUpdate)
-		Expect(pods.Created).To(BeEmpty(), "created")
-		Expect(pods.Deleted).To(BeEmpty(), "deleted")
-		Expect(pods.Updated).To(ConsistOf(maps.Keys(podsBeforeUpdate)), "updated")
-
-		newYt := ytv1.Ytsaurus{}
-		err := k8sClient.Get(ctx, name, &newYt)
-		Expect(err).Should(Succeed())
-
-		Expect(newYt.Status.ObservedGeneration).To(Equal(newYt.Generation))
-	}
 }
 
 func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {

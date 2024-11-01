@@ -111,14 +111,19 @@ func CreateMinimalYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 	}
 }
 
-func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
-	ytsaurus := CreateMinimalYtsaurusResource(namespace)
+func WithBaseYtsaurusComponents(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus = WithBootstrap(ytsaurus)
 	ytsaurus = WithScheduler(ytsaurus)
 	ytsaurus = WithControllerAgents(ytsaurus)
 	ytsaurus = WithDataNodes(ytsaurus)
 	ytsaurus = WithTabletNodes(ytsaurus)
 	ytsaurus = WithExecNodes(ytsaurus)
+	return ytsaurus
+}
+
+func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
+	ytsaurus := CreateMinimalYtsaurusResource(namespace)
+	ytsaurus = WithBaseYtsaurusComponents(ytsaurus)
 	return ytsaurus
 }
 
