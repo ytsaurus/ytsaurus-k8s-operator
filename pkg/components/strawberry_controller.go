@@ -187,7 +187,7 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 	deployment.Spec.Template.Spec.Containers = []corev1.Container{
 		{
 			Image:   c.microservice.getImage(),
-			Name:    consts.UIContainerName,
+			Name:    consts.StrawberryContainerName,
 			EnvFrom: c.getEnvSource(),
 			Command: []string{
 				"/usr/bin/chyt-controller",
