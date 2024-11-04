@@ -23,9 +23,10 @@ import (
 
 	"go.uber.org/zap/zapcore"
 
-	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -67,6 +68,14 @@ func main() {
 	opts := zap.Options{
 		Development: true,
 		TimeEncoder: zapcore.ISO8601TimeEncoder,
+		//DestWriter: func() io.Writer {
+		//	file, err := os.OpenFile("log.out", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+		//	if err != nil {
+		//		setupLog.Error(err, "unable to open log file")
+		//		os.Exit(1)
+		//	}
+		//	return file
+		//}(),
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
