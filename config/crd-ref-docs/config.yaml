@@ -3,10 +3,8 @@ processor:
   ignoreTypes:
     - "(Chyt|RemoteExecNodes|RemoteYtsaurus|Spyt|Ytsaurus)List$"
     # - "CommonSpec$"
-    - "(Chyt|RemoteExecNode|Spyt)ReleaseStatus$"
   # RE2 regular expressions describing type fields that should be excluded from the generated documentation.
   ignoreFields:
-    - "status$"
     - "TypeMeta$"
 
 render:
