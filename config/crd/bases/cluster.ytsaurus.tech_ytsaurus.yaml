@@ -39570,18 +39570,22 @@ spec:
               uiImage:
                 type: string
               updateSelector:
-                description: UpdateSelector is an experimental field. Behaviour may
-                  change.
-                enum:
-                - ""
-                - Nothing
-                - MasterOnly
-                - DataNodesOnly
-                - TabletNodesOnly
-                - ExecNodesOnly
-                - StatelessOnly
-                - Everything
+                description: 'Deprecated: UpdateSelector is an experimental field.
+                  Behaviour may change.'
                 type: string
+              updateSelectors:
+                description: Controls the components that should be updated during
+                  the update process.
+                items:
+                  properties:
+                    componentGroup:
+                      type: string
+                    componentName:
+                      type: string
+                    componentType:
+                      type: string
+                  type: object
+                type: array
               useIpv4:
                 default: false
                 type: boolean
