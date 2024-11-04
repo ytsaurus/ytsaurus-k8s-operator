@@ -34,6 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	clientgoretry "k8s.io/client-go/util/retry"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -181,21 +182,34 @@ func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 	}
 }
 
-func ExpectYtsaurus(ctx context.Context, name types.NamespacedName) Assertion {
-	var ytsaurus ytv1.Ytsaurus
-	Expect(k8sClient.Get(ctx, name, &ytsaurus)).Should(Succeed())
+func GetYtsaurus(ctx context.Context, ytsaurus *ytv1.Ytsaurus) Assertion {
+	name := client.ObjectKeyFromObject(ytsaurus)
+	err := k8sClient.Get(ctx, name, ytsaurus)
+	Expect(err).ToNot(HaveOccurred())
 	return Expect(ytsaurus)
 }
 
-func EventuallyYtsaurus(ctx context.Context, name types.NamespacedName, timeout time.Duration) AsyncAssertion {
-	var ytsaurus ytv1.Ytsaurus
+func UpdateYtsaurus(ctx context.Context, ytsaurus *ytv1.Ytsaurus) {
+	var current ytv1.Ytsaurus
+	name := client.ObjectKeyFromObject(ytsaurus)
+	err := clientgoretry.RetryOnConflict(clientgoretry.DefaultRetry, func() error {
+		Expect(k8sClient.Get(ctx, name, &current)).To(Succeed())
+		// Fetch current resource version: any status update changes it too.
+		ytsaurus.SetResourceVersion(current.GetResourceVersion())
+		return k8sClient.Update(ctx, ytsaurus)
+	})
+	Expect(err).ToNot(HaveOccurred())
+}
+
+func EventuallyYtsaurus(ctx context.Context, ytsaurus *ytv1.Ytsaurus, timeout time.Duration) AsyncAssertion {
 	trackStatus := NewYtsaurusStatusTracker()
+	name := client.ObjectKeyFromObject(ytsaurus)
 	return Eventually(ctx, func(ctx context.Context) (*ytv1.Ytsaurus, error) {
-		err := k8sClient.Get(ctx, name, &ytsaurus)
+		err := k8sClient.Get(ctx, name, ytsaurus)
 		if err == nil {
-			trackStatus(&ytsaurus)
+			trackStatus(ytsaurus)
 		}
-		return &ytsaurus, err
+		return ytsaurus, err
 	}, timeout, pollInterval)
 }
 

@@ -176,7 +176,7 @@ func runYtsaurus(ytsaurus *ytv1.Ytsaurus) {
 	}
 
 	By("Checking that ytsaurus state is equal to `Running`")
-	EventuallyYtsaurus(ctx, ytsaurusLookupKey, bootstrapTimeout).Should(HaveClusterStateRunning())
+	EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
 
 	By("Check pods are running")
 	for _, podName := range pods {
@@ -285,24 +285,18 @@ func deleteRemoteTabletNodes(ctx context.Context, remoteTabletNodes *ytv1.Remote
 }
 
 func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client) {
-	name := types.NamespacedName{Name: ytsaurus.Name, Namespace: ytsaurus.Namespace}
-
 	By("Run cluster impossible update")
-	Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
 	ytsaurus.Spec.CoreImage = testutil.CoreImageSecond
-	Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+	UpdateYtsaurus(ctx, ytsaurus)
 
-	EventuallyYtsaurus(ctx, name, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStateImpossibleToStart))
+	EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStateImpossibleToStart))
 
 	By("Set previous core image")
-	Eventually(func(g Gomega) {
-		g.Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
-		ytsaurus.Spec.CoreImage = testutil.CoreImageFirst
-		g.Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
-	}, reactionTimeout, pollInterval).Should(Succeed())
+	ytsaurus.Spec.CoreImage = testutil.CoreImageFirst
+	UpdateYtsaurus(ctx, ytsaurus)
 
 	By("Wait for running")
-	EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterStateRunning())
+	EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 
 	By("Check that cluster alive after update")
 	res := make([]string, 0)
@@ -352,11 +346,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				podsBeforeUpdate := getComponentPods(ctx, namespace)
 
 				By("Run cluster update with selector: nothing")
-				Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
 				ytsaurus.Spec.UpdateSelector = ytv1.UpdateSelectorNothing
 				// We want change in all yson configs, new discovery instance will trigger that.
 				ytsaurus.Spec.Discovery.InstanceCount += 1
-				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+				UpdateYtsaurus(ctx, ytsaurus)
 
 				By("Ensure cluster doesn't start updating for 5 seconds")
 				ConsistentlyYtsaurus(ctx, name, 5*time.Second).Should(HaveClusterStateRunning())
@@ -367,15 +360,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				)
 
 				By("Update cluster update with strategy full")
-				Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
 				ytsaurus.Spec.UpdateSelector = ytv1.UpdateSelectorEverything
 				ytsaurus.Spec.Discovery.InstanceCount += 1
-				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
-				EventuallyYtsaurus(ctx, name, reactionTimeout).Should(HaveObservedGeneration())
-				ExpectYtsaurus(ctx, name).Should(HaveClusterUpdatingComponents())
+				UpdateYtsaurus(ctx, ytsaurus)
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents())
 
 				By("Wait cluster update with full update complete")
-				EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterStateRunning())
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 				podsAfterFullUpdate := getComponentPods(ctx, namespace)
 
 				pods := getChangedPods(podsBeforeUpdate, podsAfterFullUpdate)
@@ -390,21 +382,19 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Creating a Ytsaurus resource")
 				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 				DeferCleanup(deleteYtsaurus, ytsaurus)
-				name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
 
 				deployAndCheck(ytsaurus, namespace)
 				podsBeforeUpdate := getComponentPods(ctx, namespace)
 
 				By("Run cluster update with selector:ExecNodesOnly")
-				Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
 				ytsaurus.Spec.UpdateSelector = ytv1.UpdateSelectorExecNodesOnly
 				ytsaurus.Spec.Discovery.InstanceCount += 1
-				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
-				EventuallyYtsaurus(ctx, name, reactionTimeout).Should(HaveObservedGeneration())
-				ExpectYtsaurus(ctx, name).Should(HaveClusterUpdatingComponents("ExecNode"))
+				UpdateYtsaurus(ctx, ytsaurus)
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("ExecNode"))
 
 				By("Wait cluster update with selector:ExecNodesOnly complete")
-				EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterStateRunning())
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 				ytClient := createYtsaurusClient(ytsaurus, namespace)
 				checkClusterBaseViability(ytClient)
 
@@ -415,15 +405,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(pods.Updated).To(ConsistOf("end-0"), "updated")
 
 				By("Run cluster update with selector:TabletNodesOnly")
-				Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
 				ytsaurus.Spec.UpdateSelector = ytv1.UpdateSelectorTabletNodesOnly
 				ytsaurus.Spec.Discovery.InstanceCount += 1
-				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
-				EventuallyYtsaurus(ctx, name, reactionTimeout).Should(HaveObservedGeneration())
-				ExpectYtsaurus(ctx, name).Should(HaveClusterUpdatingComponents("TabletNode"))
+				UpdateYtsaurus(ctx, ytsaurus)
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("TabletNode"))
 
 				By("Wait cluster update with selector:TabletNodesOnly complete")
-				EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterStateRunning())
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 				checkClusterBaseViability(ytClient)
 
 				podsAfterTndUpdate := getComponentPods(ctx, namespace)
@@ -439,21 +428,19 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Creating a Ytsaurus resource")
 				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 				DeferCleanup(deleteYtsaurus, ytsaurus)
-				name := types.NamespacedName{Name: ytsaurus.GetName(), Namespace: namespace}
 
 				deployAndCheck(ytsaurus, namespace)
 				podsBeforeUpdate := getComponentPods(ctx, namespace)
 
 				By("Run cluster update with selector:MasterOnly")
-				Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
 				ytsaurus.Spec.UpdateSelector = ytv1.UpdateSelectorMasterOnly
 				ytsaurus.Spec.Discovery.InstanceCount += 1
-				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
-				EventuallyYtsaurus(ctx, name, reactionTimeout).Should(HaveObservedGeneration())
-				ExpectYtsaurus(ctx, name).Should(HaveClusterUpdatingComponents("Master"))
+				UpdateYtsaurus(ctx, ytsaurus)
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("Master"))
 
 				By("Wait cluster update with selector:MasterOnly complete")
-				EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterStateRunning())
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 				ytClient := createYtsaurusClient(ytsaurus, namespace)
 				checkClusterBaseViability(ytClient)
 				podsAfterMasterUpdate := getComponentPods(ctx, namespace)
@@ -463,12 +450,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(pods.Updated).To(ConsistOf("ms-0"), "updated")
 
 				By("Run cluster update with selector:StatelessOnly")
-				Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
 				ytsaurus.Spec.UpdateSelector = ytv1.UpdateSelectorStatelessOnly
 				ytsaurus.Spec.Discovery.InstanceCount += 1
-				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
-				EventuallyYtsaurus(ctx, name, reactionTimeout).Should(HaveObservedGeneration())
-				ExpectYtsaurus(ctx, name).Should(HaveClusterUpdatingComponents(
+				UpdateYtsaurus(ctx, ytsaurus)
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(
 					"Discovery",
 					"HttpProxy",
 					"ExecNode",
@@ -476,7 +462,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					"ControllerAgent",
 				))
 				By("Wait cluster update with selector:StatelessOnly complete")
-				EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterStateRunning())
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 				checkClusterBaseViability(ytClient)
 				podsAfterStatelessUpdate := getComponentPods(ctx, namespace)
 				pods = getChangedPods(podsAfterMasterUpdate, podsAfterStatelessUpdate)
@@ -549,7 +535,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", func(ctx context.Context) {
 				namespace := "test3"
 				ytsaurus := testutil.CreateMinimalYtsaurusResource(namespace)
-				ytsaurusKey := types.NamespacedName{Name: testutil.YtsaurusName, Namespace: namespace}
 
 				By("Creating a Ytsaurus resource")
 				g := ytconfig.NewGenerator(ytsaurus, "local")
@@ -582,15 +567,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(err).Should(Succeed())
 
 				By("Run cluster update")
-				Expect(k8sClient.Get(ctx, ytsaurusKey, ytsaurus)).Should(Succeed())
 				ytsaurus.Spec.HostNetwork = true
 				ytsaurus.Spec.PrimaryMasters.HostAddresses = []string{
 					getKindControlPlaneName(),
 				}
-				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+				UpdateYtsaurus(ctx, ytsaurus)
 
 				By("Waiting PossibilityCheck")
-				EventuallyYtsaurus(ctx, ytsaurusKey, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck))
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck))
 
 				By("Check that master pod was NOT recreated at the PossibilityCheck stage")
 				time.Sleep(1 * time.Second)
@@ -1308,18 +1292,17 @@ func getSimpleUpdateScenario(namespace, newImage string) func(ctx context.Contex
 
 		By("Run cluster update")
 		podsBeforeUpdate := getComponentPods(ctx, namespace)
-		Expect(k8sClient.Get(ctx, name, ytsaurus)).Should(Succeed())
 
 		checkPodLabels(ctx, namespace)
 
 		ytsaurus.Spec.CoreImage = newImage
-		Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+		UpdateYtsaurus(ctx, ytsaurus)
 
-		EventuallyYtsaurus(ctx, name, reactionTimeout).Should(HaveObservedGeneration())
-		ExpectYtsaurus(ctx, name).Should(HaveClusterUpdateFlow(ytv1.UpdateFlowFull))
+		EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+		Expect(ytsaurus).Should(HaveClusterUpdateFlow(ytv1.UpdateFlowFull))
 
 		By("Wait cluster update complete")
-		EventuallyYtsaurus(ctx, name, upgradeTimeout).Should(HaveClusterStateRunning())
+		EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 		g := ytconfig.NewGenerator(ytsaurus, "local")
 		ytClient := getYtClient(g, namespace)
 		checkClusterBaseViability(ytClient)
