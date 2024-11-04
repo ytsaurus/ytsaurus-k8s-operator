@@ -433,61 +433,81 @@ type updateMeta struct {
 	componentNames []string
 }
 
-func canUpdateComponent(selector ytv1.UpdateSelector, component consts.ComponentType) bool {
-	switch selector {
-	case ytv1.UpdateSelectorNothing:
-		return false
-	case ytv1.UpdateSelectorMasterOnly:
-		return component == consts.MasterType
-	case ytv1.UpdateSelectorDataNodesOnly:
-		return component == consts.DataNodeType
-	case ytv1.UpdateSelectorTabletNodesOnly:
-		return component == consts.TabletNodeType
-	case ytv1.UpdateSelectorExecNodesOnly:
-		return component == consts.ExecNodeType
-	case ytv1.UpdateSelectorStatelessOnly:
-		switch component {
-		case consts.MasterType:
-			return false
-		case consts.DataNodeType:
-			return false
-		case consts.TabletNodeType:
-			return false
-		}
-		return true
-	case ytv1.UpdateSelectorEverything:
-		return true
-	default:
-		return false
+func getFlowFromComponent(component consts.ComponentType) ytv1.UpdateFlow {
+	if component == consts.MasterType {
+		return ytv1.UpdateFlowMaster
 	}
+	if component == consts.TabletNodeType {
+		return ytv1.UpdateFlowTabletNodes
+	}
+	if component == consts.DataNodeType || component == consts.ExecNodeType {
+		return ytv1.UpdateFlowFull
+	}
+	return ytv1.UpdateFlowStateless
+}
+
+func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component components.Component) (bool, error) {
+	for _, selector := range selectors {
+		if selector.ComponentType != "" {
+			if selector.ComponentType == component.GetType() {
+				return true, nil
+			}
+		} else if selector.ComponentName != "" {
+			if selector.ComponentName == component.GetName() {
+				return true, nil
+			}
+		} else {
+			switch selector.ComponentGroup {
+			case consts.ComponentGroupEverything:
+				return true, nil
+			case consts.ComponentGroupNothing:
+				return false, nil
+			case consts.ComponentGroupStateful:
+				if component.GetType() == consts.DataNodeType || component.GetType() == consts.TabletNodeType {
+					return true, nil
+				}
+			case consts.ComponentGroupStateless:
+				if component.GetType() != consts.DataNodeType && component.GetType() != consts.TabletNodeType && component.GetType() != consts.MasterType {
+					return true, nil
+				}
+			default:
+				return false, fmt.Errorf("unexpected component group %s", selector.ComponentGroup)
+			}
+		}
+	}
+	return false, nil
 }
 
 // chooseUpdateFlow considers spec and decides if operator should proceed with update or block.
 // Block case is indicated with non-empty blockMsg.
 // If update is not blocked, updateMeta containing a chosen flow and the component names to update returned.
 func chooseUpdateFlow(spec ytv1.YtsaurusSpec, needUpdate []components.Component) (meta updateMeta, blockMsg string) {
-	configuredSelector := spec.UpdateSelector
-	if configuredSelector == ytv1.UpdateSelectorUnspecified {
-		if spec.EnableFullUpdate {
-			configuredSelector = ytv1.UpdateSelectorEverything
-		} else {
-			configuredSelector = ytv1.UpdateSelectorStatelessOnly
-		}
+	configuredSelectors := spec.UpdateSelectors
+	if len(configuredSelectors) == 0 && spec.EnableFullUpdate {
+		configuredSelectors = []ytv1.ComponentUpdateSelector{{ComponentGroup: consts.ComponentGroupEverything}}
 	}
+	needFullUpdate := false
 
 	var canUpdate []string
 	var cannotUpdate []string
-	needFullUpdate := false
+	flows := make(map[ytv1.UpdateFlow]struct{})
 
 	for _, comp := range needUpdate {
 		componentType := comp.GetType()
 		componentName := comp.GetName()
-		if canUpdateComponent(configuredSelector, componentType) {
+		upd, err := canUpdateComponent(configuredSelectors, comp)
+		if err != nil {
+			return updateMeta{}, err.Error()
+		}
+		if upd {
 			canUpdate = append(canUpdate, componentName)
+			flows[getFlowFromComponent(componentType)] = struct{}{}
 		} else {
 			cannotUpdate = append(cannotUpdate, componentName)
 		}
-		if !canUpdateComponent(ytv1.UpdateSelectorStatelessOnly, componentType) && componentType != consts.DataNodeType {
+
+		statelessCheck, err := canUpdateComponent([]ytv1.ComponentUpdateSelector{{ComponentGroup: consts.ComponentGroupStateless}}, comp)
+		if !statelessCheck && componentType != consts.DataNodeType {
 			needFullUpdate = true
 		}
 	}
@@ -499,37 +519,25 @@ func chooseUpdateFlow(spec ytv1.YtsaurusSpec, needUpdate []components.Component)
 		return updateMeta{}, "All components are uptodate"
 	}
 
-	switch configuredSelector {
-	case ytv1.UpdateSelectorEverything:
+	if len(configuredSelectors) == 1 && configuredSelectors[0].ComponentGroup == consts.ComponentGroupEverything {
 		if needFullUpdate {
-			return updateMeta{
-				flow:           ytv1.UpdateFlowFull,
-				componentNames: nil,
-			}, ""
+			return updateMeta{flow: ytv1.UpdateFlowFull, componentNames: nil}, ""
 		} else {
-			return updateMeta{
-				flow:           ytv1.UpdateFlowStateless,
-				componentNames: canUpdate,
-			}, ""
+			return updateMeta{flow: ytv1.UpdateFlowStateless, componentNames: canUpdate}, ""
 		}
-	case ytv1.UpdateSelectorMasterOnly:
-		return updateMeta{
-			flow:           ytv1.UpdateFlowMaster,
-			componentNames: canUpdate,
-		}, ""
-	case ytv1.UpdateSelectorTabletNodesOnly:
-		return updateMeta{
-			flow:           ytv1.UpdateFlowTabletNodes,
-			componentNames: canUpdate,
-		}, ""
-	case ytv1.UpdateSelectorDataNodesOnly, ytv1.UpdateSelectorExecNodesOnly, ytv1.UpdateSelectorStatelessOnly:
-		return updateMeta{
-			flow:           ytv1.UpdateFlowStateless,
-			componentNames: canUpdate,
-		}, ""
-	default:
-		return updateMeta{}, fmt.Sprintf("Unexpected update selector %s", configuredSelector)
 	}
+
+	if len(flows) == 0 {
+		return updateMeta{}, fmt.Sprintf("Unexpected state: no flows for components {%s}", strings.Join(canUpdate, ", "))
+	}
+
+	if len(flows) == 1 {
+		for flow := range flows {
+			return updateMeta{flow: flow, componentNames: canUpdate}, ""
+		}
+	}
+	// If more than one flow is possible, we choose to follow full update flow.
+	return updateMeta{flow: ytv1.UpdateFlowFull, componentNames: canUpdate}, ""
 }
 
 func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
