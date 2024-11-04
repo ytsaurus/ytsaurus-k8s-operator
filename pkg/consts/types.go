@@ -23,3 +23,12 @@ const (
 	ChytType                 ComponentType = "CHYT"
 	SpytType                 ComponentType = "SPYT"
 )
+
+type ComponentGroup string
+
+const (
+	ComponentGroupStateless  ComponentGroup = "Stateless"
+	ComponentGroupStateful   ComponentGroup = "Stateful"
+	ComponentGroupEverything ComponentGroup = "Everything"
+	ComponentGroupNone       ComponentGroup = "None"
+)
