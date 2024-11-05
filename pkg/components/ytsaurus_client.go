@@ -372,11 +372,13 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 		proxy, ok := os.LookupEnv("YTOP_PROXY")
 		disableProxyDiscovery := true
 		if !ok {
+			// FIXME(khlebnikov): Use GetHTTPProxyUrl() when SDK will be ready.
 			proxy = yc.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 			disableProxyDiscovery = false
 		}
 		yc.ytClient, err = ythttp.NewClient(&yt.Config{
 			Proxy:                 proxy,
+			UseTLS:                yc.cfgen.UseHTTPSProxy(),
 			Token:                 token,
 			LightRequestTimeout:   &timeout,
 			DisableProxyDiscovery: disableProxyDiscovery,
