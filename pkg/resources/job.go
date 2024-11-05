@@ -19,6 +19,8 @@ type Job struct {
 	newObject batchv1.Job
 }
 
+var _ Resource = &Job{}
+
 func NewJob(name string, l *labeller.Labeller, apiProxy apiproxy.APIProxy) *Job {
 	return &Job{
 		name:     name,

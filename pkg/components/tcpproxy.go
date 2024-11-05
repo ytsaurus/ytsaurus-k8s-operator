@@ -30,10 +30,9 @@ func NewTCPProxy(
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
 	spec ytv1.TCPProxiesSpec) *TcpProxy {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 	l := labeller.Labeller{
 		ObjectMeta:        &resource.ObjectMeta,
-		APIProxy:          ytsaurus.APIProxy(),
 		ComponentType:     consts.TcpProxyType,
 		ComponentNamePart: spec.Role,
 	}
@@ -75,12 +74,6 @@ func NewTCPProxy(
 	}
 }
 
-func (tp *TcpProxy) IsUpdatable() bool {
-	return true
-}
-
-func (tp *TcpProxy) GetType() consts.ComponentType { return consts.TcpProxyType }
-
 func (tp *TcpProxy) Fetch(ctx context.Context) error {
 	fetchable := []resources.Fetchable{
 		tp.server,
@@ -91,7 +84,7 @@ func (tp *TcpProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, fetchable...)
 }
 
-func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (tp *TcpProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(tp.ytsaurus.GetClusterState()) && tp.server.needUpdate() {
@@ -99,20 +92,16 @@ func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if tp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, tp.ytsaurus, tp, &tp.localComponent, tp.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, tp, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	tpStatus, err := tp.master.Status(ctx)
-	if err != nil {
-		return tpStatus, err
-	}
-	if !IsRunningStatus(tpStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, tp.master.GetName()), err
+	if status, err := checkComponentDependency(ctx, tp.master); status != nil {
+		return *status, err
 	}
 
-	if tp.NeedSync() {
+	if ServerNeedSync(tp.server, tp.ytsaurus) {
 		if !dry {
 			err = tp.server.Sync(ctx)
 		}
@@ -132,13 +121,4 @@ func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (tp *TcpProxy) Status(ctx context.Context) (ComponentStatus, error) {
-	return tp.doSync(ctx, true)
-}
-
-func (tp *TcpProxy) Sync(ctx context.Context) error {
-	_, err := tp.doSync(ctx, false)
-	return err
 }

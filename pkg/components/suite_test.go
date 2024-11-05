@@ -13,7 +13,9 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	mock_yt "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/mock"
 )
 
@@ -37,6 +39,8 @@ type FakeComponent struct {
 	status   ComponentStatus
 }
 
+var _ Component = &FakeComponent{}
+
 func NewFakeComponent(name string, compType consts.ComponentType) *FakeComponent {
 	return &FakeComponent{
 		name:     name,
@@ -45,19 +49,19 @@ func NewFakeComponent(name string, compType consts.ComponentType) *FakeComponent
 	}
 }
 
-func (fc *FakeComponent) IsUpdatable() bool {
-	return false
+func (fc *FakeComponent) getAPIProxy() apiproxy.APIProxy {
+	return nil
+}
+
+func (fyc *FakeComponent) getLabeller() *labeller.Labeller {
+	return nil
 }
 
 func (fc *FakeComponent) Fetch(ctx context.Context) error {
 	return nil
 }
 
-func (fc *FakeComponent) Sync(ctx context.Context) error {
-	return nil
-}
-
-func (fc *FakeComponent) Status(ctx context.Context) (ComponentStatus, error) {
+func (fc *FakeComponent) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	return fc.status, nil
 }
 
@@ -103,10 +107,6 @@ func (fs *FakeServer) needBuild() bool {
 	return false
 }
 
-func (fs *FakeServer) needSync() bool {
-	return false
-}
-
 func (fs *FakeServer) arePodsRemoved(ctx context.Context) bool {
 	return true
 }
@@ -140,6 +140,8 @@ type FakeYtsaurusClient struct {
 	client *mock_yt.MockClient
 }
 
+var _ internalYtsaurusClient = &FakeYtsaurusClient{}
+
 func NewFakeYtsaurusClient(client *mock_yt.MockClient) *FakeYtsaurusClient {
 	return &FakeYtsaurusClient{
 		FakeComponent: *NewFakeComponent("ytsaurus_client", consts.YtsaurusClientType),
@@ -153,8 +155,4 @@ func (fyc *FakeYtsaurusClient) GetYtClient() yt.Client {
 
 func (fyc *FakeYtsaurusClient) SetStatus(status ComponentStatus) {
 	fyc.status = status
-}
-
-func (fyc *FakeYtsaurusClient) IsUpdatable() bool {
-	return false
 }

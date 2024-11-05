@@ -21,10 +21,9 @@ type ControllerAgent struct {
 }
 
 func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *ControllerAgent {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 	l := labeller.Labeller{
 		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
 		ComponentType: consts.ControllerAgentType,
 	}
 
@@ -55,17 +54,11 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 	}
 }
 
-func (ca *ControllerAgent) IsUpdatable() bool {
-	return true
-}
-
-func (ca *ControllerAgent) GetType() consts.ComponentType { return consts.ControllerAgentType }
-
 func (ca *ControllerAgent) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, ca.server)
 }
 
-func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (ca *ControllerAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(ca.ytsaurus.GetClusterState()) && ca.server.needUpdate() {
@@ -73,20 +66,16 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.localComponent, ca.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, ca, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	masterStatus, err := ca.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, ca.master.GetName()), err
+	if status, err := checkComponentDependency(ctx, ca.master); status != nil {
+		return *status, err
 	}
 
-	if ca.NeedSync() {
+	if ServerNeedSync(ca.server, ca.ytsaurus) {
 		if !dry {
 			err = ca.server.Sync(ctx)
 		}
@@ -98,13 +87,4 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (ca *ControllerAgent) Status(ctx context.Context) (ComponentStatus, error) {
-	return ca.doSync(ctx, true)
-}
-
-func (ca *ControllerAgent) Sync(ctx context.Context) error {
-	_, err := ca.doSync(ctx, false)
-	return err
 }

@@ -79,7 +79,7 @@ func newMicroservice(
 			labeller,
 			ytsaurus.APIProxy(),
 			labeller.GetMainConfigMapName(),
-			ytsaurus.GetResource().Spec.ConfigOverrides,
+			ytsaurus.Resource().Spec.ConfigOverrides,
 			generators),
 	}
 }

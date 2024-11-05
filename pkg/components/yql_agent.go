@@ -27,10 +27,9 @@ type YqlAgent struct {
 }
 
 func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *YqlAgent {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 	l := labeller.Labeller{
 		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
 		ComponentType: consts.YqlAgentType,
 		Annotations:   resource.Spec.ExtraPodAnnotations,
 	}
@@ -80,16 +79,6 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 	}
 }
 
-func (yqla *YqlAgent) IsUpdatable() bool {
-	return true
-}
-
-func (yqla *YqlAgent) GetType() consts.ComponentType { return consts.YqlAgentType }
-
-func (yqla *YqlAgent) GetName() string {
-	return yqla.labeller.GetFullComponentName()
-}
-
 func (yqla *YqlAgent) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		yqla.server,
@@ -127,7 +116,7 @@ func (yqla *YqlAgent) createInitScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(yqla.ytsaurus.GetClusterState()) && yqla.server.needUpdate() {
@@ -135,17 +124,13 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.localComponent, yqla.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, yqla, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	masterStatus, err := yqla.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, yqla.master.GetName()), err
+	if status, err := checkComponentDependency(ctx, yqla.master); status != nil {
+		return *status, err
 	}
 
 	if yqla.secret.NeedSync(consts.TokenSecretKey, "") {
@@ -159,15 +144,15 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return WaitingStatus(SyncStatusPending, yqla.secret.Name()), err
 	}
 
-	if yqla.NeedSync() {
+	if ServerNeedSync(yqla.server, yqla.ytsaurus) {
 		if !dry {
 			ss := yqla.server.buildStatefulSet()
 			container := &ss.Spec.Template.Spec.Containers[0]
 			container.Command = []string{"sh", "-c", fmt.Sprintf("echo -n $YT_TOKEN > %s; %s", consts.DefaultYqlTokenPath, strings.Join(container.Command, " "))}
 			container.EnvFrom = []corev1.EnvFromSource{yqla.secret.GetEnvSource()}
-			if yqla.ytsaurus.GetResource().Spec.UseIPv6 && !yqla.ytsaurus.GetResource().Spec.UseIPv4 {
+			if yqla.ytsaurus.Resource().Spec.UseIPv6 && !yqla.ytsaurus.Resource().Spec.UseIPv4 {
 				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "1"}}
-			} else if !yqla.ytsaurus.GetResource().Spec.UseIPv6 && yqla.ytsaurus.GetResource().Spec.UseIPv4 {
+			} else if !yqla.ytsaurus.Resource().Spec.UseIPv6 && yqla.ytsaurus.Resource().Spec.UseIPv4 {
 				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "1"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
 			} else {
 				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
@@ -186,13 +171,4 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	return yqla.initEnvironment.Sync(ctx, dry)
-}
-
-func (yqla *YqlAgent) Status(ctx context.Context) (ComponentStatus, error) {
-	return yqla.doSync(ctx, true)
-}
-
-func (yqla *YqlAgent) Sync(ctx context.Context) error {
-	_, err := yqla.doSync(ctx, false)
-	return err
 }

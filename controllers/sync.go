@@ -21,7 +21,7 @@ func (r *YtsaurusReconciler) handleEverything(
 	ytsaurus *apiProxy.Ytsaurus,
 	componentManager *ComponentManager,
 ) (*ctrl.Result, error) {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 
 	switch resource.Status.UpdateStatus.State {
 	case ytv1.UpdateStateNone:
@@ -41,7 +41,7 @@ func (r *YtsaurusReconciler) handleEverything(
 		}
 
 	case ytv1.UpdateStateImpossibleToStart:
-		if !componentManager.needSync() || !ytsaurus.GetResource().Spec.EnableFullUpdate {
+		if !componentManager.needSync() || !ytsaurus.Resource().Spec.EnableFullUpdate {
 			ytsaurus.LogUpdate(ctx, "Spec changed back or full update isn't enabled, update is canceling")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateCancelUpdate)
 			return &ctrl.Result{Requeue: true}, err
@@ -167,7 +167,7 @@ func (r *YtsaurusReconciler) handleStateless(
 	ytsaurus *apiProxy.Ytsaurus,
 	componentManager *ComponentManager,
 ) (*ctrl.Result, error) {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 
 	switch resource.Status.UpdateStatus.State {
 	case ytv1.UpdateStateNone:
@@ -239,7 +239,7 @@ func (r *YtsaurusReconciler) handleMasterOnly(
 	ytsaurus *apiProxy.Ytsaurus,
 	componentManager *ComponentManager,
 ) (*ctrl.Result, error) {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 
 	switch resource.Status.UpdateStatus.State {
 	case ytv1.UpdateStateNone:
@@ -259,7 +259,7 @@ func (r *YtsaurusReconciler) handleMasterOnly(
 		}
 
 	case ytv1.UpdateStateImpossibleToStart:
-		if !componentManager.needSync() || !ytsaurus.GetResource().Spec.EnableFullUpdate {
+		if !componentManager.needSync() || !ytsaurus.Resource().Spec.EnableFullUpdate {
 			ytsaurus.LogUpdate(ctx, "Spec changed back or full update isn't enabled, update is canceling")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateCancelUpdate)
 			return &ctrl.Result{Requeue: true}, err
@@ -315,7 +315,7 @@ func (r *YtsaurusReconciler) handleTabletNodesOnly(
 	ytsaurus *apiProxy.Ytsaurus,
 	componentManager *ComponentManager,
 ) (*ctrl.Result, error) {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 
 	switch resource.Status.UpdateStatus.State {
 	case ytv1.UpdateStateNone:
@@ -335,7 +335,7 @@ func (r *YtsaurusReconciler) handleTabletNodesOnly(
 		}
 
 	case ytv1.UpdateStateImpossibleToStart:
-		if !componentManager.needSync() || !ytsaurus.GetResource().Spec.EnableFullUpdate {
+		if !componentManager.needSync() || !ytsaurus.Resource().Spec.EnableFullUpdate {
 			ytsaurus.LogUpdate(ctx, "Spec changed back or full update isn't enabled, update is canceling")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateCancelUpdate)
 			return &ctrl.Result{Requeue: true}, err
@@ -543,7 +543,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 				needUpdateNames = append(needUpdateNames, c.GetName())
 			}
 			logger = logger.WithValues("componentsForUpdateAll", needUpdateNames)
-			meta, blockMsg := chooseUpdateFlow(ytsaurus.GetResource().Spec, needUpdate)
+			meta, blockMsg := chooseUpdateFlow(ytsaurus.Resource().Spec, needUpdate)
 			if blockMsg != "" {
 				logger.Info(blockMsg)
 				return ctrl.Result{Requeue: true}, nil

@@ -32,10 +32,9 @@ func NewHTTPProxy(
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
 	spec ytv1.HTTPProxiesSpec) *HttpProxy {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 	l := labeller.Labeller{
 		ObjectMeta:        &resource.ObjectMeta,
-		APIProxy:          ytsaurus.APIProxy(),
 		ComponentType:     consts.HttpProxyType,
 		ComponentNamePart: spec.Role,
 	}
@@ -104,12 +103,6 @@ func NewHTTPProxy(
 	}
 }
 
-func (hp *HttpProxy) IsUpdatable() bool {
-	return true
-}
-
-func (hp *HttpProxy) GetType() consts.ComponentType { return consts.HttpProxyType }
-
 func (hp *HttpProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		hp.server,
@@ -117,7 +110,7 @@ func (hp *HttpProxy) Fetch(ctx context.Context) error {
 	)
 }
 
-func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (hp *HttpProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(hp.ytsaurus.GetClusterState()) && hp.server.needUpdate() {
@@ -125,20 +118,16 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	}
 
 	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.localComponent, hp.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, hp, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	masterStatus, err := hp.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, hp.master.GetName()), err
+	if status, err := checkComponentDependency(ctx, hp.master); status != nil {
+		return *status, err
 	}
 
-	if hp.NeedSync() {
+	if ServerNeedSync(hp.server, hp.ytsaurus) {
 		if !dry {
 			statefulSet := hp.server.buildStatefulSet()
 			if hp.httpsSecret != nil {
@@ -164,13 +153,4 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (hp *HttpProxy) Status(ctx context.Context) (ComponentStatus, error) {
-	return hp.doSync(ctx, true)
-}
-
-func (hp *HttpProxy) Sync(ctx context.Context) error {
-	_, err := hp.doSync(ctx, false)
-	return err
 }

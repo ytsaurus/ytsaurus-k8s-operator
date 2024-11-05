@@ -15,11 +15,12 @@ import (
 )
 
 type RemoteTabletNode struct {
-	server server
-	cfgen  *ytconfig.NodeGenerator
-	spec   *ytv1.TabletNodesSpec
-	baseComponent
+	remoteServerComponent
+	cfgen *ytconfig.NodeGenerator
+	spec  *ytv1.TabletNodesSpec
 }
+
+var _ RemoteServerComponent = &RemoteTabletNode{}
 
 func NewRemoteTabletNodes(
 	cfgen *ytconfig.NodeGenerator,
@@ -30,7 +31,6 @@ func NewRemoteTabletNodes(
 ) *RemoteTabletNode {
 	l := labeller.Labeller{
 		ObjectMeta:        &nodes.ObjectMeta,
-		APIProxy:          proxy,
 		ComponentType:     consts.TabletNodeType,
 		ComponentNamePart: spec.Name,
 	}
@@ -39,7 +39,7 @@ func NewRemoteTabletNodes(
 		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.TabletNodeMonitoringPort))
 	}
 
-	srv := newServerConfigured(
+	server := newServerConfigured(
 		&l,
 		proxy,
 		commonSpec,
@@ -58,17 +58,16 @@ func NewRemoteTabletNodes(
 		}),
 	)
 	return &RemoteTabletNode{
-		baseComponent: baseComponent{labeller: &l},
-		server:        srv,
-		cfgen:         cfgen,
-		spec:          &spec,
+		remoteServerComponent: newRemoteServerComponent(proxy, &l, server),
+		cfgen:                 cfgen,
+		spec:                  &spec,
 	}
 }
 
-func (n *RemoteTabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (n *RemoteTabletNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if n.server.needSync() || n.server.needUpdate() {
+	if n.server.configNeedsReload() || n.server.needBuild() || n.server.needUpdate() {
 		if !dry {
 			err = n.server.Sync(ctx)
 		}
@@ -80,12 +79,6 @@ func (n *RemoteTabletNode) doSync(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (n *RemoteTabletNode) GetType() consts.ComponentType { return consts.TabletNodeType }
-
-func (n *RemoteTabletNode) Sync(ctx context.Context) (ComponentStatus, error) {
-	return n.doSync(ctx, false)
 }
 
 func (n *RemoteTabletNode) Fetch(ctx context.Context) error {

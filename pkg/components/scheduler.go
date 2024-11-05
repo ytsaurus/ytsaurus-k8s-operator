@@ -36,10 +36,9 @@ func NewScheduler(
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	execNodes, tabletNodes []Component) *Scheduler {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 	l := labeller.Labeller{
 		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
 		ComponentType: consts.SchedulerType,
 		Annotations:   resource.Spec.ExtraPodAnnotations,
 	}
@@ -103,12 +102,6 @@ func NewScheduler(
 	}
 }
 
-func (s *Scheduler) IsUpdatable() bool {
-	return true
-}
-
-func (s *Scheduler) GetType() consts.ComponentType { return consts.SchedulerType }
-
 func (s *Scheduler) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		s.server,
@@ -118,16 +111,7 @@ func (s *Scheduler) Fetch(ctx context.Context) error {
 	)
 }
 
-func (s *Scheduler) Status(ctx context.Context) (ComponentStatus, error) {
-	return s.doSync(ctx, true)
-}
-
-func (s *Scheduler) Sync(ctx context.Context) error {
-	_, err := s.doSync(ctx, false)
-	return err
-}
-
-func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (s *Scheduler) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(s.ytsaurus.GetClusterState()) && s.server.needUpdate() {
@@ -138,7 +122,7 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		if IsUpdatingComponent(s.ytsaurus, s) {
 			if s.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, s.server, &s.localComponent)
+					err = removePods(ctx, s.server, s.ytsaurus, s.labeller)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
@@ -156,22 +140,13 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	masterStatus, err := s.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, s.master.GetName()), err
+	if status, err := checkComponentDependency(ctx, s.master); status != nil {
+		return *status, err
 	}
 
 	for _, end := range s.execNodes {
-		endStatus, err := end.Status(ctx)
-		if err != nil {
-			return endStatus, err
-		}
-		if !IsRunningStatus(endStatus.SyncStatus) {
-			// It makes no sense to start scheduler without exec nodes.
-			return WaitingStatus(SyncStatusBlocked, end.GetName()), err
+		if status, err := checkComponentDependency(ctx, end); status != nil {
+			return *status, err
 		}
 	}
 
@@ -186,7 +161,7 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return WaitingStatus(SyncStatusPending, s.secret.Name()), err
 	}
 
-	if s.NeedSync() {
+	if ServerNeedSync(s.server, s.ytsaurus) {
 		if !dry {
 			err = s.server.Sync(ctx)
 		}
@@ -216,13 +191,8 @@ func (s *Scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	for _, tnd := range s.tabletNodes {
-		tndStatus, err := tnd.Status(ctx)
-		if err != nil {
-			return tndStatus, err
-		}
-		if !IsRunningStatus(tndStatus.SyncStatus) {
-			// Wait for tablet nodes to proceed with operations archive init.
-			return WaitingStatus(SyncStatusBlocked, tnd.GetName()), err
+		if status, err := checkComponentDependency(ctx, tnd); status != nil {
+			return *status, err
 		}
 	}
 

@@ -32,7 +32,7 @@ func (r *RemoteTabletNodesReconciler) Sync(
 	component := components.NewRemoteTabletNodes(
 		cfgen,
 		resource,
-		apiProxy,
+		apiProxy.APIProxy(),
 		resource.Spec.TabletNodesSpec,
 		resource.Spec.CommonSpec,
 	)
@@ -42,7 +42,7 @@ func (r *RemoteTabletNodesReconciler) Sync(
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	status, err := component.Sync(ctx)
+	status, err := component.Sync(ctx, false)
 	if err != nil {
 		logger.Error(err, "failed to sync remote nodes")
 		return ctrl.Result{Requeue: true}, err

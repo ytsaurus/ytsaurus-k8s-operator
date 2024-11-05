@@ -17,10 +17,10 @@ import (
 )
 
 type Chyt struct {
-	labeller *labeller.Labeller
-	chyt     *apiproxy.Chyt
-	cfgen    *ytconfig.Generator
-	ytsaurus *ytv1.Ytsaurus
+	localComponent
+
+	chyt  *apiproxy.Chyt
+	cfgen *ytconfig.Generator
 
 	secret *resources.StringSecret
 
@@ -29,23 +29,25 @@ type Chyt struct {
 	initChPublicJob *InitJob
 }
 
+var _ LocalComponent = &Chyt{}
+
 func NewChyt(
 	cfgen *ytconfig.Generator,
 	chyt *apiproxy.Chyt,
-	ytsaurus *ytv1.Ytsaurus) *Chyt {
+	ytsaurusApi *apiproxy.Ytsaurus) *Chyt {
+	ytsaurus := ytsaurusApi.Resource()
+
 	l := labeller.Labeller{
-		ObjectMeta:        &chyt.GetResource().ObjectMeta,
-		APIProxy:          chyt.APIProxy(),
+		ObjectMeta:        &chyt.Resource().ObjectMeta,
 		ComponentType:     consts.ChytType,
-		ComponentNamePart: chyt.GetResource().Name,
+		ComponentNamePart: chyt.Resource().Name,
 		Annotations:       ytsaurus.Spec.ExtraPodAnnotations,
 	}
 
 	return &Chyt{
-		labeller: &l,
-		chyt:     chyt,
-		cfgen:    cfgen,
-		ytsaurus: ytsaurus,
+		localComponent: newLocalComponent(&l, ytsaurusApi),
+		chyt:           chyt,
+		cfgen:          cfgen,
 		initUser: NewInitJob(
 			&l,
 			chyt.APIProxy(),
@@ -65,7 +67,7 @@ func NewChyt(
 			ytsaurus.Spec.ImagePullSecrets,
 			"release",
 			consts.ClientConfigFileName,
-			chyt.GetResource().Spec.Image,
+			chyt.Resource().Spec.Image,
 			cfgen.GetNativeClientConfig,
 			ytsaurus.Spec.Tolerations,
 			ytsaurus.Spec.NodeSelector,
@@ -77,7 +79,7 @@ func NewChyt(
 			ytsaurus.Spec.ImagePullSecrets,
 			"ch-public",
 			consts.ClientConfigFileName,
-			chyt.GetResource().Spec.Image,
+			chyt.Resource().Spec.Image,
 			cfgen.GetNativeClientConfig,
 			ytsaurus.Spec.Tolerations,
 			ytsaurus.Spec.NodeSelector,
@@ -103,7 +105,7 @@ func (c *Chyt) createInitUserScript() string {
 func (c *Chyt) createInitScript() string {
 	script := "/setup_cluster_for_chyt.sh"
 
-	if c.chyt.GetResource().Spec.MakeDefault {
+	if c.chyt.Resource().Spec.MakeDefault {
 		script += " --make-default"
 	}
 
@@ -135,10 +137,10 @@ func (c *Chyt) prepareChPublicJob() {
 	container.EnvFrom = []corev1.EnvFromSource{c.secret.GetEnvSource()}
 }
 
-func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (c *Chyt) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if c.ytsaurus.Status.State != ytv1.ClusterStateRunning {
+	if c.ytsaurus.GetClusterState() != ytv1.ClusterStateRunning {
 		return WaitingStatus(SyncStatusBlocked, "ytsaurus running"), err
 	}
 
@@ -151,7 +153,7 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 			}
 			err = c.secret.Sync(ctx)
 		}
-		c.chyt.GetResource().Status.ReleaseStatus = ytv1.ChytReleaseStatusCreatingUserSecret
+		c.chyt.Resource().Status.ReleaseStatus = ytv1.ChytReleaseStatusCreatingUserSecret
 		return WaitingStatus(SyncStatusPending, c.secret.Name()), err
 	}
 
@@ -161,7 +163,7 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 
 	status, err := c.initUser.Sync(ctx, dry)
 	if status.SyncStatus != SyncStatusReady {
-		c.chyt.GetResource().Status.ReleaseStatus = ytv1.ChytReleaseStatusCreatingUser
+		c.chyt.Resource().Status.ReleaseStatus = ytv1.ChytReleaseStatusCreatingUser
 		return status, err
 	}
 
@@ -184,23 +186,23 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 
 	status, err = c.initEnvironment.Sync(ctx, dry)
 	if err != nil || status.SyncStatus != SyncStatusReady {
-		c.chyt.GetResource().Status.ReleaseStatus = ytv1.ChytReleaseStatusUploadingIntoCypress
+		c.chyt.Resource().Status.ReleaseStatus = ytv1.ChytReleaseStatusUploadingIntoCypress
 		return status, err
 	}
 
-	createPublicClique := c.chyt.GetResource().Spec.CreatePublicClique
-	if c.ytsaurus.Spec.StrawberryController != nil && createPublicClique != nil && *createPublicClique {
+	createPublicClique := c.chyt.Resource().Spec.CreatePublicClique
+	if c.ytsaurus.Resource().Spec.StrawberryController != nil && createPublicClique != nil && *createPublicClique {
 		if !dry {
 			c.prepareChPublicJob()
 		}
 		status, err = c.initChPublicJob.Sync(ctx, dry)
 		if err != nil || status.SyncStatus != SyncStatusReady {
-			c.chyt.GetResource().Status.ReleaseStatus = ytv1.ChytReleaseStatusCreatingChPublicClique
+			c.chyt.Resource().Status.ReleaseStatus = ytv1.ChytReleaseStatusCreatingChPublicClique
 			return status, err
 		}
 	}
 
-	c.chyt.GetResource().Status.ReleaseStatus = ytv1.ChytReleaseStatusFinished
+	c.chyt.Resource().Status.ReleaseStatus = ytv1.ChytReleaseStatusFinished
 
 	return SimpleStatus(SyncStatusReady), err
 }
@@ -212,18 +214,4 @@ func (c *Chyt) Fetch(ctx context.Context) error {
 		c.initChPublicJob,
 		c.secret,
 	)
-}
-
-func (c *Chyt) Status(ctx context.Context) ComponentStatus {
-	status, err := c.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
-}
-
-func (c *Chyt) Sync(ctx context.Context) error {
-	_, err := c.doSync(ctx, false)
-	return err
 }

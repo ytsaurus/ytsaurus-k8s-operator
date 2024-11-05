@@ -36,7 +36,6 @@ func initJobWithNativeDriverPrologue() string {
 
 type InitJob struct {
 	baseComponent
-	apiProxy          apiproxy.APIProxy
 	conditionsManager apiproxy.ConditionManager
 	imagePullSecrets  []corev1.LocalObjectReference
 
@@ -52,6 +51,8 @@ type InitJob struct {
 	builtJob *batchv1.Job
 }
 
+var _ Component = &InitJob{}
+
 func NewInitJob(
 	labeller *labeller.Labeller,
 	apiProxy apiproxy.APIProxy,
@@ -63,10 +64,7 @@ func NewInitJob(
 	nodeSelector map[string]string,
 ) *InitJob {
 	return &InitJob{
-		baseComponent: baseComponent{
-			labeller: labeller,
-		},
-		apiProxy:               apiProxy,
+		baseComponent:          newBaseComponent(apiProxy, labeller),
 		conditionsManager:      conditionsManager,
 		imagePullSecrets:       imagePullSecrets,
 		initCompletedCondition: fmt.Sprintf("%s%sInitJobCompleted", name, labeller.GetFullComponentName()),
@@ -111,7 +109,7 @@ func (j *InitJob) Build() *batchv1.Job {
 	var defaultMode int32 = 0o500
 	job := j.initJob.Build()
 	job.Spec.Template = corev1.PodTemplateSpec{
-		ObjectMeta: j.baseComponent.labeller.GetInitJobObjectMeta(),
+		ObjectMeta: j.labeller.GetInitJobObjectMeta(),
 		Spec: corev1.PodSpec{
 			ImagePullSecrets: j.imagePullSecrets,
 			Containers: []corev1.Container{

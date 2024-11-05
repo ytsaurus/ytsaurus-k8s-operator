@@ -31,10 +31,9 @@ func NewRPCProxy(
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
 	spec ytv1.RPCProxiesSpec) *RpcProxy {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 	l := labeller.Labeller{
 		ObjectMeta:        &resource.ObjectMeta,
-		APIProxy:          ytsaurus.APIProxy(),
 		ComponentType:     consts.RpcProxyType,
 		ComponentNamePart: spec.Role,
 	}
@@ -89,12 +88,6 @@ func NewRPCProxy(
 	}
 }
 
-func (rp *RpcProxy) IsUpdatable() bool {
-	return true
-}
-
-func (rp *RpcProxy) GetType() consts.ComponentType { return consts.RpcProxyType }
-
 func (rp *RpcProxy) Fetch(ctx context.Context) error {
 	fetchable := []resources.Fetchable{
 		rp.server,
@@ -105,7 +98,7 @@ func (rp *RpcProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, fetchable...)
 }
 
-func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (rp *RpcProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(rp.ytsaurus.GetClusterState()) && rp.server.needUpdate() {
@@ -113,20 +106,16 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.localComponent, rp.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, rp, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	masterStatus, err := rp.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, rp.master.GetName()), err
+	if status, err := checkComponentDependency(ctx, rp.master); status != nil {
+		return *status, err
 	}
 
-	if rp.NeedSync() {
+	if ServerNeedSync(rp.server, rp.ytsaurus) {
 		if !dry {
 			statefulSet := rp.server.buildStatefulSet()
 			if secret := rp.tlsSecret; secret != nil {
@@ -152,13 +141,4 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (rp *RpcProxy) Status(ctx context.Context) (ComponentStatus, error) {
-	return rp.doSync(ctx, true)
-}
-
-func (rp *RpcProxy) Sync(ctx context.Context) error {
-	_, err := rp.doSync(ctx, false)
-	return err
 }

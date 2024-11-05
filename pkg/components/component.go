@@ -21,13 +21,13 @@ const (
 	SyncStatusUpdating        SyncStatus = "Updating"
 )
 
-func IsRunningStatus(status SyncStatus) bool {
-	return status == SyncStatusReady || status == SyncStatusNeedLocalUpdate
-}
-
 type ComponentStatus struct {
 	SyncStatus SyncStatus
 	Message    string
+}
+
+func (s ComponentStatus) IsRunning() bool {
+	return s.SyncStatus == SyncStatusReady || s.SyncStatus == SyncStatusNeedLocalUpdate
 }
 
 func NewComponentStatus(status SyncStatus, message string) ComponentStatus {
@@ -43,37 +43,102 @@ func SimpleStatus(status SyncStatus) ComponentStatus {
 }
 
 type Component interface {
-	Fetch(ctx context.Context) error
-	Sync(ctx context.Context) error
-	Status(ctx context.Context) (ComponentStatus, error)
-	GetName() string
 	GetType() consts.ComponentType
-	SetReadyCondition(status ComponentStatus)
 
-	// TODO(nadya73): refactor it
-	IsUpdatable() bool
+	// GetName returns component's name, which is used as an identifier in component management
+	// and for mentioning in logs. For example: "Master", "DataNode<NameFromSpec>".
+	GetName() string
+
+	Fetch(ctx context.Context) error
+	Sync(ctx context.Context, dry bool) (ComponentStatus, error)
+
+	getAPIProxy() apiproxy.APIProxy
+	getLabeller() *labeller.Labeller
+}
+
+type LocalComponent interface {
+	Component
+
+	getYtsaurus() *apiproxy.Ytsaurus
+}
+
+type LocalServerComponent interface {
+	LocalComponent
+
+	getServer() server
+}
+
+type RemoteServerComponent interface {
+	Component
 }
 
 // Following structs are used as a base for implementing YTsaurus components objects.
-// baseComponent is a base struct intended for use in the simplest components and remote components
-// (the ones that don't have access to the ytsaurus resource).
 type baseComponent struct {
+	apiProxy apiproxy.APIProxy
 	labeller *labeller.Labeller
 }
 
-// GetName returns component's name, which is used as an identifier in component management
-// and for mentioning in logs.
-// For example for master component name is "Master",
-// For data node name looks like "DataNode<NameFromSpec>".
+func (c *baseComponent) GetType() consts.ComponentType {
+	return c.labeller.ComponentType
+}
+
 func (c *baseComponent) GetName() string {
 	return c.labeller.GetFullComponentName()
+}
+
+func (c *baseComponent) getAPIProxy() apiproxy.APIProxy {
+	return c.apiProxy
+}
+
+func (c *baseComponent) getLabeller() *labeller.Labeller {
+	return c.labeller
+}
+
+func newBaseComponent(
+	apiProxy apiproxy.APIProxy,
+	labeller *labeller.Labeller,
+) baseComponent {
+	return baseComponent{
+		apiProxy: apiProxy,
+		labeller: labeller,
+	}
 }
 
 // localComponent is a base structs for components which have access to ytsaurus resource,
 // but don't depend on server. Example: UI, Strawberry.
 type localComponent struct {
-	baseComponent
 	ytsaurus *apiproxy.Ytsaurus
+	labeller *labeller.Labeller
+}
+
+func (c *localComponent) GetType() consts.ComponentType {
+	return c.labeller.ComponentType
+}
+
+func (c *localComponent) GetName() string {
+	return c.labeller.GetFullComponentName()
+}
+
+func (c *localComponent) getAPIProxy() apiproxy.APIProxy {
+	return c.ytsaurus.APIProxy()
+}
+
+func (c *localComponent) getLabeller() *labeller.Labeller {
+	return c.labeller
+}
+
+func (c *localComponent) getYtsaurus() *apiproxy.Ytsaurus {
+	return c.ytsaurus
+}
+
+func newLocalComponent(
+	labeller *labeller.Labeller,
+	ytsaurus *apiproxy.Ytsaurus,
+) localComponent {
+	return localComponent{
+		ytsaurus: ytsaurus,
+		labeller: labeller,
+	}
 }
 
 // localServerComponent is a base structs for components which have access to ytsaurus resource,
@@ -83,27 +148,8 @@ type localServerComponent struct {
 	server server
 }
 
-func newLocalComponent(
-	labeller *labeller.Labeller,
-	ytsaurus *apiproxy.Ytsaurus,
-) localComponent {
-	return localComponent{
-		baseComponent: baseComponent{labeller: labeller},
-		ytsaurus:      ytsaurus,
-	}
-}
-
-func (c *localComponent) SetReadyCondition(status ComponentStatus) {
-	ready := metav1.ConditionFalse
-	if status.SyncStatus == SyncStatusReady {
-		ready = metav1.ConditionTrue
-	}
-	c.ytsaurus.SetStatusCondition(metav1.Condition{
-		Type:    fmt.Sprintf("%sReady", c.labeller.GetFullComponentName()),
-		Status:  ready,
-		Reason:  string(status.SyncStatus),
-		Message: status.Message,
-	})
+func (c *localServerComponent) getServer() server {
+	return c.server
 }
 
 func newLocalServerComponent(
@@ -112,21 +158,41 @@ func newLocalServerComponent(
 	server server,
 ) localServerComponent {
 	return localServerComponent{
-		localComponent: localComponent{
-			baseComponent: baseComponent{
-				labeller: labeller,
-			},
-			ytsaurus: ytsaurus,
-		},
-		server: server,
+		localComponent: newLocalComponent(labeller, ytsaurus),
+		server:         server,
 	}
 }
 
-func (c *localServerComponent) NeedSync() bool {
-	return LocalServerNeedSync(c.server, c.ytsaurus)
+type remoteServerComponent struct {
+	baseComponent
+	server server
 }
 
-func LocalServerNeedSync(srv server, ytsaurus *apiproxy.Ytsaurus) bool {
-	return (srv.configNeedsReload() && ytsaurus.IsUpdating()) ||
-		srv.needBuild()
+func newRemoteServerComponent(
+	apiProxy apiproxy.APIProxy,
+	labeller *labeller.Labeller,
+	server server,
+) remoteServerComponent {
+	return remoteServerComponent{
+		baseComponent: newBaseComponent(apiProxy, labeller),
+		server:        server,
+	}
+}
+
+func ServerNeedSync(s server, ytsaurus *apiproxy.Ytsaurus) bool {
+	// FIXME(khlebnikov): Explain this logic and move into upper layer.
+	return (s.configNeedsReload() && ytsaurus.IsUpdating()) || s.needBuild()
+}
+
+func GetReadyCondition(component Component, status ComponentStatus) metav1.Condition {
+	ready := metav1.ConditionFalse
+	if status.SyncStatus == SyncStatusReady {
+		ready = metav1.ConditionTrue
+	}
+	return metav1.Condition{
+		Type:    fmt.Sprintf("%sReady", component.GetName()),
+		Status:  ready,
+		Reason:  string(status.SyncStatus),
+		Message: status.Message,
+	}
 }

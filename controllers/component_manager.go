@@ -34,23 +34,23 @@ func NewComponentManager(
 	ytsaurus *apiProxy.Ytsaurus,
 ) (*ComponentManager, error) {
 	logger := log.FromContext(ctx)
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 
-	clusterDomain := getClusterDomain(ytsaurus.APIProxy().Client())
+	clusterDomain := getClusterDomain(ytsaurus.Client())
 	cfgen := ytconfig.NewGenerator(resource, clusterDomain)
 
 	d := components.NewDiscovery(cfgen, ytsaurus)
 	m := components.NewMaster(cfgen, ytsaurus)
 	var hps []components.Component
-	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {
+	for _, hpSpec := range ytsaurus.Resource().Spec.HTTPProxies {
 		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
 	}
 	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0])
 
 	var dnds []components.Component
-	nodeCfgGen := ytconfig.NewLocalNodeGenerator(ytsaurus.GetResource(), clusterDomain)
+	nodeCfgGen := ytconfig.NewLocalNodeGenerator(ytsaurus.Resource(), clusterDomain)
 	if len(resource.Spec.DataNodes) > 0 {
-		for _, dndSpec := range ytsaurus.GetResource().Spec.DataNodes {
+		for _, dndSpec := range ytsaurus.Resource().Spec.DataNodes {
 			dnds = append(dnds, components.NewDataNode(nodeCfgGen, ytsaurus, m, dndSpec))
 		}
 	}
@@ -70,7 +70,7 @@ func NewComponentManager(
 
 	if len(resource.Spec.RPCProxies) > 0 {
 		var rps []components.Component
-		for _, rpSpec := range ytsaurus.GetResource().Spec.RPCProxies {
+		for _, rpSpec := range ytsaurus.Resource().Spec.RPCProxies {
 			rps = append(rps, components.NewRPCProxy(cfgen, ytsaurus, m, rpSpec))
 		}
 		allComponents = append(allComponents, rps...)
@@ -78,7 +78,7 @@ func NewComponentManager(
 
 	if len(resource.Spec.TCPProxies) > 0 {
 		var tps []components.Component
-		for _, tpSpec := range ytsaurus.GetResource().Spec.TCPProxies {
+		for _, tpSpec := range ytsaurus.Resource().Spec.TCPProxies {
 			tps = append(tps, components.NewTCPProxy(cfgen, ytsaurus, m, tpSpec))
 		}
 		allComponents = append(allComponents, tps...)
@@ -86,7 +86,7 @@ func NewComponentManager(
 
 	var ends []components.Component
 	if len(resource.Spec.ExecNodes) > 0 {
-		for _, endSpec := range ytsaurus.GetResource().Spec.ExecNodes {
+		for _, endSpec := range ytsaurus.Resource().Spec.ExecNodes {
 			ends = append(ends, components.NewExecNode(nodeCfgGen, ytsaurus, m, endSpec))
 		}
 	}
@@ -94,7 +94,7 @@ func NewComponentManager(
 
 	var tnds []components.Component
 	if len(resource.Spec.TabletNodes) > 0 {
-		for idx, tndSpec := range ytsaurus.GetResource().Spec.TabletNodes {
+		for idx, tndSpec := range ytsaurus.Resource().Spec.TabletNodes {
 			tnds = append(tnds, components.NewTabletNode(nodeCfgGen, ytsaurus, yc, tndSpec, idx == 0))
 		}
 	}
@@ -152,20 +152,21 @@ func NewComponentManager(
 			return nil, err
 		}
 
-		componentStatus, err := c.Status(ctx)
+		componentStatus, err := c.Sync(ctx, true)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get component %s status: %w", c.GetName(), err)
 		}
 
-		c.SetReadyCondition(componentStatus)
+		ytsaurus.SetStatusCondition(components.GetReadyCondition(c, componentStatus))
+
+		if !componentStatus.IsRunning() {
+			status.needInit = true
+		}
+
 		syncStatus := componentStatus.SyncStatus
 
 		if syncStatus == components.SyncStatusNeedLocalUpdate {
 			status.needUpdate = append(status.needUpdate, c)
-		}
-
-		if !components.IsRunningStatus(syncStatus) {
-			status.needInit = true
 		}
 
 		if syncStatus != components.SyncStatusReady && syncStatus != components.SyncStatusUpdating {
@@ -201,7 +202,7 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 
 	hasPending := false
 	for _, c := range cm.allComponents {
-		status, err := c.Status(ctx)
+		status, err := c.Sync(ctx, true)
 		if err != nil {
 			return ctrl.Result{Requeue: true}, fmt.Errorf("failed to get status for %s: %w", c.GetName(), err)
 		}
@@ -210,14 +211,14 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 			status.SyncStatus == components.SyncStatusUpdating {
 			hasPending = true
 			logger.Info("component sync", "component", c.GetName())
-			if err := c.Sync(ctx); err != nil {
+			if _, err := c.Sync(ctx, false); err != nil {
 				logger.Error(err, "component sync failed", "component", c.GetName())
 				return ctrl.Result{Requeue: true}, err
 			}
 		}
 	}
 
-	if err := cm.ytsaurus.APIProxy().UpdateStatus(ctx); err != nil {
+	if err := cm.ytsaurus.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "update Ytsaurus status failed")
 		return ctrl.Result{Requeue: true}, err
 	}

@@ -15,22 +15,22 @@ import (
 )
 
 type RemoteDataNode struct {
-	server server
-	cfgen  *ytconfig.NodeGenerator
-	spec   *ytv1.DataNodesSpec
-	baseComponent
+	remoteServerComponent
+	cfgen *ytconfig.NodeGenerator
+	spec  *ytv1.DataNodesSpec
 }
+
+var _ RemoteServerComponent = &RemoteDataNode{}
 
 func NewRemoteDataNodes(
 	cfgen *ytconfig.NodeGenerator,
 	nodes *ytv1.RemoteDataNodes,
-	proxy apiproxy.APIProxy,
+	apiProxy apiproxy.APIProxy,
 	spec ytv1.DataNodesSpec,
 	commonSpec ytv1.CommonSpec,
 ) *RemoteDataNode {
 	l := labeller.Labeller{
 		ObjectMeta:        &nodes.ObjectMeta,
-		APIProxy:          proxy,
 		ComponentType:     consts.DataNodeType,
 		ComponentNamePart: spec.Name,
 	}
@@ -39,9 +39,9 @@ func NewRemoteDataNodes(
 		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.DataNodeMonitoringPort))
 	}
 
-	srv := newServerConfigured(
+	server := newServerConfigured(
 		&l,
-		proxy,
+		apiProxy,
 		commonSpec,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
@@ -58,17 +58,16 @@ func NewRemoteDataNodes(
 		}),
 	)
 	return &RemoteDataNode{
-		baseComponent: baseComponent{labeller: &l},
-		server:        srv,
-		cfgen:         cfgen,
-		spec:          &spec,
+		remoteServerComponent: newRemoteServerComponent(apiProxy, &l, server),
+		cfgen:                 cfgen,
+		spec:                  &spec,
 	}
 }
 
-func (n *RemoteDataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (n *RemoteDataNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if n.server.needSync() || n.server.needUpdate() {
+	if n.server.configNeedsReload() || n.server.needBuild() || n.server.needUpdate() {
 		if !dry {
 			err = n.server.Sync(ctx)
 		}
@@ -80,12 +79,6 @@ func (n *RemoteDataNode) doSync(ctx context.Context, dry bool) (ComponentStatus,
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (n *RemoteDataNode) GetType() consts.ComponentType { return consts.DataNodeType }
-
-func (n *RemoteDataNode) Sync(ctx context.Context) (ComponentStatus, error) {
-	return n.doSync(ctx, false)
 }
 
 func (n *RemoteDataNode) Fetch(ctx context.Context) error {
