@@ -208,6 +208,15 @@ func WithQueryTracker(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	return ytsaurus
 }
 
+func WithYqlAgent(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
+	ytsaurus.Spec.YqlAgents = &ytv1.YqlAgentSpec{
+		InstanceSpec: ytv1.InstanceSpec{
+			InstanceCount: 1,
+		},
+	}
+	return ytsaurus
+}
+
 func WithQueueAgent(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{
 		InstanceSpec: ytv1.InstanceSpec{

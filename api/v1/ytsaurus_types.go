@@ -696,6 +696,8 @@ const (
 	UpdateStateWaitingForOpArchiveUpdate          UpdateState = "WaitingForOpArchiveUpdate"
 	UpdateStateWaitingForQTStateUpdatingPrepare   UpdateState = "WaitingForQTStateUpdatingPrepare"
 	UpdateStateWaitingForQTStateUpdate            UpdateState = "WaitingForQTStateUpdate"
+	UpdateStateWaitingForYqlAUpdatingPrepare      UpdateState = "WaitingForYqlAUpdatingPrepare"
+	UpdateStateWaitingForYqlAUpdate               UpdateState = "WaitingForYqlAUpdate"
 	UpdateStateWaitingForSafeModeDisabled         UpdateState = "WaitingForSafeModeDisabled"
 )
 

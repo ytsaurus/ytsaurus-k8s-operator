@@ -134,8 +134,8 @@ func (r *YtsaurusReconciler) handleEverything(
 	case ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:
 		if !componentManager.needQueryTrackerUpdate() {
 			ytsaurus.LogUpdate(ctx, "Query tracker state update was skipped")
-			ytsaurus.LogUpdate(ctx, "Waiting for safe mode disabled")
-			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSafeModeDisabled)
+			ytsaurus.LogUpdate(ctx, "Waiting for yql agent env prepare for updating")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForYqlAUpdatingPrepare)
 			return &ctrl.Result{Requeue: true}, err
 		}
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionQTStatePreparedForUpdating) {
@@ -146,6 +146,26 @@ func (r *YtsaurusReconciler) handleEverything(
 
 	case ytv1.UpdateStateWaitingForQTStateUpdate:
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionQTStateUpdated) {
+			ytsaurus.LogUpdate(ctx, "Waiting for yql agent env prepare for updating")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForYqlAUpdatingPrepare)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForYqlAUpdatingPrepare:
+		if !componentManager.needYqlAgentUpdate() {
+			ytsaurus.LogUpdate(ctx, "Yql agent env update was skipped")
+			ytsaurus.LogUpdate(ctx, "Waiting for safe mode disabled")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSafeModeDisabled)
+			return &ctrl.Result{Requeue: true}, err
+		}
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionYqlAPreparedForUpdating) {
+			ytsaurus.LogUpdate(ctx, "Waiting for yql agent env updating to finish")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForYqlAUpdate)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForYqlAUpdate:
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionYqlAUpdated) {
 			ytsaurus.LogUpdate(ctx, "Waiting for safe mode disabled")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSafeModeDisabled)
 			return &ctrl.Result{Requeue: true}, err
@@ -213,8 +233,8 @@ func (r *YtsaurusReconciler) handleStateless(
 	case ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:
 		if !componentManager.needQueryTrackerUpdate() {
 			ytsaurus.LogUpdate(ctx, "Query tracker state update was skipped")
-			ytsaurus.LogUpdate(ctx, "Finishing")
-			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdateFinishing)
+			ytsaurus.LogUpdate(ctx, "Waiting for yql agent env prepare for updating")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForYqlAUpdatingPrepare)
 			return &ctrl.Result{Requeue: true}, err
 		}
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionQTStatePreparedForUpdating) {
@@ -225,6 +245,26 @@ func (r *YtsaurusReconciler) handleStateless(
 
 	case ytv1.UpdateStateWaitingForQTStateUpdate:
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionQTStateUpdated) {
+			ytsaurus.LogUpdate(ctx, "Waiting for yql agent env prepare for updating")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForYqlAUpdatingPrepare)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForYqlAUpdatingPrepare:
+		if !componentManager.needYqlAgentUpdate() {
+			ytsaurus.LogUpdate(ctx, "Yql agent env update was skipped")
+			ytsaurus.LogUpdate(ctx, "Finishing")
+			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdateFinishing)
+			return &ctrl.Result{Requeue: true}, err
+		}
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionYqlAPreparedForUpdating) {
+			ytsaurus.LogUpdate(ctx, "Waiting for yql agent env updating to finish")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForYqlAUpdate)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForYqlAUpdate:
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionYqlAUpdated) {
 			ytsaurus.LogUpdate(ctx, "Finishing")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdateFinishing)
 			return &ctrl.Result{Requeue: true}, err
