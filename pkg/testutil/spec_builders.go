@@ -209,7 +209,7 @@ func WithQueryTracker(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 }
 
 func WithYqlAgent(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
-	ytsaurus.Spec.YqlAgents = &ytv1.YqlAgentSpec{
+	ytsaurus.Spec.YQLAgents = &ytv1.YQLAgentSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
 		},
