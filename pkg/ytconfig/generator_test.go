@@ -116,9 +116,9 @@ var (
 	}
 )
 
-func TestGetChytInitClusterConfig(t *testing.T) {
+func TestGetStrawberryInitClusterConfig(t *testing.T) {
 	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	cfg, err := g.GetChytInitClusterConfig()
+	cfg, err := g.GetStrawberryInitClusterConfig()
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -334,6 +334,30 @@ func TestGetSchedulerWithFixedMasterHostsConfig(t *testing.T) {
 
 func TestGetStrawberryControllerConfig(t *testing.T) {
 	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	cfg, err := g.GetStrawberryControllerConfig()
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetStrawberryControllerConfigWithExtendedHTTPMapping(t *testing.T) {
+	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	externalProxy := "some.domain"
+	g.ytsaurus.Spec.StrawberryController.ExternalProxy = &externalProxy
+	cfg, err := g.GetStrawberryControllerConfig()
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetStrawberryControllerConfigWithCustomFamilies(t *testing.T) {
+	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	externalProxy := "some.domain"
+	g.ytsaurus.Spec.StrawberryController.ExternalProxy = &externalProxy
+	g.ytsaurus.Spec.StrawberryController.ControllerFamilies = append(
+		g.ytsaurus.Spec.StrawberryController.ControllerFamilies,
+		"superservice1", "superservice2", "superservice3",
+	)
+	defaultRouteFamily := "superservice2"
+	g.ytsaurus.Spec.StrawberryController.DefaultRouteFamily = &defaultRouteFamily
 	cfg, err := g.GetStrawberryControllerConfig()
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)

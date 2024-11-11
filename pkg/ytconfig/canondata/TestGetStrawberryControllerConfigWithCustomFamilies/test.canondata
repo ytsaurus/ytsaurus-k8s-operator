@@ -8,14 +8,11 @@
         "robot_username"="robot-strawberry-controller";
     };
     controllers={
-        chyt={
-            "address_resolver"={
-                "enable_ipv4"=%true;
-                "enable_ipv6"=%false;
-                retries=1000;
-            };
+        superservice1={
         };
-        jupyt={
+        superservice2={
+        };
+        superservice3={
         };
     };
     "http_api_endpoint"=":80";
@@ -25,6 +22,8 @@
         ];
     };
     "http_controller_mappings"={
-        "*"=chyt;
+        "*"=superservice2;
+        "superservice1.some.domain"=superservice1;
+        "superservice3.some.domain"=superservice3;
     };
 }
