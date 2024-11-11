@@ -251,7 +251,7 @@ func (r *YtsaurusReconciler) handleStateless(
 		}
 
 	case ytv1.UpdateStateWaitingForYqlaUpdatingPrepare:
-		if !componentManager.needYqlagentUpdate() {
+		if !componentManager.needYqlAgentUpdate() {
 			ytsaurus.LogUpdate(ctx, "Yql agent env update was skipped")
 			ytsaurus.LogUpdate(ctx, "Finishing")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdateFinishing)
