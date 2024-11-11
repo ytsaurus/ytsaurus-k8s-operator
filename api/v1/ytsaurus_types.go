@@ -517,13 +517,17 @@ type QueryTrackerSpec struct {
 }
 
 type StrawberryControllerSpec struct {
-	Resources          corev1.ResourceRequirements `json:"resources,omitempty"`
-	Image              *string                     `json:"image,omitempty"`
-	Tolerations        []corev1.Toleration         `json:"tolerations,omitempty"`
-	NodeSelector       map[string]string           `json:"nodeSelector,omitempty"`
-	ExternalProxy      *string                     `json:"externalProxy,omitempty"`
-	ControllerFamilies []string                    `json:"controllerFamilies,omitempty"`
-	DefaultRouteFamily *string                     `json:"defaultRouteFamily,omitempty"`
+	Resources     corev1.ResourceRequirements `json:"resources,omitempty"`
+	Image         *string                     `json:"image,omitempty"`
+	Tolerations   []corev1.Toleration         `json:"tolerations,omitempty"`
+	NodeSelector  map[string]string           `json:"nodeSelector,omitempty"`
+	ExternalProxy *string                     `json:"externalProxy,omitempty"`
+	// Supported controller families, for example: "chyt", "jupyt", "livy".
+	ControllerFamilies []string `json:"controllerFamilies,omitempty"`
+	// The family that will receive requests for domains that are not explicitly specified in http_controller_mappings.
+	// For example, "chyt" (with `ControllerFamilies` set to {"chyt", "jupyt"} would mean
+	// that requests to "foo.<domain>" will be processed by chyt controller.
+	DefaultRouteFamily *string `json:"defaultRouteFamily,omitempty"`
 }
 
 type YQLAgentSpec struct {

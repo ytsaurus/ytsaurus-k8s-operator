@@ -29433,10 +29433,14 @@ spec:
               strawberry:
                 properties:
                   controllerFamilies:
+                    description: 'Supported controller families, for example: "chyt",
+                      "jupyt", "livy".'
                     items:
                       type: string
                     type: array
                   defaultRouteFamily:
+                    description: The family that will receive requests for domains
+                      that are not explicitly specif
                     type: string
                   externalProxy:
                     type: string
