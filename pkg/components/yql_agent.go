@@ -167,11 +167,11 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
 
-			if status, err := yqla.updateYqlA(ctx, dry); status != nil {
+			if status, err := yqla.updateYqla(ctx, dry); status != nil {
 				return *status, err
 			}
 			if yqla.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
-				yqla.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForYqlAUpdate {
+				yqla.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForYqlaUpdate {
 				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
 			}
 		} else {
@@ -235,23 +235,23 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	return yqla.updateEnvironment.Sync(ctx, dry)
 }
 
-func (yqla *YqlAgent) updateYqlA(ctx context.Context, dry bool) (*ComponentStatus, error) {
+func (yqla *YqlAgent) updateYqla(ctx context.Context, dry bool) (*ComponentStatus, error) {
 	var err error
 	switch yqla.ytsaurus.GetUpdateState() {
-	case ytv1.UpdateStateWaitingForYqlAUpdatingPrepare:
+	case ytv1.UpdateStateWaitingForYqlaUpdatingPrepare:
 		if !yqla.updateEnvironment.isRestartPrepared() {
 			return ptr.To(SimpleStatus(SyncStatusUpdating)), yqla.updateEnvironment.prepareRestart(ctx, dry)
 		}
 		if !dry {
-			yqla.setConditionYqlAPreparedForUpdating(ctx)
+			yqla.setConditionYqlaPreparedForUpdating(ctx)
 		}
 		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
-	case ytv1.UpdateStateWaitingForYqlAUpdate:
+	case ytv1.UpdateStateWaitingForYqlaUpdate:
 		if !yqla.updateEnvironment.isRestartCompleted() {
 			return nil, nil
 		}
 		if !dry {
-			yqla.setConditionYqlAUpdated(ctx)
+			yqla.setConditionYqlaUpdated(ctx)
 		}
 		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
 	default:
@@ -259,20 +259,20 @@ func (yqla *YqlAgent) updateYqlA(ctx context.Context, dry bool) (*ComponentStatu
 	}
 }
 
-func (yqla *YqlAgent) setConditionYqlAPreparedForUpdating(ctx context.Context) {
+func (yqla *YqlAgent) setConditionYqlaPreparedForUpdating(ctx context.Context) {
 	yqla.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionYqlAPreparedForUpdating,
+		Type:    consts.ConditionYqlaPreparedForUpdating,
 		Status:  metav1.ConditionTrue,
-		Reason:  "YqlAPreparedForUpdating",
+		Reason:  "YqlaPreparedForUpdating",
 		Message: "Yql Agent state prepared for updating",
 	})
 }
 
-func (yqla *YqlAgent) setConditionYqlAUpdated(ctx context.Context) {
+func (yqla *YqlAgent) setConditionYqlaUpdated(ctx context.Context) {
 	yqla.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionYqlAUpdated,
+		Type:    consts.ConditionYqlaUpdated,
 		Status:  metav1.ConditionTrue,
-		Reason:  "YqlAUpdated",
+		Reason:  "YqlaUpdated",
 		Message: "Yql Agent state updated",
 	})
 }
