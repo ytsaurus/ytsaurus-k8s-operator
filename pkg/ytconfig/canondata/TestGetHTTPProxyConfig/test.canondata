@@ -136,10 +136,10 @@
         port=443;
         credentials={
             "cert_chain"={
-                "file_name"="/config/https_secret/tls.crt";
+                "file_name"="/tls/https_secret/tls.crt";
             };
             "private_key"={
-                "file_name"="/config/https_secret/tls.key";
+                "file_name"="/tls/https_secret/tls.key";
             };
             "update_period"=60000;
         };
