@@ -208,16 +208,16 @@ kind-delete-local-registry: ## Delete local docker registry.
 	rm -fr "${REGISTRY_CONFIG_DIR}/${REGISTRY_LOCAL_ADDR}"
 
 TEST_IMAGES = \
-    	ytsaurus/ytsaurus-nightly:dev-23.1-28ccaedbf353b870bedafb6e881ecf386a0a3779 \
-    	ytsaurus/ytsaurus-nightly:dev-23.1-9779e0140ff73f5a786bd5362313ef9a74fcd0de \
-    	ytsaurus/ytsaurus-nightly:dev-23.2-9c50056eacfa4fe213798a5b9ee828ae3acb1bca
+    	ghcr.io/ytsaurus/ytsaurus:stable-24.1.0 \
+    	ghcr.io/ytsaurus/ytsaurus:stable-23.2.0 \
+    	ghcr.io/ytsaurus/ytsaurus:stable-23.2.1
 
 .PHONY: kind-load-test-images
 kind-load-test-images:
 	$(foreach img,$(TEST_IMAGES),docker pull -q $(img) && $(KIND) load docker-image --name $(KIND_CLUSTER_NAME) $(img);)
 
 SAMPLE_IMAGES = \
-	ytsaurus/ytsaurus:stable-23.1.0-relwithdebinfo
+	ghcr.io/ytsaurus/ytsaurus:stable-24.1.0-relwithdebinfo
 .PHONY: kind-load-sample-images
 kind-load-sample-images:
 	$(foreach img,$(SAMPLE_IMAGES),docker pull -q $(img) && $(KIND) load docker-image --name $(KIND_CLUSTER_NAME) $(img);)
