@@ -217,7 +217,7 @@ kind-load-test-images:
 	$(foreach img,$(TEST_IMAGES),docker pull -q $(img) && $(KIND) load docker-image --name $(KIND_CLUSTER_NAME) $(img);)
 
 SAMPLE_IMAGES = \
-	ytsaurus/ytsaurus:stable-24.1.0-relwithdebinfo
+	ghcr.io/ytsaurus/ytsaurus:stable-24.1.0-relwithdebinfo
 .PHONY: kind-load-sample-images
 kind-load-sample-images:
 	$(foreach img,$(SAMPLE_IMAGES),docker pull -q $(img) && $(KIND) load docker-image --name $(KIND_CLUSTER_NAME) $(img);)
