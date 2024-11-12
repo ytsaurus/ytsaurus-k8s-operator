@@ -7,8 +7,8 @@ import (
 const (
 	ConfigMountPoint           = "/config"
 	ConfigTemplateMountPoint   = "/config_template"
-	HTTPSSecretMountPoint      = "/config/https_secret"
-	RPCSecretMountPoint        = "/config/rpc_secret"
+	HTTPSSecretMountPoint      = "/tls/https_secret"
+	RPCSecretMountPoint        = "/tls/rpc_secret"
 	BusSecretMountPoint        = "/tls/bus_secret"
 	CABundleMountPoint         = "/tls/ca_bundle"
 	UIClustersConfigMountPoint = "/opt/app"
