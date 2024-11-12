@@ -25,8 +25,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/validation"
+	v1validation "k8s.io/apimachinery/pkg/apis/meta/v1/validation"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/utils/ptr"
@@ -42,13 +43,19 @@ import (
 // log is for logging in this package.
 var ytsauruslog = logf.Log.WithName("ytsaurus-resource")
 
-type ytsaurusValidator struct {
+type baseValidator struct {
 	Client client.Client
+}
+
+type ytsaurusValidator struct {
+	baseValidator
 }
 
 func (r *Ytsaurus) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	validator := &ytsaurusValidator{
-		Client: mgr.GetClient(),
+		baseValidator: baseValidator{
+			Client: mgr.GetClient(),
+		},
 	}
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
@@ -221,7 +228,7 @@ func (r *ytsaurusValidator) validateDataNodes(newYtsaurus *Ytsaurus) field.Error
 	return allErrors
 }
 
-func validateSidecars(sidecars []string, path *field.Path) field.ErrorList {
+func (r *baseValidator) validateSidecars(sidecars []string, path *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
 	names := make(map[string]bool)
@@ -262,16 +269,17 @@ func (r *ytsaurusValidator) validateExecNodes(newYtsaurus *Ytsaurus) field.Error
 		}
 
 		if en.InitContainers != nil {
-			allErrors = append(allErrors, validateSidecars(en.InitContainers, path.Child("initContainers"))...)
+			allErrors = append(allErrors, r.validateSidecars(en.InitContainers, path.Child("initContainers"))...)
 		}
 		if en.Sidecars != nil {
-			allErrors = append(allErrors, validateSidecars(en.Sidecars, path.Child("sidecars"))...)
+			allErrors = append(allErrors, r.validateSidecars(en.Sidecars, path.Child("sidecars"))...)
 		}
 	}
 
 	if len(newYtsaurus.Spec.ExecNodes) > 0 {
 		if newYtsaurus.Spec.Schedulers == nil {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"), "execNodes doesn't make sense without schedulers"))
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"),
+				"execNodes doesn't make sense without schedulers"))
 		}
 	}
 
@@ -286,7 +294,8 @@ func (r *ytsaurusValidator) validateSchedulers(newYtsaurus *Ytsaurus) field.Erro
 		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.Schedulers.InstanceSpec, path)...)
 
 		if newYtsaurus.Spec.ControllerAgents == nil {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("controllerAgents"), "schedulers doesn't make sense without controllerAgents"))
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("controllerAgents"),
+				"schedulers doesn't make sense without controllerAgents"))
 		}
 	}
 
@@ -301,7 +310,8 @@ func (r *ytsaurusValidator) validateControllerAgents(newYtsaurus *Ytsaurus) fiel
 		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.ControllerAgents.InstanceSpec, path)...)
 
 		if newYtsaurus.Spec.Schedulers == nil {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"), "controllerAgents doesn't make sense without schedulers"))
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"),
+				"controllerAgents doesn't make sense without schedulers"))
 		}
 	}
 
@@ -337,7 +347,8 @@ func (r *ytsaurusValidator) validateStrawberry(newYtsaurus *Ytsaurus) field.Erro
 
 	if newYtsaurus.Spec.StrawberryController != nil {
 		if newYtsaurus.Spec.Schedulers == nil {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"), "schedulers are required for strawberry"))
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"),
+				"schedulers are required for strawberry"))
 		}
 	}
 
@@ -352,11 +363,13 @@ func (r *ytsaurusValidator) validateQueryTrackers(newYtsaurus *Ytsaurus) field.E
 		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.QueryTrackers.InstanceSpec, path)...)
 
 		if len(newYtsaurus.Spec.TabletNodes) == 0 {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("tabletNodes"), "tabletNodes are required for queryTrackers"))
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("tabletNodes"),
+				"tabletNodes are required for queryTrackers"))
 		}
 
 		if newYtsaurus.Spec.Schedulers == nil {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"), "schedulers are required for queryTrackers"))
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"),
+				"schedulers are required for queryTrackers"))
 		}
 	}
 
@@ -371,7 +384,8 @@ func (r *ytsaurusValidator) validateQueueAgents(newYtsaurus *Ytsaurus) field.Err
 		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.QueueAgents.InstanceSpec, path)...)
 
 		if len(newYtsaurus.Spec.TabletNodes) == 0 {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("tabletNodes"), "tabletNodes are required for queueAgents"))
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("tabletNodes"),
+				"tabletNodes are required for queueAgents"))
 		}
 	}
 
@@ -383,7 +397,8 @@ func (r *ytsaurusValidator) validateSpyt(newYtsaurus *Ytsaurus) field.ErrorList 
 	path := field.NewPath("spec").Child("spyt")
 
 	if newYtsaurus.Spec.Spyt != nil {
-		allErrors = append(allErrors, field.Invalid(path, newYtsaurus.Spec.Spyt, "spyt is deprecated here, use Spyt resource instead"))
+		allErrors = append(allErrors, field.Invalid(path, newYtsaurus.Spec.Spyt,
+			"spyt is deprecated here, use Spyt resource instead"))
 	}
 
 	return allErrors
@@ -397,7 +412,8 @@ func (r *ytsaurusValidator) validateYQLAgents(newYtsaurus *Ytsaurus) field.Error
 		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.YQLAgents.InstanceSpec, path)...)
 
 		if newYtsaurus.Spec.QueryTrackers == nil {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("queryTrackers"), "yqlAgents doesn't make sense without queryTrackers"))
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("queryTrackers"),
+				"yqlAgents doesn't make sense without queryTrackers"))
 		}
 	}
 
@@ -424,13 +440,15 @@ func (r *ytsaurusValidator) validateUi(newYtsaurus *Ytsaurus) field.ErrorList {
 	return allErrors
 }
 
-//////////////////////////////////////////////////
-
-func (r *ytsaurusValidator) validateInstanceSpec(instanceSpec InstanceSpec, path *field.Path) field.ErrorList {
+func (r *baseValidator) validateInstanceSpec(instanceSpec InstanceSpec, path *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
+	allErrors = append(allErrors, v1validation.ValidateLabels(instanceSpec.PodLabels, path.Child("podLabels"))...)
+	allErrors = append(allErrors, validation.ValidateAnnotations(instanceSpec.PodAnnotations, path.Child("podAnnotations"))...)
+
 	if instanceSpec.EnableAntiAffinity != nil {
-		allErrors = append(allErrors, field.Invalid(path.Child("EnableAntiAffinity"), instanceSpec.EnableAntiAffinity, "EnableAntiAffinity is deprecated, use Affinity instead"))
+		allErrors = append(allErrors, field.Invalid(path.Child("EnableAntiAffinity"), instanceSpec.EnableAntiAffinity,
+			"EnableAntiAffinity is deprecated, use Affinity instead"))
 	}
 
 	if instanceSpec.Locations != nil {
@@ -444,7 +462,8 @@ func (r *ytsaurusValidator) validateInstanceSpec(instanceSpec InstanceSpec, path
 			}
 
 			if !inVolumeMount {
-				allErrors = append(allErrors, field.Invalid(path.Child("locations").Index(locationIdx), location, "location path is not in any volume mount"))
+				allErrors = append(allErrors, field.Invalid(path.Child("locations").Index(locationIdx), location,
+					"location path is not in any volume mount"))
 			}
 		}
 	}
@@ -471,8 +490,18 @@ func (r *ytsaurusValidator) validateExistsYtsaurus(ctx context.Context, newYtsau
 		// it's the creation operation for the first ytsaurus object
 		return allErrors
 	} else {
-		allErrors = append(allErrors, field.Forbidden(field.NewPath("metadata").Child("namespace"), fmt.Sprintf("A Ytsaurus object already exists in the given namespace %s", newYtsaurus.Namespace)))
+		allErrors = append(allErrors, field.Forbidden(field.NewPath("metadata").Child("namespace"),
+			fmt.Sprintf("A Ytsaurus object already exists in the given namespace %s", newYtsaurus.Namespace)))
 	}
+
+	return allErrors
+}
+
+func (r *baseValidator) validateCommonSpec(spec *CommonSpec) field.ErrorList {
+	var allErrors field.ErrorList
+	path := field.NewPath("spec")
+
+	allErrors = append(allErrors, validation.ValidateAnnotations(spec.ExtraPodAnnotations, path.Child("extraPodAnnotations"))...)
 
 	return allErrors
 }
@@ -480,6 +509,7 @@ func (r *ytsaurusValidator) validateExistsYtsaurus(ctx context.Context, newYtsau
 func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, oldYtsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
+	allErrors = append(allErrors, r.validateCommonSpec(&newYtsaurus.Spec.CommonSpec)...)
 	allErrors = append(allErrors, r.validateDiscovery(newYtsaurus)...)
 	allErrors = append(allErrors, r.validatePrimaryMasters(newYtsaurus, oldYtsaurus)...)
 	allErrors = append(allErrors, r.validateSecondaryMasters(newYtsaurus)...)
@@ -503,16 +533,13 @@ func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, o
 	return allErrors
 }
 
-func (r *ytsaurusValidator) evaluateYtsaurusValidation(ctx context.Context, newYtsaurus, oldYtsaurus *Ytsaurus) error {
+func (r *ytsaurusValidator) evaluateYtsaurusValidation(ctx context.Context, newYtsaurus, oldYtsaurus *Ytsaurus) (admission.Warnings, error) {
 	allErrors := r.validateYtsaurus(ctx, newYtsaurus, oldYtsaurus)
 	if len(allErrors) == 0 {
-		return nil
+		return nil, nil
 	}
 
-	return apierrors.NewInvalid(
-		schema.GroupKind{Group: "cluster.ytsaurus.tech", Kind: "Ytsaurus"},
-		newYtsaurus.Name,
-		allErrors)
+	return nil, apierrors.NewInvalid(YtsaurusGVK.GroupKind(), newYtsaurus.Name, allErrors)
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
@@ -522,7 +549,7 @@ func (r *ytsaurusValidator) ValidateCreate(ctx context.Context, obj runtime.Obje
 	if !ok {
 		return nil, fmt.Errorf("expected a Ytsaurus but got a %T", obj)
 	}
-	return nil, r.evaluateYtsaurusValidation(ctx, newYtsaurus, nil)
+	return r.evaluateYtsaurusValidation(ctx, newYtsaurus, nil)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
@@ -536,7 +563,7 @@ func (r *ytsaurusValidator) ValidateUpdate(ctx context.Context, oldObj, newObj r
 	if !ok {
 		return nil, fmt.Errorf("expected a Ytsaurus but got a %T", newYtsaurus)
 	}
-	return nil, r.evaluateYtsaurusValidation(ctx, newYtsaurus, oldYtsaurus)
+	return r.evaluateYtsaurusValidation(ctx, newYtsaurus, oldYtsaurus)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
