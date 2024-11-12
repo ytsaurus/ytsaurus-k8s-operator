@@ -76,70 +76,82 @@ func (r *ytsaurusValidator) validateDiscovery(newYtsaurus *Ytsaurus) field.Error
 	return allErrors
 }
 
-func (r *ytsaurusValidator) validatePrimaryMasters(newYtsaurus, oldYtsaurus *Ytsaurus) field.ErrorList {
+func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus *Ytsaurus, mastersSpec, oldMastersSpec *MastersSpec, path *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
-	path := field.NewPath("spec").Child("primaryMasters")
-	allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.PrimaryMasters.InstanceSpec, path)...)
-	allErrors = append(allErrors, r.validateHostAddresses(newYtsaurus, path)...)
+	allErrors = append(allErrors, r.validateInstanceSpec(mastersSpec.InstanceSpec, path)...)
+	allErrors = append(allErrors, r.validateHostAddresses(newYtsaurus, mastersSpec, path)...)
 
-	if FindFirstLocation(newYtsaurus.Spec.PrimaryMasters.Locations, LocationTypeMasterChangelogs) == nil {
+	if FindFirstLocation(mastersSpec.Locations, LocationTypeMasterChangelogs) == nil {
 		allErrors = append(allErrors, field.NotFound(path.Child("locations"), LocationTypeMasterChangelogs))
 	}
 
-	if FindFirstLocation(newYtsaurus.Spec.PrimaryMasters.Locations, LocationTypeMasterSnapshots) == nil {
+	if FindFirstLocation(mastersSpec.Locations, LocationTypeMasterSnapshots) == nil {
 		allErrors = append(allErrors, field.NotFound(path.Child("locations"), LocationTypeMasterSnapshots))
 	}
 
-	if oldYtsaurus != nil && oldYtsaurus.Spec.PrimaryMasters.CellTag != newYtsaurus.Spec.PrimaryMasters.CellTag {
-		allErrors = append(allErrors, field.Invalid(path.Child("cellTag"), newYtsaurus.Spec.PrimaryMasters.CellTag, "Could not be changed"))
+	if oldMastersSpec != nil && oldMastersSpec.CellTag != mastersSpec.CellTag {
+		allErrors = append(allErrors, field.Invalid(path.Child("cellTag"), mastersSpec.CellTag, "Could not be changed"))
 	}
 
-	if newYtsaurus.Spec.PrimaryMasters.InstanceCount > 1 && !newYtsaurus.Spec.EphemeralCluster {
+	if mastersSpec.InstanceCount > 1 && !newYtsaurus.Spec.EphemeralCluster {
 		affinity := newYtsaurus.Spec.PrimaryMasters.Affinity
 		if affinity == nil || affinity.PodAntiAffinity == nil {
-			allErrors = append(allErrors, field.Required(path.Child("affinity").Child("podAntiAffinity"), "Masters should be placed on different nodes"))
+			allErrors = append(allErrors, field.Required(path.Child("affinity").Child("podAntiAffinity"),
+				"Masters should be placed on different nodes"))
 		}
 	}
 
+	allErrors = append(allErrors, r.validateSidecars(mastersSpec.Sidecars, path.Child("sidecars"))...)
+
 	return allErrors
 }
 
-func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus *Ytsaurus) field.ErrorList {
+func (r *ytsaurusValidator) validatePrimaryMasters(newYtsaurus, oldYtsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
-	for i, sm := range newYtsaurus.Spec.SecondaryMasters {
+
+	mastersSpec := &newYtsaurus.Spec.PrimaryMasters
+	path := field.NewPath("spec").Child("primaryMasters")
+
+	var oldMastersSpec *MastersSpec
+	if oldYtsaurus != nil {
+		oldMastersSpec = &oldYtsaurus.Spec.PrimaryMasters
+	}
+
+	allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, mastersSpec, oldMastersSpec, path)...)
+
+	return allErrors
+}
+
+func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *Ytsaurus) field.ErrorList {
+	var allErrors field.ErrorList
+
+	for i := range newYtsaurus.Spec.SecondaryMasters {
 		path := field.NewPath("spec").Child("secondaryMasters").Index(i)
-		allErrors = append(allErrors, r.validateInstanceSpec(sm.InstanceSpec, path)...)
-		allErrors = append(allErrors, r.validateHostAddresses(newYtsaurus, path)...)
+		mastersSpec := &newYtsaurus.Spec.SecondaryMasters[i]
+		var oldMastersSpec *MastersSpec
+		if oldYtsaurus != nil && len(oldYtsaurus.Spec.SecondaryMasters) > i {
+			oldMastersSpec = &oldYtsaurus.Spec.SecondaryMasters[i]
+		}
+		allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, mastersSpec, oldMastersSpec, path)...)
 	}
 
 	return allErrors
 }
 
-func (r *ytsaurusValidator) validateHostAddresses(newYtsaurus *Ytsaurus, fieldPath *field.Path) field.ErrorList {
+func (r *ytsaurusValidator) validateHostAddresses(newYtsaurus *Ytsaurus, mastersSpec *MastersSpec, fieldPath *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
 	hostAddressesFieldPath := fieldPath.Child("hostAddresses")
-	if !ptr.Deref(newYtsaurus.Spec.PrimaryMasters.HostNetwork, newYtsaurus.Spec.HostNetwork) && len(newYtsaurus.Spec.PrimaryMasters.HostAddresses) != 0 {
-		allErrors = append(
-			allErrors,
-			field.Required(
-				field.NewPath("spec").Child("hostNetwork"),
-				fmt.Sprintf("%s doesn't make sense without hostNetwork=true", hostAddressesFieldPath.String()),
-			),
-		)
+	if !ptr.Deref(mastersSpec.HostNetwork, newYtsaurus.Spec.HostNetwork) && len(mastersSpec.HostAddresses) != 0 {
+		allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("hostNetwork"),
+			fmt.Sprintf("%s doesn't make sense without hostNetwork=true", hostAddressesFieldPath.String())))
 	}
 
-	if len(newYtsaurus.Spec.PrimaryMasters.HostAddresses) != 0 && len(newYtsaurus.Spec.PrimaryMasters.HostAddresses) != int(newYtsaurus.Spec.PrimaryMasters.InstanceCount) {
+	if len(mastersSpec.HostAddresses) != 0 && len(mastersSpec.HostAddresses) != int(mastersSpec.InstanceCount) {
 		instanceCountFieldPath := fieldPath.Child("instanceCount")
-		allErrors = append(
-			allErrors,
-			field.Invalid(
-				hostAddressesFieldPath,
-				newYtsaurus.Spec.PrimaryMasters.HostAddresses,
-				fmt.Sprintf("%s list length shoud be equal to %s", hostAddressesFieldPath.String(), instanceCountFieldPath.String()),
-			),
-		)
+		allErrors = append(allErrors, field.Invalid(hostAddressesFieldPath, newYtsaurus.Spec.PrimaryMasters.HostAddresses,
+			fmt.Sprintf("%s list length shoud be equal to %s", hostAddressesFieldPath.String(), instanceCountFieldPath.String())))
 	}
 
 	return allErrors
@@ -512,7 +524,7 @@ func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, o
 	allErrors = append(allErrors, r.validateCommonSpec(&newYtsaurus.Spec.CommonSpec)...)
 	allErrors = append(allErrors, r.validateDiscovery(newYtsaurus)...)
 	allErrors = append(allErrors, r.validatePrimaryMasters(newYtsaurus, oldYtsaurus)...)
-	allErrors = append(allErrors, r.validateSecondaryMasters(newYtsaurus)...)
+	allErrors = append(allErrors, r.validateSecondaryMasters(newYtsaurus, oldYtsaurus)...)
 	allErrors = append(allErrors, r.validateHTTPProxies(newYtsaurus)...)
 	allErrors = append(allErrors, r.validateRPCProxies(newYtsaurus)...)
 	allErrors = append(allErrors, r.validateTCPProxies(newYtsaurus)...)
