@@ -199,6 +199,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			Name:      ytsaurus.Name,
 			Namespace: namespace,
 		}
+
+		By("Logging all events in namespace")
+		DeferCleanup(LogObjectEvents(ctx, namespace))
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
