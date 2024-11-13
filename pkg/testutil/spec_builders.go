@@ -20,7 +20,8 @@ const (
 	// It is short because of error:
 	// `Failed to create pod sandbox: failed to construct FQDN from pod hostname and cluster domain, FQDN
 	// <...> is too long (64 characters is the max, 67 characters requested)`.
-	RemoteResourceName = "tst-rmt"
+	// FIXME(khlebnikov): https://github.com/ytsaurus/ytsaurus-k8s-operator/issues/390
+	RemoteResourceName = "rmt"
 	// Images should be in sync with TEST_IMAGES variable in Makefile
 	// todo: come up with a more elegant solution
 	CoreImageNextVer = "ghcr.io/ytsaurus/ytsaurus:stable-24.1.0"
