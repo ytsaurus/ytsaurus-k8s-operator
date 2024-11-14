@@ -15,6 +15,16 @@ spec:
   primaryMasters:
     instanceCount: 3
     cellTag: 1
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+            - key: yt_component
+              operator: In
+              values:
+              - ytdemo-yt-master
+          topologyKey: "kubernetes.io/hostname"
     volumeMounts:
       - name: master-data
         mountPath: /yt/master-data
