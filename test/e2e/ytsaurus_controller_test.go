@@ -60,6 +60,17 @@ func getYtHTTPClient(g *ytconfig.Generator, namespace string) yt.Client {
 	return ytClient
 }
 
+func getYtRPCClient(g *ytconfig.Generator, namespace string) yt.Client {
+	ytClient, err := ytrpc.NewClient(&yt.Config{
+		Proxy:                 getHTTPProxyAddress(g, namespace),
+		RPCProxy:              getRPCProxyAddress(g, namespace),
+		Token:                 consts.DefaultAdminPassword,
+		DisableProxyDiscovery: true,
+	})
+	Expect(err).Should(Succeed())
+	return ytClient
+}
+
 func getHTTPProxyAddress(g *ytconfig.Generator, namespace string) string {
 	proxy := os.Getenv("E2E_YT_HTTP_PROXY")
 	if proxy != "" {
@@ -907,15 +918,22 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			It("Rpc proxies should require authentication", func(ctx context.Context) {
 				// Just in case, so dirty dev environment wouldn't interfere.
 				Expect(os.Unsetenv("YT_TOKEN")).Should(Succeed())
+
+				By("Checking RPC proxy without token does not work")
 				cli, err := ytrpc.NewClient(&yt.Config{
-					// N.B.: no credentials are passed here.
+					Proxy:                 getHTTPProxyAddress(g, namespace),
 					RPCProxy:              getRPCProxyAddress(g, namespace),
 					DisableProxyDiscovery: true,
 				})
 				Expect(err).Should(Succeed())
 
-				_, err = cli.NodeExists(context.Background(), ypath.Path("/"), nil)
+				_, err = cli.NodeExists(ctx, ypath.Path("/"), nil)
 				Expect(yterrors.ContainsErrorCode(err, yterrors.CodeRPCAuthenticationError)).Should(BeTrue())
+
+				By("Checking RPC proxy works with token")
+				cli = getYtRPCClient(g, namespace)
+				_, err = cli.NodeExists(ctx, ypath.Path("/"), nil)
+				Expect(err).Should(Succeed())
 			})
 
 		}) // integration rpc-proxy
