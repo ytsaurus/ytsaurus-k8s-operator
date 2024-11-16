@@ -9,7 +9,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -21,25 +20,19 @@ type ControllerAgent struct {
 }
 
 func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *ControllerAgent {
+	l := cfgen.GetComponentLabeller(consts.ControllerAgentType, "")
 	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
-		ComponentType: consts.ControllerAgentType,
-	}
 
 	if resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort = ptr.To(int32(consts.ControllerAgentMonitoringPort))
 	}
 
 	srv := newServer(
-		&l,
+		l,
 		ytsaurus,
 		&resource.Spec.ControllerAgents.InstanceSpec,
 		"/usr/bin/ytserver-controller-agent",
 		"ytserver-controller-agent.yson",
-		"ca",
-		"controller-agents",
 		func() ([]byte, error) { return cfgen.GetControllerAgentConfig(resource.Spec.ControllerAgents) },
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
@@ -49,7 +42,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 	)
 
 	return &ControllerAgent{
-		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               master,
 	}
@@ -58,8 +51,6 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 func (ca *ControllerAgent) IsUpdatable() bool {
 	return true
 }
-
-func (ca *ControllerAgent) GetType() consts.ComponentType { return consts.ControllerAgentType }
 
 func (ca *ControllerAgent) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, ca.server)

@@ -9,7 +9,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -28,26 +27,19 @@ func NewRemoteDataNodes(
 	spec ytv1.DataNodesSpec,
 	commonSpec ytv1.CommonSpec,
 ) *RemoteDataNode {
-	l := labeller.Labeller{
-		ObjectMeta:        &nodes.ObjectMeta,
-		APIProxy:          proxy,
-		ComponentType:     consts.DataNodeType,
-		ComponentNamePart: spec.Name,
-	}
+	l := cfgen.GetComponentLabeller(consts.DataNodeType, spec.Name)
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.DataNodeMonitoringPort))
 	}
 
 	srv := newServerConfigured(
-		&l,
+		l,
 		proxy,
 		commonSpec,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-data-node.yson",
-		cfgen.GetDataNodesStatefulSetName(spec.Name),
-		cfgen.GetDataNodesServiceName(spec.Name),
 		func() ([]byte, error) {
 			return cfgen.GetDataNodeConfig(spec)
 		},
@@ -58,7 +50,7 @@ func NewRemoteDataNodes(
 		}),
 	)
 	return &RemoteDataNode{
-		baseComponent: baseComponent{labeller: &l},
+		baseComponent: baseComponent{labeller: l},
 		server:        srv,
 		cfgen:         cfgen,
 		spec:          &spec,

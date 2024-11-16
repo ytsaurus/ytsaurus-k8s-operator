@@ -52,6 +52,8 @@ type Component interface {
 
 	// TODO(nadya73): refactor it
 	IsUpdatable() bool
+
+	GetLabeller() *labeller.Labeller
 }
 
 // Following structs are used as a base for implementing YTsaurus components objects.
@@ -67,6 +69,14 @@ type baseComponent struct {
 // For data node name looks like "DataNode<NameFromSpec>".
 func (c *baseComponent) GetName() string {
 	return c.labeller.GetFullComponentName()
+}
+
+func (c *baseComponent) GetType() consts.ComponentType {
+	return c.labeller.ComponentType
+}
+
+func (c *baseComponent) GetLabeller() *labeller.Labeller {
+	return c.labeller
 }
 
 // localComponent is a base structs for components which have access to ytsaurus resource,

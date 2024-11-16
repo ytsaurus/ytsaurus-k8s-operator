@@ -16,7 +16,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -38,26 +37,19 @@ func NewQueryTracker(
 	yc internalYtsaurusClient,
 	tabletNodes []Component,
 ) *QueryTracker {
+	l := cfgen.GetComponentLabeller(consts.QueryTrackerType, "")
 	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
-		ComponentType: consts.QueryTrackerType,
-		Annotations:   resource.Spec.ExtraPodAnnotations,
-	}
 
 	if resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort = ptr.To(int32(consts.QueryTrackerMonitoringPort))
 	}
 
 	srv := newServer(
-		&l,
+		l,
 		ytsaurus,
 		&resource.Spec.QueryTrackers.InstanceSpec,
 		"/usr/bin/ytserver-query-tracker",
 		"ytserver-query-tracker.yson",
-		cfgen.GetQueryTrackerStatefulSetName(),
-		cfgen.GetQueryTrackerServiceName(),
 		func() ([]byte, error) { return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers) },
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
@@ -67,13 +59,13 @@ func NewQueryTracker(
 	)
 
 	return &QueryTracker{
-		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		tabletNodes:          tabletNodes,
 		initCondition:        "queryTrackerInitCompleted",
 		ytsaurusClient:       yc,
 		initQTState: NewInitJob(
-			&l,
+			l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			resource.Spec.ImagePullSecrets,
@@ -86,7 +78,7 @@ func NewQueryTracker(
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
-			&l,
+			l,
 			ytsaurus.APIProxy()),
 	}
 }
@@ -94,8 +86,6 @@ func NewQueryTracker(
 func (qt *QueryTracker) IsUpdatable() bool {
 	return true
 }
-
-func (qt *QueryTracker) GetType() consts.ComponentType { return consts.QueryTrackerType }
 
 func (qt *QueryTracker) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,

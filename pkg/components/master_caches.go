@@ -10,7 +10,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -21,26 +20,19 @@ type MasterCache struct {
 }
 
 func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *MasterCache {
-	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
-		ComponentType: consts.MasterCacheType,
-		Annotations:   resource.Spec.ExtraPodAnnotations,
-	}
+	l := cfgen.GetComponentLabeller(consts.MasterCacheType, "")
 
+	resource := ytsaurus.GetResource()
 	if resource.Spec.MasterCaches.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.MasterCaches.InstanceSpec.MonitoringPort = ptr.To(int32(consts.MasterCachesMonitoringPort))
 	}
 
 	srv := newServer(
-		&l,
+		l,
 		ytsaurus,
 		&resource.Spec.MasterCaches.InstanceSpec,
 		"/usr/bin/ytserver-master-cache",
 		"ytserver-master-cache.yson",
-		cfgen.GetMasterCachesStatefulSetName(),
-		cfgen.GetMasterCachesServiceName(),
 		func() ([]byte, error) { return cfgen.GetMasterCachesConfig(resource.Spec.MasterCaches) },
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
@@ -50,7 +42,7 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Mas
 	)
 
 	return &MasterCache{
-		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 	}
 }
@@ -58,8 +50,6 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Mas
 func (mc *MasterCache) IsUpdatable() bool {
 	return true
 }
-
-func (mc *MasterCache) GetType() consts.ComponentType { return consts.MasterCacheType }
 
 func (mc *MasterCache) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, mc.server)

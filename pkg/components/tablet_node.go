@@ -15,7 +15,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -43,26 +42,18 @@ func NewTabletNode(
 	spec ytv1.TabletNodesSpec,
 	doInitiailization bool,
 ) *TabletNode {
-	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:        &resource.ObjectMeta,
-		APIProxy:          ytsaurus.APIProxy(),
-		ComponentType:     consts.TabletNodeType,
-		ComponentNamePart: spec.Name,
-	}
+	l := cfgen.GetComponentLabeller(consts.TabletNodeType, spec.Name)
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.TabletNodeMonitoringPort))
 	}
 
 	srv := newServer(
-		&l,
+		l,
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-tablet-node.yson",
-		cfgen.GetTabletNodesStatefulSetName(spec.Name),
-		cfgen.GetTabletNodesServiceName(spec.Name),
 		func() ([]byte, error) {
 			return cfgen.GetTabletNodeConfig(spec)
 		},
@@ -74,7 +65,7 @@ func NewTabletNode(
 	)
 
 	return &TabletNode{
-		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		initBundlesCondition: "bundlesTabletNodeInitCompleted",
 		ytsaurusClient:       ytsaurusClient,
@@ -86,8 +77,6 @@ func NewTabletNode(
 func (tn *TabletNode) IsUpdatable() bool {
 	return true
 }
-
-func (tn *TabletNode) GetType() consts.ComponentType { return consts.TabletNodeType }
 
 func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error

@@ -584,9 +584,12 @@ type CommonSpec struct {
 	//+optional
 	ForceTCP *bool `json:"forceTcp,omitempty"`
 
+	// Do not add resource name into names of resources under control.
+	// When enabled resource should not share namespace with other Ytsaurus.
 	//+kubebuilder:default:=true
 	//+optional
 	UseShortNames bool `json:"useShortNames"`
+
 	// Use the host's network namespace for all components.
 	//+kubebuilder:default:=false
 	//+optional

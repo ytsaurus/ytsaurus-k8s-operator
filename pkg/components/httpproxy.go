@@ -10,7 +10,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -31,27 +30,20 @@ func NewHTTPProxy(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
-	spec ytv1.HTTPProxiesSpec) *HttpProxy {
-	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:        &resource.ObjectMeta,
-		APIProxy:          ytsaurus.APIProxy(),
-		ComponentType:     consts.HttpProxyType,
-		ComponentNamePart: spec.Role,
-	}
+	spec ytv1.HTTPProxiesSpec,
+) *HttpProxy {
+	l := cfgen.GetComponentLabeller(consts.HttpProxyType, spec.Role)
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.HTTPProxyMonitoringPort))
 	}
 
 	srv := newServer(
-		&l,
+		l,
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-http-proxy",
 		"ytserver-http-proxy.yson",
-		cfgen.GetHTTPProxiesStatefulSetName(spec.Role),
-		cfgen.GetHTTPProxiesHeadlessServiceName(spec.Role),
 		func() ([]byte, error) {
 			return cfgen.GetHTTPProxyConfig(spec)
 		},
@@ -87,14 +79,14 @@ func NewHTTPProxy(
 	balancingService := resources.NewHTTPService(
 		cfgen.GetHTTPProxiesServiceName(spec.Role),
 		&spec.Transport,
-		&l,
+		l,
 		ytsaurus.APIProxy())
 
 	balancingService.SetHttpNodePort(spec.HttpNodePort)
 	balancingService.SetHttpsNodePort(spec.HttpsNodePort)
 
 	return &HttpProxy{
-		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               masterReconciler,
 		serviceType:          spec.ServiceType,
@@ -107,8 +99,6 @@ func NewHTTPProxy(
 func (hp *HttpProxy) IsUpdatable() bool {
 	return true
 }
-
-func (hp *HttpProxy) GetType() consts.ComponentType { return consts.HttpProxyType }
 
 func (hp *HttpProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,

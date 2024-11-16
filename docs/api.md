@@ -319,7 +319,7 @@ _Appears in:_
 | `useIpv4` _boolean_ |  | false |  |
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
-| `useShortNames` _boolean_ |  | true |  |
+| `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
@@ -1288,7 +1288,7 @@ _Appears in:_
 | `useIpv4` _boolean_ |  | false |  |
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
-| `useShortNames` _boolean_ |  | true |  |
+| `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
@@ -1336,6 +1336,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `observedGeneration` _integer_ | Reflects resource generation which was used for updating status. |  |  |
 | `releaseStatus` _[RemoteNodeReleaseStatus](#remotenodereleasestatus)_ |  |  |  |
 
 
@@ -1381,7 +1382,7 @@ _Appears in:_
 | `useIpv4` _boolean_ |  | false |  |
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
-| `useShortNames` _boolean_ |  | true |  |
+| `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
@@ -1435,6 +1436,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `observedGeneration` _integer_ | Reflects resource generation which was used for updating status. |  |  |
 | `releaseStatus` _[RemoteNodeReleaseStatus](#remotenodereleasestatus)_ |  |  |  |
 
 
@@ -1519,7 +1521,7 @@ _Appears in:_
 | `useIpv4` _boolean_ |  | false |  |
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
-| `useShortNames` _boolean_ |  | true |  |
+| `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
@@ -1567,6 +1569,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `observedGeneration` _integer_ | Reflects resource generation which was used for updating status. |  |  |
 | `releaseStatus` _[RemoteNodeReleaseStatus](#remotenodereleasestatus)_ |  |  |  |
 
 
@@ -1777,7 +1780,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `externalProxy` _string_ |  |  |  |
 | `controllerFamilies` _string array_ | Supported controller families, for example: "chyt", "jupyt", "livy". |  |  |
-| `defaultRouteFamily` _string_ | The family that will receive requests for domains that are not explicitly specified in http_controller_mappings.<br />For example, "chyt" (with `ControllerFamilies` set to {"chyt", "jupyt"} would mean<br />that requests to "foo.<domain>" will be processed by chyt controller. |  |  |
+| `defaultRouteFamily` _string_ | The family that will receive requests for domains that are not explicitly specified in http_controller_mappings.<br />For example, "chyt" (with `ControllerFamilies` set to \{"chyt", "jupyt"\} would mean<br />that requests to "foo.<domain>" will be processed by chyt controller. |  |  |
 
 
 #### StructuredLoggerSpec
@@ -2172,7 +2175,7 @@ _Appears in:_
 | `useIpv4` _boolean_ |  | false |  |
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
-| `useShortNames` _boolean_ |  | true |  |
+| `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |

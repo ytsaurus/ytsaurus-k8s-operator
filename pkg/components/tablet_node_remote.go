@@ -9,7 +9,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -28,26 +27,19 @@ func NewRemoteTabletNodes(
 	spec ytv1.TabletNodesSpec,
 	commonSpec ytv1.CommonSpec,
 ) *RemoteTabletNode {
-	l := labeller.Labeller{
-		ObjectMeta:        &nodes.ObjectMeta,
-		APIProxy:          proxy,
-		ComponentType:     consts.TabletNodeType,
-		ComponentNamePart: spec.Name,
-	}
+	l := cfgen.GetComponentLabeller(consts.TabletNodeType, spec.Name)
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.TabletNodeMonitoringPort))
 	}
 
 	srv := newServerConfigured(
-		&l,
+		l,
 		proxy,
 		commonSpec,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-tablet-node.yson",
-		cfgen.GetTabletNodesStatefulSetName(spec.Name),
-		cfgen.GetTabletNodesServiceName(spec.Name),
 		func() ([]byte, error) {
 			return cfgen.GetTabletNodeConfig(spec)
 		},
@@ -58,7 +50,7 @@ func NewRemoteTabletNodes(
 		}),
 	)
 	return &RemoteTabletNode{
-		baseComponent: baseComponent{labeller: &l},
+		baseComponent: baseComponent{labeller: l},
 		server:        srv,
 		cfgen:         cfgen,
 		spec:          &spec,

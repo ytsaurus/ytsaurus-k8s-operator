@@ -15,7 +15,6 @@ import (
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -35,27 +34,22 @@ func NewScheduler(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
-	execNodes, tabletNodes []Component) *Scheduler {
+	execNodes, tabletNodes []Component,
+) *Scheduler {
+	l := cfgen.GetComponentLabeller(consts.SchedulerType, "")
+
 	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
-		ComponentType: consts.SchedulerType,
-		Annotations:   resource.Spec.ExtraPodAnnotations,
-	}
 
 	if resource.Spec.Schedulers.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.Schedulers.InstanceSpec.MonitoringPort = ptr.To(int32(consts.SchedulerMonitoringPort))
 	}
 
 	srv := newServer(
-		&l,
+		l,
 		ytsaurus,
 		&resource.Spec.Schedulers.InstanceSpec,
 		"/usr/bin/ytserver-scheduler",
 		"ytserver-scheduler.yson",
-		cfgen.GetSchedulerStatefulSetName(),
-		cfgen.GetSchedulerServiceName(),
 		func() ([]byte, error) {
 			return cfgen.GetSchedulerConfig(resource.Spec.Schedulers)
 		},
@@ -67,13 +61,13 @@ func NewScheduler(
 	)
 
 	return &Scheduler{
-		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               master,
 		execNodes:            execNodes,
 		tabletNodes:          tabletNodes,
 		initUser: NewInitJob(
-			&l,
+			l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			resource.Spec.ImagePullSecrets,
@@ -85,7 +79,7 @@ func NewScheduler(
 			getNodeSelectorWithDefault(resource.Spec.Schedulers.NodeSelector, resource.Spec.NodeSelector),
 		),
 		initOpArchive: NewInitJob(
-			&l,
+			l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			resource.Spec.ImagePullSecrets,
@@ -98,7 +92,7 @@ func NewScheduler(
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
-			&l,
+			l,
 			ytsaurus.APIProxy()),
 	}
 }
@@ -106,8 +100,6 @@ func NewScheduler(
 func (s *Scheduler) IsUpdatable() bool {
 	return true
 }
-
-func (s *Scheduler) GetType() consts.ComponentType { return consts.SchedulerType }
 
 func (s *Scheduler) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,

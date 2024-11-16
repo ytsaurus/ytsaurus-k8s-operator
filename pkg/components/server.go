@@ -66,7 +66,7 @@ func newServer(
 	l *labeller.Labeller,
 	ytsaurus *apiproxy.Ytsaurus,
 	instanceSpec *ytv1.InstanceSpec,
-	binaryPath, configFileName, statefulSetName, serviceName string,
+	binaryPath, configFileName string,
 	generator ytconfig.YsonGeneratorFunc,
 	options ...Option,
 ) server {
@@ -77,7 +77,7 @@ func newServer(
 		proxy,
 		commonSpec,
 		instanceSpec,
-		binaryPath, configFileName, statefulSetName, serviceName,
+		binaryPath, configFileName,
 		generator,
 		options...,
 	)
@@ -88,7 +88,7 @@ func newServerConfigured(
 	proxy apiproxy.APIProxy,
 	commonSpec ytv1.CommonSpec,
 	instanceSpec *ytv1.InstanceSpec,
-	binaryPath, configFileName, statefulSetName, serviceName string,
+	binaryPath, configFileName string,
 	generator ytconfig.YsonGeneratorFunc,
 	optFuncs ...Option,
 ) server {
@@ -139,13 +139,13 @@ func newServerConfigured(
 		instanceSpec: instanceSpec,
 		binaryPath:   binaryPath,
 		statefulSet: resources.NewStatefulSet(
-			statefulSetName,
+			l.GetServerStatfulSetName(),
 			l,
 			proxy,
 			commonSpec,
 		),
 		headlessService: resources.NewHeadlessService(
-			serviceName,
+			l.GetHeadlessServiceName(),
 			l,
 			proxy,
 		),

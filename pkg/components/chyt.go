@@ -19,7 +19,7 @@ import (
 type Chyt struct {
 	labeller *labeller.Labeller
 	chyt     *apiproxy.Chyt
-	cfgen    *ytconfig.Generator
+	cfgen    *ytconfig.NodeGenerator
 	ytsaurus *ytv1.Ytsaurus
 
 	secret *resources.StringSecret
@@ -29,25 +29,15 @@ type Chyt struct {
 	initChPublicJob *InitJob
 }
 
-func NewChyt(
-	cfgen *ytconfig.Generator,
-	chyt *apiproxy.Chyt,
-	ytsaurus *ytv1.Ytsaurus) *Chyt {
-	l := labeller.Labeller{
-		ObjectMeta:        &chyt.GetResource().ObjectMeta,
-		APIProxy:          chyt.APIProxy(),
-		ComponentType:     consts.ChytType,
-		ComponentNamePart: chyt.GetResource().Name,
-		Annotations:       ytsaurus.Spec.ExtraPodAnnotations,
-	}
-
+func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.Ytsaurus) *Chyt {
+	l := cfgen.GetComponentLabeller(consts.ChytType, chyt.GetResource().Name)
 	return &Chyt{
-		labeller: &l,
+		labeller: l,
 		chyt:     chyt,
 		cfgen:    cfgen,
 		ytsaurus: ytsaurus,
 		initUser: NewInitJob(
-			&l,
+			l,
 			chyt.APIProxy(),
 			chyt,
 			ytsaurus.Spec.ImagePullSecrets,
@@ -59,7 +49,7 @@ func NewChyt(
 			ytsaurus.Spec.NodeSelector,
 		),
 		initEnvironment: NewInitJob(
-			&l,
+			l,
 			chyt.APIProxy(),
 			chyt,
 			ytsaurus.Spec.ImagePullSecrets,
@@ -71,7 +61,7 @@ func NewChyt(
 			ytsaurus.Spec.NodeSelector,
 		),
 		initChPublicJob: NewInitJob(
-			&l,
+			l,
 			chyt.APIProxy(),
 			chyt,
 			ytsaurus.Spec.ImagePullSecrets,
@@ -84,7 +74,7 @@ func NewChyt(
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
-			&l,
+			l,
 			chyt.APIProxy()),
 	}
 }
@@ -113,7 +103,9 @@ func (c *Chyt) createInitScript() string {
 func (c *Chyt) createInitChPublicScript() string {
 	script := []string{
 		initJobPrologue,
-		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v YT_LOG_LEVEL=debug", c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole), c.cfgen.GetStrawberryControllerServiceAddress()),
+		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v YT_LOG_LEVEL=debug",
+			c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+			c.cfgen.GetStrawberryControllerServiceAddress()),
 		"yt create scheduler_pool --attributes '{name=chyt; pool_tree=default}' --ignore-existing",
 		"yt clickhouse ctl create ch_public || true",
 		"yt clickhouse ctl set-option --alias ch_public pool chyt",

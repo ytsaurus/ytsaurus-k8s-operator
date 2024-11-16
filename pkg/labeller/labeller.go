@@ -4,43 +4,120 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
-type FetchableObject struct {
-	Name   string
-	Object client.Object
-}
-
+// Labeller defines component names, labels and addresses.
 type Labeller struct {
-	APIProxy      apiproxy.APIProxy
-	ObjectMeta    *metav1.ObjectMeta
+	Namespace string
+
+	// Name of YTsaurus cluster.
+	ClusterName string
+
+	// Name of resource which defines this component.
+	ResourceName string
+
 	ComponentType consts.ComponentType
+
 	// An optional name identifying a group of instances of the type above.
 	// Role for proxies, instance group name for nodes, may be empty.
-	ComponentNamePart string
-	Annotations       map[string]string
+	InstanceGroup string
+
+	// K8s cluster domain, usually "cluster.local".
+	ClusterDomain string
+
+	Annotations map[string]string
+
+	// Do not include resource name into component name.
+	UseShortNames bool
+}
+
+func (l *Labeller) ForComponent(component consts.ComponentType, instanceGroup string) *Labeller {
+	cl := *l
+	cl.ComponentType = component
+	cl.InstanceGroup = instanceGroup
+	return &cl
+}
+
+func (l *Labeller) GetNamespace() string {
+	return l.Namespace
 }
 
 func (l *Labeller) GetClusterName() string {
-	return l.ObjectMeta.Name
+	return l.ClusterName
 }
 
-// GetComponentName Returns CamelCase component type without name part.
-func (l *Labeller) GetComponentName() string {
-	return string(l.ComponentType)
+func (l *Labeller) GetClusterDomain() string {
+	return l.ClusterDomain
 }
 
-// GetFullComponentName Returns CamelCase component type with name part.
-func (l *Labeller) GetFullComponentName() string {
-	if l.ComponentNamePart != "" {
-		return consts.FormatComponentStringWithDefault(l.GetComponentName(), l.ComponentNamePart)
+// getGroupName converts <name> into <name>[-group]
+func (l *Labeller) getGroupName(name string) string {
+	if l.InstanceGroup != "" && l.InstanceGroup != consts.DefaultName {
+		name += "-" + l.InstanceGroup
 	}
+	return name
+}
 
-	return l.GetComponentName()
+// getName converts <name> into <name>[-group][-infix][-resource]
+func (l *Labeller) getName(name, infix string) string {
+	name = l.getGroupName(name)
+	if infix != "" {
+		name += "-" + infix
+	}
+	if !l.UseShortNames {
+		// NOTE: It would be better add resource as prefix rather than as suffix ¯\_(ツ)_/¯.
+		name += "-" + l.ResourceName
+	}
+	return name
+}
+
+// GetFullComponentName Returns CamelCase component type with instance group.
+func (l *Labeller) GetFullComponentName() string {
+	// NOTE: Group name is not CamelCase.
+	return l.getGroupName(string(l.ComponentType))
+}
+
+func (l *Labeller) GetServerStatfulSetName() string {
+	return l.getName(consts.ComponentStatefulSetPrefix(l.ComponentType), "")
+}
+
+func (l *Labeller) GetHeadlessServiceName() string {
+	return l.getName(consts.ComponentServicePrefix(l.ComponentType), "")
+}
+
+func (l *Labeller) GetBalancerServiceName() string {
+	// NOTE: For non-short names "-lb-" is inside ¯\_(ツ)_/¯.
+	return l.getName(consts.ComponentServicePrefix(l.ComponentType), "lb")
+}
+
+func (l *Labeller) GetHeadlessServiceAddress() string {
+	return fmt.Sprintf("%s.%s.svc.%s",
+		l.GetHeadlessServiceName(),
+		l.GetNamespace(),
+		l.ClusterDomain)
+}
+
+func (l *Labeller) GetBalancerServiceAddress() string {
+	return fmt.Sprintf("%s.%s.svc.%s",
+		l.GetBalancerServiceName(),
+		l.GetNamespace(),
+		l.ClusterDomain)
+}
+
+func (l *Labeller) GetInstanceAddressPort(index, port int) string {
+	// NOTE: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+	return fmt.Sprintf("%s-%d.%s.%s.svc.%s:%d",
+		l.GetServerStatfulSetName(),
+		index,
+		l.GetHeadlessServiceName(),
+		l.GetNamespace(),
+		l.ClusterDomain,
+		port)
 }
 
 // GetComponentLabel Returns lower case hyphenated component type without name part.
@@ -50,11 +127,8 @@ func (l *Labeller) GetComponentLabel() string {
 
 // GetFullComponentLabel Returns lower case hyphenated component type with name part.
 func (l *Labeller) GetFullComponentLabel() string {
-	if l.ComponentNamePart != "" {
-		return consts.FormatComponentStringWithDefault(l.GetComponentLabel(), l.ComponentNamePart)
-	}
-
-	return l.GetComponentLabel()
+	// NOTE: Resulting name does not include resource name, not so full ¯\_(ツ)_/¯.
+	return l.getGroupName(l.GetComponentLabel())
 }
 
 func (l *Labeller) GetSecretName() string {
@@ -77,10 +151,14 @@ func (l *Labeller) GetPodsRemovingStartedCondition() string {
 	return fmt.Sprintf("%sPodsRemovingStarted", l.GetFullComponentName())
 }
 
+func (l *Labeller) GetPodsRemovedCondition() string {
+	return fmt.Sprintf("%sPodsRemoved", l.GetFullComponentName())
+}
+
 func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Name:        name,
-		Namespace:   l.ObjectMeta.Namespace,
+		Namespace:   l.GetNamespace(),
 		Labels:      l.GetMetaLabelMap(false),
 		Annotations: l.Annotations,
 	}
@@ -89,14 +167,15 @@ func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
 func (l *Labeller) GetInitJobObjectMeta() metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Name:        "ytsaurus-init",
-		Namespace:   l.ObjectMeta.Namespace,
+		Namespace:   l.GetNamespace(),
 		Labels:      l.GetMetaLabelMap(true),
 		Annotations: l.Annotations,
 	}
 }
 
 func (l *Labeller) GetInstanceLabelValue(isInitJob bool) string {
-	result := fmt.Sprintf("%s-%s", l.GetClusterName(), l.GetFullComponentLabel())
+	// NOTE: Prefix is not cluster name as it was documented before ¯\_(ツ)_/¯.
+	result := fmt.Sprintf("%s-%s", l.ResourceName, l.GetFullComponentLabel())
 	if isInitJob {
 		result = fmt.Sprintf("%s-%s", result, "init-job")
 	}
@@ -123,7 +202,7 @@ func (l *Labeller) GetSelectorLabelMap() map[string]string {
 
 func (l *Labeller) GetListOptions() []client.ListOption {
 	return []client.ListOption{
-		client.InNamespace(l.ObjectMeta.Namespace),
+		client.InNamespace(l.GetNamespace()),
 		client.MatchingLabels(l.GetSelectorLabelMap()),
 	}
 }
@@ -145,10 +224,12 @@ func (l *Labeller) GetMetaLabelMap(isInitJob bool) map[string]string {
 		"app.kubernetes.io/managed-by": "ytsaurus-k8s-operator",
 		// It is nice to have the cluster name as a label.
 		// Template: <cluster_name>.
+		// NOTE: Previously this was "<resource_name>" by mistake ¯\_(ツ)_/¯.
 		consts.YTClusterLabelName: l.GetClusterName(),
 		// This label is used to check pods for readiness during updates.
 		// The name isn't quite right, but we keep it for backwards compatibility.
-		// Template: <cluster_name>-yt-<component_type>-<instance_group>[-init-job].
+		// Template: <resource_name>-yt-<component_type>-<instance_group>[-init-job].
+		// NOTE: Prefix is not cluster name as it was documented before ¯\_(ツ)_/¯.
 		consts.YTComponentLabelName: l.GetInstanceLabelValue(isInitJob),
 	}
 }
@@ -159,8 +240,4 @@ func (l *Labeller) GetMonitoringMetaLabelMap() map[string]string {
 	labels[consts.YTMetricsLabelName] = "true"
 
 	return labels
-}
-
-func GetPodsRemovedCondition(componentName string) string {
-	return fmt.Sprintf("%sPodsRemoved", componentName)
 }

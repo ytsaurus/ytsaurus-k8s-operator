@@ -9,7 +9,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -25,26 +24,18 @@ func NewExecNode(
 	master Component,
 	spec ytv1.ExecNodesSpec,
 ) *ExecNode {
-	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:        &resource.ObjectMeta,
-		APIProxy:          ytsaurus.APIProxy(),
-		ComponentType:     consts.ExecNodeType,
-		ComponentNamePart: spec.Name,
-	}
+	l := cfgen.GetComponentLabeller(consts.ExecNodeType, spec.Name)
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.ExecNodeMonitoringPort))
 	}
 
 	srv := newServer(
-		&l,
+		l,
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-exec-node.yson",
-		cfgen.GetExecNodesStatefulSetName(spec.Name),
-		cfgen.GetExecNodesServiceName(spec.Name),
 		func() ([]byte, error) {
 			return cfgen.GetExecNodeConfig(spec)
 		},
@@ -58,7 +49,7 @@ func NewExecNode(
 	var sidecarConfig *ConfigHelper
 	if spec.JobEnvironment != nil && spec.JobEnvironment.CRI != nil {
 		sidecarConfig = NewConfigHelper(
-			&l,
+			l,
 			ytsaurus.APIProxy(),
 			l.GetSidecarConfigMapName(consts.JobsContainerName),
 			ytsaurus.GetResource().Spec.ConfigOverrides,
@@ -73,7 +64,7 @@ func NewExecNode(
 	}
 
 	return &ExecNode{
-		localComponent: newLocalComponent(&l, ytsaurus),
+		localComponent: newLocalComponent(l, ytsaurus),
 		baseExecNode: baseExecNode{
 			server:        srv,
 			cfgen:         cfgen,
@@ -87,8 +78,6 @@ func NewExecNode(
 func (n *ExecNode) IsUpdatable() bool {
 	return true
 }
-
-func (n *ExecNode) GetType() consts.ComponentType { return consts.ExecNodeType }
 
 func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error

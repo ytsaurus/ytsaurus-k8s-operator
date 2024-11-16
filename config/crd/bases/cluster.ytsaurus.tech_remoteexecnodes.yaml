@@ -1261,6 +1261,8 @@ spec:
                 type: boolean
               useShortNames:
                 default: true
+                description: Do not add resource name into names of resources under
+                  control.
                 type: boolean
               volumeClaimTemplates:
                 items:

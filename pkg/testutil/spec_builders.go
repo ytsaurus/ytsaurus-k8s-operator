@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	YtsaurusName = "test-ytsaurus"
+	YtsaurusName  = "test-ytsaurus"
+	MasterPodName = "ms-0"
 	// RemoteResourceName is a name for test remote ytsaurus and nodes.
 	// It is short because of error:
 	// `Failed to create pod sandbox: failed to construct FQDN from pod hostname and cluster domain, FQDN

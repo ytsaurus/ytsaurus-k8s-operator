@@ -468,7 +468,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", func(ctx context.Context) {
 
 				By("Store master pod creation time")
-				msPod := getMasterPod(g.GetMasterPodNames()[0], namespace)
+				msPod := getMasterPod(testutil.MasterPodName, namespace)
 				msPodCreationFirstTimestamp := msPod.CreationTimestamp
 
 				By("Setting artificial conditions for deploy to stuck in PossibilityCheck")
@@ -497,7 +497,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Check that master pod was NOT recreated at the PossibilityCheck stage")
 				time.Sleep(1 * time.Second)
-				msPod = getMasterPod(g.GetMasterPodNames()[0], namespace)
+				msPod = getMasterPod(testutil.MasterPodName, namespace)
 				msPodCreationSecondTimestamp := msPod.CreationTimestamp
 				log.Info("ms pods ts", "first", msPodCreationFirstTimestamp, "second", msPodCreationSecondTimestamp)
 				Expect(msPodCreationFirstTimestamp.Equal(&msPodCreationSecondTimestamp)).Should(BeTrue())
@@ -954,7 +954,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				monitoringPort := 0
 				Expect(ytClient.GetNode(ctx, ypath.Path(fmt.Sprintf("//sys/primary_masters/%v/orchid/config/monitoring_port", masterAddress)), &monitoringPort, nil)).Should(Succeed())
 
-				msPod := getMasterPod(g.GetMasterPodNames()[0], namespace)
+				msPod := getMasterPod(testutil.MasterPodName, namespace)
 				log.Info("Pod", "ip", msPod.Status.PodIP)
 
 				rsp, err := http.Get(fmt.Sprintf(

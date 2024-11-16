@@ -13,7 +13,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -32,13 +31,9 @@ const UIClustersConfigFileName = "clusters-config.json"
 const UICustomConfigFileName = "common.js"
 
 func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *UI {
+	l := cfgen.GetComponentLabeller(consts.UIType, "")
+
 	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
-		ComponentType: consts.UIType,
-		Annotations:   resource.Spec.ExtraPodAnnotations,
-	}
 	image := resource.Spec.UIImage
 	if resource.Spec.UI.Image != nil {
 		image = *resource.Spec.UI.Image
@@ -50,7 +45,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 	}
 
 	microservice := newMicroservice(
-		&l,
+		l,
 		ytsaurus,
 		image,
 		resource.Spec.UI.InstanceCount,
@@ -73,11 +68,11 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 	microservice.getHttpService().SetHttpNodePort(resource.Spec.UI.HttpNodePort)
 
 	return &UI{
-		localComponent: newLocalComponent(&l, ytsaurus),
+		localComponent: newLocalComponent(l, ytsaurus),
 		cfgen:          cfgen,
 		microservice:   microservice,
 		initJob: NewInitJob(
-			&l,
+			l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			resource.Spec.ImagePullSecrets,
@@ -90,7 +85,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
-			&l,
+			l,
 			ytsaurus.APIProxy()),
 		caBundle: caBundle,
 		master:   master,
@@ -100,8 +95,6 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 func (u *UI) IsUpdatable() bool {
 	return true
 }
-
-func (u *UI) GetType() consts.ComponentType { return consts.UIType }
 
 func (u *UI) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,

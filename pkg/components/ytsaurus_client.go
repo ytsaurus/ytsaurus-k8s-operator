@@ -17,7 +17,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -43,20 +42,14 @@ func NewYtsaurusClient(
 	ytsaurus *apiproxy.Ytsaurus,
 	httpProxy Component,
 ) *YtsaurusClient {
+	l := cfgen.GetComponentLabeller(consts.YtsaurusClientType, "")
 	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
-		ComponentType: consts.YtsaurusClientType,
-		Annotations:   resource.Spec.ExtraPodAnnotations,
-	}
-
 	return &YtsaurusClient{
-		localComponent: newLocalComponent(&l, ytsaurus),
+		localComponent: newLocalComponent(l, ytsaurus),
 		cfgen:          cfgen,
 		httpProxy:      httpProxy,
 		initUserJob: NewInitJob(
-			&l,
+			l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			ytsaurus.GetResource().Spec.ImagePullSecrets,
@@ -69,7 +62,7 @@ func NewYtsaurusClient(
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
-			&l,
+			l,
 			ytsaurus.APIProxy()),
 	}
 }
@@ -77,8 +70,6 @@ func NewYtsaurusClient(
 func (yc *YtsaurusClient) IsUpdatable() bool {
 	return false
 }
-
-func (yc *YtsaurusClient) GetType() consts.ComponentType { return consts.YtsaurusClientType }
 
 func (yc *YtsaurusClient) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,

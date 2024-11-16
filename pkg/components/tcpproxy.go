@@ -10,7 +10,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -25,31 +24,19 @@ type TcpProxy struct {
 	balancingService *resources.TCPService
 }
 
-func NewTCPProxy(
-	cfgen *ytconfig.Generator,
-	ytsaurus *apiproxy.Ytsaurus,
-	masterReconciler Component,
-	spec ytv1.TCPProxiesSpec) *TcpProxy {
-	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:        &resource.ObjectMeta,
-		APIProxy:          ytsaurus.APIProxy(),
-		ComponentType:     consts.TcpProxyType,
-		ComponentNamePart: spec.Role,
-	}
+func NewTCPProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, masterReconciler Component, spec ytv1.TCPProxiesSpec) *TcpProxy {
+	l := cfgen.GetComponentLabeller(consts.TcpProxyType, spec.Role)
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.TCPProxyMonitoringPort))
 	}
 
 	srv := newServer(
-		&l,
+		l,
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-tcp-proxy",
 		"ytserver-tcp-proxy.yson",
-		cfgen.GetTCPProxiesStatefulSetName(spec.Role),
-		cfgen.GetTCPProxiesHeadlessServiceName(spec.Role),
 		func() ([]byte, error) {
 			return cfgen.GetTCPProxyConfig(spec)
 		},
@@ -62,12 +49,12 @@ func NewTCPProxy(
 			*spec.ServiceType,
 			spec.PortCount,
 			spec.MinPort,
-			&l,
+			l,
 			ytsaurus.APIProxy())
 	}
 
 	return &TcpProxy{
-		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               masterReconciler,
 		serviceType:          spec.ServiceType,
@@ -78,8 +65,6 @@ func NewTCPProxy(
 func (tp *TcpProxy) IsUpdatable() bool {
 	return true
 }
-
-func (tp *TcpProxy) GetType() consts.ComponentType { return consts.TcpProxyType }
 
 func (tp *TcpProxy) Fetch(ctx context.Context) error {
 	fetchable := []resources.Fetchable{
