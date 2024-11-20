@@ -100,15 +100,15 @@ func (s *StatefulSet) ArePodsRemoved(ctx context.Context) bool {
 	return true
 }
 
-func (s *StatefulSet) ArePodsReady(ctx context.Context, minReadyInstanceCount *int) bool {
+func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minReadyInstanceCount *int) bool {
 	logger := log.FromContext(ctx)
 	podList := s.getPods(ctx)
 	if podList == nil {
 		return false
 	}
 
-	effectiveMinReadyInstanceCount := len(podList.Items)
-	if minReadyInstanceCount != nil && *minReadyInstanceCount < len(podList.Items) {
+	effectiveMinReadyInstanceCount := instanceCount
+	if minReadyInstanceCount != nil && *minReadyInstanceCount < instanceCount {
 		effectiveMinReadyInstanceCount = *minReadyInstanceCount
 	}
 
