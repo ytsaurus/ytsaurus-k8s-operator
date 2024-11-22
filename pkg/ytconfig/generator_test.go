@@ -4,9 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/types"
-
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"k8s.io/apimachinery/pkg/types"
 
 	"k8s.io/utils/ptr"
 
@@ -583,6 +582,12 @@ func withOauthSpec(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 		UserInfo: ytv1.OauthUserInfoHandlerSpec{
 			Endpoint:   "user-info-endpoint",
 			LoginField: "login",
+			LoginTransformations: []ytv1.OauthUserLoginTransformation{
+				{
+					MatchPattern: "(.*)@ytsaurus.team",
+					Replacement:  `\1`,
+				},
+			},
 		},
 	}
 	return ytsaurus
