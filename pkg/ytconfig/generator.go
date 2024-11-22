@@ -463,7 +463,6 @@ func getOauthService(oauthServiceSpec ytv1.OauthServiceSpec) OauthService {
 		UserInfoErrorField:   oauthServiceSpec.UserInfo.ErrorField,
 		LoginTransformations: loginTransformations,
 	}
-
 }
 
 func (g *Generator) GetRPCProxyConfig(spec ytv1.RPCProxiesSpec) ([]byte, error) {
