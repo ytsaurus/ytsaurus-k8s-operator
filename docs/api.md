@@ -1065,6 +1065,24 @@ _Appears in:_
 | `endpoint` _string_ |  | user/info |  |
 | `loginField` _string_ |  | nickname |  |
 | `errorField` _string_ |  |  |  |
+| `loginTransformations` _[OauthUserLoginTransformation](#oauthuserlogintransformation) array_ | LoginTransformations will be applied to the login field consequentially if set.<br />Result of the transformations is treated as YTsaurus OAuth user's username. |  |  |
+
+
+#### OauthUserLoginTransformation
+
+
+
+
+
+
+
+_Appears in:_
+- [OauthUserInfoHandlerSpec](#oauthuserinfohandlerspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `matchPattern` _string_ | MatchPattern expects RE2 (https://github.com/google/re2/wiki/syntax) syntax. |  |  |
+| `replacement` _string_ |  |  |  |
 
 
 #### QueryTrackerSpec
@@ -1336,6 +1354,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `observedGeneration` _integer_ | Reflects resource generation which was used for updating status. |  |  |
 | `releaseStatus` _[RemoteNodeReleaseStatus](#remotenodereleasestatus)_ |  |  |  |
 
 
@@ -1435,6 +1454,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `observedGeneration` _integer_ | Reflects resource generation which was used for updating status. |  |  |
 | `releaseStatus` _[RemoteNodeReleaseStatus](#remotenodereleasestatus)_ |  |  |  |
 
 
@@ -1567,6 +1587,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `observedGeneration` _integer_ | Reflects resource generation which was used for updating status. |  |  |
 | `releaseStatus` _[RemoteNodeReleaseStatus](#remotenodereleasestatus)_ |  |  |  |
 
 
@@ -1777,7 +1798,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `externalProxy` _string_ |  |  |  |
 | `controllerFamilies` _string array_ | Supported controller families, for example: "chyt", "jupyt", "livy". |  |  |
-| `defaultRouteFamily` _string_ | The family that will receive requests for domains that are not explicitly specified in http_controller_mappings.<br />For example, "chyt" (with `ControllerFamilies` set to {"chyt", "jupyt"} would mean<br />that requests to "foo.<domain>" will be processed by chyt controller. |  |  |
+| `defaultRouteFamily` _string_ | The family that will receive requests for domains that are not explicitly specified in http_controller_mappings.<br />For example, "chyt" (with `ControllerFamilies` set to \{"chyt", "jupyt"\} would mean<br />that requests to "foo.<domain>" will be processed by chyt controller. |  |  |
 
 
 #### StructuredLoggerSpec
