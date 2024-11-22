@@ -14923,6 +14923,19 @@ spec:
                       loginField:
                         default: nickname
                         type: string
+                      loginTransformations:
+                        description: LoginTransformations will be applied to the login
+                          field consequentially if set.
+                        items:
+                          properties:
+                            matchPattern:
+                              description: MatchPattern expects RE2 (https://github.com/google/re2/wiki/syntax)
+                                syntax.
+                              type: string
+                            replacement:
+                              type: string
+                          type: object
+                        type: array
                     type: object
                 type: object
               primaryMasters:
