@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 
 	"k8s.io/utils/ptr"
 

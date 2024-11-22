@@ -18,12 +18,18 @@ type CypressTokenAuthenticator struct {
 }
 
 type OauthService struct {
-	Host               string  `yson:"host"`
-	Port               int     `yson:"port"`
-	Secure             bool    `yson:"secure"`
-	UserInfoEndpoint   string  `yson:"user_info_endpoint"`
-	UserInfoLoginField string  `yson:"user_info_login_field"`
-	UserInfoErrorField *string `yson:"user_info_error_field,omitempty"`
+	Host                 string                `yson:"host"`
+	Port                 int                   `yson:"port"`
+	Secure               bool                  `yson:"secure"`
+	UserInfoEndpoint     string                `yson:"user_info_endpoint"`
+	UserInfoLoginField   string                `yson:"user_info_login_field"`
+	UserInfoErrorField   *string               `yson:"user_info_error_field,omitempty"`
+	LoginTransformations []LoginTransformation `yson:"login_transformations,omitempty"`
+}
+
+type LoginTransformation struct {
+	MatchPattern string `yson:"match_pattern,omitempty"`
+	Replacement  string `yson:"replacement,omitempty"`
 }
 
 type OauthCookieAuthenticator struct{}
