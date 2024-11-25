@@ -101,6 +101,12 @@
             secure=%true;
             "user_info_endpoint"="user-info-endpoint";
             "user_info_login_field"=login;
+            "login_transformations"=[
+                {
+                    "match_pattern"="(.*)@ytsaurus.team";
+                    replacement="\\1";
+                };
+            ];
         };
         "oauth_cookie_authenticator"={
         };

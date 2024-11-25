@@ -208,6 +208,15 @@ type OauthUserInfoHandlerSpec struct {
 	//+kubebuilder:default:=nickname
 	LoginField string  `json:"loginField,omitempty"`
 	ErrorField *string `json:"errorField,omitempty"`
+	// LoginTransformations will be applied to the login field consequentially if set.
+	// Result of the transformations is treated as YTsaurus OAuth user's username.
+	LoginTransformations []OauthUserLoginTransformation `json:"loginTransformations,omitempty"`
+}
+
+type OauthUserLoginTransformation struct {
+	// MatchPattern expects RE2 (https://github.com/google/re2/wiki/syntax) syntax.
+	MatchPattern string `json:"matchPattern,omitempty"`
+	Replacement  string `json:"replacement,omitempty"`
 }
 
 type OauthServiceSpec struct {

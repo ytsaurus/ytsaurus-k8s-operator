@@ -582,6 +582,12 @@ func withOauthSpec(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 		UserInfo: ytv1.OauthUserInfoHandlerSpec{
 			Endpoint:   "user-info-endpoint",
 			LoginField: "login",
+			LoginTransformations: []ytv1.OauthUserLoginTransformation{
+				{
+					MatchPattern: "(.*)@ytsaurus.team",
+					Replacement:  `\1`,
+				},
+			},
 		},
 	}
 	return ytsaurus

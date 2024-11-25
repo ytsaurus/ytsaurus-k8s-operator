@@ -436,20 +436,33 @@ func (g *Generator) getRPCProxyConfigImpl(spec *ytv1.RPCProxiesSpec) (RPCProxySe
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 
 	if g.ytsaurus.Spec.OauthService != nil {
+		c.OauthService = ptr.To(getOauthService(*g.ytsaurus.Spec.OauthService))
 		c.CypressUserManager = CypressUserManager{}
-		c.OauthService = &OauthService{
-			Host:               g.ytsaurus.Spec.OauthService.Host,
-			Port:               g.ytsaurus.Spec.OauthService.Port,
-			Secure:             g.ytsaurus.Spec.OauthService.Secure,
-			UserInfoEndpoint:   g.ytsaurus.Spec.OauthService.UserInfo.Endpoint,
-			UserInfoLoginField: g.ytsaurus.Spec.OauthService.UserInfo.LoginField,
-			UserInfoErrorField: g.ytsaurus.Spec.OauthService.UserInfo.ErrorField,
-		}
 		c.OauthTokenAuthenticator = &OauthTokenAuthenticator{}
 		c.RequireAuthentication = ptr.To(true)
 	}
 
 	return c, nil
+}
+
+func getOauthService(oauthServiceSpec ytv1.OauthServiceSpec) OauthService {
+	var loginTransformations []LoginTransformation
+	for _, tr := range oauthServiceSpec.UserInfo.LoginTransformations {
+		loginTransformations = append(loginTransformations, LoginTransformation{
+			MatchPattern: tr.MatchPattern,
+			Replacement:  tr.Replacement,
+		})
+	}
+
+	return OauthService{
+		Host:                 oauthServiceSpec.Host,
+		Port:                 oauthServiceSpec.Port,
+		Secure:               oauthServiceSpec.Secure,
+		UserInfoEndpoint:     oauthServiceSpec.UserInfo.Endpoint,
+		UserInfoLoginField:   oauthServiceSpec.UserInfo.LoginField,
+		UserInfoErrorField:   oauthServiceSpec.UserInfo.ErrorField,
+		LoginTransformations: loginTransformations,
+	}
 }
 
 func (g *Generator) GetRPCProxyConfig(spec ytv1.RPCProxiesSpec) ([]byte, error) {
@@ -598,14 +611,7 @@ func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProx
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
 	if g.ytsaurus.Spec.OauthService != nil {
-		c.Auth.OauthService = &OauthService{
-			Host:               g.ytsaurus.Spec.OauthService.Host,
-			Port:               g.ytsaurus.Spec.OauthService.Port,
-			Secure:             g.ytsaurus.Spec.OauthService.Secure,
-			UserInfoEndpoint:   g.ytsaurus.Spec.OauthService.UserInfo.Endpoint,
-			UserInfoLoginField: g.ytsaurus.Spec.OauthService.UserInfo.LoginField,
-			UserInfoErrorField: g.ytsaurus.Spec.OauthService.UserInfo.ErrorField,
-		}
+		c.Auth.OauthService = ptr.To(getOauthService(*g.ytsaurus.Spec.OauthService))
 		c.Auth.OauthCookieAuthenticator = &OauthCookieAuthenticator{}
 		c.Auth.OauthTokenAuthenticator = &OauthTokenAuthenticator{}
 	}
