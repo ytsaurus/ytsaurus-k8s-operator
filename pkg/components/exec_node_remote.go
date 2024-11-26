@@ -14,9 +14,11 @@ import (
 )
 
 type RemoteExecNode struct {
+	remoteServerComponent
 	baseExecNode
-	baseComponent
 }
+
+var _ RemoteServerComponent = &RemoteExecNode{}
 
 func NewRemoteExecNodes(
 	cfgen *ytconfig.NodeGenerator,
@@ -27,7 +29,6 @@ func NewRemoteExecNodes(
 ) *RemoteExecNode {
 	l := labeller.Labeller{
 		ObjectMeta:        &nodes.ObjectMeta,
-		APIProxy:          proxy,
 		ComponentType:     consts.ExecNodeType,
 		ComponentNamePart: spec.Name,
 	}
@@ -36,7 +37,7 @@ func NewRemoteExecNodes(
 		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.ExecNodeMonitoringPort))
 	}
 
-	srv := newServerConfigured(
+	server := newServerConfigured(
 		&l,
 		proxy,
 		commonSpec,
@@ -73,9 +74,9 @@ func NewRemoteExecNodes(
 	}
 
 	return &RemoteExecNode{
-		baseComponent: baseComponent{labeller: &l},
+		remoteServerComponent: newRemoteServerComponent(proxy, &l, server),
 		baseExecNode: baseExecNode{
-			server:        srv,
+			server:        server,
 			cfgen:         cfgen,
 			spec:          &spec,
 			sidecarConfig: sidecarConfig,
@@ -83,22 +84,17 @@ func NewRemoteExecNodes(
 	}
 }
 
-func (n *RemoteExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (n *RemoteExecNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if n.server.needSync() || n.server.needUpdate() {
+	server := n.remoteServerComponent.server
+	if server.configNeedsReload() || server.needBuild() || server.needUpdate() {
 		return n.doSyncBase(ctx, dry)
 	}
 
-	if !n.server.arePodsReady(ctx) {
+	if !server.arePodsReady(ctx) {
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (n *RemoteExecNode) GetType() consts.ComponentType { return consts.ExecNodeType }
-
-func (n *RemoteExecNode) Sync(ctx context.Context) (ComponentStatus, error) {
-	return n.doSync(ctx, false)
 }

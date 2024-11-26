@@ -41,7 +41,7 @@ func NewStrawberryController(
 	master Component,
 	scheduler Component,
 	dataNodes []Component) *StrawberryController {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 
 	// TODO: strawberry has a different image and can't be nil/fallback on CoreImage.
 	image := resource.Spec.CoreImage
@@ -51,7 +51,6 @@ func NewStrawberryController(
 
 	l := labeller.Labeller{
 		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
 		ComponentType: consts.StrawberryControllerType,
 		Annotations:   resource.Spec.ExtraPodAnnotations,
 	}
@@ -81,7 +80,7 @@ func NewStrawberryController(
 			&l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
-			ytsaurus.GetResource().Spec.ImagePullSecrets,
+			ytsaurus.Resource().Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,
 			resource.Spec.CoreImage,
@@ -111,12 +110,6 @@ func NewStrawberryController(
 		dataNodes: dataNodes,
 	}
 }
-
-func (c *StrawberryController) IsUpdatable() bool {
-	return true
-}
-
-func (c *StrawberryController) GetType() consts.ComponentType { return consts.StrawberryControllerType }
 
 func (c *StrawberryController) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
@@ -220,7 +213,7 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 	return c.microservice.Sync(ctx)
 }
 
-func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (c *StrawberryController) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(c.ytsaurus.GetClusterState()) && c.microservice.needUpdate() {
@@ -231,7 +224,7 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		if IsUpdatingComponent(c.ytsaurus, c) {
 			if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, c.microservice, &c.localComponent)
+					err = removePods(ctx, c.microservice, c.ytsaurus, c.labeller)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
@@ -244,29 +237,17 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		}
 	}
 
-	masterStatus, err := c.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, c.master.GetName()), err
+	if status, err := checkComponentDependency(ctx, c.master); status != nil {
+		return *status, err
 	}
 
-	schStatus, err := c.scheduler.Status(ctx)
-	if err != nil {
-		return schStatus, err
-	}
-	if !IsRunningStatus(schStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, c.scheduler.GetName()), err
+	if status, err := checkComponentDependency(ctx, c.scheduler); status != nil {
+		return *status, err
 	}
 
 	for _, dataNode := range c.dataNodes {
-		dndStatus, err := dataNode.Status(ctx)
-		if err != nil {
-			return dndStatus, err
-		}
-		if !IsRunningStatus(dndStatus.SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, dataNode.GetName()), err
+		if status, err := checkComponentDependency(ctx, dataNode); status != nil {
+			return *status, err
 		}
 	}
 
@@ -305,13 +286,4 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (c *StrawberryController) Status(ctx context.Context) (ComponentStatus, error) {
-	return c.doSync(ctx, true)
-}
-
-func (c *StrawberryController) Sync(ctx context.Context) error {
-	_, err := c.doSync(ctx, false)
-	return err
 }

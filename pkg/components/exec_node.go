@@ -14,10 +14,12 @@ import (
 )
 
 type ExecNode struct {
+	localServerComponent
 	baseExecNode
-	localComponent
 	master Component
 }
+
+var _ LocalServerComponent = &ExecNode{}
 
 func NewExecNode(
 	cfgen *ytconfig.NodeGenerator,
@@ -25,10 +27,9 @@ func NewExecNode(
 	master Component,
 	spec ytv1.ExecNodesSpec,
 ) *ExecNode {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 	l := labeller.Labeller{
 		ObjectMeta:        &resource.ObjectMeta,
-		APIProxy:          ytsaurus.APIProxy(),
 		ComponentType:     consts.ExecNodeType,
 		ComponentNamePart: spec.Name,
 	}
@@ -37,7 +38,7 @@ func NewExecNode(
 		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.ExecNodeMonitoringPort))
 	}
 
-	srv := newServer(
+	server := newServer(
 		&l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -61,7 +62,7 @@ func NewExecNode(
 			&l,
 			ytsaurus.APIProxy(),
 			l.GetSidecarConfigMapName(consts.JobsContainerName),
-			ytsaurus.GetResource().Spec.ConfigOverrides,
+			ytsaurus.Resource().Spec.ConfigOverrides,
 			map[string]ytconfig.GeneratorDescriptor{
 				consts.ContainerdConfigFileName: {
 					F: func() ([]byte, error) {
@@ -73,9 +74,9 @@ func NewExecNode(
 	}
 
 	return &ExecNode{
-		localComponent: newLocalComponent(&l, ytsaurus),
+		localServerComponent: newLocalServerComponent(&l, ytsaurus, server),
 		baseExecNode: baseExecNode{
-			server:        srv,
+			server:        server,
 			cfgen:         cfgen,
 			spec:          &spec,
 			sidecarConfig: sidecarConfig,
@@ -84,49 +85,31 @@ func NewExecNode(
 	}
 }
 
-func (n *ExecNode) IsUpdatable() bool {
-	return true
-}
-
-func (n *ExecNode) GetType() consts.ComponentType { return consts.ExecNodeType }
-
-func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (n *ExecNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && n.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && n.localServerComponent.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, &n.localComponent, n.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, n, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	masterStatus, err := n.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
+	if status, err := checkComponentDependency(ctx, n.master); status != nil {
+		return *status, err
 	}
 
-	if LocalServerNeedSync(n.server, n.ytsaurus) {
+	server := n.localServerComponent.server
+	if ServerNeedSync(server, n.ytsaurus) {
 		return n.doSyncBase(ctx, dry)
 	}
 
-	if !n.server.arePodsReady(ctx) {
+	if !server.arePodsReady(ctx) {
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (n *ExecNode) Status(ctx context.Context) (ComponentStatus, error) {
-	return n.doSync(ctx, true)
-}
-
-func (n *ExecNode) Sync(ctx context.Context) error {
-	_, err := n.doSync(ctx, false)
-	return err
 }

@@ -32,7 +32,7 @@ func (r *RemoteExecNodesReconciler) Sync(
 	component := components.NewRemoteExecNodes(
 		cfgen,
 		resource,
-		apiProxy,
+		apiProxy.APIProxy(),
 		resource.Spec.ExecNodesSpec,
 		resource.Spec.CommonSpec,
 	)
@@ -42,7 +42,7 @@ func (r *RemoteExecNodesReconciler) Sync(
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	status, err := component.Sync(ctx)
+	status, err := component.Sync(ctx, false)
 	if err != nil {
 		logger.Error(err, "failed to sync remote nodes")
 		return ctrl.Result{Requeue: true}, err

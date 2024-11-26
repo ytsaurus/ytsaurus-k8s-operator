@@ -15,7 +15,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-type APIProxy interface {
+type OwningResource interface {
+	client.Object
+}
+
+type TypedAPIProxy[T OwningResource] interface {
+	Resource() T
+
+	APIProxy() APIProxy
+
 	Client() client.Client
 	FetchObject(ctx context.Context, name string, obj client.Object) error
 	ListObjects(ctx context.Context, objList client.ObjectList, opts ...client.ListOption) error
@@ -27,44 +35,63 @@ type APIProxy interface {
 	UpdateStatus(ctx context.Context) error
 }
 
+type APIProxy = TypedAPIProxy[OwningResource]
+
 type ConditionManager interface {
 	SetStatusCondition(condition metav1.Condition)
 	IsStatusConditionTrue(conditionType string) bool
 	IsStatusConditionFalse(conditionType string) bool
 }
 
-func NewAPIProxy(
-	object client.Object,
+type UpdateConditionManager interface {
+	SetUpdateStatusCondition(ctx context.Context, condition metav1.Condition)
+	IsUpdateStatusConditionTrue(condition string) bool
+}
+
+func NewAPIProxy[T OwningResource](
+	resource T,
 	client client.Client,
 	recorder record.EventRecorder,
-	scheme *runtime.Scheme) APIProxy {
-	return &apiProxy{
-		object:   object,
+	scheme *runtime.Scheme) apiProxy[T] {
+	return apiProxy[T]{
+		resource: resource,
 		client:   client,
 		recorder: recorder,
 		scheme:   scheme,
 	}
 }
 
-type apiProxy struct {
-	object   client.Object
+type apiProxy[T OwningResource] struct {
+	resource T
 	client   client.Client
 	recorder record.EventRecorder
 	scheme   *runtime.Scheme
 }
 
-func (c *apiProxy) getObjectKey(name string) types.NamespacedName {
+var _ APIProxy = &apiProxy[OwningResource]{}
+
+func (c *apiProxy[T]) Resource() T {
+	return c.resource
+}
+
+func (c *apiProxy[T]) APIProxy() APIProxy {
+	var r OwningResource = c.resource
+	p := NewAPIProxy(r, c.client, c.recorder, c.scheme)
+	return &p
+}
+
+func (c *apiProxy[T]) getObjectKey(name string) types.NamespacedName {
 	return types.NamespacedName{
 		Name:      name,
-		Namespace: c.object.GetNamespace(),
+		Namespace: c.resource.GetNamespace(),
 	}
 }
 
-func (c *apiProxy) Client() client.Client {
+func (c *apiProxy[T]) Client() client.Client {
 	return c.client
 }
 
-func (c *apiProxy) FetchObject(ctx context.Context, name string, obj client.Object) error {
+func (c *apiProxy[T]) FetchObject(ctx context.Context, name string, obj client.Object) error {
 	err := c.client.Get(ctx, c.getObjectKey(name), obj)
 	if err == nil || !apierrors.IsNotFound(err) {
 		return err
@@ -73,28 +100,28 @@ func (c *apiProxy) FetchObject(ctx context.Context, name string, obj client.Obje
 	return nil
 }
 
-func (c *apiProxy) ListObjects(ctx context.Context, objList client.ObjectList, opts ...client.ListOption) error {
+func (c *apiProxy[T]) ListObjects(ctx context.Context, objList client.ObjectList, opts ...client.ListOption) error {
 	err := c.client.List(ctx, objList, opts...)
 	return err
 }
 
-func (c *apiProxy) RecordWarning(reason, message string) {
+func (c *apiProxy[T]) RecordWarning(reason, message string) {
 	c.recorder.Event(
-		c.object,
+		c.resource,
 		corev1.EventTypeWarning,
 		reason,
 		message)
 }
 
-func (c *apiProxy) RecordNormal(reason, message string) {
+func (c *apiProxy[T]) RecordNormal(reason, message string) {
 	c.recorder.Event(
-		c.object,
+		c.resource,
 		corev1.EventTypeNormal,
 		reason,
 		message)
 }
 
-func (c *apiProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object) error {
+func (c *apiProxy[T]) SyncObject(ctx context.Context, oldObj, newObj client.Object) error {
 	var err error
 	if newObj.GetName() == "" {
 		return fmt.Errorf("cannot sync uninitialized object, object type %T", oldObj)
@@ -109,7 +136,7 @@ func (c *apiProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object)
 	return err
 }
 
-func (c *apiProxy) DeleteObject(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
+func (c *apiProxy[T]) DeleteObject(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
 	logger := log.FromContext(ctx)
 
 	if err := c.client.Delete(ctx, obj, opts...); err != nil {
@@ -128,10 +155,10 @@ func (c *apiProxy) DeleteObject(ctx context.Context, obj client.Object, opts ...
 	return nil
 }
 
-func (c *apiProxy) updateObject(ctx context.Context, obj client.Object) error {
+func (c *apiProxy[T]) updateObject(ctx context.Context, obj client.Object) error {
 	logger := log.FromContext(ctx)
 
-	if err := ctrl.SetControllerReference(c.object, obj, c.scheme); err != nil {
+	if err := ctrl.SetControllerReference(c.resource, obj, c.scheme); err != nil {
 		logger.Error(err, "unable to set controller reference", "object_name", obj.GetName())
 		return err
 	}
@@ -152,10 +179,10 @@ func (c *apiProxy) updateObject(ctx context.Context, obj client.Object) error {
 	return nil
 }
 
-func (c *apiProxy) createAndReferenceObject(ctx context.Context, obj client.Object) error {
+func (c *apiProxy[T]) createAndReferenceObject(ctx context.Context, obj client.Object) error {
 	logger := log.FromContext(ctx)
 
-	if err := ctrl.SetControllerReference(c.object, obj, c.scheme); err != nil {
+	if err := ctrl.SetControllerReference(c.resource, obj, c.scheme); err != nil {
 		logger.Error(err, "unable to set controller reference", "object_name", obj.GetName())
 		return err
 	}
@@ -175,6 +202,6 @@ func (c *apiProxy) createAndReferenceObject(ctx context.Context, obj client.Obje
 	return nil
 }
 
-func (c *apiProxy) UpdateStatus(ctx context.Context) error {
-	return c.client.Status().Update(ctx, c.object)
+func (c *apiProxy[T]) UpdateStatus(ctx context.Context) error {
+	return c.client.Status().Update(ctx, c.resource)
 }

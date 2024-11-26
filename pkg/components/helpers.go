@@ -20,6 +20,7 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 func CreateTabletCells(ctx context.Context, ytClient yt.Client, bundle string, tabletCellCount int) error {
@@ -139,23 +140,31 @@ func CreateUser(ctx context.Context, ytClient yt.Client, userName, token string,
 
 func IsUpdatingComponent(ytsaurus *apiproxy.Ytsaurus, component Component) bool {
 	componentNames := ytsaurus.GetLocalUpdatingComponents()
-	return (componentNames == nil && component.IsUpdatable()) || slices.Contains(componentNames, component.GetName())
+	return (componentNames == nil && component.GetType() != consts.YtsaurusClientType) ||
+		slices.Contains(componentNames, component.GetName())
+}
+
+func checkComponentDependency(ctx context.Context, dep Component) (*ComponentStatus, error) {
+	status, err := dep.Sync(ctx, true)
+	if err != nil || !status.IsRunning() {
+		return ptr.To(WaitingStatus(SyncStatusBlocked, dep.GetName())), err
+	}
+	return nil, nil
 }
 
 func handleUpdatingClusterState(
 	ctx context.Context,
-	ytsaurus *apiproxy.Ytsaurus,
-	cmp Component,
-	cmpBase *localComponent,
-	server server,
+	component LocalServerComponent,
 	dry bool,
 ) (*ComponentStatus, error) {
 	var err error
 
-	if IsUpdatingComponent(ytsaurus, cmp) {
+	labeller := component.getLabeller()
+	ytsaurus := component.getYtsaurus()
+	if IsUpdatingComponent(ytsaurus, component) {
 		if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !dry {
-				err = removePods(ctx, server, cmpBase)
+				err = removePods(ctx, component.getServer(), ytsaurus, labeller)
 			}
 			return ptr.To(WaitingStatus(SyncStatusUpdating, "pods removal")), err
 		}
@@ -166,7 +175,7 @@ func handleUpdatingClusterState(
 	} else {
 		return ptr.To(NewComponentStatus(SyncStatusReady, "Not updating component")), err
 	}
-	return nil, err
+	return nil, nil
 }
 
 func SetPathAcl(path string, acl []yt.ACE) string {

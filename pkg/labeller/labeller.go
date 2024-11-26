@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -16,7 +15,6 @@ type FetchableObject struct {
 }
 
 type Labeller struct {
-	APIProxy      apiproxy.APIProxy
 	ObjectMeta    *metav1.ObjectMeta
 	ComponentType consts.ComponentType
 	// An optional name identifying a group of instances of the type above.
@@ -75,6 +73,10 @@ func (l *Labeller) GetInitJobName(name string) string {
 
 func (l *Labeller) GetPodsRemovingStartedCondition() string {
 	return fmt.Sprintf("%sPodsRemovingStarted", l.GetFullComponentName())
+}
+
+func (l *Labeller) GetPodsRemovedCondition() string {
+	return GetPodsRemovedCondition(l.GetFullComponentName())
 }
 
 func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {

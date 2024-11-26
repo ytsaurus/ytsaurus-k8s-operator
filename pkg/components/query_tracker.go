@@ -38,10 +38,9 @@ func NewQueryTracker(
 	yc internalYtsaurusClient,
 	tabletNodes []Component,
 ) *QueryTracker {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 	l := labeller.Labeller{
 		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
 		ComponentType: consts.QueryTrackerType,
 		Annotations:   resource.Spec.ExtraPodAnnotations,
 	}
@@ -91,12 +90,6 @@ func NewQueryTracker(
 	}
 }
 
-func (qt *QueryTracker) IsUpdatable() bool {
-	return true
-}
-
-func (qt *QueryTracker) GetType() consts.ComponentType { return consts.QueryTrackerType }
-
 func (qt *QueryTracker) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		qt.server,
@@ -105,7 +98,7 @@ func (qt *QueryTracker) Fetch(ctx context.Context) error {
 	)
 }
 
-func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (qt *QueryTracker) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(qt.ytsaurus.GetClusterState()) && qt.server.needUpdate() {
@@ -116,7 +109,7 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		if IsUpdatingComponent(qt.ytsaurus, qt) {
 			if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(qt.ytsaurus, qt) {
 				if !dry {
-					err = removePods(ctx, qt.server, &qt.localComponent)
+					err = removePods(ctx, qt.server, qt.ytsaurus, qt.labeller)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
@@ -144,7 +137,7 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		return WaitingStatus(SyncStatusPending, qt.secret.Name()), err
 	}
 
-	if qt.NeedSync() {
+	if ServerNeedSync(qt.server, qt.ytsaurus) {
 		if !dry {
 			err = qt.server.Sync(ctx)
 		}
@@ -162,12 +155,8 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	}
 
 	for _, tnd := range qt.tabletNodes {
-		tndStatus, err := tnd.Status(ctx)
-		if err != nil {
-			return tndStatus, err
-		}
-		if !IsRunningStatus(tndStatus.SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, "tablet nodes"), err
+		if status, err := checkComponentDependency(ctx, tnd); status != nil {
+			return *status, err
 		}
 	}
 
@@ -405,15 +394,6 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 		return
 	}
 	return
-}
-
-func (qt *QueryTracker) Status(ctx context.Context) (ComponentStatus, error) {
-	return qt.doSync(ctx, true)
-}
-
-func (qt *QueryTracker) Sync(ctx context.Context) error {
-	_, err := qt.doSync(ctx, false)
-	return err
 }
 
 func (qt *QueryTracker) prepareInitQueryTrackerState() {

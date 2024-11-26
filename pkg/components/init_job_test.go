@@ -51,7 +51,7 @@ func prepareTest(t *testing.T, namespace string) (*testutil.TestHelper, *apiprox
 	fakeRecorder := record.NewFakeRecorder(100)
 
 	ytsaurus := apiproxy.NewYtsaurus(&ytsaurusResource, h.GetK8sClient(), fakeRecorder, scheme)
-	cfgen := ytconfig.NewGenerator(ytsaurus.GetResource(), domain)
+	cfgen := ytconfig.NewGenerator(ytsaurus.Resource(), domain)
 	return h, ytsaurus, cfgen
 }
 
@@ -78,7 +78,7 @@ func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
 		&labeller.Labeller{
 			ObjectMeta: &metav1.ObjectMeta{
 				Name:      k8sName,
-				Namespace: ytsaurus.GetResource().Namespace,
+				Namespace: ytsaurus.Resource().Namespace,
 			},
 			ComponentType: consts.MasterType,
 		},

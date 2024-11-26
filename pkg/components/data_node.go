@@ -26,10 +26,9 @@ func NewDataNode(
 	master Component,
 	spec ytv1.DataNodesSpec,
 ) *DataNode {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 	l := labeller.Labeller{
 		ObjectMeta:        &resource.ObjectMeta,
-		APIProxy:          ytsaurus.APIProxy(),
 		ComponentType:     consts.DataNodeType,
 		ComponentNamePart: spec.Name,
 	}
@@ -63,17 +62,11 @@ func NewDataNode(
 	}
 }
 
-func (n *DataNode) IsUpdatable() bool {
-	return true
-}
-
-func (n *DataNode) GetType() consts.ComponentType { return consts.DataNodeType }
-
 func (n *DataNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, n.server)
 }
 
-func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (n *DataNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && n.server.needUpdate() {
@@ -81,20 +74,16 @@ func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	}
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, &n.localComponent, n.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, n, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	masterStatus, err := n.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
+	if status, err := checkComponentDependency(ctx, n.master); status != nil {
+		return *status, err
 	}
 
-	if n.NeedSync() {
+	if ServerNeedSync(n.server, n.ytsaurus) {
 		if !dry {
 			err = n.server.Sync(ctx)
 		}
@@ -106,13 +95,4 @@ func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (n *DataNode) Status(ctx context.Context) (ComponentStatus, error) {
-	return n.doSync(ctx, true)
-}
-
-func (n *DataNode) Sync(ctx context.Context) error {
-	_, err := n.doSync(ctx, false)
-	return err
 }

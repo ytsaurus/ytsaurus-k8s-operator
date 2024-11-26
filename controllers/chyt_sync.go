@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -17,9 +18,11 @@ func (r *ChytReconciler) Sync(ctx context.Context, resource *ytv1.Chyt, ytsaurus
 
 	chyt := apiproxy.NewChyt(resource, r.Client, r.Recorder, r.Scheme)
 
-	cfgen := ytconfig.NewGenerator(ytsaurus, getClusterDomain(chyt.APIProxy().Client()))
+	ytsaurusApi := apiproxy.NewYtsaurus(ytsaurus, r.Client, r.Recorder, r.Scheme)
 
-	component := components.NewChyt(cfgen, chyt, ytsaurus)
+	cfgen := ytconfig.NewGenerator(ytsaurus, getClusterDomain(chyt.Client()))
+
+	component := components.NewChyt(cfgen, chyt, ytsaurusApi)
 
 	err := component.Fetch(ctx)
 	if err != nil {
@@ -27,11 +30,14 @@ func (r *ChytReconciler) Sync(ctx context.Context, resource *ytv1.Chyt, ytsaurus
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if chyt.GetResource().Status.ReleaseStatus == ytv1.ChytReleaseStatusFinished {
+	if chyt.Resource().Status.ReleaseStatus == ytv1.ChytReleaseStatusFinished {
 		return ctrl.Result{}, nil
 	}
 
-	status := component.Status(ctx)
+	status, err := component.Sync(ctx, true)
+	if err != nil {
+		return ctrl.Result{Requeue: true}, fmt.Errorf("failed to get status for %s: %w", component.GetName(), err)
+	}
 	if status.SyncStatus == components.SyncStatusBlocked {
 		return ctrl.Result{RequeueAfter: time.Second * 10}, nil
 	}
@@ -43,12 +49,12 @@ func (r *ChytReconciler) Sync(ctx context.Context, resource *ytv1.Chyt, ytsaurus
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if err := component.Sync(ctx); err != nil {
+	if _, err := component.Sync(ctx, false); err != nil {
 		logger.Error(err, "component sync failed", "component", "chyt")
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if err := chyt.APIProxy().UpdateStatus(ctx); err != nil {
+	if err := chyt.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "update chyt status failed")
 		return ctrl.Result{Requeue: true}, err
 	}

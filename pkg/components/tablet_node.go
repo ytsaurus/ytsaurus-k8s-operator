@@ -43,10 +43,9 @@ func NewTabletNode(
 	spec ytv1.TabletNodesSpec,
 	doInitiailization bool,
 ) *TabletNode {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 	l := labeller.Labeller{
 		ObjectMeta:        &resource.ObjectMeta,
-		APIProxy:          ytsaurus.APIProxy(),
 		ComponentType:     consts.TabletNodeType,
 		ComponentNamePart: spec.Name,
 	}
@@ -83,13 +82,7 @@ func NewTabletNode(
 	}
 }
 
-func (tn *TabletNode) IsUpdatable() bool {
-	return true
-}
-
-func (tn *TabletNode) GetType() consts.ComponentType { return consts.TabletNodeType }
-
-func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (tn *TabletNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(tn.ytsaurus.GetClusterState()) && tn.server.needUpdate() {
@@ -97,12 +90,12 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.localComponent, tn.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, tn, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	if tn.NeedSync() {
+	if ServerNeedSync(tn.server, tn.ytsaurus) {
 		if !dry {
 			err = tn.server.Sync(ctx)
 		}
@@ -118,12 +111,8 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return SimpleStatus(SyncStatusReady), err
 	}
 
-	ytClientStatus, err := tn.ytsaurusClient.Status(ctx)
-	if err != nil {
-		return ytClientStatus, err
-	}
-	if ytClientStatus.SyncStatus != SyncStatusReady {
-		return WaitingStatus(SyncStatusBlocked, tn.ytsaurusClient.GetName()), err
+	if status, err := checkComponentDependency(ctx, tn.ytsaurusClient); status != nil {
+		return *status, err
 	}
 
 	if !dry && tn.doInitialization {
@@ -137,7 +126,7 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 }
 
 func (tn *TabletNode) getBundleBootstrap(bundle string) *ytv1.BundleBootstrapSpec {
-	resource := tn.ytsaurus.GetResource()
+	resource := tn.ytsaurus.Resource()
 	if resource.Spec.Bootstrap == nil || resource.Spec.Bootstrap.TabletCellBundles == nil {
 		return nil
 	}
@@ -245,15 +234,6 @@ func (tn *TabletNode) initBundles(ctx context.Context) (ComponentStatus, error) 
 	})
 
 	return SimpleStatus(SyncStatusReady), nil
-}
-
-func (tn *TabletNode) Status(ctx context.Context) (ComponentStatus, error) {
-	return tn.doSync(ctx, true)
-}
-
-func (tn *TabletNode) Sync(ctx context.Context) error {
-	_, err := tn.doSync(ctx, false)
-	return err
 }
 
 func (tn *TabletNode) Fetch(ctx context.Context) error {

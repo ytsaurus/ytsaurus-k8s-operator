@@ -62,10 +62,10 @@ func (d *Deployment) Build() *appsv1.Deployment {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      d.labeller.GetMetaLabelMap(false),
-					Annotations: d.ytsaurus.GetResource().Spec.ExtraPodAnnotations,
+					Annotations: d.ytsaurus.Resource().Spec.ExtraPodAnnotations,
 				},
 				Spec: corev1.PodSpec{
-					ImagePullSecrets: d.ytsaurus.GetResource().Spec.ImagePullSecrets,
+					ImagePullSecrets: d.ytsaurus.Resource().Spec.ImagePullSecrets,
 					Tolerations:      d.tolerations,
 					NodeSelector:     d.nodeSelector,
 				},

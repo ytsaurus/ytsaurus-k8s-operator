@@ -28,14 +28,15 @@ type UI struct {
 	caBundle     *resources.CABundle
 }
 
+var _ LocalComponent = &UI{}
+
 const UIClustersConfigFileName = "clusters-config.json"
 const UICustomConfigFileName = "common.js"
 
 func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *UI {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 	l := labeller.Labeller{
 		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
 		ComponentType: consts.UIType,
 		Annotations:   resource.Spec.ExtraPodAnnotations,
 	}
@@ -97,12 +98,6 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 	}
 }
 
-func (u *UI) IsUpdatable() bool {
-	return true
-}
-
-func (u *UI) GetType() consts.ComponentType { return consts.UIType }
-
 func (u *UI) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		u.microservice,
@@ -127,7 +122,7 @@ func (u *UI) createInitScript() string {
 }
 
 func (u *UI) syncComponents(ctx context.Context) (err error) {
-	ytsaurusResource := u.ytsaurus.GetResource()
+	ytsaurusResource := u.ytsaurus.Resource()
 	service := u.microservice.buildService()
 	service.Spec.Type = ytsaurusResource.Spec.UI.ServiceType
 
@@ -269,7 +264,7 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 	return u.microservice.Sync(ctx)
 }
 
-func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (u *UI) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && u.microservice.needUpdate() {
@@ -280,7 +275,7 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		if IsUpdatingComponent(u.ytsaurus, u) {
 			if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, u.microservice, &u.localComponent)
+					err = removePods(ctx, u.microservice, u.ytsaurus, u.labeller)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
@@ -293,12 +288,8 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		}
 	}
 
-	masterStatus, err := u.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, u.master.GetName()), err
+	if status, err := checkComponentDependency(ctx, u.master); status != nil {
+		return *status, err
 	}
 
 	if u.secret.NeedSync(consts.TokenSecretKey, "") {
@@ -334,13 +325,4 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (u *UI) Status(ctx context.Context) (ComponentStatus, error) {
-	return u.doSync(ctx, true)
-}
-
-func (u *UI) Sync(ctx context.Context) error {
-	_, err := u.doSync(ctx, false)
-	return err
 }

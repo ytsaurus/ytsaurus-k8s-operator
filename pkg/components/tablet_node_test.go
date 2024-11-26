@@ -174,13 +174,13 @@ var _ = Describe("Tablet node test", func() {
 
 			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true)
 			tabletNode.server = NewFakeServer()
-			status, err := tabletNode.Status(context.Background())
+			status, err := tabletNode.Sync(context.Background(), true)
 			Expect(err).Should(Succeed())
 			Expect(status.SyncStatus).Should(Equal(SyncStatusBlocked))
 
 			ytsaurusClient.SetStatus(SimpleStatus(SyncStatusReady))
 
-			status, err = tabletNode.Status(context.Background())
+			status, err = tabletNode.Sync(context.Background(), true)
 			Expect(err).Should(Succeed())
 			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
 		})
@@ -195,13 +195,13 @@ var _ = Describe("Tablet node test", func() {
 			fakeServer.podsReady = false
 			tabletNode.server = fakeServer
 
-			status, err := tabletNode.Status(context.Background())
+			status, err := tabletNode.Sync(context.Background(), true)
 			Expect(err).Should(Succeed())
 			Expect(status.SyncStatus).Should(Equal(SyncStatusBlocked))
 
 			fakeServer.podsReady = true
 
-			status, err = tabletNode.Status(context.Background())
+			status, err = tabletNode.Sync(context.Background(), true)
 			Expect(err).Should(Succeed())
 			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
 		})
@@ -229,9 +229,9 @@ var _ = Describe("Tablet node test", func() {
 						gomock.Nil()).
 					Return(false, existsNetError),
 			)
-			err := tabletNode.Sync(context.Background())
+			_, err := tabletNode.Sync(context.Background(), false)
 			Expect(err).Should(Equal(existsNetError))
-			status, err := tabletNode.Status(context.Background())
+			status, err := tabletNode.Sync(context.Background(), true)
 			Expect(err).Should(Succeed())
 			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
 
@@ -250,9 +250,9 @@ var _ = Describe("Tablet node test", func() {
 						gomock.Any()).
 					Return(yt.NodeID(guid.New()), createBundleNetError),
 			)
-			err = tabletNode.Sync(context.Background())
+			_, err = tabletNode.Sync(context.Background(), false)
 			Expect(err).Should(Equal(createBundleNetError))
-			status, err = tabletNode.Status(context.Background())
+			status, err = tabletNode.Sync(context.Background(), true)
 			Expect(err).Should(Succeed())
 			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
 
@@ -292,9 +292,9 @@ var _ = Describe("Tablet node test", func() {
 						nil).
 					Return(getNetError),
 			)
-			err = tabletNode.Sync(context.Background())
+			_, err = tabletNode.Sync(context.Background(), false)
 			Expect(err).Should(Equal(getNetError))
-			status, err = tabletNode.Status(context.Background())
+			status, err = tabletNode.Sync(context.Background(), true)
 			Expect(err).Should(Succeed())
 			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
 
@@ -335,9 +335,9 @@ var _ = Describe("Tablet node test", func() {
 						gomock.Any()).
 					Return(yt.NodeID(guid.New()), createCellNetError),
 			)
-			err = tabletNode.Sync(context.Background())
+			_, err = tabletNode.Sync(context.Background(), false)
 			Expect(err).Should(Equal(createCellNetError))
-			status, err = tabletNode.Status(context.Background())
+			status, err = tabletNode.Sync(context.Background(), true)
 			Expect(err).Should(Succeed())
 			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
 			gomock.InOrder()
@@ -386,9 +386,9 @@ var _ = Describe("Tablet node test", func() {
 						nil).
 					Return(getNetError).Times(1),
 			)
-			err = tabletNode.Sync(context.Background())
+			_, err = tabletNode.Sync(context.Background(), false)
 			Expect(err).Should(Equal(getNetError))
-			status, err = tabletNode.Status(context.Background())
+			status, err = tabletNode.Sync(context.Background(), true)
 			Expect(err).Should(Succeed())
 			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
 
@@ -437,9 +437,9 @@ var _ = Describe("Tablet node test", func() {
 						gomock.Any()).
 					Return(yt.NodeID(guid.New()), nil).Times(1),
 			)
-			err = tabletNode.Sync(context.Background())
+			_, err = tabletNode.Sync(context.Background(), false)
 			Expect(err).Should(Succeed())
-			status, err = tabletNode.Status(context.Background())
+			status, err = tabletNode.Sync(context.Background(), true)
 			Expect(err).Should(Succeed())
 			Expect(status.SyncStatus).Should(Equal(SyncStatusReady))
 		})
@@ -513,10 +513,10 @@ var _ = Describe("Tablet node test", func() {
 			nodeCfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, "cluster_domain")
 			tabletNode := NewTabletNode(nodeCfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true)
 			tabletNode.server = NewFakeServer()
-			err := tabletNode.Sync(context.Background())
+			_, err := tabletNode.Sync(context.Background(), false)
 			Expect(err).Should(Succeed())
 
-			status, err := tabletNode.Status(context.Background())
+			status, err := tabletNode.Sync(context.Background(), true)
 			Expect(err).Should(Succeed())
 			Expect(status.SyncStatus).Should(Equal(SyncStatusReady))
 		})
@@ -529,10 +529,10 @@ var _ = Describe("Tablet node test", func() {
 			cfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, "cluster_domain")
 			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], false)
 			tabletNode.server = NewFakeServer()
-			err := tabletNode.Sync(context.Background())
+			_, err := tabletNode.Sync(context.Background(), false)
 			Expect(err).Should(Succeed())
 
-			status, err := tabletNode.Status(context.Background())
+			status, err := tabletNode.Sync(context.Background(), true)
 			Expect(err).Should(Succeed())
 			Expect(status.SyncStatus).Should(Equal(SyncStatusReady))
 		})

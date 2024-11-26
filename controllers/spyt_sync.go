@@ -17,7 +17,7 @@ func (r *SpytReconciler) Sync(ctx context.Context, resource *ytv1.Spyt, ytsaurus
 
 	spyt := apiproxy.NewSpyt(resource, r.Client, r.Recorder, r.Scheme)
 
-	cfgen := ytconfig.NewGenerator(ytsaurus, getClusterDomain(spyt.APIProxy().Client()))
+	cfgen := ytconfig.NewGenerator(ytsaurus, getClusterDomain(spyt.Client()))
 
 	component := components.NewSpyt(cfgen, spyt, ytsaurus)
 
@@ -27,11 +27,15 @@ func (r *SpytReconciler) Sync(ctx context.Context, resource *ytv1.Spyt, ytsaurus
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if spyt.GetResource().Status.ReleaseStatus == ytv1.SpytReleaseStatusFinished {
+	if spyt.Resource().Status.ReleaseStatus == ytv1.SpytReleaseStatusFinished {
 		return ctrl.Result{}, nil
 	}
 
-	componentStatus := component.Status(ctx)
+	componentStatus, err := component.Sync(ctx, true)
+	if err != nil {
+		logger.Error(err, "failed to get SPYT status for controller")
+		return ctrl.Result{Requeue: true}, err
+	}
 
 	if componentStatus.SyncStatus == components.SyncStatusBlocked {
 		return ctrl.Result{RequeueAfter: time.Second * 10}, nil
@@ -44,12 +48,12 @@ func (r *SpytReconciler) Sync(ctx context.Context, resource *ytv1.Spyt, ytsaurus
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if err := component.Sync(ctx); err != nil {
+	if _, err := component.Sync(ctx, false); err != nil {
 		logger.Error(err, "component sync failed", "component", "spyt")
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if err := spyt.APIProxy().UpdateStatus(ctx); err != nil {
+	if err := spyt.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "update spyt status failed")
 		return ctrl.Result{Requeue: true}, err
 	}

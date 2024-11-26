@@ -20,10 +20,9 @@ type Discovery struct {
 }
 
 func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Discovery {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 	l := labeller.Labeller{
 		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
 		ComponentType: consts.DiscoveryType,
 	}
 
@@ -55,17 +54,11 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Disco
 	}
 }
 
-func (d *Discovery) IsUpdatable() bool {
-	return true
-}
-
-func (d *Discovery) GetType() consts.ComponentType { return consts.DiscoveryType }
-
 func (d *Discovery) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, d.server)
 }
 
-func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (d *Discovery) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(d.ytsaurus.GetClusterState()) && d.server.needUpdate() {
@@ -73,12 +66,12 @@ func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, d.ytsaurus, d, &d.localComponent, d.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, d, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	if d.NeedSync() {
+	if ServerNeedSync(d.server, d.ytsaurus) {
 		if !dry {
 			err = d.server.Sync(ctx)
 		}
@@ -90,13 +83,4 @@ func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (d *Discovery) Status(ctx context.Context) (ComponentStatus, error) {
-	return d.doSync(ctx, true)
-}
-
-func (d *Discovery) Sync(ctx context.Context) error {
-	_, err := d.doSync(ctx, false)
-	return err
 }

@@ -17,9 +17,10 @@ import (
 )
 
 type Ytsaurus struct {
-	apiProxy APIProxy
-	ytsaurus *ytv1.Ytsaurus
+	apiProxy[*ytv1.Ytsaurus]
 }
+
+var _ TypedAPIProxy[*ytv1.Ytsaurus] = &Ytsaurus{}
 
 func NewYtsaurus(
 	ytsaurus *ytv1.Ytsaurus,
@@ -27,25 +28,20 @@ func NewYtsaurus(
 	recorder record.EventRecorder,
 	scheme *runtime.Scheme) *Ytsaurus {
 	return &Ytsaurus{
-		ytsaurus: ytsaurus,
 		apiProxy: NewAPIProxy(ytsaurus, client, recorder, scheme),
 	}
 }
 
-func (c *Ytsaurus) APIProxy() APIProxy {
-	return c.apiProxy
-}
-
-func (c *Ytsaurus) GetResource() *ytv1.Ytsaurus {
-	return c.ytsaurus
+func (c *Ytsaurus) Spec() *ytv1.YtsaurusSpec {
+	return &c.resource.Spec
 }
 
 func (c *Ytsaurus) GetCommonSpec() ytv1.CommonSpec {
-	return c.GetResource().Spec.CommonSpec
+	return c.resource.Spec.CommonSpec
 }
 
 func (c *Ytsaurus) GetClusterState() ytv1.ClusterState {
-	return c.ytsaurus.Status.State
+	return c.resource.Status.State
 }
 
 func (c *Ytsaurus) IsUpdating() bool {
@@ -53,34 +49,34 @@ func (c *Ytsaurus) IsUpdating() bool {
 }
 
 func (c *Ytsaurus) GetUpdateState() ytv1.UpdateState {
-	return c.ytsaurus.Status.UpdateStatus.State
+	return c.resource.Status.UpdateStatus.State
 }
 
 func (c *Ytsaurus) GetLocalUpdatingComponents() []string {
-	return c.ytsaurus.Status.UpdateStatus.Components
+	return c.resource.Status.UpdateStatus.Components
 }
 
 func (c *Ytsaurus) GetUpdateFlow() ytv1.UpdateFlow {
-	return c.ytsaurus.Status.UpdateStatus.Flow
+	return c.resource.Status.UpdateStatus.Flow
 }
 
 func (c *Ytsaurus) IsUpdateStatusConditionTrue(condition string) bool {
-	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
+	return meta.IsStatusConditionTrue(c.resource.Status.UpdateStatus.Conditions, condition)
 }
 
 func (c *Ytsaurus) SetUpdateStatusCondition(ctx context.Context, condition metav1.Condition) {
 	logger := log.FromContext(ctx)
 	logger.Info("Setting update status condition", "condition", condition)
-	meta.SetStatusCondition(&c.ytsaurus.Status.UpdateStatus.Conditions, condition)
-	sortConditions(c.ytsaurus.Status.UpdateStatus.Conditions)
+	meta.SetStatusCondition(&c.resource.Status.UpdateStatus.Conditions, condition)
+	sortConditions(c.resource.Status.UpdateStatus.Conditions)
 }
 
 func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
-	c.ytsaurus.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
-	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
-	c.ytsaurus.Status.UpdateStatus.MasterMonitoringPaths = make([]string, 0)
-	c.ytsaurus.Status.UpdateStatus.Components = nil
-	c.ytsaurus.Status.UpdateStatus.Flow = ytv1.UpdateFlowNone
+	c.resource.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
+	c.resource.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
+	c.resource.Status.UpdateStatus.MasterMonitoringPaths = make([]string, 0)
+	c.resource.Status.UpdateStatus.Components = nil
+	c.resource.Status.UpdateStatus.Flow = ytv1.UpdateFlowNone
 	return c.apiProxy.UpdateStatus(ctx)
 }
 
@@ -92,11 +88,11 @@ func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {
 
 func (c *Ytsaurus) SaveUpdatingClusterState(ctx context.Context, flow ytv1.UpdateFlow, components []string) error {
 	logger := log.FromContext(ctx)
-	c.ytsaurus.Status.State = ytv1.ClusterStateUpdating
-	c.ytsaurus.Status.UpdateStatus.Flow = flow
-	c.ytsaurus.Status.UpdateStatus.Components = components
+	c.resource.Status.State = ytv1.ClusterStateUpdating
+	c.resource.Status.UpdateStatus.Flow = flow
+	c.resource.Status.UpdateStatus.Components = components
 
-	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
+	if err := c.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "unable to update Ytsaurus cluster status")
 		return err
 	}
@@ -106,7 +102,7 @@ func (c *Ytsaurus) SaveUpdatingClusterState(ctx context.Context, flow ytv1.Updat
 
 func (c *Ytsaurus) SaveClusterState(ctx context.Context, clusterState ytv1.ClusterState) error {
 	logger := log.FromContext(ctx)
-	c.ytsaurus.Status.State = clusterState
+	c.resource.Status.State = clusterState
 	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "unable to update Ytsaurus cluster status")
 		return err
@@ -118,16 +114,16 @@ func (c *Ytsaurus) SaveClusterState(ctx context.Context, clusterState ytv1.Clust
 // SyncObservedGeneration confirms that current generation was observed.
 // Returns true if generation actually has been changed and status must be saved.
 func (c *Ytsaurus) SyncObservedGeneration() bool {
-	if c.ytsaurus.Status.ObservedGeneration == c.ytsaurus.Generation {
+	if c.resource.Status.ObservedGeneration == c.resource.Generation {
 		return false
 	}
-	c.ytsaurus.Status.ObservedGeneration = c.ytsaurus.Generation
+	c.resource.Status.ObservedGeneration = c.resource.Generation
 	return true
 }
 
 func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateState) error {
 	logger := log.FromContext(ctx)
-	c.ytsaurus.Status.UpdateStatus.State = updateState
+	c.resource.Status.UpdateStatus.State = updateState
 	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "unable to update Ytsaurus update state")
 		return err
@@ -136,16 +132,16 @@ func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateS
 }
 
 func (c *Ytsaurus) SetStatusCondition(condition metav1.Condition) {
-	meta.SetStatusCondition(&c.ytsaurus.Status.Conditions, condition)
-	sortConditions(c.ytsaurus.Status.Conditions)
+	meta.SetStatusCondition(&c.resource.Status.Conditions, condition)
+	sortConditions(c.resource.Status.Conditions)
 }
 
 func (c *Ytsaurus) IsStatusConditionTrue(conditionType string) bool {
-	return meta.IsStatusConditionTrue(c.ytsaurus.Status.Conditions, conditionType)
+	return meta.IsStatusConditionTrue(c.resource.Status.Conditions, conditionType)
 }
 
 func (c *Ytsaurus) IsStatusConditionFalse(conditionType string) bool {
-	return meta.IsStatusConditionFalse(c.ytsaurus.Status.Conditions, conditionType)
+	return meta.IsStatusConditionFalse(c.resource.Status.Conditions, conditionType)
 }
 
 func sortConditions(conditions []metav1.Condition) {

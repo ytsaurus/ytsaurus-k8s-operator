@@ -34,10 +34,9 @@ type Master struct {
 }
 
 func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
-	resource := ytsaurus.GetResource()
+	resource := ytsaurus.Resource()
 	l := labeller.Labeller{
 		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
 		ComponentType: consts.MasterType,
 		Annotations:   resource.Spec.ExtraPodAnnotations,
 	}
@@ -96,17 +95,11 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 	}
 }
 
-func (m *Master) GetType() consts.ComponentType { return consts.MasterType }
-
-func (m *Master) IsUpdatable() bool {
-	return true
-}
-
 func (m *Master) Fetch(ctx context.Context) error {
-	if m.ytsaurus.GetResource().Spec.AdminCredentials != nil {
-		err := m.ytsaurus.APIProxy().FetchObject(
+	if m.ytsaurus.Resource().Spec.AdminCredentials != nil {
+		err := m.ytsaurus.FetchObject(
 			ctx,
-			m.ytsaurus.GetResource().Spec.AdminCredentials.Name,
+			m.ytsaurus.Spec().AdminCredentials.Name,
 			&m.adminCredentials)
 		if err != nil {
 			return err
@@ -151,7 +144,7 @@ type Medium struct {
 func (m *Master) getExtraMedia() []Medium {
 	mediaMap := make(map[string]Medium)
 
-	for _, d := range m.ytsaurus.GetResource().Spec.DataNodes {
+	for _, d := range m.ytsaurus.Resource().Spec.DataNodes {
 		for _, l := range d.Locations {
 			if l.Medium == consts.DefaultMedium {
 				continue
@@ -291,7 +284,7 @@ func (m *Master) createExitReadOnlyScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(m.ytsaurus.GetClusterState()) && m.server.needUpdate() {
@@ -303,12 +296,12 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 			st, err := m.exitReadOnly(ctx, dry)
 			return *st, err
 		}
-		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, m, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	if m.NeedSync() {
+	if ServerNeedSync(m.server, m.ytsaurus) {
 		if !dry {
 			err = m.doServerSync(ctx)
 		}
@@ -326,19 +319,10 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	return m.initJob.Sync(ctx, dry)
 }
 
-func (m *Master) Status(ctx context.Context) (ComponentStatus, error) {
-	return m.doSync(ctx, true)
-}
-
-func (m *Master) Sync(ctx context.Context) error {
-	_, err := m.doSync(ctx, false)
-	return err
-}
-
 func (m *Master) doServerSync(ctx context.Context) error {
 	statefulSet := m.server.buildStatefulSet()
 	podSpec := &statefulSet.Spec.Template.Spec
-	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
+	primaryMastersSpec := m.ytsaurus.Resource().Spec.PrimaryMasters
 
 	if err := AddSidecarsToPodSpec(primaryMastersSpec.Sidecars, podSpec); err != nil {
 		return err
@@ -351,7 +335,7 @@ func (m *Master) doServerSync(ctx context.Context) error {
 }
 
 func (m *Master) getHostAddressLabel() string {
-	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
+	primaryMastersSpec := m.ytsaurus.Resource().Spec.PrimaryMasters
 	if primaryMastersSpec.HostAddressLabel != "" {
 		return primaryMastersSpec.HostAddressLabel
 	}

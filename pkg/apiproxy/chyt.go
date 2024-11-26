@@ -13,9 +13,10 @@ import (
 )
 
 type Chyt struct {
-	apiProxy APIProxy
-	chyt     *ytv1.Chyt
+	apiProxy[*ytv1.Chyt]
 }
+
+var _ TypedAPIProxy[*ytv1.Chyt] = &Chyt{}
 
 func NewChyt(
 	chyt *ytv1.Chyt,
@@ -23,35 +24,31 @@ func NewChyt(
 	recorder record.EventRecorder,
 	scheme *runtime.Scheme) *Chyt {
 	return &Chyt{
-		chyt:     chyt,
-		apiProxy: NewAPIProxy(chyt, client, recorder, scheme),
+		apiProxy: apiProxy[*ytv1.Chyt]{
+			resource: chyt,
+			client:   client,
+			recorder: recorder,
+			scheme:   scheme,
+		},
 	}
 }
 
-func (c *Chyt) GetResource() *ytv1.Chyt {
-	return c.chyt
-}
-
-func (c *Chyt) APIProxy() APIProxy {
-	return c.apiProxy
-}
-
 func (c *Chyt) SetStatusCondition(condition metav1.Condition) {
-	meta.SetStatusCondition(&c.chyt.Status.Conditions, condition)
+	meta.SetStatusCondition(&c.resource.Status.Conditions, condition)
 }
 
 func (c *Chyt) IsStatusConditionTrue(conditionType string) bool {
-	return meta.IsStatusConditionTrue(c.chyt.Status.Conditions, conditionType)
+	return meta.IsStatusConditionTrue(c.resource.Status.Conditions, conditionType)
 }
 
 func (c *Chyt) IsStatusConditionFalse(conditionType string) bool {
-	return meta.IsStatusConditionFalse(c.chyt.Status.Conditions, conditionType)
+	return meta.IsStatusConditionFalse(c.resource.Status.Conditions, conditionType)
 }
 
 func (c *Chyt) SaveReleaseStatus(ctx context.Context, releaseStatus ytv1.ChytReleaseStatus) error {
 	logger := log.FromContext(ctx)
-	c.GetResource().Status.ReleaseStatus = releaseStatus
-	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
+	c.resource.Status.ReleaseStatus = releaseStatus
+	if err := c.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "unable to update Chyt release status")
 		return err
 	}

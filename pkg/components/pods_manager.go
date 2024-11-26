@@ -5,6 +5,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 )
 
@@ -16,13 +17,18 @@ type podsManager interface {
 	podsImageCorrespondsToSpec() bool
 }
 
-func removePods(ctx context.Context, manager podsManager, c *localComponent) error {
-	if !isPodsRemovingStarted(c) {
+func removePods(ctx context.Context, manager podsManager, conditionsManager apiproxy.UpdateConditionManager, labeller *labeller.Labeller) error {
+	started := labeller.GetPodsRemovingStartedCondition()
+	if !conditionsManager.IsUpdateStatusConditionTrue(started) {
 		if err := manager.removePods(ctx); err != nil {
 			return err
 		}
-
-		setPodsRemovingStartedCondition(ctx, c)
+		conditionsManager.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    started,
+			Status:  metav1.ConditionTrue,
+			Reason:  "Update",
+			Message: "Pods removing was started",
+		})
 		return nil
 	}
 
@@ -30,28 +36,11 @@ func removePods(ctx context.Context, manager podsManager, c *localComponent) err
 		return nil
 	}
 
-	setPodsRemovedCondition(ctx, c)
-	return nil
-}
-
-func isPodsRemovingStarted(c *localComponent) bool {
-	return c.ytsaurus.IsUpdateStatusConditionTrue(c.labeller.GetPodsRemovingStartedCondition())
-}
-
-func setPodsRemovingStartedCondition(ctx context.Context, c *localComponent) {
-	c.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    c.labeller.GetPodsRemovingStartedCondition(),
-		Status:  metav1.ConditionTrue,
-		Reason:  "Update",
-		Message: "Pods removing was started",
-	})
-}
-
-func setPodsRemovedCondition(ctx context.Context, c *localComponent) {
-	c.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    labeller.GetPodsRemovedCondition(c.GetName()),
+	conditionsManager.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    labeller.GetPodsRemovedCondition(),
 		Status:  metav1.ConditionTrue,
 		Reason:  "Update",
 		Message: "Pods removed",
 	})
+	return nil
 }
