@@ -191,9 +191,16 @@ func (h *ConfigHelper) NeedReload() (bool, error) {
 		}
 		curConfig := h.getCurrentConfigValue(fileName)
 		if !cmp.Equal(curConfig, newConfig) {
-			h.apiProxy.RecordNormal(
-				"Reconciliation",
-				fmt.Sprintf("Config %s needs reload", fileName))
+			if curConfig == nil {
+				h.apiProxy.RecordNormal(
+					"Reconciliation",
+					fmt.Sprintf("Config %s needs creation", fileName))
+			} else {
+				configsDiff := cmp.Diff(string(curConfig), string(newConfig))
+				h.apiProxy.RecordNormal(
+					"Reconciliation",
+					fmt.Sprintf("Config %s needs reload. Diff: %s", fileName, configsDiff))
+			}
 			return true, nil
 		}
 	}
