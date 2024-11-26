@@ -10,7 +10,6 @@ import (
 
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -38,6 +37,7 @@ func NewComponentManager(
 
 	clusterDomain := getClusterDomain(ytsaurus.APIProxy().Client())
 	cfgen := ytconfig.NewGenerator(resource, clusterDomain)
+	nodeCfgGen := &cfgen.NodeGenerator
 
 	d := components.NewDiscovery(cfgen, ytsaurus)
 	m := components.NewMaster(cfgen, ytsaurus)
@@ -48,7 +48,6 @@ func NewComponentManager(
 	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0])
 
 	var dnds []components.Component
-	nodeCfgGen := ytconfig.NewLocalNodeGenerator(ytsaurus.GetResource(), clusterDomain)
 	if len(resource.Spec.DataNodes) > 0 {
 		for _, dndSpec := range ytsaurus.GetResource().Spec.DataNodes {
 			dnds = append(dnds, components.NewDataNode(nodeCfgGen, ytsaurus, m, dndSpec))
@@ -265,5 +264,5 @@ func (cm *ComponentManager) arePodsRemoved() bool {
 }
 
 func (cm *ComponentManager) areComponentPodsRemoved(component components.Component) bool {
-	return cm.ytsaurus.IsUpdateStatusConditionTrue(labeller.GetPodsRemovedCondition(component.GetName()))
+	return cm.ytsaurus.IsUpdateStatusConditionTrue(component.GetLabeller().GetPodsRemovedCondition())
 }

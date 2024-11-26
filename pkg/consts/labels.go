@@ -54,10 +54,3 @@ func ComponentLabel(component ComponentType) string {
 
 	panic(fmt.Sprintf("Unknown component type: %s", component))
 }
-
-func FormatComponentStringWithDefault(base string, name string) string {
-	if name != DefaultName {
-		return fmt.Sprintf("%s-%s", base, name)
-	}
-	return base
-}

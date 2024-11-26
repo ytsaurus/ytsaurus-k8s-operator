@@ -13,7 +13,6 @@ import (
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -27,26 +26,19 @@ type YqlAgent struct {
 }
 
 func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *YqlAgent {
-	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
-		ComponentType: consts.YqlAgentType,
-		Annotations:   resource.Spec.ExtraPodAnnotations,
-	}
+	l := cfgen.GetComponentLabeller(consts.YqlAgentType, "")
 
+	resource := ytsaurus.GetResource()
 	if resource.Spec.YQLAgents.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.YQLAgents.InstanceSpec.MonitoringPort = ptr.To(int32(consts.YQLAgentMonitoringPort))
 	}
 
 	srv := newServer(
-		&l,
+		l,
 		ytsaurus,
 		&resource.Spec.YQLAgents.InstanceSpec,
 		"/usr/bin/ytserver-yql-agent",
 		"ytserver-yql-agent.yson",
-		cfgen.GetYQLAgentStatefulSetName(),
-		cfgen.GetYQLAgentServiceName(),
 		func() ([]byte, error) {
 			return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents)
 		},
@@ -58,11 +50,11 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 	)
 
 	return &YqlAgent{
-		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               master,
 		initEnvironment: NewInitJob(
-			&l,
+			l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			resource.Spec.ImagePullSecrets,
@@ -75,7 +67,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
-			&l,
+			l,
 			ytsaurus.APIProxy()),
 	}
 }
@@ -83,8 +75,6 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 func (yqla *YqlAgent) IsUpdatable() bool {
 	return true
 }
-
-func (yqla *YqlAgent) GetType() consts.ComponentType { return consts.YqlAgentType }
 
 func (yqla *YqlAgent) GetName() string {
 	return yqla.labeller.GetFullComponentName()

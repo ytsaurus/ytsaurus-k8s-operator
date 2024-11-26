@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -21,13 +20,7 @@ func (r *RemoteTabletNodesReconciler) Sync(
 	logger := log.FromContext(ctx).WithValues("component", "remoteTabletNodes")
 	apiProxy := apiproxy.NewAPIProxy(resource, r.Client, r.Recorder, r.Scheme)
 
-	cfgen := ytconfig.NewRemoteNodeGenerator(
-		types.NamespacedName{Name: resource.Name, Namespace: resource.Namespace},
-		getClusterDomain(r.Client),
-		resource.Spec.CommonSpec,
-		remoteYtsaurus.Spec.MasterConnectionSpec,
-		&remoteYtsaurus.Spec.MasterCachesSpec,
-	)
+	cfgen := ytconfig.NewRemoteNodeGenerator(remoteYtsaurus, resource.GetName(), getClusterDomain(r.Client), &resource.Spec.CommonSpec)
 
 	component := components.NewRemoteTabletNodes(
 		cfgen,

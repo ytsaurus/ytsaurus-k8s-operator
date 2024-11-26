@@ -165,7 +165,7 @@ var _ = Describe("Tablet node test", func() {
 		})
 
 		It("Tablet node Sync; ytclient not ready", func() {
-			cfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, "cluster_domain")
+			cfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, ytsaurusSpec.Name, "cluster_domain")
 			ytsaurus := apiproxy.NewYtsaurus(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
 
 			ytsaurusClient := NewFakeYtsaurusClient(mockYtClient)
@@ -186,7 +186,7 @@ var _ = Describe("Tablet node test", func() {
 		})
 
 		It("Tablet node Sync; pods are not ready", func() {
-			cfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, "cluster_domain")
+			cfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, ytsaurusSpec.Name, "cluster_domain")
 			ytsaurus := apiproxy.NewYtsaurus(ytsaurusSpec, client, record.NewFakeRecorder(1), scheme)
 
 			ytsaurusClient := NewFakeYtsaurusClient(mockYtClient)
@@ -216,7 +216,7 @@ var _ = Describe("Tablet node test", func() {
 			getNetError := net.UnknownNetworkError("get: some net error")
 			createCellNetError := net.UnknownNetworkError("create cell: some net error")
 
-			nodeCfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, "cluster_domain")
+			nodeCfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, ytsaurusSpec.Name, "cluster_domain")
 			tabletNode := NewTabletNode(nodeCfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true)
 			tabletNode.server = NewFakeServer()
 
@@ -510,7 +510,7 @@ var _ = Describe("Tablet node test", func() {
 							}})).Return(yt.NodeID(guid.New()), nil)
 			}
 
-			nodeCfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, "cluster_domain")
+			nodeCfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, ytsaurusSpec.Name, "cluster_domain")
 			tabletNode := NewTabletNode(nodeCfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true)
 			tabletNode.server = NewFakeServer()
 			err := tabletNode.Sync(context.Background())
@@ -526,7 +526,7 @@ var _ = Describe("Tablet node test", func() {
 
 			ytsaurusClient := NewFakeYtsaurusClient(mockYtClient)
 
-			cfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, "cluster_domain")
+			cfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, ytsaurusSpec.Name, "cluster_domain")
 			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], false)
 			tabletNode.server = NewFakeServer()
 			err := tabletNode.Sync(context.Background())

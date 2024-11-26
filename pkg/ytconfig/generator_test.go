@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"k8s.io/apimachinery/pkg/types"
 
 	"k8s.io/utils/ptr"
 
@@ -18,10 +17,10 @@ import (
 )
 
 var (
-	testClusterDomain  = "fake.zone"
-	testNamespace      = "fake"
-	testYtsaurusName   = "test"
-	testNamespacedName = types.NamespacedName{
+	testClusterDomain = "fake.zone"
+	testNamespace     = "fake"
+	testYtsaurusName  = "test"
+	testObjectMeta    = metav1.ObjectMeta{
 		Namespace: testNamespace,
 		Name:      testYtsaurusName,
 	}
@@ -148,7 +147,8 @@ func TestGetDataNodeConfig(t *testing.T) {
 
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
-			g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
+			ytsaurus := getYtsaurusWithEverything()
+			g := NewLocalNodeGenerator(ytsaurus, ytsaurus.Name, testClusterDomain)
 			cfg, err := g.GetDataNodeConfig(getDataNodeSpec(test.Location))
 			require.NoError(t, err)
 			canonize.Assert(t, cfg)
@@ -158,11 +158,10 @@ func TestGetDataNodeConfig(t *testing.T) {
 
 func TestGetDataNodeWithoutYtsaurusConfig(t *testing.T) {
 	g := NewRemoteNodeGenerator(
-		testNamespacedName,
+		getRemoteYtsaurus(),
+		testYtsaurusName,
 		testClusterDomain,
 		getCommonSpec(),
-		getMasterConnectionSpecWithFixedMasterHosts(),
-		getMasterCachesSpecWithFixedHosts(),
 	)
 	cfg, err := g.GetDataNodeConfig(getDataNodeSpec(testLocationChunkStore))
 	require.NoError(t, err)
@@ -191,7 +190,8 @@ func TestGetExecNodeConfig(t *testing.T) {
 
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
-			g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
+			ytsaurus := getYtsaurusWithEverything()
+			g := NewLocalNodeGenerator(ytsaurus, ytsaurus.Name, testClusterDomain)
 			cfg, err := g.GetExecNodeConfig(getExecNodeSpec(test.JobResources))
 			require.NoError(t, err)
 			canonize.Assert(t, cfg)
@@ -200,7 +200,8 @@ func TestGetExecNodeConfig(t *testing.T) {
 }
 
 func TestGetExecNodeConfigWithCri(t *testing.T) {
-	g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewLocalNodeGenerator(ytsaurus, ytsaurus.Name, testClusterDomain)
 
 	cases := map[string]struct {
 		JobResources *corev1.ResourceRequirements
@@ -235,7 +236,8 @@ func TestGetExecNodeConfigWithCri(t *testing.T) {
 }
 
 func TestGetContainerdConfig(t *testing.T) {
-	g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewLocalNodeGenerator(ytsaurus, ytsaurus.Name, testClusterDomain)
 
 	spec := withCri(getExecNodeSpec(nil), nil, false)
 	cfg, err := g.GetContainerdConfig(&spec)
@@ -245,11 +247,10 @@ func TestGetContainerdConfig(t *testing.T) {
 
 func TestGetExecNodeWithoutYtsaurusConfig(t *testing.T) {
 	g := NewRemoteNodeGenerator(
-		testNamespacedName,
+		getRemoteYtsaurus(),
+		testYtsaurusName,
 		testClusterDomain,
 		getCommonSpec(),
-		getMasterConnectionSpecWithFixedMasterHosts(),
-		getMasterCachesSpecWithFixedHosts(),
 	)
 	cfg, err := g.GetExecNodeConfig(getExecNodeSpec(nil))
 	require.NoError(t, err)
@@ -364,7 +365,8 @@ func TestGetStrawberryControllerConfigWithCustomFamilies(t *testing.T) {
 }
 
 func TestGetTabletNodeConfig(t *testing.T) {
-	g := NewLocalNodeGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	ytsaurus := getYtsaurusWithEverything()
+	g := NewLocalNodeGenerator(ytsaurus, ytsaurus.Name, testClusterDomain)
 	cfg, err := g.GetTabletNodeConfig(getTabletNodeSpec())
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
@@ -372,11 +374,10 @@ func TestGetTabletNodeConfig(t *testing.T) {
 
 func TestGetTabletNodeWithoutYtsaurusConfig(t *testing.T) {
 	g := NewRemoteNodeGenerator(
-		testNamespacedName,
+		getRemoteYtsaurus(),
+		testYtsaurusName,
 		testClusterDomain,
 		getCommonSpec(),
-		getMasterConnectionSpecWithFixedMasterHosts(),
-		getMasterCachesSpecWithFixedHosts(),
 	)
 	cfg, err := g.GetTabletNodeConfig(getTabletNodeSpec())
 	require.NoError(t, err)
@@ -454,12 +455,9 @@ func TestGetMasterCachesConfig(t *testing.T) {
 
 func getYtsaurus() *ytv1.Ytsaurus {
 	return &ytv1.Ytsaurus{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: testNamespace,
-			Name:      testYtsaurusName,
-		},
+		ObjectMeta: testObjectMeta,
 		Spec: ytv1.YtsaurusSpec{
-			CommonSpec: getCommonSpec(),
+			CommonSpec: *getCommonSpec(),
 
 			PrimaryMasters: ytv1.MastersSpec{
 				MasterConnectionSpec:   getMasterConnectionSpec(),
@@ -546,6 +544,16 @@ func getYtsaurus() *ytv1.Ytsaurus {
 					"{name: sleep, image: fakeimage:stable, command: [/bin/sleep], args: [inf]}",
 				},
 			},
+		},
+	}
+}
+
+func getRemoteYtsaurus() *ytv1.RemoteYtsaurus {
+	return &ytv1.RemoteYtsaurus{
+		ObjectMeta: testObjectMeta,
+		Spec: ytv1.RemoteYtsaurusSpec{
+			MasterConnectionSpec: getMasterConnectionSpecWithFixedMasterHosts(),
+			MasterCachesSpec:     getMasterCachesSpecWithFixedHosts(),
 		},
 	}
 }
@@ -827,8 +835,8 @@ func getTCPProxySpec() ytv1.TCPProxiesSpec {
 	}
 }
 
-func getCommonSpec() ytv1.CommonSpec {
-	return ytv1.CommonSpec{
+func getCommonSpec() *ytv1.CommonSpec {
+	return &ytv1.CommonSpec{
 		UseIPv6: true,
 	}
 }
@@ -856,8 +864,8 @@ func getMasterCachesSpec() ytv1.MasterCachesSpec {
 	}
 }
 
-func getMasterCachesSpecWithFixedHosts() *ytv1.MasterCachesSpec {
+func getMasterCachesSpecWithFixedHosts() ytv1.MasterCachesSpec {
 	spec := getMasterCachesSpec()
 	spec.MasterCachesConnectionSpec.HostAddresses = testMasterCachesExternalHosts
-	return &spec
+	return spec
 }

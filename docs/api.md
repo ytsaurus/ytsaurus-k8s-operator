@@ -319,7 +319,7 @@ _Appears in:_
 | `useIpv4` _boolean_ |  | false |  |
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
-| `useShortNames` _boolean_ |  | true |  |
+| `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
@@ -1306,7 +1306,7 @@ _Appears in:_
 | `useIpv4` _boolean_ |  | false |  |
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
-| `useShortNames` _boolean_ |  | true |  |
+| `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
@@ -1400,7 +1400,7 @@ _Appears in:_
 | `useIpv4` _boolean_ |  | false |  |
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
-| `useShortNames` _boolean_ |  | true |  |
+| `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
@@ -1539,7 +1539,7 @@ _Appears in:_
 | `useIpv4` _boolean_ |  | false |  |
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
-| `useShortNames` _boolean_ |  | true |  |
+| `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
@@ -2193,7 +2193,7 @@ _Appears in:_
 | `useIpv4` _boolean_ |  | false |  |
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
-| `useShortNames` _boolean_ |  | true |  |
+| `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |

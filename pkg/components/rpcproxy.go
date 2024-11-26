@@ -10,7 +10,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -30,27 +29,20 @@ func NewRPCProxy(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
-	spec ytv1.RPCProxiesSpec) *RpcProxy {
-	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:        &resource.ObjectMeta,
-		APIProxy:          ytsaurus.APIProxy(),
-		ComponentType:     consts.RpcProxyType,
-		ComponentNamePart: spec.Role,
-	}
+	spec ytv1.RPCProxiesSpec,
+) *RpcProxy {
+	l := cfgen.GetComponentLabeller(consts.RpcProxyType, spec.Role)
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.RPCProxyMonitoringPort))
 	}
 
 	srv := newServer(
-		&l,
+		l,
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-proxy",
 		"ytserver-rpc-proxy.yson",
-		cfgen.GetRPCProxiesStatefulSetName(spec.Role),
-		cfgen.GetRPCProxiesHeadlessServiceName(spec.Role),
 		func() ([]byte, error) {
 			return cfgen.GetRPCProxyConfig(spec)
 		},
@@ -65,7 +57,7 @@ func NewRPCProxy(
 	if spec.ServiceType != nil {
 		balancingService = resources.NewRPCService(
 			cfgen.GetRPCProxiesServiceName(spec.Role),
-			&l,
+			l,
 			ytsaurus.APIProxy())
 
 		balancingService.SetNodePort(spec.NodePort)
@@ -80,7 +72,7 @@ func NewRPCProxy(
 	}
 
 	return &RpcProxy{
-		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               masterReconciler,
 		serviceType:          spec.ServiceType,
@@ -92,8 +84,6 @@ func NewRPCProxy(
 func (rp *RpcProxy) IsUpdatable() bool {
 	return true
 }
-
-func (rp *RpcProxy) GetType() consts.ComponentType { return consts.RpcProxyType }
 
 func (rp *RpcProxy) Fetch(ctx context.Context) error {
 	fetchable := []resources.Fetchable{

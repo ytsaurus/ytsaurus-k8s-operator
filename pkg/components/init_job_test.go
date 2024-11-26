@@ -10,7 +10,6 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/tools/record"
@@ -73,13 +72,12 @@ func syncJobUntilReady(t *testing.T, job *InitJob) {
 }
 
 func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
-	k8sName := "dummy-name"
+	resource := ytsaurus.GetResource()
 	return NewInitJob(
 		&labeller.Labeller{
-			ObjectMeta: &metav1.ObjectMeta{
-				Name:      k8sName,
-				Namespace: ytsaurus.GetResource().Namespace,
-			},
+			Namespace:     resource.GetNamespace(),
+			ResourceName:  resource.GetName(),
+			ClusterName:   resource.GetName(),
 			ComponentType: consts.MasterType,
 		},
 		ytsaurus.APIProxy(),

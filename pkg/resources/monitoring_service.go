@@ -52,7 +52,7 @@ func (s *MonitoringService) Sync(ctx context.Context) error {
 func (s *MonitoringService) GetServiceMeta(name string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Name:      name,
-		Namespace: s.labeller.ObjectMeta.Namespace,
+		Namespace: s.labeller.GetNamespace(),
 		Labels:    s.labeller.GetMonitoringMetaLabelMap(),
 	}
 }

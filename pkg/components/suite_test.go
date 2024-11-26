@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	mock_yt "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/mock"
 )
 
@@ -72,6 +73,10 @@ func (fc *FakeComponent) GetName() string {
 
 func (fc *FakeComponent) GetType() consts.ComponentType {
 	return fc.compType
+}
+
+func (fyc *FakeComponent) GetLabeller() *labeller.Labeller {
+	return nil
 }
 
 func (fc *FakeComponent) SetReadyCondition(status ComponentStatus) {}

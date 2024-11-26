@@ -4,8 +4,6 @@ import (
 	"context"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 )
 
 // TODO: move to Updatable
@@ -49,7 +47,7 @@ func setPodsRemovingStartedCondition(ctx context.Context, c *localComponent) {
 
 func setPodsRemovedCondition(ctx context.Context, c *localComponent) {
 	c.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    labeller.GetPodsRemovedCondition(c.GetName()),
+		Type:    c.labeller.GetPodsRemovedCondition(),
 		Status:  metav1.ConditionTrue,
 		Reason:  "Update",
 		Message: "Pods removed",

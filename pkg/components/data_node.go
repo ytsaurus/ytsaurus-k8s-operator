@@ -9,7 +9,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -26,26 +25,18 @@ func NewDataNode(
 	master Component,
 	spec ytv1.DataNodesSpec,
 ) *DataNode {
-	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:        &resource.ObjectMeta,
-		APIProxy:          ytsaurus.APIProxy(),
-		ComponentType:     consts.DataNodeType,
-		ComponentNamePart: spec.Name,
-	}
+	l := cfgen.GetComponentLabeller(consts.DataNodeType, spec.Name)
 
 	if spec.InstanceSpec.MonitoringPort == nil {
 		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.DataNodeMonitoringPort))
 	}
 
 	srv := newServer(
-		&l,
+		l,
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-data-node.yson",
-		cfgen.GetDataNodesStatefulSetName(spec.Name),
-		cfgen.GetDataNodesServiceName(spec.Name),
 		func() ([]byte, error) {
 			return cfgen.GetDataNodeConfig(spec)
 		},
@@ -57,7 +48,7 @@ func NewDataNode(
 	)
 
 	return &DataNode{
-		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               master,
 	}
@@ -66,8 +57,6 @@ func NewDataNode(
 func (n *DataNode) IsUpdatable() bool {
 	return true
 }
-
-func (n *DataNode) GetType() consts.ComponentType { return consts.DataNodeType }
 
 func (n *DataNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, n.server)

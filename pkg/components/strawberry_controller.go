@@ -12,7 +12,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -40,7 +39,10 @@ func NewStrawberryController(
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	scheduler Component,
-	dataNodes []Component) *StrawberryController {
+	dataNodes []Component,
+) *StrawberryController {
+	l := cfgen.GetComponentLabeller(consts.StrawberryControllerType, "")
+
 	resource := ytsaurus.GetResource()
 
 	// TODO: strawberry has a different image and can't be nil/fallback on CoreImage.
@@ -49,15 +51,8 @@ func NewStrawberryController(
 		image = *resource.Spec.StrawberryController.Image
 	}
 
-	l := labeller.Labeller{
-		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
-		ComponentType: consts.StrawberryControllerType,
-		Annotations:   resource.Spec.ExtraPodAnnotations,
-	}
-
 	microservice := newMicroservice(
-		&l,
+		l,
 		ytsaurus,
 		image,
 		1,
@@ -74,11 +69,11 @@ func NewStrawberryController(
 	)
 
 	return &StrawberryController{
-		localComponent: newLocalComponent(&l, ytsaurus),
+		localComponent: newLocalComponent(l, ytsaurus),
 		cfgen:          cfgen,
 		microservice:   microservice,
 		initUserAndUrlJob: NewInitJob(
-			&l,
+			l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			ytsaurus.GetResource().Spec.ImagePullSecrets,
@@ -90,7 +85,7 @@ func NewStrawberryController(
 			getNodeSelectorWithDefault(resource.Spec.StrawberryController.NodeSelector, resource.Spec.NodeSelector),
 		),
 		initChytClusterJob: NewInitJob(
-			&l,
+			l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			resource.Spec.ImagePullSecrets,
@@ -103,7 +98,7 @@ func NewStrawberryController(
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
-			&l,
+			l,
 			ytsaurus.APIProxy()),
 		name:      "strawberry",
 		master:    master,
@@ -115,8 +110,6 @@ func NewStrawberryController(
 func (c *StrawberryController) IsUpdatable() bool {
 	return true
 }
-
-func (c *StrawberryController) GetType() consts.ComponentType { return consts.StrawberryControllerType }
 
 func (c *StrawberryController) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,

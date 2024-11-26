@@ -16,7 +16,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -40,26 +39,20 @@ func NewQueueAgent(
 	master Component,
 	tabletNodes []Component,
 ) *QueueAgent {
+	l := cfgen.GetComponentLabeller(consts.QueueAgentType, "")
+
 	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
-		ComponentType: consts.QueueAgentType,
-		Annotations:   resource.Spec.ExtraPodAnnotations,
-	}
 
 	if resource.Spec.QueueAgents.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.QueueAgents.InstanceSpec.MonitoringPort = ptr.To(int32(consts.QueueAgentMonitoringPort))
 	}
 
 	srv := newServer(
-		&l,
+		l,
 		ytsaurus,
 		&resource.Spec.QueueAgents.InstanceSpec,
 		"/usr/bin/ytserver-queue-agent",
 		"ytserver-queue-agent.yson",
-		cfgen.GetQueueAgentStatefulSetName(),
-		cfgen.GetQueueAgentServiceName(),
 		func() ([]byte, error) { return cfgen.GetQueueAgentConfig(resource.Spec.QueueAgents) },
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
@@ -69,14 +62,14 @@ func NewQueueAgent(
 	)
 
 	return &QueueAgent{
-		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               master,
 		tabletNodes:          tabletNodes,
 		initCondition:        "queueAgentInitCompleted",
 		ytsaurusClient:       yc,
 		initQAState: NewInitJob(
-			&l,
+			l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			resource.Spec.ImagePullSecrets,
@@ -89,7 +82,7 @@ func NewQueueAgent(
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
-			&l,
+			l,
 			ytsaurus.APIProxy()),
 	}
 }
@@ -105,8 +98,6 @@ func (qa *QueueAgent) Fetch(ctx context.Context) error {
 		qa.secret,
 	)
 }
-
-func (qa *QueueAgent) GetType() consts.ComponentType { return consts.QueueAgentType }
 
 func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error

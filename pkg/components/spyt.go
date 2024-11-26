@@ -18,7 +18,7 @@ import (
 type Spyt struct {
 	labeller *labeller.Labeller
 	spyt     *apiproxy.Spyt
-	cfgen    *ytconfig.Generator
+	cfgen    *ytconfig.NodeGenerator
 	ytsaurus *ytv1.Ytsaurus
 
 	secret *resources.StringSecret
@@ -27,25 +27,15 @@ type Spyt struct {
 	initEnvironment *InitJob
 }
 
-func NewSpyt(
-	cfgen *ytconfig.Generator,
-	spyt *apiproxy.Spyt,
-	ytsaurus *ytv1.Ytsaurus) *Spyt {
-	l := labeller.Labeller{
-		ObjectMeta:        &spyt.GetResource().ObjectMeta,
-		APIProxy:          spyt.APIProxy(),
-		ComponentType:     consts.SpytType,
-		ComponentNamePart: spyt.GetResource().Name,
-		Annotations:       ytsaurus.Spec.ExtraPodAnnotations,
-	}
-
+func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.Ytsaurus) *Spyt {
+	l := cfgen.GetComponentLabeller(consts.SpytType, spyt.GetResource().Name)
 	return &Spyt{
-		labeller: &l,
+		labeller: l,
 		spyt:     spyt,
 		cfgen:    cfgen,
 		ytsaurus: ytsaurus,
 		initUser: NewInitJob(
-			&l,
+			l,
 			spyt.APIProxy(),
 			spyt,
 			ytsaurus.Spec.ImagePullSecrets,
@@ -57,7 +47,7 @@ func NewSpyt(
 			ytsaurus.Spec.NodeSelector,
 		),
 		initEnvironment: NewInitJob(
-			&l,
+			l,
 			spyt.APIProxy(),
 			spyt,
 			ytsaurus.Spec.ImagePullSecrets,
@@ -70,7 +60,7 @@ func NewSpyt(
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
-			&l,
+			l,
 			spyt.APIProxy()),
 	}
 }

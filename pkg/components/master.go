@@ -15,7 +15,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -34,26 +33,19 @@ type Master struct {
 }
 
 func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
-	resource := ytsaurus.GetResource()
-	l := labeller.Labeller{
-		ObjectMeta:    &resource.ObjectMeta,
-		APIProxy:      ytsaurus.APIProxy(),
-		ComponentType: consts.MasterType,
-		Annotations:   resource.Spec.ExtraPodAnnotations,
-	}
+	l := cfgen.GetComponentLabeller(consts.MasterType, "")
 
+	resource := ytsaurus.GetResource()
 	if resource.Spec.PrimaryMasters.InstanceSpec.MonitoringPort == nil {
 		resource.Spec.PrimaryMasters.InstanceSpec.MonitoringPort = ptr.To(int32(consts.MasterMonitoringPort))
 	}
 
 	srv := newServer(
-		&l,
+		l,
 		ytsaurus,
 		&resource.Spec.PrimaryMasters.InstanceSpec,
 		"/usr/bin/ytserver-master",
 		"ytserver-master.yson",
-		cfgen.GetMastersStatefulSetName(),
-		cfgen.GetMastersServiceName(),
 		func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
@@ -63,7 +55,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 	)
 
 	initJob := NewInitJob(
-		&l,
+		l,
 		ytsaurus.APIProxy(),
 		ytsaurus,
 		resource.Spec.ImagePullSecrets,
@@ -76,7 +68,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 	)
 
 	exitReadOnlyJob := NewInitJob(
-		&l,
+		l,
 		ytsaurus.APIProxy(),
 		ytsaurus,
 		resource.Spec.ImagePullSecrets,
@@ -89,14 +81,12 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 	)
 
 	return &Master{
-		localServerComponent: newLocalServerComponent(&l, ytsaurus, srv),
+		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		initJob:              initJob,
 		exitReadOnlyJob:      exitReadOnlyJob,
 	}
 }
-
-func (m *Master) GetType() consts.ComponentType { return consts.MasterType }
 
 func (m *Master) IsUpdatable() bool {
 	return true
