@@ -1,0 +1,11 @@
+{
+  address_resolver = {
+    force_tcp = %true;
+  };
+  api = {
+    concurrency_limit = 4000;
+  };
+  cluster_connection = {
+    thread_pool_size = 8;
+  };
+}
