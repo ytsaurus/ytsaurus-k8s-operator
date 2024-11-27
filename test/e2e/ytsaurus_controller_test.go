@@ -599,6 +599,34 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		}) // update query-tracker
 
+		Context("With yql agent", Label("yql-agent"), func() {
+
+			It("Should run with yql agent and check that yql agent channel options set up correctly", Label("basic"), func(ctx context.Context) {
+				By("Creating a Ytsaurus resource")
+
+				namespace := "yqlagentchannel"
+
+				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+				ytsaurus = testutil.WithQueryTracker(ytsaurus)
+				ytsaurus = testutil.WithYqlAgent(ytsaurus)
+
+				g := ytconfig.NewGenerator(ytsaurus, "local")
+
+				DeferCleanup(deleteYtsaurus, ytsaurus)
+				runYtsaurus(ytsaurus)
+
+				By("Creating ytsaurus client")
+				ytClient := getYtClient(g, namespace)
+
+				By("Check that yql agent channel exists in cluster_connection")
+				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/@cluster_connection/yql_agent/stages/production/channel"), nil)).Should(BeTrue())
+				result := true
+				Expect(ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection/yql_agent/stages/production/channel/disable_balancing_on_single_address"), &result, nil)).Should(Succeed())
+				Expect(result).Should(BeFalse())
+			})
+
+		}) // update yql-agent
+
 		Context("With queue agent", Label("queue-agent"), func() {
 			BeforeEach(func() {
 				ytsaurus = testutil.WithQueryTracker(ytsaurus)

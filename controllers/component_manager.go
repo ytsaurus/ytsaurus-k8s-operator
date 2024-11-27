@@ -17,6 +17,7 @@ type ComponentManager struct {
 	ytsaurus              *apiProxy.Ytsaurus
 	allComponents         []components.Component
 	queryTrackerComponent components.Component
+	yqlAgentComponent     components.Component
 	schedulerComponent    components.Component
 	status                ComponentManagerStatus
 }
@@ -120,8 +121,9 @@ func NewComponentManager(
 		allComponents = append(allComponents, qa)
 	}
 
+	var yqla components.Component
 	if resource.Spec.YQLAgents != nil {
-		yqla := components.NewYQLAgent(cfgen, ytsaurus, m)
+		yqla = components.NewYQLAgent(cfgen, ytsaurus, m)
 		allComponents = append(allComponents, yqla)
 	}
 
@@ -190,6 +192,7 @@ func NewComponentManager(
 		ytsaurus:              ytsaurus,
 		allComponents:         allComponents,
 		queryTrackerComponent: q,
+		yqlAgentComponent:     yqla,
 		schedulerComponent:    s,
 		status:                status,
 	}, nil
@@ -247,6 +250,10 @@ func (cm *ComponentManager) allReadyOrUpdating() bool {
 
 func (cm *ComponentManager) needQueryTrackerUpdate() bool {
 	return cm.queryTrackerComponent != nil && components.IsUpdatingComponent(cm.ytsaurus, cm.queryTrackerComponent)
+}
+
+func (cm *ComponentManager) needYqlAgentUpdate() bool {
+	return cm.yqlAgentComponent != nil && components.IsUpdatingComponent(cm.ytsaurus, cm.yqlAgentComponent)
 }
 
 func (cm *ComponentManager) needSchedulerUpdate() bool {

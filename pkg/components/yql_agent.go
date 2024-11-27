@@ -10,6 +10,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
@@ -19,10 +20,11 @@ import (
 
 type YqlAgent struct {
 	localServerComponent
-	cfgen           *ytconfig.Generator
-	master          Component
-	initEnvironment *InitJob
-	secret          *resources.StringSecret
+	cfgen             *ytconfig.Generator
+	master            Component
+	initEnvironment   *InitJob
+	updateEnvironment *InitJob
+	secret            *resources.StringSecret
 }
 
 func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *YqlAgent {
@@ -65,6 +67,18 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 			getTolerationsWithDefault(resource.Spec.YQLAgents.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.YQLAgents.NodeSelector, resource.Spec.NodeSelector),
 		),
+		updateEnvironment: NewInitJob(
+			&l,
+			ytsaurus.APIProxy(),
+			ytsaurus,
+			resource.Spec.ImagePullSecrets,
+			"yql-agent-update-environment",
+			consts.ClientConfigFileName,
+			getImageWithDefault(resource.Spec.YQLAgents.Image, resource.Spec.CoreImage),
+			cfgen.GetNativeClientConfig,
+			getTolerationsWithDefault(resource.Spec.YQLAgents.Tolerations, resource.Spec.Tolerations),
+			getNodeSelectorWithDefault(resource.Spec.YQLAgents.NodeSelector, resource.Spec.NodeSelector),
+		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
@@ -84,6 +98,7 @@ func (yqla *YqlAgent) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		yqla.server,
 		yqla.initEnvironment,
+		yqla.updateEnvironment,
 		yqla.secret,
 	)
 }
@@ -110,8 +125,17 @@ func (yqla *YqlAgent) createInitScript() string {
 		yqla.initUsers(),
 		"/usr/bin/yt add-member --member yql_agent --group superusers || true",
 		"/usr/bin/yt create document //sys/yql_agent/config --attributes '{value={}}' --recursive --ignore-existing",
-		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent '{stages={production={channel={addresses=%v}}}}'", yqlAgentAddrs),
+		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent '{stages={production={channel={disable_balancing_on_single_address=%%false;addresses=%v}}}}'", yqlAgentAddrs),
 		fmt.Sprintf("/usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/%s", yqla.labeller.GetClusterName()),
+	}
+
+	return strings.Join(script, "\n")
+}
+
+func (yqla *YqlAgent) createUpdateScript() string {
+	script := []string{
+		initJobWithNativeDriverPrologue(),
+		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent/stages/production/channel/disable_balancing_on_single_address '%%false'"),
 	}
 
 	return strings.Join(script, "\n")
@@ -125,8 +149,23 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.localComponent, yqla.server, dry); status != nil {
-			return *status, err
+		if IsUpdatingComponent(yqla.ytsaurus, yqla) {
+			if yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(yqla.ytsaurus, yqla) {
+				if !dry {
+					err = removePods(ctx, yqla.server, &yqla.localComponent)
+				}
+				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+			}
+
+			if status, err := yqla.updateYqla(ctx, dry); status != nil {
+				return *status, err
+			}
+			if yqla.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+				yqla.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForYqlaUpdate {
+				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
+			}
+		} else {
+			return NewComponentStatus(SyncStatusReady, "Not updating component"), err
 		}
 	}
 
@@ -175,7 +214,57 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		yqla.initEnvironment.SetInitScript(yqla.createInitScript())
 	}
 
-	return yqla.initEnvironment.Sync(ctx, dry)
+	status, err := yqla.initEnvironment.Sync(ctx, dry)
+	if err != nil || status.SyncStatus != SyncStatusReady {
+		return status, err
+	}
+
+	if !dry {
+		yqla.updateEnvironment.SetInitScript(yqla.createUpdateScript())
+	}
+	return yqla.updateEnvironment.Sync(ctx, dry)
+}
+
+func (yqla *YqlAgent) updateYqla(ctx context.Context, dry bool) (*ComponentStatus, error) {
+	var err error
+	switch yqla.ytsaurus.GetUpdateState() {
+	case ytv1.UpdateStateWaitingForYqlaUpdatingPrepare:
+		if !yqla.updateEnvironment.isRestartPrepared() {
+			return ptr.To(SimpleStatus(SyncStatusUpdating)), yqla.updateEnvironment.prepareRestart(ctx, dry)
+		}
+		if !dry {
+			yqla.setConditionYqlaPreparedForUpdating(ctx)
+		}
+		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
+	case ytv1.UpdateStateWaitingForYqlaUpdate:
+		if !yqla.updateEnvironment.isRestartCompleted() {
+			return nil, nil
+		}
+		if !dry {
+			yqla.setConditionYqlaUpdated(ctx)
+		}
+		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
+	default:
+		return nil, nil
+	}
+}
+
+func (yqla *YqlAgent) setConditionYqlaPreparedForUpdating(ctx context.Context) {
+	yqla.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    consts.ConditionYqlaPreparedForUpdating,
+		Status:  metav1.ConditionTrue,
+		Reason:  "YqlaPreparedForUpdating",
+		Message: "Yql Agent state prepared for updating",
+	})
+}
+
+func (yqla *YqlAgent) setConditionYqlaUpdated(ctx context.Context) {
+	yqla.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    consts.ConditionYqlaUpdated,
+		Status:  metav1.ConditionTrue,
+		Reason:  "YqlaUpdated",
+		Message: "Yql Agent state updated",
+	})
 }
 
 func (yqla *YqlAgent) Status(ctx context.Context) (ComponentStatus, error) {

@@ -394,7 +394,7 @@ func (g *Generator) GetStrawberryControllerConfig() ([]byte, error) {
 	proxy := g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 	c.LocationProxies = []string{proxy}
 	c.HTTPLocationAliases = map[string][]string{
-		proxy: []string{g.ytsaurus.Name},
+		proxy: {g.ytsaurus.Name},
 	}
 	return marshallYsonConfig(c)
 }
