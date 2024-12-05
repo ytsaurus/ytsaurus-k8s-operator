@@ -327,6 +327,24 @@ _Appears in:_
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
 
 
+#### ComponentUpdateSelector
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `componentKind` _[ComponentType](#componenttype)_ |  |  |  |
+| `componentGroup` _[ComponentGroup](#componentgroup)_ |  |  |  |
+| `update` _boolean_ |  | false |  |
+
+
 #### ControllerAgentsSpec
 
 
@@ -2204,7 +2222,8 @@ _Appears in:_
 | `oauthService` _[OauthServiceSpec](#oauthservicespec)_ |  |  |  |
 | `isManaged` _boolean_ |  | true |  |
 | `enableFullUpdate` _boolean_ |  | true |  |
-| `updateSelector` _[UpdateSelector](#updateselector)_ | UpdateSelector is an experimental field. Behaviour may change.<br />If UpdateSelector is not empty EnableFullUpdate is ignored. |  | Enum: [ Nothing MasterOnly DataNodesOnly TabletNodesOnly ExecNodesOnly StatelessOnly Everything] <br /> |
+| `updateSelector` _[UpdateSelector](#updateselector)_ | Deprecated: UpdateSelector is an experimental field. Behaviour may change. |  |  |
+| `updateSelectors` _[ComponentUpdateSelector](#componentupdateselector) array_ | Controls the components that should be updated during the update process. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
 | `bootstrap` _[BootstrapSpec](#bootstrapspec)_ |  |  |  |
