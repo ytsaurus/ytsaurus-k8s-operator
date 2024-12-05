@@ -60,4 +60,7 @@ const (
 
 	MasterCachesRPCPort        = 9018
 	MasterCachesMonitoringPort = 10018
+
+	KafkaProxyMonitoringPort = 10020
+	KafkaProxyKafkaPort      = 80
 )

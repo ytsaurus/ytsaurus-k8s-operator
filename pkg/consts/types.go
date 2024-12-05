@@ -17,6 +17,7 @@ const (
 	StrawberryControllerType ComponentType = "StrawberryController"
 	TabletNodeType           ComponentType = "TabletNode"
 	TcpProxyType             ComponentType = "TcpProxy"
+	KafkaProxyType           ComponentType = "KafkaProxy"
 	UIType                   ComponentType = "UI"
 	YqlAgentType             ComponentType = "YqlAgent"
 	YtsaurusClientType       ComponentType = "YtsaurusClient"
