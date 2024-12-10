@@ -247,7 +247,8 @@ helm-install: ## Install helm chart from sources.
 	$(HELM) upgrade --install --wait $(OPERATOR_INSTANCE) $(OPERATOR_CHART) \
 		-n $(OPERATOR_NAMESPACE) --create-namespace \
 		--set controllerManager.manager.image.repository=${OPERATOR_IMAGE} \
-		--set controllerManager.manager.image.tag=${OPERATOR_TAG}
+		--set controllerManager.manager.image.tag=${OPERATOR_TAG} \
+		--debug
 	$(KUBECTL) -n $(OPERATOR_NAMESPACE) rollout restart deployment -l app.kubernetes.io/instance=$(OPERATOR_INSTANCE)
 
 .PHONY: helm-kind-install
