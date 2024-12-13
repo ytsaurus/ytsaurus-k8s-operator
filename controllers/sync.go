@@ -440,13 +440,14 @@ func chooseUpdateFlow(spec ytv1.YtsaurusSpec, needUpdate []components.Component)
 	needFullUpdate := false
 
 	for _, comp := range needUpdate {
-		component := comp.GetType()
-		if canUpdateComponent(configuredSelector, component) {
-			canUpdate = append(canUpdate, string(component))
+		componentType := comp.GetType()
+		componentName := comp.GetName()
+		if canUpdateComponent(configuredSelector, componentType) {
+			canUpdate = append(canUpdate, componentName)
 		} else {
-			cannotUpdate = append(cannotUpdate, string(component))
+			cannotUpdate = append(cannotUpdate, componentName)
 		}
-		if !canUpdateComponent(ytv1.UpdateSelectorStatelessOnly, component) && component != consts.DataNodeType {
+		if !canUpdateComponent(ytv1.UpdateSelectorStatelessOnly, componentType) && componentType != consts.DataNodeType {
 			needFullUpdate = true
 		}
 	}
