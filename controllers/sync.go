@@ -442,7 +442,7 @@ func chooseUpdateFlow(spec ytv1.YtsaurusSpec, needUpdate []components.Component)
 	for _, comp := range needUpdate {
 		component := comp.GetType()
 		if canUpdateComponent(configuredSelector, component) {
-			canUpdate = append(canUpdate, string(component))
+			canUpdate = append(canUpdate, comp.GetName())
 		} else {
 			cannotUpdate = append(cannotUpdate, string(component))
 		}
