@@ -506,6 +506,7 @@ _Appears in:_
 - [ExecNodesSpec](#execnodesspec)
 - [HTTPProxiesSpec](#httpproxiesspec)
 - [InstanceSpec](#instancespec)
+- [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
@@ -655,6 +656,7 @@ _Appears in:_
 - [ExecNodesSpec](#execnodesspec)
 - [HTTPProxiesSpec](#httpproxiesspec)
 - [InstanceSpec](#instancespec)
+- [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
@@ -692,6 +694,7 @@ _Appears in:_
 - [DiscoverySpec](#discoveryspec)
 - [ExecNodesSpec](#execnodesspec)
 - [HTTPProxiesSpec](#httpproxiesspec)
+- [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
@@ -757,6 +760,47 @@ _Appears in:_
 | `doNotSetUserId` _boolean_ | Do not use slot user id for running jobs. |  |  |
 
 
+#### KafkaProxiesSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
+| `instanceCount` _integer_ |  |  |  |
+| `minReadyInstanceCount` _integer_ |  |  |  |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `runtimeClassName` _string_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
+| `monitoringPort` _integer_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ |  |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  |  |  |
+| `role` _string_ |  | default | MinLength: 1 <br /> |
+
+
 #### LocationSpec
 
 
@@ -772,6 +816,7 @@ _Appears in:_
 - [ExecNodesSpec](#execnodesspec)
 - [HTTPProxiesSpec](#httpproxiesspec)
 - [InstanceSpec](#instancespec)
+- [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
@@ -1245,6 +1290,7 @@ _Appears in:_
 - [ExecNodesSpec](#execnodesspec)
 - [HTTPProxiesSpec](#httpproxiesspec)
 - [InstanceSpec](#instancespec)
+- [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
@@ -1850,6 +1896,7 @@ _Appears in:_
 - [ExecNodesSpec](#execnodesspec)
 - [HTTPProxiesSpec](#httpproxiesspec)
 - [InstanceSpec](#instancespec)
+- [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
@@ -1997,6 +2044,7 @@ _Appears in:_
 - [ExecNodesSpec](#execnodesspec)
 - [HTTPProxiesSpec](#httpproxiesspec)
 - [InstanceSpec](#instancespec)
+- [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
@@ -2260,6 +2308,7 @@ _Appears in:_
 | `httpProxies` _[HTTPProxiesSpec](#httpproxiesspec) array_ |  |  | MinItems: 1 <br /> |
 | `rpcProxies` _[RPCProxiesSpec](#rpcproxiesspec) array_ |  |  |  |
 | `tcpProxies` _[TCPProxiesSpec](#tcpproxiesspec) array_ |  |  |  |
+| `kafkaProxies` _[KafkaProxiesSpec](#kafkaproxiesspec) array_ |  |  |  |
 | `dataNodes` _[DataNodesSpec](#datanodesspec) array_ |  |  | MinItems: 1 <br /> |
 | `execNodes` _[ExecNodesSpec](#execnodesspec) array_ |  |  |  |
 | `schedulers` _[SchedulersSpec](#schedulersspec)_ |  |  |  |

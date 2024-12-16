@@ -372,7 +372,6 @@ type TCPProxiesSpec struct {
 type KafkaProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
-	NodePort     *int32              `json:"nodePort,omitempty"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`

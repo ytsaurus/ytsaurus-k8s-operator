@@ -3,7 +3,7 @@ kind: Ytsaurus
 metadata:
   name: minisaurus
 spec:
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-23.2.0-relwithdebinfo
+  coreImage: ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2024-12-06-ee9e61d820c81624e2562edca351e9bc8bdd7e2e
 
   discovery:
     instanceCount: 1
@@ -27,6 +27,12 @@ spec:
       - name: error
         minLogLevel: error
         writerType: stderr
+
+  kafkaProxies:
+    - serviceType: NodePort
+      loggers: *loggers
+      instanceCount: 1
+      role: default
 
   primaryMasters:
     instanceCount: 1

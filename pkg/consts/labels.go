@@ -34,6 +34,8 @@ func ComponentLabel(component ComponentType) string {
 		return "yt-rpc-proxy"
 	case TcpProxyType:
 		return "yt-tcp-proxy"
+	case KafkaProxyType:
+		return "yt-kp-proxy"
 	case QueueAgentType:
 		return "yt-queue-agent"
 	case QueryTrackerType:
