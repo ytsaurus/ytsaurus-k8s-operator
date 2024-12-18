@@ -68,7 +68,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 			getNodeSelectorWithDefault(resource.Spec.YQLAgents.NodeSelector, resource.Spec.NodeSelector),
 		),
 		updateEnvironment: NewInitJob(
-			&l,
+			l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
 			resource.Spec.ImagePullSecrets,

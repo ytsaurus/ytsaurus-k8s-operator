@@ -2089,6 +2089,8 @@ _Appears in:_
 | `WaitingForOpArchiveUpdate` |  |
 | `WaitingForQTStateUpdatingPrepare` |  |
 | `WaitingForQTStateUpdate` |  |
+| `WaitingForYqlaUpdatingPrepare` |  |
+| `WaitingForYqlaUpdate` |  |
 | `WaitingForSafeModeDisabled` |  |
 
 
