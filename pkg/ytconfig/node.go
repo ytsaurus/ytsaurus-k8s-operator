@@ -338,8 +338,8 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 			storeLocation.HighWatermark = storeLocation.LowWatermark / 2
 			storeLocation.DisableWritesWatermark = storeLocation.HighWatermark / 2
 			storeLocation.TrashCleanupWatermark = storeLocation.LowWatermark
-			storeLocation.MaxTrashTtl = location.MaxTrashMilliseconds
 		}
+		storeLocation.MaxTrashTtl = location.MaxTrashMilliseconds
 		c.DataNode.StoreLocations = append(c.DataNode.StoreLocations, storeLocation)
 	}
 
