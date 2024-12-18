@@ -325,7 +325,8 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 		}
 		if quota != nil {
 			storeLocation.Quota = *quota
-
+		}
+		if location.LowWatermark != nil || quota != nil {
 			if location.LowWatermark != nil {
 				storeLocation.LowWatermark = location.LowWatermark.Value()
 			} else {
