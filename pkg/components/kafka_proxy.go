@@ -41,6 +41,16 @@ func NewKafkaProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, maste
 		func() ([]byte, error) {
 			return cfgen.GetKafkaProxyConfig(spec)
 		},
+		WithContainerPorts(corev1.ContainerPort{
+			Name:          consts.YTRPCPortName,
+			ContainerPort: consts.KafkaProxyRPCPort,
+			Protocol:      corev1.ProtocolTCP,
+		}),
+		WithContainerPorts(corev1.ContainerPort{
+			Name:          consts.KafkaPortName,
+			ContainerPort: consts.KafkaProxyKafkaPort,
+			Protocol:      corev1.ProtocolTCP,
+		}),
 	)
 
 	var balancingService *resources.RPCService = nil
