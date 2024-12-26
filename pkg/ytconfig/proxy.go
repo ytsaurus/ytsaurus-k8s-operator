@@ -202,6 +202,7 @@ func getKafkaProxyServerCarcass(spec *ytv1.KafkaProxiesSpec) (KafkaProxyServer, 
 	var c KafkaProxyServer
 
 	c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	c.RPCPort = consts.KafkaProxyRPCPort
 
 	c.Role = spec.Role
 	c.Auth.RequireAuthentication = true
