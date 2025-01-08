@@ -66,7 +66,7 @@ SHELL = /usr/bin/env bash -o pipefail
 DEBUG =
 
 ## Tests parallelism.
-GINKGO_PROCS ?= 2
+GINKGO_PROCS ?= 4
 
 ## Filter tests by labels.
 GINKGO_LABEL_FILTER =
