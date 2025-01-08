@@ -111,6 +111,14 @@
                     default=%true;
                 };
             ];
+            "mr_job_system_libs_with_md5"=[
+                {
+                    file="/usr/lib/yql/libiconv.so";
+                };
+                {
+                    file="/usr/lib/yql/liblibidn-dynamic.so";
+                };
+            ];
         };
         "yql_plugin_shared_library"="/usr/lib/yql/libyqlplugin.so";
         "yt_token_path"="/usr/yql_agent_token";
