@@ -65,7 +65,7 @@ SHELL = /usr/bin/env bash -o pipefail
 ## Enable debug options.
 DEBUG =
 
-## Tests parallelism.
+## Tests parallelism. 
 GINKGO_PROCS ?= 2
 
 ## Filter tests by labels.
