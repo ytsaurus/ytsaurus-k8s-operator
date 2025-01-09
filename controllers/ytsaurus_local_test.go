@@ -50,13 +50,13 @@ func waitClusterState(h *testutil.TestHelper, expectedState ytv1.ClusterState, m
 			observedGen := obj.(*ytv1.Ytsaurus).Status.ObservedGeneration
 			if !(state == expectedState && observedGen >= minObservedGeneration) {
 				h.Logf(
-					"state condition is NOT yet satisifed: %s == %s; gen %d >= %d",
+					"state condition is NOT yet satisfied: %s == %s; gen %d >= %d",
 					state, expectedState, observedGen, minObservedGeneration,
 				)
 				return false
 			}
 			h.Logf(
-				"state condition is satisifed: %s == %s; gen %d >= %d",
+				"state condition is satisfied: %s == %s; gen %d >= %d",
 				state, expectedState, observedGen, minObservedGeneration,
 			)
 			return true
