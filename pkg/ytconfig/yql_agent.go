@@ -55,13 +55,15 @@ func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	c.User = "yql_agent"
 
 	c.YQLAgent.GatewayConfig.UDFDirectory = "/usr/lib/yql"
-	c.YQLAgent.GatewayConfig.MrJobSystemLibsWithMd5 = []MrJobSystemLibsWithMd5{
-		MrJobSystemLibsWithMd5{
-			File: "/usr/lib/yql/libiconv.so",
-		},
-		MrJobSystemLibsWithMd5{
-			File: "/usr/lib/yql/liblibidn-dynamic.so",
-		},
+	if spec.ConfigureMrJobDynamicLibraries {
+		c.YQLAgent.GatewayConfig.MrJobSystemLibsWithMd5 = []MrJobSystemLibsWithMd5{
+			MrJobSystemLibsWithMd5{
+				File: "/usr/lib/yql/libiconv.so",
+			},
+			MrJobSystemLibsWithMd5{
+				File: "/usr/lib/yql/liblibidn-dynamic.so",
+			},
+		}
 	}
 	c.YQLAgent.GatewayConfig.MRJobBinary = "/usr/bin/mrjob"
 	c.YQLAgent.YqlPluginSharedLibrary = "/usr/lib/yql/libyqlplugin.so"
