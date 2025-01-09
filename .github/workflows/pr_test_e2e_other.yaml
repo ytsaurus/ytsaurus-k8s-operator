@@ -8,4 +8,4 @@ jobs:
     name: Run e2e tests for extra scenarios
     uses: ./.github/workflows/subflow_run_e2e_tests.yaml
     with:
-      e2e_filter: "!basic"
+      e2e_filter: "!basic && !selector"

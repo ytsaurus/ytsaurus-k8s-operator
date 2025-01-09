@@ -68,9 +68,6 @@ DEBUG =
 ## Tests parallelism.
 GINKGO_PROCS ?= 2
 
-## Filter tests by labels.
-GINKGO_LABEL_FILTER =
-
 GINKGO_FLAGS += --vv
 GINKGO_FLAGS += --trace
 GINKGO_FLAGS += --procs="$(GINKGO_PROCS)"
