@@ -19,7 +19,7 @@ type GatewayConfig struct {
 	MRJobBinary            string                   `yson:"mr_job_bin"`
 	UDFDirectory           string                   `yson:"mr_job_udfs_dir"`
 	ClusterMapping         []ClusterMapping         `yson:"cluster_mapping"`
-	MrJobSystemLibsWithMd5 []MrJobSystemLibsWithMd5 `yson:"mr_job_system_libs_with_md5"`
+	MrJobSystemLibsWithMd5 []MrJobSystemLibsWithMd5 `yson:"mr_job_system_libs_with_md5,omitempty"`
 }
 
 type YQLAgent struct {
