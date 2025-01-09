@@ -38,16 +38,28 @@ func prepareTest(t *testing.T, namespace string) *testutil.TestHelper {
 	return h
 }
 
-func waitClusterState(h *testutil.TestHelper, expectedState ytv1.ClusterState) {
+func waitClusterState(h *testutil.TestHelper, expectedState ytv1.ClusterState, minObservedGeneration int64) {
 	h.Logf("[ Wait for YTsaurus %s state ]", expectedState)
 	testutil.FetchAndCheckEventually(
 		h,
 		ytsaurusName,
 		&ytv1.Ytsaurus{},
-		fmt.Sprintf("cluster state is %s", expectedState),
+		fmt.Sprintf("cluster state is %s, gen is %d", expectedState, minObservedGeneration),
 		func(obj client.Object) bool {
 			state := obj.(*ytv1.Ytsaurus).Status.State
-			return state == expectedState
+			observedGen := obj.(*ytv1.Ytsaurus).Status.ObservedGeneration
+			if !(state == expectedState && observedGen >= minObservedGeneration) {
+				h.Logf(
+					"state condition is NOT yet satisifed: %s == %s; gen %d >= %d",
+					state, expectedState, observedGen, minObservedGeneration,
+				)
+				return false
+			}
+			h.Logf(
+				"state condition is satisifed: %s == %s; gen %d >= %d",
+				state, expectedState, observedGen, minObservedGeneration,
+			)
+			return true
 		},
 	)
 }
@@ -107,7 +119,7 @@ func TestYtsaurusFromScratch(t *testing.T) {
 			return len(secret.Data["YT_TOKEN"]) != 0
 		},
 	)
-	waitClusterState(h, ytv1.ClusterStateRunning)
+	waitClusterState(h, ytv1.ClusterStateRunning, ytsaurusResource.Generation)
 }
 
 func TestYtsaurusUpdateStatelessComponent(t *testing.T) {
@@ -123,7 +135,7 @@ func TestYtsaurusUpdateStatelessComponent(t *testing.T) {
 	ytsaurusResource.Spec.DataNodes[0].MinReadyInstanceCount = ptr.To(0)
 	testutil.DeployObject(h, &ytsaurusResource)
 
-	waitClusterState(h, ytv1.ClusterStateRunning)
+	waitClusterState(h, ytv1.ClusterStateRunning, ytsaurusResource.Generation)
 
 	imageUpdated := testYtsaurusImage + "-updated"
 	ytsaurusResource.Spec.Discovery.Image = &imageUpdated
@@ -131,7 +143,7 @@ func TestYtsaurusUpdateStatelessComponent(t *testing.T) {
 	ytsaurusResource.Spec.EnableFullUpdate = false
 	testutil.UpdateObject(h, &ytv1.Ytsaurus{}, &ytsaurusResource)
 
-	waitClusterState(h, ytv1.ClusterStateRunning)
+	waitClusterState(h, ytv1.ClusterStateRunning, ytsaurusResource.Generation)
 
 	sts := appsv1.StatefulSet{}
 	testutil.GetObject(h, "ds", &sts)
@@ -151,7 +163,7 @@ func TestYtsaurusUpdateMasterBlocked(t *testing.T) {
 	ytsaurusResource.Spec.DataNodes[0].MinReadyInstanceCount = ptr.To(0)
 	testutil.DeployObject(h, &ytsaurusResource)
 
-	waitClusterState(h, ytv1.ClusterStateRunning)
+	waitClusterState(h, ytv1.ClusterStateRunning, ytsaurusResource.Generation)
 
 	imageUpdated := testYtsaurusImage + "-updated"
 	ytsaurusResource.Spec.PrimaryMasters.Image = &imageUpdated
