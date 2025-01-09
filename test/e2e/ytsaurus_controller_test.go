@@ -298,7 +298,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				})
 			},
 			Entry("When update Ytsaurus within same major version", Label("basic"), testutil.CoreImageSecond),
-			Entry("When update Ytsaurus to the next major version", testutil.CoreImageNextVer),
+			Entry("When update Ytsaurus to the next major version", Label("basic"), testutil.CoreImageNextVer),
 		)
 
 		Context("Test UpdateSelector", Label("selector"), func() {
@@ -376,7 +376,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(pods.Updated).To(ConsistOf("tnd-0", "tnd-1", "tnd-2"), "updated")
 			})
 
-			It("Should be updated according to UpdateSelector=MasterOnly,StatelessOnly", Label("basic"), func(ctx context.Context) {
+			It("Should be updated according to UpdateSelector=MasterOnly,StatelessOnly", func(ctx context.Context) {
 
 				By("Run cluster update with selector:MasterOnly")
 				ytsaurus.Spec.UpdateSelector = ytv1.UpdateSelectorMasterOnly
@@ -592,7 +592,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytsaurus = testutil.WithQueryTracker(ytsaurus)
 			})
 
-			It("Should run with query tracker and check that query tracker rpc address set up correctly", Label("basic"), func(ctx context.Context) {
+			It("Should run with query tracker and check that query tracker rpc address set up correctly", func(ctx context.Context) {
 				By("Check that query tracker channel exists in cluster_connection")
 				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/@cluster_connection/query_tracker/stages/production/channel"), nil)).Should(BeTrue())
 			})
@@ -605,7 +605,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytsaurus = testutil.WithYqlAgent(ytsaurus)
 			})
 
-			It("Should run with yql agent and check that yql agent channel options set up correctly", Label("basic"), func(ctx context.Context) {
+			It("Should run with yql agent and check that yql agent channel options set up correctly", func(ctx context.Context) {
 				By("Creating ytsaurus client")
 				ytClient := createYtsaurusClient(ytsaurus, namespace)
 
@@ -624,7 +624,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytsaurus = testutil.WithQueueAgent(ytsaurus)
 			})
 
-			It("Should run with query tracker and check that access control objects set up correctly", Label("basic"), func(ctx context.Context) {
+			It("Should run with query tracker and check that access control objects set up correctly", func(ctx context.Context) {
 
 				By("Check that access control object namespace 'queries' exists")
 				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries"), nil)).Should(BeTrue())
