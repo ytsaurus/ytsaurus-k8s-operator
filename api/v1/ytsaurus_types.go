@@ -542,7 +542,7 @@ type YQLAgentSpec struct {
 	// Sets mrjob dynamic library paths in yql agent config.
 	//+kubebuilder:default:=false
 	//+optional
-	ConfigureMrJobDynamicLibraries bool `json:"configureMrJobDynamicLibraries"`
+	ConfigureMrJobSystemLibs bool `json:"configureMrJobSystemLibs"`
 }
 
 type QueueAgentSpec struct {

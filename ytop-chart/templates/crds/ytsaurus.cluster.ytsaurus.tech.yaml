@@ -35308,7 +35308,7 @@ spec:
                             type: array
                         type: object
                     type: object
-                  configureMrJobDynamicLibraries:
+                  configureMrJobSystemLibs:
                     default: false
                     description: Sets mrjob dynamic library paths in yql agent config.
                     type: boolean

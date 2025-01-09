@@ -55,7 +55,7 @@ func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	c.User = "yql_agent"
 
 	c.YQLAgent.GatewayConfig.UDFDirectory = "/usr/lib/yql"
-	if spec.ConfigureMrJobDynamicLibraries {
+	if spec.ConfigureMrJobSystemLibs {
 		c.YQLAgent.GatewayConfig.MrJobSystemLibsWithMd5 = []MrJobSystemLibsWithMd5{
 			MrJobSystemLibsWithMd5{
 				File: "/usr/lib/yql/libiconv.so",
