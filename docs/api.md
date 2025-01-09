@@ -2152,6 +2152,7 @@ _Appears in:_
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `configureMrJobSystemLibs` _boolean_ | Sets mrjob dynamic library paths in yql agent config. | false |  |
 
 
 #### Ytsaurus

@@ -538,6 +538,11 @@ type StrawberryControllerSpec struct {
 
 type YQLAgentSpec struct {
 	InstanceSpec `json:",inline"`
+
+	// Sets mrjob dynamic library paths in yql agent config.
+	//+kubebuilder:default:=false
+	//+optional
+	ConfigureMrJobSystemLibs bool `json:"configureMrJobSystemLibs"`
 }
 
 type QueueAgentSpec struct {

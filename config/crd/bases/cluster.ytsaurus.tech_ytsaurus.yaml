@@ -35297,6 +35297,10 @@ spec:
                             type: array
                         type: object
                     type: object
+                  configureMrJobSystemLibs:
+                    default: false
+                    description: Sets mrjob dynamic library paths in yql agent config.
+                    type: boolean
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
