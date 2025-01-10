@@ -39,12 +39,17 @@ spec:
         description: Spyt is the Schema for the spyts API
         properties:
           apiVersion:
-            description: APIVersion defines the versioned schema of this representation
-              of an object.
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
             type: string
           kind:
-            description: Kind is a string value representing the REST resource this
-              object represents.
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
             type: string
           metadata:
             type: object
@@ -57,12 +62,13 @@ spec:
                 items:
                   description: |-
                     LocalObjectReference contains enough information to let you locate the
-                    reference
+                    referenced object inside the same namespace.
                   properties:
                     name:
                       description: |-
                         Name of the referent.
-                        More info: https://kubernetes.
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        TODO: Add other useful fields. apiVersion, kind, uid?
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
@@ -70,12 +76,13 @@ spec:
               ytsaurus:
                 description: |-
                   LocalObjectReference contains enough information to let you locate the
-                  reference
+                  referenced object inside the same namespace.
                 properties:
                   name:
                     description: |-
                       Name of the referent.
-                      More info: https://kubernetes.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
@@ -85,27 +92,33 @@ spec:
             properties:
               conditions:
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resou
+                  description: |-
+                    Condition contains details for one aspect of the current state of this API Resource.
+                    ---
+                    This struct is intended for direct use as an array at the field path .status.conditions.
                   properties:
                     lastTransitionTime:
-                      description: lastTransitionTime is the last time the condition
-                        transitioned from one status t
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.
                       format: date-time
                       type: string
                     message:
-                      description: message is a human readable message indicating
-                        details about the transition.
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
                       maxLength: 32768
                       type: string
                     observedGeneration:
-                      description: observedGeneration represents the .metadata.
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].
                       format: int64
                       minimum: 0
                       type: integer
                     reason:
                       description: reason contains a programmatic identifier indicating
-                        the reason for the conditio
+                        the reason for the condition's last transition.
                       maxLength: 1024
                       minLength: 1
                       pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
@@ -121,7 +134,8 @@ spec:
                       description: |-
                         type of condition in CamelCase or in foo.example.com/CamelCase.
                         ---
-                        Many .
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
+                        useful (see .
                       maxLength: 316
                       pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
                       type: string
