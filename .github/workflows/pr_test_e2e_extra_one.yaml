@@ -1,0 +1,11 @@
+name: Run extra e2e tests (part 1)
+
+on:
+  pull_request:
+
+jobs:
+  check:
+    name: Run extra e2e tests (part 1)
+    uses: ./.github/workflows/subflow_run_e2e_tests.yaml
+    with:
+      e2e_filter: "selector || remote"
