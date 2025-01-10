@@ -77,6 +77,7 @@ func NewScheduler(
 			cfgen.GetNativeClientConfig,
 			getTolerationsWithDefault(resource.Spec.Schedulers.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.Schedulers.NodeSelector, resource.Spec.NodeSelector),
+			getDNSConfigWithDefault(resource.Spec.Schedulers.DNSConfig, resource.Spec.DNSConfig),
 		),
 		initOpArchive: NewInitJob(
 			l,
@@ -89,6 +90,7 @@ func NewScheduler(
 			cfgen.GetNativeClientConfig,
 			getTolerationsWithDefault(resource.Spec.Schedulers.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.Schedulers.NodeSelector, resource.Spec.NodeSelector),
+			getDNSConfigWithDefault(resource.Spec.Schedulers.DNSConfig, resource.Spec.DNSConfig),
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

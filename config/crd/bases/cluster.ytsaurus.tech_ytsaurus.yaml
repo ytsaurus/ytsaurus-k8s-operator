@@ -29828,6 +29828,34 @@ spec:
                     description: The family that will receive requests for domains
                       that are not explicitly specif
                     type: string
+                  dnsConfig:
+                    description: DNSConfig allows customizing the DNS settings for
+                      the pods.
+                    properties:
+                      nameservers:
+                        description: A list of DNS name server IP addresses.
+                        items:
+                          type: string
+                        type: array
+                      options:
+                        description: A list of DNS resolver options.
+                        items:
+                          description: PodDNSConfigOption defines DNS resolver options
+                            of a pod.
+                          properties:
+                            name:
+                              description: Required.
+                              type: string
+                            value:
+                              type: string
+                          type: object
+                        type: array
+                      searches:
+                        description: A list of DNS search domains for host-name lookup.
+                        items:
+                          type: string
+                        type: array
+                    type: object
                   externalProxy:
                     type: string
                   image:
@@ -34869,6 +34897,34 @@ spec:
                     description: When this is set to false, UI will use backend for
                       downloading instead of proxy.
                     type: boolean
+                  dnsConfig:
+                    description: DNSConfig allows customizing the DNS settings for
+                      the pods.
+                    properties:
+                      nameservers:
+                        description: A list of DNS name server IP addresses.
+                        items:
+                          type: string
+                        type: array
+                      options:
+                        description: A list of DNS resolver options.
+                        items:
+                          description: PodDNSConfigOption defines DNS resolver options
+                            of a pod.
+                          properties:
+                            name:
+                              description: Required.
+                              type: string
+                            value:
+                              type: string
+                          type: object
+                        type: array
+                      searches:
+                        description: A list of DNS search domains for host-name lookup.
+                        items:
+                          type: string
+                        type: array
+                    type: object
                   environment:
                     default: testing
                     type: string
