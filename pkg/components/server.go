@@ -349,6 +349,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		Affinity:     s.instanceSpec.Affinity,
 		NodeSelector: s.instanceSpec.NodeSelector,
 		Tolerations:  s.instanceSpec.Tolerations,
+		DNSConfig:    s.instanceSpec.DNSConfig,
 	}
 	if ptr.Deref(s.instanceSpec.HostNetwork, s.commonSpec.HostNetwork) {
 		statefulSet.Spec.Template.Spec.HostNetwork = true
