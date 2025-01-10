@@ -265,6 +265,24 @@ func TestGetHTTPProxyConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetHTTPProxyConfigDisableCreateOauthUser(t *testing.T) {
+	spec := getYtsaurusWithEverything()
+	spec.Spec.OauthService.DisableUserCreation = ptr.To(true)
+	g := NewGenerator(spec, testClusterDomain)
+	cfg, err := g.GetHTTPProxyConfig(getHTTPProxySpec())
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetHTTPProxyConfigEnableCreateOauthUser(t *testing.T) {
+	spec := getYtsaurusWithEverything()
+	spec.Spec.OauthService.DisableUserCreation = ptr.To(false)
+	g := NewGenerator(spec, testClusterDomain)
+	cfg, err := g.GetHTTPProxyConfig(getHTTPProxySpec())
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetMasterConfig(t *testing.T) {
 	ytsaurus := getYtsaurusWithEverything()
 	g := NewGenerator(ytsaurus, testClusterDomain)
@@ -598,7 +616,6 @@ func withOauthSpec(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 				},
 			},
 		},
-		DisableUserCreation: ptr.To(true),
 	}
 	return ytsaurus
 }

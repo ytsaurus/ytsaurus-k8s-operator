@@ -109,8 +109,10 @@
             ];
         };
         "oauth_cookie_authenticator"={
+            "create_user_if_not_exists"=%true;
         };
         "oauth_token_authenticator"={
+            "create_user_if_not_exists"=%true;
         };
         "require_authentication"=%true;
     };
