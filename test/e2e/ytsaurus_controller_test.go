@@ -1032,12 +1032,7 @@ func checkClusterBaseViability(ytClient yt.Client) {
 	res := make([]string, 0)
 	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
 
-	// https://github.com/ytsaurus/ytsaurus-k8s-operator/issues/396
-	// we expect enable_real_chunk_locations being set to true for all currently tested/supported versions.
-	realChunkLocationPath := "//sys/@config/node_tracker/enable_real_chunk_locations"
-	var realChunkLocationsValue bool
-	Expect(ytClient.GetNode(ctx, ypath.Path(realChunkLocationPath), &realChunkLocationsValue, nil)).Should(Succeed())
-	Expect(realChunkLocationsValue).Should(BeTrue())
+	checkChunkLocations(ytClient)
 
 	By("Check that tablet cell bundles are in `good` health")
 	Eventually(func() bool {
@@ -1121,6 +1116,24 @@ func checkPodLabels(ctx context.Context, namespace string) {
 
 	// Init jobs have their own suffixes.
 	checkPodLabelCount(pods, "app.kubernetes.io/name", "yt-scheduler", 1)
+}
+
+func checkChunkLocations(ytClient yt.Client) {
+	// https://github.com/ytsaurus/ytsaurus-k8s-operator/issues/396
+	// we expect enable_real_chunk_locations being set to true for all currently tested/supported versions.
+	realChunkLocationPath := "//sys/@config/node_tracker/enable_real_chunk_locations"
+	var realChunkLocationsValue bool
+	Expect(ytClient.GetNode(ctx, ypath.Path(realChunkLocationPath), &realChunkLocationsValue, nil)).Should(Succeed())
+	Expect(realChunkLocationsValue).Should(BeTrue())
+
+	var values []yson.ValueWithAttrs
+	Expect(ytClient.ListNode(ctx, ypath.Path("//sys/data_nodes"), &values, &yt.ListNodeOptions{
+		Attributes: []string{"use_imaginary_chunk_locations"},
+	})).Should(Succeed())
+
+	for _, node := range values {
+		Expect(node.Attrs["use_imaginary_chunk_locations"]).ShouldNot(BeTrue())
+	}
 }
 
 func createYtsaurusClient(ytsaurus *ytv1.Ytsaurus, namespace string) yt.Client {
