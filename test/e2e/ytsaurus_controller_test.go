@@ -1032,6 +1032,13 @@ func checkClusterBaseViability(ytClient yt.Client) {
 	res := make([]string, 0)
 	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
 
+	// https://github.com/ytsaurus/ytsaurus-k8s-operator/issues/396
+	// we expect enable_real_chunk_locations being set to true for all currently tested/supported versions.
+	realChunkLocationPath := "//sys/@config/node_tracker/enable_real_chunk_locations"
+	var realChunkLocationsValue bool
+	Expect(ytClient.GetNode(ctx, ypath.Path(realChunkLocationPath), &realChunkLocationsValue, nil)).Should(Succeed())
+	Expect(realChunkLocationsValue).Should(BeTrue())
+
 	By("Check that tablet cell bundles are in `good` health")
 	Eventually(func() bool {
 		notGoodBundles, err := components.GetNotGoodTabletCellBundles(ctx, ytClient)
