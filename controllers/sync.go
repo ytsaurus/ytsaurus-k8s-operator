@@ -34,7 +34,8 @@ func (r *YtsaurusReconciler) handleEverything(
 			ytsaurus.LogUpdate(ctx, "Waiting for safe mode enabled")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSafeModeEnabled)
 			return &ctrl.Result{Requeue: true}, err
-		} else if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
+		}
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
 			ytsaurus.LogUpdate(ctx, "Update is impossible, need to apply previous images")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateImpossibleToStart)
 			return &ctrl.Result{Requeue: true}, err
@@ -292,7 +293,8 @@ func (r *YtsaurusReconciler) handleMasterOnly(
 			ytsaurus.LogUpdate(ctx, "Waiting for safe mode enabled")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSafeModeEnabled)
 			return &ctrl.Result{Requeue: true}, err
-		} else if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
+		}
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
 			ytsaurus.LogUpdate(ctx, "Update is impossible, need to apply previous images")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateImpossibleToStart)
 			return &ctrl.Result{Requeue: true}, err
@@ -368,7 +370,8 @@ func (r *YtsaurusReconciler) handleTabletNodesOnly(
 			ytsaurus.LogUpdate(ctx, "Waiting for safe mode enabled")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForTabletCellsSaving)
 			return &ctrl.Result{Requeue: true}, err
-		} else if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
+		}
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
 			ytsaurus.LogUpdate(ctx, "Update is impossible, need to apply previous images")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateImpossibleToStart)
 			return &ctrl.Result{Requeue: true}, err
