@@ -32,8 +32,12 @@ type LoginTransformation struct {
 	Replacement  string `yson:"replacement,omitempty"`
 }
 
-type OauthCookieAuthenticator struct{}
-type OauthTokenAuthenticator struct{}
+type OauthCookieAuthenticator struct {
+	CreateUserIfNotExists *bool `yson:"create_user_if_not_exists,omitempty"`
+}
+type OauthTokenAuthenticator struct {
+	CreateUserIfNotExists *bool `yson:"create_user_if_not_exists,omitempty"`
+}
 
 type Coordinator struct {
 	Enable            bool   `yson:"enable"`

@@ -14904,6 +14904,10 @@ spec:
                 type: object
               oauthService:
                 properties:
+                  disableUserCreation:
+                    description: If DisableUserCreation is set, proxies will NOT create
+                      non-existing users with O
+                    type: boolean
                   host:
                     minLength: 1
                     type: string

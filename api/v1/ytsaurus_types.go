@@ -227,6 +227,8 @@ type OauthServiceSpec struct {
 	//+kubebuilder:default:=false
 	Secure   bool                     `json:"secure,omitempty"`
 	UserInfo OauthUserInfoHandlerSpec `json:"userInfoHandler,omitempty"`
+	// If DisableUserCreation is set, proxies will NOT create non-existing users with OAuth authentication.
+	DisableUserCreation *bool `json:"disableUserCreation,omitempty"`
 }
 
 type HealthcheckProbeParams struct {

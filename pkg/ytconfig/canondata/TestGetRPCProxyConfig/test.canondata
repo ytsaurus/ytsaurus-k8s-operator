@@ -106,6 +106,7 @@
         ];
     };
     "oauth_token_authenticator"={
+        "create_user_if_not_exists"=%false;
     };
     "require_authentication"=%true;
 }

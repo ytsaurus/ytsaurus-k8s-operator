@@ -1047,6 +1047,7 @@ _Appears in:_
 | `port` _integer_ |  | 80 |  |
 | `secure` _boolean_ |  | false |  |
 | `userInfoHandler` _[OauthUserInfoHandlerSpec](#oauthuserinfohandlerspec)_ |  |  |  |
+| `disableUserCreation` _boolean_ | If DisableUserCreation is set, proxies will NOT create non-existing users with OAuth authentication. |  |  |
 
 
 #### OauthUserInfoHandlerSpec

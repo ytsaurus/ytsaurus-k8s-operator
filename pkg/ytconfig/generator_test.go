@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 
 	"k8s.io/utils/ptr"
@@ -597,6 +598,7 @@ func withOauthSpec(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 				},
 			},
 		},
+		DisableUserCreation: ptr.To(true),
 	}
 	return ytsaurus
 }
