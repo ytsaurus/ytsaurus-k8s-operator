@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 
 	"k8s.io/utils/ptr"
@@ -259,6 +260,24 @@ func TestGetExecNodeWithoutYtsaurusConfig(t *testing.T) {
 
 func TestGetHTTPProxyConfig(t *testing.T) {
 	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	cfg, err := g.GetHTTPProxyConfig(getHTTPProxySpec())
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetHTTPProxyConfigDisableCreateOauthUser(t *testing.T) {
+	spec := getYtsaurusWithEverything()
+	spec.Spec.OauthService.DisableUserCreation = ptr.To(true)
+	g := NewGenerator(spec, testClusterDomain)
+	cfg, err := g.GetHTTPProxyConfig(getHTTPProxySpec())
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetHTTPProxyConfigEnableCreateOauthUser(t *testing.T) {
+	spec := getYtsaurusWithEverything()
+	spec.Spec.OauthService.DisableUserCreation = ptr.To(false)
+	g := NewGenerator(spec, testClusterDomain)
 	cfg, err := g.GetHTTPProxyConfig(getHTTPProxySpec())
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)

@@ -495,10 +495,17 @@ func (g *Generator) getRPCProxyConfigImpl(spec *ytv1.RPCProxiesSpec) (RPCProxySe
 
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 
-	if g.ytsaurus.Spec.OauthService != nil {
-		c.OauthService = ptr.To(getOauthService(*g.ytsaurus.Spec.OauthService))
+	oauthService := g.ytsaurus.Spec.OauthService
+	if oauthService != nil {
+		c.OauthService = ptr.To(getOauthService(*oauthService))
 		c.CypressUserManager = CypressUserManager{}
-		c.OauthTokenAuthenticator = &OauthTokenAuthenticator{}
+		var createUserIfNotExist *bool
+		if oauthService.DisableUserCreation != nil {
+			createUserIfNotExist = ptr.To(!*oauthService.DisableUserCreation)
+		}
+		c.OauthTokenAuthenticator = &OauthTokenAuthenticator{
+			CreateUserIfNotExists: createUserIfNotExist,
+		}
 		c.RequireAuthentication = ptr.To(true)
 	}
 
@@ -670,10 +677,19 @@ func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProx
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
-	if g.ytsaurus.Spec.OauthService != nil {
-		c.Auth.OauthService = ptr.To(getOauthService(*g.ytsaurus.Spec.OauthService))
-		c.Auth.OauthCookieAuthenticator = &OauthCookieAuthenticator{}
-		c.Auth.OauthTokenAuthenticator = &OauthTokenAuthenticator{}
+	oauthService := g.ytsaurus.Spec.OauthService
+	if oauthService != nil {
+		c.Auth.OauthService = ptr.To(getOauthService(*oauthService))
+		var createUserIfNotExist *bool
+		if oauthService.DisableUserCreation != nil {
+			createUserIfNotExist = ptr.To(!*oauthService.DisableUserCreation)
+		}
+		c.Auth.OauthCookieAuthenticator = &OauthCookieAuthenticator{
+			CreateUserIfNotExists: createUserIfNotExist,
+		}
+		c.Auth.OauthTokenAuthenticator = &OauthTokenAuthenticator{
+			CreateUserIfNotExists: createUserIfNotExist,
+		}
 	}
 
 	return c, nil
