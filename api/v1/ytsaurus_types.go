@@ -288,6 +288,7 @@ type InstanceSpec struct {
 	// DNSConfig allows customizing the DNS settings for the pods.
 	//+optional
 	DNSConfig *corev1.PodDNSConfig `json:"dnsConfig,omitempty"`
+	DNSPolicy *corev1.DNSPolicy    `json:"dnsPolicy,omitempty"`
 }
 
 type MasterConnectionSpec struct {

@@ -752,6 +752,9 @@ spec:
                           type: string
                         type: array
                     type: object
+                  dnsPolicy:
+                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
@@ -3191,6 +3194,9 @@ spec:
                             type: string
                           type: array
                       type: object
+                    dnsPolicy:
+                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      type: string
                     enableAntiAffinity:
                       description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
@@ -5641,6 +5647,9 @@ spec:
                           type: string
                         type: array
                     type: object
+                  dnsPolicy:
+                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
@@ -8113,6 +8122,9 @@ spec:
                             type: string
                           type: array
                       type: object
+                    dnsPolicy:
+                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      type: string
                     enableAntiAffinity:
                       description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
@@ -10775,6 +10787,9 @@ spec:
                             type: string
                           type: array
                       type: object
+                    dnsPolicy:
+                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      type: string
                     enableAntiAffinity:
                       description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
@@ -13267,6 +13282,9 @@ spec:
                           type: string
                         type: array
                     type: object
+                  dnsPolicy:
+                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
@@ -15774,6 +15792,9 @@ spec:
                           type: string
                         type: array
                     type: object
+                  dnsPolicy:
+                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
@@ -18220,6 +18241,9 @@ spec:
                           type: string
                         type: array
                     type: object
+                  dnsPolicy:
+                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
@@ -20649,6 +20673,9 @@ spec:
                           type: string
                         type: array
                     type: object
+                  dnsPolicy:
+                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
@@ -23086,6 +23113,9 @@ spec:
                             type: string
                           type: array
                       type: object
+                    dnsPolicy:
+                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      type: string
                     enableAntiAffinity:
                       description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
@@ -25558,6 +25588,9 @@ spec:
                           type: string
                         type: array
                     type: object
+                  dnsPolicy:
+                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
@@ -27997,6 +28030,9 @@ spec:
                             type: string
                           type: array
                       type: object
+                    dnsPolicy:
+                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      type: string
                     enableAntiAffinity:
                       description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
@@ -30587,6 +30623,9 @@ spec:
                             type: string
                           type: array
                       type: object
+                    dnsPolicy:
+                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      type: string
                     enableAntiAffinity:
                       description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
@@ -33044,6 +33083,9 @@ spec:
                             type: string
                           type: array
                       type: object
+                    dnsPolicy:
+                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      type: string
                     enableAntiAffinity:
                       description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                       type: boolean
@@ -35816,6 +35858,9 @@ spec:
                           type: string
                         type: array
                     type: object
+                  dnsPolicy:
+                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean
