@@ -4,26 +4,31 @@ import (
 	"context"
 
 	. "github.com/onsi/gomega"
+	batchv1 "k8s.io/api/batch/v1"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
 
 type NamespaceWatcher struct {
 	kubeWatcher watch.Interface
 	stopCh      chan struct{}
-	events      []WatcherEvent
+	events      []testEvent
 }
 
-type WatcherEvent struct {
+type testEvent struct {
 	Kind string
 	Name string
 }
 
 func NewNamespaceWatcher(ctx context.Context, namespace string) *NamespaceWatcher {
-	watcher, err := k8sClient.Watch(ctx, &corev1.EventList{}, &client.ListOptions{
-		Namespace: namespace,
+	watcher, err := newCombinedKubeWatcher(ctx, k8sClient, namespace, []client.ObjectList{
+		&corev1.EventList{},
+		&batchv1.JobList{},
+		&ytv1.YtsaurusList{},
 	})
 	Expect(err).ToNot(HaveOccurred())
 	return &NamespaceWatcher{
@@ -41,7 +46,7 @@ func (w *NamespaceWatcher) Stop() {
 	w.kubeWatcher.Stop()
 }
 
-func (w *NamespaceWatcher) Events() []WatcherEvent {
+func (w *NamespaceWatcher) Events() []testEvent {
 	return w.events
 }
 
@@ -51,17 +56,17 @@ func (w *NamespaceWatcher) loop() {
 		case <-w.stopCh:
 			return
 		case ev := <-w.kubeWatcher.ResultChan():
-			w.handleEvent(ev)
+			w.handleWatchEvent(ev)
 		}
 	}
 }
 
-func (w *NamespaceWatcher) handleEvent(ev watch.Event) {
-	w.maybeLogEvent(ev)
-	w.maybeStoreEvent(ev)
+func (w *NamespaceWatcher) handleWatchEvent(ev watch.Event) {
+	w.maybeLogWatchEvent(ev)
+	w.maybeStoreWatchEvent(ev)
 }
 
-func (w *NamespaceWatcher) maybeLogEvent(ev watch.Event) {
+func (w *NamespaceWatcher) maybeLogWatchEvent(ev watch.Event) {
 	logEvent := func(event *corev1.Event) {
 		log.Info("Event",
 			"type", event.Type,
@@ -80,14 +85,15 @@ func (w *NamespaceWatcher) maybeLogEvent(ev watch.Event) {
 	}
 }
 
-func (w *NamespaceWatcher) maybeStoreEvent(ev watch.Event) {
+func (w *NamespaceWatcher) maybeStoreWatchEvent(ev watch.Event) {
 	switch ev.Type {
 	case watch.Added, watch.Modified:
-		if event, ok := ev.Object.(*corev1.Event); ok {
-			w.events = append(w.events, WatcherEvent{
-				Kind: event.InvolvedObject.Kind,
-				Name: event.InvolvedObject.Name,
-			})
+		if obj, ok := ev.Object.(*batchv1.Job); ok {
+			event := testEvent{
+				Kind: obj.Kind,
+				Name: obj.Name,
+			}
+			w.events = append(w.events, event)
 		}
 	}
 }
