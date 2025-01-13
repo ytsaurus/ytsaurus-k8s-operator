@@ -129,12 +129,26 @@ var _ = BeforeEach(func() {
 	})
 })
 
-func LogObjectEvents(ctx context.Context, namespace string) func() {
+type NamespaceWatcher struct {
+	kubeWatcher watch.Interface
+	stopCh      chan struct{}
+}
+
+func NewNamespaceWatcher(ctx context.Context, namespace string) *NamespaceWatcher {
 	watcher, err := k8sClient.Watch(ctx, &corev1.EventList{}, &client.ListOptions{
 		Namespace: namespace,
 	})
 	Expect(err).ToNot(HaveOccurred())
+	return &NamespaceWatcher{
+		kubeWatcher: watcher,
+	}
+}
 
+func (w *NamespaceWatcher) Start() {
+	go w.loop()
+}
+
+func (w *NamespaceWatcher) loop() {
 	logEvent := func(event *corev1.Event) {
 		log.Info("Event",
 			"type", event.Type,
@@ -145,8 +159,11 @@ func LogObjectEvents(ctx context.Context, namespace string) func() {
 		)
 	}
 
-	go func() {
-		for ev := range watcher.ResultChan() {
+	for {
+		select {
+		case <-w.stopCh:
+			return
+		case ev := <-w.kubeWatcher.ResultChan():
 			switch ev.Type {
 			case watch.Added, watch.Modified:
 				if event, ok := ev.Object.(*corev1.Event); ok {
@@ -154,9 +171,12 @@ func LogObjectEvents(ctx context.Context, namespace string) func() {
 				}
 			}
 		}
-	}()
+	}
+}
 
-	return watcher.Stop
+func (w *NamespaceWatcher) Stop() {
+	close(w.stopCh)
+	w.kubeWatcher.Stop()
 }
 
 func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
