@@ -49,7 +49,8 @@ type InitJob struct {
 	tolerations  []corev1.Toleration
 	nodeSelector map[string]string
 
-	builtJob *batchv1.Job
+	builtJob  *batchv1.Job
+	dnsConfig *corev1.PodDNSConfig
 }
 
 func NewInitJob(
@@ -61,6 +62,7 @@ func NewInitJob(
 	generator ytconfig.YsonGeneratorFunc,
 	tolerations []corev1.Toleration,
 	nodeSelector map[string]string,
+	dnsConfig *corev1.PodDNSConfig,
 ) *InitJob {
 	return &InitJob{
 		baseComponent: baseComponent{
@@ -73,6 +75,7 @@ func NewInitJob(
 		image:                  image,
 		tolerations:            tolerations,
 		nodeSelector:           nodeSelector,
+		dnsConfig:              dnsConfig,
 		initJob: resources.NewJob(
 			labeller.GetInitJobName(name),
 			labeller,
@@ -130,6 +133,7 @@ func (j *InitJob) Build() *batchv1.Job {
 			RestartPolicy: corev1.RestartPolicyOnFailure,
 			Tolerations:   j.tolerations,
 			NodeSelector:  j.nodeSelector,
+			DNSConfig:     j.dnsConfig,
 		},
 	}
 	j.builtJob = job

@@ -285,6 +285,10 @@ type InstanceSpec struct {
 	// Component config for native RPC bus transport.
 	//+optional
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
+	// DNSConfig allows customizing the DNS settings for the pods.
+	//+optional
+	DNSConfig *corev1.PodDNSConfig `json:"dnsConfig,omitempty"`
+	DNSPolicy corev1.DNSPolicy     `json:"dnsPolicy,omitempty"`
 }
 
 type MasterConnectionSpec struct {
@@ -518,6 +522,9 @@ type UISpec struct {
 	DirectDownload *bool               `json:"directDownload,omitempty"`
 	Tolerations    []corev1.Toleration `json:"tolerations,omitempty"`
 	NodeSelector   map[string]string   `json:"nodeSelector,omitempty"`
+	// DNSConfig allows customizing the DNS settings for the pods.
+	//+optional
+	DNSConfig *corev1.PodDNSConfig `json:"dnsConfig,omitempty"`
 }
 
 type QueryTrackerSpec struct {
@@ -536,6 +543,9 @@ type StrawberryControllerSpec struct {
 	// For example, "chyt" (with `ControllerFamilies` set to {"chyt", "jupyt"} would mean
 	// that requests to "foo.<domain>" will be processed by chyt controller.
 	DefaultRouteFamily *string `json:"defaultRouteFamily,omitempty"`
+	// DNSConfig allows customizing the DNS settings for the pods.
+	//+optional
+	DNSConfig *corev1.PodDNSConfig `json:"dnsConfig,omitempty"`
 }
 
 type YQLAgentSpec struct {
@@ -659,8 +669,10 @@ type YtsaurusSpec struct {
 
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
-
-	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
+	// DNSConfig allows customizing the DNS settings for the pods.
+	//+optional
+	DNSConfig *corev1.PodDNSConfig `json:"dnsConfig,omitempty"`
+	Bootstrap *BootstrapSpec       `json:"bootstrap,omitempty"`
 
 	Discovery        DiscoverySpec `json:"discovery,omitempty"`
 	PrimaryMasters   MastersSpec   `json:"primaryMasters,omitempty"`

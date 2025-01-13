@@ -47,6 +47,7 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 			cfgen.GetNativeClientConfig,
 			ytsaurus.Spec.Tolerations,
 			ytsaurus.Spec.NodeSelector,
+			ytsaurus.Spec.DNSConfig,
 		),
 		initEnvironment: NewInitJob(
 			l,
@@ -59,6 +60,7 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 			cfgen.GetNativeClientConfig,
 			ytsaurus.Spec.Tolerations,
 			ytsaurus.Spec.NodeSelector,
+			ytsaurus.Spec.DNSConfig,
 		),
 		initChPublicJob: NewInitJob(
 			l,
@@ -71,6 +73,7 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 			cfgen.GetNativeClientConfig,
 			ytsaurus.Spec.Tolerations,
 			ytsaurus.Spec.NodeSelector,
+			ytsaurus.Spec.DNSConfig,
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

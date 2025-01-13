@@ -83,6 +83,7 @@ func NewStrawberryController(
 			cfgen.GetNativeClientConfig,
 			getTolerationsWithDefault(resource.Spec.StrawberryController.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.StrawberryController.NodeSelector, resource.Spec.NodeSelector),
+			getDNSConfigWithDefault(resource.Spec.StrawberryController.DNSConfig, resource.Spec.DNSConfig),
 		),
 		initChytClusterJob: NewInitJob(
 			l,
@@ -95,6 +96,7 @@ func NewStrawberryController(
 			cfgen.GetStrawberryInitClusterConfig,
 			getTolerationsWithDefault(resource.Spec.StrawberryController.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.StrawberryController.NodeSelector, resource.Spec.NodeSelector),
+			getDNSConfigWithDefault(resource.Spec.StrawberryController.DNSConfig, resource.Spec.DNSConfig),
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

@@ -272,3 +272,11 @@ func getNodeSelectorWithDefault(componentNodeSelector, defaultNodeSelector map[s
 	}
 	return defaultNodeSelector
 }
+
+func getDNSConfigWithDefault(componentDNSConfig, defaultDNSConfig *corev1.PodDNSConfig) *corev1.PodDNSConfig {
+	if componentDNSConfig != nil {
+		return componentDNSConfig
+	}
+	// Otherwise, fall back to the default DNSConfig.
+	return defaultDNSConfig
+}

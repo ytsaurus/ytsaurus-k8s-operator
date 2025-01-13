@@ -59,6 +59,7 @@ func NewYtsaurusClient(
 			cfgen.GetNativeClientConfig,
 			resource.Spec.Tolerations,
 			resource.Spec.NodeSelector,
+			resource.Spec.DNSConfig,
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

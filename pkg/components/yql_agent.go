@@ -66,6 +66,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 			cfgen.GetNativeClientConfig,
 			getTolerationsWithDefault(resource.Spec.YQLAgents.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.YQLAgents.NodeSelector, resource.Spec.NodeSelector),
+			getDNSConfigWithDefault(resource.Spec.YQLAgents.DNSConfig, resource.Spec.DNSConfig),
 		),
 		updateEnvironment: NewInitJob(
 			l,
@@ -78,6 +79,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 			cfgen.GetNativeClientConfig,
 			getTolerationsWithDefault(resource.Spec.YQLAgents.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.YQLAgents.NodeSelector, resource.Spec.NodeSelector),
+			getDNSConfigWithDefault(resource.Spec.YQLAgents.DNSConfig, resource.Spec.DNSConfig),
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

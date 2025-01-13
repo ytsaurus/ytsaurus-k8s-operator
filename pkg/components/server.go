@@ -349,11 +349,19 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		Affinity:     s.instanceSpec.Affinity,
 		NodeSelector: s.instanceSpec.NodeSelector,
 		Tolerations:  s.instanceSpec.Tolerations,
+		DNSConfig:    s.instanceSpec.DNSConfig,
 	}
+
+	var stsDNSPolicy corev1.DNSPolicy
 	if ptr.Deref(s.instanceSpec.HostNetwork, s.commonSpec.HostNetwork) {
 		statefulSet.Spec.Template.Spec.HostNetwork = true
-		statefulSet.Spec.Template.Spec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
+		// https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy
+		stsDNSPolicy = corev1.DNSClusterFirstWithHostNet
 	}
+	if s.instanceSpec.DNSPolicy != "" {
+		stsDNSPolicy = s.instanceSpec.DNSPolicy
+	}
+	statefulSet.Spec.Template.Spec.DNSPolicy = stsDNSPolicy
 
 	if s.caBundle != nil {
 		s.caBundle.AddVolume(&statefulSet.Spec.Template.Spec)
