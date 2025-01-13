@@ -215,7 +215,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 
 		By("Logging all events in namespace")
-		DeferCleanup(namespaceWatcher.Stop)
+		logEventsCleanup := LogObjectEvents(ctx, namespace)
+		DeferCleanup(func() {
+			logEventsCleanup()
+			namespaceWatcher.Stop()
+		})
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
@@ -228,6 +232,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		By("Checking that Ytsaurus state is equal to `Running`")
 		EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
+
+		By("Checking jobs order")
+		completedJobs := namespaceWatcher.GetCompletedJobNames()
+		Expect(completedJobs).Should(Equal(getInitializingStageJobNames()))
 
 		g = ytconfig.NewGenerator(ytsaurus, "local")
 
