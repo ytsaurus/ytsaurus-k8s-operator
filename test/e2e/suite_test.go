@@ -33,8 +33,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/watch"
-
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	clientgoretry "k8s.io/client-go/util/retry"
 
@@ -43,8 +41,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	corev1 "k8s.io/api/core/v1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -128,56 +124,6 @@ var _ = BeforeEach(func() {
 		ctx = nil
 	})
 })
-
-type NamespaceWatcher struct {
-	kubeWatcher watch.Interface
-	stopCh      chan struct{}
-}
-
-func NewNamespaceWatcher(ctx context.Context, namespace string) *NamespaceWatcher {
-	watcher, err := k8sClient.Watch(ctx, &corev1.EventList{}, &client.ListOptions{
-		Namespace: namespace,
-	})
-	Expect(err).ToNot(HaveOccurred())
-	return &NamespaceWatcher{
-		kubeWatcher: watcher,
-	}
-}
-
-func (w *NamespaceWatcher) Start() {
-	go w.loop()
-}
-
-func (w *NamespaceWatcher) loop() {
-	logEvent := func(event *corev1.Event) {
-		log.Info("Event",
-			"type", event.Type,
-			"kind", event.InvolvedObject.Kind,
-			"name", event.InvolvedObject.Name,
-			"reason", event.Reason,
-			"message", event.Message,
-		)
-	}
-
-	for {
-		select {
-		case <-w.stopCh:
-			return
-		case ev := <-w.kubeWatcher.ResultChan():
-			switch ev.Type {
-			case watch.Added, watch.Modified:
-				if event, ok := ev.Object.(*corev1.Event); ok {
-					logEvent(event)
-				}
-			}
-		}
-	}
-}
-
-func (w *NamespaceWatcher) Stop() {
-	close(w.stopCh)
-	w.kubeWatcher.Stop()
-}
 
 func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 	prevStatus := ytv1.YtsaurusStatus{}

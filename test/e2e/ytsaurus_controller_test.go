@@ -219,7 +219,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
-
 		By("Creating resource objects")
 		for _, object := range objects {
 			By(fmt.Sprintf("Creating %v %v", GetObjectGVK(object), object.GetName()))
