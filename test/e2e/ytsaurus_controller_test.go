@@ -233,10 +233,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		By("Checking that Ytsaurus state is equal to `Running`")
 		EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
 
-		By("Checking jobs order")
-		completedJobs := namespaceWatcher.GetCompletedJobNames()
-		Expect(completedJobs).Should(Equal(getInitializingStageJobNames()))
-
 		g = ytconfig.NewGenerator(ytsaurus, "local")
 
 		ytClient = createYtsaurusClient(ytsaurus, namespace)
@@ -286,6 +282,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				})
 
 				It("Triggers cluster update", func(ctx context.Context) {
+					By("Checking jobs order")
+					completedJobs := namespaceWatcher.GetCompletedJobNames()
+					Expect(completedJobs).Should(Equal(getInitializingStageJobNames()))
+
 					checkPodLabels(ctx, namespace)
 
 					ytsaurus.Spec.CoreImage = newImage
