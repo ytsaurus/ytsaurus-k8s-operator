@@ -351,11 +351,14 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		Tolerations:  s.instanceSpec.Tolerations,
 		DNSConfig:    s.instanceSpec.DNSConfig,
 	}
-	if s.instanceSpec.DNSPolicy != nil {
-		statefulSet.Spec.Template.Spec.DNSPolicy = *s.instanceSpec.DNSPolicy
-	} else if ptr.Deref(s.instanceSpec.HostNetwork, s.commonSpec.HostNetwork) {
+
+	if ptr.Deref(s.instanceSpec.HostNetwork, s.commonSpec.HostNetwork) {
 		statefulSet.Spec.Template.Spec.HostNetwork = true
-		statefulSet.Spec.Template.Spec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
+		if s.instanceSpec.DNSPolicy != nil {
+			statefulSet.Spec.Template.Spec.DNSPolicy = *s.instanceSpec.DNSPolicy
+		} else {
+			statefulSet.Spec.Template.Spec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
+		}
 	}
 
 	if s.caBundle != nil {
