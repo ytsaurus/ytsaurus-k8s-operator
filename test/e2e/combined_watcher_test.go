@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
+// combinedKubeWatcher is a watcher that combines multiple watchers into a single channel preserving watcher interface.
 type combinedKubeWatcher struct {
 	watchers      []watch.Interface
 	stopCh        chan struct{}
@@ -98,20 +99,13 @@ func TestCombinedWatcher(t *testing.T) {
 
 	var events []watch.Event
 	go func() {
-		for {
-			select {
-			case msg, ok := <-watcher.ResultChan():
-				if !ok {
-					return
+		for msg := range watcher.ResultChan() {
+			if obj, ok := msg.Object.(*corev1.ConfigMap); ok {
+				if obj.Name == "kube-root-ca.crt" {
+					continue
 				}
-				switch obj := msg.Object.(type) {
-				case *corev1.ConfigMap:
-					if obj.Name == "kube-root-ca.crt" {
-						continue
-					}
-				}
-				events = append(events, msg)
 			}
+			events = append(events, msg)
 		}
 	}()
 
