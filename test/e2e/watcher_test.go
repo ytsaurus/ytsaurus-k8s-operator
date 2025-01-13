@@ -11,6 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 )
 
 type NamespaceWatcher struct {
@@ -25,7 +26,7 @@ type testEvent struct {
 }
 
 func NewNamespaceWatcher(ctx context.Context, namespace string) *NamespaceWatcher {
-	watcher, err := newCombinedKubeWatcher(ctx, k8sClient, namespace, []client.ObjectList{
+	watcher, err := testutil.NewCombinedKubeWatcher(ctx, k8sClient, namespace, []client.ObjectList{
 		&corev1.EventList{},
 		&batchv1.JobList{},
 		&ytv1.YtsaurusList{},
