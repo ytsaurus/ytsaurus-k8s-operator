@@ -2,6 +2,7 @@ package consts
 
 const (
 	YTRPCPortName = "rpc"
+	KafkaPortName = "kafka"
 
 	YTMonitoringContainerPortName = "metrics"
 	YTMonitoringServicePortName   = "ytsaurus-metrics"
@@ -60,4 +61,8 @@ const (
 
 	MasterCachesRPCPort        = 9018
 	MasterCachesMonitoringPort = 10018
+
+	KafkaProxyMonitoringPort = 10020
+	KafkaProxyKafkaPort      = 9023
+	KafkaProxyRPCPort        = 9021
 )

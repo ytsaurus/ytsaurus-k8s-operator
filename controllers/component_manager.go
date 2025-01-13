@@ -84,6 +84,14 @@ func NewComponentManager(
 		allComponents = append(allComponents, tps...)
 	}
 
+	if len(resource.Spec.KafkaProxies) > 0 {
+		var kps []components.Component
+		for _, kpSpec := range ytsaurus.GetResource().Spec.KafkaProxies {
+			kps = append(kps, components.NewKafkaProxy(cfgen, ytsaurus, m, kpSpec))
+		}
+		allComponents = append(allComponents, kps...)
+	}
+
 	var ends []components.Component
 	if len(resource.Spec.ExecNodes) > 0 {
 		for _, endSpec := range ytsaurus.GetResource().Spec.ExecNodes {

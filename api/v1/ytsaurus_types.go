@@ -369,6 +369,14 @@ type TCPProxiesSpec struct {
 	Role string `json:"role,omitempty"`
 }
 
+type KafkaProxiesSpec struct {
+	InstanceSpec `json:",inline"`
+	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
+	//+kubebuilder:default:=default
+	//+kubebuilder:validation:MinLength:=1
+	Role string `json:"role,omitempty"`
+}
+
 // ClusterNodesSpec is a common part of spec for nodes of all flavors.
 type ClusterNodesSpec struct {
 	// List of the node tags.
@@ -680,9 +688,10 @@ type YtsaurusSpec struct {
 	//+optional
 	MasterCaches *MasterCachesSpec `json:"masterCaches,omitempty"`
 	// +kubebuilder:validation:MinItems:=1
-	HTTPProxies []HTTPProxiesSpec `json:"httpProxies,omitempty"`
-	RPCProxies  []RPCProxiesSpec  `json:"rpcProxies,omitempty"`
-	TCPProxies  []TCPProxiesSpec  `json:"tcpProxies,omitempty"`
+	HTTPProxies  []HTTPProxiesSpec  `json:"httpProxies,omitempty"`
+	RPCProxies   []RPCProxiesSpec   `json:"rpcProxies,omitempty"`
+	TCPProxies   []TCPProxiesSpec   `json:"tcpProxies,omitempty"`
+	KafkaProxies []KafkaProxiesSpec `json:"kafkaProxies,omitempty"`
 	// +kubebuilder:validation:MinItems:=1
 	DataNodes        []DataNodesSpec       `json:"dataNodes,omitempty"`
 	ExecNodes        []ExecNodesSpec       `json:"execNodes,omitempty"`

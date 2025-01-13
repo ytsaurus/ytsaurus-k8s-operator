@@ -15,6 +15,7 @@ type RPCService struct {
 	name     string
 	labeller *labeller.Labeller
 	apiProxy apiproxy.APIProxy
+	port     *int32
 	nodePort *int32
 
 	oldObject corev1.Service
@@ -45,15 +46,23 @@ func (s *RPCService) SetNodePort(port *int32) {
 	s.nodePort = port
 }
 
+func (s *RPCService) SetPort(port *int32) {
+	s.port = port
+}
+
 func (s *RPCService) Sync(ctx context.Context) error {
 	return s.apiProxy.SyncObject(ctx, &s.oldObject, &s.newObject)
 }
 
 func (s *RPCService) Build() *corev1.Service {
+	var port int32 = consts.RPCProxyRPCPort
+	if s.port != nil {
+		port = *s.port
+	}
 	servicePort := corev1.ServicePort{
 		Name:       "rpc",
-		Port:       consts.RPCProxyRPCPort,
-		TargetPort: intstr.IntOrString{IntVal: consts.RPCProxyRPCPort},
+		Port:       port,
+		TargetPort: intstr.IntOrString{IntVal: port},
 	}
 	if s.nodePort != nil {
 		servicePort.NodePort = *s.nodePort
