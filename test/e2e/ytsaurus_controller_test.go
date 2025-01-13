@@ -167,6 +167,7 @@ type testRow struct {
 var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() {
 	var namespace string
 	var objects []client.Object
+	var namespaceWatcher *NamespaceWatcher
 	var name client.ObjectKey
 	var ytsaurus *ytv1.Ytsaurus
 	var ytClient yt.Client
@@ -201,6 +202,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 		Expect(k8sClient.Create(ctx, &namespaceObject)).Should(Succeed())
 		namespace = namespaceObject.Name // Fetch unique namespace name
+		namespaceWatcher = NewNamespaceWatcher(ctx, namespace)
+		namespaceWatcher.Start()
 
 		By("Creating minimal Ytsaurus spec")
 		ytsaurus = testutil.CreateMinimalYtsaurusResource(namespace)
@@ -212,11 +215,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 
 		By("Logging all events in namespace")
-		DeferCleanup(LogObjectEvents(ctx, namespace))
+		logEventsCleanup := LogObjectEvents(ctx, namespace)
+		DeferCleanup(func() {
+			logEventsCleanup()
+			namespaceWatcher.Stop()
+		})
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
-
 		By("Creating resource objects")
 		for _, object := range objects {
 			By(fmt.Sprintf("Creating %v %v", GetObjectGVK(object), object.GetName()))
@@ -276,6 +282,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				})
 
 				It("Triggers cluster update", func(ctx context.Context) {
+					By("Checking jobs order")
+					completedJobs := namespaceWatcher.GetCompletedJobNames()
+					Expect(completedJobs).Should(Equal(getInitializingStageJobNames()))
+
 					checkPodLabels(ctx, namespace)
 
 					ytsaurus.Spec.CoreImage = newImage
