@@ -21,7 +21,6 @@ type NamespaceWatcher struct {
 func NewNamespaceWatcher(ctx context.Context, namespace string) *NamespaceWatcher {
 	watcher, err := testutil.NewCombinedKubeWatcher(ctx, k8sClient, namespace, []client.ObjectList{
 		&batchv1.JobList{},
-		//&ytv1.YtsaurusList{},
 	})
 	Expect(err).ToNot(HaveOccurred())
 	return &NamespaceWatcher{
