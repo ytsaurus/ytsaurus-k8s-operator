@@ -15,7 +15,6 @@ import (
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
-	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -138,8 +137,16 @@ func CreateUser(ctx context.Context, ytClient yt.Client, userName, token string,
 }
 
 func IsUpdatingComponent(ytsaurus *apiproxy.Ytsaurus, component Component) bool {
-	componentNames := ytsaurus.GetLocalUpdatingComponents()
-	return (componentNames == nil && component.IsUpdatable()) || slices.Contains(componentNames, component.GetName())
+	components := ytsaurus.GetUpdatingComponents()
+	if components == nil && component.IsUpdatable() {
+		return true
+	}
+	for _, c := range components {
+		if c.ComponentName == component.GetName() {
+			return true
+		}
+	}
+	return false
 }
 
 func handleUpdatingClusterState(

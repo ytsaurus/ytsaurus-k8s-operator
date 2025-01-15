@@ -20,6 +20,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 // EmbeddedPersistentVolumeClaim is an embedded version of k8s.io/api/core/v1.PersistentVolumeClaim.
@@ -747,6 +749,7 @@ const (
 	UpdateStateWaitingForYqlaUpdatingPrepare      UpdateState = "WaitingForYqlaUpdatingPrepare"
 	UpdateStateWaitingForYqlaUpdate               UpdateState = "WaitingForYqlaUpdate"
 	UpdateStateWaitingForSafeModeDisabled         UpdateState = "WaitingForSafeModeDisabled"
+	UpdateStateFinishing                          UpdateState = "Finishing"
 )
 
 type TabletCellBundleInfo struct {
@@ -789,8 +792,10 @@ const (
 
 type UpdateStatus struct {
 	//+kubebuilder:default:=None
-	State      UpdateState `json:"state,omitempty"`
-	Components []string    `json:"components,omitempty"`
+	State UpdateState `json:"state,omitempty"`
+	// Deprecated: Use updatingComponents instead.
+	Components         []string    `json:"components,omitempty"`
+	UpdatingComponents []Component `json:"updatingComponents,omitempty"`
 	// Flow is an internal field that is needed to persist the chosen flow until the end of an update.
 	// Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage
 	// executes steps corresponding to that update flow.
@@ -798,6 +803,11 @@ type UpdateStatus struct {
 	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
 	TabletCellBundles     []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
 	MasterMonitoringPaths []string               `json:"masterMonitoringPaths,omitempty"`
+}
+
+type Component struct {
+	ComponentName string               `json:"componentName,omitempty"`
+	ComponentType consts.ComponentType `json:"componentType,omitempty"`
 }
 
 // YtsaurusStatus defines the observed state of Ytsaurus
