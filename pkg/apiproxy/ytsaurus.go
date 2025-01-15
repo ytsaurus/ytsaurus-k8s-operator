@@ -56,10 +56,6 @@ func (c *Ytsaurus) GetUpdateState() ytv1.UpdateState {
 	return c.ytsaurus.Status.UpdateStatus.State
 }
 
-func (c *Ytsaurus) GetUpdateFlow() ytv1.UpdateFlow {
-	return c.ytsaurus.Status.UpdateStatus.Flow
-}
-
 func (c *Ytsaurus) GetUpdatingComponents() []ytv1.Component {
 	return c.ytsaurus.Status.UpdateStatus.UpdatingComponents
 }
@@ -79,8 +75,7 @@ func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
 	c.ytsaurus.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
 	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
 	c.ytsaurus.Status.UpdateStatus.MasterMonitoringPaths = make([]string, 0)
-	c.ytsaurus.Status.UpdateStatus.Components = nil
-	c.ytsaurus.Status.UpdateStatus.Flow = ytv1.UpdateFlowNone
+	c.ytsaurus.Status.UpdateStatus.UpdatingComponents = nil
 	return c.apiProxy.UpdateStatus(ctx)
 }
 

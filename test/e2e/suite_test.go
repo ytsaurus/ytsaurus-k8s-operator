@@ -309,14 +309,6 @@ func HaveClusterStateUpdating() otypes.GomegaMatcher {
 	return HaveClusterState(ytv1.ClusterStateUpdating)
 }
 
-func HaveClusterUpdateFlow(flow ytv1.UpdateFlow) otypes.GomegaMatcher {
-	return And(
-		HaveClusterStateUpdating(),
-		HaveField("Status.UpdateStatus.Flow", flow),
-	)
-	// FIXME(khlebnikov): Flow initial state is None which is weird.
-}
-
 func HaveClusterUpdateState(updateState ytv1.UpdateState) otypes.GomegaMatcher {
 	return And(
 		HaveClusterStateUpdating(),
