@@ -334,7 +334,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 			{
 				Image:        s.image,
 				Name:         consts.PrepareLocationsContainerName,
-				Command:      []string{"bash", "-xc", locationCreationCommand},
+				Command:      []string{"bash", "-exc", locationCreationCommand},
 				VolumeMounts: volumeMounts,
 			},
 			{

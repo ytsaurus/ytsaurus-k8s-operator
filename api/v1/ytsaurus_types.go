@@ -94,6 +94,10 @@ type LocationSpec struct {
 	// Max TTL of trash in milliseconds.
 	//+kubebuilder:validation:Minimum:=60000
 	MaxTrashMilliseconds *int64 `json:"maxTrashMilliseconds,omitempty"`
+
+	// Dangerous: changing purge key to different non-empty value removes all data in location.
+	//+optional
+	PurgeKey string `json:"purgeKey,omitempty"`
 }
 
 // LogLevel string describes possible Ytsaurus logging level.

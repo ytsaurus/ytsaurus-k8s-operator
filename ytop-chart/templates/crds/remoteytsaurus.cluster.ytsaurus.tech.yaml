@@ -744,6 +744,10 @@ spec:
                     path:
                       minLength: 1
                       type: string
+                    purgeKey:
+                      description: 'Dangerous: changing purge key to different non-empty
+                        value removes all data in l'
+                      type: string
                     quota:
                       anyOf:
                       - type: integer
