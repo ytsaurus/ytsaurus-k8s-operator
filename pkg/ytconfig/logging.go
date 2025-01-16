@@ -112,11 +112,24 @@ func newLoggingBuilder(location *ytv1.LocationSpec, componentName string) loggin
 	}
 }
 
-func newJobProxyLoggingBuilder() loggingBuilder {
-	return loggingBuilder{
+type jobProxyLoggingBuilder struct {
+	loggingDirectory string
+	componentName    string
+	// COMPAT(ignat)
+	logging            Logging
+	logManagerTemplate Logging
+}
+
+func newJobProxyLoggingBuilder() jobProxyLoggingBuilder {
+	return jobProxyLoggingBuilder{
 		loggingDirectory: "",
 		componentName:    "job-proxy",
+		// COMPAT(ignat)
 		logging: Logging{
+			Rules:   make([]LoggingRule, 0),
+			Writers: make(map[string]LoggingWriter),
+		},
+		logManagerTemplate: Logging{
 			Rules:   make([]LoggingRule, 0),
 			Writers: make(map[string]LoggingWriter),
 		},
@@ -216,6 +229,26 @@ func (b *loggingBuilder) addLogger(loggerSpec ytv1.TextLoggerSpec) *loggingBuild
 func (b *loggingBuilder) addStructuredLogger(loggerSpec ytv1.StructuredLoggerSpec) *loggingBuilder {
 	b.logging.Rules = append(b.logging.Rules, createStructuredLoggingRule(loggerSpec))
 	b.logging.Writers[loggerSpec.Name] = createStructuredLoggingWriter(b.componentName, b.loggingDirectory, loggerSpec)
+
+	return b
+}
+
+func (b *jobProxyLoggingBuilder) addLogger(loggerSpec ytv1.TextLoggerSpec) *jobProxyLoggingBuilder {
+	// COMPAT(ignat)
+	b.logging.Rules = append(b.logging.Rules, createLoggingRule(loggerSpec))
+	b.logging.Writers[loggerSpec.Name] = createLoggingWriter(b.componentName, b.loggingDirectory, loggerSpec)
+	b.logManagerTemplate.Rules = append(b.logManagerTemplate.Rules, createLoggingRule(loggerSpec))
+	b.logManagerTemplate.Writers[loggerSpec.Name] = createLoggingWriter(b.componentName, b.loggingDirectory, loggerSpec)
+
+	return b
+}
+
+func (b *jobProxyLoggingBuilder) addStructuredLogger(loggerSpec ytv1.StructuredLoggerSpec) *jobProxyLoggingBuilder {
+	// COMPAT(ignat)
+	b.logging.Rules = append(b.logging.Rules, createStructuredLoggingRule(loggerSpec))
+	b.logging.Writers[loggerSpec.Name] = createStructuredLoggingWriter(b.componentName, b.loggingDirectory, loggerSpec)
+	b.logManagerTemplate.Rules = append(b.logManagerTemplate.Rules, createStructuredLoggingRule(loggerSpec))
+	b.logManagerTemplate.Writers[loggerSpec.Name] = createStructuredLoggingWriter(b.componentName, b.loggingDirectory, loggerSpec)
 
 	return b
 }

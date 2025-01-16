@@ -560,7 +560,9 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 			jobProxyLoggingBuilder.addLogger(defaultLoggerSpec)
 		}
 	}
+	// COMPAT(ignat)
 	jobProxyLoggingBuilder.logging.FlushPeriod = 3000
+	jobProxyLoggingBuilder.logManagerTemplate.FlushPeriod = 3000
 	c.ExecNode.JobProxy.JobProxyLogging = jobProxyLoggingBuilder.logging
 
 	c.ExecNode.JobProxy.JobProxyAuthenticationManager.RequireAuthentication = true
