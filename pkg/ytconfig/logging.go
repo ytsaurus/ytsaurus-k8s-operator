@@ -242,13 +242,3 @@ func (b *jobProxyLoggingBuilder) addLogger(loggerSpec ytv1.TextLoggerSpec) *jobP
 
 	return b
 }
-
-func (b *jobProxyLoggingBuilder) addStructuredLogger(loggerSpec ytv1.StructuredLoggerSpec) *jobProxyLoggingBuilder {
-	// COMPAT(ignat)
-	b.logging.Rules = append(b.logging.Rules, createStructuredLoggingRule(loggerSpec))
-	b.logging.Writers[loggerSpec.Name] = createStructuredLoggingWriter(b.componentName, b.loggingDirectory, loggerSpec)
-	b.logManagerTemplate.Rules = append(b.logManagerTemplate.Rules, createStructuredLoggingRule(loggerSpec))
-	b.logManagerTemplate.Writers[loggerSpec.Name] = createStructuredLoggingWriter(b.componentName, b.loggingDirectory, loggerSpec)
-
-	return b
-}
