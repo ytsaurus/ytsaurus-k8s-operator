@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -245,21 +246,35 @@ type HealthcheckProbeParams struct {
 }
 
 type InstanceSpec struct {
+	// Desired number of instances.
+	InstanceCount int32 `json:"instanceCount,omitempty"`
+
+	// Acceptable number of instances.
+	MinReadyInstanceCount *int `json:"minReadyInstanceCount,omitempty"`
+
+	// StatefulSet update strategy.
+	//+optional
+	UpdateStrategy *appsv1.StatefulSetUpdateStrategy `json:"updateStrategy,omitempty"`
+
+	// Parameters for periodic probe of instance readiness.
+	//+optional
+	ReadinessProbeParams *HealthcheckProbeParams `json:"readinessProbeParams,omitempty"`
+
+	// Optional duration in seconds the pod needs to terminate gracefully. Defaults to 30 seconds.
+	//+optional
+	TerminationGracePeriodSeconds *int64 `json:"terminationGracePeriodSeconds,omitempty"`
+
 	// Overrides coreImage for component.
 	//+optional
 	Image *string `json:"image,omitempty"`
 	// Specifies wrapper for component container command.
 	//+optional
-	EntrypointWrapper []string             `json:"entrypointWrapper,omitempty"`
-	Volumes           []corev1.Volume      `json:"volumes,omitempty"`
-	VolumeMounts      []corev1.VolumeMount `json:"volumeMounts,omitempty"`
-	//+optional
-	ReadinessProbeParams  *HealthcheckProbeParams         `json:"readinessProbeParams,omitempty"`
-	Resources             corev1.ResourceRequirements     `json:"resources,omitempty"`
-	InstanceCount         int32                           `json:"instanceCount,omitempty"`
-	MinReadyInstanceCount *int                            `json:"minReadyInstanceCount,omitempty"`
-	Locations             []LocationSpec                  `json:"locations,omitempty"`
-	VolumeClaimTemplates  []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
+	EntrypointWrapper    []string                        `json:"entrypointWrapper,omitempty"`
+	Volumes              []corev1.Volume                 `json:"volumes,omitempty"`
+	VolumeMounts         []corev1.VolumeMount            `json:"volumeMounts,omitempty"`
+	Resources            corev1.ResourceRequirements     `json:"resources,omitempty"`
+	Locations            []LocationSpec                  `json:"locations,omitempty"`
+	VolumeClaimTemplates []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
 	//+optional
 	RuntimeClassName *string `json:"runtimeClassName,omitempty"`
 	// Deprecated: use Affinity.PodAntiAffinity instead.
@@ -279,9 +294,6 @@ type InstanceSpec struct {
 	// SetHostnameAsFQDN indicates whether to set the hostname as FQDN.
 	//+kubebuilder:default:=true
 	SetHostnameAsFQDN *bool `json:"setHostnameAsFqdn,omitempty"`
-	// Optional duration in seconds the pod needs to terminate gracefully.
-	//+optional
-	TerminationGracePeriodSeconds *int64 `json:"terminationGracePeriodSeconds,omitempty"`
 	// Component config for native RPC bus transport.
 	//+optional
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`

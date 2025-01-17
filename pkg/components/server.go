@@ -282,6 +282,10 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	statefulSet.Spec.ServiceName = s.headlessService.Name()
 	statefulSet.Spec.VolumeClaimTemplates = createVolumeClaims(s.instanceSpec.VolumeClaimTemplates)
 
+	if s.instanceSpec.UpdateStrategy != nil {
+		s.instanceSpec.UpdateStrategy.DeepCopyInto(&statefulSet.Spec.UpdateStrategy)
+	}
+
 	fileNames := s.configHelper.GetFileNames()
 	if len(fileNames) != 1 {
 		log.Panicf("expected exactly one config filename, found %v", len(fileNames))
