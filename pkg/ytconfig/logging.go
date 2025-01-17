@@ -125,16 +125,15 @@ type JobProxyLogging struct {
 type jobProxyLoggingBuilder struct {
 	loggingDirectory string
 	componentName    string
-	// COMPAT(ignat)
-	logManagerTemplate JobProxyLogging
+	logging          JobProxyLogging
 }
 
 func newJobProxyLoggingBuilder() jobProxyLoggingBuilder {
 	return jobProxyLoggingBuilder{
 		loggingDirectory: "",
 		componentName:    "job-proxy",
-		// COMPAT(ignat)
 		logging: JobProxyLogging{
+			// COMPAT(ignat)
 			Rules:   make([]LoggingRule, 0),
 			Writers: make(map[string]LoggingWriter),
 			LogManagerTemplate: Logging{
@@ -244,10 +243,10 @@ func (b *loggingBuilder) addStructuredLogger(loggerSpec ytv1.StructuredLoggerSpe
 
 func (b *jobProxyLoggingBuilder) addLogger(loggerSpec ytv1.TextLoggerSpec) *jobProxyLoggingBuilder {
 	// COMPAT(ignat)
-	b.logManagerTemplate.logging.Rules = append(b.logging.Rules, createLoggingRule(loggerSpec))
-	b.logManagerTemplate.logging.Writers[loggerSpec.Name] = createLoggingWriter(b.componentName, b.loggingDirectory, loggerSpec)
-	b.logManagerTemplate.Rules = append(b.logManagerTemplate.Rules, createLoggingRule(loggerSpec))
-	b.logManagerTemplate.Writers[loggerSpec.Name] = createLoggingWriter(b.componentName, b.loggingDirectory, loggerSpec)
+	b.logging.LogManagerTemplate.Rules = append(b.logging.LogManagerTemplate.Rules, createLoggingRule(loggerSpec))
+	b.logging.LogManagerTemplate.Writers[loggerSpec.Name] = createLoggingWriter(b.componentName, b.loggingDirectory, loggerSpec)
+	b.logging.Rules = append(b.logging.Rules, createLoggingRule(loggerSpec))
+	b.logging.Writers[loggerSpec.Name] = createLoggingWriter(b.componentName, b.loggingDirectory, loggerSpec)
 
 	return b
 }
