@@ -140,7 +140,7 @@ func newJobProxyLoggingBuilder() jobProxyLoggingBuilder {
 			LogManagerTemplate: Logging{
 				Rules:   make([]LoggingRule, 0),
 				Writers: make(map[string]LoggingWriter),
-			}
+			},
 		},
 	}
 }
