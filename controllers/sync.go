@@ -111,9 +111,8 @@ func (r *YtsaurusReconciler) handleEverything(
 		}
 
 	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
-		if !componentManager.needSchedulerUpdate() ||
-			ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNotNecessaryToUpdateOpArchive) {
-			ytsaurus.LogUpdate(ctx, "Operations archive update was skipped")
+		if !componentManager.needSchedulerUpdate() {
+			ytsaurus.LogUpdate(ctx, "Scheduler doesn't need update")
 			ytsaurus.LogUpdate(ctx, "Waiting for query tracker state prepare for updating")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForQTStateUpdatingPrepare)
 			return &ctrl.Result{Requeue: true}, err
@@ -211,7 +210,7 @@ func (r *YtsaurusReconciler) handleStateless(
 		}
 
 	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
-		if !componentManager.needSchedulerUpdate() || ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNotNecessaryToUpdateOpArchive) {
+		if !componentManager.needSchedulerUpdate() {
 			ytsaurus.LogUpdate(ctx, "Operations archive update was skipped")
 			ytsaurus.LogUpdate(ctx, "Waiting for query tracker state prepare for updating")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForQTStateUpdatingPrepare)

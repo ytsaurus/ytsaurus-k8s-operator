@@ -231,7 +231,9 @@ func (s *Scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentSt
 	switch s.ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
 		if !s.needOpArchiveInit() {
-			s.setConditionNotNecessaryToUpdateOpArchive(ctx)
+			if !dry {
+				s.setConditionOpArchivePreparedForUpdating(ctx)
+			}
 			return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
 		}
 		if !s.initOpArchive.isRestartPrepared() {
@@ -242,6 +244,12 @@ func (s *Scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentSt
 		}
 		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
 	case ytv1.UpdateStateWaitingForOpArchiveUpdate:
+		if !s.needOpArchiveInit() {
+			if !dry {
+				s.setConditionOpArchiveUpdated(ctx)
+			}
+			return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
+		}
 		if !s.initOpArchive.isRestartCompleted() {
 			return nil, nil
 		}
@@ -256,15 +264,6 @@ func (s *Scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentSt
 
 func (s *Scheduler) needOpArchiveInit() bool {
 	return len(s.tabletNodes) > 0
-}
-
-func (s *Scheduler) setConditionNotNecessaryToUpdateOpArchive(ctx context.Context) {
-	s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionNotNecessaryToUpdateOpArchive,
-		Status:  metav1.ConditionTrue,
-		Reason:  "NotNecessaryToUpdateOpArchive",
-		Message: "Operations archive does not need to be updated",
-	})
 }
 
 func (s *Scheduler) setConditionOpArchivePreparedForUpdating(ctx context.Context) {
