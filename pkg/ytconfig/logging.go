@@ -119,7 +119,7 @@ type JobProxyLogging struct {
 
 	FlushPeriod int `yson:"flush_period"`
 
-	LogManagerTemplate Logging
+	LogManagerTemplate Logging `yson:"log_manager_template"`
 }
 
 type jobProxyLoggingBuilder struct {
