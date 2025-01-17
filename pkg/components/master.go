@@ -27,9 +27,10 @@ type Master struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
 
-	initJob          *InitJob
-	exitReadOnlyJob  *InitJob
-	adminCredentials corev1.Secret
+	initJob             *InitJob
+	enableRealChunksJob *InitJob
+	exitReadOnlyJob     *InitJob
+	adminCredentials    corev1.Secret
 }
 
 func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
@@ -54,6 +55,10 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		}),
 	)
 
+	jobImage := getImageWithDefault(resource.Spec.PrimaryMasters.InstanceSpec.Image, resource.Spec.CoreImage)
+	jobTolerations := getTolerationsWithDefault(resource.Spec.PrimaryMasters.Tolerations, resource.Spec.Tolerations)
+	jobNodeSelector := getNodeSelectorWithDefault(resource.Spec.PrimaryMasters.NodeSelector, resource.Spec.NodeSelector)
+	dnsConfig := getDNSConfigWithDefault(resource.Spec.PrimaryMasters.DNSConfig, resource.Spec.DNSConfig)
 	initJob := NewInitJob(
 		l,
 		ytsaurus.APIProxy(),
@@ -61,11 +66,25 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		resource.Spec.ImagePullSecrets,
 		"default",
 		consts.ClientConfigFileName,
-		getImageWithDefault(resource.Spec.PrimaryMasters.InstanceSpec.Image, resource.Spec.CoreImage),
+		jobImage,
 		cfgen.GetNativeClientConfig,
-		getTolerationsWithDefault(resource.Spec.PrimaryMasters.Tolerations, resource.Spec.Tolerations),
-		getNodeSelectorWithDefault(resource.Spec.PrimaryMasters.NodeSelector, resource.Spec.NodeSelector),
-		getDNSConfigWithDefault(resource.Spec.PrimaryMasters.DNSConfig, resource.Spec.DNSConfig),
+		jobTolerations,
+		jobNodeSelector,
+		dnsConfig,
+	)
+
+	enableRealChunksJob := NewInitJob(
+		l,
+		ytsaurus.APIProxy(),
+		ytsaurus,
+		resource.Spec.ImagePullSecrets,
+		"enableRealChunks",
+		consts.ClientConfigFileName,
+		jobImage,
+		cfgen.GetNativeClientConfig,
+		jobTolerations,
+		jobNodeSelector,
+		dnsConfig,
 	)
 
 	exitReadOnlyJob := NewInitJob(
@@ -75,17 +94,18 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		resource.Spec.ImagePullSecrets,
 		"exit-read-only",
 		consts.ClientConfigFileName,
-		getImageWithDefault(resource.Spec.PrimaryMasters.InstanceSpec.Image, resource.Spec.CoreImage),
+		jobImage,
 		cfgen.GetNativeClientConfig,
-		getTolerationsWithDefault(resource.Spec.PrimaryMasters.Tolerations, resource.Spec.Tolerations),
-		getNodeSelectorWithDefault(resource.Spec.PrimaryMasters.NodeSelector, resource.Spec.NodeSelector),
-		getDNSConfigWithDefault(resource.Spec.PrimaryMasters.DNSConfig, resource.Spec.DNSConfig),
+		jobTolerations,
+		jobNodeSelector,
+		dnsConfig,
 	)
 
 	return &Master{
 		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		initJob:              initJob,
+		enableRealChunksJob:  enableRealChunksJob,
 		exitReadOnlyJob:      exitReadOnlyJob,
 	}
 }
@@ -108,6 +128,7 @@ func (m *Master) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		m.server,
 		m.initJob,
+		m.enableRealChunksJob,
 		m.exitReadOnlyJob,
 	)
 }
@@ -271,6 +292,17 @@ func (m *Master) createInitScript() string {
 	return strings.Join(script, "\n")
 }
 
+func (m *Master) createEnableRealChunksScript() string {
+	script := []string{
+		initJobWithNativeDriverPrologue(),
+		"export YT_LOG_LEVEL=DEBUG",
+		`[[ "$YTSAURUS_VERSION" < "23.2" || "$YTSAURUS_VERSION" > "24.1" ]] && echo "enable_real_chunk_locations is supported between versions 23.2 and 24.1, nothing to do" && exit 0`,
+		"/usr/bin/yt set //sys/@config/node_tracker/enable_real_chunk_locations %true",
+	}
+
+	return strings.Join(script, "\n")
+}
+
 func (m *Master) createExitReadOnlyScript() string {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
@@ -292,8 +324,10 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForMasterExitReadOnly {
-			st, err := m.exitReadOnly(ctx, dry)
-			return *st, err
+			return m.exitReadOnly(ctx, dry)
+		}
+		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForEnableRealChunkLocations {
+			return m.restartEnableRealChunksJob(ctx, dry)
 		}
 		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
 			return *status, err
@@ -311,11 +345,7 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
-	if !dry {
-		m.initJob.SetInitScript(m.createInitScript())
-	}
-
-	return m.initJob.Sync(ctx, dry)
+	return m.runInitPhaseJobs(ctx, dry)
 }
 
 func (m *Master) Status(ctx context.Context) (ComponentStatus, error) {
@@ -350,26 +380,25 @@ func (m *Master) getHostAddressLabel() string {
 	return defaultHostAddressLabel
 }
 
-func (m *Master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, error) {
+func (m *Master) exitReadOnly(ctx context.Context, dry bool) (ComponentStatus, error) {
 	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterExitReadOnlyPrepared) {
 		if !m.exitReadOnlyJob.isRestartPrepared() {
 			if err := m.exitReadOnlyJob.prepareRestart(ctx, dry); err != nil {
-				return ptr.To(SimpleStatus(SyncStatusUpdating)), err
+				return SimpleStatus(SyncStatusUpdating), err
 			}
 		}
 
 		if !dry {
 			m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionTrue)
 		}
-		return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
+		return SimpleStatus(SyncStatusUpdating), nil
 	}
 
 	if !m.exitReadOnlyJob.IsCompleted() {
 		if !dry {
 			m.exitReadOnlyJob.SetInitScript(m.createExitReadOnlyScript())
 		}
-		status, err := m.exitReadOnlyJob.Sync(ctx, dry)
-		return &status, err
+		return m.exitReadOnlyJob.Sync(ctx, dry)
 	}
 
 	if !dry {
@@ -381,7 +410,7 @@ func (m *Master) exitReadOnly(ctx context.Context, dry bool) (*ComponentStatus, 
 		})
 		m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionFalse)
 	}
-	return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
+	return SimpleStatus(SyncStatusUpdating), nil
 }
 
 func (m *Master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav1.ConditionStatus) {
@@ -391,4 +420,74 @@ func (m *Master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav
 		Reason:  "MasterExitReadOnlyPrepared",
 		Message: "Masters are ready to exit read-only state",
 	})
+}
+
+func (m *Master) runInitPhaseJobs(ctx context.Context, dry bool) (ComponentStatus, error) {
+	st, err := m.runMasterInitJob(ctx, dry)
+	if err != nil {
+		return ComponentStatus{}, err
+	}
+	if st.SyncStatus != SyncStatusReady {
+		return st, nil
+	}
+	st, err = m.runEnableRealChunksJob(ctx, dry)
+	if err != nil {
+		return ComponentStatus{}, err
+	}
+	return st, nil
+}
+
+// runMasterInitJob launches job only once in an Initialization phase.
+func (m *Master) runMasterInitJob(ctx context.Context, dry bool) (ComponentStatus, error) {
+	if !dry {
+		m.initJob.SetInitScript(m.createInitScript())
+	}
+	return m.initJob.Sync(ctx, dry)
+}
+
+// runEnableRealChunksJob launches job in the Initialization and Updating phases.
+func (m *Master) runEnableRealChunksJob(ctx context.Context, dry bool) (ComponentStatus, error) {
+	if !dry {
+		m.enableRealChunksJob.SetInitScript(m.createEnableRealChunksScript())
+	}
+	return m.enableRealChunksJob.Sync(ctx, dry)
+}
+
+func (m *Master) restartEnableRealChunksJob(ctx context.Context, dry bool) (ComponentStatus, error) {
+	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionRealChunkLocationsEnablePrepared) {
+		if !dry {
+			if !m.enableRealChunksJob.isRestartPrepared() {
+				if err := m.enableRealChunksJob.prepareRestart(ctx, dry); err != nil {
+					return ComponentStatus{}, err
+				}
+			}
+			m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+				Type:    consts.ConditionRealChunkLocationsEnablePrepared,
+				Status:  metav1.ConditionTrue,
+				Reason:  "RealChunkLocationsEnablePrepared",
+				Message: "Enable real chunk locations job prepared to restart",
+			})
+		}
+		return WaitingStatus(SyncStatusPending, "reconciliation"), nil
+	}
+
+	if !m.enableRealChunksJob.IsCompleted() {
+		return m.runEnableRealChunksJob(ctx, dry)
+	}
+
+	if !dry {
+		m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    consts.ConditionRealChunkLocationsEnabled,
+			Status:  metav1.ConditionTrue,
+			Reason:  "RealChunksLocationsEnabled",
+			Message: "Enable real-chunk locations job is finished",
+		})
+		m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    consts.ConditionRealChunkLocationsEnablePrepared,
+			Status:  metav1.ConditionFalse,
+			Reason:  "RealChunkLocationsEnablePrepared",
+			Message: "Enable real chunk locations job preparation reset after completion",
+		})
+	}
+	return WaitingStatus(SyncStatusPending, "reconciliation"), nil
 }

@@ -71,6 +71,15 @@ func (r *YtsaurusReconciler) handleEverything(
 	case ytv1.UpdateStateWaitingForTabletCellsRemoved:
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemoved) {
 			ytsaurus.LogUpdate(ctx, "Waiting for snapshots")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForEnableRealChunkLocations)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForEnableRealChunkLocations:
+		// This stage may also be added to MasterOnly flow, but it makes sense only if
+		// data nodes are re-registered in master after this job, so I've added it only here.
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionRealChunkLocationsEnabled) {
+			ytsaurus.LogUpdate(ctx, "Real chunk locations enabled")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSnapshots)
 			return &ctrl.Result{Requeue: true}, err
 		}
