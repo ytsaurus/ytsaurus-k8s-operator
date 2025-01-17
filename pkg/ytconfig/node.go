@@ -153,9 +153,9 @@ type JobResourceManager struct {
 }
 
 type JobProxy struct {
-	JobProxyAuthenticationManager  Auth    `yson:"job_proxy_authentication_manager"`
-	JobProxyLogging                Logging `yson:"job_proxy_logging"`
-	ForwardAllEnvironmentVariables *bool   `yson:"forward_all_environment_variables,omitempty"`
+	JobProxyAuthenticationManager  Auth            `yson:"job_proxy_authentication_manager"`
+	JobProxyLogging                JobProxyLogging `yson:"job_proxy_logging"`
+	ForwardAllEnvironmentVariables *bool           `yson:"forward_all_environment_variables,omitempty"`
 }
 
 type ExecNode struct {
@@ -561,7 +561,11 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 		}
 	}
 	jobProxyLoggingBuilder.logging.FlushPeriod = 3000
-	c.ExecNode.JobProxy.JobProxyLogging = jobProxyLoggingBuilder.logging
+	jobProxyLogging := jobProxyLoggingBuilder.logging
+	c.ExecNode.JobProxy.JobProxyLogging = JobProxyLogging{
+		Logging:            jobProxyLogging,
+		LogManagerTemplate: jobProxyLogging,
+	}
 
 	c.ExecNode.JobProxy.JobProxyAuthenticationManager.RequireAuthentication = true
 	c.ExecNode.JobProxy.JobProxyAuthenticationManager.CypressTokenAuthenticator.Secure = true
@@ -569,7 +573,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	// TODO(khlebnikov): Drop legacy fields depending on ytsaurus version.
 	c.ExecNode.JobController.ResourceLimitsLegacy = &c.JobResourceManager.ResourceLimits
 	c.ExecNode.JobController.GpuManagerLegacy = &c.ExecNode.GpuManager
-	c.ExecNode.JobProxyLoggingLegacy = &c.ExecNode.JobProxy.JobProxyLogging
+	c.ExecNode.JobProxyLoggingLegacy = &jobProxyLogging
 	c.ExecNode.JobProxyAuthenticationManagerLegacy = &c.ExecNode.JobProxy.JobProxyAuthenticationManager
 	c.ExecNode.DoNotSetUserIdLegacy = c.ExecNode.SlotManager.DoNotSetUserId
 	c.ExecNode.ForwardAllEnvironmentVariablesLegacy = c.ExecNode.JobProxy.ForwardAllEnvironmentVariables

@@ -90,6 +90,12 @@ type Logging struct {
 	FlushPeriod int `yson:"flush_period"`
 }
 
+type JobProxyLogging struct {
+	// COMPAT(ignat)
+	Logging
+	LogManagerTemplate Logging `yson:"log_manager_template"`
+}
+
 type loggingBuilder struct {
 	loggingDirectory string
 	componentName    string
