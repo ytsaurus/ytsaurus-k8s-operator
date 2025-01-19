@@ -588,6 +588,7 @@ func getYtsaurusWithEverything() *ytv1.Ytsaurus {
 	ytsaurus = withStrawberry(ytsaurus)
 	ytsaurus = withScheduler(ytsaurus)
 	ytsaurus = withTCPProxies(ytsaurus)
+	ytsaurus = withKafkaProxies(ytsaurus)
 	ytsaurus = withUI(ytsaurus)
 	ytsaurus = withYQLAgent(ytsaurus)
 	ytsaurus = withMasterCaches(ytsaurus)
@@ -673,6 +674,16 @@ func withTCPProxies(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 		},
 	}
 	ytsaurus.Spec.TCPProxies[0].InstanceSpec.MonitoringPort = ptr.To(int32(consts.TCPProxyMonitoringPort))
+	return ytsaurus
+}
+
+func withKafkaProxies(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
+	ytsaurus.Spec.KafkaProxies = []ytv1.KafkaProxiesSpec{
+		{
+			InstanceSpec: testBasicInstanceSpec,
+		},
+	}
+	ytsaurus.Spec.KafkaProxies[0].InstanceSpec.MonitoringPort = ptr.To(int32(consts.KafkaProxyMonitoringPort))
 	return ytsaurus
 }
 
