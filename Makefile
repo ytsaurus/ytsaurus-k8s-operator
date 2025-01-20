@@ -106,17 +106,23 @@ help: ## Display this help.
 
 ##@ Development
 
+.PHONY: generate
+generate: generate-code manifests helm-chart generate-docs ## Generate everything.
+
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd:maxDescLen=80 webhook paths="{\"./api/...\" , \"./controllers/...\", \"./pkg/...\"}" output:crd:artifacts:config=config/crd/bases
-	$(MAKE) docs/api.md
 
-.PHONY: generate
-generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+.PHONY: generate-code
+generate-code: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="{\"./api/...\" , \"./controllers/...\", \"./pkg/...\"}"
+	$(MAKE) fmt vet
 
 docs/api.md: config/crd-ref-docs/config.yaml $(wildcard api/v1/*_types.go) | crd-ref-docs
 	$(CRD_REF_DOCS) --config $< --renderer=markdown --source-path=api/v1 --output-path=$@
+
+.PHONY: generate-docs
+generate-docs: docs/api.md ## Generate documentation.
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
@@ -127,18 +133,18 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: manifests generate fmt vet envtest ## Run tests.
+test: generate-code manifests envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
 	go test -v ./... -coverprofile cover.out -timeout 1800s
 
 .PHONY: test-e2e
-test-e2e: manifests generate fmt vet envtest ginkgo ## Run e2e tests.
+test-e2e: generate-code manifests envtest ginkgo ## Run e2e tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
 	YTSAURUS_ENABLE_E2E_TESTS=true \
 	$(GINKGO) $(GINKGO_FLAGS) ./test/e2e/... -coverprofile cover.out -timeout 1800s
 
 .PHONY: lint
-lint: golangci-lint ## Run golangci-lint linter.
+lint: fmt vet golangci-lint ## Run golangci-lint linter.
 	$(GOLANGCI_LINT) run
 
 .PHONY: lint-fix
@@ -146,11 +152,11 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes.
 	$(GOLANGCI_LINT) run --fix
 
 .PHONY: lint-generated
-lint-generated: generate helm-chart ## Check that generated files are uptodate and committed.
+lint-generated: generate ## Check that generated files are uptodate and committed.
 	test -z "$(shell git status --porcelain api docs/api.md config ytop-chart)"
 
 .PHONY: canonize
-canonize: manifests generate fmt vet envtest ## Canonize test results.
+canonize: generate-code manifests envtest ## Canonize test results.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
 	CANONIZE=y \
 	go test -v ./... -coverprofile cover.out
@@ -296,11 +302,11 @@ kind-yt-info:
 ##@ Build
 
 .PHONY: build
-build: generate fmt vet ## Build manager binary.
+build: generate-code ## Build manager binary.
 	go build -o bin/manager main.go
 
 .PHONY: run
-run: manifests generate fmt vet ## Run a controller from your host.
+run: generate-code manifests ## Run a controller from your host.
 	go run ./main.go
 
 .PHONY: docker-build
