@@ -34,6 +34,8 @@ func ComponentServicePrefix(component ComponentType) string {
 		return "tablet-nodes"
 	case TcpProxyType:
 		return "tcp-proxies"
+	case KafkaProxyType:
+		return "kafka-proxies"
 	case YqlAgentType:
 		return "yql-agents"
 	}
@@ -69,6 +71,8 @@ func ComponentStatefulSetPrefix(component ComponentType) string {
 		return "tnd"
 	case TcpProxyType:
 		return "tp"
+	case KafkaProxyType:
+		return "kp"
 	case YqlAgentType:
 		return "yqla"
 	}

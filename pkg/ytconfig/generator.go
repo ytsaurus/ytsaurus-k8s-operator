@@ -178,6 +178,10 @@ func (g *Generator) GetTCPProxiesServiceName(role string) string {
 	return g.GetComponentLabeller(consts.TcpProxyType, role).GetBalancerServiceName()
 }
 
+func (g *Generator) GetKafkaProxiesServiceName(role string) string {
+	return g.GetComponentLabeller(consts.KafkaProxyType, role).GetBalancerServiceName()
+}
+
 func (g *NodeGenerator) GetStrawberryControllerServiceAddress() string {
 	return g.GetComponentLabeller(consts.StrawberryControllerType, "").GetHeadlessServiceAddress()
 }
@@ -565,6 +569,30 @@ func (g *Generator) GetTCPProxyConfig(spec ytv1.TCPProxiesSpec) ([]byte, error) 
 	}
 
 	c, err := g.getTCPProxyConfigImpl(&spec)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return marshallYsonConfig(c)
+}
+
+func (g *Generator) getKafkaProxyConfigImpl(spec *ytv1.KafkaProxiesSpec) (KafkaProxyServer, error) {
+	c, err := getKafkaProxyServerCarcass(spec)
+	if err != nil {
+		return KafkaProxyServer{}, err
+	}
+
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+
+	return c, nil
+}
+
+func (g *Generator) GetKafkaProxyConfig(spec ytv1.KafkaProxiesSpec) ([]byte, error) {
+	if g.ytsaurus.Spec.KafkaProxies == nil {
+		return []byte{}, nil
+	}
+
+	c, err := g.getKafkaProxyConfigImpl(&spec)
 	if err != nil {
 		return []byte{}, err
 	}

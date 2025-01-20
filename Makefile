@@ -152,7 +152,8 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes.
 	$(GOLANGCI_LINT) run --fix
 
 .PHONY: lint-generated
-lint-generated: generate ## Check that generated files are uptodate and committed.
+lint-generated: generate helm-chart ## Check that generated files are uptodate and committed.
+	git diff | cat
 	test -z "$(shell git status --porcelain api docs/api.md config ytop-chart)"
 
 .PHONY: canonize
@@ -160,6 +161,12 @@ canonize: generate-code manifests envtest ## Canonize test results.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
 	CANONIZE=y \
 	go test -v ./... -coverprofile cover.out
+
+.PHONY: canonize-ytconfig
+canonize-ytconfig: manifests generate fmt vet envtest ## Canonize ytconfig test results.
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
+	CANONIZE=y \
+	go test -v ./pkg/ytconfig/... -coverprofile cover.out
 
 ##@ K8s operations
 
