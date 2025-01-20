@@ -2123,6 +2123,7 @@ _Appears in:_
 | `WaitingForPodsRemoval` |  |
 | `WaitingForPodsCreation` |  |
 | `WaitingForMasterExitReadOnly` |  |
+| `WaitingForEnableRealChunkLocations` |  |
 | `WaitingForTabletCellsRecovery` |  |
 | `WaitingForOpArchiveUpdatingPrepare` |  |
 | `WaitingForOpArchiveUpdate` |  |
