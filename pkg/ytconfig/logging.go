@@ -90,6 +90,16 @@ type Logging struct {
 	FlushPeriod int `yson:"flush_period"`
 }
 
+type JobProxyLogging struct {
+	// COMPAT(ignat)
+	// 23.2 — job_proxy_logging
+	// 24.1 — job_proxy/job_proxy_logging
+	// 24.2 — job_proxy/job_proxy_logging/log_manager_template
+	// Legacy fields can be removed with end of respective server version support.
+	Logging
+	LogManagerTemplate Logging `yson:"log_manager_template"`
+}
+
 type loggingBuilder struct {
 	loggingDirectory string
 	componentName    string

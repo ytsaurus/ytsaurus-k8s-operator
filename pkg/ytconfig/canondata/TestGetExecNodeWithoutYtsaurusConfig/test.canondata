@@ -185,6 +185,36 @@
                     };
                 ];
                 "flush_period"=3000;
+                "log_manager_template"={
+                    writers={
+                        debug={
+                            type=file;
+                            "file_name"="job-proxy.debug.log.zstd";
+                            format="plain_text";
+                            "compression_method"=zstd;
+                            "enable_compression"=%true;
+                            "enable_system_messages"=%true;
+                            "rotation_policy"={
+                                "rotation_period"=900000;
+                                "max_total_size_to_keep"=3145728;
+                            };
+                        };
+                    };
+                    rules=[
+                        {
+                            "exclude_categories"=[
+                                Bus;
+                                Concurrency;
+                            ];
+                            "min_level"=debug;
+                            writers=[
+                                debug;
+                            ];
+                            family="plain_text";
+                        };
+                    ];
+                    "flush_period"=3000;
+                };
             };
         };
         "job_proxy_authentication_manager"={
