@@ -118,11 +118,9 @@ generate-code: controller-gen ## Generate code containing DeepCopy, DeepCopyInto
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="{\"./api/...\" , \"./controllers/...\", \"./pkg/...\"}"
 	$(MAKE) fmt vet
 
-docs/api.md: config/crd-ref-docs/config.yaml $(wildcard api/v1/*_types.go) | crd-ref-docs
-	$(CRD_REF_DOCS) --config $< --renderer=markdown --source-path=api/v1 --output-path=$@
-
 .PHONY: generate-docs
-generate-docs: docs/api.md ## Generate documentation.
+generate-docs: crd-ref-docs ## Generate documentation.
+	$(CRD_REF_DOCS) --config config/crd-ref-docs/config.yaml --renderer=markdown --source-path=api/v1 --output-path=docs/api.md
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
