@@ -152,7 +152,7 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes.
 	$(GOLANGCI_LINT) run --fix
 
 .PHONY: lint-generated
-lint-generated: generate ## Check that generated files are uptodate and committed.
+lint-generated: generate helm-chart ## Check that generated files are uptodate and committed.
 	test -z "$(shell git status --porcelain api docs/api.md config ytop-chart)"
 
 .PHONY: canonize
