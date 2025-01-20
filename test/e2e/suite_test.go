@@ -202,13 +202,8 @@ func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 			changed = true
 		}
 
-		if len(prevStatus.UpdateStatus.Components) != len(newStatus.UpdateStatus.Components) {
-			log.Info("UpdateStatus", "components", newStatus.UpdateStatus.Components)
-			changed = true
-		}
-
-		if prevStatus.UpdateStatus.Flow != newStatus.UpdateStatus.Flow {
-			log.Info("UpdateStatus", "flow", newStatus.UpdateStatus.Flow)
+		if len(prevStatus.UpdateStatus.UpdatingComponents) != len(newStatus.UpdateStatus.UpdatingComponents) {
+			log.Info("UpdateStatus", "updatingComponents", newStatus.UpdateStatus.UpdatingComponents)
 			changed = true
 		}
 
@@ -312,7 +307,6 @@ func HaveClusterStateUpdating() otypes.GomegaMatcher {
 func HaveClusterUpdateState(updateState ytv1.UpdateState) otypes.GomegaMatcher {
 	return And(
 		HaveClusterStateUpdating(),
-		HaveField("Status.UpdateStatus.Flow", Not(Equal(ytv1.UpdateFlowNone))),
 		HaveField("Status.UpdateStatus.State", updateState),
 	)
 }
@@ -320,10 +314,8 @@ func HaveClusterUpdateState(updateState ytv1.UpdateState) otypes.GomegaMatcher {
 func HaveClusterUpdatingComponents(components ...string) otypes.GomegaMatcher {
 	return And(
 		HaveClusterStateUpdating(),
-		HaveField("Status.UpdateStatus.Flow", Not(Equal(ytv1.UpdateFlowNone))),
 		HaveField("Status.UpdateStatus.Components", components),
 	)
-	// FIXME(khlebnikov): Flow initial state is None which is weird.
 }
 
 func HaveRemoteNodeReleaseStatusRunning() otypes.GomegaMatcher {

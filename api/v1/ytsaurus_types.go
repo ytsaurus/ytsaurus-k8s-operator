@@ -749,7 +749,6 @@ const (
 	UpdateStateWaitingForYqlaUpdatingPrepare      UpdateState = "WaitingForYqlaUpdatingPrepare"
 	UpdateStateWaitingForYqlaUpdate               UpdateState = "WaitingForYqlaUpdate"
 	UpdateStateWaitingForSafeModeDisabled         UpdateState = "WaitingForSafeModeDisabled"
-	UpdateStateFinishing                          UpdateState = "Finishing"
 )
 
 type TabletCellBundleInfo struct {
