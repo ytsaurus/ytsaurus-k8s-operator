@@ -161,6 +161,12 @@ canonize: generate-code manifests envtest ## Canonize test results.
 	CANONIZE=y \
 	go test -v ./... -coverprofile cover.out
 
+.PHONY: canonize-ytconfig
+canonize-ytconfig: manifests generate fmt vet envtest ## Canonize ytconfig test results.
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
+	CANONIZE=y \
+	go test -v ./pkg/ytconfig/... -coverprofile cover.out
+
 ##@ K8s operations
 
 KIND_CLUSTER_CREATE_FLAGS = -v 100 --wait 120s  --retain
