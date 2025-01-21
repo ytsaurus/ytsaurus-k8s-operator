@@ -8,53 +8,10 @@ rules:
   - ""
   resources:
   - configmaps
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
   - events
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
+  - pod
   - pods
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
   - secrets
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
   - services
   verbs:
   - create
@@ -65,21 +22,17 @@ rules:
   - update
   - watch
 - apiGroups:
-  - apps
+  - ""
   resources:
-  - deployments
+  - pod/status
   verbs:
-  - create
-  - delete
   - get
-  - list
-  - patch
-  - update
-  - watch
 - apiGroups:
   - apps
   resources:
+  - deployments
   - statefulset
+  - statefulsets
   verbs:
   - create
   - delete
@@ -94,18 +47,6 @@ rules:
   - statefulset/status
   verbs:
   - get
-- apiGroups:
-  - apps
-  resources:
-  - statefulsets
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
 - apiGroups:
   - batch
   resources:
@@ -122,161 +63,11 @@ rules:
   - cluster.ytsaurus.tech
   resources:
   - chyts
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
-  - chyts/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
-  - chyts/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
   - remotedatanodes
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
-  - remotedatanodes/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
-  - remotedatanodes/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
   - remoteexecnodes
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
-  - remoteexecnodes/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
-  - remoteexecnodes/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
   - remotetabletnodes
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
-  - remotetabletnodes/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
-  - remotetabletnodes/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
   - remoteytsaurus
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
-  - remoteytsaurus/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
-  - remoteytsaurus/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
   - spyts
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
-  - spyts/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
-  - spyts/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cluster.ytsaurus.tech
-  resources:
   - ytsaurus
   verbs:
   - create
@@ -289,32 +80,26 @@ rules:
 - apiGroups:
   - cluster.ytsaurus.tech
   resources:
+  - chyts/finalizers
+  - remotedatanodes/finalizers
+  - remoteexecnodes/finalizers
+  - remotetabletnodes/finalizers
+  - remoteytsaurus/finalizers
+  - spyts/finalizers
   - ytsaurus/finalizers
   verbs:
   - update
 - apiGroups:
   - cluster.ytsaurus.tech
   resources:
+  - chyts/status
+  - remotedatanodes/status
+  - remoteexecnodes/status
+  - remotetabletnodes/status
+  - remoteytsaurus/status
+  - spyts/status
   - ytsaurus/status
   verbs:
   - get
   - patch
   - update
-- apiGroups:
-  - ""
-  resources:
-  - pod
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - pod/status
-  verbs:
-  - get
