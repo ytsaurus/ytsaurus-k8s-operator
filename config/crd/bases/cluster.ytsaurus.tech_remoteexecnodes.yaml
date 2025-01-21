@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.16.5
   name: remoteexecnodes.cluster.ytsaurus.tech
 spec:
   group: cluster.ytsaurus.tech
@@ -81,11 +81,13 @@ spec:
                                         items:
                                           type: string
                                         type: array
+                                        x-kubernetes-list-type: atomic
                                     required:
                                     - key
                                     - operator
                                     type: object
                                   type: array
+                                  x-kubernetes-list-type: atomic
                                 matchFields:
                                   description: A list of node selector requirements
                                     by node's fields.
@@ -107,11 +109,13 @@ spec:
                                         items:
                                           type: string
                                         type: array
+                                        x-kubernetes-list-type: atomic
                                     required:
                                     - key
                                     - operator
                                     type: object
                                   type: array
+                                  x-kubernetes-list-type: atomic
                               type: object
                               x-kubernetes-map-type: atomic
                             weight:
@@ -124,6 +128,7 @@ spec:
                           - weight
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                       requiredDuringSchedulingIgnoredDuringExecution:
                         description: |-
                           If the affinity requirements specified by this field are not met at
@@ -157,11 +162,13 @@ spec:
                                         items:
                                           type: string
                                         type: array
+                                        x-kubernetes-list-type: atomic
                                     required:
                                     - key
                                     - operator
                                     type: object
                                   type: array
+                                  x-kubernetes-list-type: atomic
                                 matchFields:
                                   description: A list of node selector requirements
                                     by node's fields.
@@ -183,14 +190,17 @@ spec:
                                         items:
                                           type: string
                                         type: array
+                                        x-kubernetes-list-type: atomic
                                     required:
                                     - key
                                     - operator
                                     type: object
                                   type: array
+                                  x-kubernetes-list-type: atomic
                               type: object
                               x-kubernetes-map-type: atomic
                             type: array
+                            x-kubernetes-list-type: atomic
                         required:
                         - nodeSelectorTerms
                         type: object
@@ -252,6 +262,21 @@ spec:
                                       type: object
                                   type: object
                                   x-kubernetes-map-type: atomic
+                                matchLabelKeys:
+                                  description: |-
+                                    MatchLabelKeys is a set of pod label keys to select which pods will
+                                    be taken int
+                                  items:
+                                    type: string
+                                  type: array
+                                  x-kubernetes-list-type: atomic
+                                mismatchLabelKeys:
+                                  description: "MismatchLabelKeys is a set of pod
+                                    label keys to select which pods will\nbe taken "
+                                  items:
+                                    type: string
+                                  type: array
+                                  x-kubernetes-list-type: atomic
                                 namespaceSelector:
                                   description: A label query over the set of namespaces
                                     that the term applies to.
@@ -299,6 +324,7 @@ spec:
                                   items:
                                     type: string
                                   type: array
+                                  x-kubernetes-list-type: atomic
                                 topologyKey:
                                   description: 'This pod should be co-located (affinity)
                                     or not co-located (anti-affinity) with '
@@ -316,6 +342,7 @@ spec:
                           - weight
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                       requiredDuringSchedulingIgnoredDuringExecution:
                         description: |-
                           If the affinity requirements specified by this field are not met at
@@ -366,6 +393,21 @@ spec:
                                   type: object
                               type: object
                               x-kubernetes-map-type: atomic
+                            matchLabelKeys:
+                              description: |-
+                                MatchLabelKeys is a set of pod label keys to select which pods will
+                                be taken int
+                              items:
+                                type: string
+                              type: array
+                              x-kubernetes-list-type: atomic
+                            mismatchLabelKeys:
+                              description: "MismatchLabelKeys is a set of pod label
+                                keys to select which pods will\nbe taken "
+                              items:
+                                type: string
+                              type: array
+                              x-kubernetes-list-type: atomic
                             namespaceSelector:
                               description: A label query over the set of namespaces
                                 that the term applies to.
@@ -413,6 +455,7 @@ spec:
                               items:
                                 type: string
                               type: array
+                              x-kubernetes-list-type: atomic
                             topologyKey:
                               description: 'This pod should be co-located (affinity)
                                 or not co-located (anti-affinity) with '
@@ -421,6 +464,7 @@ spec:
                           - topologyKey
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                     type: object
                   podAntiAffinity:
                     description: Describes pod anti-affinity scheduling rules (e.g.
@@ -478,6 +522,21 @@ spec:
                                       type: object
                                   type: object
                                   x-kubernetes-map-type: atomic
+                                matchLabelKeys:
+                                  description: |-
+                                    MatchLabelKeys is a set of pod label keys to select which pods will
+                                    be taken int
+                                  items:
+                                    type: string
+                                  type: array
+                                  x-kubernetes-list-type: atomic
+                                mismatchLabelKeys:
+                                  description: "MismatchLabelKeys is a set of pod
+                                    label keys to select which pods will\nbe taken "
+                                  items:
+                                    type: string
+                                  type: array
+                                  x-kubernetes-list-type: atomic
                                 namespaceSelector:
                                   description: A label query over the set of namespaces
                                     that the term applies to.
@@ -525,6 +584,7 @@ spec:
                                   items:
                                     type: string
                                   type: array
+                                  x-kubernetes-list-type: atomic
                                 topologyKey:
                                   description: 'This pod should be co-located (affinity)
                                     or not co-located (anti-affinity) with '
@@ -542,6 +602,7 @@ spec:
                           - weight
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                       requiredDuringSchedulingIgnoredDuringExecution:
                         description: |-
                           If the anti-affinity requirements specified by this field are not met at
@@ -592,6 +653,21 @@ spec:
                                   type: object
                               type: object
                               x-kubernetes-map-type: atomic
+                            matchLabelKeys:
+                              description: |-
+                                MatchLabelKeys is a set of pod label keys to select which pods will
+                                be taken int
+                              items:
+                                type: string
+                              type: array
+                              x-kubernetes-list-type: atomic
+                            mismatchLabelKeys:
+                              description: "MismatchLabelKeys is a set of pod label
+                                keys to select which pods will\nbe taken "
+                              items:
+                                type: string
+                              type: array
+                              x-kubernetes-list-type: atomic
                             namespaceSelector:
                               description: A label query over the set of namespaces
                                 that the term applies to.
@@ -639,6 +715,7 @@ spec:
                               items:
                                 type: string
                               type: array
+                              x-kubernetes-list-type: atomic
                             topologyKey:
                               description: 'This pod should be co-located (affinity)
                                 or not co-located (anti-affinity) with '
@@ -647,15 +724,15 @@ spec:
                           - topologyKey
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                     type: object
                 type: object
               caBundle:
                 description: 'Reference to ConfigMap with trusted certificates: "ca.crt".'
                 properties:
                   name:
-                    description: |-
-                      Name of the referent.
-                      More info: https://kubernetes.
+                    default: ""
+                    description: Name of the referent.
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
@@ -665,9 +742,8 @@ spec:
                   reference
                 properties:
                   name:
-                    description: |-
-                      Name of the referent.
-                      More info: https://kubernetes.
+                    default: ""
+                    description: Name of the referent.
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
@@ -682,6 +758,7 @@ spec:
                     items:
                       type: string
                     type: array
+                    x-kubernetes-list-type: atomic
                   options:
                     description: A list of DNS resolver options.
                     items:
@@ -695,11 +772,13 @@ spec:
                           type: string
                       type: object
                     type: array
+                    x-kubernetes-list-type: atomic
                   searches:
                     description: A list of DNS search domains for host-name lookup.
                     items:
                       type: string
                     type: array
+                    x-kubernetes-list-type: atomic
                 type: object
               dnsPolicy:
                 description: DNSPolicy defines how a pod's DNS will be configured.
@@ -736,9 +815,8 @@ spec:
                     reference
                   properties:
                     name:
-                      description: |-
-                        Name of the referent.
-                        More info: https://kubernetes.
+                      default: ""
+                      description: Name of the referent.
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
@@ -1076,9 +1154,8 @@ spec:
                     description: Reference to kubernetes.io/tls secret.
                     properties:
                       name:
-                        description: |-
-                          Name of the referent.
-                          More info: https://kubernetes.
+                        default: ""
+                        description: Name of the referent.
                         type: string
                     type: object
                     x-kubernetes-map-type: atomic
@@ -1125,9 +1202,8 @@ spec:
                   reference
                 properties:
                   name:
-                    description: |-
-                      Name of the referent.
-                      More info: https://kubernetes.
+                    default: ""
+                    description: Name of the referent.
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
@@ -1339,6 +1415,7 @@ spec:
                           items:
                             type: string
                           type: array
+                          x-kubernetes-list-type: atomic
                         dataSource:
                           description: |-
                             dataSource field can be used to specify either:
@@ -1386,24 +1463,6 @@ spec:
                           description: resources represents the minimum resources
                             the volume should have.
                           properties:
-                            claims:
-                              description: Claims lists the names of resources, defined
-                                in spec.
-                              items:
-                                description: ResourceClaim references one entry in
-                                  PodSpec.ResourceClaims.
-                                properties:
-                                  name:
-                                    description: Name must match the name of one entry
-                                      in pod.spec.
-                                    type: string
-                                required:
-                                - name
-                                type: object
-                              type: array
-                              x-kubernetes-list-map-keys:
-                              - name
-                              x-kubernetes-list-type: map
                             limits:
                               additionalProperties:
                                 anyOf:
@@ -1467,6 +1526,10 @@ spec:
                           description: storageClassName is the name of the StorageClass
                             required by the claim.
                           type: string
+                        volumeAttributesClassName:
+                          description: volumeAttributesClassName may be used to set
+                            the VolumeAttributesClass used by t
+                          type: string
                         volumeMode:
                           description: volumeMode defines what type of volume is required
                             by the claim.
@@ -1499,6 +1562,11 @@ spec:
                       description: Mounted read-only if true, read-write otherwise
                         (false or unspecified).
                       type: boolean
+                    recursiveReadOnly:
+                      description: |-
+                        RecursiveReadOnly specifies whether read-only mounts should be handled
+                        recursive
+                      type: string
                     subPath:
                       description: Path within the volume from which the container's
                         volume should be mounted.
@@ -1601,6 +1669,7 @@ spec:
                           items:
                             type: string
                           type: array
+                          x-kubernetes-list-type: atomic
                         path:
                           description: 'path is Optional: Used as the mounted root,
                             rather than the full Ceph tree, defa'
@@ -1617,9 +1686,8 @@ spec:
                             to the authentication secret for U'
                           properties:
                             name:
-                              description: |-
-                                Name of the referent.
-                                More info: https://kubernetes.
+                              default: ""
+                              description: Name of the referent.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -1646,9 +1714,8 @@ spec:
                             object containing parameters used to c'
                           properties:
                             name:
-                              description: |-
-                                Name of the referent.
-                                More info: https://kubernetes.
+                              default: ""
+                              description: Name of the referent.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -1693,10 +1760,10 @@ spec:
                             - path
                             type: object
                           type: array
+                          x-kubernetes-list-type: atomic
                         name:
-                          description: |-
-                            Name of the referent.
-                            More info: https://kubernetes.
+                          default: ""
+                          description: Name of the referent.
                           type: string
                         optional:
                           description: optional specify whether the ConfigMap or its
@@ -1721,9 +1788,8 @@ spec:
                             sensitive in
                           properties:
                             name:
-                              description: |-
-                                Name of the referent.
-                                More info: https://kubernetes.
+                              default: ""
+                              description: Name of the referent.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -1758,7 +1824,7 @@ spec:
                             properties:
                               fieldRef:
                                 description: 'Required: Selects a field of the pod:
-                                  only annotations, labels, name and namespa'
+                                  only annotations, labels, name, namespace '
                                 properties:
                                   apiVersion:
                                     description: Version of the schema the FieldPath
@@ -1809,6 +1875,7 @@ spec:
                             - path
                             type: object
                           type: array
+                          x-kubernetes-list-type: atomic
                       type: object
                     emptyDir:
                       description: emptyDir represents a temporary directory that
@@ -1849,6 +1916,7 @@ spec:
                                   items:
                                     type: string
                                   type: array
+                                  x-kubernetes-list-type: atomic
                                 dataSource:
                                   description: |-
                                     dataSource field can be used to specify either:
@@ -1900,24 +1968,6 @@ spec:
                                   description: resources represents the minimum resources
                                     the volume should have.
                                   properties:
-                                    claims:
-                                      description: Claims lists the names of resources,
-                                        defined in spec.
-                                      items:
-                                        description: ResourceClaim references one
-                                          entry in PodSpec.ResourceClaims.
-                                        properties:
-                                          name:
-                                            description: Name must match the name
-                                              of one entry in pod.spec.
-                                            type: string
-                                        required:
-                                        - name
-                                        type: object
-                                      type: array
-                                      x-kubernetes-list-map-keys:
-                                      - name
-                                      x-kubernetes-list-type: map
                                     limits:
                                       additionalProperties:
                                         anyOf:
@@ -1984,6 +2034,10 @@ spec:
                                   description: storageClassName is the name of the
                                     StorageClass required by the claim.
                                   type: string
+                                volumeAttributesClassName:
+                                  description: volumeAttributesClassName may be used
+                                    to set the VolumeAttributesClass used by t
+                                  type: string
                                 volumeMode:
                                   description: volumeMode defines what type of volume
                                     is required by the claim.
@@ -2017,6 +2071,7 @@ spec:
                           items:
                             type: string
                           type: array
+                          x-kubernetes-list-type: atomic
                         wwids:
                           description: |-
                             wwids Optional: FC volume world wide identifiers (wwids)
@@ -2024,6 +2079,7 @@ spec:
                           items:
                             type: string
                           type: array
+                          x-kubernetes-list-type: atomic
                       type: object
                     flexVolume:
                       description: |-
@@ -2052,9 +2108,8 @@ spec:
                             se
                           properties:
                             name:
-                              description: |-
-                                Name of the referent.
-                                More info: https://kubernetes.
+                              default: ""
+                              description: Name of the referent.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -2192,6 +2247,7 @@ spec:
                           items:
                             type: string
                           type: array
+                          x-kubernetes-list-type: atomic
                         readOnly:
                           description: readOnly here will force the ReadOnly setting
                             in VolumeMounts.
@@ -2201,9 +2257,8 @@ spec:
                             and initiator authentication
                           properties:
                             name:
-                              description: |-
-                                Name of the referent.
-                                More info: https://kubernetes.
+                              default: ""
+                              description: Name of the referent.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -2305,6 +2360,70 @@ spec:
                             description: Projection that may be projected along with
                               other supported volume types
                             properties:
+                              clusterTrustBundle:
+                                description: ClusterTrustBundle allows a pod to access
+                                  the `.spec.
+                                properties:
+                                  labelSelector:
+                                    description: Select all ClusterTrustBundles that
+                                      match this label selector.
+                                    properties:
+                                      matchExpressions:
+                                        description: matchExpressions is a list of
+                                          label selector requirements.
+                                        items:
+                                          description: A label selector requirement
+                                            is a selector that contains values, a
+                                            key, and an o
+                                          properties:
+                                            key:
+                                              description: key is the label key that
+                                                the selector applies to.
+                                              type: string
+                                            operator:
+                                              description: operator represents a key's
+                                                relationship to a set of values.
+                                              type: string
+                                            values:
+                                              description: values is an array of string
+                                                values.
+                                              items:
+                                                type: string
+                                              type: array
+                                              x-kubernetes-list-type: atomic
+                                          required:
+                                          - key
+                                          - operator
+                                          type: object
+                                        type: array
+                                        x-kubernetes-list-type: atomic
+                                      matchLabels:
+                                        additionalProperties:
+                                          type: string
+                                        description: matchLabels is a map of {key,value}
+                                          pairs.
+                                        type: object
+                                    type: object
+                                    x-kubernetes-map-type: atomic
+                                  name:
+                                    description: Select a single ClusterTrustBundle
+                                      by object name.
+                                    type: string
+                                  optional:
+                                    description: "If true, don't block pod startup
+                                      if the referenced ClusterTrustBundle(s)\naren't "
+                                    type: boolean
+                                  path:
+                                    description: Relative path from the volume root
+                                      to write the bundle.
+                                    type: string
+                                  signerName:
+                                    description: Select all ClusterTrustBundles that
+                                      match this signer name.
+                                    type: string
+                                required:
+                                - path
+                                type: object
                               configMap:
                                 description: configMap information about the configMap
                                   data to project
@@ -2334,10 +2453,10 @@ spec:
                                       - path
                                       type: object
                                     type: array
+                                    x-kubernetes-list-type: atomic
                                   name:
-                                    description: |-
-                                      Name of the referent.
-                                      More info: https://kubernetes.
+                                    default: ""
+                                    description: Name of the referent.
                                     type: string
                                   optional:
                                     description: optional specify whether the ConfigMap
@@ -2360,7 +2479,7 @@ spec:
                                         fieldRef:
                                           description: 'Required: Selects a field
                                             of the pod: only annotations, labels,
-                                            name and namespa'
+                                            name, namespace '
                                           properties:
                                             apiVersion:
                                               description: Version of the schema the
@@ -2415,6 +2534,7 @@ spec:
                                       - path
                                       type: object
                                     type: array
+                                    x-kubernetes-list-type: atomic
                                 type: object
                               secret:
                                 description: secret information about the secret data
@@ -2445,10 +2565,10 @@ spec:
                                       - path
                                       type: object
                                     type: array
+                                    x-kubernetes-list-type: atomic
                                   name:
-                                    description: |-
-                                      Name of the referent.
-                                      More info: https://kubernetes.
+                                    default: ""
+                                    description: Name of the referent.
                                     type: string
                                   optional:
                                     description: optional field specify whether the
@@ -2480,6 +2600,7 @@ spec:
                                 type: object
                             type: object
                           type: array
+                          x-kubernetes-list-type: atomic
                       type: object
                     quobyte:
                       description: quobyte represents a Quobyte mount on the host
@@ -2541,6 +2662,7 @@ spec:
                           items:
                             type: string
                           type: array
+                          x-kubernetes-list-type: atomic
                         pool:
                           description: |-
                             pool is the rados pool name.
@@ -2556,9 +2678,8 @@ spec:
                             for RBDUser.
                           properties:
                             name:
-                              description: |-
-                                Name of the referent.
-                                More info: https://kubernetes.
+                              default: ""
+                              description: Name of the referent.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -2596,9 +2717,8 @@ spec:
                             sensitive informat
                           properties:
                             name:
-                              description: |-
-                                Name of the referent.
-                                More info: https://kubernetes.
+                              default: ""
+                              description: Name of the referent.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -2661,6 +2781,7 @@ spec:
                             - path
                             type: object
                           type: array
+                          x-kubernetes-list-type: atomic
                         optional:
                           description: optional field specify whether the Secret or
                             its keys must be defined
@@ -2686,9 +2807,8 @@ spec:
                             credential
                           properties:
                             name:
-                              description: |-
-                                Name of the referent.
-                                More info: https://kubernetes.
+                              default: ""
+                              description: Name of the referent.
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic

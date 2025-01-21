@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.16.5
   name: spyts.cluster.ytsaurus.tech
 spec:
   group: cluster.ytsaurus.tech
@@ -49,9 +49,8 @@ spec:
                     reference
                   properties:
                     name:
-                      description: |-
-                        Name of the referent.
-                        More info: https://kubernetes.
+                      default: ""
+                      description: Name of the referent.
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
@@ -62,9 +61,8 @@ spec:
                   reference
                 properties:
                   name:
-                    description: |-
-                      Name of the referent.
-                      More info: https://kubernetes.
+                    default: ""
+                    description: Name of the referent.
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
@@ -107,10 +105,7 @@ spec:
                       - Unknown
                       type: string
                     type:
-                      description: |-
-                        type of condition in CamelCase or in foo.example.com/CamelCase.
-                        ---
-                        Many .
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
                       maxLength: 316
                       pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
                       type: string
