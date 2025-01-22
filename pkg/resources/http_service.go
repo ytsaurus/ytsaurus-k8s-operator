@@ -1,27 +1,20 @@
 package resources
 
 import (
-	"context"
-
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	labeller "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type HTTPService struct {
-	name          string
+	BaseManagedResource[*corev1.Service]
+
 	transport     *ytv1.HTTPTransportSpec
-	labeller      *labeller.Labeller
-	apiProxy      apiproxy.APIProxy
 	httpNodePort  *int32
 	httpsNodePort *int32
-
-	oldObject corev1.Service
-	newObject corev1.Service
 }
 
 func NewHTTPService(name string, transport *ytv1.HTTPTransportSpec, labeller *labeller.Labeller, apiProxy apiproxy.APIProxy) *HTTPService {
@@ -29,19 +22,15 @@ func NewHTTPService(name string, transport *ytv1.HTTPTransportSpec, labeller *la
 		transport = &ytv1.HTTPTransportSpec{}
 	}
 	return &HTTPService{
-		name:      name,
+		BaseManagedResource: BaseManagedResource[*corev1.Service]{
+			proxy:     apiProxy,
+			labeller:  labeller,
+			name:      name,
+			oldObject: &corev1.Service{},
+			newObject: &corev1.Service{},
+		},
 		transport: transport,
-		labeller:  labeller,
-		apiProxy:  apiProxy,
 	}
-}
-
-func (s *HTTPService) OldObject() client.Object {
-	return &s.oldObject
-}
-
-func (s *HTTPService) Name() string {
-	return s.name
 }
 
 func (s *HTTPService) SetHttpNodePort(port *int32) {
@@ -50,10 +39,6 @@ func (s *HTTPService) SetHttpNodePort(port *int32) {
 
 func (s *HTTPService) SetHttpsNodePort(port *int32) {
 	s.httpsNodePort = port
-}
-
-func (s *HTTPService) Sync(ctx context.Context) error {
-	return s.apiProxy.SyncObject(ctx, &s.oldObject, &s.newObject)
 }
 
 func (s *HTTPService) Build() *corev1.Service {
@@ -87,9 +72,5 @@ func (s *HTTPService) Build() *corev1.Service {
 		s.newObject.Spec.Ports = append(s.newObject.Spec.Ports, port)
 	}
 
-	return &s.newObject
-}
-
-func (s *HTTPService) Fetch(ctx context.Context) error {
-	return s.apiProxy.FetchObject(ctx, s.name, &s.oldObject)
+	return s.newObject
 }

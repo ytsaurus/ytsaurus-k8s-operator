@@ -1,41 +1,25 @@
 package resources
 
 import (
-	"context"
-
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type StringSecret struct {
-	name       string
-	reconciler *labeller.Labeller
-	apiProxy   apiproxy.APIProxy
-
-	oldObject corev1.Secret
-	newObject corev1.Secret
+	BaseManagedResource[*corev1.Secret]
 }
 
 func NewStringSecret(name string, reconciler *labeller.Labeller, apiProxy apiproxy.APIProxy) *StringSecret {
 	return &StringSecret{
-		name:       name,
-		reconciler: reconciler,
-		apiProxy:   apiProxy,
+		BaseManagedResource: BaseManagedResource[*corev1.Secret]{
+			proxy:     apiProxy,
+			labeller:  reconciler,
+			name:      name,
+			oldObject: &corev1.Secret{},
+			newObject: &corev1.Secret{},
+		},
 	}
-}
-
-func (s *StringSecret) OldObject() client.Object {
-	return &s.oldObject
-}
-
-func (s *StringSecret) Name() string {
-	return s.name
-}
-
-func (s *StringSecret) Sync(ctx context.Context) error {
-	return s.apiProxy.SyncObject(ctx, &s.oldObject, &s.newObject)
 }
 
 func (s *StringSecret) GetValue(key string) (string, bool) {
@@ -57,13 +41,13 @@ func (s *StringSecret) GetEnvSource() corev1.EnvFromSource {
 }
 
 func (s *StringSecret) Build() *corev1.Secret {
-	s.newObject.ObjectMeta = s.reconciler.GetObjectMeta(s.name)
+	s.newObject.ObjectMeta = s.labeller.GetObjectMeta(s.name)
 	s.newObject.Type = corev1.SecretTypeOpaque
-	return &s.newObject
+	return s.newObject
 }
 
 func (s *StringSecret) NeedSync(key, value string) bool {
-	if !Exists(s) {
+	if !s.Exists() {
 		return true
 	}
 
@@ -77,8 +61,4 @@ func (s *StringSecret) NeedSync(key, value string) bool {
 	}
 
 	return value != string(v)
-}
-
-func (s *StringSecret) Fetch(ctx context.Context) error {
-	return s.apiProxy.FetchObject(ctx, s.name, &s.oldObject)
 }

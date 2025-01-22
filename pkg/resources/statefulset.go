@@ -6,7 +6,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -15,15 +14,10 @@ import (
 )
 
 type StatefulSet struct {
-	name     string
-	labeller *labeller2.Labeller
+	BaseManagedResource[*appsv1.StatefulSet]
 
-	proxy      apiproxy.APIProxy
 	commonSpec ytv1.CommonSpec
-
-	oldObject appsv1.StatefulSet
-	newObject appsv1.StatefulSet
-	built     bool
+	built      bool
 }
 
 func NewStatefulSet(
@@ -33,23 +27,15 @@ func NewStatefulSet(
 	commonSpec ytv1.CommonSpec,
 ) *StatefulSet {
 	return &StatefulSet{
-		name:       name,
-		labeller:   labeller,
-		proxy:      proxy,
+		BaseManagedResource: BaseManagedResource[*appsv1.StatefulSet]{
+			proxy:     proxy,
+			labeller:  labeller,
+			name:      name,
+			oldObject: &appsv1.StatefulSet{},
+			newObject: &appsv1.StatefulSet{},
+		},
 		commonSpec: commonSpec,
 	}
-}
-
-func (s *StatefulSet) OldObject() client.Object {
-	return &s.oldObject
-}
-
-func (s *StatefulSet) Name() string {
-	return s.name
-}
-
-func (s *StatefulSet) Sync(ctx context.Context) error {
-	return s.proxy.SyncObject(ctx, &s.oldObject, &s.newObject)
 }
 
 func (s *StatefulSet) Build() *appsv1.StatefulSet {
@@ -70,7 +56,7 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 	}
 
 	s.built = true
-	return &s.newObject
+	return s.newObject
 }
 
 func (s *StatefulSet) getPods(ctx context.Context) *corev1.PodList {
@@ -137,8 +123,4 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minRe
 func (s *StatefulSet) NeedSync(replicas int32) bool {
 	return s.oldObject.Spec.Replicas == nil ||
 		*s.oldObject.Spec.Replicas != replicas
-}
-
-func (s *StatefulSet) Fetch(ctx context.Context) error {
-	return s.proxy.FetchObject(ctx, s.name, &s.oldObject)
 }

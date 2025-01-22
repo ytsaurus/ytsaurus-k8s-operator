@@ -176,7 +176,7 @@ func (h *ConfigHelper) getCurrentConfigValue(fileName string) []byte {
 		return nil
 	}
 
-	data, exists := h.configMap.OldObject().(*corev1.ConfigMap).Data[fileName]
+	data, exists := h.configMap.OldObject().Data[fileName]
 	if !exists {
 		return nil
 	}

@@ -1,7 +1,6 @@
 package resources
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -10,43 +9,25 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type MonitoringService struct {
-	name     string
-	labeller *labeller2.Labeller
-	apiProxy apiproxy.APIProxy
+	BaseManagedResource[*corev1.Service]
 
 	monitoringTargetPort int32
-
-	oldObject corev1.Service
-	newObject corev1.Service
 }
 
 func NewMonitoringService(monitoringTargetPort int32, labeller *labeller2.Labeller, apiProxy apiproxy.APIProxy) *MonitoringService {
 	return &MonitoringService{
-		name:                 fmt.Sprintf("%s-monitoring", labeller.GetFullComponentLabel()),
-		labeller:             labeller,
-		apiProxy:             apiProxy,
+		BaseManagedResource: BaseManagedResource[*corev1.Service]{
+			proxy:     apiProxy,
+			labeller:  labeller,
+			name:      fmt.Sprintf("%s-monitoring", labeller.GetFullComponentLabel()),
+			oldObject: &corev1.Service{},
+			newObject: &corev1.Service{},
+		},
 		monitoringTargetPort: monitoringTargetPort,
 	}
-}
-
-func (s *MonitoringService) Service() corev1.Service {
-	return s.oldObject
-}
-
-func (s *MonitoringService) OldObject() client.Object {
-	return &s.oldObject
-}
-
-func (s *MonitoringService) Name() string {
-	return s.name
-}
-
-func (s *MonitoringService) Sync(ctx context.Context) error {
-	return s.apiProxy.SyncObject(ctx, &s.oldObject, &s.newObject)
 }
 
 func (s *MonitoringService) GetServiceMeta(name string) metav1.ObjectMeta {
@@ -70,9 +51,5 @@ func (s *MonitoringService) Build() *corev1.Service {
 		},
 	}
 
-	return &s.newObject
-}
-
-func (s *MonitoringService) Fetch(ctx context.Context) error {
-	return s.apiProxy.FetchObject(ctx, s.name, &s.oldObject)
+	return s.newObject
 }

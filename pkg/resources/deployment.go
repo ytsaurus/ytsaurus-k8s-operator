@@ -6,7 +6,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -14,13 +13,11 @@ import (
 )
 
 type Deployment struct {
-	name         string
-	labeller     *labeller2.Labeller
-	ytsaurus     *apiproxy.Ytsaurus
+	BaseManagedResource[*appsv1.Deployment]
+
+	ytsaurus     apiproxy.Ytsaurus
 	tolerations  []corev1.Toleration
 	nodeSelector map[string]string
-	oldObject    appsv1.Deployment
-	newObject    appsv1.Deployment
 	built        bool
 }
 
@@ -32,24 +29,17 @@ func NewDeployment(
 	nodeSelector map[string]string,
 ) *Deployment {
 	return &Deployment{
-		name:         name,
-		labeller:     labeller,
-		ytsaurus:     ytsaurus,
+		BaseManagedResource: BaseManagedResource[*appsv1.Deployment]{
+			proxy:     ytsaurus.APIProxy(),
+			labeller:  labeller,
+			name:      name,
+			oldObject: &appsv1.Deployment{},
+			newObject: &appsv1.Deployment{},
+		},
+		ytsaurus:     *ytsaurus,
 		tolerations:  tolerations,
 		nodeSelector: nodeSelector,
 	}
-}
-
-func (d *Deployment) OldObject() client.Object {
-	return &d.oldObject
-}
-
-func (d *Deployment) Name() string {
-	return d.name
-}
-
-func (d *Deployment) Sync(ctx context.Context) error {
-	return d.ytsaurus.APIProxy().SyncObject(ctx, &d.oldObject, &d.newObject)
 }
 
 func (d *Deployment) Build() *appsv1.Deployment {
@@ -74,7 +64,7 @@ func (d *Deployment) Build() *appsv1.Deployment {
 	}
 
 	d.built = true
-	return &d.newObject
+	return d.newObject
 }
 
 func (d *Deployment) NeedSync(replicas int32) bool {
@@ -115,8 +105,4 @@ func (d *Deployment) ArePodsReady(ctx context.Context) bool {
 	}
 
 	return true
-}
-
-func (d *Deployment) Fetch(ctx context.Context) error {
-	return d.ytsaurus.APIProxy().FetchObject(ctx, d.name, &d.oldObject)
 }
