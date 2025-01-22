@@ -231,7 +231,7 @@ func (s *serverImpl) arePodsRemoved(ctx context.Context) bool {
 }
 
 func (s *serverImpl) podsImageCorrespondsToSpec() bool {
-	return s.statefulSet.OldObject().(*appsv1.StatefulSet).Spec.Template.Spec.Containers[0].Image == s.image
+	return s.statefulSet.OldObject().Spec.Template.Spec.Containers[0].Image == s.image
 }
 
 func (s *serverImpl) needUpdate() bool {

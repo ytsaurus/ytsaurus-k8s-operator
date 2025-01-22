@@ -1,27 +1,20 @@
 package resources
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	labeller2 "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type TCPService struct {
-	name        string
+	BaseManagedResource[*corev1.Service]
+
 	serviceType corev1.ServiceType
 	portCount   int32
 	minPort     int32
-
-	labeller *labeller2.Labeller
-	apiProxy apiproxy.APIProxy
-
-	oldObject corev1.Service
-	newObject corev1.Service
 }
 
 func NewTCPService(name string,
@@ -31,29 +24,17 @@ func NewTCPService(name string,
 	labeller *labeller2.Labeller,
 	apiProxy apiproxy.APIProxy) *TCPService {
 	return &TCPService{
-		name:        name,
+		BaseManagedResource: BaseManagedResource[*corev1.Service]{
+			proxy:     apiProxy,
+			labeller:  labeller,
+			name:      name,
+			oldObject: &corev1.Service{},
+			newObject: &corev1.Service{},
+		},
 		serviceType: serviceType,
 		portCount:   portCount,
 		minPort:     minPort,
-		labeller:    labeller,
-		apiProxy:    apiProxy,
 	}
-}
-
-func (s *TCPService) Service() corev1.Service {
-	return s.oldObject
-}
-
-func (s *TCPService) OldObject() client.Object {
-	return &s.oldObject
-}
-
-func (s *TCPService) Name() string {
-	return s.name
-}
-
-func (s *TCPService) Sync(ctx context.Context) error {
-	return s.apiProxy.SyncObject(ctx, &s.oldObject, &s.newObject)
 }
 
 func (s *TCPService) Build() *corev1.Service {
@@ -78,9 +59,5 @@ func (s *TCPService) Build() *corev1.Service {
 		Ports:    ports,
 	}
 
-	return &s.newObject
-}
-
-func (s *TCPService) Fetch(ctx context.Context) error {
-	return s.apiProxy.FetchObject(ctx, s.name, &s.oldObject)
+	return s.newObject
 }

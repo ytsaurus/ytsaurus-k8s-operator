@@ -185,12 +185,12 @@ func (m *microserviceImpl) exists() bool {
 }
 
 func (m *microserviceImpl) podsImageCorrespondsToSpec() bool {
-	return m.deployment.OldObject().(*appsv1.Deployment).Spec.Template.Spec.Containers[0].Image == m.image
+	return m.deployment.OldObject().Spec.Template.Spec.Containers[0].Image == m.image
 }
 
 func (m *microserviceImpl) removePods(ctx context.Context) error {
 	m.builtDeployment = m.deployment.Build()
-	m.builtDeployment.Spec = m.deployment.OldObject().(*appsv1.Deployment).Spec
+	m.builtDeployment.Spec = m.deployment.OldObject().Spec
 	m.builtDeployment.Spec.Replicas = ptr.To(int32(0))
 	return m.Sync(ctx)
 }
