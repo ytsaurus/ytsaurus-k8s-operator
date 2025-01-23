@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"sigs.k8s.io/yaml"
+
 	"github.com/pmezard/go-difflib/difflib"
 )
 
@@ -19,7 +21,7 @@ const (
 )
 
 func Assert(t *testing.T, data []byte) {
-	canonFilePath := getCanonFilePath(t)
+	canonFilePath := getCanonFilePath(t, canonFileName)
 
 	if isCanonizeNeeded() {
 		err := writeCanonData(canonFilePath, data)
@@ -40,6 +42,45 @@ func Assert(t *testing.T, data []byte) {
 
 	diff := difflib.UnifiedDiff{
 		A:        difflib.SplitLines(canonDataTrimmed),
+		B:        difflib.SplitLines(string(data)),
+		FromFile: "old",
+		ToFile:   "new",
+		Context:  3,
+	}
+	text, _ := difflib.GetUnifiedDiffString(diff)
+	if text != "" {
+		t.Errorf("%s", addColorsToDiff(text))
+	}
+}
+
+func AssertStruct(t *testing.T, name string, s any) {
+	canonFilePath := getCanonFilePath(t, name+".yaml")
+
+	data, err := yaml.Marshal(s)
+	if err != nil {
+		t.Errorf("can't encode data with error: %q", err.Error())
+		t.FailNow()
+		return
+	}
+
+	if isCanonizeNeeded() {
+		err := writeCanonData(canonFilePath, data)
+		if err != nil {
+			t.Errorf("can't write canon data with error: %q", err.Error())
+			t.FailNow()
+			return
+		}
+	}
+
+	canonData, err := readCanonData(canonFilePath)
+	if err != nil {
+		t.Errorf("can't read canon data with error: %q", err.Error())
+		t.FailNow()
+		return
+	}
+
+	diff := difflib.UnifiedDiff{
+		A:        difflib.SplitLines(string(canonData)),
 		B:        difflib.SplitLines(string(data)),
 		FromFile: "old",
 		ToFile:   "new",
@@ -89,6 +130,6 @@ func createCanonDirsIfNeeded(canonFilePath string) error {
 	return err
 }
 
-func getCanonFilePath(t *testing.T) string {
-	return filepath.Join(canonDirName, t.Name(), canonFileName)
+func getCanonFilePath(t *testing.T, fileName string) string {
+	return filepath.Join(canonDirName, t.Name(), fileName)
 }

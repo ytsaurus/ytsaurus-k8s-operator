@@ -1,0 +1,6 @@
+instanceCount: 3
+minPort: 0
+monitoringPort: 10017
+portCount: 0
+resources: {}
+role: default
