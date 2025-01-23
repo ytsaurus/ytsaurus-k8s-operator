@@ -1,0 +1,62 @@
+instanceCount: 50
+jobEnvironment:
+  cri:
+    apiRetryTimeoutSeconds: 120
+    baseCgroup: /yt
+    criNamespace: yt
+    sandboxImage: registry.k8s.io/pause:3.8
+  doNotSetUserId: true
+  isolated: false
+  useArtifactBinds: true
+  userSlots: 42
+jobProxyLoggers:
+- categoriesFilter:
+    type: exclude
+    values:
+    - Bus
+    - Concurrency
+  compression: zstd
+  format: plain_text
+  minLogLevel: debug
+  name: debug
+  rotationPolicy:
+    maxTotalSizeToKeep: "3145728"
+    rotationPeriodMilliseconds: 900000
+  useTimestampSuffix: false
+  writerType: file
+jobResources:
+  limits:
+    cpu: "99"
+    memory: 99Gi
+locations:
+- locationType: ChunkCache
+  path: /yt/hdd1/chunk-cache
+- locationType: Slots
+  path: /yt/hdd2/slots
+  quota: 5Gi
+- locationType: ImageCache
+  path: /yt/hdd1/images
+  quota: 4Gi
+monitoringPort: 10029
+name: end-a
+privileged: false
+rack: fake
+resources:
+  limits:
+    cpu: "20"
+    memory: 5Gi
+tags:
+- rack:xn-a
+volumeClaimTemplates:
+- metadata:
+    name: hdd1
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 10Gi
+    storageClassName: yc-network-hdd
+volumeMounts:
+- mountPath: /yt/hdd1
+  name: hdd1

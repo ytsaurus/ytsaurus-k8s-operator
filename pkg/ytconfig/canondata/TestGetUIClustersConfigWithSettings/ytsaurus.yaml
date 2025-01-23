@@ -1,0 +1,74 @@
+metadata:
+  creationTimestamp: null
+  name: test
+  namespace: fake
+spec:
+  discovery:
+    resources: {}
+  enableFullUpdate: false
+  hostNetwork: false
+  isManaged: false
+  primaryMasters:
+    cellTag: 0
+    instanceCount: 1
+    locations:
+    - locationType: MasterChangelogs
+      path: /yt/master-data/master-changelogs
+    - locationType: MasterSnapshots
+      path: /yt/master-data/master-snapshots
+    loggers:
+    - compression: none
+      format: plain_text
+      minLogLevel: info
+      name: info
+      useTimestampSuffix: false
+      writerType: file
+    - compression: none
+      format: plain_text
+      minLogLevel: error
+      name: error
+      useTimestampSuffix: false
+      writerType: file
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxTotalSizeToKeep: 10Gi
+        rotationPeriodMilliseconds: 900000
+      useTimestampSuffix: false
+      writerType: file
+    maxSnapshotCountToKeep: 1543
+    monitoringPort: 10010
+    resources: {}
+    sidecars:
+    - '{name: sleep, image: fakeimage:stable, command: [/bin/sleep], args: [inf]}'
+    volumeClaimTemplates:
+    - metadata:
+        name: master-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 20Gi
+    volumeMounts:
+    - mountPath: /yt/master-data
+      name: master-data
+  ui:
+    externalProxy: https://my-external-proxy.example.com
+    odinBaseUrl: http://odin-webservice.odin.svc.cluster.local
+    resources: {}
+    secure: true
+    useInsecureCookies: false
+  updateSelector: ""
+  useIpv4: false
+  useIpv6: true
+  usePorto: false
+  useShortNames: false
+status:
+  updateStatus: {}
