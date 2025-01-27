@@ -150,17 +150,59 @@ func handleUpdatingClusterState(
 	server server,
 	dry bool,
 ) (*ComponentStatus, error) {
+	return handleUpdatingClusterStateForUpdateStates(
+		ctx,
+		ytsaurus,
+		cmp,
+		cmpBase,
+		server,
+		dry,
+		ytv1.UpdateStateWaitingForPodsRemoval,
+		ytv1.UpdateStateWaitingForPodsCreation,
+	)
+}
+
+func handleUpdatingClusterStateForMaster(
+	ctx context.Context,
+	ytsaurus *apiproxy.Ytsaurus,
+	cmp Component,
+	cmpBase *localComponent,
+	server server,
+	dry bool,
+) (*ComponentStatus, error) {
+	return handleUpdatingClusterStateForUpdateStates(
+		ctx,
+		ytsaurus,
+		cmp,
+		cmpBase,
+		server,
+		dry,
+		ytv1.UpdateStateWaitingForMasterPodsRemoval,
+		ytv1.UpdateStateWaitingForMasterPodsCreation,
+	)
+}
+
+func handleUpdatingClusterStateForUpdateStates(
+	ctx context.Context,
+	ytsaurus *apiproxy.Ytsaurus,
+	cmp Component,
+	cmpBase *localComponent,
+	server server,
+	dry bool,
+	podsRemovalState ytv1.UpdateState,
+	podsCreationState ytv1.UpdateState,
+) (*ComponentStatus, error) {
 	var err error
 
 	if IsUpdatingComponent(ytsaurus, cmp) {
-		if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+		if ytsaurus.GetUpdateState() == podsRemovalState {
 			if !dry {
 				err = removePods(ctx, server, cmpBase)
 			}
 			return ptr.To(WaitingStatus(SyncStatusUpdating, "pods removal")), err
 		}
 
-		if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+		if ytsaurus.GetUpdateState() != podsCreationState {
 			return ptr.To(NewComponentStatus(SyncStatusReady, "Nothing to do now")), err
 		}
 	} else {

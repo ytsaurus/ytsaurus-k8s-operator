@@ -329,7 +329,7 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForEnableRealChunkLocations {
 			return m.restartEnableRealChunksJob(ctx, dry)
 		}
-		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
+		if status, err := handleUpdatingClusterStateForMaster(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
 			return *status, err
 		}
 	}
