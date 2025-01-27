@@ -113,7 +113,7 @@ func (r *YtsaurusReconciler) handleEverything(
 		}
 
 	case ytv1.UpdateStateWaitingForMasterPodsCreation:
-		if componentManager.nonMasterReadyOrUpdating() {
+		if componentManager.masterReadyOrUpdating() {
 			ytsaurus.LogUpdate(ctx, "Master was recreated")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForMasterExitReadOnly)
 			return &ctrl.Result{RequeueAfter: time.Second * 7}, err
@@ -349,7 +349,7 @@ func (r *YtsaurusReconciler) handleMasterOnly(
 		}
 
 	case ytv1.UpdateStateWaitingForMasterPodsCreation:
-		if componentManager.nonMasterReadyOrUpdating() {
+		if componentManager.masterReadyOrUpdating() {
 			ytsaurus.LogUpdate(ctx, "Master was recreated")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForMasterExitReadOnly)
 			return &ctrl.Result{RequeueAfter: time.Second * 7}, err
