@@ -737,6 +737,8 @@ const (
 	UpdateStateWaitingForSnapshots                UpdateState = "WaitingForSnapshots"
 	UpdateStateWaitingForPodsRemoval              UpdateState = "WaitingForPodsRemoval"
 	UpdateStateWaitingForPodsCreation             UpdateState = "WaitingForPodsCreation"
+	UpdateStateWaitingForMasterPodsRemoval        UpdateState = "WaitingForMasterPodsRemoval"
+	UpdateStateWaitingForMasterPodsCreation       UpdateState = "WaitingForMasterPodsCreation"
 	UpdateStateWaitingForMasterExitReadOnly       UpdateState = "WaitingForMasterExitReadOnly"
 	UpdateStateWaitingForEnableRealChunkLocations UpdateState = "WaitingForEnableRealChunkLocations"
 	UpdateStateWaitingForTabletCellsRecovery      UpdateState = "WaitingForTabletCellsRecovery"
@@ -747,8 +749,6 @@ const (
 	UpdateStateWaitingForYqlaUpdatingPrepare      UpdateState = "WaitingForYqlaUpdatingPrepare"
 	UpdateStateWaitingForYqlaUpdate               UpdateState = "WaitingForYqlaUpdate"
 	UpdateStateWaitingForSafeModeDisabled         UpdateState = "WaitingForSafeModeDisabled"
-	UpdateStateWaitingForMasterPodsRemoval        UpdateState = "WaitingForMasterPodsRemoval"
-	UpdateStateWaitingForMasterPodsCreation       UpdateState = "WaitingForMasterPodsCreation"
 )
 
 type TabletCellBundleInfo struct {
