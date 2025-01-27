@@ -337,7 +337,7 @@ func (r *YtsaurusReconciler) handleMasterOnly(
 	case ytv1.UpdateStateWaitingForSnapshots:
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnaphotsSaved) {
 			ytsaurus.LogUpdate(ctx, "Waiting for pods removal")
-			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForPodsRemoval)
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForMasterPodsRemoval)
 			return &ctrl.Result{Requeue: true}, err
 		}
 
