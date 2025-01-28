@@ -2172,6 +2172,8 @@ _Appears in:_
 | `WaitingForSnapshots` |  |
 | `WaitingForPodsRemoval` |  |
 | `WaitingForPodsCreation` |  |
+| `WaitingForMasterPodsRemoval` |  |
+| `WaitingForMasterPodsCreation` |  |
 | `WaitingForMasterExitReadOnly` |  |
 | `WaitingForEnableRealChunkLocations` |  |
 | `WaitingForTabletCellsRecovery` |  |

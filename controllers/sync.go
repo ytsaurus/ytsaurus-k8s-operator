@@ -80,27 +80,41 @@ func (r *YtsaurusReconciler) handleEverything(
 		// data nodes are re-registered in master after this job, so I've added it only here.
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionRealChunkLocationsEnabled) {
 			ytsaurus.LogUpdate(ctx, "Real chunk locations enabled")
-			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSnapshots)
-			return &ctrl.Result{Requeue: true}, err
-		}
-
-	case ytv1.UpdateStateWaitingForSnapshots:
-		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnaphotsSaved) {
-			ytsaurus.LogUpdate(ctx, "Waiting for pods removal")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForPodsRemoval)
 			return &ctrl.Result{Requeue: true}, err
 		}
 
 	case ytv1.UpdateStateWaitingForPodsRemoval:
-		if componentManager.arePodsRemoved() {
-			ytsaurus.LogUpdate(ctx, "Waiting for pods creation")
+		if componentManager.areNonMasterPodsRemoved() {
+			ytsaurus.LogUpdate(ctx, "Waiting for non-master pods creation")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForPodsCreation)
 			return &ctrl.Result{Requeue: true}, err
 		}
 
 	case ytv1.UpdateStateWaitingForPodsCreation:
-		if componentManager.allReadyOrUpdating() {
-			ytsaurus.LogUpdate(ctx, "All components were recreated")
+		if componentManager.nonMasterReadyOrUpdating() {
+			ytsaurus.LogUpdate(ctx, "Non master components were recreated")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForSnapshots)
+			return &ctrl.Result{RequeueAfter: time.Second * 7}, err
+		}
+
+	case ytv1.UpdateStateWaitingForSnapshots:
+		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnaphotsSaved) {
+			ytsaurus.LogUpdate(ctx, "Waiting for master pods removal")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForMasterPodsRemoval)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForMasterPodsRemoval:
+		if componentManager.areMasterPodsRemoved() {
+			ytsaurus.LogUpdate(ctx, "Waiting for pods master creation")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForMasterPodsCreation)
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.UpdateStateWaitingForMasterPodsCreation:
+		if componentManager.masterReadyOrUpdating() {
+			ytsaurus.LogUpdate(ctx, "Master was recreated")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForMasterExitReadOnly)
 			return &ctrl.Result{RequeueAfter: time.Second * 7}, err
 		}
@@ -204,14 +218,14 @@ func (r *YtsaurusReconciler) handleStateless(
 		return &ctrl.Result{Requeue: true}, err
 
 	case ytv1.UpdateStateWaitingForPodsRemoval:
-		if componentManager.arePodsRemoved() {
+		if componentManager.areNonMasterPodsRemoved() {
 			ytsaurus.LogUpdate(ctx, "Waiting for pods creation")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForPodsCreation)
 			return &ctrl.Result{Requeue: true}, err
 		}
 
 	case ytv1.UpdateStateWaitingForPodsCreation:
-		if componentManager.allReadyOrUpdating() {
+		if componentManager.nonMasterReadyOrUpdating() {
 			ytsaurus.LogUpdate(ctx, "All components were recreated")
 			ytsaurus.LogUpdate(ctx, "Waiting for operations archive prepare for updating")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare)
@@ -323,20 +337,20 @@ func (r *YtsaurusReconciler) handleMasterOnly(
 	case ytv1.UpdateStateWaitingForSnapshots:
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnaphotsSaved) {
 			ytsaurus.LogUpdate(ctx, "Waiting for pods removal")
-			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForPodsRemoval)
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForMasterPodsRemoval)
 			return &ctrl.Result{Requeue: true}, err
 		}
 
-	case ytv1.UpdateStateWaitingForPodsRemoval:
-		if componentManager.arePodsRemoved() {
-			ytsaurus.LogUpdate(ctx, "Waiting for pods creation")
-			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForPodsCreation)
+	case ytv1.UpdateStateWaitingForMasterPodsRemoval:
+		if componentManager.areMasterPodsRemoved() {
+			ytsaurus.LogUpdate(ctx, "Waiting for pods master creation")
+			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForMasterPodsCreation)
 			return &ctrl.Result{Requeue: true}, err
 		}
 
-	case ytv1.UpdateStateWaitingForPodsCreation:
-		if componentManager.allReadyOrUpdating() {
-			ytsaurus.LogUpdate(ctx, "All components were recreated")
+	case ytv1.UpdateStateWaitingForMasterPodsCreation:
+		if componentManager.masterReadyOrUpdating() {
+			ytsaurus.LogUpdate(ctx, "Master was recreated")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForMasterExitReadOnly)
 			return &ctrl.Result{RequeueAfter: time.Second * 7}, err
 		}
@@ -411,14 +425,14 @@ func (r *YtsaurusReconciler) handleTabletNodesOnly(
 		}
 
 	case ytv1.UpdateStateWaitingForPodsRemoval:
-		if componentManager.arePodsRemoved() {
+		if componentManager.areNonMasterPodsRemoved() {
 			ytsaurus.LogUpdate(ctx, "Waiting for pods creation")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForPodsCreation)
 			return &ctrl.Result{Requeue: true}, err
 		}
 
 	case ytv1.UpdateStateWaitingForPodsCreation:
-		if componentManager.allReadyOrUpdating() {
+		if componentManager.nonMasterReadyOrUpdating() {
 			ytsaurus.LogUpdate(ctx, "All components were recreated")
 			err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateWaitingForTabletCellsRecovery)
 			return &ctrl.Result{RequeueAfter: time.Second * 7}, err
