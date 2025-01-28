@@ -171,10 +171,14 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 
 	case ytv1.ClusterStateUpdating:
 		updatingComponents := ytsaurus.GetUpdatingComponents()
-		result, err := buildAndExecuteFlow(ctx, ytsaurus, componentManager, updatingComponents)
+		progressed, err := buildAndExecuteFlow(ctx, ytsaurus, componentManager, updatingComponents)
 
-		if result != nil {
-			return *result, err
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		if progressed {
+			return ctrl.Result{Requeue: true}, err
 		}
 
 	case ytv1.ClusterStateCancelUpdate:

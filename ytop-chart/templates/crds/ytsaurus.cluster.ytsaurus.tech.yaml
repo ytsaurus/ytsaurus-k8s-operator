@@ -42233,6 +42233,7 @@ spec:
               updateStatus:
                 properties:
                   components:
+                    description: 'Deprecated: Use updatingComponents instead.'
                     items:
                       type: string
                     type: array
@@ -42305,6 +42306,15 @@ spec:
                       required:
                       - name
                       - tabletCellCount
+                      type: object
+                    type: array
+                  updatingComponents:
+                    items:
+                      properties:
+                        componentName:
+                          type: string
+                        componentType:
+                          type: string
                       type: object
                     type: array
                 type: object

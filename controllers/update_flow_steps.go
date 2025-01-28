@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	ctrl "sigs.k8s.io/controller-runtime"
-
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
@@ -22,11 +20,21 @@ const (
 	stepResultMarkUnhappy     stepResultMark = "unhappy"
 )
 
-func buildAndExecuteFlow(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager, updatingComponents []ytv1.Component) (*ctrl.Result, error) {
-	tree := buildFlowTree(updatingComponents, componentManager.allComponents)
-	_, err := tree.execute(ctx, ytsaurus, componentManager)
-	return &ctrl.Result{Requeue: true}, err
+func buildAndExecuteFlow(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager, updatingComponents []ytv1.Component) (bool, error) {
+	allComponents := convertToYtComponents(componentManager.allComponents)
+	tree := buildFlowTree(updatingComponents, allComponents)
+	ytsaurus.LogUpdate(ctx, fmt.Sprintf("Update flow starting with %s, updating components: %v, all components: %v", ytsaurus.GetUpdateState(), updatingComponents, allComponents))
+	return tree.execute(ctx, ytsaurus, componentManager)
+}
 
+func convertToYtComponents(components []components.Component) []ytv1.Component {
+	result := make([]ytv1.Component, len(components))
+	for i, c := range components {
+		result[i] = ytv1.Component{
+			ComponentType: c.GetType(),
+		}
+	}
+	return result
 }
 
 var terminateTransitions = map[ytv1.UpdateState]ytv1.ClusterState{
@@ -42,7 +50,6 @@ func flowCheckStatusCondition(conditionName string) flowCondition {
 		}
 		return stepResultMarkUnsatisfied
 	}
-
 }
 
 type flowStep struct {
@@ -101,15 +108,15 @@ type flowTree struct {
 	index map[ytv1.UpdateState]*flowStep
 	head  *flowStep
 	tail  *flowStep
-
-	deferredChain ytv1.UpdateState
 }
 
 func newFlowTree(head *flowStep) *flowTree {
 	return &flowTree{
-		index: make(map[ytv1.UpdateState]*flowStep),
-		head:  head,
-		tail:  head,
+		index: map[ytv1.UpdateState]*flowStep{
+			head.updateState: head,
+		},
+		head: head,
+		tail: head,
 	}
 }
 
@@ -122,6 +129,7 @@ func (f *flowTree) execute(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, com
 	mark := currentStep.checkCondition(ctx, ytsaurus, componentManager)
 	// condition is not met, wait for the next update
 	if mark == stepResultMarkUnsatisfied {
+		ytsaurus.LogUpdate(ctx, fmt.Sprintf("Update flow: condition not met for %s", currentState))
 		return false, nil
 	}
 
@@ -153,12 +161,6 @@ func (f *flowTree) execute(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, com
 }
 
 func (f *flowTree) chain(steps ...*flowStep) *flowTree {
-	if f.deferredChain != "" {
-		if len(steps) != 0 {
-			f.index[f.deferredChain].chain(steps[0])
-			f.deferredChain = ""
-		}
-	}
 	for _, step := range steps {
 		f.index[step.updateState] = step
 		f.tail.chain(step)
@@ -206,6 +208,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForYqlaUpdatingPrepare:      flowCheckStatusCondition(consts.ConditionYqlaPreparedForUpdating),
 	ytv1.UpdateStateWaitingForYqlaUpdate:               flowCheckStatusCondition(consts.ConditionYqlaUpdated),
 	ytv1.UpdateStateWaitingForSafeModeDisabled:         flowCheckStatusCondition(consts.ConditionSafeModeDisabled),
+	ytv1.UpdateStateWaitingForMasterExitReadOnly:       flowCheckStatusCondition(consts.ConditionMasterExitedReadOnly),
 	ytv1.UpdateStateWaitingForPodsRemoval: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 		if componentManager.areNonMasterPodsRemoved() {
 			return stepResultMarkHappy
@@ -232,7 +235,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	},
 }
 
-func buildFlowTree(updatingComponents []ytv1.Component, allComponents []components.Component) *flowTree {
+func buildFlowTree(updatingComponents []ytv1.Component, allComponents []ytv1.Component) *flowTree {
 	st := newSimpleStep
 	head := st(ytv1.UpdateStateNone)
 	tree := newFlowTree(head)
@@ -245,7 +248,8 @@ func buildFlowTree(updatingComponents []ytv1.Component, allComponents []componen
 	updYqlAgent := hasComponent(updatingComponents, allComponents, consts.YqlAgentType)
 
 	// TODO: if validation conditions can be not mentioned here or needed
-	tree.chain(
+	tree.chainIf(
+		updMasterOrTablet,
 		newConditionalForkStep(
 			ytv1.UpdateStatePossibilityCheck,
 			// This is the unhappy path.
@@ -297,10 +301,10 @@ func buildFlowTree(updatingComponents []ytv1.Component, allComponents []componen
 	return tree
 }
 
-func hasComponent(updatingComponents []ytv1.Component, allComponents []components.Component, componentType consts.ComponentType) bool {
-	if updatingComponents == nil {
+func hasComponent(updatingComponents []ytv1.Component, allComponents []ytv1.Component, componentType consts.ComponentType) bool {
+	if len(updatingComponents) == 0 {
 		for _, component := range allComponents {
-			if component.GetType() == componentType {
+			if component.ComponentType == componentType {
 				return true
 			}
 		}
