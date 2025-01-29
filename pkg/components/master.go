@@ -296,7 +296,8 @@ func (m *Master) createEnableRealChunksScript() string {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		"export YT_LOG_LEVEL=DEBUG",
-		`[[ "$YTSAURUS_VERSION" < "23.2" || "$YTSAURUS_VERSION" > "24.1" ]] && echo "enable_real_chunk_locations is supported between versions 23.2 and 24.1, nothing to do" && exit 0`,
+		// N.B. job may be run at 24.2 image over 24.1 cluster.
+		`[[ "$YTSAURUS_VERSION" < "23.2" || "$YTSAURUS_VERSION" > "24.2" ]] && echo "enable_real_chunk_locations is supported between versions 23.2 and 24.2, nothing to do" && exit 0`,
 		"/usr/bin/yt set //sys/@config/node_tracker/enable_real_chunk_locations %true",
 	}
 
