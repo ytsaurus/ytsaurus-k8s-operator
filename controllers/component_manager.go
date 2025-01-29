@@ -10,7 +10,6 @@ import (
 
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -24,11 +23,10 @@ type ComponentManager struct {
 }
 
 type ComponentManagerStatus struct {
-	needSync                 bool
-	needInit                 bool
-	needUpdate               []components.Component
-	nonMasterReadyOrUpdating bool
-	masterReadyOrUpdating    bool
+	needSync           bool
+	needInit           bool
+	needUpdate         []components.Component
+	allReadyOrUpdating bool
 }
 
 func NewComponentManager(
@@ -151,11 +149,10 @@ func NewComponentManager(
 	var notReadyComponents []string
 
 	status := ComponentManagerStatus{
-		needInit:                 false,
-		needSync:                 false,
-		needUpdate:               nil,
-		nonMasterReadyOrUpdating: true,
-		masterReadyOrUpdating:    true,
+		needInit:           false,
+		needSync:           false,
+		needUpdate:         nil,
+		allReadyOrUpdating: true,
 	}
 	for _, c := range allComponents {
 		err := c.Fetch(ctx)
@@ -181,11 +178,7 @@ func NewComponentManager(
 		}
 
 		if syncStatus != components.SyncStatusReady && syncStatus != components.SyncStatusUpdating {
-			if c.GetType() == consts.MasterType {
-				status.masterReadyOrUpdating = false
-			} else {
-				status.nonMasterReadyOrUpdating = false
-			}
+			status.allReadyOrUpdating = false
 		}
 
 		if syncStatus != components.SyncStatusReady {
@@ -259,12 +252,8 @@ func (cm *ComponentManager) needUpdate() []components.Component {
 	return cm.status.needUpdate
 }
 
-func (cm *ComponentManager) nonMasterReadyOrUpdating() bool {
-	return cm.status.nonMasterReadyOrUpdating
-}
-
-func (cm *ComponentManager) masterReadyOrUpdating() bool {
-	return cm.status.masterReadyOrUpdating
+func (cm *ComponentManager) allReadyOrUpdating() bool {
+	return cm.status.allReadyOrUpdating
 }
 
 func (cm *ComponentManager) needQueryTrackerUpdate() bool {
@@ -279,27 +268,13 @@ func (cm *ComponentManager) needSchedulerUpdate() bool {
 	return cm.schedulerComponent != nil && components.IsUpdatingComponent(cm.ytsaurus, cm.schedulerComponent)
 }
 
-func (cm *ComponentManager) areNonMasterPodsRemoved() bool {
+func (cm *ComponentManager) arePodsRemoved() bool {
 	for _, cmp := range cm.allComponents {
-		if cmp.GetType() == consts.MasterType {
-			continue
-		}
 		if components.IsUpdatingComponent(cm.ytsaurus, cmp) && !cm.areComponentPodsRemoved(cmp) {
 			return false
 		}
 	}
-	return true
-}
 
-func (cm *ComponentManager) areMasterPodsRemoved() bool {
-	for _, cmp := range cm.allComponents {
-		if cmp.GetType() != consts.MasterType {
-			continue
-		}
-		if components.IsUpdatingComponent(cm.ytsaurus, cmp) && !cm.areComponentPodsRemoved(cmp) {
-			return false
-		}
-	}
 	return true
 }
 
