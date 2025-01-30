@@ -246,7 +246,7 @@ func buildFlowTree(updatingComponents []ytv1.Component, allComponents []ytv1.Com
 			// Happy path will be chained automatically.
 		),
 	).chainIf(
-		updMasterOrTablet,
+		updMaster,
 		st(ytv1.UpdateStateWaitingForSafeModeEnabled),
 	).chainIf(
 		updTablet,
@@ -256,12 +256,10 @@ func buildFlowTree(updatingComponents []ytv1.Component, allComponents []ytv1.Com
 	).chainIf(
 		updMaster,
 		st(ytv1.UpdateStateWaitingForEnableRealChunkLocations),
+		st(ytv1.UpdateStateWaitingForSnapshots),
 	).chain(
 		st(ytv1.UpdateStateWaitingForPodsRemoval),
 		st(ytv1.UpdateStateWaitingForPodsCreation),
-	).chainIf(
-		updMaster,
-		st(ytv1.UpdateStateWaitingForSnapshots),
 	).chainIf(
 		updMaster,
 		st(ytv1.UpdateStateWaitingForMasterExitReadOnly),
