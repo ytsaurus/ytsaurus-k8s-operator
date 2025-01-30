@@ -211,25 +211,13 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForSafeModeDisabled:         flowCheckStatusCondition(consts.ConditionSafeModeDisabled),
 	ytv1.UpdateStateWaitingForMasterExitReadOnly:       flowCheckStatusCondition(consts.ConditionMasterExitedReadOnly),
 	ytv1.UpdateStateWaitingForPodsRemoval: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
-		if componentManager.areNonMasterPodsRemoved() {
+		if componentManager.arePodsRemoved() {
 			return stepResultMarkHappy
 		}
 		return stepResultMarkUnsatisfied
 	},
 	ytv1.UpdateStateWaitingForPodsCreation: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
-		if componentManager.nonMasterReadyOrUpdating() {
-			return stepResultMarkHappy
-		}
-		return stepResultMarkUnsatisfied
-	},
-	ytv1.UpdateStateWaitingForMasterPodsRemoval: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
-		if componentManager.areMasterPodsRemoved() {
-			return stepResultMarkHappy
-		}
-		return stepResultMarkUnsatisfied
-	},
-	ytv1.UpdateStateWaitingForMasterPodsCreation: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
-		if componentManager.masterReadyOrUpdating() {
+		if componentManager.allReadyOrUpdating() {
 			return stepResultMarkHappy
 		}
 		return stepResultMarkUnsatisfied
@@ -274,8 +262,6 @@ func buildFlowTree(updatingComponents []ytv1.Component, allComponents []ytv1.Com
 	).chainIf(
 		updMaster,
 		st(ytv1.UpdateStateWaitingForSnapshots),
-		st(ytv1.UpdateStateWaitingForMasterPodsRemoval),
-		st(ytv1.UpdateStateWaitingForMasterPodsCreation),
 	).chainIf(
 		updMaster,
 		st(ytv1.UpdateStateWaitingForMasterExitReadOnly),
