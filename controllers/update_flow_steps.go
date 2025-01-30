@@ -164,6 +164,12 @@ func (f *flowTree) execute(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, com
 func (f *flowTree) chain(steps ...*flowStep) *flowTree {
 	for _, step := range steps {
 		f.index[step.updateState] = step
+		// Also index any unhappy path steps
+		if step.nextSteps != nil {
+			if unhappyStep := step.nextSteps[stepResultMarkUnhappy]; unhappyStep != nil {
+				f.index[unhappyStep.updateState] = unhappyStep
+			}
+		}
 		f.tail.chain(step)
 		f.tail = step
 	}
