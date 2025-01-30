@@ -95,18 +95,20 @@ func (c *apiProxy) RecordNormal(reason, message string) {
 }
 
 func (c *apiProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object) error {
-	var err error
 	if newObj.GetName() == "" {
 		return fmt.Errorf("cannot sync uninitialized object, object type %T", oldObj)
 	}
+
 	if oldObj.GetResourceVersion() == "" {
-		err = c.createAndReferenceObject(ctx, newObj)
-	} else {
-		newObj.SetResourceVersion(oldObj.GetResourceVersion())
-		err = c.updateObject(ctx, newObj)
+		return c.createAndReferenceObject(ctx, newObj)
 	}
 
-	return err
+	newObj.SetResourceVersion(oldObj.GetResourceVersion())
+
+	// Preserve finalizers, for example "foregroundDeletion".
+	newObj.SetFinalizers(oldObj.GetFinalizers())
+
+	return c.updateObject(ctx, newObj)
 }
 
 func (c *apiProxy) DeleteObject(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
