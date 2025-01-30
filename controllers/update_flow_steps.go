@@ -87,9 +87,10 @@ func (s *flowStep) next(mark stepResultMark) *flowStep {
 }
 
 func (s *flowStep) addHappyPath(next *flowStep) *flowStep {
-	s.nextSteps = map[stepResultMark]*flowStep{
-		stepResultMarkHappy: next,
+	if s.nextSteps == nil {
+		s.nextSteps = make(map[stepResultMark]*flowStep)
 	}
+	s.nextSteps[stepResultMarkHappy] = next
 	return next
 }
 

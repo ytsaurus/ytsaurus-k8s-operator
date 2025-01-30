@@ -32,6 +32,7 @@ func TestBuildFlowTree(t *testing.T) {
 		updatingComponents []ytv1.Component
 		allComponents      []ytv1.Component
 		expectedStates     []ytv1.UpdateState
+		unhappyPath        bool
 	}{
 		{
 			name:               "empty updating components with full components",
@@ -60,6 +61,17 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateWaitingForYqlaUpdate,
 				ytv1.UpdateStateWaitingForSafeModeDisabled,
 			},
+		},
+		{
+			name:               "empty updating components with full components - unhappy path",
+			updatingComponents: []ytv1.Component{},
+			allComponents:      fullComponents,
+			expectedStates: []ytv1.UpdateState{
+				ytv1.UpdateStateNone,
+				ytv1.UpdateStatePossibilityCheck,
+				ytv1.UpdateStateImpossibleToStart,
+			},
+			unhappyPath: true,
 		},
 		{
 			name:               "empty updating components with master-tablet only",
@@ -249,7 +261,11 @@ func TestBuildFlowTree(t *testing.T) {
 			currentStep := tree.head
 			for currentStep != nil {
 				states = append(states, currentStep.updateState)
-				currentStep = currentStep.nextSteps[stepResultMarkHappy]
+				if tt.unhappyPath && currentStep.updateState == ytv1.UpdateStatePossibilityCheck {
+					currentStep = currentStep.nextSteps[stepResultMarkUnhappy]
+				} else {
+					currentStep = currentStep.nextSteps[stepResultMarkHappy]
+				}
 			}
 
 			require.Equal(t, tt.expectedStates, states, "Flow states mismatch")
