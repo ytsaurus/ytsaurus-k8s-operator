@@ -47,7 +47,7 @@ func canUpdateComponent(selector ytv1.UpdateSelector, component consts.Component
 // Considers spec and decides if operator should proceed with update or block.
 // Block case is indicated with non-empty blockMsg.
 // If update is not blocked, updateMeta containing a chosen flow and the component names to update returned.
-func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Component) (components []ytv1.Component, blockMsg string) {
+func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Component, allComponents []components.Component) (components []ytv1.Component, blockMsg string) {
 	configuredSelector := spec.UpdateSelector
 	if configuredSelector == ytv1.UpdateSelectorUnspecified {
 		if spec.EnableFullUpdate {
@@ -59,7 +59,6 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 
 	var canUpdate []ytv1.Component
 	var cannotUpdate []ytv1.Component
-	var allComponents []ytv1.Component
 	needFullUpdate := false
 
 	for _, comp := range needUpdate {
@@ -67,7 +66,6 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 			Name: comp.GetName(),
 			Type: comp.GetType(),
 		}
-		allComponents = append(allComponents, component)
 		if canUpdateComponent(configuredSelector, component.Type) {
 			canUpdate = append(canUpdate, component)
 		} else {
@@ -88,7 +86,7 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 	switch configuredSelector {
 	case ytv1.UpdateSelectorEverything:
 		if needFullUpdate {
-			return allComponents, ""
+			return convertToComponent(allComponents), ""
 		} else {
 			return canUpdate, ""
 		}
@@ -101,6 +99,17 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 	default:
 		return nil, fmt.Sprintf("Unexpected update selector %s", configuredSelector)
 	}
+}
+
+func convertToComponent(components []components.Component) []ytv1.Component {
+	var result []ytv1.Component
+	for _, c := range components {
+		result = append(result, ytv1.Component{
+			Name: c.GetName(),
+			Type: c.GetType(),
+		})
+	}
+	return result
 }
 
 func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
@@ -155,7 +164,8 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 				needUpdateNames = append(needUpdateNames, c.GetName())
 			}
 			logger = logger.WithValues("componentsForUpdateAll", needUpdateNames)
-			updatingComponents, blockMsg := chooseUpdatingComponents(ytsaurus.GetResource().Spec, needUpdate)
+			updatingComponents, blockMsg := chooseUpdatingComponents(
+				ytsaurus.GetResource().Spec, needUpdate, componentManager.allUpdatableComponents())
 			if blockMsg != "" {
 				logger.Info(blockMsg)
 				return ctrl.Result{Requeue: true}, nil

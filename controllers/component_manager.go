@@ -10,6 +10,7 @@ import (
 
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -258,6 +259,16 @@ func (cm *ComponentManager) arePodsRemoved() bool {
 	}
 
 	return true
+}
+
+func (cm *ComponentManager) allUpdatableComponents() []components.Component {
+	var result []components.Component
+	for _, cmp := range cm.allComponents {
+		if cmp.GetType() != consts.YtsaurusClientType {
+			result = append(result, cmp)
+		}
+	}
+	return result
 }
 
 func (cm *ComponentManager) areComponentPodsRemoved(component components.Component) bool {
