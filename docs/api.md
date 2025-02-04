@@ -340,8 +340,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `componentName` _string_ |  |  |  |
-| `componentType` _[ComponentType](#componenttype)_ |  |  |  |
+| `name` _string_ |  |  |  |
+| `type` _[ComponentType](#componenttype)_ |  |  |  |
 
 
 #### ControllerAgentsSpec
