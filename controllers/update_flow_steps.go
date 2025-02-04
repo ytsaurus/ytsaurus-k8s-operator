@@ -6,7 +6,6 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
@@ -19,23 +18,6 @@ const (
 	stepResultMarkHappy       stepResultMark = "happy"
 	stepResultMarkUnhappy     stepResultMark = "unhappy"
 )
-
-func buildAndExecuteFlow(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager, updatingComponents []ytv1.Component) (bool, error) {
-	allComponents := convertToYtComponents(componentManager.allComponents)
-	tree := buildFlowTree(updatingComponents, allComponents)
-	ytsaurus.LogUpdate(ctx, fmt.Sprintf("Update flow starting with %s, updating components: %v, all components: %v", ytsaurus.GetUpdateState(), updatingComponents, allComponents))
-	return tree.execute(ctx, ytsaurus, componentManager)
-}
-
-func convertToYtComponents(components []components.Component) []ytv1.Component {
-	result := make([]ytv1.Component, len(components))
-	for i, c := range components {
-		result[i] = ytv1.Component{
-			ComponentType: c.GetType(),
-		}
-	}
-	return result
-}
 
 var terminateTransitions = map[ytv1.UpdateState]ytv1.ClusterState{
 	ytv1.UpdateStateImpossibleToStart: ytv1.ClusterStateCancelUpdate,
@@ -121,6 +103,9 @@ func newFlowTree(head *flowStep) *flowTree {
 	}
 }
 
+/* Execute the flow tree starting from the current state of the Ytsaurus.
+* Returns true if update state progressed to another state, false otherwise.
+ */
 func (f *flowTree) execute(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) (bool, error) {
 	var err error
 	currentState := ytsaurus.GetUpdateState()
@@ -295,7 +280,7 @@ func buildFlowTree(updatingComponents []ytv1.Component, allComponents []ytv1.Com
 func hasComponent(updatingComponents []ytv1.Component, allComponents []ytv1.Component, componentType consts.ComponentType) bool {
 	if len(updatingComponents) == 0 {
 		for _, component := range allComponents {
-			if component.ComponentType == componentType {
+			if component.Type == componentType {
 				return true
 			}
 		}
@@ -303,7 +288,7 @@ func hasComponent(updatingComponents []ytv1.Component, allComponents []ytv1.Comp
 	}
 
 	for _, component := range updatingComponents {
-		if component.ComponentType == componentType {
+		if component.Type == componentType {
 			return true
 		}
 	}

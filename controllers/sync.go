@@ -45,7 +45,7 @@ func canUpdateComponent(selector ytv1.UpdateSelector, component consts.Component
 	}
 }
 
-// chooseUpdatingComponents considers spec and decides if operator should proceed with update or block.
+// Considers spec and decides if operator should proceed with update or block.
 // Block case is indicated with non-empty blockMsg.
 // If update is not blocked, updateMeta containing a chosen flow and the component names to update returned.
 func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Component) (components []ytv1.Component, blockMsg string) {
@@ -64,15 +64,15 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 
 	for _, comp := range needUpdate {
 		component := ytv1.Component{
-			ComponentName: comp.GetName(),
-			ComponentType: comp.GetType(),
+			Name: comp.GetName(),
+			Type: comp.GetType(),
 		}
-		if canUpdateComponent(configuredSelector, component.ComponentType) {
+		if canUpdateComponent(configuredSelector, component.Type) {
 			canUpdate = append(canUpdate, component)
 		} else {
-			cannotUpdate = append(cannotUpdate, component.ComponentName)
+			cannotUpdate = append(cannotUpdate, component.Name)
 		}
-		if !canUpdateComponent(ytv1.UpdateSelectorStatelessOnly, component.ComponentType) && component.ComponentType != consts.DataNodeType {
+		if !canUpdateComponent(ytv1.UpdateSelectorStatelessOnly, component.Type) && component.Type != consts.DataNodeType {
 			needFullUpdate = true
 		}
 	}
@@ -220,4 +220,21 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 	}
 
 	return componentManager.Sync(ctx)
+}
+
+func buildAndExecuteFlow(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager, updatingComponents []ytv1.Component) (bool, error) {
+	allComponents := convertToYtComponents(componentManager.allComponents)
+	tree := buildFlowTree(updatingComponents, allComponents)
+	ytsaurus.LogUpdate(ctx, fmt.Sprintf("Update flow starting with %s, updating components: %v, all components: %v", ytsaurus.GetUpdateState(), updatingComponents, allComponents))
+	return tree.execute(ctx, ytsaurus, componentManager)
+}
+
+func convertToYtComponents(components []components.Component) []ytv1.Component {
+	result := make([]ytv1.Component, len(components))
+	for i, c := range components {
+		result[i] = ytv1.Component{
+			Type: c.GetType(),
+		}
+	}
+	return result
 }

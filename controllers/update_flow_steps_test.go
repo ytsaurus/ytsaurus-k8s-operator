@@ -11,20 +11,20 @@ import (
 
 func TestBuildFlowTree(t *testing.T) {
 	fullComponents := []ytv1.Component{
-		{ComponentType: consts.MasterType},
-		{ComponentType: consts.TabletNodeType},
-		{ComponentType: consts.SchedulerType},
-		{ComponentType: consts.QueryTrackerType},
-		{ComponentType: consts.YqlAgentType},
+		{Type: consts.MasterType},
+		{Type: consts.TabletNodeType},
+		{Type: consts.SchedulerType},
+		{Type: consts.QueryTrackerType},
+		{Type: consts.YqlAgentType},
 	}
 
 	masterTabletComponents := []ytv1.Component{
-		{ComponentType: consts.MasterType},
-		{ComponentType: consts.TabletNodeType},
+		{Type: consts.MasterType},
+		{Type: consts.TabletNodeType},
 	}
 
 	onlyMasterComponents := []ytv1.Component{
-		{ComponentType: consts.MasterType},
+		{Type: consts.MasterType},
 	}
 
 	tests := []struct {
@@ -110,7 +110,7 @@ func TestBuildFlowTree(t *testing.T) {
 		{
 			name: "master update with full components",
 			updatingComponents: []ytv1.Component{
-				{ComponentType: consts.MasterType},
+				{Type: consts.MasterType},
 			},
 			allComponents: fullComponents,
 			expectedStates: []ytv1.UpdateState{
@@ -128,7 +128,7 @@ func TestBuildFlowTree(t *testing.T) {
 		{
 			name: "tablet update with full components",
 			updatingComponents: []ytv1.Component{
-				{ComponentType: consts.TabletNodeType},
+				{Type: consts.TabletNodeType},
 			},
 			allComponents: fullComponents,
 			expectedStates: []ytv1.UpdateState{
@@ -145,7 +145,7 @@ func TestBuildFlowTree(t *testing.T) {
 		{
 			name: "scheduler update with full components",
 			updatingComponents: []ytv1.Component{
-				{ComponentType: consts.SchedulerType},
+				{Type: consts.SchedulerType},
 			},
 			allComponents: fullComponents,
 			expectedStates: []ytv1.UpdateState{
@@ -159,7 +159,7 @@ func TestBuildFlowTree(t *testing.T) {
 		{
 			name: "query tracker update with full components",
 			updatingComponents: []ytv1.Component{
-				{ComponentType: consts.QueryTrackerType},
+				{Type: consts.QueryTrackerType},
 			},
 			allComponents: fullComponents,
 			expectedStates: []ytv1.UpdateState{
@@ -173,7 +173,7 @@ func TestBuildFlowTree(t *testing.T) {
 		{
 			name: "yql agent update with full components",
 			updatingComponents: []ytv1.Component{
-				{ComponentType: consts.YqlAgentType},
+				{Type: consts.YqlAgentType},
 			},
 			allComponents: fullComponents,
 			expectedStates: []ytv1.UpdateState{
@@ -187,7 +187,7 @@ func TestBuildFlowTree(t *testing.T) {
 		{
 			name: "random stateless component update with full components",
 			updatingComponents: []ytv1.Component{
-				{ComponentType: consts.DiscoveryType},
+				{Type: consts.DiscoveryType},
 			},
 			allComponents: fullComponents,
 			expectedStates: []ytv1.UpdateState{
@@ -199,8 +199,8 @@ func TestBuildFlowTree(t *testing.T) {
 		{
 			name: "combined master and tablet update with full components",
 			updatingComponents: []ytv1.Component{
-				{ComponentType: consts.MasterType},
-				{ComponentType: consts.TabletNodeType},
+				{Type: consts.MasterType},
+				{Type: consts.TabletNodeType},
 			},
 			allComponents: fullComponents,
 			expectedStates: []ytv1.UpdateState{
@@ -222,7 +222,7 @@ func TestBuildFlowTree(t *testing.T) {
 		{
 			name: "master update with master-tablet components",
 			updatingComponents: []ytv1.Component{
-				{ComponentType: consts.MasterType},
+				{Type: consts.MasterType},
 			},
 			allComponents: masterTabletComponents,
 			expectedStates: []ytv1.UpdateState{
@@ -262,8 +262,8 @@ func TestBuildFlowTree(t *testing.T) {
 
 func TestHasComponent(t *testing.T) {
 	allComponents := []ytv1.Component{
-		{ComponentType: consts.MasterType},
-		{ComponentType: consts.TabletNodeType},
+		{Type: consts.MasterType},
+		{Type: consts.TabletNodeType},
 	}
 
 	tests := []struct {
@@ -287,7 +287,7 @@ func TestHasComponent(t *testing.T) {
 		{
 			name: "component present in updating components",
 			updatingComponents: []ytv1.Component{
-				{ComponentType: consts.MasterType},
+				{Type: consts.MasterType},
 			},
 			componentType: consts.MasterType,
 			expected:      true,
@@ -295,7 +295,7 @@ func TestHasComponent(t *testing.T) {
 		{
 			name: "component not present in updating components",
 			updatingComponents: []ytv1.Component{
-				{ComponentType: consts.TabletNodeType},
+				{Type: consts.TabletNodeType},
 			},
 			componentType: consts.MasterType,
 			expected:      false,

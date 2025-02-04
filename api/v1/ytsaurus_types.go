@@ -806,8 +806,8 @@ type UpdateStatus struct {
 }
 
 type Component struct {
-	ComponentName string               `json:"componentName,omitempty"`
-	ComponentType consts.ComponentType `json:"componentType,omitempty"`
+	Name string               `json:"name,omitempty"`
+	Type consts.ComponentType `json:"type,omitempty"`
 }
 
 // YtsaurusStatus defines the observed state of Ytsaurus
