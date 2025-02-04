@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
@@ -59,7 +58,8 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 	}
 
 	var canUpdate []ytv1.Component
-	var cannotUpdate []string
+	var cannotUpdate []ytv1.Component
+	var allComponents []ytv1.Component
 	needFullUpdate := false
 
 	for _, comp := range needUpdate {
@@ -67,10 +67,11 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 			Name: comp.GetName(),
 			Type: comp.GetType(),
 		}
+		allComponents = append(allComponents, component)
 		if canUpdateComponent(configuredSelector, component.Type) {
 			canUpdate = append(canUpdate, component)
 		} else {
-			cannotUpdate = append(cannotUpdate, component.Name)
+			cannotUpdate = append(cannotUpdate, component)
 		}
 		if !canUpdateComponent(ytv1.UpdateSelectorStatelessOnly, component.Type) && component.Type != consts.DataNodeType {
 			needFullUpdate = true
@@ -79,7 +80,7 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 
 	if len(canUpdate) == 0 {
 		if len(cannotUpdate) != 0 {
-			return nil, fmt.Sprintf("All components allowed by updateSelector are uptodate, update of {%s} is not allowed", strings.Join(cannotUpdate, ", "))
+			return nil, fmt.Sprintf("All components allowed by updateSelector are uptodate, update of {%v} is not allowed", cannotUpdate)
 		}
 		return nil, "All components are uptodate"
 	}
@@ -87,7 +88,7 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 	switch configuredSelector {
 	case ytv1.UpdateSelectorEverything:
 		if needFullUpdate {
-			return nil, ""
+			return allComponents, ""
 		} else {
 			return canUpdate, ""
 		}
@@ -223,18 +224,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 }
 
 func buildAndExecuteFlow(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager, updatingComponents []ytv1.Component) (bool, error) {
-	allComponents := convertToYtComponents(componentManager.allComponents)
-	tree := buildFlowTree(updatingComponents, allComponents)
-	ytsaurus.LogUpdate(ctx, fmt.Sprintf("Update flow starting with %s, updating components: %v, all components: %v", ytsaurus.GetUpdateState(), updatingComponents, allComponents))
+	tree := buildFlowTree(updatingComponents)
+	ytsaurus.LogUpdate(ctx, fmt.Sprintf("Update flow starting with %s, updating components: %v", ytsaurus.GetUpdateState(), updatingComponents))
 	return tree.execute(ctx, ytsaurus, componentManager)
-}
-
-func convertToYtComponents(components []components.Component) []ytv1.Component {
-	result := make([]ytv1.Component, len(components))
-	for i, c := range components {
-		result[i] = ytv1.Component{
-			Type: c.GetType(),
-		}
-	}
-	return result
 }

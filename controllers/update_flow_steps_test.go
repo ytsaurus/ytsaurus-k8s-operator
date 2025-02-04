@@ -10,109 +10,26 @@ import (
 )
 
 func TestBuildFlowTree(t *testing.T) {
-	fullComponents := []ytv1.Component{
-		{Type: consts.MasterType},
-		{Type: consts.TabletNodeType},
-		{Type: consts.SchedulerType},
-		{Type: consts.QueryTrackerType},
-		{Type: consts.YqlAgentType},
-	}
-
-	masterTabletComponents := []ytv1.Component{
-		{Type: consts.MasterType},
-		{Type: consts.TabletNodeType},
-	}
-
-	onlyMasterComponents := []ytv1.Component{
-		{Type: consts.MasterType},
-	}
-
 	tests := []struct {
 		name               string
 		updatingComponents []ytv1.Component
-		allComponents      []ytv1.Component
 		expectedStates     []ytv1.UpdateState
 		unhappyPath        bool
 	}{
 		{
-			name:               "empty updating components with full components",
+			name:               "empty updating components",
 			updatingComponents: []ytv1.Component{},
-			allComponents:      fullComponents,
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStatePossibilityCheck,
-				ytv1.UpdateStateWaitingForSafeModeEnabled,
-				ytv1.UpdateStateWaitingForTabletCellsSaving,
-				ytv1.UpdateStateWaitingForTabletCellsRemovingStart,
-				ytv1.UpdateStateWaitingForTabletCellsRemoved,
-				ytv1.UpdateStateWaitingForEnableRealChunkLocations,
-				ytv1.UpdateStateWaitingForSnapshots,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
-				ytv1.UpdateStateWaitingForMasterExitReadOnly,
-				ytv1.UpdateStateWaitingForTabletCellsRecovery,
-				ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare,
-				ytv1.UpdateStateWaitingForOpArchiveUpdate,
-				ytv1.UpdateStateWaitingForQTStateUpdatingPrepare,
-				ytv1.UpdateStateWaitingForQTStateUpdate,
-				ytv1.UpdateStateWaitingForYqlaUpdatingPrepare,
-				ytv1.UpdateStateWaitingForYqlaUpdate,
-				ytv1.UpdateStateWaitingForSafeModeDisabled,
 			},
 		},
 		{
-			name:               "empty updating components with full components - unhappy path",
-			updatingComponents: []ytv1.Component{},
-			allComponents:      fullComponents,
-			expectedStates: []ytv1.UpdateState{
-				ytv1.UpdateStateNone,
-				ytv1.UpdateStatePossibilityCheck,
-				ytv1.UpdateStateImpossibleToStart,
-			},
-			unhappyPath: true,
-		},
-		{
-			name:               "empty updating components with master-tablet only",
-			updatingComponents: []ytv1.Component{},
-			allComponents:      masterTabletComponents,
-			expectedStates: []ytv1.UpdateState{
-				ytv1.UpdateStateNone,
-				ytv1.UpdateStatePossibilityCheck,
-				ytv1.UpdateStateWaitingForSafeModeEnabled,
-				ytv1.UpdateStateWaitingForTabletCellsSaving,
-				ytv1.UpdateStateWaitingForTabletCellsRemovingStart,
-				ytv1.UpdateStateWaitingForTabletCellsRemoved,
-				ytv1.UpdateStateWaitingForEnableRealChunkLocations,
-				ytv1.UpdateStateWaitingForSnapshots,
-				ytv1.UpdateStateWaitingForPodsRemoval,
-				ytv1.UpdateStateWaitingForPodsCreation,
-				ytv1.UpdateStateWaitingForMasterExitReadOnly,
-				ytv1.UpdateStateWaitingForTabletCellsRecovery,
-				ytv1.UpdateStateWaitingForSafeModeDisabled,
-			},
-		},
-		{
-			name:               "empty updating components with master only",
-			updatingComponents: []ytv1.Component{},
-			allComponents:      onlyMasterComponents,
-			expectedStates: []ytv1.UpdateState{
-				ytv1.UpdateStateNone,
-				ytv1.UpdateStatePossibilityCheck,
-				ytv1.UpdateStateWaitingForSafeModeEnabled,
-				ytv1.UpdateStateWaitingForEnableRealChunkLocations,
-				ytv1.UpdateStateWaitingForSnapshots,
-				ytv1.UpdateStateWaitingForPodsRemoval,
-				ytv1.UpdateStateWaitingForPodsCreation,
-				ytv1.UpdateStateWaitingForMasterExitReadOnly,
-				ytv1.UpdateStateWaitingForSafeModeDisabled,
-			},
-		},
-		{
-			name: "master update with full components",
+			name: "master update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.MasterType},
 			},
-			allComponents: fullComponents,
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStatePossibilityCheck,
@@ -126,11 +43,10 @@ func TestBuildFlowTree(t *testing.T) {
 			},
 		},
 		{
-			name: "tablet update with full components",
+			name: "tablet update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.TabletNodeType},
 			},
-			allComponents: fullComponents,
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStatePossibilityCheck,
@@ -143,11 +59,10 @@ func TestBuildFlowTree(t *testing.T) {
 			},
 		},
 		{
-			name: "scheduler update with full components",
+			name: "scheduler update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.SchedulerType},
 			},
-			allComponents: fullComponents,
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStateWaitingForPodsRemoval,
@@ -157,11 +72,10 @@ func TestBuildFlowTree(t *testing.T) {
 			},
 		},
 		{
-			name: "query tracker update with full components",
+			name: "query tracker update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.QueryTrackerType},
 			},
-			allComponents: fullComponents,
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStateWaitingForPodsRemoval,
@@ -171,11 +85,10 @@ func TestBuildFlowTree(t *testing.T) {
 			},
 		},
 		{
-			name: "yql agent update with full components",
+			name: "yql agent update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.YqlAgentType},
 			},
-			allComponents: fullComponents,
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStateWaitingForPodsRemoval,
@@ -185,11 +98,10 @@ func TestBuildFlowTree(t *testing.T) {
 			},
 		},
 		{
-			name: "random stateless component update with full components",
+			name: "random stateless component update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.DiscoveryType},
 			},
-			allComponents: fullComponents,
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStateWaitingForPodsRemoval,
@@ -197,12 +109,11 @@ func TestBuildFlowTree(t *testing.T) {
 			},
 		},
 		{
-			name: "combined master and tablet update with full components",
+			name: "combined master and tablet update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.MasterType},
 				{Type: consts.TabletNodeType},
 			},
-			allComponents: fullComponents,
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStatePossibilityCheck,
@@ -216,24 +127,6 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForMasterExitReadOnly,
 				ytv1.UpdateStateWaitingForTabletCellsRecovery,
-				ytv1.UpdateStateWaitingForSafeModeDisabled,
-			},
-		},
-		{
-			name: "master update with master-tablet components",
-			updatingComponents: []ytv1.Component{
-				{Type: consts.MasterType},
-			},
-			allComponents: masterTabletComponents,
-			expectedStates: []ytv1.UpdateState{
-				ytv1.UpdateStateNone,
-				ytv1.UpdateStatePossibilityCheck,
-				ytv1.UpdateStateWaitingForSafeModeEnabled,
-				ytv1.UpdateStateWaitingForEnableRealChunkLocations,
-				ytv1.UpdateStateWaitingForSnapshots,
-				ytv1.UpdateStateWaitingForPodsRemoval,
-				ytv1.UpdateStateWaitingForPodsCreation,
-				ytv1.UpdateStateWaitingForMasterExitReadOnly,
 				ytv1.UpdateStateWaitingForSafeModeDisabled,
 			},
 		},
@@ -241,7 +134,7 @@ func TestBuildFlowTree(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tree := buildFlowTree(tt.updatingComponents, tt.allComponents)
+			tree := buildFlowTree(tt.updatingComponents)
 
 			// Collect all states from the tree
 			var states []ytv1.UpdateState
@@ -261,11 +154,6 @@ func TestBuildFlowTree(t *testing.T) {
 }
 
 func TestHasComponent(t *testing.T) {
-	allComponents := []ytv1.Component{
-		{Type: consts.MasterType},
-		{Type: consts.TabletNodeType},
-	}
-
 	tests := []struct {
 		name               string
 		updatingComponents []ytv1.Component
@@ -276,13 +164,13 @@ func TestHasComponent(t *testing.T) {
 			name:               "nil updating components",
 			updatingComponents: nil,
 			componentType:      consts.MasterType,
-			expected:           true,
+			expected:           false,
 		},
 		{
 			name:               "empty updating components",
 			updatingComponents: []ytv1.Component{},
 			componentType:      consts.MasterType,
-			expected:           true,
+			expected:           false,
 		},
 		{
 			name: "component present in updating components",
@@ -304,7 +192,7 @@ func TestHasComponent(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := hasComponent(tt.updatingComponents, allComponents, tt.componentType)
+			result := hasComponent(tt.updatingComponents, tt.componentType)
 			require.Equal(t, tt.expected, result)
 		})
 	}

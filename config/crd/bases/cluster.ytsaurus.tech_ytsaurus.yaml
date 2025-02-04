@@ -42300,9 +42300,9 @@ spec:
                   updatingComponents:
                     items:
                       properties:
-                        componentName:
+                        name:
                           type: string
-                        componentType:
+                        type:
                           type: string
                       type: object
                     type: array

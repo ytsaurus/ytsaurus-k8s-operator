@@ -215,17 +215,17 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	},
 }
 
-func buildFlowTree(updatingComponents []ytv1.Component, allComponents []ytv1.Component) *flowTree {
+func buildFlowTree(updatingComponents []ytv1.Component) *flowTree {
 	st := newSimpleStep
 	head := st(ytv1.UpdateStateNone)
 	tree := newFlowTree(head)
 
-	updMaster := hasComponent(updatingComponents, allComponents, consts.MasterType)
-	updTablet := hasComponent(updatingComponents, allComponents, consts.TabletNodeType)
+	updMaster := hasComponent(updatingComponents, consts.MasterType)
+	updTablet := hasComponent(updatingComponents, consts.TabletNodeType)
 	updMasterOrTablet := updMaster || updTablet
-	updScheduler := hasComponent(updatingComponents, allComponents, consts.SchedulerType)
-	updQueryTracker := hasComponent(updatingComponents, allComponents, consts.QueryTrackerType)
-	updYqlAgent := hasComponent(updatingComponents, allComponents, consts.YqlAgentType)
+	updScheduler := hasComponent(updatingComponents, consts.SchedulerType)
+	updQueryTracker := hasComponent(updatingComponents, consts.QueryTrackerType)
+	updYqlAgent := hasComponent(updatingComponents, consts.YqlAgentType)
 
 	// TODO: if validation conditions can be not mentioned here or needed
 	tree.chainIf(
@@ -277,16 +277,7 @@ func buildFlowTree(updatingComponents []ytv1.Component, allComponents []ytv1.Com
 	return tree
 }
 
-func hasComponent(updatingComponents []ytv1.Component, allComponents []ytv1.Component, componentType consts.ComponentType) bool {
-	if len(updatingComponents) == 0 {
-		for _, component := range allComponents {
-			if component.Type == componentType {
-				return true
-			}
-		}
-		return false
-	}
-
+func hasComponent(updatingComponents []ytv1.Component, componentType consts.ComponentType) bool {
 	for _, component := range updatingComponents {
 		if component.Type == componentType {
 			return true

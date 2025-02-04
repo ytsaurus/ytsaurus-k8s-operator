@@ -17,6 +17,8 @@ limitations under the License.
 package v1
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -808,6 +810,10 @@ type UpdateStatus struct {
 type Component struct {
 	Name string               `json:"name,omitempty"`
 	Type consts.ComponentType `json:"type,omitempty"`
+}
+
+func (c Component) String() string {
+	return fmt.Sprintf("%s(%s)", c.Name, c.Type)
 }
 
 // YtsaurusStatus defines the observed state of Ytsaurus
