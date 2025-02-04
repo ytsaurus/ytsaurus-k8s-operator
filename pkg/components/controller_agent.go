@@ -48,10 +48,6 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 	}
 }
 
-func (ca *ControllerAgent) IsUpdatable() bool {
-	return true
-}
-
 func (ca *ControllerAgent) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, ca.server)
 }

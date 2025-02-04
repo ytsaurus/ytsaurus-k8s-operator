@@ -62,10 +62,6 @@ func NewTCPProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, masterR
 	}
 }
 
-func (tp *TcpProxy) IsUpdatable() bool {
-	return true
-}
-
 func (tp *TcpProxy) Fetch(ctx context.Context) error {
 	fetchable := []resources.Fetchable{
 		tp.server,

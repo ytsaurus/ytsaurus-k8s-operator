@@ -88,10 +88,6 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 	}
 }
 
-func (yqla *YqlAgent) IsUpdatable() bool {
-	return true
-}
-
 func (yqla *YqlAgent) GetName() string {
 	return yqla.labeller.GetFullComponentName()
 }

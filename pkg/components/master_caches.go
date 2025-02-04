@@ -47,10 +47,6 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Mas
 	}
 }
 
-func (mc *MasterCache) IsUpdatable() bool {
-	return true
-}
-
 func (mc *MasterCache) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, mc.server)
 }

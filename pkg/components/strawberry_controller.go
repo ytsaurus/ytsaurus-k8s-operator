@@ -109,10 +109,6 @@ func NewStrawberryController(
 	}
 }
 
-func (c *StrawberryController) IsUpdatable() bool {
-	return true
-}
-
 func (c *StrawberryController) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		c.microservice,

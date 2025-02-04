@@ -70,10 +70,6 @@ func NewKafkaProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, maste
 	}
 }
 
-func (kp *KafkaProxy) IsUpdatable() bool {
-	return true
-}
-
 func (kp *KafkaProxy) Fetch(ctx context.Context) error {
 	fetchable := []resources.Fetchable{
 		kp.server,

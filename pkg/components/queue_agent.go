@@ -88,10 +88,6 @@ func NewQueueAgent(
 	}
 }
 
-func (qa *QueueAgent) IsUpdatable() bool {
-	return true
-}
-
 func (qa *QueueAgent) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		qa.server,

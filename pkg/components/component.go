@@ -50,9 +50,6 @@ type Component interface {
 	GetType() consts.ComponentType
 	SetReadyCondition(status ComponentStatus)
 
-	// TODO(nadya73): refactor it
-	IsUpdatable() bool
-
 	GetLabeller() *labeller.Labeller
 }
 

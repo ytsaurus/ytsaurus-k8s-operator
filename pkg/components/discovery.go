@@ -48,10 +48,6 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Disco
 	}
 }
 
-func (d *Discovery) IsUpdatable() bool {
-	return true
-}
-
 func (d *Discovery) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, d.server)
 }

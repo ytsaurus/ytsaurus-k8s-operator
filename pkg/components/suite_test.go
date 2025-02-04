@@ -47,10 +47,6 @@ func NewFakeComponent(name string, compType consts.ComponentType) *FakeComponent
 	}
 }
 
-func (fc *FakeComponent) IsUpdatable() bool {
-	return false
-}
-
 func (fc *FakeComponent) Fetch(ctx context.Context) error {
 	return nil
 }
@@ -159,8 +155,4 @@ func (fyc *FakeYtsaurusClient) GetYtClient() yt.Client {
 
 func (fyc *FakeYtsaurusClient) SetStatus(status ComponentStatus) {
 	fyc.status = status
-}
-
-func (fyc *FakeYtsaurusClient) IsUpdatable() bool {
-	return false
 }

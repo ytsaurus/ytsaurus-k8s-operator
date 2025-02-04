@@ -84,10 +84,6 @@ func NewQueryTracker(
 	}
 }
 
-func (qt *QueryTracker) IsUpdatable() bool {
-	return true
-}
-
 func (qt *QueryTracker) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		qt.server,

@@ -54,10 +54,6 @@ func NewDataNode(
 	}
 }
 
-func (n *DataNode) IsUpdatable() bool {
-	return true
-}
-
 func (n *DataNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, n.server)
 }
