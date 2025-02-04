@@ -110,10 +110,6 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 	}
 }
 
-func (m *Master) IsUpdatable() bool {
-	return true
-}
-
 func (m *Master) Fetch(ctx context.Context) error {
 	if m.ytsaurus.GetResource().Spec.AdminCredentials != nil {
 		err := m.ytsaurus.APIProxy().FetchObject(

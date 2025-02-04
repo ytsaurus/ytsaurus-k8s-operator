@@ -99,10 +99,6 @@ func NewScheduler(
 	}
 }
 
-func (s *Scheduler) IsUpdatable() bool {
-	return true
-}
-
 func (s *Scheduler) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		s.server,

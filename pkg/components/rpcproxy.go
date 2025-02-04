@@ -81,10 +81,6 @@ func NewRPCProxy(
 	}
 }
 
-func (rp *RpcProxy) IsUpdatable() bool {
-	return true
-}
-
 func (rp *RpcProxy) Fetch(ctx context.Context) error {
 	fetchable := []resources.Fetchable{
 		rp.server,

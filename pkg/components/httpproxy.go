@@ -96,10 +96,6 @@ func NewHTTPProxy(
 	}
 }
 
-func (hp *HttpProxy) IsUpdatable() bool {
-	return true
-}
-
 func (hp *HttpProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		hp.server,

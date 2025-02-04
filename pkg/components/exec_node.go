@@ -75,10 +75,6 @@ func NewExecNode(
 	}
 }
 
-func (n *ExecNode) IsUpdatable() bool {
-	return true
-}
-
 func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 

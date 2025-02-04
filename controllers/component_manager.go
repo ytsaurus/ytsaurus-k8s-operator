@@ -10,16 +10,14 @@ import (
 
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
 type ComponentManager struct {
-	ytsaurus              *apiProxy.Ytsaurus
-	allComponents         []components.Component
-	queryTrackerComponent components.Component
-	yqlAgentComponent     components.Component
-	schedulerComponent    components.Component
-	status                ComponentManagerStatus
+	ytsaurus      *apiProxy.Ytsaurus
+	allComponents []components.Component
+	status        ComponentManagerStatus
 }
 
 type ComponentManagerStatus struct {
@@ -197,12 +195,9 @@ func NewComponentManager(
 		"clusterState", resource.Status.State)
 
 	return &ComponentManager{
-		ytsaurus:              ytsaurus,
-		allComponents:         allComponents,
-		queryTrackerComponent: q,
-		yqlAgentComponent:     yqla,
-		schedulerComponent:    s,
-		status:                status,
+		ytsaurus:      ytsaurus,
+		allComponents: allComponents,
+		status:        status,
 	}, nil
 }
 
@@ -256,18 +251,6 @@ func (cm *ComponentManager) allReadyOrUpdating() bool {
 	return cm.status.allReadyOrUpdating
 }
 
-func (cm *ComponentManager) needQueryTrackerUpdate() bool {
-	return cm.queryTrackerComponent != nil && components.IsUpdatingComponent(cm.ytsaurus, cm.queryTrackerComponent)
-}
-
-func (cm *ComponentManager) needYqlAgentUpdate() bool {
-	return cm.yqlAgentComponent != nil && components.IsUpdatingComponent(cm.ytsaurus, cm.yqlAgentComponent)
-}
-
-func (cm *ComponentManager) needSchedulerUpdate() bool {
-	return cm.schedulerComponent != nil && components.IsUpdatingComponent(cm.ytsaurus, cm.schedulerComponent)
-}
-
 func (cm *ComponentManager) arePodsRemoved() bool {
 	for _, cmp := range cm.allComponents {
 		if components.IsUpdatingComponent(cm.ytsaurus, cmp) && !cm.areComponentPodsRemoved(cmp) {
@@ -276,6 +259,16 @@ func (cm *ComponentManager) arePodsRemoved() bool {
 	}
 
 	return true
+}
+
+func (cm *ComponentManager) allUpdatableComponents() []components.Component {
+	var result []components.Component
+	for _, cmp := range cm.allComponents {
+		if cmp.GetType() != consts.YtsaurusClientType {
+			result = append(result, cmp)
+		}
+	}
+	return result
 }
 
 func (cm *ComponentManager) areComponentPodsRemoved(component components.Component) bool {

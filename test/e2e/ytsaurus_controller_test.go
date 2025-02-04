@@ -292,7 +292,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					UpdateObject(ctx, ytsaurus)
 
 					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-					Expect(ytsaurus).Should(HaveClusterUpdateFlow(ytv1.UpdateFlowFull))
 
 					By("Waiting cluster update completes")
 					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
@@ -336,7 +335,15 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-				Expect(ytsaurus).Should(HaveClusterUpdatingComponents())
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(
+					"Discovery",
+					"Master",
+					"DataNode",
+					"HttpProxy",
+					"ExecNode",
+					"TabletNode",
+					"Scheduler",
+					"ControllerAgent"))
 
 				By("Wait cluster update with full update complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())

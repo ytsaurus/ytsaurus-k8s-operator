@@ -93,10 +93,6 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 	}
 }
 
-func (u *UI) IsUpdatable() bool {
-	return true
-}
-
 func (u *UI) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		u.microservice,

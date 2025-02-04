@@ -26,7 +26,9 @@ func getDiscoveryLogging(spec *ytv1.DiscoverySpec) Logging {
 func getDiscoveryServerCarcass(spec *ytv1.DiscoverySpec) (DiscoveryServer, error) {
 	var c DiscoveryServer
 
-	c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	if spec.InstanceSpec.MonitoringPort != nil {
+		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	}
 	c.RPCPort = consts.DiscoveryRPCPort
 
 	c.Logging = getDiscoveryLogging(spec)

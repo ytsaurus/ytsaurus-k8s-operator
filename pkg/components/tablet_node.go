@@ -74,10 +74,6 @@ func NewTabletNode(
 	}
 }
 
-func (tn *TabletNode) IsUpdatable() bool {
-	return true
-}
-
 func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 

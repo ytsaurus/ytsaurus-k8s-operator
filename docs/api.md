@@ -327,6 +327,23 @@ _Appears in:_
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
 
 
+#### Component
+
+
+
+
+
+
+
+_Appears in:_
+- [UpdateStatus](#updatestatus)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ |  |  |  |
+| `type` _[ComponentType](#componenttype)_ |  |  |  |
+
+
 #### ControllerAgentsSpec
 
 
@@ -2198,8 +2215,9 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `state` _[UpdateState](#updatestate)_ |  | None |  |
-| `components` _string array_ |  |  |  |
-| `flow` _[UpdateFlow](#updateflow)_ | Flow is an internal field that is needed to persist the chosen flow until the end of an update.<br />Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage<br />executes steps corresponding to that update flow. |  |  |
+| `components` _string array_ | Deprecated: Use updatingComponents instead. |  |  |
+| `updatingComponents` _[Component](#component) array_ |  |  |  |
+| `flow` _[UpdateFlow](#updateflow)_ | Flow is an internal field that is needed to persist the chosen flow until the end of an update.<br />Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage<br />executes steps corresponding to that update flow.<br />Deprecated: Use updatingComponents instead. |  |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
 | `tabletCellBundles` _[TabletCellBundleInfo](#tabletcellbundleinfo) array_ |  |  |  |
 | `masterMonitoringPaths` _string array_ |  |  |  |
