@@ -15,59 +15,43 @@ import (
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 )
 
-func getFlowFromComponent(component consts.ComponentType) ytv1.UpdateFlow {
-	if component == consts.MasterType {
-		return ytv1.UpdateFlowMaster
-	}
-	if component == consts.TabletNodeType {
-		return ytv1.UpdateFlowTabletNodes
-	}
-	if component == consts.DataNodeType || component == consts.ExecNodeType {
-		return ytv1.UpdateFlowFull
-	}
-	return ytv1.UpdateFlowStateless
-}
-
-func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) (bool, error) {
+func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
 	for _, selector := range selectors {
-		if selector.ComponentType != "" {
-			if selector.ComponentType == component.Type {
-				return true, nil
-			}
-		} else if selector.ComponentName != "" {
+		if selector.ComponentName != "" {
 			if selector.ComponentName == component.Name {
-				return true, nil
+				return true
+			}
+		} else if selector.ComponentType != "" {
+			if selector.ComponentType == component.Type {
+				return true
 			}
 		} else {
 			switch selector.ComponentGroup {
 			case consts.ComponentGroupEverything:
-				return true, nil
+				return true
 			case consts.ComponentGroupNothing:
-				return false, nil
+				return false
 			case consts.ComponentGroupStateful:
 				if component.Type == consts.DataNodeType || component.Type == consts.TabletNodeType {
-					return true, nil
+					return true
 				}
 			case consts.ComponentGroupStateless:
 				if component.Type != consts.DataNodeType && component.Type != consts.TabletNodeType && component.Type != consts.MasterType {
-					return true, nil
+					return true
 				}
 			default:
-				return false, fmt.Errorf("unexpected component group %s", selector.ComponentGroup)
+				return false
 			}
 		}
 	}
-	return false, nil
+	return false
 }
 
 // Considers spec and decides if operator should proceed with update or block.
 // Block case is indicated with non-empty blockMsg.
 // If update is not blocked, updateMeta containing a chosen flow and the component names to update returned.
 func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Component, allComponents []components.Component) (components []ytv1.Component, blockMsg string) {
-	configuredSelectors := spec.UpdateSelectors
-	if len(configuredSelectors) == 0 && spec.EnableFullUpdate {
-		configuredSelectors = []ytv1.ComponentUpdateSelector{{ComponentGroup: consts.ComponentGroupEverything}}
-	}
+	configuredSelectors := getEffectiveSelectors(spec)
 	needFullUpdate := false
 
 	var canUpdate []ytv1.Component
@@ -78,16 +62,13 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 			Name: comp.GetName(),
 			Type: comp.GetType(),
 		}
-		upd, err := canUpdateComponent(configuredSelectors, component)
-		if err != nil {
-			return nil, err.Error()
-		}
+		upd := canUpdateComponent(configuredSelectors, component)
 		if upd {
 			canUpdate = append(canUpdate, component)
 		} else {
 			cannotUpdate = append(cannotUpdate, component)
 		}
-		statelessCheck, err := canUpdateComponent([]ytv1.ComponentUpdateSelector{{ComponentGroup: consts.ComponentGroupStateless}}, component)
+		statelessCheck := canUpdateComponent([]ytv1.ComponentUpdateSelector{{ComponentGroup: consts.ComponentGroupStateless}}, component)
 		if !statelessCheck && component.Type != consts.DataNodeType {
 			needFullUpdate = true
 		}
@@ -108,6 +89,37 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 		}
 	}
 	return canUpdate, ""
+}
+
+func getEffectiveSelectors(spec ytv1.YtsaurusSpec) []ytv1.ComponentUpdateSelector {
+	if len(spec.UpdateSelectors) != 0 {
+		return spec.UpdateSelectors
+	}
+
+	if spec.UpdateSelector != ytv1.UpdateSelectorUnspecified {
+		switch spec.UpdateSelector {
+		case ytv1.UpdateSelectorNothing:
+			return []ytv1.ComponentUpdateSelector{{ComponentGroup: consts.ComponentGroupNothing}}
+		case ytv1.UpdateSelectorMasterOnly:
+			return []ytv1.ComponentUpdateSelector{{ComponentType: consts.MasterType}}
+		case ytv1.UpdateSelectorDataNodesOnly:
+			return []ytv1.ComponentUpdateSelector{{ComponentType: consts.DataNodeType}}
+		case ytv1.UpdateSelectorTabletNodesOnly:
+			return []ytv1.ComponentUpdateSelector{{ComponentType: consts.TabletNodeType}}
+		case ytv1.UpdateSelectorExecNodesOnly:
+			return []ytv1.ComponentUpdateSelector{{ComponentType: consts.ExecNodeType}}
+		case ytv1.UpdateSelectorStatelessOnly:
+			return []ytv1.ComponentUpdateSelector{{ComponentGroup: consts.ComponentGroupStateless}}
+		case ytv1.UpdateSelectorEverything:
+			return []ytv1.ComponentUpdateSelector{{ComponentGroup: consts.ComponentGroupEverything}}
+		}
+	}
+
+	if spec.EnableFullUpdate {
+		return []ytv1.ComponentUpdateSelector{{ComponentGroup: consts.ComponentGroupEverything}}
+	}
+
+	return []ytv1.ComponentUpdateSelector{{ComponentGroup: consts.ComponentGroupStateless}}
 }
 
 func convertToComponent(components []components.Component) []ytv1.Component {

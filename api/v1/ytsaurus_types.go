@@ -673,7 +673,7 @@ type YtsaurusSpec struct {
 	EnableFullUpdate bool `json:"enableFullUpdate"`
 	//+optional
 	//+optional
-	// Deprecated: UpdateSelector is an experimental field. Behaviour may change.
+	// Deprecated: UpdateSelector is going to be removed soon. Please use UpdateSelectors instead.
 	UpdateSelector UpdateSelector `json:"updateSelector"`
 
 	//+optional
@@ -761,6 +761,27 @@ type TabletCellBundleInfo struct {
 
 type UpdateSelector string
 
+const (
+	// UpdateSelectorUnspecified means that selector is disabled and would be ignored completely.
+	UpdateSelectorUnspecified UpdateSelector = ""
+	// UpdateSelectorNothing means that no component could be updated.
+	UpdateSelectorNothing UpdateSelector = "Nothing"
+	// UpdateSelectorMasterOnly means that only master could be updated.
+	UpdateSelectorMasterOnly UpdateSelector = "MasterOnly"
+	// UpdateSelectorTabletNodesOnly means that only data nodes could be updated
+	UpdateSelectorDataNodesOnly UpdateSelector = "DataNodesOnly"
+	// UpdateSelectorTabletNodesOnly means that only tablet nodes could be updated
+	UpdateSelectorTabletNodesOnly UpdateSelector = "TabletNodesOnly"
+	// UpdateSelectorExecNodesOnly means that only tablet nodes could be updated
+	UpdateSelectorExecNodesOnly UpdateSelector = "ExecNodesOnly"
+	// UpdateSelectorStatelessOnly means that only stateless components (everything but master, data nodes, and tablet nodes)
+	// could be updated.
+	UpdateSelectorStatelessOnly UpdateSelector = "StatelessOnly"
+	// UpdateSelectorEverything means that all components could be updated.
+	// With this setting and if master or tablet nodes need update all the components would be updated.
+	UpdateSelectorEverything UpdateSelector = "Everything"
+)
+
 type ComponentUpdateSelector struct {
 	//+optional
 	ComponentType consts.ComponentType `json:"componentType,omitempty"`
@@ -773,14 +794,6 @@ type ComponentUpdateSelector struct {
 }
 
 type UpdateFlow string
-
-const (
-	UpdateFlowNone        UpdateFlow = ""
-	UpdateFlowStateless   UpdateFlow = "Stateless"
-	UpdateFlowMaster      UpdateFlow = "Master"
-	UpdateFlowTabletNodes UpdateFlow = "TabletNodes"
-	UpdateFlowFull        UpdateFlow = "Full"
-)
 
 type UpdateStatus struct {
 	//+kubebuilder:default:=None

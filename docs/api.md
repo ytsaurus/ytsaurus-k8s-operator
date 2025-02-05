@@ -344,6 +344,24 @@ _Appears in:_
 | `type` _[ComponentType](#componenttype)_ |  |  |  |
 
 
+#### ComponentUpdateSelector
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `componentType` _[ComponentType](#componenttype)_ |  |  |  |
+| `componentGroup` _[ComponentGroup](#componentgroup)_ |  |  |  |
+| `componentName` _string_ |  |  |  |
+
+
 #### ControllerAgentsSpec
 
 
@@ -2134,13 +2152,6 @@ _Underlying type:_ _string_
 _Appears in:_
 - [UpdateStatus](#updatestatus)
 
-| Field | Description |
-| --- | --- |
-| `` |  |
-| `Stateless` |  |
-| `Master` |  |
-| `TabletNodes` |  |
-| `Full` |  |
 
 
 #### UpdateSelector
@@ -2317,7 +2328,8 @@ _Appears in:_
 | `oauthService` _[OauthServiceSpec](#oauthservicespec)_ |  |  |  |
 | `isManaged` _boolean_ |  | true |  |
 | `enableFullUpdate` _boolean_ |  | true |  |
-| `updateSelector` _[UpdateSelector](#updateselector)_ | UpdateSelector is an experimental field. Behaviour may change.<br />If UpdateSelector is not empty EnableFullUpdate is ignored. |  | Enum: [ Nothing MasterOnly DataNodesOnly TabletNodesOnly ExecNodesOnly StatelessOnly Everything] <br /> |
+| `updateSelector` _[UpdateSelector](#updateselector)_ | Deprecated: UpdateSelector is going to be removed soon. Please use UpdateSelectors instead. |  |  |
+| `updateSelectors` _[ComponentUpdateSelector](#componentupdateselector) array_ | Controls the components that should be updated during the update process. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
 | `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |

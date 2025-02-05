@@ -39570,8 +39570,7 @@ spec:
               uiImage:
                 type: string
               updateSelector:
-                description: 'Deprecated: UpdateSelector is an experimental field.
-                  Behaviour may change.'
+                description: 'Deprecated: UpdateSelector is going to be removed soon.'
                 type: string
               updateSelectors:
                 description: Controls the components that should be updated during
