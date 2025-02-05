@@ -32,7 +32,7 @@ func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1
 			case consts.ComponentGroupNothing:
 				return false
 			case consts.ComponentGroupStateful:
-				if component.Type == consts.DataNodeType || component.Type == consts.TabletNodeType {
+				if component.Type != consts.MasterType {
 					return true
 				}
 			case consts.ComponentGroupStateless:
@@ -52,8 +52,6 @@ func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1
 // If update is not blocked, updateMeta containing a chosen flow and the component names to update returned.
 func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Component, allComponents []components.Component) (components []ytv1.Component, blockMsg string) {
 	configuredSelectors := getEffectiveSelectors(spec)
-	needFullUpdate := false
-
 	var canUpdate []ytv1.Component
 	var cannotUpdate []ytv1.Component
 
@@ -68,10 +66,6 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 		} else {
 			cannotUpdate = append(cannotUpdate, component)
 		}
-		statelessCheck := canUpdateComponent([]ytv1.ComponentUpdateSelector{{ComponentGroup: consts.ComponentGroupStateless}}, component)
-		if !statelessCheck && component.Type != consts.DataNodeType {
-			needFullUpdate = true
-		}
 	}
 
 	if len(canUpdate) == 0 {
@@ -82,13 +76,29 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 	}
 
 	if len(configuredSelectors) == 1 && configuredSelectors[0].ComponentGroup == consts.ComponentGroupEverything {
-		if needFullUpdate {
+		if needFullUpdate(needUpdate) {
+			// Here we update not only components that are not up-to-date, but all cluster.
 			return convertToComponent(allComponents), ""
 		} else {
 			return canUpdate, ""
 		}
 	}
 	return canUpdate, ""
+}
+
+func needFullUpdate(needUpdate []components.Component) bool {
+	statelessSelector := []ytv1.ComponentUpdateSelector{{ComponentGroup: consts.ComponentGroupStateless}}
+	for _, comp := range needUpdate {
+		component := ytv1.Component{
+			Name: comp.GetName(),
+			Type: comp.GetType(),
+		}
+		isStateless := canUpdateComponent(statelessSelector, component)
+		if !isStateless && component.Type != consts.DataNodeType {
+			return true
+		}
+	}
+	return false
 }
 
 func getEffectiveSelectors(spec ytv1.YtsaurusSpec) []ytv1.ComponentUpdateSelector {

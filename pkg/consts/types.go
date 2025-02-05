@@ -28,7 +28,9 @@ const (
 type ComponentGroup string
 
 const (
-	ComponentGroupStateless  ComponentGroup = "Stateless"
+	// ComponentGroupStateless group contains only stateless components (not master, data nodes, tablet nodes)
+	ComponentGroupStateless ComponentGroup = "Stateless"
+	// ComponentGroupStateful group contains every component except master
 	ComponentGroupStateful   ComponentGroup = "Stateful"
 	ComponentGroupEverything ComponentGroup = "Everything"
 	ComponentGroupNothing    ComponentGroup = "Nothing"
