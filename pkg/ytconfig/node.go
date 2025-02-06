@@ -26,35 +26,61 @@ const (
 	NodeFlavorTablet NodeFlavor = "tablet"
 )
 
+type DiskLocation struct {
+	// Root directory for the location.
+	Path string `yson:"path"`
+
+	// Minimum size the disk partition must have to make this location usable.
+	MinDiskSpace int64 `yson:"min_disk_space,omitempty"`
+
+	// Name of the medium corresponding to disk type.
+	MediumName string `yson:"medium_name,omitempty"`
+}
+
+type ChunkLocation struct {
+	// Maximum space chunks are allowed to occupy.
+	Quota int64 `yson:"quota,omitempty"`
+
+	IOEngine *IOEngine `yson:"io_config,omitempty"`
+}
+
+type CacheLocation struct {
+	DiskLocation
+	ChunkLocation
+}
+
 type StoreLocation struct {
-	Path                   string    `yson:"path"`
-	IOEngine               *IOEngine `yson:"io_config,omitempty"`
-	MediumName             string    `yson:"medium_name"`
-	Quota                  int64     `yson:"quota,omitempty"`
-	HighWatermark          int64     `yson:"high_watermark,omitempty"`
-	LowWatermark           int64     `yson:"low_watermark,omitempty"`
-	DisableWritesWatermark int64     `yson:"disable_writes_watermark,omitempty"`
-	TrashCleanupWatermark  int64     `yson:"trash_cleanup_watermark"`
-	MaxTrashTtl            *int64    `yson:"max_trash_ttl,omitempty"`
+	DiskLocation
+	ChunkLocation
+
+	// Consider location full when available space is less than high watermark.
+	HighWatermark int64 `yson:"high_watermark,omitempty"`
+	// Consider location non-full when available space is more than low watermark.
+	LowWatermark int64 `yson:"low_watermark,omitempty"`
+	// Stop writes when available space becomes less than disable-writes watermark.
+	DisableWritesWatermark int64 `yson:"disable_writes_watermark,omitempty"`
+	// Start deleting trash when available space less than trash-cleanup watermark.
+	TrashCleanupWatermark int64 `yson:"trash_cleanup_watermark"`
+	// Maximum time before permanent deletion.
+	MaxTrashTtl *int64 `yson:"max_trash_ttl,omitempty"`
+}
+
+type SlotLocation struct {
+	DiskLocation
+
+	// Maximum reported total disk capacity.
+	DiskQuota *int64 `yson:"disk_quota,omitempty"`
+	// Reserve subtracted from disk capacity.
+	DiskUsageWatermark *int64 `yson:"disk_usage_watermark,omitempty"`
+
+	// Enforce disk space limits using disk quota.
+	EnableDiskQuota *bool `yson:"enable_disk_quota,omitempty"`
 }
 
 type ResourceLimits struct {
 	TotalMemory      int64    `yson:"total_memory,omitempty"`
 	TotalCpu         *float32 `yson:"total_cpu,omitempty"`
 	NodeDedicatedCpu *float32 `yson:"node_dedicated_cpu,omitempty"`
-}
-
-type CacheLocation struct {
-	Path     string    `yson:"path"`
-	IOEngine *IOEngine `yson:"io_config,omitempty"`
-}
-
-type SlotLocation struct {
-	Path               string `yson:"path"`
-	MediumName         string `yson:"medium_name"`
-	DiskQuota          *int64 `yson:"disk_quota,omitempty"`
-	DiskUsageWatermark *int64 `yson:"disk_usage_watermark,omitempty"`
-	EnableDiskQuota    *bool  `yson:"enable_disk_quota,omitempty"`
 }
 
 type DataNode struct {
@@ -318,16 +344,19 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 	c.ResourceLimits = getDataNodeResourceLimits(spec)
 
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkStore) {
-		quota := findQuotaForLocation(location, spec.InstanceSpec)
 		storeLocation := StoreLocation{
-			MediumName: location.Medium,
-			Path:       location.Path,
+			DiskLocation: DiskLocation{
+				Path:       location.Path,
+				MediumName: location.Medium,
+			},
 		}
-		if quota != nil {
+
+		if quota := findQuotaForLocation(location, spec.InstanceSpec); quota != nil {
 			storeLocation.Quota = *quota
 
 			if location.LowWatermark != nil {
 				storeLocation.LowWatermark = location.LowWatermark.Value()
+				storeLocation.MinDiskSpace = storeLocation.LowWatermark
 			} else {
 				gb := float64(1024 * 1024 * 1024)
 				storeLocation.LowWatermark = int64(math.Min(0.1*float64(storeLocation.Quota), float64(25)*gb))
@@ -497,9 +526,22 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	c.ResourceLimits = getExecNodeResourceLimits(spec)
 
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
-		c.DataNode.CacheLocations = append(c.DataNode.CacheLocations, CacheLocation{
-			Path: location.Path,
-		})
+		cacheLocation := CacheLocation{
+			DiskLocation: DiskLocation{
+				Path:       location.Path,
+				MediumName: location.Medium,
+			},
+		}
+
+		if location.LowWatermark != nil {
+			cacheLocation.MinDiskSpace = location.LowWatermark.Value()
+		}
+
+		if quota := findQuotaForLocation(location, spec.InstanceSpec); quota != nil {
+			cacheLocation.Quota = *quota
+		}
+
+		c.DataNode.CacheLocations = append(c.DataNode.CacheLocations, cacheLocation)
 	}
 
 	if len(c.DataNode.CacheLocations) == 0 {
@@ -508,8 +550,14 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeSlots) {
 		slotLocation := SlotLocation{
-			Path:       location.Path,
-			MediumName: location.Medium,
+			DiskLocation: DiskLocation{
+				Path:       location.Path,
+				MediumName: location.Medium,
+			},
+		}
+
+		if location.LowWatermark != nil {
+			slotLocation.MinDiskSpace = location.LowWatermark.Value()
 		}
 
 		if quota := findQuotaForLocation(location, spec.InstanceSpec); quota != nil {

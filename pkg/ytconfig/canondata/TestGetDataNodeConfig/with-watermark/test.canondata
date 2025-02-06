@@ -103,6 +103,7 @@
         "store_locations"=[
             {
                 path="/yt/hdd1/chunk-store";
+                "min_disk_space"=53687091200;
                 "medium_name"=nvme;
                 quota=1099511627776;
                 "high_watermark"=26843545600;
