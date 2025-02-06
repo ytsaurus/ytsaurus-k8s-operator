@@ -357,9 +357,9 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `componentType` _[ComponentType](#componenttype)_ |  |  |  |
-| `componentGroup` _[ComponentGroup](#componentgroup)_ |  |  |  |
-| `componentName` _string_ |  |  |  |
+| `type` _[ComponentType](#componenttype)_ |  |  |  |
+| `group` _[ComponentGroup](#componentgroup)_ |  |  |  |
+| `name` _string_ |  |  |  |
 
 
 #### ControllerAgentsSpec

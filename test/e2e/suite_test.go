@@ -317,7 +317,7 @@ func HaveClusterUpdatingComponents(components ...string) otypes.GomegaMatcher {
 		WithTransform(func(yts *ytv1.Ytsaurus) []string {
 			var result []string
 			for _, comp := range yts.Status.UpdateStatus.UpdatingComponents {
-				result = append(result, string(comp.Type))
+				result = append(result, comp.Name)
 			}
 			return result
 		}, Equal(components)),

@@ -784,11 +784,11 @@ const (
 
 type ComponentUpdateSelector struct {
 	//+optional
-	ComponentType consts.ComponentType `json:"componentType,omitempty"`
+	Type consts.ComponentType `json:"type,omitempty"`
 	//+optional
-	ComponentGroup consts.ComponentGroup `json:"componentGroup,omitempty"`
+	Group consts.ComponentGroup `json:"group,omitempty"`
 	//+optional
-	ComponentName string `json:"componentName,omitempty"`
+	Name string `json:"name,omitempty"`
 
 	// TODO(#325): Add rolling options
 }

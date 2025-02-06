@@ -39577,11 +39577,11 @@ spec:
                   the update process.
                 items:
                   properties:
-                    componentGroup:
+                    group:
                       type: string
-                    componentName:
+                    name:
                       type: string
-                    componentType:
+                    type:
                       type: string
                   type: object
                 type: array
