@@ -47,7 +47,6 @@ spec:
       useTimestampSuffix: false
       writerType: file
     maxSnapshotCountToKeep: 1543
-    monitoringPort: 10010
     resources: {}
     sidecars:
     - '{name: sleep, image: fakeimage:stable, command: [/bin/sleep], args: [inf]}'
@@ -65,7 +64,6 @@ spec:
       name: master-data
   schedulers:
     instanceCount: 3
-    monitoringPort: 10011
     resources: {}
   updateSelector: ""
   useIpv4: false

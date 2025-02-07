@@ -1,6 +1,8 @@
 package ytconfig
 
 import (
+	"k8s.io/utils/ptr"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
@@ -26,9 +28,7 @@ func getDiscoveryLogging(spec *ytv1.DiscoverySpec) Logging {
 func getDiscoveryServerCarcass(spec *ytv1.DiscoverySpec) (DiscoveryServer, error) {
 	var c DiscoveryServer
 
-	if spec.InstanceSpec.MonitoringPort != nil {
-		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
-	}
+	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.DiscoveryMonitoringPort)
 	c.RPCPort = consts.DiscoveryRPCPort
 
 	c.Logging = getDiscoveryLogging(spec)

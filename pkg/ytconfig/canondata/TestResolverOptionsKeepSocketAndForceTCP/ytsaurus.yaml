@@ -5,11 +5,9 @@ metadata:
 spec:
   controllerAgents:
     instanceCount: 3
-    monitoringPort: 10014
     resources: {}
   discovery:
     instanceCount: 3
-    monitoringPort: 10020
     resources: {}
   enableFullUpdate: false
   forceTcp: true
@@ -17,13 +15,11 @@ spec:
   isManaged: false
   kafkaProxies:
   - instanceCount: 3
-    monitoringPort: 10033
     resources: {}
   keepSocket: true
   masterCaches:
     cellTagMasterCaches: 0
     instanceCount: 3
-    monitoringPort: 10018
     resources: {}
   oauthService:
     host: oauth-host
@@ -70,7 +66,6 @@ spec:
       useTimestampSuffix: false
       writerType: file
     maxSnapshotCountToKeep: 1543
-    monitoringPort: 10010
     resources: {}
     sidecars:
     - '{name: sleep, image: fakeimage:stable, command: [/bin/sleep], args: [inf]}'
@@ -88,15 +83,12 @@ spec:
       name: master-data
   queryTrackers:
     instanceCount: 3
-    monitoringPort: 10028
     resources: {}
   queueAgents:
     instanceCount: 3
-    monitoringPort: 10030
     resources: {}
   schedulers:
     instanceCount: 3
-    monitoringPort: 10011
     resources: {}
   strawberry:
     image: dummy-strawberry-image
@@ -107,7 +99,6 @@ spec:
   tcpProxies:
   - instanceCount: 3
     minPort: 10000
-    monitoringPort: 10017
     portCount: 20000
     resources: {}
   ui:
@@ -125,7 +116,6 @@ spec:
   yqlAgents:
     configureMrJobSystemLibs: false
     instanceCount: 3
-    monitoringPort: 10019
     resources: {}
 status:
   updateStatus: {}

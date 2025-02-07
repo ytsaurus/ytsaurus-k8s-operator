@@ -5,7 +5,6 @@ locations:
 - locationType: Slots
   path: /yt/hdd2/slots
   quota: 5Gi
-monitoringPort: 10022
 rack: fake
 resources:
   limits:

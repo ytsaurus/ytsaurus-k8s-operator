@@ -4,7 +4,6 @@ locations:
   maxTrashMilliseconds: 60000
   medium: nvme
   path: /yt/hdd1/chunk-store
-monitoringPort: 10012
 name: dn-a
 rack: fake
 resources:

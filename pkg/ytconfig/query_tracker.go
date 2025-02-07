@@ -1,6 +1,8 @@
 package ytconfig
 
 import (
+	"k8s.io/utils/ptr"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
@@ -21,8 +23,7 @@ func getQueryTrackerLogging(spec *ytv1.QueryTrackerSpec) Logging {
 func getQueryTrackerServerCarcass(spec *ytv1.QueryTrackerSpec) (QueryTrackerServer, error) {
 	var c QueryTrackerServer
 	c.RPCPort = consts.QueryTrackerRPCPort
-	c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
-
+	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.QueryTrackerMonitoringPort)
 	c.User = "query_tracker"
 	c.CreateStateTablesOnStartup = true
 

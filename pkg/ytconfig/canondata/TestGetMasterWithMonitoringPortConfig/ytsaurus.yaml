@@ -3,32 +3,11 @@ metadata:
   name: test
   namespace: fake
 spec:
-  controllerAgents:
-    instanceCount: 3
-    resources: {}
   discovery:
-    instanceCount: 3
     resources: {}
   enableFullUpdate: false
   hostNetwork: false
   isManaged: false
-  kafkaProxies:
-  - instanceCount: 3
-    resources: {}
-  masterCaches:
-    cellTagMasterCaches: 0
-    instanceCount: 3
-    resources: {}
-  oauthService:
-    host: oauth-host
-    port: 433
-    secure: true
-    userInfoHandler:
-      endpoint: user-info-endpoint
-      loginField: login
-      loginTransformations:
-      - matchPattern: (.*)@ytsaurus.team
-        replacement: \1
   primaryMasters:
     cellTag: 0
     instanceCount: 1
@@ -64,6 +43,7 @@ spec:
       useTimestampSuffix: false
       writerType: file
     maxSnapshotCountToKeep: 1543
+    monitoringPort: 20010
     resources: {}
     sidecars:
     - '{name: sleep, image: fakeimage:stable, command: [/bin/sleep], args: [inf]}'
@@ -79,47 +59,10 @@ spec:
     volumeMounts:
     - mountPath: /yt/master-data
       name: master-data
-  queryTrackers:
-    instanceCount: 3
-    resources: {}
-  queueAgents:
-    instanceCount: 3
-    resources: {}
-  schedulers:
-    instanceCount: 3
-    resources: {}
-  strawberry:
-    controllerFamilies:
-    - superservice1
-    - superservice2
-    - superservice3
-    defaultRouteFamily: superservice2
-    externalProxy: some.domain
-    image: dummy-strawberry-image
-    resources:
-      limits:
-        cpu: "20"
-        memory: 5Gi
-  tcpProxies:
-  - instanceCount: 3
-    minPort: 10000
-    portCount: 20000
-    resources: {}
-  ui:
-    image: dummy-ui-image
-    odinBaseUrl: http://odin-webservice.odin.svc.cluster.local
-    resources: {}
-    secure: false
-    serviceType: NodePort
-    useInsecureCookies: false
   updateSelector: ""
-  useIpv4: true
-  useIpv6: false
-  usePorto: true
+  useIpv4: false
+  useIpv6: true
+  usePorto: false
   useShortNames: false
-  yqlAgents:
-    configureMrJobSystemLibs: false
-    instanceCount: 3
-    resources: {}
 status:
   updateStatus: {}

@@ -20,7 +20,6 @@ locations:
 - locationType: Slots
   path: /yt/hdd2/slots
   quota: 5Gi
-monitoringPort: 10029
 name: end-a
 privileged: false
 rack: fake

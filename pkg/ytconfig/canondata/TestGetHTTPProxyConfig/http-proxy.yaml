@@ -1,7 +1,6 @@
 httpNodePort: 10000
 httpsNodePort: 10001
 instanceCount: 3
-monitoringPort: 10016
 resources: {}
 role: control
 serviceType: NodePort

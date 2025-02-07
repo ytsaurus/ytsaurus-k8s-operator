@@ -33,7 +33,6 @@ locations:
 - locationType: ImageCache
   path: /yt/hdd1/images
   quota: 4Gi
-monitoringPort: 10029
 name: end-a
 privileged: false
 rack: fake

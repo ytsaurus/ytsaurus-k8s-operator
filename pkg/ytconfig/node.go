@@ -297,15 +297,20 @@ func fillClusterNodeServerCarcass(n *NodeServer, flavor NodeFlavor, spec ytv1.Cl
 	case NodeFlavorData:
 		n.RPCPort = consts.DataNodeRPCPort
 		n.SkynetHttpPort = consts.DataNodeSkynetPort
+		n.MonitoringPort = consts.DataNodeMonitoringPort
 	case NodeFlavorExec:
 		n.RPCPort = consts.ExecNodeRPCPort
 		n.SkynetHttpPort = consts.ExecNodeSkynetPort
+		n.MonitoringPort = consts.ExecNodeMonitoringPort
 	case NodeFlavorTablet:
 		n.RPCPort = consts.TabletNodeRPCPort
 		n.SkynetHttpPort = consts.TabletNodeSkynetPort
+		n.MonitoringPort = consts.TabletNodeMonitoringPort
 	}
 
-	n.MonitoringPort = *is.MonitoringPort
+	if is.MonitoringPort != nil {
+		n.MonitoringPort = *is.MonitoringPort
+	}
 
 	n.Flavors = []NodeFlavor{flavor}
 	n.Tags = spec.Tags
