@@ -4,7 +4,6 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -26,10 +25,6 @@ func NewExecNode(
 ) *ExecNode {
 	l := cfgen.GetComponentLabeller(consts.ExecNodeType, spec.Name)
 
-	if spec.InstanceSpec.MonitoringPort == nil {
-		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.ExecNodeMonitoringPort))
-	}
-
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -39,6 +34,7 @@ func NewExecNode(
 		func() ([]byte, error) {
 			return cfgen.GetExecNodeConfig(spec)
 		},
+		consts.ExecNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.ExecNodeRPCPort,

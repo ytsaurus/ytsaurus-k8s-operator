@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/utils/ptr"
-
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
@@ -43,10 +41,6 @@ func NewQueueAgent(
 
 	resource := ytsaurus.GetResource()
 
-	if resource.Spec.QueueAgents.InstanceSpec.MonitoringPort == nil {
-		resource.Spec.QueueAgents.InstanceSpec.MonitoringPort = ptr.To(int32(consts.QueueAgentMonitoringPort))
-	}
-
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -54,6 +48,7 @@ func NewQueueAgent(
 		"/usr/bin/ytserver-queue-agent",
 		"ytserver-queue-agent.yson",
 		func() ([]byte, error) { return cfgen.GetQueueAgentConfig(resource.Spec.QueueAgents) },
+		consts.QueueAgentMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.QueueAgentRPCPort,

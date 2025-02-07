@@ -40,10 +40,6 @@ func NewQueryTracker(
 	l := cfgen.GetComponentLabeller(consts.QueryTrackerType, "")
 	resource := ytsaurus.GetResource()
 
-	if resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort == nil {
-		resource.Spec.QueryTrackers.InstanceSpec.MonitoringPort = ptr.To(int32(consts.QueryTrackerMonitoringPort))
-	}
-
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -51,6 +47,7 @@ func NewQueryTracker(
 		"/usr/bin/ytserver-query-tracker",
 		"ytserver-query-tracker.yson",
 		func() ([]byte, error) { return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers) },
+		consts.QueryTrackerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.QueryTrackerRPCPort,

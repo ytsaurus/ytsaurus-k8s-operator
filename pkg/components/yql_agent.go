@@ -31,9 +31,6 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 	l := cfgen.GetComponentLabeller(consts.YqlAgentType, "")
 
 	resource := ytsaurus.GetResource()
-	if resource.Spec.YQLAgents.InstanceSpec.MonitoringPort == nil {
-		resource.Spec.YQLAgents.InstanceSpec.MonitoringPort = ptr.To(int32(consts.YQLAgentMonitoringPort))
-	}
 
 	srv := newServer(
 		l,
@@ -44,6 +41,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		func() ([]byte, error) {
 			return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents)
 		},
+		consts.YQLAgentMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.YQLAgentRPCPort,

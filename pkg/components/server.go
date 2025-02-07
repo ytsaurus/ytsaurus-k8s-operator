@@ -68,6 +68,7 @@ func newServer(
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName string,
 	generator ytconfig.YsonGeneratorFunc,
+	defaultMonitoringPort int32,
 	options ...Option,
 ) server {
 	proxy := ytsaurus.APIProxy()
@@ -79,6 +80,7 @@ func newServer(
 		instanceSpec,
 		binaryPath, configFileName,
 		generator,
+		defaultMonitoringPort,
 		options...,
 	)
 }
@@ -90,6 +92,7 @@ func newServerConfigured(
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName string,
 	generator ytconfig.YsonGeneratorFunc,
+	defaultMonitoringPort int32,
 	optFuncs ...Option,
 ) server {
 	image := commonSpec.CoreImage
@@ -115,11 +118,12 @@ func newServerConfigured(
 			consts.BusSecretMountPoint)
 	}
 
+	monitoringPort := ptr.Deref(instanceSpec.MonitoringPort, defaultMonitoringPort)
 	opts := &options{
 		containerPorts: []corev1.ContainerPort{
 			{
 				Name:          consts.YTMonitoringContainerPortName,
-				ContainerPort: *instanceSpec.MonitoringPort,
+				ContainerPort: monitoringPort,
 				Protocol:      corev1.ProtocolTCP,
 			},
 		},
@@ -150,7 +154,7 @@ func newServerConfigured(
 			proxy,
 		),
 		monitoringService: resources.NewMonitoringService(
-			*instanceSpec.MonitoringPort,
+			monitoringPort,
 			l,
 			proxy,
 		),

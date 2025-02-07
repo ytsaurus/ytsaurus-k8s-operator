@@ -3,8 +3,6 @@ package components
 import (
 	"context"
 
-	"k8s.io/utils/ptr"
-
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -33,10 +31,6 @@ func NewRPCProxy(
 ) *RpcProxy {
 	l := cfgen.GetComponentLabeller(consts.RpcProxyType, spec.Role)
 
-	if spec.InstanceSpec.MonitoringPort == nil {
-		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.RPCProxyMonitoringPort))
-	}
-
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -46,6 +40,7 @@ func NewRPCProxy(
 		func() ([]byte, error) {
 			return cfgen.GetRPCProxyConfig(spec)
 		},
+		consts.RPCProxyMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.RPCProxyRPCPort,

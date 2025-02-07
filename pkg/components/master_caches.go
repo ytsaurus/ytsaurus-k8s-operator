@@ -3,8 +3,6 @@ package components
 import (
 	"context"
 
-	"k8s.io/utils/ptr"
-
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -23,10 +21,6 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Mas
 	l := cfgen.GetComponentLabeller(consts.MasterCacheType, "")
 
 	resource := ytsaurus.GetResource()
-	if resource.Spec.MasterCaches.InstanceSpec.MonitoringPort == nil {
-		resource.Spec.MasterCaches.InstanceSpec.MonitoringPort = ptr.To(int32(consts.MasterCachesMonitoringPort))
-	}
-
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -34,6 +28,7 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Mas
 		"/usr/bin/ytserver-master-cache",
 		"ytserver-master-cache.yson",
 		func() ([]byte, error) { return cfgen.GetMasterCachesConfig(resource.Spec.MasterCaches) },
+		consts.MasterCachesMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.MasterCachesRPCPort,
