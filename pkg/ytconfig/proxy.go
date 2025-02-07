@@ -4,6 +4,7 @@ import (
 	"path"
 
 	"go.ytsaurus.tech/yt/go/yson"
+	"k8s.io/utils/ptr"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -123,10 +124,7 @@ func getHTTPProxyServerCarcass(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, err
 	c.Coordinator.DefaultRoleFilter = consts.DefaultHTTPProxyRole
 
 	c.RPCPort = consts.HTTPProxyRPCPort
-	c.MonitoringPort = consts.HTTPProxyMonitoringPort
-	if spec.InstanceSpec.MonitoringPort != nil {
-		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
-	}
+	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.HTTPProxyMonitoringPort)
 	c.Port = consts.HTTPProxyHTTPPort
 
 	c.Role = spec.Role
@@ -168,10 +166,7 @@ func getRPCProxyServerCarcass(spec *ytv1.RPCProxiesSpec) (RPCProxyServer, error)
 	c.CypressTokenAuthenticator.Secure = true
 
 	c.RPCPort = consts.RPCProxyRPCPort
-	c.MonitoringPort = consts.RPCProxyMonitoringPort
-	if spec.InstanceSpec.MonitoringPort != nil {
-		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
-	}
+	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.RPCProxyMonitoringPort)
 
 	c.Role = spec.Role
 	c.Logging = getRPCProxyLogging(spec)
@@ -196,11 +191,7 @@ func getKafkaProxyLogging(spec *ytv1.KafkaProxiesSpec) Logging {
 func getTCPProxyServerCarcass(spec *ytv1.TCPProxiesSpec) (TCPProxyServer, error) {
 	var c TCPProxyServer
 
-	c.MonitoringPort = consts.TCPProxyMonitoringPort
-	if spec.InstanceSpec.MonitoringPort != nil {
-		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
-	}
-
+	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.TCPProxyMonitoringPort)
 	c.Role = spec.Role
 	c.Logging = getTCPProxyLogging(spec)
 
@@ -210,10 +201,7 @@ func getTCPProxyServerCarcass(spec *ytv1.TCPProxiesSpec) (TCPProxyServer, error)
 func getKafkaProxyServerCarcass(spec *ytv1.KafkaProxiesSpec) (KafkaProxyServer, error) {
 	var c KafkaProxyServer
 
-	c.MonitoringPort = consts.KafkaProxyMonitoringPort
-	if spec.InstanceSpec.MonitoringPort != nil {
-		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
-	}
+	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.KafkaProxyMonitoringPort)
 	c.RPCPort = consts.KafkaProxyRPCPort
 
 	c.Role = spec.Role

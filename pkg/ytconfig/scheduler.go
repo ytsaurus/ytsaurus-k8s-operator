@@ -1,6 +1,8 @@
 package ytconfig
 
 import (
+	"k8s.io/utils/ptr"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
@@ -51,10 +53,7 @@ func getControllerAgentLogging(spec *ytv1.ControllerAgentsSpec) Logging {
 func getSchedulerServerCarcass(spec *ytv1.SchedulersSpec) (SchedulerServer, error) {
 	var c SchedulerServer
 	c.RPCPort = consts.SchedulerRPCPort
-	c.MonitoringPort = consts.SchedulerMonitoringPort
-	if spec.MonitoringPort != nil {
-		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
-	}
+	c.MonitoringPort = ptr.Deref(spec.MonitoringPort, consts.SchedulerMonitoringPort)
 	c.Logging = getSchedulerLogging(spec)
 
 	return c, nil
@@ -63,10 +62,7 @@ func getSchedulerServerCarcass(spec *ytv1.SchedulersSpec) (SchedulerServer, erro
 func getControllerAgentServerCarcass(spec *ytv1.ControllerAgentsSpec) (ControllerAgentServer, error) {
 	var c ControllerAgentServer
 	c.RPCPort = consts.ControllerAgentRPCPort
-	c.MonitoringPort = consts.ControllerAgentMonitoringPort
-	if spec.MonitoringPort != nil {
-		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
-	}
+	c.MonitoringPort = ptr.Deref(spec.MonitoringPort, consts.ControllerAgentMonitoringPort)
 	c.Logging = getControllerAgentLogging(spec)
 
 	return c, nil

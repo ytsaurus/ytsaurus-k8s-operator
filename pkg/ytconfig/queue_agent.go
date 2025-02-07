@@ -1,6 +1,8 @@
 package ytconfig
 
 import (
+	"k8s.io/utils/ptr"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
@@ -25,11 +27,8 @@ func getQueueAgentLogging(spec *ytv1.QueueAgentSpec) Logging {
 func getQueueAgentServerCarcass(spec *ytv1.QueueAgentSpec) (QueueAgentServer, error) {
 	var c QueueAgentServer
 	c.RPCPort = consts.QueueAgentRPCPort
-	c.MonitoringPort = consts.QueueAgentMonitoringPort
-	if spec.InstanceSpec.MonitoringPort != nil {
-		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
-	}
 
+	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.QueueAgentMonitoringPort)
 	c.User = "queue_agent"
 	c.QueueAgent.Stage = "production"
 

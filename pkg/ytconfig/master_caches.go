@@ -1,6 +1,8 @@
 package ytconfig
 
 import (
+	"k8s.io/utils/ptr"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
@@ -19,11 +21,7 @@ func getMasterCachesLogging(spec *ytv1.MasterCachesSpec) Logging {
 func getMasterCachesCarcass(spec *ytv1.MasterCachesSpec) (MasterCacheServer, error) {
 	var mcs MasterCacheServer
 	mcs.RPCPort = consts.MasterCachesRPCPort
-	mcs.MonitoringPort = consts.MasterCachesMonitoringPort
-	if spec.MonitoringPort != nil {
-		mcs.MonitoringPort = *spec.MonitoringPort
-	}
-
+	mcs.MonitoringPort = ptr.Deref(spec.MonitoringPort, consts.MasterCachesMonitoringPort)
 	mcs.Logging = getMasterCachesLogging(spec)
 
 	return mcs, nil

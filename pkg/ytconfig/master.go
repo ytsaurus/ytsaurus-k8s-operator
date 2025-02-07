@@ -3,6 +3,8 @@ package ytconfig
 import (
 	"fmt"
 
+	"k8s.io/utils/ptr"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
@@ -51,10 +53,7 @@ func getMasterServerCarcass(spec *ytv1.MastersSpec) (MasterServer, error) {
 	var c MasterServer
 	c.UseNewHydra = true
 	c.RPCPort = consts.MasterRPCPort
-	c.MonitoringPort = consts.MasterMonitoringPort
-	if spec.MonitoringPort != nil {
-		c.MonitoringPort = *spec.MonitoringPort
-	}
+	c.MonitoringPort = ptr.Deref(spec.MonitoringPort, consts.MasterMonitoringPort)
 
 	c.HydraManager.MaxSnapshotCountToKeep = 10
 	if spec.MaxSnapshotCountToKeep != nil {

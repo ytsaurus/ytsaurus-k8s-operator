@@ -1,6 +1,8 @@
 package ytconfig
 
 import (
+	"k8s.io/utils/ptr"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
@@ -50,10 +52,7 @@ func getYQLAgentLogging(spec *ytv1.YQLAgentSpec) Logging {
 func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	var c YQLAgentServer
 	c.RPCPort = consts.YQLAgentRPCPort
-	c.MonitoringPort = consts.YQLAgentMonitoringPort
-	if spec.InstanceSpec.MonitoringPort != nil {
-		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
-	}
+	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.YQLAgentMonitoringPort)
 
 	c.User = "yql_agent"
 
