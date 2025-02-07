@@ -14,6 +14,5 @@ spec:
   - host2.external.address
   - host3.external.address
   instanceCount: 3
-  monitoringPort: 10018
   resources: {}
 status: {}

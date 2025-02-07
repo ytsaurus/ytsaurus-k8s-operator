@@ -43,7 +43,6 @@ spec:
       useTimestampSuffix: false
       writerType: file
     maxSnapshotCountToKeep: 1543
-    monitoringPort: 10010
     resources: {}
     sidecars:
     - '{name: sleep, image: fakeimage:stable, command: [/bin/sleep], args: [inf]}'

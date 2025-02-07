@@ -5,8 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-
 	"k8s.io/utils/ptr"
 
 	corev1 "k8s.io/api/core/v1"
@@ -331,6 +329,15 @@ func TestGetMasterWithFixedHostsConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetMasterWithMonitoringPortConfig(t *testing.T) {
+	ytsaurus := withMasterMonitoringPort(getYtsaurus())
+	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetMasterConfig(&ytsaurus.Spec.PrimaryMasters)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetNativeClientConfig(t *testing.T) {
 	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
@@ -548,8 +555,7 @@ func getYtsaurus() *ytv1.Ytsaurus {
 				MasterConnectionSpec:   getMasterConnectionSpec(),
 				MaxSnapshotCountToKeep: ptr.To(1543),
 				InstanceSpec: ytv1.InstanceSpec{
-					InstanceCount:  1,
-					MonitoringPort: ptr.To(int32(consts.MasterMonitoringPort)),
+					InstanceCount: 1,
 
 					VolumeMounts: []corev1.VolumeMount{
 						{
@@ -726,6 +732,10 @@ func withFixedMasterHosts(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	return ytsaurus
 }
 
+func withMasterMonitoringPort(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
+	ytsaurus.Spec.PrimaryMasters.MonitoringPort = ptr.To(int32(20010))
+	return ytsaurus
+}
 func withTCPProxies(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.TCPProxies = []ytv1.TCPProxiesSpec{
 		{
@@ -797,7 +807,6 @@ func getDataNodeSpec(locations ...ytv1.LocationSpec) ytv1.DataNodesSpec {
 	return ytv1.DataNodesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:        20,
-			MonitoringPort:       ptr.To(int32(consts.DataNodeMonitoringPort)),
 			Resources:            testResourceReqs,
 			Locations:            locations,
 			VolumeMounts:         testVolumeMounts,
@@ -813,9 +822,8 @@ func getExecNodeSpec(jobResources *corev1.ResourceRequirements) ytv1.ExecNodesSp
 	rotationPolicyMaxTotalSize := resource.MustParse("3145728")
 	return ytv1.ExecNodesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			InstanceCount:  50,
-			MonitoringPort: ptr.To(int32(consts.ExecNodeMonitoringPort)),
-			Resources:      testResourceReqs,
+			InstanceCount: 50,
+			Resources:     testResourceReqs,
 			Locations: []ytv1.LocationSpec{
 				testLocationChunkCache,
 				testLocationSlots,
@@ -869,9 +877,8 @@ func withCri(spec ytv1.ExecNodesSpec, jobResources *corev1.ResourceRequirements,
 func getTabletNodeSpec() ytv1.TabletNodesSpec {
 	return ytv1.TabletNodesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			InstanceCount:  100,
-			MonitoringPort: ptr.To(int32(consts.TabletNodeMonitoringPort)),
-			Resources:      testResourceReqs,
+			InstanceCount: 100,
+			Resources:     testResourceReqs,
 			Locations: []ytv1.LocationSpec{
 				testLocationChunkCache,
 				testLocationSlots,
@@ -888,8 +895,7 @@ func getHTTPProxySpec() ytv1.HTTPProxiesSpec {
 	httpsPort := int32(10001)
 	return ytv1.HTTPProxiesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			InstanceCount:  3,
-			MonitoringPort: ptr.To(int32(consts.HTTPProxyMonitoringPort)),
+			InstanceCount: 3,
 		},
 		ServiceType: corev1.ServiceTypeNodePort,
 		Role:        "control",
@@ -904,8 +910,7 @@ func getHTTPProxySpec() ytv1.HTTPProxiesSpec {
 func getRPCProxySpec() ytv1.RPCProxiesSpec {
 	return ytv1.RPCProxiesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			InstanceCount:  3,
-			MonitoringPort: ptr.To(int32(consts.RPCProxyMonitoringPort)),
+			InstanceCount: 3,
 		},
 		Role: "default",
 	}
@@ -914,8 +919,7 @@ func getRPCProxySpec() ytv1.RPCProxiesSpec {
 func getTCPProxySpec() ytv1.TCPProxiesSpec {
 	return ytv1.TCPProxiesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			InstanceCount:  3,
-			MonitoringPort: ptr.To(int32(consts.TCPProxyMonitoringPort)),
+			InstanceCount: 3,
 		},
 		Role: "default",
 	}
@@ -943,8 +947,7 @@ func getMasterConnectionSpecWithFixedMasterHosts() ytv1.MasterConnectionSpec {
 func getMasterCachesSpec() ytv1.MasterCachesSpec {
 	return ytv1.MasterCachesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			InstanceCount:  3,
-			MonitoringPort: ptr.To(int32(consts.MasterCachesMonitoringPort)),
+			InstanceCount: 3,
 		},
 		HostAddressLabel: "",
 	}

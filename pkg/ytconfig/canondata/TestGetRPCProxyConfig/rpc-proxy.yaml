@@ -1,5 +1,4 @@
 instanceCount: 3
-monitoringPort: 10013
 resources: {}
 role: default
 transport: {}
