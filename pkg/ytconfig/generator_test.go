@@ -37,7 +37,7 @@ var (
 		"host2.external.address",
 		"host3.external.address",
 	}
-	testBasicInstanceSpec = ytv1.InstanceSpec{InstanceCount: 3, MonitoringPort: ptr.To(int32(12345))}
+	testBasicInstanceSpec = ytv1.InstanceSpec{InstanceCount: 3}
 	testStorageClassname  = "yc-network-hdd"
 	testResourceReqs      = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
@@ -664,7 +664,6 @@ func getYtsaurusWithEverything() *ytv1.Ytsaurus {
 func withControllerAgents(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.ControllerAgents = &ytv1.ControllerAgentsSpec{InstanceSpec: testBasicInstanceSpec}
 	ytsaurus.Spec.UsePorto = true
-	ytsaurus.Spec.ControllerAgents.InstanceSpec.MonitoringPort = ptr.To(int32(consts.ControllerAgentMonitoringPort))
 	return ytsaurus
 }
 
@@ -695,19 +694,16 @@ func withResolverConfigured(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 
 func withDiscovery(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.Discovery = ytv1.DiscoverySpec{InstanceSpec: testBasicInstanceSpec}
-	ytsaurus.Spec.Discovery.InstanceSpec.MonitoringPort = ptr.To(int32(consts.DiscoveryMonitoringPort))
 	return ytsaurus
 }
 
 func withQueryTracker(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{InstanceSpec: testBasicInstanceSpec}
-	ytsaurus.Spec.QueryTrackers.InstanceSpec.MonitoringPort = ptr.To(int32(consts.QueryTrackerMonitoringPort))
 	return ytsaurus
 }
 
 func withQueueAgent(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: testBasicInstanceSpec}
-	ytsaurus.Spec.QueueAgents.InstanceSpec.MonitoringPort = ptr.To(int32(consts.QueueAgentMonitoringPort))
 	return ytsaurus
 }
 
@@ -722,7 +718,6 @@ func withStrawberry(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 
 func withScheduler(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.Schedulers = &ytv1.SchedulersSpec{InstanceSpec: testBasicInstanceSpec}
-	ytsaurus.Spec.Schedulers.InstanceSpec.MonitoringPort = ptr.To(int32(consts.SchedulerMonitoringPort))
 	return ytsaurus
 }
 
@@ -739,7 +734,6 @@ func withTCPProxies(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 			PortCount:    20000,
 		},
 	}
-	ytsaurus.Spec.TCPProxies[0].InstanceSpec.MonitoringPort = ptr.To(int32(consts.TCPProxyMonitoringPort))
 	return ytsaurus
 }
 
@@ -749,7 +743,6 @@ func withKafkaProxies(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 			InstanceSpec: testBasicInstanceSpec,
 		},
 	}
-	ytsaurus.Spec.KafkaProxies[0].InstanceSpec.MonitoringPort = ptr.To(int32(consts.KafkaProxyMonitoringPort))
 	return ytsaurus
 }
 
@@ -787,19 +780,16 @@ func withUICustomSettings(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 
 func withMasterCaches(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.MasterCaches = &ytv1.MasterCachesSpec{InstanceSpec: testBasicInstanceSpec}
-	ytsaurus.Spec.MasterCaches.InstanceSpec.MonitoringPort = ptr.To(int32(consts.MasterCachesMonitoringPort))
 	return ytsaurus
 }
 
 func withYQLAgent(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.YQLAgents = &ytv1.YQLAgentSpec{InstanceSpec: testBasicInstanceSpec}
-	ytsaurus.Spec.YQLAgents.InstanceSpec.MonitoringPort = ptr.To(int32(consts.YQLAgentMonitoringPort))
 	return ytsaurus
 }
 
 func withFixedMasterCachesHosts(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.MasterCaches.MasterCachesConnectionSpec.HostAddresses = testMasterCachesExternalHosts
-	ytsaurus.Spec.MasterCaches.InstanceSpec.MonitoringPort = ptr.To(int32(consts.MasterCachesMonitoringPort))
 	return ytsaurus
 }
 

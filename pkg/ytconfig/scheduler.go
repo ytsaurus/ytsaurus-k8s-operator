@@ -51,7 +51,10 @@ func getControllerAgentLogging(spec *ytv1.ControllerAgentsSpec) Logging {
 func getSchedulerServerCarcass(spec *ytv1.SchedulersSpec) (SchedulerServer, error) {
 	var c SchedulerServer
 	c.RPCPort = consts.SchedulerRPCPort
-	c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	c.MonitoringPort = consts.SchedulerMonitoringPort
+	if spec.MonitoringPort != nil {
+		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	}
 	c.Logging = getSchedulerLogging(spec)
 
 	return c, nil
@@ -60,7 +63,10 @@ func getSchedulerServerCarcass(spec *ytv1.SchedulersSpec) (SchedulerServer, erro
 func getControllerAgentServerCarcass(spec *ytv1.ControllerAgentsSpec) (ControllerAgentServer, error) {
 	var c ControllerAgentServer
 	c.RPCPort = consts.ControllerAgentRPCPort
-	c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	c.MonitoringPort = consts.ControllerAgentMonitoringPort
+	if spec.MonitoringPort != nil {
+		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	}
 	c.Logging = getControllerAgentLogging(spec)
 
 	return c, nil

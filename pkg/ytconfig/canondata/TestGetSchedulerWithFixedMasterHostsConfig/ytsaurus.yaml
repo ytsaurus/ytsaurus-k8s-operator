@@ -65,7 +65,6 @@ spec:
       name: master-data
   schedulers:
     instanceCount: 3
-    monitoringPort: 10011
     resources: {}
   updateSelector: ""
   useIpv4: false

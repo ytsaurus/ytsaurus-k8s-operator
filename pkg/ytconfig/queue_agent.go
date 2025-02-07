@@ -25,7 +25,10 @@ func getQueueAgentLogging(spec *ytv1.QueueAgentSpec) Logging {
 func getQueueAgentServerCarcass(spec *ytv1.QueueAgentSpec) (QueueAgentServer, error) {
 	var c QueueAgentServer
 	c.RPCPort = consts.QueueAgentRPCPort
-	c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	c.MonitoringPort = consts.QueueAgentMonitoringPort
+	if spec.InstanceSpec.MonitoringPort != nil {
+		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	}
 
 	c.User = "queue_agent"
 	c.QueueAgent.Stage = "production"

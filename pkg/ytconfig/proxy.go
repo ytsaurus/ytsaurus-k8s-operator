@@ -123,7 +123,10 @@ func getHTTPProxyServerCarcass(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, err
 	c.Coordinator.DefaultRoleFilter = consts.DefaultHTTPProxyRole
 
 	c.RPCPort = consts.HTTPProxyRPCPort
-	c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	c.MonitoringPort = consts.HTTPProxyMonitoringPort
+	if spec.InstanceSpec.MonitoringPort != nil {
+		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	}
 	c.Port = consts.HTTPProxyHTTPPort
 
 	c.Role = spec.Role
@@ -165,7 +168,10 @@ func getRPCProxyServerCarcass(spec *ytv1.RPCProxiesSpec) (RPCProxyServer, error)
 	c.CypressTokenAuthenticator.Secure = true
 
 	c.RPCPort = consts.RPCProxyRPCPort
-	c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	c.MonitoringPort = consts.RPCProxyMonitoringPort
+	if spec.InstanceSpec.MonitoringPort != nil {
+		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	}
 
 	c.Role = spec.Role
 	c.Logging = getRPCProxyLogging(spec)
@@ -190,7 +196,10 @@ func getKafkaProxyLogging(spec *ytv1.KafkaProxiesSpec) Logging {
 func getTCPProxyServerCarcass(spec *ytv1.TCPProxiesSpec) (TCPProxyServer, error) {
 	var c TCPProxyServer
 
-	c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	c.MonitoringPort = consts.TCPProxyMonitoringPort
+	if spec.InstanceSpec.MonitoringPort != nil {
+		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	}
 
 	c.Role = spec.Role
 	c.Logging = getTCPProxyLogging(spec)
@@ -201,7 +210,10 @@ func getTCPProxyServerCarcass(spec *ytv1.TCPProxiesSpec) (TCPProxyServer, error)
 func getKafkaProxyServerCarcass(spec *ytv1.KafkaProxiesSpec) (KafkaProxyServer, error) {
 	var c KafkaProxyServer
 
-	c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	c.MonitoringPort = consts.KafkaProxyMonitoringPort
+	if spec.InstanceSpec.MonitoringPort != nil {
+		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	}
 	c.RPCPort = consts.KafkaProxyRPCPort
 
 	c.Role = spec.Role

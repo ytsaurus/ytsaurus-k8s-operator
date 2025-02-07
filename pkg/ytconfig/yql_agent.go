@@ -50,7 +50,10 @@ func getYQLAgentLogging(spec *ytv1.YQLAgentSpec) Logging {
 func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	var c YQLAgentServer
 	c.RPCPort = consts.YQLAgentRPCPort
-	c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	c.MonitoringPort = consts.YQLAgentMonitoringPort
+	if spec.InstanceSpec.MonitoringPort != nil {
+		c.MonitoringPort = *spec.InstanceSpec.MonitoringPort
+	}
 
 	c.User = "yql_agent"
 

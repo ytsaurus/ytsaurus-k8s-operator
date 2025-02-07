@@ -5,23 +5,19 @@ metadata:
 spec:
   controllerAgents:
     instanceCount: 3
-    monitoringPort: 10014
     resources: {}
   discovery:
     instanceCount: 3
-    monitoringPort: 10020
     resources: {}
   enableFullUpdate: false
   hostNetwork: false
   isManaged: false
   kafkaProxies:
   - instanceCount: 3
-    monitoringPort: 10033
     resources: {}
   masterCaches:
     cellTagMasterCaches: 0
     instanceCount: 3
-    monitoringPort: 10018
     resources: {}
   oauthService:
     disableUserCreation: true
@@ -87,15 +83,12 @@ spec:
       name: master-data
   queryTrackers:
     instanceCount: 3
-    monitoringPort: 10028
     resources: {}
   queueAgents:
     instanceCount: 3
-    monitoringPort: 10030
     resources: {}
   schedulers:
     instanceCount: 3
-    monitoringPort: 10011
     resources: {}
   strawberry:
     image: dummy-strawberry-image
@@ -106,7 +99,6 @@ spec:
   tcpProxies:
   - instanceCount: 3
     minPort: 10000
-    monitoringPort: 10017
     portCount: 20000
     resources: {}
   ui:
@@ -124,7 +116,6 @@ spec:
   yqlAgents:
     configureMrJobSystemLibs: false
     instanceCount: 3
-    monitoringPort: 10019
     resources: {}
 status:
   updateStatus: {}
