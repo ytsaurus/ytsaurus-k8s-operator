@@ -3,8 +3,6 @@ package components
 import (
 	"context"
 
-	"k8s.io/utils/ptr"
-
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -34,10 +32,6 @@ func NewHTTPProxy(
 ) *HttpProxy {
 	l := cfgen.GetComponentLabeller(consts.HttpProxyType, spec.Role)
 
-	if spec.InstanceSpec.MonitoringPort == nil {
-		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.HTTPProxyMonitoringPort))
-	}
-
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -47,6 +41,7 @@ func NewHTTPProxy(
 		func() ([]byte, error) {
 			return cfgen.GetHTTPProxyConfig(spec)
 		},
+		consts.HTTPProxyMonitoringPort,
 		WithContainerPorts(
 			corev1.ContainerPort{
 				Name:          consts.YTRPCPortName,

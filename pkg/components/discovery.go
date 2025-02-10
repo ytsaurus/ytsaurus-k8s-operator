@@ -4,7 +4,6 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -22,10 +21,6 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Disco
 	l := cfgen.GetComponentLabeller(consts.DiscoveryType, "")
 	resource := ytsaurus.GetResource()
 
-	if resource.Spec.Discovery.InstanceSpec.MonitoringPort == nil {
-		resource.Spec.Discovery.InstanceSpec.MonitoringPort = ptr.To(int32(consts.DiscoveryMonitoringPort))
-	}
-
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -35,6 +30,7 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Disco
 		func() ([]byte, error) {
 			return cfgen.GetDiscoveryConfig(&resource.Spec.Discovery)
 		},
+		consts.DiscoveryMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.DiscoveryRPCPort,

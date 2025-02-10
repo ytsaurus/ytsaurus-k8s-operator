@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/utils/ptr"
-
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
@@ -44,10 +42,6 @@ func NewTabletNode(
 ) *TabletNode {
 	l := cfgen.GetComponentLabeller(consts.TabletNodeType, spec.Name)
 
-	if spec.InstanceSpec.MonitoringPort == nil {
-		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.TabletNodeMonitoringPort))
-	}
-
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -57,6 +51,7 @@ func NewTabletNode(
 		func() ([]byte, error) {
 			return cfgen.GetTabletNodeConfig(spec)
 		},
+		consts.TabletNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.TabletNodeRPCPort,

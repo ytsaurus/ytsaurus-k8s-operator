@@ -4,7 +4,6 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -29,10 +28,6 @@ func NewRemoteTabletNodes(
 ) *RemoteTabletNode {
 	l := cfgen.GetComponentLabeller(consts.TabletNodeType, spec.Name)
 
-	if spec.InstanceSpec.MonitoringPort == nil {
-		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.TabletNodeMonitoringPort))
-	}
-
 	srv := newServerConfigured(
 		l,
 		proxy,
@@ -43,6 +38,7 @@ func NewRemoteTabletNodes(
 		func() ([]byte, error) {
 			return cfgen.GetTabletNodeConfig(spec)
 		},
+		consts.TabletNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.TabletNodeRPCPort,

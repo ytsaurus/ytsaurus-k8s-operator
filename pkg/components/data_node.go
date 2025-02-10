@@ -4,7 +4,6 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -27,10 +26,6 @@ func NewDataNode(
 ) *DataNode {
 	l := cfgen.GetComponentLabeller(consts.DataNodeType, spec.Name)
 
-	if spec.InstanceSpec.MonitoringPort == nil {
-		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.DataNodeMonitoringPort))
-	}
-
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -40,6 +35,7 @@ func NewDataNode(
 		func() ([]byte, error) {
 			return cfgen.GetDataNodeConfig(spec)
 		},
+		consts.DataNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.DataNodeRPCPort,

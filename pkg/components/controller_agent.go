@@ -4,7 +4,6 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -23,10 +22,6 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 	l := cfgen.GetComponentLabeller(consts.ControllerAgentType, "")
 	resource := ytsaurus.GetResource()
 
-	if resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort == nil {
-		resource.Spec.ControllerAgents.InstanceSpec.MonitoringPort = ptr.To(int32(consts.ControllerAgentMonitoringPort))
-	}
-
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -34,6 +29,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		"/usr/bin/ytserver-controller-agent",
 		"ytserver-controller-agent.yson",
 		func() ([]byte, error) { return cfgen.GetControllerAgentConfig(resource.Spec.ControllerAgents) },
+		consts.ControllerAgentMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.ControllerAgentRPCPort,

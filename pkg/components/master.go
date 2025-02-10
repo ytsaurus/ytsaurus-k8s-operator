@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/utils/ptr"
-
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
@@ -37,9 +35,6 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 	l := cfgen.GetComponentLabeller(consts.MasterType, "")
 
 	resource := ytsaurus.GetResource()
-	if resource.Spec.PrimaryMasters.InstanceSpec.MonitoringPort == nil {
-		resource.Spec.PrimaryMasters.InstanceSpec.MonitoringPort = ptr.To(int32(consts.MasterMonitoringPort))
-	}
 
 	srv := newServer(
 		l,
@@ -48,6 +43,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		"/usr/bin/ytserver-master",
 		"ytserver-master.yson",
 		func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
+		consts.MasterMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.MasterRPCPort,

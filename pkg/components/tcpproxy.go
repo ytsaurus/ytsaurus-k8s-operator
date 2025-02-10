@@ -3,8 +3,6 @@ package components
 import (
 	"context"
 
-	"k8s.io/utils/ptr"
-
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -27,10 +25,6 @@ type TcpProxy struct {
 func NewTCPProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, masterReconciler Component, spec ytv1.TCPProxiesSpec) *TcpProxy {
 	l := cfgen.GetComponentLabeller(consts.TcpProxyType, spec.Role)
 
-	if spec.InstanceSpec.MonitoringPort == nil {
-		spec.InstanceSpec.MonitoringPort = ptr.To(int32(consts.TCPProxyMonitoringPort))
-	}
-
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -40,6 +34,7 @@ func NewTCPProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, masterR
 		func() ([]byte, error) {
 			return cfgen.GetTCPProxyConfig(spec)
 		},
+		consts.TCPProxyMonitoringPort,
 	)
 
 	var balancingService *resources.TCPService = nil

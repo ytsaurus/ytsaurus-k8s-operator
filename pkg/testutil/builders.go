@@ -3,10 +3,8 @@ package testutil
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 const (
@@ -27,14 +25,12 @@ func BuildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
 
 			Discovery: ytv1.DiscoverySpec{
 				InstanceSpec: ytv1.InstanceSpec{
-					InstanceCount:  3,
-					MonitoringPort: ptr.To(int32(consts.DiscoveryMonitoringPort)),
+					InstanceCount: 3,
 				},
 			},
 			PrimaryMasters: ytv1.MastersSpec{
 				InstanceSpec: ytv1.InstanceSpec{
-					InstanceCount:  3,
-					MonitoringPort: ptr.To(int32(consts.MasterMonitoringPort)),
+					InstanceCount: 3,
 					Locations: []ytv1.LocationSpec{
 						{
 							LocationType: "MasterChangelogs",

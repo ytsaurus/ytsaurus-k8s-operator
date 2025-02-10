@@ -40,10 +40,6 @@ func NewScheduler(
 
 	resource := ytsaurus.GetResource()
 
-	if resource.Spec.Schedulers.InstanceSpec.MonitoringPort == nil {
-		resource.Spec.Schedulers.InstanceSpec.MonitoringPort = ptr.To(int32(consts.SchedulerMonitoringPort))
-	}
-
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -53,6 +49,7 @@ func NewScheduler(
 		func() ([]byte, error) {
 			return cfgen.GetSchedulerConfig(resource.Spec.Schedulers)
 		},
+		consts.SchedulerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.SchedulerRPCPort,
