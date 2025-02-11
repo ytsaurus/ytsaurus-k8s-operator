@@ -851,6 +851,7 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    description: Desired number of instances.
                     format: int32
                     type: integer
                   locations:
@@ -969,6 +970,7 @@ spec:
                       type: object
                     type: array
                   minReadyInstanceCount:
+                    description: Acceptable number of instances.
                     type: integer
                   monitoringPort:
                     format: int32
@@ -1010,6 +1012,7 @@ spec:
                       type: string
                     type: object
                   readinessProbeParams:
+                    description: Parameters for periodic probe of instance readiness.
                     properties:
                       failureThreshold:
                         format: int32
@@ -1170,6 +1173,31 @@ spec:
                           type: string
                       type: object
                     type: array
+                  updateStrategy:
+                    description: StatefulSet update strategy.
+                    properties:
+                      rollingUpdate:
+                        description: RollingUpdate is used to communicate parameters
+                          when Type is RollingUpdateStatef
+                        properties:
+                          maxUnavailable:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: The maximum number of pods that can be unavailable
+                              during the update.
+                            x-kubernetes-int-or-string: true
+                          partition:
+                            description: |-
+                              Partition indicates the ordinal at which the StatefulSet should be partitioned
+                              f
+                            format: int32
+                            type: integer
+                        type: object
+                      type:
+                        description: Type indicates the type of the StatefulSetUpdateStrategy.
+                        type: string
+                    type: object
                   volumeClaimTemplates:
                     items:
                       description: EmbeddedPersistentVolumeClaim is an embedded version
@@ -3421,6 +3449,7 @@ spec:
                       description: Overrides coreImage for component.
                       type: string
                     instanceCount:
+                      description: Desired number of instances.
                       format: int32
                       type: integer
                     locations:
@@ -3539,6 +3568,7 @@ spec:
                         type: object
                       type: array
                     minReadyInstanceCount:
+                      description: Acceptable number of instances.
                       type: integer
                     monitoringPort:
                       format: int32
@@ -3587,6 +3617,7 @@ spec:
                       description: Name of the node rack.
                       type: string
                     readinessProbeParams:
+                      description: Parameters for periodic probe of instance readiness.
                       properties:
                         failureThreshold:
                           format: int32
@@ -3752,6 +3783,31 @@ spec:
                             type: string
                         type: object
                       type: array
+                    updateStrategy:
+                      description: StatefulSet update strategy.
+                      properties:
+                        rollingUpdate:
+                          description: RollingUpdate is used to communicate parameters
+                            when Type is RollingUpdateStatef
+                          properties:
+                            maxUnavailable:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: The maximum number of pods that can be
+                                unavailable during the update.
+                              x-kubernetes-int-or-string: true
+                            partition:
+                              description: |-
+                                Partition indicates the ordinal at which the StatefulSet should be partitioned
+                                f
+                              format: int32
+                              type: integer
+                          type: object
+                        type:
+                          description: Type indicates the type of the StatefulSetUpdateStrategy.
+                          type: string
+                      type: object
                     volumeClaimTemplates:
                       items:
                         description: EmbeddedPersistentVolumeClaim is an embedded
@@ -6003,6 +6059,7 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    description: Desired number of instances.
                     format: int32
                     type: integer
                   locations:
@@ -6121,6 +6178,7 @@ spec:
                       type: object
                     type: array
                   minReadyInstanceCount:
+                    description: Acceptable number of instances.
                     type: integer
                   monitoringPort:
                     format: int32
@@ -6162,6 +6220,7 @@ spec:
                       type: string
                     type: object
                   readinessProbeParams:
+                    description: Parameters for periodic probe of instance readiness.
                     properties:
                       failureThreshold:
                         format: int32
@@ -6322,6 +6381,31 @@ spec:
                           type: string
                       type: object
                     type: array
+                  updateStrategy:
+                    description: StatefulSet update strategy.
+                    properties:
+                      rollingUpdate:
+                        description: RollingUpdate is used to communicate parameters
+                          when Type is RollingUpdateStatef
+                        properties:
+                          maxUnavailable:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: The maximum number of pods that can be unavailable
+                              during the update.
+                            x-kubernetes-int-or-string: true
+                          partition:
+                            description: |-
+                              Partition indicates the ordinal at which the StatefulSet should be partitioned
+                              f
+                            format: int32
+                            type: integer
+                        type: object
+                      type:
+                        description: Type indicates the type of the StatefulSetUpdateStrategy.
+                        type: string
+                    type: object
                   volumeClaimTemplates:
                     items:
                       description: EmbeddedPersistentVolumeClaim is an embedded version
@@ -8614,6 +8698,7 @@ spec:
                         type: string
                       type: array
                     instanceCount:
+                      description: Desired number of instances.
                       format: int32
                       type: integer
                     jobEnvironment:
@@ -8914,6 +8999,7 @@ spec:
                         type: object
                       type: array
                     minReadyInstanceCount:
+                      description: Acceptable number of instances.
                       type: integer
                     monitoringPort:
                       format: int32
@@ -8965,6 +9051,7 @@ spec:
                       description: Name of the node rack.
                       type: string
                     readinessProbeParams:
+                      description: Parameters for periodic probe of instance readiness.
                       properties:
                         failureThreshold:
                           format: int32
@@ -9135,6 +9222,31 @@ spec:
                             type: string
                         type: object
                       type: array
+                    updateStrategy:
+                      description: StatefulSet update strategy.
+                      properties:
+                        rollingUpdate:
+                          description: RollingUpdate is used to communicate parameters
+                            when Type is RollingUpdateStatef
+                          properties:
+                            maxUnavailable:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: The maximum number of pods that can be
+                                unavailable during the update.
+                              x-kubernetes-int-or-string: true
+                            partition:
+                              description: |-
+                                Partition indicates the ordinal at which the StatefulSet should be partitioned
+                                f
+                              format: int32
+                              type: integer
+                          type: object
+                        type:
+                          description: Type indicates the type of the StatefulSetUpdateStrategy.
+                          type: string
+                      type: object
                     volumeClaimTemplates:
                       items:
                         description: EmbeddedPersistentVolumeClaim is an embedded
@@ -11409,6 +11521,7 @@ spec:
                       description: Overrides coreImage for component.
                       type: string
                     instanceCount:
+                      description: Desired number of instances.
                       format: int32
                       type: integer
                     locations:
@@ -11527,6 +11640,7 @@ spec:
                         type: object
                       type: array
                     minReadyInstanceCount:
+                      description: Acceptable number of instances.
                       type: integer
                     monitoringPort:
                       format: int32
@@ -11568,6 +11682,7 @@ spec:
                         type: string
                       type: object
                     readinessProbeParams:
+                      description: Parameters for periodic probe of instance readiness.
                       properties:
                         failureThreshold:
                           format: int32
@@ -11750,6 +11865,31 @@ spec:
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
+                      type: object
+                    updateStrategy:
+                      description: StatefulSet update strategy.
+                      properties:
+                        rollingUpdate:
+                          description: RollingUpdate is used to communicate parameters
+                            when Type is RollingUpdateStatef
+                          properties:
+                            maxUnavailable:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: The maximum number of pods that can be
+                                unavailable during the update.
+                              x-kubernetes-int-or-string: true
+                            partition:
+                              description: |-
+                                Partition indicates the ordinal at which the StatefulSet should be partitioned
+                                f
+                              format: int32
+                              type: integer
+                          type: object
+                        type:
+                          description: Type indicates the type of the StatefulSetUpdateStrategy.
+                          type: string
                       type: object
                     volumeClaimTemplates:
                       items:
@@ -14029,6 +14169,7 @@ spec:
                       description: Overrides coreImage for component.
                       type: string
                     instanceCount:
+                      description: Desired number of instances.
                       format: int32
                       type: integer
                     locations:
@@ -14147,6 +14288,7 @@ spec:
                         type: object
                       type: array
                     minReadyInstanceCount:
+                      description: Acceptable number of instances.
                       type: integer
                     monitoringPort:
                       format: int32
@@ -14188,6 +14330,7 @@ spec:
                         type: string
                       type: object
                     readinessProbeParams:
+                      description: Parameters for periodic probe of instance readiness.
                       properties:
                         failureThreshold:
                           format: int32
@@ -14356,6 +14499,31 @@ spec:
                             type: string
                         type: object
                       type: array
+                    updateStrategy:
+                      description: StatefulSet update strategy.
+                      properties:
+                        rollingUpdate:
+                          description: RollingUpdate is used to communicate parameters
+                            when Type is RollingUpdateStatef
+                          properties:
+                            maxUnavailable:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: The maximum number of pods that can be
+                                unavailable during the update.
+                              x-kubernetes-int-or-string: true
+                            partition:
+                              description: |-
+                                Partition indicates the ordinal at which the StatefulSet should be partitioned
+                                f
+                              format: int32
+                              type: integer
+                          type: object
+                        type:
+                          description: Type indicates the type of the StatefulSetUpdateStrategy.
+                          type: string
+                      type: object
                     volumeClaimTemplates:
                       items:
                         description: EmbeddedPersistentVolumeClaim is an embedded
@@ -16616,6 +16784,7 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    description: Desired number of instances.
                     format: int32
                     type: integer
                   locations:
@@ -16734,6 +16903,7 @@ spec:
                       type: object
                     type: array
                   minReadyInstanceCount:
+                    description: Acceptable number of instances.
                     type: integer
                   monitoringPort:
                     format: int32
@@ -16775,6 +16945,7 @@ spec:
                       type: string
                     type: object
                   readinessProbeParams:
+                    description: Parameters for periodic probe of instance readiness.
                     properties:
                       failureThreshold:
                         format: int32
@@ -16935,6 +17106,31 @@ spec:
                           type: string
                       type: object
                     type: array
+                  updateStrategy:
+                    description: StatefulSet update strategy.
+                    properties:
+                      rollingUpdate:
+                        description: RollingUpdate is used to communicate parameters
+                          when Type is RollingUpdateStatef
+                        properties:
+                          maxUnavailable:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: The maximum number of pods that can be unavailable
+                              during the update.
+                            x-kubernetes-int-or-string: true
+                          partition:
+                            description: |-
+                              Partition indicates the ordinal at which the StatefulSet should be partitioned
+                              f
+                            format: int32
+                            type: integer
+                        type: object
+                      type:
+                        description: Type indicates the type of the StatefulSetUpdateStrategy.
+                        type: string
+                    type: object
                   volumeClaimTemplates:
                     items:
                       description: EmbeddedPersistentVolumeClaim is an embedded version
@@ -19253,6 +19449,7 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    description: Desired number of instances.
                     format: int32
                     type: integer
                   locations:
@@ -19375,6 +19572,7 @@ spec:
                   maxSnapshotCountToKeep:
                     type: integer
                   minReadyInstanceCount:
+                    description: Acceptable number of instances.
                     type: integer
                   monitoringPort:
                     format: int32
@@ -19416,6 +19614,7 @@ spec:
                       type: string
                     type: object
                   readinessProbeParams:
+                    description: Parameters for periodic probe of instance readiness.
                     properties:
                       failureThreshold:
                         format: int32
@@ -19581,6 +19780,31 @@ spec:
                           type: string
                       type: object
                     type: array
+                  updateStrategy:
+                    description: StatefulSet update strategy.
+                    properties:
+                      rollingUpdate:
+                        description: RollingUpdate is used to communicate parameters
+                          when Type is RollingUpdateStatef
+                        properties:
+                          maxUnavailable:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: The maximum number of pods that can be unavailable
+                              during the update.
+                            x-kubernetes-int-or-string: true
+                          partition:
+                            description: |-
+                              Partition indicates the ordinal at which the StatefulSet should be partitioned
+                              f
+                            format: int32
+                            type: integer
+                        type: object
+                      type:
+                        description: Type indicates the type of the StatefulSetUpdateStrategy.
+                        type: string
+                    type: object
                   volumeClaimTemplates:
                     items:
                       description: EmbeddedPersistentVolumeClaim is an embedded version
@@ -21824,6 +22048,7 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    description: Desired number of instances.
                     format: int32
                     type: integer
                   locations:
@@ -21942,6 +22167,7 @@ spec:
                       type: object
                     type: array
                   minReadyInstanceCount:
+                    description: Acceptable number of instances.
                     type: integer
                   monitoringPort:
                     format: int32
@@ -21983,6 +22209,7 @@ spec:
                       type: string
                     type: object
                   readinessProbeParams:
+                    description: Parameters for periodic probe of instance readiness.
                     properties:
                       failureThreshold:
                         format: int32
@@ -22143,6 +22370,31 @@ spec:
                           type: string
                       type: object
                     type: array
+                  updateStrategy:
+                    description: StatefulSet update strategy.
+                    properties:
+                      rollingUpdate:
+                        description: RollingUpdate is used to communicate parameters
+                          when Type is RollingUpdateStatef
+                        properties:
+                          maxUnavailable:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: The maximum number of pods that can be unavailable
+                              during the update.
+                            x-kubernetes-int-or-string: true
+                          partition:
+                            description: |-
+                              Partition indicates the ordinal at which the StatefulSet should be partitioned
+                              f
+                            format: int32
+                            type: integer
+                        type: object
+                      type:
+                        description: Type indicates the type of the StatefulSetUpdateStrategy.
+                        type: string
+                    type: object
                   volumeClaimTemplates:
                     items:
                       description: EmbeddedPersistentVolumeClaim is an embedded version
@@ -24384,6 +24636,7 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    description: Desired number of instances.
                     format: int32
                     type: integer
                   locations:
@@ -24502,6 +24755,7 @@ spec:
                       type: object
                     type: array
                   minReadyInstanceCount:
+                    description: Acceptable number of instances.
                     type: integer
                   monitoringPort:
                     format: int32
@@ -24543,6 +24797,7 @@ spec:
                       type: string
                     type: object
                   readinessProbeParams:
+                    description: Parameters for periodic probe of instance readiness.
                     properties:
                       failureThreshold:
                         format: int32
@@ -24703,6 +24958,31 @@ spec:
                           type: string
                       type: object
                     type: array
+                  updateStrategy:
+                    description: StatefulSet update strategy.
+                    properties:
+                      rollingUpdate:
+                        description: RollingUpdate is used to communicate parameters
+                          when Type is RollingUpdateStatef
+                        properties:
+                          maxUnavailable:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: The maximum number of pods that can be unavailable
+                              during the update.
+                            x-kubernetes-int-or-string: true
+                          partition:
+                            description: |-
+                              Partition indicates the ordinal at which the StatefulSet should be partitioned
+                              f
+                            format: int32
+                            type: integer
+                        type: object
+                      type:
+                        description: Type indicates the type of the StatefulSetUpdateStrategy.
+                        type: string
+                    type: object
                   volumeClaimTemplates:
                     items:
                       description: EmbeddedPersistentVolumeClaim is an embedded version
@@ -26952,6 +27232,7 @@ spec:
                       description: Overrides coreImage for component.
                       type: string
                     instanceCount:
+                      description: Desired number of instances.
                       format: int32
                       type: integer
                     locations:
@@ -27070,6 +27351,7 @@ spec:
                         type: object
                       type: array
                     minReadyInstanceCount:
+                      description: Acceptable number of instances.
                       type: integer
                     monitoringPort:
                       format: int32
@@ -27114,6 +27396,7 @@ spec:
                         type: string
                       type: object
                     readinessProbeParams:
+                      description: Parameters for periodic probe of instance readiness.
                       properties:
                         failureThreshold:
                           format: int32
@@ -27304,6 +27587,31 @@ spec:
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
+                      type: object
+                    updateStrategy:
+                      description: StatefulSet update strategy.
+                      properties:
+                        rollingUpdate:
+                          description: RollingUpdate is used to communicate parameters
+                            when Type is RollingUpdateStatef
+                          properties:
+                            maxUnavailable:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: The maximum number of pods that can be
+                                unavailable during the update.
+                              x-kubernetes-int-or-string: true
+                            partition:
+                              description: |-
+                                Partition indicates the ordinal at which the StatefulSet should be partitioned
+                                f
+                              format: int32
+                              type: integer
+                          type: object
+                        type:
+                          description: Type indicates the type of the StatefulSetUpdateStrategy.
+                          type: string
                       type: object
                     volumeClaimTemplates:
                       items:
@@ -29555,6 +29863,7 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    description: Desired number of instances.
                     format: int32
                     type: integer
                   locations:
@@ -29673,6 +29982,7 @@ spec:
                       type: object
                     type: array
                   minReadyInstanceCount:
+                    description: Acceptable number of instances.
                     type: integer
                   monitoringPort:
                     format: int32
@@ -29714,6 +30024,7 @@ spec:
                       type: string
                     type: object
                   readinessProbeParams:
+                    description: Parameters for periodic probe of instance readiness.
                     properties:
                       failureThreshold:
                         format: int32
@@ -29874,6 +30185,31 @@ spec:
                           type: string
                       type: object
                     type: array
+                  updateStrategy:
+                    description: StatefulSet update strategy.
+                    properties:
+                      rollingUpdate:
+                        description: RollingUpdate is used to communicate parameters
+                          when Type is RollingUpdateStatef
+                        properties:
+                          maxUnavailable:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: The maximum number of pods that can be unavailable
+                              during the update.
+                            x-kubernetes-int-or-string: true
+                          partition:
+                            description: |-
+                              Partition indicates the ordinal at which the StatefulSet should be partitioned
+                              f
+                            format: int32
+                            type: integer
+                        type: object
+                      type:
+                        description: Type indicates the type of the StatefulSetUpdateStrategy.
+                        type: string
+                    type: object
                   volumeClaimTemplates:
                     items:
                       description: EmbeddedPersistentVolumeClaim is an embedded version
@@ -32131,6 +32467,7 @@ spec:
                       description: Overrides coreImage for component.
                       type: string
                     instanceCount:
+                      description: Desired number of instances.
                       format: int32
                       type: integer
                     locations:
@@ -32253,6 +32590,7 @@ spec:
                     maxSnapshotCountToKeep:
                       type: integer
                     minReadyInstanceCount:
+                      description: Acceptable number of instances.
                       type: integer
                     monitoringPort:
                       format: int32
@@ -32294,6 +32632,7 @@ spec:
                         type: string
                       type: object
                     readinessProbeParams:
+                      description: Parameters for periodic probe of instance readiness.
                       properties:
                         failureThreshold:
                           format: int32
@@ -32459,6 +32798,31 @@ spec:
                             type: string
                         type: object
                       type: array
+                    updateStrategy:
+                      description: StatefulSet update strategy.
+                      properties:
+                        rollingUpdate:
+                          description: RollingUpdate is used to communicate parameters
+                            when Type is RollingUpdateStatef
+                          properties:
+                            maxUnavailable:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: The maximum number of pods that can be
+                                unavailable during the update.
+                              x-kubernetes-int-or-string: true
+                            partition:
+                              description: |-
+                                Partition indicates the ordinal at which the StatefulSet should be partitioned
+                                f
+                              format: int32
+                              type: integer
+                          type: object
+                        type:
+                          description: Type indicates the type of the StatefulSetUpdateStrategy.
+                          type: string
+                      type: object
                     volumeClaimTemplates:
                       items:
                         description: EmbeddedPersistentVolumeClaim is an embedded
@@ -34850,6 +35214,7 @@ spec:
                       description: Overrides coreImage for component.
                       type: string
                     instanceCount:
+                      description: Desired number of instances.
                       format: int32
                       type: integer
                     locations:
@@ -34968,6 +35333,7 @@ spec:
                         type: object
                       type: array
                     minReadyInstanceCount:
+                      description: Acceptable number of instances.
                       type: integer
                     monitoringPort:
                       format: int32
@@ -35016,6 +35382,7 @@ spec:
                       description: Name of the node rack.
                       type: string
                     readinessProbeParams:
+                      description: Parameters for periodic probe of instance readiness.
                       properties:
                         failureThreshold:
                           format: int32
@@ -35181,6 +35548,31 @@ spec:
                             type: string
                         type: object
                       type: array
+                    updateStrategy:
+                      description: StatefulSet update strategy.
+                      properties:
+                        rollingUpdate:
+                          description: RollingUpdate is used to communicate parameters
+                            when Type is RollingUpdateStatef
+                          properties:
+                            maxUnavailable:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: The maximum number of pods that can be
+                                unavailable during the update.
+                              x-kubernetes-int-or-string: true
+                            partition:
+                              description: |-
+                                Partition indicates the ordinal at which the StatefulSet should be partitioned
+                                f
+                              format: int32
+                              type: integer
+                          type: object
+                        type:
+                          description: Type indicates the type of the StatefulSetUpdateStrategy.
+                          type: string
+                      type: object
                     volumeClaimTemplates:
                       items:
                         description: EmbeddedPersistentVolumeClaim is an embedded
@@ -37439,6 +37831,7 @@ spec:
                       description: Overrides coreImage for component.
                       type: string
                     instanceCount:
+                      description: Desired number of instances.
                       format: int32
                       type: integer
                     locations:
@@ -37561,6 +37954,7 @@ spec:
                       format: int32
                       type: integer
                     minReadyInstanceCount:
+                      description: Acceptable number of instances.
                       type: integer
                     monitoringPort:
                       format: int32
@@ -37607,6 +38001,7 @@ spec:
                       format: int32
                       type: integer
                     readinessProbeParams:
+                      description: Parameters for periodic probe of instance readiness.
                       properties:
                         failureThreshold:
                           format: int32
@@ -37775,6 +38170,31 @@ spec:
                             type: string
                         type: object
                       type: array
+                    updateStrategy:
+                      description: StatefulSet update strategy.
+                      properties:
+                        rollingUpdate:
+                          description: RollingUpdate is used to communicate parameters
+                            when Type is RollingUpdateStatef
+                          properties:
+                            maxUnavailable:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: The maximum number of pods that can be
+                                unavailable during the update.
+                              x-kubernetes-int-or-string: true
+                            partition:
+                              description: |-
+                                Partition indicates the ordinal at which the StatefulSet should be partitioned
+                                f
+                              format: int32
+                              type: integer
+                          type: object
+                        type:
+                          description: Type indicates the type of the StatefulSetUpdateStrategy.
+                          type: string
+                      type: object
                     volumeClaimTemplates:
                       items:
                         description: EmbeddedPersistentVolumeClaim is an embedded
@@ -40344,6 +40764,7 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    description: Desired number of instances.
                     format: int32
                     type: integer
                   locations:
@@ -40462,6 +40883,7 @@ spec:
                       type: object
                     type: array
                   minReadyInstanceCount:
+                    description: Acceptable number of instances.
                     type: integer
                   monitoringPort:
                     format: int32
@@ -40503,6 +40925,7 @@ spec:
                       type: string
                     type: object
                   readinessProbeParams:
+                    description: Parameters for periodic probe of instance readiness.
                     properties:
                       failureThreshold:
                         format: int32
@@ -40663,6 +41086,31 @@ spec:
                           type: string
                       type: object
                     type: array
+                  updateStrategy:
+                    description: StatefulSet update strategy.
+                    properties:
+                      rollingUpdate:
+                        description: RollingUpdate is used to communicate parameters
+                          when Type is RollingUpdateStatef
+                        properties:
+                          maxUnavailable:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: The maximum number of pods that can be unavailable
+                              during the update.
+                            x-kubernetes-int-or-string: true
+                          partition:
+                            description: |-
+                              Partition indicates the ordinal at which the StatefulSet should be partitioned
+                              f
+                            format: int32
+                            type: integer
+                        type: object
+                      type:
+                        description: Type indicates the type of the StatefulSetUpdateStrategy.
+                        type: string
+                    type: object
                   volumeClaimTemplates:
                     items:
                       description: EmbeddedPersistentVolumeClaim is an embedded version
