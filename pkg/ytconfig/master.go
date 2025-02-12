@@ -33,6 +33,7 @@ type CypressManager struct {
 
 type MasterServer struct {
 	CommonServer
+	BusClient        *Bus             `yson:"bus_client,omitempty"`
 	Snapshots        MasterSnapshots  `yson:"snapshots"`
 	Changelogs       MasterChangelogs `yson:"changelogs"`
 	UseNewHydra      bool             `yson:"use_new_hydra"`
