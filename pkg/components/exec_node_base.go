@@ -159,6 +159,9 @@ func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSp
 			ReadOnly:  true,
 		})
 
+	n.server.addCABundleMount(&jobsContainer)
+	n.server.addTlsSecretMount(&jobsContainer)
+
 	// Replace mount propagation "Bidirectional" -> "HostToContainer".
 	// Tmpfs are propagated: exec-node -> host -> containerd.
 	for i := range jobsContainer.VolumeMounts {

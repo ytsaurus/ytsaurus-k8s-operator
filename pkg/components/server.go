@@ -35,6 +35,8 @@ type server interface {
 	needSync() bool
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
+	addCABundleMount(c *corev1.Container)
+	addTlsSecretMount(c *corev1.Container)
 }
 
 type serverImpl struct {
@@ -370,16 +372,16 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	if s.caBundle != nil {
 		s.caBundle.AddVolume(&statefulSet.Spec.Template.Spec)
 		for i := range statefulSet.Spec.Template.Spec.Containers {
-			s.caBundle.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[i])
+			s.addCABundleMount(&statefulSet.Spec.Template.Spec.Containers[i])
 		}
 		for i := range statefulSet.Spec.Template.Spec.InitContainers {
-			s.caBundle.AddVolumeMount(&statefulSet.Spec.Template.Spec.InitContainers[i])
+			s.addCABundleMount(&statefulSet.Spec.Template.Spec.InitContainers[i])
 		}
 	}
 
 	if s.tlsSecret != nil {
 		s.tlsSecret.AddVolume(&statefulSet.Spec.Template.Spec)
-		s.tlsSecret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
+		s.addTlsSecretMount(&statefulSet.Spec.Template.Spec.Containers[0])
 	}
 
 	s.builtStatefulSet = statefulSet
@@ -390,4 +392,16 @@ func (s *serverImpl) removePods(ctx context.Context) error {
 	ss := s.rebuildStatefulSet()
 	ss.Spec.Replicas = ptr.To(int32(0))
 	return s.Sync(ctx)
+}
+
+func (s *serverImpl) addCABundleMount(c *corev1.Container) {
+	if s.caBundle != nil {
+		s.caBundle.AddVolumeMount(c)
+	}
+}
+
+func (s *serverImpl) addTlsSecretMount(c *corev1.Container) {
+	if s.tlsSecret != nil {
+		s.tlsSecret.AddVolumeMount(c)
+	}
 }

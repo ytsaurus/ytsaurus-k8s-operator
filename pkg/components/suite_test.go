@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	"go.ytsaurus.tech/yt/go/yt"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -131,6 +132,12 @@ func (fs *FakeServer) rebuildStatefulSet() *appsv1.StatefulSet {
 
 func (fs *FakeServer) removePods(ctx context.Context) error {
 	return nil
+}
+
+func (fs *FakeServer) addCABundleMount(c *corev1.Container) {
+}
+
+func (fs *FakeServer) addTlsSecretMount(c *corev1.Container) {
 }
 
 func (fs *FakeServer) GetImage() string {
