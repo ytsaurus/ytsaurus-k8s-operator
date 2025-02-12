@@ -223,6 +223,8 @@ linters-settings:
     # Default: 120.
     line-length: 180
 
+  interfacebloat:
+    max: 11
 
 issues:
   max-same-issues: 0  # disable

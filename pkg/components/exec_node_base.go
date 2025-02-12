@@ -97,7 +97,9 @@ func (n *baseExecNode) doBuildBase() error {
 	if n.IsJobEnvironmentIsolated() {
 		// Add sidecar container for running jobs.
 		if envSpec := n.spec.JobEnvironment; envSpec != nil && envSpec.CRI != nil {
-			n.doBuildCRISidecar(envSpec, podSpec)
+			jobContainer := n.doBuildCRISidecar(envSpec, podSpec)
+			n.server.addCABundleMount(jobContainer)
+			n.server.addTlsSecretMount(jobContainer)
 		}
 	} else if n.sidecarConfig != nil {
 		// Mount sidecar config into exec node container if job environment is not isolated.
@@ -129,7 +131,7 @@ func (n *baseExecNode) addEnvironmentForCRITools(container *corev1.Container) {
 	}...)
 }
 
-func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSpec *corev1.PodSpec) {
+func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSpec *corev1.PodSpec) *corev1.Container {
 	configPath := path.Join(consts.ContainerdConfigMountPoint, consts.ContainerdConfigFileName)
 
 	wrapper := envSpec.CRI.EntrypointWrapper
@@ -177,6 +179,8 @@ func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSp
 	}
 
 	podSpec.Containers = append(podSpec.Containers, jobsContainer)
+
+	return &podSpec.Containers[len(podSpec.Containers)-1]
 }
 
 func (n *baseExecNode) doSyncBase(ctx context.Context, dry bool) (ComponentStatus, error) {
