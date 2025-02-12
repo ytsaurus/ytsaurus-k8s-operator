@@ -422,6 +422,8 @@ func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, e
 	g.fillPrimaryMaster(&c.PrimaryMaster)
 	configureMasterServerCypressManager(g.GetMaxReplicationFactor(), &c.CypressManager)
 
+	c.BusClient = c.ClusterConnection.BusClient
+
 	// COMPAT(l0kix2): remove that after we drop support for specifying host network without master host addresses.
 	if ptr.Deref(spec.HostNetwork, g.ytsaurus.Spec.HostNetwork) && len(spec.HostAddresses) == 0 {
 		// Each master deduces its index within cell by looking up his FQDN in the
@@ -765,6 +767,8 @@ func (g *Generator) getQueueAgentConfigImpl(spec *ytv1.QueueAgentSpec) (QueueAge
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
+	c.BusClient = c.ClusterConnection.BusClient
+
 	return c, nil
 }
 
@@ -876,6 +880,7 @@ func (g *Generator) getDiscoveryConfigImpl(spec *ytv1.DiscoverySpec) (DiscoveryS
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	c.DiscoveryServer.Addresses = g.getDiscoveryAddresses()
+	c.BusClient = c.ClusterConnection.BusClient
 	return c, nil
 }
 
@@ -893,6 +898,7 @@ func (g *Generator) getMasterCachesConfigImpl(spec *ytv1.MasterCachesSpec) (Mast
 		return MasterCacheServer{}, err
 	}
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	c.BusClient = c.ClusterConnection.BusClient
 	return c, nil
 }
 
