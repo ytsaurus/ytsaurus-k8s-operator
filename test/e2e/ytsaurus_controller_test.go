@@ -468,14 +468,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
 					Component: ytv1.Component{
 						Type: consts.DataNodeType,
-						Name: "DataNode-dn-2",
+						Name: "dn-2",
 					},
 				}}
 				ytsaurus.Spec.Discovery.InstanceCount += 1
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("DataNode-dn-2"))
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponentsExactly("dn-2"))
 
 				By("Wait cluster update with selector:DataNodesOnly complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())

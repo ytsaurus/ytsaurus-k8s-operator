@@ -63,7 +63,11 @@ func (fc *FakeComponent) IsUpdating() bool {
 	return false
 }
 
-func (fc *FakeComponent) GetName() string {
+func (fc *FakeComponent) GetShortName() string {
+	return fc.name
+}
+
+func (fc *FakeComponent) GetFullName() string {
 	return fc.name
 }
 

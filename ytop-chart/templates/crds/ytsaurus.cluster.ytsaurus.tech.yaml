@@ -40,7 +40,7 @@ spec:
       name: UpdateState
       type: string
     - description: Updating components (for local update)
-      jsonPath: .status.updateStatus.components
+      jsonPath: .status.updateStatus.updatingComponents[*].type
       name: UpdatingComponents
       type: string
     name: v1

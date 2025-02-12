@@ -108,7 +108,7 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return ytClientStatus, err
 	}
 	if ytClientStatus.SyncStatus != SyncStatusReady {
-		return WaitingStatus(SyncStatusBlocked, tn.ytsaurusClient.GetName()), err
+		return WaitingStatus(SyncStatusBlocked, tn.ytsaurusClient.GetFullName()), err
 	}
 
 	if !dry && tn.doInitialization {

@@ -50,7 +50,7 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 
 	for _, comp := range needUpdate {
 		component := ytv1.Component{
-			Name: comp.GetName(),
+			Name: comp.GetShortName(),
 			Type: comp.GetType(),
 		}
 		upd := canUpdateComponent(configuredSelectors, component)
@@ -83,7 +83,7 @@ func needFullUpdate(needUpdate []components.Component) bool {
 	statelessSelector := []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassStateless}}
 	for _, comp := range needUpdate {
 		component := ytv1.Component{
-			Name: comp.GetName(),
+			Name: comp.GetShortName(),
 			Type: comp.GetType(),
 		}
 		isStateless := canUpdateComponent(statelessSelector, component)
@@ -145,7 +145,7 @@ func convertToComponent(components []components.Component) []ytv1.Component {
 	var result []ytv1.Component
 	for _, c := range components {
 		result = append(result, ytv1.Component{
-			Name: c.GetName(),
+			Name: c.GetShortName(),
 			Type: c.GetType(),
 		})
 	}
@@ -201,7 +201,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		case len(needUpdate) != 0:
 			var needUpdateNames []string
 			for _, c := range needUpdate {
-				needUpdateNames = append(needUpdateNames, c.GetName())
+				needUpdateNames = append(needUpdateNames, c.GetFullName())
 			}
 			logger = logger.WithValues("componentsForUpdateAll", needUpdateNames)
 			updatingComponents, blockMsg := chooseUpdatingComponents(

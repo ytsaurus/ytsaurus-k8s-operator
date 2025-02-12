@@ -178,7 +178,7 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	if !dry {
 		err = qt.init(ctx, ytClient)
 		if err != nil {
-			return WaitingStatus(SyncStatusPending, fmt.Sprintf("%s initialization", qt.GetName())), err
+			return WaitingStatus(SyncStatusPending, fmt.Sprintf("%s initialization", qt.GetFullName())), err
 		}
 
 		qt.ytsaurus.SetStatusCondition(metav1.Condition{

@@ -109,7 +109,7 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return masterStatus, err
 	}
 	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, rp.master.GetName()), err
+		return WaitingStatus(SyncStatusBlocked, rp.master.GetFullName()), err
 	}
 
 	if rp.NeedSync() {

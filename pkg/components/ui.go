@@ -288,7 +288,7 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return masterStatus, err
 	}
 	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, u.master.GetName()), err
+		return WaitingStatus(SyncStatusBlocked, u.master.GetFullName()), err
 	}
 
 	if u.secret.NeedSync(consts.TokenSecretKey, "") {

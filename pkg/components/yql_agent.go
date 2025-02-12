@@ -88,8 +88,12 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 	}
 }
 
-func (yqla *YqlAgent) GetName() string {
+func (yqla *YqlAgent) GetFullName() string {
 	return yqla.labeller.GetFullComponentName()
+}
+
+func (yqla *YqlAgent) GetShortName() string {
+	return yqla.labeller.GetInstanceGroup()
 }
 
 func (yqla *YqlAgent) Fetch(ctx context.Context) error {
@@ -172,7 +176,7 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return masterStatus, err
 	}
 	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, yqla.master.GetName()), err
+		return WaitingStatus(SyncStatusBlocked, yqla.master.GetFullName()), err
 	}
 
 	if yqla.secret.NeedSync(consts.TokenSecretKey, "") {

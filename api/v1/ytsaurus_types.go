@@ -17,6 +17,8 @@ limitations under the License.
 package v1
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -814,7 +816,7 @@ type Component struct {
 }
 
 func (c Component) String() string {
-	return c.Name
+	return fmt.Sprintf("%s(%s)", c.Type, c.Name)
 }
 
 // YtsaurusStatus defines the observed state of Ytsaurus
@@ -843,7 +845,7 @@ type YtsaurusStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:printcolumn:name="ClusterState",type="string",JSONPath=".status.state",description="State of Ytsaurus cluster"
 //+kubebuilder:printcolumn:name="UpdateState",type="string",JSONPath=".status.updateStatus.state",description="Update state of Ytsaurus cluster"
-//+kubebuilder:printcolumn:name="UpdatingComponents",type="string",JSONPath=".status.updateStatus.components",description="Updating components (for local update)"
+//+kubebuilder:printcolumn:name="UpdatingComponents",type="string",JSONPath=".status.updateStatus.updatingComponents[*].type",description="Updating components (for local update)"
 //+kubebuilder:resource:path=ytsaurus,shortName=yt,categories=ytsaurus-all;yt-all
 //+kubebuilder:subresource:status
 

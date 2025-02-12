@@ -114,7 +114,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return masterStatus, err
 	}
 	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, qa.master.GetName()), err
+		return WaitingStatus(SyncStatusBlocked, qa.master.GetFullName()), err
 	}
 
 	// It makes no sense to start queue agents without tablet nodes.
@@ -127,7 +127,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			return tndStatus, err
 		}
 		if !IsRunningStatus(tndStatus.SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, tnd.GetName()), err
+			return WaitingStatus(SyncStatusBlocked, tnd.GetFullName()), err
 		}
 	}
 
@@ -161,7 +161,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			return ytClientStatus, err
 		}
 		if ytClientStatus.SyncStatus != SyncStatusReady {
-			return WaitingStatus(SyncStatusBlocked, qa.ytsaurusClient.GetName()), err
+			return WaitingStatus(SyncStatusBlocked, qa.ytsaurusClient.GetFullName()), err
 		}
 
 		if !dry {
@@ -189,7 +189,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	if !dry {
 		err = qa.init(ctx, ytClient)
 		if err != nil {
-			return WaitingStatus(SyncStatusPending, fmt.Sprintf("%s initialization", qa.GetName())), err
+			return WaitingStatus(SyncStatusPending, fmt.Sprintf("%s initialization", qa.GetFullName())), err
 		}
 
 		qa.ytsaurus.SetStatusCondition(metav1.Condition{

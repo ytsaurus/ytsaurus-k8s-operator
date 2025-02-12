@@ -82,6 +82,10 @@ func (l *Labeller) GetFullComponentName() string {
 	return l.getGroupName(string(l.ComponentType))
 }
 
+func (l *Labeller) GetInstanceGroup() string {
+	return l.InstanceGroup
+}
+
 func (l *Labeller) GetServerStatfulSetName() string {
 	return l.getName(consts.ComponentStatefulSetPrefix(l.ComponentType), "")
 }
