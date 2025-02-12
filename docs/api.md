@@ -336,6 +336,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [ComponentUpdateSelector](#componentupdateselector)
 - [UpdateStatus](#updatestatus)
 
 | Field | Description | Default | Validation |
@@ -357,9 +358,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `type` _[ComponentType](#componenttype)_ |  |  |  |
-| `group` _[ComponentGroup](#componentgroup)_ |  |  |  |
-| `name` _string_ |  |  |  |
+| `class` _[ComponentClass](#componentclass)_ |  |  |  |
+| `component` _[Component](#component)_ |  |  |  |
 
 
 #### ControllerAgentsSpec

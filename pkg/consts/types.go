@@ -25,11 +25,11 @@ const (
 	SpytType                 ComponentType = "SPYT"
 )
 
-type ComponentGroup string
+type ComponentClass string
 
 const (
-	// ComponentGroupStateless group contains only stateless components (not master, data nodes, tablet nodes)
-	ComponentGroupStateless  ComponentGroup = "Stateless"
-	ComponentGroupEverything ComponentGroup = "Everything"
-	ComponentGroupNothing    ComponentGroup = "Nothing"
+	// ComponentClassStateless group contains only stateless components (not master, data nodes, tablet nodes)
+	ComponentClassStateless  ComponentClass = "Stateless"
+	ComponentClassEverything ComponentClass = "Everything"
+	ComponentClassNothing    ComponentClass = "Nothing"
 )

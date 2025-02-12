@@ -39577,12 +39577,15 @@ spec:
                   the update process.
                 items:
                   properties:
-                    group:
+                    class:
                       type: string
-                    name:
-                      type: string
-                    type:
-                      type: string
+                    component:
+                      properties:
+                        name:
+                          type: string
+                        type:
+                          type: string
+                      type: object
                   type: object
                 type: array
               useIpv4:

@@ -316,7 +316,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			It("Should be updated according to UpdateSelector=Everything", func(ctx context.Context) {
 
 				By("Run cluster update with selector: nothing")
-				ytsaurus.Spec.UpdateSelectors = []ytv1.ComponentUpdateSelector{{Group: consts.ComponentGroupNothing}}
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassNothing}}
 				// We want change in all yson configs, new discovery instance will trigger that.
 				ytsaurus.Spec.Discovery.InstanceCount += 1
 				UpdateObject(ctx, ytsaurus)
@@ -330,7 +330,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				)
 
 				By("Update cluster update with strategy full")
-				ytsaurus.Spec.UpdateSelectors = []ytv1.ComponentUpdateSelector{{Group: consts.ComponentGroupEverything}}
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
 				ytsaurus.Spec.Discovery.InstanceCount += 1
 				UpdateObject(ctx, ytsaurus)
 
@@ -358,7 +358,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			It("Should be updated according to UpdateSelector=TabletNodesOnly,ExecNodesOnly", func(ctx context.Context) {
 
 				By("Run cluster update with selector:ExecNodesOnly")
-				ytsaurus.Spec.UpdateSelectors = []ytv1.ComponentUpdateSelector{{Type: consts.ExecNodeType}}
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+					Component: ytv1.Component{
+						Type: consts.ExecNodeType,
+					},
+				}}
 				ytsaurus.Spec.Discovery.InstanceCount += 1
 				UpdateObject(ctx, ytsaurus)
 
@@ -376,7 +380,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(pods.Updated).To(ConsistOf("end-0"), "updated")
 
 				By("Run cluster update with selector:TabletNodesOnly")
-				ytsaurus.Spec.UpdateSelectors = []ytv1.ComponentUpdateSelector{{Type: consts.TabletNodeType}}
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+					Component: ytv1.Component{
+						Type: consts.TabletNodeType,
+					},
+				}}
 				ytsaurus.Spec.Discovery.InstanceCount += 1
 				UpdateObject(ctx, ytsaurus)
 
@@ -397,7 +405,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			It("Should be updated according to UpdateSelector=MasterOnly,StatelessOnly", func(ctx context.Context) {
 
 				By("Run cluster update with selector:MasterOnly")
-				ytsaurus.Spec.UpdateSelectors = []ytv1.ComponentUpdateSelector{{Type: consts.MasterType}}
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+					Component: ytv1.Component{
+						Type: consts.MasterType,
+					},
+				}}
 				ytsaurus.Spec.Discovery.InstanceCount += 1
 				UpdateObject(ctx, ytsaurus)
 
@@ -414,7 +426,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(pods.Updated).To(ConsistOf("ms-0"), "updated")
 
 				By("Run cluster update with selector:StatelessOnly")
-				ytsaurus.Spec.UpdateSelectors = []ytv1.ComponentUpdateSelector{{Group: consts.ComponentGroupStateless}}
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+					Class: consts.ComponentClassStateless,
+				}}
 				ytsaurus.Spec.Discovery.InstanceCount += 1
 				UpdateObject(ctx, ytsaurus)
 
@@ -451,8 +465,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				podsBeforeUpdate = getComponentPods(ctx, namespace)
 
 				By("Run cluster update with selector targeting only second data node group")
-				ytsaurus.Spec.UpdateSelectors = []ytv1.ComponentUpdateSelector{{
-					Name: "DataNode-dn-2",
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+					Component: ytv1.Component{
+						Type: consts.DataNodeType,
+						Name: "DataNode-dn-2",
+					},
 				}}
 				ytsaurus.Spec.Discovery.InstanceCount += 1
 				UpdateObject(ctx, ytsaurus)

@@ -17,26 +17,23 @@ import (
 
 func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
 	for _, selector := range selectors {
-		if selector.Name != "" {
-			if selector.Name == component.Name {
+		if len(selector.Class) > 0 {
+			switch selector.Class {
+			case consts.ComponentClassEverything:
 				return true
-			}
-		} else if selector.Type != "" {
-			if selector.Type == component.Type {
-				return true
-			}
-		} else {
-			switch selector.Group {
-			case consts.ComponentGroupEverything:
-				return true
-			case consts.ComponentGroupNothing:
+			case consts.ComponentClassNothing:
 				return false
-			case consts.ComponentGroupStateless:
+			case consts.ComponentClassStateless:
 				if component.Type != consts.DataNodeType && component.Type != consts.TabletNodeType && component.Type != consts.MasterType {
 					return true
 				}
 			default:
 				return false
+			}
+		}
+		if selector.Component.Type == component.Type {
+			if len(selector.Component.Name) == 0 || selector.Component.Name == component.Name {
+				return true
 			}
 		}
 	}
@@ -71,7 +68,7 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 		return nil, "All components are uptodate"
 	}
 
-	if len(configuredSelectors) == 1 && configuredSelectors[0].Group == consts.ComponentGroupEverything {
+	if len(configuredSelectors) == 1 && configuredSelectors[0].Class == consts.ComponentClassEverything {
 		if needFullUpdate(needUpdate) {
 			// Here we update not only components that are not up-to-date, but all cluster.
 			return convertToComponent(allComponents), ""
@@ -83,7 +80,7 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []components.Co
 }
 
 func needFullUpdate(needUpdate []components.Component) bool {
-	statelessSelector := []ytv1.ComponentUpdateSelector{{Group: consts.ComponentGroupStateless}}
+	statelessSelector := []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassStateless}}
 	for _, comp := range needUpdate {
 		component := ytv1.Component{
 			Name: comp.GetName(),
@@ -98,34 +95,50 @@ func needFullUpdate(needUpdate []components.Component) bool {
 }
 
 func getEffectiveSelectors(spec ytv1.YtsaurusSpec) []ytv1.ComponentUpdateSelector {
-	if len(spec.UpdateSelectors) != 0 {
-		return spec.UpdateSelectors
+	if spec.UpdatePlan != nil {
+		return spec.UpdatePlan
 	}
 
 	if spec.UpdateSelector != ytv1.UpdateSelectorUnspecified {
 		switch spec.UpdateSelector {
 		case ytv1.UpdateSelectorNothing:
-			return []ytv1.ComponentUpdateSelector{{Group: consts.ComponentGroupNothing}}
+			return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassNothing}}
 		case ytv1.UpdateSelectorMasterOnly:
-			return []ytv1.ComponentUpdateSelector{{Type: consts.MasterType}}
+			return []ytv1.ComponentUpdateSelector{{
+				Component: ytv1.Component{
+					Type: consts.MasterType,
+				},
+			}}
 		case ytv1.UpdateSelectorDataNodesOnly:
-			return []ytv1.ComponentUpdateSelector{{Type: consts.DataNodeType}}
+			return []ytv1.ComponentUpdateSelector{{
+				Component: ytv1.Component{
+					Type: consts.DataNodeType,
+				},
+			}}
 		case ytv1.UpdateSelectorTabletNodesOnly:
-			return []ytv1.ComponentUpdateSelector{{Type: consts.TabletNodeType}}
+			return []ytv1.ComponentUpdateSelector{{
+				Component: ytv1.Component{
+					Type: consts.TabletNodeType,
+				},
+			}}
 		case ytv1.UpdateSelectorExecNodesOnly:
-			return []ytv1.ComponentUpdateSelector{{Type: consts.ExecNodeType}}
+			return []ytv1.ComponentUpdateSelector{{
+				Component: ytv1.Component{
+					Type: consts.ExecNodeType,
+				},
+			}}
 		case ytv1.UpdateSelectorStatelessOnly:
-			return []ytv1.ComponentUpdateSelector{{Group: consts.ComponentGroupStateless}}
+			return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassStateless}}
 		case ytv1.UpdateSelectorEverything:
-			return []ytv1.ComponentUpdateSelector{{Group: consts.ComponentGroupEverything}}
+			return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
 		}
 	}
 
 	if spec.EnableFullUpdate {
-		return []ytv1.ComponentUpdateSelector{{Group: consts.ComponentGroupEverything}}
+		return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
 	}
 
-	return []ytv1.ComponentUpdateSelector{{Group: consts.ComponentGroupStateless}}
+	return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassStateless}}
 }
 
 func convertToComponent(components []components.Component) []ytv1.Component {

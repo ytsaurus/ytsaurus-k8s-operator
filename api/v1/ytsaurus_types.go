@@ -678,7 +678,7 @@ type YtsaurusSpec struct {
 
 	//+optional
 	// Controls the components that should be updated during the update process.
-	UpdateSelectors []ComponentUpdateSelector `json:"updateSelectors,omitempty"`
+	UpdatePlan []ComponentUpdateSelector `json:"updateSelectors,omitempty"`
 
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
@@ -784,12 +784,9 @@ const (
 
 type ComponentUpdateSelector struct {
 	//+optional
-	Type consts.ComponentType `json:"type,omitempty"`
+	Class consts.ComponentClass `json:"class,omitempty"`
 	//+optional
-	Group consts.ComponentGroup `json:"group,omitempty"`
-	//+optional
-	Name string `json:"name,omitempty"`
-
+	Component Component `json:"component,omitempty"`
 	// TODO(#325): Add rolling options
 }
 
