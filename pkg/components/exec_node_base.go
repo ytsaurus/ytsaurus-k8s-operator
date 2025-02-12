@@ -97,9 +97,7 @@ func (n *baseExecNode) doBuildBase() error {
 	if n.IsJobEnvironmentIsolated() {
 		// Add sidecar container for running jobs.
 		if envSpec := n.spec.JobEnvironment; envSpec != nil && envSpec.CRI != nil {
-			jobContainer := n.doBuildCRISidecar(envSpec, podSpec)
-			n.server.addCABundleMount(jobContainer)
-			n.server.addTlsSecretMount(jobContainer)
+			n.doBuildCRISidecar(envSpec, podSpec)
 		}
 	} else if n.sidecarConfig != nil {
 		// Mount sidecar config into exec node container if job environment is not isolated.
@@ -131,7 +129,7 @@ func (n *baseExecNode) addEnvironmentForCRITools(container *corev1.Container) {
 	}...)
 }
 
-func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSpec *corev1.PodSpec) *corev1.Container {
+func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSpec *corev1.PodSpec) {
 	configPath := path.Join(consts.ContainerdConfigMountPoint, consts.ContainerdConfigFileName)
 
 	wrapper := envSpec.CRI.EntrypointWrapper
@@ -161,6 +159,9 @@ func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSp
 			ReadOnly:  true,
 		})
 
+	n.server.addCABundleMount(&jobsContainer)
+	n.server.addTlsSecretMount(&jobsContainer)
+
 	// Replace mount propagation "Bidirectional" -> "HostToContainer".
 	// Tmpfs are propagated: exec-node -> host -> containerd.
 	for i := range jobsContainer.VolumeMounts {
@@ -179,8 +180,6 @@ func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSp
 	}
 
 	podSpec.Containers = append(podSpec.Containers, jobsContainer)
-
-	return &podSpec.Containers[len(podSpec.Containers)-1]
 }
 
 func (n *baseExecNode) doSyncBase(ctx context.Context, dry bool) (ComponentStatus, error) {
