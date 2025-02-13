@@ -518,6 +518,34 @@ func (r *baseValidator) validateCommonSpec(spec *CommonSpec) field.ErrorList {
 	return allErrors
 }
 
+func (r *baseValidator) validateUpdateSelectors(newYtsaurus *Ytsaurus) field.ErrorList {
+	var allErrors field.ErrorList
+	hasNothing := false
+
+	if newYtsaurus.Spec.UpdatePlan != nil {
+		if len(newYtsaurus.Spec.UpdatePlan) == 0 {
+			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("updatePlan"), "updatePlan should not be empty"))
+		}
+
+		for i, updateSelector := range newYtsaurus.Spec.UpdatePlan {
+			if updateSelector.Class != consts.ComponentClassUnspecified && (updateSelector.Component.Type != "" || updateSelector.Component.Name != "") {
+				allErrors = append(allErrors, field.Invalid(field.NewPath("spec").Child("updatePlan").Index(i).Child("component"), updateSelector.Component, "Only one of component or class should be specified"))
+			}
+			if updateSelector.Class == consts.ComponentClassUnspecified && updateSelector.Component.Type == "" && updateSelector.Component.Name == "" {
+				allErrors = append(allErrors, field.Invalid(field.NewPath("spec").Child("updatePlan").Index(i).Child("component"), updateSelector.Component, "Either component or class should be specified"))
+			}
+			if updateSelector.Class == consts.ComponentClassNothing {
+				hasNothing = true
+			}
+		}
+		if hasNothing && len(newYtsaurus.Spec.UpdatePlan) > 1 {
+			allErrors = append(allErrors, field.Invalid(field.NewPath("spec").Child("updatePlan"), newYtsaurus.Spec.UpdatePlan, "updatePlan should contain only one Nothing class"))
+		}
+	}
+
+	return allErrors
+}
+
 func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, oldYtsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
@@ -541,6 +569,7 @@ func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, o
 	allErrors = append(allErrors, r.validateYQLAgents(newYtsaurus)...)
 	allErrors = append(allErrors, r.validateUi(newYtsaurus)...)
 	allErrors = append(allErrors, r.validateExistsYtsaurus(ctx, newYtsaurus)...)
+	allErrors = append(allErrors, r.validateUpdateSelectors(newYtsaurus)...)
 
 	return allErrors
 }

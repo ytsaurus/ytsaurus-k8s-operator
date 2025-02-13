@@ -155,13 +155,13 @@ func NewComponentManager(
 	for _, c := range allComponents {
 		err := c.Fetch(ctx)
 		if err != nil {
-			logger.Error(err, "failed to fetch status for controller", "component", c.GetName())
+			logger.Error(err, "failed to fetch status for controller", "component", c.GetFullName())
 			return nil, err
 		}
 
 		componentStatus, err := c.Status(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get component %s status: %w", c.GetName(), err)
+			return nil, fmt.Errorf("failed to get component %s status: %w", c.GetFullName(), err)
 		}
 
 		c.SetReadyCondition(componentStatus)
@@ -180,11 +180,11 @@ func NewComponentManager(
 		}
 
 		if syncStatus != components.SyncStatusReady {
-			logger.Info("component is not ready", "component", c.GetName(), "syncStatus", syncStatus)
-			notReadyComponents = append(notReadyComponents, c.GetName())
+			logger.Info("component is not ready", "component", c.GetFullName(), "syncStatus", syncStatus)
+			notReadyComponents = append(notReadyComponents, c.GetFullName())
 			status.needSync = true
 		} else {
-			readyComponents = append(readyComponents, c.GetName())
+			readyComponents = append(readyComponents, c.GetFullName())
 		}
 	}
 
@@ -208,15 +208,15 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	for _, c := range cm.allComponents {
 		status, err := c.Status(ctx)
 		if err != nil {
-			return ctrl.Result{Requeue: true}, fmt.Errorf("failed to get status for %s: %w", c.GetName(), err)
+			return ctrl.Result{Requeue: true}, fmt.Errorf("failed to get status for %s: %w", c.GetFullName(), err)
 		}
 
 		if status.SyncStatus == components.SyncStatusPending ||
 			status.SyncStatus == components.SyncStatusUpdating {
 			hasPending = true
-			logger.Info("component sync", "component", c.GetName())
+			logger.Info("component sync", "component", c.GetFullName())
 			if err := c.Sync(ctx); err != nil {
-				logger.Error(err, "component sync failed", "component", c.GetName())
+				logger.Error(err, "component sync failed", "component", c.GetFullName())
 				return ctrl.Result{Requeue: true}, err
 			}
 		}

@@ -46,7 +46,8 @@ type Component interface {
 	Fetch(ctx context.Context) error
 	Sync(ctx context.Context) error
 	Status(ctx context.Context) (ComponentStatus, error)
-	GetName() string
+	GetFullName() string
+	GetShortName() string
 	GetType() consts.ComponentType
 	SetReadyCondition(status ComponentStatus)
 
@@ -60,12 +61,16 @@ type baseComponent struct {
 	labeller *labeller.Labeller
 }
 
-// GetName returns component's name, which is used as an identifier in component management
+// GetFullName returns component's name, which is used as an identifier in component management
 // and for mentioning in logs.
 // For example for master component name is "Master",
 // For data node name looks like "DataNode<NameFromSpec>".
-func (c *baseComponent) GetName() string {
+func (c *baseComponent) GetFullName() string {
 	return c.labeller.GetFullComponentName()
+}
+
+func (c *baseComponent) GetShortName() string {
+	return c.labeller.GetInstanceGroup()
 }
 
 func (c *baseComponent) GetType() consts.ComponentType {

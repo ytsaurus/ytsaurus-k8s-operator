@@ -139,7 +139,7 @@ func CreateUser(ctx context.Context, ytClient yt.Client, userName, token string,
 func IsUpdatingComponent(ytsaurus *apiproxy.Ytsaurus, component Component) bool {
 	components := ytsaurus.GetUpdatingComponents()
 	for _, c := range components {
-		if c.Name == component.GetName() {
+		if c.Type == component.GetType() && c.Name == component.GetShortName() {
 			return true
 		}
 	}
