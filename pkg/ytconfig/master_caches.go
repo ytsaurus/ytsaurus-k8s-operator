@@ -9,6 +9,8 @@ import (
 
 type MasterCacheServer struct {
 	CommonServer
+
+	BusClient *Bus `yson:"bus_client,omitempty"`
 }
 
 func getMasterCachesLogging(spec *ytv1.MasterCachesSpec) Logging {

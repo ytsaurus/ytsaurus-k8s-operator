@@ -13,6 +13,8 @@ type QueueAgent struct {
 
 type QueueAgentServer struct {
 	CommonServer
+
+	BusClient  *Bus       `yson:"bus_client,omitempty"`
 	User       string     `yson:"user"`
 	QueueAgent QueueAgent `yson:"queue_agent"`
 }

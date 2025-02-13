@@ -15,6 +15,8 @@ type Discovery struct {
 
 type DiscoveryServer struct {
 	CommonServer
+
+	BusClient       *Bus      `yson:"bus_client,omitempty"`
 	DiscoveryServer Discovery `yson:"discovery_server"`
 }
 
