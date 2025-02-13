@@ -301,8 +301,7 @@ func (g *NodeGenerator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec)
 		c.BusServer = &BusServer{}
 	}
 
-	// FIXME(khlebnikov): some clients does not support TLS yet
-	if s.TLSRequired && s != g.commonSpec.NativeTransport {
+	if s.TLSRequired {
 		c.BusServer.EncryptionMode = EncryptionModeRequired
 	} else {
 		c.BusServer.EncryptionMode = EncryptionModeOptional
