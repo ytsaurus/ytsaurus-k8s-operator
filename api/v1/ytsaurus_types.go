@@ -675,12 +675,13 @@ type YtsaurusSpec struct {
 	EnableFullUpdate bool `json:"enableFullUpdate"`
 	//+optional
 	//+optional
+	//+kubebuilder:validation:Enum={"","Nothing","MasterOnly","DataNodesOnly","TabletNodesOnly","ExecNodesOnly","StatelessOnly","Everything"}
 	// Deprecated: UpdateSelector is going to be removed soon. Please use UpdateSelectors instead.
 	UpdateSelector UpdateSelector `json:"updateSelector"`
 
 	//+optional
 	// Controls the components that should be updated during the update process.
-	UpdatePlan []ComponentUpdateSelector `json:"updateSelectors,omitempty"`
+	UpdatePlan []ComponentUpdateSelector `json:"updatePlan,omitempty"`
 
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
@@ -786,6 +787,7 @@ const (
 
 type ComponentUpdateSelector struct {
 	//+optional
+	//+kubebuilder:validation:Enum={"","Nothing","Stateless","Everything"}
 	Class consts.ComponentClass `json:"class,omitempty"`
 	//+optional
 	Component Component `json:"component,omitempty"`

@@ -17,7 +17,7 @@ import (
 
 func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
 	for _, selector := range selectors {
-		if len(selector.Class) > 0 {
+		if selector.Class != consts.ComponentClassUnspecified {
 			switch selector.Class {
 			case consts.ComponentClassEverything:
 				return true
@@ -31,10 +31,8 @@ func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1
 				return false
 			}
 		}
-		if selector.Component.Type == component.Type {
-			if len(selector.Component.Name) == 0 || selector.Component.Name == component.Name {
-				return true
-			}
+		if selector.Component.Type == component.Type && (selector.Component.Name == "" || selector.Component.Name == component.Name) {
+			return true
 		}
 	}
 	return false

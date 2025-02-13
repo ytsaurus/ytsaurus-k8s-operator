@@ -39580,15 +39580,17 @@ spec:
                 type: object
               uiImage:
                 type: string
-              updateSelector:
-                description: 'Deprecated: UpdateSelector is going to be removed soon.'
-                type: string
-              updateSelectors:
+              updatePlan:
                 description: Controls the components that should be updated during
                   the update process.
                 items:
                   properties:
                     class:
+                      enum:
+                      - ""
+                      - Nothing
+                      - Stateless
+                      - Everything
                       type: string
                     component:
                       properties:
@@ -39599,6 +39601,18 @@ spec:
                       type: object
                   type: object
                 type: array
+              updateSelector:
+                description: 'Deprecated: UpdateSelector is going to be removed soon.'
+                enum:
+                - ""
+                - Nothing
+                - MasterOnly
+                - DataNodesOnly
+                - TabletNodesOnly
+                - ExecNodesOnly
+                - StatelessOnly
+                - Everything
+                type: string
               useIpv4:
                 default: false
                 type: boolean
