@@ -564,7 +564,7 @@ func TestGetYtsaurusWithTlsInterconnect(t *testing.T) {
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
 
 	// all these components must have `bus_client` configuration section on the top-level
-	components := map[string](func() ([]byte, error)){
+	components := map[string]func() ([]byte, error){
 		"discovery":    func() ([]byte, error) { return g.GetDiscoveryConfig(&ytsaurus.Spec.Discovery) },
 		"master":       func() ([]byte, error) { return g.GetMasterConfig(&ytsaurus.Spec.PrimaryMasters) },
 		"master-cache": func() ([]byte, error) { return g.GetMasterCachesConfig(ytsaurus.Spec.MasterCaches) },
