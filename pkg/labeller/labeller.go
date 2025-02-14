@@ -83,6 +83,9 @@ func (l *Labeller) GetFullComponentName() string {
 }
 
 func (l *Labeller) GetInstanceGroup() string {
+	if l.InstanceGroup == consts.DefaultName {
+		return ""
+	}
 	return l.InstanceGroup
 }
 

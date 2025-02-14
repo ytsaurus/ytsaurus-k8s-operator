@@ -679,6 +679,7 @@ type YtsaurusSpec struct {
 	UpdateSelector UpdateSelector `json:"updateSelector"`
 
 	//+optional
+	// Experimental: api may change.
 	// Controls the components that should be updated during the update process.
 	UpdatePlan []ComponentUpdateSelector `json:"updatePlan,omitempty"`
 
@@ -817,6 +818,9 @@ type Component struct {
 }
 
 func (c Component) String() string {
+	if c.Name == "" {
+		return string(c.Type)
+	}
 	return fmt.Sprintf("%s(%s)", c.Type, c.Name)
 }
 
