@@ -324,6 +324,19 @@ func HaveClusterUpdatingComponents(components ...string) otypes.GomegaMatcher {
 	)
 }
 
+func HaveClusterUpdatingComponentsExactly(components ...string) otypes.GomegaMatcher {
+	return And(
+		HaveClusterStateUpdating(),
+		WithTransform(func(yts *ytv1.Ytsaurus) []string {
+			var result []string
+			for _, comp := range yts.Status.UpdateStatus.UpdatingComponents {
+				result = append(result, comp.Name)
+			}
+			return result
+		}, Equal(components)),
+	)
+}
+
 func HaveRemoteNodeReleaseStatusRunning() otypes.GomegaMatcher {
 	return HaveField("Status.ReleaseStatus", ytv1.RemoteNodeReleaseStatusRunning)
 }

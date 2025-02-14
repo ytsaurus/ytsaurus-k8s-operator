@@ -72,7 +72,7 @@ func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		return masterStatus, err
 	}
 	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, n.master.GetName()), err
+		return WaitingStatus(SyncStatusBlocked, n.master.GetFullName()), err
 	}
 
 	if n.NeedSync() {

@@ -78,8 +78,15 @@ func (l *Labeller) getName(name, infix string) string {
 
 // GetFullComponentName Returns CamelCase component type with instance group.
 func (l *Labeller) GetFullComponentName() string {
-	// NOTE: Group name is not CamelCase.
+	// NOTE: Class name is not CamelCase.
 	return l.getGroupName(string(l.ComponentType))
+}
+
+func (l *Labeller) GetInstanceGroup() string {
+	if l.InstanceGroup == consts.DefaultName {
+		return ""
+	}
+	return l.InstanceGroup
 }
 
 func (l *Labeller) GetServerStatfulSetName() string {

@@ -24,3 +24,13 @@ const (
 	ChytType                 ComponentType = "CHYT"
 	SpytType                 ComponentType = "SPYT"
 )
+
+type ComponentClass string
+
+const (
+	// ComponentClassStateless group contains only stateless components (not master, data nodes, tablet nodes)
+	ComponentClassUnspecified ComponentClass = ""
+	ComponentClassStateless   ComponentClass = "Stateless"
+	ComponentClassEverything  ComponentClass = "Everything"
+	ComponentClassNothing     ComponentClass = "Nothing"
+)

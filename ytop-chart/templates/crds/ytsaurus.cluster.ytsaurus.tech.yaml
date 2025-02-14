@@ -40,7 +40,7 @@ spec:
       name: UpdateState
       type: string
     - description: Updating components (for local update)
-      jsonPath: .status.updateStatus.components
+      jsonPath: .status.updateStatus.updatingComponents[*].type
       name: UpdatingComponents
       type: string
     name: v1
@@ -39580,9 +39580,28 @@ spec:
                 type: object
               uiImage:
                 type: string
+              updatePlan:
+                description: 'Experimental: api may change.'
+                items:
+                  properties:
+                    class:
+                      enum:
+                      - ""
+                      - Nothing
+                      - Stateless
+                      - Everything
+                      type: string
+                    component:
+                      properties:
+                        name:
+                          type: string
+                        type:
+                          type: string
+                      type: object
+                  type: object
+                type: array
               updateSelector:
-                description: UpdateSelector is an experimental field. Behaviour may
-                  change.
+                description: 'Deprecated: UpdateSelector is going to be removed soon.'
                 enum:
                 - ""
                 - Nothing

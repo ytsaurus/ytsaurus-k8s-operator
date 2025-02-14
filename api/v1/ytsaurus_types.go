@@ -17,6 +17,8 @@ limitations under the License.
 package v1
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -673,9 +675,13 @@ type YtsaurusSpec struct {
 	EnableFullUpdate bool `json:"enableFullUpdate"`
 	//+optional
 	//+kubebuilder:validation:Enum={"","Nothing","MasterOnly","DataNodesOnly","TabletNodesOnly","ExecNodesOnly","StatelessOnly","Everything"}
-	// UpdateSelector is an experimental field. Behaviour may change.
-	// If UpdateSelector is not empty EnableFullUpdate is ignored.
+	// Deprecated: UpdateSelector is going to be removed soon. Please use UpdateSelectors instead.
 	UpdateSelector UpdateSelector `json:"updateSelector"`
+
+	//+optional
+	// Experimental: api may change.
+	// Controls the components that should be updated during the update process.
+	UpdatePlan []ComponentUpdateSelector `json:"updatePlan,omitempty"`
 
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
@@ -779,15 +785,16 @@ const (
 	UpdateSelectorEverything UpdateSelector = "Everything"
 )
 
-type UpdateFlow string
+type ComponentUpdateSelector struct {
+	//+optional
+	//+kubebuilder:validation:Enum={"","Nothing","Stateless","Everything"}
+	Class consts.ComponentClass `json:"class,omitempty"`
+	//+optional
+	Component Component `json:"component,omitempty"`
+	// TODO(#325): Add rolling options
+}
 
-const (
-	UpdateFlowNone        UpdateFlow = ""
-	UpdateFlowStateless   UpdateFlow = "Stateless"
-	UpdateFlowMaster      UpdateFlow = "Master"
-	UpdateFlowTabletNodes UpdateFlow = "TabletNodes"
-	UpdateFlowFull        UpdateFlow = "Full"
-)
+type UpdateFlow string
 
 type UpdateStatus struct {
 	//+kubebuilder:default:=None
@@ -811,7 +818,10 @@ type Component struct {
 }
 
 func (c Component) String() string {
-	return c.Name
+	if c.Name == "" {
+		return string(c.Type)
+	}
+	return fmt.Sprintf("%s(%s)", c.Type, c.Name)
 }
 
 // YtsaurusStatus defines the observed state of Ytsaurus
@@ -840,7 +850,7 @@ type YtsaurusStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:printcolumn:name="ClusterState",type="string",JSONPath=".status.state",description="State of Ytsaurus cluster"
 //+kubebuilder:printcolumn:name="UpdateState",type="string",JSONPath=".status.updateStatus.state",description="Update state of Ytsaurus cluster"
-//+kubebuilder:printcolumn:name="UpdatingComponents",type="string",JSONPath=".status.updateStatus.components",description="Updating components (for local update)"
+//+kubebuilder:printcolumn:name="UpdatingComponents",type="string",JSONPath=".status.updateStatus.updatingComponents[*].type",description="Updating components (for local update)"
 //+kubebuilder:resource:path=ytsaurus,shortName=yt,categories=ytsaurus-all;yt-all
 //+kubebuilder:subresource:status
 
