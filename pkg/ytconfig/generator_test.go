@@ -545,6 +545,48 @@ func TestGetMasterCachesConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetYtsaurusWithTlsInterconnect(t *testing.T) {
+	ytsaurus := getYtsaurusWithEverything()
+
+	ytsaurus.Spec.CommonSpec.CABundle = &corev1.LocalObjectReference{
+		Name: "ytsaurus-ca-bundle",
+	}
+	ytsaurus.Spec.CommonSpec.NativeTransport = &ytv1.RPCTransportSpec{
+		TLSSecret: &corev1.LocalObjectReference{
+			Name: "ytsaurus-native-cert",
+		},
+		TLSRequired:                true,
+		TLSInsecure:                true,                                 // not mTLS
+		TLSPeerAlternativeHostName: testNamespace + ".svc.cluster.local", // or testNamespace.testClusterDomain ?
+	}
+
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
+
+	// all these components must have `bus_client` configuration section on the top-level
+	components := map[string](func() ([]byte, error)){
+		"discovery":    func() ([]byte, error) { return g.GetDiscoveryConfig(&ytsaurus.Spec.Discovery) },
+		"master":       func() ([]byte, error) { return g.GetMasterConfig(&ytsaurus.Spec.PrimaryMasters) },
+		"master-cache": func() ([]byte, error) { return g.GetMasterCachesConfig(ytsaurus.Spec.MasterCaches) },
+		"queue-agent":  func() ([]byte, error) { return g.GetQueueAgentConfig(ytsaurus.Spec.QueueAgents) },
+	}
+
+	for name, fn := range components {
+		t.Run(name, func(t *testing.T) {
+			cfg, err := fn()
+			require.NoError(t, err)
+			canonize.Assert(t, cfg)
+		})
+	}
+
+	t.Run("exec-node", func(t *testing.T) {
+		execNodeSpec := getExecNodeSpec(nil)
+		cfg, err := g.GetExecNodeConfig(execNodeSpec)
+		require.NoError(t, err)
+		canonize.Assert(t, cfg)
+	})
+}
+
 func getYtsaurus() *ytv1.Ytsaurus {
 	return &ytv1.Ytsaurus{
 		ObjectMeta: testObjectMeta,
