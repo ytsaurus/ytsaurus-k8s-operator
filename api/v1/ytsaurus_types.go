@@ -482,6 +482,10 @@ type TabletNodesSpec struct {
 	Name string `json:"name,omitempty"`
 }
 
+type TabletBalancerSpec struct {
+	InstanceSpec `json:",inline"`
+}
+
 type SchedulersSpec struct {
 	// label filter (for daemonset)
 	InstanceSpec `json:",inline"`
@@ -701,12 +705,12 @@ type YtsaurusSpec struct {
 	TCPProxies   []TCPProxiesSpec   `json:"tcpProxies,omitempty"`
 	KafkaProxies []KafkaProxiesSpec `json:"kafkaProxies,omitempty"`
 	// +kubebuilder:validation:MinItems:=1
-	DataNodes        []DataNodesSpec       `json:"dataNodes,omitempty"`
-	ExecNodes        []ExecNodesSpec       `json:"execNodes,omitempty"`
-	Schedulers       *SchedulersSpec       `json:"schedulers,omitempty"`
-	ControllerAgents *ControllerAgentsSpec `json:"controllerAgents,omitempty"`
-	TabletNodes      []TabletNodesSpec     `json:"tabletNodes,omitempty"`
-
+	DataNodes            []DataNodesSpec           `json:"dataNodes,omitempty"`
+	ExecNodes            []ExecNodesSpec           `json:"execNodes,omitempty"`
+	Schedulers           *SchedulersSpec           `json:"schedulers,omitempty"`
+	ControllerAgents     *ControllerAgentsSpec     `json:"controllerAgents,omitempty"`
+	TabletNodes          []TabletNodesSpec         `json:"tabletNodes,omitempty"`
+	TabletBalancer       *TabletBalancerSpec       `json:"tabletBalancer,omitempty"`
 	StrawberryController *StrawberryControllerSpec `json:"strawberry,omitempty"`
 	QueryTrackers        *QueryTrackerSpec         `json:"queryTrackers,omitempty"`
 	Spyt                 *DeprecatedSpytSpec       `json:"spyt,omitempty"`

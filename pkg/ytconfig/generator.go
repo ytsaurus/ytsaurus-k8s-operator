@@ -695,6 +695,26 @@ func (g *NodeGenerator) GetTabletNodeConfig(spec ytv1.TabletNodesSpec) ([]byte, 
 	return marshallYsonConfig(c)
 }
 
+func (g *Generator) getTabletBalancerConfigImpl(spec *ytv1.TabletBalancerSpec) (TabletBalancerServer, error) {
+	c, err := getTabletBalancerServerCarcass(spec)
+	if err != nil {
+		return TabletBalancerServer{}, err
+	}
+
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+
+	return c, nil
+}
+
+func (g *Generator) GetTabletBalancerConfig(spec *ytv1.TabletBalancerSpec) ([]byte, error) {
+	c, err := g.getTabletBalancerConfigImpl(spec)
+	if err != nil {
+		return nil, err
+	}
+	return marshallYsonConfig(c)
+}
+
 func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, error) {
 	c, err := getHTTPProxyServerCarcass(spec)
 	if err != nil {

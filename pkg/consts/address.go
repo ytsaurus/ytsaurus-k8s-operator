@@ -28,6 +28,9 @@ const (
 	TabletNodeRPCPort        = 9022
 	TabletNodeMonitoringPort = 10022
 
+	TabletBalancerRPCPort        = 9023
+	TabletBalancerMonitoringPort = 10023
+
 	ExecNodeRPCPort        = 9029
 	ExecNodeMonitoringPort = 10029
 
