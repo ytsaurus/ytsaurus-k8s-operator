@@ -106,6 +106,11 @@ func NewComponentManager(
 	}
 	allComponents = append(allComponents, tnds...)
 
+	if resource.Spec.TabletBalancer != nil {
+		tb := components.NewTabletBalancer(cfgen, ytsaurus, yc, m)
+		allComponents = append(allComponents, tb)
+	}
+
 	if resource.Spec.Schedulers != nil {
 		s = components.NewScheduler(cfgen, ytsaurus, m, ends, tnds)
 		allComponents = append(allComponents, s)
