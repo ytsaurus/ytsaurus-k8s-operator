@@ -15,6 +15,16 @@ spec:
   primaryMasters:
     instanceCount: 3
     cellTag: 1
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+            - key: yt_component
+              operator: In
+              values:
+              - ytdemo-yt-master
+          topologyKey: "kubernetes.io/hostname"
     volumeMounts:
       - name: master-data
         mountPath: /yt/master-data
@@ -90,6 +100,7 @@ spec:
     image: ghcr.io/ytsaurus/query-tracker:0.0.6-relwithdebinfo
 
   yqlAgents:
+    instanceCount: 1
     image: ghcr.io/ytsaurus/query-tracker:0.0.6-relwithdebinfo
 
   schedulers:
