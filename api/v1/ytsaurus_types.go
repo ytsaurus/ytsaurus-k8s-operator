@@ -746,7 +746,6 @@ const (
 	UpdateStateWaitingForPodsRemoval              UpdateState = "WaitingForPodsRemoval"
 	UpdateStateWaitingForPodsCreation             UpdateState = "WaitingForPodsCreation"
 	UpdateStateWaitingForMasterExitReadOnly       UpdateState = "WaitingForMasterExitReadOnly"
-	UpdateStateWaitingForEnableRealChunkLocations UpdateState = "WaitingForEnableRealChunkLocations"
 	UpdateStateWaitingForTabletCellsRecovery      UpdateState = "WaitingForTabletCellsRecovery"
 	UpdateStateWaitingForOpArchiveUpdatingPrepare UpdateState = "WaitingForOpArchiveUpdatingPrepare"
 	UpdateStateWaitingForOpArchiveUpdate          UpdateState = "WaitingForOpArchiveUpdate"
