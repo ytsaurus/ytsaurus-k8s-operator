@@ -742,6 +742,7 @@ const (
 	UpdateStateWaitingForTabletCellsSaving        UpdateState = "WaitingForTabletCellsSaving"
 	UpdateStateWaitingForTabletCellsRemovingStart UpdateState = "WaitingForTabletCellsRemovingStart"
 	UpdateStateWaitingForTabletCellsRemoved       UpdateState = "WaitingForTabletCellsRemoved"
+	UpdateStateWaitingForImaginaryChunksAbsence   UpdateState = "WaitingForImaginaryChunksAbsence"
 	UpdateStateWaitingForSnapshots                UpdateState = "WaitingForSnapshots"
 	UpdateStateWaitingForPodsRemoval              UpdateState = "WaitingForPodsRemoval"
 	UpdateStateWaitingForPodsCreation             UpdateState = "WaitingForPodsCreation"

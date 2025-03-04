@@ -296,7 +296,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					By("Waiting cluster update completes")
 					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 					checkClusterBaseViability(ytClient)
-					// checkChunkLocations(ytClient)
+					checkChunkLocations(ytClient)
 
 					podsAfterFullUpdate := getComponentPods(ctx, namespace)
 					pods := getChangedPods(podsBeforeUpdate, podsAfterFullUpdate)
@@ -1178,23 +1178,23 @@ func checkPodLabels(ctx context.Context, namespace string) {
 	checkPodLabelCount(pods, "app.kubernetes.io/name", "yt-scheduler", 1)
 }
 
-//  func checkChunkLocations(ytClient yt.Client) {
-//	// https://github.com/ytsaurus/ytsaurus-k8s-operator/issues/396
-//	// we expect enable_real_chunk_locations being set to true for all currently tested/supported versions.
-//	realChunkLocationPath := "//sys/@config/node_tracker/enable_real_chunk_locations"
-//	var realChunkLocationsValue bool
-//	Expect(ytClient.GetNode(ctx, ypath.Path(realChunkLocationPath), &realChunkLocationsValue, nil)).Should(Succeed())
-//	Expect(realChunkLocationsValue).Should(BeTrue())
-//
-//	var values []yson.ValueWithAttrs
-//	Expect(ytClient.ListNode(ctx, ypath.Path("//sys/data_nodes"), &values, &yt.ListNodeOptions{
-//		Attributes: []string{"use_imaginary_chunk_locations"},
-//	})).Should(Succeed())
-//
-//	for _, node := range values {
-//		Expect(node.Attrs["use_imaginary_chunk_locations"]).ShouldNot(BeTrue())
-//	}
-//  }
+func checkChunkLocations(ytClient yt.Client) {
+	// https://github.com/ytsaurus/ytsaurus-k8s-operator/issues/396
+	// we expect enable_real_chunk_locations being set to true for all currently tested/supported versions.
+	realChunkLocationPath := "//sys/@config/node_tracker/enable_real_chunk_locations"
+	var realChunkLocationsValue bool
+	Expect(ytClient.GetNode(ctx, ypath.Path(realChunkLocationPath), &realChunkLocationsValue, nil)).Should(Succeed())
+	Expect(realChunkLocationsValue).Should(BeTrue())
+
+	var values []yson.ValueWithAttrs
+	Expect(ytClient.ListNode(ctx, ypath.Path("//sys/data_nodes"), &values, &yt.ListNodeOptions{
+		Attributes: []string{"use_imaginary_chunk_locations"},
+	})).Should(Succeed())
+
+	for _, node := range values {
+		Expect(node.Attrs["use_imaginary_chunk_locations"]).ShouldNot(BeTrue())
+	}
+}
 
 func createYtsaurusClient(ytsaurus *ytv1.Ytsaurus, namespace string) yt.Client {
 	By("Creating ytsaurus client")

@@ -3,6 +3,7 @@ package controllers
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -34,6 +35,7 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStatePossibilityCheck,
 				ytv1.UpdateStateWaitingForSafeModeEnabled,
+				ytv1.UpdateStateWaitingForImaginaryChunksAbsence,
 				ytv1.UpdateStateWaitingForSnapshots,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
@@ -120,6 +122,7 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateWaitingForTabletCellsSaving,
 				ytv1.UpdateStateWaitingForTabletCellsRemovingStart,
 				ytv1.UpdateStateWaitingForTabletCellsRemoved,
+				ytv1.UpdateStateWaitingForImaginaryChunksAbsence,
 				ytv1.UpdateStateWaitingForSnapshots,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
@@ -146,7 +149,7 @@ func TestBuildFlowTree(t *testing.T) {
 				}
 			}
 
-			require.Equal(t, tt.expectedStates, states, "Flow states mismatch")
+			require.Emptyf(t, cmp.Diff(tt.expectedStates, states), "Flow states mismatch")
 		})
 	}
 }
