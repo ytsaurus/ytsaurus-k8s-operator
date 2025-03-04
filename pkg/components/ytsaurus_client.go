@@ -704,9 +704,7 @@ func (yc *YtsaurusClient) areOnlineDataNodesWithImaginaryChunksExist(ctx context
 	}
 	logger := log.FromContext(ctx)
 	if len(nodesWithImaginaryChunks) == 0 {
-		logger.Info(
-			fmt.Sprintf("There are 0 online nodes with imaginary chunk locations"),
-		)
+		logger.Info("There are 0 online nodes with imaginary chunk locations")
 		return false, nil
 	}
 	logger.Info(
