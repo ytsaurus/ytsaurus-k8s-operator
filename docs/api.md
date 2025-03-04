@@ -2197,6 +2197,7 @@ _Appears in:_
 | `WaitingForTabletCellsSaving` |  |
 | `WaitingForTabletCellsRemovingStart` |  |
 | `WaitingForTabletCellsRemoved` |  |
+| `WaitingForImaginaryChunksAbsence` |  |
 | `WaitingForSnapshots` |  |
 | `WaitingForPodsRemoval` |  |
 | `WaitingForPodsCreation` |  |
