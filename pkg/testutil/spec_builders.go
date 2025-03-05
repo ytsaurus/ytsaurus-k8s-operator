@@ -26,8 +26,8 @@ const (
 	// Images should be in sync with TEST_IMAGES variable in Makefile
 	// todo: come up with a more elegant solution
 	CoreImageFirst   = "ghcr.io/ytsaurus/ytsaurus:stable-23.2.0"
-	CoreImageSecond  = "ghcr.io/ytsaurus/ytsaurus:stable-23.2.1"
-	CoreImageNextVer = "ghcr.io/ytsaurus/ytsaurus:stable-24.1.0"
+	CoreImageSecond  = "ghcr.io/ytsaurus/ytsaurus:stable-24.1.0"
+	CoreImageNextVer = "ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2025-01-25-07c3e1af9aa6df37118356ecd5cc3486fa80e274"
 )
 
 var (

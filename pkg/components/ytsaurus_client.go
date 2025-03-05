@@ -658,14 +658,25 @@ func (yc *YtsaurusClient) AreMasterSnapshotsBuilt(ctx context.Context, monitorin
 }
 
 func (yc *YtsaurusClient) ensureRealChunkLocationsEnabled(ctx context.Context) error {
+	logger := log.FromContext(ctx)
+
 	realChunkLocationPath := "//sys/@config/node_tracker/enable_real_chunk_locations"
+
+	pathExists, err := yc.ytClient.NodeExists(ctx, ypath.Path(realChunkLocationPath), nil)
+	if err != nil {
+		return fmt.Errorf("failed to check if %s exists: %w", realChunkLocationPath, err)
+	}
+	if !pathExists {
+		logger.Info(fmt.Sprintf("%s doesn't exist, this is the case for 24.2+ versions, nothing to do", realChunkLocationPath))
+		return nil
+	}
+
 	var isChunkLocationsEnabled bool
-	err := yc.ytClient.GetNode(ctx, ypath.Path(realChunkLocationPath), &isChunkLocationsEnabled, nil)
+	err = yc.ytClient.GetNode(ctx, ypath.Path(realChunkLocationPath), &isChunkLocationsEnabled, nil)
 	if err != nil {
 		return fmt.Errorf("failed to get %s: %w", realChunkLocationPath, err)
 	}
 
-	logger := log.FromContext(ctx)
 	logger.Info(fmt.Sprintf("enable_real_chunk_locations is %t", isChunkLocationsEnabled))
 
 	if isChunkLocationsEnabled {

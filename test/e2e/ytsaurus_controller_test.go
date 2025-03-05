@@ -313,6 +313,15 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		Context("Test UpdateSelector", Label("selector"), func() {
 
+			BeforeEach(func() {
+				By("Setting 24.2+ image for update selector tests")
+				// This image is used for update selector tests because for earlier images
+				// there will be migration of imaginary chunks locations which restarts datanodes
+				// and makes it hard to test updateSelector.
+				// For 24.2+ image no migration is needed.
+				ytsaurus.Spec.CoreImage = testutil.CoreImageNextVer
+			})
+
 			It("Should be updated according to UpdateSelector=Everything", func(ctx context.Context) {
 
 				By("Run cluster update with selector: nothing")
