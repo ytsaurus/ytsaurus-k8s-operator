@@ -350,7 +350,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				podsAfterFullUpdate := getComponentPods(ctx, namespace)
 
 				pods := getChangedPods(podsBeforeUpdate, podsAfterFullUpdate)
-				Expect(pods.Created).To(ConsistOf("ds-1", "ds-2"), "created")
+				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Updated).To(ConsistOf(maps.Keys(podsBeforeUpdate)), "updated")
 			})
@@ -447,9 +447,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				podsAfterStatelessUpdate := getComponentPods(ctx, namespace)
 				pods = getChangedPods(podsAfterMasterUpdate, podsAfterStatelessUpdate)
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
+				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Updated).To(ConsistOf("ca-0", "ds-0", "end-0", "hp-0", "sch-0"), "updated")
 				// Only with StatelessOnly strategy those pending ds pods should be finally created.
-				Expect(pods.Created).To(ConsistOf("ds-1", "ds-2"), "created")
 			})
 
 			It("Should update only specified data node group", func(ctx context.Context) {
