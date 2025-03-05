@@ -74,6 +74,6 @@ func updateSpecToTriggerAllComponentUpdate(ytsaurus *ytv1.Ytsaurus) {
 	if ytsaurus.Spec.ForceTCP == nil {
 		ytsaurus.Spec.ForceTCP = ptr.To(true)
 	} else {
-		ytsaurus.Spec.ForceTCP = nil
+		ytsaurus.Spec.ForceTCP = ptr.To(!*ytsaurus.Spec.ForceTCP)
 	}
 }
