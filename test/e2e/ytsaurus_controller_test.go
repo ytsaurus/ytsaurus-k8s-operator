@@ -456,6 +456,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					InstanceSpec: testutil.CreateDataNodeInstanceSpec(1),
 					Name:         "dn-2",
 				})
+				ytsaurus.Status.UpdateStatus.Conditions = append(ytsaurus.Status.UpdateStatus.Conditions, metav1.Condition{
+					Type:    consts.ConditionDataNodesWithImaginaryChunksAbsent,
+					Status:  metav1.ConditionTrue,
+					Message: "Emulate that all data nodes have real chunks, since it is not relevant to this test",
+				})
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterState(ytv1.ClusterStateReconfiguration))
