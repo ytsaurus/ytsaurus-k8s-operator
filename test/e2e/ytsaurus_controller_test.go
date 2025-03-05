@@ -307,8 +307,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					CurrentlyObject(ctx, ytsaurus).Should(HaveObservedGeneration())
 				})
 			},
-			Entry("When update Ytsaurus within same major version", Label("basic"), testutil.CoreImageSecond),
-			Entry("When update Ytsaurus to the next major version", Label("basic"), testutil.CoreImageNextVer),
+			Entry("When update Ytsaurus 23.2 -> 24.1", Label("basic"), testutil.CoreImageSecond),
+			Entry("When update Ytsaurus 24.1 -> 24.2", Label("basic"), testutil.CoreImageNextVer),
 		)
 
 		Context("Test UpdateSelector", Label("selector"), func() {

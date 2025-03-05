@@ -231,7 +231,8 @@ kind-delete-local-registry: ## Delete local docker registry.
 TEST_IMAGES = \
     	ghcr.io/ytsaurus/ytsaurus:stable-24.1.0 \
     	ghcr.io/ytsaurus/ytsaurus:stable-23.2.0 \
-    	ghcr.io/ytsaurus/ytsaurus:stable-23.2.1
+    	ghcr.io/ytsaurus/ytsaurus:stable-23.2.1 \
+    	ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2025-03-03-3e3acb6592a673533589443b4e7354b21e29debd
 
 .PHONY: kind-load-test-images
 kind-load-test-images:

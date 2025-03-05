@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
 	"go.ytsaurus.tech/yt/go/yt/ythttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -257,7 +256,7 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			return SimpleStatus(SyncStatusUpdating), nil
 		}
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionDataNodesWithImaginaryChunksAbsent) {
-			haveImaginaryChunks, err := yc.areOnlineDataNodesWithImaginaryChunksExist(ctx)
+			haveImaginaryChunks, err := yc.areActiveDataNodesWithImaginaryChunksExist(ctx)
 			if !haveImaginaryChunks {
 				// Either no imaginary chunks been found
 				// or imaginary chunk nodes pods were removed
@@ -303,6 +302,11 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			}
 
 			if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnapshotsBuildingStarted) {
+				dnds, err := yc.getDataNodesInfo(ctx)
+				if err != nil {
+					return SimpleStatus(SyncStatusUpdating), err
+				}
+				log.FromContext(ctx).Info("data nodes before snapshots building", "dataNodes", dnds)
 				if err := yc.StartBuildMasterSnapshots(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths); err != nil {
 					return SimpleStatus(SyncStatusUpdating), err
 				}
@@ -691,8 +695,14 @@ func (yc *YtsaurusClient) ensureRealChunkLocationsEnabled(ctx context.Context) e
 	return nil
 }
 
-func (yc *YtsaurusClient) areOnlineDataNodesWithImaginaryChunksExist(ctx context.Context) (bool, error) {
-	var dndMeta []yson.ValueWithAttrs
+type DataNodeMeta struct {
+	Name               string `yson:",value"`
+	UseImaginaryChunks bool   `yson:"use_imaginary_chunk_locations,attr"`
+	State              string `yson:"state,attr"`
+}
+
+func (yc *YtsaurusClient) getDataNodesInfo(ctx context.Context) ([]DataNodeMeta, error) {
+	var dndMeta []DataNodeMeta
 	err := yc.ytClient.ListNode(ctx, ypath.Path("//sys/data_nodes"), &dndMeta, &yt.ListNodeOptions{
 		Attributes: []string{
 			"use_imaginary_chunk_locations",
@@ -700,27 +710,31 @@ func (yc *YtsaurusClient) areOnlineDataNodesWithImaginaryChunksExist(ctx context
 		},
 	})
 	if err != nil {
+		return nil, fmt.Errorf("failed to list data_nodes: %w", err)
+	}
+	return dndMeta, nil
+}
+
+func (yc *YtsaurusClient) areActiveDataNodesWithImaginaryChunksExist(ctx context.Context) (bool, error) {
+	dndMeta, err := yc.getDataNodesInfo(ctx)
+	if err != nil {
 		return false, err
 	}
 
-	var nodesWithImaginaryChunks []yson.ValueWithAttrs
+	var activeNodesWithImaginaryChunks []DataNodeMeta
 	for _, dnd := range dndMeta {
-		if dnd.Attrs["state"] != "online" {
-			continue
-		}
-		if dnd.Attrs["use_imaginary_chunk_locations"] == true {
-			nodesWithImaginaryChunks = append(nodesWithImaginaryChunks, dnd)
-			continue
+		if dnd.UseImaginaryChunks && dnd.State != "offline" {
+			activeNodesWithImaginaryChunks = append(activeNodesWithImaginaryChunks, dnd)
 		}
 	}
 	logger := log.FromContext(ctx)
-	if len(nodesWithImaginaryChunks) == 0 {
-		logger.Info("There are 0 online nodes with imaginary chunk locations")
+	if len(activeNodesWithImaginaryChunks) == 0 {
+		logger.Info("There are 0 active nodes with imaginary chunk locations")
 		return false, nil
 	}
 	logger.Info(
-		fmt.Sprintf("There are %d online nodes with imaginary chunk locations", len(nodesWithImaginaryChunks)),
-		"sample", nodesWithImaginaryChunks[:1],
+		fmt.Sprintf("There are %d active nodes with imaginary chunk locations", len(activeNodesWithImaginaryChunks)),
+		"sample", activeNodesWithImaginaryChunks[:1],
 	)
 	return true, nil
 }
