@@ -317,8 +317,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Run cluster update with selector: nothing")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassNothing}}
-				// We want change in all yson configs, new discovery instance will trigger that.
-				ytsaurus.Spec.CoreImage = testutil.CoreImageSecond
+				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
 				By("Ensure cluster doesn't start updating for 5 seconds")
@@ -331,7 +330,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Update cluster update with strategy full")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
-				ytsaurus.Spec.CoreImage = testutil.CoreImageNextVer
+				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
@@ -363,7 +362,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Type: consts.ExecNodeType,
 					},
 				}}
-				ytsaurus.Spec.CoreImage = testutil.CoreImageSecond
+				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
@@ -385,7 +384,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Type: consts.TabletNodeType,
 					},
 				}}
-				ytsaurus.Spec.CoreImage = testutil.CoreImageNextVer
+				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
@@ -410,7 +409,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Type: consts.MasterType,
 					},
 				}}
-				ytsaurus.Spec.CoreImage = testutil.CoreImageSecond
+				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
@@ -429,7 +428,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
 					Class: consts.ComponentClassStateless,
 				}}
-				ytsaurus.Spec.CoreImage = testutil.CoreImageNextVer
+				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
@@ -470,11 +469,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Name: "dn-2",
 					},
 				}}
-				// Updating images for all datanodes and discover, expecting only dn-2 to be updated.
-				for idx := range ytsaurus.Spec.DataNodes {
-					ytsaurus.Spec.DataNodes[idx].Image = ptr.To(testutil.CoreImageSecond)
-				}
-				ytsaurus.Spec.Discovery.Image = ptr.To(testutil.CoreImageSecond)
+				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
