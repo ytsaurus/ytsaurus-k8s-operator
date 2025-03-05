@@ -318,7 +318,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Run cluster update with selector: nothing")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassNothing}}
 				// We want change in all yson configs, new discovery instance will trigger that.
-				ytsaurus.Spec.Discovery.InstanceCount += 1
+				ytsaurus.Spec.CoreImage = testutil.CoreImageSecond
 				UpdateObject(ctx, ytsaurus)
 
 				By("Ensure cluster doesn't start updating for 5 seconds")
@@ -331,7 +331,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Update cluster update with strategy full")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
-				ytsaurus.Spec.Discovery.InstanceCount += 1
+				ytsaurus.Spec.CoreImage = testutil.CoreImageNextVer
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
