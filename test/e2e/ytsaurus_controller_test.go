@@ -318,7 +318,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Run cluster update with selector: nothing")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassNothing}}
 				// We want change in all yson configs, new discovery instance will trigger that.
-				ytsaurus.Spec.Discovery.InstanceCount += 1
+				ytsaurus.Spec.CoreImage = testutil.CoreImageSecond
 				UpdateObject(ctx, ytsaurus)
 
 				By("Ensure cluster doesn't start updating for 5 seconds")
@@ -331,7 +331,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Update cluster update with strategy full")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
-				ytsaurus.Spec.Discovery.InstanceCount += 1
+				ytsaurus.Spec.CoreImage = testutil.CoreImageNextVer
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
@@ -350,7 +350,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				podsAfterFullUpdate := getComponentPods(ctx, namespace)
 
 				pods := getChangedPods(podsBeforeUpdate, podsAfterFullUpdate)
-				Expect(pods.Created).To(ConsistOf("ds-1", "ds-2"), "created")
+				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Updated).To(ConsistOf(maps.Keys(podsBeforeUpdate)), "updated")
 			})
@@ -363,7 +363,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Type: consts.ExecNodeType,
 					},
 				}}
-				ytsaurus.Spec.Discovery.InstanceCount += 1
+				ytsaurus.Spec.CoreImage = testutil.CoreImageSecond
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
@@ -385,7 +385,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Type: consts.TabletNodeType,
 					},
 				}}
-				ytsaurus.Spec.Discovery.InstanceCount += 1
+				ytsaurus.Spec.CoreImage = testutil.CoreImageNextVer
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
@@ -410,7 +410,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Type: consts.MasterType,
 					},
 				}}
-				ytsaurus.Spec.Discovery.InstanceCount += 1
+				ytsaurus.Spec.CoreImage = testutil.CoreImageSecond
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
@@ -429,7 +429,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
 					Class: consts.ComponentClassStateless,
 				}}
-				ytsaurus.Spec.Discovery.InstanceCount += 1
+				ytsaurus.Spec.CoreImage = testutil.CoreImageNextVer
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
@@ -447,9 +447,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				podsAfterStatelessUpdate := getComponentPods(ctx, namespace)
 				pods = getChangedPods(podsAfterMasterUpdate, podsAfterStatelessUpdate)
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
+				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Updated).To(ConsistOf("ca-0", "ds-0", "end-0", "hp-0", "sch-0"), "updated")
-				// Only with StatelessOnly strategy those pending ds pods should be finally created.
-				Expect(pods.Created).To(ConsistOf("ds-1", "ds-2"), "created")
 			})
 
 			It("Should update only specified data node group", func(ctx context.Context) {
@@ -471,7 +470,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Name: "dn-2",
 					},
 				}}
-				ytsaurus.Spec.Discovery.InstanceCount += 1
+				// Updating images for all datanodes and discover, expecting only dn-2 to be updated.
+				for idx := range ytsaurus.Spec.DataNodes {
+					ytsaurus.Spec.DataNodes[idx].Image = ptr.To(testutil.CoreImageSecond)
+				}
+				ytsaurus.Spec.Discovery.Image = ptr.To(testutil.CoreImageSecond)
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())

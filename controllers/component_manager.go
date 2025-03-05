@@ -8,6 +8,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
@@ -172,6 +173,16 @@ func NewComponentManager(
 		}
 
 		if !components.IsRunningStatus(syncStatus) {
+			if ytsaurus.GetClusterState() == ytv1.ClusterStateRunning {
+				msg := fmt.Sprintf("component `%s` status is neither Ready nor NeedLocalUpdate, but `%s`, "+
+					"needInit=true will be set, which will lead to Reconfiguration since cluster is in Running state",
+					c.GetFullName(), syncStatus,
+				)
+				logger.Info(msg,
+					"component", c.GetFullName(),
+					"syncStatus", syncStatus,
+				)
+			}
 			status.needInit = true
 		}
 
