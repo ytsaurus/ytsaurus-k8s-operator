@@ -307,11 +307,20 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					CurrentlyObject(ctx, ytsaurus).Should(HaveObservedGeneration())
 				})
 			},
-			Entry("When update Ytsaurus within same major version", Label("basic"), testutil.CoreImageSecond),
-			Entry("When update Ytsaurus to the next major version", Label("basic"), testutil.CoreImageNextVer),
+			Entry("When update Ytsaurus 23.2 -> 24.1", Label("basic"), testutil.CoreImageSecond),
+			Entry("When update Ytsaurus 24.1 -> 24.2", Label("basic"), testutil.CoreImageNextVer),
 		)
 
 		Context("Test UpdateSelector", Label("selector"), func() {
+
+			BeforeEach(func() {
+				By("Setting 24.2+ image for update selector tests")
+				// This image is used for update selector tests because for earlier images
+				// there will be migration of imaginary chunks locations which restarts datanodes
+				// and makes it hard to test updateSelector.
+				// For 24.2+ image no migration is needed.
+				ytsaurus.Spec.CoreImage = testutil.CoreImageNextVer
+			})
 
 			It("Should be updated according to UpdateSelector=Everything", func(ctx context.Context) {
 
@@ -455,6 +464,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytsaurus.Spec.DataNodes = append(ytsaurus.Spec.DataNodes, ytv1.DataNodesSpec{
 					InstanceSpec: testutil.CreateDataNodeInstanceSpec(1),
 					Name:         "dn-2",
+				})
+				ytsaurus.Status.UpdateStatus.Conditions = append(ytsaurus.Status.UpdateStatus.Conditions, metav1.Condition{
+					Type:    consts.ConditionDataNodesWithImaginaryChunksAbsent,
+					Status:  metav1.ConditionTrue,
+					Message: "Emulate that all data nodes have real chunks, since it is not relevant to this test",
 				})
 				UpdateObject(ctx, ytsaurus)
 

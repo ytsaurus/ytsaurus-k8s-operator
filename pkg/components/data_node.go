@@ -4,6 +4,7 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -62,6 +63,11 @@ func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	}
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if n.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForImaginaryChunksAbsence {
+			if status, err := n.handleImaginaryChunksMigration(ctx, dry); status != nil {
+				return *status, err
+			}
+		}
 		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, &n.localComponent, n.server, dry); status != nil {
 			return *status, err
 		}
@@ -96,4 +102,25 @@ func (n *DataNode) Status(ctx context.Context) (ComponentStatus, error) {
 func (n *DataNode) Sync(ctx context.Context) error {
 	_, err := n.doSync(ctx, false)
 	return err
+}
+
+// handleImaginaryChunksMigration will remove dnd pods if client component detects active dnds with imaginary chunks
+// and sets relevant condition.
+// Nodes pods will be recreated (and updated if needed) later at UpdateStateWaitingForPodsCreation stage.
+// After that they will be re-registered in master with real chunks, since client component will set an attribute in cypress.
+func (n *DataNode) handleImaginaryChunksMigration(ctx context.Context, dry bool) (*ComponentStatus, error) {
+	if !n.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionDataNodesNeedPodsRemoval) {
+		// nothing to do, either no imaginary chunks is detected or condition to remove pods is not set yet
+		return nil, nil
+	}
+	// https://github.com/ytsaurus/ytsaurus-k8s-operator/issues/396
+	var err error
+	if !dry {
+		err = removePods(
+			ctx,
+			n.server,
+			&n.localComponent,
+		)
+	}
+	return ptr.To(WaitingStatus(SyncStatusUpdating, "pods removal for imaginary chunks migration")), err
 }

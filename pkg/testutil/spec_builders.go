@@ -26,8 +26,8 @@ const (
 	// Images should be in sync with TEST_IMAGES variable in Makefile
 	// todo: come up with a more elegant solution
 	CoreImageFirst   = "ghcr.io/ytsaurus/ytsaurus:stable-23.2.0"
-	CoreImageSecond  = "ghcr.io/ytsaurus/ytsaurus:stable-23.2.1"
-	CoreImageNextVer = "ghcr.io/ytsaurus/ytsaurus:stable-24.1.0"
+	CoreImageSecond  = "ghcr.io/ytsaurus/ytsaurus:stable-24.1.0"
+	CoreImageNextVer = "ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2025-03-03-3e3acb6592a673533589443b4e7354b21e29debd"
 )
 
 var (
@@ -229,7 +229,7 @@ func WithQueueAgent(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
 			// Older version doesn't have /usr/bin/ytserver-queue-agent
-			Image: ptr.To(CoreImageNextVer),
+			Image: ptr.To(CoreImageSecond),
 		},
 	}
 	return ytsaurus

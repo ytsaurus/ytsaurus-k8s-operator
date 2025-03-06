@@ -2197,11 +2197,11 @@ _Appears in:_
 | `WaitingForTabletCellsSaving` |  |
 | `WaitingForTabletCellsRemovingStart` |  |
 | `WaitingForTabletCellsRemoved` |  |
+| `WaitingForImaginaryChunksAbsence` |  |
 | `WaitingForSnapshots` |  |
 | `WaitingForPodsRemoval` |  |
 | `WaitingForPodsCreation` |  |
 | `WaitingForMasterExitReadOnly` |  |
-| `WaitingForEnableRealChunkLocations` |  |
 | `WaitingForTabletCellsRecovery` |  |
 | `WaitingForOpArchiveUpdatingPrepare` |  |
 | `WaitingForOpArchiveUpdate` |  |

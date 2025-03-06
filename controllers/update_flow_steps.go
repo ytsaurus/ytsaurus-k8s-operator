@@ -190,7 +190,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForTabletCellsSaving:        flowCheckStatusCondition(consts.ConditionTabletCellsSaved),
 	ytv1.UpdateStateWaitingForTabletCellsRemovingStart: flowCheckStatusCondition(consts.ConditionTabletCellsRemovingStarted),
 	ytv1.UpdateStateWaitingForTabletCellsRemoved:       flowCheckStatusCondition(consts.ConditionTabletCellsRemoved),
-	ytv1.UpdateStateWaitingForEnableRealChunkLocations: flowCheckStatusCondition(consts.ConditionRealChunkLocationsEnabled),
+	ytv1.UpdateStateWaitingForImaginaryChunksAbsence:   flowCheckStatusCondition(consts.ConditionDataNodesWithImaginaryChunksAbsent),
 	ytv1.UpdateStateWaitingForSnapshots:                flowCheckStatusCondition(consts.ConditionSnaphotsSaved),
 	ytv1.UpdateStateWaitingForTabletCellsRecovery:      flowCheckStatusCondition(consts.ConditionTabletCellsRecovered),
 	ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare: flowCheckStatusCondition(consts.ConditionOpArchivePreparedForUpdating),
@@ -223,6 +223,7 @@ func buildFlowTree(updatingComponents []ytv1.Component) *flowTree {
 	updMaster := hasComponent(updatingComponents, consts.MasterType)
 	updTablet := hasComponent(updatingComponents, consts.TabletNodeType)
 	updMasterOrTablet := updMaster || updTablet
+	updDataNodes := hasComponent(updatingComponents, consts.DataNodeType)
 	updScheduler := hasComponent(updatingComponents, consts.SchedulerType)
 	updQueryTracker := hasComponent(updatingComponents, consts.QueryTrackerType)
 	updYqlAgent := hasComponent(updatingComponents, consts.YqlAgentType)
@@ -245,8 +246,10 @@ func buildFlowTree(updatingComponents []ytv1.Component) *flowTree {
 		st(ytv1.UpdateStateWaitingForTabletCellsRemovingStart),
 		st(ytv1.UpdateStateWaitingForTabletCellsRemoved),
 	).chainIf(
+		updDataNodes || updMaster,
+		st(ytv1.UpdateStateWaitingForImaginaryChunksAbsence),
+	).chainIf(
 		updMaster,
-		st(ytv1.UpdateStateWaitingForEnableRealChunkLocations),
 		st(ytv1.UpdateStateWaitingForSnapshots),
 	).chain(
 		st(ytv1.UpdateStateWaitingForPodsRemoval),
