@@ -38,13 +38,9 @@ func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1
 	return false
 }
 
-// Considers spec and decides if operator should proceed with update or block.
-// Block case is indicated with non-empty blockMsg.
-// If update is not blocked, updateMeta containing a chosen flow and the component names to update returned.
-func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []ytv1.Component, allComponents []ytv1.Component) (components []ytv1.Component, blockMsg string) {
+// Considers splits all the components in two groups: ones that can be updated and ones which update isblocked.
+func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []ytv1.Component, allComponents []ytv1.Component) (canUpdate []ytv1.Component, cannotUpdate []ytv1.Component) {
 	configuredSelectors := getEffectiveSelectors(spec)
-	var canUpdate []ytv1.Component
-	var cannotUpdate []ytv1.Component
 
 	for _, component := range needUpdate {
 		upd := canUpdateComponent(configuredSelectors, component)
@@ -56,21 +52,13 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []ytv1.Componen
 	}
 
 	if len(canUpdate) == 0 {
-		if len(cannotUpdate) != 0 {
-			return nil, fmt.Sprintf("All components allowed by updateSelector are uptodate, update of {%v} is not allowed", cannotUpdate)
-		}
-		return nil, "All components are uptodate"
+		return nil, cannotUpdate
 	}
-
-	if hasEverythingSelector(configuredSelectors) {
-		if needFullUpdate(needUpdate) {
-			// Here we update not only components that are not up-to-date, but all cluster.
-			return allComponents, ""
-		} else {
-			return canUpdate, ""
-		}
+	if hasEverythingSelector(configuredSelectors) && needFullUpdate(needUpdate) {
+		// Here we update not only components that are not up-to-date, but all cluster.
+		return allComponents, nil
 	}
-	return canUpdate, ""
+	return canUpdate, cannotUpdate
 }
 
 func hasEverythingSelector(selectors []ytv1.ComponentUpdateSelector) bool {
@@ -204,19 +192,21 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 				needUpdateNames = append(needUpdateNames, c.GetFullName())
 			}
 			logger = logger.WithValues("componentsForUpdateAll", needUpdateNames)
-			updatingComponents, blockMsg := chooseUpdatingComponents(
+			canUpdate, cannotUpdate := chooseUpdatingComponents(
 				ytsaurus.GetResource().Spec, convertToComponent(needUpdate), convertToComponent(componentManager.allUpdatableComponents()))
-			if blockMsg != "" {
-				logger.Info(blockMsg)
-				return ctrl.Result{Requeue: true}, nil
+
+			logMsg := ""
+			if len(canUpdate) == 0 {
+				if len(cannotUpdate) != 0 {
+					logMsg = fmt.Sprintf("All components allowed by updateSelector are up-to-date, update of {%v} is not allowed", cannotUpdate)
+				}
+				logMsg = "All components are up-to-date"
+			} else {
+				logMsg = fmt.Sprintf("Components {%v} will be updated, update of {%v} is not allowed", canUpdate, cannotUpdate)
+				ytsaurus.SyncObservedGeneration()
+				err = ytsaurus.SaveUpdatingClusterState(ctx, canUpdate)
 			}
-			logger.Info("Ytsaurus needs components update",
-				"componentsForUpdateSelected", updatingComponents)
-			ytsaurus.SyncObservedGeneration()
-			err = ytsaurus.SaveUpdatingClusterState(ctx, updatingComponents)
-			if err != nil {
-				return ctrl.Result{}, err
-			}
+			logger.Info(logMsg)
 			return ctrl.Result{Requeue: true}, nil
 		}
 
