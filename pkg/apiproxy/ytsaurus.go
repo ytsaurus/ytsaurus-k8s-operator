@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -76,7 +77,16 @@ func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
 	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
 	c.ytsaurus.Status.UpdateStatus.MasterMonitoringPaths = make([]string, 0)
 	c.ytsaurus.Status.UpdateStatus.UpdatingComponents = nil
+	c.syncUpdatingComponentsSummary()
 	return c.apiProxy.UpdateStatus(ctx)
+}
+
+func (c *Ytsaurus) syncUpdatingComponentsSummary() {
+	var componentNames []string
+	for _, comp := range c.ytsaurus.Status.UpdateStatus.UpdatingComponents {
+		componentNames = append(componentNames, comp.String())
+	}
+	c.ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary = strings.Join(componentNames, ", ")
 }
 
 func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {
@@ -89,6 +99,7 @@ func (c *Ytsaurus) SaveUpdatingClusterState(ctx context.Context, components []yt
 	logger := log.FromContext(ctx)
 	c.ytsaurus.Status.State = ytv1.ClusterStateUpdating
 	c.ytsaurus.Status.UpdateStatus.UpdatingComponents = components
+	c.syncUpdatingComponentsSummary()
 
 	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "unable to update Ytsaurus cluster status")

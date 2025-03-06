@@ -28,8 +28,8 @@ spec:
       jsonPath: .status.updateStatus.state
       name: UpdateState
       type: string
-    - description: Updating components (for local update)
-      jsonPath: .status.updateStatus.updatingComponents[*].type
+    - description: Updating components
+      jsonPath: .status.updateStatus.updatingComponentsSummary
       name: UpdatingComponents
       type: string
     name: v1
@@ -42325,6 +42325,10 @@ spec:
                           type: string
                       type: object
                     type: array
+                  updatingComponentsSummary:
+                    description: UpdatingComponentsSummary is used only for representation
+                      in kubectl, since it o
+                    type: string
                 type: object
             type: object
         type: object
