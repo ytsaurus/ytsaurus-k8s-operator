@@ -205,7 +205,11 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 				}
 				updStateErr = ytsaurus.SaveBlockedComponentsState(ctx, cannotUpdate)
 			} else {
-				logMsg = fmt.Sprintf("Components {%v} will be updated, update of {%v} is not allowed", canUpdate, cannotUpdate)
+				if len(cannotUpdate) != 0 {
+					logMsg = fmt.Sprintf("Components {%v} will be updated, update of {%v} is not allowed", canUpdate, cannotUpdate)
+				} else {
+					logMsg = fmt.Sprintf("Components {%v} will be updated", canUpdate)
+				}
 				ytsaurus.SyncObservedGeneration()
 				updStateErr = ytsaurus.SaveUpdatingClusterState(ctx, canUpdate, cannotUpdate)
 			}
