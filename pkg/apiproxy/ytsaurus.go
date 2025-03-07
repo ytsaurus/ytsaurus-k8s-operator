@@ -175,12 +175,13 @@ func buildComponentsSummary(components []ytv1.Component) string {
 	}
 	var componentNames []string
 	for _, comp := range components {
+		// TODO: we better use labeller here after support deployment names in it.
 		name := consts.GetShortName(comp.Type)
 		if name == "" {
 			name = strings.ToLower(string(comp.Type))
 		}
 		if comp.Name != "" {
-			name += fmt.Sprintf("/%s", comp.Name)
+			name += fmt.Sprintf("-%s", comp.Name)
 		}
 		componentNames = append(componentNames, name)
 	}

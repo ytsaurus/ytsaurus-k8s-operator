@@ -44,7 +44,7 @@ const (
 	pollInterval     = time.Millisecond * 250
 	reactionTimeout  = time.Second * 150
 	bootstrapTimeout = time.Minute * 3
-	upgradeTimeout   = time.Minute * 7
+	upgradeTimeout   = time.Minute * 10
 )
 
 var getYtClient = getYtHTTPClient
