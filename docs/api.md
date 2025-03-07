@@ -2229,6 +2229,7 @@ _Appears in:_
 | `components` _string array_ | Deprecated: Use updatingComponents instead. |  |  |
 | `updatingComponents` _[Component](#component) array_ |  |  |  |
 | `updatingComponentsSummary` _string_ | UpdatingComponentsSummary is used only for representation in kubectl, since it only supports<br />"simple" JSONPath, and it is unclear how to force to print required data based on UpdatingComponents field. |  |  |
+| `blockedComponentsSummary` _string_ |  |  |  |
 | `flow` _[UpdateFlow](#updateflow)_ | Flow is an internal field that is needed to persist the chosen flow until the end of an update.<br />Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage<br />executes steps corresponding to that update flow.<br />Deprecated: Use updatingComponents instead. |  |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
 | `tabletCellBundles` _[TabletCellBundleInfo](#tabletcellbundleinfo) array_ |  |  |  |

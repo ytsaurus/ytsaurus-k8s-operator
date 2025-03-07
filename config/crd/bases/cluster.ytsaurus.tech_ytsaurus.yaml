@@ -32,6 +32,10 @@ spec:
       jsonPath: .status.updateStatus.updatingComponentsSummary
       name: UpdatingComponents
       type: string
+    - description: Blocked components
+      jsonPath: .status.updateStatus.blockedComponentsSummary
+      name: BlockedComponents
+      type: string
     name: v1
     schema:
       openAPIV3Schema:
@@ -42240,6 +42244,8 @@ spec:
                 type: string
               updateStatus:
                 properties:
+                  blockedComponentsSummary:
+                    type: string
                   components:
                     description: 'Deprecated: Use updatingComponents instead.'
                     items:

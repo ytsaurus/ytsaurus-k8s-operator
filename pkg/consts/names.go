@@ -43,7 +43,7 @@ func ComponentServicePrefix(component ComponentType) string {
 	panic(fmt.Sprintf("No service is defined for component type: %s", component))
 }
 
-func ComponentStatefulSetPrefix(component ComponentType) string {
+func GetStatefulSetPrefix(component ComponentType) string {
 	switch component {
 	case ControllerAgentType:
 		return "ca"
@@ -76,6 +76,31 @@ func ComponentStatefulSetPrefix(component ComponentType) string {
 	case YqlAgentType:
 		return "yqla"
 	}
+	return ""
+}
 
+func GetMicroservicePrefix(component ComponentType) string {
+	switch component {
+	case StrawberryControllerType:
+		return "strawberry"
+	case UIType:
+		return "ui"
+	}
+	return ""
+}
+
+func GetShortName(component ComponentType) string {
+	stsPrefix := GetStatefulSetPrefix(component)
+	if stsPrefix != "" {
+		return stsPrefix
+	}
+	return GetMicroservicePrefix(component)
+}
+
+func ComponentStatefulSetPrefix(component ComponentType) string {
+	shortTypeName := GetStatefulSetPrefix(component)
+	if shortTypeName != "" {
+		return shortTypeName
+	}
 	panic(fmt.Sprintf("No stateful set is defined for component type: %s", component))
 }

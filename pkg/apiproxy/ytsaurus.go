@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 type Ytsaurus struct {
@@ -82,11 +83,7 @@ func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
 }
 
 func (c *Ytsaurus) syncUpdatingComponentsSummary() {
-	var componentNames []string
-	for _, comp := range c.ytsaurus.Status.UpdateStatus.UpdatingComponents {
-		componentNames = append(componentNames, comp.String())
-	}
-	c.ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary = strings.Join(componentNames, ", ")
+	c.ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary = buildComponentsSummary(c.ytsaurus.Status.UpdateStatus.UpdatingComponents)
 }
 
 func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {
@@ -95,10 +92,11 @@ func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {
 	logger.Info(fmt.Sprintf("Ytsaurus update: %s", message))
 }
 
-func (c *Ytsaurus) SaveUpdatingClusterState(ctx context.Context, components []ytv1.Component) error {
+func (c *Ytsaurus) SaveUpdatingClusterState(ctx context.Context, canUpdate, cannotUpdate []ytv1.Component) error {
 	logger := log.FromContext(ctx)
 	c.ytsaurus.Status.State = ytv1.ClusterStateUpdating
-	c.ytsaurus.Status.UpdateStatus.UpdatingComponents = components
+	c.ytsaurus.Status.UpdateStatus.UpdatingComponents = canUpdate
+	c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary = buildComponentsSummary(cannotUpdate)
 	c.syncUpdatingComponentsSummary()
 
 	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
@@ -106,6 +104,14 @@ func (c *Ytsaurus) SaveUpdatingClusterState(ctx context.Context, components []yt
 		return err
 	}
 
+	return nil
+}
+
+func (c *Ytsaurus) SaveBlockedComponentsState(ctx context.Context, components []ytv1.Component) error {
+	c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary = buildComponentsSummary(components)
+	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
+		return fmt.Errorf("unable to update Ytsaurus cluster status when setting blocked components")
+	}
 	return nil
 }
 
@@ -161,4 +167,22 @@ func sortConditions(conditions []metav1.Condition) {
 		}
 		return a.LastTransitionTime.Compare(b.LastTransitionTime.Time)
 	})
+}
+
+func buildComponentsSummary(components []ytv1.Component) string {
+	if len(components) == 0 {
+		return ""
+	}
+	var componentNames []string
+	for _, comp := range components {
+		name := consts.GetShortName(comp.Type)
+		if name == "" {
+			name = strings.ToLower(string(comp.Type))
+		}
+		if comp.Name != "" {
+			name += fmt.Sprintf("/%s", comp.Name)
+		}
+		componentNames = append(componentNames, name)
+	}
+	return "{" + strings.Join(componentNames, " ") + "}"
 }
