@@ -566,7 +566,7 @@ type YQLAgentSpec struct {
 	// Sets mrjob dynamic library paths in yql agent config.
 	//+kubebuilder:default:=false
 	//+optional
-	ConfigureMrJobSystemLibs bool `json:"configureMrJobSystemLibs"`
+	ConfigureMrJobSystemLibs bool `json:"configureMrJobSystemLibs,omitempty"`
 }
 
 type QueueAgentSpec struct {
@@ -676,7 +676,7 @@ type YtsaurusSpec struct {
 	//+optional
 	//+kubebuilder:validation:Enum={"","Nothing","MasterOnly","DataNodesOnly","TabletNodesOnly","ExecNodesOnly","StatelessOnly","Everything"}
 	// Deprecated: UpdateSelector is going to be removed soon. Please use UpdateSelectors instead.
-	UpdateSelector UpdateSelector `json:"updateSelector"`
+	UpdateSelector UpdateSelector `json:"updateSelector,omitempty"`
 
 	//+optional
 	// Experimental: api may change.
