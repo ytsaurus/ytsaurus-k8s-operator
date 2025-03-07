@@ -114,13 +114,11 @@ spec:
     secure: false
     serviceType: NodePort
     useInsecureCookies: false
-  updateSelector: ""
   useIpv4: true
   useIpv6: false
   usePorto: true
   useShortNames: false
   yqlAgents:
-    configureMrJobSystemLibs: false
     instanceCount: 3
     resources: {}
 status:
