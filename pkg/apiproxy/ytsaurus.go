@@ -180,7 +180,7 @@ func buildComponentsSummary(components []ytv1.Component) string {
 			name = strings.ToLower(string(comp.Type))
 		}
 		if comp.Name != "" {
-			name += fmt.Sprintf("/%s", comp.Name)
+			name += fmt.Sprintf("-%s", comp.Name)
 		}
 		componentNames = append(componentNames, name)
 	}
