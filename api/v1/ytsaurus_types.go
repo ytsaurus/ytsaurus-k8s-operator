@@ -805,6 +805,7 @@ type UpdateStatus struct {
 	// UpdatingComponentsSummary is used only for representation in kubectl, since it only supports
 	// "simple" JSONPath, and it is unclear how to force to print required data based on UpdatingComponents field.
 	UpdatingComponentsSummary string `json:"updatingComponentsSummary,omitempty"`
+	BlockedComponentsSummary  string `json:"blockedComponentsSummary,omitempty"`
 	// Flow is an internal field that is needed to persist the chosen flow until the end of an update.
 	// Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage
 	// executes steps corresponding to that update flow.
@@ -854,6 +855,7 @@ type YtsaurusStatus struct {
 //+kubebuilder:printcolumn:name="ClusterState",type="string",JSONPath=".status.state",description="State of Ytsaurus cluster"
 //+kubebuilder:printcolumn:name="UpdateState",type="string",JSONPath=".status.updateStatus.state",description="Update state of Ytsaurus cluster"
 //+kubebuilder:printcolumn:name="UpdatingComponents",type="string",JSONPath=".status.updateStatus.updatingComponentsSummary",description="Updating components"
+//+kubebuilder:printcolumn:name="BlockedComponents",type="string",JSONPath=".status.updateStatus.blockedComponentsSummary",description="Blocked components"
 //+kubebuilder:resource:path=ytsaurus,shortName=yt,categories=ytsaurus-all;yt-all
 //+kubebuilder:subresource:status
 

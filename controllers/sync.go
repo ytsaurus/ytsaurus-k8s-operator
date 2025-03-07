@@ -195,19 +195,22 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			canUpdate, cannotUpdate := chooseUpdatingComponents(
 				ytsaurus.GetResource().Spec, convertToComponent(needUpdate), convertToComponent(componentManager.allUpdatableComponents()))
 
-			logMsg := ""
+			var logMsg string
+			var updStateErr error
 			if len(canUpdate) == 0 {
 				if len(cannotUpdate) != 0 {
 					logMsg = fmt.Sprintf("All components allowed by updateSelector are up-to-date, update of {%v} is not allowed", cannotUpdate)
+				} else {
+					logMsg = "All components are up-to-date"
 				}
-				logMsg = "All components are up-to-date"
+				updStateErr = ytsaurus.SaveBlockedComponentsState(ctx, cannotUpdate)
 			} else {
 				logMsg = fmt.Sprintf("Components {%v} will be updated, update of {%v} is not allowed", canUpdate, cannotUpdate)
 				ytsaurus.SyncObservedGeneration()
-				err = ytsaurus.SaveUpdatingClusterState(ctx, canUpdate)
+				updStateErr = ytsaurus.SaveUpdatingClusterState(ctx, canUpdate, cannotUpdate)
 			}
 			logger.Info(logMsg)
-			return ctrl.Result{Requeue: true}, nil
+			return ctrl.Result{Requeue: true}, updStateErr
 		}
 
 	case ytv1.ClusterStateUpdating:
