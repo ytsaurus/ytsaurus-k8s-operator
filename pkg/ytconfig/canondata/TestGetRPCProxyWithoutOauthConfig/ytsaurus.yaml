@@ -58,7 +58,6 @@ spec:
     volumeMounts:
     - mountPath: /yt/master-data
       name: master-data
-  updateSelector: ""
   useIpv4: false
   useIpv6: true
   usePorto: false

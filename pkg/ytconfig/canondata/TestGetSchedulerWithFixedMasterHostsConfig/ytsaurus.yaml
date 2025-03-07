@@ -65,7 +65,6 @@ spec:
   schedulers:
     instanceCount: 3
     resources: {}
-  updateSelector: ""
   useIpv4: false
   useIpv6: true
   usePorto: false

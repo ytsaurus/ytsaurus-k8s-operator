@@ -63,7 +63,6 @@ spec:
     resources: {}
     secure: false
     useInsecureCookies: false
-  updateSelector: ""
   useIpv4: false
   useIpv6: true
   usePorto: false
