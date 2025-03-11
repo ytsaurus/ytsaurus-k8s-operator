@@ -170,6 +170,18 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 
 	case ytv1.ClusterStateRunning:
 		needUpdate := componentManager.needUpdate()
+		canUpdate, cannotUpdate := chooseUpdatingComponents(
+			ytsaurus.GetResource().Spec,
+			convertToComponent(needUpdate),
+			convertToComponent(componentManager.allUpdatableComponents()),
+		)
+		// There may be the case when some components needed update, but spec was reverted
+		// and Updating never happen — so blocked components column need to be always actualized.
+		err = ytsaurus.SaveBlockedComponentsState(ctx, cannotUpdate)
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("failed to save blocked components state: %w", err)
+		}
+
 		switch {
 		case !componentManager.needSync():
 			logger.Info("Ytsaurus is running and happy")
@@ -192,8 +204,6 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 				needUpdateNames = append(needUpdateNames, c.GetFullName())
 			}
 			logger = logger.WithValues("componentsForUpdateAll", needUpdateNames)
-			canUpdate, cannotUpdate := chooseUpdatingComponents(
-				ytsaurus.GetResource().Spec, convertToComponent(needUpdate), convertToComponent(componentManager.allUpdatableComponents()))
 
 			var logMsg string
 			var updStateErr error
@@ -203,7 +213,6 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 				} else {
 					logMsg = "All components are up-to-date"
 				}
-				updStateErr = ytsaurus.SaveBlockedComponentsState(ctx, cannotUpdate)
 			} else {
 				if len(cannotUpdate) != 0 {
 					logMsg = fmt.Sprintf("Components {%v} will be updated, update of {%v} is not allowed", canUpdate, cannotUpdate)
@@ -211,7 +220,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 					logMsg = fmt.Sprintf("Components {%v} will be updated", canUpdate)
 				}
 				ytsaurus.SyncObservedGeneration()
-				updStateErr = ytsaurus.SaveUpdatingClusterState(ctx, canUpdate, cannotUpdate)
+				updStateErr = ytsaurus.SaveUpdatingClusterState(ctx, canUpdate)
 			}
 			logger.Info(logMsg)
 			return ctrl.Result{Requeue: true}, updStateErr

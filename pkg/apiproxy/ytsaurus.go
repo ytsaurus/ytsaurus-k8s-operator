@@ -92,11 +92,11 @@ func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {
 	logger.Info(fmt.Sprintf("Ytsaurus update: %s", message))
 }
 
-func (c *Ytsaurus) SaveUpdatingClusterState(ctx context.Context, canUpdate, cannotUpdate []ytv1.Component) error {
+func (c *Ytsaurus) SaveUpdatingClusterState(ctx context.Context, canUpdate []ytv1.Component) error {
 	logger := log.FromContext(ctx)
 	c.ytsaurus.Status.State = ytv1.ClusterStateUpdating
 	c.ytsaurus.Status.UpdateStatus.UpdatingComponents = canUpdate
-	c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary = buildComponentsSummary(cannotUpdate)
+	// We do not update BlockedComponentsSummary here, it should be updated first thing in Running state.
 	c.syncUpdatingComponentsSummary()
 
 	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
