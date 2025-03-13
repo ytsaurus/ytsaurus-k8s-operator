@@ -19,6 +19,7 @@ import (
 
 const (
 	defaultHostAddressLabel = "kubernetes.io/hostname"
+	mediumInitQuota         = 1 << 30 // enough to start the cluster
 )
 
 type Master struct {
@@ -167,6 +168,9 @@ func (m *Master) initMedia() string {
 		}
 		// COMPAT(gritukan): Remove "medium" after some time.
 		commands = append(commands, fmt.Sprintf("/usr/bin/yt get //sys/media/%s/@name || /usr/bin/yt create domestic_medium --attr '%s' || /usr/bin/yt create medium --attr '%s'", medium.Name, string(attr), string(attr)))
+
+		quotaPath := fmt.Sprintf("//sys/accounts/sys/@resource_limits/disk_space_per_medium/%s", medium.Name)
+		commands = append(commands, fmt.Sprintf("/usr/bin/yt get %s || /usr/bin/yt set %s %d", quotaPath, quotaPath, mediumInitQuota))
 	}
 	return strings.Join(commands, "\n")
 }
