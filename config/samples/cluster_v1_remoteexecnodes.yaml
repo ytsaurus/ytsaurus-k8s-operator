@@ -58,9 +58,6 @@ spec:
       minLogLevel: info
       writerType: file
       rotationPolicy: *rotationPolicyJobs
-    - name: error
-      minLogLevel: error
-      writerType: stderr
 
   resources:
     # Allocate resources for exec node container
