@@ -250,6 +250,10 @@ spec:
           minLogLevel: info
           writerType: file
           rotationPolicy: *rotationPolicyJobs
+        # this file is append-only and not rotated
+        # - name: error
+        #   minLogLevel: error
+        #   writerType: stderr
 
       resources:
         # Allocate resources for exec node container

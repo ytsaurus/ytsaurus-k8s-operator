@@ -136,6 +136,10 @@ spec:
           minLogLevel: info
           writerType: file
           rotationPolicy: *rotationPolicy
+        # this file is append-only and not rotated
+        # - name: error
+        #   minLogLevel: error
+        #   writerType: stderr
 
   schedulers:
     instanceCount: 1
