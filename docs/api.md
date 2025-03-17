@@ -75,6 +75,7 @@ _Appears in:_
 | `snapshotMedium` _string_ |  |  |  |
 | `changelogMedium` _string_ |  |  |  |
 | `tabletCellCount` _integer_ |  | 1 |  |
+| `tabletNodeTagFilter` _string_ |  |  |  |
 
 
 #### BundlesBootstrapSpec

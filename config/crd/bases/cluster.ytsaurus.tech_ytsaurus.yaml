@@ -78,6 +78,8 @@ spec:
                           tabletCellCount:
                             default: 1
                             type: integer
+                          tabletNodeTagFilter:
+                            type: string
                         type: object
                       sys:
                         properties:
@@ -88,6 +90,8 @@ spec:
                           tabletCellCount:
                             default: 1
                             type: integer
+                          tabletNodeTagFilter:
+                            type: string
                         type: object
                     type: object
                 type: object
