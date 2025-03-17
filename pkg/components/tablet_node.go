@@ -206,6 +206,20 @@ func (tn *TabletNode) initBundles(ctx context.Context) (ComponentStatus, error) 
 	}
 
 	for _, bundle := range []string{DefaultBundle, SysBundle} {
+		bootstrap := tn.getBundleBootstrap(bundle)
+		nodeTagFilter := ""
+		if bootstrap != nil && bootstrap.TabletNodeTagFilter != nil {
+			nodeTagFilter = *bootstrap.TabletNodeTagFilter
+		}
+		path := ypath.Path("//sys/tablet_cell_bundles").Child(bundle).Attr("node_tag_filter")
+		err = ytClient.SetNode(ctx, path, nodeTagFilter, nil)
+		if err != nil {
+			logger.Error(err, "Setting node tag filter for bundle failed", "bundle", bundle, "nodeTagFilter", nodeTagFilter)
+			return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting bundle %q node tag filter", bundle)), err
+		}
+	}
+
+	for _, bundle := range []string{DefaultBundle, SysBundle} {
 		tabletCellCount := 1
 		bootstrap := tn.getBundleBootstrap(bundle)
 		if bootstrap != nil {
