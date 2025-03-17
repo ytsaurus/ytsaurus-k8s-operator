@@ -285,20 +285,6 @@ var _ = Describe("Tablet node test", func() {
 						gomock.Nil()).
 					Return(nil).Times(1),
 				mockYtClient.EXPECT().
-					SetNode(
-						gomock.Any(),
-						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@node_tag_filter")),
-						gomock.Any(),
-						gomock.Nil()).
-					Return(nil),
-				mockYtClient.EXPECT().
-					SetNode(
-						gomock.Any(),
-						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/sys/@node_tag_filter")),
-						gomock.Any(),
-						gomock.Nil()).
-					Return(nil),
-				mockYtClient.EXPECT().
 					GetNode(
 						gomock.Any(),
 						gomock.Eq(ypath.Path(fmt.Sprintf("//sys/tablet_cell_bundles/%s/@tablet_cell_count", "default"))),
@@ -334,20 +320,6 @@ var _ = Describe("Tablet node test", func() {
 						gomock.Any(),
 						gomock.Nil()).
 					Return(nil).Times(1),
-				mockYtClient.EXPECT().
-					SetNode(
-						gomock.Any(),
-						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@node_tag_filter")),
-						gomock.Any(),
-						gomock.Nil()).
-					Return(nil),
-				mockYtClient.EXPECT().
-					SetNode(
-						gomock.Any(),
-						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/sys/@node_tag_filter")),
-						gomock.Any(),
-						gomock.Nil()).
-					Return(nil),
 				mockYtClient.EXPECT().
 					GetNode(
 						gomock.Any(),
@@ -392,20 +364,6 @@ var _ = Describe("Tablet node test", func() {
 						gomock.Any(),
 						gomock.Nil()).
 					Return(nil).Times(1),
-				mockYtClient.EXPECT().
-					SetNode(
-						gomock.Any(),
-						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@node_tag_filter")),
-						gomock.Any(),
-						gomock.Nil()).
-					Return(nil),
-				mockYtClient.EXPECT().
-					SetNode(
-						gomock.Any(),
-						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/sys/@node_tag_filter")),
-						gomock.Any(),
-						gomock.Nil()).
-					Return(nil),
 				mockYtClient.EXPECT().
 					GetNode(
 						gomock.Any(),
@@ -456,20 +414,6 @@ var _ = Describe("Tablet node test", func() {
 						gomock.Any(),
 						gomock.Nil()).
 					Return(nil).Times(1),
-				mockYtClient.EXPECT().
-					SetNode(
-						gomock.Any(),
-						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@node_tag_filter")),
-						gomock.Any(),
-						gomock.Nil()).
-					Return(nil),
-				mockYtClient.EXPECT().
-					SetNode(
-						gomock.Any(),
-						gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/sys/@node_tag_filter")),
-						gomock.Any(),
-						gomock.Nil()).
-					Return(nil),
 				mockYtClient.EXPECT().
 					GetNode(
 						gomock.Any(),
@@ -542,22 +486,6 @@ var _ = Describe("Tablet node test", func() {
 				SetNode(
 					gomock.Any(),
 					gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@options")),
-					gomock.Any(),
-					gomock.Nil()).
-				Return(nil)
-
-			mockYtClient.EXPECT().
-				SetNode(
-					gomock.Any(),
-					gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/default/@node_tag_filter")),
-					gomock.Any(),
-					gomock.Nil()).
-				Return(nil)
-
-			mockYtClient.EXPECT().
-				SetNode(
-					gomock.Any(),
-					gomock.Eq(ypath.Path("//sys/tablet_cell_bundles/sys/@node_tag_filter")),
 					gomock.Any(),
 					gomock.Nil()).
 				Return(nil)
