@@ -57,6 +57,9 @@
     };
     "monitoring_port"=10019;
     "rpc_port"=9019;
+    stockpile={
+        "thread_count"=0;
+    };
     "timestamp_provider"={
         addresses=[
             "ms-test-0.masters-test.fake.svc.fake.zone:9010";
