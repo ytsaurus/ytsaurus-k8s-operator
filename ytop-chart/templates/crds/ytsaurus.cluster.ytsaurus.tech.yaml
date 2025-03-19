@@ -84,6 +84,8 @@ spec:
                         properties:
                           changelogMedium:
                             type: string
+                          nodeTagFilter:
+                            type: string
                           snapshotMedium:
                             type: string
                           tabletCellCount:
@@ -93,6 +95,8 @@ spec:
                       sys:
                         properties:
                           changelogMedium:
+                            type: string
+                          nodeTagFilter:
                             type: string
                           snapshotMedium:
                             type: string

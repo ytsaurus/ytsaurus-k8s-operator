@@ -194,7 +194,8 @@ type BundleBootstrapSpec struct {
 	SnapshotPrimaryMedium  *string `json:"snapshotMedium,omitempty"`
 	ChangelogPrimaryMedium *string `json:"changelogMedium,omitempty"`
 	//+kubebuilder:default:=1
-	TabletCellCount int `json:"tabletCellCount,omitempty"`
+	TabletCellCount int     `json:"tabletCellCount,omitempty"`
+	NodeTagFilter   *string `json:"nodeTagFilter,omitempty"`
 }
 
 type BundlesBootstrapSpec struct {
