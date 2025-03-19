@@ -27,7 +27,7 @@ const (
 	// todo: come up with a more elegant solution
 	CoreImageFirst   = "ghcr.io/ytsaurus/ytsaurus:stable-23.2.0"
 	CoreImageSecond  = "ghcr.io/ytsaurus/ytsaurus:stable-24.1.0"
-	CoreImageNextVer = "ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2025-03-03-3e3acb6592a673533589443b4e7354b21e29debd"
+	CoreImageNextVer = "ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2025-03-19-2973ab7cb36ed53ae3cbe9c37b8c7f55eb9c4e77"
 )
 
 var (
