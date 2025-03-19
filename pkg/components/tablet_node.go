@@ -207,7 +207,6 @@ func (tn *TabletNode) initBundles(ctx context.Context) (ComponentStatus, error) 
 
 	for _, bundle := range []string{DefaultBundle, SysBundle} {
 		bootstrap := tn.getBundleBootstrap(bundle)
-		nodeTagFilter := ""
 		if bootstrap != nil && bootstrap.TabletNodeTagFilter != nil {
 			// If user don't specify filter in bundle bootstrap (or not specify bootstrap at all),
 			// he can expect that we unset previously set filter. However, if filter was set manually
@@ -216,7 +215,10 @@ func (tn *TabletNode) initBundles(ctx context.Context) (ComponentStatus, error) 
 			path := ypath.Path("//sys/tablet_cell_bundles").Child(bundle).Attr("node_tag_filter")
 			err = ytClient.SetNode(ctx, path, *bootstrap.TabletNodeTagFilter, nil)
 			if err != nil {
-				logger.Error(err, "Setting node tag filter for bundle failed", "bundle", bundle, "nodeTagFilter", nodeTagFilter)
+				logger.Error(err, "Setting node tag filter for bundle failed",
+					"bundle", bundle,
+					"nodeTagFilter", *bootstrap.TabletNodeTagFilter,
+				)
 				return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting bundle %q node tag filter", bundle)), err
 			}
 		}
