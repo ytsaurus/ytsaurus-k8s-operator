@@ -27,7 +27,7 @@ OPERATOR_IMAGE = ytsaurus/k8s-operator
 ## YTsaurus operator image tag.
 OPERATOR_TAG = 0.0.0-alpha
 
-OPERATOR_CHART = ytop-chart
+OPERATOR_CHART = charts/ytop-chart
 OPERATOR_CHART_NAME = ytop-chart
 OPERATOR_CHART_CRDS = $(OPERATOR_CHART)/templates/crds
 OPERATOR_INSTANCE = ytsaurus-dev
