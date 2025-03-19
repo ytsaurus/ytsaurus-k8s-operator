@@ -84,25 +84,25 @@ spec:
                         properties:
                           changelogMedium:
                             type: string
+                          nodeTagFilter:
+                            type: string
                           snapshotMedium:
                             type: string
                           tabletCellCount:
                             default: 1
                             type: integer
-                          tabletNodeTagFilter:
-                            type: string
                         type: object
                       sys:
                         properties:
                           changelogMedium:
                             type: string
+                          nodeTagFilter:
+                            type: string
                           snapshotMedium:
                             type: string
                           tabletCellCount:
                             default: 1
                             type: integer
-                          tabletNodeTagFilter:
-                            type: string
                         type: object
                     type: object
                 type: object

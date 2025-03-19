@@ -79,8 +79,8 @@ func (in *BundleBootstrapSpec) DeepCopyInto(out *BundleBootstrapSpec) {
 		*out = new(string)
 		**out = **in
 	}
-	if in.TabletNodeTagFilter != nil {
-		in, out := &in.TabletNodeTagFilter, &out.TabletNodeTagFilter
+	if in.NodeTagFilter != nil {
+		in, out := &in.NodeTagFilter, &out.NodeTagFilter
 		*out = new(string)
 		**out = **in
 	}
