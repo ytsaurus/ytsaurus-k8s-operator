@@ -45,8 +45,10 @@ func NewExecNode(
 		}),
 	)
 
+	criConfig := ytconfig.NewCRIConfigGenerator(&spec)
+
 	var sidecarConfig *ConfigMapBuilder
-	if spec.JobEnvironment != nil && spec.JobEnvironment.CRI != nil {
+	if criConfig.Service == ytv1.CRIServiceContainerd {
 		sidecarConfig = NewConfigMapBuilder(
 			l,
 			ytsaurus.APIProxy(),
@@ -58,18 +60,18 @@ func NewExecNode(
 			consts.ContainerdConfigFileName,
 			ConfigFormatToml,
 			func() ([]byte, error) {
-				return cfgen.GetContainerdConfig(&spec)
+				return criConfig.GetContainerdConfig()
 			},
 		)
+	}
 
-		if port := ytconfig.GetCRIServiceMonitoringPort(&spec); port != 0 {
-			srv.addMonitoringPort(corev1.ServicePort{
-				Name:       consts.CRIServiceMonitoringPortName,
-				Protocol:   corev1.ProtocolTCP,
-				Port:       port,
-				TargetPort: intstr.FromInt32(port),
-			})
-		}
+	if criConfig.MonitoringPort != 0 {
+		srv.addMonitoringPort(corev1.ServicePort{
+			Name:       consts.CRIServiceMonitoringPortName,
+			Protocol:   corev1.ProtocolTCP,
+			Port:       criConfig.MonitoringPort,
+			TargetPort: intstr.FromInt32(criConfig.MonitoringPort),
+		})
 	}
 
 	return &ExecNode{
@@ -77,6 +79,7 @@ func NewExecNode(
 		baseExecNode: baseExecNode{
 			server:        srv,
 			cfgen:         cfgen,
+			criConfig:     criConfig,
 			spec:          &spec,
 			sidecarConfig: sidecarConfig,
 		},

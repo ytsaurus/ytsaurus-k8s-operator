@@ -461,6 +461,8 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 	jobEnv.StartUID = consts.StartUID
 
 	if envSpec != nil && envSpec.CRI != nil {
+		cri := NewCRIConfigGenerator(spec)
+
 		jobEnv.Type = JobEnvironmentTypeCRI
 
 		if jobImage := commonSpec.JobImage; jobImage != nil {
@@ -471,7 +473,7 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 
 		jobEnv.UseJobProxyFromImage = ptr.To(false)
 
-		endpoint := "unix://" + GetContainerdSocketPath(spec)
+		endpoint := "unix://" + cri.GetSocketPath()
 
 		jobEnv.CriExecutor = &CriExecutor{
 			RuntimeEndpoint: endpoint,

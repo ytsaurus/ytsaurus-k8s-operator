@@ -320,6 +320,7 @@ spec:
       jobEnvironment:
         # Add CRI containerd sidecar
         cri:
+          # criService: crio
           apiRetryTimeoutSeconds: 180
           # registryConfigPath: /config/registry
 
