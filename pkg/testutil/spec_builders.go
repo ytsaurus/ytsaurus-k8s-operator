@@ -70,6 +70,7 @@ type YtsaurusBuilder struct {
 	YtsaurusImage     string
 	JobImage          *string
 	SandboxImage      *string
+	CRIService        *ytv1.CRIServiceType
 	QueryTrackerImage string
 	Ytsaurus          *ytv1.Ytsaurus
 
@@ -387,6 +388,7 @@ func (b *YtsaurusBuilder) SetupCRIJobEnvironment(node *ytv1.ExecNodesSpec) {
 	node.JobEnvironment = &ytv1.JobEnvironmentSpec{
 		UserSlots: ptr.To(4),
 		CRI: &ytv1.CRIJobEnvironmentSpec{
+			CRIService:   b.CRIService,
 			SandboxImage: b.SandboxImage,
 		},
 	}

@@ -368,4 +368,12 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		It("Test", func(ctx context.Context) {})
 	})
 
+	Context("With CRI job environment - CRI-O", Label("crio"), func() {
+		BeforeEach(func() {
+			ytBuilder.CRIService = ptr.To(ytv1.CRIServiceCRIO)
+			ytBuilder.WithExecNodes()
+			ytBuilder.WithCRIJobEnvironment()
+		})
+		It("Test", func(ctx context.Context) {})
+	})
 })

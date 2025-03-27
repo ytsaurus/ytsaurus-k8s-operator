@@ -43,8 +43,10 @@ func NewRemoteExecNodes(
 		}),
 	)
 
+	criConfig := ytconfig.NewCRIConfigGenerator(&spec)
+
 	var sidecarConfig *ConfigMapBuilder
-	if spec.JobEnvironment != nil && spec.JobEnvironment.CRI != nil {
+	if criConfig.Service == ytv1.CRIServiceContainerd {
 		sidecarConfig = NewConfigMapBuilder(
 			l,
 			proxy,
@@ -56,7 +58,7 @@ func NewRemoteExecNodes(
 			consts.ContainerdConfigFileName,
 			ConfigFormatToml,
 			func() ([]byte, error) {
-				return cfgen.GetContainerdConfig(&spec)
+				return criConfig.GetContainerdConfig()
 			},
 		)
 	}
@@ -66,6 +68,7 @@ func NewRemoteExecNodes(
 		baseExecNode: baseExecNode{
 			server:        srv,
 			cfgen:         cfgen,
+			criConfig:     criConfig,
 			spec:          &spec,
 			sidecarConfig: sidecarConfig,
 		},
