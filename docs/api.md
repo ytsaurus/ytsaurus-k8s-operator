@@ -108,7 +108,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `entrypointWrapper` _string array_ | Specifies wrapper for CRI service (i.e. containerd) command. |  |  |
+| `criService` _[CRIServiceType](#criservicetype)_ | CRI service: containerd (default), crio. |  | Enum: [none containerd crio] <br /> |
+| `entrypointWrapper` _string array_ | Specifies wrapper for CRI service command, default: ["tini", "--"]. |  |  |
 | `sandboxImage` _string_ | Sandbox (pause) image. |  |  |
 | `apiRetryTimeoutSeconds` _integer_ | Timeout for retrying CRI API calls. |  |  |
 | `criNamespace` _string_ | CRI namespace for jobs containers. |  |  |
@@ -118,6 +119,24 @@ _Appears in:_
 | `imageCompressionRatioEstimation` _integer_ | Multiplier for image size to account space used by unpacked images. |  |  |
 | `alwaysPullLatestImage` _boolean_ | Always pull "latest" images. |  |  |
 | `imagePullPeriodSeconds` _integer_ | Pull images periodically. |  |  |
+
+
+#### CRIServiceType
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [CRIJobEnvironmentSpec](#crijobenvironmentspec)
+
+| Field | Description |
+| --- | --- |
+| `none` |  |
+| `containerd` |  |
+| `crio` |  |
 
 
 #### CategoriesFilter
