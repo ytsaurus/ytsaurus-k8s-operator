@@ -1174,6 +1174,35 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 	Context("Integration tests", Label("integration"), func() {
 
+		Context("With CRI-O", Label("crio"), func() {
+
+			BeforeEach(func() {
+
+				if os.Getenv("YTSAURUS_CRIO_READY") == "" {
+					Skip("YTsaurus is not ready for CRI-O")
+				}
+
+				By("Adding exec nodes")
+				ytBuilder.WithScheduler()
+				ytBuilder.WithControllerAgents()
+				ytBuilder.WithExecNodes()
+
+				By("Adding job environment")
+				ytsaurus.Spec.ExecNodes[0].JobEnvironment = &ytv1.JobEnvironmentSpec{
+					Isolated:  ptr.To(true),
+					UserSlots: ptr.To(4),
+					CRI: &ytv1.CRIJobEnvironmentSpec{
+						CRIService: ptr.To(ytv1.CRIServiceCRIO),
+					},
+				}
+			})
+
+			It("Verify CRI-O job environment", func(ctx context.Context) {
+				// TODO(khlebnikov): Check docker image and resource limits.
+			})
+
+		}) // integration crio
+
 		Context("With RPC proxy", Label("rpc-proxy"), func() {
 			var ytRPCProxyAddress string
 
