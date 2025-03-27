@@ -67,6 +67,8 @@ type YtsaurusBuilder struct {
 	Namespace         string
 	YtsaurusImage     string
 	JobImage          *string
+	SandboxImage      *string
+	CRIService        *ytv1.CRIServiceType
 	QueryTrackerImage string
 	Ytsaurus          *ytv1.Ytsaurus
 }
@@ -341,11 +343,11 @@ func (b *YtsaurusBuilder) CreateExecNodeSpec() ytv1.ExecNodesSpec {
 			Loggers:       b.CreateLoggersSpec(),
 			Locations: []ytv1.LocationSpec{
 				{
-					LocationType: "ChunkCache",
+					LocationType: ytv1.LocationTypeChunkCache,
 					Path:         "/yt/node-data/chunk-cache",
 				},
 				{
-					LocationType: "Slots",
+					LocationType: ytv1.LocationTypeSlots,
 					Path:         "/yt/node-data/slots",
 				},
 			},
@@ -359,6 +361,29 @@ func (b *YtsaurusBuilder) CreateExecNodeSpec() ytv1.ExecNodesSpec {
 				},
 			},
 		},
+	}
+}
+
+func (b *YtsaurusBuilder) SetupCRIJobEnvironment(node *ytv1.ExecNodesSpec) {
+	node.Locations = append(node.Locations, ytv1.LocationSpec{
+		LocationType: ytv1.LocationTypeImageCache,
+		Path:         "/yt/node-data/image-cache",
+	})
+	node.JobEnvironment = &ytv1.JobEnvironmentSpec{
+		// Isolated:  ptr.To(true),
+		// DoNotSetUserId: ptr.To(true),
+		// UseArtifactBinds: ptr.To(true),
+		UserSlots: ptr.To(4),
+		CRI: &ytv1.CRIJobEnvironmentSpec{
+			CRIService:   b.CRIService,
+			SandboxImage: b.SandboxImage,
+		},
+	}
+}
+
+func (b *YtsaurusBuilder) WithCRIJobEnvironment() {
+	for i := range b.Ytsaurus.Spec.ExecNodes {
+		b.SetupCRIJobEnvironment(&b.Ytsaurus.Spec.ExecNodes[i])
 	}
 }
 

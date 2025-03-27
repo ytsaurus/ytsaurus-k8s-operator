@@ -211,6 +211,7 @@ func TestGetExecNodeConfigWithCri(t *testing.T) {
 	cases := map[string]struct {
 		JobResources *corev1.ResourceRequirements
 		Isolated     bool
+		Service      *ytv1.CRIServiceType
 	}{
 		"isolated-containers-without-job-resources": {
 			JobResources: nil,
@@ -228,11 +229,16 @@ func TestGetExecNodeConfigWithCri(t *testing.T) {
 			JobResources: &testJobResourceReqs,
 			Isolated:     false,
 		},
+		"isolated-crio-with-job-resources": {
+			JobResources: &testJobResourceReqs,
+			Isolated:     true,
+			Service:      ptr.To(ytv1.CRIServiceCRIO),
+		},
 	}
 
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
-			spec := withCri(getExecNodeSpec(nil), test.JobResources, test.Isolated)
+			spec := withCri(getExecNodeSpec(nil), test.JobResources, test.Isolated, test.Service)
 			canonize.AssertStruct(t, "exec-node-"+name, spec)
 			cfg, err := g.GetExecNodeConfig(spec)
 			require.NoError(t, err)
@@ -245,7 +251,7 @@ func TestGetContainerdConfig(t *testing.T) {
 	ytsaurus := getYtsaurusWithoutNodes()
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
 	g := NewLocalNodeGenerator(ytsaurus, ytsaurus.Name, testClusterDomain)
-	spec := withCri(getExecNodeSpec(nil), nil, false)
+	spec := withCri(getExecNodeSpec(nil), nil, false, nil)
 	canonize.AssertStruct(t, "exec-node", spec)
 	cfg, err := g.GetContainerdConfig(&spec)
 	require.NoError(t, err)
@@ -870,12 +876,13 @@ func getExecNodeSpec(jobResources *corev1.ResourceRequirements) ytv1.ExecNodesSp
 	}
 }
 
-func withCri(spec ytv1.ExecNodesSpec, jobResources *corev1.ResourceRequirements, isolated bool) ytv1.ExecNodesSpec {
+func withCri(spec ytv1.ExecNodesSpec, jobResources *corev1.ResourceRequirements, isolated bool, criService *ytv1.CRIServiceType) ytv1.ExecNodesSpec {
 	spec.Locations = append(spec.Locations, testLocationImageCache)
 	spec.JobResources = jobResources
 	spec.JobEnvironment = &ytv1.JobEnvironmentSpec{
 		UserSlots: ptr.To(int(42)),
 		CRI: &ytv1.CRIJobEnvironmentSpec{
+			CRIService:             criService,
 			SandboxImage:           ptr.To("registry.k8s.io/pause:3.8"),
 			APIRetryTimeoutSeconds: ptr.To(int32(120)),
 			CRINamespace:           ptr.To("yt"),

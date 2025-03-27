@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"path"
 
@@ -71,44 +72,15 @@ func (n *baseExecNode) doBuildBase() error {
 
 	for i := range podSpec.Containers {
 		setContainerPrivileged(&podSpec.Containers[i])
-
-		if envSpec := n.spec.JobEnvironment; envSpec != nil && envSpec.CRI != nil {
-			n.addEnvironmentForCRITools(&podSpec.Containers[i])
-		}
-	}
-
-	// Pour job resources into node container if jobs are not isolated.
-	if n.spec.JobResources != nil && !n.IsJobEnvironmentIsolated() {
-		addResourceList := func(list, newList corev1.ResourceList) {
-			for name, quantity := range newList {
-				if value, ok := list[name]; ok {
-					value.Add(quantity)
-					list[name] = value
-				} else {
-					list[name] = quantity.DeepCopy()
-				}
-			}
-		}
-
-		addResourceList(podSpec.Containers[0].Resources.Requests, n.spec.JobResources.Requests)
-		addResourceList(podSpec.Containers[0].Resources.Limits, n.spec.JobResources.Limits)
+		n.addEnvironmentForTools(&podSpec.Containers[i])
 	}
 
 	if n.IsJobEnvironmentIsolated() {
-		// Add sidecar container for running jobs.
-		if envSpec := n.spec.JobEnvironment; envSpec != nil && envSpec.CRI != nil {
-			n.doBuildCRISidecar(envSpec, podSpec)
-		}
-	} else if n.sidecarConfig != nil {
-		// Mount sidecar config into exec node container if job environment is not isolated.
+		// Add CRI service sidecar container for running jobs.
+		n.doBuildCRIServiceSidecar(podSpec)
+	} else {
 		// CRI service is supposed to be started by exec node entrypoint wrapper.
-		podSpec.Containers[0].VolumeMounts = append(podSpec.Containers[0].VolumeMounts,
-			corev1.VolumeMount{
-				Name:      consts.ContainerdConfigVolumeName,
-				MountPath: consts.ContainerdConfigMountPoint,
-				ReadOnly:  true,
-			})
-		n.addCRIServicePorts(&podSpec.Containers[0])
+		n.doBuildCRIServiceInplace(&podSpec.Containers[0])
 	}
 
 	if n.sidecarConfig != nil {
@@ -131,30 +103,69 @@ func (n *baseExecNode) addCRIServicePorts(container *corev1.Container) {
 	}
 }
 
-func (n *baseExecNode) addEnvironmentForCRITools(container *corev1.Container) {
-	socketPath := ytconfig.GetContainerdSocketPath(n.spec)
-	container.Env = append(container.Env, []corev1.EnvVar{
-		{Name: "CONTAINERD_ADDRESS", Value: socketPath},                     // ctr
-		{Name: "CONTAINERD_NAMESPACE", Value: "k8s.io"},                     // ctr
-		{Name: "CONTAINER_RUNTIME_ENDPOINT", Value: "unix://" + socketPath}, // crictl
-	}...)
+func (n *baseExecNode) addEnvironmentForTools(container *corev1.Container) {
+	switch ytconfig.GetCRIServiceType(n.spec) {
+	case ytv1.CRIServiceContainerd:
+		// ctr
+		container.Env = append(container.Env, corev1.EnvVar{
+			Name:  "CONTAINERD_ADDRESS",
+			Value: ytconfig.GetCRIServiceSocketPath(n.spec),
+		}, corev1.EnvVar{
+			Name:  "CONTAINERD_NAMESPACE",
+			Value: "k8s.io",
+		})
+		fallthrough
+	case ytv1.CRIServiceCRIO:
+		// crictl
+		container.Env = append(container.Env, corev1.EnvVar{
+			Name:  "CONTAINER_RUNTIME_ENDPOINT",
+			Value: "unix://" + ytconfig.GetCRIServiceSocketPath(n.spec),
+		})
+	}
 }
 
-func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSpec *corev1.PodSpec) {
-	configPath := path.Join(consts.ContainerdConfigMountPoint, consts.ContainerdConfigFileName)
+func (n *baseExecNode) addEnvironmentForCRIO(criSpec *ytv1.CRIJobEnvironmentSpec, container *corev1.Container) {
+	appendEnv := func(name, value string) {
+		container.Env = append(container.Env, corev1.EnvVar{Name: name, Value: value})
+	}
+
+	// See https://github.com/cri-o/cri-o/blob/main/docs/crio.8.md
+	appendEnv("CONTAINER_LISTEN", ytconfig.GetCRIServiceSocketPath(n.spec))
+	appendEnv("CONTAINER_CGROUP_MANAGER", "cgroupfs")
+	appendEnv("CONTAINER_CONMON_CGROUP", "pod")
+	if locationPath := ytconfig.GetImageCacheLocationPath(n.spec); locationPath != nil {
+		appendEnv("CONTAINER_ROOT", *locationPath)
+	}
+	if criSpec.SandboxImage != nil {
+		appendEnv("CONTAINER_PAUSE_IMAGE", *criSpec.SandboxImage)
+	}
+	if port := ytconfig.GetCRIServiceMonitoringPort(n.spec); port != 0 {
+		appendEnv("CONTAINER_ENABLE_METRICS", "true")
+		appendEnv("CONTAINER_METRICS_HOST", "")
+		appendEnv("CONTAINER_METRICS_PORT", fmt.Sprintf("%d", port))
+	}
+}
+
+func (n *baseExecNode) doBuildCRIServiceSidecar(podSpec *corev1.PodSpec) {
+	criService := ytconfig.GetCRIServiceType(n.spec)
+	if criService == ytv1.CRIServiceNone {
+		return
+	}
+	envSpec := n.spec.JobEnvironment
 
 	wrapper := envSpec.CRI.EntrypointWrapper
 	if len(wrapper) == 0 {
 		wrapper = []string{"tini", "--"}
 	}
+
 	command := make([]string, 0, 1+len(wrapper))
-	command = append(append(command, wrapper...), "containerd")
+	command = append(command, wrapper...)
+	command = append(command, string(criService))
 
 	jobsContainer := corev1.Container{
 		Name:         consts.JobsContainerName,
 		Image:        podSpec.Containers[0].Image,
 		Command:      command,
-		Args:         []string{"--config", configPath},
 		Env:          getDefaultEnv(),
 		VolumeMounts: createVolumeMounts(n.spec.VolumeMounts),
 		SecurityContext: &corev1.SecurityContext{
@@ -162,15 +173,22 @@ func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSp
 		},
 	}
 
-	n.addCRIServicePorts(&jobsContainer)
-	n.addEnvironmentForCRITools(&jobsContainer)
+	switch criService {
+	case ytv1.CRIServiceContainerd:
+		configPath := path.Join(consts.ContainerdConfigMountPoint, consts.ContainerdConfigFileName)
+		jobsContainer.Args = []string{"--config", configPath}
+		jobsContainer.VolumeMounts = append(jobsContainer.VolumeMounts,
+			corev1.VolumeMount{
+				Name:      consts.ContainerdConfigVolumeName,
+				MountPath: consts.ContainerdConfigMountPoint,
+				ReadOnly:  true,
+			})
+	case ytv1.CRIServiceCRIO:
+		n.addEnvironmentForCRIO(envSpec.CRI, &jobsContainer)
+	}
 
-	jobsContainer.VolumeMounts = append(jobsContainer.VolumeMounts,
-		corev1.VolumeMount{
-			Name:      consts.ContainerdConfigVolumeName,
-			MountPath: consts.ContainerdConfigMountPoint,
-			ReadOnly:  true,
-		})
+	n.addCRIServicePorts(&jobsContainer)
+	n.addEnvironmentForTools(&jobsContainer)
 
 	n.server.addCABundleMount(&jobsContainer)
 	n.server.addTlsSecretMount(&jobsContainer)
@@ -193,6 +211,46 @@ func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSp
 	}
 
 	podSpec.Containers = append(podSpec.Containers, jobsContainer)
+}
+
+func (n *baseExecNode) doBuildCRIServiceInplace(container *corev1.Container) {
+	// Pour job resources into node container if jobs are not isolated.
+	if n.spec.JobResources != nil {
+		addResourceList := func(list, newList corev1.ResourceList) {
+			for name, quantity := range newList {
+				if value, ok := list[name]; ok {
+					value.Add(quantity)
+					list[name] = value
+				} else {
+					list[name] = quantity.DeepCopy()
+				}
+			}
+		}
+
+		addResourceList(container.Resources.Requests, n.spec.JobResources.Requests)
+		addResourceList(container.Resources.Limits, n.spec.JobResources.Limits)
+	}
+
+	criService := ytconfig.GetCRIServiceType(n.spec)
+	if criService == ytv1.CRIServiceNone {
+		return
+	}
+	envSpec := n.spec.JobEnvironment
+
+	if n.sidecarConfig != nil {
+		// Mount sidecar config into exec node container if job environment is not isolated.
+		container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
+			Name:      consts.ContainerdConfigVolumeName,
+			MountPath: consts.ContainerdConfigMountPoint,
+			ReadOnly:  true,
+		})
+	}
+
+	if criService == ytv1.CRIServiceCRIO {
+		n.addEnvironmentForCRIO(envSpec.CRI, container)
+	}
+
+	n.addCRIServicePorts(container)
 }
 
 func (n *baseExecNode) doSyncBase(ctx context.Context, dry bool) (ComponentStatus, error) {

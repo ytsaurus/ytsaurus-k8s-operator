@@ -49,6 +49,8 @@ const (
 	ContainerdSocketName       = "containerd.sock"
 	ContainerdConfigFileName   = "containerd.toml"
 
+	CRIServiceSocketName = "cri.sock"
+
 	CRINamespace  = "yt"
 	CRIBaseCgroup = "/yt"
 )
