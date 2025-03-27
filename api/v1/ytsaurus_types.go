@@ -429,8 +429,20 @@ type DataNodesSpec struct {
 	Name string `json:"name,omitempty"`
 }
 
+type CRIServiceType string
+
+const (
+	CRIServiceNone       CRIServiceType = "none"
+	CRIServiceContainerd CRIServiceType = "containerd"
+	CRIServiceCRIO       CRIServiceType = "crio"
+)
+
 type CRIJobEnvironmentSpec struct {
-	// Specifies wrapper for CRI service (i.e. containerd) command.
+	// CRI service: containerd (default), crio, none.
+	//+optional
+	//+kubebuilder:validation:Enum={"none","containerd","crio"}
+	CRIService *CRIServiceType `json:"criService,omitempty"`
+	// Specifies wrapper for CRI service command, default: ["tini", "--"].
 	//+optional
 	EntrypointWrapper []string `json:"entrypointWrapper,omitempty"`
 	// Sandbox (pause) image.
@@ -445,7 +457,7 @@ type CRIJobEnvironmentSpec struct {
 	// Base cgroup for jobs.
 	//+optional
 	BaseCgroup *string `json:"baseCgroup,omitempty"`
-	// See: https://github.com/containerd/containerd/blob/main/docs/hosts.md
+	// For containerd: https://github.com/containerd/containerd/blob/main/docs/hosts.md
 	//+optional
 	RegistryConfigPath *string `json:"registryConfigPath,omitempty"`
 	// Initial estimation for space required for pulling image into cache.

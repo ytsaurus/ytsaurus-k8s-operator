@@ -44,7 +44,7 @@ func NewRemoteExecNodes(
 	)
 
 	var sidecarConfig *ConfigMapBuilder
-	if spec.JobEnvironment != nil && spec.JobEnvironment.CRI != nil {
+	if ytconfig.GetCRIServiceType(&spec) == ytv1.CRIServiceContainerd {
 		sidecarConfig = NewConfigMapBuilder(
 			l,
 			proxy,
