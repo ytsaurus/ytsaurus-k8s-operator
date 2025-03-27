@@ -8701,9 +8701,17 @@ spec:
                             criNamespace:
                               description: CRI namespace for jobs containers.
                               type: string
+                            criService:
+                              description: 'CRI service: containerd (default), crio,
+                                none.'
+                              enum:
+                              - containerd
+                              - crio
+                              - none
+                              type: string
                             entrypointWrapper:
-                              description: Specifies wrapper for CRI service (i.e.
-                                containerd) command.
+                              description: 'Specifies wrapper for CRI service command,
+                                default: ["tini", "--"].'
                               items:
                                 type: string
                               type: array
@@ -8727,7 +8735,7 @@ spec:
                               format: int32
                               type: integer
                             registryConfigPath:
-                              description: 'See: https://github.com/containerd/containerd/blob/main/docs/hosts.md'
+                              description: 'For containerd: https://github.com/containerd/containerd/blob/main/docs/hosts.md'
                               type: string
                             sandboxImage:
                               description: Sandbox (pause) image.
