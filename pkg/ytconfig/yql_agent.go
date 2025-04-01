@@ -13,15 +13,15 @@ type ClusterMapping struct {
 	Default bool   `yson:"default"`
 }
 
-type MrJobSystemLibsWithMd5 struct {
+type AdditionalSystemLib struct {
 	File string `yson:"file"`
 }
 
 type GatewayConfig struct {
-	MRJobBinary            string                   `yson:"mr_job_bin"`
-	UDFDirectory           string                   `yson:"mr_job_udfs_dir"`
-	ClusterMapping         []ClusterMapping         `yson:"cluster_mapping"`
-	MrJobSystemLibsWithMd5 []MrJobSystemLibsWithMd5 `yson:"mr_job_system_libs_with_md5,omitempty"`
+	MRJobBinary          string                `yson:"mr_job_bin"`
+	UDFDirectory         string                `yson:"mr_job_udfs_dir"`
+	ClusterMapping       []ClusterMapping      `yson:"cluster_mapping"`
+	AdditionalSystemLibs []AdditionalSystemLib `yson:"additional_system_libs,omitempty"`
 }
 
 type YQLAgent struct {
@@ -57,15 +57,13 @@ func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	c.User = "yql_agent"
 
 	c.YQLAgent.GatewayConfig.UDFDirectory = "/usr/lib/yql"
-	if spec.ConfigureMrJobSystemLibs {
-		c.YQLAgent.GatewayConfig.MrJobSystemLibsWithMd5 = []MrJobSystemLibsWithMd5{
-			MrJobSystemLibsWithMd5{
-				File: "/usr/lib/yql/libiconv.so",
-			},
-			MrJobSystemLibsWithMd5{
-				File: "/usr/lib/yql/liblibidn-dynamic.so",
-			},
-		}
+	c.YQLAgent.GatewayConfig.AdditionalSystemLibs = []AdditionalSystemLib{
+		AdditionalSystemLib{
+			File: "/usr/lib/yql/libiconv.so",
+		},
+		AdditionalSystemLib{
+			File: "/usr/lib/yql/liblibidn-dynamic.so",
+		},
 	}
 	c.YQLAgent.GatewayConfig.MRJobBinary = "/usr/bin/mrjob"
 	c.YQLAgent.YqlPluginSharedLibrary = "/usr/lib/yql/libyqlplugin.so"

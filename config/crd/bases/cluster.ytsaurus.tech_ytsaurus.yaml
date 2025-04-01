@@ -40317,10 +40317,6 @@ spec:
                             x-kubernetes-list-type: atomic
                         type: object
                     type: object
-                  configureMrJobSystemLibs:
-                    default: false
-                    description: Sets mrjob dynamic library paths in yql agent config.
-                    type: boolean
                   dnsConfig:
                     description: DNSConfig allows customizing the DNS settings for
                       the pods.
