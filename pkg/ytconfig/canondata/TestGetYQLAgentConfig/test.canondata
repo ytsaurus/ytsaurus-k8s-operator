@@ -123,5 +123,13 @@
             test="http-proxies-test.fake.svc.fake.zone";
         };
         "default_cluster"=test;
+        "additional_system_libs"=[
+            {
+                file="/usr/lib/yql/libiconv.so";
+            };
+            {
+                file="/usr/lib/yql/liblibidn-dynamic.so";
+            };
+        ];
     };
 }
