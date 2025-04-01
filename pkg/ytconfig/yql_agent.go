@@ -18,10 +18,9 @@ type AdditionalSystemLib struct {
 }
 
 type GatewayConfig struct {
-	MRJobBinary          string                `yson:"mr_job_bin"`
-	UDFDirectory         string                `yson:"mr_job_udfs_dir"`
-	ClusterMapping       []ClusterMapping      `yson:"cluster_mapping"`
-	AdditionalSystemLibs []AdditionalSystemLib `yson:"additional_system_libs,omitempty"`
+	MRJobBinary    string           `yson:"mr_job_bin"`
+	UDFDirectory   string           `yson:"mr_job_udfs_dir"`
+	ClusterMapping []ClusterMapping `yson:"cluster_mapping"`
 }
 
 type YQLAgent struct {
@@ -30,10 +29,11 @@ type YQLAgent struct {
 	YTTokenPath            string        `yson:"yt_token_path"`
 
 	// For backward compatibility.
-	MRJobBinary        string            `yson:"mr_job_binary"`
-	UDFDirectory       string            `yson:"udf_directory"`
-	AdditionalClusters map[string]string `yson:"additional_clusters"`
-	DefaultCluster     string            `yson:"default_cluster"`
+	MRJobBinary          string                `yson:"mr_job_binary"`
+	UDFDirectory         string                `yson:"udf_directory"`
+	AdditionalClusters   map[string]string     `yson:"additional_clusters"`
+	DefaultCluster       string                `yson:"default_cluster"`
+	AdditionalSystemLibs []AdditionalSystemLib `yson:"additional_system_libs,omitempty"`
 }
 
 type YQLAgentServer struct {
@@ -57,7 +57,7 @@ func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	c.User = "yql_agent"
 
 	c.YQLAgent.GatewayConfig.UDFDirectory = "/usr/lib/yql"
-	c.YQLAgent.GatewayConfig.AdditionalSystemLibs = []AdditionalSystemLib{
+	c.YQLAgent.AdditionalSystemLibs = []AdditionalSystemLib{
 		AdditionalSystemLib{
 			File: "/usr/lib/yql/libiconv.so",
 		},
