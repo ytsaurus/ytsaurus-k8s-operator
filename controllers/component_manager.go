@@ -145,6 +145,7 @@ func NewComponentManager(
 	}
 	// Fetch component status.
 	var readyComponents []string
+	var updatingComponents []string
 	var notReadyComponents []string
 
 	status := ComponentManagerStatus{
@@ -197,11 +198,16 @@ func NewComponentManager(
 		} else {
 			readyComponents = append(readyComponents, c.GetFullName())
 		}
+
+		if syncStatus == components.SyncStatusUpdating {
+			updatingComponents = append(updatingComponents, c.GetFullName())
+		}
 	}
 
 	logger.Info("Ytsaurus sync status",
 		"notReadyComponents", notReadyComponents,
 		"readyComponents", readyComponents,
+		"updatingComponents", updatingComponents,
 		"updateState", resource.Status.UpdateStatus.State,
 		"clusterState", resource.Status.State)
 
