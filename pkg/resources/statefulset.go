@@ -116,7 +116,12 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minRe
 			"totalInstanceCount", len(podList.Items))
 		return false
 	}
-
+	logger.Info(
+		"pods are ready",
+		"component", s.labeller.GetFullComponentName(),
+		"readyInstanceCount", readyInstanceCount,
+		"minReadyInstanceCount", effectiveMinReadyInstanceCount,
+		"totalInstanceCount", len(podList.Items))
 	return true
 }
 
