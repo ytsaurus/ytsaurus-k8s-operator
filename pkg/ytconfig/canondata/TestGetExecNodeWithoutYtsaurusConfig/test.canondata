@@ -44,9 +44,6 @@
     };
     "monitoring_port"=10029;
     "rpc_port"=9029;
-    stockpile={
-        "thread_count"=0;
-    };
     "timestamp_provider"={
         addresses=[
             "host1.external.address:9010";
