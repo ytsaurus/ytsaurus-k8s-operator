@@ -69,14 +69,6 @@ type SolomonExporter struct {
 	InstanceTags map[string]string `yson:"instance_tags,omitempty"`
 }
 
-type Stockpile struct {
-	BufferSize                  int           `yson:"buffer_size,omitempty"`
-	ThreadCount                 int           `yson:"thread_count"`
-	Strategy                    string        `yson:"strategy,omitempty"`
-	Period                      yson.Duration `yson:"period,omitempty"`
-	TotalMemoryFractionOverride float32       `yson:"total_memory_fraction_override,omitempty"`
-}
-
 type PemBlob struct {
 	FileName string `yson:"file_name,omitempty"`
 	Value    string `yson:"value,omitempty"`
@@ -121,7 +113,6 @@ type BasicServer struct {
 	MonitoringPort  int32           `yson:"monitoring_port"`
 	RPCPort         int32           `yson:"rpc_port"`
 	BusServer       *BusServer      `yson:"bus_server,omitempty"`
-	Stockpile       *Stockpile      `yson:"stockpile,omitempty"`
 }
 
 type CommonServer struct {

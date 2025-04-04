@@ -215,13 +215,6 @@ func (g *NodeGenerator) fillDriver(c *Driver) {
 	g.fillPrimaryMaster(&c.PrimaryMaster)
 }
 
-func (g *NodeGenerator) fillStockpile(c *BasicServer) {
-	// disable stockpile
-	c.Stockpile = &Stockpile{
-		ThreadCount: 0,
-	}
-}
-
 func (g *NodeGenerator) fillAddressResolver(c *AddressResolver) {
 	var retries = 1000
 	c.EnableIPv4 = g.commonSpec.UseIPv4
@@ -273,7 +266,6 @@ func (g *NodeGenerator) fillCypressAnnotations(c *CommonServer) {
 
 func (g *NodeGenerator) fillCommonService(c *CommonServer, s *ytv1.InstanceSpec) {
 	// ToDo(psushin): enable porto resource tracker?
-	g.fillStockpile(&c.BasicServer)
 	g.fillAddressResolver(&c.AddressResolver)
 	g.fillSolomonExporter(&c.SolomonExporter)
 	g.fillClusterConnection(&c.ClusterConnection, s.NativeTransport)
