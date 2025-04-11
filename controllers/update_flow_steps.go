@@ -199,6 +199,8 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForQTStateUpdate:            flowCheckStatusCondition(consts.ConditionQTStateUpdated),
 	ytv1.UpdateStateWaitingForYqlaUpdatingPrepare:      flowCheckStatusCondition(consts.ConditionYqlaPreparedForUpdating),
 	ytv1.UpdateStateWaitingForYqlaUpdate:               flowCheckStatusCondition(consts.ConditionYqlaUpdated),
+	ytv1.UpdateStateWaitingForQAStateUpdatingPrepare:   flowCheckStatusCondition(consts.ConditionQAStatePreparedForUpdating),
+	ytv1.UpdateStateWaitingForQAStateUpdate:            flowCheckStatusCondition(consts.ConditionQAStateUpdated),
 	ytv1.UpdateStateWaitingForSafeModeDisabled:         flowCheckStatusCondition(consts.ConditionSafeModeDisabled),
 	ytv1.UpdateStateWaitingForMasterExitReadOnly:       flowCheckStatusCondition(consts.ConditionMasterExitedReadOnly),
 	ytv1.UpdateStateWaitingForPodsRemoval: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
@@ -227,6 +229,7 @@ func buildFlowTree(updatingComponents []ytv1.Component) *flowTree {
 	updScheduler := hasComponent(updatingComponents, consts.SchedulerType)
 	updQueryTracker := hasComponent(updatingComponents, consts.QueryTrackerType)
 	updYqlAgent := hasComponent(updatingComponents, consts.YqlAgentType)
+	updQueueAgent := hasComponent(updatingComponents, consts.QueueAgentType)
 
 	// TODO: if validation conditions can be not mentioned here or needed
 	tree.chainIf(
@@ -272,6 +275,10 @@ func buildFlowTree(updatingComponents []ytv1.Component) *flowTree {
 		updYqlAgent,
 		st(ytv1.UpdateStateWaitingForYqlaUpdatingPrepare),
 		st(ytv1.UpdateStateWaitingForYqlaUpdate),
+	).chainIf(
+		updQueueAgent,
+		st(ytv1.UpdateStateWaitingForQAStateUpdatingPrepare),
+		st(ytv1.UpdateStateWaitingForQAStateUpdate),
 	).chainIf(
 		updMaster,
 		st(ytv1.UpdateStateWaitingForSafeModeDisabled),

@@ -99,6 +99,19 @@ func TestBuildFlowTree(t *testing.T) {
 			},
 		},
 		{
+			name: "queue agent update",
+			updatingComponents: []ytv1.Component{
+				{Type: consts.QueueAgentType},
+			},
+			expectedStates: []ytv1.UpdateState{
+				ytv1.UpdateStateNone,
+				ytv1.UpdateStateWaitingForPodsRemoval,
+				ytv1.UpdateStateWaitingForPodsCreation,
+				ytv1.UpdateStateWaitingForQAStateUpdatingPrepare,
+				ytv1.UpdateStateWaitingForQAStateUpdate,
+			},
+		},
+		{
 			name: "random stateless component update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.DiscoveryType},
