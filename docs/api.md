@@ -2208,6 +2208,8 @@ _Appears in:_
 | `WaitingForOpArchiveUpdate` |  |
 | `WaitingForQTStateUpdatingPrepare` |  |
 | `WaitingForQTStateUpdate` |  |
+| `WaitingForQAStateUpdatingPrepare` |  |
+| `WaitingForQAStateUpdate` |  |
 | `WaitingForYqlaUpdatingPrepare` |  |
 | `WaitingForYqlaUpdate` |  |
 | `WaitingForSafeModeDisabled` |  |
