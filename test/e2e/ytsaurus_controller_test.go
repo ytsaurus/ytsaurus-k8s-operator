@@ -268,6 +268,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		BeforeEach(func() {
 			By("Adding base components")
 			testutil.WithBaseYtsaurusComponents(ytsaurus)
+      testutil.WithQueueAgent(ytsaurus)
 		})
 
 		JustBeforeEach(func() {

@@ -364,7 +364,7 @@ func (qa *QueueAgent) initQAState(ctx context.Context, dry bool) (ComponentStatu
 			return tndStatus, err
 		}
 		if !IsRunningStatus(tndStatus.SyncStatus) {
-			// Wait for tablet nodes to proceed with operations archive init.
+			// Wait for tablet nodes to proceed with queue agent state init.
 			return WaitingStatus(SyncStatusBlocked, tnd.GetFullName()), err
 		}
 	}
