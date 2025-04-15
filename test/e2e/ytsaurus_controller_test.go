@@ -352,7 +352,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					"TabletNode",
 					"Scheduler",
 					"ControllerAgent",
-					"QueueAgent",
 				))
 
 				By("Wait cluster update with full update complete")
