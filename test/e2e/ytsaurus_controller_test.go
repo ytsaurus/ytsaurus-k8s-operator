@@ -268,7 +268,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		BeforeEach(func() {
 			By("Adding base components")
 			testutil.WithBaseYtsaurusComponents(ytsaurus)
-      testutil.WithQueueAgent(ytsaurus)
 		})
 
 		JustBeforeEach(func() {
@@ -352,7 +351,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					"ExecNode",
 					"TabletNode",
 					"Scheduler",
-					"ControllerAgent"))
+					"ControllerAgent",
+					"QueueAgent",
+				))
 
 				By("Wait cluster update with full update complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
@@ -448,6 +449,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					"ExecNode",
 					"Scheduler",
 					"ControllerAgent",
+					"QueueAgent",
 				))
 
 				By("Wait cluster update with selector:StatelessOnly complete")
@@ -696,17 +698,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				result := true
 				Expect(ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection/yql_agent/stages/production/channel/disable_balancing_on_single_address"), &result, nil)).Should(Succeed())
 				Expect(result).Should(BeFalse())
-			})
-
-		}) // update yql-agent
-
-		Context("With queue agent", Label("queue-agent"), func() {
-			BeforeEach(func() {
-				ytsaurus = testutil.WithQueryTracker(ytsaurus)
-				ytsaurus = testutil.WithQueueAgent(ytsaurus)
-			})
-
-			It("Should run with query tracker and check that access control objects set up correctly", func(ctx context.Context) {
 
 				By("Check that access control object namespace 'queries' exists")
 				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries"), nil)).Should(BeTrue())
@@ -773,6 +764,18 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						HaveKeyWithValue("permissions", ConsistOf("use")),
 					),
 				))
+			})
+
+		}) // update yql-agent
+
+		Context("With queue agent", Label("queue-agent"), func() {
+			BeforeEach(func() {
+				ytsaurus = testutil.WithQueueAgent(ytsaurus)
+			})
+
+			It("Should run with queue agent", func(ctx context.Context) {
+				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/queue_agents/queues"), nil)).Should(BeTrue())
+				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/queue_agents/consumers"), nil)).Should(BeTrue())
 			})
 
 		}) // update queue-agent
