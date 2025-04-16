@@ -21,13 +21,13 @@ import (
 
 type Scheduler struct {
 	localServerComponent
-	cfgen         *ytconfig.Generator
-	master        Component
-	execNodes     []Component
-	tabletNodes   []Component
-	initUser      *InitJob
-	initOpArchive *InitJob
-	secret        *resources.StringSecret
+	cfgen            *ytconfig.Generator
+	master           Component
+	execNodes        []Component
+	tabletNodes      []Component
+	initUserJob      *InitJob
+	initOpArchiveJob *InitJob
+	secret           *resources.StringSecret
 }
 
 func NewScheduler(
@@ -63,7 +63,7 @@ func NewScheduler(
 		master:               master,
 		execNodes:            execNodes,
 		tabletNodes:          tabletNodes,
-		initUser: NewInitJob(
+		initUserJob: NewInitJob(
 			l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
@@ -76,7 +76,7 @@ func NewScheduler(
 			getNodeSelectorWithDefault(resource.Spec.Schedulers.NodeSelector, resource.Spec.NodeSelector),
 			getDNSConfigWithDefault(resource.Spec.Schedulers.DNSConfig, resource.Spec.DNSConfig),
 		),
-		initOpArchive: NewInitJob(
+		initOpArchiveJob: NewInitJob(
 			l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
@@ -99,8 +99,8 @@ func NewScheduler(
 func (s *Scheduler) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		s.server,
-		s.initOpArchive,
-		s.initUser,
+		s.initOpArchiveJob,
+		s.initUserJob,
 		s.secret,
 	)
 }
@@ -189,15 +189,15 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return SimpleStatus(SyncStatusReady), err
 	}
 
-	return s.initOpAchieve(ctx, dry)
+	return s.initOpArchive(ctx, dry)
 }
 
-func (s *Scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (s *Scheduler) initOpArchive(ctx context.Context, dry bool) (ComponentStatus, error) {
 	if !dry {
-		s.initUser.SetInitScript(s.createInitUserScript())
+		s.initUserJob.SetInitScript(s.createInitUserScript())
 	}
 
-	status, err := s.initUser.Sync(ctx, dry)
+	status, err := s.initUserJob.Sync(ctx, dry)
 	if status.SyncStatus != SyncStatusReady {
 		return status, err
 	}
@@ -216,7 +216,7 @@ func (s *Scheduler) initOpAchieve(ctx context.Context, dry bool) (ComponentStatu
 	if !dry {
 		s.prepareInitOperationsArchive()
 	}
-	return s.initOpArchive.Sync(ctx, dry)
+	return s.initOpArchiveJob.Sync(ctx, dry)
 }
 
 func (s *Scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentStatus, error) {
@@ -229,8 +229,8 @@ func (s *Scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentSt
 			}
 			return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
 		}
-		if !s.initOpArchive.isRestartPrepared() {
-			return ptr.To(SimpleStatus(SyncStatusUpdating)), s.initOpArchive.prepareRestart(ctx, dry)
+		if !s.initOpArchiveJob.isRestartPrepared() {
+			return ptr.To(SimpleStatus(SyncStatusUpdating)), s.initOpArchiveJob.prepareRestart(ctx, dry)
 		}
 		if !dry {
 			s.setConditionOpArchivePreparedForUpdating(ctx)
@@ -243,7 +243,7 @@ func (s *Scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentSt
 			}
 			return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
 		}
-		if !s.initOpArchive.isRestartCompleted() {
+		if !s.initOpArchiveJob.isRestartCompleted() {
 			return nil, nil
 		}
 		if !dry {
@@ -306,8 +306,8 @@ func (s *Scheduler) prepareInitOperationsArchive() {
 		SetWithIgnoreExisting("//sys/cluster_nodes/@config", "'{\"%true\" = {job_agent={enable_job_reporter=%true}}}'"),
 	}
 
-	s.initOpArchive.SetInitScript(strings.Join(script, "\n"))
-	job := s.initOpArchive.Build()
+	s.initOpArchiveJob.SetInitScript(strings.Join(script, "\n"))
+	job := s.initOpArchiveJob.Build()
 	container := &job.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{s.secret.GetEnvSource()}
 }

@@ -9,6 +9,7 @@ import (
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -26,7 +27,7 @@ type QueueAgent struct {
 	master         Component
 	tabletNodes    []Component
 	initCondition  string
-	initQAState    *InitJob
+	initQAStateJob *InitJob
 	secret         *resources.StringSecret
 }
 
@@ -63,7 +64,7 @@ func NewQueueAgent(
 		tabletNodes:          tabletNodes,
 		initCondition:        "queueAgentInitCompleted",
 		ytsaurusClient:       yc,
-		initQAState: NewInitJob(
+		initQAStateJob: NewInitJob(
 			l,
 			ytsaurus.APIProxy(),
 			ytsaurus,
@@ -86,7 +87,7 @@ func NewQueueAgent(
 func (qa *QueueAgent) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		qa.server,
-		qa.initQAState,
+		qa.initQAStateJob,
 		qa.secret,
 	)
 }
@@ -99,8 +100,24 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, qa.ytsaurus, qa, &qa.localComponent, qa.server, dry); status != nil {
-			return *status, err
+		if IsUpdatingComponent(qa.ytsaurus, qa) {
+			if qa.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+				if !dry {
+					err = removePods(ctx, qa.server, &qa.localComponent)
+				}
+				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+			}
+
+			if status, err := qa.updateQAState(ctx, dry); status != nil {
+				return *status, err
+			}
+
+			if qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+				qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQAStateUpdate {
+				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
+			}
+		} else {
+			return NewComponentStatus(SyncStatusReady, "Not updating component"), err
 		}
 	}
 
@@ -169,10 +186,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		}
 	}
 
-	if !dry {
-		qa.prepareInitQueueAgentState()
-	}
-	status, err := qa.initQAState.Sync(ctx, dry)
+	status, err := qa.initQAState(ctx, dry)
 	if err != nil || status.SyncStatus != SyncStatusReady {
 		return status, err
 	}
@@ -180,7 +194,6 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	if qa.ytsaurus.IsStatusConditionTrue(qa.initCondition) {
 		return SimpleStatus(SyncStatusReady), err
 	}
-
 	if !dry {
 		err = qa.init(ctx, ytClient)
 		if err != nil {
@@ -316,10 +329,86 @@ func (qa *QueueAgent) prepareInitQueueAgentState() {
 		`fi`,
 	}
 
-	qa.initQAState.SetInitScript(strings.Join(script, "\n"))
-	job := qa.initQAState.Build()
+	qa.initQAStateJob.SetInitScript(strings.Join(script, "\n"))
+	job := qa.initQAStateJob.Build()
 	container := &job.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{qa.secret.GetEnvSource()}
+}
+
+func (qa *QueueAgent) needQAStateInit() bool {
+	return len(qa.tabletNodes) > 0
+}
+
+func (qa *QueueAgent) setConditionQAStatePreparedForUpdating(ctx context.Context) {
+	qa.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    consts.ConditionQAStatePreparedForUpdating,
+		Status:  metav1.ConditionTrue,
+		Reason:  "QAStatePreparedForUpdating",
+		Message: "Queue agent state prepared for updating",
+	})
+}
+
+func (qa *QueueAgent) setConditionQAStateUpdated(ctx context.Context) {
+	qa.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    consts.ConditionQAStateUpdated,
+		Status:  metav1.ConditionTrue,
+		Reason:  "QAStateUpdated",
+		Message: "Queue agent state updated",
+	})
+}
+
+func (qa *QueueAgent) initQAState(ctx context.Context, dry bool) (ComponentStatus, error) {
+	for _, tnd := range qa.tabletNodes {
+		tndStatus, err := tnd.Status(ctx)
+		if err != nil {
+			return tndStatus, err
+		}
+		if !IsRunningStatus(tndStatus.SyncStatus) {
+			// Wait for tablet nodes to proceed with queue agent state init.
+			return WaitingStatus(SyncStatusBlocked, tnd.GetFullName()), err
+		}
+	}
+
+	if !dry {
+		qa.prepareInitQueueAgentState()
+	}
+	return qa.initQAStateJob.Sync(ctx, dry)
+}
+
+func (qa *QueueAgent) updateQAState(ctx context.Context, dry bool) (*ComponentStatus, error) {
+	var err error
+	switch qa.ytsaurus.GetUpdateState() {
+	case ytv1.UpdateStateWaitingForQAStateUpdatingPrepare:
+		if !qa.needQAStateInit() {
+			if !dry {
+				qa.setConditionQAStatePreparedForUpdating(ctx)
+			}
+			return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
+		}
+		if !qa.initQAStateJob.isRestartPrepared() {
+			return ptr.To(SimpleStatus(SyncStatusUpdating)), qa.initQAStateJob.prepareRestart(ctx, dry)
+		}
+		if !dry {
+			qa.setConditionQAStatePreparedForUpdating(ctx)
+		}
+		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
+	case ytv1.UpdateStateWaitingForQAStateUpdate:
+		if !qa.needQAStateInit() {
+			if !dry {
+				qa.setConditionQAStateUpdated(ctx)
+			}
+			return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
+		}
+		if !qa.initQAStateJob.isRestartCompleted() {
+			return nil, nil
+		}
+		if !dry {
+			qa.setConditionQAStateUpdated(ctx)
+		}
+		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
+	default:
+		return nil, nil
+	}
 }
 
 func (qa *QueueAgent) Status(ctx context.Context) (ComponentStatus, error) {
