@@ -92,7 +92,7 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		return WaitingStatus(SyncStatusBlocked, n.master.GetFullName()), err
 	}
 
-	if LocalServerNeedSync(n.server, n.ytsaurus) {
+	if LocalServerNeedSync(n.server, n.ytsaurus) || n.sidecarConfigNeedsReload() {
 		return n.doSyncBase(ctx, dry)
 	}
 
