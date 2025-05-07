@@ -898,6 +898,10 @@ spec:
                         path:
                           minLength: 1
                           type: string
+                        purgeKey:
+                          description: 'Dangerous: changing purge key to different
+                            non-empty value removes all data in l'
+                          type: string
                         quota:
                           anyOf:
                           - type: integer
@@ -3467,6 +3471,10 @@ spec:
                             type: string
                           path:
                             minLength: 1
+                            type: string
+                          purgeKey:
+                            description: 'Dangerous: changing purge key to different
+                              non-empty value removes all data in l'
                             type: string
                           quota:
                             anyOf:
@@ -6049,6 +6057,10 @@ spec:
                           type: string
                         path:
                           minLength: 1
+                          type: string
+                        purgeKey:
+                          description: 'Dangerous: changing purge key to different
+                            non-empty value removes all data in l'
                           type: string
                         quota:
                           anyOf:
@@ -8843,6 +8855,10 @@ spec:
                           path:
                             minLength: 1
                             type: string
+                          purgeKey:
+                            description: 'Dangerous: changing purge key to different
+                              non-empty value removes all data in l'
+                            type: string
                           quota:
                             anyOf:
                             - type: integer
@@ -11455,6 +11471,10 @@ spec:
                             type: string
                           path:
                             minLength: 1
+                            type: string
+                          purgeKey:
+                            description: 'Dangerous: changing purge key to different
+                              non-empty value removes all data in l'
                             type: string
                           quota:
                             anyOf:
@@ -14076,6 +14096,10 @@ spec:
                           path:
                             minLength: 1
                             type: string
+                          purgeKey:
+                            description: 'Dangerous: changing purge key to different
+                              non-empty value removes all data in l'
+                            type: string
                           quota:
                             anyOf:
                             - type: integer
@@ -16662,6 +16686,10 @@ spec:
                           type: string
                         path:
                           minLength: 1
+                          type: string
+                        purgeKey:
+                          description: 'Dangerous: changing purge key to different
+                            non-empty value removes all data in l'
                           type: string
                         quota:
                           anyOf:
@@ -19300,6 +19328,10 @@ spec:
                         path:
                           minLength: 1
                           type: string
+                        purgeKey:
+                          description: 'Dangerous: changing purge key to different
+                            non-empty value removes all data in l'
+                          type: string
                         quota:
                           anyOf:
                           - type: integer
@@ -21871,6 +21903,10 @@ spec:
                         path:
                           minLength: 1
                           type: string
+                        purgeKey:
+                          description: 'Dangerous: changing purge key to different
+                            non-empty value removes all data in l'
+                          type: string
                         quota:
                           anyOf:
                           - type: integer
@@ -24430,6 +24466,10 @@ spec:
                           type: string
                         path:
                           minLength: 1
+                          type: string
+                        purgeKey:
+                          description: 'Dangerous: changing purge key to different
+                            non-empty value removes all data in l'
                           type: string
                         quota:
                           anyOf:
@@ -26998,6 +27038,10 @@ spec:
                             type: string
                           path:
                             minLength: 1
+                            type: string
+                          purgeKey:
+                            description: 'Dangerous: changing purge key to different
+                              non-empty value removes all data in l'
                             type: string
                           quota:
                             anyOf:
@@ -29602,6 +29646,10 @@ spec:
                         path:
                           minLength: 1
                           type: string
+                        purgeKey:
+                          description: 'Dangerous: changing purge key to different
+                            non-empty value removes all data in l'
+                          type: string
                         quota:
                           anyOf:
                           - type: integer
@@ -32177,6 +32225,10 @@ spec:
                             type: string
                           path:
                             minLength: 1
+                            type: string
+                          purgeKey:
+                            description: 'Dangerous: changing purge key to different
+                              non-empty value removes all data in l'
                             type: string
                           quota:
                             anyOf:
@@ -34897,6 +34949,10 @@ spec:
                           path:
                             minLength: 1
                             type: string
+                          purgeKey:
+                            description: 'Dangerous: changing purge key to different
+                              non-empty value removes all data in l'
+                            type: string
                           quota:
                             anyOf:
                             - type: integer
@@ -37485,6 +37541,10 @@ spec:
                             type: string
                           path:
                             minLength: 1
+                            type: string
+                          purgeKey:
+                            description: 'Dangerous: changing purge key to different
+                              non-empty value removes all data in l'
                             type: string
                           quota:
                             anyOf:
@@ -40405,6 +40465,10 @@ spec:
                           type: string
                         path:
                           minLength: 1
+                          type: string
+                        purgeKey:
+                          description: 'Dangerous: changing purge key to different
+                            non-empty value removes all data in l'
                           type: string
                         quota:
                           anyOf:
