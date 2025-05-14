@@ -21,7 +21,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"go.ytsaurus.tech/yt/go/mapreduce"
-	"go.ytsaurus.tech/yt/go/mapreduce/spec"
+	ytspec "go.ytsaurus.tech/yt/go/mapreduce/spec"
 	"go.ytsaurus.tech/yt/go/schema"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
@@ -45,6 +45,9 @@ const (
 	reactionTimeout  = time.Second * 150
 	bootstrapTimeout = time.Minute * 3
 	upgradeTimeout   = time.Minute * 10
+
+	opeationPollInterval = time.Millisecond * 250
+	operationTimeout     = time.Second * 30
 )
 
 var getYtClient = getYtHTTPClient
@@ -237,6 +240,22 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		ytClient = createYtsaurusClient(ytsaurus, namespace)
 		checkClusterViability(ytClient)
+
+		if len(ytsaurus.Spec.ExecNodes) != 0 {
+			By("Running vanilla operation")
+			runAndCheckVanillaOperation(ytClient)
+		}
+	})
+
+	JustAfterEach(func(ctx context.Context) {
+		if CurrentSpecReport().Failed() {
+			return
+		}
+
+		if len(ytsaurus.Spec.ExecNodes) != 0 {
+			By("Running vanilla operation")
+			runAndCheckVanillaOperation(ytClient)
+		}
 	})
 
 	AfterEach(func(ctx context.Context) {
@@ -688,8 +707,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			})
 
 			It("Should run with yql agent and check that yql agent channel options set up correctly", func(ctx context.Context) {
-				By("Creating ytsaurus client")
-				ytClient := createYtsaurusClient(ytsaurus, namespace)
 
 				By("Check that yql agent channel exists in cluster_connection")
 				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/@cluster_connection/yql_agent/stages/production/channel"), nil)).Should(BeTrue())
@@ -842,9 +859,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			It("Should create ytsaurus with remote exec nodes and execute a job", func(ctx context.Context) {
 
+				By("Running running vanilla operation")
+				runAndCheckVanillaOperation(ytClient)
+
 				By("Running sort operation to ensure exec node works")
 				op := runAndCheckSortOperation(ytClient)
-				op.ID()
 
 				result, err := ytClient.ListJobs(ctx, op.ID(), &yt.ListJobsOptions{
 					JobState: &yt.JobCompleted,
@@ -1213,6 +1232,62 @@ func createYtsaurusClient(ytsaurus *ytv1.Ytsaurus, namespace string) yt.Client {
 	return getYtClient(g, namespace)
 }
 
+func startOperation(ytClient yt.Client, opSpec *ytspec.Spec) yt.OperationID {
+	opId, err := ytClient.StartOperation(ctx, opSpec.Type, opSpec, nil)
+	Expect(err).Should(Succeed())
+	log.Info("Operation started", "id", opId, "type", opSpec.Type)
+	return opId
+}
+
+func NewOprationStatusTracker() func(opStatus *yt.OperationStatus) bool {
+	var prevState yt.OperationState
+	return func(opStatus *yt.OperationStatus) bool {
+		if opStatus == nil {
+			return false
+		}
+		changed := false
+		if prevState != opStatus.State {
+			log.Info("Operation progress", "id", opStatus.ID, "state", opStatus.State)
+			prevState = opStatus.State
+			changed = true
+		}
+		return changed
+	}
+}
+
+func waitOperation(ytClient yt.Client, opId yt.OperationID) *yt.OperationStatus {
+	var opStatus *yt.OperationStatus
+	trackStatus := NewOprationStatusTracker()
+	Eventually(func(ctx context.Context) bool {
+		var err error
+		opStatus, err = ytClient.GetOperation(ctx, opId, nil)
+		Expect(err).NotTo(HaveOccurred())
+		trackStatus(opStatus)
+		if opStatus.State.IsFinished() {
+			Expect(opStatus.State).Should(Equal(yt.StateCompleted))
+			return true
+		}
+		return false
+	}, operationTimeout, opeationPollInterval, ctx).Should(BeTrue())
+	return opStatus
+}
+
+func runAndCheckVanillaOperation(ytClient yt.Client) *yt.OperationStatus {
+	opSpec := ytspec.Spec{
+		Type:  yt.OperationVanilla,
+		Title: "e2e test operation",
+		Tasks: map[string]*ytspec.UserScript{
+			"test": {
+				Command:  "true",
+				JobCount: 1,
+			},
+		},
+		MaxFailedJobCount: 1,
+	}
+	opId := startOperation(ytClient, &opSpec)
+	return waitOperation(ytClient, opId)
+}
+
 func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
 	testTablePathIn := ypath.Path("//tmp/testexec")
 	testTablePathOut := ypath.Path("//tmp/testexec-out")
@@ -1249,7 +1324,7 @@ func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
 	Expect(err).Should(Succeed())
 
 	mrCli := mapreduce.New(ytClient)
-	op, err := mrCli.Sort(&spec.Spec{
+	op, err := mrCli.Sort(&ytspec.Spec{
 		Type:            yt.OperationSort,
 		InputTablePaths: []ypath.YPath{testTablePathIn},
 		OutputTablePath: testTablePathOut,
