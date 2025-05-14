@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -21,7 +22,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"go.ytsaurus.tech/yt/go/mapreduce"
-	"go.ytsaurus.tech/yt/go/mapreduce/spec"
+	ytspec "go.ytsaurus.tech/yt/go/mapreduce/spec"
 	"go.ytsaurus.tech/yt/go/schema"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
@@ -45,6 +46,9 @@ const (
 	reactionTimeout  = time.Second * 150
 	bootstrapTimeout = time.Minute * 5
 	upgradeTimeout   = time.Minute * 10
+
+	operationPollInterval = time.Millisecond * 250
+	operationTimeout      = time.Second * 120
 )
 
 func getYtClient(proxyAddress string) yt.Client {
@@ -268,6 +272,38 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		ytClient = getYtClient(ytProxyAddress)
 		checkClusterViability(ytClient)
+
+		if len(ytsaurus.Spec.ExecNodes) != 0 {
+			// NOTE: There is no reliable readiness signal for compute stack except active checks.
+			op := NewVanillaOperation(ytClient)
+
+			By("Waiting scheduler is ready to start operation")
+			Eventually(ctx, op.Start, bootstrapTimeout, pollInterval).Should(Succeed())
+
+			By("Waiting scheduler could provide operation status")
+			Eventually(ctx, op.Status, bootstrapTimeout, pollInterval).ShouldNot(BeNil())
+
+			By("Waiting operation completion")
+			op.Wait()
+		}
+	})
+
+	JustAfterEach(func(ctx context.Context) {
+		if CurrentSpecReport().Failed() {
+			return
+		}
+
+		if len(ytsaurus.Spec.ExecNodes) != 0 {
+			By("Running vanilla operation")
+			op := NewVanillaOperation(ytClient)
+
+			By("Waiting scheduler is ready to start operation")
+			Eventually(ctx, op.Start, bootstrapTimeout, pollInterval).Should(Succeed())
+
+			// FIXME(khlebnikov): In some cases cluster is broken and cannot run operations.
+			By("Aborting operation")
+			Expect(op.Abort()).To(Succeed())
+		}
 	})
 
 	AfterEach(func(ctx context.Context) {
@@ -886,9 +922,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			It("Should create ytsaurus with remote exec nodes and execute a job", func(ctx context.Context) {
 
+				By("Running running vanilla operation")
+				NewVanillaOperation(ytClient).Run()
+
 				By("Running sort operation to ensure exec node works")
 				op := runAndCheckSortOperation(ytClient)
-				op.ID()
 
 				result, err := ytClient.ListJobs(ctx, op.ID(), &yt.ListJobsOptions{
 					JobState: &yt.JobCompleted,
@@ -1259,6 +1297,99 @@ func checkChunkLocations(ytClient yt.Client) {
 	}
 }
 
+type TestOperation struct {
+	Client yt.Client
+	Spec   *ytspec.Spec
+	Id     yt.OperationID
+}
+
+func (o *TestOperation) Start() error {
+	id, err := o.Client.StartOperation(ctx, o.Spec.Type, o.Spec, nil)
+	if err == nil {
+		log.Info("Operation started", "id", id)
+		o.Id = id
+	}
+	return err
+}
+
+func (o *TestOperation) Status() (*yt.OperationStatus, error) {
+	return o.Client.GetOperation(ctx, o.Id, nil)
+}
+
+func (o *TestOperation) Abort() error {
+	err := o.Client.AbortOperation(ctx, o.Id, nil)
+	if err == nil {
+		log.Info("Operation aborted", "id", o.Id)
+	}
+	return err
+}
+
+func NewOprationStatusTracker() func(opStatus *yt.OperationStatus) bool {
+	var prevState yt.OperationState
+	var prevJobs yt.TotalJobCounter
+	return func(opStatus *yt.OperationStatus) bool {
+		if opStatus == nil {
+			return false
+		}
+		changed := false
+		jobs := ptr.Deref(opStatus.BriefProgress.TotalJobCounter, yt.TotalJobCounter{})
+		if prevState != opStatus.State || !reflect.DeepEqual(&prevJobs, &jobs) {
+			log.Info("Operation progress",
+				"id", opStatus.ID,
+				"state", opStatus.State,
+				"running", jobs.Running,
+				"completed", jobs.Completed,
+				"total", jobs.Total,
+			)
+			prevState = opStatus.State
+			prevJobs = jobs
+			changed = true
+		}
+		return changed
+	}
+}
+
+func (o *TestOperation) Wait() *yt.OperationStatus {
+	var opStatus *yt.OperationStatus
+	trackStatus := NewOprationStatusTracker()
+	Eventually(func(ctx context.Context) bool {
+		var err error
+		opStatus, err = o.Status()
+		Expect(err).NotTo(HaveOccurred())
+		trackStatus(opStatus)
+		if opStatus.State.IsFinished() {
+			Expect(opStatus.State).Should(Equal(yt.StateCompleted))
+			return true
+		}
+		return false
+	}, operationTimeout, operationPollInterval, ctx).Should(BeTrue())
+	return opStatus
+}
+
+func (o *TestOperation) Run() *yt.OperationStatus {
+	err := o.Start()
+	Expect(err).NotTo(HaveOccurred())
+	return o.Wait()
+}
+
+func NewVanillaOperation(ytClient yt.Client) *TestOperation {
+	return &TestOperation{
+		Client: ytClient,
+		Spec: &ytspec.Spec{
+			Type:  yt.OperationVanilla,
+			Title: "e2e test operation",
+			Tasks: map[string]*ytspec.UserScript{
+				"test": {
+					Command:  "true",
+					CPULimit: 0,
+					JobCount: 1,
+				},
+			},
+			MaxFailedJobCount: 1,
+		},
+	}
+}
+
 func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
 	testTablePathIn := ypath.Path("//tmp/testexec")
 	testTablePathOut := ypath.Path("//tmp/testexec-out")
@@ -1295,7 +1426,7 @@ func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
 	Expect(err).Should(Succeed())
 
 	mrCli := mapreduce.New(ytClient)
-	op, err := mrCli.Sort(&spec.Spec{
+	op, err := mrCli.Sort(&ytspec.Spec{
 		Type:            yt.OperationSort,
 		InputTablePaths: []ypath.YPath{testTablePathIn},
 		OutputTablePath: testTablePathOut,
