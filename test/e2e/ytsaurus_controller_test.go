@@ -167,6 +167,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var objects []client.Object
 	var namespaceWatcher *NamespaceWatcher
 	var name client.ObjectKey
+	var ytBuilder *testutil.YtsaurusBuilder
 	var ytsaurus *ytv1.Ytsaurus
 	var ytProxyAddress string
 	var ytClient yt.Client
@@ -216,7 +217,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		DeferCleanup(namespaceWatcher.Stop)
 
 		By("Creating minimal Ytsaurus spec")
-		ytsaurus = testutil.CreateMinimalYtsaurusResource(namespace)
+		ytBuilder = &testutil.YtsaurusBuilder{
+			Namespace: namespace,
+		}
+		ytBuilder.CreateMinimal()
+		ytsaurus = ytBuilder.Ytsaurus
+
 		objects = []client.Object{ytsaurus}
 
 		name = client.ObjectKey{
@@ -283,7 +289,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		BeforeEach(func() {
 			By("Adding base components")
-			testutil.WithBaseYtsaurusComponents(ytsaurus)
+			ytBuilder.WithBaseComponents()
 		})
 
 		JustBeforeEach(func() {
@@ -294,7 +300,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		DescribeTableSubtree("Updating Ytsaurus image",
 			func(newImage string) {
 				BeforeEach(func() {
-					testutil.WithNamedDataNodes(ytsaurus, ptr.To("dn-t"))
+					ytBuilder.WithNamedDataNodes(ptr.To("dn-t"))
 				})
 
 				It("Triggers cluster update", func(ctx context.Context) {
@@ -479,7 +485,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			It("Should update only specified data node group", func(ctx context.Context) {
 				By("Adding second data node group")
 				ytsaurus.Spec.DataNodes = append(ytsaurus.Spec.DataNodes, ytv1.DataNodesSpec{
-					InstanceSpec: testutil.CreateDataNodeInstanceSpec(1),
+					InstanceSpec: ytBuilder.CreateDataNodeInstanceSpec(1),
 					Name:         "dn-2",
 				})
 				ytsaurus.Status.UpdateStatus.Conditions = append(ytsaurus.Status.UpdateStatus.Conditions, metav1.Condition{
@@ -606,7 +612,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Context("With tablet nodes", Label("tablet"), func() {
 
 			BeforeEach(func() {
-				ytsaurus = testutil.WithTabletNodes(ytsaurus)
+				ytBuilder.WithTabletNodes()
 			})
 
 			It("Should run and try to update Ytsaurus with tablet cell bundle which is not in `good` health", func(ctx context.Context) {
@@ -687,7 +693,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Context("With query tracker", Label("query-tracker"), func() {
 
 			BeforeEach(func() {
-				ytsaurus = testutil.WithQueryTracker(ytsaurus)
+				ytBuilder.WithQueryTracker()
 			})
 
 			It("Should run with query tracker and check that query tracker rpc address set up correctly", func(ctx context.Context) {
@@ -699,8 +705,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		Context("With yql agent", Label("yql-agent"), func() {
 			BeforeEach(func() {
-				ytsaurus = testutil.WithQueryTracker(ytsaurus)
-				ytsaurus = testutil.WithYqlAgent(ytsaurus)
+				ytBuilder.WithQueryTracker()
+				ytBuilder.WithYqlAgent()
 			})
 
 			It("Should run with yql agent and check that yql agent channel options set up correctly", func(ctx context.Context) {
@@ -782,7 +788,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		Context("With queue agent", Label("queue-agent"), func() {
 			BeforeEach(func() {
-				ytsaurus = testutil.WithQueueAgent(ytsaurus)
+				ytBuilder.WithQueueAgent()
 			})
 
 			It("Should run with queue agent", func(ctx context.Context) {
@@ -827,12 +833,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		Context("With remote exec nodes", Label("exec"), func() {
 			BeforeEach(func() {
-				ytsaurus = testutil.WithBaseYtsaurusComponents(ytsaurus)
+				ytBuilder.WithBaseComponents()
 
 				By("Adding remote exec nodes")
 
 				// Ensure that no local exec nodes exist, only remote ones (which will be created later).
-				ytsaurus.Spec.ExecNodes = []ytv1.ExecNodesSpec{}
+				ytsaurus.Spec.ExecNodes = nil
 
 				remoteNodes = &ytv1.RemoteExecNodes{
 					ObjectMeta: metav1.ObjectMeta{
@@ -846,9 +852,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						CommonSpec: ytv1.CommonSpec{
 							CoreImage: testutil.CoreImageFirst,
 						},
-						ExecNodesSpec: ytv1.ExecNodesSpec{
-							InstanceSpec: testutil.CreateExecNodeInstanceSpec(),
-						},
+						ExecNodesSpec: ytBuilder.CreateExecNodeSpec(),
 					},
 				}
 				objects = append(objects, remoteNodes)
@@ -901,7 +905,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 							CoreImage: testutil.CoreImageFirst,
 						},
 						DataNodesSpec: ytv1.DataNodesSpec{
-							InstanceSpec: testutil.CreateDataNodeInstanceSpec(3),
+							InstanceSpec: ytBuilder.CreateDataNodeInstanceSpec(3),
 						},
 					},
 				}
@@ -927,7 +931,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Context("With remote tablet nodes", Label("tablet"), func() {
 			BeforeEach(func() {
 				// We have to create the minimal YT - with master, discovery servers and data-nodes
-				ytsaurus = testutil.WithDataNodes(ytsaurus)
+				ytBuilder.WithDataNodes()
 
 				By("Adding remote tablet nodes")
 				remoteNodes = &ytv1.RemoteTabletNodes{
@@ -943,7 +947,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 							CoreImage: testutil.CoreImageFirst,
 						},
 						TabletNodesSpec: ytv1.TabletNodesSpec{
-							InstanceSpec: testutil.CreateTabletNodeSpec(3),
+							InstanceSpec: ytBuilder.CreateTabletNodeSpec(3),
 						},
 					},
 				}
@@ -1031,7 +1035,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			var ytRPCProxyAddress string
 
 			BeforeEach(func() {
-				ytsaurus = testutil.WithRPCProxies(ytsaurus)
+				ytBuilder.WithRPCProxies()
 			})
 
 			JustBeforeEach(func() {
