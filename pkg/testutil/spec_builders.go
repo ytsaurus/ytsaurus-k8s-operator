@@ -23,11 +23,19 @@ const (
 	// <...> is too long (64 characters is the max, 67 characters requested)`.
 	// FIXME(khlebnikov): https://github.com/ytsaurus/ytsaurus-k8s-operator/issues/390
 	RemoteResourceName = "rmt"
-	// Images should be in sync with TEST_IMAGES variable in Makefile
-	// todo: come up with a more elegant solution
-	CoreImageFirst   = "ghcr.io/ytsaurus/ytsaurus:stable-23.2.0"
-	CoreImageSecond  = "ghcr.io/ytsaurus/ytsaurus:stable-24.1.0"
-	CoreImageNextVer = "ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2025-03-19-2973ab7cb36ed53ae3cbe9c37b8c7f55eb9c4e77"
+)
+
+// Images are should be in sync with TEST_IMAGES variable in Makefile
+// https://github.com/ytsaurus/ytsaurus/pkgs/container/ytsaurus
+// https://github.com/ytsaurus/ytsaurus/pkgs/container/ytsaurus-nightly
+var (
+	CoreImage23_2 = GetenvOr("TEST_IMAGE_23_2", "ghcr.io/ytsaurus/ytsaurus:stable-23.2.0")
+	CoreImage24_1 = GetenvOr("TEST_IMAGE_24_1", "ghcr.io/ytsaurus/ytsaurus:stable-24.1.0")
+	CoreImage24_2 = GetenvOr("TEST_IMAGE_24_2", "ghcr.io/ytsaurus/ytsaurus:stable-24.2.0")
+
+	CoreImageFirst  = GetenvOr("TEST_IMAGE_FIRST", CoreImage23_2)
+	CoreImageSecond = GetenvOr("TEST_IMAGE_SECOND", CoreImage24_1)
+	CoreImageNext = os.Getenv("TEST_IMAGE_NEXT")
 )
 
 var (
@@ -46,7 +54,7 @@ func createLoggersSpec() []ytv1.TextLoggerSpec {
 	}
 }
 
-func CreateMinimalYtsaurusResource(namespace string) *ytv1.Ytsaurus {
+func CreateMinimalYtsaurusResource(namespace, coreImage string) *ytv1.Ytsaurus {
 	return &ytv1.Ytsaurus{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      YtsaurusName,
@@ -56,7 +64,7 @@ func CreateMinimalYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 			CommonSpec: ytv1.CommonSpec{
 				EphemeralCluster: true,
 				UseShortNames:    true,
-				CoreImage:        CoreImageFirst,
+				CoreImage:        coreImage,
 			},
 			EnableFullUpdate: true,
 			IsManaged:        true,
@@ -123,7 +131,7 @@ func WithBaseYtsaurusComponents(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 }
 
 func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
-	ytsaurus := CreateMinimalYtsaurusResource(namespace)
+	ytsaurus := CreateMinimalYtsaurusResource(namespace, CoreImageFirst)
 	ytsaurus = WithBaseYtsaurusComponents(ytsaurus)
 	return ytsaurus
 }
@@ -225,11 +233,15 @@ func WithYqlAgent(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 }
 
 func WithQueueAgent(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
+	coreImage := ytsaurus.Spec.CoreImage
+	if coreImage == CoreImage23_2 {
+		// Older version doesn't have /usr/bin/ytserver-queue-agent
+		coreImage = CoreImage24_1
+	}
 	ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
-			// Older version doesn't have /usr/bin/ytserver-queue-agent
-			Image: ptr.To(CoreImageSecond),
+			Image:         ptr.To(coreImage),
 		},
 	}
 	return ytsaurus

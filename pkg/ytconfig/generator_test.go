@@ -245,6 +245,13 @@ func TestGetExecNodeConfigWithCri(t *testing.T) {
 			require.NoError(t, err)
 			canonize.Assert(t, cfg)
 		})
+		t.Run(name, func(t *testing.T) {
+			spec := withCrio(withCri(getExecNodeSpec(nil), test.JobResources, test.Isolated))
+			canonize.AssertStruct(t, "exec-node-"+name+"-crio", spec)
+			cfg, err := g.GetExecNodeConfig(spec)
+			require.NoError(t, err)
+			canonize.Assert(t, cfg)
+		})
 	}
 }
 
@@ -913,6 +920,11 @@ func withCri(spec ytv1.ExecNodesSpec, jobResources *corev1.ResourceRequirements,
 		DoNotSetUserId:   ptr.To(true),
 		Isolated:         ptr.To(isolated),
 	}
+	return spec
+}
+
+func withCrio(spec ytv1.ExecNodesSpec) ytv1.ExecNodesSpec {
+	spec.JobEnvironment.CRI.CRIService = ptr.To(ytv1.CRIServiceCRIO)
 	return spec
 }
 

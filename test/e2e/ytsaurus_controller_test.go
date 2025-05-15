@@ -21,7 +21,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"go.ytsaurus.tech/yt/go/mapreduce"
-	"go.ytsaurus.tech/yt/go/mapreduce/spec"
+	ytspec "go.ytsaurus.tech/yt/go/mapreduce/spec"
 	"go.ytsaurus.tech/yt/go/schema"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
@@ -45,13 +45,14 @@ const (
 	reactionTimeout  = time.Second * 150
 	bootstrapTimeout = time.Minute * 3
 	upgradeTimeout   = time.Minute * 10
+
+	opeationPollInterval = time.Millisecond * 250
+	operationTimeout     = time.Second * 30
 )
 
-var getYtClient = getYtHTTPClient
-
-func getYtHTTPClient(g *ytconfig.Generator, namespace string) yt.Client {
+func getYtClient(proxyAddress string) yt.Client {
 	ytClient, err := ythttp.NewClient(&yt.Config{
-		Proxy:                 getHTTPProxyAddress(g, namespace),
+		Proxy:                 proxyAddress,
 		Token:                 consts.DefaultAdminPassword,
 		DisableProxyDiscovery: true,
 	})
@@ -60,10 +61,10 @@ func getYtHTTPClient(g *ytconfig.Generator, namespace string) yt.Client {
 	return ytClient
 }
 
-func getYtRPCClient(g *ytconfig.Generator, namespace string) yt.Client {
+func getYtRPCClient(proxyAddress, rpcProxyAddress string) yt.Client {
 	ytClient, err := ytrpc.NewClient(&yt.Config{
-		Proxy:                 getHTTPProxyAddress(g, namespace),
-		RPCProxy:              getRPCProxyAddress(g, namespace),
+		Proxy:                 proxyAddress,
+		RPCProxy:              rpcProxyAddress,
 		Token:                 consts.DefaultAdminPassword,
 		DisableProxyDiscovery: true,
 	})
@@ -170,6 +171,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var namespaceWatcher *NamespaceWatcher
 	var name client.ObjectKey
 	var ytsaurus *ytv1.Ytsaurus
+	var ytProxyAddress string
 	var ytClient yt.Client
 	var g *ytconfig.Generator
 
@@ -201,25 +203,29 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			},
 		}
 		Expect(k8sClient.Create(ctx, &namespaceObject)).Should(Succeed())
+
 		namespace = namespaceObject.Name // Fetch unique namespace name
+		log.Info("Namespace created", "namespace", namespace)
+		DeferCleanup(AttachProgressReporter(func() string {
+			return fmt.Sprintf("namespace: %s", namespace)
+		}))
+
+		By("Logging all events in namespace")
+		DeferCleanup(LogObjectEvents(ctx, namespace))
+
+		By("Logging some other objects in namespace")
 		namespaceWatcher = NewNamespaceWatcher(ctx, namespace)
 		namespaceWatcher.Start()
+		DeferCleanup(namespaceWatcher.Stop)
 
 		By("Creating minimal Ytsaurus spec")
-		ytsaurus = testutil.CreateMinimalYtsaurusResource(namespace)
+		ytsaurus = testutil.CreateMinimalYtsaurusResource(namespace, testutil.CoreImageFirst)
 		objects = []client.Object{ytsaurus}
 
 		name = client.ObjectKey{
 			Name:      ytsaurus.Name,
 			Namespace: namespace,
 		}
-
-		By("Logging all events in namespace")
-		logEventsCleanup := LogObjectEvents(ctx, namespace)
-		DeferCleanup(func() {
-			logEventsCleanup()
-			namespaceWatcher.Stop()
-		})
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
@@ -233,10 +239,38 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		By("Checking that Ytsaurus state is equal to `Running`")
 		EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
 
+		By("Creating ytsaurus client")
 		g = ytconfig.NewGenerator(ytsaurus, "local")
+		ytProxyAddress = getHTTPProxyAddress(g, namespace)
 
-		ytClient = createYtsaurusClient(ytsaurus, namespace)
+		log.Info("Ytsaurus access",
+			"YT_PROXY", ytProxyAddress,
+			"YT_TOKEN", consts.DefaultAdminPassword,
+			"login", consts.DefaultAdminLogin,
+			"password", consts.DefaultAdminPassword,
+		)
+
+		DeferCleanup(AttachProgressReporter(func() string {
+			return fmt.Sprintf("YT_PROXY=%s YT_TOKEN=%s", ytProxyAddress, consts.DefaultAdminPassword)
+		}))
+
+		ytClient = getYtClient(ytProxyAddress)
 		checkClusterViability(ytClient)
+		if len(ytsaurus.Spec.ExecNodes) != 0 {
+			By("Running vanilla operation")
+			runAndCheckVanillaOperation(ytClient)
+		}
+	})
+
+	JustAfterEach(func(ctx context.Context) {
+		if CurrentSpecReport().Failed() {
+			return
+		}
+
+		if len(ytsaurus.Spec.ExecNodes) != 0 {
+			By("Running vanilla operation")
+			runAndCheckVanillaOperation(ytClient)
+		}
 	})
 
 	AfterEach(func(ctx context.Context) {
@@ -266,6 +300,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		var podsBeforeUpdate map[string]corev1.Pod
 
 		BeforeEach(func() {
+			By("Setting 23.2 core image for testing upgrade")
+			ytsaurus.Spec.CoreImage = testutil.CoreImage23_2
+
 			By("Adding base components")
 			testutil.WithBaseYtsaurusComponents(ytsaurus)
 		})
@@ -288,6 +325,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 					checkPodLabels(ctx, namespace)
 
+					log.Info("Update core image", "before", ytsaurus.Spec.CoreImage, "after", newImage)
 					ytsaurus.Spec.CoreImage = newImage
 					UpdateObject(ctx, ytsaurus)
 
@@ -307,8 +345,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					CurrentlyObject(ctx, ytsaurus).Should(HaveObservedGeneration())
 				})
 			},
-			Entry("When update Ytsaurus 23.2 -> 24.1", Label("basic"), testutil.CoreImageSecond),
-			Entry("When update Ytsaurus 24.1 -> 24.2", Label("basic"), testutil.CoreImageNextVer),
+			Entry("When update Ytsaurus 23.2 -> 24.1", Label("basic"), testutil.CoreImage24_1),
+			Entry("When update Ytsaurus 24.1 -> 24.2", Label("basic"), testutil.CoreImage24_2),
 		)
 
 		Context("Test UpdateSelector", Label("selector"), func() {
@@ -319,7 +357,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				// there will be migration of imaginary chunks locations which restarts datanodes
 				// and makes it hard to test updateSelector.
 				// For 24.2+ image no migration is needed.
-				ytsaurus.Spec.CoreImage = testutil.CoreImageNextVer
+				ytsaurus.Spec.CoreImage = testutil.CoreImage24_2
 			})
 
 			It("Should be updated according to UpdateSelector=Everything", func(ctx context.Context) {
@@ -688,8 +726,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			})
 
 			It("Should run with yql agent and check that yql agent channel options set up correctly", func(ctx context.Context) {
-				By("Creating ytsaurus client")
-				ytClient := createYtsaurusClient(ytsaurus, namespace)
 
 				By("Check that yql agent channel exists in cluster_connection")
 				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/@cluster_connection/yql_agent/stages/production/channel"), nil)).Should(BeTrue())
@@ -842,9 +878,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			It("Should create ytsaurus with remote exec nodes and execute a job", func(ctx context.Context) {
 
+				By("Running running vanilla operation")
+				runAndCheckVanillaOperation(ytClient)
+
 				By("Running sort operation to ensure exec node works")
 				op := runAndCheckSortOperation(ytClient)
-				op.ID()
 
 				result, err := ytClient.ListJobs(ctx, op.ID(), &yt.ListJobsOptions{
 					JobState: &yt.JobCompleted,
@@ -1014,9 +1052,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	Context("Integration tests", Label("integration"), func() {
 
 		Context("With RPC proxy", Label("rpc-proxy"), func() {
+			var ytRPCProxyAddress string
 
 			BeforeEach(func() {
 				ytsaurus = testutil.WithRPCProxies(ytsaurus)
+			})
+
+			JustBeforeEach(func() {
+				ytRPCProxyAddress = getRPCProxyAddress(g, namespace)
 			})
 
 			It("Rpc proxies should require authentication", func(ctx context.Context) {
@@ -1025,8 +1068,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Checking RPC proxy without token does not work")
 				cli, err := ytrpc.NewClient(&yt.Config{
-					Proxy:                 getHTTPProxyAddress(g, namespace),
-					RPCProxy:              getRPCProxyAddress(g, namespace),
+					Proxy:                 ytProxyAddress,
+					RPCProxy:              ytRPCProxyAddress,
 					DisableProxyDiscovery: true,
 				})
 				Expect(err).Should(Succeed())
@@ -1035,7 +1078,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(yterrors.ContainsErrorCode(err, yterrors.CodeRPCAuthenticationError)).Should(BeTrue())
 
 				By("Checking RPC proxy works with token")
-				cli = getYtRPCClient(g, namespace)
+				cli = getYtRPCClient(ytProxyAddress, ytRPCProxyAddress)
 				_, err = cli.NodeExists(ctx, ypath.Path("/"), nil)
 				Expect(err).Should(Succeed())
 			})
@@ -1207,10 +1250,60 @@ func checkChunkLocations(ytClient yt.Client) {
 	}
 }
 
-func createYtsaurusClient(ytsaurus *ytv1.Ytsaurus, namespace string) yt.Client {
-	By("Creating ytsaurus client")
-	g := ytconfig.NewGenerator(ytsaurus, "local")
-	return getYtClient(g, namespace)
+func startOperation(ytClient yt.Client, opSpec *ytspec.Spec) yt.OperationID {
+	opId, err := ytClient.StartOperation(ctx, opSpec.Type, opSpec, nil)
+	Expect(err).Should(Succeed())
+	log.Info("Operation started", "id", opId, "type", opSpec.Type)
+	return opId
+}
+
+func NewOprationStatusTracker() func(opStatus *yt.OperationStatus) bool {
+	var prevState yt.OperationState
+	return func(opStatus *yt.OperationStatus) bool {
+		if opStatus == nil {
+			return false
+		}
+		changed := false
+		if prevState != opStatus.State {
+			log.Info("Operation progress", "id", opStatus.ID, "state", opStatus.State)
+			prevState = opStatus.State
+			changed = true
+		}
+		return changed
+	}
+}
+
+func waitOperation(ytClient yt.Client, opId yt.OperationID) *yt.OperationStatus {
+	var opStatus *yt.OperationStatus
+	trackStatus := NewOprationStatusTracker()
+	Eventually(func(ctx context.Context) bool {
+		var err error
+		opStatus, err = ytClient.GetOperation(ctx, opId, nil)
+		Expect(err).NotTo(HaveOccurred())
+		trackStatus(opStatus)
+		if opStatus.State.IsFinished() {
+			Expect(opStatus.State).Should(Equal(yt.StateCompleted))
+			return true
+		}
+		return false
+	}, operationTimeout, opeationPollInterval, ctx).Should(BeTrue())
+	return opStatus
+}
+
+func runAndCheckVanillaOperation(ytClient yt.Client) *yt.OperationStatus {
+	opSpec := ytspec.Spec{
+		Type:  yt.OperationVanilla,
+		Title: "e2e test operation",
+		Tasks: map[string]*ytspec.UserScript{
+			"test": {
+				Command:  "true",
+				JobCount: 1,
+			},
+		},
+		MaxFailedJobCount: 1,
+	}
+	opId := startOperation(ytClient, &opSpec)
+	return waitOperation(ytClient, opId)
 }
 
 func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
@@ -1249,7 +1342,7 @@ func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
 	Expect(err).Should(Succeed())
 
 	mrCli := mapreduce.New(ytClient)
-	op, err := mrCli.Sort(&spec.Spec{
+	op, err := mrCli.Sort(&ytspec.Spec{
 		Type:            yt.OperationSort,
 		InputTablePaths: []ypath.YPath{testTablePathIn},
 		OutputTablePath: testTablePathOut,
