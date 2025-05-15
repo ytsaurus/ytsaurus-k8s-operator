@@ -228,10 +228,24 @@ kind-delete-local-registry: ## Delete local docker registry.
 	docker volume rm ${REGISTRY_LOCAL_NAME}
 	rm -fr "${REGISTRY_CONFIG_DIR}/${REGISTRY_LOCAL_ADDR}"
 
-TEST_IMAGES = \
-    	ghcr.io/ytsaurus/ytsaurus:stable-23.2.0 \
-    	ghcr.io/ytsaurus/ytsaurus:stable-24.1.0 \
-    	ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2025-03-19-2973ab7cb36ed53ae3cbe9c37b8c7f55eb9c4e77
+
+TEST_IMAGE_REPO ?= ghcr.io/ytsaurus/ytsaurus
+
+export TEST_IMAGE_23_2 = ${TEST_IMAGE_REPO}:stable-23.2.0
+export TEST_IMAGE_24_1 = ${TEST_IMAGE_REPO}:stable-24.1.0
+export TEST_IMAGE_24_2 = ${TEST_IMAGE_REPO}:stable-24.2.0
+export TEST_IMAGE_FIRST = ${TEST_IMAGE_23_2}
+export TEST_IMAGE_SECOND = ${TEST_IMAGE_24_1}
+export TEST_IMAGE_NEXT = ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2025-03-19-2973ab7cb36ed53ae3cbe9c37b8c7f55eb9c4e77
+
+define TEST_IMAGES
+${TEST_IMAGE_23_2}
+${TEST_IMAGE_24_1}
+${TEST_IMAGE_24_2}
+${TEST_IMAGE_FIRST}
+${TEST_IMAGE_SECOND}
+${TEST_IMAGE_NEXT}
+endef
 
 .PHONY: kind-load-test-images
 kind-load-test-images:

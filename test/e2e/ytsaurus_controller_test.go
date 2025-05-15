@@ -219,7 +219,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		DeferCleanup(namespaceWatcher.Stop)
 
 		By("Creating minimal Ytsaurus spec")
-		ytsaurus = testutil.CreateMinimalYtsaurusResource(namespace)
+		ytsaurus = testutil.CreateMinimalYtsaurusResource(namespace, testutil.CoreImageFirst)
 		objects = []client.Object{ytsaurus}
 
 		name = client.ObjectKey{
@@ -300,6 +300,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		var podsBeforeUpdate map[string]corev1.Pod
 
 		BeforeEach(func() {
+			By("Setting 23.2 core image for testing upgrade")
+			ytsaurus.Spec.CoreImage = testutil.CoreImage23_2
+
 			By("Adding base components")
 			testutil.WithBaseYtsaurusComponents(ytsaurus)
 		})
@@ -322,6 +325,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 					checkPodLabels(ctx, namespace)
 
+					log.Info("Update core image", "before", ytsaurus.Spec.CoreImage, "after", newImage)
 					ytsaurus.Spec.CoreImage = newImage
 					UpdateObject(ctx, ytsaurus)
 
@@ -341,8 +345,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					CurrentlyObject(ctx, ytsaurus).Should(HaveObservedGeneration())
 				})
 			},
-			Entry("When update Ytsaurus 23.2 -> 24.1", Label("basic"), testutil.CoreImageSecond),
-			Entry("When update Ytsaurus 24.1 -> 24.2", Label("basic"), testutil.CoreImageNextVer),
+			Entry("When update Ytsaurus 23.2 -> 24.1", Label("basic"), testutil.CoreImage24_1),
+			Entry("When update Ytsaurus 24.1 -> 24.2", Label("basic"), testutil.CoreImage24_2),
 		)
 
 		Context("Test UpdateSelector", Label("selector"), func() {
@@ -353,7 +357,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				// there will be migration of imaginary chunks locations which restarts datanodes
 				// and makes it hard to test updateSelector.
 				// For 24.2+ image no migration is needed.
-				ytsaurus.Spec.CoreImage = testutil.CoreImageNextVer
+				ytsaurus.Spec.CoreImage = testutil.CoreImage24_2
 			})
 
 			It("Should be updated according to UpdateSelector=Everything", func(ctx context.Context) {
