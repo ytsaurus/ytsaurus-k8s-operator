@@ -50,11 +50,9 @@ const (
 	operationTimeout     = time.Second * 30
 )
 
-var getYtClient = getYtHTTPClient
-
-func getYtHTTPClient(g *ytconfig.Generator, namespace string) yt.Client {
+func getYtClient(proxyAddress string) yt.Client {
 	ytClient, err := ythttp.NewClient(&yt.Config{
-		Proxy:                 getHTTPProxyAddress(g, namespace),
+		Proxy:                 proxyAddress,
 		Token:                 consts.DefaultAdminPassword,
 		DisableProxyDiscovery: true,
 	})
@@ -63,10 +61,10 @@ func getYtHTTPClient(g *ytconfig.Generator, namespace string) yt.Client {
 	return ytClient
 }
 
-func getYtRPCClient(g *ytconfig.Generator, namespace string) yt.Client {
+func getYtRPCClient(proxyAddress, rpcProxyAddress string) yt.Client {
 	ytClient, err := ytrpc.NewClient(&yt.Config{
-		Proxy:                 getHTTPProxyAddress(g, namespace),
-		RPCProxy:              getRPCProxyAddress(g, namespace),
+		Proxy:                 proxyAddress,
+		RPCProxy:              rpcProxyAddress,
 		Token:                 consts.DefaultAdminPassword,
 		DisableProxyDiscovery: true,
 	})
@@ -173,6 +171,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var namespaceWatcher *NamespaceWatcher
 	var name client.ObjectKey
 	var ytsaurus *ytv1.Ytsaurus
+	var ytProxyAddress string
 	var ytClient yt.Client
 	var g *ytconfig.Generator
 
@@ -204,9 +203,20 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			},
 		}
 		Expect(k8sClient.Create(ctx, &namespaceObject)).Should(Succeed())
+
 		namespace = namespaceObject.Name // Fetch unique namespace name
+		log.Info("Namespace created", "namespace", namespace)
+		DeferCleanup(AttachProgressReporter(func() string {
+			return fmt.Sprintf("namespace: %s", namespace)
+		}))
+
+		By("Logging all events in namespace")
+		DeferCleanup(LogObjectEvents(ctx, namespace))
+
+		By("Logging some other objects in namespace")
 		namespaceWatcher = NewNamespaceWatcher(ctx, namespace)
 		namespaceWatcher.Start()
+		DeferCleanup(namespaceWatcher.Stop)
 
 		By("Creating minimal Ytsaurus spec")
 		ytsaurus = testutil.CreateMinimalYtsaurusResource(namespace)
@@ -216,13 +226,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			Name:      ytsaurus.Name,
 			Namespace: namespace,
 		}
-
-		By("Logging all events in namespace")
-		logEventsCleanup := LogObjectEvents(ctx, namespace)
-		DeferCleanup(func() {
-			logEventsCleanup()
-			namespaceWatcher.Stop()
-		})
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
@@ -236,11 +239,23 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		By("Checking that Ytsaurus state is equal to `Running`")
 		EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
 
+		By("Creating ytsaurus client")
 		g = ytconfig.NewGenerator(ytsaurus, "local")
+		ytProxyAddress = getHTTPProxyAddress(g, namespace)
 
-		ytClient = createYtsaurusClient(ytsaurus, namespace)
+		log.Info("Ytsaurus access",
+			"YT_PROXY", ytProxyAddress,
+			"YT_TOKEN", consts.DefaultAdminPassword,
+			"login", consts.DefaultAdminLogin,
+			"password", consts.DefaultAdminPassword,
+		)
+
+		DeferCleanup(AttachProgressReporter(func() string {
+			return fmt.Sprintf("YT_PROXY=%s YT_TOKEN=%s", ytProxyAddress, consts.DefaultAdminPassword)
+		}))
+
+		ytClient = getYtClient(ytProxyAddress)
 		checkClusterViability(ytClient)
-
 		if len(ytsaurus.Spec.ExecNodes) != 0 {
 			By("Running vanilla operation")
 			runAndCheckVanillaOperation(ytClient)
@@ -1033,9 +1048,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	Context("Integration tests", Label("integration"), func() {
 
 		Context("With RPC proxy", Label("rpc-proxy"), func() {
+			var ytRPCProxyAddress string
 
 			BeforeEach(func() {
 				ytsaurus = testutil.WithRPCProxies(ytsaurus)
+			})
+
+			JustBeforeEach(func() {
+				ytRPCProxyAddress = getRPCProxyAddress(g, namespace)
 			})
 
 			It("Rpc proxies should require authentication", func(ctx context.Context) {
@@ -1044,8 +1064,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Checking RPC proxy without token does not work")
 				cli, err := ytrpc.NewClient(&yt.Config{
-					Proxy:                 getHTTPProxyAddress(g, namespace),
-					RPCProxy:              getRPCProxyAddress(g, namespace),
+					Proxy:                 ytProxyAddress,
+					RPCProxy:              ytRPCProxyAddress,
 					DisableProxyDiscovery: true,
 				})
 				Expect(err).Should(Succeed())
@@ -1054,7 +1074,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(yterrors.ContainsErrorCode(err, yterrors.CodeRPCAuthenticationError)).Should(BeTrue())
 
 				By("Checking RPC proxy works with token")
-				cli = getYtRPCClient(g, namespace)
+				cli = getYtRPCClient(ytProxyAddress, ytRPCProxyAddress)
 				_, err = cli.NodeExists(ctx, ypath.Path("/"), nil)
 				Expect(err).Should(Succeed())
 			})
@@ -1224,12 +1244,6 @@ func checkChunkLocations(ytClient yt.Client) {
 	for _, node := range values {
 		Expect(node.Attrs["use_imaginary_chunk_locations"]).ShouldNot(BeTrue())
 	}
-}
-
-func createYtsaurusClient(ytsaurus *ytv1.Ytsaurus, namespace string) yt.Client {
-	By("Creating ytsaurus client")
-	g := ytconfig.NewGenerator(ytsaurus, "local")
-	return getYtClient(g, namespace)
 }
 
 func startOperation(ytClient yt.Client, opSpec *ytspec.Spec) yt.OperationID {
