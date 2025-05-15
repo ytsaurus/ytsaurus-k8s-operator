@@ -35,6 +35,13 @@ type TestHelper struct {
 	Namespace  string
 }
 
+func GetenvOr(key, value string) string {
+	if x, ok := os.LookupEnv(key); ok {
+		return x
+	}
+	return value
+}
+
 func NewTestHelper(t *testing.T, namespace, crdDirectoryPath string) *TestHelper {
 	if os.Getenv("KUBEBUILDER_ASSETS") == "" {
 		t.Fatal(
