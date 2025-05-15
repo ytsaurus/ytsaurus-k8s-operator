@@ -141,13 +141,14 @@ func getMasterPod(name, namespace string) corev1.Pod {
 
 func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client) {
 	By("Run cluster impossible update")
-	ytsaurus.Spec.CoreImage = testutil.CoreImageSecond
+	Expect(ytsaurus.Spec.CoreImage).To(Equal(testutil.YtsaurusImageCurrent))
+	ytsaurus.Spec.CoreImage = testutil.YtsaurusImageFuture
 	UpdateObject(ctx, ytsaurus)
 
 	EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStateImpossibleToStart))
 
 	By("Set previous core image")
-	ytsaurus.Spec.CoreImage = testutil.CoreImageFirst
+	ytsaurus.Spec.CoreImage = testutil.YtsaurusImageCurrent
 	UpdateObject(ctx, ytsaurus)
 
 	By("Wait for running")
@@ -218,7 +219,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		By("Creating minimal Ytsaurus spec")
 		ytBuilder = &testutil.YtsaurusBuilder{
-			Namespace: namespace,
+			Namespace:         namespace,
+			YtsaurusImage:     testutil.YtsaurusImageCurrent,
+			QueryTrackerImage: testutil.QueryTrackerImageCurrent,
 		}
 		ytBuilder.CreateMinimal()
 		ytsaurus = ytBuilder.Ytsaurus
@@ -240,6 +243,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 
 		By("Checking that Ytsaurus state is equal to `Running`")
+		log.Info("Ytsaurus",
+			"namespace", ytsaurus.Namespace,
+			"name", ytsaurus.Name,
+			"hostNetwork", ytsaurus.Spec.HostNetwork,
+			"cellTag", ytsaurus.Spec.PrimaryMasters.CellTag,
+			"coreImage", ytsaurus.Spec.CoreImage)
 		EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
 
 		By("Creating ytsaurus client")
@@ -298,9 +307,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		})
 
 		DescribeTableSubtree("Updating Ytsaurus image",
-			func(newImage string) {
+			func(oldImage, newImage string) {
 				BeforeEach(func() {
 					ytBuilder.WithNamedDataNodes(ptr.To("dn-t"))
+
+					By("Setting old core image for testing upgrade")
+					ytsaurus.Spec.CoreImage = oldImage
 				})
 
 				It("Triggers cluster update", func(ctx context.Context) {
@@ -310,6 +322,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 					checkPodLabels(ctx, namespace)
 
+					log.Info("Update core image", "before", ytsaurus.Spec.CoreImage, "after", newImage)
 					ytsaurus.Spec.CoreImage = newImage
 					UpdateObject(ctx, ytsaurus)
 
@@ -329,8 +342,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					CurrentlyObject(ctx, ytsaurus).Should(HaveObservedGeneration())
 				})
 			},
-			Entry("When update Ytsaurus 23.2 -> 24.1", Label("basic"), testutil.CoreImageSecond),
-			Entry("When update Ytsaurus 24.1 -> 24.2", Label("basic"), testutil.CoreImageNextVer),
+			Entry("When update Ytsaurus 23.2 -> 24.1", Label("basic"), testutil.YtsaurusImage23_2, testutil.YtsaurusImage24_1),
+			Entry("When update Ytsaurus 24.1 -> 24.2", Label("basic"), testutil.YtsaurusImage24_1, testutil.YtsaurusImage24_2),
 		)
 
 		Context("Test UpdateSelector", Label("selector"), func() {
@@ -341,7 +354,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				// there will be migration of imaginary chunks locations which restarts datanodes
 				// and makes it hard to test updateSelector.
 				// For 24.2+ image no migration is needed.
-				ytsaurus.Spec.CoreImage = testutil.CoreImageNextVer
+				ytsaurus.Spec.CoreImage = testutil.YtsaurusImage24_2
 			})
 
 			It("Should be updated according to UpdateSelector=Everything", func(ctx context.Context) {
@@ -863,7 +876,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 							Name: testutil.RemoteResourceName,
 						},
 						CommonSpec: ytv1.CommonSpec{
-							CoreImage: testutil.CoreImageFirst,
+							CoreImage: testutil.YtsaurusImageCurrent,
 						},
 						ExecNodesSpec: ytBuilder.CreateExecNodeSpec(),
 					},
@@ -915,7 +928,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 							Name: testutil.RemoteResourceName,
 						},
 						CommonSpec: ytv1.CommonSpec{
-							CoreImage: testutil.CoreImageFirst,
+							CoreImage: testutil.YtsaurusImageCurrent,
 						},
 						DataNodesSpec: ytv1.DataNodesSpec{
 							InstanceSpec: ytBuilder.CreateDataNodeInstanceSpec(3),
@@ -957,7 +970,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 							Name: testutil.RemoteResourceName,
 						},
 						CommonSpec: ytv1.CommonSpec{
-							CoreImage: testutil.CoreImageFirst,
+							CoreImage: testutil.YtsaurusImageCurrent,
 						},
 						TabletNodesSpec: ytv1.TabletNodesSpec{
 							InstanceSpec: ytBuilder.CreateTabletNodeSpec(3),

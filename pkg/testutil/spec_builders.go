@@ -23,27 +23,40 @@ const (
 	// <...> is too long (64 characters is the max, 67 characters requested)`.
 	// FIXME(khlebnikov): https://github.com/ytsaurus/ytsaurus-k8s-operator/issues/390
 	RemoteResourceName = "rmt"
-	// Images should be in sync with TEST_IMAGES variable in Makefile
-	// todo: come up with a more elegant solution
-	CoreImageFirst   = "ghcr.io/ytsaurus/ytsaurus:stable-23.2.0"
-	CoreImageSecond  = "ghcr.io/ytsaurus/ytsaurus:stable-24.1.0"
-	CoreImageNextVer = "ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2025-03-19-2973ab7cb36ed53ae3cbe9c37b8c7f55eb9c4e77"
+)
+
+// Images are should be set by TEST_ENV include in Makefile
+// FIXME(khlebnikov): Maybe embed test env file for defaults
+var (
+	YtsaurusImage23_2 = GetenvOr("YTSAURUS_IMAGE_23_2", "ghcr.io/ytsaurus/ytsaurus:stable-23.2.0")
+	YtsaurusImage24_1 = GetenvOr("YTSAURUS_IMAGE_24_1", "ghcr.io/ytsaurus/ytsaurus:stable-24.1.0")
+	YtsaurusImage24_2 = GetenvOr("YTSAURUS_IMAGE_24_2", "ghcr.io/ytsaurus/ytsaurus:stable-24.2.0")
+
+	YtsaurusImagePrevious = GetenvOr("YTSAURUS_IMAGE_PREVIOUS", YtsaurusImage23_2)
+	YtsaurusImageCurrent  = GetenvOr("YTSAURUS_IMAGE_CURRENT", YtsaurusImage24_1)
+	YtsaurusImageFuture   = GetenvOr("YTSAURUS_IMAGE_FUTURE", YtsaurusImage24_2)
+	YtsaurusImageNightly  = GetenvOr("YTSAURUS_IMAGE_NIGHTLY", "ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2025-03-19-2973ab7cb36ed53ae3cbe9c37b8c7f55eb9c4e77")
+
+	QueryTrackerImagePrevious = GetenvOr("QUERY_TRACKER_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/query-tracker:0.0.6")
+	QueryTrackerImageCurrent  = GetenvOr("QUERY_TRACKER_IMAGE_CURRENT", "ghcr.io/ytsaurus/query-tracker:0.0.9")
+	QueryTrackerImageFuture   = GetenvOr("QUERY_TRACKER_IMAGE_FUTURE", "ghcr.io/ytsaurus/query-tracker:0.0.9")
 )
 
 var (
-	masterVolumeSize, _ = resource.ParseQuantity("5Gi")
+	masterVolumeSize, _   = resource.ParseQuantity("5Gi")
 	dataNodeVolumeSize, _ = resource.ParseQuantity("5Gi")
 	execNodeVolumeSize, _ = resource.ParseQuantity("5Gi")
 )
 
 type YtsaurusBuilder struct {
-	Namespace string
-
-	Ytsaurus *ytv1.Ytsaurus
+	Namespace         string
+	YtsaurusImage     string
+	QueryTrackerImage string
+	Ytsaurus          *ytv1.Ytsaurus
 }
 
 func (b *YtsaurusBuilder) CreateVolumeClaim(name string, size resource.Quantity) ytv1.EmbeddedPersistentVolumeClaim {
-	return ytv1.EmbeddedPersistentVolumeClaim {
+	return ytv1.EmbeddedPersistentVolumeClaim{
 		EmbeddedObjectMetadata: ytv1.EmbeddedObjectMetadata{
 			Name: name,
 		},
@@ -80,7 +93,7 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 			CommonSpec: ytv1.CommonSpec{
 				EphemeralCluster: true,
 				UseShortNames:    true,
-				CoreImage:        CoreImageFirst,
+				CoreImage:        b.YtsaurusImage,
 			},
 			EnableFullUpdate: true,
 			IsManaged:        true,
@@ -106,7 +119,7 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 							Path:         "/yt/master-data/master-snapshots",
 						},
 					},
-					VolumeClaimTemplates:  []ytv1.EmbeddedPersistentVolumeClaim{
+					VolumeClaimTemplates: []ytv1.EmbeddedPersistentVolumeClaim{
 						b.CreateVolumeClaim("master-data", masterVolumeSize),
 					},
 					VolumeMounts: []corev1.VolumeMount{
@@ -136,7 +149,9 @@ func (b *YtsaurusBuilder) WithBaseComponents() {
 
 func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 	builder := YtsaurusBuilder{
-		Namespace: namespace,
+		Namespace:         namespace,
+		YtsaurusImage:     YtsaurusImageCurrent,
+		QueryTrackerImage: QueryTrackerImageCurrent,
 	}
 	builder.CreateMinimal()
 	builder.WithBaseComponents()
@@ -218,6 +233,7 @@ func (b *YtsaurusBuilder) WithBootstrap() {
 func (b *YtsaurusBuilder) WithQueryTracker() {
 	b.Ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
 		InstanceSpec: ytv1.InstanceSpec{
+			Image:         ptr.To(b.QueryTrackerImage),
 			InstanceCount: 1,
 			Loggers:       b.CreateLoggersSpec(),
 		},
@@ -227,6 +243,7 @@ func (b *YtsaurusBuilder) WithQueryTracker() {
 func (b *YtsaurusBuilder) WithYqlAgent() {
 	b.Ytsaurus.Spec.YQLAgents = &ytv1.YQLAgentSpec{
 		InstanceSpec: ytv1.InstanceSpec{
+			Image:         ptr.To(b.QueryTrackerImage),
 			InstanceCount: 1,
 			Loggers:       b.CreateLoggersSpec(),
 		},
@@ -234,12 +251,16 @@ func (b *YtsaurusBuilder) WithYqlAgent() {
 }
 
 func (b *YtsaurusBuilder) WithQueueAgent() {
+	image := b.YtsaurusImage
+	// Older version doesn't have /usr/bin/ytserver-queue-agent
+	if image == YtsaurusImage23_2 {
+		image = YtsaurusImage24_1
+	}
 	b.Ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
 			Loggers:       b.CreateLoggersSpec(),
-			// Older version doesn't have /usr/bin/ytserver-queue-agent
-			Image: ptr.To(CoreImageSecond),
+			Image:         ptr.To(image),
 		},
 	}
 }

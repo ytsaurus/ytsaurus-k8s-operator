@@ -62,6 +62,10 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
+## Test environment include
+TEST_ENV = test-env.inc
+include ${TEST_ENV}
+
 ## Enable debug options.
 DEBUG =
 
@@ -233,20 +237,13 @@ kind-delete-local-registry: ## Delete local docker registry.
 	docker volume rm ${REGISTRY_LOCAL_NAME}
 	rm -fr "${REGISTRY_CONFIG_DIR}/${REGISTRY_LOCAL_ADDR}"
 
-TEST_IMAGES = \
-    	ghcr.io/ytsaurus/ytsaurus:stable-23.2.0 \
-    	ghcr.io/ytsaurus/ytsaurus:stable-24.1.0 \
-    	ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2025-03-19-2973ab7cb36ed53ae3cbe9c37b8c7f55eb9c4e77
-
 .PHONY: kind-load-test-images
 kind-load-test-images:
-	$(foreach img,$(TEST_IMAGES),docker pull -q $(img) && $(KIND) load docker-image --name $(KIND_CLUSTER_NAME) $(img);)
+	$(foreach img,$(LOAD_TEST_IMAGES),docker pull -q $(img) && $(KIND) load docker-image --name $(KIND_CLUSTER_NAME) $(img);)
 
-SAMPLE_IMAGES = \
-	ghcr.io/ytsaurus/ytsaurus:stable-24.1.0-relwithdebinfo
 .PHONY: kind-load-sample-images
 kind-load-sample-images:
-	$(foreach img,$(SAMPLE_IMAGES),docker pull -q $(img) && $(KIND) load docker-image --name $(KIND_CLUSTER_NAME) $(img);)
+	$(foreach img,$(LOAD_SAMPLE_IMAGES),docker pull -q $(img) && $(KIND) load docker-image --name $(KIND_CLUSTER_NAME) $(img);)
 
 .PHONY: k8s-install-cert-manager
 k8s-install-cert-manager:
