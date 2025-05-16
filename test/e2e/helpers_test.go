@@ -28,6 +28,15 @@ import (
 	"go.ytsaurus.tech/yt/go/yterrors"
 )
 
+func getKindControlPlaneNode() corev1.Node {
+	nodeList := corev1.NodeList{}
+	err := k8sClient.List(ctx, &nodeList)
+	Expect(err).Should(Succeed())
+	Expect(nodeList.Items).To(HaveLen(1))
+	Expect(nodeList.Items[0].Name).To(HaveSuffix("kind-control-plane"))
+	return nodeList.Items[0]
+}
+
 func getNodesAddresses() []string {
 	var nodes corev1.NodeList
 	Expect(k8sClient.List(ctx, &nodes)).Should(Succeed())
@@ -41,6 +50,40 @@ func getNodesAddresses() []string {
 		}
 	}
 	return addrs
+}
+
+func getServiceAddress(namespace, serviceName, portName string) string {
+	svc := corev1.Service{}
+	Expect(k8sClient.Get(ctx,
+		types.NamespacedName{Name: serviceName, Namespace: namespace},
+		&svc),
+	).Should(Succeed())
+
+	k8sNode := getKindControlPlaneNode()
+
+	Expect(svc.Spec.Type).To(Equal(corev1.ServiceTypeNodePort))
+	Expect(svc.Spec.IPFamilies[0]).To(Equal(corev1.IPv4Protocol))
+
+	Expect(svc.Spec.Ports).To(ContainElement(HaveField("Name", portName)))
+	var nodePort int32
+	for _, port := range svc.Spec.Ports {
+		if port.Name == portName {
+			nodePort = port.NodePort
+			break
+		}
+	}
+	Expect(nodePort).ToNot(BeZero())
+
+	var nodeAddress string
+	for _, address := range k8sNode.Status.Addresses {
+		if address.Type == corev1.NodeInternalIP && net.ParseIP(address.Address).To4() != nil {
+			nodeAddress = address.Address
+			break
+		}
+	}
+	Expect(nodeAddress).ToNot(BeEmpty())
+
+	return fmt.Sprintf("%s:%v", nodeAddress, nodePort)
 }
 
 func getComponentPods(ctx context.Context, namespace string) map[string]corev1.Pod {

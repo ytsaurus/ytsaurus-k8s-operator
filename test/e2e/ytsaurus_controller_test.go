@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"os"
 	"reflect"
@@ -111,52 +110,6 @@ func getRPCProxyAddress(g *ytconfig.Generator, namespace string) string {
 	}
 
 	return getServiceAddress(namespace, serviceName, portName)
-}
-
-func getServiceAddress(namespace, serviceName, portName string) string {
-	svc := corev1.Service{}
-	Expect(k8sClient.Get(ctx,
-		client.ObjectKey{Name: serviceName, Namespace: namespace},
-		&svc),
-	).Should(Succeed())
-
-	k8sNode := corev1.Node{}
-	Expect(k8sClient.Get(ctx,
-		client.ObjectKey{Name: getKindControlPlaneName(), Namespace: namespace},
-		&k8sNode),
-	).Should(Succeed())
-
-	Expect(svc.Spec.Type).To(Equal(corev1.ServiceTypeNodePort))
-	Expect(svc.Spec.IPFamilies[0]).To(Equal(corev1.IPv4Protocol))
-
-	Expect(svc.Spec.Ports).To(ContainElement(HaveField("Name", portName)))
-	var nodePort int32
-	for _, port := range svc.Spec.Ports {
-		if port.Name == portName {
-			nodePort = port.NodePort
-			break
-		}
-	}
-	Expect(nodePort).ToNot(BeZero())
-
-	var nodeAddress string
-	for _, address := range k8sNode.Status.Addresses {
-		if address.Type == corev1.NodeInternalIP && net.ParseIP(address.Address).To4() != nil {
-			nodeAddress = address.Address
-			break
-		}
-	}
-	Expect(nodeAddress).ToNot(BeEmpty())
-
-	return fmt.Sprintf("%s:%v", nodeAddress, nodePort)
-}
-
-func getKindControlPlaneName() string {
-	kindClusterName := os.Getenv("KIND_CLUSTER_NAME")
-	if kindClusterName == "" {
-		kindClusterName = "kind"
-	}
-	return kindClusterName + "-control-plane"
 }
 
 func getMasterPod(name, namespace string) corev1.Pod {
@@ -930,7 +883,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Run cluster update")
 				ytsaurus.Spec.HostNetwork = true
 				ytsaurus.Spec.PrimaryMasters.HostAddresses = []string{
-					getKindControlPlaneName(),
+					getKindControlPlaneNode().Name,
 				}
 				UpdateObject(ctx, ytsaurus)
 
