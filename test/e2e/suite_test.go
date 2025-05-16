@@ -18,7 +18,7 @@ package controllers_test
 
 import (
 	"context"
-	"os"
+	"flag"
 	"reflect"
 	"testing"
 	"time"
@@ -63,18 +63,26 @@ var k8sClient client.WithWatch
 var ctx context.Context
 var log = logf.Log
 
-func TestAPIs(t *testing.T) {
-	if os.Getenv("YTSAURUS_ENABLE_E2E_TESTS") != "true" {
-		t.Skip("skipping E2E tests: set YTSAURUS_ENABLE_E2E_TESTS environment variable to 'true'")
-	}
+var enableE2E = flag.Bool("enable-e2e", false, "")
 
+var _ = BeforeEach(func() {
+	if !*enableE2E {
+		Skip("skipping E2E tests: add option --enable-e2e")
+	}
+})
+
+func TestE2E(t *testing.T) {
 	oformat.MaxLength = 20_000 // Do not truncate large YT errors
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Controller Suite")
+	RunSpecs(t, "E2E Tests")
 }
 
 var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+
+	if !*enableE2E {
+		return nil
+	}
 
 	By("bootstrapping test environment")
 	cfg, err := config.GetConfig()
@@ -94,6 +102,10 @@ var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	return []byte(cfg.Host)
 }, func(ctx context.Context, host []byte) {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+
+	if !*enableE2E {
+		return
+	}
 
 	By("bootstrapping k8s client")
 
