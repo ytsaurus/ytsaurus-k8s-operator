@@ -63,6 +63,7 @@ func CreateMinimalYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 			Discovery: ytv1.DiscoverySpec{
 				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount: 1,
+					Loggers:       createLoggersSpec(),
 				},
 			},
 			PrimaryMasters: ytv1.MastersSpec{
@@ -174,6 +175,7 @@ func WithScheduler(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.Schedulers = &ytv1.SchedulersSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
+			Loggers:       createLoggersSpec(),
 		},
 	}
 	return ytsaurus
@@ -183,6 +185,7 @@ func WithControllerAgents(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.ControllerAgents = &ytv1.ControllerAgentsSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
+			Loggers:       createLoggersSpec(),
 		},
 	}
 	return ytsaurus
@@ -210,6 +213,7 @@ func WithQueryTracker(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
+			Loggers:       createLoggersSpec(),
 		},
 	}
 	return ytsaurus
@@ -219,6 +223,7 @@ func WithYqlAgent(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.YQLAgents = &ytv1.YQLAgentSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
+			Loggers:       createLoggersSpec(),
 		},
 	}
 	return ytsaurus
@@ -228,6 +233,7 @@ func WithQueueAgent(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
+			Loggers:       createLoggersSpec(),
 			// Older version doesn't have /usr/bin/ytserver-queue-agent
 			Image: ptr.To(CoreImageSecond),
 		},
@@ -247,6 +253,7 @@ func createHTTPProxiesSpec() ytv1.HTTPProxiesSpec {
 		ServiceType: "NodePort",
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
+			Loggers:       createLoggersSpec(),
 		},
 		HttpNodePort: getPortFromEnv("E2E_HTTP_PROXY_INTERNAL_PORT"),
 	}
@@ -258,6 +265,7 @@ func createRPCProxiesSpec() ytv1.RPCProxiesSpec {
 		ServiceType: &stype,
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
+			Loggers:       createLoggersSpec(),
 		},
 		NodePort: getPortFromEnv("E2E_RPC_PROXY_INTERNAL_PORT"),
 	}
@@ -320,6 +328,7 @@ func CreateExecNodeInstanceSpec() ytv1.InstanceSpec {
 func CreateDataNodeInstanceSpec(instanceCount int32) ytv1.InstanceSpec {
 	return ytv1.InstanceSpec{
 		InstanceCount: instanceCount,
+		Loggers:       createLoggersSpec(),
 		Locations: []ytv1.LocationSpec{
 			{
 				LocationType: "ChunkStore",
