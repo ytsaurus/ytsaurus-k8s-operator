@@ -2,8 +2,10 @@ package controllers_test
 
 import (
 	"context"
+	"strings"
 
 	. "github.com/onsi/gomega"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -11,6 +13,10 @@ import (
 	ctrlcli "sigs.k8s.io/controller-runtime/pkg/client"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
+	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yt"
+	"go.ytsaurus.tech/yt/go/yterrors"
 )
 
 func getComponentPods(ctx context.Context, namespace string) map[string]corev1.Pod {
@@ -76,4 +82,95 @@ func updateSpecToTriggerAllComponentUpdate(ytsaurus *ytv1.Ytsaurus) {
 	} else {
 		ytsaurus.Spec.ForceTCP = ptr.To(!*ytsaurus.Spec.ForceTCP)
 	}
+}
+
+type ClusterHealthReport struct {
+	Alerts map[ypath.Path][]yterrors.Error
+}
+
+func (c ClusterHealthReport) IgnoreAlert(alert yterrors.Error) bool {
+	// FIXME(khlebnikov): Fix configs.
+	ignoredMessages := []string{
+		"Found unrecognized options in dynamic cluster config",
+		"Too few matching agents",
+		"Conflicting profiling tags",
+		"Snapshot loading is disabled; consider enabling it using the controller agent config",
+	}
+	for _, msg := range ignoredMessages {
+		if strings.Contains(alert.Message, msg) {
+			return true
+		}
+	}
+	return false
+}
+
+func (c ClusterHealthReport) AddAlert(alert yterrors.Error, alertPath ypath.Path) {
+	if c.IgnoreAlert(alert) {
+		log.Info("Ignoring cluster alert", "alert_path", alertPath, "alert", alert)
+	} else {
+		log.Error(&alert, "Cluster alert", "alert_path", alertPath)
+		c.Alerts[alertPath] = append(c.Alerts[alertPath], alert)
+	}
+}
+
+func (c ClusterHealthReport) CollectAlerts(ytClient yt.Client, alertPath ypath.Path) {
+	var alerts []yterrors.Error
+	err := ytClient.GetNode(ctx, alertPath, &alerts, nil)
+	if yterrors.ContainsResolveError(err) {
+		log.Error(err, "Cannot collect alerts", "alert_path", alertPath)
+		return
+	}
+	Expect(err).Should(Succeed())
+	for _, alert := range alerts {
+		c.AddAlert(alert, alertPath)
+	}
+}
+
+func (c ClusterHealthReport) CollectNodes(ytClient yt.Client, basePath ypath.Path) {
+	type nodeAlerts struct {
+		Name   string           `yson:",value"`
+		Alerts []yterrors.Error `yson:"alerts,attr"`
+	}
+	var nodes []nodeAlerts
+	Expect(ytClient.ListNode(ctx, basePath, &nodes, &yt.ListNodeOptions{
+		Attributes: []string{"alerts"},
+	})).Should(Succeed())
+	for _, node := range nodes {
+		alertPath := basePath.Child(node.Name).Attr("alerts")
+		for _, alert := range node.Alerts {
+			c.AddAlert(alert, alertPath)
+		}
+	}
+}
+
+func (c ClusterHealthReport) CollectLostChunks(ytClient yt.Client, countPath ypath.Path) {
+	var count int
+	Expect(ytClient.GetNode(ctx, countPath, &count, nil)).Should(Succeed())
+	if count != 0 {
+		alert := yterrors.Error{
+			Code:    yterrors.CodeChunkIsLost,
+			Message: "Lost chunks",
+			Attributes: map[string]any{
+				"count_path": countPath,
+				"count":      count,
+			},
+		}
+		c.AddAlert(alert, countPath)
+	}
+}
+
+func CollectClusterHealth(ytClient yt.Client) ClusterHealthReport {
+	c := ClusterHealthReport{
+		Alerts: map[ypath.Path][]yterrors.Error{},
+	}
+	c.CollectAlerts(ytClient, "//sys/@master_alerts")
+	c.CollectAlerts(ytClient, "//sys/scheduler/@alerts")
+	c.CollectLostChunks(ytClient, "//sys/lost_chunks/@count")
+	c.CollectLostChunks(ytClient, "//sys/lost_vital_chunks/@count")
+	c.CollectNodes(ytClient, "//sys/data_nodes")
+	c.CollectNodes(ytClient, "//sys/tablet_nodes")
+	c.CollectNodes(ytClient, "//sys/exec_nodes")
+	c.CollectNodes(ytClient, "//sys/cluster_nodes")
+	c.CollectNodes(ytClient, "//sys/controller_agents/instances")
+	return c
 }

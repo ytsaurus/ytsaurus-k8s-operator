@@ -1123,12 +1123,15 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 })
 
 func checkClusterBaseViability(ytClient yt.Client) {
-	By("Check that cluster is alive")
-
-	res := make([]string, 0)
+	By("Checking that cluster is alive")
+	var res []string
 	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
 
-	By("Check that tablet cell bundles are in `good` health")
+	By("Checking cluster alerts")
+	clusterHealth := CollectClusterHealth(ytClient)
+	Expect(clusterHealth.Alerts).To(BeEmpty())
+
+	By("Checking that tablet cell bundles are in `good` health")
 	Eventually(func() bool {
 		notGoodBundles, err := components.GetNotGoodTabletCellBundles(ctx, ytClient)
 		if err != nil {
