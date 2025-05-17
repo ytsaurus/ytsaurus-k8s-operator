@@ -32,12 +32,30 @@ const (
 
 var (
 	masterVolumeSize, _ = resource.ParseQuantity("5Gi")
+	dataNodeVolumeSize, _ = resource.ParseQuantity("5Gi")
+	execNodeVolumeSize, _ = resource.ParseQuantity("5Gi")
 )
 
 type YtsaurusBuilder struct {
 	Namespace string
 
 	Ytsaurus *ytv1.Ytsaurus
+}
+
+func (b *YtsaurusBuilder) CreateVolumeClaim(name string, size resource.Quantity) ytv1.EmbeddedPersistentVolumeClaim {
+	return ytv1.EmbeddedPersistentVolumeClaim {
+		EmbeddedObjectMetadata: ytv1.EmbeddedObjectMetadata{
+			Name: name,
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{"ReadWriteOnce"},
+			Resources: corev1.VolumeResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceStorage: size,
+				},
+			},
+		},
+	}
 }
 
 func (b *YtsaurusBuilder) CreateLoggersSpec() []ytv1.TextLoggerSpec {
@@ -88,20 +106,8 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 							Path:         "/yt/master-data/master-snapshots",
 						},
 					},
-					VolumeClaimTemplates: []ytv1.EmbeddedPersistentVolumeClaim{
-						{
-							EmbeddedObjectMetadata: ytv1.EmbeddedObjectMetadata{
-								Name: "master-data",
-							},
-							Spec: corev1.PersistentVolumeClaimSpec{
-								AccessModes: []corev1.PersistentVolumeAccessMode{"ReadWriteOnce"},
-								Resources: corev1.VolumeResourceRequirements{
-									Requests: corev1.ResourceList{
-										corev1.ResourceStorage: masterVolumeSize,
-									},
-								},
-							},
-						},
+					VolumeClaimTemplates:  []ytv1.EmbeddedPersistentVolumeClaim{
+						b.CreateVolumeClaim("master-data", masterVolumeSize),
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{
@@ -280,7 +286,6 @@ func getPortFromEnv(envvar string) *int32 {
 }
 
 func (b *YtsaurusBuilder) CreateExecNodeSpec() ytv1.ExecNodesSpec {
-	execNodeVolumeSize, _ := resource.ParseQuantity("3Gi")
 	execNodeCPU, _ := resource.ParseQuantity("1")
 	execNodeMemory, _ := resource.ParseQuantity("2Gi")
 
@@ -304,15 +309,8 @@ func (b *YtsaurusBuilder) CreateExecNodeSpec() ytv1.ExecNodesSpec {
 					Path:         "/yt/node-data/slots",
 				},
 			},
-			Volumes: []corev1.Volume{
-				{
-					Name: "node-data",
-					VolumeSource: corev1.VolumeSource{
-						EmptyDir: &corev1.EmptyDirVolumeSource{
-							SizeLimit: &execNodeVolumeSize,
-						},
-					},
-				},
+			VolumeClaimTemplates: []ytv1.EmbeddedPersistentVolumeClaim{
+				b.CreateVolumeClaim("node-data", execNodeVolumeSize),
 			},
 			VolumeMounts: []corev1.VolumeMount{
 				{
@@ -334,15 +332,8 @@ func (b *YtsaurusBuilder) CreateDataNodeInstanceSpec(instanceCount int32) ytv1.I
 				Path:         "/yt/node-data/chunk-store",
 			},
 		},
-		Volumes: []corev1.Volume{
-			{
-				Name: "node-data",
-				VolumeSource: corev1.VolumeSource{
-					EmptyDir: &corev1.EmptyDirVolumeSource{
-						SizeLimit: &masterVolumeSize,
-					},
-				},
-			},
+		VolumeClaimTemplates: []ytv1.EmbeddedPersistentVolumeClaim{
+			b.CreateVolumeClaim("node-data", dataNodeVolumeSize),
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{
