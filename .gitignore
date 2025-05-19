@@ -8,6 +8,7 @@
 bin
 testbin/*
 cover.out
+report.xml
 
 # Test binary, build with `go test -c`
 *.test
