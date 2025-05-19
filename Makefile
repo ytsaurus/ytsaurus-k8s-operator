@@ -74,6 +74,7 @@ GINKGO_FLAGS += --procs="$(GINKGO_PROCS)"
 GINKGO_FLAGS += --timeout=1h
 GINKGO_FLAGS += --poll-progress-after=2m
 GINKGO_FLAGS += --poll-progress-interval=1m
+GINKGO_FLAGS += --junit-report=report.xml
 
 ifneq ($(GINKGO_LABEL_FILTER),)
 	GINKGO_FLAGS += --label-filter="$(GINKGO_LABEL_FILTER)"

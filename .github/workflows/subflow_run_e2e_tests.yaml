@@ -47,3 +47,11 @@ jobs:
           make kind-load-test-images
           make test-e2e
           make helm-uninstall
+
+      - name: Report results
+        if: always()
+        uses: dorny/test-reporter@v2
+        with:
+          name: "E2E tests"
+          path: report.xml
+          reporter: java-junit
