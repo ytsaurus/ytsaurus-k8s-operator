@@ -70,7 +70,7 @@ func NewComponentManager(
 	if len(resource.Spec.RPCProxies) > 0 {
 		var rps []components.Component
 		for _, rpSpec := range ytsaurus.GetResource().Spec.RPCProxies {
-			rps = append(rps, components.NewRPCProxy(cfgen, ytsaurus, m, rpSpec))
+			rps = append(rps, components.NewRPCProxy(cfgen, ytsaurus, yc, m, rpSpec))
 		}
 		allComponents = append(allComponents, rps...)
 	}

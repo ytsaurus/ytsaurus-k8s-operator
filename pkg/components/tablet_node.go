@@ -20,6 +20,7 @@ import (
 const (
 	SysBundle     string = "sys"
 	DefaultBundle string = "default"
+	SpareBundle   string = "spare"
 )
 
 type TabletNode struct {
@@ -106,6 +107,11 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return WaitingStatus(SyncStatusBlocked, tn.ytsaurusClient.GetFullName()), err
 	}
 
+	bcAnnotationsStatus, err := initBundleControllerAnnotatios(ctx, dry, tn.ytsaurusClient.GetYtClient(), ypath.Root.Child("sys").Child("tablet_nodes"))
+	if bcAnnotationsStatus.SyncStatus != SyncStatusReady || err != nil {
+		return bcAnnotationsStatus, err
+	}
+
 	if !dry && tn.doInitialization {
 		tabletBundleStatus, err := tn.initBundles(ctx)
 		if err != nil {
@@ -135,6 +141,8 @@ func (tn *TabletNode) getBundleBootstrap(bundle string) *ytv1.BundleBootstrapSpe
 
 func (tn *TabletNode) getBundleOptions(bundle string) map[string]any {
 	options := map[string]any{}
+
+	options["enable_bundle_controller"] = false
 
 	if bundle == SysBundle {
 		options["changelog_account"] = "sys"
