@@ -182,6 +182,7 @@ type JobProxy struct {
 	JobProxyAuthenticationManager  Auth            `yson:"job_proxy_authentication_manager"`
 	JobProxyLogging                JobProxyLogging `yson:"job_proxy_logging"`
 	ForwardAllEnvironmentVariables *bool           `yson:"forward_all_environment_variables,omitempty"`
+	SupervisorConnection           *BusClient      `yson:"supervisor_connection,omitempty"`
 }
 
 type ExecNode struct {

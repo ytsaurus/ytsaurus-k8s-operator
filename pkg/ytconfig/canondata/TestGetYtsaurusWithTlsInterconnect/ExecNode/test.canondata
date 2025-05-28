@@ -224,6 +224,15 @@
                     "flush_period"=3000;
                 };
             };
+            "supervisor_connection"={
+                "encryption_mode"=required;
+                ca={
+                    "file_name"="/tls/ca_bundle/ca.crt";
+                };
+                "verification_mode"=none;
+                "peer_alternative_host_name"="fake.svc.cluster.local";
+                address="127.0.0.1:9029";
+            };
         };
         "job_proxy_authentication_manager"={
             "cypress_cookie_manager"={

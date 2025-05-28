@@ -2,7 +2,9 @@ package ytconfig
 
 import (
 	"fmt"
+	"net"
 	"path"
+	"strconv"
 
 	"k8s.io/utils/ptr"
 
@@ -673,6 +675,22 @@ func (g *NodeGenerator) getExecNodeConfigImpl(spec *ytv1.ExecNodesSpec) (ExecNod
 	}
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+
+	// Fill job proxy supervisor connection.
+	if busClient := c.ClusterConnection.BusClient; busClient != nil {
+		var localAddress string
+		if g.commonSpec.UseIPv6 {
+			localAddress = net.JoinHostPort("::1", strconv.Itoa(int(c.RPCPort)))
+		} else {
+			localAddress = net.JoinHostPort("127.0.0.1", strconv.Itoa(int(c.RPCPort)))
+		}
+
+		c.ExecNode.JobProxy.SupervisorConnection = &BusClient{
+			Address: localAddress,
+			Bus:     *busClient,
+		}
+	}
+
 	return c, nil
 }
 
