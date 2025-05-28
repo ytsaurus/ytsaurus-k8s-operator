@@ -265,21 +265,6 @@ func (g *NodeGenerator) fillCommonService(c *CommonServer, s *ytv1.InstanceSpec)
 	c.TimestampProviders.Addresses = g.getMasterAddresses()
 }
 
-func (g *Generator) fillBusEncryption(b *Bus, s *ytv1.RPCTransportSpec) {
-	if s.TLSRequired {
-		b.EncryptionMode = EncryptionModeRequired
-	} else {
-		b.EncryptionMode = EncryptionModeOptional
-	}
-
-	b.CertChain = &PemBlob{
-		FileName: path.Join(consts.RPCSecretMountPoint, corev1.TLSCertKey),
-	}
-	b.PrivateKey = &PemBlob{
-		FileName: path.Join(consts.RPCSecretMountPoint, corev1.TLSPrivateKeyKey),
-	}
-}
-
 func (g *NodeGenerator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec) {
 	if s == nil {
 		// Use common bus transport config
@@ -293,18 +278,40 @@ func (g *NodeGenerator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec)
 		c.BusServer = &BusServer{}
 	}
 
-	// FIXME(khlebnikov): some clients does not support TLS yet
-	if s.TLSRequired && s != g.commonSpec.NativeTransport {
+	// For insecure mode status of TLS is decided by client.
+	if s.TLSRequired && !s.TLSInsecure {
 		c.BusServer.EncryptionMode = EncryptionModeRequired
 	} else {
 		c.BusServer.EncryptionMode = EncryptionModeOptional
 	}
 
 	c.BusServer.CertChain = &PemBlob{
-		FileName: path.Join(consts.BusSecretMountPoint, corev1.TLSCertKey),
+		FileName: path.Join(consts.BusServerSecretMountPoint, corev1.TLSCertKey),
 	}
+
 	c.BusServer.PrivateKey = &PemBlob{
-		FileName: path.Join(consts.BusSecretMountPoint, corev1.TLSPrivateKeyKey),
+		FileName: path.Join(consts.BusServerSecretMountPoint, corev1.TLSPrivateKeyKey),
+	}
+
+	// Always require mTLS in secure mode.
+	if !s.TLSInsecure {
+		c.BusServer.VerificationMode = VerificationModeFull
+
+		if g.commonSpec.CABundle != nil {
+			c.BusServer.CA = &PemBlob{
+				FileName: path.Join(consts.CABundleMountPoint, consts.CABundleFileName),
+			}
+		} else {
+			c.BusServer.CA = &PemBlob{
+				FileName: consts.DefaultCABundlePath,
+			}
+		}
+
+		if s.TLSPeerAlternativeHostName != "" {
+			c.BusServer.PeerAlternativeHostName = s.TLSPeerAlternativeHostName
+		}
+	} else {
+		c.BusServer.VerificationMode = VerificationModeNone
 	}
 }
 
@@ -345,6 +352,15 @@ func (g *NodeGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s 
 
 	if s.TLSPeerAlternativeHostName != "" {
 		c.BusClient.PeerAlternativeHostName = s.TLSPeerAlternativeHostName
+	}
+
+	if s.TLSClientSecret != nil {
+		c.BusClient.CertChain = &PemBlob{
+			FileName: path.Join(consts.BusClientSecretMountPoint, corev1.TLSCertKey),
+		}
+		c.BusClient.PrivateKey = &PemBlob{
+			FileName: path.Join(consts.BusClientSecretMountPoint, corev1.TLSPrivateKeyKey),
+		}
 	}
 }
 
@@ -549,7 +565,18 @@ func (g *Generator) GetRPCProxyConfig(spec ytv1.RPCProxiesSpec) ([]byte, error) 
 		if c.BusServer == nil {
 			c.BusServer = &BusServer{}
 		}
-		g.fillBusEncryption(&c.BusServer.Bus, &spec.Transport)
+		// FIXME(khlebnikov): RPCProxy share bus server for native and public services
+		if spec.Transport.TLSRequired {
+			c.BusServer.EncryptionMode = EncryptionModeRequired
+		} else {
+			c.BusServer.EncryptionMode = EncryptionModeOptional
+		}
+		c.BusServer.CertChain = &PemBlob{
+			FileName: path.Join(consts.RPCProxySecretMountPoint, corev1.TLSCertKey),
+		}
+		c.BusServer.PrivateKey = &PemBlob{
+			FileName: path.Join(consts.RPCProxySecretMountPoint, corev1.TLSPrivateKeyKey),
+		}
 	}
 
 	return marshallYsonConfig(c)

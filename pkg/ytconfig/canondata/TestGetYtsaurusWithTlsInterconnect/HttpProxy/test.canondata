@@ -52,6 +52,7 @@
         "private_key"={
             "file_name"="/tls/bus_secret/tls.key";
         };
+        "verification_mode"=none;
     };
     "timestamp_provider"={
         addresses=[

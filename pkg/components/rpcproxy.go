@@ -62,8 +62,8 @@ func NewRPCProxy(
 	if secret := spec.Transport.TLSSecret; secret != nil {
 		tlsSecret = resources.NewTLSSecret(
 			secret.Name,
-			consts.RPCSecretVolumeName,
-			consts.RPCSecretMountPoint)
+			consts.RPCProxySecretVolumeName,
+			consts.RPCProxySecretMountPoint)
 	}
 
 	return &RpcProxy{
