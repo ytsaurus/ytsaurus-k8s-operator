@@ -2,7 +2,9 @@ package ytconfig
 
 import (
 	"fmt"
+	"net"
 	"path"
+	"strconv"
 
 	"k8s.io/utils/ptr"
 
@@ -668,6 +670,7 @@ func (g *NodeGenerator) getExecNodeConfigImpl(spec *ytv1.ExecNodesSpec) (ExecNod
 	}
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+
 	return c, nil
 }
 
@@ -676,6 +679,46 @@ func (g *NodeGenerator) GetExecNodeConfig(spec ytv1.ExecNodesSpec) ([]byte, erro
 	if err != nil {
 		return []byte{}, err
 	}
+
+	if c.ClusterConnection.BusClient != nil {
+		var clusterConnection ClusterConnection
+
+		keyring := getMountKeyring(g.commonSpec, spec.NativeTransport)
+		jobProxyKeyring := getVaultKeyring(g.commonSpec, spec.NativeTransport)
+		g.fillClusterConnection(&clusterConnection, spec.NativeTransport, jobProxyKeyring)
+
+		forwardSecret := func(node, proxy *PemBlob) {
+			if node != nil && proxy != nil {
+				c.ExecNode.JobProxy.EnvironmentVariables = append(
+					c.ExecNode.JobProxy.EnvironmentVariables,
+					EnvironmentVariable{
+						Name:     proxy.EnvironmentVariable,
+						FileName: &node.FileName,
+						Export:   ptr.To(false),
+					},
+				)
+			}
+		}
+
+		forwardSecret(keyring.BusCABundle, jobProxyKeyring.BusCABundle)
+		forwardSecret(keyring.BusClientCertificate, jobProxyKeyring.BusClientCertificate)
+		forwardSecret(keyring.BusClientPrivateKey, jobProxyKeyring.BusClientPrivateKey)
+
+		c.ExecNode.JobProxy.ClusterConnection = &clusterConnection
+
+		var localAddress string
+		if g.commonSpec.UseIPv6 {
+			localAddress = net.JoinHostPort("::1", strconv.Itoa(int(c.RPCPort)))
+		} else {
+			localAddress = net.JoinHostPort("127.0.0.1", strconv.Itoa(int(c.RPCPort)))
+		}
+
+		c.ExecNode.JobProxy.SupervisorConnection = &BusClient{
+			Address: localAddress,
+			Bus:     *clusterConnection.BusClient,
+		}
+	}
+
 	return marshallYsonConfig(c)
 }
 
