@@ -120,6 +120,12 @@ type Bus struct {
 	PeerAlternativeHostName string           `yson:"peer_alternative_host_name,omitempty"`
 }
 
+type BusClient struct {
+	Bus
+	Address              string `yson:"address,omitempty"`
+	UnixDomainSocketPath string `yson:"unix_domain_socket_path,omitempty"`
+}
+
 type BusServer struct {
 	Bus
 }
