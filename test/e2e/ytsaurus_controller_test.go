@@ -202,6 +202,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Labels: map[string]string{
 					"app.kubernetes.io/component": "test",
 					"app.kubernetes.io/name":      "test-" + strings.Join(currentSpec.Labels(), "-"),
+					"app.kubernetes.io/part-of":   "ytsaurus-dev",
 				},
 				Annotations: map[string]string{
 					"kubernetes.io/description": currentSpec.LeafNodeText,
@@ -259,7 +260,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
 
 		By("Creating ytsaurus client")
-		g = ytconfig.NewGenerator(ytsaurus, "local")
+		g = ytconfig.NewGenerator(ytsaurus, "cluster.local")
 		ytProxyAddress = getHTTPProxyAddress(g, namespace)
 
 		log.Info("Ytsaurus access",
@@ -1272,6 +1273,67 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			})
 
 		}) // integration chyt
+
+		Context("With Bus RPC mTLS", Label("tls"), func() {
+
+			var certBuilder *testutil.CertBuilder
+
+			BeforeEach(func() {
+				By("Adding all components")
+				ytBuilder.WithBaseComponents()
+				ytBuilder.WithRPCProxies()
+				ytBuilder.WithQueryTracker()
+				ytBuilder.WithYqlAgent()
+				ytBuilder.WithStrawberryController()
+
+				By("Adding CHYT instance")
+				chyt = ytBuilder.CreateChyt()
+				objects = append(objects, chyt)
+
+				By("Adding native transport certificates")
+				certBuilder = &testutil.CertBuilder{
+					Namespace: namespace,
+				}
+
+				nativeServerCert := certBuilder.BuildCertificate(ytsaurus.Name+"-server", []string{
+					ytsaurus.Name,
+				})
+				nativeClientCert := certBuilder.BuildCertificate(ytsaurus.Name+"-client", []string{
+					ytsaurus.Name,
+				})
+
+				ytsaurus.Spec.CABundle = &corev1.LocalObjectReference{
+					Name: testutil.TestTrustBundleName,
+				}
+
+				ytsaurus.Spec.NativeTransport = &ytv1.RPCTransportSpec{
+					TLSSecret: &corev1.LocalObjectReference{
+						Name: nativeServerCert.Name,
+					},
+					TLSClientSecret: &corev1.LocalObjectReference{
+						Name: nativeClientCert.Name,
+					},
+					TLSRequired:                true,
+					TLSPeerAlternativeHostName: ytsaurus.Name,
+				}
+
+				objects = append(objects,
+					nativeServerCert,
+					nativeClientCert,
+				)
+			})
+
+			It("Verify that mTLS is active", func(ctx context.Context) {
+				// TODO(khlebnikov): Poke all RPC servers.
+				// TODO(khlebnikov): Check all RPC connections in orchid.
+
+				Expect(queryClickHouse(
+					ytProxyAddress,
+					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one;",
+				)).To(Equal(""))
+			})
+
+		}) // integration tls
 
 	}) // integration
 })
