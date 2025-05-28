@@ -8,8 +8,9 @@ const (
 	ConfigMountPoint           = "/config"
 	ConfigTemplateMountPoint   = "/config_template"
 	HTTPSSecretMountPoint      = "/tls/https_secret"
-	RPCSecretMountPoint        = "/tls/rpc_secret"
-	BusSecretMountPoint        = "/tls/bus_secret"
+	RPCProxySecretMountPoint   = "/tls/rpc_secret"
+	BusServerSecretMountPoint  = "/tls/bus_secret"
+	BusClientSecretMountPoint  = "/tls/bus_client_secret"
 	CABundleMountPoint         = "/tls/ca_bundle"
 	UIClustersConfigMountPoint = "/opt/app"
 	UICustomConfigMountPoint   = "/opt/app/dist/server/configs/custom"
@@ -52,15 +53,16 @@ const (
 )
 
 const (
-	ConfigTemplateVolumeName = "config-template"
-	ConfigVolumeName         = "config"
-	HTTPSSecretVolumeName    = "https-secret"
-	RPCSecretVolumeName      = "rpc-secret"
-	BusSecretVolumeName      = "bus-secret"
-	CABundleVolumeName       = "ca-bundle"
-	InitScriptVolumeName     = "init-script"
-	UIVaultVolumeName        = "vault"
-	UISecretsVolumeName      = "secrets"
+	ConfigTemplateVolumeName  = "config-template"
+	ConfigVolumeName          = "config"
+	HTTPSSecretVolumeName     = "https-secret"
+	RPCProxySecretVolumeName  = "rpc-secret"
+	BusServerSecretVolumeName = "bus-secret"
+	BusClientSecretVolumeName = "bus-client-secret"
+	CABundleVolumeName        = "ca-bundle"
+	InitScriptVolumeName      = "init-script"
+	UIVaultVolumeName         = "vault"
+	UISecretsVolumeName       = "secrets"
 )
 
 const (

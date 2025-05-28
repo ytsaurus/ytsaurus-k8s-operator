@@ -1363,7 +1363,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `tlsSecret` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Reference to kubernetes.io/tls secret. |  |  |
+| `tlsSecret` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Server certificate. Reference to kubernetes.io/tls secret. |  |  |
+| `tlsClientSecret` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Client certificate. Reference to kubernetes.io/tls secret. |  |  |
 | `tlsRequired` _boolean_ | Require encrypted connections, otherwise only when required by peer. |  |  |
 | `tlsInsecure` _boolean_ | Disable TLS certificate verification. |  |  |
 | `tlsPeerAlternativeHostName` _string_ | Define alternative host name for certificate verification. |  |  |

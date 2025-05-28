@@ -342,9 +342,12 @@ type HTTPProxiesSpec struct {
 }
 
 type RPCTransportSpec struct {
-	// Reference to kubernetes.io/tls secret.
+	// Server certificate. Reference to kubernetes.io/tls secret.
 	//+optional
 	TLSSecret *corev1.LocalObjectReference `json:"tlsSecret,omitempty"`
+	// Client certificate. Reference to kubernetes.io/tls secret.
+	//+optional
+	TLSClientSecret *corev1.LocalObjectReference `json:"tlsClientSecret,omitempty"`
 	// Require encrypted connections, otherwise only when required by peer.
 	//+optional
 	TLSRequired bool `json:"tlsRequired,omitempty"`
