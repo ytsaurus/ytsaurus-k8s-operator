@@ -995,6 +995,16 @@ spec:
                   nativeTransport:
                     description: Component config for native RPC bus transport.
                     properties:
+                      tlsClientSecret:
+                        description: Client certificate. Reference to kubernetes.io/tls
+                          secret.
+                        properties:
+                          name:
+                            default: ""
+                            description: Name of the referent.
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
                       tlsInsecure:
                         description: Disable TLS certificate verification.
                         type: boolean
@@ -1007,7 +1017,8 @@ spec:
                           when required by peer.
                         type: boolean
                       tlsSecret:
-                        description: Reference to kubernetes.io/tls secret.
+                        description: Server certificate. Reference to kubernetes.io/tls
+                          secret.
                         properties:
                           name:
                             default: ""
@@ -3569,6 +3580,16 @@ spec:
                     nativeTransport:
                       description: Component config for native RPC bus transport.
                       properties:
+                        tlsClientSecret:
+                          description: Client certificate. Reference to kubernetes.io/tls
+                            secret.
+                          properties:
+                            name:
+                              default: ""
+                              description: Name of the referent.
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
                         tlsInsecure:
                           description: Disable TLS certificate verification.
                           type: boolean
@@ -3581,7 +3602,8 @@ spec:
                             when required by peer.
                           type: boolean
                         tlsSecret:
-                          description: Reference to kubernetes.io/tls secret.
+                          description: Server certificate. Reference to kubernetes.io/tls
+                            secret.
                           properties:
                             name:
                               default: ""
@@ -6147,6 +6169,16 @@ spec:
                   nativeTransport:
                     description: Component config for native RPC bus transport.
                     properties:
+                      tlsClientSecret:
+                        description: Client certificate. Reference to kubernetes.io/tls
+                          secret.
+                        properties:
+                          name:
+                            default: ""
+                            description: Name of the referent.
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
                       tlsInsecure:
                         description: Disable TLS certificate verification.
                         type: boolean
@@ -6159,7 +6191,8 @@ spec:
                           when required by peer.
                         type: boolean
                       tlsSecret:
-                        description: Reference to kubernetes.io/tls secret.
+                        description: Server certificate. Reference to kubernetes.io/tls
+                          secret.
                         properties:
                           name:
                             default: ""
@@ -8944,6 +8977,16 @@ spec:
                     nativeTransport:
                       description: Component config for native RPC bus transport.
                       properties:
+                        tlsClientSecret:
+                          description: Client certificate. Reference to kubernetes.io/tls
+                            secret.
+                          properties:
+                            name:
+                              default: ""
+                              description: Name of the referent.
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
                         tlsInsecure:
                           description: Disable TLS certificate verification.
                           type: boolean
@@ -8956,7 +8999,8 @@ spec:
                             when required by peer.
                           type: boolean
                         tlsSecret:
-                          description: Reference to kubernetes.io/tls secret.
+                          description: Server certificate. Reference to kubernetes.io/tls
+                            secret.
                           properties:
                             name:
                               default: ""
@@ -11553,6 +11597,16 @@ spec:
                     nativeTransport:
                       description: Component config for native RPC bus transport.
                       properties:
+                        tlsClientSecret:
+                          description: Client certificate. Reference to kubernetes.io/tls
+                            secret.
+                          properties:
+                            name:
+                              default: ""
+                              description: Name of the referent.
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
                         tlsInsecure:
                           description: Disable TLS certificate verification.
                           type: boolean
@@ -11565,7 +11619,8 @@ spec:
                             when required by peer.
                           type: boolean
                         tlsSecret:
-                          description: Reference to kubernetes.io/tls secret.
+                          description: Server certificate. Reference to kubernetes.io/tls
+                            secret.
                           properties:
                             name:
                               default: ""
@@ -14173,6 +14228,16 @@ spec:
                     nativeTransport:
                       description: Component config for native RPC bus transport.
                       properties:
+                        tlsClientSecret:
+                          description: Client certificate. Reference to kubernetes.io/tls
+                            secret.
+                          properties:
+                            name:
+                              default: ""
+                              description: Name of the referent.
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
                         tlsInsecure:
                           description: Disable TLS certificate verification.
                           type: boolean
@@ -14185,7 +14250,8 @@ spec:
                             when required by peer.
                           type: boolean
                         tlsSecret:
-                          description: Reference to kubernetes.io/tls secret.
+                          description: Server certificate. Reference to kubernetes.io/tls
+                            secret.
                           properties:
                             name:
                               default: ""
@@ -16760,6 +16826,16 @@ spec:
                   nativeTransport:
                     description: Component config for native RPC bus transport.
                     properties:
+                      tlsClientSecret:
+                        description: Client certificate. Reference to kubernetes.io/tls
+                          secret.
+                        properties:
+                          name:
+                            default: ""
+                            description: Name of the referent.
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
                       tlsInsecure:
                         description: Disable TLS certificate verification.
                         type: boolean
@@ -16772,7 +16848,8 @@ spec:
                           when required by peer.
                         type: boolean
                       tlsSecret:
-                        description: Reference to kubernetes.io/tls secret.
+                        description: Server certificate. Reference to kubernetes.io/tls
+                          secret.
                         properties:
                           name:
                             default: ""
@@ -18456,6 +18533,16 @@ spec:
               nativeTransport:
                 description: Common config for native RPC bus transport.
                 properties:
+                  tlsClientSecret:
+                    description: Client certificate. Reference to kubernetes.io/tls
+                      secret.
+                    properties:
+                      name:
+                        default: ""
+                        description: Name of the referent.
+                        type: string
+                    type: object
+                    x-kubernetes-map-type: atomic
                   tlsInsecure:
                     description: Disable TLS certificate verification.
                     type: boolean
@@ -18467,7 +18554,8 @@ spec:
                       required by peer.
                     type: boolean
                   tlsSecret:
-                    description: Reference to kubernetes.io/tls secret.
+                    description: Server certificate. Reference to kubernetes.io/tls
+                      secret.
                     properties:
                       name:
                         default: ""
@@ -19406,6 +19494,16 @@ spec:
                   nativeTransport:
                     description: Component config for native RPC bus transport.
                     properties:
+                      tlsClientSecret:
+                        description: Client certificate. Reference to kubernetes.io/tls
+                          secret.
+                        properties:
+                          name:
+                            default: ""
+                            description: Name of the referent.
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
                       tlsInsecure:
                         description: Disable TLS certificate verification.
                         type: boolean
@@ -19418,7 +19516,8 @@ spec:
                           when required by peer.
                         type: boolean
                       tlsSecret:
-                        description: Reference to kubernetes.io/tls secret.
+                        description: Server certificate. Reference to kubernetes.io/tls
+                          secret.
                         properties:
                           name:
                             default: ""
@@ -21973,6 +22072,16 @@ spec:
                   nativeTransport:
                     description: Component config for native RPC bus transport.
                     properties:
+                      tlsClientSecret:
+                        description: Client certificate. Reference to kubernetes.io/tls
+                          secret.
+                        properties:
+                          name:
+                            default: ""
+                            description: Name of the referent.
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
                       tlsInsecure:
                         description: Disable TLS certificate verification.
                         type: boolean
@@ -21985,7 +22094,8 @@ spec:
                           when required by peer.
                         type: boolean
                       tlsSecret:
-                        description: Reference to kubernetes.io/tls secret.
+                        description: Server certificate. Reference to kubernetes.io/tls
+                          secret.
                         properties:
                           name:
                             default: ""
@@ -24533,6 +24643,16 @@ spec:
                   nativeTransport:
                     description: Component config for native RPC bus transport.
                     properties:
+                      tlsClientSecret:
+                        description: Client certificate. Reference to kubernetes.io/tls
+                          secret.
+                        properties:
+                          name:
+                            default: ""
+                            description: Name of the referent.
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
                       tlsInsecure:
                         description: Disable TLS certificate verification.
                         type: boolean
@@ -24545,7 +24665,8 @@ spec:
                           when required by peer.
                         type: boolean
                       tlsSecret:
-                        description: Reference to kubernetes.io/tls secret.
+                        description: Server certificate. Reference to kubernetes.io/tls
+                          secret.
                         properties:
                           name:
                             default: ""
@@ -27101,6 +27222,16 @@ spec:
                     nativeTransport:
                       description: Component config for native RPC bus transport.
                       properties:
+                        tlsClientSecret:
+                          description: Client certificate. Reference to kubernetes.io/tls
+                            secret.
+                          properties:
+                            name:
+                              default: ""
+                              description: Name of the referent.
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
                         tlsInsecure:
                           description: Disable TLS certificate verification.
                           type: boolean
@@ -27113,7 +27244,8 @@ spec:
                             when required by peer.
                           type: boolean
                         tlsSecret:
-                          description: Reference to kubernetes.io/tls secret.
+                          description: Server certificate. Reference to kubernetes.io/tls
+                            secret.
                           properties:
                             name:
                               default: ""
@@ -27308,6 +27440,16 @@ spec:
                       type: array
                     transport:
                       properties:
+                        tlsClientSecret:
+                          description: Client certificate. Reference to kubernetes.io/tls
+                            secret.
+                          properties:
+                            name:
+                              default: ""
+                              description: Name of the referent.
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
                         tlsInsecure:
                           description: Disable TLS certificate verification.
                           type: boolean
@@ -27320,7 +27462,8 @@ spec:
                             when required by peer.
                           type: boolean
                         tlsSecret:
-                          description: Reference to kubernetes.io/tls secret.
+                          description: Server certificate. Reference to kubernetes.io/tls
+                            secret.
                           properties:
                             name:
                               default: ""
@@ -29704,6 +29847,16 @@ spec:
                   nativeTransport:
                     description: Component config for native RPC bus transport.
                     properties:
+                      tlsClientSecret:
+                        description: Client certificate. Reference to kubernetes.io/tls
+                          secret.
+                        properties:
+                          name:
+                            default: ""
+                            description: Name of the referent.
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
                       tlsInsecure:
                         description: Disable TLS certificate verification.
                         type: boolean
@@ -29716,7 +29869,8 @@ spec:
                           when required by peer.
                         type: boolean
                       tlsSecret:
-                        description: Reference to kubernetes.io/tls secret.
+                        description: Server certificate. Reference to kubernetes.io/tls
+                          secret.
                         properties:
                           name:
                             default: ""
@@ -32289,6 +32443,16 @@ spec:
                     nativeTransport:
                       description: Component config for native RPC bus transport.
                       properties:
+                        tlsClientSecret:
+                          description: Client certificate. Reference to kubernetes.io/tls
+                            secret.
+                          properties:
+                            name:
+                              default: ""
+                              description: Name of the referent.
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
                         tlsInsecure:
                           description: Disable TLS certificate verification.
                           type: boolean
@@ -32301,7 +32465,8 @@ spec:
                             when required by peer.
                           type: boolean
                         tlsSecret:
-                          description: Reference to kubernetes.io/tls secret.
+                          description: Server certificate. Reference to kubernetes.io/tls
+                            secret.
                           properties:
                             name:
                               default: ""
@@ -35008,6 +35173,16 @@ spec:
                     nativeTransport:
                       description: Component config for native RPC bus transport.
                       properties:
+                        tlsClientSecret:
+                          description: Client certificate. Reference to kubernetes.io/tls
+                            secret.
+                          properties:
+                            name:
+                              default: ""
+                              description: Name of the referent.
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
                         tlsInsecure:
                           description: Disable TLS certificate verification.
                           type: boolean
@@ -35020,7 +35195,8 @@ spec:
                             when required by peer.
                           type: boolean
                         tlsSecret:
-                          description: Reference to kubernetes.io/tls secret.
+                          description: Server certificate. Reference to kubernetes.io/tls
+                            secret.
                           properties:
                             name:
                               default: ""
@@ -37597,6 +37773,16 @@ spec:
                     nativeTransport:
                       description: Component config for native RPC bus transport.
                       properties:
+                        tlsClientSecret:
+                          description: Client certificate. Reference to kubernetes.io/tls
+                            secret.
+                          properties:
+                            name:
+                              default: ""
+                              description: Name of the referent.
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
                         tlsInsecure:
                           description: Disable TLS certificate verification.
                           type: boolean
@@ -37609,7 +37795,8 @@ spec:
                             when required by peer.
                           type: boolean
                         tlsSecret:
-                          description: Reference to kubernetes.io/tls secret.
+                          description: Server certificate. Reference to kubernetes.io/tls
+                            secret.
                           properties:
                             name:
                               default: ""
@@ -40513,6 +40700,16 @@ spec:
                   nativeTransport:
                     description: Component config for native RPC bus transport.
                     properties:
+                      tlsClientSecret:
+                        description: Client certificate. Reference to kubernetes.io/tls
+                          secret.
+                        properties:
+                          name:
+                            default: ""
+                            description: Name of the referent.
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
                       tlsInsecure:
                         description: Disable TLS certificate verification.
                         type: boolean
@@ -40525,7 +40722,8 @@ spec:
                           when required by peer.
                         type: boolean
                       tlsSecret:
-                        description: Reference to kubernetes.io/tls secret.
+                        description: Server certificate. Reference to kubernetes.io/tls
+                          secret.
                         properties:
                           name:
                             default: ""
