@@ -50,6 +50,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -104,6 +106,9 @@ var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	Expect(err).NotTo(HaveOccurred())
 
 	err = ytv1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = certmanagerv1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	k8sClient, err = client.NewWithWatch(cfg, client.Options{Scheme: scheme})
