@@ -519,18 +519,31 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytsaurus.Spec.ConfigOverrides = &corev1.LocalObjectReference{
 					Name: overrides.Name,
 				}
+
+				// configure exec nodes to use CRI environment
+				ytsaurus.Spec.ExecNodes[0].JobEnvironment = &ytv1.JobEnvironmentSpec{
+					CRI: &ytv1.CRIJobEnvironmentSpec{
+						SandboxImage: ptr.To("registry.k8s.io/pause:3.8"),
+					},
+				}
+				ytsaurus.Spec.ExecNodes[0].Locations = append(ytsaurus.Spec.ExecNodes[0].Locations, ytv1.LocationSpec{
+					LocationType: ytv1.LocationTypeImageCache,
+					Path:         "/yt/node-data/image-cache",
+				})
+				ytsaurus.Spec.JobImage = &ytsaurus.Spec.CoreImage
 			})
 
-			It("ConfigOverrides update shout trigger reconciliation", func(ctx context.Context) {
+			It("ConfigOverrides update should trigger reconciliation", func(ctx context.Context) {
 				By("Updating config overrides")
 				overrides.Data = map[string]string{
 					"ytserver-discovery.yson": "{resource_limits = {total_memory = 123456789;};}",
+					"containerd.toml":         "{\"plugins\" = {\"io.containerd.grpc.v1.cri\" = {registry = {configs = {\"cr.test\" = {auth = {username = user; password = password;}}}}}}}",
 				}
 				UpdateObject(ctx, overrides)
 
 				By("Waiting cluster update starts")
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterStateUpdating())
-				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("Discovery"))
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("Discovery", "ExecNode")) // change in containerd.toml must trigger exec node update
 
 				By("Waiting cluster update completes")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
@@ -539,7 +552,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				pods := getChangedPods(podsBeforeUpdate, podsAfterUpdate)
 				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
-				Expect(pods.Updated).To(ConsistOf("ds-0"), "updated")
+				Expect(pods.Updated).To(ConsistOf("ds-0", "end-0"), "updated")
 			})
 
 		}) // update overrides
