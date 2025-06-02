@@ -193,3 +193,15 @@ func (n *baseExecNode) doSyncBase(ctx context.Context, dry bool) (ComponentStatu
 	}
 	return WaitingStatus(SyncStatusPending, "components"), err
 }
+
+func (n *baseExecNode) sidecarConfigNeedsReload() bool {
+	if n.sidecarConfig == nil {
+		return false
+	}
+
+	needsReload, err := n.sidecarConfig.NeedReload()
+	if err != nil {
+		return false
+	}
+	return needsReload
+}
