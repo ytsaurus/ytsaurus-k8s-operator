@@ -80,12 +80,6 @@ type HTTPProxyServer struct {
 	HTTPSServer *HTTPSServer `yson:"https_server,omitempty"`
 }
 
-type NativeClient struct {
-	AddressResolver AddressResolver `yson:"address_resolver"`
-	Logging         Logging         `yson:"logging"`
-	Driver          Driver          `yson:"driver"`
-}
-
 type RPCProxyServer struct {
 	CommonServer
 	Role                      string                    `yson:"role"`
@@ -209,15 +203,6 @@ func getKafkaProxyServerCarcass(spec *ytv1.KafkaProxiesSpec) (KafkaProxyServer, 
 	c.Auth.CypressTokenAuthenticator.Secure = true
 	c.Port = consts.KafkaProxyKafkaPort
 	c.Logging = getKafkaProxyLogging(spec)
-
-	return c, nil
-}
-
-func getNativeClientCarcass() (NativeClient, error) {
-	var c NativeClient
-
-	loggingBuilder := newLoggingBuilder(nil, "client")
-	c.Logging = loggingBuilder.logging
 
 	return c, nil
 }
