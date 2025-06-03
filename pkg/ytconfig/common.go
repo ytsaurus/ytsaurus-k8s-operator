@@ -34,18 +34,36 @@ type MasterCache struct {
 	EnableMasterCacheDiscover bool   `yson:"enable_master_cache_discovery"`
 }
 
+// NYT::NDriver::TDriverConfig
 type Driver struct {
-	TimestampProviders TimestampProviders `yson:"timestamp_provider,omitempty"`
-	PrimaryMaster      MasterCell         `yson:"primary_master,omitempty"`
-	APIVersion         int                `yson:"api_version,omitempty"`
+	APIVersion int `yson:"api_version,omitempty"`
 }
 
+// NYT::NDriver::TDriverConfig
+// NYT::NDriver::TNativeDriverConfig
+// NYT::NApi::NNative::TConnectionStaticConfig
+// NYT::NApi::NNative::TConnectionDynamicConfig
+type NativeDriver struct {
+	Driver
+	ClusterConnection
+}
+
+// Python SDK native driver config
+type NativeClientConfig struct {
+	AddressResolver AddressResolver `yson:"address_resolver"`
+	Logging         Logging         `yson:"logging"`
+	Driver          NativeDriver    `yson:"driver"`
+}
+
+// NYT::NApi::NNative::TConnectionStaticConfig
+// NYT::NApi::NNative::TConnectionDynamicConfig
 type ClusterConnection struct {
 	ClusterName         string              `yson:"cluster_name"`
 	PrimaryMaster       MasterCell          `yson:"primary_master"`
 	DiscoveryConnection DiscoveryConnection `yson:"discovery_connection,omitempty"`
 	BusClient           *Bus                `yson:"bus_client,omitempty"`
-	MasterCache         MasterCache         `yson:"master_cache"`
+	MasterCache         MasterCache         `yson:"master_cache,omitempty"`
+	TimestampProviders  *TimestampProviders `yson:"timestamp_provider,omitempty"`
 }
 
 type AddressResolver struct {

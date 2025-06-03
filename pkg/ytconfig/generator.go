@@ -207,14 +207,6 @@ func (g *NodeGenerator) fillIOEngine(ioEngine **IOEngine) {
 	}
 }
 
-func (g *NodeGenerator) fillDriver(c *Driver) {
-	c.TimestampProviders.Addresses = g.getMasterAddresses()
-
-	c.PrimaryMaster.Addresses = g.getMasterAddresses()
-	c.PrimaryMaster.CellID = generateCellID(g.masterConnectionSpec.CellTag)
-	g.fillPrimaryMaster(&c.PrimaryMaster)
-}
-
 func (g *NodeGenerator) fillAddressResolver(c *AddressResolver) {
 	var retries = 1000
 	c.EnableIPv4 = g.commonSpec.UseIPv4
@@ -453,13 +445,22 @@ func (g *Generator) GetMasterConfig(spec *ytv1.MastersSpec) ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
+func getNativeClientConfigCarcass() (NativeClientConfig, error) {
+	var c NativeClientConfig
+
+	loggingBuilder := newLoggingBuilder(nil, "client")
+	c.Logging = loggingBuilder.logging
+
+	return c, nil
+}
+
 func (g *NodeGenerator) GetNativeClientConfig() ([]byte, error) {
-	c, err := getNativeClientCarcass()
+	c, err := getNativeClientConfigCarcass()
 	if err != nil {
 		return nil, err
 	}
 
-	g.fillDriver(&c.Driver)
+	g.fillClusterConnection(&c.Driver.ClusterConnection, nil)
 	g.fillAddressResolver(&c.AddressResolver)
 	c.Driver.APIVersion = 4
 
@@ -703,7 +704,6 @@ func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProx
 		return c, err
 	}
 
-	g.fillDriver(&c.Driver)
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
