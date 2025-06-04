@@ -1,5 +1,8 @@
+name: "Compat Tests"
+
 on:
-  workflow_call:
+  workflow_call: {}
+  workflow_dispatch: {}
 
 jobs:
   check:
@@ -7,15 +10,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Free Disk Space (Ubuntu)
+      - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
         with:
           tool-cache: false
+          large-packages: false
 
       - name: checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -36,5 +40,5 @@ jobs:
         shell: bash
         run: |
           make kind-create-cluster
-          make kind-load-sample-images 
+          make kind-load-sample-images
           ./compat_test.sh --from-version 0.4.1 --to-version trunk
