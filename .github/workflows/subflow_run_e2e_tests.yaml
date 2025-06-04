@@ -11,47 +11,65 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Free Disk Space (Ubuntu)
+      - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
         with:
           tool-cache: false
+          large-packages: false
 
-      - name: checkout sources
-        uses: actions/checkout@v3
+      - name: Checkout sources
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
 
-      - name: Set up Helm
+      - name: Setup Helm
         uses: azure/setup-helm@v1
         with:
           version: v3.11.2
 
-      - name: Build
+      - name: Build YTsaurus operator
         shell: bash
         run: |
           make build
 
-      - name: Run e2e tests
+      - name: Setup k8s cluster
         shell: bash
-        env:
-          GINKGO_LABEL_FILTER: ${{ inputs.e2e_filter }}
         run: |
           make kind-create-cluster
+
+      - name: Install YTsaurus operator
+        shell: bash
+        run: |
           make helm-kind-install
-          kubectl get pod
+          kubectl get pod -A
+
+      - name: Pull YTsaurus images
+        shell: bash
+        run: |
           make kind-load-test-images
+
+      - name: Run e2e tests
+        env:
+          GINKGO_LABEL_FILTER: ${{ inputs.e2e_filter }}
+        shell: bash
+        run: |
           make test-e2e
+
+      - name: Cleanup k8s cluster
+        shell: bash
+        run: |
           make helm-uninstall
+          make kind-delete-cluster
 
       - name: Report results
         if: always()
         uses: dorny/test-reporter@v2
         with:
           name: "E2E tests"
-          path: report.xml
+          path: "report.xml"
           reporter: java-junit
