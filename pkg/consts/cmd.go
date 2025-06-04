@@ -48,6 +48,8 @@ const (
 
 	CRINamespace  = "yt"
 	CRIBaseCgroup = "/yt"
+
+	PurgeKeyFileName = ".purge.key"
 )
 
 const (
