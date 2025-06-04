@@ -12,6 +12,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
@@ -125,15 +126,17 @@ func (j *InitJob) Build() *batchv1.Job {
 					VolumeMounts: []corev1.VolumeMount{
 						createConfigVolumeMount(),
 					},
+					TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 				},
 			},
 			Volumes: []corev1.Volume{
 				createConfigVolume(consts.ConfigVolumeName, j.configHelper.GetConfigMapName(), &defaultMode),
 			},
-			RestartPolicy: corev1.RestartPolicyOnFailure,
-			Tolerations:   j.tolerations,
-			NodeSelector:  j.nodeSelector,
-			DNSConfig:     j.dnsConfig,
+			RestartPolicy:      corev1.RestartPolicyOnFailure,
+			Tolerations:        j.tolerations,
+			NodeSelector:       j.nodeSelector,
+			DNSConfig:          j.dnsConfig,
+			EnableServiceLinks: ptr.To(false),
 		},
 	}
 	j.builtJob = job
