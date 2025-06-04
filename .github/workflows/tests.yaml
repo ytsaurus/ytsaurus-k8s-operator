@@ -1,9 +1,13 @@
-name: Test main branch
+name: Tests
 
 on:
   push:
     branches:
       - main
+
+  pull_request: {}
+
+  workflow_dispatch: {}
 
 jobs:
   check-unit:
@@ -12,12 +16,8 @@ jobs:
 
   check-e2e:
     name: Run e2e tests
-    needs:
-      - check-unit
     uses: ./.github/workflows/subflow_run_e2e_tests.yaml
 
   check-compat:
     name: Run compat tests
-    needs:
-      - check-e2e
     uses: ./.github/workflows/subflow_run_compat_tests.yaml
