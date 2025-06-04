@@ -28,6 +28,8 @@ func ComponentLabel(component ComponentType) string {
 		return "yt-exec-node"
 	case TabletNodeType:
 		return "yt-tablet-node"
+	case TabletBalancerType:
+		return "yt-tablet-balancer"
 	case HttpProxyType:
 		return "yt-http-proxy"
 	case RpcProxyType:
