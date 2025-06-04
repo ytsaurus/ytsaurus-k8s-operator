@@ -76,6 +76,10 @@ GINKGO_FLAGS += --poll-progress-after=2m
 GINKGO_FLAGS += --poll-progress-interval=1m
 GINKGO_FLAGS += --junit-report=report.xml
 
+ifneq ($(GITHUB_ACTION),)
+	GINKGO_FLAGS += --github-output
+endif
+
 ifneq ($(GINKGO_LABEL_FILTER),)
 	GINKGO_FLAGS += --label-filter="$(GINKGO_LABEL_FILTER)"
 endif
