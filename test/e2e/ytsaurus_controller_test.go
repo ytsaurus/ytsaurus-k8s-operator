@@ -43,7 +43,7 @@ import (
 const (
 	pollInterval     = time.Millisecond * 250
 	reactionTimeout  = time.Second * 150
-	bootstrapTimeout = time.Minute * 3
+	bootstrapTimeout = time.Minute * 5
 	upgradeTimeout   = time.Minute * 10
 )
 
