@@ -1,0 +1,54 @@
+# https://kind.sigs.k8s.io/docs/user/configuration/
+
+apiVersion: kind.x-k8s.io/v1alpha4
+kind: Cluster
+
+# overriden by environment KIND_CLUSTER_NAME
+name: kind
+
+# https://kind.sigs.k8s.io/docs/user/configuration/#networking
+networking:
+# ipFamily: dual
+# ipFamily: ipv6
+# podSubnet: "10.244.0.0/16"
+# serviceSubnet: "10.96.0.0/12"
+# disableDefaultCNI: true
+# kubeProxyMode: "ipvs"
+# kubeProxyMode: "none"
+
+runtimeConfig:
+# "api/alpha": "true"
+
+# https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/
+featureGates:
+# "KubeletCgroupDriverFromCRI": true
+# "NewVolumeManagerReconstruction": true
+# "InPlacePodVerticalScaling": true
+# "MemoryQoS": true
+# "CustomCPUCFSQuotaPeriod": true
+# "StatefulSetStartOrdinal": true
+# "StatefulSetAutoDeletePVC": true
+
+
+# https://kind.sigs.k8s.io/docs/user/configuration#kubeadm-config-patches
+kubeadmConfigPatches:
+  # https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#etcd-flags
+  # https://etcd.io/docs/v3.5/op-guide/configuration/#command-line-flags
+  - |
+    apiVersion: kubeadm.k8s.io/v1beta4
+    kind: ClusterConfiguration
+    etcd:
+      local:
+        extraArgs:
+          unsafe-no-fsync: "true"
+          max-request-bytes: 4194304  # default is 1572864
+  # https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
+  - |
+    apiVersion: kubelet.config.k8s.io/v1beta1
+    kind: KubeletConfiguration
+    serializeImagePulls: false
+    maxParallelImagePulls: 4
+
+# https://kind.sigs.k8s.io/docs/user/configuration/#nodes
+nodes:
+  - role: control-plane

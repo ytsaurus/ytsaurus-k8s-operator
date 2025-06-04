@@ -7,7 +7,7 @@ KIND_CLUSTER_NAME ?= ${USER}-yt-kind
 export KIND_CLUSTER_NAME
 
 ## Path to kind cluster config.
-KIND_CLUSTER_CONFIG =
+KIND_CLUSTER_CONFIG = config/kind/kind-optimized.yaml
 
 ## K8s context for kind cluster
 KIND_KUBE_CONTEXT = kind-$(KIND_CLUSTER_NAME)
