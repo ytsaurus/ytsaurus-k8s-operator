@@ -29,6 +29,31 @@ type Master struct {
 	initJob          *InitJob
 	exitReadOnlyJob  *InitJob
 	adminCredentials corev1.Secret
+
+	sidecarSecrets *sidecarSecretsStruct
+}
+
+type sidecarSecretsStruct struct {
+	hydraPersistenceUploaderSecret *resources.StringSecret
+}
+
+func buildMasterOptions(resource *ytv1.Ytsaurus) []Option {
+	options := []Option{
+		WithContainerPorts(corev1.ContainerPort{
+			Name:          consts.YTRPCPortName,
+			ContainerPort: consts.MasterRPCPort,
+			Protocol:      corev1.ProtocolTCP,
+		}),
+	}
+
+	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil {
+		options = append(options, WithSidecarImage(
+			consts.HydraPersistenceUploaderContainerName,
+			*resource.Spec.PrimaryMasters.HydraPersistenceUploader.Image,
+		))
+	}
+
+	return options
 }
 
 func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
@@ -44,11 +69,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		"ytserver-master.yson",
 		func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
 		consts.MasterMonitoringPort,
-		WithContainerPorts(corev1.ContainerPort{
-			Name:          consts.YTRPCPortName,
-			ContainerPort: consts.MasterRPCPort,
-			Protocol:      corev1.ProtocolTCP,
-		}),
+		buildMasterOptions(resource)...,
 	)
 
 	jobImage := getImageWithDefault(resource.Spec.PrimaryMasters.InstanceSpec.Image, resource.Spec.CoreImage)
@@ -88,6 +109,12 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		cfgen:                cfgen,
 		initJob:              initJob,
 		exitReadOnlyJob:      exitReadOnlyJob,
+		sidecarSecrets: &sidecarSecretsStruct{
+			hydraPersistenceUploaderSecret: resources.NewStringSecret(
+				fmt.Sprintf("%s-secret", consts.HydraPersistenceUploaderUserName),
+				l,
+				ytsaurus.APIProxy()),
+		},
 	}
 }
 
@@ -106,10 +133,11 @@ func (m *Master) Fetch(ctx context.Context) error {
 		m.server,
 		m.initJob,
 		m.exitReadOnlyJob,
+		m.sidecarSecrets.hydraPersistenceUploaderSecret,
 	)
 }
 
-func (m *Master) initAdminUser() string {
+func (m *Master) getAdminCredentials() (string, string, string) {
 	adminLogin, adminPassword := consts.DefaultAdminLogin, consts.DefaultAdminPassword
 	adminToken := consts.DefaultAdminPassword
 
@@ -128,9 +156,38 @@ func (m *Master) initAdminUser() string {
 			adminToken = string(value)
 		}
 	}
+	return adminLogin, adminPassword, adminToken
+}
+
+func (m *Master) initAdminUser() string {
+	adminLogin, adminPassword, adminToken := m.getAdminCredentials()
 
 	commands := createUserCommand(adminLogin, adminPassword, adminToken, true)
 	return RunIfNonexistent(fmt.Sprintf("//sys/users/%s", adminLogin), commands...)
+}
+
+func (m *Master) initHydraPersistenceUploaderUser() string {
+	login := consts.HydraPersistenceUploaderUserName
+	token, _ := m.sidecarSecrets.hydraPersistenceUploaderSecret.GetValue(consts.TokenSecretKey)
+	commands := createUserCommand(login, token, token, false)
+
+	commands = append(commands,
+		"/usr/bin/yt create map_node //sys/admin/snapshots -r -i",
+		SetPathAcl("//sys/admin/snapshots", []yt.ACE{
+			{
+				Action:          "allow",
+				Subjects:        []string{login},
+				Permissions:     []yt.Permission{"read", "write", "remove", "use", "create"},
+				InheritanceMode: "object_and_descendants",
+			},
+		}),
+		AppendPathAcl("//sys/accounts/sys", yt.ACE{
+			Action:      "allow",
+			Subjects:    []string{login},
+			Permissions: []yt.Permission{"use"},
+		}),
+	)
+	return RunIfNonexistent(fmt.Sprintf("//sys/users/%s", login), commands...)
 }
 
 type Medium struct {
@@ -264,6 +321,7 @@ func (m *Master) createInitScript() string {
 		RunIfExists("//sys/@provision_lock", fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection '%s'", string(clusterConnection))),
 		SetWithIgnoreExisting("//sys/controller_agents/config/operation_options/spec_template", "'{enable_partitioned_data_balancing=%false}' -r"),
 		m.initAdminUser(),
+		m.initHydraPersistenceUploaderUser(),
 		m.initMedia(),
 		"/usr/bin/yt remove //sys/@provision_lock -f",
 	}
@@ -299,6 +357,18 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 		}
 	}
 
+	if m.sidecarSecrets.hydraPersistenceUploaderSecret.NeedSync(consts.TokenSecretKey, "") {
+		if !dry {
+			token := ytconfig.RandString(30)
+			s := m.sidecarSecrets.hydraPersistenceUploaderSecret.Build()
+			s.StringData = map[string]string{
+				consts.TokenSecretKey: token,
+			}
+			err = m.sidecarSecrets.hydraPersistenceUploaderSecret.Sync(ctx)
+		}
+		return WaitingStatus(SyncStatusPending, m.sidecarSecrets.hydraPersistenceUploaderSecret.Name()), err
+	}
+
 	if m.NeedSync() {
 		if !dry {
 			err = m.doServerSync(ctx)
@@ -327,6 +397,14 @@ func (m *Master) doServerSync(ctx context.Context) error {
 	podSpec := &statefulSet.Spec.Template.Spec
 	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
 
+	if primaryMastersSpec.HydraPersistenceUploader != nil {
+		addHydraPersistenceUploaderToPodSpec(
+			primaryMastersSpec.HydraPersistenceUploader,
+			podSpec,
+			m.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+			fmt.Sprintf("%s-secret", consts.HydraPersistenceUploaderUserName),
+		)
+	}
 	if err := AddSidecarsToPodSpec(primaryMastersSpec.Sidecars, podSpec); err != nil {
 		return err
 	}
@@ -401,4 +479,69 @@ func (m *Master) runMasterInitJob(ctx context.Context, dry bool) (ComponentStatu
 		m.initJob.SetInitScript(m.createInitScript())
 	}
 	return m.initJob.Sync(ctx, dry)
+}
+
+func addHydraPersistenceUploaderToPodSpec(hydraPersistenceUploader *ytv1.HydraPersistenceUploaderSpec, podSpec *corev1.PodSpec, proxy string, secretKey string) {
+	podSpec.Containers = append(podSpec.Containers,
+		corev1.Container{
+			Name:    consts.HydraPersistenceUploaderContainerName,
+			Image:   *hydraPersistenceUploader.Image,
+			Command: []string{"/usr/bin/hydra_persistence_uploader"},
+			Env: []corev1.EnvVar{
+				{
+					Name: consts.TokenSecretKey,
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: secretKey,
+							},
+							Key: consts.TokenSecretKey,
+						},
+					},
+				},
+				{Name: "YT_PROXY", Value: proxy},
+			},
+			VolumeMounts: []corev1.VolumeMount{
+				{Name: consts.ConfigTemplateVolumeName, MountPath: consts.ConfigMountPoint, ReadOnly: true},
+				{Name: "master-data", MountPath: "/yt/master-data", ReadOnly: true},
+				{Name: "master-logs", MountPath: "/yt/master-logs", ReadOnly: true},
+				{Name: "shared-binaries", MountPath: "/shared-binaries", ReadOnly: false},
+			},
+			ImagePullPolicy: corev1.PullAlways,
+		},
+	)
+
+	command := strings.Join([]string{
+		"rm /shared-binaries/*",
+		"cp /usr/bin/ytserver-all /shared-binaries/ytserver-all",
+		"ln /shared-binaries/ytserver-all /shared-binaries/ytserver-master",
+	}, "; ")
+	backgroundCommand := fmt.Sprintf("nohup bash -c '%s' > /dev/null 2>&1 &", command)
+	for i := range podSpec.Containers {
+		if podSpec.Containers[i].Name == "ytserver" {
+			podSpec.Containers[i].Lifecycle = &corev1.Lifecycle{
+				PostStart: &corev1.LifecycleHandler{
+					Exec: &corev1.ExecAction{
+						Command: []string{"/bin/bash", "-c", backgroundCommand},
+					},
+				},
+			}
+			podSpec.Containers[i].VolumeMounts = append(podSpec.Containers[i].VolumeMounts,
+				corev1.VolumeMount{
+					Name:      "shared-binaries",
+					MountPath: "/shared-binaries",
+				},
+			)
+			break
+		}
+	}
+
+	podSpec.Volumes = append(podSpec.Volumes,
+		corev1.Volume{
+			Name: "shared-binaries",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
+	)
 }
