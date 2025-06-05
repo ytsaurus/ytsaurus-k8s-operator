@@ -181,6 +181,14 @@ func SetPathAcl(path string, acl []yt.ACE) string {
 	return fmt.Sprintf("/usr/bin/yt set %s/@acl '%s'", path, string(formattedAcl))
 }
 
+func AppendPathAcl(path string, acl yt.ACE) string {
+	formattedAcl, err := yson.MarshalFormat(acl, yson.FormatText)
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("/usr/bin/yt set %s/@acl/end '%s'", path, string(formattedAcl))
+}
+
 func RunIfCondition(condition string, commands ...string) string {
 	var wrappedCommands []string
 	wrappedCommands = append(wrappedCommands, fmt.Sprintf("if [ %s ]; then", condition))
@@ -235,13 +243,21 @@ func AddAffinity(statefulSet *appsv1.StatefulSet,
 
 func AddSidecarsToPodSpec(sidecar []string, podSpec *corev1.PodSpec) error {
 	for _, sidecarSpec := range sidecar {
-		sidecar := corev1.Container{}
-		if err := yaml.UnmarshalStrict([]byte(sidecarSpec), &sidecar); err != nil {
+		sidecar, err := DecodeSidecar(sidecarSpec)
+		if err != nil {
 			return err
 		}
 		podSpec.Containers = append(podSpec.Containers, sidecar)
 	}
 	return nil
+}
+
+func DecodeSidecar(sidecarSpec string) (corev1.Container, error) {
+	sidecarContainer := corev1.Container{}
+	if err := yaml.UnmarshalStrict([]byte(sidecarSpec), &sidecarContainer); err != nil {
+		return corev1.Container{}, fmt.Errorf("failed to parse sidecar: %w", err)
+	}
+	return sidecarContainer, nil
 }
 
 func AddInitContainersToPodSpec(initContainers []string, podSpec *corev1.PodSpec) error {

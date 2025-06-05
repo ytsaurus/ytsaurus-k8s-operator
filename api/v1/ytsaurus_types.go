@@ -301,6 +301,10 @@ type MasterConnectionSpec struct {
 	HostAddresses []string `json:"hostAddresses,omitempty"`
 }
 
+type HydraPersistenceUploaderSpec struct {
+	Image *string `json:"image,omitempty"`
+}
+
 type MastersSpec struct {
 	InstanceSpec         `json:",inline"`
 	MasterConnectionSpec `json:",inline"`
@@ -309,6 +313,8 @@ type MastersSpec struct {
 
 	MaxSnapshotCountToKeep  *int `json:"maxSnapshotCountToKeep,omitempty"`
 	MaxChangelogCountToKeep *int `json:"maxChangelogCountToKeep,omitempty"`
+
+	HydraPersistenceUploader *HydraPersistenceUploaderSpec `json:"hydraPersistenceUploader,omitempty"`
 
 	// List of sidecar containers as yaml of core/v1 Container.
 	Sidecars []string `json:"sidecars,omitempty"`
