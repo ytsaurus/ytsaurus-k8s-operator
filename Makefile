@@ -165,12 +165,14 @@ lint-generated: generate helm-chart ## Check that generated files are uptodate a
 
 .PHONY: canonize
 canonize: generate-code manifests envtest ## Canonize test results.
+	rm -fr pkg/components/canondata pkg/ytconfig/canondata
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
 	CANONIZE=y \
 	go test -v ./... -coverprofile cover.out
 
 .PHONY: canonize-ytconfig
 canonize-ytconfig: manifests generate fmt vet envtest ## Canonize ytconfig test results.
+	rm -fr pkg/ytconfig/canondata
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
 	CANONIZE=y \
 	go test -v ./pkg/ytconfig/... -coverprofile cover.out
