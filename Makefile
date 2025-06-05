@@ -167,11 +167,13 @@ lint-generated: generate helm-chart ## Check that generated files are uptodate a
 
 .PHONY: canonize
 canonize: generate-code manifests envtest-assets ## Canonize test results.
+	rm -fr pkg/components/canondata pkg/ytconfig/canondata
 	CANONIZE=y \
 	go test $(GO_TEST_FLAGS) ./...
 
 .PHONY: canonize-ytconfig
 canonize-ytconfig: generate-code fmt vet ## Canonize ytconfig test results.
+	rm -fr pkg/ytconfig/canondata
 	CANONIZE=y \
 	go test $(GO_TEST_FLAGS) ./pkg/ytconfig/...
 
