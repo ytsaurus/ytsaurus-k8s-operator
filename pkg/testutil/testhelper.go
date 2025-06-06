@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
 	"github.com/go-logr/logr/testr"
 	"github.com/stretchr/testify/require"
 	batchv1 "k8s.io/api/batch/v1"
@@ -24,6 +26,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
 
+// FIXME(khlebnikov): Remove all this and rewrite with ginkgo.
 type TestHelper struct {
 	t          *testing.T
 	ctx        context.Context
@@ -73,6 +76,10 @@ func NewTestHelper(t *testing.T, namespace, crdDirectoryPath string) *TestHelper
 
 func (h *TestHelper) Start(reconcilerSetup func(mgr ctrl.Manager) error) {
 	t := h.t
+
+	logger := testr.New(t)
+	logf.SetLogger(logger)
+
 	conf, err := h.k8sTestEnv.Start()
 	require.NoError(t, err)
 	require.NotNil(t, conf)
@@ -82,13 +89,13 @@ func (h *TestHelper) Start(reconcilerSetup func(mgr ctrl.Manager) error) {
 	require.NoError(t, err)
 
 	mgr, err := ctrl.NewManager(conf, ctrl.Options{
+		Logger: logger,
 		Scheme: scheme.Scheme,
 		// To get rid of macOS' accept incoming network connections popup
 		Metrics: metricsserver.Options{
 			BindAddress: "0",
 		},
 		HealthProbeBindAddress: "0",
-		Logger:                 testr.New(t),
 	})
 	require.NoError(t, err)
 
