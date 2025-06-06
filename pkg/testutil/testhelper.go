@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
+
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/go-logr/logr/testr"
 	"github.com/stretchr/testify/require"
@@ -24,6 +27,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
 
+// FIXME(khlebnikov): Remove all this and rewrite with ginkgo.
 type TestHelper struct {
 	t          *testing.T
 	ctx        context.Context
@@ -42,16 +46,10 @@ func GetenvOr(key, value string) string {
 	return value
 }
 
-func NewTestHelper(t *testing.T, namespace, crdDirectoryPath string) *TestHelper {
-	if os.Getenv("KUBEBUILDER_ASSETS") == "" {
-		t.Fatal(
-			"KUBEBUILDER_ASSETS needed to be set for this test " +
-				"Something like KUBEBUILDER_ASSETS=`bin/setup-envtest use 1.24.2 -p path` would do." +
-				"Check Makefile for the details.",
-		)
-	}
+func NewTestHelper(t *testing.T, namespace, topDirectoryPath string) *TestHelper {
 	k8sTestEnv := &envtest.Environment{
-		CRDDirectoryPaths:     []string{crdDirectoryPath},
+		BinaryAssetsDirectory: filepath.Join(topDirectoryPath, "bin", "envtest-assets"),
+		CRDDirectoryPaths:     []string{filepath.Join(topDirectoryPath, "config", "crd", "bases")},
 		ErrorIfCRDPathMissing: true,
 		CRDInstallOptions: envtest.CRDInstallOptions{
 			MaxTime: 60 * time.Second,
@@ -73,6 +71,10 @@ func NewTestHelper(t *testing.T, namespace, crdDirectoryPath string) *TestHelper
 
 func (h *TestHelper) Start(reconcilerSetup func(mgr ctrl.Manager) error) {
 	t := h.t
+
+	logger := testr.New(t)
+	logf.SetLogger(logger)
+
 	conf, err := h.k8sTestEnv.Start()
 	require.NoError(t, err)
 	require.NotNil(t, conf)
@@ -82,13 +84,13 @@ func (h *TestHelper) Start(reconcilerSetup func(mgr ctrl.Manager) error) {
 	require.NoError(t, err)
 
 	mgr, err := ctrl.NewManager(conf, ctrl.Options{
+		Logger: logger,
 		Scheme: scheme.Scheme,
 		// To get rid of macOS' accept incoming network connections popup
 		Metrics: metricsserver.Options{
 			BindAddress: "0",
 		},
 		HealthProbeBindAddress: "0",
-		Logger:                 testr.New(t),
 	})
 	require.NoError(t, err)
 

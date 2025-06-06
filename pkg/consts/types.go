@@ -34,3 +34,30 @@ const (
 	ComponentClassEverything  ComponentClass = "Everything"
 	ComponentClassNothing     ComponentClass = "Nothing"
 )
+
+var (
+	LocalComponentTypes = []ComponentType{
+		ControllerAgentType,
+		DataNodeType,
+		DiscoveryType,
+		ExecNodeType,
+		HttpProxyType,
+		MasterCacheType,
+		MasterType,
+		QueryTrackerType,
+		QueueAgentType,
+		RpcProxyType,
+		SchedulerType,
+		StrawberryControllerType,
+		TabletNodeType,
+		TcpProxyType,
+		KafkaProxyType,
+		YqlAgentType,
+	}
+
+	RemoteComponentTypes = []ComponentType{
+		DataNodeType,
+		ExecNodeType,
+		TabletNodeType,
+	}
+)
