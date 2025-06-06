@@ -137,7 +137,16 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
-	bcAnnotationsStatus, err := initBundleControllerAnnotatios(ctx, dry, rp.ytsaurusClient.GetYtClient(), ypath.Root.Child("sys").Child("rpc_proxies"))
+	ytClientStatus, err := rp.ytsaurusClient.Status(ctx)
+	if err != nil {
+		return ytClientStatus, err
+	}
+	if ytClientStatus.SyncStatus != SyncStatusReady {
+		return WaitingStatus(SyncStatusBlocked, rp.ytsaurusClient.GetFullName()), err
+	}
+
+	annotations, _ := getInstanceResources("", nil)
+	bcAnnotationsStatus, err := initBundleControllerAnnotatios(ctx, dry, rp.ytsaurusClient.GetYtClient(), ypath.Root.Child("sys").Child("rpc_proxies"), annotations)
 	if bcAnnotationsStatus.SyncStatus != SyncStatusReady || err != nil {
 		return bcAnnotationsStatus, err
 	}
