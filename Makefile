@@ -92,6 +92,10 @@ ifneq ($(DEBUG),)
 	GINKGO_FLAGS += --fail-fast
 endif
 
+GO_TEST_FLAGS += -v
+GO_TEST_FLAGS += -timeout 1800s
+GO_TEST_FLAGS += -coverprofile cover.out
+
 ##@ General
 
 .PHONY: all
@@ -140,13 +144,11 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: generate-code manifests envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
-	go test -v ./... -coverprofile cover.out -timeout 1800s
+test: generate-code manifests envtest-assets ## Run tests.
+	go test $(GO_TEST_FLAGS) ./...
 
 .PHONY: test-e2e
-test-e2e: generate-code manifests envtest ginkgo ## Run e2e tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
+test-e2e: generate-code manifests ginkgo ## Run e2e tests.
 	YTSAURUS_ENABLE_E2E_TESTS=true \
 	$(GINKGO) $(GINKGO_FLAGS) ./test/e2e/... -coverprofile cover.out -timeout 1800s
 
@@ -164,16 +166,14 @@ lint-generated: generate helm-chart ## Check that generated files are uptodate a
 	test -z "$(shell git status --porcelain api docs/api.md config ytop-chart)"
 
 .PHONY: canonize
-canonize: generate-code manifests envtest ## Canonize test results.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
+canonize: generate-code manifests envtest-assets ## Canonize test results.
 	CANONIZE=y \
-	go test -v ./... -coverprofile cover.out
+	go test $(GO_TEST_FLAGS) ./...
 
 .PHONY: canonize-ytconfig
-canonize-ytconfig: manifests generate fmt vet envtest ## Canonize ytconfig test results.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
+canonize-ytconfig: generate-code fmt vet ## Canonize ytconfig test results.
 	CANONIZE=y \
-	go test -v ./pkg/ytconfig/... -coverprofile cover.out
+	go test $(GO_TEST_FLAGS) ./pkg/ytconfig/...
 
 ##@ K8s operations
 
@@ -377,7 +377,7 @@ release: kustomize yq  ## Release operator docker image and helm chart.
 ## Location to install dependencies to.
 LOCALBIN ?= $(shell pwd)/bin
 $(LOCALBIN):
-	mkdir -p $(LOCALBIN)
+	mkdir -p "$(LOCALBIN)"
 
 # Tool Binaries
 KUBECTL ?= kubectl --context $(KIND_KUBE_CONTEXT)
@@ -424,6 +424,10 @@ envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST): $(LOCALBIN)
 	$(call go-install-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest,$(ENVTEST_VERSION))
 
+.PHONY: envtest-assets
+envtest-assets: envtest $(LOCALBIN) ## Download envtest assets.
+	ln -snf "$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" "$(LOCALBIN)/$@"
+
 .PHONY: golangci-lint
 golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
 $(GOLANGCI_LINT): $(LOCALBIN)
@@ -468,7 +472,7 @@ define go-install-tool
 set -e; \
 package=$(2)@$(3) ;\
 echo "Downloading $${package}" ;\
-GOBIN=$(LOCALBIN) go install $${package} ;\
+GOBIN="$(LOCALBIN)" go install $${package} ;\
 mv "$$(echo "$(1)" | sed "s/-$(3)$$//")" $(1) ;\
 }
 endef
