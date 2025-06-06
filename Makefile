@@ -261,7 +261,7 @@ helm-install: ## Install helm chart from sources.
 	$(KUBECTL) -n $(OPERATOR_NAMESPACE) rollout restart deployment -l app.kubernetes.io/instance=$(OPERATOR_INSTANCE)
 
 .PHONY: helm-kind-install
-helm-kind-install: helm-chart docker-build ## Build docker image, load into kind and install helm chart.
+helm-kind-install: helm-chart docker-build kind ## Build docker image, load into kind and install helm chart.
 	$(KIND) load docker-image --name $(KIND_CLUSTER_NAME) ${OPERATOR_IMAGE}:${OPERATOR_TAG}
 	$(MAKE) helm-install
 
