@@ -19,7 +19,6 @@ package controllers_test
 import (
 	"context"
 	"os"
-	"path/filepath"
 	"reflect"
 	"testing"
 	"time"
@@ -79,8 +78,6 @@ var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	Expect(err).NotTo(HaveOccurred())
 
 	testEnv := &envtest.Environment{
-		CRDDirectoryPaths:        []string{filepath.Join("..", "..", "config", "crd", "bases")},
-		ErrorIfCRDPathMissing:    true,
 		UseExistingCluster:       ptr.To(true),
 		AttachControlPlaneOutput: true,
 		Config:                   cfg,
