@@ -2,7 +2,6 @@ package components
 
 import (
 	"context"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -38,7 +37,7 @@ var (
 )
 
 func prepareTest(t *testing.T, namespace string) (*testutil.TestHelper, *apiproxy.Ytsaurus, *ytconfig.Generator) {
-	h := testutil.NewTestHelper(t, namespace, filepath.Join("..", "..", "config", "crd", "bases"))
+	h := testutil.NewTestHelper(t, namespace, "../..")
 	h.Start(func(mgr ctrl.Manager) error { return nil })
 
 	ytsaurusResource := testutil.BuildMinimalYtsaurus(namespace, ytsaurusName)

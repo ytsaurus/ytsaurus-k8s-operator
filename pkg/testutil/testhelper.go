@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -45,16 +46,10 @@ func GetenvOr(key, value string) string {
 	return value
 }
 
-func NewTestHelper(t *testing.T, namespace, crdDirectoryPath string) *TestHelper {
-	if os.Getenv("KUBEBUILDER_ASSETS") == "" {
-		t.Fatal(
-			"KUBEBUILDER_ASSETS needed to be set for this test " +
-				"Something like KUBEBUILDER_ASSETS=`bin/setup-envtest use 1.24.2 -p path` would do." +
-				"Check Makefile for the details.",
-		)
-	}
+func NewTestHelper(t *testing.T, namespace, topDirectoryPath string) *TestHelper {
 	k8sTestEnv := &envtest.Environment{
-		CRDDirectoryPaths:     []string{crdDirectoryPath},
+		BinaryAssetsDirectory: filepath.Join(topDirectoryPath, "bin", "envtest-assets"),
+		CRDDirectoryPaths:     []string{filepath.Join(topDirectoryPath, "config", "crd", "bases")},
 		ErrorIfCRDPathMissing: true,
 		CRDInstallOptions: envtest.CRDInstallOptions{
 			MaxTime: 60 * time.Second,
