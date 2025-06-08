@@ -491,6 +491,28 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 			}
 		}
 
+		// FIXME(khlebnikov): Isolate job-proxy or pass certificate via environment.
+		nativeTransport := spec.NativeTransport
+		if nativeTransport == nil {
+			nativeTransport = commonSpec.NativeTransport
+		}
+		if nativeTransport != nil {
+			if commonSpec.CABundle != nil && !nativeTransport.TLSInsecure {
+				jobEnv.JobProxyBindMounts = append(jobEnv.JobProxyBindMounts, BindMount{
+					InternalPath: consts.CABundleMountPoint,
+					ExternalPath: consts.CABundleMountPoint,
+					ReadOnly:     true,
+				})
+			}
+			if nativeTransport.TLSClientSecret != nil {
+				jobEnv.JobProxyBindMounts = append(jobEnv.JobProxyBindMounts, BindMount{
+					InternalPath: consts.BusClientSecretMountPoint,
+					ExternalPath: consts.BusClientSecretMountPoint,
+					ReadOnly:     true,
+				})
+			}
+		}
+
 		// FIXME(khlebnikov): For now running jobs as non-root is more likely broken.
 		execNode.SlotManager.DoNotSetUserId = ptr.To(ptr.Deref(envSpec.DoNotSetUserId, true))
 
