@@ -73,6 +73,7 @@ func NewQueryTracker(
 			getTolerationsWithDefault(resource.Spec.QueryTrackers.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.QueryTrackers.NodeSelector, resource.Spec.NodeSelector),
 			getDNSConfigWithDefault(resource.Spec.QueryTrackers.DNSConfig, resource.Spec.DNSConfig),
+			&resource.Spec.CommonSpec,
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

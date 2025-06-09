@@ -76,6 +76,7 @@ func NewQueueAgent(
 			getTolerationsWithDefault(resource.Spec.QueueAgents.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.QueueAgents.NodeSelector, resource.Spec.NodeSelector),
 			getDNSConfigWithDefault(resource.Spec.QueueAgents.DNSConfig, resource.Spec.DNSConfig),
+			&resource.Spec.CommonSpec,
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
