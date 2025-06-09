@@ -515,6 +515,8 @@ func (g *Generator) getRPCProxyConfigImpl(spec *ytv1.RPCProxiesSpec) (RPCProxySe
 		c.RequireAuthentication = ptr.To(true)
 	}
 
+	c.CypressAnnotations["bundle_controller_spec_id"] = spec.Role
+
 	return c, nil
 }
 
@@ -686,6 +688,9 @@ func (g *NodeGenerator) getTabletNodeConfigImpl(spec *ytv1.TabletNodesSpec) (Tab
 	}
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+
+	c.CypressAnnotations["bundle_controller_spec_id"] = spec.Name
+
 	return c, nil
 }
 

@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 
+	"go.ytsaurus.tech/yt/go/ypath"
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -16,16 +17,20 @@ type RpcProxy struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
 
+	ytsaurusClient internalYtsaurusClient
+
 	master Component
 
 	serviceType      *corev1.ServiceType
 	balancingService *resources.RPCService
 	tlsSecret        *resources.TLSSecret
+	spec             ytv1.RPCProxiesSpec
 }
 
 func NewRPCProxy(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
+	ytsaurusClient internalYtsaurusClient,
 	masterReconciler Component,
 	spec ytv1.RPCProxiesSpec,
 ) *RpcProxy {
@@ -69,6 +74,8 @@ func NewRPCProxy(
 	return &RpcProxy{
 		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
+		ytsaurusClient:       ytsaurusClient,
+		spec:                 spec,
 		master:               masterReconciler,
 		serviceType:          spec.ServiceType,
 		balancingService:     balancingService,
@@ -130,6 +137,20 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 
 	if !rp.server.arePodsReady(ctx) {
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
+	}
+
+	ytClientStatus, err := rp.ytsaurusClient.Status(ctx)
+	if err != nil {
+		return ytClientStatus, err
+	}
+	if ytClientStatus.SyncStatus != SyncStatusReady {
+		return WaitingStatus(SyncStatusBlocked, rp.ytsaurusClient.GetFullName()), err
+	}
+
+	annotations, _ := getInstanceResources(rp.spec.Role, nil)
+	bcAnnotationsStatus, err := initBundleControllerAnnotatios(ctx, dry, rp.ytsaurusClient.GetYtClient(), ypath.Root.Child("sys").Child("rpc_proxies"), annotations)
+	if bcAnnotationsStatus.SyncStatus != SyncStatusReady || err != nil {
+		return bcAnnotationsStatus, err
 	}
 
 	return SimpleStatus(SyncStatusReady), err
