@@ -61,6 +61,7 @@ func NewYtsaurusClient(
 			resource.Spec.Tolerations,
 			resource.Spec.NodeSelector,
 			resource.Spec.DNSConfig,
+			&resource.Spec.CommonSpec,
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
