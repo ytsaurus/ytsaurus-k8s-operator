@@ -234,11 +234,11 @@ func (g *NodeGenerator) fillPrimaryMaster(c *MasterCell) {
 	c.CellID = generateCellID(g.masterConnectionSpec.CellTag)
 }
 
-func (g *NodeGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCTransportSpec) {
+func (g *NodeGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCTransportSpec, keyring *Keyring) {
 	g.fillPrimaryMaster(&c.PrimaryMaster)
 	c.ClusterName = g.baseLabeller.GetClusterName()
 	c.DiscoveryConnection.Addresses = g.getDiscoveryAddresses()
-	g.fillClusterConnectionEncryption(c, s)
+	g.fillClusterConnectionEncryption(c, s, keyring)
 	c.MasterCache.Addresses = g.getMasterCachesAddresses()
 	if len(c.MasterCache.Addresses) == 0 {
 		c.MasterCache.Addresses = c.PrimaryMaster.Addresses
@@ -260,7 +260,8 @@ func (g *NodeGenerator) fillCommonService(c *CommonServer, s *ytv1.InstanceSpec)
 	// ToDo(psushin): enable porto resource tracker?
 	g.fillAddressResolver(&c.AddressResolver)
 	g.fillSolomonExporter(&c.SolomonExporter)
-	g.fillClusterConnection(&c.ClusterConnection, s.NativeTransport)
+	keyring := getMountKeyring(g.commonSpec, s.NativeTransport)
+	g.fillClusterConnection(&c.ClusterConnection, s.NativeTransport, keyring)
 	g.fillCypressAnnotations(c)
 	c.TimestampProviders.Addresses = g.getMasterAddresses()
 }
@@ -277,45 +278,34 @@ func (g *NodeGenerator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec)
 	if c.BusServer == nil {
 		c.BusServer = &BusServer{}
 	}
+	keyring := getMountKeyring(g.commonSpec, s)
+	fillBusServer(c.BusServer, s, keyring)
+}
+
+func fillBusServer(b *BusServer, s *ytv1.RPCTransportSpec, keyring *Keyring) {
+	b.CertChain = keyring.BusServerCertificate
+	b.PrivateKey = keyring.BusServerPrivateKey
 
 	// For insecure mode status of TLS is decided by client.
 	if s.TLSRequired && !s.TLSInsecure {
-		c.BusServer.EncryptionMode = EncryptionModeRequired
+		b.EncryptionMode = EncryptionModeRequired
 	} else {
-		c.BusServer.EncryptionMode = EncryptionModeOptional
-	}
-
-	c.BusServer.CertChain = &PemBlob{
-		FileName: path.Join(consts.BusServerSecretMountPoint, corev1.TLSCertKey),
-	}
-
-	c.BusServer.PrivateKey = &PemBlob{
-		FileName: path.Join(consts.BusServerSecretMountPoint, corev1.TLSPrivateKeyKey),
+		b.EncryptionMode = EncryptionModeOptional
 	}
 
 	// Always require mTLS in secure mode.
 	if !s.TLSInsecure {
-		c.BusServer.VerificationMode = VerificationModeFull
-
-		if g.commonSpec.CABundle != nil {
-			c.BusServer.CA = &PemBlob{
-				FileName: path.Join(consts.CABundleMountPoint, consts.CABundleFileName),
-			}
-		} else {
-			c.BusServer.CA = &PemBlob{
-				FileName: consts.DefaultCABundlePath,
-			}
-		}
-
+		b.VerificationMode = VerificationModeFull
+		b.CA = keyring.BusCABundle
 		if s.TLSPeerAlternativeHostName != "" {
-			c.BusServer.PeerAlternativeHostName = s.TLSPeerAlternativeHostName
+			b.PeerAlternativeHostName = s.TLSPeerAlternativeHostName
 		}
 	} else {
-		c.BusServer.VerificationMode = VerificationModeNone
+		b.VerificationMode = VerificationModeNone
 	}
 }
 
-func (g *NodeGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s *ytv1.RPCTransportSpec) {
+func (g *NodeGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s *ytv1.RPCTransportSpec, keyring *Keyring) {
 	if s == nil {
 		// Use common bus transport config
 		s = g.commonSpec.NativeTransport
@@ -328,15 +318,9 @@ func (g *NodeGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s 
 		c.BusClient = &Bus{}
 	}
 
-	if g.commonSpec.CABundle != nil {
-		c.BusClient.CA = &PemBlob{
-			FileName: path.Join(consts.CABundleMountPoint, consts.CABundleFileName),
-		}
-	} else {
-		c.BusClient.CA = &PemBlob{
-			FileName: consts.DefaultCABundlePath,
-		}
-	}
+	c.BusClient.CA = keyring.BusCABundle
+	c.BusClient.CertChain = keyring.BusClientCertificate
+	c.BusClient.PrivateKey = keyring.BusClientPrivateKey
 
 	if s.TLSRequired {
 		c.BusClient.EncryptionMode = EncryptionModeRequired
@@ -353,15 +337,6 @@ func (g *NodeGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s 
 	if s.TLSPeerAlternativeHostName != "" {
 		c.BusClient.PeerAlternativeHostName = s.TLSPeerAlternativeHostName
 	}
-
-	if s.TLSClientSecret != nil {
-		c.BusClient.CertChain = &PemBlob{
-			FileName: path.Join(consts.BusClientSecretMountPoint, corev1.TLSCertKey),
-		}
-		c.BusClient.PrivateKey = &PemBlob{
-			FileName: path.Join(consts.BusClientSecretMountPoint, corev1.TLSPrivateKeyKey),
-		}
-	}
 }
 
 func marshallYsonConfig(c interface{}) ([]byte, error) {
@@ -374,7 +349,8 @@ func marshallYsonConfig(c interface{}) ([]byte, error) {
 
 func (g *Generator) GetClusterConnection() ([]byte, error) {
 	var c ClusterConnection
-	g.fillClusterConnection(&c, nil)
+	keyring := getVaultKeyring(g.commonSpec, nil)
+	g.fillClusterConnection(&c, nil, keyring)
 	return marshallYsonConfig(c)
 }
 
@@ -476,7 +452,8 @@ func (g *NodeGenerator) GetNativeClientConfig() ([]byte, error) {
 		return nil, err
 	}
 
-	g.fillClusterConnection(&c.Driver.ClusterConnection, nil)
+	keyring := getMountKeyring(g.commonSpec, nil)
+	g.fillClusterConnection(&c.Driver.ClusterConnection, nil, keyring)
 	g.fillAddressResolver(&c.AddressResolver)
 	c.Driver.APIVersion = 4
 

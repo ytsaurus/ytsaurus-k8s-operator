@@ -88,8 +88,9 @@ type SolomonExporter struct {
 }
 
 type PemBlob struct {
-	FileName string `yson:"file_name,omitempty"`
-	Value    string `yson:"value,omitempty"`
+	EnvironmentVariable string `yson:"environment_variable,omitempty"`
+	FileName            string `yson:"file_name,omitempty"`
+	Value               string `yson:"value,omitempty"`
 }
 
 type EncryptionMode string
