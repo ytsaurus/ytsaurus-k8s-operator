@@ -1,5 +1,6 @@
 # vim: set filetype=make :
 
+# https://ytsaurus.tech/docs/en/admin-guide/releases
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/ytsaurus
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/ytsaurus-nightly
 
@@ -20,6 +21,14 @@ export YTSAURUS_IMAGE_NIGHTLY = ${YTSAURUS_REGISTRY}/ytsaurus-nightly:dev-24.2-2
 export QUERY_TRACKER_IMAGE_PREVIOUS = ${YTSAURUS_REGISTRY}/query-tracker:0.0.6
 export QUERY_TRACKER_IMAGE_CURRENT = ${YTSAURUS_REGISTRY}/query-tracker:0.0.9
 export QUERY_TRACKER_IMAGE_FUTURE = ${YTSAURUS_REGISTRY}/query-tracker:0.0.9
+
+export STRAWBERRY_IMAGE_PREVIOUS = ${YTSAURUS_REGISTRY}/strawberry:0.0.12
+export STRAWBERRY_IMAGE_CURRENT = ${YTSAURUS_REGISTRY}/strawberry:0.0.13
+export STRAWBERRY_IMAGE_FUTURE = ${YTSAURUS_REGISTRY}/strawberry:0.0.13
+
+export CHYT_IMAGE_PREVIOUS = ${YTSAURUS_REGISTRY}/chyt:2.14.0
+export CHYT_IMAGE_CURRENT = ${YTSAURUS_REGISTRY}/chyt:2.16.0
+export CHYT_IMAGE_FUTURE = ${YTSAURUS_REGISTRY}/chyt:2.16.0
 
 define LOAD_TEST_IMAGES
 ${YTSAURUS_IMAGE_23_2}

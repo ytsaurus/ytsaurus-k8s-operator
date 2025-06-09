@@ -170,6 +170,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var name client.ObjectKey
 	var ytBuilder *testutil.YtsaurusBuilder
 	var ytsaurus *ytv1.Ytsaurus
+	var chyt *ytv1.Chyt
 	var ytProxyAddress string
 	var ytClient yt.Client
 	var g *ytconfig.Generator
@@ -268,6 +269,23 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		ytClient = getYtClient(ytProxyAddress)
 		checkClusterViability(ytClient)
+
+		if chyt != nil {
+			By("Checking CHYT status")
+			Eventually(ctx, func(ctx context.Context) (*ytv1.Chyt, error) {
+				err := k8sClient.Get(ctx, client.ObjectKeyFromObject(chyt), chyt)
+				return chyt, err
+			}, bootstrapTimeout, pollInterval).Should(
+				HaveField("Status.ReleaseStatus", ytv1.ChytReleaseStatusFinished),
+				"CHYT status: %+v", &chyt.Status,
+			)
+
+			By("Checking CHYT liveness")
+			// FIXME(khlebnikov): There is no reliable readiness signal.
+			Eventually(queryClickHouse, "120s", "1s").WithArguments(
+				ytProxyAddress, "SELECT 1",
+			).MustPassRepeatedly(3).Should(Equal("1\n"))
+		}
 	})
 
 	AfterEach(func(ctx context.Context) {
@@ -1144,6 +1162,27 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			})
 
 		}) // integration host-network
+
+		Context("With CHYT", Label("chyt"), func() {
+
+			BeforeEach(func() {
+				By("Adding strawberry")
+				ytBuilder.WithBaseComponents()
+				ytBuilder.WithStrawberryController()
+
+				By("Adding CHYT instance")
+				chyt = ytBuilder.CreateChyt()
+				objects = append(objects, chyt)
+			})
+
+			It("Checks ClickHouse", func(ctx context.Context) {
+				Expect(queryClickHouse(
+					ytProxyAddress,
+					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one;",
+				)).To(Succeed())
+			})
+
+		}) // integration chyt
 
 	}) // integration
 })
