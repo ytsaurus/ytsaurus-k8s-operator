@@ -40,6 +40,14 @@ var (
 	QueryTrackerImagePrevious = GetenvOr("QUERY_TRACKER_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/query-tracker:0.0.6")
 	QueryTrackerImageCurrent  = GetenvOr("QUERY_TRACKER_IMAGE_CURRENT", "ghcr.io/ytsaurus/query-tracker:0.0.9")
 	QueryTrackerImageFuture   = GetenvOr("QUERY_TRACKER_IMAGE_FUTURE", "ghcr.io/ytsaurus/query-tracker:0.0.9")
+
+	StrawberryImagePrevious = GetenvOr("STRAWBERRY_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/strawberry:0.0.12")
+	StrawberryImageCurrent  = GetenvOr("STRAWBERRY_IMAGE_CURRENT", "ghcr.io/ytsaurus/strawberry:0.0.13")
+	StrawberryImageFuture   = GetenvOr("STRAWBERRY_IMAGE_FUTURE", "ghcr.io/ytsaurus/strawberry:0.0.13")
+
+	ChytImagePrevious = GetenvOr("CHYT_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/chyt:2.14.0")
+	ChytImageCurrent  = GetenvOr("CHYT_IMAGE_CURRENT", "ghcr.io/ytsaurus/chyt:2.16.0")
+	ChytImageFuture   = GetenvOr("CHYT_IMAGE_FUTURE", "ghcr.io/ytsaurus/chyt:2.16.0")
 )
 
 var (
@@ -361,4 +369,28 @@ func (b *YtsaurusBuilder) CreateTabletNodeSpec(instanceCount int32) ytv1.Instanc
 		InstanceCount: instanceCount,
 		Loggers:       b.CreateLoggersSpec(),
 	}
+}
+
+func (b *YtsaurusBuilder) WithStrawberryController() {
+	b.Ytsaurus.Spec.StrawberryController = &ytv1.StrawberryControllerSpec{
+		Image: ptr.To(StrawberryImageCurrent),
+	}
+}
+
+func (b *YtsaurusBuilder) CreateChyt() *ytv1.Chyt {
+	chyt := ytv1.Chyt{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      YtsaurusName,
+			Namespace: b.Namespace,
+		},
+		Spec: ytv1.ChytSpec{
+			Ytsaurus: &corev1.LocalObjectReference{
+				Name: YtsaurusName,
+			},
+			Image:              ChytImageCurrent,
+			MakeDefault:        true,
+			CreatePublicClique: ptr.To(true),
+		},
+	}
+	return &chyt
 }

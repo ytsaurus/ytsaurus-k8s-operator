@@ -47,6 +47,8 @@ const (
 	bootstrapTimeout = time.Minute * 5
 	upgradeTimeout   = time.Minute * 10
 
+	chytBootstrapTimeout = time.Minute * 2
+
 	operationPollInterval = time.Millisecond * 250
 	operationTimeout      = time.Second * 120
 )
@@ -174,6 +176,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var name client.ObjectKey
 	var ytBuilder *testutil.YtsaurusBuilder
 	var ytsaurus *ytv1.Ytsaurus
+	var chyt *ytv1.Chyt
 	var ytProxyAddress string
 	var ytClient yt.Client
 	var g *ytconfig.Generator
@@ -285,6 +288,23 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			By("Waiting operation completion")
 			op.Wait()
+		}
+
+		if chyt != nil {
+			By("Checking CHYT status")
+			Eventually(ctx, func(ctx context.Context) (*ytv1.Chyt, error) {
+				err := k8sClient.Get(ctx, client.ObjectKeyFromObject(chyt), chyt)
+				return chyt, err
+			}, bootstrapTimeout, pollInterval).Should(
+				HaveField("Status.ReleaseStatus", ytv1.ChytReleaseStatusFinished),
+				"CHYT status: %+v", &chyt.Status,
+			)
+
+			By("Checking CHYT readiness")
+			// FIXME(khlebnikov): There is no reliable readiness signal.
+			Eventually(queryClickHouse, chytBootstrapTimeout, pollInterval).WithArguments(
+				ytProxyAddress, "SELECT 1",
+			).MustPassRepeatedly(3).Should(Equal("1\n"))
 		}
 	})
 
@@ -1182,6 +1202,28 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			})
 
 		}) // integration host-network
+
+		Context("With CHYT", Label("chyt"), func() {
+
+			BeforeEach(func() {
+				By("Adding strawberry")
+				ytBuilder.WithBaseComponents()
+				ytBuilder.WithStrawberryController()
+
+				By("Adding CHYT instance")
+				chyt = ytBuilder.CreateChyt()
+				objects = append(objects, chyt)
+			})
+
+			It("Checks ClickHouse", func(ctx context.Context) {
+				By("Creating table")
+				Expect(queryClickHouse(
+					ytProxyAddress,
+					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one",
+				)).To(Equal(""))
+			})
+
+		}) // integration chyt
 
 	}) // integration
 })
