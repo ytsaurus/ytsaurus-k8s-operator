@@ -145,6 +145,18 @@ var _ = Describe("Tablet node test", func() {
 
 	Context("Default context", func() {
 		var scheme *runtime.Scheme
+		listZeroTabletNodes := func() *gomock.Call {
+			return mockYtClient.EXPECT().
+				ListNode(
+					gomock.Any(),
+					gomock.Eq(ypath.Path("//sys/tablet_nodes")),
+					gomock.Not(gomock.Nil()),
+					gomock.Eq(&yt.ListNodeOptions{
+						Attributes: []string{"annotations"},
+					}),
+				).
+				Return(nil)
+		}
 
 		BeforeEach(func() {
 			scheme = runtime.NewScheme()
@@ -180,6 +192,10 @@ var _ = Describe("Tablet node test", func() {
 
 			ytsaurusClient.SetStatus(SimpleStatus(SyncStatusReady))
 
+			gomock.InOrder(
+				listZeroTabletNodes(),
+			)
+
 			status, err = tabletNode.Status(context.Background())
 			Expect(err).Should(Succeed())
 			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
@@ -200,6 +216,10 @@ var _ = Describe("Tablet node test", func() {
 			Expect(status.SyncStatus).Should(Equal(SyncStatusBlocked))
 
 			fakeServer.podsReady = true
+
+			gomock.InOrder(
+				listZeroTabletNodes(),
+			)
 
 			status, err = tabletNode.Status(context.Background())
 			Expect(err).Should(Succeed())
@@ -222,6 +242,7 @@ var _ = Describe("Tablet node test", func() {
 
 			By("Failed to check if there is //sys/tablet_cell_bundles/sys.")
 			gomock.InOrder(
+				listZeroTabletNodes(),
 				mockYtClient.EXPECT().
 					NodeExists(
 						gomock.Any(),
@@ -231,12 +252,16 @@ var _ = Describe("Tablet node test", func() {
 			)
 			err := tabletNode.Sync(context.Background())
 			Expect(err).Should(Equal(existsNetError))
+			gomock.InOrder(
+				listZeroTabletNodes(),
+			)
 			status, err := tabletNode.Status(context.Background())
 			Expect(err).Should(Succeed())
 			Expect(status.SyncStatus).Should(Equal(SyncStatusPending))
 
 			By("Failed to create `sys` bundle.")
 			gomock.InOrder(
+				listZeroTabletNodes(),
 				mockYtClient.EXPECT().
 					NodeExists(
 						gomock.Any(),
