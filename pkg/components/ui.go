@@ -83,6 +83,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			getTolerationsWithDefault(resource.Spec.UI.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.UI.NodeSelector, resource.Spec.NodeSelector),
 			getDNSConfigWithDefault(resource.Spec.UI.DNSConfig, resource.Spec.DNSConfig),
+			&resource.Spec.CommonSpec,
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
