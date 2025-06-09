@@ -173,7 +173,7 @@ func (c *StrawberryController) createInitUserAndUrlScript() string {
 func (c *StrawberryController) createInitChytClusterScript() string {
 	script := []string{
 		initJobPrologue,
-		fmt.Sprintf("/usr/bin/chyt-controller --config-path %s init-cluster",
+		fmt.Sprintf("/usr/bin/chyt-controller --log-to-stderr --config-path %s init-cluster",
 			path.Join(consts.ConfigMountPoint, ChytInitClusterJobConfigFileName)),
 	}
 
@@ -217,6 +217,7 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 			Env:     getDefaultEnv(),
 			Command: []string{
 				"/usr/bin/chyt-controller",
+				"--log-to-stderr",
 				"--config-path",
 				path.Join(consts.ConfigMountPoint, ControllerConfigFileName),
 				"run",
