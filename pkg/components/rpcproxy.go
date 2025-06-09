@@ -24,6 +24,7 @@ type RpcProxy struct {
 	serviceType      *corev1.ServiceType
 	balancingService *resources.RPCService
 	tlsSecret        *resources.TLSSecret
+	spec ytv1.RPCProxiesSpec
 }
 
 func NewRPCProxy(
@@ -74,6 +75,7 @@ func NewRPCProxy(
 		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		ytsaurusClient:       ytsaurusClient,
+		spec:                 spec,
 		master:               masterReconciler,
 		serviceType:          spec.ServiceType,
 		balancingService:     balancingService,
@@ -145,7 +147,7 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return WaitingStatus(SyncStatusBlocked, rp.ytsaurusClient.GetFullName()), err
 	}
 
-	annotations, _ := getInstanceResources("", nil)
+	annotations, _ := getInstanceResources(rp.spec.Role, nil)
 	bcAnnotationsStatus, err := initBundleControllerAnnotatios(ctx, dry, rp.ytsaurusClient.GetYtClient(), ypath.Root.Child("sys").Child("rpc_proxies"), annotations)
 	if bcAnnotationsStatus.SyncStatus != SyncStatusReady || err != nil {
 		return bcAnnotationsStatus, err

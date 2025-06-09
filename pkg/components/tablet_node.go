@@ -73,8 +73,6 @@ func NewTabletNode(
 func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	logger := log.FromContext(ctx)
-
 	if ytv1.IsReadyToUpdateClusterState(tn.ytsaurus.GetClusterState()) && tn.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
@@ -109,10 +107,7 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return WaitingStatus(SyncStatusBlocked, tn.ytsaurusClient.GetFullName()), err
 	}
 
-	statefulSetName := tn.GetLabeller().GetServerStatfulSetName()
-	logger.Info("Tablet node stateful set name", "name", statefulSetName)
-
-	resources, _ := getInstanceResources(statefulSetName, &tn.spec.InstanceSpec.Resources.Limits)
+	resources, _ := getInstanceResources(tn.spec.Name, &tn.spec.InstanceSpec.Resources.Limits)
 	bcAnnotationsStatus, err := initBundleControllerAnnotatios(ctx, dry, tn.ytsaurusClient.GetYtClient(), ypath.Root.Child("sys").Child("tablet_nodes"), resources)
 	if bcAnnotationsStatus.SyncStatus != SyncStatusReady || err != nil {
 		return bcAnnotationsStatus, err

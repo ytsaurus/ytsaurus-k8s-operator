@@ -27,6 +27,7 @@ type instanceResources struct {
 
 func getInstanceResources(name string, resources *ytv1.ResourceList) (instanceResources, bool) {
 	dummyResult := instanceResources{
+		Type:   name,
 		Vcpu:   18000,
 		Memory: 120 * 1024 * 1024 * 1024,
 	}
@@ -62,17 +63,28 @@ func getBundleControllerInstanceAnnotations(ctx context.Context, spareBundleName
 }
 
 func initBundleControllerAnnotatios(ctx context.Context, dry bool, ytClient yt.Client, instancePath ypath.Path, resources instanceResources) (ComponentStatus, error) {
-	var instances []string
-	err := ytClient.ListNode(ctx, instancePath, &instances, nil)
+	var instances []struct {
+		Name        string            `yson:",value"`
+		Annotations map[string]string `yson:"annotations,attr"`
+	}
+	opts := &yt.ListNodeOptions{
+		Attributes: []string{
+			"annotations",
+		},
+	}
+	err := ytClient.ListNode(ctx, instancePath, &instances, opts)
 	if err != nil {
 		return SimpleStatus(SyncStatusBlocked), err
 	}
 
 	initialized := true
-	annotations := getBundleControllerInstanceAnnotations(ctx, SpareBundle, resources)
+	bcAnnotations := getBundleControllerInstanceAnnotations(ctx, SpareBundle, resources)
 
 	for _, instance := range instances {
-		annotationsPath := instancePath.Child(instance).Attr("bundle_controller_annotations")
+		if name, exists := instance.Annotations["bundle_controller_spec_id"]; !exists || name != resources.Type {
+			continue
+		}
+		annotationsPath := instancePath.Child(instance.Name).Attr("bundle_controller_annotations")
 		exists, err := ytClient.NodeExists(ctx, annotationsPath, nil)
 		if err != nil {
 			return SimpleStatus(SyncStatusBlocked), err
@@ -88,7 +100,7 @@ func initBundleControllerAnnotatios(ctx context.Context, dry bool, ytClient yt.C
 			continue
 		}
 
-		err = ytClient.SetNode(ctx, annotationsPath, annotations, nil)
+		err = ytClient.SetNode(ctx, annotationsPath, bcAnnotations, nil)
 		if err != nil {
 			return SimpleStatus(SyncStatusBlocked), err
 		}
