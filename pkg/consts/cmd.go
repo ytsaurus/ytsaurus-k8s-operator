@@ -66,5 +66,16 @@ const (
 )
 
 const (
+	// Pass certificates via secure vault too - to avoid logging bulky values
+	BusCABundleVaultName          = "YT_BUS_CA_BUNDLE"
+	BusClientCertificateVaultName = "YT_BUS_CLIENT_CERTIFICATE"
+	BusClientPrivateKeyVaultName  = "YT_BUS_CLIENT_PRIVATE_KEY"
+	BusServerCertificateVaultName = "YT_BUS_SERVER_CERTIFICATE"
+	BusServerPrivateKeyVaultName  = "YT_BUS_SERVER_PRIVATE_KEY"
+
+	SecureVaultEnvPrefix = "YT_SECURE_VAULT_"
+)
+
+const (
 	HTTPSSecretUpdatePeriod = time.Second * 60
 )
