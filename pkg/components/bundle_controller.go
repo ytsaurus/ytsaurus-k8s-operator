@@ -5,7 +5,7 @@ import (
 
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
-	ytv1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type bundleControllerInstanceAnnotations struct {
@@ -25,7 +25,7 @@ type instanceResources struct {
 	Vcpu   int64  `yson:"vcpu"`
 }
 
-func getInstanceResources(name string, resources *ytv1.ResourceList) (instanceResources, bool) {
+func getInstanceResources(name string, resources *corev1.ResourceList) (instanceResources, bool) {
 	dummyResult := instanceResources{
 		Type:   name,
 		Vcpu:   18000,
@@ -50,7 +50,7 @@ func getInstanceResources(name string, resources *ytv1.ResourceList) (instanceRe
 	return result, true
 }
 
-func getBundleControllerInstanceAnnotations(ctx context.Context, spareBundleName string, resources instanceResources) bundleControllerInstanceAnnotations {
+func getBundleControllerInstanceAnnotations(_ context.Context, spareBundleName string, resources instanceResources) bundleControllerInstanceAnnotations {
 	return bundleControllerInstanceAnnotations{
 		Allocated:            true,
 		AllocatedForBundle:   spareBundleName,

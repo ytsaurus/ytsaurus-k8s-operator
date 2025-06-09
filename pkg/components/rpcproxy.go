@@ -24,7 +24,7 @@ type RpcProxy struct {
 	serviceType      *corev1.ServiceType
 	balancingService *resources.RPCService
 	tlsSecret        *resources.TLSSecret
-	spec ytv1.RPCProxiesSpec
+	spec             ytv1.RPCProxiesSpec
 }
 
 func NewRPCProxy(
