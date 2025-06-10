@@ -29,6 +29,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	gtypes "github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
+	oformat "github.com/onsi/gomega/format"
 	otypes "github.com/onsi/gomega/types"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -65,6 +66,7 @@ func TestAPIs(t *testing.T) {
 		t.Skip("skipping E2E tests: set YTSAURUS_ENABLE_E2E_TESTS environment variable to 'true'")
 	}
 
+	oformat.MaxLength = 20_000 // Do not truncate large YT errors
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Controller Suite")
 }
