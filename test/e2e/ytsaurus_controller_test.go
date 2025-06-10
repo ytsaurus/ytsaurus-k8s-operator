@@ -415,22 +415,30 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			It("Should be updated according to UpdateSelector=Everything", func(ctx context.Context) {
 
-				By("Run cluster update with selector: nothing")
+				By("Run cluster update with selector: class=Nothing")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassNothing}}
 				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
 				By("Ensure cluster doesn't start updating for 5 seconds")
 				ConsistentlyYtsaurus(ctx, name, 5*time.Second).Should(HaveClusterStateRunning())
+
+				By("Ensure cluster generation is observed")
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+				Expect(ytsaurus).Should(HaveClusterStateRunning())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
+
+				By("Verifying that pods were not recreated")
 				podsAfterBlockedUpdate := getComponentPods(ctx, namespace)
 				Expect(podsBeforeUpdate).To(
 					Equal(podsAfterBlockedUpdate),
 					"pods shouldn't be recreated when update is blocked",
 				)
 
-				By("Update cluster update with strategy full")
+				By("Update cluster update with selector: class=Everything")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
-				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
@@ -444,11 +452,17 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					"Scheduler",
 					"ControllerAgent",
 				))
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).To(BeEmpty())
 
 				By("Wait cluster update with full update complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
-				podsAfterFullUpdate := getComponentPods(ctx, namespace)
+				Expect(ytsaurus).Should(HaveObservedGeneration())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).To(BeEmpty())
 
+				podsAfterFullUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterFullUpdate)
 				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
@@ -468,9 +482,16 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("ExecNode"))
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				By("Wait cluster update with selector:ExecNodesOnly complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				Expect(ytsaurus).Should(HaveObservedGeneration())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
+
 				checkClusterBaseViability(ytClient)
 
 				podsAfterEndUpdate := getComponentPods(ctx, namespace)
@@ -485,14 +506,20 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Type: consts.TabletNodeType,
 					},
 				}}
-				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("TabletNode"))
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				By("Wait cluster update with selector:TabletNodesOnly complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				Expect(ytsaurus).Should(HaveObservedGeneration())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
+
 				checkClusterBaseViability(ytClient)
 
 				podsAfterTndUpdate := getComponentPods(ctx, namespace)
@@ -515,10 +542,18 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("Master"))
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				By("Wait cluster update with selector:MasterOnly complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				Expect(ytsaurus).Should(HaveObservedGeneration())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
+
 				checkClusterBaseViability(ytClient)
+
 				podsAfterMasterUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterMasterUpdate)
 				Expect(pods.Created).To(BeEmpty(), "created")
@@ -529,7 +564,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
 					Class: consts.ComponentClassStateless,
 				}}
-				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
@@ -540,9 +574,16 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					"Scheduler",
 					"ControllerAgent",
 				))
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				By("Wait cluster update with selector:StatelessOnly complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				Expect(ytsaurus).Should(HaveObservedGeneration())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
+
 				checkClusterBaseViability(ytClient)
 				podsAfterStatelessUpdate := getComponentPods(ctx, namespace)
 				pods = getChangedPods(podsAfterMasterUpdate, podsAfterStatelessUpdate)
@@ -580,9 +621,16 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponentsExactly("dn-2"))
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				By("Wait cluster update with selector:DataNodesOnly complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				Expect(ytsaurus).Should(HaveObservedGeneration())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
+
 				checkClusterBaseViability(ytClient)
 
 				podsAfterUpdate := getComponentPods(ctx, namespace)
