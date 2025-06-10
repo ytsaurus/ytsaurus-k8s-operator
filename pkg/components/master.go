@@ -49,7 +49,7 @@ func buildMasterOptions(resource *ytv1.Ytsaurus) []Option {
 	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil {
 		options = append(options, WithSidecarImage(
 			consts.HydraPersistenceUploaderContainerName,
-			*resource.Spec.PrimaryMasters.HydraPersistenceUploader.Image,
+			resource.Spec.PrimaryMasters.HydraPersistenceUploader.Image,
 		))
 	}
 
@@ -137,9 +137,9 @@ func (m *Master) Fetch(ctx context.Context) error {
 	)
 }
 
-func (m *Master) getAdminCredentials() (string, string, string) {
-	adminLogin, adminPassword := consts.DefaultAdminLogin, consts.DefaultAdminPassword
-	adminToken := consts.DefaultAdminPassword
+func (m *Master) getAdminCredentials() (adminLogin string, adminPassword string, adminToken string) {
+	adminLogin, adminPassword = consts.DefaultAdminLogin, consts.DefaultAdminPassword
+	adminToken = consts.DefaultAdminPassword
 
 	if m.adminCredentials.Name != "" {
 		value, ok := m.adminCredentials.Data[consts.AdminLoginSecret]
@@ -166,28 +166,42 @@ func (m *Master) initAdminUser() string {
 	return RunIfNonexistent(fmt.Sprintf("//sys/users/%s", adminLogin), commands...)
 }
 
-func (m *Master) initHydraPersistenceUploaderUser() string {
+func (m *Master) initHydraPersistenceUploaderUser() (string, error) {
 	login := consts.HydraPersistenceUploaderUserName
 	token, _ := m.sidecarSecrets.hydraPersistenceUploaderSecret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand(login, token, token, false)
+	commands := []string{
+		strings.Join(createUserCommand(login, token, token, false), "\n"),
+	}
+
+	setPathAclCommand, err := SetPathAcl("//sys/admin/snapshots", []yt.ACE{
+		{
+			Action:          "allow",
+			Subjects:        []string{login},
+			Permissions:     []yt.Permission{"read", "write", "remove", "use", "create"},
+			InheritanceMode: "object_and_descendants",
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create set acl command: %w", err)
+	}
+	appendPathAclCommand, err := AppendPathAcl("//sys/accounts/sys", yt.ACE{
+		Action:      "allow",
+		Subjects:    []string{login},
+		Permissions: []yt.Permission{"use"},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create append acl command: %w", err)
+	}
 
 	commands = append(commands,
 		"/usr/bin/yt create map_node //sys/admin/snapshots -r -i",
-		SetPathAcl("//sys/admin/snapshots", []yt.ACE{
-			{
-				Action:          "allow",
-				Subjects:        []string{login},
-				Permissions:     []yt.Permission{"read", "write", "remove", "use", "create"},
-				InheritanceMode: "object_and_descendants",
-			},
-		}),
-		AppendPathAcl("//sys/accounts/sys", yt.ACE{
-			Action:      "allow",
-			Subjects:    []string{login},
-			Permissions: []yt.Permission{"use"},
-		}),
+		setPathAclCommand,
+		appendPathAclCommand,
 	)
-	return RunIfNonexistent(fmt.Sprintf("//sys/users/%s", login), commands...)
+	return RunIfCondition(
+		fmt.Sprintf("'%v' = 'true'", m.ytsaurus.GetResource().Spec.PrimaryMasters.HydraPersistenceUploader != nil),
+		RunIfNonexistent(fmt.Sprintf("//sys/users/%s", login), commands...),
+	), nil
 }
 
 type Medium struct {
@@ -239,7 +253,7 @@ func (m *Master) initGroups() string {
 	return strings.Join(commands, "\n")
 }
 
-func (m *Master) initSchemaACLs() string {
+func (m *Master) initSchemaACLs() (string, error) {
 	userReadACE := yt.ACE{
 		Action:      "allow",
 		Subjects:    []string{"users"},
@@ -270,49 +284,82 @@ func (m *Master) initSchemaACLs() string {
 		"user", "group",
 		"rack", "data_center", "cluster_node",
 		"access_control_object_namespace", "access_control_object_namespace_map"} {
-		commands = append(commands, SetPathAcl(fmt.Sprintf("//sys/schemas/%s", objectType), []yt.ACE{
+		setPathAclCommand, err := SetPathAcl(fmt.Sprintf("//sys/schemas/%s", objectType), []yt.ACE{
 			userReadACE,
 			adminACE,
-		}))
+		})
+		if err != nil {
+			return "", fmt.Errorf("failed to create set acl command for %s: %w", objectType, err)
+		}
+		commands = append(commands, setPathAclCommand)
 	}
 	// COMPAT(achulkov2): Drop the first command after `medium` is obsolete in all major versions.
+
+	setPathAclMediumCommand, err := SetPathAcl("//sys/schemas/medium", []yt.ACE{
+		userReadACE,
+		adminACE,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create set acl command for medium: %w", err)
+	}
+
+	setPathAclDomesticMediumCommand, err := SetPathAcl("//sys/schemas/domestic_medium", []yt.ACE{
+		userReadCreateACE,
+		adminACE,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create set acl command for domestic_medium: %w", err)
+	}
+
 	commands = append(commands, fmt.Sprintf("%s || %s",
-		SetPathAcl("//sys/schemas/medium", []yt.ACE{
-			userReadACE,
-			adminACE,
-		}),
-		SetPathAcl("//sys/schemas/domestic_medium", []yt.ACE{
-			userReadCreateACE,
-			adminACE,
-		})))
+		setPathAclMediumCommand,
+		setPathAclDomesticMediumCommand))
 
 	// Users can create pools, pool trees, accounts and access control objects given the right circumstances and permissions.
 	for _, objectType := range []string{"account", "scheduler_pool", "scheduler_pool_tree", "access_control_object"} {
-		commands = append(commands, SetPathAcl(fmt.Sprintf("//sys/schemas/%s", objectType), []yt.ACE{
+		setPathAclCommand, err := SetPathAcl(fmt.Sprintf("//sys/schemas/%s", objectType), []yt.ACE{
 			userReadCreateACE,
 			adminACE,
-		}))
+		})
+		if err != nil {
+			return "", fmt.Errorf("failed to create set acl command for %s: %w", objectType, err)
+		}
+		commands = append(commands, setPathAclCommand)
 	}
 
 	// Users can write account_resource_usage_lease objects.
-	commands = append(commands, SetPathAcl("//sys/schemas/account_resource_usage_lease", []yt.ACE{
+	setPathAclCommand, err := SetPathAcl("//sys/schemas/account_resource_usage_lease", []yt.ACE{
 		userReadWriteCreateACE,
 		adminACE,
-	}))
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create set acl command for account_resource_usage_lease: %w", err)
+	}
+	commands = append(commands, setPathAclCommand)
 
-	return strings.Join(commands, "\n")
+	return strings.Join(commands, "\n"), nil
 }
 
-func (m *Master) createInitScript() string {
+func (m *Master) createInitScript() (string, error) {
 	clusterConnection, err := m.cfgen.GetClusterConnection()
 	if err != nil {
 		panic(err)
 	}
 
+	initSchemaACLsCommands, err := m.initSchemaACLs()
+	if err != nil {
+		return "", fmt.Errorf("failed to create init schema ACLs commands: %w", err)
+	}
+
+	initHydraPersistenceUploaderUserCommands, err := m.initHydraPersistenceUploaderUser()
+	if err != nil {
+		return "", fmt.Errorf("failed to create init hydra persistence uploader user commands: %w", err)
+	}
+
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		m.initGroups(),
-		RunIfExists("//sys/@provision_lock", m.initSchemaACLs()),
+		RunIfExists("//sys/@provision_lock", initSchemaACLsCommands),
 		"/usr/bin/yt create scheduler_pool_tree --attributes '{name=default; config={nodes_filter=\"\"}}' --ignore-existing",
 		SetWithIgnoreExisting("//sys/pool_trees/@default_tree", "default"),
 		RunIfNonexistent("//sys/pools", "/usr/bin/yt link //sys/pool_trees/default //sys/pools"),
@@ -321,12 +368,12 @@ func (m *Master) createInitScript() string {
 		RunIfExists("//sys/@provision_lock", fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection '%s'", string(clusterConnection))),
 		SetWithIgnoreExisting("//sys/controller_agents/config/operation_options/spec_template", "'{enable_partitioned_data_balancing=%false}' -r"),
 		m.initAdminUser(),
-		m.initHydraPersistenceUploaderUser(),
+		initHydraPersistenceUploaderUserCommands,
 		m.initMedia(),
 		"/usr/bin/yt remove //sys/@provision_lock -f",
 	}
 
-	return strings.Join(script, "\n")
+	return strings.Join(script, "\n"), nil
 }
 
 func (m *Master) createExitReadOnlyScript() string {
@@ -350,6 +397,11 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForMasterExitReadOnly {
+			if !m.initJob.isRestartPrepared() {
+				if err := m.initJob.prepareRestart(ctx, dry); err != nil {
+					return SimpleStatus(SyncStatusUpdating), err
+				}
+			}
 			return m.exitReadOnly(ctx, dry)
 		}
 		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
@@ -475,8 +527,12 @@ func (m *Master) runInitPhaseJobs(ctx context.Context, dry bool) (ComponentStatu
 
 // runMasterInitJob launches job only once in an Initialization phase.
 func (m *Master) runMasterInitJob(ctx context.Context, dry bool) (ComponentStatus, error) {
+	initScript, err := m.createInitScript()
+	if err != nil {
+		return ComponentStatus{}, fmt.Errorf("failed to create init script: %w", err)
+	}
 	if !dry {
-		m.initJob.SetInitScript(m.createInitScript())
+		m.initJob.SetInitScript(initScript)
 	}
 	return m.initJob.Sync(ctx, dry)
 }
@@ -485,7 +541,7 @@ func addHydraPersistenceUploaderToPodSpec(hydraPersistenceUploader *ytv1.HydraPe
 	podSpec.Containers = append(podSpec.Containers,
 		corev1.Container{
 			Name:    consts.HydraPersistenceUploaderContainerName,
-			Image:   *hydraPersistenceUploader.Image,
+			Image:   hydraPersistenceUploader.Image,
 			Command: []string{"/usr/bin/hydra_persistence_uploader"},
 			Env: []corev1.EnvVar{
 				{

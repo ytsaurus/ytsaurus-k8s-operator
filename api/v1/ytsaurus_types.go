@@ -302,7 +302,7 @@ type MasterConnectionSpec struct {
 }
 
 type HydraPersistenceUploaderSpec struct {
-	Image *string `json:"image,omitempty"`
+	Image string `json:"image,omitempty"`
 }
 
 type MastersSpec struct {

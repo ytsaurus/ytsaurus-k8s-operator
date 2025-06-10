@@ -173,20 +173,20 @@ func handleUpdatingClusterState(
 	return nil, err
 }
 
-func SetPathAcl(path string, acl []yt.ACE) string {
+func SetPathAcl(path string, acl []yt.ACE) (string, error) {
 	formattedAcl, err := yson.MarshalFormat(acl, yson.FormatText)
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf("failed to marshal ACL: %w", err)
 	}
-	return fmt.Sprintf("/usr/bin/yt set %s/@acl '%s'", path, string(formattedAcl))
+	return fmt.Sprintf("/usr/bin/yt set %s/@acl '%s'", path, string(formattedAcl)), nil
 }
 
-func AppendPathAcl(path string, acl yt.ACE) string {
+func AppendPathAcl(path string, acl yt.ACE) (string, error) {
 	formattedAcl, err := yson.MarshalFormat(acl, yson.FormatText)
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf("failed to marshal ACL: %w", err)
 	}
-	return fmt.Sprintf("/usr/bin/yt set %s/@acl/end '%s'", path, string(formattedAcl))
+	return fmt.Sprintf("/usr/bin/yt set %s/@acl/end '%s'", path, string(formattedAcl)), nil
 }
 
 func RunIfCondition(condition string, commands ...string) string {
