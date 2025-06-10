@@ -23,6 +23,8 @@ const (
 	YtsaurusClientType       ComponentType = "YtsaurusClient"
 	ChytType                 ComponentType = "CHYT"
 	SpytType                 ComponentType = "SPYT"
+	ClusterConnectionType    ComponentType = "ClusterConnection"
+	NativeClientConfigType   ComponentType = "NativeClientConfig"
 )
 
 type ComponentClass string
@@ -53,6 +55,8 @@ var (
 		TcpProxyType,
 		KafkaProxyType,
 		YqlAgentType,
+		ClusterConnectionType,
+		NativeClientConfigType,
 	}
 
 	RemoteComponentTypes = []ComponentType{

@@ -916,6 +916,10 @@ func (g *Generator) GetMasterCachesConfig(spec *ytv1.MasterCachesSpec) ([]byte, 
 func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string, error) {
 	var names []string
 	switch component {
+	case consts.ClusterConnectionType:
+		names = append(names, "")
+	case consts.NativeClientConfigType:
+		names = append(names, "")
 	case consts.ControllerAgentType:
 		if g.ytsaurus.Spec.ControllerAgents != nil {
 			names = append(names, "")
@@ -985,6 +989,14 @@ func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string,
 
 func (g *Generator) GetComponentConfig(component consts.ComponentType, name string) ([]byte, error) {
 	switch component {
+	case consts.ClusterConnectionType:
+		if name == "" {
+			return g.GetClusterConnection()
+		}
+	case consts.NativeClientConfigType:
+		if name == "" {
+			return g.GetNativeClientConfig()
+		}
 	case consts.ControllerAgentType:
 		if name == "" {
 			return g.GetControllerAgentConfig(g.ytsaurus.Spec.ControllerAgents)

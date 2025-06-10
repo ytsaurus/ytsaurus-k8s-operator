@@ -177,15 +177,6 @@ func TestGetDataNodeWithoutYtsaurusConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
-func TestGetDiscoveryConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithoutNodes()
-	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
-	g := NewGenerator(ytsaurus, testClusterDomain)
-	cfg, err := g.GetDiscoveryConfig(&ytsaurus.Spec.Discovery)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
 func TestGetExecNodeConfig(t *testing.T) {
 	cases := map[string]struct {
 		JobResources *corev1.ResourceRequirements
@@ -279,16 +270,6 @@ func TestGetExecNodeWithoutYtsaurusConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
-func TestGetHTTPProxyConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithoutNodes(), testClusterDomain)
-	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
-	proxySpec := getHTTPProxySpec()
-	canonize.AssertStruct(t, "http-proxy", proxySpec)
-	cfg, err := g.GetHTTPProxyConfig(proxySpec)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
 func TestGetHTTPProxyConfigDisableCreateOauthUser(t *testing.T) {
 	spec := getYtsaurusWithoutNodes()
 	spec.Spec.OauthService.DisableUserCreation = ptr.To(true)
@@ -313,15 +294,6 @@ func TestGetHTTPProxyConfigEnableCreateOauthUser(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
-func TestGetMasterConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithoutNodes()
-	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
-	g := NewGenerator(ytsaurus, testClusterDomain)
-	cfg, err := g.GetMasterConfig(&ytsaurus.Spec.PrimaryMasters)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
 func TestGetMasterWithFixedHostsConfig(t *testing.T) {
 	ytsaurus := withFixedMasterHosts(getYtsaurus())
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
@@ -340,42 +312,6 @@ func TestGetMasterWithMonitoringPortConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
-func TestGetNativeClientConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithoutNodes(), testClusterDomain)
-	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
-	cfg, err := g.GetNativeClientConfig()
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
-func TestGetQueryTrackerConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithoutNodes()
-	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
-	g := NewGenerator(ytsaurus, testClusterDomain)
-	cfg, err := g.GetQueryTrackerConfig(ytsaurus.Spec.QueryTrackers)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
-func TestGetQueueAgentConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithoutNodes()
-	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
-	g := NewGenerator(ytsaurus, testClusterDomain)
-	cfg, err := g.GetQueueAgentConfig(ytsaurus.Spec.QueueAgents)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
-func TestGetRPCProxyConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithoutNodes(), testClusterDomain)
-	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
-	proxySpec := getRPCProxySpec()
-	canonize.AssertStruct(t, "rpc-proxy", proxySpec)
-	cfg, err := g.GetRPCProxyConfig(proxySpec)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
 func TestGetRPCProxyWithoutOauthConfig(t *testing.T) {
 	g := NewGenerator(getYtsaurus(), testClusterDomain)
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
@@ -386,7 +322,7 @@ func TestGetRPCProxyWithoutOauthConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
-func TestGetSchedulerConfig(t *testing.T) {
+func TestGetSchedulerWithoutTabletNodes(t *testing.T) {
 	ytsaurus := getYtsaurusWithoutNodes()
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
 	g := NewGenerator(ytsaurus, testClusterDomain)
@@ -400,14 +336,6 @@ func TestGetSchedulerWithFixedMasterHostsConfig(t *testing.T) {
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
 	g := NewGenerator(ytsaurus, testClusterDomain)
 	cfg, err := g.GetSchedulerConfig(ytsaurus.Spec.Schedulers)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
-func TestGetStrawberryControllerConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithoutNodes(), testClusterDomain)
-	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
-	cfg, err := g.GetStrawberryControllerConfig()
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -434,17 +362,6 @@ func TestGetStrawberryControllerConfigWithCustomFamilies(t *testing.T) {
 	g.ytsaurus.Spec.StrawberryController.DefaultRouteFamily = &defaultRouteFamily
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
 	cfg, err := g.GetStrawberryControllerConfig()
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
-func TestGetTabletNodeConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithoutNodes()
-	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
-	g := NewLocalNodeGenerator(ytsaurus, ytsaurus.Name, testClusterDomain)
-	spec := getTabletNodeSpec()
-	canonize.AssertStruct(t, "tablet-node", spec)
-	cfg, err := g.GetTabletNodeConfig(spec)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -509,15 +426,6 @@ func TestGetUICustomConfigWithSettings(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
-func TestGetYQLAgentConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithoutNodes()
-	g := NewGenerator(ytsaurus, testClusterDomain)
-	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
-	cfg, err := g.GetYQLAgentConfig(ytsaurus.Spec.YQLAgents)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
 func TestResolverOptionsKeepSocketAndForceTCP(t *testing.T) {
 	ytsaurus := getYtsaurusWithoutNodes()
 	ytsaurus.Spec.CommonSpec.ForceTCP = ptr.To(true)
@@ -538,13 +446,22 @@ func TestGetMasterCachesWithFixedHostsConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
-func TestGetMasterCachesConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithoutNodes()
+func TestGetYtsaurusComponents(t *testing.T) {
+	ytsaurus := getYtsaurusWithAllComponents()
+
 	g := NewGenerator(ytsaurus, testClusterDomain)
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
-	cfg, err := g.GetMasterCachesConfig(ytsaurus.Spec.MasterCaches)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
+
+	for _, component := range consts.LocalComponentTypes {
+		t.Run(string(component), func(t *testing.T) {
+			names, err := g.GetComponentNames(component)
+			require.NoError(t, err)
+			require.Len(t, names, 1)
+			cfg, err := g.GetComponentConfig(component, names[0])
+			require.NoError(t, err)
+			canonize.Assert(t, cfg)
+		})
+	}
 }
 
 func TestGetYtsaurusWithTlsInterconnect(t *testing.T) {
