@@ -73,46 +73,32 @@ func (c *Ytsaurus) SetUpdateStatusCondition(ctx context.Context, condition metav
 	sortConditions(c.ytsaurus.Status.UpdateStatus.Conditions)
 }
 
+func (c *Ytsaurus) SetUpdatingComponents(canUpdate []ytv1.Component) {
+	c.ytsaurus.Status.UpdateStatus.UpdatingComponents = canUpdate
+	c.ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary = buildComponentsSummary(canUpdate)
+}
+
+func (c *Ytsaurus) SetBlockedComponents(components []ytv1.Component) bool {
+	summary := buildComponentsSummary(components)
+	if c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary == summary {
+		return false
+	}
+	c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary = summary
+	return true
+}
+
 func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
 	c.ytsaurus.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
 	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
 	c.ytsaurus.Status.UpdateStatus.MasterMonitoringPaths = make([]string, 0)
-	c.ytsaurus.Status.UpdateStatus.UpdatingComponents = nil
-	c.syncUpdatingComponentsSummary()
+	c.SetUpdatingComponents(nil)
 	return c.apiProxy.UpdateStatus(ctx)
-}
-
-func (c *Ytsaurus) syncUpdatingComponentsSummary() {
-	c.ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary = buildComponentsSummary(c.ytsaurus.Status.UpdateStatus.UpdatingComponents)
 }
 
 func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {
 	logger := log.FromContext(ctx)
 	c.apiProxy.RecordNormal("Update", message)
 	logger.Info(fmt.Sprintf("Ytsaurus update: %s", message))
-}
-
-func (c *Ytsaurus) SaveUpdatingClusterState(ctx context.Context, canUpdate []ytv1.Component) error {
-	logger := log.FromContext(ctx)
-	c.ytsaurus.Status.State = ytv1.ClusterStateUpdating
-	c.ytsaurus.Status.UpdateStatus.UpdatingComponents = canUpdate
-	// We do not update BlockedComponentsSummary here, it should be updated first thing in Running state.
-	c.syncUpdatingComponentsSummary()
-
-	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
-		logger.Error(err, "unable to update Ytsaurus cluster status")
-		return err
-	}
-
-	return nil
-}
-
-func (c *Ytsaurus) SaveBlockedComponentsState(ctx context.Context, components []ytv1.Component) error {
-	c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary = buildComponentsSummary(components)
-	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
-		return fmt.Errorf("unable to update Ytsaurus cluster status when setting blocked components")
-	}
-	return nil
 }
 
 func (c *Ytsaurus) SaveClusterState(ctx context.Context, clusterState ytv1.ClusterState) error {
