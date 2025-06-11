@@ -179,7 +179,10 @@ func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 		}
 
 		if prevStatus.ObservedGeneration != newStatus.ObservedGeneration {
-			log.Info("ObservedGeneration", "current", newStatus.ObservedGeneration, "previous", prevStatus.ObservedGeneration)
+			log.Info("ObservedGeneration",
+				"current", newStatus.ObservedGeneration,
+				"previous", prevStatus.ObservedGeneration,
+				"observed", newStatus.ObservedGeneration == ytsaurus.Generation)
 			changed = true
 		}
 
@@ -201,8 +204,23 @@ func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 			changed = true
 		}
 
+		if prevStatus.UpdateStatus.Flow != newStatus.UpdateStatus.Flow {
+			log.Info("UpdateStatus", "flow", newStatus.UpdateStatus.Flow)
+			changed = true
+		}
+
 		if len(prevStatus.UpdateStatus.UpdatingComponents) != len(newStatus.UpdateStatus.UpdatingComponents) {
 			log.Info("UpdateStatus", "updatingComponents", newStatus.UpdateStatus.UpdatingComponents)
+			changed = true
+		}
+
+		if len(prevStatus.UpdateStatus.UpdatingComponentsSummary) != len(newStatus.UpdateStatus.UpdatingComponentsSummary) {
+			log.Info("UpdateStatus", "updatingComponentsSummary", newStatus.UpdateStatus.UpdatingComponentsSummary)
+			changed = true
+		}
+
+		if len(prevStatus.UpdateStatus.BlockedComponentsSummary) != len(newStatus.UpdateStatus.BlockedComponentsSummary) {
+			log.Info("UpdateStatus", "blockedComponentsSummary", newStatus.UpdateStatus.BlockedComponentsSummary)
 			changed = true
 		}
 
