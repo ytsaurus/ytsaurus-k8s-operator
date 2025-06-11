@@ -14,6 +14,11 @@
                 "enable_ipv6"=%false;
                 retries=1000;
             };
+            "secure_vault_files"={
+                "YT_BUS_CA_BUNDLE"="/tls/ca_bundle/ca.crt";
+                "YT_BUS_CLIENT_CERTIFICATE"="/tls/bus_client_secret/tls.crt";
+                "YT_BUS_CLIENT_PRIVATE_KEY"="/tls/bus_client_secret/tls.key";
+            };
         };
         jupyt={
         };

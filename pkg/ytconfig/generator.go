@@ -377,7 +377,8 @@ func (g *Generator) GetStrawberryControllerConfig() ([]byte, error) {
 	var conFamConfig StrawberryControllerFamiliesConfig
 	g.fillStrawberryControllerFamiliesConfig(&conFamConfig, g.ytsaurus.Spec.StrawberryController)
 
-	c, err := getStrawberryController(conFamConfig, resolver)
+	keyring := getMountKeyring(g.commonSpec, nil)
+	c, err := getStrawberryController(conFamConfig, resolver, keyring)
 	if err != nil {
 		return nil, err
 	}

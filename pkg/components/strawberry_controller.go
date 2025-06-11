@@ -23,6 +23,8 @@ type StrawberryController struct {
 	initUserAndUrlJob  *InitJob
 	initChytClusterJob *InitJob
 	secret             *resources.StringSecret
+	caBundle           *resources.CABundle
+	busClientSecret    *resources.TLSSecret
 
 	master    Component
 	scheduler Component
@@ -49,6 +51,25 @@ func NewStrawberryController(
 	image := resource.Spec.CoreImage
 	if resource.Spec.StrawberryController.Image != nil {
 		image = *resource.Spec.StrawberryController.Image
+	}
+
+	var caBundle *resources.CABundle
+	var busClientSecret *resources.TLSSecret
+
+	if caBundleSpec := resource.Spec.CABundle; caBundleSpec != nil {
+		caBundle = resources.NewCABundle(
+			caBundleSpec.Name,
+			consts.CABundleVolumeName,
+			consts.CABundleMountPoint)
+	}
+
+	if transportSpec := resource.Spec.NativeTransport; transportSpec != nil {
+		if transportSpec.TLSClientSecret != nil {
+			busClientSecret = resources.NewTLSSecret(
+				transportSpec.TLSClientSecret.Name,
+				consts.BusClientSecretVolumeName,
+				consts.BusClientSecretMountPoint)
+		}
 	}
 
 	microservice := newMicroservice(
@@ -104,10 +125,12 @@ func NewStrawberryController(
 			l.GetSecretName(),
 			l,
 			ytsaurus.APIProxy()),
-		name:      "strawberry",
-		master:    master,
-		scheduler: scheduler,
-		dataNodes: dataNodes,
+		caBundle:        caBundle,
+		busClientSecret: busClientSecret,
+		name:            "strawberry",
+		master:          master,
+		scheduler:       scheduler,
+		dataNodes:       dataNodes,
 	}
 }
 
@@ -209,6 +232,16 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 
 	deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
 		createConfigVolume(consts.ConfigVolumeName, c.labeller.GetMainConfigMapName(), nil),
+	}
+
+	if c.caBundle != nil {
+		c.caBundle.AddVolume(&deployment.Spec.Template.Spec)
+		c.caBundle.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[0])
+	}
+
+	if c.busClientSecret != nil {
+		c.busClientSecret.AddVolume(&deployment.Spec.Template.Spec)
+		c.busClientSecret.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[0])
 	}
 
 	return c.microservice.Sync(ctx)
