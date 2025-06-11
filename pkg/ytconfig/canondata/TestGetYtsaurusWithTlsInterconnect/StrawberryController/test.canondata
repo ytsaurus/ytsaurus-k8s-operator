@@ -14,6 +14,21 @@
                 "enable_ipv6"=%false;
                 retries=1000;
             };
+            "bus_server"={
+                "encryption_mode"=optional;
+                "cert_chain"={
+                    "environment_variable"="YT_SECURE_VAULT_YT_BUS_SERVER_CERTIFICATE";
+                };
+                "private_key"={
+                    "environment_variable"="YT_SECURE_VAULT_YT_BUS_SERVER_PRIVATE_KEY";
+                };
+                "verification_mode"=none;
+            };
+            "secure_vault_files"={
+                "YT_BUS_CA_BUNDLE"="/tls/ca_bundle/ca.crt";
+                "YT_BUS_SERVER_CERTIFICATE"="/tls/bus_secret/tls.crt";
+                "YT_BUS_SERVER_PRIVATE_KEY"="/tls/bus_secret/tls.key";
+            };
         };
         jupyt={
         };
