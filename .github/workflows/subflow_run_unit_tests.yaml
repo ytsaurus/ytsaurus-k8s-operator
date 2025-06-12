@@ -6,8 +6,16 @@ on:
 
 jobs:
   check:
-    name: Run checks
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: ubuntu
+            runs-on: ubuntu-latest
+          - name: macos
+            runs-on: macos-latest
+
+    name: Run checks on ${{ matrix.name }}
+    runs-on: ${{ matrix.runs-on }}
 
     steps:
       - name: checkout sources
