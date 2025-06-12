@@ -30,10 +30,16 @@ type StrawberryInitCluster struct {
 
 type ChytConfig struct {
 	AddressResolver  AddressResolver   `yson:"address_resolver"`
+	BusServer        *BusServer        `yson:"bus_server,omitempty"`
 	SecureVaultFiles map[string]string `yson:"secure_vault_files"`
 }
 
-func getStrawberryController(conFamConfig StrawberryControllerFamiliesConfig, resolver AddressResolver, keyring *Keyring) (StrawberryController, error) {
+func getStrawberryController(
+	conFamConfig StrawberryControllerFamiliesConfig,
+	resolver AddressResolver,
+	busServer *BusServer,
+	keyring *Keyring,
+) (StrawberryController, error) {
 	controllers := make(map[string]yson.RawValue, len(conFamConfig.ControllerFamilies))
 	for _, cFamily := range conFamConfig.ControllerFamilies {
 		var config any
@@ -50,8 +56,15 @@ func getStrawberryController(conFamConfig StrawberryControllerFamiliesConfig, re
 			if keyring.BusClientPrivateKey != nil {
 				vault[consts.BusClientPrivateKeyVaultName] = keyring.BusClientPrivateKey.FileName
 			}
+			if keyring.BusServerCertificate != nil {
+				vault[consts.BusServerCertificateVaultName] = keyring.BusServerCertificate.FileName
+			}
+			if keyring.BusServerPrivateKey != nil {
+				vault[consts.BusServerPrivateKeyVaultName] = keyring.BusServerPrivateKey.FileName
+			}
 			config = ChytConfig{
 				AddressResolver:  resolver,
+				BusServer:        busServer,
 				SecureVaultFiles: vault,
 			}
 		default:

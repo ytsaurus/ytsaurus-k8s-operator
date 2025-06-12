@@ -25,6 +25,7 @@ type StrawberryController struct {
 	secret             *resources.StringSecret
 	caBundle           *resources.CABundle
 	busClientSecret    *resources.TLSSecret
+	busServerSecret    *resources.TLSSecret
 
 	master    Component
 	scheduler Component
@@ -55,6 +56,7 @@ func NewStrawberryController(
 
 	var caBundle *resources.CABundle
 	var busClientSecret *resources.TLSSecret
+	var busServerSecret *resources.TLSSecret
 
 	if caBundleSpec := resource.Spec.CABundle; caBundleSpec != nil {
 		caBundle = resources.NewCABundle(
@@ -64,6 +66,12 @@ func NewStrawberryController(
 	}
 
 	if transportSpec := resource.Spec.NativeTransport; transportSpec != nil {
+		if transportSpec.TLSSecret != nil {
+			busServerSecret = resources.NewTLSSecret(
+				transportSpec.TLSSecret.Name,
+				consts.BusServerSecretVolumeName,
+				consts.BusServerSecretMountPoint)
+		}
 		if transportSpec.TLSClientSecret != nil {
 			busClientSecret = resources.NewTLSSecret(
 				transportSpec.TLSClientSecret.Name,
@@ -127,6 +135,7 @@ func NewStrawberryController(
 			ytsaurus.APIProxy()),
 		caBundle:        caBundle,
 		busClientSecret: busClientSecret,
+		busServerSecret: busServerSecret,
 		name:            "strawberry",
 		master:          master,
 		scheduler:       scheduler,
@@ -242,6 +251,11 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 	if c.busClientSecret != nil {
 		c.busClientSecret.AddVolume(&deployment.Spec.Template.Spec)
 		c.busClientSecret.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[0])
+	}
+
+	if c.busServerSecret != nil {
+		c.busServerSecret.AddVolume(&deployment.Spec.Template.Spec)
+		c.busServerSecret.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[0])
 	}
 
 	return c.microservice.Sync(ctx)
