@@ -170,6 +170,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var name client.ObjectKey
 	var ytBuilder *testutil.YtsaurusBuilder
 	var ytsaurus *ytv1.Ytsaurus
+	var chyt *ytv1.Chyt
 	var ytProxyAddress string
 	var ytClient yt.Client
 	var g *ytconfig.Generator
@@ -195,6 +196,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Labels: map[string]string{
 					"app.kubernetes.io/component": "test",
 					"app.kubernetes.io/name":      "test-" + strings.Join(currentSpec.Labels(), "-"),
+					"app.kubernetes.io/part-of":   "ytsaurus-dev",
 				},
 				Annotations: map[string]string{
 					"kubernetes.io/description": currentSpec.LeafNodeText,
@@ -252,7 +254,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
 
 		By("Creating ytsaurus client")
-		g = ytconfig.NewGenerator(ytsaurus, "local")
+		g = ytconfig.NewGenerator(ytsaurus, "cluster.local")
 		ytProxyAddress = getHTTPProxyAddress(g, namespace)
 
 		log.Info("Ytsaurus access",
@@ -268,6 +270,23 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		ytClient = getYtClient(ytProxyAddress)
 		checkClusterViability(ytClient)
+
+		if chyt != nil {
+			By("Checking CHYT status")
+			Eventually(ctx, func(ctx context.Context) (*ytv1.Chyt, error) {
+				err := k8sClient.Get(ctx, client.ObjectKeyFromObject(chyt), chyt)
+				return chyt, err
+			}, bootstrapTimeout, pollInterval).Should(
+				HaveField("Status.ReleaseStatus", ytv1.ChytReleaseStatusFinished),
+				"CHYT status: %+v", &chyt.Status,
+			)
+
+			By("Checking CHYT liveness")
+			// FIXME(khlebnikov): There is no reliable readiness signal.
+			Eventually(queryClickHouse, "120s", "1s").WithArguments(
+				ytProxyAddress, "SELECT 1",
+			).MustPassRepeatedly(3).Should(Equal("1\n"))
+		}
 	})
 
 	AfterEach(func(ctx context.Context) {
@@ -1144,6 +1163,88 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			})
 
 		}) // integration host-network
+
+		Context("With CHYT", Label("chyt"), func() {
+
+			BeforeEach(func() {
+				By("Adding strawberry")
+				ytBuilder.WithBaseComponents()
+				ytBuilder.WithStrawberryController()
+
+				By("Adding CHYT instance")
+				chyt = ytBuilder.CreateChyt()
+				objects = append(objects, chyt)
+			})
+
+			It("Checks ClickHouse", func(ctx context.Context) {
+				Expect(queryClickHouse(
+					ytProxyAddress,
+					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one;",
+				)).To(Succeed())
+			})
+
+		}) // integration chyt
+
+		Context("With Bus RPC mTLS", Label("tls"), func() {
+
+			var certBuilder *testutil.CertBuilder
+
+			BeforeEach(func() {
+				By("Adding all components")
+				ytBuilder.WithBaseComponents()
+				ytBuilder.WithRPCProxies()
+				ytBuilder.WithQueryTracker()
+				ytBuilder.WithYqlAgent()
+				ytBuilder.WithStrawberryController()
+
+				By("Adding CHYT instance")
+				chyt = ytBuilder.CreateChyt()
+				objects = append(objects, chyt)
+
+				By("Adding native transport ceritificates")
+				certBuilder = &testutil.CertBuilder{
+					Namespace: namespace,
+				}
+
+				nativeServerCert := certBuilder.BuildCertificate(ytsaurus.Name+"-server", []string{
+					ytsaurus.Name,
+				})
+				nativeClientCert := certBuilder.BuildCertificate(ytsaurus.Name+"-client", []string{
+					ytsaurus.Name,
+				})
+
+				ytsaurus.Spec.CABundle = &corev1.LocalObjectReference{
+					Name: testutil.TestTrustBundleName,
+				}
+
+				ytsaurus.Spec.NativeTransport = &ytv1.RPCTransportSpec{
+					TLSSecret: &corev1.LocalObjectReference{
+						Name: nativeServerCert.Name,
+					},
+					TLSClientSecret: &corev1.LocalObjectReference{
+						Name: nativeClientCert.Name,
+					},
+					TLSRequired:                true,
+					TLSPeerAlternativeHostName: ytsaurus.Name,
+				}
+
+				objects = append(objects,
+					nativeServerCert,
+					nativeClientCert,
+				)
+			})
+
+			It("Verify that mTLS is active", func(ctx context.Context) {
+				// TODO(khlebnikov): Poke all RPC servers.
+				// TODO(khlebnikov): Check all RPC connections in orchid.
+
+				Expect(queryClickHouse(
+					ytProxyAddress,
+					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one;",
+				)).To(Succeed())
+			})
+
+		}) // integration tls
 
 	}) // integration
 })

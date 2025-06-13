@@ -46,6 +46,7 @@ func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.
 			ytsaurus.Spec.Tolerations,
 			ytsaurus.Spec.NodeSelector,
 			ytsaurus.Spec.DNSConfig,
+			&ytsaurus.Spec.CommonSpec,
 		),
 		initEnvironment: NewInitJob(
 			l,
@@ -59,6 +60,7 @@ func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.
 			ytsaurus.Spec.Tolerations,
 			ytsaurus.Spec.NodeSelector,
 			ytsaurus.Spec.DNSConfig,
+			&ytsaurus.Spec.CommonSpec,
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

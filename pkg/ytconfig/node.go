@@ -182,6 +182,7 @@ type JobProxy struct {
 	JobProxyAuthenticationManager  Auth            `yson:"job_proxy_authentication_manager"`
 	JobProxyLogging                JobProxyLogging `yson:"job_proxy_logging"`
 	ForwardAllEnvironmentVariables *bool           `yson:"forward_all_environment_variables,omitempty"`
+	SupervisorConnection           *BusClient      `yson:"supervisor_connection,omitempty"`
 }
 
 type ExecNode struct {
@@ -485,6 +486,28 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 				jobEnv.JobProxyBindMounts = append(jobEnv.JobProxyBindMounts, BindMount{
 					InternalPath: location.Path,
 					ExternalPath: location.Path,
+					ReadOnly:     true,
+				})
+			}
+		}
+
+		// FIXME(khlebnikov): Isolate job-proxy or pass certificate via environment.
+		nativeTransport := spec.NativeTransport
+		if nativeTransport == nil {
+			nativeTransport = commonSpec.NativeTransport
+		}
+		if nativeTransport != nil {
+			if commonSpec.CABundle != nil && !nativeTransport.TLSInsecure {
+				jobEnv.JobProxyBindMounts = append(jobEnv.JobProxyBindMounts, BindMount{
+					InternalPath: consts.CABundleMountPoint,
+					ExternalPath: consts.CABundleMountPoint,
+					ReadOnly:     true,
+				})
+			}
+			if nativeTransport.TLSClientSecret != nil {
+				jobEnv.JobProxyBindMounts = append(jobEnv.JobProxyBindMounts, BindMount{
+					InternalPath: consts.BusClientSecretMountPoint,
+					ExternalPath: consts.BusClientSecretMountPoint,
 					ReadOnly:     true,
 				})
 			}

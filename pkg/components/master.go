@@ -67,6 +67,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		jobTolerations,
 		jobNodeSelector,
 		dnsConfig,
+		&resource.Spec.CommonSpec,
 	)
 
 	exitReadOnlyJob := NewInitJob(
@@ -81,6 +82,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		jobTolerations,
 		jobNodeSelector,
 		dnsConfig,
+		&resource.Spec.CommonSpec,
 	)
 
 	return &Master{

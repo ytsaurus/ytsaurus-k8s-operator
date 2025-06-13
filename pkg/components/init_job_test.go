@@ -87,6 +87,7 @@ func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
 		"dummy-image",
 		func() ([]byte, error) { return []byte("dummy-cfg"), nil },
 		nil, nil, nil,
+		&resource.Spec.CommonSpec,
 	)
 }
 
