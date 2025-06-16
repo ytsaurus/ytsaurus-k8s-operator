@@ -397,12 +397,10 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForMasterExitReadOnly {
-			if !m.initJob.isRestartPrepared() {
-				if err := m.initJob.prepareRestart(ctx, dry); err != nil {
-					return SimpleStatus(SyncStatusUpdating), err
-				}
-			}
 			return m.exitReadOnly(ctx, dry)
+		}
+		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForSidecarsInitializingPrepare || m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForSidecarsInitialize {
+			return m.sidecarsInit(ctx, dry)
 		}
 		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
 			return *status, err
@@ -473,6 +471,51 @@ func (m *Master) getHostAddressLabel() string {
 		return primaryMastersSpec.HostAddressLabel
 	}
 	return defaultHostAddressLabel
+}
+
+func (m *Master) setSidecarsInitializingPrepared(ctx context.Context, status metav1.ConditionStatus) {
+	m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    consts.ConditionSidecarsPreparedForInitializing,
+		Status:  status,
+		Reason:  "SidecarsPreparedForInitializing",
+		Message: "Sidecars are prepared for initializing",
+	})
+}
+
+func (m *Master) sidecarsInit(ctx context.Context, dry bool) (ComponentStatus, error) {
+	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSidecarsPreparedForInitializing) {
+		if !m.initJob.isRestartPrepared() {
+			if err := m.initJob.prepareRestart(ctx, dry); err != nil {
+				return SimpleStatus(SyncStatusUpdating), err
+			}
+		}
+		if !dry {
+			m.setSidecarsInitializingPrepared(ctx, metav1.ConditionTrue)
+		}
+		return SimpleStatus(SyncStatusUpdating), nil
+	}
+
+	if !m.initJob.IsCompleted() {
+		if !dry {
+			initScript, err := m.createInitScript()
+			if err != nil {
+				return ComponentStatus{}, fmt.Errorf("failed to create init script: %w", err)
+			}
+			m.initJob.SetInitScript(initScript)
+		}
+		return m.initJob.Sync(ctx, dry)
+	}
+
+	if !dry {
+		m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    consts.ConditionSidecarsInitialized,
+			Status:  metav1.ConditionTrue,
+			Reason:  "SidecarsInitialized",
+			Message: "Sidecars are initialized",
+		})
+		m.setSidecarsInitializingPrepared(ctx, metav1.ConditionFalse)
+	}
+	return SimpleStatus(SyncStatusUpdating), nil
 }
 
 func (m *Master) exitReadOnly(ctx context.Context, dry bool) (ComponentStatus, error) {
