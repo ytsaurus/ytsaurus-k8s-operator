@@ -2223,6 +2223,8 @@ _Appears in:_
 | `WaitingForTabletCellsRecovery` |  |
 | `WaitingForOpArchiveUpdatingPrepare` |  |
 | `WaitingForOpArchiveUpdate` |  |
+| `WaitingForSidecarsInitializingPrepare` |  |
+| `WaitingForSidecarsInitialize` |  |
 | `WaitingForQTStateUpdatingPrepare` |  |
 | `WaitingForQTStateUpdate` |  |
 | `WaitingForQAStateUpdatingPrepare` |  |
