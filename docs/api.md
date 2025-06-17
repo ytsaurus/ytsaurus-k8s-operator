@@ -716,6 +716,22 @@ _Appears in:_
 | `failureThreshold` _integer_ |  |  |  |
 
 
+#### HydraPersistenceUploaderSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [MastersSpec](#mastersspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `image` _string_ |  |  |  |
+
+
 #### InstanceSpec
 
 
@@ -1126,6 +1142,7 @@ _Appears in:_
 | `hostAddressLabel` _string_ |  |  |  |
 | `maxSnapshotCountToKeep` _integer_ |  |  |  |
 | `maxChangelogCountToKeep` _integer_ |  |  |  |
+| `hydraPersistenceUploader` _[HydraPersistenceUploaderSpec](#hydrapersistenceuploaderspec)_ |  |  |  |
 | `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
 
 
@@ -2206,6 +2223,8 @@ _Appears in:_
 | `WaitingForTabletCellsRecovery` |  |
 | `WaitingForOpArchiveUpdatingPrepare` |  |
 | `WaitingForOpArchiveUpdate` |  |
+| `WaitingForSidecarsInitializingPrepare` |  |
+| `WaitingForSidecarsInitialize` |  |
 | `WaitingForQTStateUpdatingPrepare` |  |
 | `WaitingForQTStateUpdate` |  |
 | `WaitingForQAStateUpdatingPrepare` |  |

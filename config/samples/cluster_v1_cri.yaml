@@ -101,6 +101,9 @@ spec:
     # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#mastersspec
     instanceCount: 1
 
+    # hydraPersistenceUploader: 
+    #   image: ghcr.io/ytsaurus/sidecars:0.0.1
+
     cellTag: 1
 
     loggers: *loggers
