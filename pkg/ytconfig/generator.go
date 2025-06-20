@@ -272,6 +272,8 @@ func (g *Generator) fillBusEncryption(b *Bus, s *ytv1.RPCTransportSpec) {
 		b.EncryptionMode = EncryptionModeOptional
 	}
 
+	b.VerificationMode = VerificationModeNone
+
 	b.CertChain = &PemBlob{
 		FileName: path.Join(consts.RPCSecretMountPoint, corev1.TLSCertKey),
 	}
@@ -300,6 +302,8 @@ func (g *NodeGenerator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec)
 		c.BusServer.EncryptionMode = EncryptionModeOptional
 	}
 
+	c.BusServer.VerificationMode = VerificationModeNone
+
 	c.BusServer.CertChain = &PemBlob{
 		FileName: path.Join(consts.BusSecretMountPoint, corev1.TLSCertKey),
 	}
@@ -321,16 +325,6 @@ func (g *NodeGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s 
 		c.BusClient = &Bus{}
 	}
 
-	if g.commonSpec.CABundle != nil {
-		c.BusClient.CA = &PemBlob{
-			FileName: path.Join(consts.CABundleMountPoint, consts.CABundleFileName),
-		}
-	} else {
-		c.BusClient.CA = &PemBlob{
-			FileName: consts.DefaultCABundlePath,
-		}
-	}
-
 	if s.TLSRequired {
 		c.BusClient.EncryptionMode = EncryptionModeRequired
 	} else {
@@ -341,9 +335,17 @@ func (g *NodeGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s 
 		c.BusClient.VerificationMode = VerificationModeNone
 	} else {
 		c.BusClient.VerificationMode = VerificationModeFull
-	}
 
-	if s.TLSPeerAlternativeHostName != "" {
+		if g.commonSpec.CABundle != nil {
+			c.BusClient.CA = &PemBlob{
+				FileName: path.Join(consts.CABundleMountPoint, consts.CABundleFileName),
+			}
+		} else {
+			c.BusClient.CA = &PemBlob{
+				FileName: consts.DefaultCABundlePath,
+			}
+		}
+
 		c.BusClient.PeerAlternativeHostName = s.TLSPeerAlternativeHostName
 	}
 }
