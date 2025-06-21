@@ -43,9 +43,9 @@ var (
 )
 
 var (
-	masterVolumeSize, _   = resource.ParseQuantity("5Gi")
-	dataNodeVolumeSize, _ = resource.ParseQuantity("5Gi")
-	execNodeVolumeSize, _ = resource.ParseQuantity("5Gi")
+	masterVolumeSize   = resource.MustParse("5Gi")
+	dataNodeVolumeSize = resource.MustParse("5Gi")
+	execNodeVolumeSize = resource.MustParse("5Gi")
 )
 
 type YtsaurusBuilder struct {
@@ -307,19 +307,10 @@ func getPortFromEnv(envvar string) *int32 {
 }
 
 func (b *YtsaurusBuilder) CreateExecNodeSpec() ytv1.ExecNodesSpec {
-	execNodeCPU, _ := resource.ParseQuantity("1")
-	execNodeMemory, _ := resource.ParseQuantity("2Gi")
-
 	return ytv1.ExecNodesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    execNodeCPU,
-					corev1.ResourceMemory: execNodeMemory,
-				},
-			},
-			Loggers: b.CreateLoggersSpec(),
+			Loggers:       b.CreateLoggersSpec(),
 			Locations: []ytv1.LocationSpec{
 				{
 					LocationType: "ChunkCache",
