@@ -1,16 +1,27 @@
+name: "Unit Tests"
+
 on:
-  workflow_call:
+  workflow_call: {}
+  workflow_dispatch: {}
 
 jobs:
   check:
-    name: Run checks
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: ubuntu
+            runs-on: ubuntu-latest
+          - name: macos
+            runs-on: macos-latest
+
+    name: Run checks on ${{ matrix.name }}
+    runs-on: ${{ matrix.runs-on }}
 
     steps:
       - name: checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Go
         uses: actions/setup-go@v5

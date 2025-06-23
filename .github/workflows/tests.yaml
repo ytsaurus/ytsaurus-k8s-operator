@@ -1,0 +1,23 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request: {}
+
+  workflow_dispatch: {}
+
+jobs:
+  check-unit:
+    name: Run unit tests
+    uses: ./.github/workflows/subflow_run_unit_tests.yaml
+
+  check-e2e:
+    name: Run e2e tests
+    uses: ./.github/workflows/subflow_run_e2e_tests.yaml
+
+  check-compat:
+    name: Run compat tests
+    uses: ./.github/workflows/subflow_run_compat_tests.yaml

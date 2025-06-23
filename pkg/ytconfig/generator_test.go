@@ -13,6 +13,8 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/canonize"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 var (
@@ -115,7 +117,7 @@ var (
 )
 
 func TestGetStrawberryInitClusterConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithEverything()
+	ytsaurus := getYtsaurusWithoutNodes()
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
 	g := NewGenerator(ytsaurus, testClusterDomain)
 	cfg, err := g.GetStrawberryInitClusterConfig()
@@ -124,7 +126,7 @@ func TestGetStrawberryInitClusterConfig(t *testing.T) {
 }
 
 func TestGetControllerAgentsConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithEverything()
+	ytsaurus := getYtsaurusWithoutNodes()
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
 	g := NewGenerator(ytsaurus, testClusterDomain)
 	cfg, err := g.GetControllerAgentConfig(ytsaurus.Spec.ControllerAgents)
@@ -149,7 +151,7 @@ func TestGetDataNodeConfig(t *testing.T) {
 
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
-			ytsaurus := getYtsaurusWithEverything()
+			ytsaurus := getYtsaurusWithoutNodes()
 			canonize.AssertStruct(t, "ytsaurus", ytsaurus)
 			g := NewLocalNodeGenerator(ytsaurus, ytsaurus.Name, testClusterDomain)
 			spec := getDataNodeSpec(test.Location)
@@ -175,15 +177,6 @@ func TestGetDataNodeWithoutYtsaurusConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
-func TestGetDiscoveryConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithEverything()
-	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
-	g := NewGenerator(ytsaurus, testClusterDomain)
-	cfg, err := g.GetDiscoveryConfig(&ytsaurus.Spec.Discovery)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
 func TestGetExecNodeConfig(t *testing.T) {
 	cases := map[string]struct {
 		JobResources *corev1.ResourceRequirements
@@ -198,7 +191,7 @@ func TestGetExecNodeConfig(t *testing.T) {
 
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
-			ytsaurus := getYtsaurusWithEverything()
+			ytsaurus := getYtsaurusWithoutNodes()
 			canonize.AssertStruct(t, "ytsaurus", ytsaurus)
 			g := NewLocalNodeGenerator(ytsaurus, ytsaurus.Name, testClusterDomain)
 			spec := getExecNodeSpec(test.JobResources)
@@ -211,7 +204,7 @@ func TestGetExecNodeConfig(t *testing.T) {
 }
 
 func TestGetExecNodeConfigWithCri(t *testing.T) {
-	ytsaurus := getYtsaurusWithEverything()
+	ytsaurus := getYtsaurusWithoutNodes()
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
 	g := NewLocalNodeGenerator(ytsaurus, ytsaurus.Name, testClusterDomain)
 
@@ -249,7 +242,7 @@ func TestGetExecNodeConfigWithCri(t *testing.T) {
 }
 
 func TestGetContainerdConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithEverything()
+	ytsaurus := getYtsaurusWithoutNodes()
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
 	g := NewLocalNodeGenerator(ytsaurus, ytsaurus.Name, testClusterDomain)
 	spec := withCri(getExecNodeSpec(nil), nil, false)
@@ -277,18 +270,8 @@ func TestGetExecNodeWithoutYtsaurusConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
-func TestGetHTTPProxyConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
-	proxySpec := getHTTPProxySpec()
-	canonize.AssertStruct(t, "http-proxy", proxySpec)
-	cfg, err := g.GetHTTPProxyConfig(proxySpec)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
 func TestGetHTTPProxyConfigDisableCreateOauthUser(t *testing.T) {
-	spec := getYtsaurusWithEverything()
+	spec := getYtsaurusWithoutNodes()
 	spec.Spec.OauthService.DisableUserCreation = ptr.To(true)
 	g := NewGenerator(spec, testClusterDomain)
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
@@ -300,22 +283,13 @@ func TestGetHTTPProxyConfigDisableCreateOauthUser(t *testing.T) {
 }
 
 func TestGetHTTPProxyConfigEnableCreateOauthUser(t *testing.T) {
-	spec := getYtsaurusWithEverything()
+	spec := getYtsaurusWithoutNodes()
 	spec.Spec.OauthService.DisableUserCreation = ptr.To(false)
 	g := NewGenerator(spec, testClusterDomain)
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
 	proxySpec := getHTTPProxySpec()
 	canonize.AssertStruct(t, "http-proxy", proxySpec)
 	cfg, err := g.GetHTTPProxyConfig(proxySpec)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
-func TestGetMasterConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithEverything()
-	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
-	g := NewGenerator(ytsaurus, testClusterDomain)
-	cfg, err := g.GetMasterConfig(&ytsaurus.Spec.PrimaryMasters)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -338,42 +312,6 @@ func TestGetMasterWithMonitoringPortConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
-func TestGetNativeClientConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
-	cfg, err := g.GetNativeClientConfig()
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
-func TestGetQueryTrackerConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithEverything()
-	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
-	g := NewGenerator(ytsaurus, testClusterDomain)
-	cfg, err := g.GetQueryTrackerConfig(ytsaurus.Spec.QueryTrackers)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
-func TestGetQueueAgentConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithEverything()
-	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
-	g := NewGenerator(ytsaurus, testClusterDomain)
-	cfg, err := g.GetQueueAgentConfig(ytsaurus.Spec.QueueAgents)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
-func TestGetRPCProxyConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
-	proxySpec := getRPCProxySpec()
-	canonize.AssertStruct(t, "rpc-proxy", proxySpec)
-	cfg, err := g.GetRPCProxyConfig(proxySpec)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
 func TestGetRPCProxyWithoutOauthConfig(t *testing.T) {
 	g := NewGenerator(getYtsaurus(), testClusterDomain)
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
@@ -384,8 +322,8 @@ func TestGetRPCProxyWithoutOauthConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
-func TestGetSchedulerConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithEverything()
+func TestGetSchedulerWithoutTabletNodes(t *testing.T) {
+	ytsaurus := getYtsaurusWithoutNodes()
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
 	g := NewGenerator(ytsaurus, testClusterDomain)
 	cfg, err := g.GetSchedulerConfig(ytsaurus.Spec.Schedulers)
@@ -402,16 +340,8 @@ func TestGetSchedulerWithFixedMasterHostsConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
-func TestGetStrawberryControllerConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
-	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
-	cfg, err := g.GetStrawberryControllerConfig()
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
 func TestGetStrawberryControllerConfigWithExtendedHTTPMapping(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	g := NewGenerator(getYtsaurusWithoutNodes(), testClusterDomain)
 	externalProxy := "some.domain"
 	g.ytsaurus.Spec.StrawberryController.ExternalProxy = &externalProxy
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
@@ -421,7 +351,7 @@ func TestGetStrawberryControllerConfigWithExtendedHTTPMapping(t *testing.T) {
 }
 
 func TestGetStrawberryControllerConfigWithCustomFamilies(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	g := NewGenerator(getYtsaurusWithoutNodes(), testClusterDomain)
 	externalProxy := "some.domain"
 	g.ytsaurus.Spec.StrawberryController.ExternalProxy = &externalProxy
 	g.ytsaurus.Spec.StrawberryController.ControllerFamilies = append(
@@ -432,17 +362,6 @@ func TestGetStrawberryControllerConfigWithCustomFamilies(t *testing.T) {
 	g.ytsaurus.Spec.StrawberryController.DefaultRouteFamily = &defaultRouteFamily
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
 	cfg, err := g.GetStrawberryControllerConfig()
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
-func TestGetTabletNodeConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithEverything()
-	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
-	g := NewLocalNodeGenerator(ytsaurus, ytsaurus.Name, testClusterDomain)
-	spec := getTabletNodeSpec()
-	canonize.AssertStruct(t, "tablet-node", spec)
-	cfg, err := g.GetTabletNodeConfig(spec)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -466,7 +385,7 @@ func TestGetTabletNodeWithoutYtsaurusConfig(t *testing.T) {
 }
 
 func TestGetTCPProxyConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	g := NewGenerator(getYtsaurusWithoutNodes(), testClusterDomain)
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
 	spec := getTCPProxySpec()
 	canonize.AssertStruct(t, "tcp-proxy", spec)
@@ -476,7 +395,7 @@ func TestGetTCPProxyConfig(t *testing.T) {
 }
 
 func TestGetUIClustersConfig(t *testing.T) {
-	g := NewGenerator(getYtsaurusWithEverything(), testClusterDomain)
+	g := NewGenerator(getYtsaurusWithoutNodes(), testClusterDomain)
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
 	cfg, err := g.GetUIClustersConfig()
 	require.NoError(t, err)
@@ -507,17 +426,8 @@ func TestGetUICustomConfigWithSettings(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
-func TestGetYQLAgentConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithEverything()
-	g := NewGenerator(ytsaurus, testClusterDomain)
-	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
-	cfg, err := g.GetYQLAgentConfig(ytsaurus.Spec.YQLAgents)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
-}
-
 func TestResolverOptionsKeepSocketAndForceTCP(t *testing.T) {
-	ytsaurus := getYtsaurusWithEverything()
+	ytsaurus := getYtsaurusWithoutNodes()
 	ytsaurus.Spec.CommonSpec.ForceTCP = ptr.To(true)
 	ytsaurus.Spec.CommonSpec.KeepSocket = ptr.To(true)
 	g := NewGenerator(ytsaurus, testClusterDomain)
@@ -528,7 +438,7 @@ func TestResolverOptionsKeepSocketAndForceTCP(t *testing.T) {
 }
 
 func TestGetMasterCachesWithFixedHostsConfig(t *testing.T) {
-	ytsaurus := withFixedMasterCachesHosts(getYtsaurusWithEverything())
+	ytsaurus := withFixedMasterCachesHosts(getYtsaurusWithoutNodes())
 	g := NewGenerator(ytsaurus, testClusterDomain)
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
 	cfg, err := g.GetMasterCachesConfig(ytsaurus.Spec.MasterCaches)
@@ -536,22 +446,31 @@ func TestGetMasterCachesWithFixedHostsConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
-func TestGetMasterCachesConfig(t *testing.T) {
-	ytsaurus := getYtsaurusWithEverything()
+func TestGetYtsaurusComponents(t *testing.T) {
+	ytsaurus := getYtsaurusWithAllComponents()
+
 	g := NewGenerator(ytsaurus, testClusterDomain)
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
-	cfg, err := g.GetMasterCachesConfig(ytsaurus.Spec.MasterCaches)
-	require.NoError(t, err)
-	canonize.Assert(t, cfg)
+
+	for _, component := range consts.LocalComponentTypes {
+		t.Run(string(component), func(t *testing.T) {
+			names, err := g.GetComponentNames(component)
+			require.NoError(t, err)
+			require.Len(t, names, 1)
+			cfg, err := g.GetComponentConfig(component, names[0])
+			require.NoError(t, err)
+			canonize.Assert(t, cfg)
+		})
+	}
 }
 
 func TestGetYtsaurusWithTlsInterconnect(t *testing.T) {
-	ytsaurus := getYtsaurusWithEverything()
+	ytsaurus := getYtsaurusWithAllComponents()
 
-	ytsaurus.Spec.CommonSpec.CABundle = &corev1.LocalObjectReference{
+	ytsaurus.Spec.CABundle = &corev1.LocalObjectReference{
 		Name: "ytsaurus-ca-bundle",
 	}
-	ytsaurus.Spec.CommonSpec.NativeTransport = &ytv1.RPCTransportSpec{
+	ytsaurus.Spec.NativeTransport = &ytv1.RPCTransportSpec{
 		TLSSecret: &corev1.LocalObjectReference{
 			Name: "ytsaurus-native-cert",
 		},
@@ -563,28 +482,16 @@ func TestGetYtsaurusWithTlsInterconnect(t *testing.T) {
 	g := NewGenerator(ytsaurus, testClusterDomain)
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
 
-	// all these components must have `bus_client` configuration section on the top-level
-	components := map[string]func() ([]byte, error){
-		"discovery":    func() ([]byte, error) { return g.GetDiscoveryConfig(&ytsaurus.Spec.Discovery) },
-		"master":       func() ([]byte, error) { return g.GetMasterConfig(&ytsaurus.Spec.PrimaryMasters) },
-		"master-cache": func() ([]byte, error) { return g.GetMasterCachesConfig(ytsaurus.Spec.MasterCaches) },
-		"queue-agent":  func() ([]byte, error) { return g.GetQueueAgentConfig(ytsaurus.Spec.QueueAgents) },
-	}
-
-	for name, fn := range components {
-		t.Run(name, func(t *testing.T) {
-			cfg, err := fn()
+	for _, component := range consts.LocalComponentTypes {
+		t.Run(string(component), func(t *testing.T) {
+			names, err := g.GetComponentNames(component)
+			require.NoError(t, err)
+			require.Len(t, names, 1)
+			cfg, err := g.GetComponentConfig(component, names[0])
 			require.NoError(t, err)
 			canonize.Assert(t, cfg)
 		})
 	}
-
-	t.Run("exec-node", func(t *testing.T) {
-		execNodeSpec := getExecNodeSpec(nil)
-		cfg, err := g.GetExecNodeConfig(execNodeSpec)
-		require.NoError(t, err)
-		canonize.Assert(t, cfg)
-	})
 }
 
 func getYtsaurus() *ytv1.Ytsaurus {
@@ -691,7 +598,8 @@ func getRemoteYtsaurus() *ytv1.RemoteYtsaurus {
 	}
 }
 
-func getYtsaurusWithEverything() *ytv1.Ytsaurus {
+// TODO(khlebnikov): Get rid of this yet another spec generator.
+func getYtsaurusWithoutNodes() *ytv1.Ytsaurus {
 	ytsaurus := getYtsaurus()
 	ytsaurus = withControllerAgents(ytsaurus)
 	ytsaurus = withOauthSpec(ytsaurus)
@@ -706,6 +614,16 @@ func getYtsaurusWithEverything() *ytv1.Ytsaurus {
 	ytsaurus = withUI(ytsaurus)
 	ytsaurus = withYQLAgent(ytsaurus)
 	ytsaurus = withMasterCaches(ytsaurus)
+	return ytsaurus
+}
+
+func getYtsaurusWithAllComponents() *ytv1.Ytsaurus {
+	ytsaurus := getYtsaurusWithoutNodes()
+	ytsaurus.Spec.HTTPProxies = append(ytsaurus.Spec.HTTPProxies, getHTTPProxySpec())
+	ytsaurus.Spec.RPCProxies = append(ytsaurus.Spec.RPCProxies, getRPCProxySpec())
+	ytsaurus.Spec.DataNodes = append(ytsaurus.Spec.DataNodes, getDataNodeSpec(testLocationChunkStore))
+	ytsaurus.Spec.ExecNodes = append(ytsaurus.Spec.ExecNodes, getExecNodeSpec(nil))
+	ytsaurus.Spec.TabletNodes = append(ytsaurus.Spec.TabletNodes, getTabletNodeSpec())
 	return ytsaurus
 }
 

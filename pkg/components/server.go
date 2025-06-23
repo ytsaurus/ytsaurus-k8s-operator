@@ -148,7 +148,7 @@ func newServerConfigured(
 		instanceSpec:  instanceSpec,
 		binaryPath:    binaryPath,
 		statefulSet: resources.NewStatefulSet(
-			l.GetServerStatfulSetName(),
+			l.GetServerStatefulSetName(),
 			l,
 			proxy,
 			commonSpec,

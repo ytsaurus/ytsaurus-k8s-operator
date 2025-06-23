@@ -95,6 +95,7 @@ func (c ClusterHealthReport) IgnoreAlert(alert yterrors.Error) bool {
 		"Too few matching agents",
 		"Conflicting profiling tags",
 		"Snapshot loading is disabled; consider enabling it using the controller agent config",
+		"Watcher failed to take lock", // scheduler transient alert - read-only cypress
 	}
 	for _, msg := range ignoredMessages {
 		if strings.Contains(alert.Message, msg) {

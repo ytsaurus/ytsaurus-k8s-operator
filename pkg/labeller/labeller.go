@@ -89,7 +89,7 @@ func (l *Labeller) GetInstanceGroup() string {
 	return l.InstanceGroup
 }
 
-func (l *Labeller) GetServerStatfulSetName() string {
+func (l *Labeller) GetServerStatefulSetName() string {
 	return l.getName(consts.ComponentStatefulSetPrefix(l.ComponentType), "")
 }
 
@@ -119,7 +119,7 @@ func (l *Labeller) GetBalancerServiceAddress() string {
 func (l *Labeller) GetInstanceAddressPort(index, port int) string {
 	// NOTE: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
 	return fmt.Sprintf("%s-%d.%s.%s.svc.%s:%d",
-		l.GetServerStatfulSetName(),
+		l.GetServerStatefulSetName(),
 		index,
 		l.GetHeadlessServiceName(),
 		l.GetNamespace(),

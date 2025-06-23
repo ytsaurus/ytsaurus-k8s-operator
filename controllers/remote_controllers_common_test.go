@@ -1,7 +1,6 @@
 package controllers_test
 
 import (
-	"path/filepath"
 	"testing"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -15,7 +14,7 @@ const (
 )
 
 func startHelperWithController(t *testing.T, namespace string, reconcilerSetupFunc func(mgr ctrl.Manager) error) *testutil.TestHelper {
-	h := testutil.NewTestHelper(t, namespace, filepath.Join("..", "config", "crd", "bases"))
+	h := testutil.NewTestHelper(t, namespace, "..")
 	h.Start(reconcilerSetupFunc)
 	return h
 }

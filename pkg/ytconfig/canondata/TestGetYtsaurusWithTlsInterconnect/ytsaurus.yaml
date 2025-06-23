@@ -8,11 +8,93 @@ spec:
   controllerAgents:
     instanceCount: 3
     resources: {}
+  dataNodes:
+  - instanceCount: 20
+    locations:
+    - locationType: ChunkStore
+      medium: nvme
+      path: /yt/hdd1/chunk-store
+    name: dn-a
+    rack: fake
+    resources:
+      limits:
+        cpu: "20"
+        memory: 5Gi
+    tags:
+    - rack:xn-a
+    volumeClaimTemplates:
+    - metadata:
+        name: hdd1
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: yc-network-hdd
+    volumeMounts:
+    - mountPath: /yt/hdd1
+      name: hdd1
   discovery:
     instanceCount: 3
     resources: {}
   enableFullUpdate: false
+  execNodes:
+  - instanceCount: 50
+    jobProxyLoggers:
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+        - Concurrency
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxTotalSizeToKeep: "3145728"
+        rotationPeriodMilliseconds: 900000
+      useTimestampSuffix: false
+      writerType: file
+    locations:
+    - locationType: ChunkCache
+      path: /yt/hdd1/chunk-cache
+    - locationType: Slots
+      path: /yt/hdd2/slots
+      quota: 5Gi
+    name: end-a
+    privileged: false
+    rack: fake
+    resources:
+      limits:
+        cpu: "20"
+        memory: 5Gi
+    tags:
+    - rack:xn-a
+    volumeClaimTemplates:
+    - metadata:
+        name: hdd1
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: yc-network-hdd
+    volumeMounts:
+    - mountPath: /yt/hdd1
+      name: hdd1
   hostNetwork: false
+  httpProxies:
+  - httpNodePort: 10000
+    httpsNodePort: 10001
+    instanceCount: 3
+    resources: {}
+    role: control
+    serviceType: NodePort
+    transport:
+      httpsSecret:
+        name: yt-test-infra-wildcard
   isManaged: false
   kafkaProxies:
   - instanceCount: 3
@@ -93,6 +175,11 @@ spec:
   queueAgents:
     instanceCount: 3
     resources: {}
+  rpcProxies:
+  - instanceCount: 3
+    resources: {}
+    role: default
+    transport: {}
   schedulers:
     instanceCount: 3
     resources: {}
@@ -102,6 +189,34 @@ spec:
       limits:
         cpu: "20"
         memory: 5Gi
+  tabletNodes:
+  - instanceCount: 100
+    locations:
+    - locationType: ChunkCache
+      path: /yt/hdd1/chunk-cache
+    - locationType: Slots
+      path: /yt/hdd2/slots
+      quota: 5Gi
+    rack: fake
+    resources:
+      limits:
+        cpu: "20"
+        memory: 5Gi
+    tags:
+    - rack:xn-a
+    volumeClaimTemplates:
+    - metadata:
+        name: hdd1
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: yc-network-hdd
+    volumeMounts:
+    - mountPath: /yt/hdd1
+      name: hdd1
   tcpProxies:
   - instanceCount: 3
     minPort: 10000

@@ -1,8 +1,9 @@
+//go:build !darwin
+
 package controllers_test
 
 import (
 	"fmt"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -26,7 +27,7 @@ const (
 )
 
 func prepareTest(t *testing.T, namespace string) *testutil.TestHelper {
-	h := testutil.NewTestHelper(t, namespace, filepath.Join("..", "config", "crd", "bases"))
+	h := testutil.NewTestHelper(t, namespace, "..")
 	reconcilerSetup := func(mgr ctrl.Manager) error {
 		return (&controllers.YtsaurusReconciler{
 			Client:   mgr.GetClient(),

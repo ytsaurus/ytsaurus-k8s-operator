@@ -1,14 +1,44 @@
+name: "E2E Tests"
+
 on:
   workflow_call:
     inputs:
       e2e_filter:
-        required: false
         type: string
+        required: false
+        default: ""
+
+  workflow_dispatch:
+    inputs:
+      e2e_filter:
+        description: "E2E tests filter"
+        type: string
+        required: false
+        default: ""
 
 jobs:
   check:
-    name: Run checks
+    name: "Check ${{ matrix.e2e.name }} e2e tests"
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        e2e:
+          - name: "basic"
+            filter: "basic"
+          - name: "selector and remote"
+            filter: "selector || remote"
+          - name: "other"
+            filter: "!basic && !selector && !remote"
+          - name: "${{ inputs.e2e_filter }}"
+            filter: "${{ inputs.e2e_filter }}"
+            from_input: true
+        exclude:
+          - e2e:
+              # run only from_input part when defined and vice versa
+              from_input: ${{ ( ! inputs.e2e_filter ) && true || '' }}
 
     steps:
       - name: Free Disk Space
@@ -53,9 +83,9 @@ jobs:
         run: |
           make kind-load-test-images
 
-      - name: Run e2e tests
+      - name: Run ${{ matrix.e2e.name }} e2e tests
         env:
-          GINKGO_LABEL_FILTER: ${{ inputs.e2e_filter }}
+          GINKGO_LABEL_FILTER: ${{ matrix.e2e.filter }}
         shell: bash
         run: |
           make test-e2e

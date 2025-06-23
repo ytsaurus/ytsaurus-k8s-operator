@@ -1,0 +1,232 @@
+metadata:
+  creationTimestamp: null
+  name: test
+  namespace: fake
+spec:
+  controllerAgents:
+    instanceCount: 3
+    resources: {}
+  dataNodes:
+  - instanceCount: 20
+    locations:
+    - locationType: ChunkStore
+      medium: nvme
+      path: /yt/hdd1/chunk-store
+    name: dn-a
+    rack: fake
+    resources:
+      limits:
+        cpu: "20"
+        memory: 5Gi
+    tags:
+    - rack:xn-a
+    volumeClaimTemplates:
+    - metadata:
+        name: hdd1
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: yc-network-hdd
+    volumeMounts:
+    - mountPath: /yt/hdd1
+      name: hdd1
+  discovery:
+    instanceCount: 3
+    resources: {}
+  enableFullUpdate: false
+  execNodes:
+  - instanceCount: 50
+    jobProxyLoggers:
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+        - Concurrency
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxTotalSizeToKeep: "3145728"
+        rotationPeriodMilliseconds: 900000
+      useTimestampSuffix: false
+      writerType: file
+    locations:
+    - locationType: ChunkCache
+      path: /yt/hdd1/chunk-cache
+    - locationType: Slots
+      path: /yt/hdd2/slots
+      quota: 5Gi
+    name: end-a
+    privileged: false
+    rack: fake
+    resources:
+      limits:
+        cpu: "20"
+        memory: 5Gi
+    tags:
+    - rack:xn-a
+    volumeClaimTemplates:
+    - metadata:
+        name: hdd1
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: yc-network-hdd
+    volumeMounts:
+    - mountPath: /yt/hdd1
+      name: hdd1
+  hostNetwork: false
+  httpProxies:
+  - httpNodePort: 10000
+    httpsNodePort: 10001
+    instanceCount: 3
+    resources: {}
+    role: control
+    serviceType: NodePort
+    transport:
+      httpsSecret:
+        name: yt-test-infra-wildcard
+  isManaged: false
+  kafkaProxies:
+  - instanceCount: 3
+    resources: {}
+  masterCaches:
+    cellTagMasterCaches: 0
+    instanceCount: 3
+    resources: {}
+  oauthService:
+    host: oauth-host
+    port: 433
+    secure: true
+    userInfoHandler:
+      endpoint: user-info-endpoint
+      loginField: login
+      loginTransformations:
+      - matchPattern: (.*)@ytsaurus.team
+        replacement: \1
+  primaryMasters:
+    cellTag: 0
+    instanceCount: 1
+    locations:
+    - locationType: MasterChangelogs
+      path: /yt/master-data/master-changelogs
+    - locationType: MasterSnapshots
+      path: /yt/master-data/master-snapshots
+    loggers:
+    - compression: none
+      format: plain_text
+      minLogLevel: info
+      name: info
+      useTimestampSuffix: false
+      writerType: file
+    - compression: none
+      format: plain_text
+      minLogLevel: error
+      name: error
+      useTimestampSuffix: false
+      writerType: file
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxTotalSizeToKeep: 10Gi
+        rotationPeriodMilliseconds: 900000
+      useTimestampSuffix: false
+      writerType: file
+    maxSnapshotCountToKeep: 1543
+    resources: {}
+    sidecars:
+    - '{name: sleep, image: fakeimage:stable, command: [/bin/sleep], args: [inf]}'
+    volumeClaimTemplates:
+    - metadata:
+        name: master-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 20Gi
+    volumeMounts:
+    - mountPath: /yt/master-data
+      name: master-data
+  queryTrackers:
+    instanceCount: 3
+    resources: {}
+  queueAgents:
+    instanceCount: 3
+    resources: {}
+  rpcProxies:
+  - instanceCount: 3
+    resources: {}
+    role: default
+    transport: {}
+  schedulers:
+    instanceCount: 3
+    resources: {}
+  strawberry:
+    image: dummy-strawberry-image
+    resources:
+      limits:
+        cpu: "20"
+        memory: 5Gi
+  tabletNodes:
+  - instanceCount: 100
+    locations:
+    - locationType: ChunkCache
+      path: /yt/hdd1/chunk-cache
+    - locationType: Slots
+      path: /yt/hdd2/slots
+      quota: 5Gi
+    rack: fake
+    resources:
+      limits:
+        cpu: "20"
+        memory: 5Gi
+    tags:
+    - rack:xn-a
+    volumeClaimTemplates:
+    - metadata:
+        name: hdd1
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: yc-network-hdd
+    volumeMounts:
+    - mountPath: /yt/hdd1
+      name: hdd1
+  tcpProxies:
+  - instanceCount: 3
+    minPort: 10000
+    portCount: 20000
+    resources: {}
+  ui:
+    image: dummy-ui-image
+    odinBaseUrl: http://odin-webservice.odin.svc.cluster.local
+    resources: {}
+    secure: false
+    serviceType: NodePort
+    useInsecureCookies: false
+  useIpv4: true
+  useIpv6: false
+  usePorto: true
+  useShortNames: false
+  yqlAgents:
+    instanceCount: 3
+    resources: {}
+status:
+  updateStatus: {}

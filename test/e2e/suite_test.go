@@ -19,7 +19,6 @@ package controllers_test
 import (
 	"context"
 	"os"
-	"path/filepath"
 	"reflect"
 	"testing"
 	"time"
@@ -29,6 +28,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	gtypes "github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
+	oformat "github.com/onsi/gomega/format"
 	otypes "github.com/onsi/gomega/types"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -65,6 +65,7 @@ func TestAPIs(t *testing.T) {
 		t.Skip("skipping E2E tests: set YTSAURUS_ENABLE_E2E_TESTS environment variable to 'true'")
 	}
 
+	oformat.MaxLength = 20_000 // Do not truncate large YT errors
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Controller Suite")
 }
@@ -77,8 +78,6 @@ var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	Expect(err).NotTo(HaveOccurred())
 
 	testEnv := &envtest.Environment{
-		CRDDirectoryPaths:        []string{filepath.Join("..", "..", "config", "crd", "bases")},
-		ErrorIfCRDPathMissing:    true,
 		UseExistingCluster:       ptr.To(true),
 		AttachControlPlaneOutput: true,
 		Config:                   cfg,

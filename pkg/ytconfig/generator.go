@@ -912,3 +912,170 @@ func (g *Generator) GetMasterCachesConfig(spec *ytv1.MasterCachesSpec) ([]byte, 
 	}
 	return marshallYsonConfig(c)
 }
+
+func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string, error) {
+	var names []string
+	switch component {
+	case consts.ClusterConnectionType:
+		names = append(names, "")
+	case consts.NativeClientConfigType:
+		names = append(names, "")
+	case consts.ControllerAgentType:
+		if g.ytsaurus.Spec.ControllerAgents != nil {
+			names = append(names, "")
+		}
+	case consts.DataNodeType:
+		for _, spec := range g.ytsaurus.Spec.DataNodes {
+			names = append(names, spec.Name)
+		}
+	case consts.DiscoveryType:
+		names = append(names, "")
+	case consts.ExecNodeType:
+		for _, spec := range g.ytsaurus.Spec.ExecNodes {
+			names = append(names, spec.Name)
+		}
+	case consts.HttpProxyType:
+		for _, spec := range g.ytsaurus.Spec.HTTPProxies {
+			names = append(names, spec.Role)
+		}
+	case consts.MasterCacheType:
+		if g.ytsaurus.Spec.MasterCaches != nil {
+			names = append(names, "")
+		}
+	case consts.MasterType:
+		names = append(names, "")
+	case consts.QueryTrackerType:
+		if g.ytsaurus.Spec.QueryTrackers != nil {
+			names = append(names, "")
+		}
+	case consts.QueueAgentType:
+		if g.ytsaurus.Spec.QueueAgents != nil {
+			names = append(names, "")
+		}
+	case consts.RpcProxyType:
+		for _, spec := range g.ytsaurus.Spec.RPCProxies {
+			names = append(names, spec.Role)
+		}
+	case consts.SchedulerType:
+		if g.ytsaurus.Spec.Schedulers != nil {
+			names = append(names, "")
+		}
+	case consts.StrawberryControllerType:
+		if g.ytsaurus.Spec.StrawberryController != nil {
+			names = append(names, "")
+		}
+	case consts.TabletNodeType:
+		for _, spec := range g.ytsaurus.Spec.TabletNodes {
+			names = append(names, spec.Name)
+		}
+	case consts.TcpProxyType:
+		for _, spec := range g.ytsaurus.Spec.TCPProxies {
+			names = append(names, spec.Role)
+		}
+	case consts.KafkaProxyType:
+		for _, spec := range g.ytsaurus.Spec.KafkaProxies {
+			names = append(names, spec.Role)
+		}
+	case consts.YqlAgentType:
+		if g.ytsaurus.Spec.YQLAgents != nil {
+			names = append(names, "")
+		}
+	default:
+		return nil, fmt.Errorf("unknown component %v", component)
+	}
+
+	return names, nil
+}
+
+func (g *Generator) GetComponentConfig(component consts.ComponentType, name string) ([]byte, error) {
+	switch component {
+	case consts.ClusterConnectionType:
+		if name == "" {
+			return g.GetClusterConnection()
+		}
+	case consts.NativeClientConfigType:
+		if name == "" {
+			return g.GetNativeClientConfig()
+		}
+	case consts.ControllerAgentType:
+		if name == "" {
+			return g.GetControllerAgentConfig(g.ytsaurus.Spec.ControllerAgents)
+		}
+	case consts.DataNodeType:
+		for _, spec := range g.ytsaurus.Spec.DataNodes {
+			if spec.Name == name {
+				return g.GetDataNodeConfig(spec)
+			}
+		}
+	case consts.DiscoveryType:
+		if name == "" {
+			return g.GetDiscoveryConfig(&g.ytsaurus.Spec.Discovery)
+		}
+	case consts.ExecNodeType:
+		for _, spec := range g.ytsaurus.Spec.ExecNodes {
+			if spec.Name == name {
+				return g.GetExecNodeConfig(spec)
+			}
+		}
+	case consts.HttpProxyType:
+		for _, spec := range g.ytsaurus.Spec.HTTPProxies {
+			if spec.Role == name {
+				return g.GetHTTPProxyConfig(spec)
+			}
+		}
+	case consts.MasterCacheType:
+		if name == "" {
+			return g.GetMasterCachesConfig(g.ytsaurus.Spec.MasterCaches)
+		}
+	case consts.MasterType:
+		if name == "" {
+			return g.GetMasterConfig(&g.ytsaurus.Spec.PrimaryMasters)
+		}
+	case consts.QueryTrackerType:
+		if name == "" {
+			return g.GetQueryTrackerConfig(g.ytsaurus.Spec.QueryTrackers)
+		}
+	case consts.QueueAgentType:
+		if name == "" {
+			return g.GetQueueAgentConfig(g.ytsaurus.Spec.QueueAgents)
+		}
+	case consts.RpcProxyType:
+		for _, spec := range g.ytsaurus.Spec.RPCProxies {
+			if spec.Role == name {
+				return g.GetRPCProxyConfig(spec)
+			}
+		}
+	case consts.SchedulerType:
+		if name == "" {
+			return g.GetSchedulerConfig(g.ytsaurus.Spec.Schedulers)
+		}
+	case consts.StrawberryControllerType:
+		if name == "" {
+			return g.GetStrawberryControllerConfig()
+		}
+	case consts.TabletNodeType:
+		for _, spec := range g.ytsaurus.Spec.TabletNodes {
+			if spec.Name == name {
+				return g.GetTabletNodeConfig(spec)
+			}
+		}
+	case consts.TcpProxyType:
+		for _, spec := range g.ytsaurus.Spec.TCPProxies {
+			if spec.Role == name {
+				return g.GetTCPProxyConfig(spec)
+			}
+		}
+	case consts.KafkaProxyType:
+		for _, spec := range g.ytsaurus.Spec.KafkaProxies {
+			if spec.Role == name {
+				return g.GetKafkaProxyConfig(spec)
+			}
+		}
+	case consts.YqlAgentType:
+		if name == "" {
+			return g.GetYQLAgentConfig(g.ytsaurus.Spec.YQLAgents)
+		}
+	}
+
+	return nil, fmt.Errorf("unknown component %v name %v", component, name)
+}

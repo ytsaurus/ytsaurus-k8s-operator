@@ -23,6 +23,8 @@ const (
 	YtsaurusClientType       ComponentType = "YtsaurusClient"
 	ChytType                 ComponentType = "CHYT"
 	SpytType                 ComponentType = "SPYT"
+	ClusterConnectionType    ComponentType = "ClusterConnection"
+	NativeClientConfigType   ComponentType = "NativeClientConfig"
 )
 
 type ComponentClass string
@@ -33,4 +35,33 @@ const (
 	ComponentClassStateless   ComponentClass = "Stateless"
 	ComponentClassEverything  ComponentClass = "Everything"
 	ComponentClassNothing     ComponentClass = "Nothing"
+)
+
+var (
+	LocalComponentTypes = []ComponentType{
+		ControllerAgentType,
+		DataNodeType,
+		DiscoveryType,
+		ExecNodeType,
+		HttpProxyType,
+		MasterCacheType,
+		MasterType,
+		QueryTrackerType,
+		QueueAgentType,
+		RpcProxyType,
+		SchedulerType,
+		StrawberryControllerType,
+		TabletNodeType,
+		TcpProxyType,
+		KafkaProxyType,
+		YqlAgentType,
+		ClusterConnectionType,
+		NativeClientConfigType,
+	}
+
+	RemoteComponentTypes = []ComponentType{
+		DataNodeType,
+		ExecNodeType,
+		TabletNodeType,
+	}
 )

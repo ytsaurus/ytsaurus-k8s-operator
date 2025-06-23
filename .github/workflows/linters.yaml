@@ -1,0 +1,31 @@
+name: Linters
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request: {}
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    name: Run checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout sources
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Run linters
+        shell: bash
+        run: |
+          make lint
+          make lint-generated
