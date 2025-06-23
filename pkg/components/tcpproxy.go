@@ -85,7 +85,7 @@ func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return tpStatus, err
 	}
 	if !IsRunningStatus(tpStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, tp.master.GetFullName()), err
+		return ComponentStatusBlockedBy(tp.master), nil
 	}
 
 	if tp.NeedSync() {

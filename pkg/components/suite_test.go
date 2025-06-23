@@ -68,8 +68,8 @@ func (fc *FakeComponent) GetShortName() string {
 	return fc.name
 }
 
-func (fc *FakeComponent) GetFullName() string {
-	return fc.name
+func (fc *FakeComponent) GetFullName() consts.ComponentFullName {
+	return consts.ComponentFullName(fc.name)
 }
 
 func (fc *FakeComponent) GetType() consts.ComponentType {

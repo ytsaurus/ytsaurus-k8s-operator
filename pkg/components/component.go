@@ -38,6 +38,10 @@ func WaitingStatus(status SyncStatus, event string) ComponentStatus {
 	return ComponentStatus{status, fmt.Sprintf("Wait for %s", event)}
 }
 
+func ComponentStatusBlockedBy(blocker Component) ComponentStatus {
+	return ComponentStatus{SyncStatusBlocked, fmt.Sprintf("Waiting for %s", blocker.GetFullName())}
+}
+
 func SimpleStatus(status SyncStatus) ComponentStatus {
 	return ComponentStatus{status, string(status)}
 }
@@ -46,7 +50,7 @@ type Component interface {
 	Fetch(ctx context.Context) error
 	Sync(ctx context.Context) error
 	Status(ctx context.Context) (ComponentStatus, error)
-	GetFullName() string
+	GetFullName() consts.ComponentFullName
 	GetShortName() string
 	GetType() consts.ComponentType
 	SetReadyCondition(status ComponentStatus)
@@ -61,12 +65,11 @@ type baseComponent struct {
 	labeller *labeller.Labeller
 }
 
-// GetFullName returns component's name, which is used as an identifier in component management
-// and for mentioning in logs.
+// GetFullName returns component's name:"<ComponentType>[-<InstanceGroupName>]".
 // For example for master component name is "Master",
-// For data node name looks like "DataNode<NameFromSpec>".
-func (c *baseComponent) GetFullName() string {
-	return c.labeller.GetFullComponentName()
+// For data node name looks like "DataNode-foo".
+func (c *baseComponent) GetFullName() consts.ComponentFullName {
+	return c.labeller.GetFullName()
 }
 
 func (c *baseComponent) GetShortName() string {
@@ -111,7 +114,7 @@ func (c *localComponent) SetReadyCondition(status ComponentStatus) {
 		ready = metav1.ConditionTrue
 	}
 	c.ytsaurus.SetStatusCondition(metav1.Condition{
-		Type:    fmt.Sprintf("%sReady", c.labeller.GetFullComponentName()),
+		Type:    c.labeller.GetReadyCondition(),
 		Status:  ready,
 		Reason:  string(status.SyncStatus),
 		Message: status.Message,

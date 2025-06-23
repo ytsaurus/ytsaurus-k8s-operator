@@ -76,10 +76,10 @@ func (l *Labeller) getName(name, infix string) string {
 	return name
 }
 
-// GetFullComponentName Returns CamelCase component type with instance group.
-func (l *Labeller) GetFullComponentName() string {
-	// NOTE: Class name is not CamelCase.
-	return l.getGroupName(string(l.ComponentType))
+// GetFullName Returns "<ComponentType>[-<InstanceGroupName>]".
+// NOTE: instance group name is came from spec and can be non-CamelCase.
+func (l *Labeller) GetFullName() consts.ComponentFullName {
+	return consts.ComponentFullName(l.getGroupName(string(l.ComponentType)))
 }
 
 func (l *Labeller) GetInstanceGroup() string {
@@ -154,12 +154,24 @@ func (l *Labeller) GetInitJobName(name string) string {
 	return fmt.Sprintf("%s-init-job-%s", l.GetFullComponentLabel(), strings.ToLower(name))
 }
 
+func (l *Labeller) GetInitJobConfigName(name string) string {
+	return fmt.Sprintf("%s-%s-init-job-config", strings.ToLower(name), l.GetFullComponentLabel())
+}
+
+func (l *Labeller) GetInitJobCondition(name string) string {
+	return fmt.Sprintf("%s%sInitJobCompleted", name, l.GetFullName())
+}
+
 func (l *Labeller) GetPodsRemovingStartedCondition() string {
-	return fmt.Sprintf("%sPodsRemovingStarted", l.GetFullComponentName())
+	return fmt.Sprintf("%sPodsRemovingStarted", l.GetFullName())
 }
 
 func (l *Labeller) GetPodsRemovedCondition() string {
-	return fmt.Sprintf("%sPodsRemoved", l.GetFullComponentName())
+	return fmt.Sprintf("%sPodsRemoved", l.GetFullName())
+}
+
+func (l *Labeller) GetReadyCondition() string {
+	return fmt.Sprintf("%sReady", l.GetFullName())
 }
 
 func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {

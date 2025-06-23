@@ -127,7 +127,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return masterStatus, err
 	}
 	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, qa.master.GetFullName()), err
+		return ComponentStatusBlockedBy(qa.master), nil
 	}
 
 	// It makes no sense to start queue agents without tablet nodes.
@@ -140,7 +140,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			return tndStatus, err
 		}
 		if !IsRunningStatus(tndStatus.SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, tnd.GetFullName()), err
+			return ComponentStatusBlockedBy(tnd), nil
 		}
 	}
 
@@ -174,7 +174,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			return ytClientStatus, err
 		}
 		if ytClientStatus.SyncStatus != SyncStatusReady {
-			return WaitingStatus(SyncStatusBlocked, qa.ytsaurusClient.GetFullName()), err
+			return ComponentStatusBlockedBy(qa.ytsaurusClient), nil
 		}
 
 		if !dry {
@@ -366,7 +366,7 @@ func (qa *QueueAgent) initQAState(ctx context.Context, dry bool) (ComponentStatu
 		}
 		if !IsRunningStatus(tndStatus.SyncStatus) {
 			// Wait for tablet nodes to proceed with queue agent state init.
-			return WaitingStatus(SyncStatusBlocked, tnd.GetFullName()), err
+			return ComponentStatusBlockedBy(tnd), nil
 		}
 	}
 
