@@ -119,7 +119,7 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 		return masterStatus, err
 	}
 	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, hp.master.GetFullName()), err
+		return ComponentStatusBlockedBy(hp.master), nil
 	}
 
 	if hp.NeedSync() {

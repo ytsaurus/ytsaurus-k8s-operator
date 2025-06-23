@@ -72,12 +72,12 @@ func NewLocalNodeGenerator(ytsaurus *ytv1.Ytsaurus, resourceName string, cluster
 
 	return &NodeGenerator{
 		baseLabeller: &labeller.Labeller{
-			Namespace:     ytsaurus.GetNamespace(),
-			ClusterName:   ytsaurus.GetName(),
-			ResourceName:  resourceName,
-			ClusterDomain: clusterDomain,
-			Annotations:   ytsaurus.Spec.ExtraPodAnnotations,
-			UseShortNames: ytsaurus.Spec.UseShortNames,
+			Namespace:          ytsaurus.GetNamespace(),
+			ClusterName:        ytsaurus.GetName(),
+			ResourceName:       resourceName,
+			ClusterDomain:      clusterDomain,
+			Annotations:        ytsaurus.Spec.ExtraPodAnnotations,
+			AppendResourceName: !ytsaurus.Spec.UseShortNames,
 		},
 		commonSpec:             &ytsaurus.Spec.CommonSpec,
 		clusterFeatures:        ptr.Deref(ytsaurus.Spec.ClusterFeatures, ytv1.ClusterFeatures{}),
@@ -92,12 +92,12 @@ func NewLocalNodeGenerator(ytsaurus *ytv1.Ytsaurus, resourceName string, cluster
 func NewRemoteNodeGenerator(ytsaurus *ytv1.RemoteYtsaurus, resourceName string, clusterDomain string, commonSpec *ytv1.CommonSpec) *NodeGenerator {
 	return &NodeGenerator{
 		baseLabeller: &labeller.Labeller{
-			Namespace:     ytsaurus.GetNamespace(),
-			ClusterName:   ytsaurus.GetName(),
-			ResourceName:  resourceName,
-			ClusterDomain: clusterDomain,
-			Annotations:   commonSpec.ExtraPodAnnotations,
-			UseShortNames: commonSpec.UseShortNames,
+			Namespace:          ytsaurus.GetNamespace(),
+			ClusterName:        ytsaurus.GetName(),
+			ResourceName:       resourceName,
+			ClusterDomain:      clusterDomain,
+			Annotations:        commonSpec.ExtraPodAnnotations,
+			AppendResourceName: !commonSpec.UseShortNames,
 		},
 		commonSpec:           commonSpec,
 		clusterFeatures:      ptr.Deref(commonSpec.ClusterFeatures, ytv1.ClusterFeatures{}),
