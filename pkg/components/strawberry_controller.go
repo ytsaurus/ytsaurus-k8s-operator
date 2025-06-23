@@ -289,7 +289,7 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		return masterStatus, err
 	}
 	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, c.master.GetFullName()), err
+		return ComponentStatusBlockedBy(c.master), nil
 	}
 
 	schStatus, err := c.scheduler.Status(ctx)
@@ -297,7 +297,7 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		return schStatus, err
 	}
 	if !IsRunningStatus(schStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, c.scheduler.GetFullName()), err
+		return ComponentStatusBlockedBy(c.scheduler), nil
 	}
 
 	for _, dataNode := range c.dataNodes {
@@ -306,7 +306,7 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 			return dndStatus, err
 		}
 		if !IsRunningStatus(dndStatus.SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, dataNode.GetFullName()), err
+			return ComponentStatusBlockedBy(dataNode), nil
 		}
 	}
 

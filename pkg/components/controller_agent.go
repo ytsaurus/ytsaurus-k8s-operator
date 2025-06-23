@@ -66,7 +66,7 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 		return masterStatus, err
 	}
 	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, ca.master.GetFullName()), err
+		return ComponentStatusBlockedBy(ca.master), nil
 	}
 
 	if ca.NeedSync() {

@@ -64,15 +64,15 @@ func (fc *FakeComponent) IsUpdating() bool {
 	return false
 }
 
-func (fc *FakeComponent) GetShortName() string {
+func (fc *FakeComponent) GetInstanceGroup() string {
 	return fc.name
 }
 
-func (fc *FakeComponent) GetFullName() string {
-	return fc.name
+func (fc *FakeComponent) GetComponentName() consts.ComponentName {
+	return consts.ComponentName(fc.name)
 }
 
-func (fc *FakeComponent) GetType() consts.ComponentType {
+func (fc *FakeComponent) GetComponentType() consts.ComponentType {
 	return fc.compType
 }
 
