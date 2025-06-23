@@ -18,6 +18,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -249,6 +250,9 @@ func buildRemoteExecNodes(h *testutil.TestHelper, remoteYtsaurusName, remoteExec
 			RemoteClusterSpec: &(corev1.LocalObjectReference{
 				Name: remoteYtsaurusName,
 			}),
+			CommonSpec: ytv1.CommonSpec{
+				UseShortNames: false,
+			},
 			ExecNodesSpec: ytv1.ExecNodesSpec{
 				InstanceSpec: ytv1.InstanceSpec{
 					Image: ptr.To(testYtsaurusImage),
@@ -269,13 +273,15 @@ func buildRemoteExecNodes(h *testutil.TestHelper, remoteYtsaurusName, remoteExec
 }
 
 func buildExecNodePod(h *testutil.TestHelper) corev1.Pod {
+	l := labeller.Labeller{
+		ComponentType: consts.ExecNodeType,
+		ResourceName:  remoteExecNodesName,
+	}
 	return corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "end-0",
 			Namespace: h.Namespace,
-			Labels: map[string]string{
-				consts.YTComponentLabelName: remoteExecNodesName + "-" + consts.ComponentLabel(consts.ExecNodeType),
-			},
+			Labels:    l.GetMetaLabelMap(false),
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{

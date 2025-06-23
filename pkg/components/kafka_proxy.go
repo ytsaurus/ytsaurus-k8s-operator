@@ -101,7 +101,7 @@ func (kp *KafkaProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return kpStatus, err
 	}
 	if !IsRunningStatus(kpStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, kp.master.GetFullName()), err
+		return ComponentStatusBlockedBy(kp.master), nil
 	}
 
 	if kp.NeedSync() {

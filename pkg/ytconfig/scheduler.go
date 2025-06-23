@@ -39,14 +39,14 @@ type ControllerAgentServer struct {
 func getSchedulerLogging(spec *ytv1.SchedulersSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
-		consts.GetServiceKebabCase(consts.SchedulerType),
+		consts.SchedulerType.SingularName(),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
 func getControllerAgentLogging(spec *ytv1.ControllerAgentsSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
-		consts.GetServiceKebabCase(consts.ControllerAgentType),
+		consts.ControllerAgentType.SingularName(),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 

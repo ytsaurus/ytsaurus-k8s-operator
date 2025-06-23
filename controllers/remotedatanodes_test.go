@@ -18,6 +18,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -246,6 +247,9 @@ func buildRemoteDataNodes(h *testutil.TestHelper, remoteYtsaurusName, remoteData
 	return ytv1.RemoteDataNodes{
 		ObjectMeta: h.GetObjectMeta(remoteDataNodesName),
 		Spec: ytv1.RemoteDataNodesSpec{
+			CommonSpec: ytv1.CommonSpec{
+				UseShortNames: false,
+			},
 			RemoteClusterSpec: &(corev1.LocalObjectReference{
 				Name: remoteYtsaurusName,
 			}),
@@ -269,13 +273,15 @@ func buildRemoteDataNodes(h *testutil.TestHelper, remoteYtsaurusName, remoteData
 }
 
 func buildDataNodePod(h *testutil.TestHelper) corev1.Pod {
+	l := labeller.Labeller{
+		ComponentType: consts.DataNodeType,
+		ResourceName:  remoteDataNodesName,
+	}
 	return corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "dn-0",
 			Namespace: h.Namespace,
-			Labels: map[string]string{
-				consts.YTComponentLabelName: remoteDataNodesName + "-" + consts.ComponentLabel(consts.DataNodeType),
-			},
+			Labels:    l.GetMetaLabelMap(false),
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{

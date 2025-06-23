@@ -15,7 +15,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 type Ytsaurus struct {
@@ -162,7 +161,7 @@ func buildComponentsSummary(components []ytv1.Component) string {
 	var componentNames []string
 	for _, comp := range components {
 		// TODO: we better use labeller here after support deployment names in it.
-		name := consts.GetShortName(comp.Type)
+		name := comp.Type.ShortName()
 		if name == "" {
 			name = strings.ToLower(string(comp.Type))
 		}

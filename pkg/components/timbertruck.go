@@ -163,7 +163,7 @@ func (tt *Timbertruck) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 	}
 
 	if !IsRunningStatus(ytClientStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, tt.ytsaurusClient.GetFullName()), nil
+		return ComponentStatusBlockedBy(tt.ytsaurusClient), nil
 	}
 
 	if len(tt.tabletNodes) > 0 {
@@ -183,7 +183,7 @@ func (tt *Timbertruck) handleTabletNodes(ctx context.Context, dry bool) (Compone
 			return tndStatus, err
 		}
 		if !IsRunningStatus(tndStatus.SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, tnd.GetFullName()), nil
+			return ComponentStatusBlockedBy(tnd), nil
 		}
 	}
 
@@ -261,7 +261,7 @@ func (tt *Timbertruck) GetDeliveryLoggers() []ComponentLoggers {
 			LogsDeliveryPath:  getLogsDirectoryPath(timbertruck),
 		})
 	}
-	extractDeliveryLoggers(consts.GetServiceKebabCase(consts.MasterType), spec.PrimaryMasters.Timbertruck, spec.PrimaryMasters.InstanceSpec.StructuredLoggers)
+	extractDeliveryLoggers(consts.MasterType.SingularName(), spec.PrimaryMasters.Timbertruck, spec.PrimaryMasters.InstanceSpec.StructuredLoggers)
 	return allDeliveryLoggers
 }
 
@@ -427,7 +427,7 @@ func checkAndAddTimbertruckToPodSpec(timbertruck *ytv1.TimbertruckSpec, podSpec 
 	}
 	structuredLoggres := instanceSpec.StructuredLoggers
 	logsDirectory := logsLocation.Path
-	componentName := consts.GetServiceKebabCase(labeler.ComponentType)
+	componentName := labeler.ComponentType.SingularName()
 	workDir := fmt.Sprintf("%s/%s", logsDirectory, consts.TimbertruckWorkDirName)
 	deliveryProxy := cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 

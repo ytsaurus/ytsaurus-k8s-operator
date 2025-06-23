@@ -204,7 +204,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	if !j.initJob.Completed() {
-		logger.Info("Init job is not completed for " + j.labeller.GetFullComponentName())
+		logger.Info("Init job is not completed", "component", j.labeller.GetComponentName())
 		return WaitingStatus(SyncStatusBlocked, fmt.Sprintf("%s completion", j.initJob.Name())), err
 	}
 

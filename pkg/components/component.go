@@ -38,6 +38,10 @@ func WaitingStatus(status SyncStatus, event string) ComponentStatus {
 	return ComponentStatus{status, fmt.Sprintf("Wait for %s", event)}
 }
 
+func ComponentStatusBlockedBy(blocker Component) ComponentStatus {
+	return ComponentStatus{SyncStatusBlocked, fmt.Sprintf("Waiting for %v", blocker.GetComponentName())}
+}
+
 func SimpleStatus(status SyncStatus) ComponentStatus {
 	return ComponentStatus{status, string(status)}
 }
@@ -46,9 +50,9 @@ type Component interface {
 	Fetch(ctx context.Context) error
 	Sync(ctx context.Context) error
 	Status(ctx context.Context) (ComponentStatus, error)
-	GetFullName() string
-	GetShortName() string
-	GetType() consts.ComponentType
+	GetComponentType() consts.ComponentType
+	GetComponentName() consts.ComponentName
+	GetInstanceGroup() string
 	SetReadyCondition(status ComponentStatus)
 
 	GetLabeller() *labeller.Labeller
@@ -61,19 +65,18 @@ type baseComponent struct {
 	labeller *labeller.Labeller
 }
 
-// GetFullName returns component's name, which is used as an identifier in component management
-// and for mentioning in logs.
+// GetComponentName returns component's name:"<ComponentType>[-<InstanceGroup>]".
 // For example for master component name is "Master",
-// For data node name looks like "DataNode<NameFromSpec>".
-func (c *baseComponent) GetFullName() string {
-	return c.labeller.GetFullComponentName()
+// For data node name looks like "DataNode-foo".
+func (c *baseComponent) GetComponentName() consts.ComponentName {
+	return c.labeller.GetComponentName()
 }
 
-func (c *baseComponent) GetShortName() string {
+func (c *baseComponent) GetInstanceGroup() string {
 	return c.labeller.GetInstanceGroup()
 }
 
-func (c *baseComponent) GetType() consts.ComponentType {
+func (c *baseComponent) GetComponentType() consts.ComponentType {
 	return c.labeller.ComponentType
 }
 

@@ -160,13 +160,13 @@ func NewComponentManager(
 	for _, c := range allComponents {
 		err := c.Fetch(ctx)
 		if err != nil {
-			logger.Error(err, "failed to fetch status for controller", "component", c.GetFullName())
+			logger.Error(err, "failed to fetch status for controller", "component", c.GetComponentName())
 			return nil, err
 		}
 
 		componentStatus, err := c.Status(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get component %s status: %w", c.GetFullName(), err)
+			return nil, fmt.Errorf("failed to get component %v status: %w", c.GetComponentName(), err)
 		}
 
 		c.SetReadyCondition(componentStatus)
@@ -178,12 +178,12 @@ func NewComponentManager(
 
 		if !components.IsRunningStatus(syncStatus) {
 			if ytsaurus.GetClusterState() == ytv1.ClusterStateRunning {
-				msg := fmt.Sprintf("component `%s` status is neither Ready nor NeedLocalUpdate, but `%s`, "+
+				msg := fmt.Sprintf("component `%v` status is neither Ready nor NeedLocalUpdate, but `%v`, "+
 					"needInit=true will be set, which will lead to Reconfiguration since cluster is in Running state",
-					c.GetFullName(), syncStatus,
+					c.GetComponentName(), syncStatus,
 				)
 				logger.Info(msg,
-					"component", c.GetFullName(),
+					"component", c.GetComponentName(),
 					"syncStatus", syncStatus,
 				)
 			}
@@ -195,15 +195,15 @@ func NewComponentManager(
 		}
 
 		if syncStatus != components.SyncStatusReady {
-			logger.Info("component is not ready", "component", c.GetFullName(), "syncStatus", syncStatus)
-			notReadyComponents = append(notReadyComponents, c.GetFullName())
+			logger.Info("component is not ready", "component", c.GetComponentName(), "syncStatus", syncStatus)
+			notReadyComponents = append(notReadyComponents, string(c.GetComponentName()))
 			status.needSync = true
 		} else {
-			readyComponents = append(readyComponents, c.GetFullName())
+			readyComponents = append(readyComponents, string(c.GetComponentName()))
 		}
 
 		if syncStatus == components.SyncStatusUpdating {
-			updatingComponents = append(updatingComponents, c.GetFullName())
+			updatingComponents = append(updatingComponents, string(c.GetComponentName()))
 		}
 	}
 
@@ -228,15 +228,15 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	for _, c := range cm.allComponents {
 		status, err := c.Status(ctx)
 		if err != nil {
-			return ctrl.Result{Requeue: true}, fmt.Errorf("failed to get status for %s: %w", c.GetFullName(), err)
+			return ctrl.Result{Requeue: true}, fmt.Errorf("failed to get status for %s: %w", c.GetComponentName(), err)
 		}
 
 		if status.SyncStatus == components.SyncStatusPending ||
 			status.SyncStatus == components.SyncStatusUpdating {
 			hasPending = true
-			logger.Info("component sync", "component", c.GetFullName())
+			logger.Info("component sync", "component", c.GetComponentName())
 			if err := c.Sync(ctx); err != nil {
-				logger.Error(err, "component sync failed", "component", c.GetFullName())
+				logger.Error(err, "component sync failed", "component", c.GetComponentName())
 				return ctrl.Result{Requeue: true}, err
 			}
 		}
@@ -283,9 +283,12 @@ func (cm *ComponentManager) arePodsRemoved() bool {
 
 func (cm *ComponentManager) allUpdatableComponents() []components.Component {
 	var result []components.Component
-	for _, cmp := range cm.allComponents {
-		if cmp.GetType() != consts.YtsaurusClientType && cmp.GetType() != consts.TimbertruckType {
-			result = append(result, cmp)
+	for _, component := range cm.allComponents {
+		switch component.GetComponentType() {
+		case consts.YtsaurusClientType, consts.TimbertruckType:
+			// Not independent component.
+		default:
+			result = append(result, component)
 		}
 	}
 	return result
