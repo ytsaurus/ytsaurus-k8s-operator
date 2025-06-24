@@ -1279,6 +1279,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			var certBuilder *testutil.CertBuilder
 
 			BeforeEach(func() {
+
+				if os.Getenv("YTSAURUS_TLS_READY") == "" {
+					Skip("YTsaurus is not ready for TLS")
+				}
+
 				By("Adding all components")
 				ytBuilder.WithBaseComponents()
 				ytBuilder.WithRPCProxies()
