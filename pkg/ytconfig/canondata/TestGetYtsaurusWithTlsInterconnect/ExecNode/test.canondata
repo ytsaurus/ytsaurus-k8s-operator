@@ -220,13 +220,6 @@
                     "flush_period"=3000;
                 };
             };
-            "environment_variables"=[
-                {
-                    name="YT_SECURE_VAULT_YT_BUS_CA_BUNDLE";
-                    "file_name"="/tls/ca_bundle/ca.crt";
-                    export=%false;
-                };
-            ];
             "cluster_connection"={
                 "cluster_name"=test;
                 "primary_master"={
