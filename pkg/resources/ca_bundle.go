@@ -2,34 +2,57 @@ package resources
 
 import (
 	corev1 "k8s.io/api/core/v1"
+
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 // CABundle represents mounted configmap with trusted certificates
 type CABundle struct {
-	ConfigMapName string
-	VolumeName    string
-	MountPath     string
+	Source     ytv1.FileObjectReference
+	VolumeName string
+	MountPath  string
 }
 
-func NewCABundle(configMapName string, volumeName string, mountPath string) *CABundle {
+func NewCABundle(source ytv1.FileObjectReference, volumeName string, mountPath string) *CABundle {
 	return &CABundle{
-		ConfigMapName: configMapName,
-		VolumeName:    volumeName,
-		MountPath:     mountPath,
+		Source:     source,
+		VolumeName: volumeName,
+		MountPath:  mountPath,
 	}
 }
 
 func (t *CABundle) AddVolume(podSpec *corev1.PodSpec) {
-	podSpec.Volumes = append(podSpec.Volumes, corev1.Volume{
-		Name: t.VolumeName,
-		VolumeSource: corev1.VolumeSource{
-			ConfigMap: &corev1.ConfigMapVolumeSource{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: t.ConfigMapName,
+	var items []corev1.KeyToPath
+	if t.Source.Key != "" {
+		items = []corev1.KeyToPath{{Key: t.Source.Key, Path: consts.CABundleFileName}}
+	}
+
+	switch t.Source.Kind {
+	case "", "ConfigMap":
+		podSpec.Volumes = append(podSpec.Volumes, corev1.Volume{
+			Name: t.VolumeName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: t.Source.Name,
+					},
+					Items: items,
 				},
 			},
-		},
-	})
+		})
+	case "Secret":
+		podSpec.Volumes = append(podSpec.Volumes, corev1.Volume{
+			Name: t.VolumeName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: t.Source.Name,
+					Items:      items,
+				},
+			},
+		})
+	}
 }
 
 func (t *CABundle) AddVolumeMount(container *corev1.Container) {

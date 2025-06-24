@@ -467,7 +467,7 @@ func TestGetYtsaurusComponents(t *testing.T) {
 func TestGetYtsaurusWithTlsInterconnect(t *testing.T) {
 	ytsaurus := getYtsaurusWithAllComponents()
 
-	ytsaurus.Spec.CABundle = &corev1.LocalObjectReference{
+	ytsaurus.Spec.CABundle = &ytv1.FileObjectReference{
 		Name: "ytsaurus-ca-bundle",
 	}
 	ytsaurus.Spec.NativeTransport = &ytv1.RPCTransportSpec{
@@ -497,7 +497,7 @@ func TestGetYtsaurusWithTlsInterconnect(t *testing.T) {
 func TestGetYtsaurusWithMutualTLSInterconnect(t *testing.T) {
 	ytsaurus := getYtsaurusWithAllComponents()
 
-	ytsaurus.Spec.CABundle = &corev1.LocalObjectReference{
+	ytsaurus.Spec.CABundle = &ytv1.FileObjectReference{
 		Name: "ytsaurus-ca-bundle",
 	}
 	ytsaurus.Spec.NativeTransport = &ytv1.RPCTransportSpec{

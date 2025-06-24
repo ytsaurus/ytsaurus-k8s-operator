@@ -1317,7 +1317,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					ytsaurus.Name,
 				})
 
-				ytsaurus.Spec.CABundle = &corev1.LocalObjectReference{
+				ytsaurus.Spec.CABundle = &ytv1.FileObjectReference{
 					Name: testutil.TestTrustBundleName,
 				}
 

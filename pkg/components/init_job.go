@@ -74,7 +74,7 @@ func NewInitJob(
 	var busClientSecret *resources.TLSSecret
 
 	if caBundleSpec := commonSpec.CABundle; caBundleSpec != nil {
-		caBundle = resources.NewCABundle(caBundleSpec.Name, consts.CABundleVolumeName, consts.CABundleMountPoint)
+		caBundle = resources.NewCABundle(*caBundleSpec, consts.CABundleVolumeName, consts.CABundleMountPoint)
 	}
 
 	if transportSpec := commonSpec.NativeTransport; transportSpec != nil {
