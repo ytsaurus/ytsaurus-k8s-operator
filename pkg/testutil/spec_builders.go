@@ -147,6 +147,7 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 }
 
 func (b *YtsaurusBuilder) WithBaseComponents() {
+	b.WithMasterCaches()
 	b.WithBootstrap()
 	b.WithScheduler()
 	b.WithControllerAgents()
@@ -164,6 +165,15 @@ func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 	builder.CreateMinimal()
 	builder.WithBaseComponents()
 	return builder.Ytsaurus
+}
+
+func (b *YtsaurusBuilder) WithMasterCaches() {
+	b.Ytsaurus.Spec.MasterCaches = &ytv1.MasterCachesSpec{
+		InstanceSpec: ytv1.InstanceSpec{
+			InstanceCount: 1,
+			Loggers:       b.CreateLoggersSpec(),
+		},
+	}
 }
 
 // TODO (l0kix2): merge with ytconfig build spec helpers.

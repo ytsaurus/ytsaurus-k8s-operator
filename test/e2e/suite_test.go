@@ -50,6 +50,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	//+kubebuilder:scaffold:imports
@@ -333,20 +334,20 @@ func HaveClusterUpdateState(updateState ytv1.UpdateState) otypes.GomegaMatcher {
 	)
 }
 
-func HaveClusterUpdatingComponents(components ...string) otypes.GomegaMatcher {
+func HaveClusterUpdatingComponents(components ...consts.ComponentType) otypes.GomegaMatcher {
 	return And(
 		HaveClusterStateUpdating(),
-		WithTransform(func(yts *ytv1.Ytsaurus) []string {
-			var result []string
+		WithTransform(func(yts *ytv1.Ytsaurus) []consts.ComponentType {
+			var result []consts.ComponentType
 			for _, comp := range yts.Status.UpdateStatus.UpdatingComponents {
-				result = append(result, string(comp.Type))
+				result = append(result, comp.Type)
 			}
 			return result
-		}, Equal(components)),
+		}, ConsistOf(components)),
 	)
 }
 
-func HaveClusterUpdatingComponentsExactly(components ...string) otypes.GomegaMatcher {
+func HaveClusterUpdatingComponentsNames(components ...string) otypes.GomegaMatcher {
 	return And(
 		HaveClusterStateUpdating(),
 		WithTransform(func(yts *ytv1.Ytsaurus) []string {
@@ -355,7 +356,7 @@ func HaveClusterUpdatingComponentsExactly(components ...string) otypes.GomegaMat
 				result = append(result, comp.Name)
 			}
 			return result
-		}, Equal(components)),
+		}, ConsistOf(components)),
 	)
 }
 

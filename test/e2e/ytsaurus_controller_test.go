@@ -370,6 +370,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 					By("Setting old core image for testing upgrade")
 					ytsaurus.Spec.CoreImage = oldImage
+
+					if oldImage == testutil.YtsaurusImage23_2 {
+						By("Disabling master caches in 23.2")
+						ytsaurus.Spec.MasterCaches = nil
+					}
 				})
 
 				It("Triggers cluster update", func(ctx context.Context) {
@@ -444,14 +449,15 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(
-					"Discovery",
-					"Master",
-					"DataNode",
-					"HttpProxy",
-					"ExecNode",
-					"TabletNode",
-					"Scheduler",
-					"ControllerAgent",
+					consts.ControllerAgentType,
+					consts.DataNodeType,
+					consts.DiscoveryType,
+					consts.ExecNodeType,
+					consts.HttpProxyType,
+					consts.MasterType,
+					consts.MasterCacheType,
+					consts.SchedulerType,
+					consts.TabletNodeType,
 				))
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).To(BeEmpty())
@@ -482,7 +488,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("ExecNode"))
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(consts.ExecNodeType))
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
@@ -510,7 +516,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("TabletNode"))
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(consts.TabletNodeType))
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
@@ -542,7 +548,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("Master"))
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(consts.MasterType))
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
@@ -569,11 +575,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(
-					"Discovery",
-					"HttpProxy",
-					"ExecNode",
-					"Scheduler",
-					"ControllerAgent",
+					consts.ControllerAgentType,
+					consts.DiscoveryType,
+					consts.ExecNodeType,
+					consts.HttpProxyType,
+					consts.MasterCacheType,
+					consts.SchedulerType,
 				))
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
@@ -590,7 +597,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				pods = getChangedPods(podsAfterMasterUpdate, podsAfterStatelessUpdate)
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Created).To(BeEmpty(), "created")
-				Expect(pods.Updated).To(ConsistOf("ca-0", "ds-0", "end-0", "hp-0", "sch-0"), "updated")
+				Expect(pods.Updated).To(ConsistOf("ca-0", "ds-0", "end-0", "hp-0", "msc-0", "sch-0"), "updated")
 			})
 
 			It("Should update only specified data node group", func(ctx context.Context) {
@@ -621,7 +628,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-				Expect(ytsaurus).Should(HaveClusterUpdatingComponentsExactly("dn-2"))
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponentsNames("dn-2"))
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
@@ -683,7 +690,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Waiting cluster update starts")
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterStateUpdating())
-				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("Discovery", "ExecNode")) // change in containerd.toml must trigger exec node update
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(
+					consts.DiscoveryType,
+					consts.ExecNodeType,
+				)) // change in containerd.toml must trigger exec node update
 
 				By("Waiting cluster update completes")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
