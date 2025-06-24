@@ -708,7 +708,9 @@ func (g *NodeGenerator) GetExecNodeConfig(spec ytv1.ExecNodesSpec) ([]byte, erro
 			}
 		}
 
-		forwardSecret(keyring.BusCABundle, jobProxyKeyring.BusCABundle)
+		if c.ClusterConnection.BusClient.VerificationMode != VerificationModeNone {
+			forwardSecret(keyring.BusCABundle, jobProxyKeyring.BusCABundle)
+		}
 		forwardSecret(keyring.BusClientCertificate, jobProxyKeyring.BusClientCertificate)
 		forwardSecret(keyring.BusClientPrivateKey, jobProxyKeyring.BusClientPrivateKey)
 
