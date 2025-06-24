@@ -947,7 +947,9 @@ func (g *Generator) getMasterCachesConfigImpl(spec *ytv1.MasterCachesSpec) (Mast
 	if err != nil {
 		return MasterCacheServer{}, err
 	}
+
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	c.BusClient = c.ClusterConnection.BusClient
 	return c, nil
 }

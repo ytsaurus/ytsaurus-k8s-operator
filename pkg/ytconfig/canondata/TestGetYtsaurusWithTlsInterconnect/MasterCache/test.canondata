@@ -44,6 +44,16 @@
     };
     "monitoring_port"=10018;
     "rpc_port"=9018;
+    "bus_server"={
+        "encryption_mode"=optional;
+        "cert_chain"={
+            "file_name"="/tls/bus_secret/tls.crt";
+        };
+        "private_key"={
+            "file_name"="/tls/bus_secret/tls.key";
+        };
+        "verification_mode"=none;
+    };
     "timestamp_provider"={
         addresses=[
             "ms-test-0.masters-test.fake.svc.fake.zone:9010";
