@@ -2,10 +2,12 @@ package controllers_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 
 	. "github.com/onsi/gomega"
@@ -257,4 +259,16 @@ func readFileObject(namespace string, source ytv1.FileObjectReference) ([]byte, 
 		}
 	}
 	return nil, fmt.Errorf("Key %v not found in %v/%v", source.Key, source.Kind, source.Name)
+}
+
+func discoverProxies(proxyAddress string, params url.Values) []string {
+	resp, err := http.Get(proxyAddress + "/api/v4/discover_proxies?" + params.Encode())
+	Expect(err).NotTo(HaveOccurred())
+	defer resp.Body.Close()
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	var proxies struct {
+		Proxies []string `json:"proxies"`
+	}
+	Expect(json.NewDecoder(resp.Body).Decode(&proxies)).To(Succeed())
+	return proxies.Proxies
 }

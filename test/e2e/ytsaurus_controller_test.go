@@ -208,6 +208,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var ytHTTPSProxyAddress string
 	var ytHTTPSClient yt.Client
 	var ytRPCProxyAddress string
+	var ytRPCClient yt.Client
 	var ytRPCTLSClient yt.Client
 
 	// NOTE: execution order for each test spec:
@@ -354,7 +355,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		ytClient = getYtClient(ytProxyAddress)
 		Expect(ytClient.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
-		checkClusterViability(ytClient)
+
+		checkClusterHealth(ytClient)
+
+		createTestUser(ytClient)
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
@@ -409,6 +413,32 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
+		if len(ytsaurus.Spec.RPCProxies) == 0 {
+			return
+		}
+
+		// TODO(khlebnikov): Generalize for all components in cluster health report.
+		By("Checking RPC proxies are registered")
+		var rpcProxies []string
+		Expect(ytClient.ListNode(ctx, ypath.Path("//sys/rpc_proxies"), &rpcProxies, nil)).Should(Succeed())
+		Expect(rpcProxies).Should(HaveLen(int(ytsaurus.Spec.RPCProxies[0].InstanceCount)))
+
+		By("Checking YT RPC Proxy discovery")
+		proxies := discoverProxies("http://"+ytProxyAddress, nil)
+		Expect(proxies).ToNot(BeEmpty())
+		Expect(proxies).To(HaveEach(HaveSuffix(fmt.Sprintf(":%v", consts.RPCProxyPublicRPCPort))))
+
+		By("Creating ytsaurus RPC client")
+		ytRPCProxyAddress = getRPCProxyAddress(generator, namespace)
+		ytRPCClient = getYtRPCClient(ytProxyAddress, ytRPCProxyAddress)
+
+		By("Checking RPC proxy is working")
+		// Expect(ytTLSRPCClient.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
+		_, err := ytRPCClient.NodeExists(ctx, ypath.Path("/"), nil)
+		Expect(err).Should(Succeed())
+	})
+
+	JustBeforeEach(func(ctx context.Context) {
 		if !clusterWithTLS || len(ytsaurus.Spec.RPCProxies) == 0 {
 			return
 		}
@@ -416,7 +446,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		var err error
 
 		By("Checking YT RPC TLS Client")
-		ytRPCProxyAddress = getRPCProxyAddress(generator, namespace)
 		ytRPCTLSClient, err = ytrpc.NewClient(&yt.Config{
 			Proxy:                    ytHTTPSProxyAddress,
 			RPCProxy:                 ytRPCProxyAddress,
@@ -558,7 +587,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 					By("Waiting cluster update completes")
 					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
-					checkClusterBaseViability(ytClient)
+					checkClusterHealth(ytClient)
 					checkChunkLocations(ytClient)
 
 					podsAfterFullUpdate := getComponentPods(ctx, namespace)
@@ -665,7 +694,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				checkClusterBaseViability(ytClient)
+				checkClusterHealth(ytClient)
 
 				podsAfterEndUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterEndUpdate)
@@ -693,7 +722,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				checkClusterBaseViability(ytClient)
+				checkClusterHealth(ytClient)
 
 				podsAfterTndUpdate := getComponentPods(ctx, namespace)
 				pods = getChangedPods(podsAfterEndUpdate, podsAfterTndUpdate)
@@ -725,7 +754,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				checkClusterBaseViability(ytClient)
+				checkClusterHealth(ytClient)
 
 				podsAfterMasterUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterMasterUpdate)
@@ -758,7 +787,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				checkClusterBaseViability(ytClient)
+				checkClusterHealth(ytClient)
 				podsAfterStatelessUpdate := getComponentPods(ctx, namespace)
 				pods = getChangedPods(podsAfterMasterUpdate, podsAfterStatelessUpdate)
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
@@ -805,7 +834,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				checkClusterBaseViability(ytClient)
+				checkClusterHealth(ytClient)
 
 				podsAfterUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterUpdate)
@@ -1341,14 +1370,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	Context("Integration tests", Label("integration"), func() {
 
 		Context("With RPC proxy", Label("rpc-proxy"), func() {
-			var ytRPCProxyAddress string
-
 			BeforeEach(func() {
 				ytBuilder.WithRPCProxies()
-			})
-
-			JustBeforeEach(func() {
-				ytRPCProxyAddress = getRPCProxyAddress(generator, namespace)
 			})
 
 			It("Rpc proxies should require authentication", func(ctx context.Context) {
@@ -1539,7 +1562,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	}) // integration
 })
 
-func checkClusterBaseViability(ytClient yt.Client) {
+func checkClusterHealth(ytClient yt.Client) {
 	By("Checking that cluster is alive")
 	var res []string
 	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
@@ -1559,9 +1582,7 @@ func checkClusterBaseViability(ytClient yt.Client) {
 	}, reactionTimeout, pollInterval).Should(BeTrue())
 }
 
-func checkClusterViability(ytClient yt.Client) {
-	checkClusterBaseViability(ytClient)
-
+func createTestUser(ytClient yt.Client) {
 	By("Create a test user")
 	_, err := ytClient.CreateObject(ctx, yt.NodeUser, &yt.CreateObjectOptions{Attributes: map[string]any{"name": "test-user"}})
 	Expect(err).Should(Succeed())
