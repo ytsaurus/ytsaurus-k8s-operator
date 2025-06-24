@@ -106,7 +106,7 @@ func newServerConfigured(
 
 	var caBundle *resources.CABundle
 	if caBundleSpec := commonSpec.CABundle; caBundleSpec != nil {
-		caBundle = resources.NewCABundle(caBundleSpec.Name, consts.CABundleVolumeName, consts.CABundleMountPoint)
+		caBundle = resources.NewCABundle(*caBundleSpec, consts.CABundleVolumeName, consts.CABundleMountPoint)
 	}
 
 	var busServerSecret *resources.TLSSecret

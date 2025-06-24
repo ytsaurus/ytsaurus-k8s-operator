@@ -60,7 +60,7 @@ func NewStrawberryController(
 
 	if caBundleSpec := resource.Spec.CABundle; caBundleSpec != nil {
 		caBundle = resources.NewCABundle(
-			caBundleSpec.Name,
+			*caBundleSpec,
 			consts.CABundleVolumeName,
 			consts.CABundleMountPoint)
 	}

@@ -41,7 +41,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 
 	var caBundle *resources.CABundle
 	if caBundleSpec := resource.Spec.CABundle; caBundleSpec != nil {
-		caBundle = resources.NewCABundle(caBundleSpec.Name, consts.CABundleVolumeName, consts.CABundleMountPoint)
+		caBundle = resources.NewCABundle(*caBundleSpec, consts.CABundleVolumeName, consts.CABundleMountPoint)
 	}
 
 	microservice := newMicroservice(
