@@ -11447,6 +11447,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    externalNetworkDomain:
+                      description: In the case of ServiceType='NodePort' and ExternalNetworkDomain
+                        is set, the prox
+                      type: string
                     hostNetwork:
                       description: Use the host's network namespace, this overrides
                         global option.
@@ -11454,7 +11458,15 @@ spec:
                     httpNodePort:
                       format: int32
                       type: integer
+                    httpPort:
+                      default: 80
+                      format: int32
+                      type: integer
                     httpsNodePort:
+                      format: int32
+                      type: integer
+                    httpsPort:
+                      default: 443
                       format: int32
                       type: integer
                     image:

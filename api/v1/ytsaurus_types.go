@@ -331,9 +331,17 @@ type HTTPTransportSpec struct {
 type HTTPProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	//+kubebuilder:default:=NodePort
-	ServiceType   corev1.ServiceType `json:"serviceType,omitempty"`
-	HttpNodePort  *int32             `json:"httpNodePort,omitempty"`
-	HttpsNodePort *int32             `json:"httpsNodePort,omitempty"`
+	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
+	//+kubebuilder:default:=80
+	HttpPort *int32 `json:"httpPort,omitempty"`
+	//+kubebuilder:default:=443
+	HttpsPort     *int32 `json:"httpsPort,omitempty"`
+	HttpNodePort  *int32 `json:"httpNodePort,omitempty"`
+	HttpsNodePort *int32 `json:"httpsNodePort,omitempty"`
+	// In the case of ServiceType='NodePort' and ExternalNetworkDomain is set, the proxy will be available on 2 networks:
+	//  1. "default" with FQDN {K8S_POD_NAME}.{ns}.svc.cluster.local (K8S internal network)
+	//  2. "external" with FQDN {K8S_NODE_NAME}.{ExternalNetworkDomain}
+	ExternalNetworkDomain *string `json:"externalNetworkDomain,omitempty"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`

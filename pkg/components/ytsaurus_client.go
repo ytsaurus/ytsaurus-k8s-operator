@@ -409,7 +409,7 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 		proxy, ok := os.LookupEnv("YTOP_PROXY")
 		disableProxyDiscovery := true
 		if !ok {
-			proxy = yc.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
+			proxy = yc.cfgen.GetHTTPProxiesAddress(&yc.ytsaurus.GetResource().Spec, consts.DefaultHTTPProxyRole)
 			disableProxyDiscovery = false
 		}
 		yc.ytClient, err = ythttp.NewClient(&yt.Config{

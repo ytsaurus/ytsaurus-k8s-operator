@@ -1,0 +1,12 @@
+externalNetworkDomain: example.com
+httpNodePort: 10000
+httpPort: 10000
+httpsNodePort: 10001
+httpsPort: 10001
+instanceCount: 3
+resources: {}
+role: control
+serviceType: NodePort
+transport:
+  httpsSecret:
+    name: yt-test-infra-wildcard

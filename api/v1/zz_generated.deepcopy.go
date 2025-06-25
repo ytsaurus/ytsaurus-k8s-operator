@@ -599,6 +599,16 @@ func (in *ExecNodesSpec) DeepCopy() *ExecNodesSpec {
 func (in *HTTPProxiesSpec) DeepCopyInto(out *HTTPProxiesSpec) {
 	*out = *in
 	in.InstanceSpec.DeepCopyInto(&out.InstanceSpec)
+	if in.HttpPort != nil {
+		in, out := &in.HttpPort, &out.HttpPort
+		*out = new(int32)
+		**out = **in
+	}
+	if in.HttpsPort != nil {
+		in, out := &in.HttpsPort, &out.HttpsPort
+		*out = new(int32)
+		**out = **in
+	}
 	if in.HttpNodePort != nil {
 		in, out := &in.HttpNodePort, &out.HttpNodePort
 		*out = new(int32)
@@ -607,6 +617,11 @@ func (in *HTTPProxiesSpec) DeepCopyInto(out *HTTPProxiesSpec) {
 	if in.HttpsNodePort != nil {
 		in, out := &in.HttpsNodePort, &out.HttpsNodePort
 		*out = new(int32)
+		**out = **in
+	}
+	if in.ExternalNetworkDomain != nil {
+		in, out := &in.ExternalNetworkDomain, &out.ExternalNetworkDomain
+		*out = new(string)
 		**out = **in
 	}
 	in.Transport.DeepCopyInto(&out.Transport)

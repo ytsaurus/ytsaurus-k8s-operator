@@ -164,12 +164,35 @@ func (g *Generator) GetHTTPProxiesServiceName(role string) string {
 	return g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceName()
 }
 
-func (g *Generator) GetHTTPProxiesServiceAddress(role string) string {
-	return g.GetComponentLabeller(consts.HttpProxyType, role).GetHeadlessServiceAddress()
+func getHttpProxyPortOverride(ytsaurus *ytv1.YtsaurusSpec, role string) *int32 {
+	for _, p := range ytsaurus.HTTPProxies {
+		if p.Role == role {
+			return p.HttpPort
+		}
+	}
+	return nil
 }
 
-func (g *NodeGenerator) GetHTTPProxiesAddress(role string) string {
-	return g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceAddress()
+func (g *Generator) GetHTTPProxiesServiceAddress(role string) string {
+	port := getHttpProxyPortOverride(&g.ytsaurus.Spec, role)
+	if port == nil || *port == consts.HTTPProxyHTTPPort {
+		return g.GetComponentLabeller(consts.HttpProxyType, role).GetHeadlessServiceAddress()
+	}
+	return fmt.Sprintf("%s:%d",
+		g.GetComponentLabeller(consts.HttpProxyType, role).GetHeadlessServiceAddress(),
+		*port,
+	)
+}
+
+func (g *NodeGenerator) GetHTTPProxiesAddress(ytsaurus *ytv1.YtsaurusSpec, role string) string {
+	port := getHttpProxyPortOverride(ytsaurus, role)
+	if port == nil || *port == consts.HTTPProxyHTTPPort {
+		return g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceAddress()
+	}
+	return fmt.Sprintf("%s:%d",
+		g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceAddress(),
+		*port,
+	)
 }
 
 func (g *Generator) GetRPCProxiesServiceName(role string) string {
@@ -226,7 +249,7 @@ func (g *NodeGenerator) fillAddressResolver(c *AddressResolver) {
 func (g *NodeGenerator) fillSolomonExporter(c *SolomonExporter) {
 	c.Host = ptr.To("{POD_SHORT_HOSTNAME}")
 	c.InstanceTags = map[string]string{
-		"pod": "{K8S_POD_NAME}",
+		"pod": fmt.Sprintf("{%s}", consts.ENV_K8S_POD_NAME),
 	}
 }
 
@@ -250,11 +273,11 @@ func (g *NodeGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCT
 
 func (g *NodeGenerator) fillCypressAnnotations(c *CommonServer) {
 	c.CypressAnnotations = map[string]any{
-		"k8s_pod_name":      "{K8S_POD_NAME}",
-		"k8s_pod_namespace": "{K8S_POD_NAMESPACE}",
-		"k8s_node_name":     "{K8S_NODE_NAME}",
+		"k8s_pod_name":      fmt.Sprintf("{%s}", consts.ENV_K8S_POD_NAME),
+		"k8s_pod_namespace": fmt.Sprintf("{%s}", consts.ENV_K8S_POD_NAMESPACE),
+		"k8s_node_name":     fmt.Sprintf("{%s}", consts.ENV_K8S_NODE_NAME),
 		// for CMS and UI сompatibility
-		"physical_host": "{K8S_NODE_NAME}",
+		"physical_host": fmt.Sprintf("{%s}", consts.ENV_K8S_NODE_NAME),
 	}
 }
 
@@ -384,7 +407,7 @@ func (g *Generator) GetStrawberryControllerConfig() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	proxy := g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
+	proxy := g.GetHTTPProxiesAddress(&g.ytsaurus.Spec, consts.DefaultHTTPProxyRole)
 	c.LocationProxies = []string{proxy}
 	c.HTTPLocationAliases = map[string][]string{
 		proxy: {g.ytsaurus.Name},
@@ -396,7 +419,7 @@ func (g *Generator) GetStrawberryInitClusterConfig() ([]byte, error) {
 	var conFamConfig StrawberryControllerFamiliesConfig
 	g.fillStrawberryControllerFamiliesConfig(&conFamConfig, g.ytsaurus.Spec.StrawberryController)
 	c := getStrawberryInitCluster(conFamConfig)
-	c.Proxy = g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
+	c.Proxy = g.GetHTTPProxiesAddress(&g.ytsaurus.Spec, consts.DefaultHTTPProxyRole)
 	return marshallYsonConfig(c)
 }
 
@@ -424,8 +447,8 @@ func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, e
 		// config postprocessing.
 		l := g.GetComponentLabeller(consts.MasterType, "")
 		c.AddressResolver.LocalhostNameOverride = ptr.To(
-			fmt.Sprintf("%s.%s.%s.svc.%s",
-				"{K8S_POD_NAME}",
+			fmt.Sprintf("{%s}.%s.%s.svc.%s",
+				consts.ENV_K8S_POD_NAME,
 				l.GetHeadlessServiceName(),
 				l.GetNamespace(),
 				l.GetClusterDomain()))
@@ -748,7 +771,7 @@ func (g *NodeGenerator) GetTabletNodeConfig(spec ytv1.TabletNodesSpec) ([]byte, 
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, error) {
+func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec, l *labeller.Labeller) (HTTPProxyServer, error) {
 	c, err := getHTTPProxyServerCarcass(spec)
 	if err != nil {
 		return c, err
@@ -772,11 +795,40 @@ func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProx
 		}
 	}
 
+	c.Addresses = nil
+
+	if spec.ServiceType == corev1.ServiceTypeNodePort && spec.ExternalNetworkDomain != nil {
+		if !isEqualOrDefault(spec.HttpPort, spec.HttpNodePort, consts.HTTPProxyHTTPPort) {
+			return c, fmt.Errorf("invalid http-proxy spec, httpPort and httpNodePort must be equal or empty")
+		}
+		if !isEqualOrDefault(spec.HttpsPort, spec.HttpsNodePort, consts.HTTPProxyHTTPSPort) {
+			return c, fmt.Errorf("invalid http-proxy spec, httpsPort and httpsNodePort must be equal or empty")
+		}
+
+		c.Addresses = &[][]string{
+			{
+				"default",
+				fmt.Sprintf("{%s}.%s.%s.svc.%s",
+					consts.ENV_K8S_POD_NAME,
+					l.GetHeadlessServiceName(),
+					l.GetNamespace(),
+					l.GetClusterDomain(),
+				),
+			},
+			{
+				"external",
+				fmt.Sprintf("{%s}.%s", consts.ENV_K8S_NODE_NAME, *spec.ExternalNetworkDomain),
+			},
+		}
+	} else if spec.ExternalNetworkDomain != nil {
+		return c, fmt.Errorf("invalid http-proxy spec, externalNetworkDomain is set but serviceType is not NodePort")
+	}
+
 	return c, nil
 }
 
-func (g *Generator) GetHTTPProxyConfig(spec ytv1.HTTPProxiesSpec) ([]byte, error) {
-	c, err := g.getHTTPProxyConfigImpl(&spec)
+func (g *Generator) GetHTTPProxyConfig(spec ytv1.HTTPProxiesSpec, l *labeller.Labeller) ([]byte, error) {
+	c, err := g.getHTTPProxyConfigImpl(&spec, l)
 	if err != nil {
 		return nil, err
 	}
@@ -879,7 +931,7 @@ func (g *Generator) GetUIClustersConfig() ([]byte, error) {
 	c := getUIClusterCarcass()
 	c.ID = g.ytsaurus.Name
 	c.Name = g.ytsaurus.Name
-	c.Proxy = g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
+	c.Proxy = g.GetHTTPProxiesAddress(&g.ytsaurus.Spec, consts.DefaultHTTPProxyRole)
 	c.Secure = g.ytsaurus.Spec.UI.Secure
 	c.ExternalProxy = g.ytsaurus.Spec.UI.ExternalProxy
 	c.PrimaryMaster.CellTag = g.ytsaurus.Spec.PrimaryMasters.CellTag
@@ -1070,7 +1122,7 @@ func (g *Generator) GetComponentConfig(component consts.ComponentType, name stri
 	case consts.HttpProxyType:
 		for _, spec := range g.ytsaurus.Spec.HTTPProxies {
 			if spec.Role == name {
-				return g.GetHTTPProxyConfig(spec)
+				return g.GetHTTPProxyConfig(spec, g.GetComponentLabeller(consts.HttpProxyType, name))
 			}
 		}
 	case consts.MasterCacheType:
@@ -1128,4 +1180,17 @@ func (g *Generator) GetComponentConfig(component consts.ComponentType, name stri
 	}
 
 	return nil, fmt.Errorf("unknown component %v name %v", component, name)
+}
+
+func isEqualOrDefault(v1, v2 *int32, dflt int32) bool {
+	if v1 == nil && v2 == nil {
+		return true
+	}
+	if v1 == nil {
+		return *v2 == dflt
+	}
+	if v2 == nil {
+		return *v1 == dflt
+	}
+	return *v1 == *v2
 }

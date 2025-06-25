@@ -277,7 +277,7 @@ func TestGetHTTPProxyConfigDisableCreateOauthUser(t *testing.T) {
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
 	proxySpec := getHTTPProxySpec()
 	canonize.AssertStruct(t, "http-proxy", proxySpec)
-	cfg, err := g.GetHTTPProxyConfig(proxySpec)
+	cfg, err := g.GetHTTPProxyConfig(proxySpec, g.GetComponentLabeller(consts.HttpProxyType, "control"))
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -289,9 +289,122 @@ func TestGetHTTPProxyConfigEnableCreateOauthUser(t *testing.T) {
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
 	proxySpec := getHTTPProxySpec()
 	canonize.AssertStruct(t, "http-proxy", proxySpec)
-	cfg, err := g.GetHTTPProxyConfig(proxySpec)
+	cfg, err := g.GetHTTPProxyConfig(proxySpec, g.GetComponentLabeller(consts.HttpProxyType, "control"))
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
+}
+
+func TestGetHTTPProxyConfigWithAddresses(t *testing.T) {
+	spec := getYtsaurusWithoutNodes()
+	g := NewGenerator(spec, testClusterDomain)
+	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
+	proxySpec := getHTTPProxySpec()
+	proxySpec.ExternalNetworkDomain = ptr.To("example.com")
+	proxySpec.HttpPort = proxySpec.HttpNodePort
+	proxySpec.HttpsPort = proxySpec.HttpsNodePort
+	canonize.AssertStruct(t, "http-proxy", proxySpec)
+	cfg, err := g.GetHTTPProxyConfig(proxySpec, g.GetComponentLabeller(consts.HttpProxyType, "control"))
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetHttpProxyConfigErrors(t *testing.T) {
+	spec := getYtsaurusWithoutNodes()
+	g := NewGenerator(spec, testClusterDomain)
+
+	cases := []struct {
+		name string
+		mod  func(*ytv1.HTTPProxiesSpec) *ytv1.HTTPProxiesSpec
+		err  string
+	}{
+		{
+			name: "not NodePort",
+			mod: func(spec *ytv1.HTTPProxiesSpec) *ytv1.HTTPProxiesSpec {
+				spec.ServiceType = corev1.ServiceTypeClusterIP
+				return spec
+			},
+			err: "invalid http-proxy spec, externalNetworkDomain is set but serviceType is not NodePort",
+		},
+		{
+			name: "HttpPort != HttpNodePort (1)",
+			mod: func(spec *ytv1.HTTPProxiesSpec) *ytv1.HTTPProxiesSpec {
+				spec.HttpPort = ptr.To(int32(123))
+				return spec
+			},
+			err: "invalid http-proxy spec, httpPort and httpNodePort must be equal or empty",
+		},
+		{
+			name: "HttpPort != HttpNodePort (2)",
+			mod: func(spec *ytv1.HTTPProxiesSpec) *ytv1.HTTPProxiesSpec {
+				spec.HttpNodePort = ptr.To(int32(123))
+				return spec
+			},
+			err: "invalid http-proxy spec, httpPort and httpNodePort must be equal or empty",
+		},
+		{
+			name: "HttpPort != HttpNodePort (3)",
+			mod: func(spec *ytv1.HTTPProxiesSpec) *ytv1.HTTPProxiesSpec {
+				spec.HttpPort = nil
+				return spec
+			},
+			err: "invalid http-proxy spec, httpPort and httpNodePort must be equal or empty",
+		},
+		{
+			name: "HttpPort != HttpNodePort (4)",
+			mod: func(spec *ytv1.HTTPProxiesSpec) *ytv1.HTTPProxiesSpec {
+				spec.HttpNodePort = nil
+				return spec
+			},
+			err: "invalid http-proxy spec, httpPort and httpNodePort must be equal or empty",
+		},
+		{
+			name: "HttpsPort != HttpsNodePort (1)",
+			mod: func(spec *ytv1.HTTPProxiesSpec) *ytv1.HTTPProxiesSpec {
+				spec.HttpsPort = ptr.To(int32(123))
+				return spec
+			},
+			err: "invalid http-proxy spec, httpsPort and httpsNodePort must be equal or empty",
+		},
+		{
+			name: "HttpsPort != HttpsNodePort (2)",
+			mod: func(spec *ytv1.HTTPProxiesSpec) *ytv1.HTTPProxiesSpec {
+				spec.HttpsNodePort = ptr.To(int32(123))
+				return spec
+			},
+			err: "invalid http-proxy spec, httpsPort and httpsNodePort must be equal or empty",
+		},
+		{
+			name: "HttpsPort != HttpsNodePort (3)",
+			mod: func(spec *ytv1.HTTPProxiesSpec) *ytv1.HTTPProxiesSpec {
+				spec.HttpsPort = nil
+				return spec
+			},
+			err: "invalid http-proxy spec, httpsPort and httpsNodePort must be equal or empty",
+		},
+		{
+			name: "HttpsPort != HttpsNodePort (4)",
+			mod: func(spec *ytv1.HTTPProxiesSpec) *ytv1.HTTPProxiesSpec {
+				spec.HttpsNodePort = nil
+				return spec
+			},
+			err: "invalid http-proxy spec, httpsPort and httpsNodePort must be equal or empty",
+		},
+	}
+
+	l := g.GetComponentLabeller(consts.HttpProxyType, "control")
+
+	for _, c := range cases {
+		proxySpec := getHTTPProxySpec()
+		proxySpec.ExternalNetworkDomain = ptr.To("example.com")
+		proxySpec.HttpPort = ptr.To(*proxySpec.HttpNodePort)
+		proxySpec.HttpsPort = ptr.To(*proxySpec.HttpsNodePort)
+
+		t.Run(c.name, func(t *testing.T) {
+			_, err := g.GetHTTPProxyConfig(*c.mod(&proxySpec), l)
+			require.Error(t, err)
+			require.Equal(t, c.err, err.Error())
+		})
+	}
 }
 
 func TestGetMasterWithFixedHostsConfig(t *testing.T) {

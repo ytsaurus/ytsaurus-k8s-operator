@@ -453,7 +453,7 @@ func (m *Master) doServerSync(ctx context.Context) error {
 		addHydraPersistenceUploaderToPodSpec(
 			primaryMastersSpec.HydraPersistenceUploader,
 			podSpec,
-			m.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+			m.cfgen.GetHTTPProxiesAddress(&m.ytsaurus.GetResource().Spec, consts.DefaultHTTPProxyRole),
 			fmt.Sprintf("%s-secret", consts.HydraPersistenceUploaderUserName),
 		)
 	}

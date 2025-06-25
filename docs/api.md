@@ -654,8 +654,11 @@ _Appears in:_
 | `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  | NodePort |  |
+| `httpPort` _integer_ |  | 80 |  |
+| `httpsPort` _integer_ |  | 443 |  |
 | `httpNodePort` _integer_ |  |  |  |
 | `httpsNodePort` _integer_ |  |  |  |
+| `externalNetworkDomain` _string_ | In the case of ServiceType='NodePort' and ExternalNetworkDomain is set, the proxy will be available on 2 networks:<br /> 1. "default" with FQDN \{K8S_POD_NAME\}.\{ns\}.svc.cluster.local (K8S internal network)<br /> 2. "external" with FQDN \{K8S_NODE_NAME\}.\{ExternalNetworkDomain\} |  |  |
 | `role` _string_ |  | default | MinLength: 1 <br /> |
 | `transport` _[HTTPTransportSpec](#httptransportspec)_ |  |  |  |
 
