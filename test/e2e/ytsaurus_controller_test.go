@@ -1356,6 +1356,15 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					nativeServerCert,
 					nativeClientCert,
 				)
+
+				By("Adding transport certificates to RPC proxies")
+				// FIXME(khlebnikov): RPCProxy share bus server for native and public services.
+				// Master pokes rpc-proxy orchid during registration, so it must trust certificate.
+				ytsaurus.Spec.RPCProxies[0].Transport = ytv1.RPCTransportSpec{
+					TLSSecret: &corev1.LocalObjectReference{
+						Name: nativeServerCert.Name,
+					},
+				}
 			})
 
 			It("Verify that mTLS is active", func(ctx context.Context) {
