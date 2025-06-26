@@ -37,7 +37,7 @@ controllerManager:
       watchNamespace: ""
       ytLogLevel: DEBUG
     image:
-      repository: ytsaurus/k8s-operator
+      repository: cr.yandex/crpj2hgf4c1sh28arl7o/ytsaurus-k8s-operator
       tag: ""
     resources:
       limits:
