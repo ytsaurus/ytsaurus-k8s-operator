@@ -1,0 +1,7 @@
+package consts
+
+const (
+	ENV_K8S_POD_NAME      = "K8S_POD_NAME"
+	ENV_K8S_NODE_NAME     = "K8S_NODE_NAME"
+	ENV_K8S_POD_NAMESPACE = "K8S_POD_NAMESPACE"
+)

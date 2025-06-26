@@ -129,7 +129,7 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		container.Env = []corev1.EnvVar{
 			{
 				Name:  "YT_PROXY",
-				Value: s.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+				Value: s.cfgen.GetHTTPProxiesAddress(&s.ytsaurus.Spec, consts.DefaultHTTPProxyRole),
 			},
 			{
 				Name:  "YT_TOKEN",
@@ -138,6 +138,10 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 			{
 				Name:  "EXTRA_PUBLISH_CLUSTER_OPTIONS",
 				Value: "--ignore-existing",
+			},
+			{
+				Name:  "YT_DISABLE_PROXY_DISCOVERY",
+				Value: "true",
 			},
 		}
 	}
