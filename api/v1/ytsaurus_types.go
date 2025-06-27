@@ -312,10 +312,6 @@ type MasterConnectionSpec struct {
 	HostAddresses []string `json:"hostAddresses,omitempty"`
 }
 
-type HydraPersistenceUploaderSpec struct {
-	Image string `json:"image,omitempty"`
-}
-
 type MastersSpec struct {
 	InstanceSpec         `json:",inline"`
 	MasterConnectionSpec `json:",inline"`
@@ -324,8 +320,6 @@ type MastersSpec struct {
 
 	MaxSnapshotCountToKeep  *int `json:"maxSnapshotCountToKeep,omitempty"`
 	MaxChangelogCountToKeep *int `json:"maxChangelogCountToKeep,omitempty"`
-
-	HydraPersistenceUploader *HydraPersistenceUploaderSpec `json:"hydraPersistenceUploader,omitempty"`
 
 	// List of sidecar containers as yaml of core/v1 Container.
 	Sidecars []string `json:"sidecars,omitempty"`
@@ -751,30 +745,28 @@ func IsReadyToUpdateClusterState(clusterState ClusterState) bool {
 type UpdateState string
 
 const (
-	UpdateStateNone                                  UpdateState = "None"
-	UpdateStatePossibilityCheck                      UpdateState = "PossibilityCheck"
-	UpdateStateImpossibleToStart                     UpdateState = "ImpossibleToStart"
-	UpdateStateWaitingForSafeModeEnabled             UpdateState = "WaitingForSafeModeEnabled"
-	UpdateStateWaitingForTabletCellsSaving           UpdateState = "WaitingForTabletCellsSaving"
-	UpdateStateWaitingForTabletCellsRemovingStart    UpdateState = "WaitingForTabletCellsRemovingStart"
-	UpdateStateWaitingForTabletCellsRemoved          UpdateState = "WaitingForTabletCellsRemoved"
-	UpdateStateWaitingForImaginaryChunksAbsence      UpdateState = "WaitingForImaginaryChunksAbsence"
-	UpdateStateWaitingForSnapshots                   UpdateState = "WaitingForSnapshots"
-	UpdateStateWaitingForPodsRemoval                 UpdateState = "WaitingForPodsRemoval"
-	UpdateStateWaitingForPodsCreation                UpdateState = "WaitingForPodsCreation"
-	UpdateStateWaitingForMasterExitReadOnly          UpdateState = "WaitingForMasterExitReadOnly"
-	UpdateStateWaitingForTabletCellsRecovery         UpdateState = "WaitingForTabletCellsRecovery"
-	UpdateStateWaitingForOpArchiveUpdatingPrepare    UpdateState = "WaitingForOpArchiveUpdatingPrepare"
-	UpdateStateWaitingForOpArchiveUpdate             UpdateState = "WaitingForOpArchiveUpdate"
-	UpdateStateWaitingForSidecarsInitializingPrepare UpdateState = "WaitingForSidecarsInitializingPrepare"
-	UpdateStateWaitingForSidecarsInitialize          UpdateState = "WaitingForSidecarsInitialize"
-	UpdateStateWaitingForQTStateUpdatingPrepare      UpdateState = "WaitingForQTStateUpdatingPrepare"
-	UpdateStateWaitingForQTStateUpdate               UpdateState = "WaitingForQTStateUpdate"
-	UpdateStateWaitingForQAStateUpdatingPrepare      UpdateState = "WaitingForQAStateUpdatingPrepare"
-	UpdateStateWaitingForQAStateUpdate               UpdateState = "WaitingForQAStateUpdate"
-	UpdateStateWaitingForYqlaUpdatingPrepare         UpdateState = "WaitingForYqlaUpdatingPrepare"
-	UpdateStateWaitingForYqlaUpdate                  UpdateState = "WaitingForYqlaUpdate"
-	UpdateStateWaitingForSafeModeDisabled            UpdateState = "WaitingForSafeModeDisabled"
+	UpdateStateNone                               UpdateState = "None"
+	UpdateStatePossibilityCheck                   UpdateState = "PossibilityCheck"
+	UpdateStateImpossibleToStart                  UpdateState = "ImpossibleToStart"
+	UpdateStateWaitingForSafeModeEnabled          UpdateState = "WaitingForSafeModeEnabled"
+	UpdateStateWaitingForTabletCellsSaving        UpdateState = "WaitingForTabletCellsSaving"
+	UpdateStateWaitingForTabletCellsRemovingStart UpdateState = "WaitingForTabletCellsRemovingStart"
+	UpdateStateWaitingForTabletCellsRemoved       UpdateState = "WaitingForTabletCellsRemoved"
+	UpdateStateWaitingForImaginaryChunksAbsence   UpdateState = "WaitingForImaginaryChunksAbsence"
+	UpdateStateWaitingForSnapshots                UpdateState = "WaitingForSnapshots"
+	UpdateStateWaitingForPodsRemoval              UpdateState = "WaitingForPodsRemoval"
+	UpdateStateWaitingForPodsCreation             UpdateState = "WaitingForPodsCreation"
+	UpdateStateWaitingForMasterExitReadOnly       UpdateState = "WaitingForMasterExitReadOnly"
+	UpdateStateWaitingForTabletCellsRecovery      UpdateState = "WaitingForTabletCellsRecovery"
+	UpdateStateWaitingForOpArchiveUpdatingPrepare UpdateState = "WaitingForOpArchiveUpdatingPrepare"
+	UpdateStateWaitingForOpArchiveUpdate          UpdateState = "WaitingForOpArchiveUpdate"
+	UpdateStateWaitingForQTStateUpdatingPrepare   UpdateState = "WaitingForQTStateUpdatingPrepare"
+	UpdateStateWaitingForQTStateUpdate            UpdateState = "WaitingForQTStateUpdate"
+	UpdateStateWaitingForQAStateUpdatingPrepare   UpdateState = "WaitingForQAStateUpdatingPrepare"
+	UpdateStateWaitingForQAStateUpdate            UpdateState = "WaitingForQAStateUpdate"
+	UpdateStateWaitingForYqlaUpdatingPrepare      UpdateState = "WaitingForYqlaUpdatingPrepare"
+	UpdateStateWaitingForYqlaUpdate               UpdateState = "WaitingForYqlaUpdate"
+	UpdateStateWaitingForSafeModeDisabled         UpdateState = "WaitingForSafeModeDisabled"
 )
 
 type TabletCellBundleInfo struct {

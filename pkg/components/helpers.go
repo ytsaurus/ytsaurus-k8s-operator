@@ -173,20 +173,12 @@ func handleUpdatingClusterState(
 	return nil, err
 }
 
-func SetPathAcl(path string, acl []yt.ACE) (string, error) {
+func SetPathAcl(path string, acl []yt.ACE) string {
 	formattedAcl, err := yson.MarshalFormat(acl, yson.FormatText)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal ACL: %w", err)
+		panic(err)
 	}
-	return fmt.Sprintf("/usr/bin/yt set %s/@acl '%s'", path, string(formattedAcl)), nil
-}
-
-func AppendPathAcl(path string, acl yt.ACE) (string, error) {
-	formattedAcl, err := yson.MarshalFormat(acl, yson.FormatText)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal ACL: %w", err)
-	}
-	return fmt.Sprintf("/usr/bin/yt set %s/@acl/end '%s'", path, string(formattedAcl)), nil
+	return fmt.Sprintf("/usr/bin/yt set %s/@acl '%s'", path, string(formattedAcl))
 }
 
 func RunIfCondition(condition string, commands ...string) string {
@@ -243,21 +235,13 @@ func AddAffinity(statefulSet *appsv1.StatefulSet,
 
 func AddSidecarsToPodSpec(sidecar []string, podSpec *corev1.PodSpec) error {
 	for _, sidecarSpec := range sidecar {
-		sidecar, err := DecodeSidecar(sidecarSpec)
-		if err != nil {
+		sidecar := corev1.Container{}
+		if err := yaml.UnmarshalStrict([]byte(sidecarSpec), &sidecar); err != nil {
 			return err
 		}
 		podSpec.Containers = append(podSpec.Containers, sidecar)
 	}
 	return nil
-}
-
-func DecodeSidecar(sidecarSpec string) (corev1.Container, error) {
-	sidecarContainer := corev1.Container{}
-	if err := yaml.UnmarshalStrict([]byte(sidecarSpec), &sidecarContainer); err != nil {
-		return corev1.Container{}, fmt.Errorf("failed to parse sidecar: %w", err)
-	}
-	return sidecarContainer, nil
 }
 
 func AddInitContainersToPodSpec(initContainers []string, podSpec *corev1.PodSpec) error {

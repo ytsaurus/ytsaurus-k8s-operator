@@ -102,8 +102,6 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus *Ytsaurus, mastersSpe
 		}
 	}
 
-	allErrors = append(allErrors, r.validateHydraPersistenceUploaderSpec(mastersSpec.HydraPersistenceUploader, path.Child("hydraPersistenceUploader"))...)
-
 	allErrors = append(allErrors, r.validateSidecars(mastersSpec.Sidecars, path.Child("sidecars"))...)
 
 	return allErrors
@@ -237,17 +235,6 @@ func (r *ytsaurusValidator) validateDataNodes(newYtsaurus *Ytsaurus) field.Error
 		if FindFirstLocation(dn.Locations, LocationTypeChunkStore) == nil {
 			allErrors = append(allErrors, field.NotFound(path.Child("locations"), LocationTypeChunkStore))
 		}
-	}
-
-	return allErrors
-}
-
-func (r *baseValidator) validateHydraPersistenceUploaderSpec(
-	hydraPersistenceUploader *HydraPersistenceUploaderSpec, path *field.Path) field.ErrorList {
-	var allErrors field.ErrorList
-
-	if hydraPersistenceUploader != nil && hydraPersistenceUploader.Image == "" {
-		allErrors = append(allErrors, field.Required(path.Child("image"), "hydraPersistenceUploader image is required"))
 	}
 
 	return allErrors

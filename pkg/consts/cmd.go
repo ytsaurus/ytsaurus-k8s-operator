@@ -19,13 +19,12 @@ const (
 )
 
 const (
-	YTServerContainerName                 = "ytserver"
-	PostprocessConfigContainerName        = "postprocess-config"
-	PrepareLocationsContainerName         = "prepare-locations"
-	PrepareSecretContainerName            = "prepare-secret"
-	UIContainerName                       = "yt-ui"
-	StrawberryContainerName               = "strawberry"
-	HydraPersistenceUploaderContainerName = "hydra-persistence-uploader"
+	YTServerContainerName          = "ytserver"
+	PostprocessConfigContainerName = "postprocess-config"
+	PrepareLocationsContainerName  = "prepare-locations"
+	PrepareSecretContainerName     = "prepare-secret"
+	UIContainerName                = "yt-ui"
+	StrawberryContainerName        = "strawberry"
 )
 
 const (

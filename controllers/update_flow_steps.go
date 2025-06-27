@@ -186,25 +186,23 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 		}
 		return stepResultMarkUnsatisfied
 	},
-	ytv1.UpdateStateWaitingForSafeModeEnabled:             flowCheckStatusCondition(consts.ConditionSafeModeEnabled),
-	ytv1.UpdateStateWaitingForTabletCellsSaving:           flowCheckStatusCondition(consts.ConditionTabletCellsSaved),
-	ytv1.UpdateStateWaitingForTabletCellsRemovingStart:    flowCheckStatusCondition(consts.ConditionTabletCellsRemovingStarted),
-	ytv1.UpdateStateWaitingForTabletCellsRemoved:          flowCheckStatusCondition(consts.ConditionTabletCellsRemoved),
-	ytv1.UpdateStateWaitingForImaginaryChunksAbsence:      flowCheckStatusCondition(consts.ConditionDataNodesWithImaginaryChunksAbsent),
-	ytv1.UpdateStateWaitingForSnapshots:                   flowCheckStatusCondition(consts.ConditionSnaphotsSaved),
-	ytv1.UpdateStateWaitingForTabletCellsRecovery:         flowCheckStatusCondition(consts.ConditionTabletCellsRecovered),
-	ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:    flowCheckStatusCondition(consts.ConditionOpArchivePreparedForUpdating),
-	ytv1.UpdateStateWaitingForOpArchiveUpdate:             flowCheckStatusCondition(consts.ConditionOpArchiveUpdated),
-	ytv1.UpdateStateWaitingForSidecarsInitializingPrepare: flowCheckStatusCondition(consts.ConditionSidecarsPreparedForInitializing),
-	ytv1.UpdateStateWaitingForSidecarsInitialize:          flowCheckStatusCondition(consts.ConditionSidecarsInitialized),
-	ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:      flowCheckStatusCondition(consts.ConditionQTStatePreparedForUpdating),
-	ytv1.UpdateStateWaitingForQTStateUpdate:               flowCheckStatusCondition(consts.ConditionQTStateUpdated),
-	ytv1.UpdateStateWaitingForYqlaUpdatingPrepare:         flowCheckStatusCondition(consts.ConditionYqlaPreparedForUpdating),
-	ytv1.UpdateStateWaitingForYqlaUpdate:                  flowCheckStatusCondition(consts.ConditionYqlaUpdated),
-	ytv1.UpdateStateWaitingForQAStateUpdatingPrepare:      flowCheckStatusCondition(consts.ConditionQAStatePreparedForUpdating),
-	ytv1.UpdateStateWaitingForQAStateUpdate:               flowCheckStatusCondition(consts.ConditionQAStateUpdated),
-	ytv1.UpdateStateWaitingForSafeModeDisabled:            flowCheckStatusCondition(consts.ConditionSafeModeDisabled),
-	ytv1.UpdateStateWaitingForMasterExitReadOnly:          flowCheckStatusCondition(consts.ConditionMasterExitedReadOnly),
+	ytv1.UpdateStateWaitingForSafeModeEnabled:          flowCheckStatusCondition(consts.ConditionSafeModeEnabled),
+	ytv1.UpdateStateWaitingForTabletCellsSaving:        flowCheckStatusCondition(consts.ConditionTabletCellsSaved),
+	ytv1.UpdateStateWaitingForTabletCellsRemovingStart: flowCheckStatusCondition(consts.ConditionTabletCellsRemovingStarted),
+	ytv1.UpdateStateWaitingForTabletCellsRemoved:       flowCheckStatusCondition(consts.ConditionTabletCellsRemoved),
+	ytv1.UpdateStateWaitingForImaginaryChunksAbsence:   flowCheckStatusCondition(consts.ConditionDataNodesWithImaginaryChunksAbsent),
+	ytv1.UpdateStateWaitingForSnapshots:                flowCheckStatusCondition(consts.ConditionSnaphotsSaved),
+	ytv1.UpdateStateWaitingForTabletCellsRecovery:      flowCheckStatusCondition(consts.ConditionTabletCellsRecovered),
+	ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare: flowCheckStatusCondition(consts.ConditionOpArchivePreparedForUpdating),
+	ytv1.UpdateStateWaitingForOpArchiveUpdate:          flowCheckStatusCondition(consts.ConditionOpArchiveUpdated),
+	ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:   flowCheckStatusCondition(consts.ConditionQTStatePreparedForUpdating),
+	ytv1.UpdateStateWaitingForQTStateUpdate:            flowCheckStatusCondition(consts.ConditionQTStateUpdated),
+	ytv1.UpdateStateWaitingForYqlaUpdatingPrepare:      flowCheckStatusCondition(consts.ConditionYqlaPreparedForUpdating),
+	ytv1.UpdateStateWaitingForYqlaUpdate:               flowCheckStatusCondition(consts.ConditionYqlaUpdated),
+	ytv1.UpdateStateWaitingForQAStateUpdatingPrepare:   flowCheckStatusCondition(consts.ConditionQAStatePreparedForUpdating),
+	ytv1.UpdateStateWaitingForQAStateUpdate:            flowCheckStatusCondition(consts.ConditionQAStateUpdated),
+	ytv1.UpdateStateWaitingForSafeModeDisabled:         flowCheckStatusCondition(consts.ConditionSafeModeDisabled),
+	ytv1.UpdateStateWaitingForMasterExitReadOnly:       flowCheckStatusCondition(consts.ConditionMasterExitedReadOnly),
 	ytv1.UpdateStateWaitingForPodsRemoval: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 		if componentManager.arePodsRemoved() {
 			return stepResultMarkHappy
@@ -262,10 +260,6 @@ func buildFlowTree(updatingComponents []ytv1.Component) *flowTree {
 	).chainIf(
 		updMaster,
 		st(ytv1.UpdateStateWaitingForMasterExitReadOnly),
-	).chainIf(
-		updMaster,
-		st(ytv1.UpdateStateWaitingForSidecarsInitializingPrepare),
-		st(ytv1.UpdateStateWaitingForSidecarsInitialize),
 	).chainIf(
 		updTablet,
 		st(ytv1.UpdateStateWaitingForTabletCellsRecovery),
