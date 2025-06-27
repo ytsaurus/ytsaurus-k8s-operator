@@ -19364,11 +19364,6 @@ spec:
                     description: Use the host's network namespace, this overrides
                       global option.
                     type: boolean
-                  hydraPersistenceUploader:
-                    properties:
-                      image:
-                        type: string
-                    type: object
                   image:
                     description: Overrides coreImage for component.
                     type: string
@@ -32313,11 +32308,6 @@ spec:
                       description: Use the host's network namespace, this overrides
                         global option.
                       type: boolean
-                    hydraPersistenceUploader:
-                      properties:
-                        image:
-                          type: string
-                      type: object
                     image:
                       description: Overrides coreImage for component.
                       type: string

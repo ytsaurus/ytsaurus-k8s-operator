@@ -40,11 +40,10 @@ type server interface {
 }
 
 type serverImpl struct {
-	image         string
-	sidecarImages map[string]string
-	labeller      *labeller.Labeller
-	proxy         apiproxy.APIProxy
-	commonSpec    ytv1.CommonSpec
+	image      string
+	labeller   *labeller.Labeller
+	proxy      apiproxy.APIProxy
+	commonSpec ytv1.CommonSpec
 
 	binaryPath string
 
@@ -142,7 +141,6 @@ func newServerConfigured(
 		},
 		readinessProbeEndpointPort: intstr.FromString(consts.YTMonitoringContainerPortName),
 		readinessProbeEndpointPath: readinessProbeHTTPPath,
-		sidecarImages:              map[string]string{},
 	}
 
 	for _, fn := range optFuncs {
@@ -150,13 +148,12 @@ func newServerConfigured(
 	}
 
 	return &serverImpl{
-		labeller:      l,
-		image:         image,
-		sidecarImages: opts.sidecarImages,
-		proxy:         proxy,
-		commonSpec:    commonSpec,
-		instanceSpec:  instanceSpec,
-		binaryPath:    binaryPath,
+		labeller:     l,
+		image:        image,
+		proxy:        proxy,
+		commonSpec:   commonSpec,
+		instanceSpec: instanceSpec,
+		binaryPath:   binaryPath,
 		statefulSet: resources.NewStatefulSet(
 			l.GetServerStatefulSetName(),
 			l,
@@ -251,22 +248,7 @@ func (s *serverImpl) arePodsRemoved(ctx context.Context) bool {
 }
 
 func (s *serverImpl) podsImageCorrespondsToSpec() bool {
-	found := 0
-	for _, container := range s.statefulSet.OldObject().Spec.Template.Spec.Containers {
-		switch container.Name {
-		case consts.YTServerContainerName:
-			if container.Image != s.image {
-				return false
-			}
-		case consts.HydraPersistenceUploaderContainerName:
-			found++
-			requiredImage, ok := s.sidecarImages[consts.HydraPersistenceUploaderContainerName]
-			if !ok || requiredImage != container.Image {
-				return false
-			}
-		}
-	}
-	return found == len(s.sidecarImages)
+	return s.statefulSet.OldObject().Spec.Template.Spec.Containers[0].Image == s.image
 }
 
 func (s *serverImpl) needUpdate() bool {
