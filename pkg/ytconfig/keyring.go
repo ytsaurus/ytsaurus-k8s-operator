@@ -60,7 +60,7 @@ func getMountKeyring(commonSpec *ytv1.CommonSpec, transportSpec *ytv1.RPCTranspo
 	return &keyring
 }
 
-// Certificates from secure vault environment variables
+// Certificates from secure vault environment variables with file fallback
 func getVaultKeyring(commonSpec *ytv1.CommonSpec, transportSpec *ytv1.RPCTransportSpec) *Keyring {
 	if transportSpec == nil {
 		transportSpec = commonSpec.NativeTransport
@@ -74,6 +74,7 @@ func getVaultKeyring(commonSpec *ytv1.CommonSpec, transportSpec *ytv1.RPCTranspo
 	if commonSpec.CABundle != nil {
 		keyring.BusCABundle = &PemBlob{
 			EnvironmentVariable: consts.SecureVaultEnvPrefix + consts.BusCABundleVaultName,
+			FileName:            path.Join(consts.CABundleMountPoint, consts.CABundleFileName),
 		}
 	} else {
 		keyring.BusCABundle = &PemBlob{
@@ -84,18 +85,22 @@ func getVaultKeyring(commonSpec *ytv1.CommonSpec, transportSpec *ytv1.RPCTranspo
 	if transportSpec.TLSSecret != nil {
 		keyring.BusServerCertificate = &PemBlob{
 			EnvironmentVariable: consts.SecureVaultEnvPrefix + consts.BusServerCertificateVaultName,
+			FileName:            path.Join(consts.BusServerSecretMountPoint, corev1.TLSCertKey),
 		}
 		keyring.BusServerPrivateKey = &PemBlob{
 			EnvironmentVariable: consts.SecureVaultEnvPrefix + consts.BusServerPrivateKeyVaultName,
+			FileName:            path.Join(consts.BusServerSecretMountPoint, corev1.TLSPrivateKeyKey),
 		}
 	}
 
 	if transportSpec.TLSClientSecret != nil {
 		keyring.BusClientCertificate = &PemBlob{
 			EnvironmentVariable: consts.SecureVaultEnvPrefix + consts.BusClientCertificateVaultName,
+			FileName:            path.Join(consts.BusClientSecretMountPoint, corev1.TLSCertKey),
 		}
 		keyring.BusClientPrivateKey = &PemBlob{
 			EnvironmentVariable: consts.SecureVaultEnvPrefix + consts.BusClientPrivateKeyVaultName,
+			FileName:            path.Join(consts.BusClientSecretMountPoint, corev1.TLSPrivateKeyKey),
 		}
 	}
 

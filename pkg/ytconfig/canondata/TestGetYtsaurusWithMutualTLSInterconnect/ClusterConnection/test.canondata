@@ -23,12 +23,15 @@
         "encryption_mode"=required;
         "cert_chain"={
             "environment_variable"="YT_SECURE_VAULT_YT_BUS_CLIENT_CERTIFICATE";
+            "file_name"="/tls/bus_client_secret/tls.crt";
         };
         "private_key"={
             "environment_variable"="YT_SECURE_VAULT_YT_BUS_CLIENT_PRIVATE_KEY";
+            "file_name"="/tls/bus_client_secret/tls.key";
         };
         ca={
             "environment_variable"="YT_SECURE_VAULT_YT_BUS_CA_BUNDLE";
+            "file_name"="/tls/ca_bundle/ca.crt";
         };
         "verification_mode"=full;
         "peer_alternative_host_name"="fake.svc.cluster.local";

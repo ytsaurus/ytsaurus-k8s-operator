@@ -18,9 +18,11 @@
                 "encryption_mode"=optional;
                 "cert_chain"={
                     "environment_variable"="YT_SECURE_VAULT_YT_BUS_SERVER_CERTIFICATE";
+                    "file_name"="/tls/bus_secret/tls.crt";
                 };
                 "private_key"={
                     "environment_variable"="YT_SECURE_VAULT_YT_BUS_SERVER_PRIVATE_KEY";
+                    "file_name"="/tls/bus_secret/tls.key";
                 };
                 "verification_mode"=none;
             };
