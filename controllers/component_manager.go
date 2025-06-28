@@ -193,14 +193,14 @@ func NewComponentManager(
 
 		if syncStatus != components.SyncStatusReady {
 			logger.Info("component is not ready", "component", c.GetFullName(), "syncStatus", syncStatus)
-			notReadyComponents = append(notReadyComponents, c.GetFullName())
+			notReadyComponents = append(notReadyComponents, string(c.GetFullName()))
 			status.needSync = true
 		} else {
-			readyComponents = append(readyComponents, c.GetFullName())
+			readyComponents = append(readyComponents, string(c.GetFullName()))
 		}
 
 		if syncStatus == components.SyncStatusUpdating {
-			updatingComponents = append(updatingComponents, c.GetFullName())
+			updatingComponents = append(updatingComponents, string(c.GetFullName()))
 		}
 	}
 

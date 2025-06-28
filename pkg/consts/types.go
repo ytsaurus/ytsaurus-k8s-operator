@@ -27,6 +27,9 @@ const (
 	NativeClientConfigType   ComponentType = "NativeClientConfig"
 )
 
+// "<ComponentType>[-<Name>]", name is came from spec and can be non-CamelCase.
+type ComponentFullName string
+
 type ComponentClass string
 
 const (
