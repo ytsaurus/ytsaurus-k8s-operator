@@ -43,6 +43,24 @@ _Appears in:_
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 
 
+#### BindMountSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [JobEnvironmentSpec](#jobenvironmentspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `path` _string_ |  |  |  |
+| `sourcePath` _string_ |  |  |  |
+| `readOnly` _boolean_ |  | false |  |
+
+
 #### BootstrapSpec
 
 
@@ -855,6 +873,7 @@ _Appears in:_
 | `cri` _[CRIJobEnvironmentSpec](#crijobenvironmentspec)_ | CRI service configuration for running jobs in sidecar container. |  |  |
 | `useArtifactBinds` _boolean_ | Pass artifacts as read-only bind-mounts rather than symlinks. |  |  |
 | `doNotSetUserId` _boolean_ | Do not use slot user id for running jobs. |  |  |
+| `bindMounts` _[BindMountSpec](#bindmountspec) array_ | Add bind-mounts from exec-node container into all job containers. |  |  |
 
 
 #### KafkaProxiesSpec

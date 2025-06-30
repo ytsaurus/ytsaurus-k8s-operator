@@ -8684,6 +8684,23 @@ spec:
                       type: integer
                     jobEnvironment:
                       properties:
+                        bindMounts:
+                          description: Add bind-mounts from exec-node container into
+                            all job containers.
+                          items:
+                            properties:
+                              path:
+                                type: string
+                              readOnly:
+                                default: false
+                                type: boolean
+                              sourcePath:
+                                type: string
+                            required:
+                            - path
+                            - sourcePath
+                            type: object
+                          type: array
                         cri:
                           description: CRI service configuration for running jobs
                             in sidecar container.

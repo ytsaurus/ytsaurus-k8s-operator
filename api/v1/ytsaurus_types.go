@@ -111,6 +111,13 @@ type LocationSpec struct {
 	MaxTrashMilliseconds *int64 `json:"maxTrashMilliseconds,omitempty"`
 }
 
+type BindMountSpec struct {
+	Path       string `json:"path"`
+	SourcePath string `json:"sourcePath"`
+	//+kubebuilder:default:=false
+	ReadOnly *bool `json:"readOnly,omitempty"`
+}
+
 // LogLevel string describes possible Ytsaurus logging level.
 // +enum
 type LogLevel string
@@ -472,6 +479,9 @@ type JobEnvironmentSpec struct {
 	// Do not use slot user id for running jobs.
 	//+optional
 	DoNotSetUserId *bool `json:"doNotSetUserId,omitempty"`
+	// Add bind-mounts from exec-node container into all job containers.
+	//+optional
+	BindMounts []BindMountSpec `json:"bindMounts,omitempty"`
 }
 
 type ExecNodesSpec struct {
