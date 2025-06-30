@@ -294,6 +294,19 @@ func TestGetHTTPProxyConfigEnableCreateOauthUser(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetHTTPProxyConfigWithCustomPorts(t *testing.T) {
+	spec := getYtsaurusWithoutNodes()
+	g := NewGenerator(spec, testClusterDomain)
+	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
+	proxySpec := getHTTPProxySpec()
+	proxySpec.HttpPort = ptr.To(int32(8080))
+	proxySpec.HttpsPort = ptr.To(int32(80443))
+	canonize.AssertStruct(t, "http-proxy", proxySpec)
+	cfg, err := g.GetHTTPProxyConfig(proxySpec)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetMasterWithFixedHostsConfig(t *testing.T) {
 	ytsaurus := withFixedMasterHosts(getYtsaurus())
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)

@@ -11462,7 +11462,15 @@ spec:
                     httpNodePort:
                       format: int32
                       type: integer
+                    httpPort:
+                      default: 80
+                      format: int32
+                      type: integer
                     httpsNodePort:
+                      format: int32
+                      type: integer
+                    httpsPort:
+                      default: 443
                       format: int32
                       type: integer
                     image:
