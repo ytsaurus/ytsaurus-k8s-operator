@@ -43,6 +43,7 @@ type OauthTokenAuthenticator struct {
 type Coordinator struct {
 	Enable            bool   `yson:"enable"`
 	DefaultRoleFilter string `yson:"default_role_filter"`
+	ShowPorts         *bool  `yson:"show_ports,omitempty"`
 }
 
 type Auth struct {
@@ -116,10 +117,13 @@ func getHTTPProxyServerCarcass(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, err
 	c.Auth.CypressTokenAuthenticator.Secure = true
 	c.Coordinator.Enable = true
 	c.Coordinator.DefaultRoleFilter = consts.DefaultHTTPProxyRole
+	if spec.HttpPort != nil && *spec.HttpPort != consts.HTTPProxyHTTPPort {
+		c.Coordinator.ShowPorts = ptr.To(true)
+	}
 
 	c.RPCPort = consts.HTTPProxyRPCPort
 	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.HTTPProxyMonitoringPort)
-	c.Port = consts.HTTPProxyHTTPPort
+	c.Port = int(ptr.Deref(spec.HttpPort, int32(consts.HTTPProxyHTTPPort)))
 
 	c.Role = spec.Role
 
@@ -130,7 +134,7 @@ func getHTTPProxyServerCarcass(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, err
 	if spec.Transport.HTTPSSecret != nil {
 		c.HTTPSServer = &HTTPSServer{
 			HTTPServer: HTTPServer{
-				Port: consts.HTTPProxyHTTPSPort,
+				Port: int(ptr.Deref(spec.HttpsPort, int32(consts.HTTPProxyHTTPSPort))),
 			},
 			Credentials: HTTPSServerCredentials{
 				CertChain: PemBlob{

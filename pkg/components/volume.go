@@ -130,7 +130,7 @@ func getConfigPostprocessingCommand(configFileName string) string {
 func getConfigPostprocessEnv() []corev1.EnvVar {
 	return []corev1.EnvVar{
 		{
-			Name: "K8S_POD_NAME",
+			Name: consts.ENV_K8S_POD_NAME,
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{
 					FieldPath: "metadata.name",
@@ -138,7 +138,7 @@ func getConfigPostprocessEnv() []corev1.EnvVar {
 			},
 		},
 		{
-			Name: "K8S_POD_NAMESPACE",
+			Name: consts.ENV_K8S_POD_NAMESPACE,
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{
 					FieldPath: "metadata.namespace",
@@ -146,7 +146,7 @@ func getConfigPostprocessEnv() []corev1.EnvVar {
 			},
 		},
 		{
-			Name: "K8S_NODE_NAME",
+			Name: consts.ENV_K8S_NODE_NAME,
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{
 					FieldPath: "spec.nodeName",

@@ -614,6 +614,16 @@ func (in *FileObjectReference) DeepCopy() *FileObjectReference {
 func (in *HTTPProxiesSpec) DeepCopyInto(out *HTTPProxiesSpec) {
 	*out = *in
 	in.InstanceSpec.DeepCopyInto(&out.InstanceSpec)
+	if in.HttpPort != nil {
+		in, out := &in.HttpPort, &out.HttpPort
+		*out = new(int32)
+		**out = **in
+	}
+	if in.HttpsPort != nil {
+		in, out := &in.HttpsPort, &out.HttpsPort
+		*out = new(int32)
+		**out = **in
+	}
 	if in.HttpNodePort != nil {
 		in, out := &in.HttpNodePort, &out.HttpNodePort
 		*out = new(int32)
