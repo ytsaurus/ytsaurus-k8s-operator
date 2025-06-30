@@ -3,33 +3,51 @@ package ytconfig
 import (
 	"path"
 
+	"k8s.io/utils/ptr"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
-func GetContainerdSocketPath(spec *ytv1.ExecNodesSpec) string {
+func GetCRIServiceType(spec *ytv1.ExecNodesSpec) ytv1.CRIServiceType {
+	if envSpec := spec.JobEnvironment; envSpec != nil && envSpec.CRI != nil {
+		return ptr.Deref(envSpec.CRI.CRIService, ytv1.CRIServiceContainerd)
+	}
+	return ytv1.CRIServiceNone
+}
+
+func GetImageCacheLocationPath(spec *ytv1.ExecNodesSpec) *string {
 	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeImageCache); location != nil {
-		return path.Join(location.Path, consts.ContainerdSocketName)
+		return &location.Path
+	}
+	return nil
+}
+
+func GetCRIServiceSocketPath(spec *ytv1.ExecNodesSpec) string {
+	var socketName string
+	switch GetCRIServiceType(spec) {
+	case ytv1.CRIServiceContainerd:
+		socketName = consts.ContainerdSocketName
+	default:
+		socketName = consts.CRIServiceSocketName
+	}
+	if locationPath := GetImageCacheLocationPath(spec); locationPath != nil {
+		return path.Join(*locationPath, socketName)
 	}
 	// In non-overlayfs setup CRI could work without own location.
-	return path.Join(consts.ConfigMountPoint, consts.ContainerdSocketName)
+	return path.Join(consts.ConfigMountPoint, socketName)
 }
 
 func (g *NodeGenerator) GetContainerdConfig(spec *ytv1.ExecNodesSpec) ([]byte, error) {
 	criSpec := spec.JobEnvironment.CRI
 
-	var rootPath *string
-	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeImageCache); location != nil {
-		rootPath = &location.Path
-	}
-
 	config := map[string]any{
 		"version": 2,
-		"root":    rootPath,
+		"root":    GetImageCacheLocationPath(spec),
 
 		"grpc": map[string]any{
-			"address": GetContainerdSocketPath(spec),
+			"address": GetCRIServiceSocketPath(spec),
 			"uid":     0,
 			"gid":     0,
 		},

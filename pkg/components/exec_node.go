@@ -43,7 +43,7 @@ func NewExecNode(
 	)
 
 	var sidecarConfig *ConfigHelper
-	if spec.JobEnvironment != nil && spec.JobEnvironment.CRI != nil {
+	if ytconfig.GetCRIServiceType(&spec) == ytv1.CRIServiceContainerd {
 		sidecarConfig = NewConfigHelper(
 			l,
 			ytsaurus.APIProxy(),
