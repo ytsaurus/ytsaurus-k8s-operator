@@ -250,6 +250,16 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			Expect(k8sClient.Create(ctx, object)).Should(Succeed())
 		}
 
+		DeferCleanup(AttachProgressReporter(func() string {
+			falseConditions := make(map[string]string)
+			for _, condition := range ytsaurus.Status.Conditions {
+				if condition.Status == metav1.ConditionFalse {
+					falseConditions[condition.Type] = condition.Reason
+				}
+			}
+			return fmt.Sprintf("ytsaurus false conditions: %v", falseConditions)
+		}))
+
 		By("Checking that Ytsaurus state is equal to `Running`")
 		log.Info("Ytsaurus",
 			"namespace", ytsaurus.Namespace,
