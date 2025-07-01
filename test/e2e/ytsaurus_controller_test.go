@@ -1294,17 +1294,19 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		}) // integration chyt
 
-		Context("With Bus RPC mTLS", Label("tls"), func() {
-
+		DescribeTableSubtree("With Bus RPC mTLS", Label("tls"), func(coreImage, chytImage string) {
 			var certBuilder *testutil.CertBuilder
 
 			BeforeEach(func() {
+
+				log.Info("YTsaurus images", "coreImage", coreImage, "chytImage", chytImage)
 
 				if os.Getenv("YTSAURUS_TLS_READY") == "" {
 					Skip("YTsaurus is not ready for TLS")
 				}
 
 				By("Adding all components")
+				ytsaurus.Spec.CoreImage = coreImage
 				ytBuilder.WithBaseComponents()
 				ytBuilder.WithRPCProxies()
 				ytBuilder.WithQueryTracker()
@@ -1313,6 +1315,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Adding CHYT instance")
 				chyt = ytBuilder.CreateChyt()
+				chyt.Spec.Image = chytImage
 				objects = append(objects, chyt)
 
 				By("Adding native transport certificates")
@@ -1357,8 +1360,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one;",
 				)).To(Equal(""))
 			})
-
-		}) // integration tls
+		},
+			Entry("YTsaurus current", Label("current"), testutil.YtsaurusImageCurrent, testutil.ChytImageCurrent),
+			Entry("YTsaurus future", Label("future"), testutil.YtsaurusImageFuture, testutil.ChytImageFuture),
+		) // integration tls
 
 	}) // integration
 })
