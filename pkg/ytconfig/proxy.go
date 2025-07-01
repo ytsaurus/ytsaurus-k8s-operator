@@ -117,7 +117,10 @@ func getHTTPProxyServerCarcass(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, err
 	c.Auth.CypressTokenAuthenticator.Secure = true
 	c.Coordinator.Enable = true
 	c.Coordinator.DefaultRoleFilter = consts.DefaultHTTPProxyRole
-	if spec.HttpPort != nil && *spec.HttpPort != consts.HTTPProxyHTTPPort {
+
+	// Show only non-standard http/https ports in "/hosts" (to avoid unneeded changes)
+	if (spec.HttpPort != nil && *spec.HttpPort != consts.HTTPProxyHTTPPort) ||
+		(spec.HttpsPort != nil && *spec.HttpsPort != consts.HTTPProxyHTTPSPort) {
 		c.Coordinator.ShowPorts = ptr.To(true)
 	}
 
