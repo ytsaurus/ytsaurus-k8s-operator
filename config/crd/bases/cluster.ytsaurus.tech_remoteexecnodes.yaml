@@ -909,6 +909,18 @@ spec:
                   doNotSetUserId:
                     description: Do not use slot user id for running jobs.
                     type: boolean
+                  environmentVariables:
+                    description: Add environment variables into all job containers.
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        value:
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
                   isolated:
                     description: Isolate job execution environment from exec node
                       or not, by default true when po

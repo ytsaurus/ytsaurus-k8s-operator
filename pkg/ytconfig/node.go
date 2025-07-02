@@ -542,6 +542,13 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 				ReadOnly:     ptr.Deref(mnt.ReadOnly, false),
 			})
 		}
+		for _, env := range envSpec.EnvironmentVariables {
+			execNode.JobProxy.EnvironmentVariables = append(execNode.JobProxy.EnvironmentVariables, EnvironmentVariable{
+				Name:   env.Name,
+				Value:  env.Value,
+				Export: ptr.To(true),
+			})
+		}
 	}
 
 	return nil

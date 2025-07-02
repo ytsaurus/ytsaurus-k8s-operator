@@ -602,6 +602,23 @@ _Appears in:_
 | `spec` _[PersistentVolumeClaimSpec](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#persistentvolumeclaimspec-v1-core)_ | Spec defines the desired characteristics of a volume requested by a pod author.<br />More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims |  |  |
 
 
+#### EnvironmentVariableSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [JobEnvironmentSpec](#jobenvironmentspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ |  |  |  |
+| `value` _string_ |  |  |  |
+
+
 #### ExecNodesSpec
 
 
@@ -874,6 +891,7 @@ _Appears in:_
 | `useArtifactBinds` _boolean_ | Pass artifacts as read-only bind-mounts rather than symlinks. |  |  |
 | `doNotSetUserId` _boolean_ | Do not use slot user id for running jobs. |  |  |
 | `bindMounts` _[BindMountSpec](#bindmountspec) array_ | Add bind-mounts from exec-node container into all job containers. |  |  |
+| `environmentVariables` _[EnvironmentVariableSpec](#environmentvariablespec) array_ | Add environment variables into all job containers. |  |  |
 
 
 #### KafkaProxiesSpec
