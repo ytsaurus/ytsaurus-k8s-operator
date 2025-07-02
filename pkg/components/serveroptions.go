@@ -10,6 +10,8 @@ type options struct {
 
 	readinessProbeEndpointPort intstr.IntOrString
 	readinessProbeEndpointPath string
+
+	sidecarImages map[string]string
 }
 
 type Option func(opts *options)
@@ -29,5 +31,14 @@ func WithCustomReadinessProbeEndpointPath(path string) Option {
 func WithContainerPorts(ports ...corev1.ContainerPort) Option {
 	return func(opts *options) {
 		opts.containerPorts = append(opts.containerPorts, ports...)
+	}
+}
+
+func WithSidecarImage(name, image string) Option {
+	return func(opts *options) {
+		if opts.sidecarImages == nil {
+			opts.sidecarImages = make(map[string]string)
+		}
+		opts.sidecarImages[name] = image
 	}
 }
