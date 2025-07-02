@@ -208,6 +208,8 @@ type ExecNode struct {
 
 	// NOTE: Non-legacy "use_artifact_binds" moved into dynamic config.
 	UseArtifactBindsLegacy *bool `yson:"use_artifact_binds,omitempty"`
+
+	RootFSBinds []BindMount `yson:"root_fs_binds,omitempty"`
 }
 
 type Cache struct {
@@ -530,6 +532,23 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 	} else {
 		jobEnv.Type = JobEnvironmentTypeSimple
 		execNode.SlotManager.EnableTmpfs = ptr.To(spec.Privileged)
+	}
+
+	if envSpec != nil {
+		for _, mnt := range envSpec.BindMounts {
+			execNode.RootFSBinds = append(execNode.RootFSBinds, BindMount{
+				InternalPath: mnt.Path,
+				ExternalPath: mnt.SourcePath,
+				ReadOnly:     ptr.Deref(mnt.ReadOnly, false),
+			})
+		}
+		for _, env := range envSpec.EnvironmentVariables {
+			execNode.JobProxy.EnvironmentVariables = append(execNode.JobProxy.EnvironmentVariables, EnvironmentVariable{
+				Name:   env.Name,
+				Value:  env.Value,
+				Export: ptr.To(true),
+			})
+		}
 	}
 
 	return nil
