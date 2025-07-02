@@ -164,12 +164,39 @@ func (g *Generator) GetHTTPProxiesServiceName(role string) string {
 	return g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceName()
 }
 
-func (g *Generator) GetHTTPProxiesServiceAddress(role string) string {
-	return g.GetComponentLabeller(consts.HttpProxyType, role).GetHeadlessServiceAddress()
+func getHttpProxyPortOverride(ytsaurus *ytv1.YtsaurusSpec, role string) *int32 {
+	for _, p := range ytsaurus.HTTPProxies {
+		if p.Role == role {
+			return p.HttpPort
+		}
+	}
+	return nil
 }
 
-func (g *NodeGenerator) GetHTTPProxiesAddress(role string) string {
-	return g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceAddress()
+func (g *Generator) GetHTTPProxiesServiceAddress(role string) string {
+	port := getHttpProxyPortOverride(&g.ytsaurus.Spec, role)
+	if port == nil || *port == consts.HTTPProxyHTTPPort {
+		return g.GetComponentLabeller(consts.HttpProxyType, role).GetHeadlessServiceAddress()
+	}
+	return fmt.Sprintf("%s:%d",
+		g.GetComponentLabeller(consts.HttpProxyType, role).GetHeadlessServiceAddress(),
+		*port,
+	)
+}
+
+func (g *NodeGenerator) GetHTTPProxiesAddress(ytsaurus *ytv1.YtsaurusSpec, role string) string {
+	port := getHttpProxyPortOverride(ytsaurus, role)
+	if port == nil || *port == consts.HTTPProxyHTTPPort {
+		return g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceAddress()
+	}
+	return fmt.Sprintf("%s:%d",
+		g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceAddress(),
+		*port,
+	)
+}
+
+func (g *Generator) GetHTTPProxiesAddress(role string) string {
+	return g.NodeGenerator.GetHTTPProxiesAddress(&g.ytsaurus.Spec, role)
 }
 
 func (g *Generator) GetRPCProxiesServiceName(role string) string {
@@ -226,7 +253,7 @@ func (g *NodeGenerator) fillAddressResolver(c *AddressResolver) {
 func (g *NodeGenerator) fillSolomonExporter(c *SolomonExporter) {
 	c.Host = ptr.To("{POD_SHORT_HOSTNAME}")
 	c.InstanceTags = map[string]string{
-		"pod": "{K8S_POD_NAME}",
+		"pod": fmt.Sprintf("{%s}", consts.ENV_K8S_POD_NAME),
 	}
 }
 
@@ -250,11 +277,11 @@ func (g *NodeGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCT
 
 func (g *NodeGenerator) fillCypressAnnotations(c *CommonServer) {
 	c.CypressAnnotations = map[string]any{
-		"k8s_pod_name":      "{K8S_POD_NAME}",
-		"k8s_pod_namespace": "{K8S_POD_NAMESPACE}",
-		"k8s_node_name":     "{K8S_NODE_NAME}",
+		"k8s_pod_name":      fmt.Sprintf("{%s}", consts.ENV_K8S_POD_NAME),
+		"k8s_pod_namespace": fmt.Sprintf("{%s}", consts.ENV_K8S_POD_NAMESPACE),
+		"k8s_node_name":     fmt.Sprintf("{%s}", consts.ENV_K8S_NODE_NAME),
 		// for CMS and UI сompatibility
-		"physical_host": "{K8S_NODE_NAME}",
+		"physical_host": fmt.Sprintf("{%s}", consts.ENV_K8S_NODE_NAME),
 	}
 }
 
@@ -424,8 +451,8 @@ func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, e
 		// config postprocessing.
 		l := g.GetComponentLabeller(consts.MasterType, "")
 		c.AddressResolver.LocalhostNameOverride = ptr.To(
-			fmt.Sprintf("%s.%s.%s.svc.%s",
-				"{K8S_POD_NAME}",
+			fmt.Sprintf("{%s}.%s.%s.svc.%s",
+				consts.ENV_K8S_POD_NAME,
 				l.GetHeadlessServiceName(),
 				l.GetNamespace(),
 				l.GetClusterDomain()))

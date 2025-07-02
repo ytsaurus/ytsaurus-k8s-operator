@@ -676,6 +676,8 @@ _Appears in:_
 | `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  | NodePort |  |
+| `httpPort` _integer_ |  | 80 |  |
+| `httpsPort` _integer_ |  | 443 |  |
 | `httpNodePort` _integer_ |  |  |  |
 | `httpsNodePort` _integer_ |  |  |  |
 | `role` _string_ |  | default | MinLength: 1 <br /> |

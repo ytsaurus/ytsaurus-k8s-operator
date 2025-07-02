@@ -110,7 +110,7 @@ func (c *Chyt) createInitChPublicScript() string {
 	script := []string{
 		initJobPrologue,
 		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v YT_LOG_LEVEL=debug",
-			c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+			c.cfgen.GetHTTPProxiesAddress(&c.ytsaurus.Spec, consts.DefaultHTTPProxyRole),
 			c.cfgen.GetStrawberryControllerServiceAddress()),
 		"yt create scheduler_pool --attributes '{name=chyt; pool_tree=default}' --ignore-existing",
 		"yt clickhouse ctl create ch_public || true",
@@ -171,7 +171,7 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		container.Env = []corev1.EnvVar{
 			{
 				Name:  "YT_PROXY",
-				Value: c.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+				Value: c.cfgen.GetHTTPProxiesAddress(&c.ytsaurus.Spec, consts.DefaultHTTPProxyRole),
 			},
 			{
 				Name:  "YT_TOKEN",
