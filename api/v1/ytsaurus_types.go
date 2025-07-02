@@ -118,6 +118,11 @@ type BindMountSpec struct {
 	ReadOnly *bool `json:"readOnly,omitempty"`
 }
 
+type EnvironmentVariableSpec struct {
+	Name  string  `json:"name"`
+	Value *string `json:"value,omitempty"`
+}
+
 // LogLevel string describes possible Ytsaurus logging level.
 // +enum
 type LogLevel string
@@ -472,6 +477,9 @@ type JobEnvironmentSpec struct {
 	// Add bind-mounts from exec-node container into all job containers.
 	//+optional
 	BindMounts []BindMountSpec `json:"bindMounts,omitempty"`
+	// Add environment variables into all job containers.
+	//+optional
+	EnvironmentVariables []EnvironmentVariableSpec `json:"environmentVariables,omitempty"`
 }
 
 type ExecNodesSpec struct {
