@@ -89,8 +89,16 @@ func updateSpecToTriggerAllComponentUpdate(ytsaurus *ytv1.Ytsaurus) {
 	}
 }
 
+type BuildInfo struct {
+	BuildType     string `yson:"build_type"`
+	BinaryVersion string `yson:"binary_version"`
+	ArcVersion    string `yson:"arc_version"`
+}
+
 type ClusterHealthReport struct {
-	Alerts map[ypath.Path][]yterrors.Error
+	Alerts    map[ypath.Path][]error
+	Instances map[consts.ComponentType][]string
+	BuildInfo map[string]BuildInfo
 }
 
 func (c ClusterHealthReport) IgnoreAlert(alert yterrors.Error) bool {
@@ -115,7 +123,7 @@ func (c ClusterHealthReport) AddAlert(alert yterrors.Error, alertPath ypath.Path
 		log.Info("Ignoring cluster alert", "alert_path", alertPath, "alert", alert)
 	} else {
 		log.Error(&alert, "Cluster alert", "alert_path", alertPath)
-		c.Alerts[alertPath] = append(c.Alerts[alertPath], alert)
+		c.Alerts[alertPath] = append(c.Alerts[alertPath], &alert)
 	}
 }
 
@@ -132,7 +140,7 @@ func (c ClusterHealthReport) CollectAlerts(ytClient yt.Client, alertPath ypath.P
 	}
 }
 
-func (c ClusterHealthReport) CollectNodes(ytClient yt.Client, basePath ypath.Path) {
+func (c ClusterHealthReport) CollectNodesAlerts(ytClient yt.Client, basePath ypath.Path) {
 	type nodeAlerts struct {
 		Name   string           `yson:",value"`
 		Alerts []yterrors.Error `yson:"alerts,attr"`
@@ -145,6 +153,34 @@ func (c ClusterHealthReport) CollectNodes(ytClient yt.Client, basePath ypath.Pat
 		alertPath := basePath.Child(node.Name).Attr("alerts")
 		for _, alert := range node.Alerts {
 			c.AddAlert(alert, alertPath)
+		}
+	}
+}
+
+func (c ClusterHealthReport) CollectInstances(ytClient yt.Client, basePath ypath.Path, component consts.ComponentType) {
+	if ok, err := ytClient.NodeExists(ctx, basePath, nil); err != nil {
+		c.Alerts[basePath] = append(c.Alerts[basePath], err)
+	} else if !ok {
+		log.Info("Cypress node does not exists", "path", basePath, "component", component)
+		return
+	}
+
+	var instances []string
+	if err := ytClient.ListNode(ctx, basePath, &instances, nil); err != nil {
+		c.Alerts[basePath] = append(c.Alerts[basePath], err)
+		return
+	}
+
+	for _, instance := range instances {
+		var buildInfo BuildInfo
+		path := basePath.JoinChild(instance, "orchid", "build_info")
+		err := ytClient.GetNode(ctx, path, &buildInfo, nil)
+		if err == nil {
+			c.Instances[component] = append(c.Instances[component], instance)
+			c.BuildInfo[instance] = buildInfo
+		} else {
+			log.Error(err, "Cannot fetch orchid", "component", component, "instance", instance)
+			c.Alerts[path] = append(c.Alerts[path], err)
 		}
 	}
 }
@@ -167,17 +203,34 @@ func (c ClusterHealthReport) CollectLostChunks(ytClient yt.Client, countPath ypa
 
 func CollectClusterHealth(ytClient yt.Client) ClusterHealthReport {
 	c := ClusterHealthReport{
-		Alerts: map[ypath.Path][]yterrors.Error{},
+		Alerts:    map[ypath.Path][]error{},
+		Instances: map[consts.ComponentType][]string{},
+		BuildInfo: map[string]BuildInfo{},
 	}
 	c.CollectAlerts(ytClient, "//sys/@master_alerts")
 	c.CollectAlerts(ytClient, "//sys/scheduler/@alerts")
+	c.CollectNodesAlerts(ytClient, "//sys/data_nodes")
+	c.CollectNodesAlerts(ytClient, "//sys/tablet_nodes")
+	c.CollectNodesAlerts(ytClient, "//sys/exec_nodes")
+	c.CollectNodesAlerts(ytClient, "//sys/cluster_nodes")
+	c.CollectNodesAlerts(ytClient, "//sys/controller_agents/instances")
+
 	c.CollectLostChunks(ytClient, "//sys/lost_chunks/@count")
 	c.CollectLostChunks(ytClient, "//sys/lost_vital_chunks/@count")
-	c.CollectNodes(ytClient, "//sys/data_nodes")
-	c.CollectNodes(ytClient, "//sys/tablet_nodes")
-	c.CollectNodes(ytClient, "//sys/exec_nodes")
-	c.CollectNodes(ytClient, "//sys/cluster_nodes")
-	c.CollectNodes(ytClient, "//sys/controller_agents/instances")
+
+	c.CollectInstances(ytClient, "//sys/controller_agents/instances", consts.ControllerAgentType)
+	c.CollectInstances(ytClient, "//sys/data_nodes", consts.DataNodeType)
+	c.CollectInstances(ytClient, "//sys/discovery_servers", consts.DiscoveryType)
+	c.CollectInstances(ytClient, "//sys/exec_nodes", consts.ExecNodeType)
+	c.CollectInstances(ytClient, "//sys/http_proxies", consts.HttpProxyType)
+	c.CollectInstances(ytClient, "//sys/master_caches", consts.MasterCacheType)
+	c.CollectInstances(ytClient, "//sys/primary_masters", consts.MasterType)
+	c.CollectInstances(ytClient, "//sys/query_tracker/instances", consts.QueryTrackerType)
+	c.CollectInstances(ytClient, "//sys/queue_agents/instances", consts.QueueAgentType)
+	c.CollectInstances(ytClient, "//sys/rpc_proxies", consts.RpcProxyType)
+	c.CollectInstances(ytClient, "//sys/scheduler/instances", consts.SchedulerType)
+	c.CollectInstances(ytClient, "//sys/tablet_nodes", consts.TabletNodeType)
+
 	return c
 }
 
