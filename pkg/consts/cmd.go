@@ -54,17 +54,17 @@ const (
 )
 
 const (
-	ConfigTemplateVolumeName = "config-template"
-	ConfigVolumeName         = "config"
-	HTTPSSecretVolumeName    = "https-secret"
+	ConfigTemplateVolumeName  = "config-template"
+	ConfigVolumeName          = "config"
+	HTTPSSecretVolumeName     = "https-secret"
 	RPCProxySecretVolumeName  = "rpc-secret"
 	BusServerSecretVolumeName = "bus-secret"
 	BusClientSecretVolumeName = "bus-client-secret"
-	CABundleVolumeName       = "ca-bundle"
-	InitScriptVolumeName     = "init-script"
-	UIVaultVolumeName        = "vault"
-	UISecretsVolumeName      = "secrets"
-	TimbertruckWorkDirName   = "timbertruck"
+	CABundleVolumeName        = "ca-bundle"
+	InitScriptVolumeName      = "init-script"
+	UIVaultVolumeName         = "vault"
+	UISecretsVolumeName       = "secrets"
+	TimbertruckWorkDirName    = "timbertruck"
 )
 
 const (
