@@ -38,7 +38,7 @@ func ComponentServicePrefix(component ComponentType) string {
 		return "kafka-proxies"
 	case YqlAgentType:
 		return "yql-agents"
-	case TimbertruckType: 
+	case TimbertruckType:
 		return "timbertrucks"
 	}
 
@@ -79,7 +79,7 @@ func GetServiceKebabCase(component ComponentType) string {
 		return "kafka-proxy"
 	case YqlAgentType:
 		return "yql-agent"
-	case TimbertruckType: 
+	case TimbertruckType:
 		return "timbertruck"
 	}
 	panic(fmt.Sprintf("No kebab case service name is defined for component type: %s", component))
@@ -117,7 +117,7 @@ func GetStatefulSetPrefix(component ComponentType) string {
 		return "kp"
 	case YqlAgentType:
 		return "yqla"
-	case TimbertruckType: 
+	case TimbertruckType:
 		return "tt"
 	}
 	return ""
