@@ -23,6 +23,9 @@ type StrawberryController struct {
 	initUserAndUrlJob  *InitJob
 	initChytClusterJob *InitJob
 	secret             *resources.StringSecret
+	caBundle           *resources.CABundle
+	busClientSecret    *resources.TLSSecret
+	busServerSecret    *resources.TLSSecret
 
 	master    Component
 	scheduler Component
@@ -49,6 +52,32 @@ func NewStrawberryController(
 	image := resource.Spec.CoreImage
 	if resource.Spec.StrawberryController.Image != nil {
 		image = *resource.Spec.StrawberryController.Image
+	}
+
+	var caBundle *resources.CABundle
+	var busClientSecret *resources.TLSSecret
+	var busServerSecret *resources.TLSSecret
+
+	if caBundleSpec := resource.Spec.CABundle; caBundleSpec != nil {
+		caBundle = resources.NewCABundle(
+			*caBundleSpec,
+			consts.CABundleVolumeName,
+			consts.CABundleMountPoint)
+	}
+
+	if transportSpec := resource.Spec.NativeTransport; transportSpec != nil {
+		if transportSpec.TLSSecret != nil {
+			busServerSecret = resources.NewTLSSecret(
+				transportSpec.TLSSecret.Name,
+				consts.BusServerSecretVolumeName,
+				consts.BusServerSecretMountPoint)
+		}
+		if transportSpec.TLSClientSecret != nil {
+			busClientSecret = resources.NewTLSSecret(
+				transportSpec.TLSClientSecret.Name,
+				consts.BusClientSecretVolumeName,
+				consts.BusClientSecretMountPoint)
+		}
 	}
 
 	microservice := newMicroservice(
@@ -84,6 +113,7 @@ func NewStrawberryController(
 			getTolerationsWithDefault(resource.Spec.StrawberryController.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.StrawberryController.NodeSelector, resource.Spec.NodeSelector),
 			getDNSConfigWithDefault(resource.Spec.StrawberryController.DNSConfig, resource.Spec.DNSConfig),
+			&resource.Spec.CommonSpec,
 		),
 		initChytClusterJob: NewInitJob(
 			l,
@@ -97,15 +127,19 @@ func NewStrawberryController(
 			getTolerationsWithDefault(resource.Spec.StrawberryController.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.StrawberryController.NodeSelector, resource.Spec.NodeSelector),
 			getDNSConfigWithDefault(resource.Spec.StrawberryController.DNSConfig, resource.Spec.DNSConfig),
+			&resource.Spec.CommonSpec,
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
 			ytsaurus.APIProxy()),
-		name:      "strawberry",
-		master:    master,
-		scheduler: scheduler,
-		dataNodes: dataNodes,
+		caBundle:        caBundle,
+		busClientSecret: busClientSecret,
+		busServerSecret: busServerSecret,
+		name:            "strawberry",
+		master:          master,
+		scheduler:       scheduler,
+		dataNodes:       dataNodes,
 	}
 }
 
@@ -206,6 +240,21 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 
 	deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
 		createConfigVolume(consts.ConfigVolumeName, c.labeller.GetMainConfigMapName(), nil),
+	}
+
+	if c.caBundle != nil {
+		c.caBundle.AddVolume(&deployment.Spec.Template.Spec)
+		c.caBundle.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[0])
+	}
+
+	if c.busClientSecret != nil {
+		c.busClientSecret.AddVolume(&deployment.Spec.Template.Spec)
+		c.busClientSecret.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[0])
+	}
+
+	if c.busServerSecret != nil {
+		c.busServerSecret.AddVolume(&deployment.Spec.Template.Spec)
+		c.busServerSecret.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[0])
 	}
 
 	return c.microservice.Sync(ctx)

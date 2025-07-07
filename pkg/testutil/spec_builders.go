@@ -40,12 +40,20 @@ var (
 	QueryTrackerImagePrevious = GetenvOr("QUERY_TRACKER_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/query-tracker:0.0.6")
 	QueryTrackerImageCurrent  = GetenvOr("QUERY_TRACKER_IMAGE_CURRENT", "ghcr.io/ytsaurus/query-tracker:0.0.9")
 	QueryTrackerImageFuture   = GetenvOr("QUERY_TRACKER_IMAGE_FUTURE", "ghcr.io/ytsaurus/query-tracker:0.0.9")
+
+	StrawberryImagePrevious = GetenvOr("STRAWBERRY_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/strawberry:0.0.12")
+	StrawberryImageCurrent  = GetenvOr("STRAWBERRY_IMAGE_CURRENT", "ghcr.io/ytsaurus/strawberry:0.0.13")
+	StrawberryImageFuture   = GetenvOr("STRAWBERRY_IMAGE_FUTURE", "ghcr.io/ytsaurus/strawberry:0.0.13")
+
+	ChytImagePrevious = GetenvOr("CHYT_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/chyt:2.14.0")
+	ChytImageCurrent  = GetenvOr("CHYT_IMAGE_CURRENT", "ghcr.io/ytsaurus/chyt:2.16.0")
+	ChytImageFuture   = GetenvOr("CHYT_IMAGE_FUTURE", "ghcr.io/ytsaurus/chyt:2.16.0")
 )
 
 var (
-	masterVolumeSize, _   = resource.ParseQuantity("5Gi")
-	dataNodeVolumeSize, _ = resource.ParseQuantity("5Gi")
-	execNodeVolumeSize, _ = resource.ParseQuantity("5Gi")
+	masterVolumeSize   = resource.MustParse("5Gi")
+	dataNodeVolumeSize = resource.MustParse("5Gi")
+	execNodeVolumeSize = resource.MustParse("5Gi")
 )
 
 type YtsaurusBuilder struct {
@@ -139,6 +147,7 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 }
 
 func (b *YtsaurusBuilder) WithBaseComponents() {
+	b.WithMasterCaches()
 	b.WithBootstrap()
 	b.WithScheduler()
 	b.WithControllerAgents()
@@ -156,6 +165,15 @@ func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 	builder.CreateMinimal()
 	builder.WithBaseComponents()
 	return builder.Ytsaurus
+}
+
+func (b *YtsaurusBuilder) WithMasterCaches() {
+	b.Ytsaurus.Spec.MasterCaches = &ytv1.MasterCachesSpec{
+		InstanceSpec: ytv1.InstanceSpec{
+			InstanceCount: 1,
+			Loggers:       b.CreateLoggersSpec(),
+		},
+	}
 }
 
 // TODO (l0kix2): merge with ytconfig build spec helpers.
@@ -307,19 +325,10 @@ func getPortFromEnv(envvar string) *int32 {
 }
 
 func (b *YtsaurusBuilder) CreateExecNodeSpec() ytv1.ExecNodesSpec {
-	execNodeCPU, _ := resource.ParseQuantity("1")
-	execNodeMemory, _ := resource.ParseQuantity("2Gi")
-
 	return ytv1.ExecNodesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount: 1,
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    execNodeCPU,
-					corev1.ResourceMemory: execNodeMemory,
-				},
-			},
-			Loggers: b.CreateLoggersSpec(),
+			Loggers:       b.CreateLoggersSpec(),
 			Locations: []ytv1.LocationSpec{
 				{
 					LocationType: "ChunkCache",
@@ -370,4 +379,28 @@ func (b *YtsaurusBuilder) CreateTabletNodeSpec(instanceCount int32) ytv1.Instanc
 		InstanceCount: instanceCount,
 		Loggers:       b.CreateLoggersSpec(),
 	}
+}
+
+func (b *YtsaurusBuilder) WithStrawberryController() {
+	b.Ytsaurus.Spec.StrawberryController = &ytv1.StrawberryControllerSpec{
+		Image: ptr.To(StrawberryImageCurrent),
+	}
+}
+
+func (b *YtsaurusBuilder) CreateChyt() *ytv1.Chyt {
+	chyt := ytv1.Chyt{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      YtsaurusName,
+			Namespace: b.Namespace,
+		},
+		Spec: ytv1.ChytSpec{
+			Ytsaurus: &corev1.LocalObjectReference{
+				Name: YtsaurusName,
+			},
+			Image:              ChytImageCurrent,
+			MakeDefault:        true,
+			CreatePublicClique: ptr.To(true),
+		},
+	}
+	return &chyt
 }

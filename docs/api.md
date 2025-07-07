@@ -350,7 +350,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `coreImage` _string_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
-| `caBundle` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Reference to ConfigMap with trusted certificates: "ca.crt". |  |  |
+| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted certificates. Default kind="ConfigMap", key="ca.crt". |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
 | `ephemeralCluster` _boolean_ | Allow prioritizing performance over data safety. Useful for tests and experiments. | false |  |
 | `useIpv6` _boolean_ |  | false |  |
@@ -670,6 +670,28 @@ _Appears in:_
 | `jobProxyLoggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `jobResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for running jobs. |  |  |
 | `jobEnvironment` _[JobEnvironmentSpec](#jobenvironmentspec)_ |  |  |  |
+
+
+#### FileObjectReference
+
+
+
+A reference to a specific 'key' within a ConfigMap or Secret resource.
+
+
+
+_Appears in:_
+- [CommonSpec](#commonspec)
+- [RemoteDataNodesSpec](#remotedatanodesspec)
+- [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `kind` _string_ | Kind is the type of resource: ConfigMap or Secret. |  | Enum: [ConfigMap Secret] <br /> |
+| `name` _string_ | Name is the name of resource being referenced |  |  |
+| `key` _string_ | Key is the name of entry in ConfigMap or Secret. |  |  |
 
 
 #### HTTPProxiesSpec
@@ -1429,7 +1451,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `tlsSecret` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Reference to kubernetes.io/tls secret. |  |  |
+| `tlsSecret` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Server certificate. Reference to kubernetes.io/tls secret. |  |  |
+| `tlsClientSecret` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Client certificate. Reference to kubernetes.io/tls secret. |  |  |
 | `tlsRequired` _boolean_ | Require encrypted connections, otherwise only when required by peer. |  |  |
 | `tlsInsecure` _boolean_ | Disable TLS certificate verification. |  |  |
 | `tlsPeerAlternativeHostName` _string_ | Define alternative host name for certificate verification. |  |  |
@@ -1489,7 +1512,7 @@ _Appears in:_
 | `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `coreImage` _string_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
-| `caBundle` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Reference to ConfigMap with trusted certificates: "ca.crt". |  |  |
+| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted certificates. Default kind="ConfigMap", key="ca.crt". |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
 | `ephemeralCluster` _boolean_ | Allow prioritizing performance over data safety. Useful for tests and experiments. | false |  |
 | `useIpv6` _boolean_ |  | false |  |
@@ -1587,7 +1610,7 @@ _Appears in:_
 | `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `coreImage` _string_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
-| `caBundle` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Reference to ConfigMap with trusted certificates: "ca.crt". |  |  |
+| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted certificates. Default kind="ConfigMap", key="ca.crt". |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
 | `ephemeralCluster` _boolean_ | Allow prioritizing performance over data safety. Useful for tests and experiments. | false |  |
 | `useIpv6` _boolean_ |  | false |  |
@@ -1730,7 +1753,7 @@ _Appears in:_
 | `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `coreImage` _string_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
-| `caBundle` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Reference to ConfigMap with trusted certificates: "ca.crt". |  |  |
+| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted certificates. Default kind="ConfigMap", key="ca.crt". |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
 | `ephemeralCluster` _boolean_ | Allow prioritizing performance over data safety. Useful for tests and experiments. | false |  |
 | `useIpv6` _boolean_ |  | false |  |
@@ -2412,7 +2435,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `coreImage` _string_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
-| `caBundle` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Reference to ConfigMap with trusted certificates: "ca.crt". |  |  |
+| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted certificates. Default kind="ConfigMap", key="ca.crt". |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
 | `ephemeralCluster` _boolean_ | Allow prioritizing performance over data safety. Useful for tests and experiments. | false |  |
 | `useIpv6` _boolean_ |  | false |  |

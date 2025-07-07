@@ -41,7 +41,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 
 	var caBundle *resources.CABundle
 	if caBundleSpec := resource.Spec.CABundle; caBundleSpec != nil {
-		caBundle = resources.NewCABundle(caBundleSpec.Name, consts.CABundleVolumeName, consts.CABundleMountPoint)
+		caBundle = resources.NewCABundle(*caBundleSpec, consts.CABundleVolumeName, consts.CABundleMountPoint)
 	}
 
 	microservice := newMicroservice(
@@ -83,6 +83,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			getTolerationsWithDefault(resource.Spec.UI.Tolerations, resource.Spec.Tolerations),
 			getNodeSelectorWithDefault(resource.Spec.UI.NodeSelector, resource.Spec.NodeSelector),
 			getDNSConfigWithDefault(resource.Spec.UI.DNSConfig, resource.Spec.DNSConfig),
+			&resource.Spec.CommonSpec,
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

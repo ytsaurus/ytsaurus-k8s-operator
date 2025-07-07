@@ -2,7 +2,9 @@ package ytconfig
 
 import (
 	"fmt"
+	"net"
 	"path"
+	"strconv"
 
 	"k8s.io/utils/ptr"
 
@@ -207,14 +209,6 @@ func (g *NodeGenerator) fillIOEngine(ioEngine **IOEngine) {
 	}
 }
 
-func (g *NodeGenerator) fillDriver(c *Driver) {
-	c.TimestampProviders.Addresses = g.getMasterAddresses()
-
-	c.PrimaryMaster.Addresses = g.getMasterAddresses()
-	c.PrimaryMaster.CellID = generateCellID(g.masterConnectionSpec.CellTag)
-	g.fillPrimaryMaster(&c.PrimaryMaster)
-}
-
 func (g *NodeGenerator) fillAddressResolver(c *AddressResolver) {
 	var retries = 1000
 	c.EnableIPv4 = g.commonSpec.UseIPv4
@@ -242,11 +236,11 @@ func (g *NodeGenerator) fillPrimaryMaster(c *MasterCell) {
 	c.CellID = generateCellID(g.masterConnectionSpec.CellTag)
 }
 
-func (g *NodeGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCTransportSpec) {
+func (g *NodeGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCTransportSpec, keyring *Keyring) {
 	g.fillPrimaryMaster(&c.PrimaryMaster)
 	c.ClusterName = g.baseLabeller.GetClusterName()
 	c.DiscoveryConnection.Addresses = g.getDiscoveryAddresses()
-	g.fillClusterConnectionEncryption(c, s)
+	g.fillClusterConnectionEncryption(c, s, keyring)
 	c.MasterCache.Addresses = g.getMasterCachesAddresses()
 	if len(c.MasterCache.Addresses) == 0 {
 		c.MasterCache.Addresses = c.PrimaryMaster.Addresses
@@ -268,24 +262,10 @@ func (g *NodeGenerator) fillCommonService(c *CommonServer, s *ytv1.InstanceSpec)
 	// ToDo(psushin): enable porto resource tracker?
 	g.fillAddressResolver(&c.AddressResolver)
 	g.fillSolomonExporter(&c.SolomonExporter)
-	g.fillClusterConnection(&c.ClusterConnection, s.NativeTransport)
+	keyring := getMountKeyring(g.commonSpec, s.NativeTransport)
+	g.fillClusterConnection(&c.ClusterConnection, s.NativeTransport, keyring)
 	g.fillCypressAnnotations(c)
 	c.TimestampProviders.Addresses = g.getMasterAddresses()
-}
-
-func (g *Generator) fillBusEncryption(b *Bus, s *ytv1.RPCTransportSpec) {
-	if s.TLSRequired {
-		b.EncryptionMode = EncryptionModeRequired
-	} else {
-		b.EncryptionMode = EncryptionModeOptional
-	}
-
-	b.CertChain = &PemBlob{
-		FileName: path.Join(consts.RPCSecretMountPoint, corev1.TLSCertKey),
-	}
-	b.PrivateKey = &PemBlob{
-		FileName: path.Join(consts.RPCSecretMountPoint, corev1.TLSPrivateKeyKey),
-	}
 }
 
 func (g *NodeGenerator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec) {
@@ -300,23 +280,32 @@ func (g *NodeGenerator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec)
 	if c.BusServer == nil {
 		c.BusServer = &BusServer{}
 	}
+	keyring := getMountKeyring(g.commonSpec, s)
+	fillBusServer(c.BusServer, s, keyring)
+}
 
-	// FIXME(khlebnikov): some clients does not support TLS yet
-	if s.TLSRequired && s != g.commonSpec.NativeTransport {
-		c.BusServer.EncryptionMode = EncryptionModeRequired
+func fillBusServer(b *BusServer, s *ytv1.RPCTransportSpec, keyring *Keyring) {
+	// For insecure mode status of TLS is decided by client.
+	if s.TLSRequired && !s.TLSInsecure {
+		b.EncryptionMode = EncryptionModeRequired
 	} else {
-		c.BusServer.EncryptionMode = EncryptionModeOptional
+		b.EncryptionMode = EncryptionModeOptional
 	}
 
-	c.BusServer.CertChain = &PemBlob{
-		FileName: path.Join(consts.BusSecretMountPoint, corev1.TLSCertKey),
-	}
-	c.BusServer.PrivateKey = &PemBlob{
-		FileName: path.Join(consts.BusSecretMountPoint, corev1.TLSPrivateKeyKey),
+	b.CertChain = keyring.BusServerCertificate
+	b.PrivateKey = keyring.BusServerPrivateKey
+
+	if s.TLSInsecure {
+		b.VerificationMode = VerificationModeNone
+	} else {
+		// Always require mTLS in secure mode.
+		b.VerificationMode = VerificationModeFull
+		b.CA = keyring.BusCABundle
+		b.PeerAlternativeHostName = s.TLSPeerAlternativeHostName
 	}
 }
 
-func (g *NodeGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s *ytv1.RPCTransportSpec) {
+func (g *NodeGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s *ytv1.RPCTransportSpec, keyring *Keyring) {
 	if s == nil {
 		// Use common bus transport config
 		s = g.commonSpec.NativeTransport
@@ -329,16 +318,6 @@ func (g *NodeGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s 
 		c.BusClient = &Bus{}
 	}
 
-	if g.commonSpec.CABundle != nil {
-		c.BusClient.CA = &PemBlob{
-			FileName: path.Join(consts.CABundleMountPoint, consts.CABundleFileName),
-		}
-	} else {
-		c.BusClient.CA = &PemBlob{
-			FileName: consts.DefaultCABundlePath,
-		}
-	}
-
 	if s.TLSRequired {
 		c.BusClient.EncryptionMode = EncryptionModeRequired
 	} else {
@@ -349,11 +328,12 @@ func (g *NodeGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s 
 		c.BusClient.VerificationMode = VerificationModeNone
 	} else {
 		c.BusClient.VerificationMode = VerificationModeFull
-	}
-
-	if s.TLSPeerAlternativeHostName != "" {
+		c.BusClient.CA = keyring.BusCABundle
 		c.BusClient.PeerAlternativeHostName = s.TLSPeerAlternativeHostName
 	}
+
+	c.BusClient.CertChain = keyring.BusClientCertificate
+	c.BusClient.PrivateKey = keyring.BusClientPrivateKey
 }
 
 func marshallYsonConfig(c interface{}) ([]byte, error) {
@@ -366,7 +346,8 @@ func marshallYsonConfig(c interface{}) ([]byte, error) {
 
 func (g *Generator) GetClusterConnection() ([]byte, error) {
 	var c ClusterConnection
-	g.fillClusterConnection(&c, nil)
+	keyring := getVaultKeyring(g.commonSpec, nil)
+	g.fillClusterConnection(&c, nil, keyring)
 	return marshallYsonConfig(c)
 }
 
@@ -391,7 +372,15 @@ func (g *Generator) GetStrawberryControllerConfig() ([]byte, error) {
 	var conFamConfig StrawberryControllerFamiliesConfig
 	g.fillStrawberryControllerFamiliesConfig(&conFamConfig, g.ytsaurus.Spec.StrawberryController)
 
-	c, err := getStrawberryController(conFamConfig, resolver)
+	var busServer *BusServer
+	if g.commonSpec.NativeTransport != nil {
+		busServer = &BusServer{}
+		vaultKeyring := getVaultKeyring(g.commonSpec, nil)
+		fillBusServer(busServer, g.commonSpec.NativeTransport, vaultKeyring)
+	}
+
+	keyring := getMountKeyring(g.commonSpec, nil)
+	c, err := getStrawberryController(conFamConfig, resolver, busServer, keyring)
 	if err != nil {
 		return nil, err
 	}
@@ -453,13 +442,23 @@ func (g *Generator) GetMasterConfig(spec *ytv1.MastersSpec) ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
+func getNativeClientConfigCarcass() (NativeClientConfig, error) {
+	var c NativeClientConfig
+
+	loggingBuilder := newLoggingBuilder(nil, "client")
+	c.Logging = loggingBuilder.logging
+
+	return c, nil
+}
+
 func (g *NodeGenerator) GetNativeClientConfig() ([]byte, error) {
-	c, err := getNativeClientCarcass()
+	c, err := getNativeClientConfigCarcass()
 	if err != nil {
 		return nil, err
 	}
 
-	g.fillDriver(&c.Driver)
+	keyring := getMountKeyring(g.commonSpec, nil)
+	g.fillClusterConnection(&c.Driver.ClusterConnection, nil, keyring)
 	g.fillAddressResolver(&c.AddressResolver)
 	c.Driver.APIVersion = 4
 
@@ -548,7 +547,18 @@ func (g *Generator) GetRPCProxyConfig(spec ytv1.RPCProxiesSpec) ([]byte, error) 
 		if c.BusServer == nil {
 			c.BusServer = &BusServer{}
 		}
-		g.fillBusEncryption(&c.BusServer.Bus, &spec.Transport)
+		// FIXME(khlebnikov): RPCProxy share bus server for native and public services
+		if spec.Transport.TLSRequired {
+			c.BusServer.EncryptionMode = EncryptionModeRequired
+		} else {
+			c.BusServer.EncryptionMode = EncryptionModeOptional
+		}
+		c.BusServer.CertChain = &PemBlob{
+			FileName: path.Join(consts.RPCProxySecretMountPoint, corev1.TLSCertKey),
+		}
+		c.BusServer.PrivateKey = &PemBlob{
+			FileName: path.Join(consts.RPCProxySecretMountPoint, corev1.TLSPrivateKeyKey),
+		}
 	}
 
 	return marshallYsonConfig(c)
@@ -668,6 +678,7 @@ func (g *NodeGenerator) getExecNodeConfigImpl(spec *ytv1.ExecNodesSpec) (ExecNod
 	}
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+
 	return c, nil
 }
 
@@ -676,6 +687,48 @@ func (g *NodeGenerator) GetExecNodeConfig(spec ytv1.ExecNodesSpec) ([]byte, erro
 	if err != nil {
 		return []byte{}, err
 	}
+
+	if c.ClusterConnection.BusClient != nil {
+		var clusterConnection ClusterConnection
+
+		keyring := getMountKeyring(g.commonSpec, spec.NativeTransport)
+		jobProxyKeyring := getVaultKeyring(g.commonSpec, spec.NativeTransport)
+		g.fillClusterConnection(&clusterConnection, spec.NativeTransport, jobProxyKeyring)
+
+		forwardSecret := func(node, proxy *PemBlob) {
+			if node != nil && proxy != nil {
+				c.ExecNode.JobProxy.EnvironmentVariables = append(
+					c.ExecNode.JobProxy.EnvironmentVariables,
+					EnvironmentVariable{
+						Name:     proxy.EnvironmentVariable,
+						FileName: &node.FileName,
+						Export:   ptr.To(false),
+					},
+				)
+			}
+		}
+
+		if c.ClusterConnection.BusClient.VerificationMode != VerificationModeNone {
+			forwardSecret(keyring.BusCABundle, jobProxyKeyring.BusCABundle)
+		}
+		forwardSecret(keyring.BusClientCertificate, jobProxyKeyring.BusClientCertificate)
+		forwardSecret(keyring.BusClientPrivateKey, jobProxyKeyring.BusClientPrivateKey)
+
+		c.ExecNode.JobProxy.ClusterConnection = &clusterConnection
+
+		var localAddress string
+		if g.commonSpec.UseIPv6 {
+			localAddress = net.JoinHostPort("::1", strconv.Itoa(int(c.RPCPort)))
+		} else {
+			localAddress = net.JoinHostPort("127.0.0.1", strconv.Itoa(int(c.RPCPort)))
+		}
+
+		c.ExecNode.JobProxy.SupervisorConnection = &BusClient{
+			Address: localAddress,
+			Bus:     *clusterConnection.BusClient,
+		}
+	}
+
 	return marshallYsonConfig(c)
 }
 
@@ -703,7 +756,6 @@ func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProx
 		return c, err
 	}
 
-	g.fillDriver(&c.Driver)
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
@@ -897,7 +949,9 @@ func (g *Generator) getMasterCachesConfigImpl(spec *ytv1.MasterCachesSpec) (Mast
 	if err != nil {
 		return MasterCacheServer{}, err
 	}
+
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	c.BusClient = c.ClusterConnection.BusClient
 	return c, nil
 }

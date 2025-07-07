@@ -175,56 +175,47 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			convertToComponent(needUpdate),
 			convertToComponent(componentManager.allUpdatableComponents()),
 		)
+
+		// All status updates _must_ be in one transaction with observed generation and new cluster state.
+		needStatusUpdate := ytsaurus.SyncObservedGeneration()
+
 		// There may be the case when some components needed update, but spec was reverted
 		// and Updating never happen — so blocked components column need to be always actualized.
-		err = ytsaurus.SaveBlockedComponentsState(ctx, cannotUpdate)
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("failed to save blocked components state: %w", err)
+		if ytsaurus.SetBlockedComponents(cannotUpdate) {
+			needStatusUpdate = true
 		}
 
 		switch {
 		case !componentManager.needSync():
 			logger.Info("Ytsaurus is running and happy")
-			// Have passed final check - update observed generation.
-			if ytsaurus.SyncObservedGeneration() {
-				err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
-				return ctrl.Result{}, err
-			}
-			return ctrl.Result{}, nil
 
 		case componentManager.needInit():
 			logger.Info("Ytsaurus needs initialization of some components")
-			ytsaurus.SyncObservedGeneration()
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateReconfiguration)
 			return ctrl.Result{Requeue: true}, err
 
-		case len(needUpdate) != 0:
-			var needUpdateNames []string
-			for _, c := range needUpdate {
-				needUpdateNames = append(needUpdateNames, c.GetFullName())
-			}
-			logger = logger.WithValues("componentsForUpdateAll", needUpdateNames)
+		case len(needUpdate) == 0:
+			logger.Info("All components are up-to-date")
 
-			var logMsg string
-			var updStateErr error
-			if len(canUpdate) == 0 {
-				if len(cannotUpdate) != 0 {
-					logMsg = fmt.Sprintf("All components allowed by updateSelector are up-to-date, update of {%v} is not allowed", cannotUpdate)
-				} else {
-					logMsg = "All components are up-to-date"
-				}
-			} else {
-				if len(cannotUpdate) != 0 {
-					logMsg = fmt.Sprintf("Components {%v} will be updated, update of {%v} is not allowed", canUpdate, cannotUpdate)
-				} else {
-					logMsg = fmt.Sprintf("Components {%v} will be updated", canUpdate)
-				}
-				ytsaurus.SyncObservedGeneration()
-				updStateErr = ytsaurus.SaveUpdatingClusterState(ctx, canUpdate)
-			}
-			logger.Info(logMsg)
-			return ctrl.Result{Requeue: true}, updStateErr
+		case len(canUpdate) != 0:
+			logger.Info("Ytsaurus components needs update", "canUpdate", canUpdate, "cannotUpdate", cannotUpdate)
+			// We do not update BlockedComponentsSummary here, it should be updated first thing in Running state.
+			ytsaurus.SetUpdatingComponents(canUpdate)
+			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdating)
+			return ctrl.Result{Requeue: true}, err
+
+		case len(cannotUpdate) != 0:
+			logger.Info("Ytsaurus components update is blocked", "cannotUpdate", cannotUpdate)
 		}
+
+		// Have passed final check - save status update if needed.
+		if needStatusUpdate {
+			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
+			return ctrl.Result{Requeue: true}, err
+		}
+
+		// All done, nothing change - do not requeue reconcile.
+		return ctrl.Result{}, nil
 
 	case ytv1.ClusterStateUpdating:
 		updatingComponents := ytsaurus.GetUpdatingComponents()

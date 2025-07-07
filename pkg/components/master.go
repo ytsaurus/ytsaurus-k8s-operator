@@ -92,6 +92,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		jobTolerations,
 		jobNodeSelector,
 		dnsConfig,
+		&resource.Spec.CommonSpec,
 	)
 
 	exitReadOnlyJob := NewInitJob(
@@ -106,6 +107,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		jobTolerations,
 		jobNodeSelector,
 		dnsConfig,
+		&resource.Spec.CommonSpec,
 	)
 
 	return &Master{
@@ -360,8 +362,7 @@ func (m *Master) createInitScript() (string, error) {
 		return "", fmt.Errorf("failed to create init hydra persistence uploader user commands: %w", err)
 	}
 
-	script := []string{
-		initJobWithNativeDriverPrologue(),
+	initCommands := []string{
 		m.initGroups(),
 		RunIfExists("//sys/@provision_lock", initSchemaACLsCommands),
 		"/usr/bin/yt create scheduler_pool_tree --attributes '{name=default; config={nodes_filter=\"\"}}' --ignore-existing",
@@ -372,8 +373,18 @@ func (m *Master) createInitScript() (string, error) {
 		RunIfExists("//sys/@provision_lock", fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection '%s'", string(clusterConnection))),
 		SetWithIgnoreExisting("//sys/controller_agents/config/operation_options/spec_template", "'{enable_partitioned_data_balancing=%false}' -r"),
 		m.initAdminUser(),
-		initHydraPersistenceUploaderUserCommands,
 		m.initMedia(),
+	}
+
+	initScript := RunIfCondition(
+		fmt.Sprintf("'%v' = 'true'", ytv1.ClusterStateInitializing == m.ytsaurus.GetClusterState()),
+		initCommands...,
+	)
+
+	script := []string{
+		initJobWithNativeDriverPrologue(),
+		initScript,
+		initHydraPersistenceUploaderUserCommands,
 		"/usr/bin/yt remove //sys/@provision_lock -f",
 	}
 

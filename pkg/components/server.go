@@ -55,7 +55,8 @@ type serverImpl struct {
 	headlessService   *resources.HeadlessService
 	monitoringService *resources.MonitoringService
 	caBundle          *resources.CABundle
-	tlsSecret         *resources.TLSSecret
+	busServerSecret   *resources.TLSSecret
+	busClientSecret   *resources.TLSSecret
 	configHelper      *ConfigHelper
 
 	cfgen *ytconfig.NodeGenerator
@@ -111,20 +112,29 @@ func newServerConfigured(
 
 	var caBundle *resources.CABundle
 	if caBundleSpec := commonSpec.CABundle; caBundleSpec != nil {
-		caBundle = resources.NewCABundle(caBundleSpec.Name, consts.CABundleVolumeName, consts.CABundleMountPoint)
+		caBundle = resources.NewCABundle(*caBundleSpec, consts.CABundleVolumeName, consts.CABundleMountPoint)
 	}
 
-	var tlsSecret *resources.TLSSecret
+	var busServerSecret *resources.TLSSecret
+	var busClientSecret *resources.TLSSecret
 	transportSpec := instanceSpec.NativeTransport
 	if transportSpec == nil {
 		// FIXME(khlebnikov): do not mount common bus secret into all servers
 		transportSpec = commonSpec.NativeTransport
 	}
-	if transportSpec != nil && transportSpec.TLSSecret != nil {
-		tlsSecret = resources.NewTLSSecret(
-			transportSpec.TLSSecret.Name,
-			consts.BusSecretVolumeName,
-			consts.BusSecretMountPoint)
+	if transportSpec != nil {
+		if transportSpec.TLSSecret != nil {
+			busServerSecret = resources.NewTLSSecret(
+				transportSpec.TLSSecret.Name,
+				consts.BusServerSecretVolumeName,
+				consts.BusServerSecretMountPoint)
+		}
+		if transportSpec.TLSClientSecret != nil {
+			busClientSecret = resources.NewTLSSecret(
+				transportSpec.TLSClientSecret.Name,
+				consts.BusClientSecretVolumeName,
+				consts.BusClientSecretMountPoint)
+		}
 	}
 
 	monitoringPort := ptr.Deref(instanceSpec.MonitoringPort, defaultMonitoringPort)
@@ -173,8 +183,9 @@ func newServerConfigured(
 			l,
 			proxy,
 		),
-		caBundle:  caBundle,
-		tlsSecret: tlsSecret,
+		caBundle:        caBundle,
+		busServerSecret: busServerSecret,
+		busClientSecret: busClientSecret,
 		configHelper: NewConfigHelper(
 			l,
 			proxy,
@@ -417,10 +428,14 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		}
 	}
 
-	if s.tlsSecret != nil {
-		s.tlsSecret.AddVolume(&statefulSet.Spec.Template.Spec)
-		s.addTlsSecretMount(&statefulSet.Spec.Template.Spec.Containers[0])
+	if s.busServerSecret != nil {
+		s.busServerSecret.AddVolume(&statefulSet.Spec.Template.Spec)
 	}
+	if s.busClientSecret != nil {
+		s.busClientSecret.AddVolume(&statefulSet.Spec.Template.Spec)
+	}
+
+	s.addTlsSecretMount(&statefulSet.Spec.Template.Spec.Containers[0])
 
 	s.builtStatefulSet = statefulSet
 	return statefulSet
@@ -513,7 +528,10 @@ func (s *serverImpl) addCABundleMount(c *corev1.Container) {
 }
 
 func (s *serverImpl) addTlsSecretMount(c *corev1.Container) {
-	if s.tlsSecret != nil {
-		s.tlsSecret.AddVolumeMount(c)
+	if s.busServerSecret != nil {
+		s.busServerSecret.AddVolumeMount(c)
+	}
+	if s.busClientSecret != nil {
+		s.busClientSecret.AddVolumeMount(c)
 	}
 }

@@ -178,10 +178,21 @@ type JobResourceManager struct {
 	ResourceLimits JobResourceLimits `yson:"resource_limits"`
 }
 
+type EnvironmentVariable struct {
+	Name                string  `yson:"name"`
+	Value               *string `yson:"value,omitempty"`
+	FileName            *string `yson:"file_name,omitempty"`
+	EnvironmentVariable *string `yson:"environment_variable,omitempty"`
+	Export              *bool   `yson:"export,omitempty"`
+}
+
 type JobProxy struct {
-	JobProxyAuthenticationManager  Auth            `yson:"job_proxy_authentication_manager"`
-	JobProxyLogging                JobProxyLogging `yson:"job_proxy_logging"`
-	ForwardAllEnvironmentVariables *bool           `yson:"forward_all_environment_variables,omitempty"`
+	JobProxyAuthenticationManager  Auth                  `yson:"job_proxy_authentication_manager"`
+	JobProxyLogging                JobProxyLogging       `yson:"job_proxy_logging"`
+	EnvironmentVariables           []EnvironmentVariable `yson:"environment_variables,omitempty"`
+	ForwardAllEnvironmentVariables *bool                 `yson:"forward_all_environment_variables,omitempty"`
+	ClusterConnection              *ClusterConnection    `yson:"cluster_connection,omitempty"`
+	SupervisorConnection           *BusClient            `yson:"supervisor_connection,omitempty"`
 }
 
 type ExecNode struct {

@@ -467,7 +467,7 @@ func TestGetYtsaurusComponents(t *testing.T) {
 func TestGetYtsaurusWithTlsInterconnect(t *testing.T) {
 	ytsaurus := getYtsaurusWithAllComponents()
 
-	ytsaurus.Spec.CABundle = &corev1.LocalObjectReference{
+	ytsaurus.Spec.CABundle = &ytv1.FileObjectReference{
 		Name: "ytsaurus-ca-bundle",
 	}
 	ytsaurus.Spec.NativeTransport = &ytv1.RPCTransportSpec{
@@ -477,6 +477,38 @@ func TestGetYtsaurusWithTlsInterconnect(t *testing.T) {
 		TLSRequired:                true,
 		TLSInsecure:                true,                                 // not mTLS
 		TLSPeerAlternativeHostName: testNamespace + ".svc.cluster.local", // or testNamespace.testClusterDomain ?
+	}
+
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
+
+	for _, component := range consts.LocalComponentTypes {
+		t.Run(string(component), func(t *testing.T) {
+			names, err := g.GetComponentNames(component)
+			require.NoError(t, err)
+			require.Len(t, names, 1)
+			cfg, err := g.GetComponentConfig(component, names[0])
+			require.NoError(t, err)
+			canonize.Assert(t, cfg)
+		})
+	}
+}
+
+func TestGetYtsaurusWithMutualTLSInterconnect(t *testing.T) {
+	ytsaurus := getYtsaurusWithAllComponents()
+
+	ytsaurus.Spec.CABundle = &ytv1.FileObjectReference{
+		Name: "ytsaurus-ca-bundle",
+	}
+	ytsaurus.Spec.NativeTransport = &ytv1.RPCTransportSpec{
+		TLSSecret: &corev1.LocalObjectReference{
+			Name: "ytsaurus-native-cert",
+		},
+		TLSClientSecret: &corev1.LocalObjectReference{
+			Name: "ytsaurus-native-client-cert",
+		},
+		TLSRequired:                true,
+		TLSPeerAlternativeHostName: testNamespace + ".svc.cluster.local",
 	}
 
 	g := NewGenerator(ytsaurus, testClusterDomain)

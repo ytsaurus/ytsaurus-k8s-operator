@@ -13,6 +13,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
@@ -42,6 +44,9 @@ type InitJob struct {
 
 	initJob *resources.Job
 
+	caBundle        *resources.CABundle
+	busClientSecret *resources.TLSSecret
+
 	configHelper           *ConfigHelper
 	initCompletedCondition string
 
@@ -63,7 +68,24 @@ func NewInitJob(
 	tolerations []corev1.Toleration,
 	nodeSelector map[string]string,
 	dnsConfig *corev1.PodDNSConfig,
+	commonSpec *ytv1.CommonSpec,
 ) *InitJob {
+	var caBundle *resources.CABundle
+	var busClientSecret *resources.TLSSecret
+
+	if caBundleSpec := commonSpec.CABundle; caBundleSpec != nil {
+		caBundle = resources.NewCABundle(*caBundleSpec, consts.CABundleVolumeName, consts.CABundleMountPoint)
+	}
+
+	if transportSpec := commonSpec.NativeTransport; transportSpec != nil {
+		if transportSpec.TLSClientSecret != nil {
+			busClientSecret = resources.NewTLSSecret(
+				transportSpec.TLSClientSecret.Name,
+				consts.BusClientSecretVolumeName,
+				consts.BusClientSecretMountPoint)
+		}
+	}
+
 	return &InitJob{
 		baseComponent: baseComponent{
 			labeller: labeller,
@@ -81,6 +103,8 @@ func NewInitJob(
 			labeller,
 			apiProxy,
 		),
+		caBundle:        caBundle,
+		busClientSecret: busClientSecret,
 		configHelper: NewConfigHelper(
 			labeller,
 			apiProxy,
@@ -136,6 +160,17 @@ func (j *InitJob) Build() *batchv1.Job {
 			DNSConfig:     j.dnsConfig,
 		},
 	}
+
+	if j.caBundle != nil {
+		j.caBundle.AddVolume(&job.Spec.Template.Spec)
+		j.caBundle.AddVolumeMount(&job.Spec.Template.Spec.Containers[0])
+	}
+
+	if j.busClientSecret != nil {
+		j.busClientSecret.AddVolume(&job.Spec.Template.Spec)
+		j.busClientSecret.AddVolumeMount(&job.Spec.Template.Spec.Containers[0])
+	}
+
 	j.builtJob = job
 	return job
 }

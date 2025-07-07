@@ -190,6 +190,8 @@ kind-create-cluster: kind ## Create kind kubernetes cluster.
 		$(KIND) create cluster --name $(KIND_CLUSTER_NAME) $(KIND_CLUSTER_CREATE_FLAGS); \
 	fi
 	$(MAKE) k8s-install-cert-manager
+	$(MAKE) k8s-install-trust-manager
+	$(MAKE) k8s-install-ytsaurus-dev-ca
 
 .PHONY: kind-create-cluster-with-registry
 kind-create-cluster-with-registry:
@@ -252,6 +254,22 @@ k8s-install-cert-manager:
 	@if ! $(KUBECTL) get namespace/cert-manager &>/dev/null; then \
 		$(KUBECTL) apply --server-side -f "https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MANAGER_VERSION)/cert-manager.yaml"; \
 		$(KUBECTL) -n cert-manager wait --timeout=60s --for=condition=available --all deployment; \
+	fi
+
+.PHONY: k8s-install-trust-manager
+k8s-install-trust-manager:
+	if ! $(KUBECTL) -n cert-manager get deployment trust-manager &>/dev/null; then \
+		$(HELM) upgrade --install --wait \
+			--namespace cert-manager \
+			--repo https://charts.jetstack.io \
+			--version ${TRUST_MANAGER_VERSION} \
+			trust-manager trust-manager ; \
+	fi
+
+.PHONY: k8s-install-ytsaurus-dev-ca
+k8s-install-ytsaurus-dev-ca:
+	@if ! $(KUBECTL) -n cert-manager get clusterissuer ytsaurus-dev-ca &>/dev/null; then \
+		$(KUBECTL) apply -n cert-manager --server-side -f config/certmanager/ytsaurus-dev-ca.yaml; \
 	fi
 
 .PHONY: helm-install
@@ -407,6 +425,7 @@ CRD_REF_DOCS_VERSION ?= v0.1.0
 ## kind version.
 KIND_VERSION ?= v0.22.0
 CERT_MANAGER_VERSION ?= v1.14.4
+TRUST_MANAGER_VERSION ?= v0.17.1
 ENVSUBST_VERSION ?= v1.4.2
 KUBECTL_SLICE_VERSION ?= v1.3.1
 YQ_VERSION ?= v4.44.3

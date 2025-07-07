@@ -75,6 +75,7 @@
         "private_key"={
             "file_name"="/tls/bus_secret/tls.key";
         };
+        "verification_mode"=none;
     };
     "timestamp_provider"={
         addresses=[
@@ -104,11 +105,7 @@
         };
         "bus_client"={
             "encryption_mode"=required;
-            ca={
-                "file_name"="/tls/ca_bundle/ca.crt";
-            };
             "verification_mode"=none;
-            "peer_alternative_host_name"="fake.svc.cluster.local";
         };
         "master_cache"={
             addresses=[
@@ -128,11 +125,7 @@
     };
     "bus_client"={
         "encryption_mode"=required;
-        ca={
-            "file_name"="/tls/ca_bundle/ca.crt";
-        };
         "verification_mode"=none;
-        "peer_alternative_host_name"="fake.svc.cluster.local";
     };
     snapshots={
         path="/yt/master-data/master-snapshots";
