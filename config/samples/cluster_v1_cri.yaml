@@ -47,6 +47,9 @@ spec:
   #  tlsRequired: true
   #  tlsPeerAlternativeHostName: ...
 
+  builtinSidecars:
+    image: ghcr.io/ytsaurus/sidecars:0.0.1
+
   ui:
     # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#uispec
     instanceCount: 1
@@ -101,12 +104,24 @@ spec:
     # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#mastersspec
     instanceCount: 1
 
-    # hydraPersistenceUploader: 
-    #   image: ghcr.io/ytsaurus/sidecars:0.0.1
+    # hydraPersistenceUploader:
+    #   enabled: true
 
     cellTag: 1
 
     loggers: *loggers
+
+    # structuredLoggers:
+    #   - name: access
+    #     minLogLevel: info
+    #     category: Access
+    #     format: json
+    #     rotationPolicy:
+    #       maxTotalSizeToKeep: 1073741824 # 1GiB
+    #       rotationPeriodMilliseconds: 300000 # 5Min
+    #       maxSegmentCountToKeep: 1000
+    #     cypressDelivery:
+    #       enabled: true
 
     locations:
       - locationType: Logs
@@ -409,6 +424,25 @@ spec:
           name: yql-agent-logs
         spec: *logsVolumeSpec
 
+  # queueAgents:
+  #   image: ghcr.io/ytsaurus/ytsaurus:stable-24.1.0-relwithdebinfo
+
+  #   instanceCount: 1
+
+  #   loggers: *loggers
+
+  #   locations:
+  #     - locationType: Logs
+  #       path: /yt/queue-agent-logs
+
+  #   volumeMounts:
+  #     - name: queue-agent-logs
+  #       mountPath: /yt/queue-agent-logs
+
+  #   volumeClaimTemplates:
+  #     - metadata:
+  #         name: queue-agent-logs
+  #       spec: *logsVolumeSpec
 
   queryTrackers:
     # https://ytsaurus.tech/docs/en/admin-guide/components#yql-agent

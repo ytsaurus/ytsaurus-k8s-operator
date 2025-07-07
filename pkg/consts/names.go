@@ -43,6 +43,44 @@ func ComponentServicePrefix(component ComponentType) string {
 	panic(fmt.Sprintf("No service is defined for component type: %s", component))
 }
 
+func GetServiceKebabCase(component ComponentType) string {
+	switch component {
+	case ControllerAgentType:
+		return "controller-agent"
+	case DataNodeType:
+		return "data-node"
+	case DiscoveryType:
+		return "discovery"
+	case ExecNodeType:
+		return "exec-node"
+	case HttpProxyType:
+		return "http-proxy"
+	case MasterCacheType:
+		return "master-cache"
+	case MasterType:
+		return "master"
+	case QueryTrackerType:
+		return "query-tracker"
+	case QueueAgentType:
+		return "queue-agent"
+	case RpcProxyType:
+		return "rpc-proxy"
+	case SchedulerType:
+		return "scheduler"
+	case StrawberryControllerType:
+		return "strawberry-controller"
+	case TabletNodeType:
+		return "tablet-node"
+	case TcpProxyType:
+		return "tcp-proxy"
+	case KafkaProxyType:
+		return "kafka-proxy"
+	case YqlAgentType:
+		return "yql-agent"
+	}
+	panic(fmt.Sprintf("No kebab case service name is defined for component type: %s", component))
+}
+
 func GetStatefulSetPrefix(component ComponentType) string {
 	switch component {
 	case ControllerAgentType:

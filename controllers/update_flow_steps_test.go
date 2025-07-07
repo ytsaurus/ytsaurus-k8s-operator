@@ -43,6 +43,7 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateWaitingForSidecarsInitializingPrepare,
 				ytv1.UpdateStateWaitingForSidecarsInitialize,
 				ytv1.UpdateStateWaitingForSafeModeDisabled,
+				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
 		},
 		{
@@ -146,6 +147,7 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateWaitingForSidecarsInitialize,
 				ytv1.UpdateStateWaitingForTabletCellsRecovery,
 				ytv1.UpdateStateWaitingForSafeModeDisabled,
+				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
 		},
 	}

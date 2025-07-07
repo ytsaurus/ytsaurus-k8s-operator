@@ -25,6 +25,7 @@ const (
 	UIContainerName                       = "yt-ui"
 	StrawberryContainerName               = "strawberry"
 	HydraPersistenceUploaderContainerName = "hydra-persistence-uploader"
+	TimbertruckContainerName              = "timbertruck"
 )
 
 const (
@@ -61,6 +62,7 @@ const (
 	InitScriptVolumeName     = "init-script"
 	UIVaultVolumeName        = "vault"
 	UISecretsVolumeName      = "secrets"
+	TimbertruckWorkDirName   = "timbertruck"
 )
 
 const (

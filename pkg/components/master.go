@@ -46,10 +46,13 @@ func buildMasterOptions(resource *ytv1.Ytsaurus) []Option {
 		}),
 	}
 
-	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil {
+	hydraPersistenceUploaderSpec := resource.Spec.PrimaryMasters.HydraPersistenceUploader
+
+	if hydraPersistenceUploaderSpec != nil && hydraPersistenceUploaderSpec.Enabled {
+		hydraImage := extractBuiltinSidecarImageFromSpec(resource.Spec.CommonSpec, resource.Spec.PrimaryMasters.InstanceSpec)
 		options = append(options, WithSidecarImage(
 			consts.HydraPersistenceUploaderContainerName,
-			resource.Spec.PrimaryMasters.HydraPersistenceUploader.Image,
+			hydraImage,
 		))
 	}
 
@@ -68,6 +71,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		"/usr/bin/ytserver-master",
 		"ytserver-master.yson",
 		func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
+		&cfgen.NodeGenerator,
 		consts.MasterMonitoringPort,
 		buildMasterOptions(resource)...,
 	)
@@ -177,7 +181,7 @@ func (m *Master) initHydraPersistenceUploaderUser() (string, error) {
 		{
 			Action:          "allow",
 			Subjects:        []string{login},
-			Permissions:     []yt.Permission{"read", "write", "remove", "use", "create"},
+			Permissions:     []yt.Permission{"read", "write", "remove", "create"},
 			InheritanceMode: "object_and_descendants",
 		},
 	})
@@ -447,9 +451,13 @@ func (m *Master) doServerSync(ctx context.Context) error {
 	podSpec := &statefulSet.Spec.Template.Spec
 	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
 
-	if primaryMastersSpec.HydraPersistenceUploader != nil {
+	hydraPersistenceUploaderSpec := primaryMastersSpec.HydraPersistenceUploader
+	if hydraPersistenceUploaderSpec != nil && hydraPersistenceUploaderSpec.Enabled {
+		commonSpec := m.ytsaurus.GetResource().Spec.CommonSpec
+		instanceSpec := primaryMastersSpec.InstanceSpec
+		hydraImage := extractBuiltinSidecarImageFromSpec(commonSpec, instanceSpec)
 		addHydraPersistenceUploaderToPodSpec(
-			primaryMastersSpec.HydraPersistenceUploader,
+			hydraImage,
 			podSpec,
 			m.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
 			fmt.Sprintf("%s-secret", consts.HydraPersistenceUploaderUserName),
@@ -580,11 +588,11 @@ func (m *Master) runMasterInitJob(ctx context.Context, dry bool) (ComponentStatu
 	return m.initJob.Sync(ctx, dry)
 }
 
-func addHydraPersistenceUploaderToPodSpec(hydraPersistenceUploader *ytv1.HydraPersistenceUploaderSpec, podSpec *corev1.PodSpec, proxy string, secretKey string) {
+func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.PodSpec, proxy string, secretKey string) {
 	podSpec.Containers = append(podSpec.Containers,
 		corev1.Container{
 			Name:    consts.HydraPersistenceUploaderContainerName,
-			Image:   hydraPersistenceUploader.Image,
+			Image:   hydraImage,
 			Command: []string{"/usr/bin/hydra_persistence_uploader"},
 			Env: []corev1.EnvVar{
 				{

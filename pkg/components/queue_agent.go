@@ -49,6 +49,7 @@ func NewQueueAgent(
 		"/usr/bin/ytserver-queue-agent",
 		"ytserver-queue-agent.yson",
 		func() ([]byte, error) { return cfgen.GetQueueAgentConfig(resource.Spec.QueueAgents) },
+		&cfgen.NodeGenerator,
 		consts.QueueAgentMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

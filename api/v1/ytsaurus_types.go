@@ -187,7 +187,17 @@ type TextLoggerSpec struct {
 
 type StructuredLoggerSpec struct {
 	BaseLoggerSpec `json:",inline"`
-	Category       string `json:"category,omitempty"`
+
+	Category        string               `json:"category,omitempty"`
+	CypressDelivery *CypressDeliverySpec `json:"cypressDelivery,omitempty"`
+}
+
+type CypressDeliverySpec struct {
+	Enabled bool `json:"enabled,omitempty"`
+}
+
+type BuiltinSidecarsSpec struct {
+	Image string `json:"image,omitempty"`
 }
 
 type BundleBootstrapSpec struct {
@@ -276,6 +286,7 @@ type InstanceSpec struct {
 	MonitoringPort    *int32                 `json:"monitoringPort,omitempty"`
 	Loggers           []TextLoggerSpec       `json:"loggers,omitempty"`
 	StructuredLoggers []StructuredLoggerSpec `json:"structuredLoggers,omitempty"`
+	BuiltinSidecars   *BuiltinSidecarsSpec   `json:"builtinSidecars,omitempty"`
 	Affinity          *corev1.Affinity       `json:"affinity,omitempty"`
 	NodeSelector      map[string]string      `json:"nodeSelector,omitempty"`
 	Tolerations       []corev1.Toleration    `json:"tolerations,omitempty"`
@@ -302,7 +313,7 @@ type MasterConnectionSpec struct {
 }
 
 type HydraPersistenceUploaderSpec struct {
-	Image string `json:"image,omitempty"`
+	Enabled bool `json:"enabled,omitempty"`
 }
 
 type MastersSpec struct {
@@ -643,6 +654,8 @@ type CommonSpec struct {
 
 	ConfigOverrides  *corev1.LocalObjectReference  `json:"configOverrides,omitempty"`
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+
+	BuiltinSidecars *BuiltinSidecarsSpec `json:"builtinSidecars,omitempty"`
 }
 
 type RemoteNodeReleaseStatus string
@@ -761,6 +774,7 @@ const (
 	UpdateStateWaitingForYqlaUpdatingPrepare         UpdateState = "WaitingForYqlaUpdatingPrepare"
 	UpdateStateWaitingForYqlaUpdate                  UpdateState = "WaitingForYqlaUpdate"
 	UpdateStateWaitingForSafeModeDisabled            UpdateState = "WaitingForSafeModeDisabled"
+	UpdateStateWaitingForTimbertruckPrepared         UpdateState = "WaitingForTimbertruckPrepared"
 )
 
 type TabletCellBundleInfo struct {
