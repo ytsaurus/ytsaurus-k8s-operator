@@ -24,6 +24,7 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
+				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
 		},
 		{
@@ -43,6 +44,7 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateWaitingForSidecarsInitializingPrepare,
 				ytv1.UpdateStateWaitingForSidecarsInitialize,
 				ytv1.UpdateStateWaitingForSafeModeDisabled,
+				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
 		},
 		{
@@ -59,6 +61,7 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForTabletCellsRecovery,
+				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
 		},
 		{
@@ -72,6 +75,7 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare,
 				ytv1.UpdateStateWaitingForOpArchiveUpdate,
+				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
 		},
 		{
@@ -85,6 +89,7 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForQTStateUpdatingPrepare,
 				ytv1.UpdateStateWaitingForQTStateUpdate,
+				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
 		},
 		{
@@ -98,6 +103,7 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForYqlaUpdatingPrepare,
 				ytv1.UpdateStateWaitingForYqlaUpdate,
+				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
 		},
 		{
@@ -111,6 +117,7 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForQAStateUpdatingPrepare,
 				ytv1.UpdateStateWaitingForQAStateUpdate,
+				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
 		},
 		{
@@ -122,6 +129,7 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
+				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
 		},
 		{
@@ -146,6 +154,7 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateWaitingForSidecarsInitialize,
 				ytv1.UpdateStateWaitingForTabletCellsRecovery,
 				ytv1.UpdateStateWaitingForSafeModeDisabled,
+				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
 		},
 	}

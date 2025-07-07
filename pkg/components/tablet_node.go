@@ -51,6 +51,7 @@ func NewTabletNode(
 		func() ([]byte, error) {
 			return cfgen.GetTabletNodeConfig(spec)
 		},
+		cfgen,
 		consts.TabletNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

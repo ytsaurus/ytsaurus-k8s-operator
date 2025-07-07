@@ -102,7 +102,7 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus *Ytsaurus, mastersSpe
 		}
 	}
 
-	allErrors = append(allErrors, r.validateHydraPersistenceUploaderSpec(mastersSpec.HydraPersistenceUploader, path.Child("hydraPersistenceUploader"))...)
+	allErrors = append(allErrors, r.validateHydraPersistenceUploaderSpec(newYtsaurus, mastersSpec.HydraPersistenceUploader, path.Child("hydraPersistenceUploader"))...)
 
 	allErrors = append(allErrors, r.validateSidecars(mastersSpec.Sidecars, path.Child("sidecars"))...)
 
@@ -243,11 +243,17 @@ func (r *ytsaurusValidator) validateDataNodes(newYtsaurus *Ytsaurus) field.Error
 }
 
 func (r *baseValidator) validateHydraPersistenceUploaderSpec(
-	hydraPersistenceUploader *HydraPersistenceUploaderSpec, path *field.Path) field.ErrorList {
+	newYtsaurus *Ytsaurus, hydraPersistenceUploader *HydraPersistenceUploaderSpec, path *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
-	if hydraPersistenceUploader != nil && hydraPersistenceUploader.Image == "" {
-		allErrors = append(allErrors, field.Required(path.Child("image"), "hydraPersistenceUploader image is required"))
+	if hydraPersistenceUploader != nil && hydraPersistenceUploader.Enabled {
+		if newYtsaurus.Spec.CommonSpec.BuiltinSidecars != nil && newYtsaurus.Spec.CommonSpec.BuiltinSidecars.Image != "" {
+			return allErrors
+		}
+		if newYtsaurus.Spec.PrimaryMasters.BuiltinSidecars != nil && newYtsaurus.Spec.PrimaryMasters.InstanceSpec.BuiltinSidecars.Image != "" {
+			return allErrors
+		}
+		allErrors = append(allErrors, field.Required(path.Child("image"), "hydraPersistenceUploader requires image"))
 	}
 
 	return allErrors

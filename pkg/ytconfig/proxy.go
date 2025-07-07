@@ -105,7 +105,7 @@ type KafkaProxyServer struct {
 func getHTTPProxyLogging(spec *ytv1.HTTPProxiesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
-		"http-proxy",
+		consts.GetServiceKebabCase(consts.HttpProxyType),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
@@ -150,7 +150,7 @@ func getHTTPProxyServerCarcass(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, err
 func getRPCProxyLogging(spec *ytv1.RPCProxiesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
-		"rpc-proxy",
+		consts.GetServiceKebabCase(consts.RpcProxyType),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
@@ -171,14 +171,14 @@ func getRPCProxyServerCarcass(spec *ytv1.RPCProxiesSpec) (RPCProxyServer, error)
 func getTCPProxyLogging(spec *ytv1.TCPProxiesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
-		"tcp-proxy",
+		consts.GetServiceKebabCase(consts.TcpProxyType),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
 func getKafkaProxyLogging(spec *ytv1.KafkaProxiesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
-		"kafka-proxy",
+		consts.GetServiceKebabCase(consts.KafkaProxyType),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec(), defaultDebugLoggerSpec()})
 }
 

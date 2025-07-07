@@ -23,7 +23,7 @@ type DiscoveryServer struct {
 func getDiscoveryLogging(spec *ytv1.DiscoverySpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
-		"discovery",
+		consts.GetServiceKebabCase(consts.DiscoveryType),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
