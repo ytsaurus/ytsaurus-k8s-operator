@@ -30,6 +30,7 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Disco
 		func() ([]byte, error) {
 			return cfgen.GetDiscoveryConfig(&resource.Spec.Discovery)
 		},
+		&cfgen.NodeGenerator,
 		consts.DiscoveryMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
