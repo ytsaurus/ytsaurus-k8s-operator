@@ -31,7 +31,6 @@ func NewTimbertruckConfig(structuredLoggers []ytv1.StructuredLoggerSpec, workDir
 	}
 
 	for _, structuredLogger := range structuredLoggers {
-
 		deliveryName := fmt.Sprintf("%s-%s", componentName, structuredLogger.Name)
 
 		fileName := path.Join(loggingDirectory, fmt.Sprintf("%s.%s.log", componentName, structuredLogger.Name))

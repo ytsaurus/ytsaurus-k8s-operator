@@ -256,3 +256,7 @@ issues:
         - gosec
         - noctx
         - wrapcheck
+
+    - path: "pkg/ytconfig/timbertruck.go"
+      linters:
+        - tagliatelle

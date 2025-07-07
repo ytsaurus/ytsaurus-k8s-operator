@@ -102,8 +102,7 @@ func (tt *Timbertruck) initTimbertruckUser(ctx context.Context) error {
 func (tt *Timbertruck) handleUpdatingState(ctx context.Context) (ComponentStatus, error) {
 	var err error
 
-	switch tt.ytsaurus.GetUpdateState() {
-	case ytv1.UpdateStateWaitingForTimbertruckPrepared:
+	if tt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForTimbertruckPrepared {
 		if !tt.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTimbertruckPrepared) {
 			err := tt.prepareTimbertruckTables(ctx)
 			if err != nil {
@@ -225,12 +224,10 @@ type ComponentLoggers struct {
 }
 
 func (tt *Timbertruck) getDeliveryLoggers() []ComponentLoggers {
-
 	spec := tt.ytsaurus.GetResource().Spec
 	allDeliveryLoggers := []ComponentLoggers{}
 
 	extractDeliveryLoggers := func(componentName string, structuredLoggers []ytv1.StructuredLoggerSpec) {
-
 		structuredLoggersWithDelivery := []ytv1.StructuredLoggerSpec{}
 
 		for _, logger := range structuredLoggers {

@@ -449,7 +449,6 @@ func (s *serverImpl) patchWithTimbertruck(statefulSet *appsv1.StatefulSet, struc
 	for _, locations := range s.instanceSpec.Locations {
 		if locations.LocationType == ytv1.LocationTypeLogs {
 			workDir = locations.Path
-			// workDir = path.Join(locations.Path, consts.TimbertruckWorkDirName)
 			break
 		}
 	}
