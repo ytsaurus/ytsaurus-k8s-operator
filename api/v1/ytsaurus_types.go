@@ -609,10 +609,17 @@ type MasterCachesSpec struct {
 	HostAddressLabel           string `json:"hostAddressesLabel,omitempty"`
 }
 
+type ClusterFeatures struct {
+	// RPC proxy have "public_rpc" address. Required for separated internal/public TLS CA.
+	RPCProxyHavePublicAddress bool `json:"rpcProxyHavePublicAddress,omitempty"`
+}
+
 // CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.
 // It is inlined in these specs.
 type CommonSpec struct {
 	CoreImage string `json:"coreImage,omitempty"`
+
+	ClusterFeatures *ClusterFeatures `json:"clusterFeatures,omitempty"`
 
 	// Default docker image for user jobs.
 	//+optional

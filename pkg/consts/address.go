@@ -4,6 +4,7 @@ const (
 	HTTPPortName                  = "http"
 	HTTPSPortName                 = "https"
 	YTRPCPortName                 = "rpc"
+	YTPublicRPCPortName           = "public-rpc"
 	KafkaPortName                 = "kafka"
 	YTMonitoringContainerPortName = "metrics"
 	YTMonitoringServicePortName   = "ytsaurus-metrics"
@@ -38,8 +39,9 @@ const (
 	TabletNodeSkynetPort = 11022
 	ExecNodeSkynetPort   = 11029
 
-	RPCProxyRPCPort        = 9013
-	RPCProxyMonitoringPort = 10013
+	RPCProxyPublicRPCPort   = 9013
+	RPCProxyInternalRPCPort = 9023
+	RPCProxyMonitoringPort  = 10013
 
 	HTTPProxyRPCPort        = 9016
 	HTTPProxyMonitoringPort = 10016
