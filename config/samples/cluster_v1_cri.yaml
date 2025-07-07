@@ -47,8 +47,8 @@ spec:
   #  tlsRequired: true
   #  tlsPeerAlternativeHostName: ...
 
-  builtinSidecars:
-    image: ghcr.io/ytsaurus/sidecars:0.0.1
+  # builtinSidecars:
+  #   image: ghcr.io/ytsaurus/sidecars:0.0.1
 
   ui:
     # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#uispec
