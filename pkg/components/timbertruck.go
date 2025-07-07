@@ -187,7 +187,7 @@ func (tt *Timbertruck) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 					if err := tt.prepareTimbertruckTables(ctx); err != nil {
 						return SimpleStatus(SyncStatusUpdating), err
 					}
-					tt.ytsaurusClient.ytsaurus.SetStatusCondition(metav1.Condition{
+					tt.ytsaurus.SetStatusCondition(metav1.Condition{
 						Type:    consts.ConditionTimbertruckPrepared,
 						Status:  metav1.ConditionTrue,
 						Reason:  "Initialization",
