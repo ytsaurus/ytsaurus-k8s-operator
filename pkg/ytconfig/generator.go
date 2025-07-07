@@ -42,6 +42,7 @@ type NodeGenerator struct {
 	baseLabeller *labeller.Labeller
 
 	commonSpec           *ytv1.CommonSpec
+	clusterFeatures      ytv1.ClusterFeatures
 	masterConnectionSpec *ytv1.MasterConnectionSpec
 	masterCachesSpec     *ytv1.MasterCachesSpec
 
@@ -79,6 +80,7 @@ func NewLocalNodeGenerator(ytsaurus *ytv1.Ytsaurus, resourceName string, cluster
 			UseShortNames: ytsaurus.Spec.UseShortNames,
 		},
 		commonSpec:             &ytsaurus.Spec.CommonSpec,
+		clusterFeatures:        ptr.Deref(ytsaurus.Spec.ClusterFeatures, ytv1.ClusterFeatures{}),
 		masterConnectionSpec:   &ytsaurus.Spec.PrimaryMasters.MasterConnectionSpec,
 		masterInstanceCount:    ytsaurus.Spec.PrimaryMasters.InstanceCount,
 		discoveryInstanceCount: ytsaurus.Spec.Discovery.InstanceCount,
@@ -98,9 +100,14 @@ func NewRemoteNodeGenerator(ytsaurus *ytv1.RemoteYtsaurus, resourceName string, 
 			UseShortNames: commonSpec.UseShortNames,
 		},
 		commonSpec:           commonSpec,
+		clusterFeatures:      ptr.Deref(commonSpec.ClusterFeatures, ytv1.ClusterFeatures{}),
 		masterConnectionSpec: &ytsaurus.Spec.MasterConnectionSpec,
 		masterCachesSpec:     &ytsaurus.Spec.MasterCachesSpec,
 	}
+}
+
+func (g *NodeGenerator) GetClusterFeatures() ytv1.ClusterFeatures {
+	return g.clusterFeatures
 }
 
 func (g *NodeGenerator) GetComponentLabeller(component consts.ComponentType, instanceGroup string) *labeller.Labeller {
@@ -489,6 +496,10 @@ func (g *NodeGenerator) GetNativeClientConfig() ([]byte, error) {
 	g.fillAddressResolver(&c.AddressResolver)
 	c.Driver.APIVersion = 4
 
+	if g.clusterFeatures.RPCProxyHavePublicAddress {
+		c.Driver.DefaultRpcProxyAddressType = ptr.To(AddressTypePublicRPC)
+	}
+
 	return marshallYsonConfig(c)
 }
 
@@ -526,6 +537,41 @@ func (g *Generator) getRPCProxyConfigImpl(spec *ytv1.RPCProxiesSpec) (RPCProxySe
 	}
 
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+
+	var publicBusServer *BusServer
+
+	if g.clusterFeatures.RPCProxyHavePublicAddress {
+		g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+
+		c.PublicRPCPort = consts.RPCProxyPublicRPCPort
+		if c.PublicBusServer == nil {
+			c.PublicBusServer = &BusServer{}
+		}
+		publicBusServer = c.PublicBusServer
+	} else {
+		c.RPCPort = consts.RPCProxyPublicRPCPort
+
+		if spec.Transport.TLSSecret != nil {
+			if c.BusServer == nil {
+				c.BusServer = &BusServer{}
+			}
+			publicBusServer = c.BusServer
+		}
+	}
+
+	if publicBusServer != nil && spec.Transport.TLSSecret != nil {
+		if spec.Transport.TLSRequired {
+			publicBusServer.EncryptionMode = EncryptionModeRequired
+		} else {
+			publicBusServer.EncryptionMode = EncryptionModeOptional
+		}
+		publicBusServer.CertChain = &PemBlob{
+			FileName: path.Join(consts.RPCProxySecretMountPoint, corev1.TLSCertKey),
+		}
+		publicBusServer.PrivateKey = &PemBlob{
+			FileName: path.Join(consts.RPCProxySecretMountPoint, corev1.TLSPrivateKeyKey),
+		}
+	}
 
 	oauthService := g.ytsaurus.Spec.OauthService
 	if oauthService != nil {
@@ -568,24 +614,6 @@ func (g *Generator) GetRPCProxyConfig(spec ytv1.RPCProxiesSpec) ([]byte, error) 
 	c, err := g.getRPCProxyConfigImpl(&spec)
 	if err != nil {
 		return []byte{}, err
-	}
-
-	if spec.Transport.TLSSecret != nil {
-		if c.BusServer == nil {
-			c.BusServer = &BusServer{}
-		}
-		// FIXME(khlebnikov): RPCProxy share bus server for native and public services
-		if spec.Transport.TLSRequired {
-			c.BusServer.EncryptionMode = EncryptionModeRequired
-		} else {
-			c.BusServer.EncryptionMode = EncryptionModeOptional
-		}
-		c.BusServer.CertChain = &PemBlob{
-			FileName: path.Join(consts.RPCProxySecretMountPoint, corev1.TLSCertKey),
-		}
-		c.BusServer.PrivateKey = &PemBlob{
-			FileName: path.Join(consts.RPCProxySecretMountPoint, corev1.TLSPrivateKeyKey),
-		}
 	}
 
 	return marshallYsonConfig(c)

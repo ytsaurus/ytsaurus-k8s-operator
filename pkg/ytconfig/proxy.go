@@ -89,6 +89,9 @@ type RPCProxyServer struct {
 	OauthService              *OauthService             `yson:"oauth_service,omitempty"`
 	OauthTokenAuthenticator   *OauthTokenAuthenticator  `yson:"oauth_token_authenticator,omitempty"`
 	RequireAuthentication     *bool                     `yson:"require_authentication,omitempty"`
+
+	PublicRPCPort   int32      `yson:"public_rpc_port,omitempty"`
+	PublicBusServer *BusServer `yson:"public_bus_server,omitempty"`
 }
 
 type TCPProxyServer struct {
@@ -166,8 +169,8 @@ func getRPCProxyServerCarcass(spec *ytv1.RPCProxiesSpec) (RPCProxyServer, error)
 
 	c.CypressTokenAuthenticator.Secure = true
 
-	c.RPCPort = consts.RPCProxyRPCPort
-	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.RPCProxyMonitoringPort)
+	c.RPCPort = consts.RPCProxyInternalRPCPort
+	c.MonitoringPort = ptr.Deref(spec.MonitoringPort, consts.RPCProxyMonitoringPort)
 
 	c.Role = spec.Role
 	c.Logging = getRPCProxyLogging(spec)

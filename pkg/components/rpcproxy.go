@@ -34,6 +34,30 @@ func NewRPCProxy(
 ) *RpcProxy {
 	l := cfgen.GetComponentLabeller(consts.RpcProxyType, spec.Role)
 
+	var ports []corev1.ContainerPort
+	if cfgen.GetClusterFeatures().RPCProxyHavePublicAddress {
+		ports = []corev1.ContainerPort{
+			{
+				Name:          consts.YTRPCPortName,
+				ContainerPort: consts.RPCProxyInternalRPCPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+			{
+				Name:          consts.YTPublicRPCPortName,
+				ContainerPort: consts.RPCProxyPublicRPCPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		}
+	} else {
+		ports = []corev1.ContainerPort{
+			{
+				Name:          consts.YTRPCPortName,
+				ContainerPort: consts.RPCProxyPublicRPCPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		}
+	}
+
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -44,11 +68,7 @@ func NewRPCProxy(
 			return cfgen.GetRPCProxyConfig(spec)
 		},
 		consts.RPCProxyMonitoringPort,
-		WithContainerPorts(corev1.ContainerPort{
-			Name:          consts.YTRPCPortName,
-			ContainerPort: consts.RPCProxyRPCPort,
-			Protocol:      corev1.ProtocolTCP,
-		}),
+		WithContainerPorts(ports...),
 	)
 
 	var balancingService *resources.RPCService = nil
@@ -58,8 +78,8 @@ func NewRPCProxy(
 			[]corev1.ServicePort{
 				{
 					Name:       consts.YTRPCPortName,
-					Port:       consts.RPCProxyRPCPort,
-					TargetPort: intstr.FromInt(consts.RPCProxyRPCPort),
+					Port:       consts.RPCProxyPublicRPCPort,
+					TargetPort: intstr.FromInt(consts.RPCProxyPublicRPCPort),
 					NodePort:   ptr.Deref(spec.NodePort, 0),
 				},
 			},

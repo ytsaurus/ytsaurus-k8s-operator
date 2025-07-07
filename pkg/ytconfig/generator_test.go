@@ -524,6 +524,15 @@ func TestGetYtsaurusWithMutualTLSInterconnect(t *testing.T) {
 		TLSPeerAlternativeHostName: testNamespace + ".svc.cluster.local",
 	}
 
+	ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
+		RPCProxyHavePublicAddress: true,
+	}
+	ytsaurus.Spec.RPCProxies[0].Transport = ytv1.RPCTransportSpec{
+		TLSSecret: &corev1.LocalObjectReference{
+			Name: "ytsaurus-rpc-proxy-cert",
+		},
+	}
+
 	g := NewGenerator(ytsaurus, testClusterDomain)
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
 

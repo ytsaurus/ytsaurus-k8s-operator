@@ -116,6 +116,13 @@ func (l *Labeller) GetBalancerServiceAddress() string {
 		l.ClusterDomain)
 }
 
+func (l *Labeller) GetInstanceAddressWildcard() string {
+	return fmt.Sprintf("*.%s.%s.svc.%s",
+		l.GetHeadlessServiceName(),
+		l.GetNamespace(),
+		l.ClusterDomain)
+}
+
 func (l *Labeller) GetInstanceAddressPort(index, port int) string {
 	// NOTE: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
 	return fmt.Sprintf("%s-%d.%s.%s.svc.%s:%d",
