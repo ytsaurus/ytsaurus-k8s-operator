@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -21,7 +22,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"go.ytsaurus.tech/yt/go/mapreduce"
-	"go.ytsaurus.tech/yt/go/mapreduce/spec"
+	ytspec "go.ytsaurus.tech/yt/go/mapreduce/spec"
 	"go.ytsaurus.tech/yt/go/schema"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
@@ -45,6 +46,11 @@ const (
 	reactionTimeout  = time.Second * 150
 	bootstrapTimeout = time.Minute * 5
 	upgradeTimeout   = time.Minute * 10
+
+	chytBootstrapTimeout = time.Minute * 2
+
+	operationPollInterval = time.Millisecond * 250
+	operationTimeout      = time.Second * 120
 )
 
 func getYtClient(proxyAddress string) yt.Client {
@@ -170,6 +176,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var name client.ObjectKey
 	var ytBuilder *testutil.YtsaurusBuilder
 	var ytsaurus *ytv1.Ytsaurus
+	var chyt *ytv1.Chyt
 	var ytProxyAddress string
 	var ytClient yt.Client
 	var g *ytconfig.Generator
@@ -195,6 +202,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Labels: map[string]string{
 					"app.kubernetes.io/component": "test",
 					"app.kubernetes.io/name":      "test-" + strings.Join(currentSpec.Labels(), "-"),
+					"app.kubernetes.io/part-of":   "ytsaurus-dev",
 				},
 				Annotations: map[string]string{
 					"kubernetes.io/description": currentSpec.LeafNodeText,
@@ -252,7 +260,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
 
 		By("Creating ytsaurus client")
-		g = ytconfig.NewGenerator(ytsaurus, "local")
+		g = ytconfig.NewGenerator(ytsaurus, "cluster.local")
 		ytProxyAddress = getHTTPProxyAddress(g, namespace)
 
 		log.Info("Ytsaurus access",
@@ -268,6 +276,55 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		ytClient = getYtClient(ytProxyAddress)
 		checkClusterViability(ytClient)
+
+		if len(ytsaurus.Spec.ExecNodes) != 0 {
+			// NOTE: There is no reliable readiness signal for compute stack except active checks.
+			op := NewVanillaOperation(ytClient)
+
+			By("Waiting scheduler is ready to start operation")
+			Eventually(ctx, op.Start, bootstrapTimeout, pollInterval).Should(Succeed())
+
+			By("Waiting scheduler could provide operation status")
+			Eventually(ctx, op.Status, bootstrapTimeout, pollInterval).ShouldNot(BeNil())
+
+			By("Waiting operation completion")
+			op.Wait()
+		}
+
+		if chyt != nil {
+			By("Checking CHYT status")
+			Eventually(ctx, func(ctx context.Context) (*ytv1.Chyt, error) {
+				err := k8sClient.Get(ctx, client.ObjectKeyFromObject(chyt), chyt)
+				return chyt, err
+			}, bootstrapTimeout, pollInterval).Should(
+				HaveField("Status.ReleaseStatus", ytv1.ChytReleaseStatusFinished),
+				"CHYT status: %+v", &chyt.Status,
+			)
+
+			By("Checking CHYT readiness")
+			// FIXME(khlebnikov): There is no reliable readiness signal.
+			Eventually(queryClickHouse, chytBootstrapTimeout, pollInterval).WithArguments(
+				ytProxyAddress, "SELECT 1",
+			).MustPassRepeatedly(3).Should(Equal("1\n"))
+		}
+	})
+
+	JustAfterEach(func(ctx context.Context) {
+		if CurrentSpecReport().Failed() {
+			return
+		}
+
+		if len(ytsaurus.Spec.ExecNodes) != 0 {
+			By("Running vanilla operation")
+			op := NewVanillaOperation(ytClient)
+
+			By("Waiting scheduler is ready to start operation")
+			Eventually(ctx, op.Start, bootstrapTimeout, pollInterval).Should(Succeed())
+
+			// FIXME(khlebnikov): In some cases cluster is broken and cannot run operations.
+			By("Aborting operation")
+			Expect(op.Abort()).To(Succeed())
+		}
 	})
 
 	AfterEach(func(ctx context.Context) {
@@ -313,6 +370,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 					By("Setting old core image for testing upgrade")
 					ytsaurus.Spec.CoreImage = oldImage
+
+					if oldImage == testutil.YtsaurusImage23_2 {
+						By("Disabling master caches in 23.2")
+						ytsaurus.Spec.MasterCaches = nil
+					}
 				})
 
 				It("Triggers cluster update", func(ctx context.Context) {
@@ -359,40 +421,55 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			It("Should be updated according to UpdateSelector=Everything", func(ctx context.Context) {
 
-				By("Run cluster update with selector: nothing")
+				By("Run cluster update with selector: class=Nothing")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassNothing}}
 				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
 				By("Ensure cluster doesn't start updating for 5 seconds")
 				ConsistentlyYtsaurus(ctx, name, 5*time.Second).Should(HaveClusterStateRunning())
+
+				By("Ensure cluster generation is observed")
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+				Expect(ytsaurus).Should(HaveClusterStateRunning())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
+
+				By("Verifying that pods were not recreated")
 				podsAfterBlockedUpdate := getComponentPods(ctx, namespace)
 				Expect(podsBeforeUpdate).To(
 					Equal(podsAfterBlockedUpdate),
 					"pods shouldn't be recreated when update is blocked",
 				)
 
-				By("Update cluster update with strategy full")
+				By("Update cluster update with selector: class=Everything")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
-				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(
-					"Discovery",
-					"Master",
-					"DataNode",
-					"HttpProxy",
-					"ExecNode",
-					"TabletNode",
-					"Scheduler",
-					"ControllerAgent",
+					consts.ControllerAgentType,
+					consts.DataNodeType,
+					consts.DiscoveryType,
+					consts.ExecNodeType,
+					consts.HttpProxyType,
+					consts.MasterType,
+					consts.MasterCacheType,
+					consts.SchedulerType,
+					consts.TabletNodeType,
 				))
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).To(BeEmpty())
 
 				By("Wait cluster update with full update complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
-				podsAfterFullUpdate := getComponentPods(ctx, namespace)
+				Expect(ytsaurus).Should(HaveObservedGeneration())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).To(BeEmpty())
 
+				podsAfterFullUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterFullUpdate)
 				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
@@ -411,10 +488,17 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("ExecNode"))
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(consts.ExecNodeType))
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				By("Wait cluster update with selector:ExecNodesOnly complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				Expect(ytsaurus).Should(HaveObservedGeneration())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
+
 				checkClusterBaseViability(ytClient)
 
 				podsAfterEndUpdate := getComponentPods(ctx, namespace)
@@ -429,14 +513,20 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Type: consts.TabletNodeType,
 					},
 				}}
-				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("TabletNode"))
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(consts.TabletNodeType))
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				By("Wait cluster update with selector:TabletNodesOnly complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				Expect(ytsaurus).Should(HaveObservedGeneration())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
+
 				checkClusterBaseViability(ytClient)
 
 				podsAfterTndUpdate := getComponentPods(ctx, namespace)
@@ -458,11 +548,19 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("Master"))
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(consts.MasterType))
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				By("Wait cluster update with selector:MasterOnly complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				Expect(ytsaurus).Should(HaveObservedGeneration())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
+
 				checkClusterBaseViability(ytClient)
+
 				podsAfterMasterUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterMasterUpdate)
 				Expect(pods.Created).To(BeEmpty(), "created")
@@ -473,26 +571,33 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
 					Class: consts.ComponentClassStateless,
 				}}
-				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(
-					"Discovery",
-					"HttpProxy",
-					"ExecNode",
-					"Scheduler",
-					"ControllerAgent",
+					consts.ControllerAgentType,
+					consts.DiscoveryType,
+					consts.ExecNodeType,
+					consts.HttpProxyType,
+					consts.MasterCacheType,
+					consts.SchedulerType,
 				))
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				By("Wait cluster update with selector:StatelessOnly complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				Expect(ytsaurus).Should(HaveObservedGeneration())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
+
 				checkClusterBaseViability(ytClient)
 				podsAfterStatelessUpdate := getComponentPods(ctx, namespace)
 				pods = getChangedPods(podsAfterMasterUpdate, podsAfterStatelessUpdate)
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Created).To(BeEmpty(), "created")
-				Expect(pods.Updated).To(ConsistOf("ca-0", "ds-0", "end-0", "hp-0", "sch-0"), "updated")
+				Expect(pods.Updated).To(ConsistOf("ca-0", "ds-0", "end-0", "hp-0", "msc-0", "sch-0"), "updated")
 			})
 
 			It("Should update only specified data node group", func(ctx context.Context) {
@@ -523,10 +628,17 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-				Expect(ytsaurus).Should(HaveClusterUpdatingComponentsExactly("dn-2"))
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponentsNames("dn-2"))
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				By("Wait cluster update with selector:DataNodesOnly complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				Expect(ytsaurus).Should(HaveObservedGeneration())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
+
 				checkClusterBaseViability(ytClient)
 
 				podsAfterUpdate := getComponentPods(ctx, namespace)
@@ -578,7 +690,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Waiting cluster update starts")
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterStateUpdating())
-				Expect(ytsaurus).Should(HaveClusterUpdatingComponents("Discovery", "ExecNode")) // change in containerd.toml must trigger exec node update
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(
+					consts.DiscoveryType,
+					consts.ExecNodeType,
+				)) // change in containerd.toml must trigger exec node update
 
 				By("Waiting cluster update completes")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
@@ -886,9 +1001,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			It("Should create ytsaurus with remote exec nodes and execute a job", func(ctx context.Context) {
 
+				By("Running running vanilla operation")
+				NewVanillaOperation(ytClient).Run()
+
 				By("Running sort operation to ensure exec node works")
 				op := runAndCheckSortOperation(ytClient)
-				op.ID()
 
 				result, err := ytClient.ListJobs(ctx, op.ID(), &yt.ListJobsOptions{
 					JobState: &yt.JobCompleted,
@@ -1145,6 +1262,94 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		}) // integration host-network
 
+		Context("With CHYT", Label("chyt"), func() {
+
+			BeforeEach(func() {
+				By("Adding strawberry")
+				ytBuilder.WithBaseComponents()
+				ytBuilder.WithStrawberryController()
+
+				By("Adding CHYT instance")
+				chyt = ytBuilder.CreateChyt()
+				objects = append(objects, chyt)
+			})
+
+			It("Checks ClickHouse", func(ctx context.Context) {
+				By("Creating table")
+				Expect(queryClickHouse(
+					ytProxyAddress,
+					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one",
+				)).To(Equal(""))
+			})
+
+		}) // integration chyt
+
+		Context("With Bus RPC mTLS", Label("tls"), func() {
+
+			var certBuilder *testutil.CertBuilder
+
+			BeforeEach(func() {
+
+				if os.Getenv("YTSAURUS_TLS_READY") == "" {
+					Skip("YTsaurus is not ready for TLS")
+				}
+
+				By("Adding all components")
+				ytBuilder.WithBaseComponents()
+				ytBuilder.WithRPCProxies()
+				ytBuilder.WithQueryTracker()
+				ytBuilder.WithYqlAgent()
+				ytBuilder.WithStrawberryController()
+
+				By("Adding CHYT instance")
+				chyt = ytBuilder.CreateChyt()
+				objects = append(objects, chyt)
+
+				By("Adding native transport certificates")
+				certBuilder = &testutil.CertBuilder{
+					Namespace: namespace,
+				}
+
+				nativeServerCert := certBuilder.BuildCertificate(ytsaurus.Name+"-server", []string{
+					ytsaurus.Name,
+				})
+				nativeClientCert := certBuilder.BuildCertificate(ytsaurus.Name+"-client", []string{
+					ytsaurus.Name,
+				})
+
+				ytsaurus.Spec.CABundle = &ytv1.FileObjectReference{
+					Name: testutil.TestTrustBundleName,
+				}
+
+				ytsaurus.Spec.NativeTransport = &ytv1.RPCTransportSpec{
+					TLSSecret: &corev1.LocalObjectReference{
+						Name: nativeServerCert.Name,
+					},
+					TLSClientSecret: &corev1.LocalObjectReference{
+						Name: nativeClientCert.Name,
+					},
+					TLSRequired:                true,
+					TLSPeerAlternativeHostName: ytsaurus.Name,
+				}
+
+				objects = append(objects,
+					nativeServerCert,
+					nativeClientCert,
+				)
+			})
+
+			It("Verify that mTLS is active", func(ctx context.Context) {
+				// TODO(khlebnikov): Poke all RPC servers.
+				// TODO(khlebnikov): Check all RPC connections in orchid.
+
+				Expect(queryClickHouse(
+					ytProxyAddress,
+					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one;",
+				)).To(Equal(""))
+			})
+
+		}) // integration tls
+
 	}) // integration
 })
 
@@ -1259,6 +1464,99 @@ func checkChunkLocations(ytClient yt.Client) {
 	}
 }
 
+type TestOperation struct {
+	Client yt.Client
+	Spec   *ytspec.Spec
+	Id     yt.OperationID
+}
+
+func (o *TestOperation) Start() error {
+	id, err := o.Client.StartOperation(ctx, o.Spec.Type, o.Spec, nil)
+	if err == nil {
+		log.Info("Operation started", "id", id)
+		o.Id = id
+	}
+	return err
+}
+
+func (o *TestOperation) Status() (*yt.OperationStatus, error) {
+	return o.Client.GetOperation(ctx, o.Id, nil)
+}
+
+func (o *TestOperation) Abort() error {
+	err := o.Client.AbortOperation(ctx, o.Id, nil)
+	if err == nil {
+		log.Info("Operation aborted", "id", o.Id)
+	}
+	return err
+}
+
+func NewOprationStatusTracker() func(opStatus *yt.OperationStatus) bool {
+	var prevState yt.OperationState
+	var prevJobs yt.TotalJobCounter
+	return func(opStatus *yt.OperationStatus) bool {
+		if opStatus == nil {
+			return false
+		}
+		changed := false
+		jobs := ptr.Deref(opStatus.BriefProgress.TotalJobCounter, yt.TotalJobCounter{})
+		if prevState != opStatus.State || !reflect.DeepEqual(&prevJobs, &jobs) {
+			log.Info("Operation progress",
+				"id", opStatus.ID,
+				"state", opStatus.State,
+				"running", jobs.Running,
+				"completed", jobs.Completed,
+				"total", jobs.Total,
+			)
+			prevState = opStatus.State
+			prevJobs = jobs
+			changed = true
+		}
+		return changed
+	}
+}
+
+func (o *TestOperation) Wait() *yt.OperationStatus {
+	var opStatus *yt.OperationStatus
+	trackStatus := NewOprationStatusTracker()
+	Eventually(func(ctx context.Context) bool {
+		var err error
+		opStatus, err = o.Status()
+		Expect(err).NotTo(HaveOccurred())
+		trackStatus(opStatus)
+		if opStatus.State.IsFinished() {
+			Expect(opStatus.State).Should(Equal(yt.StateCompleted))
+			return true
+		}
+		return false
+	}, operationTimeout, operationPollInterval, ctx).Should(BeTrue())
+	return opStatus
+}
+
+func (o *TestOperation) Run() *yt.OperationStatus {
+	err := o.Start()
+	Expect(err).NotTo(HaveOccurred())
+	return o.Wait()
+}
+
+func NewVanillaOperation(ytClient yt.Client) *TestOperation {
+	return &TestOperation{
+		Client: ytClient,
+		Spec: &ytspec.Spec{
+			Type:  yt.OperationVanilla,
+			Title: "e2e test operation",
+			Tasks: map[string]*ytspec.UserScript{
+				"test": {
+					Command:  "true",
+					CPULimit: 0,
+					JobCount: 1,
+				},
+			},
+			MaxFailedJobCount: 1,
+		},
+	}
+}
+
 func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
 	testTablePathIn := ypath.Path("//tmp/testexec")
 	testTablePathOut := ypath.Path("//tmp/testexec-out")
@@ -1295,7 +1593,7 @@ func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
 	Expect(err).Should(Succeed())
 
 	mrCli := mapreduce.New(ytClient)
-	op, err := mrCli.Sort(&spec.Spec{
+	op, err := mrCli.Sort(&ytspec.Spec{
 		Type:            yt.OperationSort,
 		InputTablePaths: []ypath.YPath{testTablePathIn},
 		OutputTablePath: testTablePathOut,

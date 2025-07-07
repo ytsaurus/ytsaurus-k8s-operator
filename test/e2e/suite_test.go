@@ -50,6 +50,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -104,6 +107,9 @@ var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	Expect(err).NotTo(HaveOccurred())
 
 	err = ytv1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = certmanagerv1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	k8sClient, err = client.NewWithWatch(cfg, client.Options{Scheme: scheme})
@@ -179,7 +185,10 @@ func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 		}
 
 		if prevStatus.ObservedGeneration != newStatus.ObservedGeneration {
-			log.Info("ObservedGeneration", "current", newStatus.ObservedGeneration, "previous", prevStatus.ObservedGeneration)
+			log.Info("ObservedGeneration",
+				"current", newStatus.ObservedGeneration,
+				"previous", prevStatus.ObservedGeneration,
+				"observed", newStatus.ObservedGeneration == ytsaurus.Generation)
 			changed = true
 		}
 
@@ -201,8 +210,23 @@ func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 			changed = true
 		}
 
+		if prevStatus.UpdateStatus.Flow != newStatus.UpdateStatus.Flow {
+			log.Info("UpdateStatus", "flow", newStatus.UpdateStatus.Flow)
+			changed = true
+		}
+
 		if len(prevStatus.UpdateStatus.UpdatingComponents) != len(newStatus.UpdateStatus.UpdatingComponents) {
 			log.Info("UpdateStatus", "updatingComponents", newStatus.UpdateStatus.UpdatingComponents)
+			changed = true
+		}
+
+		if len(prevStatus.UpdateStatus.UpdatingComponentsSummary) != len(newStatus.UpdateStatus.UpdatingComponentsSummary) {
+			log.Info("UpdateStatus", "updatingComponentsSummary", newStatus.UpdateStatus.UpdatingComponentsSummary)
+			changed = true
+		}
+
+		if len(prevStatus.UpdateStatus.BlockedComponentsSummary) != len(newStatus.UpdateStatus.BlockedComponentsSummary) {
+			log.Info("UpdateStatus", "blockedComponentsSummary", newStatus.UpdateStatus.BlockedComponentsSummary)
 			changed = true
 		}
 
@@ -310,20 +334,20 @@ func HaveClusterUpdateState(updateState ytv1.UpdateState) otypes.GomegaMatcher {
 	)
 }
 
-func HaveClusterUpdatingComponents(components ...string) otypes.GomegaMatcher {
+func HaveClusterUpdatingComponents(components ...consts.ComponentType) otypes.GomegaMatcher {
 	return And(
 		HaveClusterStateUpdating(),
-		WithTransform(func(yts *ytv1.Ytsaurus) []string {
-			var result []string
+		WithTransform(func(yts *ytv1.Ytsaurus) []consts.ComponentType {
+			var result []consts.ComponentType
 			for _, comp := range yts.Status.UpdateStatus.UpdatingComponents {
-				result = append(result, string(comp.Type))
+				result = append(result, comp.Type)
 			}
 			return result
-		}, Equal(components)),
+		}, ConsistOf(components)),
 	)
 }
 
-func HaveClusterUpdatingComponentsExactly(components ...string) otypes.GomegaMatcher {
+func HaveClusterUpdatingComponentsNames(components ...string) otypes.GomegaMatcher {
 	return And(
 		HaveClusterStateUpdating(),
 		WithTransform(func(yts *ytv1.Ytsaurus) []string {
@@ -332,7 +356,7 @@ func HaveClusterUpdatingComponentsExactly(components ...string) otypes.GomegaMat
 				result = append(result, comp.Name)
 			}
 			return result
-		}, Equal(components)),
+		}, ConsistOf(components)),
 	)
 }
 

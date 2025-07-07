@@ -67,6 +67,17 @@ type EmbeddedObjectMetadata struct {
 	Annotations map[string]string `json:"annotations,omitempty" protobuf:"bytes,12,rep,name=annotations"`
 }
 
+// A reference to a specific 'key' within a ConfigMap or Secret resource.
+type FileObjectReference struct {
+	// Kind is the type of resource: ConfigMap or Secret.
+	//+kubebuilder:validation:Enum=ConfigMap;Secret
+	Kind string `json:"kind,omitempty"`
+	// Name is the name of resource being referenced
+	Name string `json:"name,omitempty"`
+	// Key is the name of entry in ConfigMap or Secret.
+	Key string `json:"key,omitempty"`
+}
+
 // LocationType string describes types of disk locations for YT components.
 // +enum
 type LocationType string
@@ -342,9 +353,12 @@ type HTTPProxiesSpec struct {
 }
 
 type RPCTransportSpec struct {
-	// Reference to kubernetes.io/tls secret.
+	// Server certificate. Reference to kubernetes.io/tls secret.
 	//+optional
 	TLSSecret *corev1.LocalObjectReference `json:"tlsSecret,omitempty"`
+	// Client certificate. Reference to kubernetes.io/tls secret.
+	//+optional
+	TLSClientSecret *corev1.LocalObjectReference `json:"tlsClientSecret,omitempty"`
 	// Require encrypted connections, otherwise only when required by peer.
 	//+optional
 	TLSRequired bool `json:"tlsRequired,omitempty"`
@@ -600,9 +614,9 @@ type CommonSpec struct {
 	//+optional
 	JobImage *string `json:"jobImage,omitempty"`
 
-	// Reference to ConfigMap with trusted certificates: "ca.crt".
+	// Reference to trusted certificates. Default kind="ConfigMap", key="ca.crt".
 	//+optional
-	CABundle *corev1.LocalObjectReference `json:"caBundle,omitempty"`
+	CABundle *FileObjectReference `json:"caBundle,omitempty"`
 
 	// Common config for native RPC bus transport.
 	//+optional

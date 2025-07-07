@@ -2,6 +2,9 @@ package controllers_test
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"net/http"
 	"strings"
 
 	. "github.com/onsi/gomega"
@@ -13,6 +16,8 @@ import (
 	ctrlcli "sigs.k8s.io/controller-runtime/pkg/client"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
@@ -174,4 +179,33 @@ func CollectClusterHealth(ytClient yt.Client) ClusterHealthReport {
 	c.CollectNodes(ytClient, "//sys/cluster_nodes")
 	c.CollectNodes(ytClient, "//sys/controller_agents/instances")
 	return c
+}
+
+func queryClickHouse(ytProxyAddress, query string) (string, error) {
+	// See https://ytsaurus.tech/docs/en/user-guide/data-processing/chyt/try-chyt
+	url := fmt.Sprintf("http://%s/chyt?chyt.clique_alias=ch_public", ytProxyAddress)
+	request, err := http.NewRequest(http.MethodPost, url, strings.NewReader(query))
+	if err != nil {
+		return "", err
+	}
+	request.Header.Add("Authorization", "OAuth "+consts.DefaultAdminPassword)
+
+	client := http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	content, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		err := fmt.Errorf("Status: %v Headers: %v Content: %v", response.Status, response.Header, string(content))
+		return string(content), err
+	}
+
+	return string(content), nil
 }
