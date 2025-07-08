@@ -3,6 +3,9 @@ package components
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/ptr"
+
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -52,10 +55,16 @@ func NewRPCProxy(
 	if spec.ServiceType != nil {
 		balancingService = resources.NewRPCService(
 			cfgen.GetRPCProxiesServiceName(spec.Role),
+			[]corev1.ServicePort{
+				{
+					Name:       consts.YTRPCPortName,
+					Port:       consts.RPCProxyRPCPort,
+					TargetPort: intstr.FromInt(consts.RPCProxyRPCPort),
+					NodePort:   ptr.Deref(spec.NodePort, 0),
+				},
+			},
 			l,
 			ytsaurus.APIProxy())
-
-		balancingService.SetNodePort(spec.NodePort)
 	}
 
 	var tlsSecret *resources.TLSSecret
