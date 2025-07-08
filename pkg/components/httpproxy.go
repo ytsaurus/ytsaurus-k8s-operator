@@ -50,12 +50,12 @@ func NewHTTPProxy(
 				Protocol:      corev1.ProtocolTCP,
 			},
 			corev1.ContainerPort{
-				Name:          "http",
+				Name:          consts.HTTPPortName,
 				ContainerPort: ptr.Deref(spec.HttpPort, consts.HTTPProxyHTTPPort),
 				Protocol:      corev1.ProtocolTCP,
 			},
 			corev1.ContainerPort{
-				Name:          "https",
+				Name:          consts.HTTPSPortName,
 				ContainerPort: ptr.Deref(spec.HttpsPort, consts.HTTPProxyHTTPSPort),
 				Protocol:      corev1.ProtocolTCP,
 			},
