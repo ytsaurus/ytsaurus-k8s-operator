@@ -222,7 +222,7 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 			},
 			Ports: []corev1.ContainerPort{
 				{
-					Name:          "http",
+					Name:          consts.HTTPPortName,
 					ContainerPort: consts.StrawberryHTTPAPIPort,
 					Protocol:      corev1.ProtocolTCP,
 				},

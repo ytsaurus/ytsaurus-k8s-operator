@@ -64,9 +64,9 @@ func (s *HTTPService) Build() *corev1.Service {
 	s.newObject.Spec.Ports = make([]corev1.ServicePort, 0, 2)
 	if !s.transport.DisableHTTP {
 		port := corev1.ServicePort{
-			Name:       "http",
+			Name:       consts.HTTPPortName,
 			Port:       httpPort,
-			TargetPort: intstr.IntOrString{IntVal: httpPort},
+			TargetPort: intstr.FromInt32(httpPort),
 		}
 		if s.httpNodePort != nil {
 			port.NodePort = *s.httpNodePort
@@ -76,9 +76,9 @@ func (s *HTTPService) Build() *corev1.Service {
 
 	if s.transport.HTTPSSecret != nil {
 		port := corev1.ServicePort{
-			Name:       "https",
+			Name:       consts.HTTPSPortName,
 			Port:       httpsPort,
-			TargetPort: intstr.IntOrString{IntVal: httpsPort},
+			TargetPort: intstr.FromInt32(httpsPort),
 		}
 		if s.httpsNodePort != nil {
 			port.NodePort = *s.httpsNodePort
