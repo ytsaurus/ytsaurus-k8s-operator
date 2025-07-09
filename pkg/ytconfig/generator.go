@@ -282,6 +282,14 @@ func (g *NodeGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCT
 	c.MasterCache.CellID = generateCellID(g.masterConnectionSpec.CellTag)
 }
 
+func (g *NodeGenerator) fillDriverConfig(c *Driver) {
+	c.APIVersion = 4
+
+	if g.clusterFeatures.RPCProxyHavePublicAddress {
+		c.DefaultRpcProxyAddressType = ptr.To(AddressTypePublicRPC)
+	}
+}
+
 func (g *NodeGenerator) fillCypressAnnotations(c *CommonServer) {
 	c.CypressAnnotations = map[string]any{
 		"k8s_pod_name":      fmt.Sprintf("{%s}", consts.ENV_K8S_POD_NAME),
@@ -494,11 +502,7 @@ func (g *NodeGenerator) GetNativeClientConfig() ([]byte, error) {
 	keyring := getMountKeyring(g.commonSpec, nil)
 	g.fillClusterConnection(&c.Driver.ClusterConnection, nil, keyring)
 	g.fillAddressResolver(&c.AddressResolver)
-	c.Driver.APIVersion = 4
-
-	if g.clusterFeatures.RPCProxyHavePublicAddress {
-		c.Driver.DefaultRpcProxyAddressType = ptr.To(AddressTypePublicRPC)
-	}
+	g.fillDriverConfig(&c.Driver.Driver)
 
 	return marshallYsonConfig(c)
 }
@@ -813,6 +817,9 @@ func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProx
 
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+
+	g.fillDriverConfig(&c.Driver)
+	c.Driver.APIVersion = 0
 
 	oauthService := g.ytsaurus.Spec.OauthService
 	if oauthService != nil {
