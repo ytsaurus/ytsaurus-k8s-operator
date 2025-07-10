@@ -36,6 +36,7 @@ func NewKafkaProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, maste
 		func() ([]byte, error) {
 			return cfgen.GetKafkaProxyConfig(spec)
 		},
+		&cfgen.NodeGenerator,
 		consts.KafkaProxyMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

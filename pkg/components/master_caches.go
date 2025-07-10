@@ -28,6 +28,7 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Mas
 		"/usr/bin/ytserver-master-cache",
 		"ytserver-master-cache.yson",
 		func() ([]byte, error) { return cfgen.GetMasterCachesConfig(resource.Spec.MasterCaches) },
+		&cfgen.NodeGenerator,
 		consts.MasterCachesMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

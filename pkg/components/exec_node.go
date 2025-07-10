@@ -34,6 +34,7 @@ func NewExecNode(
 		func() ([]byte, error) {
 			return cfgen.GetExecNodeConfig(spec)
 		},
+		cfgen,
 		consts.ExecNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

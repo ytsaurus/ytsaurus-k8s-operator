@@ -10,6 +10,7 @@ const AdminTokenSecret = "token"
 const DefaultCABundlePath = "/etc/ssl/certs/ca-certificates.crt"
 
 const HydraPersistenceUploaderUserName = "robot-hydra-persistence-uploader"
+const TimbertruckUserName = "robot-timbertruck"
 
 const UIUserName = "robot-ui"
 const StrawberryControllerUserName = "robot-strawberry-controller"

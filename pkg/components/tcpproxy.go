@@ -34,6 +34,7 @@ func NewTCPProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, masterR
 		func() ([]byte, error) {
 			return cfgen.GetTCPProxyConfig(spec)
 		},
+		&cfgen.NodeGenerator,
 		consts.TCPProxyMonitoringPort,
 	)
 

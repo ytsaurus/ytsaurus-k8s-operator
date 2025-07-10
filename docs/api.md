@@ -59,6 +59,43 @@ _Appears in:_
 | `tabletCellBundles` _[BundlesBootstrapSpec](#bundlesbootstrapspec)_ |  |  |  |
 
 
+#### BuiltinSidecarsSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [CommonSpec](#commonspec)
+- [ControllerAgentsSpec](#controlleragentsspec)
+- [DataNodesSpec](#datanodesspec)
+- [DiscoverySpec](#discoveryspec)
+- [ExecNodesSpec](#execnodesspec)
+- [HTTPProxiesSpec](#httpproxiesspec)
+- [InstanceSpec](#instancespec)
+- [KafkaProxiesSpec](#kafkaproxiesspec)
+- [MasterCachesSpec](#mastercachesspec)
+- [MastersSpec](#mastersspec)
+- [QueryTrackerSpec](#querytrackerspec)
+- [QueueAgentSpec](#queueagentspec)
+- [RPCProxiesSpec](#rpcproxiesspec)
+- [RemoteDataNodesSpec](#remotedatanodesspec)
+- [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
+- [RemoteYtsaurusSpec](#remoteytsaurusspec)
+- [SchedulersSpec](#schedulersspec)
+- [TCPProxiesSpec](#tcpproxiesspec)
+- [TabletNodesSpec](#tabletnodesspec)
+- [YQLAgentSpec](#yqlagentspec)
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `image` _string_ |  |  |  |
+
+
 #### BundleBootstrapSpec
 
 
@@ -347,6 +384,7 @@ _Appears in:_
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 
 
 #### Component
@@ -413,6 +451,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -423,6 +462,22 @@ _Appears in:_
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
+
+
+#### CypressDeliverySpec
+
+
+
+
+
+
+
+_Appears in:_
+- [StructuredLoggerSpec](#structuredloggerspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `enabled` _boolean_ |  |  |  |
 
 
 #### DataNodesSpec
@@ -455,6 +510,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -516,6 +572,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -614,6 +671,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -686,6 +744,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -774,7 +833,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `image` _string_ |  |  |  |
+| `enabled` _boolean_ |  |  |  |
 
 
 #### InstanceSpec
@@ -824,6 +883,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -886,6 +946,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -1110,6 +1171,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -1172,6 +1234,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -1276,6 +1339,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -1317,6 +1381,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -1358,6 +1423,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -1483,6 +1549,7 @@ _Appears in:_
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -1499,6 +1566,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -1580,6 +1648,7 @@ _Appears in:_
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -1596,6 +1665,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -1722,6 +1792,7 @@ _Appears in:_
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
@@ -1738,6 +1809,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -1820,6 +1892,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -1877,6 +1950,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -2024,6 +2098,7 @@ _Appears in:_
 | `useTimestampSuffix` _boolean_ |  | false |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 | `category` _string_ |  |  |  |
+| `cypressDelivery` _[CypressDeliverySpec](#cypressdeliveryspec)_ |  |  |  |
 
 
 #### TCPProxiesSpec
@@ -2055,6 +2130,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -2118,6 +2194,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -2281,6 +2358,7 @@ _Appears in:_
 | `WaitingForYqlaUpdatingPrepare` |  |
 | `WaitingForYqlaUpdate` |  |
 | `WaitingForSafeModeDisabled` |  |
+| `WaitingForTimbertruckPrepared` |  |
 
 
 #### UpdateStatus
@@ -2336,6 +2414,7 @@ _Appears in:_
 | `monitoringPort` _integer_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
@@ -2396,6 +2475,7 @@ _Appears in:_
 | `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
+| `builtinSidecars` _[BuiltinSidecarsSpec](#builtinsidecarsspec)_ |  |  |  |
 | `uiImage` _string_ |  |  |  |
 | `adminCredentials` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `oauthService` _[OauthServiceSpec](#oauthservicespec)_ |  |  |  |

@@ -143,6 +143,9 @@ func NewComponentManager(
 		mc := components.NewMasterCache(cfgen, ytsaurus)
 		allComponents = append(allComponents, mc)
 	}
+	tt := components.NewTimbertruck(cfgen, ytsaurus, tnds, yc)
+	allComponents = append(allComponents, tt)
+
 	// Fetch component status.
 	var readyComponents []string
 	var updatingComponents []string
@@ -281,7 +284,7 @@ func (cm *ComponentManager) arePodsRemoved() bool {
 func (cm *ComponentManager) allUpdatableComponents() []components.Component {
 	var result []components.Component
 	for _, cmp := range cm.allComponents {
-		if cmp.GetType() != consts.YtsaurusClientType {
+		if cmp.GetType() != consts.YtsaurusClientType && cmp.GetType() != consts.TimbertruckType {
 			result = append(result, cmp)
 		}
 	}

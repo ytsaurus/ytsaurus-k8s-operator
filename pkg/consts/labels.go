@@ -52,6 +52,8 @@ func ComponentLabel(component ComponentType) string {
 		return "yt-client"
 	case UIType:
 		return "yt-ui"
+	case TimbertruckType:
+		return "yt-timbertruck"
 	}
 
 	panic(fmt.Sprintf("Unknown component type: %s", component))

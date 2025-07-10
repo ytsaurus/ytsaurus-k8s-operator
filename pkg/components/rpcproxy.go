@@ -67,6 +67,7 @@ func NewRPCProxy(
 		func() ([]byte, error) {
 			return cfgen.GetRPCProxyConfig(spec)
 		},
+		&cfgen.NodeGenerator,
 		consts.RPCProxyMonitoringPort,
 		WithContainerPorts(ports...),
 	)

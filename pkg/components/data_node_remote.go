@@ -38,6 +38,7 @@ func NewRemoteDataNodes(
 		func() ([]byte, error) {
 			return cfgen.GetDataNodeConfig(spec)
 		},
+		cfgen,
 		consts.DataNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

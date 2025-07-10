@@ -25,6 +25,7 @@ const (
 	SpytType                 ComponentType = "SPYT"
 	ClusterConnectionType    ComponentType = "ClusterConnection"
 	NativeClientConfigType   ComponentType = "NativeClientConfig"
+	TimbertruckType          ComponentType = "Timbertruck"
 )
 
 type ComponentClass string

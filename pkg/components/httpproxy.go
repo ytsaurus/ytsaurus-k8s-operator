@@ -42,6 +42,7 @@ func NewHTTPProxy(
 		func() ([]byte, error) {
 			return cfgen.GetHTTPProxyConfig(spec)
 		},
+		&cfgen.NodeGenerator,
 		consts.HTTPProxyMonitoringPort,
 		WithContainerPorts(
 			corev1.ContainerPort{
