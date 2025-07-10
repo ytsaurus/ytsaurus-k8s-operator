@@ -381,7 +381,7 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 		return hpStatus, err
 	}
 	if !IsRunningStatus(hpStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, yc.httpProxy.GetFullName()), err
+		return ComponentStatusBlockedBy(yc.httpProxy), nil
 	}
 
 	if yc.secret.NeedSync(consts.TokenSecretKey, "") {

@@ -27,6 +27,10 @@ const (
 	NativeClientConfigType   ComponentType = "NativeClientConfig"
 )
 
+// "<ComponentType>[-<InstanceGroup>]"
+// NOTE: instance group comes from spec and can be non-CamelCase.
+type ComponentName string
+
 type ComponentClass string
 
 const (

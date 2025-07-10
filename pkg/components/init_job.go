@@ -93,7 +93,7 @@ func NewInitJob(
 		apiProxy:               apiProxy,
 		conditionsManager:      conditionsManager,
 		imagePullSecrets:       imagePullSecrets,
-		initCompletedCondition: fmt.Sprintf("%s%sInitJobCompleted", name, labeller.GetFullComponentName()),
+		initCompletedCondition: labeller.GetInitJobCondition(name),
 		image:                  image,
 		tolerations:            tolerations,
 		nodeSelector:           nodeSelector,
@@ -108,10 +108,7 @@ func NewInitJob(
 		configHelper: NewConfigHelper(
 			labeller,
 			apiProxy,
-			fmt.Sprintf(
-				"%s-%s-init-job-config",
-				strings.ToLower(name),
-				labeller.GetFullComponentLabel()),
+			labeller.GetInitJobConfigName(name),
 			nil,
 			map[string]ytconfig.GeneratorDescriptor{
 				configFileName: {
@@ -207,7 +204,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	if !j.initJob.Completed() {
-		logger.Info("Init job is not completed for " + j.labeller.GetFullComponentName())
+		logger.Info("Init job is not completed", "component", j.labeller.GetComponentName())
 		return WaitingStatus(SyncStatusBlocked, fmt.Sprintf("%s completion", j.initJob.Name())), err
 	}
 

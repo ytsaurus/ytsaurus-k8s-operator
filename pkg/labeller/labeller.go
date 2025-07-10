@@ -55,31 +55,31 @@ func (l *Labeller) GetClusterDomain() string {
 	return l.ClusterDomain
 }
 
-// getGroupName converts <name> into <name>[-group]
-func (l *Labeller) getGroupName(name string) string {
+// getGroupName converts <prefix> into <prefix>[-group]
+func (l *Labeller) getGroupName(prefix string) string {
 	if l.InstanceGroup != "" && l.InstanceGroup != consts.DefaultName {
-		name += "-" + l.InstanceGroup
+		prefix += "-" + l.InstanceGroup
 	}
-	return name
+	return prefix
 }
 
-// getName converts <name> into <name>[-group][-infix][-resource]
-func (l *Labeller) getName(name, infix string) string {
-	name = l.getGroupName(name)
+// getName converts <prefix> into <prefix>[-group][-infix][-resource]
+func (l *Labeller) getName(prefix, infix string) string {
+	prefix = l.getGroupName(prefix)
 	if infix != "" {
-		name += "-" + infix
+		prefix += "-" + infix
 	}
 	if !l.UseShortNames {
 		// NOTE: It would be better add resource as prefix rather than as suffix ¯\_(ツ)_/¯.
-		name += "-" + l.ResourceName
+		prefix += "-" + l.ResourceName
 	}
-	return name
+	return prefix
 }
 
-// GetFullComponentName Returns CamelCase component type with instance group.
-func (l *Labeller) GetFullComponentName() string {
-	// NOTE: Class name is not CamelCase.
-	return l.getGroupName(string(l.ComponentType))
+// GetComponentName Returns "<ComponentType>[-<InstanceGroup>]".
+// NOTE: instance group comes from spec and can be non-CamelCase.
+func (l *Labeller) GetComponentName() consts.ComponentName {
+	return consts.ComponentName(l.getGroupName(string(l.ComponentType)))
 }
 
 func (l *Labeller) GetInstanceGroup() string {
@@ -161,12 +161,24 @@ func (l *Labeller) GetInitJobName(name string) string {
 	return fmt.Sprintf("%s-init-job-%s", l.GetFullComponentLabel(), strings.ToLower(name))
 }
 
+func (l *Labeller) GetInitJobConfigName(name string) string {
+	return fmt.Sprintf("%s-%s-init-job-config", strings.ToLower(name), l.GetFullComponentLabel())
+}
+
+func (l *Labeller) GetInitJobCondition(name string) string {
+	return fmt.Sprintf("%s%sInitJobCompleted", name, l.GetComponentName())
+}
+
 func (l *Labeller) GetPodsRemovingStartedCondition() string {
-	return fmt.Sprintf("%sPodsRemovingStarted", l.GetFullComponentName())
+	return fmt.Sprintf("%sPodsRemovingStarted", l.GetComponentName())
 }
 
 func (l *Labeller) GetPodsRemovedCondition() string {
-	return fmt.Sprintf("%sPodsRemoved", l.GetFullComponentName())
+	return fmt.Sprintf("%sPodsRemoved", l.GetComponentName())
+}
+
+func (l *Labeller) GetReadyCondition() string {
+	return fmt.Sprintf("%sReady", l.GetComponentName())
 }
 
 func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {

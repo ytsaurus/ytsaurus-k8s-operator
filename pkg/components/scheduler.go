@@ -150,7 +150,7 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return masterStatus, err
 	}
 	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, s.master.GetFullName()), err
+		return ComponentStatusBlockedBy(s.master), nil
 	}
 
 	for _, end := range s.execNodes {
@@ -160,7 +160,8 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 		if !IsRunningStatus(endStatus.SyncStatus) {
 			// It makes no sense to start scheduler without exec nodes.
-			return WaitingStatus(SyncStatusBlocked, end.GetFullName()), err
+			// FIXME(khlebnikov): Nope, now we have remote exec nodes.
+			return ComponentStatusBlockedBy(end), nil
 		}
 	}
 
@@ -211,7 +212,7 @@ func (s *Scheduler) initOpArchive(ctx context.Context, dry bool) (ComponentStatu
 		}
 		if !IsRunningStatus(tndStatus.SyncStatus) {
 			// Wait for tablet nodes to proceed with operations archive init.
-			return WaitingStatus(SyncStatusBlocked, tnd.GetFullName()), err
+			return ComponentStatusBlockedBy(tnd), nil
 		}
 	}
 

@@ -133,8 +133,8 @@ func convertToComponent(components []components.Component) []ytv1.Component {
 	var result []ytv1.Component
 	for _, c := range components {
 		result = append(result, ytv1.Component{
-			Name: c.GetShortName(),
-			Type: c.GetType(),
+			Name: c.GetInstanceGroup(),
+			Type: c.GetComponentType(),
 		})
 	}
 	return result
