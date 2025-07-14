@@ -24,7 +24,7 @@ type TimbertruckYTQueueConfig struct {
 	ProducerPath string `json:"producer_path"`
 }
 
-func NewTimbertruckConfig(structuredLoggers []ytv1.StructuredLoggerSpec, workDir, componentName, loggingDirectory, deliveryProxy string) *TimbertruckConfig {
+func NewTimbertruckConfig(structuredLoggers []ytv1.StructuredLoggerSpec, workDir, componentName, loggingDirectory, deliveryProxy, logsDeliveryPath string) *TimbertruckConfig {
 	timbertruckConfig := &TimbertruckConfig{
 		WorkDir:  workDir,
 		JsonLogs: []TimbertruckJsonLogConfig{},
@@ -47,7 +47,7 @@ func NewTimbertruckConfig(structuredLoggers []ytv1.StructuredLoggerSpec, workDir
 			YTQueue: []TimbertruckYTQueueConfig{},
 		}
 
-		deliveryPath := fmt.Sprintf("//sys/admin/logs/%s", deliveryName)
+		deliveryPath := fmt.Sprintf("%s/%s", logsDeliveryPath, deliveryName)
 
 		timbertruckJsonLogConfig.YTQueue = append(timbertruckJsonLogConfig.YTQueue, TimbertruckYTQueueConfig{
 			Cluster:      deliveryProxy,

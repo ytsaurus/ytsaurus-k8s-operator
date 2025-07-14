@@ -441,6 +441,17 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	return statefulSet
 }
 
+func extractLogsDeliveryPathFromSpec(commonSpec ytv1.CommonSpec, instanceSpec *ytv1.InstanceSpec) string {
+	logsDeliveryPath := "//sys/admin/logs"
+	if commonSpec.BuiltinSidecars != nil && commonSpec.BuiltinSidecars.LogsDeliveryPath != "" {
+		logsDeliveryPath = commonSpec.BuiltinSidecars.LogsDeliveryPath
+	}
+	if instanceSpec.BuiltinSidecars != nil && instanceSpec.BuiltinSidecars.LogsDeliveryPath != "" {
+		logsDeliveryPath = instanceSpec.BuiltinSidecars.LogsDeliveryPath
+	}
+	return logsDeliveryPath
+}
+
 func extractTimbertruckImageFromSpec(commonSpec ytv1.CommonSpec, instanceSpec *ytv1.InstanceSpec) string {
 	// If none of the loggers are going to deliver logs to cypress, then don't return the image.
 	// This is important because otherwise the StatefulSet will wait for a timbertruck to be created,
@@ -460,6 +471,8 @@ func (s *serverImpl) patchWithTimbertruck(statefulSet *appsv1.StatefulSet, struc
 		return
 	}
 
+	logsDeliveryPath := extractLogsDeliveryPathFromSpec(s.commonSpec, s.instanceSpec)
+
 	workDir := ""
 	for _, locations := range s.instanceSpec.Locations {
 		if locations.LocationType == ytv1.LocationTypeLogs {
@@ -476,6 +489,7 @@ func (s *serverImpl) patchWithTimbertruck(statefulSet *appsv1.StatefulSet, struc
 		consts.GetServiceKebabCase(s.labeller.ComponentType),
 		workDir,
 		s.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+		logsDeliveryPath,
 	)
 
 	if timbertruckConfig == nil {
