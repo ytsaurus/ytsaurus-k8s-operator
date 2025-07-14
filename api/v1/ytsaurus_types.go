@@ -208,7 +208,8 @@ type CypressDeliverySpec struct {
 }
 
 type BuiltinSidecarsSpec struct {
-	Image string `json:"image,omitempty"`
+	Image            string `json:"image,omitempty"`
+	LogsDeliveryPath string `json:"logsDeliveryPath,omitempty"`
 }
 
 type BundleBootstrapSpec struct {

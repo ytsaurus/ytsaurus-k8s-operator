@@ -47,7 +47,7 @@ func NewTimbertruck(
 	}
 }
 
-func (tt *Timbertruck) initTimbertruckUser(ctx context.Context) error {
+func (tt *Timbertruck) initTimbertruckUser(ctx context.Context, deliveryLoggers []ComponentLoggers) error {
 	login := consts.TimbertruckUserName
 	token, _ := tt.timbertruckSecret.GetValue(consts.TokenSecretKey)
 
@@ -59,31 +59,37 @@ func (tt *Timbertruck) initTimbertruckUser(ctx context.Context) error {
 		return nil
 	}
 
-	_, err := ytClient.CreateNode(ctx, ypath.Path("//sys/admin/logs"), yt.NodeMap, &yt.CreateNodeOptions{
-		Recursive:      true,
-		IgnoreExisting: true,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create admin logs directory: %w", err)
-	}
-
-	err = CreateUser(ctx, ytClient, login, token, false)
+	err := CreateUser(ctx, ytClient, login, token, false)
 	if err != nil {
 		return fmt.Errorf("failed to create timbertruck user: %w", err)
 	}
 
-	err = ytClient.SetNode(ctx, ypath.Path("//sys/admin/logs/@acl"), []yt.ACE{
-		{
-			Action:          "allow",
-			Subjects:        []string{login},
-			Permissions:     []yt.Permission{"read", "write", "remove", "create"},
-			InheritanceMode: "object_and_descendants",
-		},
-	}, &yt.SetNodeOptions{
-		Recursive: true,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to set admin logs ACL: %w", err)
+	logsDeliveryPaths := make(map[string]struct{})
+	for _, logger := range deliveryLoggers {
+		logsDeliveryPaths[logger.LogsDeliveryPath] = struct{}{}
+	}
+	for logsDeliveryPath := range logsDeliveryPaths {
+		_, err := ytClient.CreateNode(ctx, ypath.Path(logsDeliveryPath), yt.NodeMap, &yt.CreateNodeOptions{
+			Recursive:      true,
+			IgnoreExisting: true,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create logs delivery path %s: %w", logsDeliveryPath, err)
+		}
+
+		err = ytClient.SetNode(ctx, ypath.Path(fmt.Sprintf("%s/@acl", logsDeliveryPath)), []yt.ACE{
+			{
+				Action:          "allow",
+				Subjects:        []string{login},
+				Permissions:     []yt.Permission{"read", "write", "remove", "create"},
+				InheritanceMode: "object_and_descendants",
+			},
+		}, &yt.SetNodeOptions{
+			Recursive: true,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to set ACL for logs delivery path %s: %w", logsDeliveryPath, err)
+		}
 	}
 	err = ytClient.SetNode(ctx, ypath.Path("//sys/accounts/sys/@acl/end"), yt.ACE{
 		Action:      "allow",
@@ -167,10 +173,10 @@ func (tt *Timbertruck) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 			}
 		}
 
-		if len(tt.getDeliveryLoggers()) > 0 {
+		if deliveryLoggers := tt.getDeliveryLoggers(); len(deliveryLoggers) > 0 {
 			if !tt.ytsaurus.IsStatusConditionTrue(consts.ConditionTimbertruckUserInitialized) {
 				if !dry {
-					if err := tt.initTimbertruckUser(ctx); err != nil {
+					if err := tt.initTimbertruckUser(ctx, deliveryLoggers); err != nil {
 						return SimpleStatus(SyncStatusUpdating), err
 					}
 					tt.ytsaurus.SetStatusCondition(metav1.Condition{
@@ -221,72 +227,75 @@ func (tt *Timbertruck) Sync(ctx context.Context) error {
 type ComponentLoggers struct {
 	ComponentName     string
 	StructuredLoggers []ytv1.StructuredLoggerSpec
+	LogsDeliveryPath  string
 }
 
 func (tt *Timbertruck) getDeliveryLoggers() []ComponentLoggers {
 	spec := tt.ytsaurus.GetResource().Spec
 	allDeliveryLoggers := []ComponentLoggers{}
 
-	extractDeliveryLoggers := func(componentName string, structuredLoggers []ytv1.StructuredLoggerSpec) {
+	extractDeliveryLoggers := func(componentName string, instanceSpec ytv1.InstanceSpec) {
 		structuredLoggersWithDelivery := []ytv1.StructuredLoggerSpec{}
 
-		for _, logger := range structuredLoggers {
+		for _, logger := range instanceSpec.StructuredLoggers {
 			if logger.CypressDelivery != nil && logger.CypressDelivery.Enabled {
 				structuredLoggersWithDelivery = append(structuredLoggersWithDelivery, logger)
 			}
 		}
+		logsDeliveryPath := extractLogsDeliveryPathFromSpec(spec.CommonSpec, &instanceSpec)
 
 		if len(structuredLoggersWithDelivery) > 0 {
 			allDeliveryLoggers = append(allDeliveryLoggers, ComponentLoggers{
 				ComponentName:     componentName,
 				StructuredLoggers: structuredLoggersWithDelivery,
+				LogsDeliveryPath:  logsDeliveryPath,
 			})
 		}
 	}
 
-	extractDeliveryLoggers(consts.GetServiceKebabCase(consts.DiscoveryType), spec.Discovery.StructuredLoggers)
-	extractDeliveryLoggers(consts.GetServiceKebabCase(consts.MasterType), spec.PrimaryMasters.StructuredLoggers)
+	extractDeliveryLoggers(consts.GetServiceKebabCase(consts.DiscoveryType), spec.Discovery.InstanceSpec)
+	extractDeliveryLoggers(consts.GetServiceKebabCase(consts.MasterType), spec.PrimaryMasters.InstanceSpec)
 	for _, secondaryMaster := range spec.SecondaryMasters {
-		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.MasterType), secondaryMaster.StructuredLoggers)
+		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.MasterType), secondaryMaster.InstanceSpec)
 	}
 	if spec.MasterCaches != nil {
-		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.MasterCacheType), spec.MasterCaches.StructuredLoggers)
+		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.MasterCacheType), spec.MasterCaches.InstanceSpec)
 	}
 	for _, httpProxy := range spec.HTTPProxies {
-		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.HttpProxyType), httpProxy.StructuredLoggers)
+		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.HttpProxyType), httpProxy.InstanceSpec)
 	}
 	for _, rpcProxy := range spec.RPCProxies {
-		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.RpcProxyType), rpcProxy.StructuredLoggers)
+		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.RpcProxyType), rpcProxy.InstanceSpec)
 	}
 	for _, tcpProxy := range spec.TCPProxies {
-		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.TcpProxyType), tcpProxy.StructuredLoggers)
+		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.TcpProxyType), tcpProxy.InstanceSpec)
 	}
 	for _, kafkaProxy := range spec.KafkaProxies {
-		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.KafkaProxyType), kafkaProxy.StructuredLoggers)
+		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.KafkaProxyType), kafkaProxy.InstanceSpec)
 	}
 	for _, dataNode := range spec.DataNodes {
-		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.DataNodeType), dataNode.StructuredLoggers)
+		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.DataNodeType), dataNode.InstanceSpec)
 	}
 	for _, execNode := range spec.ExecNodes {
-		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.ExecNodeType), execNode.StructuredLoggers)
+		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.ExecNodeType), execNode.InstanceSpec)
 	}
 	if spec.Schedulers != nil {
-		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.SchedulerType), spec.Schedulers.StructuredLoggers)
+		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.SchedulerType), spec.Schedulers.InstanceSpec)
 	}
 	if spec.ControllerAgents != nil {
-		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.ControllerAgentType), spec.ControllerAgents.StructuredLoggers)
+		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.ControllerAgentType), spec.ControllerAgents.InstanceSpec)
 	}
 	for _, tabletNode := range spec.TabletNodes {
-		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.TabletNodeType), tabletNode.StructuredLoggers)
+		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.TabletNodeType), tabletNode.InstanceSpec)
 	}
 	if spec.QueryTrackers != nil {
-		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.QueryTrackerType), spec.QueryTrackers.StructuredLoggers)
+		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.QueryTrackerType), spec.QueryTrackers.InstanceSpec)
 	}
 	if spec.YQLAgents != nil {
-		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.YqlAgentType), spec.YQLAgents.StructuredLoggers)
+		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.YqlAgentType), spec.YQLAgents.InstanceSpec)
 	}
 	if spec.QueueAgents != nil {
-		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.QueueAgentType), spec.QueueAgents.StructuredLoggers)
+		extractDeliveryLoggers(consts.GetServiceKebabCase(consts.QueueAgentType), spec.QueueAgents.InstanceSpec)
 	}
 	return allDeliveryLoggers
 }
@@ -305,11 +314,12 @@ func (tt *Timbertruck) prepareTimbertruckTables(ctx context.Context) error {
 			structuredLoggers.ComponentName,
 			"",
 			tt.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+			structuredLoggers.LogsDeliveryPath,
 		)
 		if timbertruckConfig == nil {
 			continue
 		}
-		err := prepareTimbertruckTablesFromConfig(ctx, tt.ytsaurusClient.GetYtClient(), timbertruckConfig)
+		err := prepareTimbertruckTablesFromConfig(ctx, tt.ytsaurusClient.GetYtClient(), timbertruckConfig, structuredLoggers.LogsDeliveryPath)
 		if err != nil {
 			return fmt.Errorf("failed to prepare timbertruck tables: %w", err)
 		}

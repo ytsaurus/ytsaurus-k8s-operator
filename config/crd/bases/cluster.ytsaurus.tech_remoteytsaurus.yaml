@@ -726,6 +726,8 @@ spec:
                 properties:
                   image:
                     type: string
+                  logsDeliveryPath:
+                    type: string
                 type: object
               cellTag:
                 type: integer

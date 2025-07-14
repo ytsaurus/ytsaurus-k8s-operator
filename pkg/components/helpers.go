@@ -314,10 +314,10 @@ func getTimbertruckInitScript(timbertruckConfig *ytconfig.TimbertruckConfig) (st
 	return fmt.Sprintf("%s%s%s", timbertruckInitScriptPrefix, string(configText), timbertruckInitScriptSuffix), nil
 }
 
-func prepareTimbertruckTablesFromConfig(ctx context.Context, ytClient yt.Client, timbertruckConfig *ytconfig.TimbertruckConfig) error {
+func prepareTimbertruckTablesFromConfig(ctx context.Context, ytClient yt.Client, timbertruckConfig *ytconfig.TimbertruckConfig, logsDeliveryPath string) error {
 	for _, jsonLog := range timbertruckConfig.JsonLogs {
 		for _, ytQueue := range jsonLog.YTQueue {
-			queueExportPath := fmt.Sprintf("//sys/admin/logs/export/%s", jsonLog.Name)
+			queueExportPath := fmt.Sprintf("%s/export/%s", logsDeliveryPath, jsonLog.Name)
 			_, err := ytClient.CreateNode(
 				ctx,
 				ypath.Path(ytQueue.QueuePath),
@@ -327,15 +327,17 @@ func prepareTimbertruckTablesFromConfig(ctx context.Context, ytClient yt.Client,
 						"dynamic": true,
 						"schema":  consts.RawLogsQueueSchema,
 						"auto_trim_config": map[string]any{
-							"enable": true,
+							"enable":                     true,
+							"retained_lifetime_duration": 24 * 60 * 60 * 1000, // 24 hours
 						},
 						"static_export_config": map[string]any{
 							"default": map[string]any{
-								"export_directory":                queueExportPath,
-								"export_period":                   15 * 60 * 1000, // 15 minutes
-								"use_upper_bound_for_table_names": true,
+								"export_directory": queueExportPath,
+								"export_period":    4 * 60 * 60 * 1000, // 4 hours
 							},
 						},
+						"commit_ordering": "strong",
+						"optimize_for":    "scan",
 					},
 					Recursive:      true,
 					IgnoreExisting: true,

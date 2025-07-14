@@ -99,6 +99,8 @@ spec:
                 properties:
                   image:
                     type: string
+                  logsDeliveryPath:
+                    type: string
                 type: object
               caBundle:
                 description: Reference to trusted certificates. Default kind="ConfigMap",
@@ -825,6 +827,8 @@ spec:
                   builtinSidecars:
                     properties:
                       image:
+                        type: string
+                      logsDeliveryPath:
                         type: string
                     type: object
                   dnsConfig:
@@ -3415,6 +3419,8 @@ spec:
                     builtinSidecars:
                       properties:
                         image:
+                          type: string
+                        logsDeliveryPath:
                           type: string
                       type: object
                     dnsConfig:
@@ -6019,6 +6025,8 @@ spec:
                   builtinSidecars:
                     properties:
                       image:
+                        type: string
+                      logsDeliveryPath:
                         type: string
                     type: object
                   dnsConfig:
@@ -8645,6 +8653,8 @@ spec:
                     builtinSidecars:
                       properties:
                         image:
+                          type: string
+                        logsDeliveryPath:
                           type: string
                       type: object
                     dnsConfig:
@@ -11461,6 +11471,8 @@ spec:
                       properties:
                         image:
                           type: string
+                        logsDeliveryPath:
+                          type: string
                       type: object
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings for
@@ -14108,6 +14120,8 @@ spec:
                       properties:
                         image:
                           type: string
+                        logsDeliveryPath:
+                          type: string
                       type: object
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings for
@@ -16708,6 +16722,8 @@ spec:
                   builtinSidecars:
                     properties:
                       image:
+                        type: string
+                      logsDeliveryPath:
                         type: string
                     type: object
                   cellTagMasterCaches:
@@ -19378,6 +19394,8 @@ spec:
                     properties:
                       image:
                         type: string
+                      logsDeliveryPath:
+                        type: string
                     type: object
                   cellTag:
                     type: integer
@@ -21983,6 +22001,8 @@ spec:
                     properties:
                       image:
                         type: string
+                      logsDeliveryPath:
+                        type: string
                     type: object
                   dnsConfig:
                     description: DNSConfig allows customizing the DNS settings for
@@ -24563,6 +24583,8 @@ spec:
                   builtinSidecars:
                     properties:
                       image:
+                        type: string
+                      logsDeliveryPath:
                         type: string
                     type: object
                   dnsConfig:
@@ -27151,6 +27173,8 @@ spec:
                     builtinSidecars:
                       properties:
                         image:
+                          type: string
+                        logsDeliveryPath:
                           type: string
                       type: object
                     dnsConfig:
@@ -29788,6 +29812,8 @@ spec:
                     properties:
                       image:
                         type: string
+                      logsDeliveryPath:
+                        type: string
                     type: object
                   dnsConfig:
                     description: DNSConfig allows customizing the DNS settings for
@@ -32375,6 +32401,8 @@ spec:
                     builtinSidecars:
                       properties:
                         image:
+                          type: string
+                        logsDeliveryPath:
                           type: string
                       type: object
                     cellTag:
@@ -35129,6 +35157,8 @@ spec:
                       properties:
                         image:
                           type: string
+                        logsDeliveryPath:
+                          type: string
                       type: object
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings for
@@ -37738,6 +37768,8 @@ spec:
                     builtinSidecars:
                       properties:
                         image:
+                          type: string
+                        logsDeliveryPath:
                           type: string
                       type: object
                     dnsConfig:
@@ -40680,6 +40712,8 @@ spec:
                   builtinSidecars:
                     properties:
                       image:
+                        type: string
+                      logsDeliveryPath:
                         type: string
                     type: object
                   dnsConfig:
