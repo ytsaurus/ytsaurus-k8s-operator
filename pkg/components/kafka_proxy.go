@@ -3,7 +3,7 @@ package components
 import (
 	"context"
 
-	"k8s.io/utils/ptr"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -54,9 +54,15 @@ func NewKafkaProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, maste
 	if spec.ServiceType != nil {
 		balancingService = resources.NewRPCService(
 			cfgen.GetKafkaProxiesServiceName(spec.Role),
+			[]corev1.ServicePort{
+				{
+					Name:       consts.KafkaPortName,
+					Port:       consts.KafkaProxyKafkaPort,
+					TargetPort: intstr.FromInt(consts.KafkaProxyKafkaPort),
+				},
+			},
 			l,
 			ytsaurus.APIProxy())
-		balancingService.SetPort(ptr.To(int32(consts.KafkaProxyKafkaPort)))
 	}
 
 	return &KafkaProxy{

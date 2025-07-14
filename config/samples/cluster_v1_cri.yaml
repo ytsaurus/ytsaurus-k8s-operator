@@ -47,9 +47,14 @@ spec:
   #  tlsRequired: true
   #  tlsPeerAlternativeHostName: ...
 
+<<<<<<< HEAD
   builtinSidecars:
     image: ghcr.io/ilyaibraev/sidecars-testing:2025-07-03-20776047d2eb92f4ee555dfaa69feb3835c71d67-fix-3
     logsDeliveryPath: //sys/admin/logs-xxx
+=======
+  # builtinSidecars:
+  #   image: ghcr.io/ytsaurus/sidecars:0.0.1
+>>>>>>> main
 
   ui:
     # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#uispec
@@ -105,13 +110,19 @@ spec:
     # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#mastersspec
     instanceCount: 1
 
+<<<<<<< HEAD
     hydraPersistenceUploader:
       enabled: true
+=======
+    # hydraPersistenceUploader:
+    #   enabled: true
+>>>>>>> main
 
     cellTag: 1
 
     loggers: *loggers
 
+<<<<<<< HEAD
     structuredLoggers:
       - name: access
         minLogLevel: info
@@ -133,6 +144,19 @@ spec:
           maxSegmentCountToKeep: 1000
         cypressDelivery:
           enabled: true
+=======
+    # structuredLoggers:
+    #   - name: access
+    #     minLogLevel: info
+    #     category: Access
+    #     format: json
+    #     rotationPolicy:
+    #       maxTotalSizeToKeep: 1073741824 # 1GiB
+    #       rotationPeriodMilliseconds: 300000 # 5Min
+    #       maxSegmentCountToKeep: 1000
+    #     cypressDelivery:
+    #       enabled: true
+>>>>>>> main
 
     locations:
       - locationType: Logs
@@ -463,6 +487,7 @@ spec:
           name: yql-agent-logs
         spec: *logsVolumeSpec
 
+<<<<<<< HEAD
   queueAgents:
     image: ghcr.io/ytsaurus/ytsaurus:stable-24.1.0-relwithdebinfo
 
@@ -482,6 +507,27 @@ spec:
       - metadata:
           name: queue-agent-logs
         spec: *logsVolumeSpec
+=======
+  # queueAgents:
+  #   image: ghcr.io/ytsaurus/ytsaurus:stable-24.1.0-relwithdebinfo
+
+  #   instanceCount: 1
+
+  #   loggers: *loggers
+
+  #   locations:
+  #     - locationType: Logs
+  #       path: /yt/queue-agent-logs
+
+  #   volumeMounts:
+  #     - name: queue-agent-logs
+  #       mountPath: /yt/queue-agent-logs
+
+  #   volumeClaimTemplates:
+  #     - metadata:
+  #         name: queue-agent-logs
+  #       spec: *logsVolumeSpec
+>>>>>>> main
 
   queryTrackers:
     # https://ytsaurus.tech/docs/en/admin-guide/components#yql-agent

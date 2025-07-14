@@ -267,6 +267,26 @@ _Appears in:_
 | `releaseStatus` _[ChytReleaseStatus](#chytreleasestatus)_ |  |  |  |
 
 
+#### ClusterFeatures
+
+
+
+
+
+
+
+_Appears in:_
+- [CommonSpec](#commonspec)
+- [RemoteDataNodesSpec](#remotedatanodesspec)
+- [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `rpcProxyHavePublicAddress` _boolean_ | RPC proxy have "public_rpc" address. Required for separated internal/public TLS CA. |  |  |
+
+
 #### ClusterNodesSpec
 
 
@@ -349,6 +369,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `coreImage` _string_ |  |  |  |
+| `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted certificates. Default kind="ConfigMap", key="ca.crt". |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
@@ -735,6 +756,8 @@ _Appears in:_
 | `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  | NodePort |  |
+| `httpPort` _integer_ |  | 80 |  |
+| `httpsPort` _integer_ |  | 443 |  |
 | `httpNodePort` _integer_ |  |  |  |
 | `httpsNodePort` _integer_ |  |  |  |
 | `role` _string_ |  | default | MinLength: 1 <br /> |
@@ -1511,6 +1534,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `coreImage` _string_ |  |  |  |
+| `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted certificates. Default kind="ConfigMap", key="ca.crt". |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
@@ -1609,6 +1633,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `coreImage` _string_ |  |  |  |
+| `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted certificates. Default kind="ConfigMap", key="ca.crt". |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
@@ -1752,6 +1777,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `coreImage` _string_ |  |  |  |
+| `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted certificates. Default kind="ConfigMap", key="ca.crt". |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
@@ -2434,6 +2460,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `coreImage` _string_ |  |  |  |
+| `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted certificates. Default kind="ConfigMap", key="ca.crt". |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |

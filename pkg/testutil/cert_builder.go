@@ -13,8 +13,9 @@ const (
 )
 
 type CertBuilder struct {
-	Namespace string
-	DNSZones  []string
+	Namespace   string
+	DNSZones    []string
+	IPAddresses []string
 }
 
 func (b *CertBuilder) BuildCertificate(name string, hostNames []string) *certv1.Certificate {
@@ -41,10 +42,11 @@ func (b *CertBuilder) BuildCertificate(name string, hostNames []string) *certv1.
 				Organizations:       []string{"YTsaurus dev"},
 				OrganizationalUnits: []string{name},
 			},
-			CommonName: dnsNames[0],
-			SecretName: name,
-			DNSNames:   dnsNames,
-			IsCA:       false,
+			CommonName:  dnsNames[0],
+			SecretName:  name,
+			DNSNames:    dnsNames,
+			IPAddresses: b.IPAddresses,
+			IsCA:        false,
 			Usages: []certv1.KeyUsage{
 				certv1.UsageServerAuth,
 				certv1.UsageClientAuth,

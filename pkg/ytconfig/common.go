@@ -34,9 +34,21 @@ type MasterCache struct {
 	EnableMasterCacheDiscover bool   `yson:"enable_master_cache_discovery"`
 }
 
+type AddressType string
+
+const (
+	AddressTypeHTTP           AddressType = "http"
+	AddressTypeHTTPS          AddressType = "https"
+	AddressTypeMonitoringHTTP AddressType = "monitoring_http"
+	AddressTypeInternalRPC    AddressType = "internal_rpc"
+	AddressTypePublicRPC      AddressType = "public_rpc"
+)
+
 // NYT::NDriver::TDriverConfig
 type Driver struct {
 	APIVersion int `yson:"api_version,omitempty"`
+
+	DefaultRpcProxyAddressType *AddressType `yson:"default_rpc_proxy_address_type,omitempty"`
 }
 
 // NYT::NDriver::TDriverConfig

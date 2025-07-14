@@ -42,6 +42,7 @@ type NodeGenerator struct {
 	baseLabeller *labeller.Labeller
 
 	commonSpec           *ytv1.CommonSpec
+	clusterFeatures      ytv1.ClusterFeatures
 	masterConnectionSpec *ytv1.MasterConnectionSpec
 	masterCachesSpec     *ytv1.MasterCachesSpec
 
@@ -79,6 +80,7 @@ func NewLocalNodeGenerator(ytsaurus *ytv1.Ytsaurus, resourceName string, cluster
 			UseShortNames: ytsaurus.Spec.UseShortNames,
 		},
 		commonSpec:             &ytsaurus.Spec.CommonSpec,
+		clusterFeatures:        ptr.Deref(ytsaurus.Spec.ClusterFeatures, ytv1.ClusterFeatures{}),
 		masterConnectionSpec:   &ytsaurus.Spec.PrimaryMasters.MasterConnectionSpec,
 		masterInstanceCount:    ytsaurus.Spec.PrimaryMasters.InstanceCount,
 		discoveryInstanceCount: ytsaurus.Spec.Discovery.InstanceCount,
@@ -98,9 +100,14 @@ func NewRemoteNodeGenerator(ytsaurus *ytv1.RemoteYtsaurus, resourceName string, 
 			UseShortNames: commonSpec.UseShortNames,
 		},
 		commonSpec:           commonSpec,
+		clusterFeatures:      ptr.Deref(commonSpec.ClusterFeatures, ytv1.ClusterFeatures{}),
 		masterConnectionSpec: &ytsaurus.Spec.MasterConnectionSpec,
 		masterCachesSpec:     &ytsaurus.Spec.MasterCachesSpec,
 	}
+}
+
+func (g *NodeGenerator) GetClusterFeatures() ytv1.ClusterFeatures {
+	return g.clusterFeatures
 }
 
 func (g *NodeGenerator) GetComponentLabeller(component consts.ComponentType, instanceGroup string) *labeller.Labeller {
@@ -164,12 +171,39 @@ func (g *Generator) GetHTTPProxiesServiceName(role string) string {
 	return g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceName()
 }
 
-func (g *Generator) GetHTTPProxiesServiceAddress(role string) string {
-	return g.GetComponentLabeller(consts.HttpProxyType, role).GetHeadlessServiceAddress()
+func getHttpProxyPortOverride(ytsaurus *ytv1.YtsaurusSpec, role string) *int32 {
+	for _, p := range ytsaurus.HTTPProxies {
+		if p.Role == role {
+			return p.HttpPort
+		}
+	}
+	return nil
 }
 
-func (g *NodeGenerator) GetHTTPProxiesAddress(role string) string {
-	return g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceAddress()
+func (g *Generator) GetHTTPProxiesServiceAddress(role string) string {
+	port := getHttpProxyPortOverride(&g.ytsaurus.Spec, role)
+	if port == nil || *port == consts.HTTPProxyHTTPPort {
+		return g.GetComponentLabeller(consts.HttpProxyType, role).GetHeadlessServiceAddress()
+	}
+	return fmt.Sprintf("%s:%d",
+		g.GetComponentLabeller(consts.HttpProxyType, role).GetHeadlessServiceAddress(),
+		*port,
+	)
+}
+
+func (g *NodeGenerator) GetHTTPProxiesAddress(ytsaurus *ytv1.YtsaurusSpec, role string) string {
+	port := getHttpProxyPortOverride(ytsaurus, role)
+	if port == nil || *port == consts.HTTPProxyHTTPPort {
+		return g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceAddress()
+	}
+	return fmt.Sprintf("%s:%d",
+		g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceAddress(),
+		*port,
+	)
+}
+
+func (g *Generator) GetHTTPProxiesAddress(role string) string {
+	return g.NodeGenerator.GetHTTPProxiesAddress(&g.ytsaurus.Spec, role)
 }
 
 func (g *Generator) GetRPCProxiesServiceName(role string) string {
@@ -226,7 +260,7 @@ func (g *NodeGenerator) fillAddressResolver(c *AddressResolver) {
 func (g *NodeGenerator) fillSolomonExporter(c *SolomonExporter) {
 	c.Host = ptr.To("{POD_SHORT_HOSTNAME}")
 	c.InstanceTags = map[string]string{
-		"pod": "{K8S_POD_NAME}",
+		"pod": fmt.Sprintf("{%s}", consts.ENV_K8S_POD_NAME),
 	}
 }
 
@@ -248,13 +282,21 @@ func (g *NodeGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCT
 	c.MasterCache.CellID = generateCellID(g.masterConnectionSpec.CellTag)
 }
 
+func (g *NodeGenerator) fillDriverConfig(c *Driver) {
+	c.APIVersion = 4
+
+	if g.clusterFeatures.RPCProxyHavePublicAddress {
+		c.DefaultRpcProxyAddressType = ptr.To(AddressTypePublicRPC)
+	}
+}
+
 func (g *NodeGenerator) fillCypressAnnotations(c *CommonServer) {
 	c.CypressAnnotations = map[string]any{
-		"k8s_pod_name":      "{K8S_POD_NAME}",
-		"k8s_pod_namespace": "{K8S_POD_NAMESPACE}",
-		"k8s_node_name":     "{K8S_NODE_NAME}",
+		"k8s_pod_name":      fmt.Sprintf("{%s}", consts.ENV_K8S_POD_NAME),
+		"k8s_pod_namespace": fmt.Sprintf("{%s}", consts.ENV_K8S_POD_NAMESPACE),
+		"k8s_node_name":     fmt.Sprintf("{%s}", consts.ENV_K8S_NODE_NAME),
 		// for CMS and UI сompatibility
-		"physical_host": "{K8S_NODE_NAME}",
+		"physical_host": fmt.Sprintf("{%s}", consts.ENV_K8S_NODE_NAME),
 	}
 }
 
@@ -424,8 +466,8 @@ func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, e
 		// config postprocessing.
 		l := g.GetComponentLabeller(consts.MasterType, "")
 		c.AddressResolver.LocalhostNameOverride = ptr.To(
-			fmt.Sprintf("%s.%s.%s.svc.%s",
-				"{K8S_POD_NAME}",
+			fmt.Sprintf("{%s}.%s.%s.svc.%s",
+				consts.ENV_K8S_POD_NAME,
 				l.GetHeadlessServiceName(),
 				l.GetNamespace(),
 				l.GetClusterDomain()))
@@ -460,7 +502,7 @@ func (g *NodeGenerator) GetNativeClientConfig() ([]byte, error) {
 	keyring := getMountKeyring(g.commonSpec, nil)
 	g.fillClusterConnection(&c.Driver.ClusterConnection, nil, keyring)
 	g.fillAddressResolver(&c.AddressResolver)
-	c.Driver.APIVersion = 4
+	g.fillDriverConfig(&c.Driver.Driver)
 
 	return marshallYsonConfig(c)
 }
@@ -499,6 +541,41 @@ func (g *Generator) getRPCProxyConfigImpl(spec *ytv1.RPCProxiesSpec) (RPCProxySe
 	}
 
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+
+	var publicBusServer *BusServer
+
+	if g.clusterFeatures.RPCProxyHavePublicAddress {
+		g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+
+		c.PublicRPCPort = consts.RPCProxyPublicRPCPort
+		if c.PublicBusServer == nil {
+			c.PublicBusServer = &BusServer{}
+		}
+		publicBusServer = c.PublicBusServer
+	} else {
+		c.RPCPort = consts.RPCProxyPublicRPCPort
+
+		if spec.Transport.TLSSecret != nil {
+			if c.BusServer == nil {
+				c.BusServer = &BusServer{}
+			}
+			publicBusServer = c.BusServer
+		}
+	}
+
+	if publicBusServer != nil && spec.Transport.TLSSecret != nil {
+		if spec.Transport.TLSRequired {
+			publicBusServer.EncryptionMode = EncryptionModeRequired
+		} else {
+			publicBusServer.EncryptionMode = EncryptionModeOptional
+		}
+		publicBusServer.CertChain = &PemBlob{
+			FileName: path.Join(consts.RPCProxySecretMountPoint, corev1.TLSCertKey),
+		}
+		publicBusServer.PrivateKey = &PemBlob{
+			FileName: path.Join(consts.RPCProxySecretMountPoint, corev1.TLSPrivateKeyKey),
+		}
+	}
 
 	oauthService := g.ytsaurus.Spec.OauthService
 	if oauthService != nil {
@@ -541,24 +618,6 @@ func (g *Generator) GetRPCProxyConfig(spec ytv1.RPCProxiesSpec) ([]byte, error) 
 	c, err := g.getRPCProxyConfigImpl(&spec)
 	if err != nil {
 		return []byte{}, err
-	}
-
-	if spec.Transport.TLSSecret != nil {
-		if c.BusServer == nil {
-			c.BusServer = &BusServer{}
-		}
-		// FIXME(khlebnikov): RPCProxy share bus server for native and public services
-		if spec.Transport.TLSRequired {
-			c.BusServer.EncryptionMode = EncryptionModeRequired
-		} else {
-			c.BusServer.EncryptionMode = EncryptionModeOptional
-		}
-		c.BusServer.CertChain = &PemBlob{
-			FileName: path.Join(consts.RPCProxySecretMountPoint, corev1.TLSCertKey),
-		}
-		c.BusServer.PrivateKey = &PemBlob{
-			FileName: path.Join(consts.RPCProxySecretMountPoint, corev1.TLSPrivateKeyKey),
-		}
 	}
 
 	return marshallYsonConfig(c)
@@ -758,6 +817,9 @@ func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProx
 
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+
+	g.fillDriverConfig(&c.Driver)
+	c.Driver.APIVersion = 0
 
 	oauthService := g.ytsaurus.Spec.OauthService
 	if oauthService != nil {

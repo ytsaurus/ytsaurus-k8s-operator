@@ -2,9 +2,12 @@ package controllers_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"net/url"
 	"strings"
 
 	. "github.com/onsi/gomega"
@@ -12,6 +15,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	ctrlcli "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -23,6 +27,21 @@ import (
 	"go.ytsaurus.tech/yt/go/yt"
 	"go.ytsaurus.tech/yt/go/yterrors"
 )
+
+func getNodesAddresses() []string {
+	var nodes corev1.NodeList
+	Expect(k8sClient.List(ctx, &nodes)).Should(Succeed())
+	var addrs []string
+	for _, node := range nodes.Items {
+		for _, address := range node.Status.Addresses {
+			if address.Type == corev1.NodeInternalIP && net.ParseIP(address.Address).To4() != nil {
+				addrs = append(addrs, address.Address)
+				break
+			}
+		}
+	}
+	return addrs
+}
 
 func getComponentPods(ctx context.Context, namespace string) map[string]corev1.Pod {
 	podlist := corev1.PodList{}
@@ -208,4 +227,48 @@ func queryClickHouse(ytProxyAddress, query string) (string, error) {
 	}
 
 	return string(content), nil
+}
+
+func readFileObject(namespace string, source ytv1.FileObjectReference) ([]byte, error) {
+	objectName := types.NamespacedName{
+		Namespace: namespace,
+		Name:      source.Name,
+	}
+	switch source.Kind {
+	case "", "ConfigMap":
+		var object corev1.ConfigMap
+		if err := k8sClient.Get(ctx, objectName, &object); err != nil {
+			return nil, err
+		}
+		if data, ok := object.Data[source.Key]; ok {
+			return []byte(data), nil
+		}
+		if data, ok := object.BinaryData[source.Key]; ok {
+			return data, nil
+		}
+	case "Secret":
+		var object corev1.Secret
+		if err := k8sClient.Get(ctx, objectName, &object); err != nil {
+			return nil, err
+		}
+		if data, ok := object.Data[source.Key]; ok {
+			return data, nil
+		}
+		if data, ok := object.StringData[source.Key]; ok {
+			return []byte(data), nil
+		}
+	}
+	return nil, fmt.Errorf("Key %v not found in %v/%v", source.Key, source.Kind, source.Name)
+}
+
+func discoverProxies(proxyAddress string, params url.Values) []string {
+	resp, err := http.Get(proxyAddress + "/api/v4/discover_proxies?" + params.Encode())
+	Expect(err).NotTo(HaveOccurred())
+	defer resp.Body.Close()
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	var proxies struct {
+		Proxies []string `json:"proxies"`
+	}
+	Expect(json.NewDecoder(resp.Body).Decode(&proxies)).To(Succeed())
+	return proxies.Proxies
 }

@@ -147,6 +147,7 @@
         "default_role_filter"=default;
     };
     driver={
+        "default_rpc_proxy_address_type"="public_rpc";
     };
     role=control;
     "https_server"={
