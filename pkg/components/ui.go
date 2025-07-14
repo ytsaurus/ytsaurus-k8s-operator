@@ -204,7 +204,7 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 			Command: []string{"supervisord"},
 			Ports: []corev1.ContainerPort{
 				{
-					Name:          "http",
+					Name:          consts.HTTPPortName,
 					ContainerPort: consts.UIHTTPPort,
 					Protocol:      corev1.ProtocolTCP,
 				},

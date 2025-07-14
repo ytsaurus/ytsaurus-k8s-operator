@@ -4,6 +4,7 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -50,17 +51,17 @@ func NewHTTPProxy(
 				Protocol:      corev1.ProtocolTCP,
 			},
 			corev1.ContainerPort{
-				Name:          "http",
-				ContainerPort: consts.HTTPProxyHTTPPort,
+				Name:          consts.HTTPPortName,
+				ContainerPort: ptr.Deref(spec.HttpPort, consts.HTTPProxyHTTPPort),
 				Protocol:      corev1.ProtocolTCP,
 			},
 			corev1.ContainerPort{
-				Name:          "https",
-				ContainerPort: consts.HTTPProxyHTTPSPort,
+				Name:          consts.HTTPSPortName,
+				ContainerPort: ptr.Deref(spec.HttpsPort, consts.HTTPProxyHTTPSPort),
 				Protocol:      corev1.ProtocolTCP,
 			},
 		),
-		WithCustomReadinessProbeEndpointPort(consts.HTTPProxyHTTPPort),
+		WithCustomReadinessProbeEndpointPort(ptr.Deref(spec.HttpPort, consts.HTTPProxyHTTPPort)),
 		WithCustomReadinessProbeEndpointPath("/ping"),
 	)
 
@@ -78,6 +79,8 @@ func NewHTTPProxy(
 		l,
 		ytsaurus.APIProxy())
 
+	balancingService.SetHttpPort(spec.HttpPort)
+	balancingService.SetHttpsPort(spec.HttpsPort)
 	balancingService.SetHttpNodePort(spec.HttpNodePort)
 	balancingService.SetHttpsNodePort(spec.HttpsNodePort)
 

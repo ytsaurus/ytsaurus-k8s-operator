@@ -7,12 +7,15 @@ import (
 	labeller "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/ptr"
 )
 
 type HTTPService struct {
 	BaseManagedResource[*corev1.Service]
 
 	transport     *ytv1.HTTPTransportSpec
+	httpPort      *int32
+	httpsPort     *int32
 	httpNodePort  *int32
 	httpsNodePort *int32
 }
@@ -33,6 +36,14 @@ func NewHTTPService(name string, transport *ytv1.HTTPTransportSpec, labeller *la
 	}
 }
 
+func (s *HTTPService) SetHttpPort(port *int32) {
+	s.httpPort = port
+}
+
+func (s *HTTPService) SetHttpsPort(port *int32) {
+	s.httpsPort = port
+}
+
 func (s *HTTPService) SetHttpNodePort(port *int32) {
 	s.httpNodePort = port
 }
@@ -47,12 +58,15 @@ func (s *HTTPService) Build() *corev1.Service {
 		Selector: s.labeller.GetSelectorLabelMap(),
 	}
 
+	httpPort := ptr.Deref(s.httpPort, consts.HTTPProxyHTTPPort)
+	httpsPort := ptr.Deref(s.httpsPort, consts.HTTPProxyHTTPSPort)
+
 	s.newObject.Spec.Ports = make([]corev1.ServicePort, 0, 2)
 	if !s.transport.DisableHTTP {
 		port := corev1.ServicePort{
-			Name:       "http",
-			Port:       consts.HTTPProxyHTTPPort,
-			TargetPort: intstr.IntOrString{IntVal: consts.HTTPProxyHTTPPort},
+			Name:       consts.HTTPPortName,
+			Port:       httpPort,
+			TargetPort: intstr.FromInt32(httpPort),
 		}
 		if s.httpNodePort != nil {
 			port.NodePort = *s.httpNodePort
@@ -62,9 +76,9 @@ func (s *HTTPService) Build() *corev1.Service {
 
 	if s.transport.HTTPSSecret != nil {
 		port := corev1.ServicePort{
-			Name:       "https",
-			Port:       consts.HTTPProxyHTTPSPort,
-			TargetPort: intstr.IntOrString{IntVal: consts.HTTPProxyHTTPSPort},
+			Name:       consts.HTTPSPortName,
+			Port:       httpsPort,
+			TargetPort: intstr.FromInt32(httpsPort),
 		}
 		if s.httpsNodePort != nil {
 			port.NodePort = *s.httpsNodePort

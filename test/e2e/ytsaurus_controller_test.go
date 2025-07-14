@@ -2,6 +2,8 @@ package controllers_test
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -75,7 +77,7 @@ func getYtRPCClient(proxyAddress, rpcProxyAddress string) yt.Client {
 	return ytClient
 }
 
-func getHTTPProxyAddress(g *ytconfig.Generator, namespace string) string {
+func getHTTPProxyAddress(g *ytconfig.Generator, namespace, portName string) string {
 	proxy := os.Getenv("E2E_YT_HTTP_PROXY")
 	if proxy != "" {
 		return proxy
@@ -90,7 +92,9 @@ func getHTTPProxyAddress(g *ytconfig.Generator, namespace string) string {
 		panic("E2E_YT_PROXY is deprecated, use E2E_YT_HTTP_PROXY")
 	}
 
-	return getServiceAddress(g.GetHTTPProxiesServiceName(consts.DefaultHTTPProxyRole), namespace)
+	serviceName := g.GetHTTPProxiesServiceName(consts.DefaultHTTPProxyRole)
+
+	return getServiceAddress(namespace, serviceName, portName)
 }
 
 func getRPCProxyAddress(g *ytconfig.Generator, namespace string) string {
@@ -99,13 +103,20 @@ func getRPCProxyAddress(g *ytconfig.Generator, namespace string) string {
 		return proxy
 	}
 
-	return getServiceAddress(g.GetRPCProxiesServiceName(consts.DefaultName), namespace)
+	serviceName := g.GetRPCProxiesServiceName(consts.DefaultName)
+
+	portName := consts.YTRPCPortName
+	if g.GetClusterFeatures().RPCProxyHavePublicAddress {
+		portName = consts.YTPublicRPCPortName
+	}
+
+	return getServiceAddress(namespace, serviceName, portName)
 }
 
-func getServiceAddress(svcName string, namespace string) string {
+func getServiceAddress(namespace, serviceName, portName string) string {
 	svc := corev1.Service{}
 	Expect(k8sClient.Get(ctx,
-		client.ObjectKey{Name: svcName, Namespace: namespace},
+		client.ObjectKey{Name: serviceName, Namespace: namespace},
 		&svc),
 	).Should(Succeed())
 
@@ -117,9 +128,18 @@ func getServiceAddress(svcName string, namespace string) string {
 
 	Expect(svc.Spec.Type).To(Equal(corev1.ServiceTypeNodePort))
 	Expect(svc.Spec.IPFamilies[0]).To(Equal(corev1.IPv4Protocol))
-	nodePort := svc.Spec.Ports[0].NodePort
 
-	nodeAddress := ""
+	Expect(svc.Spec.Ports).To(ContainElement(HaveField("Name", portName)))
+	var nodePort int32
+	for _, port := range svc.Spec.Ports {
+		if port.Name == portName {
+			nodePort = port.NodePort
+			break
+		}
+	}
+	Expect(nodePort).ToNot(BeZero())
+
+	var nodeAddress string
 	for _, address := range k8sNode.Status.Addresses {
 		if address.Type == corev1.NodeInternalIP && net.ParseIP(address.Address).To4() != nil {
 			nodeAddress = address.Address
@@ -127,6 +147,7 @@ func getServiceAddress(svcName string, namespace string) string {
 		}
 	}
 	Expect(nodeAddress).ToNot(BeEmpty())
+
 	return fmt.Sprintf("%s:%v", nodeAddress, nodePort)
 }
 
@@ -179,19 +200,59 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var chyt *ytv1.Chyt
 	var ytProxyAddress string
 	var ytClient yt.Client
-	var g *ytconfig.Generator
+	var generator *ytconfig.Generator
+	var certBuilder *testutil.CertBuilder
+	var clusterWithTLS bool
+	var caBundleCertificates []byte
+	var caBundleCertPool *x509.CertPool
+	var ytHTTPSProxyAddress string
+	var ytHTTPSClient yt.Client
+	var ytRPCProxyAddress string
+	var ytRPCClient yt.Client
+	var ytRPCTLSClient yt.Client
 
 	// NOTE: execution order for each test spec:
-	// - BeforeEach 	(configuration)
-	// - JustBeforeEach 	(creation)
-	// - It			(test itself)
-	// - JustAfterEach	(diagnosis)
-	// - AfterEach, DeferCleanup	(cleanup)
+	// - BeforeEach               (configuration)
+	// - JustBeforeEach           (creation, validation)
+	// - It                       (test itself)
+	// - JustAfterEach            (diagnosis, validation)
+	// - AfterEach, DeferCleanup  (cleanup)
 	//
 	// See:
 	// https://onsi.github.io/ginkgo/#separating-creation-and-configuration-justbeforeeach
 	// https://onsi.github.io/ginkgo/#spec-cleanup-aftereach-and-defercleanup
 	// https://onsi.github.io/ginkgo/#separating-diagnostics-collection-and-teardown-justaftereach
+
+	withHTTPSProxy := func() {
+		By("Adding HTTPS proxy TLS certificates")
+		clusterWithTLS = true
+
+		httpProxyCert := certBuilder.BuildCertificate(ytsaurus.Name+"-http-proxy", []string{
+			generator.GetHTTPProxiesServiceAddress(""),
+			generator.GetComponentLabeller(consts.HttpProxyType, "").GetInstanceAddressWildcard(),
+		})
+		objects = append(objects, httpProxyCert)
+
+		ytsaurus.Spec.HTTPProxies[0].Transport = ytv1.HTTPTransportSpec{
+			HTTPSSecret: &corev1.LocalObjectReference{
+				Name: httpProxyCert.Name,
+			},
+		}
+	}
+
+	withRPCTLSProxy := func() {
+		By("Adding RPC proxy TLS certificates")
+		rpcProxyCert := certBuilder.BuildCertificate(ytsaurus.Name+"-rpc-proxy", []string{
+			generator.GetComponentLabeller(consts.RpcProxyType, "").GetInstanceAddressWildcard(),
+		})
+		objects = append(objects, rpcProxyCert)
+
+		ytsaurus.Spec.RPCProxies[0].Transport = ytv1.RPCTransportSpec{
+			TLSSecret: &corev1.LocalObjectReference{
+				Name: rpcProxyCert.Name,
+			},
+		}
+	}
 
 	BeforeEach(func() {
 		By("Creating namespace")
@@ -240,6 +301,13 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			Name:      ytsaurus.Name,
 			Namespace: namespace,
 		}
+
+		generator = ytconfig.NewGenerator(ytsaurus, "cluster.local")
+
+		certBuilder = &testutil.CertBuilder{
+			Namespace:   namespace,
+			IPAddresses: getNodesAddresses(),
+		}
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
@@ -250,18 +318,29 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			Expect(k8sClient.Create(ctx, object)).Should(Succeed())
 		}
 
-		By("Checking that Ytsaurus state is equal to `Running`")
+		DeferCleanup(AttachProgressReporter(func() string {
+			falseConditions := make(map[string]string)
+			for _, condition := range ytsaurus.Status.Conditions {
+				if condition.Status == metav1.ConditionFalse {
+					falseConditions[condition.Type] = condition.Reason
+				}
+			}
+			return fmt.Sprintf("ytsaurus false conditions: %v", falseConditions)
+		}))
+
 		log.Info("Ytsaurus",
 			"namespace", ytsaurus.Namespace,
 			"name", ytsaurus.Name,
 			"hostNetwork", ytsaurus.Spec.HostNetwork,
 			"cellTag", ytsaurus.Spec.PrimaryMasters.CellTag,
 			"coreImage", ytsaurus.Spec.CoreImage)
-		EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
+
+		By("Checking that Ytsaurus state is equal to `Running`", func() {
+			EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
+		})
 
 		By("Creating ytsaurus client")
-		g = ytconfig.NewGenerator(ytsaurus, "cluster.local")
-		ytProxyAddress = getHTTPProxyAddress(g, namespace)
+		ytProxyAddress = getHTTPProxyAddress(generator, namespace, consts.HTTPPortName)
 
 		log.Info("Ytsaurus access",
 			"YT_PROXY", ytProxyAddress,
@@ -275,38 +354,154 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}))
 
 		ytClient = getYtClient(ytProxyAddress)
-		checkClusterViability(ytClient)
+		Expect(ytClient.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
 
-		if len(ytsaurus.Spec.ExecNodes) != 0 {
-			// NOTE: There is no reliable readiness signal for compute stack except active checks.
-			op := NewVanillaOperation(ytClient)
+		checkClusterHealth(ytClient)
 
-			By("Waiting scheduler is ready to start operation")
+		createTestUser(ytClient)
+	})
+
+	JustBeforeEach(func(ctx context.Context) {
+		if !clusterWithTLS {
+			return
+		}
+
+		var err error
+
+		By("Fetching CA bundle certificates")
+		caBundleCertificates, err = readFileObject(namespace, ytv1.FileObjectReference{
+			Name: testutil.TestTrustBundleName,
+			Key:  consts.CABundleFileName,
+		})
+		Expect(err).To(Succeed())
+		Expect(caBundleCertificates).ToNot(BeEmpty())
+		caBundleCertPool = x509.NewCertPool()
+		Expect(caBundleCertPool.AppendCertsFromPEM(caBundleCertificates)).To(BeTrue())
+
+		ytHTTPSProxyAddress = "https://" + getHTTPProxyAddress(generator, namespace, consts.HTTPSPortName)
+
+		By("Checking YT Proxy HTTPS", func() {
+			httpClient := http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{
+						RootCAs: caBundleCertPool,
+					},
+				},
+			}
+			resp, err := httpClient.Get(ytHTTPSProxyAddress + "/api")
+			Expect(err).NotTo(HaveOccurred())
+			defer resp.Body.Close()
+
+			bodyBytes, err := io.ReadAll(resp.Body)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(resp.StatusCode).To(Equal(http.StatusOK))
+			Expect(string(bodyBytes)).To(Equal(`["v3","v4"]`))
+		})
+
+		By("Checking YT HTTPS Client")
+		ytHTTPSClient, err = ythttp.NewClient(&yt.Config{
+			Proxy:                    ytHTTPSProxyAddress,
+			CertificateAuthorityData: caBundleCertificates,
+			Token:                    consts.DefaultAdminPassword,
+			DisableProxyDiscovery:    true,
+		})
+		Expect(err).Should(Succeed())
+		Expect(ytHTTPSClient.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
+
+		_, err = ytHTTPSClient.NodeExists(ctx, ypath.Path("/"), nil)
+		Expect(err).Should(Succeed())
+	})
+
+	JustBeforeEach(func(ctx context.Context) {
+		if len(ytsaurus.Spec.RPCProxies) == 0 {
+			return
+		}
+
+		// TODO(khlebnikov): Generalize for all components in cluster health report.
+		By("Checking RPC proxies are registered")
+		var rpcProxies []string
+		Expect(ytClient.ListNode(ctx, ypath.Path("//sys/rpc_proxies"), &rpcProxies, nil)).Should(Succeed())
+		Expect(rpcProxies).Should(HaveLen(int(ytsaurus.Spec.RPCProxies[0].InstanceCount)))
+
+		By("Checking YT RPC Proxy discovery")
+		proxies := discoverProxies("http://"+ytProxyAddress, nil)
+		Expect(proxies).ToNot(BeEmpty())
+		Expect(proxies).To(HaveEach(HaveSuffix(fmt.Sprintf(":%v", consts.RPCProxyPublicRPCPort))))
+
+		By("Creating ytsaurus RPC client")
+		ytRPCProxyAddress = getRPCProxyAddress(generator, namespace)
+		ytRPCClient = getYtRPCClient(ytProxyAddress, ytRPCProxyAddress)
+
+		By("Checking RPC proxy is working")
+		// Expect(ytTLSRPCClient.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
+		_, err := ytRPCClient.NodeExists(ctx, ypath.Path("/"), nil)
+		Expect(err).Should(Succeed())
+	})
+
+	JustBeforeEach(func(ctx context.Context) {
+		if !clusterWithTLS || len(ytsaurus.Spec.RPCProxies) == 0 {
+			return
+		}
+
+		var err error
+
+		By("Checking YT RPC TLS Client")
+		ytRPCTLSClient, err = ytrpc.NewClient(&yt.Config{
+			Proxy:                    ytHTTPSProxyAddress,
+			RPCProxy:                 ytRPCProxyAddress,
+			CertificateAuthorityData: caBundleCertificates,
+			Token:                    consts.DefaultAdminPassword,
+			DisableProxyDiscovery:    true,
+		})
+		Expect(err).Should(Succeed())
+		// Expect(ytTLSRPCClient.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
+
+		// TODO(khlebnikov): Add API to verify TLS connectivity.
+
+		_, err = ytRPCTLSClient.NodeExists(ctx, ypath.Path("/"), nil)
+		Expect(err).Should(Succeed())
+	})
+
+	JustBeforeEach(func(ctx context.Context) {
+		if len(ytsaurus.Spec.ExecNodes) == 0 {
+			return
+		}
+
+		// NOTE: There is no reliable readiness signal for compute stack except active checks.
+		op := NewVanillaOperation(ytClient)
+
+		By("Waiting scheduler is ready to start operation", func() {
 			Eventually(ctx, op.Start, bootstrapTimeout, pollInterval).Should(Succeed())
+		})
 
-			By("Waiting scheduler could provide operation status")
+		By("Waiting scheduler could provide operation status", func() {
 			Eventually(ctx, op.Status, bootstrapTimeout, pollInterval).ShouldNot(BeNil())
+		})
 
-			By("Waiting operation completion")
+		By("Waiting operation completion", func() {
 			op.Wait()
+		})
+	})
+
+	JustBeforeEach(func(ctx context.Context) {
+		if chyt == nil {
+			return
 		}
 
-		if chyt != nil {
-			By("Checking CHYT status")
-			Eventually(ctx, func(ctx context.Context) (*ytv1.Chyt, error) {
-				err := k8sClient.Get(ctx, client.ObjectKeyFromObject(chyt), chyt)
-				return chyt, err
-			}, bootstrapTimeout, pollInterval).Should(
-				HaveField("Status.ReleaseStatus", ytv1.ChytReleaseStatusFinished),
-				"CHYT status: %+v", &chyt.Status,
-			)
+		By("Checking CHYT status")
+		Eventually(ctx, func(ctx context.Context) (*ytv1.Chyt, error) {
+			err := k8sClient.Get(ctx, client.ObjectKeyFromObject(chyt), chyt)
+			return chyt, err
+		}, bootstrapTimeout, pollInterval).Should(
+			HaveField("Status.ReleaseStatus", ytv1.ChytReleaseStatusFinished),
+			"CHYT status: %+v", &chyt.Status,
+		)
 
-			By("Checking CHYT readiness")
-			// FIXME(khlebnikov): There is no reliable readiness signal.
-			Eventually(queryClickHouse, chytBootstrapTimeout, pollInterval).WithArguments(
-				ytProxyAddress, "SELECT 1",
-			).MustPassRepeatedly(3).Should(Equal("1\n"))
-		}
+		By("Checking CHYT readiness")
+		// FIXME(khlebnikov): There is no reliable readiness signal.
+		Eventually(queryClickHouse, chytBootstrapTimeout, pollInterval).WithArguments(
+			ytProxyAddress, "SELECT 1",
+		).MustPassRepeatedly(3).Should(Equal("1\n"))
 	})
 
 	JustAfterEach(func(ctx context.Context) {
@@ -392,7 +587,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 					By("Waiting cluster update completes")
 					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
-					checkClusterBaseViability(ytClient)
+					checkClusterHealth(ytClient)
 					checkChunkLocations(ytClient)
 
 					podsAfterFullUpdate := getComponentPods(ctx, namespace)
@@ -499,7 +694,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				checkClusterBaseViability(ytClient)
+				checkClusterHealth(ytClient)
 
 				podsAfterEndUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterEndUpdate)
@@ -527,7 +722,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				checkClusterBaseViability(ytClient)
+				checkClusterHealth(ytClient)
 
 				podsAfterTndUpdate := getComponentPods(ctx, namespace)
 				pods = getChangedPods(podsAfterEndUpdate, podsAfterTndUpdate)
@@ -559,7 +754,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				checkClusterBaseViability(ytClient)
+				checkClusterHealth(ytClient)
 
 				podsAfterMasterUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterMasterUpdate)
@@ -592,7 +787,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				checkClusterBaseViability(ytClient)
+				checkClusterHealth(ytClient)
 				podsAfterStatelessUpdate := getComponentPods(ctx, namespace)
 				pods = getChangedPods(podsAfterMasterUpdate, podsAfterStatelessUpdate)
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
@@ -639,7 +834,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				checkClusterBaseViability(ytClient)
+				checkClusterHealth(ytClient)
 
 				podsAfterUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterUpdate)
@@ -1175,14 +1370,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	Context("Integration tests", Label("integration"), func() {
 
 		Context("With RPC proxy", Label("rpc-proxy"), func() {
-			var ytRPCProxyAddress string
-
 			BeforeEach(func() {
 				ytBuilder.WithRPCProxies()
-			})
-
-			JustBeforeEach(func() {
-				ytRPCProxyAddress = getRPCProxyAddress(g, namespace)
 			})
 
 			It("Rpc proxies should require authentication", func(ctx context.Context) {
@@ -1202,6 +1391,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Checking RPC proxy works with token")
 				cli = getYtRPCClient(ytProxyAddress, ytRPCProxyAddress)
+				// Expect(cli.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
+
 				_, err = cli.NodeExists(ctx, ypath.Path("/"), nil)
 				Expect(err).Should(Succeed())
 			})
@@ -1284,32 +1475,48 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		}) // integration chyt
 
-		Context("With Bus RPC mTLS", Label("tls"), func() {
-
-			var certBuilder *testutil.CertBuilder
+		DescribeTableSubtree("With Bus RPC mTLS", Label("tls"), func(coreImage, chytImage string) {
 
 			BeforeEach(func() {
+
+				log.Info("YTsaurus images", "coreImage", coreImage, "chytImage", chytImage)
 
 				if os.Getenv("YTSAURUS_TLS_READY") == "" {
 					Skip("YTsaurus is not ready for TLS")
 				}
 
+				if coreImage == testutil.YtsaurusImageFuture {
+					By("Enabling RPC proxy public address")
+					ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
+						RPCProxyHavePublicAddress: true,
+					}
+				}
+
 				By("Adding all components")
+				ytsaurus.Spec.CoreImage = coreImage
 				ytBuilder.WithBaseComponents()
 				ytBuilder.WithRPCProxies()
 				ytBuilder.WithQueryTracker()
 				ytBuilder.WithYqlAgent()
 				ytBuilder.WithStrawberryController()
 
-				By("Adding CHYT instance")
-				chyt = ytBuilder.CreateChyt()
-				objects = append(objects, chyt)
+				withHTTPSProxy()
 
-				By("Adding native transport certificates")
-				certBuilder = &testutil.CertBuilder{
-					Namespace: namespace,
+				withRPCTLSProxy()
+
+				if coreImage == testutil.YtsaurusImageFuture {
+					By("Enabling RPC proxy public address")
+					ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
+						RPCProxyHavePublicAddress: true,
+					}
 				}
 
+				By("Adding CHYT instance")
+				chyt = ytBuilder.CreateChyt()
+				chyt.Spec.Image = chytImage
+				objects = append(objects, chyt)
+
+				By("Adding native transport TLS certificates")
 				nativeServerCert := certBuilder.BuildCertificate(ytsaurus.Name+"-server", []string{
 					ytsaurus.Name,
 				})
@@ -1347,20 +1554,23 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one;",
 				)).To(Equal(""))
 			})
-
-		}) // integration tls
+		},
+			Entry("YTsaurus current", Label("current"), testutil.YtsaurusImageCurrent, testutil.ChytImageCurrent),
+			Entry("YTsaurus future", Label("future"), testutil.YtsaurusImageFuture, testutil.ChytImageFuture),
+		) // integration tls
 
 	}) // integration
 })
 
-func checkClusterBaseViability(ytClient yt.Client) {
+func checkClusterHealth(ytClient yt.Client) {
 	By("Checking that cluster is alive")
 	var res []string
 	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
 
-	By("Checking cluster alerts")
-	clusterHealth := CollectClusterHealth(ytClient)
-	Expect(clusterHealth.Alerts).To(BeEmpty())
+	By("Checking cluster alerts", func() {
+		clusterHealth := CollectClusterHealth(ytClient)
+		Expect(clusterHealth.Alerts).To(BeEmpty())
+	})
 
 	By("Checking that tablet cell bundles are in `good` health")
 	Eventually(func() bool {
@@ -1372,9 +1582,7 @@ func checkClusterBaseViability(ytClient yt.Client) {
 	}, reactionTimeout, pollInterval).Should(BeTrue())
 }
 
-func checkClusterViability(ytClient yt.Client) {
-	checkClusterBaseViability(ytClient)
-
+func createTestUser(ytClient yt.Client) {
 	By("Create a test user")
 	_, err := ytClient.CreateObject(ctx, yt.NodeUser, &yt.CreateObjectOptions{Attributes: map[string]any{"name": "test-user"}})
 	Expect(err).Should(Succeed())

@@ -43,6 +43,7 @@ type OauthTokenAuthenticator struct {
 type Coordinator struct {
 	Enable            bool   `yson:"enable"`
 	DefaultRoleFilter string `yson:"default_role_filter"`
+	ShowPorts         *bool  `yson:"show_ports,omitempty"`
 }
 
 type Auth struct {
@@ -88,6 +89,9 @@ type RPCProxyServer struct {
 	OauthService              *OauthService             `yson:"oauth_service,omitempty"`
 	OauthTokenAuthenticator   *OauthTokenAuthenticator  `yson:"oauth_token_authenticator,omitempty"`
 	RequireAuthentication     *bool                     `yson:"require_authentication,omitempty"`
+
+	PublicRPCPort   int32      `yson:"public_rpc_port,omitempty"`
+	PublicBusServer *BusServer `yson:"public_bus_server,omitempty"`
 }
 
 type TCPProxyServer struct {
@@ -117,9 +121,15 @@ func getHTTPProxyServerCarcass(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, err
 	c.Coordinator.Enable = true
 	c.Coordinator.DefaultRoleFilter = consts.DefaultHTTPProxyRole
 
+	// Show only non-standard http/https ports in "/hosts" (to avoid unneeded changes)
+	if (spec.HttpPort != nil && *spec.HttpPort != consts.HTTPProxyHTTPPort) ||
+		(spec.HttpsPort != nil && *spec.HttpsPort != consts.HTTPProxyHTTPSPort) {
+		c.Coordinator.ShowPorts = ptr.To(true)
+	}
+
 	c.RPCPort = consts.HTTPProxyRPCPort
 	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.HTTPProxyMonitoringPort)
-	c.Port = consts.HTTPProxyHTTPPort
+	c.Port = int(ptr.Deref(spec.HttpPort, int32(consts.HTTPProxyHTTPPort)))
 
 	c.Role = spec.Role
 
@@ -130,7 +140,7 @@ func getHTTPProxyServerCarcass(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, err
 	if spec.Transport.HTTPSSecret != nil {
 		c.HTTPSServer = &HTTPSServer{
 			HTTPServer: HTTPServer{
-				Port: consts.HTTPProxyHTTPSPort,
+				Port: int(ptr.Deref(spec.HttpsPort, int32(consts.HTTPProxyHTTPSPort))),
 			},
 			Credentials: HTTPSServerCredentials{
 				CertChain: PemBlob{
@@ -159,8 +169,8 @@ func getRPCProxyServerCarcass(spec *ytv1.RPCProxiesSpec) (RPCProxyServer, error)
 
 	c.CypressTokenAuthenticator.Secure = true
 
-	c.RPCPort = consts.RPCProxyRPCPort
-	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.RPCProxyMonitoringPort)
+	c.RPCPort = consts.RPCProxyInternalRPCPort
+	c.MonitoringPort = ptr.Deref(spec.MonitoringPort, consts.RPCProxyMonitoringPort)
 
 	c.Role = spec.Role
 	c.Logging = getRPCProxyLogging(spec)

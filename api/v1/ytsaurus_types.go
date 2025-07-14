@@ -353,9 +353,13 @@ type HTTPTransportSpec struct {
 type HTTPProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	//+kubebuilder:default:=NodePort
-	ServiceType   corev1.ServiceType `json:"serviceType,omitempty"`
-	HttpNodePort  *int32             `json:"httpNodePort,omitempty"`
-	HttpsNodePort *int32             `json:"httpsNodePort,omitempty"`
+	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
+	//+kubebuilder:default:=80
+	HttpPort *int32 `json:"httpPort,omitempty"`
+	//+kubebuilder:default:=443
+	HttpsPort     *int32 `json:"httpsPort,omitempty"`
+	HttpNodePort  *int32 `json:"httpNodePort,omitempty"`
+	HttpsNodePort *int32 `json:"httpsNodePort,omitempty"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`
@@ -616,10 +620,17 @@ type MasterCachesSpec struct {
 	HostAddressLabel           string `json:"hostAddressesLabel,omitempty"`
 }
 
+type ClusterFeatures struct {
+	// RPC proxy have "public_rpc" address. Required for separated internal/public TLS CA.
+	RPCProxyHavePublicAddress bool `json:"rpcProxyHavePublicAddress,omitempty"`
+}
+
 // CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.
 // It is inlined in these specs.
 type CommonSpec struct {
 	CoreImage string `json:"coreImage,omitempty"`
+
+	ClusterFeatures *ClusterFeatures `json:"clusterFeatures,omitempty"`
 
 	// Default docker image for user jobs.
 	//+optional

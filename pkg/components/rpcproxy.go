@@ -3,6 +3,9 @@ package components
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/ptr"
+
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -31,6 +34,30 @@ func NewRPCProxy(
 ) *RpcProxy {
 	l := cfgen.GetComponentLabeller(consts.RpcProxyType, spec.Role)
 
+	var ports []corev1.ContainerPort
+	if cfgen.GetClusterFeatures().RPCProxyHavePublicAddress {
+		ports = []corev1.ContainerPort{
+			{
+				Name:          consts.YTRPCPortName,
+				ContainerPort: consts.RPCProxyInternalRPCPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+			{
+				Name:          consts.YTPublicRPCPortName,
+				ContainerPort: consts.RPCProxyPublicRPCPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		}
+	} else {
+		ports = []corev1.ContainerPort{
+			{
+				Name:          consts.YTRPCPortName,
+				ContainerPort: consts.RPCProxyPublicRPCPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		}
+	}
+
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -42,21 +69,23 @@ func NewRPCProxy(
 		},
 		&cfgen.NodeGenerator,
 		consts.RPCProxyMonitoringPort,
-		WithContainerPorts(corev1.ContainerPort{
-			Name:          consts.YTRPCPortName,
-			ContainerPort: consts.RPCProxyRPCPort,
-			Protocol:      corev1.ProtocolTCP,
-		}),
+		WithContainerPorts(ports...),
 	)
 
 	var balancingService *resources.RPCService = nil
 	if spec.ServiceType != nil {
 		balancingService = resources.NewRPCService(
 			cfgen.GetRPCProxiesServiceName(spec.Role),
+			[]corev1.ServicePort{
+				{
+					Name:       consts.YTRPCPortName,
+					Port:       consts.RPCProxyPublicRPCPort,
+					TargetPort: intstr.FromInt(consts.RPCProxyPublicRPCPort),
+					NodePort:   ptr.Deref(spec.NodePort, 0),
+				},
+			},
 			l,
 			ytsaurus.APIProxy())
-
-		balancingService.SetNodePort(spec.NodePort)
 	}
 
 	var tlsSecret *resources.TLSSecret

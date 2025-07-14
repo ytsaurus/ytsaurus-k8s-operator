@@ -5,6 +5,8 @@ metadata:
 spec:
   caBundle:
     name: ytsaurus-ca-bundle
+  clusterFeatures:
+    rpcProxyHavePublicAddress: true
   controllerAgents:
     instanceCount: 3
     resources: {}
@@ -180,7 +182,9 @@ spec:
   - instanceCount: 3
     resources: {}
     role: default
-    transport: {}
+    transport:
+      tlsSecret:
+        name: ytsaurus-rpc-proxy-cert
   schedulers:
     instanceCount: 3
     resources: {}

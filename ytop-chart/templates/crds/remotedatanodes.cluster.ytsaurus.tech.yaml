@@ -760,6 +760,12 @@ spec:
                     description: Name is the name of resource being referenced
                     type: string
                 type: object
+              clusterFeatures:
+                properties:
+                  rpcProxyHavePublicAddress:
+                    description: RPC proxy have "public_rpc" address.
+                    type: boolean
+                type: object
               configOverrides:
                 description: |-
                   LocalObjectReference contains enough information to let you locate the
