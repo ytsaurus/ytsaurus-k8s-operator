@@ -50,6 +50,7 @@ func NewScheduler(
 			return cfgen.GetSchedulerConfig(resource.Spec.Schedulers)
 		},
 		&cfgen.NodeGenerator,
+		&resource.Spec,
 		consts.SchedulerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

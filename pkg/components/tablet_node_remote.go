@@ -39,6 +39,7 @@ func NewRemoteTabletNodes(
 			return cfgen.GetTabletNodeConfig(spec)
 		},
 		cfgen,
+		&ytv1.YtsaurusSpec{},
 		consts.TabletNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

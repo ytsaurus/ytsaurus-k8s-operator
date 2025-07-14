@@ -72,6 +72,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		"ytserver-master.yson",
 		func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
 		&cfgen.NodeGenerator,
+		&resource.Spec,
 		consts.MasterMonitoringPort,
 		buildMasterOptions(resource)...,
 	)

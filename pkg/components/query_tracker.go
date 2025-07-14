@@ -48,6 +48,7 @@ func NewQueryTracker(
 		"ytserver-query-tracker.yson",
 		func() ([]byte, error) { return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers) },
 		&cfgen.NodeGenerator,
+		&resource.Spec,
 		consts.QueryTrackerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

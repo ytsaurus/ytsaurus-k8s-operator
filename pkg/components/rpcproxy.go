@@ -58,6 +58,8 @@ func NewRPCProxy(
 		}
 	}
 
+	resource := ytsaurus.GetResource()
+
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -68,6 +70,7 @@ func NewRPCProxy(
 			return cfgen.GetRPCProxyConfig(spec)
 		},
 		&cfgen.NodeGenerator,
+		&resource.Spec,
 		consts.RPCProxyMonitoringPort,
 		WithContainerPorts(ports...),
 	)

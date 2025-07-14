@@ -32,7 +32,7 @@ func NewHTTPProxy(
 	spec ytv1.HTTPProxiesSpec,
 ) *HttpProxy {
 	l := cfgen.GetComponentLabeller(consts.HttpProxyType, spec.Role)
-
+	resource := ytsaurus.GetResource()
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -43,6 +43,7 @@ func NewHTTPProxy(
 			return cfgen.GetHTTPProxyConfig(spec)
 		},
 		&cfgen.NodeGenerator,
+		&resource.Spec,
 		consts.HTTPProxyMonitoringPort,
 		WithContainerPorts(
 			corev1.ContainerPort{

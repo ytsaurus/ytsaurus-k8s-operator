@@ -59,7 +59,8 @@ type serverImpl struct {
 	busClientSecret   *resources.TLSSecret
 	configHelper      *ConfigHelper
 
-	cfgen *ytconfig.NodeGenerator
+	cfgen        *ytconfig.NodeGenerator
+	ytsaurusSpec *ytv1.YtsaurusSpec
 
 	builtStatefulSet *appsv1.StatefulSet
 
@@ -76,6 +77,7 @@ func newServer(
 	binaryPath, configFileName string,
 	generator ytconfig.YsonGeneratorFunc,
 	cfgen *ytconfig.NodeGenerator,
+	ytsaurusSpec *ytv1.YtsaurusSpec,
 	defaultMonitoringPort int32,
 	options ...Option,
 ) server {
@@ -89,6 +91,7 @@ func newServer(
 		binaryPath, configFileName,
 		generator,
 		cfgen,
+		ytsaurusSpec,
 		defaultMonitoringPort,
 		options...,
 	)
@@ -102,6 +105,7 @@ func newServerConfigured(
 	binaryPath, configFileName string,
 	generator ytconfig.YsonGeneratorFunc,
 	cfgen *ytconfig.NodeGenerator,
+	ytsaurusSpec *ytv1.YtsaurusSpec,
 	defaultMonitoringPort int32,
 	optFuncs ...Option,
 ) server {
@@ -198,7 +202,8 @@ func newServerConfigured(
 				},
 			}),
 
-		cfgen: cfgen,
+		cfgen:        cfgen,
+		ytsaurusSpec: ytsaurusSpec,
 
 		componentContainerPorts: opts.containerPorts,
 
@@ -488,7 +493,7 @@ func (s *serverImpl) patchWithTimbertruck(statefulSet *appsv1.StatefulSet, struc
 		path.Join(workDir, consts.TimbertruckWorkDirName),
 		consts.GetServiceKebabCase(s.labeller.ComponentType),
 		workDir,
-		s.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+		s.cfgen.GetHTTPProxiesAddress(s.ytsaurusSpec, consts.DefaultHTTPProxyRole),
 		logsDeliveryPath,
 	)
 
@@ -519,7 +524,7 @@ func (s *serverImpl) patchWithTimbertruck(statefulSet *appsv1.StatefulSet, struc
 			},
 			{
 				Name:  "YT_PROXY",
-				Value: s.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+				Value: s.cfgen.GetHTTPProxiesAddress(s.ytsaurusSpec, consts.DefaultHTTPProxyRole),
 			},
 		},
 		VolumeMounts: []corev1.VolumeMount{
