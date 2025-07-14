@@ -94,6 +94,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `image` _string_ |  |  |  |
+| `logsDeliveryPath` _string_ |  |  |  |
 
 
 #### BundleBootstrapSpec
