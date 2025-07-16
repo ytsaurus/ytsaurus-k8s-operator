@@ -107,8 +107,6 @@ type loggingBuilder struct {
 	logging          Logging
 }
 
-// ChooseLoggingPath returns the appropriate logging directory path based on the location specification.
-// If location is nil, it returns the default "/var/log" path.
 func ChooseLoggingPath(location *ytv1.LocationSpec) string {
 	loggingDirectory := "/var/log"
 	if location != nil {
@@ -117,8 +115,6 @@ func ChooseLoggingPath(location *ytv1.LocationSpec) string {
 	return loggingDirectory
 }
 
-// ChooseJobProxyLoggingPath returns the appropriate logging directory path for job proxy logs.
-// It looks for a location with LocationTypeLogs and returns its path, or "/var/log" as default.
 func ChooseJobProxyLoggingPath(spec *ytv1.InstanceSpec) string {
 	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs); location != nil {
 		return location.Path + "/job-proxy"
