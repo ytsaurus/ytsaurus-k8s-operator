@@ -233,6 +233,7 @@
                     ];
                     "flush_period"=3000;
                 };
+                mode=simple;
             };
             "environment_variables"=[
                 {
@@ -357,6 +358,16 @@
                 };
             ];
             "flush_period"=3000;
+        };
+        "job_proxy_log_manager"={
+            directory="/var/log/job-proxy";
+            "sharding_key_length"=2;
+            "logs_storage_period"=604800000;
+            "directory_traversal_concurrency"=4;
+            "log_dump"={
+                "buffer_size"=1048576;
+                "log_writer_name"=debug;
+            };
         };
     };
     "data_node"={
