@@ -738,13 +738,6 @@ spec:
                         x-kubernetes-list-type: atomic
                     type: object
                 type: object
-              builtinSidecars:
-                properties:
-                  image:
-                    type: string
-                  logsDeliveryPath:
-                    type: string
-                type: object
               caBundle:
                 description: Reference to trusted certificates. Default kind="ConfigMap",
                   key="ca.crt".
@@ -1313,11 +1306,6 @@ spec:
                       - gzip
                       - zstd
                       type: string
-                    cypressDelivery:
-                      properties:
-                        enabled:
-                          type: boolean
-                      type: object
                     format:
                       default: plain_text
                       enum:

@@ -95,13 +95,6 @@ spec:
                         type: object
                     type: object
                 type: object
-              builtinSidecars:
-                properties:
-                  image:
-                    type: string
-                  logsDeliveryPath:
-                    type: string
-                type: object
               caBundle:
                 description: Reference to trusted certificates. Default kind="ConfigMap",
                   key="ca.crt".
@@ -830,13 +823,6 @@ spec:
                             x-kubernetes-list-type: atomic
                         type: object
                     type: object
-                  builtinSidecars:
-                    properties:
-                      image:
-                        type: string
-                      logsDeliveryPath:
-                        type: string
-                    type: object
                   dnsConfig:
                     description: DNSConfig allows customizing the DNS settings for
                       the pods.
@@ -1135,11 +1121,6 @@ spec:
                           - gzip
                           - zstd
                           type: string
-                        cypressDelivery:
-                          properties:
-                            enabled:
-                              type: boolean
-                          type: object
                         format:
                           default: plain_text
                           enum:
@@ -3422,13 +3403,6 @@ spec:
                               x-kubernetes-list-type: atomic
                           type: object
                       type: object
-                    builtinSidecars:
-                      properties:
-                        image:
-                          type: string
-                        logsDeliveryPath:
-                          type: string
-                      type: object
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings for
                         the pods.
@@ -3735,11 +3709,6 @@ spec:
                             - gzip
                             - zstd
                             type: string
-                          cypressDelivery:
-                            properties:
-                              enabled:
-                                type: boolean
-                            type: object
                           format:
                             default: plain_text
                             enum:
@@ -6028,13 +5997,6 @@ spec:
                             x-kubernetes-list-type: atomic
                         type: object
                     type: object
-                  builtinSidecars:
-                    properties:
-                      image:
-                        type: string
-                      logsDeliveryPath:
-                        type: string
-                    type: object
                   dnsConfig:
                     description: DNSConfig allows customizing the DNS settings for
                       the pods.
@@ -6333,11 +6295,6 @@ spec:
                           - gzip
                           - zstd
                           type: string
-                        cypressDelivery:
-                          properties:
-                            enabled:
-                              type: boolean
-                          type: object
                         format:
                           default: plain_text
                           enum:
@@ -8656,13 +8613,6 @@ spec:
                               x-kubernetes-list-type: atomic
                           type: object
                       type: object
-                    builtinSidecars:
-                      properties:
-                        image:
-                          type: string
-                        logsDeliveryPath:
-                          type: string
-                      type: object
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings for
                         the pods.
@@ -9164,11 +9114,6 @@ spec:
                             - gzip
                             - zstd
                             type: string
-                          cypressDelivery:
-                            properties:
-                              enabled:
-                                type: boolean
-                            type: object
                           format:
                             default: plain_text
                             enum:
@@ -11473,13 +11418,6 @@ spec:
                               x-kubernetes-list-type: atomic
                           type: object
                       type: object
-                    builtinSidecars:
-                      properties:
-                        image:
-                          type: string
-                        logsDeliveryPath:
-                          type: string
-                      type: object
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings for
                         the pods.
@@ -11802,11 +11740,6 @@ spec:
                             - gzip
                             - zstd
                             type: string
-                          cypressDelivery:
-                            properties:
-                              enabled:
-                                type: boolean
-                            type: object
                           format:
                             default: plain_text
                             enum:
@@ -14130,13 +14063,6 @@ spec:
                               x-kubernetes-list-type: atomic
                           type: object
                       type: object
-                    builtinSidecars:
-                      properties:
-                        image:
-                          type: string
-                        logsDeliveryPath:
-                          type: string
-                      type: object
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings for
                         the pods.
@@ -14444,11 +14370,6 @@ spec:
                             - gzip
                             - zstd
                             type: string
-                          cypressDelivery:
-                            properties:
-                              enabled:
-                                type: boolean
-                            type: object
                           format:
                             default: plain_text
                             enum:
@@ -16733,13 +16654,6 @@ spec:
                             x-kubernetes-list-type: atomic
                         type: object
                     type: object
-                  builtinSidecars:
-                    properties:
-                      image:
-                        type: string
-                      logsDeliveryPath:
-                        type: string
-                    type: object
                   cellTagMasterCaches:
                     type: integer
                   dnsConfig:
@@ -17046,11 +16960,6 @@ spec:
                           - gzip
                           - zstd
                           type: string
-                        cypressDelivery:
-                          properties:
-                            enabled:
-                              type: boolean
-                          type: object
                         format:
                           default: plain_text
                           enum:
@@ -19404,13 +19313,6 @@ spec:
                             x-kubernetes-list-type: atomic
                         type: object
                     type: object
-                  builtinSidecars:
-                    properties:
-                      image:
-                        type: string
-                      logsDeliveryPath:
-                        type: string
-                    type: object
                   cellTag:
                     type: integer
                   dnsConfig:
@@ -19467,8 +19369,8 @@ spec:
                     type: boolean
                   hydraPersistenceUploader:
                     properties:
-                      enabled:
-                        type: boolean
+                      image:
+                        type: string
                     type: object
                   image:
                     description: Overrides coreImage for component.
@@ -19731,11 +19633,6 @@ spec:
                           - gzip
                           - zstd
                           type: string
-                        cypressDelivery:
-                          properties:
-                            enabled:
-                              type: boolean
-                          type: object
                         format:
                           default: plain_text
                           enum:
@@ -19788,6 +19685,13 @@ spec:
                       gracefully.
                     format: int64
                     type: integer
+                  timbertruck:
+                    properties:
+                      image:
+                        type: string
+                      logsDeliveryPath:
+                        type: string
+                    type: object
                   tolerations:
                     items:
                       description: |-
@@ -22011,13 +21915,6 @@ spec:
                             x-kubernetes-list-type: atomic
                         type: object
                     type: object
-                  builtinSidecars:
-                    properties:
-                      image:
-                        type: string
-                      logsDeliveryPath:
-                        type: string
-                    type: object
                   dnsConfig:
                     description: DNSConfig allows customizing the DNS settings for
                       the pods.
@@ -22316,11 +22213,6 @@ spec:
                           - gzip
                           - zstd
                           type: string
-                        cypressDelivery:
-                          properties:
-                            enabled:
-                              type: boolean
-                          type: object
                         format:
                           default: plain_text
                           enum:
@@ -24594,13 +24486,6 @@ spec:
                             x-kubernetes-list-type: atomic
                         type: object
                     type: object
-                  builtinSidecars:
-                    properties:
-                      image:
-                        type: string
-                      logsDeliveryPath:
-                        type: string
-                    type: object
                   dnsConfig:
                     description: DNSConfig allows customizing the DNS settings for
                       the pods.
@@ -24899,11 +24784,6 @@ spec:
                           - gzip
                           - zstd
                           type: string
-                        cypressDelivery:
-                          properties:
-                            enabled:
-                              type: boolean
-                          type: object
                         format:
                           default: plain_text
                           enum:
@@ -27184,13 +27064,6 @@ spec:
                               x-kubernetes-list-type: atomic
                           type: object
                       type: object
-                    builtinSidecars:
-                      properties:
-                        image:
-                          type: string
-                        logsDeliveryPath:
-                          type: string
-                      type: object
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings for
                         the pods.
@@ -27501,11 +27374,6 @@ spec:
                             - gzip
                             - zstd
                             type: string
-                          cypressDelivery:
-                            properties:
-                              enabled:
-                                type: boolean
-                            type: object
                           format:
                             default: plain_text
                             enum:
@@ -29822,13 +29690,6 @@ spec:
                             x-kubernetes-list-type: atomic
                         type: object
                     type: object
-                  builtinSidecars:
-                    properties:
-                      image:
-                        type: string
-                      logsDeliveryPath:
-                        type: string
-                    type: object
                   dnsConfig:
                     description: DNSConfig allows customizing the DNS settings for
                       the pods.
@@ -30127,11 +29988,6 @@ spec:
                           - gzip
                           - zstd
                           type: string
-                        cypressDelivery:
-                          properties:
-                            enabled:
-                              type: boolean
-                          type: object
                         format:
                           default: plain_text
                           enum:
@@ -32412,13 +32268,6 @@ spec:
                               x-kubernetes-list-type: atomic
                           type: object
                       type: object
-                    builtinSidecars:
-                      properties:
-                        image:
-                          type: string
-                        logsDeliveryPath:
-                          type: string
-                      type: object
                     cellTag:
                       type: integer
                     dnsConfig:
@@ -32476,8 +32325,8 @@ spec:
                       type: boolean
                     hydraPersistenceUploader:
                       properties:
-                        enabled:
-                          type: boolean
+                        image:
+                          type: string
                       type: object
                     image:
                       description: Overrides coreImage for component.
@@ -32740,11 +32589,6 @@ spec:
                             - gzip
                             - zstd
                             type: string
-                          cypressDelivery:
-                            properties:
-                              enabled:
-                                type: boolean
-                            type: object
                           format:
                             default: plain_text
                             enum:
@@ -32797,6 +32641,13 @@ spec:
                         gracefully.
                       format: int64
                       type: integer
+                    timbertruck:
+                      properties:
+                        image:
+                          type: string
+                        logsDeliveryPath:
+                          type: string
+                      type: object
                     tolerations:
                       items:
                         description: |-
@@ -35167,13 +35018,6 @@ spec:
                               x-kubernetes-list-type: atomic
                           type: object
                       type: object
-                    builtinSidecars:
-                      properties:
-                        image:
-                          type: string
-                        logsDeliveryPath:
-                          type: string
-                      type: object
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings for
                         the pods.
@@ -35480,11 +35324,6 @@ spec:
                             - gzip
                             - zstd
                             type: string
-                          cypressDelivery:
-                            properties:
-                              enabled:
-                                type: boolean
-                            type: object
                           format:
                             default: plain_text
                             enum:
@@ -37779,13 +37618,6 @@ spec:
                               x-kubernetes-list-type: atomic
                           type: object
                       type: object
-                    builtinSidecars:
-                      properties:
-                        image:
-                          type: string
-                        logsDeliveryPath:
-                          type: string
-                      type: object
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings for
                         the pods.
@@ -38102,11 +37934,6 @@ spec:
                             - gzip
                             - zstd
                             type: string
-                          cypressDelivery:
-                            properties:
-                              enabled:
-                                type: boolean
-                            type: object
                           format:
                             default: plain_text
                             enum:
@@ -40723,13 +40550,6 @@ spec:
                             x-kubernetes-list-type: atomic
                         type: object
                     type: object
-                  builtinSidecars:
-                    properties:
-                      image:
-                        type: string
-                      logsDeliveryPath:
-                        type: string
-                    type: object
                   dnsConfig:
                     description: DNSConfig allows customizing the DNS settings for
                       the pods.
@@ -41028,11 +40848,6 @@ spec:
                           - gzip
                           - zstd
                           type: string
-                        cypressDelivery:
-                          properties:
-                            enabled:
-                              type: boolean
-                          type: object
                         format:
                           default: plain_text
                           enum:

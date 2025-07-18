@@ -25,8 +25,6 @@ type TcpProxy struct {
 func NewTCPProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, masterReconciler Component, spec ytv1.TCPProxiesSpec) *TcpProxy {
 	l := cfgen.GetComponentLabeller(consts.TcpProxyType, spec.Role)
 
-	resource := ytsaurus.GetResource()
-
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -36,8 +34,6 @@ func NewTCPProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, masterR
 		func() ([]byte, error) {
 			return cfgen.GetTCPProxyConfig(spec)
 		},
-		&cfgen.NodeGenerator,
-		&resource.Spec,
 		consts.TCPProxyMonitoringPort,
 	)
 

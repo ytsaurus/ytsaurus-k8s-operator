@@ -24,7 +24,7 @@ type TimbertruckYTQueueConfig struct {
 	ProducerPath string `json:"producer_path"`
 }
 
-func NewTimbertruckConfig(structuredLoggers []ytv1.StructuredLoggerSpec, workDir, componentName, loggingDirectory, deliveryProxy, logsDeliveryPath string) *TimbertruckConfig {
+func NewTimbertruckConfig(structuredLoggers []ytv1.StructuredLoggerSpec, workDir, componentName, logsDirectory, deliveryProxy, logsDeliveryPath string) *TimbertruckConfig {
 	timbertruckConfig := &TimbertruckConfig{
 		WorkDir:  workDir,
 		JsonLogs: []TimbertruckJsonLogConfig{},
@@ -33,7 +33,7 @@ func NewTimbertruckConfig(structuredLoggers []ytv1.StructuredLoggerSpec, workDir
 	for _, structuredLogger := range structuredLoggers {
 		deliveryName := fmt.Sprintf("%s-%s", componentName, structuredLogger.Name)
 
-		fileName := path.Join(loggingDirectory, fmt.Sprintf("%s.%s.log", componentName, structuredLogger.Name))
+		fileName := path.Join(logsDirectory, fmt.Sprintf("%s.%s.log", componentName, structuredLogger.Name))
 		if structuredLogger.Format != ytv1.LogFormatPlainText {
 			fileName += fmt.Sprintf(".%s", structuredLogger.Format)
 		}

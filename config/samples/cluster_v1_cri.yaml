@@ -14,7 +14,7 @@ metadata:
 spec:
   # https://ytsaurus.tech/docs/en/admin-guide/releases#ytsaurus-server
   # https://github.com/ytsaurus/ytsaurus/pkgs/container/ytsaurus
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-23.2.0-relwithdebinfo
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.2.0-relwithdebinfo
 
   # Default "docker_image" for jobs
   jobImage: mirror.gcr.io/library/python:3.12-slim
@@ -46,9 +46,6 @@ spec:
   #    name: ytsaurus-native-secret
   #  tlsRequired: true
   #  tlsPeerAlternativeHostName: ...
-
-  # builtinSidecars:
-  #   image: ghcr.io/ytsaurus/sidecars:0.0.1
 
   ui:
     # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#uispec
@@ -105,11 +102,14 @@ spec:
     instanceCount: 1
 
     # hydraPersistenceUploader:
-    #   enabled: true
+    #   image: ghcr.io/ilyaibraev/sidecars-testing:2025-07-03-20776047d2eb92f4ee555dfaa69feb3835c71d67-fix-3
 
     cellTag: 1
 
     loggers: *loggers
+
+    timbertruck:
+      image: ghcr.io/ilyaibraev/sidecars-testing:2025-07-03-20776047d2eb92f4ee555dfaa69feb3835c71d67-fix-3
 
     # structuredLoggers:
     #   - name: access
@@ -120,8 +120,6 @@ spec:
     #       maxTotalSizeToKeep: 1073741824 # 1GiB
     #       rotationPeriodMilliseconds: 300000 # 5Min
     #       maxSegmentCountToKeep: 1000
-    #     cypressDelivery:
-    #       enabled: true
 
     locations:
       - locationType: Logs

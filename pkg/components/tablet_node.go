@@ -42,8 +42,6 @@ func NewTabletNode(
 ) *TabletNode {
 	l := cfgen.GetComponentLabeller(consts.TabletNodeType, spec.Name)
 
-	resource := ytsaurus.GetResource()
-
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -53,8 +51,6 @@ func NewTabletNode(
 		func() ([]byte, error) {
 			return cfgen.GetTabletNodeConfig(spec)
 		},
-		cfgen,
-		&resource.Spec,
 		consts.TabletNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

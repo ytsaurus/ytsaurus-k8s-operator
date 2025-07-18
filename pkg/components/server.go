@@ -2,7 +2,6 @@ package components
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"path"
 
@@ -59,9 +58,6 @@ type serverImpl struct {
 	busClientSecret   *resources.TLSSecret
 	configHelper      *ConfigHelper
 
-	cfgen        *ytconfig.NodeGenerator
-	ytsaurusSpec *ytv1.YtsaurusSpec
-
 	builtStatefulSet *appsv1.StatefulSet
 
 	componentContainerPorts []corev1.ContainerPort
@@ -76,8 +72,6 @@ func newServer(
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName string,
 	generator ytconfig.YsonGeneratorFunc,
-	cfgen *ytconfig.NodeGenerator,
-	ytsaurusSpec *ytv1.YtsaurusSpec,
 	defaultMonitoringPort int32,
 	options ...Option,
 ) server {
@@ -90,8 +84,6 @@ func newServer(
 		instanceSpec,
 		binaryPath, configFileName,
 		generator,
-		cfgen,
-		ytsaurusSpec,
 		defaultMonitoringPort,
 		options...,
 	)
@@ -104,8 +96,6 @@ func newServerConfigured(
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName string,
 	generator ytconfig.YsonGeneratorFunc,
-	cfgen *ytconfig.NodeGenerator,
-	ytsaurusSpec *ytv1.YtsaurusSpec,
 	defaultMonitoringPort int32,
 	optFuncs ...Option,
 ) server {
@@ -159,10 +149,6 @@ func newServerConfigured(
 		fn(opts)
 	}
 
-	if timbertruckImage := extractTimbertruckImageFromSpec(commonSpec, instanceSpec); timbertruckImage != "" {
-		opts.sidecarImages[consts.TimbertruckContainerName] = timbertruckImage
-	}
-
 	return &serverImpl{
 		labeller:      l,
 		image:         image,
@@ -201,9 +187,6 @@ func newServerConfigured(
 					Fmt: ytconfig.ConfigFormatYson,
 				},
 			}),
-
-		cfgen:        cfgen,
-		ytsaurusSpec: ytsaurusSpec,
 
 		componentContainerPorts: opts.containerPorts,
 
@@ -421,8 +404,6 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	}
 	statefulSet.Spec.Template.Spec.DNSPolicy = stsDNSPolicy
 
-	s.patchWithTimbertruck(statefulSet, s.instanceSpec.StructuredLoggers)
-
 	if s.caBundle != nil {
 		s.caBundle.AddVolume(&statefulSet.Spec.Template.Spec)
 		for i := range statefulSet.Spec.Template.Spec.Containers {
@@ -444,94 +425,6 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 
 	s.builtStatefulSet = statefulSet
 	return statefulSet
-}
-
-func extractLogsDeliveryPathFromSpec(commonSpec ytv1.CommonSpec, instanceSpec *ytv1.InstanceSpec) string {
-	logsDeliveryPath := "//sys/admin/logs"
-	if commonSpec.BuiltinSidecars != nil && commonSpec.BuiltinSidecars.LogsDeliveryPath != "" {
-		logsDeliveryPath = commonSpec.BuiltinSidecars.LogsDeliveryPath
-	}
-	if instanceSpec.BuiltinSidecars != nil && instanceSpec.BuiltinSidecars.LogsDeliveryPath != "" {
-		logsDeliveryPath = instanceSpec.BuiltinSidecars.LogsDeliveryPath
-	}
-	return logsDeliveryPath
-}
-
-func extractTimbertruckImageFromSpec(commonSpec ytv1.CommonSpec, instanceSpec *ytv1.InstanceSpec) string {
-	// If none of the loggers are going to deliver logs to cypress, then don't return the image.
-	// This is important because otherwise the StatefulSet will wait for a timbertruck to be created,
-	// which will not happen without at least one DeliveryToCypress.
-	image := extractBuiltinSidecarImageFromSpec(commonSpec, *instanceSpec)
-	for _, structuredLogger := range instanceSpec.StructuredLoggers {
-		if structuredLogger.CypressDelivery != nil && structuredLogger.CypressDelivery.Enabled {
-			return image
-		}
-	}
-	return ""
-}
-
-func (s *serverImpl) patchWithTimbertruck(statefulSet *appsv1.StatefulSet, structuredLoggers []ytv1.StructuredLoggerSpec) {
-	image := extractTimbertruckImageFromSpec(s.commonSpec, s.instanceSpec)
-	if image == "" {
-		return
-	}
-
-	logsDeliveryPath := extractLogsDeliveryPathFromSpec(s.commonSpec, s.instanceSpec)
-
-	workDir := ""
-	for _, locations := range s.instanceSpec.Locations {
-		if locations.LocationType == ytv1.LocationTypeLogs {
-			workDir = locations.Path
-			break
-		}
-	}
-	if workDir == "" {
-		return
-	}
-	timbertruckConfig := ytconfig.NewTimbertruckConfig(
-		structuredLoggers,
-		path.Join(workDir, consts.TimbertruckWorkDirName),
-		consts.GetServiceKebabCase(s.labeller.ComponentType),
-		workDir,
-		s.cfgen.GetHTTPProxiesAddress(s.ytsaurusSpec, consts.DefaultHTTPProxyRole),
-		logsDeliveryPath,
-	)
-
-	if timbertruckConfig == nil {
-		return
-	}
-
-	timbertruckInitScript, err := getTimbertruckInitScript(timbertruckConfig)
-	if err != nil {
-		return
-	}
-
-	statefulSet.Spec.Template.Spec.Containers = append(statefulSet.Spec.Template.Spec.Containers, corev1.Container{
-		Name:    consts.TimbertruckContainerName,
-		Image:   image,
-		Command: []string{"/bin/bash", "-c", timbertruckInitScript},
-		Env: []corev1.EnvVar{
-			{
-				Name: consts.TokenSecretKey,
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: fmt.Sprintf("%s-secret", consts.TimbertruckUserName),
-						},
-						Key: consts.TokenSecretKey,
-					},
-				},
-			},
-			{
-				Name:  "YT_PROXY",
-				Value: s.cfgen.GetHTTPProxiesAddress(s.ytsaurusSpec, consts.DefaultHTTPProxyRole),
-			},
-		},
-		VolumeMounts: []corev1.VolumeMount{
-			{Name: path.Base(workDir), MountPath: workDir, ReadOnly: false},
-		},
-		ImagePullPolicy: corev1.PullAlways,
-	})
 }
 
 func (s *serverImpl) removePods(ctx context.Context) error {

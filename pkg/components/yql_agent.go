@@ -41,8 +41,6 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		func() ([]byte, error) {
 			return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents)
 		},
-		&cfgen.NodeGenerator,
-		&resource.Spec,
 		consts.YQLAgentMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

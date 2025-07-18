@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
+	"path"
 	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -20,6 +21,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -317,94 +319,190 @@ func getTimbertruckInitScript(timbertruckConfig *ytconfig.TimbertruckConfig) (st
 func prepareTimbertruckTablesFromConfig(ctx context.Context, ytClient yt.Client, timbertruckConfig *ytconfig.TimbertruckConfig, logsDeliveryPath string) error {
 	for _, jsonLog := range timbertruckConfig.JsonLogs {
 		for _, ytQueue := range jsonLog.YTQueue {
-			queueExportPath := fmt.Sprintf("%s/export/%s", logsDeliveryPath, jsonLog.Name)
-			_, err := ytClient.CreateNode(
-				ctx,
-				ypath.Path(ytQueue.QueuePath),
-				yt.NodeTable,
-				&yt.CreateNodeOptions{
-					Attributes: map[string]any{
-						"dynamic": true,
-						"schema":  consts.RawLogsQueueSchema,
-						"auto_trim_config": map[string]any{
-							"enable":                     true,
-							"retained_lifetime_duration": 24 * 60 * 60 * 1000, // 24 hours
-						},
-						"static_export_config": map[string]any{
-							"default": map[string]any{
-								"export_directory": queueExportPath,
-								"export_period":    4 * 60 * 60 * 1000, // 4 hours
-							},
-						},
-						"commit_ordering": "strong",
-						"optimize_for":    "scan",
-					},
-					Recursive:      true,
-					IgnoreExisting: true,
-				})
-			if err != nil {
-				return fmt.Errorf("failed to create YT queue %s: %w", ytQueue.QueuePath, err)
+			queuePath := ytQueue.QueuePath
+			exportPath := fmt.Sprintf("%s/export/%s", logsDeliveryPath, jsonLog.Name)
+			if err := prepareQueue(ctx, ytClient, queuePath, exportPath); err != nil {
+				return fmt.Errorf("failed to prepare YT queue %s with export destination %s: %w", queuePath, exportPath, err)
 			}
-			err = ytClient.MountTable(ctx, ypath.Path(ytQueue.QueuePath), &yt.MountTableOptions{})
-			if err != nil {
-				return fmt.Errorf("failed to mount YT queue %s: %w", ytQueue.QueuePath, err)
+			producerPath := ytQueue.ProducerPath
+			if err := prepareProducer(ctx, ytClient, producerPath); err != nil {
+				return fmt.Errorf("failed to prepare YT producer %s: %w", producerPath, err)
 			}
-
-			_, err = ytClient.CreateNode(
-				ctx,
-				ypath.Path(ytQueue.ProducerPath),
-				yt.NodeQueueProducer,
-				&yt.CreateNodeOptions{
-					Attributes: map[string]any{
-						"min_data_versions": 0,
-						"min_data_ttl":      0,
-						"max_data_ttl":      2592000000,
-					},
-					Recursive:      true,
-					IgnoreExisting: true,
-				})
-			if err != nil {
-				return fmt.Errorf("failed to create YT producer (this functionality is supported on YTsaurus versions 24.1 and higher) %s: %w", ytQueue.ProducerPath, err)
-			}
-			err = ytClient.MountTable(ctx, ypath.Path(ytQueue.ProducerPath), &yt.MountTableOptions{})
-			if err != nil {
-				return fmt.Errorf("failed to mount YT producer %s: %w", ytQueue.ProducerPath, err)
-			}
-
-			_, err = ytClient.CreateNode(ctx, ypath.Path(queueExportPath), yt.NodeMap, &yt.CreateNodeOptions{
-				IgnoreExisting: true,
-				Recursive:      true,
-			})
-			if err != nil {
-				return fmt.Errorf("failed to create export destination %s: %w", queueExportPath, err)
-			}
-
-			var queueId string
-			err = ytClient.GetNode(ctx, ypath.Path(ytQueue.QueuePath).Attr("id"), &queueId, &yt.GetNodeOptions{})
-			if err != nil {
-				return fmt.Errorf("failed to get queue ID for %s: %w", ytQueue.QueuePath, err)
-			}
-
-			err = ytClient.SetNode(ctx, ypath.Path(queueExportPath).Attr("queue_static_export_destination"), map[string]any{"originating_queue_id": queueId}, &yt.SetNodeOptions{
-				Recursive: true,
-			})
-			if err != nil {
-				return fmt.Errorf("failed to set originating queue ID for export destination %s: %w", queueExportPath, err)
+			if err := prepareExportDestination(ctx, ytClient, queuePath, exportPath); err != nil {
+				return fmt.Errorf("failed to prepare export destination %s for YT queue %s: %w", exportPath, queuePath, err)
 			}
 		}
 	}
 	return nil
 }
 
-func extractBuiltinSidecarImageFromSpec(commonSpec ytv1.CommonSpec, instanceSpec ytv1.InstanceSpec) string {
-	instanceSpecSidecars := instanceSpec.BuiltinSidecars
-	commonSpecSidecars := commonSpec.BuiltinSidecars
-	var image string
-	if commonSpecSidecars != nil && commonSpecSidecars.Image != "" {
-		image = commonSpecSidecars.Image
+func prepareQueue(ctx context.Context, ytClient yt.Client, queuePath, exportPath string) error {
+	_, err := ytClient.CreateNode(
+		ctx,
+		ypath.Path(queuePath),
+		yt.NodeTable,
+		&yt.CreateNodeOptions{
+			Attributes: map[string]any{
+				"dynamic": true,
+				"schema":  consts.RawLogsQueueSchema,
+				"auto_trim_config": map[string]any{
+					"enable":                     true,
+					"retained_lifetime_duration": 24 * 60 * 60 * 1000, // 24 hours
+				},
+				"static_export_config": map[string]any{
+					"default": map[string]any{
+						"export_directory": exportPath,
+						"export_period":    4 * 60 * 60 * 1000, // 4 hours
+					},
+				},
+				"commit_ordering": "strong",
+				"optimize_for":    "scan",
+			},
+			Recursive:      true,
+			IgnoreExisting: true,
+		})
+	if err != nil {
+		return fmt.Errorf("failed to create YT queue %s: %w", queuePath, err)
 	}
-	if instanceSpecSidecars != nil && instanceSpecSidecars.Image != "" {
-		image = instanceSpecSidecars.Image
+	err = ytClient.MountTable(ctx, ypath.Path(queuePath), &yt.MountTableOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to mount YT queue %s: %w", queuePath, err)
 	}
-	return image
+	return nil
+}
+
+func prepareProducer(ctx context.Context, ytClient yt.Client, producerPath string) error {
+	_, err := ytClient.CreateNode(
+		ctx,
+		ypath.Path(producerPath),
+		yt.NodeQueueProducer,
+		&yt.CreateNodeOptions{
+			Attributes: map[string]any{
+				"min_data_versions": 0,
+				"min_data_ttl":      0,
+				"max_data_ttl":      2592000000,
+			},
+			Recursive:      true,
+			IgnoreExisting: true,
+		})
+	if err != nil {
+		return fmt.Errorf("failed to create YT producer (this functionality is supported on YTsaurus versions 24.1 and higher) %s: %w", producerPath, err)
+	}
+	err = ytClient.MountTable(ctx, ypath.Path(producerPath), &yt.MountTableOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to mount YT producer %s: %w", producerPath, err)
+	}
+	return nil
+}
+
+func prepareExportDestination(ctx context.Context, ytClient yt.Client, queuePath, exportPath string) error {
+	_, err := ytClient.CreateNode(ctx, ypath.Path(exportPath), yt.NodeMap, &yt.CreateNodeOptions{
+		IgnoreExisting: true,
+		Recursive:      true,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create export destination %s: %w", exportPath, err)
+	}
+
+	var queueId string
+	err = ytClient.GetNode(ctx, ypath.Path(queuePath).Attr("id"), &queueId, &yt.GetNodeOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get queue ID for %s: %w", queuePath, err)
+	}
+
+	err = ytClient.SetNode(ctx, ypath.Path(exportPath).Attr("queue_static_export_destination"), map[string]any{"originating_queue_id": queueId}, &yt.SetNodeOptions{
+		Recursive: true,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to set originating queue ID for export destination %s: %w", exportPath, err)
+	}
+	return nil
+}
+
+func getLogsDeliveryPath(timbertruck *ytv1.TimbertruckSpec) string {
+	if timbertruck != nil && timbertruck.LogsDeliveryPath != nil && *timbertruck.LogsDeliveryPath != "" {
+		return *timbertruck.LogsDeliveryPath
+	}
+	return "//sys/admin/logs"
+}
+
+func checkAndAddTimbertruckToPodSpec(timbertruck *ytv1.TimbertruckSpec, podSpec *corev1.PodSpec, instanceSpec *ytv1.InstanceSpec, labeler *labeller.Labeller, cfgen *ytconfig.Generator) error {
+	if timbertruck == nil || timbertruck.Image == nil || *timbertruck.Image == "" {
+		return nil
+	}
+
+	if len(instanceSpec.StructuredLoggers) == 0 {
+		return nil
+	}
+
+	logsDeliveryPath := getLogsDeliveryPath(timbertruck)
+
+	logsLocation := ytv1.FindFirstLocation(instanceSpec.Locations, ytv1.LocationTypeLogs)
+	if logsLocation == nil {
+		return fmt.Errorf("you are trying to use Timbertruck, but no logs location is defined in the instance spec")
+	}
+	structuredLoggres := instanceSpec.StructuredLoggers
+	logsDirectory := logsLocation.Path
+	componentName := consts.GetServiceKebabCase(labeler.ComponentType)
+	workDir := fmt.Sprintf("%s/%s", logsDirectory, consts.TimbertruckWorkDirName)
+	deliveryProxy := cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
+
+	timbertruckConfig := ytconfig.NewTimbertruckConfig(
+		structuredLoggres,
+		workDir,
+		componentName,
+		logsDirectory,
+		deliveryProxy,
+		logsDeliveryPath,
+	)
+
+	if timbertruckConfig == nil {
+		return nil
+	}
+
+	timbertruckInitScript, err := getTimbertruckInitScript(timbertruckConfig)
+	if err != nil {
+		return fmt.Errorf("failed to get timbertruck init script: %w", err)
+	}
+
+	podSpec.Containers = append(podSpec.Containers, corev1.Container{
+		Name:    consts.TimbertruckContainerName,
+		Image:   *timbertruck.Image,
+		Command: []string{"/bin/bash", "-c", timbertruckInitScript},
+		Env: []corev1.EnvVar{
+			{
+				Name: consts.TokenSecretKey,
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: buildUserCredentialsSecretname(consts.TimbertruckUserName),
+						},
+						Key: consts.TokenSecretKey,
+					},
+				},
+			},
+			{
+				Name:  "YT_PROXY",
+				Value: deliveryProxy,
+			},
+		},
+		VolumeMounts: []corev1.VolumeMount{
+			{Name: path.Base(logsDirectory), MountPath: logsDirectory, ReadOnly: false},
+		},
+		ImagePullPolicy: corev1.PullIfNotPresent,
+	})
+	return nil
+}
+
+func checkAndAddTimbertruckToServerOptions(options *[]Option, timbertruck *ytv1.TimbertruckSpec, structuredLoggers []ytv1.StructuredLoggerSpec) {
+	if timbertruck != nil && timbertruck.Image != nil && *timbertruck.Image != "" && len(structuredLoggers) > 0 {
+		*options = append(*options, WithSidecarImage(
+			consts.TimbertruckContainerName,
+			*timbertruck.Image,
+		))
+	}
+}
+
+func buildUserCredentialsSecretname(username string) string {
+	return fmt.Sprintf("%s-secret", username)
 }

@@ -27,8 +27,6 @@ func NewDataNode(
 ) *DataNode {
 	l := cfgen.GetComponentLabeller(consts.DataNodeType, spec.Name)
 
-	resource := ytsaurus.GetResource()
-
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -38,8 +36,6 @@ func NewDataNode(
 		func() ([]byte, error) {
 			return cfgen.GetDataNodeConfig(spec)
 		},
-		cfgen,
-		&resource.Spec,
 		consts.DataNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

@@ -35,8 +35,6 @@ func NewRemoteExecNodes(
 		func() ([]byte, error) {
 			return cfgen.GetExecNodeConfig(spec)
 		},
-		cfgen,
-		&ytv1.YtsaurusSpec{},
 		consts.ExecNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

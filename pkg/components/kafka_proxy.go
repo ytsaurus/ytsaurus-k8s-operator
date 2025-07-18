@@ -26,7 +26,7 @@ type KafkaProxy struct {
 
 func NewKafkaProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, masterReconciler Component, spec ytv1.KafkaProxiesSpec) *KafkaProxy {
 	l := cfgen.GetComponentLabeller(consts.KafkaProxyType, spec.Role)
-	resource := ytsaurus.GetResource()
+
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -36,8 +36,6 @@ func NewKafkaProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, maste
 		func() ([]byte, error) {
 			return cfgen.GetKafkaProxyConfig(spec)
 		},
-		&cfgen.NodeGenerator,
-		&resource.Spec,
 		consts.KafkaProxyMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

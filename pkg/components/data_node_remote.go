@@ -38,8 +38,6 @@ func NewRemoteDataNodes(
 		func() ([]byte, error) {
 			return cfgen.GetDataNodeConfig(spec)
 		},
-		cfgen,
-		&ytv1.YtsaurusSpec{},
 		consts.DataNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
