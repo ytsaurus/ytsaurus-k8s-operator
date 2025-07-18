@@ -16,7 +16,7 @@ type QueryTrackerServer struct {
 func getQueryTrackerLogging(spec *ytv1.QueryTrackerSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
-		"query-tracker",
+		consts.GetServiceKebabCase(consts.QueryTrackerType),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 

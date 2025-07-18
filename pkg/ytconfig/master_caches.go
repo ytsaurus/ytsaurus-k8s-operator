@@ -16,7 +16,7 @@ type MasterCacheServer struct {
 func getMasterCachesLogging(spec *ytv1.MasterCachesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
-		"master-cache",
+		consts.GetServiceKebabCase(consts.MasterCacheType),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 

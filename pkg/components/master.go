@@ -46,12 +46,18 @@ func buildMasterOptions(resource *ytv1.Ytsaurus) []Option {
 		}),
 	}
 
-	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil {
+	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil && resource.Spec.PrimaryMasters.HydraPersistenceUploader.Image != nil {
 		options = append(options, WithSidecarImage(
 			consts.HydraPersistenceUploaderContainerName,
-			resource.Spec.PrimaryMasters.HydraPersistenceUploader.Image,
+			*resource.Spec.PrimaryMasters.HydraPersistenceUploader.Image,
 		))
 	}
+
+	checkAndAddTimbertruckToServerOptions(
+		&options,
+		resource.Spec.PrimaryMasters.Timbertruck,
+		resource.Spec.PrimaryMasters.InstanceSpec.StructuredLoggers,
+	)
 
 	return options
 }
@@ -113,7 +119,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		exitReadOnlyJob:      exitReadOnlyJob,
 		sidecarSecrets: &sidecarSecretsStruct{
 			hydraPersistenceUploaderSecret: resources.NewStringSecret(
-				fmt.Sprintf("%s-secret", consts.HydraPersistenceUploaderUserName),
+				buildUserCredentialsSecretname(consts.HydraPersistenceUploaderUserName),
 				l,
 				ytsaurus.APIProxy()),
 		},
@@ -179,7 +185,7 @@ func (m *Master) initHydraPersistenceUploaderUser() (string, error) {
 		{
 			Action:          "allow",
 			Subjects:        []string{login},
-			Permissions:     []yt.Permission{"read", "write", "remove", "use", "create"},
+			Permissions:     []yt.Permission{"read", "write", "remove", "create"},
 			InheritanceMode: "object_and_descendants",
 		},
 	})
@@ -458,13 +464,16 @@ func (m *Master) doServerSync(ctx context.Context) error {
 	podSpec := &statefulSet.Spec.Template.Spec
 	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
 
-	if primaryMastersSpec.HydraPersistenceUploader != nil {
+	if primaryMastersSpec.HydraPersistenceUploader != nil && primaryMastersSpec.HydraPersistenceUploader.Image != nil {
 		addHydraPersistenceUploaderToPodSpec(
-			primaryMastersSpec.HydraPersistenceUploader,
+			*primaryMastersSpec.HydraPersistenceUploader.Image,
 			podSpec,
 			m.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
-			fmt.Sprintf("%s-secret", consts.HydraPersistenceUploaderUserName),
+			buildUserCredentialsSecretname(consts.HydraPersistenceUploaderUserName),
 		)
+	}
+	if err := checkAndAddTimbertruckToPodSpec(primaryMastersSpec.Timbertruck, podSpec, &primaryMastersSpec.InstanceSpec, m.labeller, m.cfgen); err != nil {
+		return err
 	}
 	if err := AddSidecarsToPodSpec(primaryMastersSpec.Sidecars, podSpec); err != nil {
 		return err
@@ -591,11 +600,11 @@ func (m *Master) runMasterInitJob(ctx context.Context, dry bool) (ComponentStatu
 	return m.initJob.Sync(ctx, dry)
 }
 
-func addHydraPersistenceUploaderToPodSpec(hydraPersistenceUploader *ytv1.HydraPersistenceUploaderSpec, podSpec *corev1.PodSpec, proxy string, secretKey string) {
+func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.PodSpec, proxy string, secretKey string) {
 	podSpec.Containers = append(podSpec.Containers,
 		corev1.Container{
 			Name:    consts.HydraPersistenceUploaderContainerName,
-			Image:   hydraPersistenceUploader.Image,
+			Image:   hydraImage,
 			Command: []string{"/usr/bin/hydra_persistence_uploader"},
 			Env: []corev1.EnvVar{
 				{
@@ -617,7 +626,7 @@ func addHydraPersistenceUploaderToPodSpec(hydraPersistenceUploader *ytv1.HydraPe
 				{Name: "master-logs", MountPath: "/yt/master-logs", ReadOnly: true},
 				{Name: "shared-binaries", MountPath: "/shared-binaries", ReadOnly: false},
 			},
-			ImagePullPolicy: corev1.PullAlways,
+			ImagePullPolicy: corev1.PullIfNotPresent,
 		},
 	)
 

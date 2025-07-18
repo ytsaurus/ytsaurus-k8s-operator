@@ -104,6 +104,8 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus *Ytsaurus, mastersSpe
 
 	allErrors = append(allErrors, r.validateHydraPersistenceUploaderSpec(mastersSpec.HydraPersistenceUploader, path.Child("hydraPersistenceUploader"))...)
 
+	allErrors = append(allErrors, r.validateTimbertruckSpec(mastersSpec.Timbertruck, path.Child("timbertruck"))...)
+
 	allErrors = append(allErrors, r.validateSidecars(mastersSpec.Sidecars, path.Child("sidecars"))...)
 
 	return allErrors
@@ -246,8 +248,19 @@ func (r *baseValidator) validateHydraPersistenceUploaderSpec(
 	hydraPersistenceUploader *HydraPersistenceUploaderSpec, path *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
-	if hydraPersistenceUploader != nil && hydraPersistenceUploader.Image == "" {
+	if hydraPersistenceUploader != nil && hydraPersistenceUploader.Image == nil {
 		allErrors = append(allErrors, field.Required(path.Child("image"), "hydraPersistenceUploader image is required"))
+	}
+
+	return allErrors
+}
+
+func (r *baseValidator) validateTimbertruckSpec(
+	timbertruck *TimbertruckSpec, path *field.Path) field.ErrorList {
+	var allErrors field.ErrorList
+
+	if timbertruck != nil && timbertruck.Image == nil {
+		allErrors = append(allErrors, field.Required(path.Child("image"), "timbertruck image is required"))
 	}
 
 	return allErrors
