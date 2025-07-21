@@ -153,11 +153,13 @@ test-e2e: generate-code manifests ginkgo ## Run e2e tests.
 	$(GINKGO) $(GINKGO_FLAGS) ./test/e2e/... -coverprofile cover.out -timeout 1800s
 
 .PHONY: lint
-lint: fmt vet golangci-lint ## Run golangci-lint linter.
+lint: golangci-lint ## Run golangci-lint linter.
 	$(GOLANGCI_LINT) run
 
 .PHONY: lint-fix
 lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes.
+	$(MAKE) fmt
+	$(MAKE) vet
 	$(GOLANGCI_LINT) run --fix
 
 .PHONY: lint-generated
