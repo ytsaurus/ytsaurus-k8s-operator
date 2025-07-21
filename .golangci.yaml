@@ -44,7 +44,6 @@ linters:
     - unconvert # Remove unnecessary type conversions.
     # - tagalign # Check that struct tags are well aligned. [fast, auto-fix]
     # - unparam # Reports unused function parameters.
-    # - wsl # add or remove empty lines
     - whitespace # detects leading and trailing whitespace
     # - dupl # Detects duplicate fragments of code. [fast]
     # - gochecknoinits # Checks that no init functions are present in Go code. [fast]
@@ -117,10 +116,7 @@ linters:
     # - prealloc # Find slice declarations that could potentially be pre-allocated. [fast]
     # - perfsprint # Checks that fmt.Sprintf can be replaced with a faster alternative. [auto-fix]
 
-    # - dupl # tool for code clone detection
-    # - goconst # finds repeated strings that could be replaced by a constant
     - gocritic # provides diagnostics that check for bugs, performance and style issues
-    # - godot # checks if comments end in a period
     # - gomnd # detects magic numbers
     - gomoddirectives # manages the use of 'replace', 'retract', and 'excludes' directives in go.mod
     - gomodguard # allow and block lists linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations
@@ -128,23 +124,16 @@ linters:
     - importas # enforces consistent import aliases (not useful without config)
     - inamedparam # Reports interfaces with unnamed method parameters
     - interfacebloat # checks the number of methods inside an interface
-    # - intrange # finds places where for loops could make use of an integer range
     - mirror # reports wrong mirror patterns of bytes/strings usage
     - misspell # finds commonly misspelled english words in comments
-    # - nakedret # finds naked returns in functions greater than a specified function length
     - nolintlint # reports ill-formed or insufficient nolint directives
     - nosprintfhostport # checks for misuse of Sprintf to construct a host with port in a URL
-    # - perfsprint # checks that fmt.Sprintf can be replaced with a faster alternative
     - predeclared # finds code that shadows one of Go's predeclared identifiers
     - promlinter # checks Prometheus metrics naming via promlint
     # - revive # fast, configurable, extensible, flexible, and beautiful linter for Go, drop-in replacement of golint
     - sloglint # ensure consistent code style when using log/slog
-    # - tagalign # check that struct tags are well aligned
     - tagliatelle # checks the struct tags
     - testableexamples # checks if examples are testable (have an expected output)
-    # - testpackage # makes you use a separate _test package
-    # - unconvert # removes unnecessary type conversions
-    # - unparam # reports unused function parameters
     - wastedassign # finds wasted assignment statements
 
     ## tests
@@ -162,7 +151,6 @@ linters:
     # - exhaustruct # Checks if all structure fields are initialized.
     - exptostd # Detects functions from golang.org/x/exp/ that can be replaced by std functions. [auto-fix]
     - grouper # Analyze expression groups. [fast]
-    # - revive # Fast, configurable, extensible, flexible, and beautiful linter for Go. Drop-in replacement of golint. [auto-fix]
 
   settings:
     cyclop:
