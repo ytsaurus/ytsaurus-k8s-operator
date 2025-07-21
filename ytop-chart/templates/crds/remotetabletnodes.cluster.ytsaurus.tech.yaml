@@ -1045,9 +1045,7 @@ spec:
                     type: integer
                 type: object
               remoteClusterSpec:
-                description: |-
-                  LocalObjectReference contains enough information to let you locate the
-                  reference
+                description: Reference to RemoteYtsaurus resource.
                 properties:
                   name:
                     default: ""

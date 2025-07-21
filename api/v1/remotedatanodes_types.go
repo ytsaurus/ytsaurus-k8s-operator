@@ -17,15 +17,14 @@ limitations under the License.
 package v1
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // RemoteDataNodesSpec defines the desired state of RemoteDataNodes
 type RemoteDataNodesSpec struct {
-	RemoteClusterSpec *corev1.LocalObjectReference `json:"remoteClusterSpec"`
-	CommonSpec        `json:",inline"`
-	DataNodesSpec     `json:",inline"`
+	CommonRemoteNodeSpec `json:",inline"`
+	CommonSpec           `json:",inline"`
+	DataNodesSpec        `json:",inline"`
 }
 
 // RemoteDataNodesStatus defines the observed state of RemoteDataNodes

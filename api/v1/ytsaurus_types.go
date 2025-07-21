@@ -670,6 +670,12 @@ type CommonSpec struct {
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 }
 
+// CommonRemoteNodeSpec is a set of fields shared between `Remote*NodesSpec`.
+type CommonRemoteNodeSpec struct {
+	// Reference to RemoteYtsaurus resource.
+	RemoteClusterSpec *corev1.LocalObjectReference `json:"remoteClusterSpec"`
+}
+
 type RemoteNodeReleaseStatus string
 
 const (

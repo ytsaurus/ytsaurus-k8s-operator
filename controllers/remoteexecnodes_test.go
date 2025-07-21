@@ -246,9 +246,11 @@ func buildRemoteExecNodes(h *testutil.TestHelper, remoteYtsaurusName, remoteExec
 	return ytv1.RemoteExecNodes{
 		ObjectMeta: h.GetObjectMeta(remoteExecNodesName),
 		Spec: ytv1.RemoteExecNodesSpec{
-			RemoteClusterSpec: &(corev1.LocalObjectReference{
-				Name: remoteYtsaurusName,
-			}),
+			CommonRemoteNodeSpec: ytv1.CommonRemoteNodeSpec{
+				RemoteClusterSpec: &corev1.LocalObjectReference{
+					Name: remoteYtsaurusName,
+				},
+			},
 			ExecNodesSpec: ytv1.ExecNodesSpec{
 				InstanceSpec: ytv1.InstanceSpec{
 					Image: ptr.To(testYtsaurusImage),
