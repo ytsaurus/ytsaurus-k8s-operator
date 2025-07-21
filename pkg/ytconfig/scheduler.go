@@ -17,6 +17,7 @@ type Scheduler struct {
 
 type SchedulerServer struct {
 	CommonServer
+
 	Scheduler Scheduler `yson:"scheduler"`
 }
 
@@ -33,6 +34,7 @@ type ControllerAgent struct {
 
 type ControllerAgentServer struct {
 	CommonServer
+
 	ControllerAgent ControllerAgent `yson:"controller_agent"`
 }
 

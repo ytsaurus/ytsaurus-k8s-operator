@@ -13,10 +13,11 @@ import (
 )
 
 type RemoteDataNode struct {
+	baseComponent
+
 	server server
 	cfgen  *ytconfig.NodeGenerator
 	spec   *ytv1.DataNodesSpec
-	baseComponent
 }
 
 func NewRemoteDataNodes(

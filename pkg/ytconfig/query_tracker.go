@@ -9,6 +9,7 @@ import (
 
 type QueryTrackerServer struct {
 	CommonServer
+
 	User                       string `yson:"user"`
 	CreateStateTablesOnStartup bool   `yson:"create_state_tables_on_startup"`
 }

@@ -191,6 +191,7 @@ type BaseLoggerSpec struct {
 
 type TextLoggerSpec struct {
 	BaseLoggerSpec `json:",inline"`
+
 	//+kubebuilder:validation:Enum=file;stderr
 	WriterType       LogWriterType     `json:"writerType,omitempty"`
 	CategoriesFilter *CategoriesFilter `json:"categoriesFilter,omitempty"`
@@ -198,7 +199,8 @@ type TextLoggerSpec struct {
 
 type StructuredLoggerSpec struct {
 	BaseLoggerSpec `json:",inline"`
-	Category       string `json:"category,omitempty"`
+
+	Category string `json:"category,omitempty"`
 }
 
 type BundleBootstrapSpec struct {
@@ -341,6 +343,7 @@ type HTTPTransportSpec struct {
 
 type HTTPProxiesSpec struct {
 	InstanceSpec `json:",inline"`
+
 	//+kubebuilder:default:=NodePort
 	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
 	//+kubebuilder:default:=80
@@ -376,8 +379,9 @@ type RPCTransportSpec struct {
 
 type RPCProxiesSpec struct {
 	InstanceSpec `json:",inline"`
-	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
-	NodePort     *int32              `json:"nodePort,omitempty"`
+
+	ServiceType *corev1.ServiceType `json:"serviceType,omitempty"`
+	NodePort    *int32              `json:"nodePort,omitempty"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`
@@ -387,7 +391,8 @@ type RPCProxiesSpec struct {
 
 type TCPProxiesSpec struct {
 	InstanceSpec `json:",inline"`
-	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
+
+	ServiceType *corev1.ServiceType `json:"serviceType,omitempty"`
 	//+kubebuilder:default:=32000
 	MinPort int32 `json:"minPort"`
 	// Number of ports to allocate for balancing service.
@@ -400,7 +405,8 @@ type TCPProxiesSpec struct {
 
 type KafkaProxiesSpec struct {
 	InstanceSpec `json:",inline"`
-	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
+
+	ServiceType *corev1.ServiceType `json:"serviceType,omitempty"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`
@@ -418,6 +424,7 @@ type DataNodesSpec struct {
 	InstanceSpec `json:",inline"`
 	// Common part of the cluster node spec.
 	ClusterNodesSpec `json:",inline"`
+
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name,omitempty"`
@@ -479,6 +486,7 @@ type ExecNodesSpec struct {
 	InstanceSpec `json:",inline"`
 	// Common part of the cluster node spec.
 	ClusterNodesSpec `json:",inline"`
+
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name,omitempty"`
@@ -502,6 +510,7 @@ type TabletNodesSpec struct {
 	InstanceSpec `json:",inline"`
 	// Common part of the cluster node spec.
 	ClusterNodesSpec `json:",inline"`
+
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name,omitempty"`
@@ -606,7 +615,8 @@ type MasterCachesConnectionSpec struct {
 type MasterCachesSpec struct {
 	InstanceSpec               `json:",inline"`
 	MasterCachesConnectionSpec `json:",inline"`
-	HostAddressLabel           string `json:"hostAddressesLabel,omitempty"`
+
+	HostAddressLabel string `json:"hostAddressesLabel,omitempty"`
 }
 
 type ClusterFeatures struct {
@@ -694,7 +704,8 @@ type CommonRemoteNodeStatus struct {
 // YtsaurusSpec defines the desired state of Ytsaurus
 type YtsaurusSpec struct {
 	CommonSpec `json:",inline"`
-	UIImage    string `json:"uiImage,omitempty"`
+
+	UIImage string `json:"uiImage,omitempty"`
 
 	AdminCredentials *corev1.LocalObjectReference `json:"adminCredentials,omitempty"`
 
@@ -900,8 +911,9 @@ type YtsaurusStatus struct {
 type Ytsaurus struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              YtsaurusSpec   `json:"spec,omitempty"`
-	Status            YtsaurusStatus `json:"status,omitempty"`
+
+	Spec   YtsaurusSpec   `json:"spec,omitempty"`
+	Status YtsaurusStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -910,7 +922,8 @@ type Ytsaurus struct {
 type YtsaurusList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Ytsaurus `json:"items"`
+
+	Items []Ytsaurus `json:"items"`
 }
 
 func init() {

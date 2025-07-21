@@ -38,6 +38,7 @@ type YQLAgent struct {
 
 type YQLAgentServer struct {
 	CommonServer
+
 	User     string   `yson:"user"`
 	YQLAgent YQLAgent `yson:"yql_agent"`
 }

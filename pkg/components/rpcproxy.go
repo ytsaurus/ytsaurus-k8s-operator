@@ -17,6 +17,7 @@ import (
 
 type RpcProxy struct {
 	localServerComponent
+
 	cfgen *ytconfig.Generator
 
 	master Component

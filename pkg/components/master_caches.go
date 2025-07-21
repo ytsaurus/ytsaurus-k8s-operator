@@ -14,6 +14,7 @@ import (
 
 type MasterCache struct {
 	localServerComponent
+
 	cfgen *ytconfig.Generator
 }
 

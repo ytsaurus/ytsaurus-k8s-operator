@@ -35,6 +35,7 @@ import (
 // SpytReconciler reconciles a Spyt object
 type SpytReconciler struct {
 	client.Client
+
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
 }

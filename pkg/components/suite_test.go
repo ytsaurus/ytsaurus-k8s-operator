@@ -150,6 +150,7 @@ func (fs *FakeServer) GetImage() string {
 
 type FakeYtsaurusClient struct {
 	FakeComponent
+
 	client *mock_yt.MockClient
 }
 

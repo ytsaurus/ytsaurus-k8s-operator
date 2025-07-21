@@ -52,7 +52,8 @@ type RemoteTabletNodes struct {
 type RemoteTabletNodesList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []RemoteTabletNodes `json:"items"`
+
+	Items []RemoteTabletNodes `json:"items"`
 }
 
 func init() {

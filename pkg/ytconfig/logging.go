@@ -97,6 +97,7 @@ type JobProxyLogging struct {
 	// 24.2 — job_proxy/job_proxy_logging/log_manager_template
 	// Legacy fields can be removed with end of respective server version support.
 	Logging
+
 	LogManagerTemplate Logging `yson:"log_manager_template"`
 	Mode               string  `yson:"mode"`
 }

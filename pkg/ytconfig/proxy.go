@@ -68,11 +68,13 @@ type HTTPSServerCredentials struct {
 
 type HTTPSServer struct {
 	HTTPServer
+
 	Credentials HTTPSServerCredentials `yson:"credentials"`
 }
 
 type HTTPProxyServer struct {
 	CommonServer
+
 	Port        int          `yson:"port"`
 	Auth        Auth         `yson:"auth"`
 	Coordinator Coordinator  `yson:"coordinator"`
@@ -83,6 +85,7 @@ type HTTPProxyServer struct {
 
 type RPCProxyServer struct {
 	CommonServer
+
 	Role                      string                    `yson:"role"`
 	CypressUserManager        CypressUserManager        `yson:"cypress_user_manager"`
 	CypressTokenAuthenticator CypressTokenAuthenticator `yson:"cypress_token_authenticator"`
@@ -96,11 +99,13 @@ type RPCProxyServer struct {
 
 type TCPProxyServer struct {
 	CommonServer
+
 	Role string `yson:"role"`
 }
 
 type KafkaProxyServer struct {
 	CommonServer
+
 	Role string `yson:"role"`
 	Port int    `yson:"port"`
 	Auth Auth   `yson:"auth"`

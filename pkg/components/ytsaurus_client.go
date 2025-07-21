@@ -29,6 +29,7 @@ type internalYtsaurusClient interface {
 
 type YtsaurusClient struct {
 	localComponent
+
 	cfgen     *ytconfig.Generator
 	httpProxy Component
 

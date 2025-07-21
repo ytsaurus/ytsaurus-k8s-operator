@@ -39,6 +39,7 @@ import (
 // YtsaurusReconciler reconciles a Ytsaurus object
 type YtsaurusReconciler struct {
 	client.Client
+
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
 }

@@ -22,6 +22,7 @@ import (
 
 type QueryTracker struct {
 	localServerComponent
+
 	cfgen *ytconfig.Generator
 
 	ytsaurusClient internalYtsaurusClient

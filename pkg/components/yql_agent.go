@@ -20,6 +20,7 @@ import (
 
 type YqlAgent struct {
 	localServerComponent
+
 	cfgen             *ytconfig.Generator
 	master            Component
 	initEnvironment   *InitJob

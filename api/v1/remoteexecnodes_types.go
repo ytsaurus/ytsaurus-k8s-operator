@@ -52,7 +52,8 @@ type RemoteExecNodes struct {
 type RemoteExecNodesList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []RemoteExecNodes `json:"items"`
+
+	Items []RemoteExecNodes `json:"items"`
 }
 
 func init() {

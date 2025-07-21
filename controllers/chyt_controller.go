@@ -35,6 +35,7 @@ import (
 // ChytReconciler reconciles a Chyt object
 type ChytReconciler struct {
 	client.Client
+
 	Recorder record.EventRecorder
 	Scheme   *runtime.Scheme
 }

@@ -24,6 +24,7 @@ const (
 
 type TabletNode struct {
 	localServerComponent
+
 	cfgen *ytconfig.NodeGenerator
 
 	ytsaurusClient internalYtsaurusClient

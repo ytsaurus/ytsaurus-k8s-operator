@@ -21,6 +21,7 @@ import (
 
 type Scheduler struct {
 	localServerComponent
+
 	cfgen            *ytconfig.Generator
 	master           Component
 	execNodes        []Component

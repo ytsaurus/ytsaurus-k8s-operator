@@ -21,6 +21,7 @@ import (
 
 type QueueAgent struct {
 	localServerComponent
+
 	cfgen *ytconfig.Generator
 
 	ytsaurusClient internalYtsaurusClient

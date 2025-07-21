@@ -24,6 +24,7 @@ const (
 
 type Master struct {
 	localServerComponent
+
 	cfgen *ytconfig.Generator
 
 	initJob          *InitJob

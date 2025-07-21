@@ -239,6 +239,7 @@ type TabletNode struct {
 
 type NodeServer struct {
 	CommonServer
+
 	Flavors        []NodeFlavor   `yson:"flavors"`
 	ResourceLimits ResourceLimits `yson:"resource_limits,omitempty"`
 	Tags           []string       `yson:"tags,omitempty"`
@@ -248,11 +249,13 @@ type NodeServer struct {
 
 type DataNodeServer struct {
 	NodeServer
+
 	DataNode DataNode `yson:"data_node"`
 }
 
 type ExecNodeServer struct {
 	NodeServer
+
 	JobResourceManager   JobResourceManager `yson:"job_resource_manager"`
 	ExecNode             ExecNode           `yson:"exec_node"`
 	DataNode             DataNode           `yson:"data_node"`
@@ -262,6 +265,7 @@ type ExecNodeServer struct {
 
 type TabletNodeServer struct {
 	NodeServer
+
 	// TabletNode `yson:"tablet_node"`
 	CachingObjectService Cache `yson:"caching_object_service"`
 }

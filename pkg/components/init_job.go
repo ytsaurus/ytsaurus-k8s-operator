@@ -38,6 +38,7 @@ func initJobWithNativeDriverPrologue() string {
 
 type InitJob struct {
 	baseComponent
+
 	apiProxy          apiproxy.APIProxy
 	conditionsManager apiproxy.ConditionManager
 	imagePullSecrets  []corev1.LocalObjectReference
