@@ -35,7 +35,7 @@ linters:
     # - embeddedstructfieldcheck # Embedded types should be at the top of the field list of a struct.
     - forbidigo # forbids identifiers
     # - funlen #  Checks for long functions. [fast]
-    # - gochecknoglobals # Check that no global variables exist.
+    - gochecknoglobals # Check that no global variables exist.
     # - ireturn # Accept Interfaces, Return Concrete Types.
     # - lll # Reports long lines. [fast]
     # - varnamelen # Checks that the length of a variable's name matches its scope.
@@ -286,6 +286,10 @@ linters:
         linters:
           - gochecknoglobals
 
+      - path: 'controllers'
+        linters:
+          - gochecknoglobals
+
       - path: 'pkg/testutil'
         linters:
           - gochecknoglobals
@@ -295,6 +299,14 @@ linters:
       - path: 'pkg/canonize'
         linters:
           - gosec
+
+      - path: 'pkg/consts'
+        linters:
+          - gochecknoglobals
+
+      - path: 'api'
+        linters:
+          - gochecknoglobals
 
       - path: "api/v1/test_helpers.go"
         linters:
