@@ -1,32 +1,89 @@
+version: "2"
+
 run:
   timeout: 5m
   allow-parallel-runners: true
 
 
-output:
-  sort-results: true
-
+issues:
+  max-same-issues: 0  # disable
+  max-issues-per-linter: 0 # disable
 
 # References:
 # https://golangci-lint.run/usage/linters/
 # https://gist.github.com/maratori/47a4d00457a92aa426dbd48a18776322
 # https://github.com/kubernetes/kubernetes/blob/master/hack/golangci-hints.yaml
 
+formatters:
+  enable:
+    # - gci     # Check if code and import statements are formatted, with additional rules.
+    - gofmt     # Check if the code is formatted according to 'gofmt' command.
+    # - gofumpt   # Check if code and import statements are formatted, with additional rules.
+    - goimports # in addition to fixing imports, goimports also formats your code in the same style as gofmt
+    # - golines   # Checks if code is formatted, and fixes long lines.
+    # - swaggo 	  # Check if swaggo comments are formatted.
+  settings: {}
+
+
 linters:
-  presets:
-    # - bugs
-    # - performance
   enable: # please keep this alphabetized
-    ## enabled by default
+    ## "style"
+    # - funcorder # Checks the order of functions, methods, and constructors.
+    - copyloopvar # detects places where loop variables are copied
+    - decorder # checks declaration order and count of types, constants, variables and functions
+    - dupword # Checks for duplicate words in the source code.
+    # - embeddedstructfieldcheck # Embedded types should be at the top of the field list of a struct.
+    - forbidigo # forbids identifiers
+    # - funlen #  Checks for long functions. [fast]
+    # - gochecknoglobals # Check that no global variables exist.
+    # - ireturn # Accept Interfaces, Return Concrete Types.
+    # - lll # Reports long lines. [fast]
+    # - varnamelen # Checks that the length of a variable's name matches its scope.
+    # - wsl_v5 # Add or remove empty lines. [auto-fix]
+    # - wsl [deprecated]: Add or remove empty lines. [fast, auto-fix]
+    - unconvert # Remove unnecessary type conversions.
+    # - tagalign # Check that struct tags are well aligned. [fast, auto-fix]
+    # - unparam # Reports unused function parameters.
+    # - wsl # add or remove empty lines
+    - whitespace # detects leading and trailing whitespace
+    # - dupl # Detects duplicate fragments of code. [fast]
+    # - gochecknoinits # Checks that no init functions are present in Go code. [fast]
+    - goconst # Finds repeated strings that could be replaced by a constant.
+    # - godot # Check if comments end in a period. [fast, auto-fix]
+    # - godox # Detects usage of FIXME, TODO and other keywords inside comments. [fast]
+    - goheader # Check if file header matches to pattern. [fast, auto-fix]
+    # - noinlineerr # Disallows inline error handling (`if err := ...; err != nil {`).
+    - dogsled # checks assignments with too many blank identifiers (e.g. x, _, _, _, := f())
+    - containedctx # Containedctx is a linter that detects struct contained context.Context field.
+    # - nonamedreturns # Reports all named returns.
+    # - mnd # An analyzer to detect magic numbers. [fast]
+    - recvcheck # Checks for receiver type consistency.
+    # - nlreturn # Checks for a new line before return and branch statements to increase code clarity. [fast, auto-fix]
+    # - nakedret # Checks that functions with naked returns are not longer than a maximum size (can be zero). [fast, auto-fix]
+
+    ## "complexity"
+    # - gocognit # computes and checks the cognitive complexity of functions
+    # - gocyclo # computes and checks the cyclomatic complexity of functions
+    - nestif # reports deeply nested if statements
+    - cyclop # Checks function and package cyclomatic complexity. [fast]
+    - maintidx # Maintidx measures the maintainability index of each function. [fast]
+
+    ## "errors"
     - errcheck # checking for unchecked errors, these unchecked errors can be critical bugs in some cases
-    - gosimple # specializes in simplifying a code
+    # - forcetypeassert # Find forced type assertions.
+    - nilerr # finds the code that returns nil even if it checks that the error is not nil
+    # - nilnil # Checks that there is no simultaneous return of `nil` error and an invalid value.
+    # - err113 # Check errors handling expressions. [auto-fix]
+    - errorlint # Find code that can cause problems with the error wrapping scheme introduced in Go 1.13. [auto-fix]
+    - nilnesserr # Reports constructs that checks for err != nil, but returns a different nil value error.
+    - errname # checks that sentinel errors are prefixed with the Err and error types are suffixed with the Error
+    # - wrapcheck # checks that errors returned from external packages are wrapped
+
+    ## "bugs"
     - govet # reports suspicious constructs, such as Printf calls whose arguments do not align with the format string
     - ineffassign # detects when assignments to existing variables are not used
     - staticcheck # is a go vet on steroids, applying a ton of static analysis checks
-    - typecheck # like the front-end of a Go compiler, parses and type-checks Go code
     - unused # checks for unused constants, variables, functions and types
-
-    ## preset "bugs"
     - asasalint # checks for pass []any as any in variadic func(...any)
     - asciicheck # checks that your code does not contain non-ASCII identifiers
     - bidichk # checks for dangerous unicode character sequences
@@ -34,7 +91,6 @@ linters:
     - contextcheck # check whether the function uses a non-inherited context
     - durationcheck # checks for two durations multiplied together
     - errchkjson # checks types passed to the json encoding functions
-    # - errorlint # finds code that will cause problems with the error wrapping scheme introduced in Go 1.13
     # - exhaustive # checks exhaustiveness of enum switch statements
     # - exportloopref # Snce Go1.22 (loopvar) this linter is no longer relevant. Replaced by copyloopvar.
     - gocheckcompilerdirectives # validates go compiler directive comments (//go:)
@@ -44,7 +100,6 @@ linters:
     - loggercheck # checks key value pairs for common logger libraries (kitlog,klog,logr,zap)
     - makezero # finds slice declarations with non-zero initial length
     - musttag # enforces field tags in (un)marshaled structs
-    - nilerr # finds the code that returns nil even if it checks that the error is not nil
     - noctx # finds sending http request without context.Context
     - protogetter # reports direct reads from proto message fields when getters should be used
     - reassign # checks that package variables are not reassigned
@@ -53,33 +108,19 @@ linters:
     - sqlclosecheck # checks that sql.Rows and sql.Stmt are closed
     - testifylint # checks usage of github.com/stretchr/testify
     - zerologlint # Detects the wrong usage of zerolog
+    - usestdlibvars # detects the possibility to use variables/constants from the Go standard library
+    - iface # Detect the incorrect use of interfaces, helping developers avoid interface pollution. [auto-fix]
+    - intrange # Intrange is a linter to find places where for loops could make use of an integer range. [auto-fix]
 
-    ## preset "complexity"
-    # - cyclop # checks function and package cyclomatic complexity
-    # - funlen # tool for detection of long functions
-    # - gocognit # computes and checks the cognitive complexity of functions
-    # - gocyclo # computes and checks the cyclomatic complexity of functions
-    # - nestif # reports deeply nested if statements
+    ## "performance"
+    - fatcontext # Detects nested contexts in loops and function literals.
+    # - prealloc # Find slice declarations that could potentially be pre-allocated. [fast]
+    # - perfsprint # Checks that fmt.Sprintf can be replaced with a faster alternative. [auto-fix]
 
-    ## preset "performance"
-    # - perfsprint # Checks that fmt.Sprintf can be replaced with a faster alternative
-    # - prealloc # finds slice declarations that could potentially be preallocated
-
-    ## preset "style", "format" and others
-    - copyloopvar # detects places where loop variables are copied
-    - decorder # checks declaration order and count of types, constants, variables and functions
-    - dogsled # checks assignments with too many blank identifiers (e.g. x, _, _, _, := f())
     # - dupl # tool for code clone detection
-    - errname # checks that sentinel errors are prefixed with the Err and error types are suffixed with the Error
-    # - execinquery # checks query string in Query function which reads your Go src files and warning it finds
-    - forbidigo # forbids identifiers
-    - ginkgolinter # enforces standards of using ginkgo and gomega
-    # - gochecknoglobals # checks that no global variables exist
-    # - gochecknoinits # checks that no init functions are present in Go code
     # - goconst # finds repeated strings that could be replaced by a constant
     - gocritic # provides diagnostics that check for bugs, performance and style issues
     # - godot # checks if comments end in a period
-    - goimports # in addition to fixing imports, goimports also formats your code in the same style as gofmt
     # - gomnd # detects magic numbers
     - gomoddirectives # manages the use of 'replace', 'retract', and 'excludes' directives in go.mod
     - gomodguard # allow and block lists linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations
@@ -88,171 +129,200 @@ linters:
     - inamedparam # Reports interfaces with unnamed method parameters
     - interfacebloat # checks the number of methods inside an interface
     # - intrange # finds places where for loops could make use of an integer range
-    # - lll # reports long lines
     - mirror # reports wrong mirror patterns of bytes/strings usage
     - misspell # finds commonly misspelled english words in comments
     # - nakedret # finds naked returns in functions greater than a specified function length
-    # - nilnil # checks that there is no simultaneous return of nil error and an invalid value
     - nolintlint # reports ill-formed or insufficient nolint directives
-    # - nonamedreturns # reports all named returns
     - nosprintfhostport # checks for misuse of Sprintf to construct a host with port in a URL
     # - perfsprint # checks that fmt.Sprintf can be replaced with a faster alternative
     - predeclared # finds code that shadows one of Go's predeclared identifiers
     - promlinter # checks Prometheus metrics naming via promlint
     # - revive # fast, configurable, extensible, flexible, and beautiful linter for Go, drop-in replacement of golint
     - sloglint # ensure consistent code style when using log/slog
-    - stylecheck # is a replacement for golint
     # - tagalign # check that struct tags are well aligned
     - tagliatelle # checks the struct tags
-    - tenv # detects using os.Setenv instead of t.Setenv since Go1.17
     - testableexamples # checks if examples are testable (have an expected output)
     # - testpackage # makes you use a separate _test package
-    - tparallel # detects inappropriate usage of t.Parallel() method in your Go test codes
     # - unconvert # removes unnecessary type conversions
     # - unparam # reports unused function parameters
-    - usestdlibvars # detects the possibility to use variables/constants from the Go standard library
     - wastedassign # finds wasted assignment statements
-    - whitespace # detects leading and trailing whitespace
-    # - wrapcheck # checks that errors returned from external packages are wrapped
-    # - wsl # add or remove empty lines
 
-linters-settings:
-  cyclop:
-    # The maximal code complexity to report.
-    # Default: 10
-    max-complexity: 30
-    # The maximal average package complexity.
-    # If it's higher than 0.0 (float) the check is enabled
-    # Default: 0.0
-    package-average: 10.0
+    ## tests
+    - ginkgolinter # enforces standards of using ginkgo and gomega
+    - usetesting # Reports uses of functions with replacement inside the testing package. [auto-fix]
+    # - thelper # Thelper detects tests helpers which is not start with t.Helper() method.
+    # - testpackage # Linter that makes you use a separate _test package. [fast]
+    # - paralleltest # Detects missing usage of t.Parallel() method in your Go test.
+    - tparallel # detects inappropriate usage of t.Parallel() method in your Go test codes
 
-  errcheck:
-    # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
-    # Such cases aren't reported by default.
-    # Default: false
-    # check-type-assertions: true
+    ## "new"
+    # - arangolint # Opinionated best practices for arangodb client.
+    # - canonicalheader # Canonicalheader checks whether net/http.Header uses canonical header. [auto-fix]
+    # - depguard # Go linter that checks if package imports are in a list of acceptable packages. [fast]
+    # - exhaustruct # Checks if all structure fields are initialized.
+    - exptostd # Detects functions from golang.org/x/exp/ that can be replaced by std functions. [auto-fix]
+    - grouper # Analyze expression groups. [fast]
+    # - revive # Fast, configurable, extensible, flexible, and beautiful linter for Go. Drop-in replacement of golint. [auto-fix]
 
-  forbidigo:
-    # Instead of matching the literal source code,
-    # use type information to replace expressions with strings that contain the package name
-    # and (for methods and fields) the type name.
-    # This makes it possible to handle import renaming and forbid struct fields and methods.
-    # Default: false
-    analyze-types: true
-    forbid:
-      - p: ^gomega\.BeTrue$
-        pkg: ^github.com/onsi/gomega$
-        msg: "it does not produce a good failure message - use BeTrueBecause with an explicit printf-style failure message instead, or plain Go: if ... { ginkgo.Fail(...) }"
-      - p: ^gomega\.BeFalse$
-        pkg: ^github.com/onsi/gomega$
-        msg: "it does not produce a good failure message - use BeFalseBecause with an explicit printf-style failure message instead, or plain Go: if ... { ginkgo.Fail(...) }"
+  settings:
+    cyclop:
+      # The maximal code complexity to report.
+      # Default: 10
+      max-complexity: 50
+      # The maximal average package complexity.
+      # If it's higher than 0.0 (float) the check is enabled
+      # Default: 0.0
+      package-average: 20.0
 
-  gocritic:
-    # Enable all checks.
-    # Default: false
-    enable-all: true
-    disabled-checks:
-      - sprintfQuotedString
-      - importShadow
-      - paramTypeCombine
-      - appendCombine
-    settings:
-      hugeParam:
-        sizeThreshold: 4096
-      rangeValCopy:
-        sizeThreshold: 4096
+    nestif:
+      # Minimal complexity of if statements to report.
+      # Default: 5
+      min-complexity: 15
 
-  gosec:
-    excludes:
-      - G101 # hard coded credentials - thinks paths are secrets
+    maintidx:
+      # Show functions with maintainability index lower than N.
+      # A high index indicates better maintainability (it's kind of the opposite of complexity).
+      # Default: 20
+      under: 10
 
-  importas:
-    # Do not allow unaliased imports of aliased packages.
-    # Default: false
-    no-unaliased: true
-    # Do not allow non-required aliases.
-    # Default: false
-    # no-extra-aliases: true
-    # List of aliases
-    # Default: []
-    alias:
-      # Kubernetes
-      - pkg: k8s.io/api/(\w+)/(v[\w\d]+)
-        alias: $1$2
-      - pkg: k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
-        alias: apiextensionsv1
-      - pkg: k8s.io/apimachinery/pkg/apis/meta/v1
-        alias: metav1
-      - pkg: k8s.io/apimachinery/pkg/api/errors
-        alias: apierrors
-      - pkg: k8s.io/apimachinery/pkg/util/errors
-        alias: kerrors
-      - pkg: k8s.io/component-base/logs/api/v1
-        alias: logsv1
-      # Controller Runtime
-      - pkg: sigs.k8s.io/controller-runtime
-        alias: ctrl
-      # - pkg: sigs.k8s.io/controller-runtime/pkg/log
-      #   alias: logf
-      # YTsaurus
-      - pkg: github.com/ytsaurus/yt-k8s-operator/api/v1
-        alias: ytv1
+    errcheck:
+      verbose: true # Display function signature instead of selector.
+      check-blank: true # report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`.
+      # check-type-assertions: true  # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
+      # disable-default-exclusions: true # To disable the errcheck built-in exclude list.
+      # exclude-functions: # List of functions to exclude from checking.
 
-  staticcheck:
-    checks:
-      - "all"
+    forbidigo:
+      # Instead of matching the literal source code,
+      # use type information to replace expressions with strings that contain the package name
+      # and (for methods and fields) the type name.
+      # This makes it possible to handle import renaming and forbid struct fields and methods.
+      # Default: false
+      analyze-types: true
+      forbid:
+        - pattern: ^gomega\.BeTrue$
+          pkg: ^github.com/onsi/gomega$
+          msg: "it does not produce a good failure message - use BeTrueBecause with an explicit printf-style failure message instead, or plain Go: if ... { ginkgo.Fail(...) }"
+        - pattern: ^gomega\.BeFalse$
+          pkg: ^github.com/onsi/gomega$
+          msg: "it does not produce a good failure message - use BeFalseBecause with an explicit printf-style failure message instead, or plain Go: if ... { ginkgo.Fail(...) }"
 
-  stylecheck:
-    checks:
-      - "all"
-      - "-ST1003" # abbrev capitalization
-      - "-ST1016" # method receiver name
+    gocritic:
+      # Enable all checks.
+      # Default: false
+      enable-all: true
+      disabled-checks:
+        - sprintfQuotedString
+        - importShadow
+        - paramTypeCombine
+        - appendCombine
+      settings:
+        hugeParam:
+          sizeThreshold: 4096
+        rangeValCopy:
+          sizeThreshold: 4096
 
-  tagalign:
-    # Align tags for adjacent fields
-    # align: false
-    # Order tags
-    # sort: false
-    order:
-      - yson
-      - json
+    gosec:
+      excludes:
+        - G101 # hard coded credentials - thinks paths are secrets
 
-  lll:
-    # Max line length, lines longer will be reported.
-    # '\t' is counted as 1 character by default, and can be changed with the tab-width option.
-    # Default: 120.
-    line-length: 180
+    importas:
+      # Do not allow unaliased imports of aliased packages.
+      # Default: false
+      no-unaliased: true
+      # Do not allow non-required aliases.
+      # Default: false
+      # no-extra-aliases: true
+      # List of aliases
+      # Default: []
+      alias:
+        # Kubernetes
+        - pkg: k8s.io/api/(\w+)/(v[\w\d]+)
+          alias: $1$2
+        - pkg: k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
+          alias: apiextensionsv1
+        - pkg: k8s.io/apimachinery/pkg/apis/meta/v1
+          alias: metav1
+        - pkg: k8s.io/apimachinery/pkg/api/errors
+          alias: apierrors
+        - pkg: k8s.io/apimachinery/pkg/util/errors
+          alias: kerrors
+        - pkg: k8s.io/component-base/logs/api/v1
+          alias: logsv1
+        # Controller Runtime
+        - pkg: sigs.k8s.io/controller-runtime
+          alias: ctrl
+        # - pkg: sigs.k8s.io/controller-runtime/pkg/log
+        #   alias: logf
+        # YTsaurus
+        - pkg: github.com/ytsaurus/yt-k8s-operator/api/v1
+          alias: ytv1
 
-  interfacebloat:
-    max: 11
+    staticcheck:
+      checks:
+        - "all"
+        - "-QF1001" # Apply De Morgan's law.
+        - "-QF1008" # Omit embedded fields from selector expression.
+        - "-ST1000" # Incorrect or missing package comment.
+        - "-ST1003" # Poorly chosen identifier.
+        - "-ST1020" # The documentation of an exported function should start with the function's name.
+        - "-ST1021" # The documentation of an exported type should start with type's name.
 
-issues:
-  max-same-issues: 0  # disable
-  max-issues-per-linter: 0 # disable
-  exclude-files:
-      - "^zz_generated.*"
-  exclude-rules:
-    - linters:
-        - gocritic
-      text: "ifElseChain: rewrite if-else to switch statement"
+    tagalign:
+      # Align tags for adjacent fields
+      # align: false
+      # Order tags
+      # sort: false
+      order:
+        - yson
+        - json
 
-    - path: "main\\.go"
-      linters:
-        - gochecknoglobals
+    lll:
+      # Max line length, lines longer will be reported.
+      # '\t' is counted as 1 character by default, and can be changed with the tab-width option.
+      # Default: 120.
+      line-length: 180
 
-    - path: "api/v1/test_helpers.go"
-      linters:
-        - gosec
+    interfacebloat:
+      max: 11
 
-    - path: "_test\\.go"
-      linters:
-        # - dupl
-        # - funlen
-        - contextcheck
-        # - errcheck
-        - forbidigo
-        - gochecknoglobals
-        - goconst
-        - gosec
-        - noctx
-        - wrapcheck
+  exclusions:
+    paths:
+      - '^zz_generated.*'
+    rules:
+      - linters:
+          - gocritic
+        text: "ifElseChain: rewrite if-else to switch statement"
+
+      - path: 'main\.go'
+        linters:
+          - gochecknoglobals
+
+      - path: 'pkg/testutil'
+        linters:
+          - gochecknoglobals
+          - containedctx
+          - fatcontext
+
+      - path: 'pkg/canonize'
+        linters:
+          - gosec
+
+      - path: "api/v1/test_helpers.go"
+        linters:
+          - gosec
+
+      - path: '_test\.go'
+        linters:
+          # - dupl
+          # - funlen
+          - contextcheck
+          - fatcontext
+          # - errcheck
+          - forbidigo
+          - gochecknoglobals
+          - goconst
+          - gosec
+          - noctx
+          - wrapcheck
+
