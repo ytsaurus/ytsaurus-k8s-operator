@@ -8,7 +8,10 @@ import (
 func sha256String(value string) string {
 	hash := sha256.New()
 	// TODO(psushin): handle errors.
-	hash.Write([]byte(value))
+	n, err := hash.Write([]byte(value))
+	if err != nil || n != len([]byte(value)) {
+		panic("cannot hash string")
+	}
 	bs := hash.Sum(nil)
 	return fmt.Sprintf("%x", bs)
 }

@@ -214,7 +214,9 @@ func queryClickHouse(ytProxyAddress, query string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer response.Body.Close()
+	defer func() {
+		Expect(response.Body.Close()).To(Succeed())
+	}()
 
 	content, err := io.ReadAll(response.Body)
 	if err != nil {
@@ -264,7 +266,9 @@ func readFileObject(namespace string, source ytv1.FileObjectReference) ([]byte, 
 func discoverProxies(proxyAddress string, params url.Values) []string {
 	resp, err := http.Get(proxyAddress + "/api/v4/discover_proxies?" + params.Encode())
 	Expect(err).NotTo(HaveOccurred())
-	defer resp.Body.Close()
+	defer func() {
+		Expect(resp.Body.Close()).To(Succeed())
+	}()
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	var proxies struct {
 		Proxies []string `json:"proxies"`

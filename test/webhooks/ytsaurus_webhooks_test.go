@@ -1,6 +1,8 @@
 package webhooks
 
 import (
+	"errors"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -222,7 +224,8 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			}
 
 			err := k8sClient.Create(ctx, ytsaurus)
-			statusErr, isStatus := err.(*apierrors.StatusError)
+			statusErr := &apierrors.StatusError{}
+			isStatus := errors.As(err, &statusErr)
 			Expect(isStatus).To(BeTrue())
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("EnableAntiAffinity is deprecated, use Affinity instead"))
