@@ -454,7 +454,7 @@ func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 	// Check tablet cell bundles.
 	notGoodBundles, err := GetNotGoodTabletCellBundles(ctx, yc.ytClient)
 	if err != nil {
-		return
+		return false, "", err
 	}
 
 	if len(notGoodBundles) > 0 {
@@ -466,7 +466,7 @@ func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 	lvcCount := 0
 	err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/lost_vital_chunks/@count"), &lvcCount, nil)
 	if err != nil {
-		return
+		return false, "", err
 	}
 
 	if lvcCount > 0 {
@@ -478,7 +478,7 @@ func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 	qmcCount := 0
 	err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/quorum_missing_chunks/@count"), &qmcCount, nil)
 	if err != nil {
-		return
+		return false, "", err
 	}
 
 	if qmcCount > 0 {
@@ -490,7 +490,7 @@ func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 	primaryMasterAddresses := make([]string, 0)
 	err = yc.ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &primaryMasterAddresses, nil)
 	if err != nil {
-		return
+		return false, "", err
 	}
 
 	leadingPrimaryMasterCount := 0
@@ -504,7 +504,7 @@ func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 			&hydra,
 			nil)
 		if err != nil {
-			return
+			return false, "", err
 		}
 
 		if !hydra.Active {
