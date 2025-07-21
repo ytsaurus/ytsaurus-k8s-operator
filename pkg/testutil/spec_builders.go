@@ -26,28 +26,32 @@ const (
 )
 
 // Images are should be set by TEST_ENV include in Makefile
-// FIXME(khlebnikov): Maybe embed test env file for defaults
 var (
 	YtsaurusImage23_2 = GetenvOr("YTSAURUS_IMAGE_23_2", "ghcr.io/ytsaurus/ytsaurus:stable-23.2.0")
 	YtsaurusImage24_1 = GetenvOr("YTSAURUS_IMAGE_24_1", "ghcr.io/ytsaurus/ytsaurus:stable-24.1.0")
-	YtsaurusImage24_2 = GetenvOr("YTSAURUS_IMAGE_24_2", "ghcr.io/ytsaurus/ytsaurus:stable-24.2.0")
+	YtsaurusImage24_2 = GetenvOr("YTSAURUS_IMAGE_24_2", "ghcr.io/ytsaurus/ytsaurus:stable-24.2.1")
+	YtsaurusImage25_1 = GetenvOr("YTSAURUS_IMAGE_25_1", "")
+	YtsaurusImage25_2 = GetenvOr("YTSAURUS_IMAGE_25_2", "")
 
-	YtsaurusImagePrevious = GetenvOr("YTSAURUS_IMAGE_PREVIOUS", YtsaurusImage23_2)
-	YtsaurusImageCurrent  = GetenvOr("YTSAURUS_IMAGE_CURRENT", YtsaurusImage24_1)
-	YtsaurusImageFuture   = GetenvOr("YTSAURUS_IMAGE_FUTURE", YtsaurusImage24_2)
-	YtsaurusImageNightly  = GetenvOr("YTSAURUS_IMAGE_NIGHTLY", "ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2025-03-19-2973ab7cb36ed53ae3cbe9c37b8c7f55eb9c4e77")
+	YtsaurusImagePrevious = GetenvOr("YTSAURUS_IMAGE_PREVIOUS", YtsaurusImage24_1)
+	YtsaurusImageCurrent  = GetenvOr("YTSAURUS_IMAGE_CURRENT", YtsaurusImage24_2)
+	YtsaurusImageFuture   = GetenvOr("YTSAURUS_IMAGE_FUTURE", YtsaurusImage25_1)
+	YtsaurusImageNightly  = GetenvOr("YTSAURUS_IMAGE_NIGHTLY", "")
 
-	QueryTrackerImagePrevious = GetenvOr("QUERY_TRACKER_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/query-tracker:0.0.6")
-	QueryTrackerImageCurrent  = GetenvOr("QUERY_TRACKER_IMAGE_CURRENT", "ghcr.io/ytsaurus/query-tracker:0.0.9")
-	QueryTrackerImageFuture   = GetenvOr("QUERY_TRACKER_IMAGE_FUTURE", "ghcr.io/ytsaurus/query-tracker:0.0.9")
+	QueryTrackerImagePrevious = GetenvOr("QUERY_TRACKER_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/query-tracker:0.0.9")
+	QueryTrackerImageCurrent  = GetenvOr("QUERY_TRACKER_IMAGE_CURRENT", "ghcr.io/ytsaurus/query-tracker:0.0.10")
+	QueryTrackerImageFuture   = GetenvOr("QUERY_TRACKER_IMAGE_FUTURE", "")
+	QueryTrackerImageNightly  = GetenvOr("QUERY_TRACKER_IMAGE_NIGHTLY", "")
 
 	StrawberryImagePrevious = GetenvOr("STRAWBERRY_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/strawberry:0.0.12")
 	StrawberryImageCurrent  = GetenvOr("STRAWBERRY_IMAGE_CURRENT", "ghcr.io/ytsaurus/strawberry:0.0.13")
-	StrawberryImageFuture   = GetenvOr("STRAWBERRY_IMAGE_FUTURE", "ghcr.io/ytsaurus/strawberry:0.0.13")
+	StrawberryImageFuture   = GetenvOr("STRAWBERRY_IMAGE_FUTURE", "")
+	StrawberryImageNightly  = GetenvOr("STRAWBERRY_IMAGE_NIGHTLY", "")
 
-	ChytImagePrevious = GetenvOr("CHYT_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/chyt:2.14.0")
-	ChytImageCurrent  = GetenvOr("CHYT_IMAGE_CURRENT", "ghcr.io/ytsaurus/chyt:2.16.0")
-	ChytImageFuture   = GetenvOr("CHYT_IMAGE_FUTURE", "ghcr.io/ytsaurus/chyt:2.16.0")
+	ChytImagePrevious = GetenvOr("CHYT_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/chyt:2.16.0")
+	ChytImageCurrent  = GetenvOr("CHYT_IMAGE_CURRENT", "ghcr.io/ytsaurus/chyt:2.17.2")
+	ChytImageFuture   = GetenvOr("CHYT_IMAGE_FUTURE", "")
+	ChytImageNightly  = GetenvOr("CHYT_IMAGE_NIGHTLY", "")
 )
 
 var (
