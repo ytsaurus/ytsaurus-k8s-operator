@@ -264,6 +264,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
+		// NOTE: Testcase should skip optional cases at "BeforeEach" stage.
+		Expect(ytsaurus.Spec.CoreImage).ToNot(BeEmpty(), "ytsaurus core image is not specified")
+
 		By("Creating resource objects")
 		for _, object := range objects {
 			By(fmt.Sprintf("Creating %v %v", GetObjectGVK(object), object.GetName()))
@@ -545,6 +548,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		DescribeTableSubtree("Updating Ytsaurus image",
 			func(oldImage, newImage string) {
 				BeforeEach(func() {
+					if oldImage == "" || newImage == "" {
+						Skip("Ytsaurus old or new image is not specified")
+					}
+
 					ytBuilder.WithNamedDataNodes(ptr.To("dn-t"))
 
 					By("Setting old core image for testing upgrade")
@@ -585,6 +592,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			},
 			Entry("When update Ytsaurus 23.2 -> 24.1", Label("basic"), testutil.YtsaurusImage23_2, testutil.YtsaurusImage24_1),
 			Entry("When update Ytsaurus 24.1 -> 24.2", Label("basic"), testutil.YtsaurusImage24_1, testutil.YtsaurusImage24_2),
+			Entry("When update Ytsaurus 24.2 -> 25.1", Label("basic"), testutil.YtsaurusImage24_2, testutil.YtsaurusImage25_1),
+			Entry("When update Ytsaurus 25.1 -> 25.2", Label("basic"), testutil.YtsaurusImage25_1, testutil.YtsaurusImage25_2),
 		)
 
 		Context("Test UpdateSelector", Label("selector"), func() {
@@ -1462,8 +1471,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		DescribeTableSubtree("With Bus RPC mTLS", Label("tls"), func(coreImage, chytImage string) {
 
 			BeforeEach(func() {
-
 				log.Info("YTsaurus images", "coreImage", coreImage, "chytImage", chytImage)
+				if coreImage == "" || chytImage == "" {
+					Skip("Ytsaurus or chyt image is not specified")
+				}
 
 				if os.Getenv("YTSAURUS_TLS_READY") == "" {
 					Skip("YTsaurus is not ready for TLS")
@@ -1541,6 +1552,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		},
 			Entry("YTsaurus current", Label("current"), testutil.YtsaurusImageCurrent, testutil.ChytImageCurrent),
 			Entry("YTsaurus future", Label("future"), testutil.YtsaurusImageFuture, testutil.ChytImageFuture),
+			Entry("YTsaurus nightly", Label("nightly"), testutil.YtsaurusImageNightly, testutil.ChytImageNightly),
 		) // integration tls
 
 	}) // integration
