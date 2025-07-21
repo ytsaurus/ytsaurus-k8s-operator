@@ -98,7 +98,7 @@ type JobProxyLogging struct {
 	// Legacy fields can be removed with end of respective server version support.
 	Logging
 	LogManagerTemplate Logging `yson:"log_manager_template"`
-	Mode string `yson:"mode"`
+	Mode               string  `yson:"mode"`
 }
 
 type loggingBuilder struct {

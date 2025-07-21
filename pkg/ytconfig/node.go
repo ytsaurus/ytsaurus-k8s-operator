@@ -196,16 +196,16 @@ type JobProxy struct {
 }
 
 type LogDump struct {
-	BufferSize int64 `yson:"buffer_size"`
+	BufferSize    int64  `yson:"buffer_size"`
 	LogWriterName string `yson:"log_writer_name"`
 }
 
 type JobProxyLogManager struct {
-	Directory             			string `yson:"directory"`
-	ShardingKeyLength     			int    `yson:"sharding_key_length"`
-	LogsStoragePeriod     			yson.Duration `yson:"logs_storage_period"`
-	DirectoryTraversalConcurrency 	int `yson:"directory_traversal_concurrency"`
-	LogDump 			  			LogDump `yson:"log_dump"`
+	Directory                     string        `yson:"directory"`
+	ShardingKeyLength             int           `yson:"sharding_key_length"`
+	LogsStoragePeriod             yson.Duration `yson:"logs_storage_period"`
+	DirectoryTraversalConcurrency int           `yson:"directory_traversal_concurrency"`
+	LogDump                       LogDump       `yson:"log_dump"`
 }
 
 type ExecNode struct {
@@ -220,8 +220,8 @@ type ExecNode struct {
 	ForwardAllEnvironmentVariablesLegacy *bool    `yson:"forward_all_environment_variables,omitempty"`
 
 	// NOTE: Non-legacy "use_artifact_binds" moved into dynamic config.
-	UseArtifactBindsLegacy *bool `yson:"use_artifact_binds,omitempty"`
-	JobProxyLogManager JobProxyLogManager `yson:"job_proxy_log_manager"`
+	UseArtifactBindsLegacy *bool              `yson:"use_artifact_binds,omitempty"`
+	JobProxyLogManager     JobProxyLogManager `yson:"job_proxy_log_manager"`
 }
 
 type Cache struct {
@@ -643,7 +643,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	c.ExecNode.JobProxy.JobProxyLogging = JobProxyLogging{
 		Logging:            jobProxyLogging,
 		LogManagerTemplate: jobProxyLogging,
-		Mode: "simple",
+		Mode:               "simple",
 	}
 
 	c.ExecNode.JobProxy.JobProxyAuthenticationManager.RequireAuthentication = true
