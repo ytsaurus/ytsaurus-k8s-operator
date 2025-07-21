@@ -130,7 +130,10 @@ func CreateUser(ctx context.Context, ytClient yt.Client, userName, token string,
 	}
 
 	if isSuperuser {
-		_ = ytClient.AddMember(ctx, "superusers", userName, nil)
+		err = ytClient.AddMember(ctx, "superusers", userName, nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	return err

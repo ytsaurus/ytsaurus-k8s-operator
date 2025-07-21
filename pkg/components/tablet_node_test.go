@@ -38,7 +38,7 @@ var _ = Describe("Tablet node test", func() {
 	BeforeEach(func() {
 		mockYtClient = mock_yt.NewMockClient(mockCtrl)
 
-		masterVolumeSize, _ := resource.ParseQuantity("1Gi")
+		masterVolumeSize := resource.MustParse("1Gi")
 
 		ytsaurusSpec = &ytv1.Ytsaurus{
 			TypeMeta: metav1.TypeMeta{

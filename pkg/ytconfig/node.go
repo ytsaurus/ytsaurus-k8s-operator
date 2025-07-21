@@ -262,7 +262,7 @@ type ExecNodeServer struct {
 
 type TabletNodeServer struct {
 	NodeServer
-	// TabletNode TabletNode `yson:"tablet_node"`
+	// TabletNode `yson:"tablet_node"`
 	CachingObjectService Cache `yson:"caching_object_service"`
 }
 
