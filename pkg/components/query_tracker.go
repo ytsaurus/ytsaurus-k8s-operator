@@ -243,7 +243,7 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 	)
 	if err != nil {
 		logger.Error(err, "Creating document '//sys/query_tracker/config' failed")
-		return
+		return err
 	}
 
 	err = ytClient.SetNode(
@@ -262,14 +262,14 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 	)
 	if err != nil {
 		logger.Error(err, "Setting '//sys/@cluster_connection/query_tracker' failed")
-		return
+		return err
 	}
 
 	clusterConnectionAttr := make(map[string]interface{})
 	err = ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection"), &clusterConnectionAttr, nil)
 	if err != nil {
 		logger.Error(err, "Getting '//sys/@cluster_connection' failed")
-		return
+		return err
 	}
 
 	err = ytClient.SetNode(
@@ -280,7 +280,7 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 	)
 	if err != nil {
 		logger.Error(err, fmt.Sprintf("Setting '//sys/clusters/%s' failed", qt.labeller.GetClusterName()))
-		return
+		return err
 	}
 
 	_, err = ytClient.CreateObject(
@@ -309,7 +309,7 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 	)
 	if err != nil {
 		logger.Error(err, "Creating access control object namespace 'queries' failed")
-		return
+		return err
 	}
 
 	_, err = ytClient.CreateObject(
@@ -325,7 +325,7 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 	)
 	if err != nil {
 		logger.Error(err, "Creating access control object 'nobody' in namespace 'queries' failed")
-		return
+		return err
 	}
 
 	_, err = ytClient.CreateObject(
@@ -346,7 +346,7 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 	)
 	if err != nil {
 		logger.Error(err, "Creating access control object 'everyone' in namespace 'queries' failed")
-		return
+		return err
 	}
 
 	_, err = ytClient.CreateObject(
@@ -367,7 +367,7 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 	)
 	if err != nil {
 		logger.Error(err, "Creating access control object 'everyone-use' in namespace 'queries' failed")
-		return
+		return err
 	}
 
 	_, err = ytClient.CreateObject(
@@ -388,9 +388,9 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 	)
 	if err != nil {
 		logger.Error(err, "Creating access control object 'everyone-share' in namespace 'queries' failed")
-		return
+		return err
 	}
-	return
+	return nil
 }
 
 func (qt *QueryTracker) Status(ctx context.Context) (ComponentStatus, error) {

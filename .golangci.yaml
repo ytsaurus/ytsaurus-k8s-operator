@@ -58,7 +58,7 @@ linters:
     # - mnd # An analyzer to detect magic numbers. [fast]
     - recvcheck # Checks for receiver type consistency.
     # - nlreturn # Checks for a new line before return and branch statements to increase code clarity. [fast, auto-fix]
-    # - nakedret # Checks that functions with naked returns are not longer than a maximum size (can be zero). [fast, auto-fix]
+    - nakedret # Checks that functions with naked returns are not longer than a maximum size (can be zero). [fast, auto-fix]
 
     ## "complexity"
     # - gocognit # computes and checks the cognitive complexity of functions
@@ -172,6 +172,11 @@ linters:
       # A high index indicates better maintainability (it's kind of the opposite of complexity).
       # Default: 20
       under: 10
+
+    nakedret:
+      # Make an issue if func has more lines of code than this setting, and it has naked returns.
+      # Default: 30
+      max-func-lines: 0
 
     errcheck:
       verbose: true # Display function signature instead of selector.

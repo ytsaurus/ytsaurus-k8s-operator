@@ -252,7 +252,7 @@ func (qa *QueueAgent) init(ctx context.Context, ytClient yt.Client) (err error) 
 	)
 	if err != nil {
 		logger.Error(err, "Creating document '//sys/queue_agents/config' failed")
-		return
+		return err
 	}
 
 	err = ytClient.SetNode(
@@ -273,14 +273,14 @@ func (qa *QueueAgent) init(ctx context.Context, ytClient yt.Client) (err error) 
 	)
 	if err != nil {
 		logger.Error(err, "Setting '//sys/@cluster_connection/queue_agent' failed")
-		return
+		return err
 	}
 
 	clusterConnectionAttr := make(map[string]interface{})
 	err = ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection"), &clusterConnectionAttr, nil)
 	if err != nil {
 		logger.Error(err, "Getting '//sys/@cluster_connection' failed")
-		return
+		return err
 	}
 
 	err = ytClient.SetNode(
@@ -291,9 +291,9 @@ func (qa *QueueAgent) init(ctx context.Context, ytClient yt.Client) (err error) 
 	)
 	if err != nil {
 		logger.Error(err, fmt.Sprintf("Setting '//sys/clusters/%s' failed", qa.labeller.GetClusterName()))
-		return
+		return err
 	}
-	return
+	return nil
 }
 
 func (qa *QueueAgent) prepareInitQueueAgentState() {
