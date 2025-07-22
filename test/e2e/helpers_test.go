@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	corev1 "k8s.io/api/core/v1"
@@ -402,4 +403,39 @@ func discoverProxies(proxyAddress string, params url.Values) []string {
 	}
 	Expect(json.NewDecoder(resp.Body).Decode(&proxies)).To(Succeed())
 	return proxies.Proxies
+}
+
+func fetchFailedPods(namespace string) []string {
+	podList := corev1.PodList{}
+	err := k8sClient.List(ctx, &podList, ctrlcli.InNamespace(namespace))
+	Expect(err).Should(Succeed())
+
+	var failedPods []string
+	for _, pod := range podList.Items {
+		if pod.Status.Phase != corev1.PodFailed {
+			continue
+		}
+		failedPods = append(failedPods, pod.Name)
+		log.Info("Failed pod",
+			"pod", pod.Name,
+			"message", pod.Status.Message,
+			"reason", pod.Status.Reason,
+		)
+
+		logRequest := clientset.CoreV1().Pods(namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
+			Timestamps: true,
+			TailLines:  ptr.To[int64](20),
+		})
+		logStream, err := logRequest.Stream(ctx)
+		if err != nil {
+			log.Error(err, "Cannot get logs")
+			continue
+		}
+
+		_, err = io.Copy(GinkgoWriter, logStream)
+		Expect(logStream.Close()).To(Succeed())
+		Expect(err).To(Succeed())
+	}
+
+	return failedPods
 }

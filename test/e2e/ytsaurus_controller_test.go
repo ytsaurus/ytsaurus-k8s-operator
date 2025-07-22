@@ -295,6 +295,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			return clusterHealth.String()
 		}))
 
+		DeferCleanup(AttachProgressReporter(func() string {
+			failedPods := fetchFailedPods(namespace)
+			if len(failedPods) != 0 {
+				return fmt.Sprintf("Failed pods: %v", failedPods)
+			}
+			return ""
+		}))
+
 		log.Info("Ytsaurus",
 			"namespace", ytsaurus.Namespace,
 			"name", ytsaurus.Name,

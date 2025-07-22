@@ -139,6 +139,7 @@ func (j *InitJob) Build() *batchv1.Job {
 					VolumeMounts: []corev1.VolumeMount{
 						createConfigVolumeMount(),
 					},
+					TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 				},
 			},
 			Volumes: []corev1.Volume{
