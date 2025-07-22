@@ -152,6 +152,10 @@ test-e2e: generate-code manifests ginkgo ## Run e2e tests.
 	YTSAURUS_ENABLE_E2E_TESTS=true \
 	$(GINKGO) $(GINKGO_FLAGS) ./test/e2e/... -coverprofile cover.out -timeout 1800s
 
+.PHONY: clean-e2e
+clean-e2e: ## Delete k8s namespaces created by e2e tests.
+	$(KUBECTL) delete namespaces -l app.kubernetes.io/part-of=ytsaurus-dev
+
 .PHONY: lint
 lint: golangci-lint ## Run golangci-lint linter.
 	$(GOLANGCI_LINT) run
