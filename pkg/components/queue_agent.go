@@ -219,9 +219,10 @@ func (qa *QueueAgent) createUser(ctx context.Context, ytClient yt.Client) (err e
 	err = CreateUser(ctx, ytClient, "queue_agent", token, true)
 	if err != nil {
 		logger.Error(err, "Creating user 'queue_agent' failed")
-		return
+		return err
 	}
-	return
+
+	return nil
 }
 
 func (qa *QueueAgent) init(ctx context.Context, ytClient yt.Client) (err error) {
