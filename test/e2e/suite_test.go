@@ -35,6 +35,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	clientgoretry "k8s.io/client-go/util/retry"
 
@@ -60,6 +61,7 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var k8sClient client.WithWatch
+var clientset *kubernetes.Clientset
 var ctx context.Context
 var log = logf.Log
 
@@ -127,6 +129,10 @@ var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	k8sClient, err = client.NewWithWatch(cfg, client.Options{Scheme: scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
+
+	clientset, err = kubernetes.NewForConfig(cfg)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(clientset).NotTo(BeNil())
 })
 
 func ShouldPreserveArtifacts() bool {
