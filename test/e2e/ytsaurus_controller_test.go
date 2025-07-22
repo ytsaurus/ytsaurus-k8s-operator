@@ -1523,8 +1523,10 @@ func checkClusterHealth(ytClient yt.Client) {
 	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
 
 	By("Checking cluster alerts", func() {
-		clusterHealth := CollectClusterHealth(ytClient)
+		var clusterHealth ClusterHealthReport
+		clusterHealth.Collect(ytClient)
 		Expect(clusterHealth.Alerts).To(BeEmpty())
+		Expect(clusterHealth.Errors).To(BeEmpty())
 	})
 
 	By("Checking that tablet cell bundles are in `good` health")
