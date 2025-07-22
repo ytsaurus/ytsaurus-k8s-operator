@@ -208,9 +208,10 @@ func (qt *QueryTracker) createUser(ctx context.Context, ytClient yt.Client) (err
 	err = CreateUser(ctx, ytClient, "query_tracker", token, true)
 	if err != nil {
 		logger.Error(err, "Creating user 'query_tracker' failed")
-		return
+		return err
 	}
-	return
+
+	return nil
 }
 
 func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error) {
