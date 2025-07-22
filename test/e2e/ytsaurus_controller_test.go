@@ -76,15 +76,15 @@ func getYtRPCClient(proxyAddress, rpcProxyAddress string) yt.Client {
 	return ytClient
 }
 
-func getHTTPProxyAddress(g *ytconfig.Generator, namespace, portName string) string {
+func getHTTPProxyAddress(g *ytconfig.Generator, namespace, portName string) (string, error) {
 	proxy := os.Getenv("E2E_YT_HTTP_PROXY")
 	if proxy != "" {
-		return proxy
+		return proxy, nil
 	}
 	// This one is used in real code in YtsaurusClient.
 	proxy = os.Getenv("YTOP_PROXY")
 	if proxy != "" {
-		return proxy
+		return proxy, nil
 	}
 
 	if os.Getenv("E2E_YT_PROXY") != "" {
@@ -96,10 +96,10 @@ func getHTTPProxyAddress(g *ytconfig.Generator, namespace, portName string) stri
 	return getServiceAddress(namespace, serviceName, portName)
 }
 
-func getRPCProxyAddress(g *ytconfig.Generator, namespace string) string {
+func getRPCProxyAddress(g *ytconfig.Generator, namespace string) (string, error) {
 	proxy := os.Getenv("E2E_YT_RPC_PROXY")
 	if proxy != "" {
-		return proxy
+		return proxy, nil
 	}
 
 	serviceName := g.GetRPCProxiesServiceName(consts.DefaultName)
@@ -281,6 +281,20 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			return fmt.Sprintf("ytsaurus false conditions: %v", falseConditions)
 		}))
 
+		DeferCleanup(AttachProgressReporter(func() string {
+			ytProxyAddress, err := getHTTPProxyAddress(generator, namespace, consts.HTTPPortName)
+			if err != nil {
+				return fmt.Sprintf("cannot find proxy address: %v", err)
+			}
+			ytClient := getYtClient(ytProxyAddress)
+			if _, err := ytClient.WhoAmI(ctx, nil); err != nil {
+				return fmt.Sprintf("ytsaurus api error: %v", err)
+			}
+			var clusterHealth ClusterHealthReport
+			clusterHealth.Collect(ytClient)
+			return clusterHealth.String()
+		}))
+
 		log.Info("Ytsaurus",
 			"namespace", ytsaurus.Namespace,
 			"name", ytsaurus.Name,
@@ -293,7 +307,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		})
 
 		By("Creating ytsaurus client")
-		ytProxyAddress = getHTTPProxyAddress(generator, namespace, consts.HTTPPortName)
+		var err error
+		ytProxyAddress, err = getHTTPProxyAddress(generator, namespace, consts.HTTPPortName)
+		Expect(err).ToNot(HaveOccurred())
 
 		log.Info("Ytsaurus access",
 			"YT_PROXY", ytProxyAddress,
@@ -331,7 +347,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		caBundleCertPool = x509.NewCertPool()
 		Expect(caBundleCertPool.AppendCertsFromPEM(caBundleCertificates)).To(BeTrue())
 
-		ytHTTPSProxyAddress = "https://" + getHTTPProxyAddress(generator, namespace, consts.HTTPSPortName)
+		ytHTTPSProxyAddress, err = getHTTPProxyAddress(generator, namespace, consts.HTTPSPortName)
+		Expect(err).ToNot(HaveOccurred())
+		ytHTTPSProxyAddress = "https://" + ytHTTPSProxyAddress
 
 		By("Checking YT Proxy HTTPS", func() {
 			httpClient := http.Client{
@@ -372,6 +390,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			return
 		}
 
+		var err error
+
 		// TODO(khlebnikov): Generalize for all components in cluster health report.
 		By("Checking RPC proxies are registered")
 		var rpcProxies []string
@@ -384,12 +404,13 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Expect(proxies).To(HaveEach(HaveSuffix(fmt.Sprintf(":%v", consts.RPCProxyPublicRPCPort))))
 
 		By("Creating ytsaurus RPC client")
-		ytRPCProxyAddress = getRPCProxyAddress(generator, namespace)
+		ytRPCProxyAddress, err = getRPCProxyAddress(generator, namespace)
+		Expect(err).ToNot(HaveOccurred())
 		ytRPCClient = getYtRPCClient(ytProxyAddress, ytRPCProxyAddress)
 
 		By("Checking RPC proxy is working")
 		// Expect(ytTLSRPCClient.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
-		_, err := ytRPCClient.NodeExists(ctx, ypath.Path("/"), nil)
+		_, err = ytRPCClient.NodeExists(ctx, ypath.Path("/"), nil)
 		Expect(err).Should(Succeed())
 	})
 
@@ -464,7 +485,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			return
 		}
 
-		if len(ytsaurus.Spec.ExecNodes) != 0 {
+		if len(ytsaurus.Spec.ExecNodes) != 0 && ytClient != nil {
 			By("Running vanilla operation")
 			op := NewVanillaOperation(ytClient)
 

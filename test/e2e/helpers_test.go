@@ -52,12 +52,12 @@ func getNodesAddresses() []string {
 	return addrs
 }
 
-func getServiceAddress(namespace, serviceName, portName string) string {
+func getServiceAddress(namespace, serviceName, portName string) (string, error) {
 	svc := corev1.Service{}
-	Expect(k8sClient.Get(ctx,
-		types.NamespacedName{Name: serviceName, Namespace: namespace},
-		&svc),
-	).Should(Succeed())
+	err := k8sClient.Get(ctx, types.NamespacedName{Name: serviceName, Namespace: namespace}, &svc)
+	if err != nil {
+		return "", err
+	}
 
 	k8sNode := getKindControlPlaneNode()
 
@@ -83,7 +83,7 @@ func getServiceAddress(namespace, serviceName, portName string) string {
 	}
 	Expect(nodeAddress).ToNot(BeEmpty())
 
-	return fmt.Sprintf("%s:%v", nodeAddress, nodePort)
+	return fmt.Sprintf("%s:%v", nodeAddress, nodePort), nil
 }
 
 func getComponentPods(ctx context.Context, namespace string) map[string]corev1.Pod {
@@ -155,6 +155,20 @@ type ClusterHealthReport struct {
 	Errors   map[ypath.Path][]error
 	Alerts   map[ypath.Path][]yterrors.Error
 	Warnings map[ypath.Path][]yterrors.Error
+}
+
+func (c *ClusterHealthReport) String() string {
+	out := new(strings.Builder)
+	for k, v := range c.Errors {
+		fmt.Fprintf(out, "E %v %v\n", k, v)
+	}
+	for k, v := range c.Alerts {
+		fmt.Fprintf(out, "A %v %v\n", k, v)
+	}
+	for k, v := range c.Warnings {
+		fmt.Fprintf(out, "W %v %v\n", k, v)
+	}
+	return out.String()
 }
 
 func (c *ClusterHealthReport) AddError(err error, errorPath ypath.Path) {
