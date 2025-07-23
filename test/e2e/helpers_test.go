@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	corev1 "k8s.io/api/core/v1"
@@ -28,6 +29,15 @@ import (
 	"go.ytsaurus.tech/yt/go/yterrors"
 )
 
+func getKindControlPlaneNode() corev1.Node {
+	nodeList := corev1.NodeList{}
+	err := k8sClient.List(ctx, &nodeList)
+	Expect(err).Should(Succeed())
+	Expect(nodeList.Items).To(HaveLen(1))
+	Expect(nodeList.Items[0].Name).To(HaveSuffix("kind-control-plane"))
+	return nodeList.Items[0]
+}
+
 func getNodesAddresses() []string {
 	var nodes corev1.NodeList
 	Expect(k8sClient.List(ctx, &nodes)).Should(Succeed())
@@ -41,6 +51,40 @@ func getNodesAddresses() []string {
 		}
 	}
 	return addrs
+}
+
+func getServiceAddress(namespace, serviceName, portName string) (string, error) {
+	svc := corev1.Service{}
+	err := k8sClient.Get(ctx, types.NamespacedName{Name: serviceName, Namespace: namespace}, &svc)
+	if err != nil {
+		return "", err
+	}
+
+	k8sNode := getKindControlPlaneNode()
+
+	Expect(svc.Spec.Type).To(Equal(corev1.ServiceTypeNodePort))
+	Expect(svc.Spec.IPFamilies[0]).To(Equal(corev1.IPv4Protocol))
+
+	Expect(svc.Spec.Ports).To(ContainElement(HaveField("Name", portName)))
+	var nodePort int32
+	for _, port := range svc.Spec.Ports {
+		if port.Name == portName {
+			nodePort = port.NodePort
+			break
+		}
+	}
+	Expect(nodePort).ToNot(BeZero())
+
+	var nodeAddress string
+	for _, address := range k8sNode.Status.Addresses {
+		if address.Type == corev1.NodeInternalIP && net.ParseIP(address.Address).To4() != nil {
+			nodeAddress = address.Address
+			break
+		}
+	}
+	Expect(nodeAddress).ToNot(BeEmpty())
+
+	return fmt.Sprintf("%s:%v", nodeAddress, nodePort), nil
 }
 
 func getComponentPods(ctx context.Context, namespace string) map[string]corev1.Pod {
@@ -109,10 +153,20 @@ func updateSpecToTriggerAllComponentUpdate(ytsaurus *ytv1.Ytsaurus) {
 }
 
 type ClusterHealthReport struct {
-	Alerts map[ypath.Path][]yterrors.Error
+	Errors   map[ypath.Path][]error
+	Alerts   map[ypath.Path][]yterrors.Error
+	Warnings map[ypath.Path][]yterrors.Error
 }
 
-func (c ClusterHealthReport) IgnoreAlert(alert yterrors.Error) bool {
+func (c *ClusterHealthReport) AddError(err error, errorPath ypath.Path) {
+	log.Info("Cluster error", "error", err, "error_path", errorPath)
+	if c.Errors == nil {
+		c.Errors = make(map[ypath.Path][]error)
+	}
+	c.Errors[errorPath] = append(c.Errors[errorPath], err)
+}
+
+func (c *ClusterHealthReport) IgnoreAlert(alert yterrors.Error) bool {
 	// FIXME(khlebnikov): Fix configs.
 	ignoredMessages := []string{
 		"Found unrecognized options in dynamic cluster config",
@@ -129,37 +183,54 @@ func (c ClusterHealthReport) IgnoreAlert(alert yterrors.Error) bool {
 	return false
 }
 
-func (c ClusterHealthReport) AddAlert(alert yterrors.Error, alertPath ypath.Path) {
+func (c *ClusterHealthReport) AddAlert(alert yterrors.Error, alertPath ypath.Path) {
 	if c.IgnoreAlert(alert) {
 		log.Info("Ignoring cluster alert", "alert_path", alertPath, "alert", alert)
-	} else {
-		log.Error(&alert, "Cluster alert", "alert_path", alertPath)
-		c.Alerts[alertPath] = append(c.Alerts[alertPath], alert)
-	}
-}
-
-func (c ClusterHealthReport) CollectAlerts(ytClient yt.Client, alertPath ypath.Path) {
-	var alerts []yterrors.Error
-	err := ytClient.GetNode(ctx, alertPath, &alerts, nil)
-	if yterrors.ContainsResolveError(err) {
-		log.Error(err, "Cannot collect alerts", "alert_path", alertPath)
 		return
 	}
-	Expect(err).Should(Succeed())
+	log.Info("Cluster alert", "alert", alert, "alert_path", alertPath)
+	if c.Alerts == nil {
+		c.Alerts = make(map[ypath.Path][]yterrors.Error)
+	}
+	c.Alerts[alertPath] = append(c.Alerts[alertPath], alert)
+}
+
+func (c *ClusterHealthReport) AddWarning(warning yterrors.Error, warningPath ypath.Path) {
+	log.Info("Cluster warning", "warning", warning, "warning_path", warningPath)
+	if c.Warnings == nil {
+		c.Warnings = make(map[ypath.Path][]yterrors.Error)
+	}
+	c.Warnings[warningPath] = append(c.Warnings[warningPath], warning)
+}
+
+func (c *ClusterHealthReport) CollectAlerts(ytClient yt.Client, alertPath ypath.Path) {
+	var alerts []yterrors.Error
+	if err := ytClient.GetNode(ctx, alertPath, &alerts, nil); err != nil {
+		if yterrors.ContainsResolveError(err) {
+			log.Info("Cannot collect alerts", "error", err, "alert_path", alertPath)
+		} else {
+			c.AddError(err, alertPath)
+		}
+		return
+	}
 	for _, alert := range alerts {
 		c.AddAlert(alert, alertPath)
 	}
 }
 
-func (c ClusterHealthReport) CollectNodes(ytClient yt.Client, basePath ypath.Path) {
+func (c *ClusterHealthReport) CollectNodes(ytClient yt.Client, basePath ypath.Path) {
 	type nodeAlerts struct {
 		Name   string           `yson:",value"`
 		Alerts []yterrors.Error `yson:"alerts,attr"`
 	}
 	var nodes []nodeAlerts
-	Expect(ytClient.ListNode(ctx, basePath, &nodes, &yt.ListNodeOptions{
+	err := ytClient.ListNode(ctx, basePath, &nodes, &yt.ListNodeOptions{
 		Attributes: []string{"alerts"},
-	})).Should(Succeed())
+	})
+	if err != nil {
+		c.AddError(err, basePath)
+		return
+	}
 	for _, node := range nodes {
 		alertPath := basePath.Child(node.Name).Attr("alerts")
 		for _, alert := range node.Alerts {
@@ -168,9 +239,13 @@ func (c ClusterHealthReport) CollectNodes(ytClient yt.Client, basePath ypath.Pat
 	}
 }
 
-func (c ClusterHealthReport) CollectLostChunks(ytClient yt.Client, countPath ypath.Path) {
+func (c *ClusterHealthReport) CollectLostChunks(ytClient yt.Client, countPath ypath.Path) {
 	var count int
-	Expect(ytClient.GetNode(ctx, countPath, &count, nil)).Should(Succeed())
+	err := ytClient.GetNode(ctx, countPath, &count, nil)
+	if err != nil {
+		c.AddError(err, countPath)
+		return
+	}
 	if count != 0 {
 		alert := yterrors.Error{
 			Code:    yterrors.CodeChunkIsLost,
@@ -184,10 +259,48 @@ func (c ClusterHealthReport) CollectLostChunks(ytClient yt.Client, countPath ypa
 	}
 }
 
-func CollectClusterHealth(ytClient yt.Client) ClusterHealthReport {
-	c := ClusterHealthReport{
-		Alerts: map[ypath.Path][]yterrors.Error{},
+func (c *ClusterHealthReport) CollectTablets(ytClient yt.Client, basePath ypath.Path, attrs []string) {
+	type node struct {
+		Name  string         `yson:",value"`
+		Attrs map[string]any `yson:",attrs"`
 	}
+	var nodes []node
+
+	err := ytClient.ListNode(
+		ctx,
+		basePath,
+		&nodes,
+		&yt.ListNodeOptions{
+			Attributes: attrs,
+		},
+	)
+	if err != nil {
+		c.AddError(err, basePath)
+		return
+	}
+
+	for _, node := range nodes {
+		if health, ok := node.Attrs["health"].(string); ok && health != "good" {
+			c.AddWarning(
+				yterrors.Error{
+					Code:       yterrors.CodeGeneric,
+					Message:    "Tablet health",
+					Attributes: node.Attrs,
+				},
+				basePath.Child(node.Name),
+			)
+		}
+	}
+}
+
+func (c *ClusterHealthReport) Clear() {
+	c.Errors = nil
+	c.Alerts = nil
+	c.Warnings = nil
+}
+
+func (c *ClusterHealthReport) Collect(ytClient yt.Client) {
+	c.Clear()
 	c.CollectAlerts(ytClient, "//sys/@master_alerts")
 	c.CollectAlerts(ytClient, "//sys/scheduler/@alerts")
 	c.CollectLostChunks(ytClient, "//sys/lost_chunks/@count")
@@ -197,7 +310,8 @@ func CollectClusterHealth(ytClient yt.Client) ClusterHealthReport {
 	c.CollectNodes(ytClient, "//sys/exec_nodes")
 	c.CollectNodes(ytClient, "//sys/cluster_nodes")
 	c.CollectNodes(ytClient, "//sys/controller_agents/instances")
-	return c
+	c.CollectTablets(ytClient, "//sys/tablet_cell_bundles", []string{"id", "health", "tablet_cell_ids", "tablet_actions", "tablet_cell_life_stage"})
+	c.CollectTablets(ytClient, "//sys/tablet_cells", []string{"id", "health", "tablet_cell_bundle", "tablet_cell_life_stage", "status"})
 }
 
 func queryClickHouse(ytProxyAddress, query string) (string, error) {
@@ -275,4 +389,39 @@ func discoverProxies(proxyAddress string, params url.Values) []string {
 	}
 	Expect(json.NewDecoder(resp.Body).Decode(&proxies)).To(Succeed())
 	return proxies.Proxies
+}
+
+func fetchFailedPods(namespace string) []string {
+	podList := corev1.PodList{}
+	err := k8sClient.List(ctx, &podList, ctrlcli.InNamespace(namespace))
+	Expect(err).Should(Succeed())
+
+	var failedPods []string
+	for _, pod := range podList.Items {
+		if pod.Status.Phase != corev1.PodFailed {
+			continue
+		}
+		failedPods = append(failedPods, pod.Name)
+		log.Info("Failed pod",
+			"pod", pod.Name,
+			"message", pod.Status.Message,
+			"reason", pod.Status.Reason,
+		)
+
+		logRequest := clientset.CoreV1().Pods(namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
+			Timestamps: true,
+			TailLines:  ptr.To[int64](20),
+		})
+		logStream, err := logRequest.Stream(ctx)
+		if err != nil {
+			log.Error(err, "Cannot get logs")
+			continue
+		}
+
+		_, err = io.Copy(GinkgoWriter, logStream)
+		Expect(logStream.Close()).To(Succeed())
+		Expect(err).To(Succeed())
+	}
+
+	return failedPods
 }
