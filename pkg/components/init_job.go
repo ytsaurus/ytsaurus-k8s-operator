@@ -19,7 +19,6 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
 const initJobPrologue = `
@@ -43,11 +42,11 @@ type InitJob struct {
 	imagePullSecrets  []corev1.LocalObjectReference
 
 	initJob *resources.Job
+	configs *ConfigMapBuilder
 
 	caBundle        *resources.CABundle
 	busClientSecret *resources.TLSSecret
 
-	configHelper           *ConfigHelper
 	initCompletedCondition string
 
 	image        string
@@ -64,7 +63,7 @@ func NewInitJob(
 	conditionsManager apiproxy.ConditionManager,
 	imagePullSecrets []corev1.LocalObjectReference,
 	name, configFileName, image string,
-	generator ytconfig.YsonGeneratorFunc,
+	generator ConfigGeneratorFunc,
 	tolerations []corev1.Toleration,
 	nodeSelector map[string]string,
 	dnsConfig *corev1.PodDNSConfig,
@@ -86,6 +85,9 @@ func NewInitJob(
 		}
 	}
 
+	configs := NewConfigMapBuilder(labeller, apiProxy, labeller.GetInitJobConfigMapName(name), nil)
+	configs.AddGenerator(configFileName, ConfigFormatYson, generator)
+
 	return &InitJob{
 		baseComponent: baseComponent{
 			labeller: labeller,
@@ -105,17 +107,7 @@ func NewInitJob(
 		),
 		caBundle:        caBundle,
 		busClientSecret: busClientSecret,
-		configHelper: NewConfigHelper(
-			labeller,
-			apiProxy,
-			labeller.GetInitJobConfigMapName(name),
-			nil,
-			map[string]ytconfig.GeneratorDescriptor{
-				configFileName: {
-					F:   generator,
-					Fmt: ytconfig.ConfigFormatYson,
-				},
-			}),
+		configs:         configs,
 	}
 }
 
@@ -124,7 +116,7 @@ func (j *InitJob) IsCompleted() bool {
 }
 
 func (j *InitJob) SetInitScript(script string) {
-	cm := j.configHelper.Build()
+	cm := j.configs.Build()
 	cm.Data[consts.InitClusterScriptFileName] = script
 }
 
@@ -149,7 +141,7 @@ func (j *InitJob) Build() *batchv1.Job {
 				},
 			},
 			Volumes: []corev1.Volume{
-				createConfigVolume(consts.ConfigVolumeName, j.configHelper.GetConfigMapName(), &defaultMode),
+				createConfigVolume(consts.ConfigVolumeName, j.configs.GetConfigMapName(), &defaultMode),
 			},
 			RestartPolicy: corev1.RestartPolicyOnFailure,
 			Tolerations:   j.tolerations,
@@ -175,7 +167,7 @@ func (j *InitJob) Build() *batchv1.Job {
 func (j *InitJob) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		j.initJob,
-		j.configHelper,
+		j.configs,
 	)
 }
 
@@ -195,7 +187,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		if !dry {
 			_ = j.Build()
 			err = resources.Sync(ctx,
-				j.configHelper,
+				j.configs,
 				j.initJob,
 			)
 		}
@@ -225,7 +217,7 @@ func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
 		return nil
 	}
 
-	if err := j.configHelper.RemoveIfExists(ctx); err != nil {
+	if err := j.configs.RemoveIfExists(ctx); err != nil {
 		return err
 	}
 
@@ -243,7 +235,7 @@ func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
 
 func (j *InitJob) isRestartPrepared() bool {
 	jobExists := resources.Exists(j.initJob)
-	configExists := j.configHelper.Exists()
+	configExists := j.configs.Exists()
 	conditionIsFalse := j.conditionsManager.IsStatusConditionFalse(j.initCompletedCondition)
 	return !jobExists && !configExists && conditionIsFalse
 }
