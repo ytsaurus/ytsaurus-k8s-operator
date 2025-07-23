@@ -19,6 +19,7 @@ import (
 
 type UI struct {
 	localComponent
+
 	cfgen        *ytconfig.Generator
 	microservice microservice
 	initJob      *InitJob

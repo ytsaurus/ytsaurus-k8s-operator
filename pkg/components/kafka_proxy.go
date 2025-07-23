@@ -16,6 +16,7 @@ import (
 
 type KafkaProxy struct {
 	localServerComponent
+
 	cfgen *ytconfig.Generator
 
 	master Component

@@ -18,6 +18,7 @@ import (
 
 type StrawberryController struct {
 	localComponent
+
 	cfgen              *ytconfig.Generator
 	microservice       microservice
 	initUserAndUrlJob  *InitJob

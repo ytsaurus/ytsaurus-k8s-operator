@@ -15,6 +15,7 @@ import (
 
 type HttpProxy struct {
 	localServerComponent
+
 	cfgen *ytconfig.Generator
 
 	serviceType      corev1.ServiceType

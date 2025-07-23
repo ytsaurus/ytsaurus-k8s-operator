@@ -13,10 +13,11 @@ import (
 )
 
 type RemoteTabletNode struct {
+	baseComponent
+
 	server server
 	cfgen  *ytconfig.NodeGenerator
 	spec   *ytv1.TabletNodesSpec
-	baseComponent
 }
 
 func NewRemoteTabletNodes(

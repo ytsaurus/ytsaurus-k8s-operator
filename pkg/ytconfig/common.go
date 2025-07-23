@@ -16,6 +16,7 @@ type HydraPeer struct {
 
 type MasterCell struct {
 	AddressList
+
 	Peers  []HydraPeer `yson:"peers"`
 	CellID string      `yson:"cell_id"`
 }
@@ -30,6 +31,7 @@ type DiscoveryConnection struct {
 
 type MasterCache struct {
 	AddressList
+
 	CellID                    string `yson:"cell_id"`
 	EnableMasterCacheDiscover bool   `yson:"enable_master_cache_discovery"`
 }
@@ -134,6 +136,7 @@ type Bus struct {
 
 type BusClient struct {
 	Bus
+
 	Address              string `yson:"address,omitempty"`
 	UnixDomainSocketPath string `yson:"unix_domain_socket_path,omitempty"`
 }
@@ -154,6 +157,7 @@ type BasicServer struct {
 
 type CommonServer struct {
 	BasicServer
+
 	TimestampProviders TimestampProviders `yson:"timestamp_provider"`
 	ClusterConnection  ClusterConnection  `yson:"cluster_connection"`
 	CypressAnnotations map[string]any     `yson:"cypress_annotations,omitempty"`

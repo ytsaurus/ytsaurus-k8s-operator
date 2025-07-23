@@ -14,6 +14,7 @@ import (
 
 type ControllerAgent struct {
 	localServerComponent
+
 	cfgen  *ytconfig.Generator
 	master Component
 }

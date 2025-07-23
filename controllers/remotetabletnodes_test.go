@@ -246,9 +246,11 @@ func buildRemoteTabletNodes(h *testutil.TestHelper, remoteYtsaurusName, remoteTa
 	return ytv1.RemoteTabletNodes{
 		ObjectMeta: h.GetObjectMeta(remoteTabletNodesName),
 		Spec: ytv1.RemoteTabletNodesSpec{
-			RemoteClusterSpec: &(corev1.LocalObjectReference{
-				Name: remoteYtsaurusName,
-			}),
+			CommonRemoteNodeSpec: ytv1.CommonRemoteNodeSpec{
+				RemoteClusterSpec: &corev1.LocalObjectReference{
+					Name: remoteYtsaurusName,
+				},
+			},
 			TabletNodesSpec: ytv1.TabletNodesSpec{
 				InstanceSpec: ytv1.InstanceSpec{
 					Image: ptr.To(testYtsaurusImage),

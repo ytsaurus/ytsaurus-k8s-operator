@@ -14,6 +14,7 @@ import (
 
 type Discovery struct {
 	localServerComponent
+
 	cfgen *ytconfig.Generator
 }
 

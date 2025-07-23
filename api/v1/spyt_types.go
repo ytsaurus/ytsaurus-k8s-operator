@@ -57,8 +57,9 @@ type SpytStatus struct {
 type Spyt struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              SpytSpec   `json:"spec,omitempty"`
-	Status            SpytStatus `json:"status,omitempty"`
+
+	Spec   SpytSpec   `json:"spec,omitempty"`
+	Status SpytStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -67,7 +68,8 @@ type Spyt struct {
 type SpytList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Spyt `json:"items"`
+
+	Items []Spyt `json:"items"`
 }
 
 func init() {

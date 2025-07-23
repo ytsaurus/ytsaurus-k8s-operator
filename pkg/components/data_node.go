@@ -15,6 +15,7 @@ import (
 
 type DataNode struct {
 	localServerComponent
+
 	cfgen  *ytconfig.NodeGenerator
 	master Component
 }

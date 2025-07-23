@@ -17,15 +17,14 @@ limitations under the License.
 package v1
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // RemoteExecNodesSpec defines the desired state of RemoteExecNodes
 type RemoteExecNodesSpec struct {
-	RemoteClusterSpec *corev1.LocalObjectReference `json:"remoteClusterSpec"`
-	CommonSpec        `json:",inline"`
-	ExecNodesSpec     `json:",inline"`
+	CommonRemoteNodeSpec `json:",inline"`
+	CommonSpec           `json:",inline"`
+	ExecNodesSpec        `json:",inline"`
 }
 
 // RemoteExecNodesStatus defines the observed state of RemoteExecNodes
@@ -53,7 +52,8 @@ type RemoteExecNodes struct {
 type RemoteExecNodesList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []RemoteExecNodes `json:"items"`
+
+	Items []RemoteExecNodes `json:"items"`
 }
 
 func init() {

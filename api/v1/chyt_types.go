@@ -70,7 +70,8 @@ type Chyt struct {
 type ChytList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Chyt `json:"items"`
+
+	Items []Chyt `json:"items"`
 }
 
 func init() {

@@ -1184,8 +1184,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Namespace: namespace,
 					},
 					Spec: ytv1.RemoteExecNodesSpec{
-						RemoteClusterSpec: &corev1.LocalObjectReference{
-							Name: testutil.RemoteResourceName,
+						CommonRemoteNodeSpec: ytv1.CommonRemoteNodeSpec{
+							RemoteClusterSpec: &corev1.LocalObjectReference{
+								Name: testutil.RemoteResourceName,
+							},
 						},
 						CommonSpec: ytv1.CommonSpec{
 							CoreImage: testutil.YtsaurusImageCurrent,
@@ -1238,8 +1240,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Namespace: namespace,
 					},
 					Spec: ytv1.RemoteDataNodesSpec{
-						RemoteClusterSpec: &corev1.LocalObjectReference{
-							Name: testutil.RemoteResourceName,
+						CommonRemoteNodeSpec: ytv1.CommonRemoteNodeSpec{
+							RemoteClusterSpec: &corev1.LocalObjectReference{
+								Name: testutil.RemoteResourceName,
+							},
 						},
 						CommonSpec: ytv1.CommonSpec{
 							CoreImage: testutil.YtsaurusImageCurrent,
@@ -1280,8 +1284,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Namespace: namespace,
 					},
 					Spec: ytv1.RemoteTabletNodesSpec{
-						RemoteClusterSpec: &corev1.LocalObjectReference{
-							Name: testutil.RemoteResourceName,
+						CommonRemoteNodeSpec: ytv1.CommonRemoteNodeSpec{
+							RemoteClusterSpec: &corev1.LocalObjectReference{
+								Name: testutil.RemoteResourceName,
+							},
 						},
 						CommonSpec: ytv1.CommonSpec{
 							CoreImage: testutil.YtsaurusImageCurrent,

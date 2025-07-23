@@ -294,6 +294,24 @@ _Appears in:_
 | `CancelUpdate` |  |
 
 
+#### CommonRemoteNodeSpec
+
+
+
+CommonRemoteNodeSpec is a set of fields shared between `Remote*NodesSpec`.
+
+
+
+_Appears in:_
+- [RemoteDataNodesSpec](#remotedatanodesspec)
+- [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Reference to RemoteYtsaurus resource. |  |  |
+
+
 #### CommonRemoteNodeStatus
 
 
@@ -1466,7 +1484,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
+| `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Reference to RemoteYtsaurus resource. |  |  |
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
@@ -1563,7 +1581,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
+| `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Reference to RemoteYtsaurus resource. |  |  |
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
@@ -1705,7 +1723,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
+| `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Reference to RemoteYtsaurus resource. |  |  |
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |

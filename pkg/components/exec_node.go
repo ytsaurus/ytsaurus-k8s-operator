@@ -14,6 +14,7 @@ import (
 type ExecNode struct {
 	baseExecNode
 	localComponent
+
 	master Component
 }
 

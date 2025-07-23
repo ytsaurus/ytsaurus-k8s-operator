@@ -14,6 +14,7 @@ import (
 
 type TcpProxy struct {
 	localServerComponent
+
 	cfgen *ytconfig.Generator
 
 	master Component

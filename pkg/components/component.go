@@ -85,6 +85,7 @@ func (c *baseComponent) GetLabeller() *labeller.Labeller {
 // but don't depend on server. Example: UI, Strawberry.
 type localComponent struct {
 	baseComponent
+
 	ytsaurus *apiproxy.Ytsaurus
 }
 
@@ -92,6 +93,7 @@ type localComponent struct {
 // and use server. Almost all components are based on this struct.
 type localServerComponent struct {
 	localComponent
+
 	server server
 }
 

@@ -246,9 +246,11 @@ func buildRemoteDataNodes(h *testutil.TestHelper, remoteYtsaurusName, remoteData
 	return ytv1.RemoteDataNodes{
 		ObjectMeta: h.GetObjectMeta(remoteDataNodesName),
 		Spec: ytv1.RemoteDataNodesSpec{
-			RemoteClusterSpec: &(corev1.LocalObjectReference{
-				Name: remoteYtsaurusName,
-			}),
+			CommonRemoteNodeSpec: ytv1.CommonRemoteNodeSpec{
+				RemoteClusterSpec: &corev1.LocalObjectReference{
+					Name: remoteYtsaurusName,
+				},
+			},
 			DataNodesSpec: ytv1.DataNodesSpec{
 				InstanceSpec: ytv1.InstanceSpec{
 					Image: ptr.To(testYtsaurusImage),
