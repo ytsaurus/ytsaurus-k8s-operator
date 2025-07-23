@@ -161,6 +161,14 @@ func (l *Labeller) GetInitJobName(name string) string {
 	return fmt.Sprintf("%s-init-job-%s", l.GetFullComponentLabel(), strings.ToLower(name))
 }
 
+func (l *Labeller) GetInitJobConfigMapName(name string) string {
+	return fmt.Sprintf("%s-%s-init-job-config", strings.ToLower(name), l.GetFullComponentLabel())
+}
+
+func (l *Labeller) GetInitJobCompletedCondition(name string) string {
+	return fmt.Sprintf("%s%sInitJobCompleted", name, l.GetFullComponentName())
+}
+
 func (l *Labeller) GetPodsRemovingStartedCondition() string {
 	return fmt.Sprintf("%sPodsRemovingStarted", l.GetFullComponentName())
 }
