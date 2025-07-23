@@ -49,14 +49,14 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		ytsaurus,
 		image,
 		resource.Spec.UI.InstanceCount,
-		map[string]ytconfig.GeneratorDescriptor{
+		map[string]ConfigGenerator{
 			UIClustersConfigFileName: {
-				F:   cfgen.GetUIClustersConfig,
-				Fmt: ytconfig.ConfigFormatJson,
+				Generator: cfgen.GetUIClustersConfig,
+				Format:    ConfigFormatJson,
 			},
 			UICustomConfigFileName: {
-				F:   cfgen.GetUICustomConfig,
-				Fmt: ytconfig.ConfigFormatJsonWithJsPrologue,
+				Generator: cfgen.GetUICustomConfig,
+				Format:    ConfigFormatJsonWithJsPrologue,
 			},
 		},
 		"ytsaurus-ui-deployment",

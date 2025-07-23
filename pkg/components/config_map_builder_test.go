@@ -9,10 +9,10 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/canonize"
 )
 
-//go:embed canondata/TestConfigMerge/http_proxy_config_wo_override.yson
+//go:embed testdata/TestConfigMerge/http_proxy_config_wo_override.yson
 var hpConfigWithoutOverride string
 
-//go:embed canondata/TestConfigMerge/http_proxy_config_override.yson
+//go:embed testdata/TestConfigMerge/http_proxy_config_override.yson
 var hpConfigOverride string
 
 func TestConfigMerge(t *testing.T) {

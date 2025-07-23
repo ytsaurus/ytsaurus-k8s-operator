@@ -17,7 +17,6 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
 const (
@@ -56,7 +55,7 @@ type serverImpl struct {
 	caBundle          *resources.CABundle
 	busServerSecret   *resources.TLSSecret
 	busClientSecret   *resources.TLSSecret
-	configHelper      *ConfigHelper
+	configs           *ConfigMapBuilder
 
 	builtStatefulSet *appsv1.StatefulSet
 
@@ -71,7 +70,7 @@ func newServer(
 	ytsaurus *apiproxy.Ytsaurus,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName string,
-	generator ytconfig.YsonGeneratorFunc,
+	generator ConfigGeneratorFunc,
 	defaultMonitoringPort int32,
 	options ...Option,
 ) server {
@@ -95,7 +94,7 @@ func newServerConfigured(
 	commonSpec ytv1.CommonSpec,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName string,
-	generator ytconfig.YsonGeneratorFunc,
+	generator ConfigGeneratorFunc,
 	defaultMonitoringPort int32,
 	optFuncs ...Option,
 ) server {
@@ -149,9 +148,19 @@ func newServerConfigured(
 		fn(opts)
 	}
 
+	configs := NewConfigMapBuilder(
+		l,
+		proxy,
+		l.GetMainConfigMapName(),
+		commonSpec.ConfigOverrides,
+	)
+
+	configs.AddGenerator(configFileName, ConfigFormatYson, generator)
+
 	return &serverImpl{
 		labeller:      l,
 		image:         image,
+		configs:       configs,
 		sidecarImages: opts.sidecarImages,
 		proxy:         proxy,
 		commonSpec:    commonSpec,
@@ -176,17 +185,6 @@ func newServerConfigured(
 		caBundle:        caBundle,
 		busServerSecret: busServerSecret,
 		busClientSecret: busClientSecret,
-		configHelper: NewConfigHelper(
-			l,
-			proxy,
-			l.GetMainConfigMapName(),
-			commonSpec.ConfigOverrides,
-			map[string]ytconfig.GeneratorDescriptor{
-				configFileName: {
-					F:   generator,
-					Fmt: ytconfig.ConfigFormatYson,
-				},
-			}),
 
 		componentContainerPorts: opts.containerPorts,
 
@@ -198,7 +196,7 @@ func newServerConfigured(
 func (s *serverImpl) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		s.statefulSet,
-		s.configHelper,
+		s.configs,
 		s.headlessService,
 		s.monitoringService,
 	)
@@ -211,7 +209,7 @@ func (s *serverImpl) exists() bool {
 }
 
 func (s *serverImpl) configNeedsReload() bool {
-	needReload, err := s.configHelper.NeedReload()
+	needReload, err := s.configs.NeedReload()
 	if err != nil {
 		needReload = false
 	}
@@ -219,7 +217,7 @@ func (s *serverImpl) configNeedsReload() bool {
 }
 
 func (s *serverImpl) needBuild() bool {
-	return s.configHelper.NeedInit() ||
+	return s.configs.NeedInit() ||
 		!s.exists() ||
 		s.statefulSet.NeedSync(s.instanceSpec.InstanceCount)
 }
@@ -229,14 +227,14 @@ func (s *serverImpl) needSync() bool {
 }
 
 func (s *serverImpl) Sync(ctx context.Context) error {
-	_ = s.configHelper.Build()
+	_ = s.configs.Build()
 	_ = s.headlessService.Build()
 	_ = s.monitoringService.Build()
 	_ = s.buildStatefulSet()
 
 	return resources.Sync(ctx,
 		s.statefulSet,
-		s.configHelper,
+		s.configs,
 		s.headlessService,
 		s.monitoringService,
 	)
@@ -284,7 +282,7 @@ func (s *serverImpl) needUpdate() bool {
 		return true
 	}
 
-	needReload, err := s.configHelper.NeedReload()
+	needReload, err := s.configs.NeedReload()
 	if err != nil {
 		return false
 	}
@@ -323,7 +321,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	statefulSet.Spec.ServiceName = s.headlessService.Name()
 	statefulSet.Spec.VolumeClaimTemplates = createVolumeClaims(s.instanceSpec.VolumeClaimTemplates)
 
-	fileNames := s.configHelper.GetFileNames()
+	fileNames := s.configs.GetFileNames()
 	if len(fileNames) != 1 {
 		log.Panicf("expected exactly one config filename, found %v", len(fileNames))
 	}

@@ -16,18 +16,37 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
 const (
 	JsPrologue string = "module.exports = "
 )
 
-type ConfigHelper struct {
+type ConfigFormat string
+
+const (
+	ConfigFormatYson               = "yson"
+	ConfigFormatJson               = "json"
+	ConfigFormatJsonWithJsPrologue = "json_with_js_prologue"
+	ConfigFormatToml               = "toml"
+)
+
+type ConfigGeneratorFunc func() ([]byte, error)
+
+type ConfigGenerator struct {
+	// Format is the desired serialization format for config map.
+	// Note that conversion from YSON to Format (if needed) is performed as a very last
+	// step of config generation pipeline.
+	Format ConfigFormat
+	// Generator must generate config in YSON.
+	Generator ConfigGeneratorFunc
+}
+
+type ConfigMapBuilder struct {
 	labeller *labeller.Labeller
 	apiProxy apiproxy.APIProxy
 
-	generators map[string]ytconfig.GeneratorDescriptor
+	generators map[string]ConfigGenerator
 
 	configOverrides *corev1.LocalObjectReference
 	overridesMap    corev1.ConfigMap
@@ -35,18 +54,27 @@ type ConfigHelper struct {
 	configMap *resources.ConfigMap
 }
 
-func NewConfigHelper(
+func NewConfigMapBuilder(
 	labeller *labeller.Labeller,
 	apiProxy apiproxy.APIProxy,
 	name string,
 	configOverrides *corev1.LocalObjectReference,
-	generators map[string]ytconfig.GeneratorDescriptor) *ConfigHelper {
-	return &ConfigHelper{
+) *ConfigMapBuilder {
+	return &ConfigMapBuilder{
 		labeller:        labeller,
 		apiProxy:        apiProxy,
-		generators:      generators,
 		configOverrides: configOverrides,
 		configMap:       resources.NewConfigMap(name, labeller, apiProxy),
+	}
+}
+
+func (h *ConfigMapBuilder) AddGenerator(fileName string, format ConfigFormat, generator ConfigGeneratorFunc) {
+	if h.generators == nil {
+		h.generators = make(map[string]ConfigGenerator)
+	}
+	h.generators[fileName] = ConfigGenerator{
+		Format:    format,
+		Generator: generator,
 	}
 }
 
@@ -93,7 +121,7 @@ func overrideYsonConfigs(base []byte, overrides []byte) ([]byte, error) {
 	return yson.MarshalFormat(merged, yson.FormatPretty)
 }
 
-func (h *ConfigHelper) GetFileNames() []string {
+func (h *ConfigMapBuilder) GetFileNames() []string {
 	fileNames := []string{}
 	for fileName := range h.generators {
 		fileNames = append(fileNames, fileName)
@@ -101,17 +129,17 @@ func (h *ConfigHelper) GetFileNames() []string {
 	return fileNames
 }
 
-func (h *ConfigHelper) GetConfigMapName() string {
+func (h *ConfigMapBuilder) GetConfigMapName() string {
 	return h.configMap.Name()
 }
 
-func (h *ConfigHelper) getConfig(fileName string) ([]byte, error) {
+func (h *ConfigMapBuilder) getConfig(fileName string) ([]byte, error) {
 	descriptor, ok := h.generators[fileName]
 	if !ok {
 		return nil, nil
 	}
 
-	serializedConfig, err := descriptor.F()
+	serializedConfig, err := descriptor.Generator()
 	if err != nil {
 		h.apiProxy.RecordWarning(
 			"Reconciling",
@@ -139,8 +167,8 @@ func (h *ConfigHelper) getConfig(fileName string) ([]byte, error) {
 		}
 	}
 
-	switch descriptor.Fmt {
-	case ytconfig.ConfigFormatJson, ytconfig.ConfigFormatJsonWithJsPrologue:
+	switch descriptor.Format {
+	case ConfigFormatJson, ConfigFormatJsonWithJsPrologue:
 		var config any
 		err := yson.Unmarshal(serializedConfig, &config)
 		if err != nil {
@@ -150,10 +178,10 @@ func (h *ConfigHelper) getConfig(fileName string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		if descriptor.Fmt == ytconfig.ConfigFormatJsonWithJsPrologue {
+		if descriptor.Format == ConfigFormatJsonWithJsPrologue {
 			serializedConfig = append([]byte(JsPrologue), serializedConfig...)
 		}
-	case ytconfig.ConfigFormatToml:
+	case ConfigFormatToml:
 		var config any
 		err := yson.Unmarshal(serializedConfig, &config)
 		if err != nil {
@@ -171,7 +199,7 @@ func (h *ConfigHelper) getConfig(fileName string) ([]byte, error) {
 	return serializedConfig, nil
 }
 
-func (h *ConfigHelper) getCurrentConfigValue(fileName string) []byte {
+func (h *ConfigMapBuilder) getCurrentConfigValue(fileName string) []byte {
 	if !resources.Exists(h.configMap) {
 		return nil
 	}
@@ -183,7 +211,7 @@ func (h *ConfigHelper) getCurrentConfigValue(fileName string) []byte {
 	return []byte(data)
 }
 
-func (h *ConfigHelper) NeedReload() (bool, error) {
+func (h *ConfigMapBuilder) NeedReload() (bool, error) {
 	for fileName := range h.generators {
 		newConfig, err := h.getConfig(fileName)
 		if err != nil {
@@ -207,11 +235,11 @@ func (h *ConfigHelper) NeedReload() (bool, error) {
 	return false, nil
 }
 
-func (h *ConfigHelper) NeedInit() bool {
+func (h *ConfigMapBuilder) NeedInit() bool {
 	return !resources.Exists(h.configMap)
 }
 
-func (h *ConfigHelper) Build() *corev1.ConfigMap {
+func (h *ConfigMapBuilder) Build() *corev1.ConfigMap {
 	cm := h.configMap.Build()
 
 	for fileName := range h.generators {
@@ -228,7 +256,7 @@ func (h *ConfigHelper) Build() *corev1.ConfigMap {
 	return cm
 }
 
-func (h *ConfigHelper) Sync(ctx context.Context) error {
+func (h *ConfigMapBuilder) Sync(ctx context.Context) error {
 	needReload, err := h.NeedReload()
 	if err != nil {
 		needReload = false
@@ -240,7 +268,7 @@ func (h *ConfigHelper) Sync(ctx context.Context) error {
 	return h.configMap.Sync(ctx)
 }
 
-func (h *ConfigHelper) Fetch(ctx context.Context) error {
+func (h *ConfigMapBuilder) Fetch(ctx context.Context) error {
 	if h.configOverrides != nil {
 		name := h.configOverrides.Name
 		err := h.apiProxy.FetchObject(ctx, name, &h.overridesMap)
@@ -251,7 +279,7 @@ func (h *ConfigHelper) Fetch(ctx context.Context) error {
 	return h.configMap.Fetch(ctx)
 }
 
-func (h *ConfigHelper) RemoveIfExists(ctx context.Context) error {
+func (h *ConfigMapBuilder) RemoveIfExists(ctx context.Context) error {
 	if !resources.Exists(h.configMap) {
 		return nil
 	}
@@ -262,6 +290,6 @@ func (h *ConfigHelper) RemoveIfExists(ctx context.Context) error {
 	)
 }
 
-func (h *ConfigHelper) Exists() bool {
+func (h *ConfigMapBuilder) Exists() bool {
 	return resources.Exists(h.configMap)
 }
