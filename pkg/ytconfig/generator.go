@@ -18,26 +18,6 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 )
 
-type ConfigFormat string
-
-const (
-	ConfigFormatYson               = "yson"
-	ConfigFormatJson               = "json"
-	ConfigFormatJsonWithJsPrologue = "json_with_js_prologue"
-	ConfigFormatToml               = "toml"
-)
-
-type YsonGeneratorFunc func() ([]byte, error)
-
-type GeneratorDescriptor struct {
-	// F must generate config in YSON.
-	F YsonGeneratorFunc
-	// Fmt is the desired serialization format for config map.
-	// Note that conversion from YSON to Fmt (if needed) is performed as a very last
-	// step of config generation pipeline.
-	Fmt ConfigFormat
-}
-
 type NodeGenerator struct {
 	baseLabeller *labeller.Labeller
 
