@@ -85,10 +85,10 @@ func NewStrawberryController(
 		ytsaurus,
 		image,
 		1,
-		map[string]ytconfig.GeneratorDescriptor{
+		map[string]ConfigGenerator{
 			ControllerConfigFileName: {
-				F:   cfgen.GetStrawberryControllerConfig,
-				Fmt: ytconfig.ConfigFormatYson,
+				Generator: cfgen.GetStrawberryControllerConfig,
+				Format:    ConfigFormatYson,
 			},
 		},
 		"strawberry-controller",
@@ -271,7 +271,7 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		if IsUpdatingComponent(c.ytsaurus, c) {
 			if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, c.microservice, &c.localComponent)
+					err = removePods(ctx, c.microservice, c)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
@@ -289,7 +289,7 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		return masterStatus, err
 	}
 	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, c.master.GetFullName()), err
+		return ComponentStatusBlockedBy(c.master), nil
 	}
 
 	schStatus, err := c.scheduler.Status(ctx)
@@ -297,7 +297,7 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		return schStatus, err
 	}
 	if !IsRunningStatus(schStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, c.scheduler.GetFullName()), err
+		return ComponentStatusBlockedBy(c.scheduler), nil
 	}
 
 	for _, dataNode := range c.dataNodes {
@@ -306,7 +306,7 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 			return dndStatus, err
 		}
 		if !IsRunningStatus(dndStatus.SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, dataNode.GetFullName()), err
+			return ComponentStatusBlockedBy(dataNode), nil
 		}
 	}
 

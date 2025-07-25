@@ -12,8 +12,8 @@ import (
 )
 
 type RemoteExecNode struct {
-	baseExecNode
 	baseComponent
+	baseExecNode
 }
 
 func NewRemoteExecNodes(
@@ -43,25 +43,32 @@ func NewRemoteExecNodes(
 		}),
 	)
 
-	var sidecarConfig *ConfigHelper
+	var sidecarConfig *ConfigMapBuilder
 	if spec.JobEnvironment != nil && spec.JobEnvironment.CRI != nil {
-		sidecarConfig = NewConfigHelper(
+		sidecarConfig = NewConfigMapBuilder(
 			l,
 			proxy,
 			l.GetSidecarConfigMapName(consts.JobsContainerName),
 			commonSpec.ConfigOverrides,
-			map[string]ytconfig.GeneratorDescriptor{
-				consts.ContainerdConfigFileName: {
-					F: func() ([]byte, error) {
-						return cfgen.GetContainerdConfig(&spec)
-					},
-					Fmt: ytconfig.ConfigFormatToml,
-				},
-			})
+		)
+
+		sidecarConfig.AddGenerator(
+			consts.ContainerdConfigFileName,
+			ConfigFormatToml,
+			func() ([]byte, error) {
+				return cfgen.GetContainerdConfig(&spec)
+			},
+		)
 	}
 
 	return &RemoteExecNode{
-		baseComponent: baseComponent{labeller: l},
+		baseComponent: newBaseComponent(
+			l,
+			apiproxy.NewConditionManager(
+				&nodes.Status.Conditions,
+				&nodes.Status.Conditions,
+			),
+		),
 		baseExecNode: baseExecNode{
 			server:        srv,
 			cfgen:         cfgen,

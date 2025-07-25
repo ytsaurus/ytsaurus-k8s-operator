@@ -19,7 +19,6 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
 const initJobPrologue = `
@@ -38,16 +37,16 @@ func initJobWithNativeDriverPrologue() string {
 
 type InitJob struct {
 	baseComponent
-	apiProxy          apiproxy.APIProxy
-	conditionsManager apiproxy.ConditionManager
-	imagePullSecrets  []corev1.LocalObjectReference
+
+	apiProxy         apiproxy.APIProxy
+	imagePullSecrets []corev1.LocalObjectReference
 
 	initJob *resources.Job
+	configs *ConfigMapBuilder
 
 	caBundle        *resources.CABundle
 	busClientSecret *resources.TLSSecret
 
-	configHelper           *ConfigHelper
 	initCompletedCondition string
 
 	image        string
@@ -64,7 +63,7 @@ func NewInitJob(
 	conditionsManager apiproxy.ConditionManager,
 	imagePullSecrets []corev1.LocalObjectReference,
 	name, configFileName, image string,
-	generator ytconfig.YsonGeneratorFunc,
+	generator ConfigGeneratorFunc,
 	tolerations []corev1.Toleration,
 	nodeSelector map[string]string,
 	dnsConfig *corev1.PodDNSConfig,
@@ -86,14 +85,14 @@ func NewInitJob(
 		}
 	}
 
+	configs := NewConfigMapBuilder(labeller, apiProxy, labeller.GetInitJobConfigMapName(name), nil)
+	configs.AddGenerator(configFileName, ConfigFormatYson, generator)
+
 	return &InitJob{
-		baseComponent: baseComponent{
-			labeller: labeller,
-		},
+		baseComponent:          newBaseComponent(labeller, conditionsManager),
 		apiProxy:               apiProxy,
-		conditionsManager:      conditionsManager,
 		imagePullSecrets:       imagePullSecrets,
-		initCompletedCondition: fmt.Sprintf("%s%sInitJobCompleted", name, labeller.GetFullComponentName()),
+		initCompletedCondition: labeller.GetInitJobCompletedCondition(name),
 		image:                  image,
 		tolerations:            tolerations,
 		nodeSelector:           nodeSelector,
@@ -105,29 +104,16 @@ func NewInitJob(
 		),
 		caBundle:        caBundle,
 		busClientSecret: busClientSecret,
-		configHelper: NewConfigHelper(
-			labeller,
-			apiProxy,
-			fmt.Sprintf(
-				"%s-%s-init-job-config",
-				strings.ToLower(name),
-				labeller.GetFullComponentLabel()),
-			nil,
-			map[string]ytconfig.GeneratorDescriptor{
-				configFileName: {
-					F:   generator,
-					Fmt: ytconfig.ConfigFormatYson,
-				},
-			}),
+		configs:         configs,
 	}
 }
 
 func (j *InitJob) IsCompleted() bool {
-	return j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition)
+	return j.GetConditionManager().IsStatusConditionTrue(j.initCompletedCondition)
 }
 
 func (j *InitJob) SetInitScript(script string) {
-	cm := j.configHelper.Build()
+	cm := j.configs.Build()
 	cm.Data[consts.InitClusterScriptFileName] = script
 }
 
@@ -152,7 +138,7 @@ func (j *InitJob) Build() *batchv1.Job {
 				},
 			},
 			Volumes: []corev1.Volume{
-				createConfigVolume(consts.ConfigVolumeName, j.configHelper.GetConfigMapName(), &defaultMode),
+				createConfigVolume(consts.ConfigVolumeName, j.configs.GetConfigMapName(), &defaultMode),
 			},
 			RestartPolicy: corev1.RestartPolicyOnFailure,
 			Tolerations:   j.tolerations,
@@ -178,7 +164,7 @@ func (j *InitJob) Build() *batchv1.Job {
 func (j *InitJob) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		j.initJob,
-		j.configHelper,
+		j.configs,
 	)
 }
 
@@ -186,7 +172,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	logger := log.FromContext(ctx)
 	var err error
 
-	if j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition) {
+	if j.GetConditionManager().IsStatusConditionTrue(j.initCompletedCondition) {
 		return ComponentStatus{
 			SyncStatusReady,
 			fmt.Sprintf("%s completed", j.initJob.Name()),
@@ -198,7 +184,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		if !dry {
 			_ = j.Build()
 			err = resources.Sync(ctx,
-				j.configHelper,
+				j.configs,
 				j.initJob,
 			)
 		}
@@ -207,12 +193,12 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	if !j.initJob.Completed() {
-		logger.Info("Init job is not completed for " + j.labeller.GetFullComponentName())
+		logger.Info("Init job is not completed", "component", j.labeller.GetComponentName())
 		return WaitingStatus(SyncStatusBlocked, fmt.Sprintf("%s completion", j.initJob.Name())), err
 	}
 
 	if !dry {
-		j.conditionsManager.SetStatusCondition(metav1.Condition{
+		j.GetConditionManager().SetStatusCondition(metav1.Condition{
 			Type:    j.initCompletedCondition,
 			Status:  metav1.ConditionTrue,
 			Reason:  "InitJobCompleted",
@@ -228,14 +214,14 @@ func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
 		return nil
 	}
 
-	if err := j.configHelper.RemoveIfExists(ctx); err != nil {
+	if err := j.configs.RemoveIfExists(ctx); err != nil {
 		return err
 	}
 
 	if err := j.removeIfExists(ctx); err != nil {
 		return err
 	}
-	j.conditionsManager.SetStatusCondition(metav1.Condition{
+	j.GetConditionManager().SetStatusCondition(metav1.Condition{
 		Type:    j.initCompletedCondition,
 		Status:  metav1.ConditionFalse,
 		Reason:  "InitJobNeedRestart",
@@ -246,13 +232,13 @@ func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
 
 func (j *InitJob) isRestartPrepared() bool {
 	jobExists := resources.Exists(j.initJob)
-	configExists := j.configHelper.Exists()
-	conditionIsFalse := j.conditionsManager.IsStatusConditionFalse(j.initCompletedCondition)
+	configExists := j.configs.Exists()
+	conditionIsFalse := j.GetConditionManager().IsStatusConditionFalse(j.initCompletedCondition)
 	return !jobExists && !configExists && conditionIsFalse
 }
 
 func (j *InitJob) isRestartCompleted() bool {
-	return j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition)
+	return j.GetConditionManager().IsStatusConditionTrue(j.initCompletedCondition)
 }
 
 func (j *InitJob) removeIfExists(ctx context.Context) error {

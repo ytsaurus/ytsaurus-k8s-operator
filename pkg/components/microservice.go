@@ -13,7 +13,6 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
 // microservice manages common resources of YTsaurus service component
@@ -39,9 +38,9 @@ type microserviceImpl struct {
 	instanceCount int32
 	ytsaurus      *apiproxy.Ytsaurus
 
-	deployment   *resources.Deployment
-	service      *resources.HTTPService
-	configHelper *ConfigHelper
+	deployment *resources.Deployment
+	service    *resources.HTTPService
+	configs    *ConfigMapBuilder
 
 	builtDeployment *appsv1.Deployment
 	builtService    *corev1.Service
@@ -53,11 +52,22 @@ func newMicroservice(
 	ytsaurus *apiproxy.Ytsaurus,
 	image string,
 	instanceCount int32,
-	generators map[string]ytconfig.GeneratorDescriptor,
+	generators map[string]ConfigGenerator,
 	deploymentName, serviceName string,
 	tolerations []corev1.Toleration,
 	nodeSelector map[string]string,
 ) microservice {
+	configs := NewConfigMapBuilder(
+		labeller,
+		ytsaurus.APIProxy(),
+		labeller.GetMainConfigMapName(),
+		ytsaurus.GetResource().Spec.ConfigOverrides,
+	)
+
+	for fileName, generator := range generators {
+		configs.AddGenerator(fileName, generator.Format, generator.Generator)
+	}
+
 	return &microserviceImpl{
 		labeller:      labeller,
 		image:         image,
@@ -75,12 +85,7 @@ func newMicroservice(
 			tolerations,
 			nodeSelector,
 		),
-		configHelper: NewConfigHelper(
-			labeller,
-			ytsaurus.APIProxy(),
-			labeller.GetMainConfigMapName(),
-			ytsaurus.GetResource().Spec.ConfigOverrides,
-			generators),
+		configs: configs,
 	}
 }
 
@@ -91,25 +96,25 @@ func (m *microserviceImpl) Sync(ctx context.Context) (err error) {
 
 	return resources.Sync(ctx,
 		m.deployment,
-		m.configHelper,
+		m.configs,
 		m.service,
 	)
 }
 
 func (m *microserviceImpl) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
-		m.configHelper,
+		m.configs,
 		m.deployment,
 		m.service,
 	)
 }
 
 func (m *microserviceImpl) needSync() bool {
-	needReload, err := m.configHelper.NeedReload()
+	needReload, err := m.configs.NeedReload()
 	if err != nil {
 		needReload = false
 	}
-	return m.configHelper.NeedInit() ||
+	return m.configs.NeedInit() ||
 		(m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && needReload) ||
 		!resources.Exists(m.service) ||
 		m.deployment.NeedSync(m.instanceCount)
@@ -147,7 +152,7 @@ func (m *microserviceImpl) buildService() *corev1.Service {
 
 func (m *microserviceImpl) buildConfig() *corev1.ConfigMap {
 	if m.builtConfig == nil {
-		m.builtConfig = m.configHelper.Build()
+		m.builtConfig = m.configs.Build()
 	}
 	return m.builtConfig
 }
@@ -172,7 +177,7 @@ func (m *microserviceImpl) needUpdate() bool {
 		return true
 	}
 
-	needReload, err := m.configHelper.NeedReload()
+	needReload, err := m.configs.NeedReload()
 	if err != nil {
 		return false
 	}

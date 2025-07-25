@@ -13,10 +13,11 @@ import (
 )
 
 type RemoteTabletNode struct {
+	baseComponent
+
 	server server
 	cfgen  *ytconfig.NodeGenerator
 	spec   *ytv1.TabletNodesSpec
-	baseComponent
 }
 
 func NewRemoteTabletNodes(
@@ -46,10 +47,16 @@ func NewRemoteTabletNodes(
 		}),
 	)
 	return &RemoteTabletNode{
-		baseComponent: baseComponent{labeller: l},
-		server:        srv,
-		cfgen:         cfgen,
-		spec:          &spec,
+		baseComponent: newBaseComponent(
+			l,
+			apiproxy.NewConditionManager(
+				&nodes.Status.Conditions,
+				&nodes.Status.Conditions,
+			),
+		),
+		server: srv,
+		cfgen:  cfgen,
+		spec:   &spec,
 	}
 }
 

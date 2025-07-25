@@ -1,8 +1,6 @@
 package resources
 
 import (
-	"fmt"
-
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	labeller2 "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
@@ -22,7 +20,7 @@ func NewMonitoringService(monitoringTargetPort int32, labeller *labeller2.Labell
 		BaseManagedResource: BaseManagedResource[*corev1.Service]{
 			proxy:     apiProxy,
 			labeller:  labeller,
-			name:      fmt.Sprintf("%s-monitoring", labeller.GetFullComponentLabel()),
+			name:      labeller.GetMonitoringServiceName(),
 			oldObject: &corev1.Service{},
 			newObject: &corev1.Service{},
 		},

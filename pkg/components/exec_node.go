@@ -42,21 +42,22 @@ func NewExecNode(
 		}),
 	)
 
-	var sidecarConfig *ConfigHelper
+	var sidecarConfig *ConfigMapBuilder
 	if spec.JobEnvironment != nil && spec.JobEnvironment.CRI != nil {
-		sidecarConfig = NewConfigHelper(
+		sidecarConfig = NewConfigMapBuilder(
 			l,
 			ytsaurus.APIProxy(),
 			l.GetSidecarConfigMapName(consts.JobsContainerName),
 			ytsaurus.GetResource().Spec.ConfigOverrides,
-			map[string]ytconfig.GeneratorDescriptor{
-				consts.ContainerdConfigFileName: {
-					F: func() ([]byte, error) {
-						return cfgen.GetContainerdConfig(&spec)
-					},
-					Fmt: ytconfig.ConfigFormatToml,
-				},
-			})
+		)
+
+		sidecarConfig.AddGenerator(
+			consts.ContainerdConfigFileName,
+			ConfigFormatToml,
+			func() ([]byte, error) {
+				return cfgen.GetContainerdConfig(&spec)
+			},
+		)
 	}
 
 	return &ExecNode{
@@ -79,7 +80,7 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	}
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, &n.localComponent, n.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, n.server, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -89,7 +90,7 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		return masterStatus, err
 	}
 	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, n.master.GetFullName()), err
+		return ComponentStatusBlockedBy(n.master), nil
 	}
 
 	if LocalServerNeedSync(n.server, n.ytsaurus) {

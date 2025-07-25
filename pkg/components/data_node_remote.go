@@ -13,10 +13,11 @@ import (
 )
 
 type RemoteDataNode struct {
+	baseComponent
+
 	server server
 	cfgen  *ytconfig.NodeGenerator
 	spec   *ytv1.DataNodesSpec
-	baseComponent
 }
 
 func NewRemoteDataNodes(
@@ -46,10 +47,16 @@ func NewRemoteDataNodes(
 		}),
 	)
 	return &RemoteDataNode{
-		baseComponent: baseComponent{labeller: l},
-		server:        srv,
-		cfgen:         cfgen,
-		spec:          &spec,
+		baseComponent: newBaseComponent(
+			l,
+			apiproxy.NewConditionManager(
+				&nodes.Status.Conditions,
+				&nodes.Status.Conditions,
+			),
+		),
+		server: srv,
+		cfgen:  cfgen,
+		spec:   &spec,
 	}
 }
 

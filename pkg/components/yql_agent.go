@@ -88,11 +88,11 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 	}
 }
 
-func (yqla *YqlAgent) GetFullName() string {
-	return yqla.labeller.GetFullComponentName()
+func (yqla *YqlAgent) GetComponentName() consts.ComponentName {
+	return yqla.labeller.GetComponentName()
 }
 
-func (yqla *YqlAgent) GetShortName() string {
+func (yqla *YqlAgent) GetInstanceGroup() string {
 	return yqla.labeller.GetInstanceGroup()
 }
 
@@ -154,7 +154,7 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		if IsUpdatingComponent(yqla.ytsaurus, yqla) {
 			if yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(yqla.ytsaurus, yqla) {
 				if !dry {
-					err = removePods(ctx, yqla.server, &yqla.localComponent)
+					err = removePods(ctx, yqla.server, yqla)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
@@ -176,7 +176,7 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return masterStatus, err
 	}
 	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, yqla.master.GetFullName()), err
+		return ComponentStatusBlockedBy(yqla.master), nil
 	}
 
 	if yqla.secret.NeedSync(consts.TokenSecretKey, "") {

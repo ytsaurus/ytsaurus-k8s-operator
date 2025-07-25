@@ -54,7 +54,7 @@ func (mc *MasterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 	}
 
 	if mc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, mc.ytsaurus, mc, &mc.localComponent, mc.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, mc.ytsaurus, mc, mc.server, dry); status != nil {
 			return *status, err
 		}
 	}

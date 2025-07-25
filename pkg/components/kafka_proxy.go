@@ -91,7 +91,7 @@ func (kp *KafkaProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if kp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, kp.ytsaurus, kp, &kp.localComponent, kp.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, kp.ytsaurus, kp, kp.server, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -101,7 +101,7 @@ func (kp *KafkaProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return kpStatus, err
 	}
 	if !IsRunningStatus(kpStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, kp.master.GetFullName()), err
+		return ComponentStatusBlockedBy(kp.master), nil
 	}
 
 	if kp.NeedSync() {

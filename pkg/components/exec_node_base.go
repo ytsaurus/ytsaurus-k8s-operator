@@ -20,7 +20,7 @@ type baseExecNode struct {
 	cfgen  *ytconfig.NodeGenerator
 	spec   *ytv1.ExecNodesSpec
 
-	sidecarConfig *ConfigHelper
+	sidecarConfig *ConfigMapBuilder
 }
 
 // Returns true if jobs are executed outside of exec node container.

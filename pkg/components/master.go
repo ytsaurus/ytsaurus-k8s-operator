@@ -413,7 +413,7 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForSidecarsInitializingPrepare || m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForSidecarsInitialize {
 			return m.sidecarsInit(ctx, dry)
 		}
-		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, m.server, dry); status != nil {
 			return *status, err
 		}
 	}

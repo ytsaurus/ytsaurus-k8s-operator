@@ -1,13 +1,10 @@
 package apiproxy
 
 import (
-	"cmp"
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -15,10 +12,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 type Ytsaurus struct {
+	ConditionManager
 	apiProxy APIProxy
 	ytsaurus *ytv1.Ytsaurus
 }
@@ -29,6 +26,10 @@ func NewYtsaurus(
 	recorder record.EventRecorder,
 	scheme *runtime.Scheme) *Ytsaurus {
 	return &Ytsaurus{
+		ConditionManager: NewConditionManager(
+			&ytsaurus.Status.Conditions,
+			&ytsaurus.Status.UpdateStatus.Conditions,
+		),
 		ytsaurus: ytsaurus,
 		apiProxy: NewAPIProxy(ytsaurus, client, recorder, scheme),
 	}
@@ -60,17 +61,6 @@ func (c *Ytsaurus) GetUpdateState() ytv1.UpdateState {
 
 func (c *Ytsaurus) GetUpdatingComponents() []ytv1.Component {
 	return c.ytsaurus.Status.UpdateStatus.UpdatingComponents
-}
-
-func (c *Ytsaurus) IsUpdateStatusConditionTrue(condition string) bool {
-	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
-}
-
-func (c *Ytsaurus) SetUpdateStatusCondition(ctx context.Context, condition metav1.Condition) {
-	logger := log.FromContext(ctx)
-	logger.Info("Setting update status condition", "condition", condition)
-	meta.SetStatusCondition(&c.ytsaurus.Status.UpdateStatus.Conditions, condition)
-	sortConditions(c.ytsaurus.Status.UpdateStatus.Conditions)
 }
 
 func (c *Ytsaurus) SetUpdatingComponents(canUpdate []ytv1.Component) {
@@ -132,29 +122,6 @@ func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateS
 	return nil
 }
 
-func (c *Ytsaurus) SetStatusCondition(condition metav1.Condition) {
-	meta.SetStatusCondition(&c.ytsaurus.Status.Conditions, condition)
-	sortConditions(c.ytsaurus.Status.Conditions)
-}
-
-func (c *Ytsaurus) IsStatusConditionTrue(conditionType string) bool {
-	return meta.IsStatusConditionTrue(c.ytsaurus.Status.Conditions, conditionType)
-}
-
-func (c *Ytsaurus) IsStatusConditionFalse(conditionType string) bool {
-	return meta.IsStatusConditionFalse(c.ytsaurus.Status.Conditions, conditionType)
-}
-
-func sortConditions(conditions []metav1.Condition) {
-	slices.SortStableFunc(conditions, func(a, b metav1.Condition) int {
-		statusOrder := []metav1.ConditionStatus{metav1.ConditionTrue, metav1.ConditionFalse, metav1.ConditionUnknown}
-		if diff := cmp.Compare(slices.Index(statusOrder, a.Status), slices.Index(statusOrder, b.Status)); diff != 0 {
-			return diff
-		}
-		return a.LastTransitionTime.Compare(b.LastTransitionTime.Time)
-	})
-}
-
 func buildComponentsSummary(components []ytv1.Component) string {
 	if len(components) == 0 {
 		return ""
@@ -162,7 +129,7 @@ func buildComponentsSummary(components []ytv1.Component) string {
 	var componentNames []string
 	for _, comp := range components {
 		// TODO: we better use labeller here after support deployment names in it.
-		name := consts.GetShortName(comp.Type)
+		name := comp.Type.ShortName()
 		if name == "" {
 			name = strings.ToLower(string(comp.Type))
 		}

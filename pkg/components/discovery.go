@@ -56,7 +56,7 @@ func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, d.ytsaurus, d, &d.localComponent, d.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, d.ytsaurus, d, d.server, dry); status != nil {
 			return *status, err
 		}
 	}

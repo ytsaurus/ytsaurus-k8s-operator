@@ -77,7 +77,7 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.localComponent, tn.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, tn.ytsaurus, tn, tn.server, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -103,7 +103,7 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return ytClientStatus, err
 	}
 	if ytClientStatus.SyncStatus != SyncStatusReady {
-		return WaitingStatus(SyncStatusBlocked, tn.ytsaurusClient.GetFullName()), err
+		return ComponentStatusBlockedBy(tn.ytsaurusClient), nil
 	}
 
 	if !dry && tn.doInitialization {

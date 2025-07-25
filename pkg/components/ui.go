@@ -49,14 +49,14 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		ytsaurus,
 		image,
 		resource.Spec.UI.InstanceCount,
-		map[string]ytconfig.GeneratorDescriptor{
+		map[string]ConfigGenerator{
 			UIClustersConfigFileName: {
-				F:   cfgen.GetUIClustersConfig,
-				Fmt: ytconfig.ConfigFormatJson,
+				Generator: cfgen.GetUIClustersConfig,
+				Format:    ConfigFormatJson,
 			},
 			UICustomConfigFileName: {
-				F:   cfgen.GetUICustomConfig,
-				Fmt: ytconfig.ConfigFormatJsonWithJsPrologue,
+				Generator: cfgen.GetUICustomConfig,
+				Format:    ConfigFormatJsonWithJsPrologue,
 			},
 		},
 		"ytsaurus-ui-deployment",
@@ -271,7 +271,7 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		if IsUpdatingComponent(u.ytsaurus, u) {
 			if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, u.microservice, &u.localComponent)
+					err = removePods(ctx, u.microservice, u)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}
@@ -289,7 +289,7 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return masterStatus, err
 	}
 	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, u.master.GetFullName()), err
+		return ComponentStatusBlockedBy(u.master), nil
 	}
 
 	if u.secret.NeedSync(consts.TokenSecretKey, "") {

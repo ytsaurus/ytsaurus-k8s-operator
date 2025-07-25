@@ -38,42 +38,56 @@ func WaitingStatus(status SyncStatus, event string) ComponentStatus {
 	return ComponentStatus{status, fmt.Sprintf("Wait for %s", event)}
 }
 
+func ComponentStatusBlockedBy(blocker Component) ComponentStatus {
+	return ComponentStatus{SyncStatusBlocked, fmt.Sprintf("Waiting for %s", blocker.GetComponentName())}
+}
+
 func SimpleStatus(status SyncStatus) ComponentStatus {
 	return ComponentStatus{status, string(status)}
 }
 
 type Component interface {
-	Fetch(ctx context.Context) error
-	Sync(ctx context.Context) error
-	Status(ctx context.Context) (ComponentStatus, error)
-	GetFullName() string
-	GetShortName() string
-	GetType() consts.ComponentType
+	// methods implemented by baseComponent
+	GetComponentType() consts.ComponentType
+	GetComponentName() consts.ComponentName
+	GetInstanceGroup() string
+	GetLabeller() *labeller.Labeller
+	GetConditionManager() apiproxy.ConditionManager
 	SetReadyCondition(status ComponentStatus)
 
-	GetLabeller() *labeller.Labeller
+	// methods implemented in specific component
+	Fetch(ctx context.Context) error
+	Status(ctx context.Context) (ComponentStatus, error)
+	Sync(ctx context.Context) error
 }
 
 // Following structs are used as a base for implementing YTsaurus components objects.
 // baseComponent is a base struct intended for use in the simplest components and remote components
 // (the ones that don't have access to the ytsaurus resource).
 type baseComponent struct {
-	labeller *labeller.Labeller
+	labeller         *labeller.Labeller
+	conditionManager apiproxy.ConditionManager
 }
 
-// GetFullName returns component's name, which is used as an identifier in component management
-// and for mentioning in logs.
+func newBaseComponent(labeller *labeller.Labeller, conditionManager apiproxy.ConditionManager) baseComponent {
+	return baseComponent{
+		labeller:         labeller,
+		conditionManager: conditionManager,
+	}
+}
+
+// GetComponentName returns component's name:"<ComponentType>[-<InstanceGroup>]".
 // For example for master component name is "Master",
-// For data node name looks like "DataNode<NameFromSpec>".
-func (c *baseComponent) GetFullName() string {
-	return c.labeller.GetFullComponentName()
+// For data node name looks like "DataNode-foo".
+func (c *baseComponent) GetComponentName() consts.ComponentName {
+	return c.labeller.GetComponentName()
 }
 
-func (c *baseComponent) GetShortName() string {
+func (c *baseComponent) GetInstanceGroup() string {
 	return c.labeller.GetInstanceGroup()
 }
 
-func (c *baseComponent) GetType() consts.ComponentType {
+func (c *baseComponent) GetComponentType() consts.ComponentType {
 	return c.labeller.ComponentType
 }
 
@@ -81,10 +95,28 @@ func (c *baseComponent) GetLabeller() *labeller.Labeller {
 	return c.labeller
 }
 
+func (c *baseComponent) GetConditionManager() apiproxy.ConditionManager {
+	return c.conditionManager
+}
+
+func (c *baseComponent) SetReadyCondition(status ComponentStatus) {
+	ready := metav1.ConditionFalse
+	if status.SyncStatus == SyncStatusReady {
+		ready = metav1.ConditionTrue
+	}
+	c.GetConditionManager().SetStatusCondition(metav1.Condition{
+		Type:    c.labeller.GetReadyCondition(),
+		Status:  ready,
+		Reason:  string(status.SyncStatus),
+		Message: status.Message,
+	})
+}
+
 // localComponent is a base structs for components which have access to ytsaurus resource,
 // but don't depend on server. Example: UI, Strawberry.
 type localComponent struct {
 	baseComponent
+
 	ytsaurus *apiproxy.Ytsaurus
 }
 
@@ -100,22 +132,9 @@ func newLocalComponent(
 	ytsaurus *apiproxy.Ytsaurus,
 ) localComponent {
 	return localComponent{
-		baseComponent: baseComponent{labeller: labeller},
+		baseComponent: newBaseComponent(labeller, ytsaurus),
 		ytsaurus:      ytsaurus,
 	}
-}
-
-func (c *localComponent) SetReadyCondition(status ComponentStatus) {
-	ready := metav1.ConditionFalse
-	if status.SyncStatus == SyncStatusReady {
-		ready = metav1.ConditionTrue
-	}
-	c.ytsaurus.SetStatusCondition(metav1.Condition{
-		Type:    fmt.Sprintf("%sReady", c.labeller.GetFullComponentName()),
-		Status:  ready,
-		Reason:  string(status.SyncStatus),
-		Message: status.Message,
-	})
 }
 
 func newLocalServerComponent(
@@ -125,10 +144,8 @@ func newLocalServerComponent(
 ) localServerComponent {
 	return localServerComponent{
 		localComponent: localComponent{
-			baseComponent: baseComponent{
-				labeller: labeller,
-			},
-			ytsaurus: ytsaurus,
+			baseComponent: newBaseComponent(labeller, ytsaurus),
+			ytsaurus:      ytsaurus,
 		},
 		server: server,
 	}
