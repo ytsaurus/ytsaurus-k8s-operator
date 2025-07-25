@@ -681,6 +681,7 @@ type CommonRemoteNodeStatus struct {
 	// Reflects resource generation which was used for updating status.
 	ObservedGeneration int64                   `json:"observedGeneration,omitempty"`
 	ReleaseStatus      RemoteNodeReleaseStatus `json:"releaseStatus,omitempty"`
+	Conditions         []metav1.Condition      `json:"conditions,omitempty"`
 }
 
 // YtsaurusSpec defines the desired state of Ytsaurus
