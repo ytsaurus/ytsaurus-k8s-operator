@@ -15,6 +15,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	mock_yt "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/mock"
@@ -77,6 +78,10 @@ func (fc *FakeComponent) GetComponentType() consts.ComponentType {
 }
 
 func (fc *FakeComponent) GetLabeller() *labeller.Labeller {
+	return nil
+}
+
+func (fc *FakeComponent) GetConditionManager() apiproxy.ConditionManager {
 	return nil
 }
 

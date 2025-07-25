@@ -47,22 +47,33 @@ func SimpleStatus(status SyncStatus) ComponentStatus {
 }
 
 type Component interface {
-	Fetch(ctx context.Context) error
-	Sync(ctx context.Context) error
-	Status(ctx context.Context) (ComponentStatus, error)
+	// methods implemented by baseComponent
 	GetComponentType() consts.ComponentType
 	GetComponentName() consts.ComponentName
 	GetInstanceGroup() string
+	GetLabeller() *labeller.Labeller
+	GetConditionManager() apiproxy.ConditionManager
 	SetReadyCondition(status ComponentStatus)
 
-	GetLabeller() *labeller.Labeller
+	// methods implemented in specific component
+	Fetch(ctx context.Context) error
+	Status(ctx context.Context) (ComponentStatus, error)
+	Sync(ctx context.Context) error
 }
 
 // Following structs are used as a base for implementing YTsaurus components objects.
 // baseComponent is a base struct intended for use in the simplest components and remote components
 // (the ones that don't have access to the ytsaurus resource).
 type baseComponent struct {
-	labeller *labeller.Labeller
+	labeller         *labeller.Labeller
+	conditionManager apiproxy.ConditionManager
+}
+
+func newBaseComponent(labeller *labeller.Labeller, conditionManager apiproxy.ConditionManager) baseComponent {
+	return baseComponent{
+		labeller:         labeller,
+		conditionManager: conditionManager,
+	}
 }
 
 // GetComponentName returns component's name:"<ComponentType>[-<InstanceGroup>]".
@@ -84,10 +95,28 @@ func (c *baseComponent) GetLabeller() *labeller.Labeller {
 	return c.labeller
 }
 
+func (c *baseComponent) GetConditionManager() apiproxy.ConditionManager {
+	return c.conditionManager
+}
+
+func (c *baseComponent) SetReadyCondition(status ComponentStatus) {
+	ready := metav1.ConditionFalse
+	if status.SyncStatus == SyncStatusReady {
+		ready = metav1.ConditionTrue
+	}
+	c.GetConditionManager().SetStatusCondition(metav1.Condition{
+		Type:    c.labeller.GetReadyCondition(),
+		Status:  ready,
+		Reason:  string(status.SyncStatus),
+		Message: status.Message,
+	})
+}
+
 // localComponent is a base structs for components which have access to ytsaurus resource,
 // but don't depend on server. Example: UI, Strawberry.
 type localComponent struct {
 	baseComponent
+
 	ytsaurus *apiproxy.Ytsaurus
 }
 
@@ -103,22 +132,9 @@ func newLocalComponent(
 	ytsaurus *apiproxy.Ytsaurus,
 ) localComponent {
 	return localComponent{
-		baseComponent: baseComponent{labeller: labeller},
+		baseComponent: newBaseComponent(labeller, ytsaurus),
 		ytsaurus:      ytsaurus,
 	}
-}
-
-func (c *localComponent) SetReadyCondition(status ComponentStatus) {
-	ready := metav1.ConditionFalse
-	if status.SyncStatus == SyncStatusReady {
-		ready = metav1.ConditionTrue
-	}
-	c.ytsaurus.SetStatusCondition(metav1.Condition{
-		Type:    c.labeller.GetReadyCondition(),
-		Status:  ready,
-		Reason:  string(status.SyncStatus),
-		Message: status.Message,
-	})
 }
 
 func newLocalServerComponent(
@@ -128,10 +144,8 @@ func newLocalServerComponent(
 ) localServerComponent {
 	return localServerComponent{
 		localComponent: localComponent{
-			baseComponent: baseComponent{
-				labeller: labeller,
-			},
-			ytsaurus: ytsaurus,
+			baseComponent: newBaseComponent(labeller, ytsaurus),
+			ytsaurus:      ytsaurus,
 		},
 		server: server,
 	}

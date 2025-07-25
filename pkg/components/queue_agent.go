@@ -104,7 +104,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		if IsUpdatingComponent(qa.ytsaurus, qa) {
 			if qa.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, qa.server, &qa.localComponent)
+					err = removePods(ctx, qa.server, qa)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}

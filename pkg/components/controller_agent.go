@@ -56,7 +56,7 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.localComponent, ca.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, ca.ytsaurus, ca, ca.server, dry); status != nil {
 			return *status, err
 		}
 	}

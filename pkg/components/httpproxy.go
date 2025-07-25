@@ -109,7 +109,7 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	}
 
 	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.localComponent, hp.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, hp.ytsaurus, hp, hp.server, dry); status != nil {
 			return *status, err
 		}
 	}

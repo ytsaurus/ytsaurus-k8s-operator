@@ -127,7 +127,7 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		if IsUpdatingComponent(s.ytsaurus, s) {
 			if s.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, s.server, &s.localComponent)
+					err = removePods(ctx, s.server, s)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}

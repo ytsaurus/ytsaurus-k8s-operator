@@ -68,7 +68,7 @@ func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 				return *status, err
 			}
 		}
-		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, &n.localComponent, n.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, n.server, dry); status != nil {
 			return *status, err
 		}
 	}
@@ -119,7 +119,7 @@ func (n *DataNode) handleImaginaryChunksMigration(ctx context.Context, dry bool)
 		err = removePods(
 			ctx,
 			n.server,
-			&n.localComponent,
+			n,
 		)
 	}
 	return ptr.To(WaitingStatus(SyncStatusUpdating, "pods removal for imaginary chunks migration")), err

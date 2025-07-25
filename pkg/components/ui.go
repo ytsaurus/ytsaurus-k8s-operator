@@ -271,7 +271,7 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		if IsUpdatingComponent(u.ytsaurus, u) {
 			if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, u.microservice, &u.localComponent)
+					err = removePods(ctx, u.microservice, u)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}

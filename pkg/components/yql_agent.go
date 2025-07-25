@@ -154,7 +154,7 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		if IsUpdatingComponent(yqla.ytsaurus, yqla) {
 			if yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(yqla.ytsaurus, yqla) {
 				if !dry {
-					err = removePods(ctx, yqla.server, &yqla.localComponent)
+					err = removePods(ctx, yqla.server, yqla)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}

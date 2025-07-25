@@ -123,7 +123,7 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.localComponent, rp.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, rp.ytsaurus, rp, rp.server, dry); status != nil {
 			return *status, err
 		}
 	}

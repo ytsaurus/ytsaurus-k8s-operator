@@ -12,8 +12,8 @@ import (
 )
 
 type RemoteExecNode struct {
-	baseExecNode
 	baseComponent
+	baseExecNode
 }
 
 func NewRemoteExecNodes(
@@ -62,7 +62,13 @@ func NewRemoteExecNodes(
 	}
 
 	return &RemoteExecNode{
-		baseComponent: baseComponent{labeller: l},
+		baseComponent: newBaseComponent(
+			l,
+			apiproxy.NewConditionManager(
+				&nodes.Status.Conditions,
+				&nodes.Status.Conditions,
+			),
+		),
 		baseExecNode: baseExecNode{
 			server:        srv,
 			cfgen:         cfgen,

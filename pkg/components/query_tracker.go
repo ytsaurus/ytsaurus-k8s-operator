@@ -101,7 +101,7 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		if IsUpdatingComponent(qt.ytsaurus, qt) {
 			if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(qt.ytsaurus, qt) {
 				if !dry {
-					err = removePods(ctx, qt.server, &qt.localComponent)
+					err = removePods(ctx, qt.server, qt)
 				}
 				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
 			}

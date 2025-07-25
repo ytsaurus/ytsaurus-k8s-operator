@@ -154,17 +154,16 @@ func IsUpdatingComponent(ytsaurus *apiproxy.Ytsaurus, component Component) bool 
 func handleUpdatingClusterState(
 	ctx context.Context,
 	ytsaurus *apiproxy.Ytsaurus,
-	cmp Component,
-	cmpBase *localComponent,
+	component Component,
 	server server,
 	dry bool,
 ) (*ComponentStatus, error) {
 	var err error
 
-	if IsUpdatingComponent(ytsaurus, cmp) {
+	if IsUpdatingComponent(ytsaurus, component) {
 		if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !dry {
-				err = removePods(ctx, server, cmpBase)
+				err = removePods(ctx, server, component)
 			}
 			return ptr.To(WaitingStatus(SyncStatusUpdating, "pods removal")), err
 		}
