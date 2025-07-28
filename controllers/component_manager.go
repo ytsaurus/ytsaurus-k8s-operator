@@ -143,6 +143,11 @@ func NewComponentManager(
 		mc := components.NewMasterCache(cfgen, ytsaurus)
 		allComponents = append(allComponents, mc)
 	}
+
+	if resource.Spec.CypressProxies != nil {
+		cp := components.NewCypressProxy(cfgen, ytsaurus)
+		allComponents = append(allComponents, cp)
+	}
 	// Fetch component status.
 	var readyComponents []string
 	var updatingComponents []string
