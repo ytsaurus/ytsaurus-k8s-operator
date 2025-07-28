@@ -195,6 +195,19 @@ type JobProxy struct {
 	SupervisorConnection           *BusClient            `yson:"supervisor_connection,omitempty"`
 }
 
+type LogDump struct {
+	BufferSize    int64  `yson:"buffer_size"`
+	LogWriterName string `yson:"log_writer_name"`
+}
+
+type JobProxyLogManager struct {
+	Directory                     string        `yson:"directory"`
+	ShardingKeyLength             int           `yson:"sharding_key_length"`
+	LogsStoragePeriod             yson.Duration `yson:"logs_storage_period"`
+	DirectoryTraversalConcurrency int           `yson:"directory_traversal_concurrency"`
+	LogDump                       LogDump       `yson:"log_dump"`
+}
+
 type ExecNode struct {
 	SlotManager   SlotManager   `yson:"slot_manager"`
 	GpuManager    GpuManager    `yson:"gpu_manager"`
@@ -207,7 +220,8 @@ type ExecNode struct {
 	ForwardAllEnvironmentVariablesLegacy *bool    `yson:"forward_all_environment_variables,omitempty"`
 
 	// NOTE: Non-legacy "use_artifact_binds" moved into dynamic config.
-	UseArtifactBindsLegacy *bool `yson:"use_artifact_binds,omitempty"`
+	UseArtifactBindsLegacy *bool              `yson:"use_artifact_binds,omitempty"`
+	JobProxyLogManager     JobProxyLogManager `yson:"job_proxy_log_manager"`
 }
 
 type Cache struct {
@@ -248,7 +262,7 @@ type ExecNodeServer struct {
 
 type TabletNodeServer struct {
 	NodeServer
-	// TabletNode TabletNode `yson:"tablet_node"`
+	// TabletNode `yson:"tablet_node"`
 	CachingObjectService Cache `yson:"caching_object_service"`
 }
 
@@ -629,10 +643,21 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	c.ExecNode.JobProxy.JobProxyLogging = JobProxyLogging{
 		Logging:            jobProxyLogging,
 		LogManagerTemplate: jobProxyLogging,
+		Mode:               "simple",
 	}
 
 	c.ExecNode.JobProxy.JobProxyAuthenticationManager.RequireAuthentication = true
 	c.ExecNode.JobProxy.JobProxyAuthenticationManager.CypressTokenAuthenticator.Secure = true
+
+	// Configure JobProxyLogManager
+	c.ExecNode.JobProxyLogManager.Directory = ChooseJobProxyLoggingPath(&spec.InstanceSpec)
+	c.ExecNode.JobProxyLogManager.ShardingKeyLength = 2
+	c.ExecNode.JobProxyLogManager.LogsStoragePeriod = yson.Duration(7 * 24 * time.Hour) // 1 week
+	c.ExecNode.JobProxyLogManager.DirectoryTraversalConcurrency = 4
+	c.ExecNode.JobProxyLogManager.LogDump = LogDump{
+		BufferSize:    1024 * 1024, // 1MB
+		LogWriterName: "debug",
+	}
 
 	// TODO(khlebnikov): Drop legacy fields depending on ytsaurus version.
 	c.ExecNode.JobController.ResourceLimitsLegacy = &c.JobResourceManager.ResourceLimits

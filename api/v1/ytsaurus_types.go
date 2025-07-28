@@ -859,7 +859,7 @@ type Component struct {
 	Type consts.ComponentType `json:"type,omitempty"`
 }
 
-func (c Component) String() string {
+func (c *Component) String() string {
 	if c.Name == "" {
 		return string(c.Type)
 	}

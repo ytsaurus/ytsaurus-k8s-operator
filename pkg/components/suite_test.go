@@ -76,7 +76,7 @@ func (fc *FakeComponent) GetType() consts.ComponentType {
 	return fc.compType
 }
 
-func (fyc *FakeComponent) GetLabeller() *labeller.Labeller {
+func (fc *FakeComponent) GetLabeller() *labeller.Labeller {
 	return nil
 }
 

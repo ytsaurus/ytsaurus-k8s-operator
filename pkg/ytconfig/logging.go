@@ -98,6 +98,7 @@ type JobProxyLogging struct {
 	// Legacy fields can be removed with end of respective server version support.
 	Logging
 	LogManagerTemplate Logging `yson:"log_manager_template"`
+	Mode               string  `yson:"mode"`
 }
 
 type loggingBuilder struct {
@@ -106,11 +107,23 @@ type loggingBuilder struct {
 	logging          Logging
 }
 
-func newLoggingBuilder(location *ytv1.LocationSpec, componentName string) loggingBuilder {
+func ChooseLoggingPath(location *ytv1.LocationSpec) string {
 	loggingDirectory := "/var/log"
 	if location != nil {
 		loggingDirectory = location.Path
 	}
+	return loggingDirectory
+}
+
+func ChooseJobProxyLoggingPath(spec *ytv1.InstanceSpec) string {
+	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs); location != nil {
+		return location.Path + "/job-proxy"
+	}
+	return "/var/log/job-proxy"
+}
+
+func newLoggingBuilder(location *ytv1.LocationSpec, componentName string) loggingBuilder {
+	loggingDirectory := ChooseLoggingPath(location)
 
 	return loggingBuilder{
 		loggingDirectory: loggingDirectory,

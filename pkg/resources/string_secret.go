@@ -60,5 +60,5 @@ func (s *StringSecret) NeedSync(key, value string) bool {
 		return false
 	}
 
-	return value != string(v)
+	return value != v
 }

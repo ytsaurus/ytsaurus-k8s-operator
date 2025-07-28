@@ -47,7 +47,10 @@ func Assert(t *testing.T, data []byte) {
 		ToFile:   "new",
 		Context:  3,
 	}
-	text, _ := difflib.GetUnifiedDiffString(diff)
+	text, err := difflib.GetUnifiedDiffString(diff)
+	if err != nil {
+		t.Errorf("cannot diff: %v", err)
+	}
 	if text != "" {
 		t.Errorf("%s", addColorsToDiff(text))
 	}
@@ -86,7 +89,10 @@ func AssertStruct(t *testing.T, name string, s any) {
 		ToFile:   "new",
 		Context:  3,
 	}
-	text, _ := difflib.GetUnifiedDiffString(diff)
+	text, err := difflib.GetUnifiedDiffString(diff)
+	if err != nil {
+		t.Errorf("cannot diff: %v", err)
+	}
 	if text != "" {
 		t.Errorf("%s", addColorsToDiff(text))
 	}

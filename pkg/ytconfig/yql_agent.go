@@ -58,10 +58,10 @@ func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 
 	c.YQLAgent.GatewayConfig.UDFDirectory = "/usr/lib/yql"
 	c.YQLAgent.AdditionalSystemLibs = []AdditionalSystemLib{
-		AdditionalSystemLib{
+		{
 			File: "/usr/lib/yql/libiconv.so",
 		},
-		AdditionalSystemLib{
+		{
 			File: "/usr/lib/yql/liblibidn-dynamic.so",
 		},
 	}

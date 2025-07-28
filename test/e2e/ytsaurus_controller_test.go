@@ -390,7 +390,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			}
 			resp, err := httpClient.Get(ytHTTPSProxyAddress + "/api")
 			Expect(err).NotTo(HaveOccurred())
-			defer resp.Body.Close()
+			defer func() {
+				Expect(resp.Body.Close()).To(Succeed())
+			}()
 
 			bodyBytes, err := io.ReadAll(resp.Body)
 			Expect(err).NotTo(HaveOccurred())
@@ -963,7 +965,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				}, upgradeTimeout, pollInterval).Should(BeTrue())
 
 				By("Ban all tablet nodes")
-				for i := 0; i < int(ytsaurus.Spec.TabletNodes[0].InstanceCount); i++ {
+				for i := range ytsaurus.Spec.TabletNodes[0].InstanceCount {
 					Expect(ytClient.SetNode(ctx, ypath.Path(fmt.Sprintf(
 						"//sys/cluster_nodes/tnd-%v.tablet-nodes.%v.svc.cluster.local:9022/@banned", i, namespace)), true, nil)).Should(Succeed())
 				}
@@ -1006,7 +1008,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				}, reactionTimeout, pollInterval).Should(Succeed())
 
 				By("Ban all data nodes")
-				for i := 0; i < int(ytsaurus.Spec.DataNodes[0].InstanceCount); i++ {
+				for i := range ytsaurus.Spec.DataNodes[0].InstanceCount {
 					node_path := ypath.Path(fmt.Sprintf("//sys/cluster_nodes/dnd-%v.data-nodes.%v.svc.cluster.local:9012/@banned", i, namespace))
 					Expect(ytClient.SetNode(ctx, node_path, true, nil)).Should(Succeed())
 				}
