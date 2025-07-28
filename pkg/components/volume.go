@@ -3,6 +3,7 @@ package components
 import (
 	"fmt"
 	"path"
+	"strings"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
@@ -82,11 +83,22 @@ func createServerVolumes(specVolumes []corev1.Volume, configMapName string) []co
 }
 
 func getLocationInitCommand(locations []ytv1.LocationSpec) string {
-	command := "echo 'Init locations'; "
+	var cmd strings.Builder
+
+	cmd.WriteString("echo 'Init locations'; ")
+
 	for _, location := range locations {
-		command += "mkdir -p " + location.Path + "; "
+		fmt.Fprintf(&cmd, "mkdir -p '%s'; ", location.Path)
+
+		if location.PurgeKey != "" {
+			purgeKeyPath := path.Join(location.Path, consts.PurgeKeyFileName)
+			fmt.Fprintf(&cmd, "[ \"`cat '%s'`\" = '%s' ] || find '%s' -mindepth 1 -delete; ",
+				purgeKeyPath, location.PurgeKey, location.Path)
+			fmt.Fprintf(&cmd, "echo '%s' >'%s'; ", location.PurgeKey, purgeKeyPath)
+		}
 	}
-	return command
+
+	return cmd.String()
 }
 
 func getConfigPostprocessingCommand(configFileName string) string {
