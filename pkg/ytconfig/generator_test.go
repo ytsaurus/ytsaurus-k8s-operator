@@ -459,6 +459,15 @@ func TestGetMasterCachesWithFixedHostsConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetCypressProxiesConfig(t *testing.T) {
+	ytsaurus := getYtsaurusWithoutNodes()
+	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetCypressProxiesConfig(ytsaurus.Spec.CypressProxies)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetYtsaurusComponents(t *testing.T) {
 	ytsaurus := getYtsaurusWithAllComponents()
 
@@ -668,6 +677,7 @@ func getYtsaurusWithoutNodes() *ytv1.Ytsaurus {
 	ytsaurus = withUI(ytsaurus)
 	ytsaurus = withYQLAgent(ytsaurus)
 	ytsaurus = withMasterCaches(ytsaurus)
+	ytsaurus = withCypressProxies(ytsaurus)
 	return ytsaurus
 }
 
@@ -804,6 +814,11 @@ func withUICustomSettings(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 
 func withMasterCaches(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.MasterCaches = &ytv1.MasterCachesSpec{InstanceSpec: testBasicInstanceSpec}
+	return ytsaurus
+}
+
+func withCypressProxies(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
+	ytsaurus.Spec.CypressProxies = &ytv1.CypressProxiesSpec{InstanceSpec: testBasicInstanceSpec}
 	return ytsaurus
 }
 
