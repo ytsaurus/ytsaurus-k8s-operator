@@ -102,6 +102,10 @@ func (l *Labeller) GetBalancerServiceName() string {
 	return l.getName(consts.ComponentServicePrefix(l.ComponentType), "lb")
 }
 
+func (l *Labeller) GetMonitoringServiceName() string {
+	return fmt.Sprintf("%s-monitoring", l.GetFullComponentLabel())
+}
+
 func (l *Labeller) GetHeadlessServiceAddress() string {
 	return fmt.Sprintf("%s.%s.svc.%s",
 		l.GetHeadlessServiceName(),
