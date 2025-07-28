@@ -8,6 +8,8 @@ func ComponentServicePrefix(component ComponentType) string {
 	switch component {
 	case ControllerAgentType:
 		return "controller-agents"
+	case CypressProxyType:
+		return "cypress-proxies"
 	case DataNodeType:
 		return "data-nodes"
 	case DiscoveryType:
@@ -89,6 +91,8 @@ func GetStatefulSetPrefix(component ComponentType) string {
 	switch component {
 	case ControllerAgentType:
 		return "ca"
+	case CypressProxyType:
+		return "cp"
 	case DataNodeType:
 		return "dnd"
 	case DiscoveryType:

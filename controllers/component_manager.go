@@ -143,6 +143,12 @@ func NewComponentManager(
 		mc := components.NewMasterCache(cfgen, ytsaurus)
 		allComponents = append(allComponents, mc)
 	}
+
+	if resource.Spec.CypressProxies != nil {
+		cp := components.NewCypressProxy(cfgen, ytsaurus)
+		allComponents = append(allComponents, cp)
+	}
+
 	tt := components.NewTimbertruck(cfgen, ytsaurus, tnds, yc)
 	allComponents = append(allComponents, tt)
 

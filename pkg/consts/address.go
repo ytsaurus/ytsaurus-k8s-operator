@@ -69,4 +69,7 @@ const (
 	KafkaProxyMonitoringPort = 10033
 	KafkaProxyKafkaPort      = 9034
 	KafkaProxyRPCPort        = 9033
+
+	CypressProxyRPCPort        = 9031
+	CypressProxyMonitoringPort = 10031
 )

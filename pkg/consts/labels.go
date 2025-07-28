@@ -16,6 +16,8 @@ func ComponentLabel(component ComponentType) string {
 		return "yt-master"
 	case MasterCacheType:
 		return "yt-master-cache"
+	case CypressProxyType:
+		return "yt-cypress-proxy"
 	case DiscoveryType:
 		return "yt-discovery"
 	case SchedulerType:

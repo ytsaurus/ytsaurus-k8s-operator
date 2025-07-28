@@ -10,6 +10,9 @@ spec:
   controllerAgents:
     instanceCount: 3
     resources: {}
+  cypressProxies:
+    instanceCount: 3
+    resources: {}
   dataNodes:
   - instanceCount: 20
     locations:

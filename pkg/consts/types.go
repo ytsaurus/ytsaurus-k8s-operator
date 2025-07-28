@@ -4,6 +4,7 @@ type ComponentType string
 
 const (
 	ControllerAgentType      ComponentType = "ControllerAgent"
+	CypressProxyType         ComponentType = "CypressProxy"
 	DataNodeType             ComponentType = "DataNode"
 	DiscoveryType            ComponentType = "Discovery"
 	ExecNodeType             ComponentType = "ExecNode"
