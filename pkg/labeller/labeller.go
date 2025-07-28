@@ -181,6 +181,10 @@ func (l *Labeller) GetPodsRemovedCondition() string {
 	return fmt.Sprintf("%sPodsRemoved", l.GetFullComponentName())
 }
 
+func (l *Labeller) GetReadyCondition() string {
+	return fmt.Sprintf("%sReady", l.GetFullComponentName())
+}
+
 func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Name:        name,
