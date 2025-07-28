@@ -32,3 +32,5 @@ const DefaultStrawberryControllerFamily = "chyt"
 func GetDefaultStrawberryControllerFamilies() []string {
 	return []string{"chyt", "jupyt"}
 }
+
+const DefaultTimbertruckDirectoryPath = "//sys/admin/logs"

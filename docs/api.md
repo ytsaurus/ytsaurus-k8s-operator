@@ -2190,7 +2190,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `image` _string_ |  |  |  |
-| `logsDeliveryPath` _string_ |  |  |  |
+| `directoryPath` _string_ |  |  |  |
 
 
 #### UISpec

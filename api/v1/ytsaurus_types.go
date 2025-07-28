@@ -317,8 +317,8 @@ type HydraPersistenceUploaderSpec struct {
 }
 
 type TimbertruckSpec struct {
-	Image            *string `json:"image,omitempty"`
-	LogsDeliveryPath *string `json:"logsDeliveryPath,omitempty"`
+	Image         *string `json:"image,omitempty"`
+	DirectoryPath *string `json:"directoryPath,omitempty"`
 }
 
 type MastersSpec struct {

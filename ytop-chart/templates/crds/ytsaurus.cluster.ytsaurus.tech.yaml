@@ -19698,9 +19698,9 @@ spec:
                     type: integer
                   timbertruck:
                     properties:
-                      image:
+                      directoryPath:
                         type: string
-                      logsDeliveryPath:
+                      image:
                         type: string
                     type: object
                   tolerations:
@@ -32654,9 +32654,9 @@ spec:
                       type: integer
                     timbertruck:
                       properties:
-                        image:
+                        directoryPath:
                           type: string
-                        logsDeliveryPath:
+                        image:
                           type: string
                       type: object
                     tolerations:

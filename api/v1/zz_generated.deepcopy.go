@@ -1900,8 +1900,8 @@ func (in *TimbertruckSpec) DeepCopyInto(out *TimbertruckSpec) {
 		*out = new(string)
 		**out = **in
 	}
-	if in.LogsDeliveryPath != nil {
-		in, out := &in.LogsDeliveryPath, &out.LogsDeliveryPath
+	if in.DirectoryPath != nil {
+		in, out := &in.DirectoryPath, &out.DirectoryPath
 		*out = new(string)
 		**out = **in
 	}

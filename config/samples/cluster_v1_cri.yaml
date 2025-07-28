@@ -14,7 +14,7 @@ metadata:
 spec:
   # https://ytsaurus.tech/docs/en/admin-guide/releases#ytsaurus-server
   # https://github.com/ytsaurus/ytsaurus/pkgs/container/ytsaurus
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.2.0-relwithdebinfo
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-23.2.0-relwithdebinfo
 
   # Default "docker_image" for jobs
   jobImage: mirror.gcr.io/library/python:3.12-slim
@@ -101,25 +101,12 @@ spec:
     # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#mastersspec
     instanceCount: 1
 
-    # hydraPersistenceUploader:
-    #   image: ghcr.io/ilyaibraev/sidecars-testing:2025-07-03-20776047d2eb92f4ee555dfaa69feb3835c71d67-fix-3
+    # hydraPersistenceUploader: 
+    #   image: ghcr.io/ytsaurus/sidecars:0.0.1
 
     cellTag: 1
 
     loggers: *loggers
-
-    timbertruck:
-      image: ghcr.io/ilyaibraev/sidecars-testing:2025-07-03-20776047d2eb92f4ee555dfaa69feb3835c71d67-fix-3
-
-    # structuredLoggers:
-    #   - name: access
-    #     minLogLevel: info
-    #     category: Access
-    #     format: json
-    #     rotationPolicy:
-    #       maxTotalSizeToKeep: 1073741824 # 1GiB
-    #       rotationPeriodMilliseconds: 300000 # 5Min
-    #       maxSegmentCountToKeep: 1000
 
     locations:
       - locationType: Logs
@@ -422,25 +409,6 @@ spec:
           name: yql-agent-logs
         spec: *logsVolumeSpec
 
-  # queueAgents:
-  #   image: ghcr.io/ytsaurus/ytsaurus:stable-24.1.0-relwithdebinfo
-
-  #   instanceCount: 1
-
-  #   loggers: *loggers
-
-  #   locations:
-  #     - locationType: Logs
-  #       path: /yt/queue-agent-logs
-
-  #   volumeMounts:
-  #     - name: queue-agent-logs
-  #       mountPath: /yt/queue-agent-logs
-
-  #   volumeClaimTemplates:
-  #     - metadata:
-  #         name: queue-agent-logs
-  #       spec: *logsVolumeSpec
 
   queryTrackers:
     # https://ytsaurus.tech/docs/en/admin-guide/components#yql-agent
