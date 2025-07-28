@@ -264,6 +264,12 @@ func (s *serverImpl) podsImageCorrespondsToSpec() bool {
 			if !ok || requiredImage != container.Image {
 				return false
 			}
+		case consts.TimbertruckContainerName:
+			found++
+			requiredImage, ok := s.sidecarImages[consts.TimbertruckContainerName]
+			if !ok || requiredImage != container.Image {
+				return false
+			}
 		}
 	}
 	return found == len(s.sidecarImages)

@@ -19685,6 +19685,13 @@ spec:
                       gracefully.
                     format: int64
                     type: integer
+                  timbertruck:
+                    properties:
+                      directoryPath:
+                        type: string
+                      image:
+                        type: string
+                    type: object
                   tolerations:
                     items:
                       description: |-
@@ -32634,6 +32641,13 @@ spec:
                         gracefully.
                       format: int64
                       type: integer
+                    timbertruck:
+                      properties:
+                        directoryPath:
+                          type: string
+                        image:
+                          type: string
+                      type: object
                     tolerations:
                       items:
                         description: |-

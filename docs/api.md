@@ -1188,6 +1188,7 @@ _Appears in:_
 | `maxSnapshotCountToKeep` _integer_ |  |  |  |
 | `maxChangelogCountToKeep` _integer_ |  |  |  |
 | `hydraPersistenceUploader` _[HydraPersistenceUploaderSpec](#hydrapersistenceuploaderspec)_ |  |  |  |
+| `timbertruck` _[TimbertruckSpec](#timbertruckspec)_ |  |  |  |
 | `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
 
 
@@ -2175,6 +2176,23 @@ _Appears in:_
 | `categoriesFilter` _[CategoriesFilter](#categoriesfilter)_ |  |  |  |
 
 
+#### TimbertruckSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [MastersSpec](#mastersspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `image` _string_ |  |  |  |
+| `directoryPath` _string_ |  |  |  |
+
+
 #### UISpec
 
 
@@ -2281,6 +2299,7 @@ _Appears in:_
 | `WaitingForYqlaUpdatingPrepare` |  |
 | `WaitingForYqlaUpdate` |  |
 | `WaitingForSafeModeDisabled` |  |
+| `WaitingForTimbertruckPrepared` |  |
 
 
 #### UpdateStatus

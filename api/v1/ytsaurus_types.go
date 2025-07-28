@@ -313,7 +313,12 @@ type MasterConnectionSpec struct {
 }
 
 type HydraPersistenceUploaderSpec struct {
-	Image string `json:"image,omitempty"`
+	Image *string `json:"image,omitempty"`
+}
+
+type TimbertruckSpec struct {
+	Image         *string `json:"image,omitempty"`
+	DirectoryPath *string `json:"directoryPath,omitempty"`
 }
 
 type MastersSpec struct {
@@ -326,6 +331,7 @@ type MastersSpec struct {
 	MaxChangelogCountToKeep *int `json:"maxChangelogCountToKeep,omitempty"`
 
 	HydraPersistenceUploader *HydraPersistenceUploaderSpec `json:"hydraPersistenceUploader,omitempty"`
+	Timbertruck              *TimbertruckSpec              `json:"timbertruck,omitempty"`
 
 	// List of sidecar containers as yaml of core/v1 Container.
 	Sidecars []string `json:"sidecars,omitempty"`
@@ -786,6 +792,7 @@ const (
 	UpdateStateWaitingForYqlaUpdatingPrepare         UpdateState = "WaitingForYqlaUpdatingPrepare"
 	UpdateStateWaitingForYqlaUpdate                  UpdateState = "WaitingForYqlaUpdate"
 	UpdateStateWaitingForSafeModeDisabled            UpdateState = "WaitingForSafeModeDisabled"
+	UpdateStateWaitingForTimbertruckPrepared         UpdateState = "WaitingForTimbertruckPrepared"
 )
 
 type TabletCellBundleInfo struct {

@@ -46,7 +46,7 @@ type MasterServer struct {
 func getMasterLogging(spec *ytv1.MastersSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
-		"master",
+		consts.GetServiceKebabCase(consts.MasterType),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 

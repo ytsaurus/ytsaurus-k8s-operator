@@ -8,7 +8,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
-	"k8s.io/apimachinery/pkg/util/yaml"
+	"sigs.k8s.io/yaml"
 
 	"k8s.io/utils/ptr"
 
@@ -21,6 +21,9 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 )
+
+const timbertruckInitScriptPrefix = "mkdir -p /etc/timbertruck; echo '"
+const timbertruckInitScriptSuffix = "' > /etc/timbertruck/config.yaml; chmod 644 /etc/timbertruck/config.yaml; /usr/bin/timbertruck_os -config /etc/timbertruck/config.yaml"
 
 func CreateTabletCells(ctx context.Context, ytClient yt.Client, bundle string, tabletCellCount int) error {
 	logger := log.FromContext(ctx)
@@ -304,4 +307,8 @@ func getDNSConfigWithDefault(componentDNSConfig, defaultDNSConfig *corev1.PodDNS
 	}
 	// Otherwise, fall back to the default DNSConfig.
 	return defaultDNSConfig
+}
+
+func buildUserCredentialsSecretname(username string) string {
+	return fmt.Sprintf("%s-secret", username)
 }
