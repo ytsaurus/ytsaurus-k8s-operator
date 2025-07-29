@@ -73,7 +73,7 @@ func (n *baseExecNode) doBuildBase() error {
 		setContainerPrivileged(&podSpec.Containers[i])
 
 		if envSpec := n.spec.JobEnvironment; envSpec != nil && envSpec.CRI != nil {
-			n.addEnvironmentForCRITools(&podSpec.Containers[i])
+			n.addEnvironmentVars(&podSpec.Containers[i])
 		}
 	}
 
@@ -120,12 +120,15 @@ func (n *baseExecNode) doBuildBase() error {
 	return nil
 }
 
-func (n *baseExecNode) addEnvironmentForCRITools(container *corev1.Container) {
+func (n *baseExecNode) addEnvironmentVars(container *corev1.Container) {
 	socketPath := ytconfig.GetContainerdSocketPath(n.spec)
 	container.Env = append(container.Env, []corev1.EnvVar{
 		{Name: "CONTAINERD_ADDRESS", Value: socketPath},                     // ctr
 		{Name: "CONTAINERD_NAMESPACE", Value: "k8s.io"},                     // ctr
 		{Name: "CONTAINER_RUNTIME_ENDPOINT", Value: "unix://" + socketPath}, // crictl
+		{Name: "K8S_POD_NAME", ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "metadata.name"},
+		}},
 	}...)
 }
 
@@ -150,7 +153,7 @@ func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSp
 		},
 	}
 
-	n.addEnvironmentForCRITools(&jobsContainer)
+	n.addEnvironmentVars(&jobsContainer)
 
 	jobsContainer.VolumeMounts = append(jobsContainer.VolumeMounts,
 		corev1.VolumeMount{
