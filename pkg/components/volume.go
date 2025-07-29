@@ -112,7 +112,7 @@ func getConfigPostprocessingCommand(configFileName string) string {
 
 	postprocessScript := fmt.Sprintf("cp %v %v; ", configTemplatePath, configPath)
 
-	for _, envVar := range getConfigPostprocessEnv() {
+	for _, envVar := range getDefaultEnv() {
 		postprocessScript += substituteEnvCommand(envVar.Name)
 	}
 
@@ -127,7 +127,7 @@ func getConfigPostprocessingCommand(configFileName string) string {
 	return command
 }
 
-func getConfigPostprocessEnv() []corev1.EnvVar {
+func getDefaultEnv() []corev1.EnvVar {
 	return []corev1.EnvVar{
 		{
 			Name: consts.ENV_K8S_POD_NAME,

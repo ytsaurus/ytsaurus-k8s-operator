@@ -329,7 +329,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	}
 
 	configPostprocessingCommand := getConfigPostprocessingCommand(fileNames[0])
-	configPostprocessEnv := getConfigPostprocessEnv()
+	defaultEnvVars := getDefaultEnv()
 
 	var readinessProbeParams ytv1.HealthcheckProbeParams
 	if s.instanceSpec.ReadinessProbeParams != nil {
@@ -353,6 +353,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Image:        s.image,
 				Name:         consts.YTServerContainerName,
 				Command:      command,
+				Env:          defaultEnvVars,
 				VolumeMounts: volumeMounts,
 				Ports:        s.componentContainerPorts,
 				Resources:    *s.instanceSpec.Resources.DeepCopy(),
@@ -376,13 +377,14 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Image:        s.image,
 				Name:         consts.PrepareLocationsContainerName,
 				Command:      []string{"bash", "-xc", locationCreationCommand},
+				Env:          defaultEnvVars,
 				VolumeMounts: volumeMounts,
 			},
 			{
 				Image:        s.image,
 				Name:         consts.PostprocessConfigContainerName,
 				Command:      []string{"bash", "-xc", configPostprocessingCommand},
-				Env:          configPostprocessEnv,
+				Env:          defaultEnvVars,
 				VolumeMounts: volumeMounts,
 			},
 		},
