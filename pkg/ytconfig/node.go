@@ -363,7 +363,7 @@ func getDataNodeResourceLimits(spec *ytv1.DataNodesSpec) ResourceLimits {
 func getDataNodeLogging(spec *ytv1.DataNodesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
-		consts.GetServiceKebabCase(consts.DataNodeType),
+		consts.DataNodeType.SingularName(),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
@@ -450,7 +450,7 @@ func getExecNodeResourceLimits(spec *ytv1.ExecNodesSpec) ResourceLimits {
 func getExecNodeLogging(spec *ytv1.ExecNodesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
-		consts.GetServiceKebabCase(consts.ExecNodeType),
+		consts.ExecNodeType.SingularName(),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
@@ -673,7 +673,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 func getTabletNodeLogging(spec *ytv1.TabletNodesSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
-		consts.GetServiceKebabCase(consts.TabletNodeType),
+		consts.TabletNodeType.SingularName(),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 

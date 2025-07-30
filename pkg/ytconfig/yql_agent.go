@@ -45,7 +45,7 @@ type YQLAgentServer struct {
 func getYQLAgentLogging(spec *ytv1.YQLAgentSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
-		consts.GetServiceKebabCase(consts.YqlAgentType),
+		consts.YqlAgentType.SingularName(),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultDebugLoggerSpec(), defaultStderrLoggerSpec()})
 }
 

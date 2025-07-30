@@ -18,6 +18,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -249,6 +250,9 @@ func buildRemoteTabletNodes(h *testutil.TestHelper, remoteYtsaurusName, remoteTa
 			RemoteClusterSpec: &(corev1.LocalObjectReference{
 				Name: remoteYtsaurusName,
 			}),
+			CommonSpec: ytv1.CommonSpec{
+				UseShortNames: false,
+			},
 			TabletNodesSpec: ytv1.TabletNodesSpec{
 				InstanceSpec: ytv1.InstanceSpec{
 					Image: ptr.To(testYtsaurusImage),
@@ -269,13 +273,15 @@ func buildRemoteTabletNodes(h *testutil.TestHelper, remoteYtsaurusName, remoteTa
 }
 
 func buildTabletNodePod(h *testutil.TestHelper) corev1.Pod {
+	l := labeller.Labeller{
+		ComponentType: consts.TabletNodeType,
+		ResourceName:  remoteTabletNodesName,
+	}
 	return corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "dn-0",
 			Namespace: h.Namespace,
-			Labels: map[string]string{
-				consts.YTComponentLabelName: remoteTabletNodesName + "-" + consts.ComponentLabel(consts.TabletNodeType),
-			},
+			Labels:    l.GetMetaLabelMap(false),
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{

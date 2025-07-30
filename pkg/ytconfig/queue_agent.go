@@ -22,7 +22,7 @@ type QueueAgentServer struct {
 func getQueueAgentLogging(spec *ytv1.QueueAgentSpec) Logging {
 	return createLogging(
 		&spec.InstanceSpec,
-		consts.GetServiceKebabCase(consts.QueueAgentType),
+		consts.QueueAgentType.SingularName(),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 

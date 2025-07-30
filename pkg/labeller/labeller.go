@@ -32,7 +32,7 @@ type Labeller struct {
 
 	Annotations map[string]string
 
-	// Do not include resource name into component name.
+	// Do not append resource name to names of (some) managed resources.
 	UseShortNames bool
 }
 
@@ -55,31 +55,35 @@ func (l *Labeller) GetClusterDomain() string {
 	return l.ClusterDomain
 }
 
-// getGroupName converts <name> into <name>[-group]
-func (l *Labeller) getGroupName(name string) string {
+// appendGroupName converts <prefix> into <prefix>[-group]
+func (l *Labeller) appendGroupName(name string) string {
 	if l.InstanceGroup != "" && l.InstanceGroup != consts.DefaultName {
 		name += "-" + l.InstanceGroup
 	}
 	return name
 }
 
-// getName converts <name> into <name>[-group][-infix][-resource]
-func (l *Labeller) getName(name, infix string) string {
-	name = l.getGroupName(name)
-	if infix != "" {
-		name += "-" + infix
-	}
-	if !l.UseShortNames {
-		// NOTE: It would be better add resource as prefix rather than as suffix ¯\_(ツ)_/¯.
-		name += "-" + l.ResourceName
-	}
-	return name
+// managedResourceName returns <prefix><name>[-group]<suffix>
+// NOTE: In some cases we always use "short" name regardless of UseShortNames ¯\_(ツ)_/¯.
+func (l *Labeller) managedResourceShortName(prefix, name, suffix string) string {
+	return prefix + l.appendGroupName(name) + suffix
 }
 
-// GetFullComponentName Returns CamelCase component type with instance group.
-func (l *Labeller) GetFullComponentName() string {
-	// NOTE: Class name is not CamelCase.
-	return l.getGroupName(string(l.ComponentType))
+// managedResourceLongName returns <prefix><name>[-group]<suffix>[-resource]
+// NOTE: It would be better add control resource as prefix rather than as suffix ¯\_(ツ)_/¯.
+// FIXME: Deprecate and remove long names - we don't want more than one cluster in namespace.
+func (l *Labeller) managedResourceLongName(prefix, name, suffix string) string {
+	result := l.managedResourceShortName(prefix, name, suffix)
+	if !l.UseShortNames {
+		result += "-" + l.ResourceName
+	}
+	return result
+}
+
+// GetComponentName Returns "<ComponentType>[-<InstanceGroup>]".
+// NOTE: instance group comes from spec and can be non-CamelCase ¯\_(ツ)_/¯.
+func (l *Labeller) GetComponentName() consts.ComponentName {
+	return consts.ComponentName(l.appendGroupName(string(l.ComponentType)))
 }
 
 func (l *Labeller) GetInstanceGroup() string {
@@ -90,20 +94,21 @@ func (l *Labeller) GetInstanceGroup() string {
 }
 
 func (l *Labeller) GetServerStatefulSetName() string {
-	return l.getName(consts.ComponentStatefulSetPrefix(l.ComponentType), "")
+	return l.managedResourceLongName("", l.ComponentType.ShortName(), "")
 }
 
 func (l *Labeller) GetHeadlessServiceName() string {
-	return l.getName(consts.ComponentServicePrefix(l.ComponentType), "")
+	return l.managedResourceLongName("", l.ComponentType.PluralName(), "")
 }
 
 func (l *Labeller) GetBalancerServiceName() string {
-	// NOTE: For non-short names "-lb-" is inside ¯\_(ツ)_/¯.
-	return l.getName(consts.ComponentServicePrefix(l.ComponentType), "lb")
+	// NOTE: For long names "-lb-" is inside ¯\_(ツ)_/¯.
+	return l.managedResourceLongName("", l.ComponentType.PluralName(), "-lb")
 }
 
 func (l *Labeller) GetMonitoringServiceName() string {
-	return fmt.Sprintf("%s-monitoring", l.GetFullComponentLabel())
+	// NOTE: Should be plural name but we messed up ¯\_(ツ)_/¯.
+	return l.managedResourceShortName("yt-", l.ComponentType.SingularName(), "-monitoring")
 }
 
 func (l *Labeller) GetHeadlessServiceAddress() string {
@@ -138,51 +143,41 @@ func (l *Labeller) GetInstanceAddressPort(index, port int) string {
 		port)
 }
 
-// GetComponentLabel Returns lower case hyphenated component type without name part.
-func (l *Labeller) GetComponentLabel() string {
-	return consts.ComponentLabel(l.ComponentType)
-}
-
-// GetFullComponentLabel Returns lower case hyphenated component type with name part.
-func (l *Labeller) GetFullComponentLabel() string {
-	// NOTE: Resulting name does not include resource name, not so full ¯\_(ツ)_/¯.
-	return l.getGroupName(l.GetComponentLabel())
-}
-
 func (l *Labeller) GetSecretName() string {
-	return fmt.Sprintf("%s-secret", l.GetFullComponentLabel())
+	return l.managedResourceShortName("yt-", l.ComponentType.SingularName(), "-secret")
 }
 
 func (l *Labeller) GetMainConfigMapName() string {
-	return fmt.Sprintf("%s-config", l.GetFullComponentLabel())
+	return l.managedResourceShortName("yt-", l.ComponentType.SingularName(), "-config")
 }
 
-func (l *Labeller) GetSidecarConfigMapName(name string) string {
-	return fmt.Sprintf("%s-%s-config", l.GetFullComponentLabel(), name)
+func (l *Labeller) GetSidecarConfigMapName(sidecarName string) string {
+	return l.managedResourceShortName("yt-", l.ComponentType.SingularName(), "-"+sidecarName+"-config")
 }
 
-func (l *Labeller) GetInitJobName(name string) string {
-	return fmt.Sprintf("%s-init-job-%s", l.GetFullComponentLabel(), strings.ToLower(name))
+func (l *Labeller) GetInitJobName(initJobName string) string {
+	return l.managedResourceShortName("yt-", l.ComponentType.SingularName(), "-init-job-"+strings.ToLower(initJobName))
 }
 
-func (l *Labeller) GetInitJobConfigMapName(name string) string {
-	return fmt.Sprintf("%s-%s-init-job-config", strings.ToLower(name), l.GetFullComponentLabel())
+func (l *Labeller) GetInitJobConfigMapName(initJobName string) string {
+	// FIXME: Fix this madness.
+	return l.managedResourceShortName(strings.ToLower(initJobName)+"-yt-", l.ComponentType.SingularName(), "-init-job-config")
 }
 
 func (l *Labeller) GetInitJobCompletedCondition(name string) string {
-	return fmt.Sprintf("%s%sInitJobCompleted", name, l.GetFullComponentName())
+	return fmt.Sprintf("%s%vInitJobCompleted", name, l.GetComponentName())
 }
 
 func (l *Labeller) GetPodsRemovingStartedCondition() string {
-	return fmt.Sprintf("%sPodsRemovingStarted", l.GetFullComponentName())
+	return fmt.Sprintf("%vPodsRemovingStarted", l.GetComponentName())
 }
 
 func (l *Labeller) GetPodsRemovedCondition() string {
-	return fmt.Sprintf("%sPodsRemoved", l.GetFullComponentName())
+	return fmt.Sprintf("%vPodsRemoved", l.GetComponentName())
 }
 
 func (l *Labeller) GetReadyCondition() string {
-	return fmt.Sprintf("%sReady", l.GetFullComponentName())
+	return fmt.Sprintf("%vReady", l.GetComponentName())
 }
 
 func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
@@ -203,30 +198,37 @@ func (l *Labeller) GetInitJobObjectMeta() metav1.ObjectMeta {
 	}
 }
 
-func (l *Labeller) GetInstanceLabelValue(isInitJob bool) string {
+// GetAppComponentLabelValue Returns lower case hyphenated component type with name part: yt-<singular>[-<group>]
+func (l *Labeller) GetAppComponentLabelValue() string {
+	// NOTE: Resulting name does not include resource name ¯\_(ツ)_/¯.
+	return l.appendGroupName("yt-" + l.ComponentType.SingularName())
+}
+
+func (l *Labeller) GetYTComponentLabelValue(isInitJob bool) string {
 	// NOTE: Prefix is not cluster name as it was documented before ¯\_(ツ)_/¯.
-	result := fmt.Sprintf("%s-%s", l.ResourceName, l.GetFullComponentLabel())
+	result := l.ResourceName + "-" + l.GetAppComponentLabelValue()
 	if isInitJob {
-		result = fmt.Sprintf("%s-%s", result, "init-job")
+		result += "-init-job"
 	}
 	return result
 }
 
-func (l *Labeller) GetComponentTypeLabelValue(isInitJob bool) string {
+func (l *Labeller) GetAppNameLabelValue(isInitJob bool) string {
+	result := "yt-" + l.ComponentType.SingularName()
 	if isInitJob {
-		return fmt.Sprintf("%s-%s", l.GetComponentLabel(), "init-job")
+		result += "-init-job"
 	}
-	return l.GetComponentLabel()
+	return result
 }
 
-func (l *Labeller) GetPartOfLabelValue() string {
+func (l *Labeller) GetAppPartOfLabelValue() string {
 	// TODO(achulkov2): Change this from `yt` to `ytsaurus` at the same time as all other label values.
-	return fmt.Sprintf("yt-%s", l.GetClusterName())
+	return "yt-" + l.GetClusterName()
 }
 
 func (l *Labeller) GetSelectorLabelMap() map[string]string {
 	return map[string]string{
-		consts.YTComponentLabelName: l.GetInstanceLabelValue(false),
+		consts.YTComponentLabelName: l.GetYTComponentLabelValue(false),
 	}
 }
 
@@ -244,12 +246,12 @@ func (l *Labeller) GetMetaLabelMap(isInitJob bool) map[string]string {
 		// not contain the name of the instance group for easier monitoring
 		// configuration.
 		// Template: yt-<component_type>[-init-job].
-		"app.kubernetes.io/name": l.GetComponentTypeLabelValue(isInitJob),
+		"app.kubernetes.io/name": l.GetAppNameLabelValue(isInitJob),
 		// Template: yt-<component_type>-<instance_group>.
-		"app.kubernetes.io/component": l.GetFullComponentLabel(),
+		"app.kubernetes.io/component": l.GetAppComponentLabelValue(),
 		// This is supposed to be the name of a higher level application
 		// that this app is part of: yt-<cluster_name>.
-		"app.kubernetes.io/part-of": l.GetPartOfLabelValue(),
+		"app.kubernetes.io/part-of": l.GetAppPartOfLabelValue(),
 		// Uppercase looks awful, even though it is more typical for k8s.
 		"app.kubernetes.io/managed-by": "ytsaurus-k8s-operator",
 		// It is nice to have the cluster name as a label.
@@ -260,7 +262,7 @@ func (l *Labeller) GetMetaLabelMap(isInitJob bool) map[string]string {
 		// The name isn't quite right, but we keep it for backwards compatibility.
 		// Template: <resource_name>-yt-<component_type>-<instance_group>[-init-job].
 		// NOTE: Prefix is not cluster name as it was documented before ¯\_(ツ)_/¯.
-		consts.YTComponentLabelName: l.GetInstanceLabelValue(isInitJob),
+		consts.YTComponentLabelName: l.GetYTComponentLabelValue(isInitJob),
 	}
 }
 
