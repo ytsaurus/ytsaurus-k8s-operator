@@ -144,6 +144,7 @@ func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSp
 		Image:        podSpec.Containers[0].Image,
 		Command:      command,
 		Args:         []string{"--config", configPath},
+		Env:          getDefaultEnv(),
 		VolumeMounts: createVolumeMounts(n.spec.VolumeMounts),
 		SecurityContext: &corev1.SecurityContext{
 			Privileged: ptr.To(true),
