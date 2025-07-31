@@ -471,7 +471,7 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 
 		jobEnv.UseJobProxyFromImage = ptr.To(false)
 
-		endpoint := "unix://" + GetContainerdSocketPath(spec)
+		endpoint := "unix://" + GetCRIServiceSocketPath(spec)
 
 		jobEnv.CriExecutor = &CriExecutor{
 			RuntimeEndpoint: endpoint,
