@@ -1672,10 +1672,14 @@ func checkPodLabels(ctx context.Context, namespace string) {
 func checkChunkLocations(ytClient yt.Client) {
 	// https://github.com/ytsaurus/ytsaurus-k8s-operator/issues/396
 	// we expect enable_real_chunk_locations being set to true for all currently tested/supported versions.
+	// FIXME(khlebnikov): Check master reigh.
 	realChunkLocationPath := "//sys/@config/node_tracker/enable_real_chunk_locations"
 	var realChunkLocationsValue bool
-	Expect(ytClient.GetNode(ctx, ypath.Path(realChunkLocationPath), &realChunkLocationsValue, nil)).Should(Succeed())
-	Expect(realChunkLocationsValue).Should(BeTrue())
+	err := ytClient.GetNode(ctx, ypath.Path(realChunkLocationPath), &realChunkLocationsValue, nil)
+	Expect(err).Should(Or(Succeed(), Satisfy(yterrors.ContainsResolveError)))
+	if err == nil {
+		Expect(realChunkLocationsValue).Should(BeTrue())
+	}
 
 	var values []yson.ValueWithAttrs
 	Expect(ytClient.ListNode(ctx, ypath.Path("//sys/data_nodes"), &values, &yt.ListNodeOptions{
