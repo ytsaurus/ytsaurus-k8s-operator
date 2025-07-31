@@ -47,6 +47,7 @@ const (
 	reactionTimeout  = time.Second * 150
 	bootstrapTimeout = time.Minute * 5
 	upgradeTimeout   = time.Minute * 10
+	imagePullTimeout = time.Minute * 10
 
 	chytBootstrapTimeout = time.Minute * 2
 
@@ -145,6 +146,7 @@ type testRow struct {
 
 var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() {
 	var namespace string
+	var requiredImages []string
 	var objects []client.Object
 	var namespaceWatcher *NamespaceWatcher
 	var name client.ObjectKey
@@ -248,6 +250,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		ytBuilder.CreateMinimal()
 		ytsaurus = ytBuilder.Ytsaurus
 
+		requiredImages = nil
 		objects = []client.Object{ytsaurus}
 
 		name = client.ObjectKey{
@@ -266,6 +269,16 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	JustBeforeEach(func(ctx context.Context) {
 		// NOTE: Testcase should skip optional cases at "BeforeEach" stage.
 		Expect(ytsaurus.Spec.CoreImage).ToNot(BeEmpty(), "ytsaurus core image is not specified")
+
+		By("Pulling required images")
+		requiredImages = append(requiredImages, ytsaurus.Spec.CoreImage)
+		if spec := ytsaurus.Spec.QueryTrackers; spec != nil && spec.Image != nil {
+			requiredImages = append(requiredImages, *spec.Image)
+		}
+		if spec := ytsaurus.Spec.YQLAgents; spec != nil && spec.Image != nil {
+			requiredImages = append(requiredImages, *spec.Image)
+		}
+		pullImages(ctx, namespace, requiredImages, imagePullTimeout)
 
 		By("Creating resource objects")
 		for _, object := range objects {
@@ -551,6 +564,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					if oldImage == "" || newImage == "" {
 						Skip("Ytsaurus old or new image is not specified")
 					}
+
+					requiredImages = append(requiredImages, newImage)
 
 					ytBuilder.WithNamedDataNodes(ptr.To("dn-t"))
 
@@ -1475,6 +1490,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				if coreImage == "" || chytImage == "" {
 					Skip("Ytsaurus or chyt image is not specified")
 				}
+
+				requiredImages = append(requiredImages, chytImage)
 
 				if os.Getenv("YTSAURUS_TLS_READY") == "" {
 					Skip("YTsaurus is not ready for TLS")
