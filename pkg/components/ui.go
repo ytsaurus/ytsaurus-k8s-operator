@@ -178,6 +178,7 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 	}
 
 	env = append(env, ytsaurusResource.Spec.UI.ExtraEnvVariables...)
+	env = append(env, getDefaultEnv()...)
 
 	secretsVolumeSize := resource.MustParse("1Mi")
 	deployment := u.microservice.buildDeployment()
@@ -192,6 +193,7 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 					path.Join(consts.UIVaultMountPoint, consts.UISecretFileName),
 					consts.UISecretsMountPoint),
 			},
+			Env:          getDefaultEnv(),
 			VolumeMounts: volumeMounts,
 		},
 	}

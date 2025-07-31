@@ -214,6 +214,7 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 			Image:   c.microservice.getImage(),
 			Name:    consts.StrawberryContainerName,
 			EnvFrom: c.getEnvSource(),
+			Env:     getDefaultEnv(),
 			Command: []string{
 				"/usr/bin/chyt-controller",
 				"--config-path",

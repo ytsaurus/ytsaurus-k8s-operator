@@ -606,7 +606,7 @@ func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.Pod
 			Name:    consts.HydraPersistenceUploaderContainerName,
 			Image:   hydraImage,
 			Command: []string{"/usr/bin/hydra_persistence_uploader"},
-			Env: []corev1.EnvVar{
+			Env: append([]corev1.EnvVar{
 				{
 					Name: consts.TokenSecretKey,
 					ValueFrom: &corev1.EnvVarSource{
@@ -619,7 +619,7 @@ func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.Pod
 					},
 				},
 				{Name: "YT_PROXY", Value: proxy},
-			},
+			}, getDefaultEnv()...),
 			VolumeMounts: []corev1.VolumeMount{
 				{Name: consts.ConfigTemplateVolumeName, MountPath: consts.ConfigMountPoint, ReadOnly: true},
 				{Name: "master-data", MountPath: "/yt/master-data", ReadOnly: true},
