@@ -78,11 +78,6 @@ jobs:
           make helm-kind-install
           kubectl get pod -A
 
-      - name: Pull YTsaurus images
-        shell: bash
-        run: |
-          make kind-load-test-images
-
       - name: Run ${{ matrix.e2e.name }} e2e tests
         env:
           GINKGO_LABEL_FILTER: ${{ matrix.e2e.filter }}

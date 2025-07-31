@@ -9,11 +9,14 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
@@ -438,4 +441,32 @@ func fetchFailedPods(namespace string) []string {
 	}
 
 	return failedPods
+}
+
+func pullImages(ctx context.Context, namaspace string, images []string, timeout time.Duration) {
+	pod := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:    namaspace,
+			GenerateName: "pull-images-",
+		},
+		Spec: corev1.PodSpec{
+			RestartPolicy: corev1.RestartPolicyNever,
+		},
+	}
+	for i, image := range images {
+		pod.Spec.Containers = append(pod.Spec.Containers,
+			corev1.Container{
+				Name:            fmt.Sprintf("image%d", i),
+				Image:           image,
+				ImagePullPolicy: corev1.PullIfNotPresent,
+				Command:         []string{"true"},
+			},
+		)
+	}
+	Expect(k8sClient.Create(ctx, &pod)).Should(Succeed())
+	EventuallyObject(ctx, &pod, timeout).Should(
+		HaveField("Status.Phase", Not(Or(Equal(corev1.PodPending), Equal(corev1.PodRunning)))),
+	)
+	Expect(pod).Should(HaveField("Status.Phase", Equal(corev1.PodSucceeded)))
+	Expect(k8sClient.Delete(ctx, &pod)).Should(Succeed())
 }
