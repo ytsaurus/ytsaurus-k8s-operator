@@ -453,7 +453,7 @@ func checkAndAddTimbertruckToPodSpec(timbertruck *ytv1.TimbertruckSpec, podSpec 
 		Name:    consts.TimbertruckContainerName,
 		Image:   *timbertruck.Image,
 		Command: []string{"/bin/bash", "-c", timbertruckInitScript},
-		Env: []corev1.EnvVar{
+		Env: append([]corev1.EnvVar{
 			{
 				Name: consts.TokenSecretKey,
 				ValueFrom: &corev1.EnvVarSource{
@@ -469,7 +469,7 @@ func checkAndAddTimbertruckToPodSpec(timbertruck *ytv1.TimbertruckSpec, podSpec 
 				Name:  "YT_PROXY",
 				Value: deliveryProxy,
 			},
-		},
+		}, getDefaultEnv()...),
 		VolumeMounts: []corev1.VolumeMount{
 			{Name: path.Base(logsDirectory), MountPath: logsDirectory, ReadOnly: false},
 		},

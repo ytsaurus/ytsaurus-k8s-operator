@@ -203,6 +203,8 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			} else {
 				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
 			}
+
+			container.Env = append(container.Env, getDefaultEnv()...)
 			err = yqla.server.Sync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err

@@ -143,6 +143,7 @@ func (j *InitJob) Build() *batchv1.Job {
 					Image:   j.image,
 					Name:    "ytsaurus-init",
 					Command: []string{"bash", "-c", path.Join(consts.ConfigMountPoint, consts.InitClusterScriptFileName)},
+					Env:     getDefaultEnv(),
 					VolumeMounts: []corev1.VolumeMount{
 						createConfigVolumeMount(),
 					},
