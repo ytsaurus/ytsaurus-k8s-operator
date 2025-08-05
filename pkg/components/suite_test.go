@@ -86,6 +86,8 @@ type FakeServer struct {
 	podsReady bool
 }
 
+var _ server = (*FakeServer)(nil)
+
 func NewFakeServer() *FakeServer {
 	return &FakeServer{podsReady: true}
 }
@@ -142,6 +144,9 @@ func (fs *FakeServer) addCABundleMount(c *corev1.Container) {
 }
 
 func (fs *FakeServer) addTlsSecretMount(c *corev1.Container) {
+}
+
+func (fs *FakeServer) addMonitoringPort(port corev1.ServicePort) {
 }
 
 func (fs *FakeServer) GetImage() string {

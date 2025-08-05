@@ -4,6 +4,9 @@
         gid=0;
         uid=0;
     };
+    metrics={
+        address=":10026";
+    };
     plugins={
         "io.containerd.grpc.v1.cri"={
             cni={

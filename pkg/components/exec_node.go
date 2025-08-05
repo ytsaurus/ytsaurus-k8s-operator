@@ -3,9 +3,12 @@ package components
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/util/intstr"
+
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
@@ -58,6 +61,15 @@ func NewExecNode(
 				return cfgen.GetContainerdConfig(&spec)
 			},
 		)
+
+		if port := ytconfig.GetCRIServiceMonitoringPort(&spec); port != 0 {
+			srv.addMonitoringPort(corev1.ServicePort{
+				Name:       consts.CRIServiceMonitoringPortName,
+				Protocol:   corev1.ProtocolTCP,
+				Port:       port,
+				TargetPort: intstr.FromInt32(port),
+			})
+		}
 	}
 
 	return &ExecNode{

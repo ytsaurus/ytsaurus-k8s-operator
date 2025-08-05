@@ -36,6 +36,7 @@ type server interface {
 	rebuildStatefulSet() *appsv1.StatefulSet
 	addCABundleMount(c *corev1.Container)
 	addTlsSecretMount(c *corev1.Container)
+	addMonitoringPort(port corev1.ServicePort)
 }
 
 type serverImpl struct {
@@ -446,4 +447,8 @@ func (s *serverImpl) addTlsSecretMount(c *corev1.Container) {
 	if s.busClientSecret != nil {
 		s.busClientSecret.AddVolumeMount(c)
 	}
+}
+
+func (s *serverImpl) addMonitoringPort(port corev1.ServicePort) {
+	s.monitoringService.AddPort(port)
 }

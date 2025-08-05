@@ -108,6 +108,7 @@ func (n *baseExecNode) doBuildBase() error {
 				MountPath: consts.ContainerdConfigMountPoint,
 				ReadOnly:  true,
 			})
+		n.addCRIServicePorts(&podSpec.Containers[0])
 	}
 
 	if n.sidecarConfig != nil {
@@ -118,6 +119,16 @@ func (n *baseExecNode) doBuildBase() error {
 	}
 
 	return nil
+}
+
+func (n *baseExecNode) addCRIServicePorts(container *corev1.Container) {
+	if port := ytconfig.GetCRIServiceMonitoringPort(n.spec); port != 0 {
+		container.Ports = append(container.Ports, corev1.ContainerPort{
+			Name:          consts.CRIServiceMonitoringPortName,
+			Protocol:      corev1.ProtocolTCP,
+			ContainerPort: port,
+		})
+	}
 }
 
 func (n *baseExecNode) addEnvironmentForCRITools(container *corev1.Container) {
@@ -151,6 +162,7 @@ func (n *baseExecNode) doBuildCRISidecar(envSpec *ytv1.JobEnvironmentSpec, podSp
 		},
 	}
 
+	n.addCRIServicePorts(&jobsContainer)
 	n.addEnvironmentForCRITools(&jobsContainer)
 
 	jobsContainer.VolumeMounts = append(jobsContainer.VolumeMounts,
