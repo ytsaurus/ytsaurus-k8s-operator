@@ -1,7 +1,10 @@
 package ytconfig
 
 import (
+	"fmt"
 	"path"
+
+	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
@@ -14,6 +17,13 @@ func GetContainerdSocketPath(spec *ytv1.ExecNodesSpec) string {
 	}
 	// In non-overlayfs setup CRI could work without own location.
 	return path.Join(consts.ConfigMountPoint, consts.ContainerdSocketName)
+}
+
+func GetCRIServiceMonitoringPort(spec *ytv1.ExecNodesSpec) int32 {
+	if envSpec := spec.JobEnvironment; envSpec != nil && envSpec.CRI != nil {
+		return ptr.Deref(envSpec.CRI.MonitoringPort, consts.CRIServiceMonitoringPort)
+	}
+	return 0
 }
 
 func (g *NodeGenerator) GetContainerdConfig(spec *ytv1.ExecNodesSpec) ([]byte, error) {
@@ -63,6 +73,12 @@ func (g *NodeGenerator) GetContainerdConfig(spec *ytv1.ExecNodesSpec) ([]byte, e
 				},
 			},
 		},
+	}
+
+	if port := GetCRIServiceMonitoringPort(spec); port != 0 {
+		config["metrics"] = map[string]any{
+			"address": fmt.Sprintf(":%d", port),
+		}
 	}
 
 	// TODO(khlebnikov): Refactor and remove this mess with formats.

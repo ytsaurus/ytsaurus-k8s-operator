@@ -430,6 +430,9 @@ type DataNodesSpec struct {
 }
 
 type CRIJobEnvironmentSpec struct {
+	// CRI service monitoring port, default is 10026, set 0 to disable.
+	// +optional
+	MonitoringPort *int32 `json:"monitoringPort,omitempty"`
 	// Specifies wrapper for CRI service (i.e. containerd) command.
 	//+optional
 	EntrypointWrapper []string `json:"entrypointWrapper,omitempty"`

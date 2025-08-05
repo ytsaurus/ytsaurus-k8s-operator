@@ -8721,6 +8721,11 @@ spec:
                                 pulling image into cache.
                               format: int64
                               type: integer
+                            monitoringPort:
+                              description: CRI service monitoring port, default is
+                                10026, set 0 to disable.
+                              format: int32
+                              type: integer
                             registryConfigPath:
                               description: 'See: https://github.com/containerd/containerd/blob/main/docs/hosts.md'
                               type: string
