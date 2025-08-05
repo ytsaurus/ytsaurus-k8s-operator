@@ -108,6 +108,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `monitoringPort` _integer_ | CRI service monitoring port, default is 10026, set 0 to disable. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for CRI service (i.e. containerd) command. |  |  |
 | `sandboxImage` _string_ | Sandbox (pause) image. |  |  |
 | `apiRetryTimeoutSeconds` _integer_ | Timeout for retrying CRI API calls. |  |  |

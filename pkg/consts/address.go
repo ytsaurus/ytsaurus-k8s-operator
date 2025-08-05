@@ -8,6 +8,7 @@ const (
 	KafkaPortName                 = "kafka"
 	YTMonitoringContainerPortName = "metrics"
 	YTMonitoringServicePortName   = "ytsaurus-metrics"
+	CRIServiceMonitoringPortName  = "cri-metrics"
 )
 
 const (
@@ -33,6 +34,8 @@ const (
 
 	ExecNodeRPCPort        = 9029
 	ExecNodeMonitoringPort = 10029
+
+	CRIServiceMonitoringPort = 10026
 
 	// TODO(zlobober): temporary until YT-20036.
 	DataNodeSkynetPort   = 11012

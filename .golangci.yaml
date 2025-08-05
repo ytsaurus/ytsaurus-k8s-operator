@@ -277,7 +277,7 @@ linters:
       line-length: 180
 
     interfacebloat:
-      max: 11
+      max: 16
 
   exclusions:
     paths:

@@ -12,7 +12,7 @@ import (
 type MonitoringService struct {
 	BaseManagedResource[*corev1.Service]
 
-	monitoringTargetPort int32
+	ports []corev1.ServicePort
 }
 
 func NewMonitoringService(monitoringTargetPort int32, labeller *labeller2.Labeller, apiProxy apiproxy.APIProxy) *MonitoringService {
@@ -24,7 +24,13 @@ func NewMonitoringService(monitoringTargetPort int32, labeller *labeller2.Labell
 			oldObject: &corev1.Service{},
 			newObject: &corev1.Service{},
 		},
-		monitoringTargetPort: monitoringTargetPort,
+		ports: []corev1.ServicePort{
+			{
+				Name:       consts.YTMonitoringServicePortName,
+				Port:       consts.YTMonitoringPort,
+				TargetPort: intstr.FromInt32(monitoringTargetPort),
+			},
+		},
 	}
 }
 
@@ -38,16 +44,16 @@ func (s *MonitoringService) GetServiceMeta(name string) metav1.ObjectMeta {
 
 func (s *MonitoringService) Build() *corev1.Service {
 	s.newObject.ObjectMeta = s.GetServiceMeta(s.name)
+
+	// FIXME(khlebnikov): Must be headless.
 	s.newObject.Spec = corev1.ServiceSpec{
 		Selector: s.labeller.GetSelectorLabelMap(),
-		Ports: []corev1.ServicePort{
-			{
-				Name:       consts.YTMonitoringServicePortName,
-				Port:       consts.YTMonitoringPort,
-				TargetPort: intstr.IntOrString{IntVal: s.monitoringTargetPort},
-			},
-		},
+		Ports:    s.ports,
 	}
 
 	return s.newObject
+}
+
+func (s *MonitoringService) AddPort(port corev1.ServicePort) {
+	s.ports = append(s.ports, port)
 }
