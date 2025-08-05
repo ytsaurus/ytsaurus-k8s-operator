@@ -245,6 +245,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		ytBuilder = &testutil.YtsaurusBuilder{
 			Namespace:         namespace,
 			YtsaurusImage:     testutil.YtsaurusImageCurrent,
+			JobImage:          ptr.To(testutil.YtsaurusJobImage),
 			QueryTrackerImage: testutil.QueryTrackerImageCurrent,
 		}
 		ytBuilder.CreateMinimal()
@@ -1195,6 +1196,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						},
 						CommonSpec: ytv1.CommonSpec{
 							CoreImage: testutil.YtsaurusImageCurrent,
+							JobImage:  ptr.To(testutil.YtsaurusJobImage),
 						},
 						ExecNodesSpec: ytBuilder.CreateExecNodeSpec(),
 					},
