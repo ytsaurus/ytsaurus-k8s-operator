@@ -27,6 +27,9 @@ const (
 
 // Images are should be set by TEST_ENV include in Makefile
 var (
+	//NOTE: The same image is used for ytsaurus integration tests.
+	YtsaurusJobImage = GetenvOr("YTSAURUS_JOB_IMAGE", "docker.io/library/python:3.8-slim")
+
 	YtsaurusImage23_2 = GetenvOr("YTSAURUS_IMAGE_23_2", "ghcr.io/ytsaurus/ytsaurus:stable-23.2.0")
 	YtsaurusImage24_1 = GetenvOr("YTSAURUS_IMAGE_24_1", "ghcr.io/ytsaurus/ytsaurus:stable-24.1.0")
 	YtsaurusImage24_2 = GetenvOr("YTSAURUS_IMAGE_24_2", "ghcr.io/ytsaurus/ytsaurus:stable-24.2.1")
@@ -63,6 +66,7 @@ var (
 type YtsaurusBuilder struct {
 	Namespace         string
 	YtsaurusImage     string
+	JobImage          *string
 	QueryTrackerImage string
 	Ytsaurus          *ytv1.Ytsaurus
 }
@@ -106,6 +110,7 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 				EphemeralCluster: true,
 				UseShortNames:    true,
 				CoreImage:        b.YtsaurusImage,
+				JobImage:         b.JobImage,
 			},
 			EnableFullUpdate: true,
 			IsManaged:        true,
@@ -164,6 +169,7 @@ func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 	builder := YtsaurusBuilder{
 		Namespace:         namespace,
 		YtsaurusImage:     YtsaurusImageCurrent,
+		JobImage:          ptr.To(YtsaurusJobImage),
 		QueryTrackerImage: QueryTrackerImageCurrent,
 	}
 	builder.CreateMinimal()
