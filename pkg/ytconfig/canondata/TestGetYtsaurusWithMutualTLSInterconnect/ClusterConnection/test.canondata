@@ -47,9 +47,9 @@
     };
     "cypress_proxy"={
         addresses=[
-            "cp-test-0.cypress-proxies-test.fake.svc.fake.zone:9031";
-            "cp-test-1.cypress-proxies-test.fake.svc.fake.zone:9031";
-            "cp-test-2.cypress-proxies-test.fake.svc.fake.zone:9031";
+            "cyp-test-0.cypress-proxies-test.fake.svc.fake.zone:9031";
+            "cyp-test-1.cypress-proxies-test.fake.svc.fake.zone:9031";
+            "cyp-test-2.cypress-proxies-test.fake.svc.fake.zone:9031";
         ];
     };
 }

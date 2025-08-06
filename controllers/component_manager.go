@@ -145,8 +145,8 @@ func NewComponentManager(
 	}
 
 	if resource.Spec.CypressProxies != nil {
-		cp := components.NewCypressProxy(cfgen, ytsaurus)
-		allComponents = append(allComponents, cp)
+		cyp := components.NewCypressProxy(cfgen, ytsaurus)
+		allComponents = append(allComponents, cyp)
 	}
 
 	tt := components.NewTimbertruck(cfgen, ytsaurus, tnds, yc)

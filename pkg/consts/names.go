@@ -92,7 +92,7 @@ func GetStatefulSetPrefix(component ComponentType) string {
 	case ControllerAgentType:
 		return "ca"
 	case CypressProxyType:
-		return "cp"
+		return "cyp"
 	case DataNodeType:
 		return "dnd"
 	case DiscoveryType:

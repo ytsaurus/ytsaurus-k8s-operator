@@ -21,10 +21,10 @@ func getCypressProxiesLogging(spec *ytv1.CypressProxiesSpec) Logging {
 }
 
 func getCypressProxiesCarcass(spec *ytv1.CypressProxiesSpec) (CypressProxyServer, error) {
-	var cps CypressProxyServer
-	cps.RPCPort = consts.CypressProxyRPCPort
-	cps.MonitoringPort = ptr.Deref(spec.MonitoringPort, consts.CypressProxyMonitoringPort)
-	cps.Logging = getCypressProxiesLogging(spec)
+	var cyps CypressProxyServer
+	cyps.RPCPort = consts.CypressProxyRPCPort
+	cyps.MonitoringPort = ptr.Deref(spec.MonitoringPort, consts.CypressProxyMonitoringPort)
+	cyps.Logging = getCypressProxiesLogging(spec)
 
-	return cps, nil
+	return cyps, nil
 }

@@ -42,46 +42,46 @@ func NewCypressProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Cy
 	}
 }
 
-func (cp *CypressProxy) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, cp.server)
+func (cyp *CypressProxy) Fetch(ctx context.Context) error {
+	return resources.Fetch(ctx, cyp.server)
 }
 
-func (cp *CypressProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (cyp *CypressProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(cp.ytsaurus.GetClusterState()) && cp.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(cyp.ytsaurus.GetClusterState()) && cyp.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
-	if cp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, cp.ytsaurus, cp, &cp.localComponent, cp.server, dry); status != nil {
+	if cyp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+		if status, err := handleUpdatingClusterState(ctx, cyp.ytsaurus, cyp, &cyp.localComponent, cyp.server, dry); status != nil {
 			return *status, err
 		}
 	}
 
-	if cp.NeedSync() {
+	if cyp.NeedSync() {
 		if !dry {
-			err = cp.doServerSync(ctx)
+			err = cyp.doServerSync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err
 	}
 
-	if !cp.server.arePodsReady(ctx) {
+	if !cyp.server.arePodsReady(ctx) {
 		return WaitingStatus(SyncStatusBlocked, "pods"), err
 	}
 
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (cp *CypressProxy) Status(ctx context.Context) (ComponentStatus, error) {
-	return cp.doSync(ctx, true)
+func (cyp *CypressProxy) Status(ctx context.Context) (ComponentStatus, error) {
+	return cyp.doSync(ctx, true)
 }
 
-func (cp *CypressProxy) Sync(ctx context.Context) error {
-	_, err := cp.doSync(ctx, false)
+func (cyp *CypressProxy) Sync(ctx context.Context) error {
+	_, err := cyp.doSync(ctx, false)
 	return err
 }
 
-func (cp *CypressProxy) doServerSync(ctx context.Context) error {
-	return cp.server.Sync(ctx)
+func (cyp *CypressProxy) doServerSync(ctx context.Context) error {
+	return cyp.server.Sync(ctx)
 }
