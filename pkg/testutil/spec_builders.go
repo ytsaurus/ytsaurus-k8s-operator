@@ -27,7 +27,7 @@ const (
 
 // Images are should be set by TEST_ENV include in Makefile
 var (
-	//NOTE: The same image is used for ytsaurus integration tests.
+	// NOTE: The same image is used for YTsaurus integration tests.
 	YtsaurusJobImage = GetenvOr("YTSAURUS_JOB_IMAGE", "docker.io/library/python:3.8-slim")
 
 	YtsaurusImage23_2 = GetenvOr("YTSAURUS_IMAGE_23_2", "ghcr.io/ytsaurus/ytsaurus:stable-23.2.0")
