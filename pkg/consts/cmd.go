@@ -44,13 +44,15 @@ const (
 const (
 	JobsContainerName = "jobs"
 
+	CRIServiceSocketName = "cri.sock"
+
+	CRINamespace  = "yt"
+	CRIBaseCgroup = "/yt"
+
 	ContainerdConfigVolumeName = "config-containerd"
 	ContainerdConfigMountPoint = "/config/containerd"
 	ContainerdSocketName       = "containerd.sock"
 	ContainerdConfigFileName   = "containerd.toml"
-
-	CRINamespace  = "yt"
-	CRIBaseCgroup = "/yt"
 )
 
 const (
