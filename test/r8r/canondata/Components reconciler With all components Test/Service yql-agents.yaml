@@ -1,0 +1,25 @@
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/component: yt-yql-agent
+    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
+    app.kubernetes.io/name: yt-yql-agent
+    app.kubernetes.io/part-of: yt-test-ytsaurus
+    yt_component: test-ytsaurus-yt-yql-agent
+    ytsaurus.tech/cluster-name: test-ytsaurus
+  name: yql-agents
+  namespace: ytsaurus-components
+  ownerReferences:
+  - apiVersion: cluster.ytsaurus.tech/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Ytsaurus
+    name: test-ytsaurus
+    uid: ""
+  resourceVersion: "1"
+spec:
+  clusterIP: None
+  selector:
+    yt_component: test-ytsaurus-yt-yql-agent
+status:
+  loadBalancer: {}

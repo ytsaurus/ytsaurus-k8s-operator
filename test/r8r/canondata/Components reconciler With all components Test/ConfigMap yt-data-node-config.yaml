@@ -1,0 +1,136 @@
+data:
+  ytserver-data-node.yson: |-
+    {
+        "address_resolver"={
+            "enable_ipv4"=%true;
+            "enable_ipv6"=%false;
+            retries=1000;
+        };
+        "solomon_exporter"={
+            host="{POD_SHORT_HOSTNAME}";
+            "instance_tags"={
+                pod="{K8S_POD_NAME}";
+            };
+        };
+        logging={
+            writers={
+                "info-stderr"={
+                    type=stderr;
+                    "file_name"="..";
+                    "enable_compression"=%true;
+                    "enable_system_messages"=%true;
+                };
+            };
+            rules=[
+                {
+                    "min_level"=info;
+                    writers=[
+                        "info-stderr";
+                    ];
+                    family="plain_text";
+                };
+            ];
+            "flush_period"=3000;
+        };
+        "monitoring_port"=10012;
+        "rpc_port"=9012;
+        "timestamp_provider"={
+            addresses=[
+                "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+            ];
+        };
+        "cluster_connection"={
+            "cluster_name"="test-ytsaurus";
+            "primary_master"={
+                addresses=[
+                    "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                ];
+                peers=[
+                    {
+                        address="ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+                "cell_id"="65726e65-ad6b7562-10259-79747361";
+            };
+            "discovery_connection"={
+                addresses=[
+                    "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
+                ];
+            };
+            "master_cache"={
+                addresses=[
+                    "msc-0.master-caches.ytsaurus-components.svc.cluster.local:9018";
+                ];
+                "cell_id"="65726e65-ad6b7562-10259-79747361";
+                "enable_master_cache_discovery"=%false;
+            };
+        };
+        "cypress_annotations"={
+            "k8s_node_name"="{K8S_NODE_NAME}";
+            "k8s_pod_name"="{K8S_POD_NAME}";
+            "k8s_pod_namespace"="{K8S_POD_NAMESPACE}";
+            "physical_host"="{K8S_NODE_NAME}";
+        };
+        flavors=[
+            data;
+        ];
+        "resource_limits"={
+            "total_cpu"=0.000000;
+            "node_dedicated_cpu"=0.000000;
+        };
+        "skynet_http_port"=11012;
+        "data_node"={
+            "store_locations"=[
+                {
+                    path="/yt/node-data/chunk-store";
+                    quota=5368709120;
+                    "io_config"={
+                        "enable_sync"=%false;
+                    };
+                    "high_watermark"=268435456;
+                    "low_watermark"=536870912;
+                    "disable_writes_watermark"=134217728;
+                    "trash_cleanup_watermark"=536870912;
+                };
+            ];
+            "cache_locations"=[
+            ];
+            "block_cache"={
+                "compressed_data"={
+                    capacity=0;
+                };
+                "uncompressed_data"={
+                    capacity=0;
+                };
+            };
+            "blocks_ext_cache"={
+                capacity=0;
+            };
+            "chunk_meta_cache"={
+                capacity=0;
+            };
+            "block_meta_cache"={
+                capacity=0;
+            };
+        };
+    }
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/component: yt-data-node
+    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
+    app.kubernetes.io/name: yt-data-node
+    app.kubernetes.io/part-of: yt-test-ytsaurus
+    yt_component: test-ytsaurus-yt-data-node
+    ytsaurus.tech/cluster-name: test-ytsaurus
+  name: yt-data-node-config
+  namespace: ytsaurus-components
+  ownerReferences:
+  - apiVersion: cluster.ytsaurus.tech/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Ytsaurus
+    name: test-ytsaurus
+    uid: ""
+  resourceVersion: "1"

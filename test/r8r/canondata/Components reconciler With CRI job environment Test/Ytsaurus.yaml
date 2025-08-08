@@ -1,0 +1,139 @@
+metadata:
+  creationTimestamp: null
+  name: test-ytsaurus
+  namespace: ytsaurus-components
+  resourceVersion: "11"
+spec:
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
+  discovery:
+    instanceCount: 1
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    resources: {}
+  enableFullUpdate: true
+  ephemeralCluster: true
+  execNodes:
+  - instanceCount: 1
+    jobEnvironment:
+      cri: {}
+      userSlots: 4
+    locations:
+    - locationType: ChunkCache
+      path: /yt/node-data/chunk-cache
+    - locationType: Slots
+      path: /yt/node-data/slots
+    - locationType: ImageCache
+      path: /yt/node-data/image-cache
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    privileged: false
+    resources: {}
+    volumeClaimTemplates:
+    - metadata:
+        name: node-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+    volumeMounts:
+    - mountPath: /yt/node-data
+      name: node-data
+  hostNetwork: false
+  httpProxies:
+  - instanceCount: 1
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    resources: {}
+    serviceType: NodePort
+    transport: {}
+  isManaged: true
+  jobImage: docker.io/library/python:3.8-slim
+  primaryMasters:
+    cellTag: 1
+    instanceCount: 1
+    locations:
+    - locationType: MasterChangelogs
+      path: /yt/master-data/master-changelogs
+    - locationType: MasterSnapshots
+      path: /yt/master-data/master-snapshots
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    resources: {}
+    volumeClaimTemplates:
+    - metadata:
+        name: master-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+    volumeMounts:
+    - mountPath: /yt/master-data
+      name: master-data
+  useIpv4: false
+  useIpv6: false
+  usePorto: false
+  useShortNames: true
+status:
+  conditions:
+  - lastTransitionTime: null
+    message: Ready
+    reason: Ready
+    status: "True"
+    type: DiscoveryReady
+  - lastTransitionTime: null
+    message: Init job successfully completed
+    reason: InitJobCompleted
+    status: "True"
+    type: defaultMasterInitJobCompleted
+  - lastTransitionTime: null
+    message: yt-master-init-job-default completed
+    reason: Ready
+    status: "True"
+    type: MasterReady
+  - lastTransitionTime: null
+    message: Ready
+    reason: Ready
+    status: "True"
+    type: ExecNodeReady
+  - lastTransitionTime: null
+    message: Ready
+    reason: Ready
+    status: "True"
+    type: HttpProxyReady
+  - lastTransitionTime: null
+    message: Init job successfully completed
+    reason: InitJobCompleted
+    status: "True"
+    type: userYtsaurusClientInitJobCompleted
+  - lastTransitionTime: null
+    message: Ready
+    reason: Ready
+    status: "True"
+    type: YtsaurusClientReady
+  - lastTransitionTime: null
+    message: Ready
+    reason: Ready
+    status: "True"
+    type: TimbertruckReady
+  state: Running
+  updateStatus: {}
