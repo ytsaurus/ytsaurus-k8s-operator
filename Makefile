@@ -171,15 +171,15 @@ lint-generated: generate helm-chart ## Check that generated files are uptodate a
 
 .PHONY: canonize
 canonize: generate-code manifests envtest-assets ginkgo ## Canonize test results.
-	rm -fr pkg/components/canondata pkg/ytconfig/canondata
+	rm -fr pkg/components/canondata pkg/ytconfig/canondata test/r8r/canondata
 	CANONIZE=y \
 	$(GINKGO) $(GINKGO_FLAGS) ./... $(GO_TEST_FLAGS)
 
 .PHONY: canonize-ytconfig
-canonize-ytconfig: generate-code fmt vet ginkgo ## Canonize ytconfig test results.
-	rm -fr pkg/ytconfig/canondata
+canonize-ytconfig: generate-code fmt vet ginkgo ## Canonize ytconfig and reconciler test results.
+	rm -fr pkg/ytconfig/canondata test/r8r/canondata
 	CANONIZE=y \
-	$(GINKGO) $(GINKGO_FLAGS) ./pkg/ytconfig/... $(GO_TEST_FLAGS)
+	$(GINKGO) $(GINKGO_FLAGS) ./pkg/ytconfig/... ./test/r8r/... $(GO_TEST_FLAGS)
 
 ##@ K8s operations
 
