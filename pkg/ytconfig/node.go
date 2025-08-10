@@ -383,7 +383,8 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 
 		if quota := findQuotaForLocation(location, spec.InstanceSpec); quota != nil {
 			storeLocation.Quota = *quota
-
+		}
+		if location.LowWatermark != nil || quota != nil {
 			if location.LowWatermark != nil {
 				storeLocation.LowWatermark = location.LowWatermark.Value()
 				storeLocation.MinDiskSpace = storeLocation.LowWatermark
@@ -396,8 +397,8 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 			storeLocation.HighWatermark = storeLocation.LowWatermark / 2
 			storeLocation.DisableWritesWatermark = storeLocation.HighWatermark / 2
 			storeLocation.TrashCleanupWatermark = storeLocation.LowWatermark
-			storeLocation.MaxTrashTtl = location.MaxTrashMilliseconds
 		}
+		storeLocation.MaxTrashTtl = location.MaxTrashMilliseconds
 		c.DataNode.StoreLocations = append(c.DataNode.StoreLocations, storeLocation)
 	}
 
