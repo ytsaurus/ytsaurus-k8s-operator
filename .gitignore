@@ -25,3 +25,5 @@ report.xml
 *.swp
 *.swo
 *~
+
+.DS_Store
