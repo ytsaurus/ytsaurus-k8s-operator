@@ -195,7 +195,7 @@ func NewComponentManager(
 		}
 
 		if syncStatus != components.SyncStatusReady {
-			logger.Info("component is not ready", "component", c.GetFullName(), "syncStatus", syncStatus)
+			logger.Info("component is not ready", "component", c.GetFullName(), "syncStatus", syncStatus, "message", componentStatus.Message)
 			notReadyComponents = append(notReadyComponents, c.GetFullName())
 			status.needSync = true
 		} else {
