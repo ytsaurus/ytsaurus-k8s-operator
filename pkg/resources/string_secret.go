@@ -23,11 +23,14 @@ func NewStringSecret(name string, reconciler *labeller.Labeller, apiProxy apipro
 }
 
 func (s *StringSecret) GetValue(key string) (string, bool) {
-	v, ok := s.oldObject.Data[key]
-	if !ok {
-		return "", ok
+	if value, ok := s.oldObject.Data[key]; ok {
+		return string(value), true
 	}
-	return string(v), ok
+	// Fake k8s client does not move StringData into Data.
+	if value, ok := s.oldObject.StringData[key]; ok {
+		return value, true
+	}
+	return "", false
 }
 
 func (s *StringSecret) GetEnvSource() corev1.EnvFromSource {
