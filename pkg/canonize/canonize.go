@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"testing"
 
 	"sigs.k8s.io/yaml"
 
@@ -20,7 +19,13 @@ const (
 	defaultDirPermissions  = 0o755
 )
 
-func Assert(t *testing.T, data []byte) {
+type T interface {
+	Name() string
+	Errorf(format string, args ...any)
+	FailNow()
+}
+
+func Assert(t T, data []byte) {
 	canonFilePath := getCanonFilePath(t, canonFileName)
 
 	if isCanonizeNeeded() {
@@ -56,7 +61,7 @@ func Assert(t *testing.T, data []byte) {
 	}
 }
 
-func AssertStruct(t *testing.T, name string, s any) {
+func AssertStruct(t T, name string, s any) {
 	canonFilePath := getCanonFilePath(t, name+".yaml")
 
 	data, err := yaml.Marshal(s)
@@ -93,6 +98,7 @@ func AssertStruct(t *testing.T, name string, s any) {
 	if err != nil {
 		t.Errorf("cannot diff: %v", err)
 	}
+
 	if text != "" {
 		t.Errorf("%s", addColorsToDiff(text))
 	}
@@ -136,6 +142,6 @@ func createCanonDirsIfNeeded(canonFilePath string) error {
 	return err
 }
 
-func getCanonFilePath(t *testing.T, fileName string) string {
+func getCanonFilePath(t T, fileName string) string {
 	return filepath.Join(canonDirName, t.Name(), fileName)
 }
