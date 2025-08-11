@@ -372,7 +372,7 @@ func (yc *YtsaurusClient) Sync(ctx context.Context, dry bool) (ComponentStatus, 
 		if !dry {
 			s := yc.secret.Build()
 			s.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
+				consts.TokenSecretKey: yc.cfgen.GenerateToken(),
 			}
 			err = yc.secret.Sync(ctx)
 		}

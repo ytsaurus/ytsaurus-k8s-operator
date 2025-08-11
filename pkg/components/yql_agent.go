@@ -171,7 +171,7 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		if !dry {
 			s := yqla.secret.Build()
 			s.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
+				consts.TokenSecretKey: yqla.cfgen.GenerateToken(),
 			}
 			err = yqla.secret.Sync(ctx)
 		}

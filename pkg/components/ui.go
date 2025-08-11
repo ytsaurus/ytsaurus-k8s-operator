@@ -301,7 +301,7 @@ func (u *UI) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 
 	if u.secret.NeedSync(consts.TokenSecretKey, "") {
 		if !dry {
-			token := ytconfig.RandString(30)
+			token := u.cfgen.GenerateToken()
 			s := u.secret.Build()
 			s.StringData = map[string]string{
 				consts.UISecretFileName: fmt.Sprintf("{\"oauthToken\" : \"%s\"}", token),

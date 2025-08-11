@@ -140,7 +140,7 @@ func (c *Chyt) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		if !dry {
 			secretSpec := c.secret.Build()
 			secretSpec.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
+				consts.TokenSecretKey: c.cfgen.GenerateToken(),
 			}
 			err = c.secret.Sync(ctx)
 		}

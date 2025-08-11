@@ -484,7 +484,7 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 
 	if m.uploaderSecret != nil && m.uploaderSecret.NeedSync(consts.TokenSecretKey, "") {
 		if !dry {
-			token := ytconfig.RandString(30)
+			token := m.cfgen.GenerateToken()
 			s := m.uploaderSecret.Build()
 			s.StringData = map[string]string{
 				consts.TokenSecretKey: token,

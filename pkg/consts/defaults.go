@@ -7,6 +7,9 @@ import (
 const DefaultAdminLogin = "admin"
 const DefaultAdminPassword = "password"
 
+const RandomTokenPrefix = "ytct-ytop-"
+const RandomTokenBytes = 30
+
 const AdminLoginSecret = "login"
 const AdminPasswordSecret = "password"
 const AdminTokenSecret = "token"

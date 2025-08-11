@@ -114,7 +114,7 @@ func (qt *QueryTracker) Sync(ctx context.Context, dry bool) (ComponentStatus, er
 		if !dry {
 			secretSpec := qt.secret.Build()
 			secretSpec.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
+				consts.TokenSecretKey: qt.cfgen.GenerateToken(),
 			}
 			err = qt.secret.Sync(ctx)
 		}

@@ -80,8 +80,8 @@ data:
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
     export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"
     /usr/bin/yt create user --attributes '{name="yql_agent"}' --ignore-existing
-    /usr/bin/yt create map_node '//sys/cypress_tokens/19d30cd963cd0abccecdb687eb8831e1e681d703edf9f885f86e0cc8b9752f67' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/19d30cd963cd0abccecdb687eb8831e1e681d703edf9f885f86e0cc8b9752f67/@user' 'yql_agent'
+    /usr/bin/yt create map_node '//sys/cypress_tokens/681aebf18d40db2dfb4a6cc03678492e3abc6d2a004f5312c53a6a2cfd0bdee8' --ignore-existing
+    /usr/bin/yt set '//sys/cypress_tokens/681aebf18d40db2dfb4a6cc03678492e3abc6d2a004f5312c53a6a2cfd0bdee8/@user' 'yql_agent'
     /usr/bin/yt add-member yql_agent superusers || true
     while [ "$(/usr/bin/yt check-permission --format json yql_agent administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done
     /usr/bin/yt create user --attributes '{name="yql_agent"}' --ignore-existing

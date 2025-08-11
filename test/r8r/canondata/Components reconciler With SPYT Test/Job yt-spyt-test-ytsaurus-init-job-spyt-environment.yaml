@@ -59,7 +59,7 @@ spec:
         - name: YT_PROXY
           value: http-proxies-lb.ytsaurus-components.svc.cluster.local
         - name: YT_TOKEN
-          value: nVLf15tNdkKbYXoMn58NO6VbDMDWFEyIhTWEGsvg
+          value: ytct-ytop-nVLf15tNdkKbYXoMn58NO6VbDMDWFEyIhTWEGsvg
         - name: EXTRA_PUBLISH_CLUSTER_OPTIONS
           value: --ignore-existing
         name: ytsaurus-init

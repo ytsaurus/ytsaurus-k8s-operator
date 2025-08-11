@@ -149,7 +149,7 @@ func (tt *Timbertruck) Sync(ctx context.Context, dry bool) (ComponentStatus, err
 
 	if tt.timbertruckSecret.NeedSync(consts.TokenSecretKey, "") {
 		if !dry {
-			token := ytconfig.RandString(30)
+			token := tt.cfgen.GenerateToken()
 			sec := tt.timbertruckSecret.Build()
 			sec.StringData = map[string]string{
 				consts.TokenSecretKey: token,

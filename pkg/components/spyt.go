@@ -134,7 +134,7 @@ func (s *Spyt) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		if !dry {
 			secretSpec := s.secret.Build()
 			secretSpec.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
+				consts.TokenSecretKey: s.cfgen.GenerateToken(),
 			}
 			err = s.secret.Sync(ctx)
 		}

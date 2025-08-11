@@ -300,7 +300,7 @@ func (c *StrawberryController) Sync(ctx context.Context, dry bool) (ComponentSta
 		if !dry {
 			s := c.secret.Build()
 			s.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
+				consts.TokenSecretKey: c.cfgen.GenerateToken(),
 			}
 			err = c.secret.Sync(ctx)
 		}

@@ -132,7 +132,7 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		if !dry {
 			secretSpec := qa.secret.Build()
 			secretSpec.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
+				consts.TokenSecretKey: qa.cfgen.GenerateToken(),
 			}
 			err = qa.secret.Sync(ctx)
 		}

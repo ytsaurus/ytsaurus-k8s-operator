@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 func generateCellID(cellTag uint16) string {
@@ -39,11 +41,11 @@ func generateCellID(cellTag uint16) string {
 	return fmt.Sprintf("%s-%s-%s-%s", getGUIDPart(uuidBytes[12:]), getGUIDPart(uuidBytes[8:12]), getGUIDPart(uuidBytes[4:8]), getGUIDPart(uuidBytes[:4]))
 }
 
-func RandString(n int) string {
-	b := make([]byte, n)
+func (g *NodeGenerator) GenerateToken() string {
+	b := make([]byte, consts.RandomTokenBytes)
 	_, err := rand.Read(b)
 	if err != nil {
 		panic(err)
 	}
-	return base64.RawURLEncoding.EncodeToString(b)
+	return consts.RandomTokenPrefix + base64.RawURLEncoding.EncodeToString(b)
 }
