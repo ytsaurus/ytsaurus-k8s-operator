@@ -1379,6 +1379,24 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 	Context("Integration tests", Label("integration"), func() {
 
+		Context("With CRI job environment", Label("cri"), func() {
+
+			BeforeEach(func() {
+				By("Adding exec nodes")
+				ytBuilder.WithScheduler()
+				ytBuilder.WithControllerAgents()
+				ytBuilder.WithExecNodes()
+
+				By("Adding CRI job environment")
+				ytBuilder.WithCRIJobEnvironment()
+			})
+
+			It("Verify CRI job environment", func(ctx context.Context) {
+				// TODO(khlebnikov): Check docker image and resource limits.
+			})
+
+		}) // integration cri
+
 		Context("With RPC proxy", Label("rpc-proxy"), func() {
 			BeforeEach(func() {
 				ytBuilder.WithRPCProxies()
