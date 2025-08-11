@@ -69,6 +69,9 @@ type YtsaurusBuilder struct {
 	JobImage          *string
 	QueryTrackerImage string
 	Ytsaurus          *ytv1.Ytsaurus
+
+	// Set MinReadyInstanceCount for all components
+	MinReadyInstanceCount *int
 }
 
 func (b *YtsaurusBuilder) CreateVolumeClaim(name string, size resource.Quantity) ytv1.EmbeddedPersistentVolumeClaim {
@@ -116,8 +119,9 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 			IsManaged:        true,
 			Discovery: ytv1.DiscoverySpec{
 				InstanceSpec: ytv1.InstanceSpec{
-					InstanceCount: 1,
-					Loggers:       b.CreateLoggersSpec(),
+					InstanceCount:         1,
+					MinReadyInstanceCount: b.MinReadyInstanceCount,
+					Loggers:               b.CreateLoggersSpec(),
 				},
 			},
 			PrimaryMasters: ytv1.MastersSpec{
@@ -125,7 +129,8 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 					CellTag: 1,
 				},
 				InstanceSpec: ytv1.InstanceSpec{
-					InstanceCount: 1,
+					InstanceCount:         1,
+					MinReadyInstanceCount: b.MinReadyInstanceCount,
 					Locations: []ytv1.LocationSpec{
 						{
 							LocationType: "MasterChangelogs",
@@ -180,8 +185,9 @@ func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 func (b *YtsaurusBuilder) WithMasterCaches() {
 	b.Ytsaurus.Spec.MasterCaches = &ytv1.MasterCachesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			InstanceCount: 1,
-			Loggers:       b.CreateLoggersSpec(),
+			InstanceCount:         1,
+			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
 }
@@ -226,8 +232,9 @@ func (b *YtsaurusBuilder) WithExecNodes() {
 func (b *YtsaurusBuilder) WithScheduler() {
 	b.Ytsaurus.Spec.Schedulers = &ytv1.SchedulersSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			InstanceCount: 1,
-			Loggers:       b.CreateLoggersSpec(),
+			InstanceCount:         1,
+			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
 }
@@ -235,8 +242,9 @@ func (b *YtsaurusBuilder) WithScheduler() {
 func (b *YtsaurusBuilder) WithControllerAgents() {
 	b.Ytsaurus.Spec.ControllerAgents = &ytv1.ControllerAgentsSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			InstanceCount: 1,
-			Loggers:       b.CreateLoggersSpec(),
+			InstanceCount:         1,
+			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
 }
@@ -261,9 +269,10 @@ func (b *YtsaurusBuilder) WithBootstrap() {
 func (b *YtsaurusBuilder) WithQueryTracker() {
 	b.Ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			Image:         ptr.To(b.QueryTrackerImage),
-			InstanceCount: 1,
-			Loggers:       b.CreateLoggersSpec(),
+			Image:                 ptr.To(b.QueryTrackerImage),
+			InstanceCount:         1,
+			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
 }
@@ -271,9 +280,10 @@ func (b *YtsaurusBuilder) WithQueryTracker() {
 func (b *YtsaurusBuilder) WithYqlAgent() {
 	b.Ytsaurus.Spec.YQLAgents = &ytv1.YQLAgentSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			Image:         ptr.To(b.QueryTrackerImage),
-			InstanceCount: 1,
-			Loggers:       b.CreateLoggersSpec(),
+			Image:                 ptr.To(b.QueryTrackerImage),
+			InstanceCount:         1,
+			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
 }
@@ -286,9 +296,10 @@ func (b *YtsaurusBuilder) WithQueueAgent() {
 	}
 	b.Ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			InstanceCount: 1,
-			Loggers:       b.CreateLoggersSpec(),
-			Image:         ptr.To(image),
+			InstanceCount:         1,
+			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Loggers:               b.CreateLoggersSpec(),
+			Image:                 ptr.To(image),
 		},
 	}
 }
@@ -303,8 +314,9 @@ func (b *YtsaurusBuilder) CreateHTTPProxiesSpec() ytv1.HTTPProxiesSpec {
 	return ytv1.HTTPProxiesSpec{
 		ServiceType: "NodePort",
 		InstanceSpec: ytv1.InstanceSpec{
-			InstanceCount: 1,
-			Loggers:       b.CreateLoggersSpec(),
+			InstanceCount:         1,
+			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Loggers:               b.CreateLoggersSpec(),
 		},
 		HttpNodePort: getPortFromEnv("E2E_HTTP_PROXY_INTERNAL_PORT"),
 	}
@@ -315,8 +327,9 @@ func (b *YtsaurusBuilder) CreateRPCProxiesSpec() ytv1.RPCProxiesSpec {
 	return ytv1.RPCProxiesSpec{
 		ServiceType: &stype,
 		InstanceSpec: ytv1.InstanceSpec{
-			InstanceCount: 1,
-			Loggers:       b.CreateLoggersSpec(),
+			InstanceCount:         1,
+			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Loggers:               b.CreateLoggersSpec(),
 		},
 		NodePort: getPortFromEnv("E2E_RPC_PROXY_INTERNAL_PORT"),
 	}
@@ -337,8 +350,9 @@ func getPortFromEnv(envvar string) *int32 {
 func (b *YtsaurusBuilder) CreateExecNodeSpec() ytv1.ExecNodesSpec {
 	return ytv1.ExecNodesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			InstanceCount: 1,
-			Loggers:       b.CreateLoggersSpec(),
+			InstanceCount:         1,
+			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Loggers:               b.CreateLoggersSpec(),
 			Locations: []ytv1.LocationSpec{
 				{
 					LocationType: "ChunkCache",
@@ -364,8 +378,9 @@ func (b *YtsaurusBuilder) CreateExecNodeSpec() ytv1.ExecNodesSpec {
 
 func (b *YtsaurusBuilder) CreateDataNodeInstanceSpec(instanceCount int32) ytv1.InstanceSpec {
 	return ytv1.InstanceSpec{
-		InstanceCount: instanceCount,
-		Loggers:       b.CreateLoggersSpec(),
+		InstanceCount:         instanceCount,
+		MinReadyInstanceCount: b.MinReadyInstanceCount,
+		Loggers:               b.CreateLoggersSpec(),
 		Locations: []ytv1.LocationSpec{
 			{
 				LocationType: "ChunkStore",
@@ -386,8 +401,9 @@ func (b *YtsaurusBuilder) CreateDataNodeInstanceSpec(instanceCount int32) ytv1.I
 
 func (b *YtsaurusBuilder) CreateTabletNodeSpec(instanceCount int32) ytv1.InstanceSpec {
 	return ytv1.InstanceSpec{
-		InstanceCount: instanceCount,
-		Loggers:       b.CreateLoggersSpec(),
+		InstanceCount:         instanceCount,
+		MinReadyInstanceCount: b.MinReadyInstanceCount,
+		Loggers:               b.CreateLoggersSpec(),
 	}
 }
 
