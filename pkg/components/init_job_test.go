@@ -100,7 +100,7 @@ func TestJobRestart(t *testing.T) {
 	defer h.Stop()
 
 	job := newTestJob(ytsaurus)
-	job.SetInitScript(scriptBefore)
+	job.SetInitScript(Script{scriptBefore})
 	syncJobUntilReady(t, job)
 
 	err := job.prepareRestart(ctx, false)
@@ -143,7 +143,7 @@ func TestJobScriptUpdateOnJobRestart(t *testing.T) {
 	defer h.Stop()
 
 	job := newTestJob(ytsaurus)
-	job.SetInitScript(scriptBefore)
+	job.SetInitScript(Script{scriptBefore})
 	syncJobUntilReady(t, job)
 
 	err := job.prepareRestart(ctx, false)
@@ -163,7 +163,7 @@ func TestJobScriptUpdateOnJobRestart(t *testing.T) {
 
 	// Imagine that new version of operator wants to set new init script for job.
 	job = newTestJob(ytsaurus)
-	job.SetInitScript(scriptAfter)
+	job.SetInitScript(Script{scriptAfter})
 	syncJobUntilReady(t, job)
 
 	cmData := testutil.FetchConfigMapData(

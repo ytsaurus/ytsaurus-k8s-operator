@@ -102,10 +102,12 @@ func (yc *YtsaurusClient) Fetch(ctx context.Context) error {
 	)
 }
 
-func (yc *YtsaurusClient) createInitUserScript() string {
+func (yc *YtsaurusClient) createInitUserScript() Script {
 	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
-	initJob := initJobWithNativeDriverPrologue()
-	return initJob + "\n" + strings.Join(createUserCommand(consts.YtsaurusOperatorUserName, "", token, true), "\n")
+	return RunScripts(
+		initJobWithNativeDriverPrologue(),
+		createUserCommand(consts.YtsaurusOperatorUserName, "", token, true),
+	)
 }
 
 type TabletCellBundleHealth struct {

@@ -105,14 +105,15 @@ func (yqla *YqlAgent) Fetch(ctx context.Context) error {
 	)
 }
 
-func (yqla *YqlAgent) initUsers() string {
+func (yqla *YqlAgent) initUsers() Script {
 	token, _ := yqla.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand(consts.YqlUserName, "", token, true)
-	commands = append(commands, createUserCommand("yql_agent", "", "", true)...)
-	return strings.Join(commands, "\n")
+	return RunScripts(
+		createUserCommand(consts.YqlUserName, "", token, true),
+		createUserCommand("yql_agent", "", "", true),
+	)
 }
 
-func (yqla *YqlAgent) createInitScript() string {
+func (yqla *YqlAgent) createInitScript() Script {
 	var sb strings.Builder
 	sb.WriteString("[")
 	for _, addr := range yqla.cfgen.GetYQLAgentAddresses() {
@@ -122,25 +123,27 @@ func (yqla *YqlAgent) createInitScript() string {
 	}
 	sb.WriteString("]")
 	yqlAgentAddrs := sb.String()
-	script := []string{
+	script := RunScripts(
 		initJobWithNativeDriverPrologue(),
 		yqla.initUsers(),
-		"/usr/bin/yt add-member --member yql_agent --group superusers || true",
-		"/usr/bin/yt create document //sys/yql_agent/config --attributes '{value={}}' --recursive --ignore-existing",
-		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent '{stages={production={channel={disable_balancing_on_single_address=%%false;addresses=%v}}}}'", yqlAgentAddrs),
-		fmt.Sprintf("/usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/%s", yqla.labeller.GetClusterName()),
-	}
+		Script{
+			"/usr/bin/yt add-member --member yql_agent --group superusers || true",
+			"/usr/bin/yt create document //sys/yql_agent/config --attributes '{value={}}' --recursive --ignore-existing",
+			fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent '{stages={production={channel={disable_balancing_on_single_address=%%false;addresses=%v}}}}'", yqlAgentAddrs),
+			fmt.Sprintf("/usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/%s", yqla.labeller.GetClusterName()),
+		},
+	)
 
-	return strings.Join(script, "\n")
+	return script
 }
 
-func (yqla *YqlAgent) createUpdateScript() string {
-	script := []string{
+func (yqla *YqlAgent) createUpdateScript() Script {
+	return RunScripts(
 		initJobWithNativeDriverPrologue(),
-		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent/stages/production/channel/disable_balancing_on_single_address '%%false'"),
-	}
-
-	return strings.Join(script, "\n")
+		Script{
+			fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent/stages/production/channel/disable_balancing_on_single_address '%%false'"),
+		},
+	)
 }
 
 func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {

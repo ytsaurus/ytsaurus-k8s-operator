@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -152,32 +151,29 @@ func (c *StrawberryController) Fetch(ctx context.Context) error {
 	)
 }
 
-func (c *StrawberryController) initUsers() string {
+func (c *StrawberryController) initUsers() Script {
 	token, _ := c.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand(consts.StrawberryControllerUserName, "", token, true)
-	return strings.Join(commands, "\n")
+	return createUserCommand(consts.StrawberryControllerUserName, "", token, true)
 }
 
-func (c *StrawberryController) createInitUserAndUrlScript() string {
-	script := []string{
+func (c *StrawberryController) createInitUserAndUrlScript() Script {
+	return RunScripts(
 		initJobWithNativeDriverPrologue(),
 		c.initUsers(),
 		RunIfNonexistent("//sys/@ui_config", "yt set //sys/@ui_config '{}'"),
-		fmt.Sprintf("yt set //sys/@ui_config/chyt_controller_base_url '\"http://%v:%v\"'",
-			c.microservice.getHttpService().Name(), consts.StrawberryHTTPAPIPort),
-	}
-
-	return strings.Join(script, "\n")
+		Script{
+			fmt.Sprintf("yt set //sys/@ui_config/chyt_controller_base_url '\"http://%v:%v\"'",
+				c.microservice.getHttpService().Name(), consts.StrawberryHTTPAPIPort),
+		},
+	)
 }
 
-func (c *StrawberryController) createInitChytClusterScript() string {
-	script := []string{
+func (c *StrawberryController) createInitChytClusterScript() Script {
+	return Script{
 		initJobPrologue,
 		fmt.Sprintf("/usr/bin/chyt-controller --config-path %s init-cluster",
 			path.Join(consts.ConfigMountPoint, ChytInitClusterJobConfigFileName)),
 	}
-
-	return strings.Join(script, "\n")
 }
 
 func (c *StrawberryController) getEnvSource() []corev1.EnvFromSource {

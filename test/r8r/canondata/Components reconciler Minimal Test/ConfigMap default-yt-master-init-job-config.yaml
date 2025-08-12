@@ -118,7 +118,6 @@ data:
     /usr/bin/yt set '//sys/cypress_tokens/5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8/@user' 'admin'
     /usr/bin/yt add-member admin superusers || true
     fi
-
     fi
     if [ 'false' = 'true' ]; then
     if [ $(/usr/bin/yt exists //sys/users/robot-hydra-persistence-uploader) = 'false' ]; then

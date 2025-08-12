@@ -2,7 +2,6 @@ package components
 
 import (
 	"context"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -69,23 +68,18 @@ func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.
 	}
 }
 
-func (s *Spyt) createInitUserScript() string {
+func (s *Spyt) createInitUserScript() Script {
 	token, _ := s.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand("spyt_releaser", "", token, true)
-	script := []string{
+	return RunScripts(
 		initJobWithNativeDriverPrologue(),
-	}
-	script = append(script, commands...)
-
-	return strings.Join(script, "\n")
+		createUserCommand("spyt_releaser", "", token, true),
+	)
 }
 
-func (s *Spyt) createInitScript() string {
-	script := []string{
+func (s *Spyt) createInitScript() Script {
+	return Script{
 		"/entrypoint.sh",
 	}
-
-	return strings.Join(script, "\n")
 }
 
 func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {

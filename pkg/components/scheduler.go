@@ -3,7 +3,6 @@ package components
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"k8s.io/utils/ptr"
 
@@ -279,36 +278,36 @@ func (s *Scheduler) setConditionOpArchiveUpdated(ctx context.Context) {
 	})
 }
 
-func (s *Scheduler) createInitUserScript() string {
+func (s *Scheduler) createInitUserScript() Script {
 	token, _ := s.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand("operation_archivarius", "", token, true)
-	script := []string{
+	return RunScripts(
 		initJobWithNativeDriverPrologue(),
-	}
-	script = append(script, commands...)
-
-	return strings.Join(script, "\n")
+		createUserCommand("operation_archivarius", "", token, true),
+	)
 }
 
 // omgronny: The file was renamed in ytsaurus image. Refer to
 // https://github.com/ytsaurus/ytsaurus/commit/e5348fef221110ce27bba13df5f9790649084b01
-const setInitOpArchivePath = `
-export INIT_OP_ARCHIVE=/usr/bin/init_operations_archive
-if [ ! -f $INIT_OP_ARCHIVE ]; then
-export INIT_OP_ARCHIVE=/usr/bin/init_operation_archive
-fi
-`
+func setInitOpArchivePath() []string {
+	return []string{
+		"export INIT_OP_ARCHIVE=/usr/bin/init_operations_archive",
+		"if [ ! -f $INIT_OP_ARCHIVE ]; then",
+		"export INIT_OP_ARCHIVE=/usr/bin/init_operation_archive",
+		"fi",
+	}
+}
 
 func (s *Scheduler) prepareInitOperationsArchive() {
-	script := []string{
+	script := RunScripts(
 		initJobWithNativeDriverPrologue(),
-		setInitOpArchivePath,
-		fmt.Sprintf("$INIT_OP_ARCHIVE --force --latest --proxy %s",
-			s.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
+		setInitOpArchivePath(),
+		Script{
+			fmt.Sprintf("$INIT_OP_ARCHIVE --force --latest --proxy %s",
+				s.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
+		},
 		SetWithIgnoreExisting("//sys/cluster_nodes/@config", "'{\"%true\" = {job_agent={enable_job_reporter=%true}}}'"),
-	}
-
-	s.initOpArchiveJob.SetInitScript(strings.Join(script, "\n"))
+	)
+	s.initOpArchiveJob.SetInitScript(script)
 	job := s.initOpArchiveJob.Build()
 	container := &job.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{s.secret.GetEnvSource()}

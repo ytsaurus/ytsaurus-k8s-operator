@@ -3,7 +3,6 @@ package components
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
@@ -85,29 +84,26 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 	}
 }
 
-func (c *Chyt) createInitUserScript() string {
+func (c *Chyt) createInitUserScript() Script {
 	token, _ := c.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand("chyt_releaser", "", token, true)
-	script := []string{
+	return RunScripts(
 		initJobWithNativeDriverPrologue(),
-	}
-	script = append(script, commands...)
-
-	return strings.Join(script, "\n")
+		createUserCommand("chyt_releaser", "", token, true),
+	)
 }
 
-func (c *Chyt) createInitScript() string {
-	script := "/setup_cluster_for_chyt.sh"
+func (c *Chyt) createInitScript() Script {
+	command := "/setup_cluster_for_chyt.sh"
 
 	if c.chyt.GetResource().Spec.MakeDefault {
-		script += " --make-default"
+		command += " --make-default"
 	}
 
-	return script
+	return Script{command}
 }
 
-func (c *Chyt) createInitChPublicScript() string {
-	script := []string{
+func (c *Chyt) createInitChPublicScript() Script {
+	return Script{
 		initJobPrologue,
 		fmt.Sprintf("export YT_PROXY=%v CHYT_CTL_ADDRESS=%v YT_LOG_LEVEL=debug",
 			c.cfgen.GetHTTPProxiesAddress(&c.ytsaurus.Spec, consts.DefaultHTTPProxyRole),
@@ -121,8 +117,6 @@ func (c *Chyt) createInitChPublicScript() string {
 		"yt clickhouse ctl set-option --alias ch_public instance_count 1",
 		"yt clickhouse ctl start ch_public",
 	}
-
-	return strings.Join(script, "\n")
 }
 
 func (c *Chyt) prepareChPublicJob() {
