@@ -92,7 +92,6 @@ ifneq ($(DEBUG),)
 	GINKGO_FLAGS += --fail-fast
 endif
 
-GO_TEST_FLAGS += -v
 GO_TEST_FLAGS += -timeout 1800s
 GO_TEST_FLAGS += -coverprofile cover.out
 
@@ -144,12 +143,12 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: generate-code manifests envtest-assets ## Run tests.
-	go test $(GO_TEST_FLAGS) ./...
+test: generate-code manifests envtest-assets ginkgo ## Run tests.
+	$(GINKGO) $(GINKGO_FLAGS) ./... $(GO_TEST_FLAGS)
 
 .PHONY: test-e2e
 test-e2e: generate-code manifests ginkgo ## Run e2e tests.
-	$(GINKGO) $(GINKGO_FLAGS) ./test/e2e/... -coverprofile cover.out -timeout 1800s -- --enable-e2e
+	$(GINKGO) $(GINKGO_FLAGS) ./test/e2e/... $(GO_TEST_FLAGS) -- --enable-e2e
 
 .PHONY: clean-e2e
 clean-e2e: ## Delete k8s namespaces created by e2e tests.
@@ -171,16 +170,16 @@ lint-generated: generate helm-chart ## Check that generated files are uptodate a
 	test -z "$(shell git status --porcelain api docs/api.md config ytop-chart)"
 
 .PHONY: canonize
-canonize: generate-code manifests envtest-assets ## Canonize test results.
+canonize: generate-code manifests envtest-assets ginkgo ## Canonize test results.
 	rm -fr pkg/components/canondata pkg/ytconfig/canondata
 	CANONIZE=y \
-	go test $(GO_TEST_FLAGS) ./...
+	$(GINKGO) $(GINKGO_FLAGS) ./... $(GO_TEST_FLAGS)
 
 .PHONY: canonize-ytconfig
-canonize-ytconfig: generate-code fmt vet ## Canonize ytconfig test results.
+canonize-ytconfig: generate-code fmt vet ginkgo ## Canonize ytconfig test results.
 	rm -fr pkg/ytconfig/canondata
 	CANONIZE=y \
-	go test $(GO_TEST_FLAGS) ./pkg/ytconfig/...
+	$(GINKGO) $(GINKGO_FLAGS) ./pkg/ytconfig/... $(GO_TEST_FLAGS)
 
 ##@ K8s operations
 
