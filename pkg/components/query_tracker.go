@@ -3,7 +3,6 @@ package components
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"k8s.io/utils/ptr"
 
@@ -405,13 +404,15 @@ func (qt *QueryTracker) Sync(ctx context.Context) error {
 func (qt *QueryTracker) prepareInitQueryTrackerState() {
 	path := "/usr/bin/init_query_tracker_state"
 
-	script := []string{
+	script := RunScripts(
 		initJobWithNativeDriverPrologue(),
-		fmt.Sprintf("if [[ -f \"%s\" ]]; then %s --force --latest --proxy %s; fi",
-			path, path, qt.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
-	}
+		Script{
+			fmt.Sprintf("if [[ -f \"%s\" ]]; then %s --force --latest --proxy %s; fi",
+				path, path, qt.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
+		},
+	)
 
-	qt.initQTState.SetInitScript(strings.Join(script, "\n"))
+	qt.initQTState.SetInitScript(script)
 	job := qt.initQTState.Build()
 	container := &job.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{qt.secret.GetEnvSource()}
