@@ -139,6 +139,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			ytsaurus.Spec.PrimaryMasters.CellTag = 123
 
 			Expect(k8sClient.Update(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.primaryMasters.cellTag")))
+			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
 		})
 
 		It("Should not accept data nodes without chunk locations", func() {
@@ -322,8 +323,13 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("should deny the creation of another YTsaurus CRD in the same namespace", func() {
+			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
 			ytsaurus1 := testutil.CreateBaseYtsaurusResource(namespace)
 			Expect(k8sClient.Create(ctx, ytsaurus1)).Should(MatchError(ContainSubstring("already exists")))
+			ytsaurus1.Name += "1"
+			Expect(k8sClient.Create(ctx, ytsaurus1)).Should(MatchError(ContainSubstring("already exists")))
+			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
 		})
 	})
 })
