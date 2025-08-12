@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -102,19 +101,16 @@ func (u *UI) Fetch(ctx context.Context) error {
 	)
 }
 
-func (u *UI) initUser() string {
+func (u *UI) initUser() Script {
 	token, _ := u.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand(consts.UIUserName, "", token, false)
-	return strings.Join(commands, "\n")
+	return createUserCommand(consts.UIUserName, "", token, false)
 }
 
-func (u *UI) createInitScript() string {
-	script := []string{
+func (u *UI) createInitScript() Script {
+	return RunScripts(
 		initJobWithNativeDriverPrologue(),
 		u.initUser(),
-	}
-
-	return strings.Join(script, "\n")
+	)
 }
 
 func (u *UI) syncComponents(ctx context.Context) (err error) {
