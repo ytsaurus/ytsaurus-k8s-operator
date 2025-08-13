@@ -9,6 +9,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ypatch"
 )
 
 type SyncStatus string
@@ -52,6 +53,8 @@ type Component interface {
 	SetReadyCondition(status ComponentStatus)
 
 	GetLabeller() *labeller.Labeller
+
+	GetCypressPatch() ypatch.PatchSet
 }
 
 // Following structs are used as a base for implementing YTsaurus components objects.
@@ -79,6 +82,10 @@ func (c *baseComponent) GetType() consts.ComponentType {
 
 func (c *baseComponent) GetLabeller() *labeller.Labeller {
 	return c.labeller
+}
+
+func (c *baseComponent) GetCypressPatch() ypatch.PatchSet {
+	return nil
 }
 
 // localComponent is a base structs for components which have access to ytsaurus resource,

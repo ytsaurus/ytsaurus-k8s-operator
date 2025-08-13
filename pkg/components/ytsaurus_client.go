@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
 	"go.ytsaurus.tech/yt/go/yt/ythttp"
 	"go.ytsaurus.tech/yt/go/yterrors"
@@ -20,6 +21,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ypatch"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -33,6 +35,10 @@ type YtsaurusClient struct {
 	cfgen     *ytconfig.Generator
 	httpProxy Component
 
+	getAllComponents func() []Component
+	configOverrides  *resources.ConfigMap
+	cypressPatch     *resources.ConfigMap
+
 	initUserJob *InitJob
 
 	secret   *resources.StringSecret
@@ -43,13 +49,28 @@ func NewYtsaurusClient(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	httpProxy Component,
+	getAllComponents func() []Component,
+
 ) *YtsaurusClient {
 	l := cfgen.GetComponentLabeller(consts.YtsaurusClientType, "")
 	resource := ytsaurus.GetResource()
+
+	var configOverrides *resources.ConfigMap
+	if overrides := resource.Spec.ConfigOverrides; overrides != nil {
+		configOverrides = resources.NewConfigMap(overrides.Name, l, ytsaurus.APIProxy())
+	}
+
 	return &YtsaurusClient{
-		localComponent: newLocalComponent(l, ytsaurus),
-		cfgen:          cfgen,
-		httpProxy:      httpProxy,
+		localComponent:   newLocalComponent(l, ytsaurus),
+		cfgen:            cfgen,
+		httpProxy:        httpProxy,
+		getAllComponents: getAllComponents,
+		configOverrides:  configOverrides,
+		cypressPatch: resources.NewConfigMap(
+			l.GetCypressPatchConfigMapName(),
+			l,
+			ytsaurus.APIProxy(),
+		),
 		initUserJob: NewInitJob(
 			l,
 			ytsaurus.APIProxy(),
@@ -76,6 +97,8 @@ func (yc *YtsaurusClient) Fetch(ctx context.Context) error {
 		yc.secret,
 		yc.initUserJob,
 		yc.httpProxy,
+		yc.configOverrides,
+		yc.cypressPatch,
 	)
 }
 
@@ -140,6 +163,12 @@ func (yc *YtsaurusClient) getMasterHydra(ctx context.Context, path string) (Mast
 	var masterHydra MasterHydra
 	err := yc.ytClient.GetNode(ctx, ypath.Path(path), &masterHydra, getReadOnlyGetOptions())
 	return masterHydra, err
+}
+
+// shouldSkipCypressOperations returns true when no alive masters are expected.
+func (yc *YtsaurusClient) shouldSkipCypressOperations() bool {
+	resource := yc.ytsaurus.GetResource()
+	return resource.Spec.EphemeralCluster && ptr.Deref(resource.Spec.PrimaryMasters.MinReadyInstanceCount, 1) == 0
 }
 
 func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentStatus, error) {
@@ -370,6 +399,20 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			})
 			return SimpleStatus(SyncStatusUpdating), nil
 		}
+
+	case ytv1.UpdateStateWaitingForCypressPatch:
+		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionCypressPatchApplied) {
+			if err := yc.SyncCypressPatch(ctx); err != nil {
+				return SimpleStatus(SyncStatusUpdating), err
+			}
+			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+				Type:    consts.ConditionCypressPatchApplied,
+				Status:  metav1.ConditionTrue,
+				Reason:  "Update",
+				Message: "Cypress patches applied",
+			})
+			return SimpleStatus(SyncStatusUpdating), nil
+		}
 	}
 
 	return SimpleStatus(SyncStatusUpdating), err
@@ -425,6 +468,21 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 		}
 	}
 
+	if yc.ytsaurus.GetClusterState() == ytv1.ClusterStateInitializing {
+		if !yc.cypressPatch.Exists() {
+			if dry {
+				return NewComponentStatus(SyncStatusPending, fmt.Sprintf("Need to sync %s", yc.cypressPatch.Name())), nil
+			}
+			if err := yc.SyncCypressPatch(ctx); err != nil {
+				return SimpleStatus(SyncStatusPending), err
+			}
+		}
+	}
+
+	if ytv1.IsReadyToUpdateClusterState(yc.ytsaurus.GetClusterState()) && yc.NeedSync() {
+		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+	}
+
 	if yc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if yc.ytsaurus.GetResource().Status.UpdateStatus.State == ytv1.UpdateStateImpossibleToStart {
 			return SimpleStatus(SyncStatusReady), err
@@ -436,6 +494,26 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 	}
 
 	return SimpleStatus(SyncStatusReady), err
+}
+
+func (yc *YtsaurusClient) NeedSync() bool {
+	if !yc.cypressPatch.Exists() {
+		return true
+	}
+
+	if yc.configOverrides != nil && yc.configOverrides.Exists() {
+		patchOverridesVersion := yc.cypressPatch.OldObject().Labels[consts.ConfigOverridesVersionLabelName]
+		overridesVersion := yc.configOverrides.OldObject().ResourceVersion
+		if overridesVersion != patchOverridesVersion {
+			return true
+		}
+	}
+
+	if yc.ytsaurus.IsStatusConditionFalse(consts.ConditionCypressPatchApplied) {
+		return true
+	}
+
+	return false
 }
 
 func (yc *YtsaurusClient) Status(ctx context.Context) (ComponentStatus, error) {
@@ -536,6 +614,193 @@ func (yc *YtsaurusClient) EnableSafeMode(ctx context.Context) error {
 }
 func (yc *YtsaurusClient) DisableSafeMode(ctx context.Context) error {
 	return yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), false, nil)
+}
+
+// Cypress patches actions.
+
+func (yc *YtsaurusClient) BuildCypressPatch(ctx context.Context) (ypatch.PatchSet, error) {
+	logger := log.FromContext(ctx)
+
+	var err error
+
+	description := &strings.Builder{}
+	currentPatch := ypatch.PatchSet{}
+	pendingPatch := ypatch.PatchSet{}
+
+	yc.cypressPatch.Build()
+
+	if yc.configOverrides != nil && yc.configOverrides.Exists() {
+		overridesVersion := yc.configOverrides.OldObject().ResourceVersion
+		metav1.SetMetaDataLabel(
+			&yc.cypressPatch.NewObject().ObjectMeta,
+			consts.ConfigOverridesVersionLabelName,
+			overridesVersion,
+		)
+		fmt.Fprintf(description, "overrides-version: %v\n", overridesVersion)
+	}
+
+	for _, component := range yc.getAllComponents() {
+		componentPatch := component.GetCypressPatch()
+
+		// File names for component patches.
+		patchFileName := component.GetLabeller().GetCypressPatchFileName(consts.CypressPatchFileName)
+		pendingFileName := component.GetLabeller().GetCypressPatchFileName(consts.PendingCypressPatchFileName)
+		previousFileName := component.GetLabeller().GetCypressPatchFileName(consts.PreviousCypressPatchFileName)
+
+		// Apply component patch override.
+		if yc.configOverrides != nil && yc.configOverrides.Exists() {
+			if data, found := yc.configOverrides.OldObject().Data[patchFileName]; found {
+				logger.Info("Add cypress patch override", "name", patchFileName)
+				override := ypatch.PatchSet{}
+				if err = yson.Unmarshal([]byte(data), &override); err != nil {
+					return nil, fmt.Errorf("cannot parse cypress patch override %s: %w", patchFileName, err)
+				}
+				if componentPatch == nil {
+					componentPatch = override
+				} else {
+					componentPatch.AddPatchSet(override)
+				}
+			}
+		}
+
+		var componentPatchData []byte
+		if componentPatchData, err = yson.MarshalFormat(componentPatch, yson.FormatPretty); err != nil {
+			return nil, fmt.Errorf("cannot format component cypress patch %s: %w", patchFileName, err)
+		}
+
+		if yc.ytsaurus.GetClusterState() == ytv1.ClusterStateInitializing || IsUpdatingComponent(yc.ytsaurus, component) {
+			// Include empty patches for clarity.
+			yc.cypressPatch.NewObject().Data[patchFileName] = string(componentPatchData)
+			currentPatch.AddPatchSet(componentPatch)
+
+			// Update previous patch if something has changed.
+			previousData := yc.cypressPatch.OldObject().Data[patchFileName]
+			if string(componentPatchData) == previousData {
+				previousData = yc.cypressPatch.OldObject().Data[previousFileName]
+			}
+			if previousData != "" {
+				yc.cypressPatch.NewObject().Data[previousFileName] = previousData
+			}
+		} else {
+			// Use saved patch if component is not updating.
+			var savedPatchData string
+			if data, found := yc.cypressPatch.OldObject().Data[patchFileName]; found {
+				savedPatchData = data
+				savedPatch := ypatch.PatchSet{}
+				if err := yson.Unmarshal([]byte(data), &savedPatch); err != nil {
+					return nil, fmt.Errorf("cannot parse current cypress patch %s: %w", patchFileName, err)
+				}
+				currentPatch.AddPatchSet(savedPatch)
+				yc.cypressPatch.NewObject().Data[patchFileName] = savedPatchData
+			}
+
+			// Include pending patch when something going to be updated.
+			if string(componentPatchData) != savedPatchData {
+				yc.cypressPatch.NewObject().Data[pendingFileName] = string(componentPatchData)
+				pendingPatch.AddPatchSet(componentPatch)
+				fmt.Fprintf(description, "pending: %v\n", component.GetLabeller().GetFullComponentLabel())
+			}
+
+			// Preserve previous patch when exists.
+			if data, found := yc.cypressPatch.OldObject().Data[previousFileName]; found {
+				yc.cypressPatch.NewObject().Data[previousFileName] = data
+			}
+		}
+	}
+
+	// Apply global cypress patch override.
+	if yc.configOverrides != nil && yc.configOverrides.Exists() {
+		if data, found := yc.configOverrides.OldObject().Data[consts.CypressPatchFileName]; found {
+			logger.Info("Adding cypress patch override", "name", consts.CypressPatchFileName)
+			patch := ypatch.PatchSet{}
+			if err := yson.Unmarshal([]byte(data), &patch); err != nil {
+				return nil, fmt.Errorf("cannot parse cypress patch override %s: %w", consts.CypressPatchFileName, err)
+			}
+			currentPatch.AddPatchSet(patch)
+		}
+	}
+
+	{
+		currentPatchData, err := yson.MarshalFormat(currentPatch, yson.FormatPretty)
+		if err != nil {
+			return nil, fmt.Errorf("cannot format current cypress patch %s: %w", consts.CypressPatchFileName, err)
+		}
+
+		yc.cypressPatch.NewObject().Data[consts.CypressPatchFileName] = string(currentPatchData)
+
+		if len(pendingPatch) != 0 {
+			pendingPatchData, err := yson.MarshalFormat(pendingPatch, yson.FormatPretty)
+			if err != nil {
+				return nil, fmt.Errorf("cannot format pending cypress patch %s: %w", consts.PendingCypressPatchFileName, err)
+			}
+			yc.cypressPatch.NewObject().Data[consts.PendingCypressPatchFileName] = string(pendingPatchData)
+		}
+
+		previousPatchData := yc.cypressPatch.OldObject().Data[consts.CypressPatchFileName]
+		if string(currentPatchData) == previousPatchData {
+			previousPatchData = yc.cypressPatch.OldObject().Data[consts.PreviousCypressPatchFileName]
+		}
+		if previousPatchData != "" {
+			yc.cypressPatch.NewObject().Data[consts.PreviousCypressPatchFileName] = previousPatchData
+		}
+	}
+
+	metav1.SetMetaDataAnnotation(&yc.cypressPatch.NewObject().ObjectMeta, consts.DescriptionAnnotation, description.String())
+
+	return currentPatch, nil
+}
+
+func (yc *YtsaurusClient) SyncCypressPatch(ctx context.Context) error {
+	logger := log.FromContext(ctx)
+	apiproxy := yc.ytsaurus.APIProxy()
+	patch, err := yc.BuildCypressPatch(ctx)
+	if err != nil {
+		logger.Error(err, "Failed to build cypress patch")
+		apiproxy.RecordWarning("CypressPatch", fmt.Sprintf("Failed to build cypress patch: %v", err))
+		yc.ytsaurus.SetStatusCondition(metav1.Condition{
+			LastTransitionTime: metav1.Now(),
+			Type:               consts.ConditionCypressPatchApplied,
+			Status:             metav1.ConditionFalse,
+			Reason:             "PatchBuildFailed",
+			Message:            fmt.Sprintf("Error: %v", err),
+		})
+		return nil
+	}
+	if err := yc.cypressPatch.Sync(ctx); err != nil {
+		return err
+	}
+	if yc.shouldSkipCypressOperations() {
+		logger.Info("Skipping cypress patch apply in test")
+		apiproxy.RecordNormal("CypressPatch", "Skip patch apply in test")
+		return nil
+	}
+	cypressPatchTarget := ypatch.CypressPatchTarget{
+		Client: yc.ytClient,
+	}
+	err = cypressPatchTarget.ApplyPatchSet(ctx, "", patch)
+	if err == nil {
+		logger.Info("Cypress patch applied")
+		apiproxy.RecordNormal("CypressPatch", "patch applied")
+		yc.ytsaurus.SetStatusCondition(metav1.Condition{
+			LastTransitionTime: metav1.Now(),
+			Type:               consts.ConditionCypressPatchApplied,
+			Status:             metav1.ConditionTrue,
+			Reason:             "PatchApplied",
+			Message: fmt.Sprintf("Description: %v",
+				yc.cypressPatch.NewObject().Annotations[consts.DescriptionAnnotation]),
+		})
+	} else {
+		logger.Error(err, "Failed to apply cypress patch")
+		apiproxy.RecordWarning("CypressPatch", fmt.Sprintf("Failed to apply cypress patch: %v", err))
+		yc.ytsaurus.SetStatusCondition(metav1.Condition{
+			LastTransitionTime: metav1.Now(),
+			Type:               consts.ConditionCypressPatchApplied,
+			Status:             metav1.ConditionFalse,
+			Reason:             "PatchApplyFailed",
+			Message:            fmt.Sprintf("Error: %v", err),
+		})
+	}
+	return nil
 }
 
 // Tablet cells actions.

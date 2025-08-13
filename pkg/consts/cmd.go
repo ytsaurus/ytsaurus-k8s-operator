@@ -32,6 +32,10 @@ const (
 const (
 	ClientConfigFileName = "client.yson"
 
+	CypressPatchFileName         = "cypress-patch.yson"
+	PendingCypressPatchFileName  = "pending-cypress-patch.yson"
+	PreviousCypressPatchFileName = "previous-cypress-patch.yson"
+
 	InitClusterScriptFileName       = "init-cluster.sh"
 	PostprocessConfigScriptFileName = "postprocess-config.sh"
 
