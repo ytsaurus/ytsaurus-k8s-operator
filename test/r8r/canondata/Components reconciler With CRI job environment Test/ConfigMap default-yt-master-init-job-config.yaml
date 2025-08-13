@@ -51,36 +51,36 @@ data:
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
     export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"
     if [ 'true' = 'true' ]; then
-    /usr/bin/yt create group --attr '{name=admins}' --ignore-existing
-    if [ $(/usr/bin/yt exists '//sys/@provision_lock') = 'true' ]; then
-    /usr/bin/yt set //sys/schemas/tablet_cell/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    /usr/bin/yt set //sys/schemas/tablet_action/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    /usr/bin/yt set //sys/schemas/tablet_cell_bundle/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    /usr/bin/yt set //sys/schemas/user/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    /usr/bin/yt set //sys/schemas/group/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    /usr/bin/yt set //sys/schemas/rack/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    /usr/bin/yt set //sys/schemas/data_center/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    /usr/bin/yt set //sys/schemas/cluster_node/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    /usr/bin/yt set //sys/schemas/access_control_object_namespace/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    /usr/bin/yt set //sys/schemas/access_control_object_namespace_map/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    /usr/bin/yt set //sys/schemas/medium/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]' || /usr/bin/yt set //sys/schemas/domestic_medium/@acl '[{action=allow;subjects=[users;];permissions=[read;create;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    /usr/bin/yt set //sys/schemas/account/@acl '[{action=allow;subjects=[users;];permissions=[read;create;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    /usr/bin/yt set //sys/schemas/scheduler_pool/@acl '[{action=allow;subjects=[users;];permissions=[read;create;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    /usr/bin/yt set //sys/schemas/scheduler_pool_tree/@acl '[{action=allow;subjects=[users;];permissions=[read;create;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    /usr/bin/yt set //sys/schemas/access_control_object/@acl '[{action=allow;subjects=[users;];permissions=[read;create;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    /usr/bin/yt set //sys/schemas/account_resource_usage_lease/@acl '[{action=allow;subjects=[users;];permissions=[read;write;create;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
-    fi
-    /usr/bin/yt create scheduler_pool_tree --attributes '{name=default; config={nodes_filter=""}}' --ignore-existing
-    if [ $(/usr/bin/yt exists '//sys/pool_trees/@default_tree') = 'false' ]; then
-    /usr/bin/yt set -r '//sys/pool_trees/@default_tree' 'default'
-    fi
-    if [ $(/usr/bin/yt exists '//sys/pools') = 'false' ]; then
-    /usr/bin/yt link //sys/pool_trees/default //sys/pools
-    fi
-    /usr/bin/yt create scheduler_pool --attributes '{name=research; pool_tree=default}' --ignore-existing
-    /usr/bin/yt create map_node //home --ignore-existing
-    if [ $(/usr/bin/yt exists '//sys/@provision_lock') = 'true' ]; then
-    /usr/bin/yt set //sys/@cluster_connection '{
+      /usr/bin/yt create group --attr '{name=admins}' --ignore-existing
+      if [ $(/usr/bin/yt exists '//sys/@provision_lock') = 'true' ]; then
+        /usr/bin/yt set //sys/schemas/tablet_cell/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+        /usr/bin/yt set //sys/schemas/tablet_action/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+        /usr/bin/yt set //sys/schemas/tablet_cell_bundle/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+        /usr/bin/yt set //sys/schemas/user/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+        /usr/bin/yt set //sys/schemas/group/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+        /usr/bin/yt set //sys/schemas/rack/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+        /usr/bin/yt set //sys/schemas/data_center/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+        /usr/bin/yt set //sys/schemas/cluster_node/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+        /usr/bin/yt set //sys/schemas/access_control_object_namespace/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+        /usr/bin/yt set //sys/schemas/access_control_object_namespace_map/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+        /usr/bin/yt set //sys/schemas/medium/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]' || /usr/bin/yt set //sys/schemas/domestic_medium/@acl '[{action=allow;subjects=[users;];permissions=[read;create;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+        /usr/bin/yt set //sys/schemas/account/@acl '[{action=allow;subjects=[users;];permissions=[read;create;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+        /usr/bin/yt set //sys/schemas/scheduler_pool/@acl '[{action=allow;subjects=[users;];permissions=[read;create;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+        /usr/bin/yt set //sys/schemas/scheduler_pool_tree/@acl '[{action=allow;subjects=[users;];permissions=[read;create;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+        /usr/bin/yt set //sys/schemas/access_control_object/@acl '[{action=allow;subjects=[users;];permissions=[read;create;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+        /usr/bin/yt set //sys/schemas/account_resource_usage_lease/@acl '[{action=allow;subjects=[users;];permissions=[read;write;create;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
+      fi
+      /usr/bin/yt create scheduler_pool_tree --attributes '{name=default; config={nodes_filter=""}}' --ignore-existing
+      if [ $(/usr/bin/yt exists '//sys/pool_trees/@default_tree') = 'false' ]; then
+        /usr/bin/yt set -r '//sys/pool_trees/@default_tree' 'default'
+      fi
+      if [ $(/usr/bin/yt exists '//sys/pools') = 'false' ]; then
+        /usr/bin/yt link //sys/pool_trees/default //sys/pools
+      fi
+      /usr/bin/yt create scheduler_pool --attributes '{name=research; pool_tree=default}' --ignore-existing
+      /usr/bin/yt create map_node //home --ignore-existing
+      if [ $(/usr/bin/yt exists '//sys/@provision_lock') = 'true' ]; then
+        /usr/bin/yt set //sys/@cluster_connection '{
         "cluster_name"="test-ytsaurus";
         "primary_master"={
             addresses=[
@@ -107,28 +107,28 @@ data:
             "enable_master_cache_discovery"=%false;
         };
     }'
-    fi
-    if [ $(/usr/bin/yt exists '//sys/controller_agents/config/operation_options/spec_template') = 'false' ]; then
-    /usr/bin/yt set -r '//sys/controller_agents/config/operation_options/spec_template' '{enable_partitioned_data_balancing=%false}'
-    fi
-    if [ $(/usr/bin/yt exists '//sys/users/admin') = 'false' ]; then
-    /usr/bin/yt create user --attributes '{name="admin"}' --ignore-existing
-    /usr/bin/yt execute set_user_password '{user=admin;new_password_sha256="5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"}'
-    /usr/bin/yt create map_node '//sys/cypress_tokens/5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8/@user' 'admin'
-    /usr/bin/yt add-member admin superusers || true
-    fi
+      fi
+      if [ $(/usr/bin/yt exists '//sys/controller_agents/config/operation_options/spec_template') = 'false' ]; then
+        /usr/bin/yt set -r '//sys/controller_agents/config/operation_options/spec_template' '{enable_partitioned_data_balancing=%false}'
+      fi
+      if [ $(/usr/bin/yt exists '//sys/users/admin') = 'false' ]; then
+        /usr/bin/yt create user --attributes '{name="admin"}' --ignore-existing
+        /usr/bin/yt execute set_user_password '{user=admin;new_password_sha256="5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"}'
+        /usr/bin/yt create map_node '//sys/cypress_tokens/5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8' --ignore-existing
+        /usr/bin/yt set '//sys/cypress_tokens/5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8/@user' 'admin'
+        /usr/bin/yt add-member admin superusers || true
+      fi
     fi
     if [ 'false' = 'true' ]; then
-    if [ $(/usr/bin/yt exists '//sys/users/robot-hydra-persistence-uploader') = 'false' ]; then
-    /usr/bin/yt create user --attributes '{name="robot-hydra-persistence-uploader"}' --ignore-existing
-    /usr/bin/yt execute set_user_password '{user=robot-hydra-persistence-uploader;new_password_sha256="d9fb903c32fe851f5d5543f2f9da27330ead9bd0d85ce8f51afba5d503f027a5"}'
-    /usr/bin/yt create map_node '//sys/cypress_tokens/d9fb903c32fe851f5d5543f2f9da27330ead9bd0d85ce8f51afba5d503f027a5' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/d9fb903c32fe851f5d5543f2f9da27330ead9bd0d85ce8f51afba5d503f027a5/@user' 'robot-hydra-persistence-uploader'
-    /usr/bin/yt create map_node //sys/admin/snapshots -r -i
-    /usr/bin/yt set //sys/admin/snapshots/@acl '[{action=allow;subjects=["robot-hydra-persistence-uploader";];permissions=[read;write;remove;create;];"inheritance_mode"="object_and_descendants";};]'
-    /usr/bin/yt set //sys/accounts/sys/@acl/end '{action=allow;subjects=["robot-hydra-persistence-uploader";];permissions=[use;];}'
-    fi
+      if [ $(/usr/bin/yt exists '//sys/users/robot-hydra-persistence-uploader') = 'false' ]; then
+        /usr/bin/yt create user --attributes '{name="robot-hydra-persistence-uploader"}' --ignore-existing
+        /usr/bin/yt execute set_user_password '{user=robot-hydra-persistence-uploader;new_password_sha256="d9fb903c32fe851f5d5543f2f9da27330ead9bd0d85ce8f51afba5d503f027a5"}'
+        /usr/bin/yt create map_node '//sys/cypress_tokens/d9fb903c32fe851f5d5543f2f9da27330ead9bd0d85ce8f51afba5d503f027a5' --ignore-existing
+        /usr/bin/yt set '//sys/cypress_tokens/d9fb903c32fe851f5d5543f2f9da27330ead9bd0d85ce8f51afba5d503f027a5/@user' 'robot-hydra-persistence-uploader'
+        /usr/bin/yt create map_node //sys/admin/snapshots -r -i
+        /usr/bin/yt set //sys/admin/snapshots/@acl '[{action=allow;subjects=["robot-hydra-persistence-uploader";];permissions=[read;write;remove;create;];"inheritance_mode"="object_and_descendants";};]'
+        /usr/bin/yt set //sys/accounts/sys/@acl/end '{action=allow;subjects=["robot-hydra-persistence-uploader";];permissions=[use;];}'
+      fi
     fi
     /usr/bin/yt remove //sys/@provision_lock -f
 kind: ConfigMap
