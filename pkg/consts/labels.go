@@ -10,6 +10,7 @@ const (
 	YTComponentLabelName = "yt_component"
 	YTMetricsLabelName   = "yt_metrics"
 
+	DescriptionAnnotation           = "kubernetes.io/description"
 	ConfigOverridesVersionLabelName = "ytsaurus.tech/config-overrides-version"
 )
 

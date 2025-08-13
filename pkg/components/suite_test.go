@@ -18,6 +18,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	mock_yt "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/mock"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ypatch"
 )
 
 var mockCtrl *gomock.Controller
@@ -77,6 +78,10 @@ func (fc *FakeComponent) GetType() consts.ComponentType {
 }
 
 func (fc *FakeComponent) GetLabeller() *labeller.Labeller {
+	return nil
+}
+
+func (fc *FakeComponent) GetCypressPatch() ypatch.PatchSet {
 	return nil
 }
 

@@ -72,6 +72,7 @@ func TestYtsaurusFromScratch(t *testing.T) {
 
 	ytsaurusResource := testutil.BuildMinimalYtsaurus(namespace, ytsaurusName)
 	// FIXME(khlebnikov): This test is broken by design.
+	ytsaurusResource.Spec.EphemeralCluster = true
 	ytsaurusResource.Spec.PrimaryMasters.MinReadyInstanceCount = ptr.To(0)
 	ytsaurusResource.Spec.Discovery.MinReadyInstanceCount = ptr.To(0)
 	ytsaurusResource.Spec.HTTPProxies[0].MinReadyInstanceCount = ptr.To(0)
@@ -130,6 +131,7 @@ func TestYtsaurusUpdateStatelessComponent(t *testing.T) {
 
 	ytsaurusResource := testutil.BuildMinimalYtsaurus(namespace, ytsaurusName)
 	// FIXME(khlebnikov): This test is broken by design.
+	ytsaurusResource.Spec.EphemeralCluster = true
 	ytsaurusResource.Spec.PrimaryMasters.MinReadyInstanceCount = ptr.To(0)
 	ytsaurusResource.Spec.Discovery.MinReadyInstanceCount = ptr.To(0)
 	ytsaurusResource.Spec.HTTPProxies[0].MinReadyInstanceCount = ptr.To(0)
@@ -158,6 +160,7 @@ func TestYtsaurusUpdateMasterBlocked(t *testing.T) {
 
 	ytsaurusResource := testutil.BuildMinimalYtsaurus(namespace, ytsaurusName)
 	// FIXME(khlebnikov): This test is broken by design.
+	ytsaurusResource.Spec.EphemeralCluster = true
 	ytsaurusResource.Spec.PrimaryMasters.MinReadyInstanceCount = ptr.To(0)
 	ytsaurusResource.Spec.Discovery.MinReadyInstanceCount = ptr.To(0)
 	ytsaurusResource.Spec.HTTPProxies[0].MinReadyInstanceCount = ptr.To(0)

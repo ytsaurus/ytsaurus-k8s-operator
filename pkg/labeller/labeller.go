@@ -149,6 +149,14 @@ func (l *Labeller) GetFullComponentLabel() string {
 	return l.getGroupName(l.GetComponentLabel())
 }
 
+func (l *Labeller) GetCypressPatchConfigMapName() string {
+	return l.getName("yt-cypress-patch", "")
+}
+
+func (l *Labeller) GetCypressPatchFileName(name string) string {
+	return fmt.Sprintf("%s-%s", l.GetFullComponentLabel(), name)
+}
+
 func (l *Labeller) GetSecretName() string {
 	return fmt.Sprintf("%s-secret", l.GetFullComponentLabel())
 }

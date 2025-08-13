@@ -895,6 +895,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Waiting cluster update starts")
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterStateUpdating())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(
+					consts.YtsaurusClientType, // to update overrides version in cypress patch.
 					consts.DiscoveryType,
 					consts.ExecNodeType,
 				)) // change in containerd.toml must trigger exec node update

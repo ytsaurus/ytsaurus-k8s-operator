@@ -801,6 +801,7 @@ const (
 	UpdateStateWaitingForPodsRemoval                 UpdateState = "WaitingForPodsRemoval"
 	UpdateStateWaitingForPodsCreation                UpdateState = "WaitingForPodsCreation"
 	UpdateStateWaitingForMasterExitReadOnly          UpdateState = "WaitingForMasterExitReadOnly"
+	UpdateStateWaitingForCypressPatch                UpdateState = "WaitingForCypressPatch"
 	UpdateStateWaitingForTabletCellsRecovery         UpdateState = "WaitingForTabletCellsRecovery"
 	UpdateStateWaitingForOpArchiveUpdatingPrepare    UpdateState = "WaitingForOpArchiveUpdatingPrepare"
 	UpdateStateWaitingForOpArchiveUpdate             UpdateState = "WaitingForOpArchiveUpdate"
