@@ -215,10 +215,14 @@ func RunScripts(scripts ...Script) Script {
 	return s
 }
 
+const ScriptIndent = "  "
+
 func RunIfCondition(condition string, commands ...string) Script {
 	var s Script
 	s.Append(fmt.Sprintf("if [ %s ]; then", condition))
-	s.Append(commands...)
+	for _, c := range commands {
+		s.Append(ScriptIndent + c)
+	}
 	s.Append("fi")
 	return s
 }
