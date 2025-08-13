@@ -244,24 +244,24 @@ status:
     status: "True"
     type: userYtsaurusClientInitJobCompleted
   - lastTransitionTime: null
-    message: Ready
-    reason: Ready
-    status: "True"
-    type: YtsaurusClientReady
-  - lastTransitionTime: null
-    message: Ready
-    reason: Ready
-    status: "True"
-    type: TimbertruckReady
-  - lastTransitionTime: null
     message: Init job successfully completed
     reason: InitJobCompleted
     status: "True"
     type: yql-agent-update-environmentYqlAgentInitJobCompleted
   - lastTransitionTime: null
+    message: Ready
+    reason: Ready
+    status: "True"
+    type: YtsaurusClientReady
+  - lastTransitionTime: null
     message: yt-yql-agent-init-job-yql-agent-update-environment completed
     reason: Ready
     status: "True"
     type: YqlAgentReady
+  - lastTransitionTime: null
+    message: Ready
+    reason: Ready
+    status: "True"
+    type: TimbertruckReady
   state: Running
   updateStatus: {}

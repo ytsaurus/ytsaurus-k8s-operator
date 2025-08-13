@@ -205,6 +205,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForQAStateUpdate:               flowCheckStatusCondition(consts.ConditionQAStateUpdated),
 	ytv1.UpdateStateWaitingForSafeModeDisabled:            flowCheckStatusCondition(consts.ConditionSafeModeDisabled),
 	ytv1.UpdateStateWaitingForMasterExitReadOnly:          flowCheckStatusCondition(consts.ConditionMasterExitedReadOnly),
+	ytv1.UpdateStateWaitingForCypressPatch:                flowCheckStatusCondition(consts.ConditionCypressPatchApplied),
 	ytv1.UpdateStateWaitingForTimbertruckPrepared:         flowCheckStatusCondition(consts.ConditionTimbertruckPrepared),
 	ytv1.UpdateStateWaitingForPodsRemoval: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 		if componentManager.arePodsRemoved() {
@@ -267,6 +268,8 @@ func buildFlowTree(updatingComponents []ytv1.Component) *flowTree {
 		updMaster,
 		st(ytv1.UpdateStateWaitingForSidecarsInitializingPrepare),
 		st(ytv1.UpdateStateWaitingForSidecarsInitialize),
+	).chain(
+		st(ytv1.UpdateStateWaitingForCypressPatch),
 	).chainIf(
 		updTablet,
 		st(ytv1.UpdateStateWaitingForTabletCellsRecovery),
