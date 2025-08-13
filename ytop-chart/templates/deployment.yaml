@@ -32,7 +32,7 @@ spec:
         - name: WATCH_NAMESPACE
           value: {{ tpl (.Release.Namespace) $ }}
         {{- end }}
-        - name: KUBERNETES_CLUSTER_DOMAIN
+        - name: K8S_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}
         image: {{ .Values.controllerManager.manager.image.repository }}:{{ .Values.controllerManager.manager.image.tag
           | default .Chart.AppVersion }}
