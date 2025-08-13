@@ -146,7 +146,7 @@ func (g *NodeGenerator) getDiscoveryAddresses() []string {
 }
 
 func (g *NodeGenerator) getCypressProxiesAddresses() []string {
-	if g.cypressProxiesSpec == nil {
+	if g.cypressProxiesSpec == nil || (g.cypressProxiesSpec.Disable != nil && *g.cypressProxiesSpec.Disable) {
 		return nil
 	}
 	return g.getComponentAddresses(consts.CypressProxyType, g.cypressProxiesSpec.InstanceCount, consts.CypressProxyRPCPort)

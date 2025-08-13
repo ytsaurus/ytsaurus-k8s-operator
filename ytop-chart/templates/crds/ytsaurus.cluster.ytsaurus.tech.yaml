@@ -3407,6 +3407,8 @@ spec:
                             x-kubernetes-list-type: atomic
                         type: object
                     type: object
+                  disable:
+                    type: boolean
                   dnsConfig:
                     description: DNSConfig allows customizing the DNS settings for
                       the pods.

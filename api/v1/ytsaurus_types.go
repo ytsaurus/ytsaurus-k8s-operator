@@ -617,6 +617,7 @@ type MasterCachesSpec struct {
 
 type CypressProxiesSpec struct {
 	InstanceSpec `json:",inline"`
+	Disable      *bool `json:"disable,omitempty"`
 }
 
 type ClusterFeatures struct {

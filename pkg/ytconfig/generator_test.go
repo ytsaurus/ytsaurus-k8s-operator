@@ -818,7 +818,10 @@ func withMasterCaches(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 }
 
 func withCypressProxies(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
-	ytsaurus.Spec.CypressProxies = &ytv1.CypressProxiesSpec{InstanceSpec: testBasicInstanceSpec}
+	ytsaurus.Spec.CypressProxies = &ytv1.CypressProxiesSpec{
+		InstanceSpec: testBasicInstanceSpec,
+		Disable:      nil,
+	}
 	return ytsaurus
 }
 
