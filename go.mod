@@ -1,6 +1,6 @@
 module github.com/ytsaurus/ytsaurus-k8s-operator
 
-go 1.22.7
+go 1.23.12
 
 require (
 	github.com/BurntSushi/toml v1.4.0
@@ -15,7 +15,7 @@ require (
 	go.uber.org/mock v0.5.0
 	go.uber.org/zap v1.27.0
 	go.ytsaurus.tech/yt/go v0.0.24
-	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
+	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.30.1
 	k8s.io/apimachinery v0.30.6
 	k8s.io/client-go v0.30.1
@@ -76,6 +76,7 @@ require (
 	go.ytsaurus.tech/library/go/x/xreflect v0.0.3 // indirect
 	go.ytsaurus.tech/library/go/x/xruntime v0.0.4 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/oauth2 v0.15.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
@@ -88,7 +89,6 @@ require (
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.30.1 // indirect
 	k8s.io/klog/v2 v2.120.1 // indirect
