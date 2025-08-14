@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"reflect"
@@ -14,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/exp/maps"
 	"k8s.io/utils/ptr"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
