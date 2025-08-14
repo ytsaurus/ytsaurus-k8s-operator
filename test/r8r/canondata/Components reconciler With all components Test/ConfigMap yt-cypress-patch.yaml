@@ -2,9 +2,46 @@ apiVersion: v1
 data:
   cypress-patch.yson: |-
     {
+        "//sys/@cluster_connection"=[
+            {
+                op=replace;
+                path="/primary_master/addresses";
+                value=[
+                    "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/primary_master/peers";
+                value=[
+                    {
+                        address="ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+            };
+            {
+                op=remove;
+                path="/bus_client";
+            };
+        ];
+        "<>//sys/clusters"=[
+            {
+                op=copy;
+                path="/test-ytsaurus";
+                from="//sys/@cluster_connection";
+            };
+        ];
     }
   yt-client-cypress-patch.yson: |-
     {
+        "<>//sys/clusters"=[
+            {
+                op=copy;
+                path="/test-ytsaurus";
+                from="//sys/@cluster_connection";
+            };
+        ];
     }
   yt-controller-agent-cypress-patch.yson: |-
     {
@@ -26,6 +63,29 @@ data:
     }
   yt-master-cypress-patch.yson: |-
     {
+        "//sys/@cluster_connection"=[
+            {
+                op=replace;
+                path="/primary_master/addresses";
+                value=[
+                    "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/primary_master/peers";
+                value=[
+                    {
+                        address="ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+            };
+            {
+                op=remove;
+                path="/bus_client";
+            };
+        ];
     }
   yt-rpc-proxy-cypress-patch.yson: |-
     {

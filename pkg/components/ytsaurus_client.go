@@ -618,6 +618,18 @@ func (yc *YtsaurusClient) DisableSafeMode(ctx context.Context) error {
 
 // Cypress patches actions.
 
+func (yc *YtsaurusClient) GetCypressPatch() ypatch.PatchSet {
+	return ypatch.PatchSet{
+		// Copy cluster connection into list of cluster after applying all other patches.
+		"<>//sys/clusters": {
+			ypatch.Copy(
+				ypath.Path("/"+yc.labeller.GetClusterName()),
+				"//sys/@cluster_connection",
+			),
+		},
+	}
+}
+
 func (yc *YtsaurusClient) BuildCypressPatch(ctx context.Context) (ypatch.PatchSet, error) {
 	logger := log.FromContext(ctx)
 
