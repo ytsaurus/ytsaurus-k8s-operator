@@ -25,6 +25,7 @@ type NodeGenerator struct {
 	clusterFeatures      ytv1.ClusterFeatures
 	masterConnectionSpec *ytv1.MasterConnectionSpec
 	masterCachesSpec     *ytv1.MasterCachesSpec
+	cypressProxiesSpec   *ytv1.CypressProxiesSpec
 
 	masterInstanceCount    int32
 	discoveryInstanceCount int32
@@ -65,6 +66,7 @@ func NewLocalNodeGenerator(ytsaurus *ytv1.Ytsaurus, resourceName string, cluster
 		masterInstanceCount:    ytsaurus.Spec.PrimaryMasters.InstanceCount,
 		discoveryInstanceCount: ytsaurus.Spec.Discovery.InstanceCount,
 		masterCachesSpec:       ytsaurus.Spec.MasterCaches,
+		cypressProxiesSpec:     ytsaurus.Spec.CypressProxies,
 		dataNodesInstanceCount: dataNodesInstanceCount,
 	}
 }
@@ -141,6 +143,13 @@ func (g *NodeGenerator) getMasterHydraPeers() []HydraPeer {
 
 func (g *NodeGenerator) getDiscoveryAddresses() []string {
 	return g.getComponentAddresses(consts.DiscoveryType, g.discoveryInstanceCount, consts.DiscoveryRPCPort)
+}
+
+func (g *NodeGenerator) getCypressProxiesAddresses() []string {
+	if g.cypressProxiesSpec == nil || (g.cypressProxiesSpec.Disable != nil && *g.cypressProxiesSpec.Disable) {
+		return nil
+	}
+	return g.getComponentAddresses(consts.CypressProxyType, g.cypressProxiesSpec.InstanceCount, consts.CypressProxyRPCPort)
 }
 
 func (g *NodeGenerator) GetMaxReplicationFactor() int32 {
@@ -260,6 +269,12 @@ func (g *NodeGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCT
 		c.MasterCache.Addresses = c.PrimaryMaster.Addresses
 	}
 	c.MasterCache.CellID = generateCellID(g.masterConnectionSpec.CellTag)
+	cpAddresses := g.getCypressProxiesAddresses()
+	if cpAddresses != nil {
+		c.CypressProxy = &CypressProxy{
+			AddressList{cpAddresses},
+		}
+	}
 }
 
 func (g *NodeGenerator) fillDriverConfig(c *Driver) {
@@ -1009,6 +1024,29 @@ func (g *Generator) GetMasterCachesConfig(spec *ytv1.MasterCachesSpec) ([]byte, 
 	return marshallYsonConfig(c)
 }
 
+func (g *Generator) getCypressProxiesConfigImpl(spec *ytv1.CypressProxiesSpec) (CypressProxyServer, error) {
+	c, err := getCypressProxiesCarcass(spec)
+	if err != nil {
+		return CypressProxyServer{}, err
+	}
+
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+	c.BusClient = c.ClusterConnection.BusClient
+	return c, nil
+}
+
+func (g *Generator) GetCypressProxiesConfig(spec *ytv1.CypressProxiesSpec) ([]byte, error) {
+	if spec == nil {
+		return []byte{}, nil
+	}
+	c, err := g.getCypressProxiesConfigImpl(spec)
+	if err != nil {
+		return nil, err
+	}
+	return marshallYsonConfig(c)
+}
+
 func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string, error) {
 	var names []string
 	switch component {
@@ -1018,6 +1056,10 @@ func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string,
 		names = append(names, "")
 	case consts.ControllerAgentType:
 		if g.ytsaurus.Spec.ControllerAgents != nil {
+			names = append(names, "")
+		}
+	case consts.CypressProxyType:
+		if g.ytsaurus.Spec.CypressProxies != nil {
 			names = append(names, "")
 		}
 	case consts.DataNodeType:
@@ -1096,6 +1138,10 @@ func (g *Generator) GetComponentConfig(component consts.ComponentType, name stri
 	case consts.ControllerAgentType:
 		if name == "" {
 			return g.GetControllerAgentConfig(g.ytsaurus.Spec.ControllerAgents)
+		}
+	case consts.CypressProxyType:
+		if name == "" {
+			return g.GetCypressProxiesConfig(g.ytsaurus.Spec.CypressProxies)
 		}
 	case consts.DataNodeType:
 		for _, spec := range g.ytsaurus.Spec.DataNodes {

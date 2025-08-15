@@ -2713,6 +2713,2579 @@ spec:
                 type: object
               coreImage:
                 type: string
+              cypressProxies:
+                properties:
+                  affinity:
+                    description: Affinity is a group of affinity scheduling rules.
+                    properties:
+                      nodeAffinity:
+                        description: Describes node affinity scheduling rules for
+                          the pod.
+                        properties:
+                          preferredDuringSchedulingIgnoredDuringExecution:
+                            description: |-
+                              The scheduler will prefer to schedule pods to nodes that satisfy
+                              the affinity ex
+                            items:
+                              description: |-
+                                An empty preferred scheduling term matches all objects with implicit weight 0
+                                (i
+                              properties:
+                                preference:
+                                  description: A node selector term, associated with
+                                    the corresponding weight.
+                                  properties:
+                                    matchExpressions:
+                                      description: A list of node selector requirements
+                                        by node's labels.
+                                      items:
+                                        description: A node selector requirement is
+                                          a selector that contains values, a key,
+                                          and an op
+                                        properties:
+                                          key:
+                                            description: The label key that the selector
+                                              applies to.
+                                            type: string
+                                          operator:
+                                            description: Represents a key's relationship
+                                              to a set of values.
+                                            type: string
+                                          values:
+                                            description: An array of string values.
+                                            items:
+                                              type: string
+                                            type: array
+                                            x-kubernetes-list-type: atomic
+                                        required:
+                                        - key
+                                        - operator
+                                        type: object
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    matchFields:
+                                      description: A list of node selector requirements
+                                        by node's fields.
+                                      items:
+                                        description: A node selector requirement is
+                                          a selector that contains values, a key,
+                                          and an op
+                                        properties:
+                                          key:
+                                            description: The label key that the selector
+                                              applies to.
+                                            type: string
+                                          operator:
+                                            description: Represents a key's relationship
+                                              to a set of values.
+                                            type: string
+                                          values:
+                                            description: An array of string values.
+                                            items:
+                                              type: string
+                                            type: array
+                                            x-kubernetes-list-type: atomic
+                                        required:
+                                        - key
+                                        - operator
+                                        type: object
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                                weight:
+                                  description: Weight associated with matching the
+                                    corresponding nodeSelectorTerm, in the range
+                                  format: int32
+                                  type: integer
+                              required:
+                              - preference
+                              - weight
+                              type: object
+                            type: array
+                            x-kubernetes-list-type: atomic
+                          requiredDuringSchedulingIgnoredDuringExecution:
+                            description: |-
+                              If the affinity requirements specified by this field are not met at
+                              scheduling t
+                            properties:
+                              nodeSelectorTerms:
+                                description: Required. A list of node selector terms.
+                                  The terms are ORed.
+                                items:
+                                  description: A null or empty node selector term
+                                    matches no objects.
+                                  properties:
+                                    matchExpressions:
+                                      description: A list of node selector requirements
+                                        by node's labels.
+                                      items:
+                                        description: A node selector requirement is
+                                          a selector that contains values, a key,
+                                          and an op
+                                        properties:
+                                          key:
+                                            description: The label key that the selector
+                                              applies to.
+                                            type: string
+                                          operator:
+                                            description: Represents a key's relationship
+                                              to a set of values.
+                                            type: string
+                                          values:
+                                            description: An array of string values.
+                                            items:
+                                              type: string
+                                            type: array
+                                            x-kubernetes-list-type: atomic
+                                        required:
+                                        - key
+                                        - operator
+                                        type: object
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    matchFields:
+                                      description: A list of node selector requirements
+                                        by node's fields.
+                                      items:
+                                        description: A node selector requirement is
+                                          a selector that contains values, a key,
+                                          and an op
+                                        properties:
+                                          key:
+                                            description: The label key that the selector
+                                              applies to.
+                                            type: string
+                                          operator:
+                                            description: Represents a key's relationship
+                                              to a set of values.
+                                            type: string
+                                          values:
+                                            description: An array of string values.
+                                            items:
+                                              type: string
+                                            type: array
+                                            x-kubernetes-list-type: atomic
+                                        required:
+                                        - key
+                                        - operator
+                                        type: object
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                                type: array
+                                x-kubernetes-list-type: atomic
+                            required:
+                            - nodeSelectorTerms
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                      podAffinity:
+                        description: Describes pod affinity scheduling rules (e.g.
+                        properties:
+                          preferredDuringSchedulingIgnoredDuringExecution:
+                            description: |-
+                              The scheduler will prefer to schedule pods to nodes that satisfy
+                              the affinity ex
+                            items:
+                              description: The weights of all of the matched WeightedPodAffinityTerm
+                                fields are added per-n
+                              properties:
+                                podAffinityTerm:
+                                  description: Required. A pod affinity term, associated
+                                    with the corresponding weight.
+                                  properties:
+                                    labelSelector:
+                                      description: A label query over a set of resources,
+                                        in this case pods.
+                                      properties:
+                                        matchExpressions:
+                                          description: matchExpressions is a list
+                                            of label selector requirements.
+                                          items:
+                                            description: A label selector requirement
+                                              is a selector that contains values,
+                                              a key, and an o
+                                            properties:
+                                              key:
+                                                description: key is the label key
+                                                  that the selector applies to.
+                                                type: string
+                                              operator:
+                                                description: operator represents a
+                                                  key's relationship to a set of values.
+                                                type: string
+                                              values:
+                                                description: values is an array of
+                                                  string values.
+                                                items:
+                                                  type: string
+                                                type: array
+                                                x-kubernetes-list-type: atomic
+                                            required:
+                                            - key
+                                            - operator
+                                            type: object
+                                          type: array
+                                          x-kubernetes-list-type: atomic
+                                        matchLabels:
+                                          additionalProperties:
+                                            type: string
+                                          description: matchLabels is a map of {key,value}
+                                            pairs.
+                                          type: object
+                                      type: object
+                                      x-kubernetes-map-type: atomic
+                                    matchLabelKeys:
+                                      description: |-
+                                        MatchLabelKeys is a set of pod label keys to select which pods will
+                                        be taken int
+                                      items:
+                                        type: string
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    mismatchLabelKeys:
+                                      description: "MismatchLabelKeys is a set of
+                                        pod label keys to select which pods will\nbe
+                                        taken "
+                                      items:
+                                        type: string
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    namespaceSelector:
+                                      description: A label query over the set of namespaces
+                                        that the term applies to.
+                                      properties:
+                                        matchExpressions:
+                                          description: matchExpressions is a list
+                                            of label selector requirements.
+                                          items:
+                                            description: A label selector requirement
+                                              is a selector that contains values,
+                                              a key, and an o
+                                            properties:
+                                              key:
+                                                description: key is the label key
+                                                  that the selector applies to.
+                                                type: string
+                                              operator:
+                                                description: operator represents a
+                                                  key's relationship to a set of values.
+                                                type: string
+                                              values:
+                                                description: values is an array of
+                                                  string values.
+                                                items:
+                                                  type: string
+                                                type: array
+                                                x-kubernetes-list-type: atomic
+                                            required:
+                                            - key
+                                            - operator
+                                            type: object
+                                          type: array
+                                          x-kubernetes-list-type: atomic
+                                        matchLabels:
+                                          additionalProperties:
+                                            type: string
+                                          description: matchLabels is a map of {key,value}
+                                            pairs.
+                                          type: object
+                                      type: object
+                                      x-kubernetes-map-type: atomic
+                                    namespaces:
+                                      description: namespaces specifies a static list
+                                        of namespace names that the term applies to.
+                                      items:
+                                        type: string
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    topologyKey:
+                                      description: 'This pod should be co-located
+                                        (affinity) or not co-located (anti-affinity)
+                                        with '
+                                      type: string
+                                  required:
+                                  - topologyKey
+                                  type: object
+                                weight:
+                                  description: "weight associated with matching the
+                                    corresponding podAffinityTerm,\nin the range "
+                                  format: int32
+                                  type: integer
+                              required:
+                              - podAffinityTerm
+                              - weight
+                              type: object
+                            type: array
+                            x-kubernetes-list-type: atomic
+                          requiredDuringSchedulingIgnoredDuringExecution:
+                            description: |-
+                              If the affinity requirements specified by this field are not met at
+                              scheduling t
+                            items:
+                              description: |-
+                                Defines a set of pods (namely those matching the labelSelector
+                                relative to the g
+                              properties:
+                                labelSelector:
+                                  description: A label query over a set of resources,
+                                    in this case pods.
+                                  properties:
+                                    matchExpressions:
+                                      description: matchExpressions is a list of label
+                                        selector requirements.
+                                      items:
+                                        description: A label selector requirement
+                                          is a selector that contains values, a key,
+                                          and an o
+                                        properties:
+                                          key:
+                                            description: key is the label key that
+                                              the selector applies to.
+                                            type: string
+                                          operator:
+                                            description: operator represents a key's
+                                              relationship to a set of values.
+                                            type: string
+                                          values:
+                                            description: values is an array of string
+                                              values.
+                                            items:
+                                              type: string
+                                            type: array
+                                            x-kubernetes-list-type: atomic
+                                        required:
+                                        - key
+                                        - operator
+                                        type: object
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    matchLabels:
+                                      additionalProperties:
+                                        type: string
+                                      description: matchLabels is a map of {key,value}
+                                        pairs.
+                                      type: object
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                                matchLabelKeys:
+                                  description: |-
+                                    MatchLabelKeys is a set of pod label keys to select which pods will
+                                    be taken int
+                                  items:
+                                    type: string
+                                  type: array
+                                  x-kubernetes-list-type: atomic
+                                mismatchLabelKeys:
+                                  description: "MismatchLabelKeys is a set of pod
+                                    label keys to select which pods will\nbe taken "
+                                  items:
+                                    type: string
+                                  type: array
+                                  x-kubernetes-list-type: atomic
+                                namespaceSelector:
+                                  description: A label query over the set of namespaces
+                                    that the term applies to.
+                                  properties:
+                                    matchExpressions:
+                                      description: matchExpressions is a list of label
+                                        selector requirements.
+                                      items:
+                                        description: A label selector requirement
+                                          is a selector that contains values, a key,
+                                          and an o
+                                        properties:
+                                          key:
+                                            description: key is the label key that
+                                              the selector applies to.
+                                            type: string
+                                          operator:
+                                            description: operator represents a key's
+                                              relationship to a set of values.
+                                            type: string
+                                          values:
+                                            description: values is an array of string
+                                              values.
+                                            items:
+                                              type: string
+                                            type: array
+                                            x-kubernetes-list-type: atomic
+                                        required:
+                                        - key
+                                        - operator
+                                        type: object
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    matchLabels:
+                                      additionalProperties:
+                                        type: string
+                                      description: matchLabels is a map of {key,value}
+                                        pairs.
+                                      type: object
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                                namespaces:
+                                  description: namespaces specifies a static list
+                                    of namespace names that the term applies to.
+                                  items:
+                                    type: string
+                                  type: array
+                                  x-kubernetes-list-type: atomic
+                                topologyKey:
+                                  description: 'This pod should be co-located (affinity)
+                                    or not co-located (anti-affinity) with '
+                                  type: string
+                              required:
+                              - topologyKey
+                              type: object
+                            type: array
+                            x-kubernetes-list-type: atomic
+                        type: object
+                      podAntiAffinity:
+                        description: Describes pod anti-affinity scheduling rules
+                          (e.g.
+                        properties:
+                          preferredDuringSchedulingIgnoredDuringExecution:
+                            description: |-
+                              The scheduler will prefer to schedule pods to nodes that satisfy
+                              the anti-affini
+                            items:
+                              description: The weights of all of the matched WeightedPodAffinityTerm
+                                fields are added per-n
+                              properties:
+                                podAffinityTerm:
+                                  description: Required. A pod affinity term, associated
+                                    with the corresponding weight.
+                                  properties:
+                                    labelSelector:
+                                      description: A label query over a set of resources,
+                                        in this case pods.
+                                      properties:
+                                        matchExpressions:
+                                          description: matchExpressions is a list
+                                            of label selector requirements.
+                                          items:
+                                            description: A label selector requirement
+                                              is a selector that contains values,
+                                              a key, and an o
+                                            properties:
+                                              key:
+                                                description: key is the label key
+                                                  that the selector applies to.
+                                                type: string
+                                              operator:
+                                                description: operator represents a
+                                                  key's relationship to a set of values.
+                                                type: string
+                                              values:
+                                                description: values is an array of
+                                                  string values.
+                                                items:
+                                                  type: string
+                                                type: array
+                                                x-kubernetes-list-type: atomic
+                                            required:
+                                            - key
+                                            - operator
+                                            type: object
+                                          type: array
+                                          x-kubernetes-list-type: atomic
+                                        matchLabels:
+                                          additionalProperties:
+                                            type: string
+                                          description: matchLabels is a map of {key,value}
+                                            pairs.
+                                          type: object
+                                      type: object
+                                      x-kubernetes-map-type: atomic
+                                    matchLabelKeys:
+                                      description: |-
+                                        MatchLabelKeys is a set of pod label keys to select which pods will
+                                        be taken int
+                                      items:
+                                        type: string
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    mismatchLabelKeys:
+                                      description: "MismatchLabelKeys is a set of
+                                        pod label keys to select which pods will\nbe
+                                        taken "
+                                      items:
+                                        type: string
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    namespaceSelector:
+                                      description: A label query over the set of namespaces
+                                        that the term applies to.
+                                      properties:
+                                        matchExpressions:
+                                          description: matchExpressions is a list
+                                            of label selector requirements.
+                                          items:
+                                            description: A label selector requirement
+                                              is a selector that contains values,
+                                              a key, and an o
+                                            properties:
+                                              key:
+                                                description: key is the label key
+                                                  that the selector applies to.
+                                                type: string
+                                              operator:
+                                                description: operator represents a
+                                                  key's relationship to a set of values.
+                                                type: string
+                                              values:
+                                                description: values is an array of
+                                                  string values.
+                                                items:
+                                                  type: string
+                                                type: array
+                                                x-kubernetes-list-type: atomic
+                                            required:
+                                            - key
+                                            - operator
+                                            type: object
+                                          type: array
+                                          x-kubernetes-list-type: atomic
+                                        matchLabels:
+                                          additionalProperties:
+                                            type: string
+                                          description: matchLabels is a map of {key,value}
+                                            pairs.
+                                          type: object
+                                      type: object
+                                      x-kubernetes-map-type: atomic
+                                    namespaces:
+                                      description: namespaces specifies a static list
+                                        of namespace names that the term applies to.
+                                      items:
+                                        type: string
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    topologyKey:
+                                      description: 'This pod should be co-located
+                                        (affinity) or not co-located (anti-affinity)
+                                        with '
+                                      type: string
+                                  required:
+                                  - topologyKey
+                                  type: object
+                                weight:
+                                  description: "weight associated with matching the
+                                    corresponding podAffinityTerm,\nin the range "
+                                  format: int32
+                                  type: integer
+                              required:
+                              - podAffinityTerm
+                              - weight
+                              type: object
+                            type: array
+                            x-kubernetes-list-type: atomic
+                          requiredDuringSchedulingIgnoredDuringExecution:
+                            description: |-
+                              If the anti-affinity requirements specified by this field are not met at
+                              schedul
+                            items:
+                              description: |-
+                                Defines a set of pods (namely those matching the labelSelector
+                                relative to the g
+                              properties:
+                                labelSelector:
+                                  description: A label query over a set of resources,
+                                    in this case pods.
+                                  properties:
+                                    matchExpressions:
+                                      description: matchExpressions is a list of label
+                                        selector requirements.
+                                      items:
+                                        description: A label selector requirement
+                                          is a selector that contains values, a key,
+                                          and an o
+                                        properties:
+                                          key:
+                                            description: key is the label key that
+                                              the selector applies to.
+                                            type: string
+                                          operator:
+                                            description: operator represents a key's
+                                              relationship to a set of values.
+                                            type: string
+                                          values:
+                                            description: values is an array of string
+                                              values.
+                                            items:
+                                              type: string
+                                            type: array
+                                            x-kubernetes-list-type: atomic
+                                        required:
+                                        - key
+                                        - operator
+                                        type: object
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    matchLabels:
+                                      additionalProperties:
+                                        type: string
+                                      description: matchLabels is a map of {key,value}
+                                        pairs.
+                                      type: object
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                                matchLabelKeys:
+                                  description: |-
+                                    MatchLabelKeys is a set of pod label keys to select which pods will
+                                    be taken int
+                                  items:
+                                    type: string
+                                  type: array
+                                  x-kubernetes-list-type: atomic
+                                mismatchLabelKeys:
+                                  description: "MismatchLabelKeys is a set of pod
+                                    label keys to select which pods will\nbe taken "
+                                  items:
+                                    type: string
+                                  type: array
+                                  x-kubernetes-list-type: atomic
+                                namespaceSelector:
+                                  description: A label query over the set of namespaces
+                                    that the term applies to.
+                                  properties:
+                                    matchExpressions:
+                                      description: matchExpressions is a list of label
+                                        selector requirements.
+                                      items:
+                                        description: A label selector requirement
+                                          is a selector that contains values, a key,
+                                          and an o
+                                        properties:
+                                          key:
+                                            description: key is the label key that
+                                              the selector applies to.
+                                            type: string
+                                          operator:
+                                            description: operator represents a key's
+                                              relationship to a set of values.
+                                            type: string
+                                          values:
+                                            description: values is an array of string
+                                              values.
+                                            items:
+                                              type: string
+                                            type: array
+                                            x-kubernetes-list-type: atomic
+                                        required:
+                                        - key
+                                        - operator
+                                        type: object
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    matchLabels:
+                                      additionalProperties:
+                                        type: string
+                                      description: matchLabels is a map of {key,value}
+                                        pairs.
+                                      type: object
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                                namespaces:
+                                  description: namespaces specifies a static list
+                                    of namespace names that the term applies to.
+                                  items:
+                                    type: string
+                                  type: array
+                                  x-kubernetes-list-type: atomic
+                                topologyKey:
+                                  description: 'This pod should be co-located (affinity)
+                                    or not co-located (anti-affinity) with '
+                                  type: string
+                              required:
+                              - topologyKey
+                              type: object
+                            type: array
+                            x-kubernetes-list-type: atomic
+                        type: object
+                    type: object
+                  disable:
+                    type: boolean
+                  dnsConfig:
+                    description: DNSConfig allows customizing the DNS settings for
+                      the pods.
+                    properties:
+                      nameservers:
+                        description: A list of DNS name server IP addresses.
+                        items:
+                          type: string
+                        type: array
+                        x-kubernetes-list-type: atomic
+                      options:
+                        description: A list of DNS resolver options.
+                        items:
+                          description: PodDNSConfigOption defines DNS resolver options
+                            of a pod.
+                          properties:
+                            name:
+                              description: Required.
+                              type: string
+                            value:
+                              type: string
+                          type: object
+                        type: array
+                        x-kubernetes-list-type: atomic
+                      searches:
+                        description: A list of DNS search domains for host-name lookup.
+                        items:
+                          type: string
+                        type: array
+                        x-kubernetes-list-type: atomic
+                    type: object
+                  dnsPolicy:
+                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    type: string
+                  enableAntiAffinity:
+                    description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
+                    type: boolean
+                  entrypointWrapper:
+                    description: Specifies wrapper for component container command.
+                    items:
+                      type: string
+                    type: array
+                  hostNetwork:
+                    description: Use the host's network namespace, this overrides
+                      global option.
+                    type: boolean
+                  image:
+                    description: Overrides coreImage for component.
+                    type: string
+                  instanceCount:
+                    format: int32
+                    type: integer
+                  locations:
+                    items:
+                      properties:
+                        locationType:
+                          description: LocationType string describes types of disk
+                            locations for YT components.
+                          type: string
+                        lowWatermark:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Limit above which the volume is considered
+                            to be non-full.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxTrashMilliseconds:
+                          description: Max TTL of trash in milliseconds.
+                          format: int64
+                          minimum: 60000
+                          type: integer
+                        medium:
+                          default: default
+                          type: string
+                        path:
+                          minLength: 1
+                          type: string
+                        quota:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Disk space quota, default is size of related
+                            volume.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                      type: object
+                    type: array
+                  loggers:
+                    items:
+                      properties:
+                        categoriesFilter:
+                          properties:
+                            type:
+                              description: CategoriesFilterType string describes types
+                                of possible log CategoriesFilter.
+                              enum:
+                              - exclude
+                              - include
+                              type: string
+                            values:
+                              items:
+                                type: string
+                              minItems: 1
+                              type: array
+                          type: object
+                        compression:
+                          default: none
+                          enum:
+                          - none
+                          - gzip
+                          - zstd
+                          type: string
+                        format:
+                          default: plain_text
+                          enum:
+                          - plain_text
+                          - json
+                          - yson
+                          type: string
+                        minLogLevel:
+                          default: info
+                          description: LogLevel string describes possible Ytsaurus
+                            logging level.
+                          enum:
+                          - trace
+                          - debug
+                          - info
+                          - warning
+                          - error
+                          type: string
+                        name:
+                          minLength: 1
+                          type: string
+                        rotationPolicy:
+                          properties:
+                            maxSegmentCountToKeep:
+                              format: int64
+                              type: integer
+                            maxSegmentSize:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            maxTotalSizeToKeep:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            rotationPeriodMilliseconds:
+                              format: int64
+                              type: integer
+                          type: object
+                        useTimestampSuffix:
+                          default: false
+                          type: boolean
+                        writerType:
+                          description: LogWriterType string describes types of possible
+                            log writers.
+                          enum:
+                          - file
+                          - stderr
+                          type: string
+                      type: object
+                    type: array
+                  minReadyInstanceCount:
+                    type: integer
+                  monitoringPort:
+                    format: int32
+                    type: integer
+                  nativeTransport:
+                    description: Component config for native RPC bus transport.
+                    properties:
+                      tlsClientSecret:
+                        description: Client certificate. Reference to kubernetes.io/tls
+                          secret.
+                        properties:
+                          name:
+                            default: ""
+                            description: Name of the referent.
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                      tlsInsecure:
+                        description: Disable TLS certificate verification.
+                        type: boolean
+                      tlsPeerAlternativeHostName:
+                        description: Define alternative host name for certificate
+                          verification.
+                        type: string
+                      tlsRequired:
+                        description: Require encrypted connections, otherwise only
+                          when required by peer.
+                        type: boolean
+                      tlsSecret:
+                        description: Server certificate. Reference to kubernetes.io/tls
+                          secret.
+                        properties:
+                          name:
+                            default: ""
+                            description: Name of the referent.
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podAnnotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  readinessProbeParams:
+                    properties:
+                      failureThreshold:
+                        format: int32
+                        type: integer
+                      initialDelaySeconds:
+                        format: int32
+                        type: integer
+                      periodSeconds:
+                        format: int32
+                        type: integer
+                      successThreshold:
+                        format: int32
+                        type: integer
+                      timeoutSeconds:
+                        format: int32
+                        type: integer
+                    type: object
+                  resources:
+                    description: ResourceRequirements describes the compute resource
+                      requirements.
+                    properties:
+                      claims:
+                        description: Claims lists the names of resources, defined
+                          in spec.
+                        items:
+                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                          properties:
+                            name:
+                              description: Name must match the name of one entry in
+                                pod.spec.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: Limits describes the maximum amount of compute
+                          resources allowed.
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: Requests describes the minimum amount of compute
+                          resources required.
+                        type: object
+                    type: object
+                  runtimeClassName:
+                    type: string
+                  setHostnameAsFqdn:
+                    default: true
+                    description: SetHostnameAsFQDN indicates whether to set the hostname
+                      as FQDN.
+                    type: boolean
+                  structuredLoggers:
+                    items:
+                      properties:
+                        category:
+                          type: string
+                        compression:
+                          default: none
+                          enum:
+                          - none
+                          - gzip
+                          - zstd
+                          type: string
+                        format:
+                          default: plain_text
+                          enum:
+                          - plain_text
+                          - json
+                          - yson
+                          type: string
+                        minLogLevel:
+                          default: info
+                          description: LogLevel string describes possible Ytsaurus
+                            logging level.
+                          enum:
+                          - trace
+                          - debug
+                          - info
+                          - warning
+                          - error
+                          type: string
+                        name:
+                          minLength: 1
+                          type: string
+                        rotationPolicy:
+                          properties:
+                            maxSegmentCountToKeep:
+                              format: int64
+                              type: integer
+                            maxSegmentSize:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            maxTotalSizeToKeep:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            rotationPeriodMilliseconds:
+                              format: int64
+                              type: integer
+                          type: object
+                        useTimestampSuffix:
+                          default: false
+                          type: boolean
+                      type: object
+                    type: array
+                  terminationGracePeriodSeconds:
+                    description: Optional duration in seconds the pod needs to terminate
+                      gracefully.
+                    format: int64
+                    type: integer
+                  tolerations:
+                    items:
+                      description: |-
+                        The pod this Toleration is attached to tolerates any taint that matches
+                        the trip
+                      properties:
+                        effect:
+                          description: Effect indicates the taint effect to match.
+                            Empty means match all taint effects.
+                          type: string
+                        key:
+                          description: Key is the taint key that the toleration applies
+                            to.
+                          type: string
+                        operator:
+                          description: Operator represents a key's relationship to
+                            the value.
+                          type: string
+                        tolerationSeconds:
+                          description: |-
+                            TolerationSeconds represents the period of time the toleration (which must be
+                            of
+                          format: int64
+                          type: integer
+                        value:
+                          description: Value is the taint value the toleration matches
+                            to.
+                          type: string
+                      type: object
+                    type: array
+                  volumeClaimTemplates:
+                    items:
+                      description: EmbeddedPersistentVolumeClaim is an embedded version
+                        of k8s.io/api/core/v1.
+                      properties:
+                        apiVersion:
+                          description: APIVersion defines the versioned schema of
+                            this representation of an object.
+                          type: string
+                        kind:
+                          description: Kind is a string value representing the REST
+                            resource this object represents.
+                          type: string
+                        metadata:
+                          description: EmbeddedMetadata contains metadata relevant
+                            to an EmbeddedResource.
+                          properties:
+                            annotations:
+                              additionalProperties:
+                                type: string
+                              description: |
+                                Annotations is an unstructured key value map stored with a resource that may be
+                              type: object
+                            labels:
+                              additionalProperties:
+                                type: string
+                              description: |-
+                                Map of string keys and values that can be used to organize and categorize
+                                (scope
+                              type: object
+                            name:
+                              description: Name must be unique within a namespace.
+                              type: string
+                          type: object
+                        spec:
+                          description: Spec defines the desired characteristics of
+                            a volume requested by a pod author.
+                          properties:
+                            accessModes:
+                              description: accessModes contains the desired access
+                                modes the volume should have.
+                              items:
+                                type: string
+                              type: array
+                              x-kubernetes-list-type: atomic
+                            dataSource:
+                              description: |-
+                                dataSource field can be used to specify either:
+                                * An existing VolumeSnapshot obj
+                              properties:
+                                apiGroup:
+                                  description: APIGroup is the group for the resource
+                                    being referenced.
+                                  type: string
+                                kind:
+                                  description: Kind is the type of resource being
+                                    referenced
+                                  type: string
+                                name:
+                                  description: Name is the name of resource being
+                                    referenced
+                                  type: string
+                              required:
+                              - kind
+                              - name
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            dataSourceRef:
+                              description: 'dataSourceRef specifies the object from
+                                which to populate the volume with data, '
+                              properties:
+                                apiGroup:
+                                  description: APIGroup is the group for the resource
+                                    being referenced.
+                                  type: string
+                                kind:
+                                  description: Kind is the type of resource being
+                                    referenced
+                                  type: string
+                                name:
+                                  description: Name is the name of resource being
+                                    referenced
+                                  type: string
+                                namespace:
+                                  description: |-
+                                    Namespace is the namespace of resource being referenced
+                                    Note that when a namespa
+                                  type: string
+                              required:
+                              - kind
+                              - name
+                              type: object
+                            resources:
+                              description: resources represents the minimum resources
+                                the volume should have.
+                              properties:
+                                limits:
+                                  additionalProperties:
+                                    anyOf:
+                                    - type: integer
+                                    - type: string
+                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                    x-kubernetes-int-or-string: true
+                                  description: Limits describes the maximum amount
+                                    of compute resources allowed.
+                                  type: object
+                                requests:
+                                  additionalProperties:
+                                    anyOf:
+                                    - type: integer
+                                    - type: string
+                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                    x-kubernetes-int-or-string: true
+                                  description: Requests describes the minimum amount
+                                    of compute resources required.
+                                  type: object
+                              type: object
+                            selector:
+                              description: selector is a label query over volumes
+                                to consider for binding.
+                              properties:
+                                matchExpressions:
+                                  description: matchExpressions is a list of label
+                                    selector requirements.
+                                  items:
+                                    description: A label selector requirement is a
+                                      selector that contains values, a key, and an
+                                      o
+                                    properties:
+                                      key:
+                                        description: key is the label key that the
+                                          selector applies to.
+                                        type: string
+                                      operator:
+                                        description: operator represents a key's relationship
+                                          to a set of values.
+                                        type: string
+                                      values:
+                                        description: values is an array of string
+                                          values.
+                                        items:
+                                          type: string
+                                        type: array
+                                        x-kubernetes-list-type: atomic
+                                    required:
+                                    - key
+                                    - operator
+                                    type: object
+                                  type: array
+                                  x-kubernetes-list-type: atomic
+                                matchLabels:
+                                  additionalProperties:
+                                    type: string
+                                  description: matchLabels is a map of {key,value}
+                                    pairs.
+                                  type: object
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            storageClassName:
+                              description: storageClassName is the name of the StorageClass
+                                required by the claim.
+                              type: string
+                            volumeAttributesClassName:
+                              description: volumeAttributesClassName may be used to
+                                set the VolumeAttributesClass used by t
+                              type: string
+                            volumeMode:
+                              description: volumeMode defines what type of volume
+                                is required by the claim.
+                              type: string
+                            volumeName:
+                              description: volumeName is the binding reference to
+                                the PersistentVolume backing this claim.
+                              type: string
+                          type: object
+                      type: object
+                    type: array
+                  volumeMounts:
+                    items:
+                      description: VolumeMount describes a mounting of a Volume within
+                        a container.
+                      properties:
+                        mountPath:
+                          description: Path within the container at which the volume
+                            should be mounted.
+                          type: string
+                        mountPropagation:
+                          description: |-
+                            mountPropagation determines how mounts are propagated from the host
+                            to container
+                          type: string
+                        name:
+                          description: This must match the Name of a Volume.
+                          type: string
+                        readOnly:
+                          description: Mounted read-only if true, read-write otherwise
+                            (false or unspecified).
+                          type: boolean
+                        recursiveReadOnly:
+                          description: |-
+                            RecursiveReadOnly specifies whether read-only mounts should be handled
+                            recursive
+                          type: string
+                        subPath:
+                          description: Path within the volume from which the container's
+                            volume should be mounted.
+                          type: string
+                        subPathExpr:
+                          description: Expanded path within the volume from which
+                            the container's volume should be moun
+                          type: string
+                      required:
+                      - mountPath
+                      - name
+                      type: object
+                    type: array
+                  volumes:
+                    items:
+                      description: 'Volume represents a named volume in a pod that
+                        may be accessed by any container '
+                      properties:
+                        awsElasticBlockStore:
+                          description: |-
+                            awsElasticBlockStore represents an AWS Disk resource that is attached to a
+                            kubel
+                          properties:
+                            fsType:
+                              description: fsType is the filesystem type of the volume
+                                that you want to mount.
+                              type: string
+                            partition:
+                              description: partition is the partition in the volume
+                                that you want to mount.
+                              format: int32
+                              type: integer
+                            readOnly:
+                              description: readOnly value true will force the readOnly
+                                setting in VolumeMounts.
+                              type: boolean
+                            volumeID:
+                              description: volumeID is unique ID of the persistent
+                                disk resource in AWS (Amazon EBS volume)
+                              type: string
+                          required:
+                          - volumeID
+                          type: object
+                        azureDisk:
+                          description: 'azureDisk represents an Azure Data Disk mount
+                            on the host and bind mount to the '
+                          properties:
+                            cachingMode:
+                              description: 'cachingMode is the Host Caching mode:
+                                None, Read Only, Read Write.'
+                              type: string
+                            diskName:
+                              description: diskName is the Name of the data disk in
+                                the blob storage
+                              type: string
+                            diskURI:
+                              description: diskURI is the URI of data disk in the
+                                blob storage
+                              type: string
+                            fsType:
+                              description: fsType is Filesystem type to mount.
+                              type: string
+                            kind:
+                              description: 'kind expected values are Shared: multiple
+                                blob disks per storage account  Dedica'
+                              type: string
+                            readOnly:
+                              description: readOnly Defaults to false (read/write).
+                              type: boolean
+                          required:
+                          - diskName
+                          - diskURI
+                          type: object
+                        azureFile:
+                          description: azureFile represents an Azure File Service
+                            mount on the host and bind mount to t
+                          properties:
+                            readOnly:
+                              description: readOnly defaults to false (read/write).
+                              type: boolean
+                            secretName:
+                              description: secretName is the  name of secret that
+                                contains Azure Storage Account Name and K
+                              type: string
+                            shareName:
+                              description: shareName is the azure share Name
+                              type: string
+                          required:
+                          - secretName
+                          - shareName
+                          type: object
+                        cephfs:
+                          description: cephFS represents a Ceph FS mount on the host
+                            that shares a pod's lifetime
+                          properties:
+                            monitors:
+                              description: |-
+                                monitors is Required: Monitors is a collection of Ceph monitors
+                                More info: https
+                              items:
+                                type: string
+                              type: array
+                              x-kubernetes-list-type: atomic
+                            path:
+                              description: 'path is Optional: Used as the mounted
+                                root, rather than the full Ceph tree, defa'
+                              type: string
+                            readOnly:
+                              description: 'readOnly is Optional: Defaults to false
+                                (read/write).'
+                              type: boolean
+                            secretFile:
+                              description: 'secretFile is Optional: SecretFile is
+                                the path to key ring for User, default is '
+                              type: string
+                            secretRef:
+                              description: 'secretRef is Optional: SecretRef is reference
+                                to the authentication secret for U'
+                              properties:
+                                name:
+                                  default: ""
+                                  description: Name of the referent.
+                                  type: string
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            user:
+                              description: |-
+                                user is optional: User is the rados user name, default is admin
+                                More info: https
+                              type: string
+                          required:
+                          - monitors
+                          type: object
+                        cinder:
+                          description: cinder represents a cinder volume attached
+                            and mounted on kubelets host machine.
+                          properties:
+                            fsType:
+                              description: fsType is the filesystem type to mount.
+                              type: string
+                            readOnly:
+                              description: readOnly defaults to false (read/write).
+                              type: boolean
+                            secretRef:
+                              description: 'secretRef is optional: points to a secret
+                                object containing parameters used to c'
+                              properties:
+                                name:
+                                  default: ""
+                                  description: Name of the referent.
+                                  type: string
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            volumeID:
+                              description: |-
+                                volumeID used to identify the volume in cinder.
+                                More info: https://examples.k8s.
+                              type: string
+                          required:
+                          - volumeID
+                          type: object
+                        configMap:
+                          description: configMap represents a configMap that should
+                            populate this volume
+                          properties:
+                            defaultMode:
+                              description: 'defaultMode is optional: mode bits used
+                                to set permissions on created files by d'
+                              format: int32
+                              type: integer
+                            items:
+                              description: |-
+                                items if unspecified, each key-value pair in the Data field of the referenced
+                                Co
+                              items:
+                                description: Maps a string key to a path within a
+                                  volume.
+                                properties:
+                                  key:
+                                    description: key is the key to project.
+                                    type: string
+                                  mode:
+                                    description: 'mode is Optional: mode bits used
+                                      to set permissions on this file.'
+                                    format: int32
+                                    type: integer
+                                  path:
+                                    description: path is the relative path of the
+                                      file to map the key to.
+                                    type: string
+                                required:
+                                - key
+                                - path
+                                type: object
+                              type: array
+                              x-kubernetes-list-type: atomic
+                            name:
+                              default: ""
+                              description: Name of the referent.
+                              type: string
+                            optional:
+                              description: optional specify whether the ConfigMap
+                                or its keys must be defined
+                              type: boolean
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        csi:
+                          description: csi (Container Storage Interface) represents
+                            ephemeral storage that is handled b
+                          properties:
+                            driver:
+                              description: driver is the name of the CSI driver that
+                                handles this volume.
+                              type: string
+                            fsType:
+                              description: fsType to mount. Ex. "ext4", "xfs", "ntfs".
+                              type: string
+                            nodePublishSecretRef:
+                              description: |-
+                                nodePublishSecretRef is a reference to the secret object containing
+                                sensitive in
+                              properties:
+                                name:
+                                  default: ""
+                                  description: Name of the referent.
+                                  type: string
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            readOnly:
+                              description: readOnly specifies a read-only configuration
+                                for the volume.
+                              type: boolean
+                            volumeAttributes:
+                              additionalProperties:
+                                type: string
+                              description: |-
+                                volumeAttributes stores driver-specific properties that are passed to the CSI
+                                dr
+                              type: object
+                          required:
+                          - driver
+                          type: object
+                        downwardAPI:
+                          description: downwardAPI represents downward API about the
+                            pod that should populate this volu
+                          properties:
+                            defaultMode:
+                              description: 'Optional: mode bits to use on created
+                                files by default.'
+                              format: int32
+                              type: integer
+                            items:
+                              description: Items is a list of downward API volume
+                                file
+                              items:
+                                description: DownwardAPIVolumeFile represents information
+                                  to create the file containing the p
+                                properties:
+                                  fieldRef:
+                                    description: 'Required: Selects a field of the
+                                      pod: only annotations, labels, name, namespace '
+                                    properties:
+                                      apiVersion:
+                                        description: Version of the schema the FieldPath
+                                          is written in terms of, defaults to "v1".
+                                        type: string
+                                      fieldPath:
+                                        description: Path of the field to select in
+                                          the specified API version.
+                                        type: string
+                                    required:
+                                    - fieldPath
+                                    type: object
+                                    x-kubernetes-map-type: atomic
+                                  mode:
+                                    description: 'Optional: mode bits used to set
+                                      permissions on this file, must be an octal value'
+                                    format: int32
+                                    type: integer
+                                  path:
+                                    description: 'Required: Path is  the relative
+                                      path name of the file to be created.'
+                                    type: string
+                                  resourceFieldRef:
+                                    description: |-
+                                      Selects a resource of the container: only resources limits and requests
+                                      (limits.
+                                    properties:
+                                      containerName:
+                                        description: 'Container name: required for
+                                          volumes, optional for env vars'
+                                        type: string
+                                      divisor:
+                                        anyOf:
+                                        - type: integer
+                                        - type: string
+                                        description: Specifies the output format of
+                                          the exposed resources, defaults to "1"
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        x-kubernetes-int-or-string: true
+                                      resource:
+                                        description: 'Required: resource to select'
+                                        type: string
+                                    required:
+                                    - resource
+                                    type: object
+                                    x-kubernetes-map-type: atomic
+                                required:
+                                - path
+                                type: object
+                              type: array
+                              x-kubernetes-list-type: atomic
+                          type: object
+                        emptyDir:
+                          description: emptyDir represents a temporary directory that
+                            shares a pod's lifetime.
+                          properties:
+                            medium:
+                              description: medium represents what type of storage
+                                medium should back this directory.
+                              type: string
+                            sizeLimit:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: sizeLimit is the total amount of local
+                                storage required for this EmptyDir volume
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                          type: object
+                        ephemeral:
+                          description: ephemeral represents a volume that is handled
+                            by a cluster storage driver.
+                          properties:
+                            volumeClaimTemplate:
+                              description: Will be used to create a stand-alone PVC
+                                to provision the volume.
+                              properties:
+                                metadata:
+                                  description: |-
+                                    May contain labels and annotations that will be copied into the PVC
+                                    when creatin
+                                  type: object
+                                spec:
+                                  description: The specification for the PersistentVolumeClaim.
+                                  properties:
+                                    accessModes:
+                                      description: accessModes contains the desired
+                                        access modes the volume should have.
+                                      items:
+                                        type: string
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    dataSource:
+                                      description: |-
+                                        dataSource field can be used to specify either:
+                                        * An existing VolumeSnapshot obj
+                                      properties:
+                                        apiGroup:
+                                          description: APIGroup is the group for the
+                                            resource being referenced.
+                                          type: string
+                                        kind:
+                                          description: Kind is the type of resource
+                                            being referenced
+                                          type: string
+                                        name:
+                                          description: Name is the name of resource
+                                            being referenced
+                                          type: string
+                                      required:
+                                      - kind
+                                      - name
+                                      type: object
+                                      x-kubernetes-map-type: atomic
+                                    dataSourceRef:
+                                      description: 'dataSourceRef specifies the object
+                                        from which to populate the volume with data, '
+                                      properties:
+                                        apiGroup:
+                                          description: APIGroup is the group for the
+                                            resource being referenced.
+                                          type: string
+                                        kind:
+                                          description: Kind is the type of resource
+                                            being referenced
+                                          type: string
+                                        name:
+                                          description: Name is the name of resource
+                                            being referenced
+                                          type: string
+                                        namespace:
+                                          description: |-
+                                            Namespace is the namespace of resource being referenced
+                                            Note that when a namespa
+                                          type: string
+                                      required:
+                                      - kind
+                                      - name
+                                      type: object
+                                    resources:
+                                      description: resources represents the minimum
+                                        resources the volume should have.
+                                      properties:
+                                        limits:
+                                          additionalProperties:
+                                            anyOf:
+                                            - type: integer
+                                            - type: string
+                                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                            x-kubernetes-int-or-string: true
+                                          description: Limits describes the maximum
+                                            amount of compute resources allowed.
+                                          type: object
+                                        requests:
+                                          additionalProperties:
+                                            anyOf:
+                                            - type: integer
+                                            - type: string
+                                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                            x-kubernetes-int-or-string: true
+                                          description: Requests describes the minimum
+                                            amount of compute resources required.
+                                          type: object
+                                      type: object
+                                    selector:
+                                      description: selector is a label query over
+                                        volumes to consider for binding.
+                                      properties:
+                                        matchExpressions:
+                                          description: matchExpressions is a list
+                                            of label selector requirements.
+                                          items:
+                                            description: A label selector requirement
+                                              is a selector that contains values,
+                                              a key, and an o
+                                            properties:
+                                              key:
+                                                description: key is the label key
+                                                  that the selector applies to.
+                                                type: string
+                                              operator:
+                                                description: operator represents a
+                                                  key's relationship to a set of values.
+                                                type: string
+                                              values:
+                                                description: values is an array of
+                                                  string values.
+                                                items:
+                                                  type: string
+                                                type: array
+                                                x-kubernetes-list-type: atomic
+                                            required:
+                                            - key
+                                            - operator
+                                            type: object
+                                          type: array
+                                          x-kubernetes-list-type: atomic
+                                        matchLabels:
+                                          additionalProperties:
+                                            type: string
+                                          description: matchLabels is a map of {key,value}
+                                            pairs.
+                                          type: object
+                                      type: object
+                                      x-kubernetes-map-type: atomic
+                                    storageClassName:
+                                      description: storageClassName is the name of
+                                        the StorageClass required by the claim.
+                                      type: string
+                                    volumeAttributesClassName:
+                                      description: volumeAttributesClassName may be
+                                        used to set the VolumeAttributesClass used
+                                        by t
+                                      type: string
+                                    volumeMode:
+                                      description: volumeMode defines what type of
+                                        volume is required by the claim.
+                                      type: string
+                                    volumeName:
+                                      description: volumeName is the binding reference
+                                        to the PersistentVolume backing this claim.
+                                      type: string
+                                  type: object
+                              required:
+                              - spec
+                              type: object
+                          type: object
+                        fc:
+                          description: fc represents a Fibre Channel resource that
+                            is attached to a kubelet's host mach
+                          properties:
+                            fsType:
+                              description: fsType is the filesystem type to mount.
+                              type: string
+                            lun:
+                              description: 'lun is Optional: FC target lun number'
+                              format: int32
+                              type: integer
+                            readOnly:
+                              description: 'readOnly is Optional: Defaults to false
+                                (read/write).'
+                              type: boolean
+                            targetWWNs:
+                              description: 'targetWWNs is Optional: FC target worldwide
+                                names (WWNs)'
+                              items:
+                                type: string
+                              type: array
+                              x-kubernetes-list-type: atomic
+                            wwids:
+                              description: |-
+                                wwids Optional: FC volume world wide identifiers (wwids)
+                                Either wwids or combina
+                              items:
+                                type: string
+                              type: array
+                              x-kubernetes-list-type: atomic
+                          type: object
+                        flexVolume:
+                          description: |-
+                            flexVolume represents a generic volume resource that is
+                            provisioned/attached usi
+                          properties:
+                            driver:
+                              description: driver is the name of the driver to use
+                                for this volume.
+                              type: string
+                            fsType:
+                              description: fsType is the filesystem type to mount.
+                              type: string
+                            options:
+                              additionalProperties:
+                                type: string
+                              description: 'options is Optional: this field holds
+                                extra command options if any.'
+                              type: object
+                            readOnly:
+                              description: 'readOnly is Optional: defaults to false
+                                (read/write).'
+                              type: boolean
+                            secretRef:
+                              description: |-
+                                secretRef is Optional: secretRef is reference to the secret object containing
+                                se
+                              properties:
+                                name:
+                                  default: ""
+                                  description: Name of the referent.
+                                  type: string
+                              type: object
+                              x-kubernetes-map-type: atomic
+                          required:
+                          - driver
+                          type: object
+                        flocker:
+                          description: flocker represents a Flocker volume attached
+                            to a kubelet's host machine.
+                          properties:
+                            datasetName:
+                              description: datasetName is Name of the dataset stored
+                                as metadata -> name on the dataset for
+                              type: string
+                            datasetUUID:
+                              description: datasetUUID is the UUID of the dataset.
+                              type: string
+                          type: object
+                        gcePersistentDisk:
+                          description: |-
+                            gcePersistentDisk represents a GCE Disk resource that is attached to a
+                            kubelet's
+                          properties:
+                            fsType:
+                              description: fsType is filesystem type of the volume
+                                that you want to mount.
+                              type: string
+                            partition:
+                              description: partition is the partition in the volume
+                                that you want to mount.
+                              format: int32
+                              type: integer
+                            pdName:
+                              description: pdName is unique name of the PD resource
+                                in GCE.
+                              type: string
+                            readOnly:
+                              description: readOnly here will force the ReadOnly setting
+                                in VolumeMounts.
+                              type: boolean
+                          required:
+                          - pdName
+                          type: object
+                        gitRepo:
+                          description: gitRepo represents a git repository at a particular
+                            revision.
+                          properties:
+                            directory:
+                              description: |-
+                                directory is the target directory name.
+                                Must not contain or start with '..'.
+                              type: string
+                            repository:
+                              description: repository is the URL
+                              type: string
+                            revision:
+                              description: revision is the commit hash for the specified
+                                revision.
+                              type: string
+                          required:
+                          - repository
+                          type: object
+                        glusterfs:
+                          description: glusterfs represents a Glusterfs mount on the
+                            host that shares a pod's lifetime.
+                          properties:
+                            endpoints:
+                              description: endpoints is the endpoint name that details
+                                Glusterfs topology.
+                              type: string
+                            path:
+                              description: |-
+                                path is the Glusterfs volume path.
+                                More info: https://examples.k8s.
+                              type: string
+                            readOnly:
+                              description: readOnly here will force the Glusterfs
+                                volume to be mounted with read-only permi
+                              type: boolean
+                          required:
+                          - endpoints
+                          - path
+                          type: object
+                        hostPath:
+                          description: |-
+                            hostPath represents a pre-existing file or directory on the host
+                            machine that is
+                          properties:
+                            path:
+                              description: path of the directory on the host.
+                              type: string
+                            type:
+                              description: |-
+                                type for HostPath Volume
+                                Defaults to ""
+                                More info: https://kubernetes.
+                              type: string
+                          required:
+                          - path
+                          type: object
+                        iscsi:
+                          description: |-
+                            iscsi represents an ISCSI Disk resource that is attached to a
+                            kubelet's host mac
+                          properties:
+                            chapAuthDiscovery:
+                              description: chapAuthDiscovery defines whether support
+                                iSCSI Discovery CHAP authentication
+                              type: boolean
+                            chapAuthSession:
+                              description: chapAuthSession defines whether support
+                                iSCSI Session CHAP authentication
+                              type: boolean
+                            fsType:
+                              description: fsType is the filesystem type of the volume
+                                that you want to mount.
+                              type: string
+                            initiatorName:
+                              description: initiatorName is the custom iSCSI Initiator
+                                Name.
+                              type: string
+                            iqn:
+                              description: iqn is the target iSCSI Qualified Name.
+                              type: string
+                            iscsiInterface:
+                              description: iscsiInterface is the interface Name that
+                                uses an iSCSI transport.
+                              type: string
+                            lun:
+                              description: lun represents iSCSI Target Lun number.
+                              format: int32
+                              type: integer
+                            portals:
+                              description: portals is the iSCSI Target Portal List.
+                              items:
+                                type: string
+                              type: array
+                              x-kubernetes-list-type: atomic
+                            readOnly:
+                              description: readOnly here will force the ReadOnly setting
+                                in VolumeMounts.
+                              type: boolean
+                            secretRef:
+                              description: secretRef is the CHAP Secret for iSCSI
+                                target and initiator authentication
+                              properties:
+                                name:
+                                  default: ""
+                                  description: Name of the referent.
+                                  type: string
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            targetPortal:
+                              description: targetPortal is iSCSI Target Portal.
+                              type: string
+                          required:
+                          - iqn
+                          - lun
+                          - targetPortal
+                          type: object
+                        name:
+                          description: |-
+                            name of the volume.
+                            Must be a DNS_LABEL and unique within the pod.
+                          type: string
+                        nfs:
+                          description: "nfs represents an NFS mount on the host that
+                            shares a pod's lifetime\nMore info: "
+                          properties:
+                            path:
+                              description: |-
+                                path that is exported by the NFS server.
+                                More info: https://kubernetes.
+                              type: string
+                            readOnly:
+                              description: readOnly here will force the NFS export
+                                to be mounted with read-only permissions
+                              type: boolean
+                            server:
+                              description: server is the hostname or IP address of
+                                the NFS server.
+                              type: string
+                          required:
+                          - path
+                          - server
+                          type: object
+                        persistentVolumeClaim:
+                          description: |-
+                            persistentVolumeClaimVolumeSource represents a reference to a
+                            PersistentVolumeCl
+                          properties:
+                            claimName:
+                              description: claimName is the name of a PersistentVolumeClaim
+                                in the same namespace as the po
+                              type: string
+                            readOnly:
+                              description: |-
+                                readOnly Will force the ReadOnly setting in VolumeMounts.
+                                Default false.
+                              type: boolean
+                          required:
+                          - claimName
+                          type: object
+                        photonPersistentDisk:
+                          description: 'photonPersistentDisk represents a PhotonController
+                            persistent disk attached and '
+                          properties:
+                            fsType:
+                              description: fsType is the filesystem type to mount.
+                              type: string
+                            pdID:
+                              description: pdID is the ID that identifies Photon Controller
+                                persistent disk
+                              type: string
+                          required:
+                          - pdID
+                          type: object
+                        portworxVolume:
+                          description: portworxVolume represents a portworx volume
+                            attached and mounted on kubelets hos
+                          properties:
+                            fsType:
+                              description: |-
+                                fSType represents the filesystem type to mount
+                                Must be a filesystem type support
+                              type: string
+                            readOnly:
+                              description: readOnly defaults to false (read/write).
+                              type: boolean
+                            volumeID:
+                              description: volumeID uniquely identifies a Portworx
+                                volume
+                              type: string
+                          required:
+                          - volumeID
+                          type: object
+                        projected:
+                          description: projected items for all in one resources secrets,
+                            configmaps, and downward API
+                          properties:
+                            defaultMode:
+                              description: defaultMode are the mode bits used to set
+                                permissions on created files by defaul
+                              format: int32
+                              type: integer
+                            sources:
+                              description: sources is the list of volume projections
+                              items:
+                                description: Projection that may be projected along
+                                  with other supported volume types
+                                properties:
+                                  clusterTrustBundle:
+                                    description: ClusterTrustBundle allows a pod to
+                                      access the `.spec.
+                                    properties:
+                                      labelSelector:
+                                        description: Select all ClusterTrustBundles
+                                          that match this label selector.
+                                        properties:
+                                          matchExpressions:
+                                            description: matchExpressions is a list
+                                              of label selector requirements.
+                                            items:
+                                              description: A label selector requirement
+                                                is a selector that contains values,
+                                                a key, and an o
+                                              properties:
+                                                key:
+                                                  description: key is the label key
+                                                    that the selector applies to.
+                                                  type: string
+                                                operator:
+                                                  description: operator represents
+                                                    a key's relationship to a set
+                                                    of values.
+                                                  type: string
+                                                values:
+                                                  description: values is an array
+                                                    of string values.
+                                                  items:
+                                                    type: string
+                                                  type: array
+                                                  x-kubernetes-list-type: atomic
+                                              required:
+                                              - key
+                                              - operator
+                                              type: object
+                                            type: array
+                                            x-kubernetes-list-type: atomic
+                                          matchLabels:
+                                            additionalProperties:
+                                              type: string
+                                            description: matchLabels is a map of {key,value}
+                                              pairs.
+                                            type: object
+                                        type: object
+                                        x-kubernetes-map-type: atomic
+                                      name:
+                                        description: Select a single ClusterTrustBundle
+                                          by object name.
+                                        type: string
+                                      optional:
+                                        description: "If true, don't block pod startup
+                                          if the referenced ClusterTrustBundle(s)\naren't "
+                                        type: boolean
+                                      path:
+                                        description: Relative path from the volume
+                                          root to write the bundle.
+                                        type: string
+                                      signerName:
+                                        description: Select all ClusterTrustBundles
+                                          that match this signer name.
+                                        type: string
+                                    required:
+                                    - path
+                                    type: object
+                                  configMap:
+                                    description: configMap information about the configMap
+                                      data to project
+                                    properties:
+                                      items:
+                                        description: |-
+                                          items if unspecified, each key-value pair in the Data field of the referenced
+                                          Co
+                                        items:
+                                          description: Maps a string key to a path
+                                            within a volume.
+                                          properties:
+                                            key:
+                                              description: key is the key to project.
+                                              type: string
+                                            mode:
+                                              description: 'mode is Optional: mode
+                                                bits used to set permissions on this
+                                                file.'
+                                              format: int32
+                                              type: integer
+                                            path:
+                                              description: path is the relative path
+                                                of the file to map the key to.
+                                              type: string
+                                          required:
+                                          - key
+                                          - path
+                                          type: object
+                                        type: array
+                                        x-kubernetes-list-type: atomic
+                                      name:
+                                        default: ""
+                                        description: Name of the referent.
+                                        type: string
+                                      optional:
+                                        description: optional specify whether the
+                                          ConfigMap or its keys must be defined
+                                        type: boolean
+                                    type: object
+                                    x-kubernetes-map-type: atomic
+                                  downwardAPI:
+                                    description: downwardAPI information about the
+                                      downwardAPI data to project
+                                    properties:
+                                      items:
+                                        description: Items is a list of DownwardAPIVolume
+                                          file
+                                        items:
+                                          description: DownwardAPIVolumeFile represents
+                                            information to create the file containing
+                                            the p
+                                          properties:
+                                            fieldRef:
+                                              description: 'Required: Selects a field
+                                                of the pod: only annotations, labels,
+                                                name, namespace '
+                                              properties:
+                                                apiVersion:
+                                                  description: Version of the schema
+                                                    the FieldPath is written in terms
+                                                    of, defaults to "v1".
+                                                  type: string
+                                                fieldPath:
+                                                  description: Path of the field to
+                                                    select in the specified API version.
+                                                  type: string
+                                              required:
+                                              - fieldPath
+                                              type: object
+                                              x-kubernetes-map-type: atomic
+                                            mode:
+                                              description: 'Optional: mode bits used
+                                                to set permissions on this file, must
+                                                be an octal value'
+                                              format: int32
+                                              type: integer
+                                            path:
+                                              description: 'Required: Path is  the
+                                                relative path name of the file to
+                                                be created.'
+                                              type: string
+                                            resourceFieldRef:
+                                              description: |-
+                                                Selects a resource of the container: only resources limits and requests
+                                                (limits.
+                                              properties:
+                                                containerName:
+                                                  description: 'Container name: required
+                                                    for volumes, optional for env
+                                                    vars'
+                                                  type: string
+                                                divisor:
+                                                  anyOf:
+                                                  - type: integer
+                                                  - type: string
+                                                  description: Specifies the output
+                                                    format of the exposed resources,
+                                                    defaults to "1"
+                                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                                  x-kubernetes-int-or-string: true
+                                                resource:
+                                                  description: 'Required: resource
+                                                    to select'
+                                                  type: string
+                                              required:
+                                              - resource
+                                              type: object
+                                              x-kubernetes-map-type: atomic
+                                          required:
+                                          - path
+                                          type: object
+                                        type: array
+                                        x-kubernetes-list-type: atomic
+                                    type: object
+                                  secret:
+                                    description: secret information about the secret
+                                      data to project
+                                    properties:
+                                      items:
+                                        description: |-
+                                          items if unspecified, each key-value pair in the Data field of the referenced
+                                          Se
+                                        items:
+                                          description: Maps a string key to a path
+                                            within a volume.
+                                          properties:
+                                            key:
+                                              description: key is the key to project.
+                                              type: string
+                                            mode:
+                                              description: 'mode is Optional: mode
+                                                bits used to set permissions on this
+                                                file.'
+                                              format: int32
+                                              type: integer
+                                            path:
+                                              description: path is the relative path
+                                                of the file to map the key to.
+                                              type: string
+                                          required:
+                                          - key
+                                          - path
+                                          type: object
+                                        type: array
+                                        x-kubernetes-list-type: atomic
+                                      name:
+                                        default: ""
+                                        description: Name of the referent.
+                                        type: string
+                                      optional:
+                                        description: optional field specify whether
+                                          the Secret or its key must be defined
+                                        type: boolean
+                                    type: object
+                                    x-kubernetes-map-type: atomic
+                                  serviceAccountToken:
+                                    description: serviceAccountToken is information
+                                      about the serviceAccountToken data to project
+                                    properties:
+                                      audience:
+                                        description: audience is the intended audience
+                                          of the token.
+                                        type: string
+                                      expirationSeconds:
+                                        description: |-
+                                          expirationSeconds is the requested duration of validity of the service
+                                          account t
+                                        format: int64
+                                        type: integer
+                                      path:
+                                        description: |-
+                                          path is the path relative to the mount point of the file to project the
+                                          token in
+                                        type: string
+                                    required:
+                                    - path
+                                    type: object
+                                type: object
+                              type: array
+                              x-kubernetes-list-type: atomic
+                          type: object
+                        quobyte:
+                          description: quobyte represents a Quobyte mount on the host
+                            that shares a pod's lifetime
+                          properties:
+                            group:
+                              description: |-
+                                group to map volume access to
+                                Default is no group
+                              type: string
+                            readOnly:
+                              description: readOnly here will force the Quobyte volume
+                                to be mounted with read-only permiss
+                              type: boolean
+                            registry:
+                              description: "registry represents a single or multiple
+                                Quobyte Registry services\nspecified as "
+                              type: string
+                            tenant:
+                              description: |-
+                                tenant owning the given Quobyte volume in the Backend
+                                Used with dynamically prov
+                              type: string
+                            user:
+                              description: |-
+                                user to map volume access to
+                                Defaults to serivceaccount user
+                              type: string
+                            volume:
+                              description: volume is a string that references an already
+                                created Quobyte volume by name.
+                              type: string
+                          required:
+                          - registry
+                          - volume
+                          type: object
+                        rbd:
+                          description: rbd represents a Rados Block Device mount on
+                            the host that shares a pod's lifeti
+                          properties:
+                            fsType:
+                              description: fsType is the filesystem type of the volume
+                                that you want to mount.
+                              type: string
+                            image:
+                              description: |-
+                                image is the rados image name.
+                                More info: https://examples.k8s.
+                              type: string
+                            keyring:
+                              description: |-
+                                keyring is the path to key ring for RBDUser.
+                                Default is /etc/ceph/keyring.
+                              type: string
+                            monitors:
+                              description: |-
+                                monitors is a collection of Ceph monitors.
+                                More info: https://examples.k8s.
+                              items:
+                                type: string
+                              type: array
+                              x-kubernetes-list-type: atomic
+                            pool:
+                              description: |-
+                                pool is the rados pool name.
+                                Default is rbd.
+                                More info: https://examples.k8s.
+                              type: string
+                            readOnly:
+                              description: readOnly here will force the ReadOnly setting
+                                in VolumeMounts.
+                              type: boolean
+                            secretRef:
+                              description: secretRef is name of the authentication
+                                secret for RBDUser.
+                              properties:
+                                name:
+                                  default: ""
+                                  description: Name of the referent.
+                                  type: string
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            user:
+                              description: |-
+                                user is the rados user name.
+                                Default is admin.
+                                More info: https://examples.k8s.
+                              type: string
+                          required:
+                          - image
+                          - monitors
+                          type: object
+                        scaleIO:
+                          description: scaleIO represents a ScaleIO persistent volume
+                            attached and mounted on Kubernete
+                          properties:
+                            fsType:
+                              description: fsType is the filesystem type to mount.
+                              type: string
+                            gateway:
+                              description: gateway is the host address of the ScaleIO
+                                API Gateway.
+                              type: string
+                            protectionDomain:
+                              description: protectionDomain is the name of the ScaleIO
+                                Protection Domain for the configured
+                              type: string
+                            readOnly:
+                              description: readOnly Defaults to false (read/write).
+                              type: boolean
+                            secretRef:
+                              description: |-
+                                secretRef references to the secret for ScaleIO user and other
+                                sensitive informat
+                              properties:
+                                name:
+                                  default: ""
+                                  description: Name of the referent.
+                                  type: string
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            sslEnabled:
+                              description: sslEnabled Flag enable/disable SSL communication
+                                with Gateway, default false
+                              type: boolean
+                            storageMode:
+                              description: storageMode indicates whether the storage
+                                for a volume should be ThickProvisione
+                              type: string
+                            storagePool:
+                              description: storagePool is the ScaleIO Storage Pool
+                                associated with the protection domain.
+                              type: string
+                            system:
+                              description: system is the name of the storage system
+                                as configured in ScaleIO.
+                              type: string
+                            volumeName:
+                              description: |-
+                                volumeName is the name of a volume already created in the ScaleIO system
+                                that is
+                              type: string
+                          required:
+                          - gateway
+                          - secretRef
+                          - system
+                          type: object
+                        secret:
+                          description: secret represents a secret that should populate
+                            this volume.
+                          properties:
+                            defaultMode:
+                              description: 'defaultMode is Optional: mode bits used
+                                to set permissions on created files by d'
+                              format: int32
+                              type: integer
+                            items:
+                              description: |-
+                                items If unspecified, each key-value pair in the Data field of the referenced
+                                Se
+                              items:
+                                description: Maps a string key to a path within a
+                                  volume.
+                                properties:
+                                  key:
+                                    description: key is the key to project.
+                                    type: string
+                                  mode:
+                                    description: 'mode is Optional: mode bits used
+                                      to set permissions on this file.'
+                                    format: int32
+                                    type: integer
+                                  path:
+                                    description: path is the relative path of the
+                                      file to map the key to.
+                                    type: string
+                                required:
+                                - key
+                                - path
+                                type: object
+                              type: array
+                              x-kubernetes-list-type: atomic
+                            optional:
+                              description: optional field specify whether the Secret
+                                or its keys must be defined
+                              type: boolean
+                            secretName:
+                              description: secretName is the name of the secret in
+                                the pod's namespace to use.
+                              type: string
+                          type: object
+                        storageos:
+                          description: storageOS represents a StorageOS volume attached
+                            and mounted on Kubernetes nodes
+                          properties:
+                            fsType:
+                              description: fsType is the filesystem type to mount.
+                              type: string
+                            readOnly:
+                              description: readOnly defaults to false (read/write).
+                              type: boolean
+                            secretRef:
+                              description: |-
+                                secretRef specifies the secret to use for obtaining the StorageOS API
+                                credential
+                              properties:
+                                name:
+                                  default: ""
+                                  description: Name of the referent.
+                                  type: string
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            volumeName:
+                              description: volumeName is the human-readable name of
+                                the StorageOS volume.
+                              type: string
+                            volumeNamespace:
+                              description: volumeNamespace specifies the scope of
+                                the volume within StorageOS.
+                              type: string
+                          type: object
+                        vsphereVolume:
+                          description: 'vsphereVolume represents a vSphere volume
+                            attached and mounted on kubelets host '
+                          properties:
+                            fsType:
+                              description: fsType is filesystem type to mount.
+                              type: string
+                            storagePolicyID:
+                              description: storagePolicyID is the storage Policy Based
+                                Management (SPBM) profile ID associa
+                              type: string
+                            storagePolicyName:
+                              description: storagePolicyName is the storage Policy
+                                Based Management (SPBM) profile name.
+                              type: string
+                            volumePath:
+                              description: volumePath is the path that identifies
+                                vSphere volume vmdk
+                              type: string
+                          required:
+                          - volumePath
+                          type: object
+                      required:
+                      - name
+                      type: object
+                    type: array
+                type: object
               dataNodes:
                 items:
                   properties:

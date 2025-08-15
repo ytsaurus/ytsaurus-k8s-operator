@@ -34,6 +34,10 @@ type MasterCache struct {
 	EnableMasterCacheDiscover bool   `yson:"enable_master_cache_discovery"`
 }
 
+type CypressProxy struct {
+	AddressList
+}
+
 type AddressType string
 
 const (
@@ -76,6 +80,7 @@ type ClusterConnection struct {
 	BusClient           *Bus                `yson:"bus_client,omitempty"`
 	MasterCache         MasterCache         `yson:"master_cache,omitempty"`
 	TimestampProviders  *TimestampProviders `yson:"timestamp_provider,omitempty"`
+	CypressProxy        *CypressProxy       `yson:"cypress_proxy,omitempty"`
 }
 
 type AddressResolver struct {

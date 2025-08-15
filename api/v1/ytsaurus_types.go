@@ -618,6 +618,11 @@ type MasterCachesSpec struct {
 	HostAddressLabel           string `json:"hostAddressesLabel,omitempty"`
 }
 
+type CypressProxiesSpec struct {
+	InstanceSpec `json:",inline"`
+	Disable      *bool `json:"disable,omitempty"`
+}
+
 type ClusterFeatures struct {
 	// RPC proxy have "public_rpc" address. Required for separated internal/public TLS CA.
 	RPCProxyHavePublicAddress bool `json:"rpcProxyHavePublicAddress,omitempty"`
@@ -748,6 +753,7 @@ type YtsaurusSpec struct {
 	Spyt                 *DeprecatedSpytSpec       `json:"spyt,omitempty"`
 	YQLAgents            *YQLAgentSpec             `json:"yqlAgents,omitempty"`
 	QueueAgents          *QueueAgentSpec           `json:"queueAgents,omitempty"`
+	CypressProxies       *CypressProxiesSpec       `json:"cypressProxies,omitempty"`
 
 	UI *UISpec `json:"ui,omitempty"`
 }

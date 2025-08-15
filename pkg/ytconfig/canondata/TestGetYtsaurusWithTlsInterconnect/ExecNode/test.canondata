@@ -93,6 +93,13 @@
             "cell_id"="65726e65-ad6b7562-259-79747361";
             "enable_master_cache_discovery"=%false;
         };
+        "cypress_proxy"={
+            addresses=[
+                "cyp-test-0.cypress-proxies-test.fake.svc.fake.zone:9031";
+                "cyp-test-1.cypress-proxies-test.fake.svc.fake.zone:9031";
+                "cyp-test-2.cypress-proxies-test.fake.svc.fake.zone:9031";
+            ];
+        };
     };
     "cypress_annotations"={
         "k8s_node_name"="{K8S_NODE_NAME}";
@@ -254,6 +261,13 @@
                     ];
                     "cell_id"="65726e65-ad6b7562-259-79747361";
                     "enable_master_cache_discovery"=%false;
+                };
+                "cypress_proxy"={
+                    addresses=[
+                        "cyp-test-0.cypress-proxies-test.fake.svc.fake.zone:9031";
+                        "cyp-test-1.cypress-proxies-test.fake.svc.fake.zone:9031";
+                        "cyp-test-2.cypress-proxies-test.fake.svc.fake.zone:9031";
+                    ];
                 };
             };
             "supervisor_connection"={

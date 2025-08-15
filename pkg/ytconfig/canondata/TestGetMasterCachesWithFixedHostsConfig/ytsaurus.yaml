@@ -6,6 +6,9 @@ spec:
   controllerAgents:
     instanceCount: 3
     resources: {}
+  cypressProxies:
+    instanceCount: 3
+    resources: {}
   discovery:
     instanceCount: 3
     resources: {}
