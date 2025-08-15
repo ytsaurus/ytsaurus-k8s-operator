@@ -52,7 +52,7 @@ data:
     export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"
     if [ 'true' = 'true' ]; then
     /usr/bin/yt create group --attr '{name=admins}' --ignore-existing
-    if [ $(/usr/bin/yt exists //sys/@provision_lock) = 'true' ]; then
+    if [ $(/usr/bin/yt exists '//sys/@provision_lock') = 'true' ]; then
     /usr/bin/yt set //sys/schemas/tablet_cell/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
     /usr/bin/yt set //sys/schemas/tablet_action/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
     /usr/bin/yt set //sys/schemas/tablet_cell_bundle/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
@@ -71,15 +71,15 @@ data:
     /usr/bin/yt set //sys/schemas/account_resource_usage_lease/@acl '[{action=allow;subjects=[users;];permissions=[read;write;create;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
     fi
     /usr/bin/yt create scheduler_pool_tree --attributes '{name=default; config={nodes_filter=""}}' --ignore-existing
-    if [ $(/usr/bin/yt exists //sys/pool_trees/@default_tree) = 'false' ]; then
-    /usr/bin/yt set //sys/pool_trees/@default_tree default
+    if [ $(/usr/bin/yt exists '//sys/pool_trees/@default_tree') = 'false' ]; then
+    /usr/bin/yt set -r '//sys/pool_trees/@default_tree' 'default'
     fi
-    if [ $(/usr/bin/yt exists //sys/pools) = 'false' ]; then
+    if [ $(/usr/bin/yt exists '//sys/pools') = 'false' ]; then
     /usr/bin/yt link //sys/pool_trees/default //sys/pools
     fi
     /usr/bin/yt create scheduler_pool --attributes '{name=research; pool_tree=default}' --ignore-existing
     /usr/bin/yt create map_node //home --ignore-existing
-    if [ $(/usr/bin/yt exists //sys/@provision_lock) = 'true' ]; then
+    if [ $(/usr/bin/yt exists '//sys/@provision_lock') = 'true' ]; then
     /usr/bin/yt set //sys/@cluster_connection '{
         "cluster_name"="test-ytsaurus";
         "primary_master"={
@@ -108,10 +108,10 @@ data:
         };
     }'
     fi
-    if [ $(/usr/bin/yt exists //sys/controller_agents/config/operation_options/spec_template) = 'false' ]; then
-    /usr/bin/yt set //sys/controller_agents/config/operation_options/spec_template '{enable_partitioned_data_balancing=%false}' -r
+    if [ $(/usr/bin/yt exists '//sys/controller_agents/config/operation_options/spec_template') = 'false' ]; then
+    /usr/bin/yt set -r '//sys/controller_agents/config/operation_options/spec_template' '{enable_partitioned_data_balancing=%false}'
     fi
-    if [ $(/usr/bin/yt exists //sys/users/admin) = 'false' ]; then
+    if [ $(/usr/bin/yt exists '//sys/users/admin') = 'false' ]; then
     /usr/bin/yt create user --attributes '{name="admin"}' --ignore-existing
     /usr/bin/yt execute set_user_password '{user=admin;new_password_sha256="5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"}'
     /usr/bin/yt create map_node '//sys/cypress_tokens/5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8' --ignore-existing
@@ -120,7 +120,7 @@ data:
     fi
     fi
     if [ 'false' = 'true' ]; then
-    if [ $(/usr/bin/yt exists //sys/users/robot-hydra-persistence-uploader) = 'false' ]; then
+    if [ $(/usr/bin/yt exists '//sys/users/robot-hydra-persistence-uploader') = 'false' ]; then
     /usr/bin/yt create user --attributes '{name="robot-hydra-persistence-uploader"}' --ignore-existing
     /usr/bin/yt execute set_user_password '{user=robot-hydra-persistence-uploader;new_password_sha256="d9fb903c32fe851f5d5543f2f9da27330ead9bd0d85ce8f51afba5d503f027a5"}'
     /usr/bin/yt create map_node '//sys/cypress_tokens/d9fb903c32fe851f5d5543f2f9da27330ead9bd0d85ce8f51afba5d503f027a5' --ignore-existing
