@@ -224,15 +224,15 @@ func RunIfCondition(condition string, commands ...string) Script {
 }
 
 func RunIfNonexistent(path string, commands ...string) Script {
-	return RunIfCondition(fmt.Sprintf("$(/usr/bin/yt exists %s) = 'false'", path), commands...)
+	return RunIfCondition(fmt.Sprintf("$(/usr/bin/yt exists '%s') = 'false'", path), commands...)
 }
 
 func RunIfExists(path string, commands ...string) Script {
-	return RunIfCondition(fmt.Sprintf("$(/usr/bin/yt exists %s) = 'true'", path), commands...)
+	return RunIfCondition(fmt.Sprintf("$(/usr/bin/yt exists '%s') = 'true'", path), commands...)
 }
 
 func SetWithIgnoreExisting(path string, value string) Script {
-	return RunIfNonexistent(path, fmt.Sprintf("/usr/bin/yt set %s %s", path, value))
+	return RunIfNonexistent(path, fmt.Sprintf("/usr/bin/yt set -r '%s' '%s'", path, value))
 }
 
 func AddAffinity(statefulSet *appsv1.StatefulSet,

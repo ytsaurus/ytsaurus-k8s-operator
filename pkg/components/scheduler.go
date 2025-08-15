@@ -305,7 +305,7 @@ func (s *Scheduler) prepareInitOperationsArchive() {
 			fmt.Sprintf("$INIT_OP_ARCHIVE --force --latest --proxy %s",
 				s.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
 		},
-		SetWithIgnoreExisting("//sys/cluster_nodes/@config", "'{\"%true\" = {job_agent={enable_job_reporter=%true}}}'"),
+		SetWithIgnoreExisting("//sys/cluster_nodes/@config", "{\"%true\" = {job_agent={enable_job_reporter=%true}}}"),
 	)
 	s.initOpArchiveJob.SetInitScript(script)
 	job := s.initOpArchiveJob.Build()
