@@ -2,7 +2,7 @@ metadata:
   creationTimestamp: null
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "11"
+  resourceVersion: "12"
 spec:
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
   discovery:

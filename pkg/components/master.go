@@ -14,6 +14,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ypatch"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -349,7 +350,7 @@ func (m *Master) initSchemaACLs() (string, error) {
 }
 
 func (m *Master) createInitScript() (string, error) {
-	clusterConnection, err := m.cfgen.GetClusterConnection()
+	clusterConnection, err := m.cfgen.GetClusterConnectionConfig()
 	if err != nil {
 		panic(err)
 	}
@@ -483,6 +484,17 @@ func (m *Master) doServerSync(ctx context.Context) error {
 		AddAffinity(statefulSet, m.getHostAddressLabel(), primaryMastersSpec.HostAddresses)
 	}
 	return m.server.Sync(ctx)
+}
+
+func (m *Master) GetCypressPatch() ypatch.PatchSet {
+	clusterConnection := m.cfgen.GetClusterConnection()
+	return ypatch.PatchSet{
+		"//sys/@cluster_connection": {
+			ypatch.Replace("/primary_master/addresses", &clusterConnection.PrimaryMaster.Addresses),
+			ypatch.Replace("/primary_master/peers", &clusterConnection.PrimaryMaster.Peers),
+			ypatch.ReplaceOrRemove("/bus_client", clusterConnection.BusClient),
+		},
+	}
 }
 
 func (m *Master) getHostAddressLabel() string {

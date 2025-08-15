@@ -381,10 +381,15 @@ func marshallYsonConfig(c interface{}) ([]byte, error) {
 	return result, nil
 }
 
-func (g *Generator) GetClusterConnection() ([]byte, error) {
+func (g *Generator) GetClusterConnection() ClusterConnection {
 	var c ClusterConnection
 	keyring := getVaultKeyring(g.commonSpec, nil)
 	g.fillClusterConnection(&c, nil, keyring)
+	return c
+}
+
+func (g *Generator) GetClusterConnectionConfig() ([]byte, error) {
+	c := g.GetClusterConnection()
 	return marshallYsonConfig(c)
 }
 
@@ -1129,7 +1134,7 @@ func (g *Generator) GetComponentConfig(component consts.ComponentType, name stri
 	switch component {
 	case consts.ClusterConnectionType:
 		if name == "" {
-			return g.GetClusterConnection()
+			return g.GetClusterConnectionConfig()
 		}
 	case consts.NativeClientConfigType:
 		if name == "" {

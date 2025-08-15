@@ -23,6 +23,7 @@ const ConditionYqlaPreparedForUpdating = "YqlaPreparedForUpdating"
 const ConditionMasterExitReadOnlyPrepared = "MasterExitReadOnlyPrepared"
 const ConditionMasterExitedReadOnly = "MasterExitedReadOnly"
 const ConditionSafeModeDisabled = "SafeModeDisabled"
+const ConditionCypressPatchApplied = "CypressPatchApplied"
 const ConditionTimbertruckPrepared = "TimbertruckPrepared"
 const ConditionTimbertruckUserInitialized = "TimbertruckUserInitialized"
 
