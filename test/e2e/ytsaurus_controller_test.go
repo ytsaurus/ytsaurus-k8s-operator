@@ -39,6 +39,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ypatch"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -859,17 +860,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			var overrides *corev1.ConfigMap
 
 			BeforeEach(func() {
-				overrides = &corev1.ConfigMap{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "config-overrides",
-						Namespace: namespace,
-					},
-				}
+				ytBuilder.WithOverrides()
+				overrides = ytBuilder.Overrides
 				objects = append(objects, overrides)
-
-				ytsaurus.Spec.ConfigOverrides = &corev1.LocalObjectReference{
-					Name: overrides.Name,
-				}
 
 				// configure exec nodes to use CRI environment
 				ytsaurus.Spec.ExecNodes[0].JobEnvironment = &ytv1.JobEnvironmentSpec{
@@ -886,10 +879,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			It("ConfigOverrides update should trigger reconciliation", func(ctx context.Context) {
 				By("Updating config overrides")
-				overrides.Data = map[string]string{
-					"ytserver-discovery.yson": "{resource_limits = {total_memory = 123456789;};}",
-					"containerd.toml":         "{\"plugins\" = {\"io.containerd.grpc.v1.cri\" = {registry = {configs = {\"cr.test\" = {auth = {username = user; password = password;}}}}}}}",
-				}
+				overrides.Data["ytserver-discovery.yson"] = `{resource_limits = {total_memory = 123456789;};}`
+				overrides.Data["containerd.toml"] = `{"plugins" = {"io.containerd.grpc.v1.cri" = {registry = {configs = {"cr.test" = {auth = {username = user; password = password;}}}}}}}`
 				UpdateObject(ctx, overrides)
 
 				By("Waiting cluster update starts")
@@ -908,6 +899,24 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Updated).To(ConsistOf("ds-0", "end-0"), "updated")
+			})
+
+			It("Applies cypress patch by config overrides", func(ctx context.Context) {
+				By("Updating config overrides")
+				overrides.Data["cypress-patch.yson"] = YsonPretty(
+					ypatch.PatchSet{
+						"//sys/scheduler/config": {
+							ypatch.Replace("/spec_template/issue_temporary_token", true),
+						},
+					},
+				)
+				UpdateObject(ctx, overrides)
+
+				Eventually(func() (any, error) {
+					var value any
+					err := ytClient.GetNode(ctx, ypath.Path("//sys/scheduler/config/spec_template/issue_temporary_token"), &value, nil)
+					return value, err
+				}, upgradeTimeout, pollInterval).Should(BeTrue())
 			})
 
 		}) // update overrides
