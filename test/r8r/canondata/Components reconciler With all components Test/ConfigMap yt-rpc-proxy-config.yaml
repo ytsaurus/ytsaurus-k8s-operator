@@ -1,3 +1,4 @@
+apiVersion: v1
 data:
   ytserver-rpc-proxy.yson: |-
     {
@@ -79,8 +80,10 @@ data:
             secure=%true;
         };
     }
+kind: ConfigMap
 metadata:
   creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-rpc-proxy
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
