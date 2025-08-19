@@ -19,6 +19,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/watch"
@@ -145,6 +146,15 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			codecs := serializer.NewCodecFactory(k8sScheme)
 			k8sObjectTraker := clienttesting.NewObjectTracker(k8sScheme, codecs.UniversalDeserializer())
 
+			getGeneration := func(obj client.Object) int64 {
+				gvr, _ := meta.UnsafeGuessKindToResource(obj.GetObjectKind().GroupVersionKind())
+				currentObj, err := k8sObjectTraker.Get(gvr, obj.GetNamespace(), obj.GetName())
+				Expect(err).To(Succeed())
+				accessor, err := meta.Accessor(currentObj)
+				Expect(err).To(Succeed())
+				return accessor.GetGeneration()
+			}
+
 			clientBuilder := fake.NewClientBuilder()
 			clientBuilder.WithScheme(k8sScheme)
 			clientBuilder.WithObjectTracker(k8sObjectTraker)
@@ -156,12 +166,19 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 					return err
 				},
 				Create: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.CreateOption) error {
+					gvks, _, err := k8sScheme.ObjectKinds(obj)
+					Expect(err).To(Succeed())
+					obj.GetObjectKind().SetGroupVersionKind(gvks[0])
+					obj.SetGeneration(1)
+
 					log.Info("Create object", "gvk", obj.GetObjectKind().GroupVersionKind(), "name", obj.GetName(), "version", obj.GetResourceVersion())
 					return client.Create(ctx, obj, opts...)
 				},
-				Update: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
+				Update: func(ctx context.Context, c client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
+					obj.SetGeneration(getGeneration(obj) + 1)
+
 					log.Info("Update object", "gvk", obj.GetObjectKind().GroupVersionKind(), "name", obj.GetName())
-					return client.Update(ctx, obj, opts...)
+					return c.Update(ctx, obj, opts...)
 				},
 				Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
 					log.Info("Patch object", "gvk", obj.GetObjectKind().GroupVersionKind(), "name", obj.GetName())

@@ -1,3 +1,4 @@
+apiVersion: v1
 data:
   ytserver-data-node.yson: |-
     {
@@ -115,8 +116,10 @@ data:
             };
         };
     }
+kind: ConfigMap
 metadata:
   creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-data-node
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator

@@ -1,4 +1,5 @@
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-master
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -17,6 +18,7 @@
     uid: ""
   resourceVersion: "1"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-discovery
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -35,6 +37,7 @@
     uid: ""
   resourceVersion: "1"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-discovery
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -53,6 +56,7 @@
     uid: ""
   resourceVersion: "1"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -71,6 +75,7 @@
     uid: ""
   resourceVersion: "1"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -89,6 +94,7 @@
     uid: ""
   resourceVersion: "1"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -107,6 +113,7 @@
     uid: ""
   resourceVersion: "1"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-master
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -125,6 +132,7 @@
     uid: ""
   resourceVersion: "1"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-master
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -143,6 +151,7 @@
     uid: ""
   resourceVersion: "1"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-client
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -161,6 +170,7 @@
     uid: ""
   resourceVersion: "1"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-client
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -179,6 +189,7 @@
     uid: ""
   resourceVersion: "2"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-discovery
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -197,6 +208,7 @@
     uid: ""
   resourceVersion: "1"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-discovery
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -216,6 +228,7 @@
     uid: ""
   resourceVersion: "1"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -234,6 +247,7 @@
     uid: ""
   resourceVersion: "1"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -253,6 +267,7 @@
     uid: ""
   resourceVersion: "1"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-master
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -271,6 +286,7 @@
     uid: ""
   resourceVersion: "1"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-master
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -289,6 +305,7 @@
     uid: ""
   resourceVersion: "2"
 - creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-master
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator

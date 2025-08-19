@@ -1,3 +1,4 @@
+apiVersion: v1
 data:
   containerd.toml: |
     root = "/yt/node-data/image-cache"
@@ -27,8 +28,10 @@ data:
               [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
                 SystemdCgroup = false
         [plugins."io.containerd.grpc.v1.cri".registry]
+kind: ConfigMap
 metadata:
   creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-exec-node
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
