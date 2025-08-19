@@ -37,6 +37,7 @@ func (c *Chyt) APIProxy() APIProxy {
 }
 
 func (c *Chyt) SetStatusCondition(condition metav1.Condition) {
+	condition.ObservedGeneration = c.chyt.Generation
 	meta.SetStatusCondition(&c.chyt.Status.Conditions, condition)
 }
 

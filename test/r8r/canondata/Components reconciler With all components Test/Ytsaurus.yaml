@@ -188,81 +188,97 @@ status:
   conditions:
   - lastTransitionTime: null
     message: Ready
+    observedGeneration: 1
     reason: Ready
     status: "True"
     type: DiscoveryReady
   - lastTransitionTime: null
     message: Ready
+    observedGeneration: 1
     reason: Ready
     status: "True"
     type: MasterCacheReady
   - lastTransitionTime: null
     message: Init job successfully completed
+    observedGeneration: 1
     reason: InitJobCompleted
     status: "True"
     type: defaultMasterInitJobCompleted
   - lastTransitionTime: null
     message: yt-master-init-job-default completed
+    observedGeneration: 1
     reason: Ready
     status: "True"
     type: MasterReady
   - lastTransitionTime: null
     message: Ready
+    observedGeneration: 1
     reason: Ready
     status: "True"
     type: DataNodeReady
   - lastTransitionTime: null
     message: Ready
+    observedGeneration: 1
     reason: Ready
     status: "True"
     type: ExecNodeReady
   - lastTransitionTime: null
     message: Ready
+    observedGeneration: 1
     reason: Ready
     status: "True"
     type: ControllerAgentReady
   - lastTransitionTime: null
     message: Ready
+    observedGeneration: 1
     reason: Ready
     status: "True"
     type: HttpProxyReady
   - lastTransitionTime: null
     message: Ready
+    observedGeneration: 1
     reason: Ready
     status: "True"
     type: RpcProxyReady
   - lastTransitionTime: null
     message: Ready
+    observedGeneration: 1
     reason: Ready
     status: "True"
     type: SchedulerReady
   - lastTransitionTime: null
     message: Init job successfully completed
+    observedGeneration: 1
     reason: InitJobCompleted
     status: "True"
     type: yql-agent-environmentYqlAgentInitJobCompleted
   - lastTransitionTime: null
     message: Init job successfully completed
+    observedGeneration: 1
     reason: InitJobCompleted
     status: "True"
     type: userYtsaurusClientInitJobCompleted
   - lastTransitionTime: null
     message: Ready
+    observedGeneration: 1
     reason: Ready
     status: "True"
     type: YtsaurusClientReady
   - lastTransitionTime: null
     message: Ready
+    observedGeneration: 1
     reason: Ready
     status: "True"
     type: TimbertruckReady
   - lastTransitionTime: null
     message: Init job successfully completed
+    observedGeneration: 1
     reason: InitJobCompleted
     status: "True"
     type: yql-agent-update-environmentYqlAgentInitJobCompleted
   - lastTransitionTime: null
     message: yt-yql-agent-init-job-yql-agent-update-environment completed
+    observedGeneration: 1
     reason: Ready
     status: "True"
     type: YqlAgentReady
