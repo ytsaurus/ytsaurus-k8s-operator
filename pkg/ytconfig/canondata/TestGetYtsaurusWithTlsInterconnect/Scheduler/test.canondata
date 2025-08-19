@@ -45,7 +45,7 @@
     "monitoring_port"=10011;
     "rpc_port"=9011;
     "bus_server"={
-        "encryption_mode"=optional;
+        "encryption_mode"=required;
         "cert_chain"={
             "file_name"="/tls/bus_secret/tls.crt";
         };
@@ -82,7 +82,11 @@
         };
         "bus_client"={
             "encryption_mode"=required;
-            "verification_mode"=none;
+            ca={
+                "file_name"="/tls/ca_bundle/ca.crt";
+            };
+            "verification_mode"=full;
+            "peer_alternative_host_name"="fake.svc.cluster.local";
         };
         "master_cache"={
             addresses=[

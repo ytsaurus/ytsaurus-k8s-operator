@@ -991,14 +991,15 @@ spec:
                     type: object
                     x-kubernetes-map-type: atomic
                   tlsInsecure:
-                    description: Disable TLS certificate verification.
+                    description: 'Disable client certificate verification when TLS
+                      is required, if not required - '
                     type: boolean
                   tlsPeerAlternativeHostName:
                     description: Define alternative host name for certificate verification.
                     type: string
                   tlsRequired:
-                    description: Require encrypted connections, otherwise only when
-                      required by peer.
+                    description: Require secure TLS connections by server, otherwise
+                      only by client.
                     type: boolean
                   tlsSecret:
                     description: Server certificate. Reference to kubernetes.io/tls
