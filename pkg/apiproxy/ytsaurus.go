@@ -133,6 +133,7 @@ func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateS
 }
 
 func (c *Ytsaurus) SetStatusCondition(condition metav1.Condition) {
+	condition.ObservedGeneration = c.ytsaurus.Generation
 	meta.SetStatusCondition(&c.ytsaurus.Status.Conditions, condition)
 	sortConditions(c.ytsaurus.Status.Conditions)
 }
