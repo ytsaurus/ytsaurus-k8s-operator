@@ -1,3 +1,4 @@
+apiVersion: v1
 data:
   ytserver-scheduler.yson: |-
     {
@@ -78,8 +79,10 @@ data:
             };
         };
     }
+kind: ConfigMap
 metadata:
   creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-scheduler
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator

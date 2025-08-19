@@ -1,3 +1,4 @@
+apiVersion: v1
 data:
   client.yson: |-
     {
@@ -59,8 +60,10 @@ data:
     /usr/bin/yt create document //sys/yql_agent/config --attributes '{value={}}' --recursive --ignore-existing
     /usr/bin/yt set //sys/@cluster_connection/yql_agent '{stages={production={channel={disable_balancing_on_single_address=%false;addresses=["yqla-0.yql-agents.ytsaurus-components.svc.cluster.local:9019";]}}}}'
     /usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/test-ytsaurus
+kind: ConfigMap
 metadata:
   creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-yql-agent
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator

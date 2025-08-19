@@ -1,8 +1,11 @@
+apiVersion: cluster.ytsaurus.tech/v1
+kind: Ytsaurus
 metadata:
   creationTimestamp: null
+  generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "12"
+  resourceVersion: "13"
 spec:
   controllerAgents:
     instanceCount: 1
@@ -263,5 +266,6 @@ status:
     reason: Ready
     status: "True"
     type: YqlAgentReady
+  observedGeneration: 1
   state: Running
   updateStatus: {}

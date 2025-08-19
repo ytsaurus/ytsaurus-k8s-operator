@@ -1,3 +1,4 @@
+apiVersion: v1
 data:
   client.yson: |-
     {
@@ -53,8 +54,10 @@ data:
     /usr/bin/yt create map_node '//sys/cypress_tokens/dcd89cc6efae0df4e42a9941000a5d1f4704e17162e02fbbae2e176989421ea4' --ignore-existing
     /usr/bin/yt set '//sys/cypress_tokens/dcd89cc6efae0df4e42a9941000a5d1f4704e17162e02fbbae2e176989421ea4/@user' 'robot-ytsaurus-k8s-operator'
     /usr/bin/yt add-member robot-ytsaurus-k8s-operator superusers || true
+kind: ConfigMap
 metadata:
   creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-client
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
