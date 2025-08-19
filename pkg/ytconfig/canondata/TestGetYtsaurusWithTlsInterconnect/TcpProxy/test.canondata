@@ -72,7 +72,11 @@
         };
         "bus_client"={
             "encryption_mode"=required;
-            "verification_mode"=none;
+            ca={
+                "file_name"="/tls/ca_bundle/ca.crt";
+            };
+            "verification_mode"=full;
+            "peer_alternative_host_name"="fake.svc.cluster.local";
         };
         "master_cache"={
             addresses=[

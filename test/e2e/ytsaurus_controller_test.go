@@ -1503,7 +1503,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		}) // integration chyt
 
-		DescribeTableSubtree("With Bus RPC mTLS", Label("tls"), func(coreImage, chytImage string) {
+		DescribeTableSubtree("With Bus RPC TLS", Label("tls"), func(coreImage, chytImage string) {
 
 			BeforeEach(func() {
 				log.Info("YTsaurus images", "coreImage", coreImage, "chytImage", chytImage)
@@ -1513,15 +1513,44 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				requiredImages = append(requiredImages, chytImage)
 
-				if os.Getenv("YTSAURUS_TLS_READY") == "" {
-					Skip("YTsaurus is not ready for TLS")
+				By("Adding native transport TLS certificates")
+				nativeServerCert := certBuilder.BuildCertificate(ytsaurus.Name+"-server", []string{
+					ytsaurus.Name,
+				})
+				nativeClientCert := certBuilder.BuildCertificate(ytsaurus.Name+"-client", []string{
+					ytsaurus.Name,
+				})
+				objects = append(objects,
+					nativeServerCert,
+					nativeClientCert,
+				)
+
+				ytsaurus.Spec.CABundle = &ytv1.FileObjectReference{
+					Name: testutil.TestTrustBundleName,
 				}
 
-				if coreImage == testutil.YtsaurusImageFuture {
+				ytsaurus.Spec.NativeTransport = &ytv1.RPCTransportSpec{
+					TLSSecret: &corev1.LocalObjectReference{
+						Name: nativeServerCert.Name,
+					},
+					TLSRequired:                true,
+					TLSPeerAlternativeHostName: ytsaurus.Name,
+				}
+
+				if testutil.YtsaurusTLSReady {
 					By("Enabling RPC proxy public address")
 					ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
 						RPCProxyHavePublicAddress: true,
 					}
+
+					By("Activating mutual TLS interconnect")
+					ytsaurus.Spec.NativeTransport.TLSInsecure = false
+					ytsaurus.Spec.NativeTransport.TLSClientSecret = &corev1.LocalObjectReference{
+						Name: nativeClientCert.Name,
+					}
+				} else {
+					By("Activating TLS-only interconnect")
+					ytsaurus.Spec.NativeTransport.TLSInsecure = true
 				}
 
 				By("Adding all components")
@@ -1533,48 +1562,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytBuilder.WithStrawberryController()
 
 				withHTTPSProxy()
-
 				withRPCTLSProxy()
-
-				if coreImage == testutil.YtsaurusImageFuture {
-					By("Enabling RPC proxy public address")
-					ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
-						RPCProxyHavePublicAddress: true,
-					}
-				}
 
 				By("Adding CHYT instance")
 				chyt = ytBuilder.CreateChyt()
 				chyt.Spec.Image = chytImage
 				objects = append(objects, chyt)
-
-				By("Adding native transport TLS certificates")
-				nativeServerCert := certBuilder.BuildCertificate(ytsaurus.Name+"-server", []string{
-					ytsaurus.Name,
-				})
-				nativeClientCert := certBuilder.BuildCertificate(ytsaurus.Name+"-client", []string{
-					ytsaurus.Name,
-				})
-
-				ytsaurus.Spec.CABundle = &ytv1.FileObjectReference{
-					Name: testutil.TestTrustBundleName,
-				}
-
-				ytsaurus.Spec.NativeTransport = &ytv1.RPCTransportSpec{
-					TLSSecret: &corev1.LocalObjectReference{
-						Name: nativeServerCert.Name,
-					},
-					TLSClientSecret: &corev1.LocalObjectReference{
-						Name: nativeClientCert.Name,
-					},
-					TLSRequired:                true,
-					TLSPeerAlternativeHostName: ytsaurus.Name,
-				}
-
-				objects = append(objects,
-					nativeServerCert,
-					nativeClientCert,
-				)
 			})
 
 			It("Verify that mTLS is active", func(ctx context.Context) {

@@ -496,8 +496,9 @@ func TestGetYtsaurusWithTlsInterconnect(t *testing.T) {
 		TLSSecret: &corev1.LocalObjectReference{
 			Name: "ytsaurus-native-cert",
 		},
-		TLSRequired:                true,
-		TLSInsecure:                true,                                 // not mTLS
+		TLSRequired: true, // client and server requires TLS
+		TLSInsecure: true, // no mTLS
+
 		TLSPeerAlternativeHostName: testNamespace + ".svc.cluster.local", // or testNamespace.testClusterDomain ?
 	}
 
@@ -529,7 +530,9 @@ func TestGetYtsaurusWithMutualTLSInterconnect(t *testing.T) {
 		TLSClientSecret: &corev1.LocalObjectReference{
 			Name: "ytsaurus-native-client-cert",
 		},
-		TLSRequired:                true,
+		TLSRequired: true,  // client and server requires TLS
+		TLSInsecure: false, // mTLS
+
 		TLSPeerAlternativeHostName: testNamespace + ".svc.cluster.local",
 	}
 

@@ -369,10 +369,10 @@ type RPCTransportSpec struct {
 	// Client certificate. Reference to kubernetes.io/tls secret.
 	//+optional
 	TLSClientSecret *corev1.LocalObjectReference `json:"tlsClientSecret,omitempty"`
-	// Require encrypted connections, otherwise only when required by peer.
+	// Require secure TLS connections by server, otherwise only by client.
 	//+optional
 	TLSRequired bool `json:"tlsRequired,omitempty"`
-	// Disable TLS certificate verification.
+	// Disable client certificate verification when TLS is required, if not required - verify neither.
 	//+optional
 	TLSInsecure bool `json:"tlsInsecure,omitempty"`
 	// Define alternative host name for certificate verification.

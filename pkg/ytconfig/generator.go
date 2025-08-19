@@ -322,8 +322,7 @@ func (g *NodeGenerator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec)
 }
 
 func fillBusServer(b *BusServer, s *ytv1.RPCTransportSpec, keyring *Keyring) {
-	// For insecure mode status of TLS is decided by client.
-	if s.TLSRequired && !s.TLSInsecure {
+	if s.TLSRequired {
 		b.EncryptionMode = EncryptionModeRequired
 	} else {
 		b.EncryptionMode = EncryptionModeOptional
@@ -332,13 +331,13 @@ func fillBusServer(b *BusServer, s *ytv1.RPCTransportSpec, keyring *Keyring) {
 	b.CertChain = keyring.BusServerCertificate
 	b.PrivateKey = keyring.BusServerPrivateKey
 
-	if s.TLSInsecure {
-		b.VerificationMode = VerificationModeNone
-	} else {
-		// Always require mTLS in secure mode.
+	if s.TLSRequired && !s.TLSInsecure {
+		// Require and verify client certificate.
 		b.VerificationMode = VerificationModeFull
 		b.CA = keyring.BusCABundle
 		b.PeerAlternativeHostName = s.TLSPeerAlternativeHostName
+	} else {
+		b.VerificationMode = VerificationModeNone
 	}
 }
 
@@ -355,18 +354,15 @@ func (g *NodeGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s 
 		c.BusClient = &Bus{}
 	}
 
-	if s.TLSRequired {
+	if s.TLSRequired || !s.TLSInsecure {
+		// Require and verify server certificate.
 		c.BusClient.EncryptionMode = EncryptionModeRequired
-	} else {
-		c.BusClient.EncryptionMode = EncryptionModeOptional
-	}
-
-	if s.TLSInsecure {
-		c.BusClient.VerificationMode = VerificationModeNone
-	} else {
 		c.BusClient.VerificationMode = VerificationModeFull
 		c.BusClient.CA = keyring.BusCABundle
 		c.BusClient.PeerAlternativeHostName = s.TLSPeerAlternativeHostName
+	} else {
+		c.BusClient.EncryptionMode = EncryptionModeOptional
+		c.BusClient.VerificationMode = VerificationModeNone
 	}
 
 	c.BusClient.CertChain = keyring.BusClientCertificate

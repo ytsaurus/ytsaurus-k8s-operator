@@ -15,7 +15,7 @@
                 retries=1000;
             };
             "bus_server"={
-                "encryption_mode"=optional;
+                "encryption_mode"=required;
                 "cert_chain"={
                     "environment_variable"="YT_SECURE_VAULT_YT_BUS_SERVER_CERTIFICATE";
                     "file_name"="/tls/bus_secret/tls.crt";
