@@ -16,6 +16,7 @@ import (
 
 const (
 	YtsaurusName  = "test-ytsaurus"
+	OverridesName = "test-overrides"
 	MasterPodName = "ms-0"
 	// RemoteResourceName is a name for test remote ytsaurus and nodes.
 	// It is short because of error:
@@ -72,6 +73,7 @@ type YtsaurusBuilder struct {
 	SandboxImage      *string
 	QueryTrackerImage string
 	Ytsaurus          *ytv1.Ytsaurus
+	Overrides         *corev1.ConfigMap
 
 	// Set MinReadyInstanceCount for all components
 	MinReadyInstanceCount *int
@@ -183,6 +185,21 @@ func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 	builder.CreateMinimal()
 	builder.WithBaseComponents()
 	return builder.Ytsaurus
+}
+
+func (b *YtsaurusBuilder) WithOverrides() {
+	b.Overrides = &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      OverridesName,
+			Namespace: b.Namespace,
+		},
+		Data: map[string]string{
+			"place-holder": "",
+		},
+	}
+	b.Ytsaurus.Spec.ConfigOverrides = &corev1.LocalObjectReference{
+		Name: OverridesName,
+	}
 }
 
 func (b *YtsaurusBuilder) WithMasterCaches() {

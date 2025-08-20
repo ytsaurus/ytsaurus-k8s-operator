@@ -7,6 +7,8 @@ metadata:
   namespace: ytsaurus-components
   resourceVersion: "12"
 spec:
+  configOverrides:
+    name: test-overrides
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
   discovery:
     instanceCount: 1
