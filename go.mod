@@ -1,6 +1,6 @@
 module github.com/ytsaurus/ytsaurus-k8s-operator
 
-go 1.23.12
+go 1.24.6
 
 require (
 	github.com/BurntSushi/toml v1.4.0
