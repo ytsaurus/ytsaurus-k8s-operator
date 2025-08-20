@@ -236,6 +236,9 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		})
 
 		By("Creating ytsaurus resource", func() {
+			if ytBuilder.Overrides != nil {
+				Expect(k8sClient.Create(ctx, ytBuilder.Overrides)).To(Succeed())
+			}
 			Expect(k8sClient.Create(ctx, ytsaurus)).To(Succeed())
 		})
 
@@ -391,6 +394,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		BeforeEach(func() {
 			ytBuilder.WithExecNodes()
 			ytBuilder.WithCRIJobEnvironment()
+			ytBuilder.WithOverrides()
 		})
 		It("Test", func(ctx context.Context) {})
 	})

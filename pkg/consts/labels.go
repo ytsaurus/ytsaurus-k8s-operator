@@ -4,9 +4,14 @@ import (
 	"fmt"
 )
 
-const YTClusterLabelName = "ytsaurus.tech/cluster-name"
-const YTComponentLabelName = "yt_component"
-const YTMetricsLabelName = "yt_metrics"
+const (
+	YTClusterLabelName = "ytsaurus.tech/cluster-name"
+
+	YTComponentLabelName = "yt_component"
+	YTMetricsLabelName   = "yt_metrics"
+
+	ConfigOverridesVersionLabelName = "ytsaurus.tech/config-overrides-version"
+)
 
 func ComponentLabel(component ComponentType) string {
 	// TODO(achulkov2): We should probably use `ytsaurus` instead of `yt` everywhere, but
