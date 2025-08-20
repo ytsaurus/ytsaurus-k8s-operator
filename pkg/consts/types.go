@@ -16,6 +16,7 @@ const (
 	RpcProxyType             ComponentType = "RpcProxy"
 	SchedulerType            ComponentType = "Scheduler"
 	StrawberryControllerType ComponentType = "StrawberryController"
+	TabletBalancerType       ComponentType = "TabletBalancer"
 	TabletNodeType           ComponentType = "TabletNode"
 	TcpProxyType             ComponentType = "TcpProxy"
 	KafkaProxyType           ComponentType = "KafkaProxy"
