@@ -414,7 +414,7 @@ install-tools: $(LOCALBIN) ## Install all tools into $LOCALBIN
 	GOBIN=${LOCALBIN} go install -modfile=tool/go.mod tool
 	GOBIN=${LOCALBIN} go install -modfile=tool/golangci-lint/go.mod tool
 
-GO_TOOL_EXEC = go tool -modfile=tool/go.mod
+GO_TOOL_EXEC = go tool -modfile=${CURDIR}/tool/go.mod
 
 # Tool Binaries
 KUBECTL         ?= kubectl --context $(KIND_KUBE_CONTEXT)
@@ -422,7 +422,7 @@ HELM            ?= helm --kube-context $(KIND_KUBE_CONTEXT)
 KUSTOMIZE       ?= ${GO_TOOL_EXEC} kustomize
 CONTROLLER_GEN  ?= ${GO_TOOL_EXEC} controller-gen
 ENVTEST         ?= ${GO_TOOL_EXEC} setup-envtest
-GOLANGCI_LINT   ?= go tool -modfile=tool/golangci-lint/go.mod golangci-lint
+GOLANGCI_LINT   ?= go tool -modfile=${CURDIR}/tool/golangci-lint/go.mod golangci-lint
 GINKGO          ?= ${GO_TOOL_EXEC} ginkgo
 CRD_REF_DOCS    ?= ${GO_TOOL_EXEC} crd-ref-docs
 KIND            ?= ${GO_TOOL_EXEC} kind
