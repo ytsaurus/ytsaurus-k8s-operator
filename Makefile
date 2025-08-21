@@ -21,6 +21,9 @@ YTSAURUS_SPEC ?= config/samples/cluster_v1_cri.yaml
 ## Version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.24.2
 
+CERT_MANAGER_VERSION = v1.14.4
+TRUST_MANAGER_VERSION = v0.17.1
+
 ## YTsaurus operator image name.
 OPERATOR_IMAGE = ytsaurus/k8s-operator
 
@@ -122,16 +125,16 @@ help: ## Display this help.
 generate: generate-code manifests helm-chart generate-docs ## Generate everything.
 
 .PHONY: manifests
-manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd:maxDescLen=80 webhook paths="{\"./api/...\" , \"./controllers/...\", \"./pkg/...\"}" output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate-code
-generate-code: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate-code: ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="{\"./api/...\" , \"./controllers/...\", \"./pkg/...\"}"
 	$(MAKE) fmt vet
 
 .PHONY: generate-docs
-generate-docs: crd-ref-docs ## Generate documentation.
+generate-docs: ## Generate documentation.
 	$(CRD_REF_DOCS) --config config/crd-ref-docs/config.yaml --renderer=markdown --source-path=api/v1 --output-path=docs/api.md
 
 .PHONY: fmt
@@ -143,11 +146,11 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: generate-code manifests envtest-assets ginkgo ## Run tests.
+test: generate-code manifests envtest-assets ## Run tests.
 	$(GINKGO) $(GINKGO_FLAGS) ./... $(GO_TEST_FLAGS)
 
 .PHONY: test-e2e
-test-e2e: generate-code manifests ginkgo ## Run e2e tests.
+test-e2e: generate-code manifests ## Run e2e tests.
 	$(GINKGO) $(GINKGO_FLAGS) ./test/e2e/... $(GO_TEST_FLAGS) -- --enable-e2e
 
 .PHONY: clean-e2e
@@ -155,11 +158,11 @@ clean-e2e: ## Delete k8s namespaces created by e2e tests.
 	$(KUBECTL) delete namespaces -l app.kubernetes.io/part-of=ytsaurus-dev
 
 .PHONY: lint
-lint: golangci-lint ## Run golangci-lint linter.
+lint: ## Run golangci-lint linter.
 	$(GOLANGCI_LINT) run
 
 .PHONY: lint-fix
-lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes.
+lint-fix: ## Run golangci-lint linter and perform fixes.
 	$(MAKE) fmt
 	$(MAKE) vet
 	$(GOLANGCI_LINT) run --fix
@@ -170,13 +173,13 @@ lint-generated: generate helm-chart ## Check that generated files are uptodate a
 	test -z "$(shell git status --porcelain api docs/api.md config ytop-chart)"
 
 .PHONY: canonize
-canonize: generate-code manifests envtest-assets ginkgo ## Canonize test results.
+canonize: generate-code manifests envtest-assets ## Canonize test results.
 	rm -fr pkg/components/canondata pkg/ytconfig/canondata test/r8r/canondata
 	CANONIZE=y \
 	$(GINKGO) $(GINKGO_FLAGS) ./... $(GO_TEST_FLAGS)
 
 .PHONY: canonize-ytconfig
-canonize-ytconfig: generate-code fmt vet ginkgo ## Canonize ytconfig and reconciler test results.
+canonize-ytconfig: generate-code fmt vet ## Canonize ytconfig and reconciler test results.
 	rm -fr pkg/ytconfig/canondata test/r8r/canondata
 	CANONIZE=y \
 	$(GINKGO) $(GINKGO_FLAGS) ./pkg/ytconfig/... ./test/r8r/... $(GO_TEST_FLAGS)
@@ -189,7 +192,7 @@ ifneq (${KIND_CLUSTER_CONFIG},)
 endif
 
 .PHONY: kind-create-cluster
-kind-create-cluster: kind ## Create kind kubernetes cluster.
+kind-create-cluster: ## Create kind kubernetes cluster.
 	@if ! $(KIND) get clusters | grep -q $(KIND_CLUSTER_NAME); then \
 		$(KIND) create cluster --name $(KIND_CLUSTER_NAME) $(KIND_CLUSTER_CREATE_FLAGS); \
 	fi
@@ -207,7 +210,7 @@ kind-use-context: ## Switch kubectl default context and namespace.
 	$(KUBECTL) config use-context $(KIND_KUBE_CONTEXT)
 
 .PHONY: kind-delete-cluster
-kind-delete-cluster: kind ## Delete kind kubernetes cluster.
+kind-delete-cluster: ## Delete kind kubernetes cluster.
 	@if $(KIND) get clusters | grep -q $(KIND_CLUSTER_NAME); then \
 		$(KIND) delete cluster --name $(KIND_CLUSTER_NAME); \
 	fi
@@ -285,7 +288,7 @@ helm-install: ## Install helm chart from sources.
 	$(KUBECTL) -n $(OPERATOR_NAMESPACE) rollout restart deployment -l app.kubernetes.io/instance=$(OPERATOR_INSTANCE)
 
 .PHONY: helm-kind-install
-helm-kind-install: helm-chart docker-build kind ## Build docker image, load into kind and install helm chart.
+helm-kind-install: helm-chart docker-build ## Build docker image, load into kind and install helm chart.
 	$(KIND) load docker-image --name $(KIND_CLUSTER_NAME) ${OPERATOR_IMAGE}:${OPERATOR_TAG}
 	$(MAKE) helm-install
 
@@ -349,7 +352,7 @@ docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
 
 .PHONY: helm-chart
-helm-chart: manifests kustomize envsubst kubectl-slice ## Generate helm chart.
+helm-chart: manifests ## Generate helm chart.
 	$(KUSTOMIZE) build config/helm | name="$(OPERATOR_CHART)" $(ENVSUBST) | $(KUBECTL_SLICE) -q -o $(OPERATOR_CHART_CRDS) -t "{{.metadata.name}}.yaml" --prune
 	name="$(OPERATOR_CHART_NAME_RELEASE)" version="$(RELEASE_VERSION)" $(ENVSUBST) < config/helm/Chart.yaml > $(OPERATOR_CHART)/Chart.yaml
 
@@ -360,22 +363,22 @@ ifndef ignore-not-found
 endif
 
 .PHONY: install
-install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+install: manifests ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | $(KUBECTL) create -f -
 
 .PHONY: update
-update: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+update: manifests ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | $(KUBECTL) replace -f -
 
 .PHONY: uninstall
-uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+uninstall: manifests ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/crd | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: reinstall
 reinstall: uninstall install ## Reinstall CRDs from the K8s cluster specified in ~/.kube/config.
 
 .PHONY: deploy
-deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | $(KUBECTL) create -f -
 
@@ -383,7 +386,7 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
 
-release: kustomize yq  ## Release operator docker image and helm chart.
+release: ## Release operator docker image and helm chart.
 	docker build ${DOCKER_BUILD_ARGS} -t $(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION} .
 	docker push $(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION}
 	docker tag $(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION} ghcr.io/$(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION}
@@ -403,104 +406,30 @@ LOCALBIN ?= $(shell pwd)/bin
 $(LOCALBIN):
 	mkdir -p "$(LOCALBIN)"
 
+upgrade-tools: ## Upgrade all tools to their latest version
+	go get -modfile=tool/go.mod tool
+	go get -modfile=tool/golangci-lint/go.mod tool
+
+install-tools: $(LOCALBIN) ## Install all tools into $LOCALBIN
+	GOBIN=${LOCALBIN} go install -modfile=tool/go.mod tool
+	GOBIN=${LOCALBIN} go install -modfile=tool/golangci-lint/go.mod tool
+
+GO_TOOL_EXEC = go tool -modfile=tool/go.mod
+
 # Tool Binaries
-KUBECTL ?= kubectl --context $(KIND_KUBE_CONTEXT)
-HELM ?= helm --kube-context $(KIND_KUBE_CONTEXT)
-KUSTOMIZE ?= $(LOCALBIN)/kustomize-$(KUSTOMIZE_VERSION)
-CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen-$(CONTROLLER_GEN_VERSION)
-ENVTEST ?= $(LOCALBIN)/setup-envtest-$(ENVTEST_VERSION)
-GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
-GINKGO ?= $(LOCALBIN)/ginkgo-$(GINKGO_VERSION)
-CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs-$(CRD_REF_DOCS_VERSION)
-KIND ?= $(LOCALBIN)/kind-$(KIND_VERSION)
-ENVSUBST ?= $(LOCALBIN)/envsubst-$(ENVSUBST_VERSION)
-KUBECTL_SLICE ?= $(LOCALBIN)/kubectl-slice-$(KUBECTL_SLICE_VERSION)
-YQ ?= $(LOCALBIN)/yq-$(YQ_VERSION)
-
-# Tool Versions
-KUSTOMIZE_VERSION ?= v5.3.0
-CONTROLLER_GEN_VERSION ?= v0.16.5
-# See here https://github.com/kubernetes-sigs/controller-runtime
-ENVTEST_VERSION ?= release-0.18
-## golangci-lint version.
-GOLANGCI_LINT_VERSION ?= v2.2.2
-GINKGO_VERSION ?= $(call go-get-version,github.com/onsi/ginkgo/v2)
-CRD_REF_DOCS_VERSION ?= v0.1.0
-## kind version.
-KIND_VERSION ?= v0.22.0
-CERT_MANAGER_VERSION ?= v1.14.4
-TRUST_MANAGER_VERSION ?= v0.17.1
-ENVSUBST_VERSION ?= v1.4.2
-KUBECTL_SLICE_VERSION ?= v1.3.1
-YQ_VERSION ?= v4.44.3
-
-.PHONY: kustomize
-kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
-$(KUSTOMIZE): $(LOCALBIN)
-	$(call go-install-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v5,$(KUSTOMIZE_VERSION))
-
-.PHONY: controller-gen
-controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
-$(CONTROLLER_GEN): $(LOCALBIN)
-	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen,$(CONTROLLER_GEN_VERSION))
-
-.PHONY: envtest
-envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
-$(ENVTEST): $(LOCALBIN)
-	$(call go-install-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest,$(ENVTEST_VERSION))
+KUBECTL         ?= kubectl --context $(KIND_KUBE_CONTEXT)
+HELM            ?= helm --kube-context $(KIND_KUBE_CONTEXT)
+KUSTOMIZE       ?= ${GO_TOOL_EXEC} kustomize
+CONTROLLER_GEN  ?= ${GO_TOOL_EXEC} controller-gen
+ENVTEST         ?= ${GO_TOOL_EXEC} setup-envtest
+GOLANGCI_LINT   ?= go tool -modfile=tool/golangci-lint/go.mod golangci-lint
+GINKGO          ?= ${GO_TOOL_EXEC} ginkgo
+CRD_REF_DOCS    ?= ${GO_TOOL_EXEC} crd-ref-docs
+KIND            ?= ${GO_TOOL_EXEC} kind
+ENVSUBST        ?= ${GO_TOOL_EXEC} envsubst
+KUBECTL_SLICE   ?= ${GO_TOOL_EXEC} kubectl-slice
+YQ              ?= ${GO_TOOL_EXEC} yq
 
 .PHONY: envtest-assets
-envtest-assets: envtest $(LOCALBIN) ## Download envtest assets.
+envtest-assets: $(LOCALBIN) ## Download envtest assets.
 	ln -snf "$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" "$(LOCALBIN)/$@"
-
-.PHONY: golangci-lint
-golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
-$(GOLANGCI_LINT): $(LOCALBIN)
-	$(call go-install-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/v2/cmd/golangci-lint,${GOLANGCI_LINT_VERSION})
-
-.PHONY: ginkgo
-ginkgo: $(GINKGO) ## Download ginkgo locally if necessary.
-$(GINKGO): $(LOCALBIN)
-	$(call go-install-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo,$(GINKGO_VERSION))
-
-.PHONY: crd-ref-docs
-crd-ref-docs: $(CRD_REF_DOCS) ## Download crd-ref-docs locally if necessary.
-$(CRD_REF_DOCS): $(LOCALBIN)
-	$(call go-install-tool,$(CRD_REF_DOCS),github.com/elastic/crd-ref-docs,$(CRD_REF_DOCS_VERSION))
-
-.PHONY: kind
-kind: $(KIND) ## Download kind locally if necessary.
-$(KIND): $(LOCALBIN)
-	$(call go-install-tool,$(KIND),sigs.k8s.io/kind,$(KIND_VERSION))
-
-.PHONY: envsubst
-envsubst: $(ENVSUBST) ## Download envsubst locally if necessary.
-$(ENVSUBST): $(LOCALBIN)
-	$(call go-install-tool,$(ENVSUBST),github.com/a8m/envsubst/cmd/envsubst,$(ENVSUBST_VERSION))
-
-.PHONY: kubectl-slice
-kubectl-slice: $(KUBECTL_SLICE) ## Download kubectl-slice locally if necessary.
-$(KUBECTL_SLICE): $(LOCALBIN)
-	$(call go-install-tool,$(KUBECTL_SLICE),github.com/patrickdappollonio/kubectl-slice,$(KUBECTL_SLICE_VERSION))
-
-.PHONY: yq
-yq: $(YQ)
-$(YQ): $(LOCALBIN)
-	$(call go-install-tool,$(YQ),github.com/mikefarah/yq/v4,$(YQ_VERSION))
-
-# go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
-# $1 - target path with name of binary (ideally with version)
-# $2 - package url which can be installed
-# $3 - specific version of package
-define go-install-tool
-@[ -f $(1) ] || { \
-set -e; \
-package=$(2)@$(3) ;\
-echo "Downloading $${package}" ;\
-GOBIN="$(LOCALBIN)" GOTOOLCHAIN=$$(go env GOVERSION) go install $${package} ;\
-mv "$$(echo "$(1)" | sed "s/-$(3)$$//")" $(1) ;\
-}
-endef
-
-# go-get-version will retrieve version of module $1 from go.mod
-go-get-version = $(shell go list -m $1 | awk '{print $$2}')
