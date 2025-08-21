@@ -35,7 +35,7 @@ func NewComponentManager(
 	logger := log.FromContext(ctx)
 	resource := ytsaurus.GetResource()
 
-	clusterDomain := getClusterDomain(ytsaurus.APIProxy().Client())
+	clusterDomain := getClusterDomain(ctx, ytsaurus.APIProxy().Client())
 	cfgen := ytconfig.NewGenerator(resource, clusterDomain)
 	nodeCfgGen := &cfgen.NodeGenerator
 

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"net"
 	"os"
 	"strings"
@@ -13,14 +14,14 @@ const (
 	remoteClusterSpecField = "remoteClusterSpec"
 )
 
-func getClusterDomain(client client.Client) string {
+func getClusterDomain(ctx context.Context, client client.Client) string {
 	domain, exists := os.LookupEnv("K8S_CLUSTER_DOMAIN")
 	if exists {
 		return domain
 	}
 	apiSvc := "kubernetes.default.svc"
 
-	cname, err := net.LookupCNAME(apiSvc)
+	cname, err := net.DefaultResolver.LookupCNAME(ctx, apiSvc)
 	if err != nil {
 		return defaultClusterDomain
 	}

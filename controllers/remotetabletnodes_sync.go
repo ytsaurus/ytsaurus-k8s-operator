@@ -20,7 +20,7 @@ func (r *RemoteTabletNodesReconciler) Sync(
 	logger := log.FromContext(ctx).WithValues("component", "remoteTabletNodes")
 	apiProxy := apiproxy.NewAPIProxy(resource, r.Client, r.Recorder, r.Scheme)
 
-	cfgen := ytconfig.NewRemoteNodeGenerator(remoteYtsaurus, resource.GetName(), getClusterDomain(r.Client), &resource.Spec.CommonSpec)
+	cfgen := ytconfig.NewRemoteNodeGenerator(remoteYtsaurus, resource.GetName(), getClusterDomain(ctx, r.Client), &resource.Spec.CommonSpec)
 
 	component := components.NewRemoteTabletNodes(
 		cfgen,
