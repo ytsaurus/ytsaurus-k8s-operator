@@ -4,7 +4,7 @@ metadata:
   annotations:
     cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "ytop-chart.fullname"
       . }}-webhook-cert'
-    controller-gen.kubebuilder.io/version: v0.16.5
+    controller-gen.kubebuilder.io/version: v0.18.0
   name: spyts.cluster.ytsaurus.tech
 spec:
   conversion:
@@ -55,9 +55,8 @@ spec:
                 type: string
               imagePullSecrets:
                 items:
-                  description: |-
-                    LocalObjectReference contains enough information to let you locate the
-                    reference
+                  description: LocalObjectReference contains enough information to
+                    let you locate the...
                   properties:
                     name:
                       default: ""
@@ -67,9 +66,8 @@ spec:
                   x-kubernetes-map-type: atomic
                 type: array
               ytsaurus:
-                description: |-
-                  LocalObjectReference contains enough information to let you locate the
-                  reference
+                description: LocalObjectReference contains enough information to let
+                  you locate the...
                 properties:
                   name:
                     default: ""
@@ -84,11 +82,11 @@ spec:
               conditions:
                 items:
                   description: Condition contains details for one aspect of the current
-                    state of this API Resou
+                    state of this API...
                   properties:
                     lastTransitionTime:
                       description: lastTransitionTime is the last time the condition
-                        transitioned from one status t
+                        transitioned from one status...
                       format: date-time
                       type: string
                     message:
@@ -103,7 +101,7 @@ spec:
                       type: integer
                     reason:
                       description: reason contains a programmatic identifier indicating
-                        the reason for the conditio
+                        the reason for the...
                       maxLength: 1024
                       minLength: 1
                       pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$

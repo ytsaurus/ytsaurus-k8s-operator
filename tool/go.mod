@@ -26,7 +26,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
-	github.com/elastic/crd-ref-docs v0.1.0 // indirect
+	github.com/elastic/crd-ref-docs v0.2.0 // indirect
 	github.com/elliotchance/orderedmap v1.8.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fatih/color v1.18.0 // indirect
@@ -100,7 +100,6 @@ require (
 	golang.org/x/text v0.28.0 // indirect
 	golang.org/x/tools v0.36.0 // indirect
 	golang.org/x/tools/go/expect v0.1.1-deprecated // indirect
-	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
@@ -111,11 +110,13 @@ require (
 	k8s.io/api v0.33.0 // indirect
 	k8s.io/apiextensions-apiserver v0.33.0 // indirect
 	k8s.io/apimachinery v0.34.0-rc.1 // indirect
+	k8s.io/code-generator v0.33.0 // indirect
+	k8s.io/gengo/v2 v2.0.0-20250604051438-85fd79dbfd9f // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20250820133309-9f93124137fa // indirect
-	sigs.k8s.io/controller-tools v0.16.5 // indirect
+	sigs.k8s.io/controller-tools v0.18.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/kind v0.22.0 // indirect
 	sigs.k8s.io/kustomize/api v0.20.1 // indirect
