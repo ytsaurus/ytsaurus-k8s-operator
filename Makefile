@@ -147,11 +147,11 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: generate-code manifests envtest-assets ## Run tests.
-	$(GINKGO) $(GINKGO_FLAGS) ./... $(GO_TEST_FLAGS)
+	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./...
 
 .PHONY: test-e2e
 test-e2e: generate-code manifests ## Run e2e tests.
-	$(GINKGO) $(GINKGO_FLAGS) ./test/e2e/... $(GO_TEST_FLAGS) -- --enable-e2e
+	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./test/e2e/... -- --enable-e2e
 
 .PHONY: clean-e2e
 clean-e2e: ## Delete k8s namespaces created by e2e tests.
@@ -176,13 +176,13 @@ lint-generated: generate helm-chart ## Check that generated files are uptodate a
 canonize: generate-code manifests envtest-assets ## Canonize test results.
 	rm -fr pkg/components/canondata pkg/ytconfig/canondata test/r8r/canondata
 	CANONIZE=y \
-	$(GINKGO) $(GINKGO_FLAGS) ./... $(GO_TEST_FLAGS)
+	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./...
 
 .PHONY: canonize-ytconfig
 canonize-ytconfig: generate-code fmt vet ## Canonize ytconfig and reconciler test results.
 	rm -fr pkg/ytconfig/canondata test/r8r/canondata
 	CANONIZE=y \
-	$(GINKGO) $(GINKGO_FLAGS) ./pkg/ytconfig/... ./test/r8r/... $(GO_TEST_FLAGS)
+	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./pkg/ytconfig/... ./test/r8r/...
 
 ##@ K8s operations
 
