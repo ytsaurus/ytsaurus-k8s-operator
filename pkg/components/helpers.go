@@ -197,24 +197,46 @@ func AppendPathAcl(path string, acl yt.ACE) (string, error) {
 	return fmt.Sprintf("/usr/bin/yt set %s/@acl/end '%s'", path, string(formattedAcl)), nil
 }
 
-func RunIfCondition(condition string, commands ...string) string {
-	var wrappedCommands []string
-	wrappedCommands = append(wrappedCommands, fmt.Sprintf("if [ %s ]; then", condition))
-	wrappedCommands = append(wrappedCommands, commands...)
-	wrappedCommands = append(wrappedCommands, "fi")
-	return strings.Join(wrappedCommands, "\n")
+type Script []string
+
+func (s *Script) String() string {
+	return strings.Join(*s, "\n")
 }
 
-func RunIfNonexistent(path string, commands ...string) string {
-	return RunIfCondition(fmt.Sprintf("$(/usr/bin/yt exists %s) = 'false'", path), commands...)
+func (s *Script) Append(commands ...string) {
+	*s = append(*s, commands...)
 }
 
-func RunIfExists(path string, commands ...string) string {
-	return RunIfCondition(fmt.Sprintf("$(/usr/bin/yt exists %s) = 'true'", path), commands...)
+func RunScripts(scripts ...Script) Script {
+	var s Script
+	for _, script := range scripts {
+		s.Append(script...)
+	}
+	return s
 }
 
-func SetWithIgnoreExisting(path string, value string) string {
-	return RunIfNonexistent(path, fmt.Sprintf("/usr/bin/yt set %s %s", path, value))
+const ScriptIndent = "  "
+
+func RunIfCondition(condition string, commands ...string) Script {
+	var s Script
+	s.Append(fmt.Sprintf("if [ %s ]; then", condition))
+	for _, c := range commands {
+		s.Append(ScriptIndent + c)
+	}
+	s.Append("fi")
+	return s
+}
+
+func RunIfNonexistent(path string, commands ...string) Script {
+	return RunIfCondition(fmt.Sprintf("$(/usr/bin/yt exists '%s') = 'false'", path), commands...)
+}
+
+func RunIfExists(path string, commands ...string) Script {
+	return RunIfCondition(fmt.Sprintf("$(/usr/bin/yt exists '%s') = 'true'", path), commands...)
+}
+
+func SetWithIgnoreExisting(path string, value string) Script {
+	return RunIfNonexistent(path, fmt.Sprintf("/usr/bin/yt set -r '%s' '%s'", path, value))
 }
 
 func AddAffinity(statefulSet *appsv1.StatefulSet,
