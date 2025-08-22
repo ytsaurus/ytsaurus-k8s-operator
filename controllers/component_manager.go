@@ -39,13 +39,19 @@ func NewComponentManager(
 	cfgen := ytconfig.NewGenerator(resource, clusterDomain)
 	nodeCfgGen := &cfgen.NodeGenerator
 
+	var allComponents []components.Component
+
+	getAllComponents := func() []components.Component {
+		return allComponents
+	}
+
 	d := components.NewDiscovery(cfgen, ytsaurus)
 	m := components.NewMaster(cfgen, ytsaurus)
 	var hps []components.Component
 	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {
 		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
 	}
-	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0])
+	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0], getAllComponents)
 
 	var dnds []components.Component
 	if len(resource.Spec.DataNodes) > 0 {
@@ -54,11 +60,7 @@ func NewComponentManager(
 		}
 	}
 
-	var s components.Component
-
-	allComponents := []components.Component{
-		d, m, yc,
-	}
+	allComponents = append(allComponents, d, m, yc)
 	allComponents = append(allComponents, dnds...)
 	allComponents = append(allComponents, hps...)
 
@@ -107,9 +109,10 @@ func NewComponentManager(
 	}
 	allComponents = append(allComponents, tnds...)
 
+	var sch components.Component
 	if resource.Spec.Schedulers != nil {
-		s = components.NewScheduler(cfgen, ytsaurus, m, ends, tnds)
-		allComponents = append(allComponents, s)
+		sch = components.NewScheduler(cfgen, ytsaurus, m, ends, tnds)
+		allComponents = append(allComponents, sch)
 	}
 
 	if resource.Spec.ControllerAgents != nil {
@@ -135,7 +138,7 @@ func NewComponentManager(
 	}
 
 	if resource.Spec.StrawberryController != nil && resource.Spec.Schedulers != nil {
-		strawberry := components.NewStrawberryController(cfgen, ytsaurus, m, s, dnds)
+		strawberry := components.NewStrawberryController(cfgen, ytsaurus, m, sch, dnds)
 		allComponents = append(allComponents, strawberry)
 	}
 
@@ -279,6 +282,9 @@ func (cm *ComponentManager) allReadyOrUpdating() bool {
 
 func (cm *ComponentManager) arePodsRemoved() bool {
 	for _, cmp := range cm.allComponents {
+		if cmp.GetType() == consts.YtsaurusClientType {
+			continue
+		}
 		if components.IsUpdatingComponent(cm.ytsaurus, cmp) && !cm.areComponentPodsRemoved(cmp) {
 			return false
 		}

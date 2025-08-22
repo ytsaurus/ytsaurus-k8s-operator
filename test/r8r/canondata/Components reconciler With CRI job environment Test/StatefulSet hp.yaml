@@ -1,5 +1,8 @@
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
   creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator

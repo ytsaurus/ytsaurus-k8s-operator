@@ -37,6 +37,7 @@ func (c *Spyt) APIProxy() APIProxy {
 }
 
 func (c *Spyt) SetStatusCondition(condition metav1.Condition) {
+	condition.ObservedGeneration = c.spyt.Generation
 	meta.SetStatusCondition(&c.spyt.Status.Conditions, condition)
 }
 

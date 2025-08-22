@@ -2337,6 +2337,7 @@ _Appears in:_
 | `WaitingForPodsRemoval` |  |
 | `WaitingForPodsCreation` |  |
 | `WaitingForMasterExitReadOnly` |  |
+| `WaitingForCypressPatch` |  |
 | `WaitingForTabletCellsRecovery` |  |
 | `WaitingForOpArchiveUpdatingPrepare` |  |
 | `WaitingForOpArchiveUpdate` |  |

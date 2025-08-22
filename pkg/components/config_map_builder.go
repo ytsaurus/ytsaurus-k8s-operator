@@ -8,12 +8,14 @@ import (
 	"reflect"
 
 	"github.com/BurntSushi/toml"
-
 	"github.com/google/go-cmp/cmp"
 	"go.ytsaurus.tech/yt/go/yson"
+
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 )
@@ -241,6 +243,10 @@ func (h *ConfigMapBuilder) NeedInit() bool {
 
 func (h *ConfigMapBuilder) Build() *corev1.ConfigMap {
 	cm := h.configMap.Build()
+
+	if version := h.overridesMap.ResourceVersion; version != "" {
+		metav1.SetMetaDataLabel(&cm.ObjectMeta, consts.ConfigOverridesVersionLabelName, version)
+	}
 
 	for fileName := range h.generators {
 		data, err := h.getConfig(fileName)

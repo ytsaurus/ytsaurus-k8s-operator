@@ -19,6 +19,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/watch"
@@ -107,7 +108,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	var ytsaurus *ytv1.Ytsaurus
 	var ytsaurusKey client.ObjectKey
 	var k8sScheme *runtime.Scheme
-	var k8sEventRecorder *record.FakeRecorder
+	var k8sEventBroadcaster record.EventBroadcaster
+	var k8sEvents []corev1.Event
 	var k8sClient client.WithWatch
 	var statefulSets map[string]*appsv1.StatefulSet
 	var configMaps map[string]*corev1.ConfigMap
@@ -124,18 +126,6 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	// https://onsi.github.io/ginkgo/#spec-cleanup-aftereach-and-defercleanup
 	// https://onsi.github.io/ginkgo/#separating-diagnostics-collection-and-teardown-justaftereach
 
-	drainEventRecorder := func() {
-	loop:
-		for {
-			select {
-			case event := <-k8sEventRecorder.Events:
-				log.Info("Event", "event", event)
-			default:
-				break loop
-			}
-		}
-	}
-
 	BeforeEach(func(ctx context.Context) {
 		By("Creating fake k8s client", func() {
 			k8sScheme = runtime.NewScheme()
@@ -144,6 +134,15 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 			codecs := serializer.NewCodecFactory(k8sScheme)
 			k8sObjectTraker := clienttesting.NewObjectTracker(k8sScheme, codecs.UniversalDeserializer())
+
+			getGeneration := func(obj client.Object) int64 {
+				gvr, _ := meta.UnsafeGuessKindToResource(obj.GetObjectKind().GroupVersionKind())
+				currentObj, err := k8sObjectTraker.Get(gvr, obj.GetNamespace(), obj.GetName())
+				Expect(err).To(Succeed())
+				accessor, err := meta.Accessor(currentObj)
+				Expect(err).To(Succeed())
+				return accessor.GetGeneration()
+			}
 
 			clientBuilder := fake.NewClientBuilder()
 			clientBuilder.WithScheme(k8sScheme)
@@ -156,12 +155,19 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 					return err
 				},
 				Create: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.CreateOption) error {
+					gvks, _, err := k8sScheme.ObjectKinds(obj)
+					Expect(err).To(Succeed())
+					obj.GetObjectKind().SetGroupVersionKind(gvks[0])
+					obj.SetGeneration(1)
+
 					log.Info("Create object", "gvk", obj.GetObjectKind().GroupVersionKind(), "name", obj.GetName(), "version", obj.GetResourceVersion())
 					return client.Create(ctx, obj, opts...)
 				},
-				Update: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
+				Update: func(ctx context.Context, c client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
+					obj.SetGeneration(getGeneration(obj) + 1)
+
 					log.Info("Update object", "gvk", obj.GetObjectKind().GroupVersionKind(), "name", obj.GetName())
-					return client.Update(ctx, obj, opts...)
+					return c.Update(ctx, obj, opts...)
 				},
 				Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
 					log.Info("Patch object", "gvk", obj.GetObjectKind().GroupVersionKind(), "name", obj.GetName())
@@ -178,7 +184,23 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			})
 			k8sClient = clientBuilder.Build()
 
-			k8sEventRecorder = record.NewFakeRecorder(100)
+			k8sEventBroadcaster = record.NewBroadcasterForTests(0)
+			eventWatcher := k8sEventBroadcaster.StartEventWatcher(func(event *corev1.Event) {
+				log.Info("Event",
+					"type", event.Type,
+					"kind", event.InvolvedObject.Kind,
+					"name", event.InvolvedObject.Name,
+					"reason", event.Reason,
+					"message", event.Message,
+				)
+				event.FirstTimestamp.Reset()
+				event.LastTimestamp.Reset()
+				event.Name = ""
+				k8sEvents = append(k8sEvents, *event)
+			})
+			DeferCleanup(func() {
+				eventWatcher.Stop()
+			})
 		})
 
 		namespace = "ytsaurus-components"
@@ -214,6 +236,9 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		})
 
 		By("Creating ytsaurus resource", func() {
+			if ytBuilder.Overrides != nil {
+				Expect(k8sClient.Create(ctx, ytBuilder.Overrides)).To(Succeed())
+			}
 			Expect(k8sClient.Create(ctx, ytsaurus)).To(Succeed())
 		})
 
@@ -221,7 +246,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytsaurusReconciler := controllers.YtsaurusReconciler{
 				Client:   k8sClient,
 				Scheme:   k8sScheme,
-				Recorder: k8sEventRecorder,
+				Recorder: k8sEventBroadcaster.NewRecorder(k8sScheme, corev1.EventSource{Component: "ytsaurus"}),
 			}
 
 			// Override crypto/rand reader to generate deterministic tokens.
@@ -240,10 +265,11 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				}()
 			}
 
+			k8sEvents = nil
+
 			Eventually(ctx, func(ctx context.Context) (bool, error) {
 				result, err := ytsaurusReconciler.Sync(ctx, ytsaurus)
 
-				drainEventRecorder()
 				CompleteOneJob(ctx, k8sClient, namespace)
 
 				return result.Requeue || result.RequeueAfter > 0, err
@@ -266,6 +292,10 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		})
 
 		var objectList []metav1.ObjectMeta
+
+		By("Checking Events", func() {
+			canonize.AssertStruct(GinkgoT(), "Events", k8sEvents)
+		})
 
 		By("Checking Services", func() {
 			var objList corev1.ServiceList
@@ -364,6 +394,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		BeforeEach(func() {
 			ytBuilder.WithExecNodes()
 			ytBuilder.WithCRIJobEnvironment()
+			ytBuilder.WithOverrides()
 		})
 		It("Test", func(ctx context.Context) {})
 	})

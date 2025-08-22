@@ -1,3 +1,4 @@
+apiVersion: v1
 data:
   ytserver-http-proxy.yson: |-
     {
@@ -91,8 +92,10 @@ data:
         };
         role="";
     }
+kind: ConfigMap
 metadata:
   creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator

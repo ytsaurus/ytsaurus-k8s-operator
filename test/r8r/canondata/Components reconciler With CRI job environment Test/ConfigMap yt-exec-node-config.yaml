@@ -1,3 +1,4 @@
+apiVersion: v1
 data:
   ytserver-exec-node.yson: |-
     {
@@ -300,8 +301,10 @@ data:
             capacity=0;
         };
     }
+kind: ConfigMap
 metadata:
   creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-exec-node
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -309,6 +312,7 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-exec-node
     ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/config-overrides-version: "1"
   name: yt-exec-node-config
   namespace: ytsaurus-components
   ownerReferences:

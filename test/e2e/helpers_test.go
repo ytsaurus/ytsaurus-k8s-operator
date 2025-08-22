@@ -28,9 +28,16 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 
 	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
 	"go.ytsaurus.tech/yt/go/yterrors"
 )
+
+func YsonPretty(value any) string {
+	data, err := yson.MarshalFormat(value, yson.FormatPretty)
+	Expect(err).To(Succeed())
+	return string(data)
+}
 
 func getKindControlPlaneNode() corev1.Node {
 	nodeList := corev1.NodeList{}

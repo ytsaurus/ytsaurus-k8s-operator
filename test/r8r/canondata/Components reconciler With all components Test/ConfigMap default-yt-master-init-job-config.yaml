@@ -1,3 +1,4 @@
+apiVersion: v1
 data:
   client.yson: |-
     {
@@ -132,8 +133,10 @@ data:
     fi
     fi
     /usr/bin/yt remove //sys/@provision_lock -f
+kind: ConfigMap
 metadata:
   creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-master
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator

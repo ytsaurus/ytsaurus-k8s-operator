@@ -1,3 +1,4 @@
+apiVersion: v1
 data:
   ytserver-controller-agent.yson: |-
     {
@@ -83,8 +84,10 @@ data:
             };
         };
     }
+kind: ConfigMap
 metadata:
   creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-controller-agent
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator

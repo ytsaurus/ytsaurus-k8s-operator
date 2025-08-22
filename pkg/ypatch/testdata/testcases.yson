@@ -1,0 +1,210 @@
+[
+   {
+      name = "A.1.  Adding an Object Member";
+      before = { "foo" = "bar" };
+      patch = [
+         { "op" = "add"; "path" = "/baz"; "value" = "qux" };
+      ];
+      after = { "baz" = "qux"; "foo" = "bar" };
+   };
+   {
+      name = "A.2.  Adding an Array Element";
+      before = { "foo" = [ "bar"; "baz" ] };
+      patch = [
+         { "op" = "add"; "path" = "/foo/1"; "value" = "qux" };
+      ];
+      after = { "foo" = [ "bar"; "qux"; "baz" ] };
+   };
+   {
+      name = "A.3.  Removing an Object Member";
+      before = { "baz" = "qux"; "foo" = "bar" };
+      patch = [
+         { "op" = "remove"; "path" = "/baz" };
+      ];
+      after = { "foo" = "bar" };
+   };
+   {
+      name = "A.4.  Removing an Array Element";
+      before = { "foo" = [ "bar"; "qux"; "baz" ] };
+      patch = [
+         { "op" = "remove"; "path" = "/foo/1" }
+      ];
+      after = { "foo" = [ "bar"; "baz" ] };
+   };
+   {
+      name = "A.5.  Replacing a Value";
+      before = { "baz" = "qux"; "foo" = "bar" };
+      patch = [
+         { "op" = "replace"; "path" = "/baz"; "value" = "boo" }
+      ];
+      after = { "baz" = "boo"; "foo" = "bar" };
+   };
+   {
+      name = "A.6.  Moving a Value";
+      before = {
+         "foo" = {
+            "bar" = "baz";
+            "waldo" = "fred";
+         };
+         "qux" = {
+            "corge" = "grault";
+         };
+      };
+      patch = [
+         { "op" = "move"; "from" = "/foo/waldo"; "path" = "/qux/thud" }
+      ];
+      after = {
+         "foo" = {
+            "bar" = "baz";
+         };
+         "qux" = {
+            "corge" = "grault";
+            "thud" = "fred";
+         };
+      };
+      alt_patch = [
+         { "op" = "remove"; "path" = "/foo/waldo"; };
+         { "op" = "add"; "path" = "/qux/thud"; value = "fred"; };
+      ];
+   };
+   {
+      name = "A.6.a.  Copying a Value";
+      before = {
+         "foo" = {
+            "bar" = "baz";
+            "waldo" = "fred";
+         };
+         "qux" = {
+            "corge" = "grault";
+         };
+      };
+      patch = [
+         { "op" = "copy"; "from" = "/foo/waldo"; "path" = "/qux/thud" }
+      ];
+      after = {
+         "foo" = {
+            "bar" = "baz";
+            "waldo" = "fred";
+         };
+         "qux" = {
+            "corge" = "grault";
+            "thud" = "fred";
+         };
+      };
+      alt_patch = [
+         { "op" = "add"; "path" = "/qux/thud"; value = "fred"; };
+      ];
+   };
+   {
+      name = "A.7.  Moving an Array Element";
+      before = { "foo" = [ "all"; "grass"; "cows"; "eat" ] };
+      patch = [
+         { "op" = "move"; "from" = "/foo/1"; "path" = "/foo/3" };
+      ];
+      after = { "foo" = [ "all"; "cows"; "eat"; "grass" ] };
+      alt_patch = [
+         { "op" = "remove"; "path" = "/foo/1"; };
+         { "op" = "add"; "path" = "/foo/3"; value = "grass" };
+      ];
+   };
+   {
+      name = "A.8.  Testing a Value: Success";
+      before = {
+         "baz" = "qux";
+         "foo" = [ "a"; 2; "c" ];
+      };
+      patch = [
+         { "op" = "test"; "path" = "/baz"; "value" = "qux" };
+         { "op" = "test"; "path" = "/foo/1"; "value" = 2 };
+      ];
+      result = "success";
+   };
+   {
+      name = "A.9.  Testing a Value: Error";
+      before = { "baz" = "qux" };
+      patch = [
+         { "op" = "test"; "path" = "/baz"; "value" = "bar" };
+      ];
+      result = "error";
+   };
+   {
+      name = "A.10.  Adding a Nested Member Object";
+      before = { "foo" = "bar" };
+      patch = [
+         { "op" = "add"; "path" = "/child"; "value" = { "grandchild" = { } } };
+      ];
+      after = {
+         "foo" = "bar";
+         "child" = {
+            "grandchild" = {
+            };
+         };
+      };
+   };
+   {
+      name = "A.11.  Ignoring Unrecognized Elements";
+      before = {
+         "foo" = "bar";
+      };
+      patch = [
+         { "op" = "add"; "path" = "/baz"; "value" = "qux"; "xyz" = 123 };
+      ];
+      after = {
+         "foo" = "bar";
+         "baz" = "qux";
+      };
+   };
+   {
+      name = "A.12.  Adding to a Nonexistent Target";
+      before = { "foo" = "bar" };
+      patch = [
+         { "op" = "add"; "path" = "/baz/bat"; "value" = "qux" };
+      ];
+      result = "error";
+   };
+   {
+      name = "A.14.  ~ Escape Ordering";
+      before = {
+         "/" = 9;
+         "~1" = 10;
+      };
+      patch = [
+         {"op" = "test"; "path" = "/~01"; "value" = 10};
+      ];
+      result = "success";
+   };
+   {
+      name = "A.15.  Comparing Strings and Numbers";
+      before = {
+         "/" = 9;
+         "~1" = 10;
+      };
+      patch = [
+         {"op" = "test"; "path" = "/~01"; "value" = "10"};
+      ];
+      result = "error";
+   };
+   {
+      name = "A.16.  Adding an Array Value";
+      before = {
+         "foo" = [
+            "bar";
+         ];
+      };
+      patch = [
+         { "op" = "add"; "path" = "/foo/-"; "value" = ["abc"; "def"] };
+      ];
+      after = {
+         "foo" = [
+            "bar";
+            [
+               "abc";
+               "def";
+            ];
+         ];
+      };
+      alt_patch = [
+         { "op" = "add"; "path" = "/foo/1"; "value" = ["abc"; "def"] };
+      ];
+   };
+]

@@ -1,3 +1,4 @@
+apiVersion: v1
 data:
   ytserver-master.yson: |-
     {
@@ -108,8 +109,10 @@ data:
         "secondary_masters"=[
         ];
     }
+kind: ConfigMap
 metadata:
   creationTimestamp: null
+  generation: 1
   labels:
     app.kubernetes.io/component: yt-master
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
