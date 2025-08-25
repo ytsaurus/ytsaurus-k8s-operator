@@ -17,6 +17,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	certv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	certmetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
@@ -27,6 +30,7 @@ import (
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 
+	"go.ytsaurus.tech/yt/go/guid"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
@@ -369,6 +373,15 @@ func queryClickHouse(ytProxyAddress, query string) (string, error) {
 	return string(content), nil
 }
 
+func queryClickHouseID(ytProxyAddress string) (guid.GUID, error) {
+	// Actually this is operation id. This is not properly documented feature.
+	result, err := queryClickHouse(ytProxyAddress, "SELECT clique_id FROM system.clique WHERE self;")
+	if err != nil {
+		return guid.GUID{}, err
+	}
+	return guid.ParseString(strings.TrimSpace(result))
+}
+
 func readFileObject(namespace string, source ytv1.FileObjectReference) ([]byte, error) {
 	objectName := types.NamespacedName{
 		Namespace: namespace,
@@ -476,4 +489,37 @@ func pullImages(ctx context.Context, namaspace string, images []string, timeout 
 	)
 	Expect(pod).Should(HaveField("Status.Phase", Equal(corev1.PodSucceeded)))
 	Expect(k8sClient.Delete(ctx, &pod)).Should(Succeed())
+}
+
+func reissueCertificate(ctx context.Context, cert *certv1.Certificate) {
+	patch := ctrlcli.MergeFrom(cert.DeepCopy())
+	cert.Status.Conditions = append(cert.Status.Conditions, certv1.CertificateCondition{
+		Type:   certv1.CertificateConditionIssuing,
+		Status: certmetav1.ConditionTrue,
+	})
+	Expect(k8sClient.Status().Patch(ctx, cert, patch)).To(Succeed())
+
+	EventuallyObject(ctx, cert, 10*time.Second).To(Satisfy(func(cert *certv1.Certificate) bool {
+		for _, c := range cert.Status.Conditions {
+			if c.Type == certv1.CertificateConditionIssuing && c.Status == certmetav1.ConditionTrue {
+				return false
+			}
+		}
+		return true
+	}))
+}
+
+func restartPod(ctx context.Context, namespace, name string) {
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+	}
+	Expect(k8sClient.Delete(ctx, pod)).To(Succeed())
+	oldUID := pod.UID
+	EventuallyObject(ctx, pod, 10*time.Second).To(SatisfyAll(
+		HaveField("ObjectMeta.UID", Not(Equal(oldUID))),
+		HaveField("Status.Phase", Equal(corev1.PodRunning)),
+	))
 }
