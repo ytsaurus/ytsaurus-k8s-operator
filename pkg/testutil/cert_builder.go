@@ -52,8 +52,9 @@ func (b *CertBuilder) BuildCertificate(name string, hostNames []string) *certv1.
 				certv1.UsageClientAuth,
 			},
 			PrivateKey: &certv1.CertificatePrivateKey{
-				Algorithm: certv1.RSAKeyAlgorithm,
-				Size:      2048,
+				RotationPolicy: certv1.RotationPolicyAlways,
+				Algorithm:      certv1.RSAKeyAlgorithm,
+				Size:           2048,
 			},
 		},
 	}
