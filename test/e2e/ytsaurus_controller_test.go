@@ -35,6 +35,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	certv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
@@ -1552,6 +1554,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}) // integration chyt
 
 		DescribeTableSubtree("With Bus RPC TLS", Label("tls"), func(coreImage, chytImage string) {
+			var nativeServerCert, nativeClientCert *certv1.Certificate
 
 			BeforeEach(func() {
 				log.Info("YTsaurus images", "coreImage", coreImage, "chytImage", chytImage)
@@ -1562,10 +1565,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				requiredImages = append(requiredImages, chytImage)
 
 				By("Adding native transport TLS certificates")
-				nativeServerCert := certBuilder.BuildCertificate(ytsaurus.Name+"-server", []string{
+				nativeServerCert = certBuilder.BuildCertificate(ytsaurus.Name+"-server", []string{
 					ytsaurus.Name,
 				})
-				nativeClientCert := certBuilder.BuildCertificate(ytsaurus.Name+"-client", []string{
+				nativeClientCert = certBuilder.BuildCertificate(ytsaurus.Name+"-client", []string{
 					ytsaurus.Name,
 				})
 				objects = append(objects,
@@ -1622,10 +1625,58 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				// TODO(khlebnikov): Poke all RPC servers.
 				// TODO(khlebnikov): Check all RPC connections in orchid.
 
+				By("Getting CHYT operation id")
+				clickHouseID, err := queryClickHouseID(ytProxyAddress)
+				Expect(err).To(Succeed())
+
+				By("Creating table //tmp/chyt_test")
 				Expect(queryClickHouse(
 					ytProxyAddress,
 					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one;",
 				)).To(Equal(""))
+
+				By("Reissuing RPC TLS certificates", func() {
+					reissueCertificate(ctx, nativeServerCert)
+					reissueCertificate(ctx, nativeClientCert)
+				})
+
+				// Restart http proxy to drop bus connection cache
+				// TODO(khlebnikov): Add better management to orchid.
+				By("Restarting http proxy", func() {
+					podName := fmt.Sprintf("%s-%d", generator.GetComponentLabeller(consts.HttpProxyType, "").GetServerStatefulSetName(), 0)
+					restartPod(ctx, namespace, podName)
+				})
+
+				// FIXME(khlebnikov): Workaround for bug yt client retrying logic.
+				By("Waiting http proxy", func() {
+					ytClient.Stop()
+					ytClient = getYtClient(ytProxyAddress)
+					Eventually(func(ctx context.Context) error {
+						_, err := ytClient.WhoAmI(ctx, nil)
+						return err
+					}, bootstrapTimeout, pollInterval, ctx).MustPassRepeatedly(5).Should(Succeed())
+					ytClient.Stop()
+					ytClient = getYtClient(ytProxyAddress)
+				})
+
+				if testutil.YtsaurusTLSReady {
+					By("Waiting for chyt operation restart by strawberry")
+					Eventually(queryClickHouseID, chytBootstrapTimeout).WithArguments(ytProxyAddress).ToNot(Equal(clickHouseID))
+				} else {
+					By("Aborting chyt operation")
+					Expect(ytClient.AbortOperation(ctx, yt.OperationID(clickHouseID), nil)).To(Succeed())
+				}
+
+				By("Waiting CHYT readiness")
+				Eventually(queryClickHouse, chytBootstrapTimeout, pollInterval).WithArguments(
+					ytProxyAddress, "SELECT 1",
+				).MustPassRepeatedly(3).Should(Equal("1\n"))
+
+				By("Checking table //tmp/chyt_test")
+				Expect(queryClickHouse(
+					ytProxyAddress,
+					"SELECT * FROM `//tmp/chyt_test`;",
+				)).To(Equal("0\n"))
 			})
 		},
 			Entry("YTsaurus current", Label("current"), testutil.YtsaurusImageCurrent, testutil.ChytImageCurrent),
