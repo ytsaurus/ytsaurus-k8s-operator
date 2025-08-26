@@ -177,12 +177,14 @@ canonize: generate-code manifests envtest-assets ## Canonize test results.
 	rm -fr pkg/components/canondata pkg/ytconfig/canondata test/r8r/canondata
 	CANONIZE=y \
 	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./...
+	! git status --porcelain '**/canondata/*' | grep .
 
 .PHONY: canonize-ytconfig
 canonize-ytconfig: generate-code fmt vet ## Canonize ytconfig and reconciler test results.
 	rm -fr pkg/ytconfig/canondata test/r8r/canondata
 	CANONIZE=y \
 	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./pkg/ytconfig/... ./test/r8r/...
+	! git status --porcelain '**/canondata/*' | grep .
 
 ##@ K8s operations
 
