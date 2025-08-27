@@ -37,6 +37,7 @@ import (
 
 // RemoteTabletNodesReconciler reconciles a RemoteTabletNodes object
 type RemoteTabletNodesReconciler struct {
+	ClusterDomain string
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder

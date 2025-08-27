@@ -32,9 +32,10 @@ const (
 func setupRemoteTabletNodesReconciler() func(mgr ctrl.Manager) error {
 	return func(mgr ctrl.Manager) error {
 		return (&controllers.RemoteTabletNodesReconciler{
-			Client:   mgr.GetClient(),
-			Scheme:   mgr.GetScheme(),
-			Recorder: mgr.GetEventRecorderFor("remotetabletnodes-controller"),
+			ClusterDomain: "cluster.local",
+			Client:        mgr.GetClient(),
+			Scheme:        mgr.GetScheme(),
+			Recorder:      mgr.GetEventRecorderFor("remotetabletnodes-controller"),
 		}).SetupWithManager(mgr)
 	}
 }
