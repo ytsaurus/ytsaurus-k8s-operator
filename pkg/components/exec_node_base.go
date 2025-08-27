@@ -186,11 +186,11 @@ func (n *baseExecNode) doSyncBase(ctx context.Context, dry bool) (ComponentStatu
 	if !dry {
 		err = n.doBuildBase()
 		if err != nil {
-			return WaitingStatus(SyncStatusBlocked, "cannot build exec node spec"), err
+			return ComponentStatusBlockedBy("cannot build exec node spec"), err
 		}
 		err = resources.Sync(ctx, n.server, n.sidecarConfig)
 	}
-	return WaitingStatus(SyncStatusPending, "components"), err
+	return ComponentStatusWaitingFor("components"), err
 }
 
 func (n *baseExecNode) sidecarConfigNeedsReload() bool {

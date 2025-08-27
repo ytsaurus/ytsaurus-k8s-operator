@@ -91,7 +91,7 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && (n.server.needUpdate() || n.sidecarConfigNeedsReload()) {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -104,8 +104,8 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	if err != nil {
 		return masterStatus, err
 	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, n.master.GetFullName()), err
+	if !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(n.master.GetFullName()), err
 	}
 
 	if LocalServerNeedSync(n.server, n.ytsaurus) {
@@ -113,10 +113,10 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	}
 
 	if !n.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (n *ExecNode) Status(ctx context.Context) (ComponentStatus, error) {

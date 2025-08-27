@@ -52,7 +52,7 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(ca.ytsaurus.GetClusterState()) && ca.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -65,22 +65,22 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 	if err != nil {
 		return masterStatus, err
 	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, ca.master.GetFullName()), err
+	if !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(ca.master.GetFullName()), err
 	}
 
 	if ca.NeedSync() {
 		if !dry {
 			err = ca.server.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !ca.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (ca *ControllerAgent) Status(ctx context.Context) (ComponentStatus, error) {

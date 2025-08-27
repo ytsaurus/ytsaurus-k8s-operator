@@ -54,7 +54,7 @@ func (bc *BundleController) doSync(ctx context.Context, dry bool) (ComponentStat
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(bc.ytsaurus.GetClusterState()) && bc.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if bc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -67,11 +67,11 @@ func (bc *BundleController) doSync(ctx context.Context, dry bool) (ComponentStat
 		if !dry {
 			err = bc.doServerSync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !bc.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
 	return SimpleStatus(SyncStatusReady), err

@@ -22,10 +22,11 @@ type ComponentManager struct {
 }
 
 type ComponentManagerStatus struct {
-	needSync           bool
-	needInit           bool
-	needUpdate         []components.Component
-	allReadyOrUpdating bool
+	allReady           bool // All components are Ready - no reconciliations required
+	allRunning         bool // All components are Ready or NeedUpdate - can start updates
+	allReadyOrUpdating bool // All components are Ready or Updating - no new updates
+
+	needUpdate []components.Component // Components in state NeedUpdate
 }
 
 func NewComponentManager(
@@ -33,7 +34,6 @@ func NewComponentManager(
 	ytsaurus *apiProxy.Ytsaurus,
 	clusterDomain string,
 ) (*ComponentManager, error) {
-	logger := log.FromContext(ctx)
 	resource := ytsaurus.GetResource()
 
 	if clusterDomain == "" {
@@ -164,79 +164,87 @@ func NewComponentManager(
 	tt := components.NewTimbertruck(cfgen, ytsaurus, tnds, yc)
 	allComponents = append(allComponents, tt)
 
+	return &ComponentManager{
+		ytsaurus:      ytsaurus,
+		allComponents: allComponents,
+	}, nil
+}
+
+func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
+	logger := log.FromContext(ctx)
+	resource := cm.ytsaurus.GetResource()
+
 	// Fetch component status.
 	var readyComponents []string
+	var needUpdateComponents []string
 	var updatingComponents []string
 	var notReadyComponents []string
 
-	status := ComponentManagerStatus{
-		needInit:           false,
-		needSync:           false,
-		needUpdate:         nil,
+	cm.status = ComponentManagerStatus{
+		allReady:           true,
+		allRunning:         true,
 		allReadyOrUpdating: true,
+		needUpdate:         nil,
 	}
-	for _, c := range allComponents {
-		err := c.Fetch(ctx)
+
+	for _, component := range cm.allComponents {
+		err := component.Fetch(ctx)
 		if err != nil {
-			logger.Error(err, "failed to fetch status for controller", "component", c.GetFullName())
-			return nil, err
+			return fmt.Errorf("failed to fetch component %s: %w", component.GetFullName(), err)
 		}
 
-		componentStatus, err := c.Status(ctx)
+		status, err := component.Status(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get component %s status: %w", c.GetFullName(), err)
+			return fmt.Errorf("failed to get component %s status: %w", component.GetFullName(), err)
 		}
 
-		c.SetReadyCondition(componentStatus)
-		syncStatus := componentStatus.SyncStatus
+		component.SetReadyCondition(status)
+		logger.Info("Component status",
+			"component", component.GetFullName(),
+			"status", status.SyncStatus,
+			"message", status.Message,
+		)
 
-		if syncStatus == components.SyncStatusNeedLocalUpdate {
-			status.needUpdate = append(status.needUpdate, c)
-		}
-
-		if !components.IsRunningStatus(syncStatus) {
-			if ytsaurus.GetClusterState() == ytv1.ClusterStateRunning {
-				msg := fmt.Sprintf("component `%s` status is neither Ready nor NeedLocalUpdate, but `%s`, "+
-					"needInit=true will be set, which will lead to Reconfiguration since cluster is in Running state",
-					c.GetFullName(), syncStatus,
-				)
-				logger.Info(msg,
-					"component", c.GetFullName(),
-					"syncStatus", syncStatus,
+		switch status.SyncStatus {
+		case components.SyncStatusReady:
+			readyComponents = append(readyComponents, component.GetFullName())
+		case components.SyncStatusNeedUpdate:
+			needUpdateComponents = append(needUpdateComponents, component.GetFullName())
+			cm.status.needUpdate = append(cm.status.needUpdate, component)
+			cm.status.allReady = false
+			cm.status.allReadyOrUpdating = false
+		case components.SyncStatusUpdating:
+			updatingComponents = append(updatingComponents, component.GetFullName())
+			cm.status.allReady = false
+			cm.status.allRunning = false
+		default:
+			notReadyComponents = append(notReadyComponents, component.GetFullName())
+			cm.status.allReady = false
+			cm.status.allRunning = false
+			cm.status.allReadyOrUpdating = false
+			if cm.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning {
+				logger.Info("Cluster needs reconfiguration because component is not running",
+					"component", component.GetFullName(),
+					"status", status.SyncStatus,
+					"message", status.Message,
 				)
 			}
-			status.needInit = true
-		}
-
-		if syncStatus != components.SyncStatusReady && syncStatus != components.SyncStatusUpdating {
-			status.allReadyOrUpdating = false
-		}
-
-		if syncStatus != components.SyncStatusReady {
-			logger.Info("component is not ready", "component", c.GetFullName(), "syncStatus", syncStatus, "message", componentStatus.Message)
-			notReadyComponents = append(notReadyComponents, c.GetFullName())
-			status.needSync = true
-		} else {
-			readyComponents = append(readyComponents, c.GetFullName())
-		}
-
-		if syncStatus == components.SyncStatusUpdating {
-			updatingComponents = append(updatingComponents, c.GetFullName())
 		}
 	}
 
 	logger.Info("Ytsaurus sync status",
+		"clusterState", resource.Status.State,
+		"updateState", resource.Status.UpdateStatus.State,
+		"allReady", cm.status.allReady,
+		"allRunning", cm.status.allRunning,
+		"allReadyOrUpdating", cm.status.allReadyOrUpdating,
+		"needUpdateComponents", needUpdateComponents,
+		"updatingComponents", updatingComponents,
 		"notReadyComponents", notReadyComponents,
 		"readyComponents", readyComponents,
-		"updatingComponents", updatingComponents,
-		"updateState", resource.Status.UpdateStatus.State,
-		"clusterState", resource.Status.State)
+	)
 
-	return &ComponentManager{
-		ytsaurus:      ytsaurus,
-		allComponents: allComponents,
-		status:        status,
-	}, nil
+	return nil
 }
 
 func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
@@ -271,22 +279,6 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	}
 
 	return ctrl.Result{RequeueAfter: time.Second}, nil
-}
-
-func (cm *ComponentManager) needSync() bool {
-	return cm.status.needSync
-}
-
-func (cm *ComponentManager) needInit() bool {
-	return cm.status.needInit
-}
-
-func (cm *ComponentManager) needUpdate() []components.Component {
-	return cm.status.needUpdate
-}
-
-func (cm *ComponentManager) allReadyOrUpdating() bool {
-	return cm.status.allReadyOrUpdating
 }
 
 func (cm *ComponentManager) arePodsRemoved() bool {

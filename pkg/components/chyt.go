@@ -137,7 +137,7 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if c.ytsaurus.Status.State != ytv1.ClusterStateRunning {
-		return WaitingStatus(SyncStatusBlocked, "ytsaurus running"), err
+		return ComponentStatusBlockedBy("ytsaurus is not running"), err
 	}
 
 	// Create a user for chyt initialization.
@@ -150,7 +150,7 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 			err = c.secret.Sync(ctx)
 		}
 		c.chyt.GetResource().Status.ReleaseStatus = ytv1.ChytReleaseStatusCreatingUserSecret
-		return WaitingStatus(SyncStatusPending, c.secret.Name()), err
+		return ComponentStatusWaitingFor(c.secret.Name()), err
 	}
 
 	if !dry {
@@ -200,7 +200,7 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 
 	c.chyt.GetResource().Status.ReleaseStatus = ytv1.ChytReleaseStatusFinished
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (c *Chyt) Fetch(ctx context.Context) error {

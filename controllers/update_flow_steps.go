@@ -181,7 +181,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 		return stepResultMarkUnsatisfied
 	},
 	ytv1.UpdateStateImpossibleToStart: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
-		if !componentManager.needSync() || !ytsaurus.GetResource().Spec.EnableFullUpdate {
+		if componentManager.status.allReady || !ytsaurus.GetResource().Spec.EnableFullUpdate {
 			return stepResultMarkHappy
 		}
 		return stepResultMarkUnsatisfied
@@ -214,7 +214,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 		return stepResultMarkUnsatisfied
 	},
 	ytv1.UpdateStateWaitingForPodsCreation: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
-		if componentManager.allReadyOrUpdating() {
+		if componentManager.status.allReadyOrUpdating {
 			return stepResultMarkHappy
 		}
 		return stepResultMarkUnsatisfied

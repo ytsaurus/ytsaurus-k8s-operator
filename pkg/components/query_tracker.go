@@ -94,7 +94,7 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(qt.ytsaurus.GetClusterState()) && qt.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -103,7 +103,7 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 				if !dry {
 					err = removePods(ctx, qt.server, &qt.localComponent)
 				}
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+				return ComponentStatusUpdateStep("pods removal"), err
 			}
 
 			if status, err := qt.updateQTState(ctx, dry); status != nil {
@@ -111,10 +111,10 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 			}
 			if qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
 				qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQTStateUpdate {
-				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
+				return ComponentStatusReady(), err
 			}
 		} else {
-			return NewComponentStatus(SyncStatusReady, "Not updating component"), err
+			return ComponentStatusReadyAfter("Not updating component"), err
 		}
 	}
 
@@ -126,7 +126,7 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 			}
 			err = qt.secret.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, qt.secret.Name()), err
+		return ComponentStatusWaitingFor(qt.secret.Name()), err
 	}
 
 	if qt.NeedSync() {
@@ -134,16 +134,16 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 			err = qt.server.Sync(ctx)
 		}
 
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !qt.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
 	// Wait for tablet nodes to proceed with query tracker state init.
 	if len(qt.tabletNodes) == 0 {
-		return WaitingStatus(SyncStatusBlocked, "tablet nodes"), fmt.Errorf("cannot initialize query tracker without tablet nodes")
+		return ComponentStatusBlockedBy("tablet nodes"), fmt.Errorf("cannot initialize query tracker without tablet nodes")
 	}
 
 	for _, tnd := range qt.tabletNodes {
@@ -151,8 +151,8 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		if err != nil {
 			return tndStatus, err
 		}
-		if !IsRunningStatus(tndStatus.SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, "tablet nodes"), err
+		if !tndStatus.IsRunning() {
+			return ComponentStatusBlockedBy("tablet nodes"), err
 		}
 	}
 
@@ -160,7 +160,7 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	if !dry {
 		ytClient = qt.ytsaurusClient.GetYtClient()
 		if ytClient == nil {
-			return WaitingStatus(SyncStatusPending, "getting yt client"), err
+			return ComponentStatusWaitingFor("getting yt client"), err
 		}
 	}
 
@@ -168,7 +168,7 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		if !dry {
 			err = qt.createUser(ctx, ytClient)
 			if err != nil {
-				return WaitingStatus(SyncStatusPending, "create qt user"), err
+				return ComponentStatusWaitingFor("create qt user"), err
 			}
 		}
 	}
@@ -176,7 +176,7 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	if !dry {
 		err = qt.init(ctx, ytClient)
 		if err != nil {
-			return WaitingStatus(SyncStatusPending, fmt.Sprintf("%s initialization", qt.GetFullName())), err
+			return ComponentStatusWaitingFor(fmt.Sprintf("%s initialization", qt.GetFullName())), err
 		}
 
 		qt.ytsaurus.SetStatusCondition(metav1.Condition{
@@ -196,9 +196,9 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	}
 
 	if qt.ytsaurus.IsStatusConditionTrue(qt.initCondition) {
-		return SimpleStatus(SyncStatusReady), err
+		return ComponentStatusReady(), err
 	}
-	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", qt.initCondition)), err
+	return ComponentStatusWaitingFor(fmt.Sprintf("setting %s condition", qt.initCondition)), err
 }
 
 func (qt *QueryTracker) createUser(ctx context.Context, ytClient yt.Client) (err error) {

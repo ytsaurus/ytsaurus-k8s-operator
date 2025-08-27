@@ -50,7 +50,7 @@ func (mc *MasterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(mc.ytsaurus.GetClusterState()) && mc.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if mc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -63,14 +63,14 @@ func (mc *MasterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 		if !dry {
 			err = mc.doServerSync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !mc.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (mc *MasterCache) Status(ctx context.Context) (ComponentStatus, error) {
