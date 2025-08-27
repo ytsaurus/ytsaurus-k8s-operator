@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path"
-	"strings"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -26,13 +25,12 @@ set -e
 set -x
 `
 
-func initJobWithNativeDriverPrologue() string {
-	commands := []string{
+func initJobWithNativeDriverPrologue() Script {
+	return Script{
 		initJobPrologue,
 		fmt.Sprintf("export YT_DRIVER_CONFIG_PATH=%s", path.Join(consts.ConfigMountPoint, consts.ClientConfigFileName)),
 		`export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"`,
 	}
-	return strings.Join(commands, "\n")
 }
 
 type InitJob struct {
@@ -115,9 +113,9 @@ func (j *InitJob) IsCompleted() bool {
 	return j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition)
 }
 
-func (j *InitJob) SetInitScript(script string) {
+func (j *InitJob) SetInitScript(script Script) {
 	cm := j.configs.Build()
-	cm.Data[consts.InitClusterScriptFileName] = script
+	cm.Data[consts.InitClusterScriptFileName] = script.String()
 }
 
 func (j *InitJob) Build() *batchv1.Job {
