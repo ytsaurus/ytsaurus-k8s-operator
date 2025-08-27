@@ -97,7 +97,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(qa.ytsaurus.GetClusterState()) && qa.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -106,7 +106,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 				if !dry {
 					err = removePods(ctx, qa.server, &qa.localComponent)
 				}
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+				return ComponentStatusUpdateStep("pods removal"), err
 			}
 
 			if status, err := qa.updateQAState(ctx, dry); status != nil {
@@ -115,10 +115,10 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 
 			if qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
 				qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQAStateUpdate {
-				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
+				return ComponentStatusReady(), err
 			}
 		} else {
-			return NewComponentStatus(SyncStatusReady, "Not updating component"), err
+			return ComponentStatusReadyAfter("Not updating component"), err
 		}
 	}
 
@@ -126,21 +126,21 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	if err != nil {
 		return masterStatus, err
 	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, qa.master.GetFullName()), err
+	if !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(qa.master.GetFullName()), err
 	}
 
 	// It makes no sense to start queue agents without tablet nodes.
 	if len(qa.tabletNodes) == 0 {
-		return WaitingStatus(SyncStatusBlocked, "tablet nodes"), fmt.Errorf("cannot initialize queue agent without tablet nodes")
+		return ComponentStatusBlockedBy("tablet nodes"), fmt.Errorf("cannot initialize queue agent without tablet nodes")
 	}
 	for _, tnd := range qa.tabletNodes {
 		tndStatus, err := tnd.Status(ctx)
 		if err != nil {
 			return tndStatus, err
 		}
-		if !IsRunningStatus(tndStatus.SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, tnd.GetFullName()), err
+		if !tndStatus.IsRunning() {
+			return ComponentStatusBlockedBy(tnd.GetFullName()), err
 		}
 	}
 
@@ -152,7 +152,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			}
 			err = qa.secret.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, qa.secret.Name()), err
+		return ComponentStatusWaitingFor(qa.secret.Name()), err
 	}
 
 	if qa.NeedSync() {
@@ -160,11 +160,11 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			err = qa.server.Sync(ctx)
 		}
 
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !qa.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
 	var ytClient yt.Client
@@ -174,7 +174,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			return ytClientStatus, err
 		}
 		if ytClientStatus.SyncStatus != SyncStatusReady {
-			return WaitingStatus(SyncStatusBlocked, qa.ytsaurusClient.GetFullName()), err
+			return ComponentStatusBlockedBy(qa.ytsaurusClient.GetFullName()), err
 		}
 
 		if !dry {
@@ -182,7 +182,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 
 			err = qa.createUser(ctx, ytClient)
 			if err != nil {
-				return WaitingStatus(SyncStatusPending, "create qa user"), err
+				return ComponentStatusWaitingFor("create qa user"), err
 			}
 		}
 	}
@@ -193,12 +193,12 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if qa.ytsaurus.IsStatusConditionTrue(qa.initCondition) {
-		return SimpleStatus(SyncStatusReady), err
+		return ComponentStatusReady(), err
 	}
 	if !dry {
 		err = qa.init(ctx, ytClient)
 		if err != nil {
-			return WaitingStatus(SyncStatusPending, fmt.Sprintf("%s initialization", qa.GetFullName())), err
+			return ComponentStatusWaitingFor(fmt.Sprintf("%s initialization", qa.GetFullName())), err
 		}
 
 		qa.ytsaurus.SetStatusCondition(metav1.Condition{
@@ -209,7 +209,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		})
 	}
 
-	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", qa.initCondition)), err
+	return ComponentStatusWaitingFor(fmt.Sprintf("setting %s condition", qa.initCondition)), err
 }
 
 func (qa *QueueAgent) createUser(ctx context.Context, ytClient yt.Client) (err error) {
@@ -365,9 +365,9 @@ func (qa *QueueAgent) initQAState(ctx context.Context, dry bool) (ComponentStatu
 		if err != nil {
 			return tndStatus, err
 		}
-		if !IsRunningStatus(tndStatus.SyncStatus) {
+		if !tndStatus.IsRunning() {
 			// Wait for tablet nodes to proceed with queue agent state init.
-			return WaitingStatus(SyncStatusBlocked, tnd.GetFullName()), err
+			return ComponentStatusBlockedBy(tnd.GetFullName()), err
 		}
 	}
 

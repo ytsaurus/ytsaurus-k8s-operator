@@ -83,10 +83,10 @@ func (n *RemoteExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus,
 	}
 
 	if !n.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (n *RemoteExecNode) GetType() consts.ComponentType { return consts.ExecNodeType }

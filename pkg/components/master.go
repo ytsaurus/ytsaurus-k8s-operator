@@ -409,7 +409,7 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(m.ytsaurus.GetClusterState()) && m.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -433,18 +433,18 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 			}
 			err = m.sidecarSecrets.hydraPersistenceUploaderSecret.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, m.sidecarSecrets.hydraPersistenceUploaderSecret.Name()), err
+		return ComponentStatusWaitingFor(m.sidecarSecrets.hydraPersistenceUploaderSecret.Name()), err
 	}
 
 	if m.NeedSync() {
 		if !dry {
 			err = m.doServerSync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !m.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
 	return m.runInitPhaseJobs(ctx, dry)

@@ -87,7 +87,7 @@ func (kp *KafkaProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(kp.ytsaurus.GetClusterState()) && kp.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if kp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -100,15 +100,15 @@ func (kp *KafkaProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	if err != nil {
 		return kpStatus, err
 	}
-	if !IsRunningStatus(kpStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, kp.master.GetFullName()), err
+	if !kpStatus.IsRunning() {
+		return ComponentStatusBlockedBy(kp.master.GetFullName()), err
 	}
 
 	if kp.NeedSync() {
 		if !dry {
 			err = kp.server.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if kp.balancingService != nil && !resources.Exists(kp.balancingService) {
@@ -116,14 +116,14 @@ func (kp *KafkaProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			kp.balancingService.Build()
 			err = kp.balancingService.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, kp.balancingService.Name()), err
+		return ComponentStatusWaitingFor(kp.balancingService.Name()), err
 	}
 
 	if !kp.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (kp *KafkaProxy) Status(ctx context.Context) (ComponentStatus, error) {

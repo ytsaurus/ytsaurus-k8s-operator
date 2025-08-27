@@ -50,7 +50,7 @@ func (cyp *CypressProxy) doSync(ctx context.Context, dry bool) (ComponentStatus,
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(cyp.ytsaurus.GetClusterState()) && cyp.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if cyp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -63,14 +63,14 @@ func (cyp *CypressProxy) doSync(ctx context.Context, dry bool) (ComponentStatus,
 		if !dry {
 			err = cyp.doServerSync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !cyp.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (cyp *CypressProxy) Status(ctx context.Context) (ComponentStatus, error) {

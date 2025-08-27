@@ -137,7 +137,7 @@ func (tt *Timbertruck) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 
 	if tt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if tt.ytsaurus.GetResource().Status.UpdateStatus.State == ytv1.UpdateStateImpossibleToStart {
-			return SimpleStatus(SyncStatusReady), err
+			return ComponentStatusReady(), err
 		}
 		if dry {
 			return SimpleStatus(SyncStatusUpdating), err
@@ -154,7 +154,7 @@ func (tt *Timbertruck) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 			}
 			err = tt.timbertruckSecret.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, tt.timbertruckSecret.Name()), err
+		return ComponentStatusWaitingFor(tt.timbertruckSecret.Name()), err
 	}
 
 	ytClientStatus, err := tt.ytsaurusClient.Status(ctx)
@@ -162,8 +162,8 @@ func (tt *Timbertruck) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 		return ytClientStatus, err
 	}
 
-	if !IsRunningStatus(ytClientStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, tt.ytsaurusClient.GetFullName()), nil
+	if !ytClientStatus.IsRunning() {
+		return ComponentStatusBlockedBy(tt.ytsaurusClient.GetFullName()), nil
 	}
 
 	if len(tt.tabletNodes) > 0 {
@@ -173,7 +173,7 @@ func (tt *Timbertruck) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 		}
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (tt *Timbertruck) handleTabletNodes(ctx context.Context, dry bool) (ComponentStatus, error) {
@@ -182,14 +182,14 @@ func (tt *Timbertruck) handleTabletNodes(ctx context.Context, dry bool) (Compone
 		if err != nil {
 			return tndStatus, err
 		}
-		if !IsRunningStatus(tndStatus.SyncStatus) {
-			return WaitingStatus(SyncStatusBlocked, tnd.GetFullName()), nil
+		if !tndStatus.IsRunning() {
+			return ComponentStatusBlockedBy(tnd.GetFullName()), nil
 		}
 	}
 
 	deliveryLoggers := tt.GetDeliveryLoggers()
 	if len(deliveryLoggers) == 0 {
-		return SimpleStatus(SyncStatusReady), nil
+		return ComponentStatusReady(), nil
 	}
 
 	if !tt.ytsaurus.IsStatusConditionTrue(consts.ConditionTimbertruckUserInitialized) {
@@ -204,7 +204,7 @@ func (tt *Timbertruck) handleTabletNodes(ctx context.Context, dry bool) (Compone
 				Message: "Timbertruck user initialized successfully",
 			})
 		}
-		return WaitingStatus(SyncStatusPending, "waiting for timbertruck user initialization"), nil
+		return ComponentStatusWaitingFor("waiting for timbertruck user initialization"), nil
 	}
 
 	if !tt.ytsaurus.IsStatusConditionTrue(consts.ConditionTimbertruckPrepared) {
@@ -219,10 +219,10 @@ func (tt *Timbertruck) handleTabletNodes(ctx context.Context, dry bool) (Compone
 				Message: "Timbertruck prepared successfully",
 			})
 		}
-		return WaitingStatus(SyncStatusPending, "waiting for timbertruck preparation"), nil
+		return ComponentStatusWaitingFor("waiting for timbertruck preparation"), nil
 	}
 
-	return SimpleStatus(SyncStatusReady), nil
+	return ComponentStatusReady(), nil
 }
 
 func (tt *Timbertruck) Fetch(ctx context.Context) error {

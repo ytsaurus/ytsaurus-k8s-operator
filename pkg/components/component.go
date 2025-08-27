@@ -15,30 +15,59 @@ import (
 type SyncStatus string
 
 const (
-	SyncStatusBlocked         SyncStatus = "Blocked"
-	SyncStatusNeedLocalUpdate SyncStatus = "NeedLocalUpdate"
-	SyncStatusPending         SyncStatus = "Pending"
-	SyncStatusReady           SyncStatus = "Ready"
-	SyncStatusUpdating        SyncStatus = "Updating"
+	SyncStatusReady      SyncStatus = "Ready"      // Running, reconciliation is not required
+	SyncStatusBlocked    SyncStatus = "Blocked"    // Reconciliation is impossible
+	SyncStatusPending    SyncStatus = "Pending"    // Reconciliation is possible
+	SyncStatusNeedUpdate SyncStatus = "NeedUpdate" // Running, update is required
+	SyncStatusUpdating   SyncStatus = "Updating"   // Update in progress
 )
-
-func IsRunningStatus(status SyncStatus) bool {
-	return status == SyncStatusReady || status == SyncStatusNeedLocalUpdate
-}
 
 type ComponentStatus struct {
 	SyncStatus SyncStatus
 	Message    string
 }
 
-func NewComponentStatus(status SyncStatus, message string) ComponentStatus {
-	return ComponentStatus{status, message}
+func (cs ComponentStatus) IsRunning() bool {
+	return cs.SyncStatus == SyncStatusReady || cs.SyncStatus == SyncStatusNeedUpdate
 }
 
-func WaitingStatus(status SyncStatus, event string) ComponentStatus {
-	return ComponentStatus{status, fmt.Sprintf("Wait for %s", event)}
+func ComponentStatusReady() ComponentStatus {
+	return ComponentStatus{SyncStatusReady, "Ready"}
 }
 
+func ComponentStatusReadyAfter(message string) ComponentStatus {
+	return ComponentStatus{SyncStatusReady, message}
+}
+
+func ComponentStatusBlocked(message string) ComponentStatus {
+	return ComponentStatus{SyncStatusBlocked, message}
+}
+
+func ComponentStatusPending(message string) ComponentStatus {
+	return ComponentStatus{SyncStatusPending, message}
+}
+
+func ComponentStatusNeedUpdate(message string) ComponentStatus {
+	return ComponentStatus{SyncStatusNeedUpdate, message}
+}
+
+func ComponentStatusUpdating(message string) ComponentStatus {
+	return ComponentStatus{SyncStatusUpdating, message}
+}
+
+func ComponentStatusBlockedBy(cause string) ComponentStatus {
+	return ComponentStatus{SyncStatusBlocked, fmt.Sprintf("Blocked by %s", cause)}
+}
+
+func ComponentStatusWaitingFor(event string) ComponentStatus {
+	return ComponentStatus{SyncStatusPending, fmt.Sprintf("Waiting for %s", event)}
+}
+
+func ComponentStatusUpdateStep(part string) ComponentStatus {
+	return ComponentStatus{SyncStatusUpdating, fmt.Sprintf("Updating %s", part)}
+}
+
+// TODO(khlebnikov): Replace this stub with status with meaningful message.
 func SimpleStatus(status SyncStatus) ComponentStatus {
 	return ComponentStatus{status, string(status)}
 }

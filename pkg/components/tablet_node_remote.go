@@ -60,14 +60,14 @@ func (n *RemoteTabletNode) doSync(ctx context.Context, dry bool) (ComponentStatu
 		if !dry {
 			err = n.server.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !n.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (n *RemoteTabletNode) GetType() consts.ComponentType { return consts.TabletNodeType }

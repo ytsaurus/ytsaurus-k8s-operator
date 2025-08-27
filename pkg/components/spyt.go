@@ -92,11 +92,11 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if s.ytsaurus.Status.State != ytv1.ClusterStateRunning {
-		return WaitingStatus(SyncStatusBlocked, s.ytsaurus.GetName()), err
+		return ComponentStatusBlockedBy(s.ytsaurus.GetName()), err
 	}
 
 	if s.spyt.GetResource().Status.ReleaseStatus == ytv1.SpytReleaseStatusFinished {
-		return SimpleStatus(SyncStatusReady), err
+		return ComponentStatusReady(), err
 	}
 
 	// Create user for spyt initialization.
@@ -109,7 +109,7 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 			err = s.secret.Sync(ctx)
 		}
 		s.spyt.GetResource().Status.ReleaseStatus = ytv1.SpytReleaseStatusCreatingUserSecret
-		return WaitingStatus(SyncStatusPending, s.secret.Name()), err
+		return ComponentStatusWaitingFor(s.secret.Name()), err
 	}
 
 	if !dry {
@@ -150,7 +150,7 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 
 	s.spyt.GetResource().Status.ReleaseStatus = ytv1.SpytReleaseStatusFinished
 
-	return SimpleStatus(SyncStatusReady), nil
+	return ComponentStatusReady(), nil
 }
 
 func (s *Spyt) Fetch(ctx context.Context) error {

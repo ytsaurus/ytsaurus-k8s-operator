@@ -147,7 +147,7 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(yqla.ytsaurus.GetClusterState()) && yqla.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -156,7 +156,7 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 				if !dry {
 					err = removePods(ctx, yqla.server, &yqla.localComponent)
 				}
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+				return ComponentStatusUpdateStep("pods removal"), err
 			}
 
 			if status, err := yqla.updateYqla(ctx, dry); status != nil {
@@ -164,10 +164,10 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			}
 			if yqla.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
 				yqla.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForYqlaUpdate {
-				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
+				return ComponentStatusReady(), err
 			}
 		} else {
-			return NewComponentStatus(SyncStatusReady, "Not updating component"), err
+			return ComponentStatusReadyAfter("Not updating component"), err
 		}
 	}
 
@@ -175,8 +175,8 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	if err != nil {
 		return masterStatus, err
 	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, yqla.master.GetFullName()), err
+	if !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(yqla.master.GetFullName()), err
 	}
 
 	if yqla.secret.NeedSync(consts.TokenSecretKey, "") {
@@ -187,7 +187,7 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			}
 			err = yqla.secret.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, yqla.secret.Name()), err
+		return ComponentStatusWaitingFor(yqla.secret.Name()), err
 	}
 
 	if yqla.NeedSync() {
@@ -207,11 +207,11 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			container.Env = append(container.Env, getDefaultEnv()...)
 			err = yqla.server.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !yqla.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
 	if !dry {
