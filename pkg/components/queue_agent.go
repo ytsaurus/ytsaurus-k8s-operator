@@ -96,7 +96,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(qa.ytsaurus.GetClusterState()) && qa.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {

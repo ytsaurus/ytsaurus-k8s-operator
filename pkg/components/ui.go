@@ -262,7 +262,7 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && u.microservice.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {

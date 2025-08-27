@@ -482,7 +482,7 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 	}
 
 	if ytv1.IsReadyToUpdateClusterState(yc.ytsaurus.GetClusterState()) && yc.NeedSync() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if yc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {

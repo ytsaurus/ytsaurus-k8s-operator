@@ -93,7 +93,7 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(qt.ytsaurus.GetClusterState()) && qt.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {

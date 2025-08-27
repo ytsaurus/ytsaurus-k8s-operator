@@ -261,7 +261,7 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(c.ytsaurus.GetClusterState()) && c.microservice.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
