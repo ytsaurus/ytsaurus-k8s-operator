@@ -194,12 +194,12 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 			)
 		}
 
-		return WaitingStatus(SyncStatusPending, fmt.Sprintf("%s creation", j.initJob.Name())), err
+		return ComponentStatusWaitingFor(fmt.Sprintf("%s creation", j.initJob.Name())), err
 	}
 
 	if !j.initJob.Completed() {
 		logger.Info("Init job is not completed for " + j.labeller.GetFullComponentName())
-		return WaitingStatus(SyncStatusBlocked, fmt.Sprintf("%s completion", j.initJob.Name())), err
+		return ComponentStatusBlockedBy(fmt.Sprintf("%s completion", j.initJob.Name())), err
 	}
 
 	if !dry {
@@ -211,7 +211,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		})
 	}
 
-	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", j.initCompletedCondition)), err
+	return ComponentStatusWaitingFor(fmt.Sprintf("setting %s condition", j.initCompletedCondition)), err
 }
 
 func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
