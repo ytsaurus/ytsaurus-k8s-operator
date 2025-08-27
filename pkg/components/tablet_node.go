@@ -73,7 +73,7 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(tn.ytsaurus.GetClusterState()) && tn.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -87,15 +87,15 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			err = tn.server.Sync(ctx)
 		}
 
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !tn.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
 	if !tn.doInitialization || tn.ytsaurus.IsStatusConditionTrue(tn.initBundlesCondition) {
-		return SimpleStatus(SyncStatusReady), err
+		return ComponentStatusReady(), err
 	}
 
 	ytClientStatus, err := tn.ytsaurusClient.Status(ctx)
@@ -103,7 +103,7 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return ytClientStatus, err
 	}
 	if ytClientStatus.SyncStatus != SyncStatusReady {
-		return WaitingStatus(SyncStatusBlocked, tn.ytsaurusClient.GetFullName()), err
+		return ComponentStatusBlockedBy(tn.ytsaurusClient.GetFullName()), err
 	}
 
 	if !dry && tn.doInitialization {
@@ -113,7 +113,7 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		}
 	}
 
-	return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting %s condition", tn.initBundlesCondition)), err
+	return ComponentStatusWaitingFor(fmt.Sprintf("setting %s condition", tn.initBundlesCondition)), err
 }
 
 func (tn *TabletNode) getBundleBootstrap(bundle string) *ytv1.BundleBootstrapSpec {
@@ -167,7 +167,7 @@ func (tn *TabletNode) initBundles(ctx context.Context) (ComponentStatus, error) 
 
 	sysBundleExists, err := ytClient.NodeExists(ctx, ypath.Path("//sys/tablet_cell_bundles").Child(SysBundle), nil)
 	if err != nil {
-		return WaitingStatus(SyncStatusPending, "tablet_cell_bundle creation"), err
+		return ComponentStatusWaitingFor("tablet_cell_bundle creation"), err
 	}
 	if !sysBundleExists {
 		options := tn.getBundleOptions(SysBundle)
@@ -180,7 +180,7 @@ func (tn *TabletNode) initBundles(ctx context.Context) (ComponentStatus, error) 
 
 		if err != nil {
 			logger.Error(err, "Creating tablet_cell_bundle failed")
-			return WaitingStatus(SyncStatusPending, "tablet_cell_bundle creation"), err
+			return ComponentStatusWaitingFor("tablet_cell_bundle creation"), err
 		}
 	}
 
@@ -192,7 +192,7 @@ func (tn *TabletNode) initBundles(ctx context.Context) (ComponentStatus, error) 
 			err = ytClient.GetNode(ctx, path.Attr("options"), &bundleOptions, nil)
 			if err != nil {
 				logger.Error(err, "Getting options for `default` bundle failed")
-				return WaitingStatus(SyncStatusPending, "getting default bundle options"), err
+				return ComponentStatusWaitingFor("getting default bundle options"), err
 			}
 			for option, value := range options {
 				bundleOptions[option] = value
@@ -200,7 +200,7 @@ func (tn *TabletNode) initBundles(ctx context.Context) (ComponentStatus, error) 
 			err = ytClient.SetNode(ctx, path.Attr("options"), bundleOptions, nil)
 			if err != nil {
 				logger.Error(err, "Setting options for `default` bundle failed", "options", options)
-				return WaitingStatus(SyncStatusPending, "setting default bundle options"), err
+				return ComponentStatusWaitingFor("setting default bundle options"), err
 			}
 		}
 	}
@@ -219,7 +219,7 @@ func (tn *TabletNode) initBundles(ctx context.Context) (ComponentStatus, error) 
 					"bundle", bundle,
 					"nodeTagFilter", *bootstrap.NodeTagFilter,
 				)
-				return WaitingStatus(SyncStatusPending, fmt.Sprintf("setting bundle %q node tag filter", bundle)), err
+				return ComponentStatusWaitingFor(fmt.Sprintf("setting bundle %q node tag filter", bundle)), err
 			}
 		}
 	}
@@ -232,7 +232,7 @@ func (tn *TabletNode) initBundles(ctx context.Context) (ComponentStatus, error) 
 		}
 		err = CreateTabletCells(ctx, ytClient, bundle, tabletCellCount)
 		if err != nil {
-			return WaitingStatus(SyncStatusPending, "tablet cells creation"), err
+			return ComponentStatusWaitingFor("tablet cells creation"), err
 		}
 	}
 
@@ -243,7 +243,7 @@ func (tn *TabletNode) initBundles(ctx context.Context) (ComponentStatus, error) 
 		Message: "Init bundles successfully completed",
 	})
 
-	return SimpleStatus(SyncStatusReady), nil
+	return ComponentStatusReady(), nil
 }
 
 func (tn *TabletNode) Status(ctx context.Context) (ComponentStatus, error) {

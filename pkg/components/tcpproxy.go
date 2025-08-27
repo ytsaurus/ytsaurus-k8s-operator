@@ -71,7 +71,7 @@ func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(tp.ytsaurus.GetClusterState()) && tp.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if tp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -84,15 +84,15 @@ func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	if err != nil {
 		return tpStatus, err
 	}
-	if !IsRunningStatus(tpStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, tp.master.GetFullName()), err
+	if !tpStatus.IsRunning() {
+		return ComponentStatusBlockedBy(tp.master.GetFullName()), err
 	}
 
 	if tp.NeedSync() {
 		if !dry {
 			err = tp.server.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if tp.balancingService != nil && !resources.Exists(tp.balancingService) {
@@ -100,14 +100,14 @@ func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 			tp.balancingService.Build()
 			err = tp.balancingService.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, tp.balancingService.Name()), err
+		return ComponentStatusWaitingFor(tp.balancingService.Name()), err
 	}
 
 	if !tp.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (tp *TcpProxy) Status(ctx context.Context) (ComponentStatus, error) {

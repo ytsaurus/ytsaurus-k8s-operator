@@ -119,7 +119,7 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(rp.ytsaurus.GetClusterState()) && rp.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -132,8 +132,8 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	if err != nil {
 		return masterStatus, err
 	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, rp.master.GetFullName()), err
+	if !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(rp.master.GetFullName()), err
 	}
 
 	if rp.NeedSync() {
@@ -145,7 +145,7 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 			}
 			err = rp.server.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if rp.balancingService != nil && !resources.Exists(rp.balancingService) {
@@ -154,14 +154,14 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 			s.Spec.Type = *rp.serviceType
 			err = rp.balancingService.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, rp.balancingService.Name()), err
+		return ComponentStatusWaitingFor(rp.balancingService.Name()), err
 	}
 
 	if !rp.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (rp *RpcProxy) Status(ctx context.Context) (ComponentStatus, error) {

@@ -45,7 +45,7 @@ func NewFakeComponent(name string, compType consts.ComponentType) *FakeComponent
 	return &FakeComponent{
 		name:     name,
 		compType: compType,
-		status:   SimpleStatus(SyncStatusReady),
+		status:   ComponentStatusReady(),
 	}
 }
 

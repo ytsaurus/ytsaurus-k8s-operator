@@ -60,14 +60,14 @@ func (n *RemoteDataNode) doSync(ctx context.Context, dry bool) (ComponentStatus,
 		if !dry {
 			err = n.server.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !n.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (n *RemoteDataNode) GetType() consts.ComponentType { return consts.DataNodeType }

@@ -151,6 +151,13 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 	ytsaurus := apiProxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
 	componentManager, err := NewComponentManager(ctx, ytsaurus, r.ClusterDomain)
 	if err != nil {
+		logger.Error(err, "Cannot build component manager")
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	err = componentManager.FetchStatus(ctx)
+	if err != nil {
+		logger.Error(err, "Cannot fetch component manager status")
 		return ctrl.Result{Requeue: true}, err
 	}
 
@@ -162,14 +169,14 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 
 	case ytv1.ClusterStateInitializing:
 		// Ytsaurus has finished initializing, and is running now.
-		if !componentManager.needSync() {
+		if componentManager.status.allRunning {
 			logger.Info("Ytsaurus has synced and is running now")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
 			return ctrl.Result{Requeue: true}, err
 		}
 
 	case ytv1.ClusterStateRunning:
-		needUpdate := componentManager.needUpdate()
+		needUpdate := componentManager.status.needUpdate
 		canUpdate, cannotUpdate := chooseUpdatingComponents(
 			ytsaurus.GetResource().Spec,
 			convertToComponent(needUpdate),
@@ -186,10 +193,10 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		}
 
 		switch {
-		case !componentManager.needSync():
+		case componentManager.status.allReady:
 			logger.Info("Ytsaurus is running and happy")
 
-		case componentManager.needInit():
+		case !componentManager.status.allRunning:
 			logger.Info("Ytsaurus needs initialization of some components")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateReconfiguration)
 			return ctrl.Result{Requeue: true}, err
@@ -259,7 +266,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		return ctrl.Result{Requeue: true}, err
 
 	case ytv1.ClusterStateReconfiguration:
-		if !componentManager.needInit() {
+		if componentManager.status.allRunning {
 			logger.Info("Ytsaurus has reconfigured and is running now")
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
 			// Requeue once again to do final check and maybe update observed generation.

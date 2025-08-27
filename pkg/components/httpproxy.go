@@ -129,7 +129,7 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(hp.ytsaurus.GetClusterState()) && hp.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -142,8 +142,8 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	if err != nil {
 		return masterStatus, err
 	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, hp.master.GetFullName()), err
+	if !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(hp.master.GetFullName()), err
 	}
 
 	if hp.NeedSync() {
@@ -155,7 +155,7 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 			}
 			err = hp.server.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !resources.Exists(hp.balancingService) {
@@ -164,14 +164,14 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 			s.Spec.Type = hp.serviceType
 			err = hp.balancingService.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, hp.balancingService.Name()), err
+		return ComponentStatusWaitingFor(hp.balancingService.Name()), err
 	}
 
 	if !hp.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (hp *HttpProxy) Status(ctx context.Context) (ComponentStatus, error) {

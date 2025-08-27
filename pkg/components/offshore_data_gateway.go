@@ -59,11 +59,11 @@ func (p *OffshoreDataGateway) doSync(ctx context.Context, dry bool) (ComponentSt
 		if !dry {
 			err = p.server.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !p.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusWaitingFor("pods"), err
 	}
 
 	return SimpleStatus(SyncStatusReady), err

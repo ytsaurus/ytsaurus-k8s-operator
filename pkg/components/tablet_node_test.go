@@ -178,7 +178,7 @@ var _ = Describe("Tablet node test", func() {
 			Expect(err).Should(Succeed())
 			Expect(status.SyncStatus).Should(Equal(SyncStatusBlocked))
 
-			ytsaurusClient.SetStatus(SimpleStatus(SyncStatusReady))
+			ytsaurusClient.SetStatus(ComponentStatusReady())
 
 			status, err = tabletNode.Status(context.Background())
 			Expect(err).Should(Succeed())
