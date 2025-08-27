@@ -3,7 +3,6 @@ package components
 import (
 	"cmp"
 	"context"
-	"os"
 	"slices"
 	"testing"
 
@@ -244,9 +243,10 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 		By("Running ytsaurus reconciler", func() {
 			ytsaurusReconciler := controllers.YtsaurusReconciler{
-				Client:   k8sClient,
-				Scheme:   k8sScheme,
-				Recorder: k8sEventBroadcaster.NewRecorder(k8sScheme, corev1.EventSource{Component: "ytsaurus"}),
+				ClusterDomain: "cluster.local",
+				Client:        k8sClient,
+				Scheme:        k8sScheme,
+				Recorder:      k8sEventBroadcaster.NewRecorder(k8sScheme, corev1.EventSource{Component: "ytsaurus"}),
 			}
 
 			// Override crypto/rand reader to generate deterministic tokens.
@@ -256,13 +256,6 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 					cryptorand.Reader = origReader
 				}()
 				cryptorand.Reader = mathrand.New(mathrand.NewSource(42))
-			}
-
-			{
-				Expect(os.Setenv("K8S_CLUSTER_DOMAIN", "cluster.local")).To(Succeed())
-				defer func() {
-					Expect(os.Unsetenv("K8S_CLUSTER_DOMAIN")).To(Succeed())
-				}()
 			}
 
 			k8sEvents = nil

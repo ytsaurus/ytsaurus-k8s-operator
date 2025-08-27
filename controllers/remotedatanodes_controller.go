@@ -37,6 +37,7 @@ import (
 
 // RemoteDataNodesReconciler reconciles a RemoteDataNodes object
 type RemoteDataNodesReconciler struct {
+	ClusterDomain string
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder

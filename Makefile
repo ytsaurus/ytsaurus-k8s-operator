@@ -343,6 +343,7 @@ build: generate-code ## Build manager binary.
 
 .PHONY: run
 run: generate-code manifests ## Run a controller from your host.
+	K8S_CLUSTER_DOMAIN=cluster.local \
 	go run ./main.go
 
 .PHONY: docker-build

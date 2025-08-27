@@ -30,9 +30,10 @@ func prepareTest(t *testing.T, namespace string) *testutil.TestHelper {
 	h := testutil.NewTestHelper(t, namespace, "..")
 	reconcilerSetup := func(mgr ctrl.Manager) error {
 		return (&controllers.YtsaurusReconciler{
-			Client:   mgr.GetClient(),
-			Scheme:   mgr.GetScheme(),
-			Recorder: mgr.GetEventRecorderFor("ytsaurus-controller"),
+			ClusterDomain: "cluster.local",
+			Client:        mgr.GetClient(),
+			Scheme:        mgr.GetScheme(),
+			Recorder:      mgr.GetEventRecorderFor("ytsaurus-controller"),
 		}).SetupWithManager(mgr)
 	}
 	h.Start(reconcilerSetup)

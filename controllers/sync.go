@@ -149,7 +149,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 	}
 
 	ytsaurus := apiProxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
-	componentManager, err := NewComponentManager(ctx, ytsaurus)
+	componentManager, err := NewComponentManager(ctx, ytsaurus, r.ClusterDomain)
 	if err != nil {
 		return ctrl.Result{Requeue: true}, err
 	}

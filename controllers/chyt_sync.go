@@ -17,7 +17,7 @@ func (r *ChytReconciler) Sync(ctx context.Context, resource *ytv1.Chyt, ytsaurus
 
 	chyt := apiproxy.NewChyt(resource, r.Client, r.Recorder, r.Scheme)
 
-	cfgen := ytconfig.NewLocalNodeGenerator(ytsaurus, resource.Name, getClusterDomain(ctx, chyt.APIProxy().Client()))
+	cfgen := ytconfig.NewLocalNodeGenerator(ytsaurus, resource.Name, r.ClusterDomain)
 
 	component := components.NewChyt(cfgen, chyt, ytsaurus)
 

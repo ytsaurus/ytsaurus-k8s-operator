@@ -74,6 +74,18 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
+	ctx := ctrl.SetupSignalHandler()
+
+	var clusterDomain string
+	if domain := os.Getenv("K8S_CLUSTER_DOMAIN"); domain != "" {
+		clusterDomain = domain
+	} else if domain, err := controllers.GuessClusterDomain(ctx); err == nil {
+		clusterDomain = domain
+	} else {
+		setupLog.Error(err, "unable to guess cluster domain")
+		os.Exit(1)
+	}
+
 	managerOptions := ctrl.Options{
 		Scheme: scheme,
 		WebhookServer: webhook.NewServer(webhook.Options{
@@ -120,9 +132,10 @@ func main() {
 	}
 
 	if err = (&controllers.YtsaurusReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("ytsaurus-controller"),
+		ClusterDomain: clusterDomain,
+		Client:        mgr.GetClient(),
+		Scheme:        mgr.GetScheme(),
+		Recorder:      mgr.GetEventRecorderFor("ytsaurus-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Ytsaurus")
 		os.Exit(1)
@@ -136,9 +149,10 @@ func main() {
 	}
 
 	if err = (&controllers.SpytReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("spyt-controller"),
+		ClusterDomain: clusterDomain,
+		Client:        mgr.GetClient(),
+		Scheme:        mgr.GetScheme(),
+		Recorder:      mgr.GetEventRecorderFor("spyt-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Spyt")
 		os.Exit(1)
@@ -151,9 +165,10 @@ func main() {
 		}
 	}
 	if err = (&controllers.ChytReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("chyt-controller"),
+		ClusterDomain: clusterDomain,
+		Client:        mgr.GetClient(),
+		Scheme:        mgr.GetScheme(),
+		Recorder:      mgr.GetEventRecorderFor("chyt-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Chyt")
 		os.Exit(1)
@@ -165,27 +180,30 @@ func main() {
 		}
 	}
 	if err = (&controllers.RemoteExecNodesReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("remoteexecnodes-controller"),
+		ClusterDomain: clusterDomain,
+		Client:        mgr.GetClient(),
+		Scheme:        mgr.GetScheme(),
+		Recorder:      mgr.GetEventRecorderFor("remoteexecnodes-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteExecNodes")
 		os.Exit(1)
 	}
 
 	if err = (&controllers.RemoteDataNodesReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("remotedatanodes-controller"),
+		ClusterDomain: clusterDomain,
+		Client:        mgr.GetClient(),
+		Scheme:        mgr.GetScheme(),
+		Recorder:      mgr.GetEventRecorderFor("remotedatanodes-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteDataNodes")
 		os.Exit(1)
 	}
 
 	if err = (&controllers.RemoteTabletNodesReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("remotetabletnodes-controller"),
+		ClusterDomain: clusterDomain,
+		Client:        mgr.GetClient(),
+		Scheme:        mgr.GetScheme(),
+		Recorder:      mgr.GetEventRecorderFor("remotetabletnodes-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteTabletNodes")
 		os.Exit(1)
@@ -202,7 +220,7 @@ func main() {
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
