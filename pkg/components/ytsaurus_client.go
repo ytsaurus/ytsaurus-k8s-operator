@@ -468,21 +468,6 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 		}
 	}
 
-	if yc.ytsaurus.GetClusterState() == ytv1.ClusterStateInitializing {
-		if !yc.cypressPatch.Exists() {
-			if dry {
-				return NewComponentStatus(SyncStatusPending, fmt.Sprintf("Need to sync %s", yc.cypressPatch.Name())), nil
-			}
-			if err := yc.SyncCypressPatch(ctx); err != nil {
-				return SimpleStatus(SyncStatusPending), err
-			}
-		}
-	}
-
-	if ytv1.IsReadyToUpdateClusterState(yc.ytsaurus.GetClusterState()) && yc.NeedSync() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
-	}
-
 	if yc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if yc.ytsaurus.GetResource().Status.UpdateStatus.State == ytv1.UpdateStateImpossibleToStart {
 			return SimpleStatus(SyncStatusReady), err
@@ -493,27 +478,39 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 		return yc.handleUpdatingState(ctx)
 	}
 
+	if status := yc.NeedSyncCypressPatch(); status.SyncStatus != SyncStatusReady {
+		if !dry {
+			if err := yc.SyncCypressPatch(ctx); err != nil {
+				return SimpleStatus(SyncStatusPending), err
+			}
+		}
+		return status, nil
+	}
+
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (yc *YtsaurusClient) NeedSync() bool {
+func (yc *YtsaurusClient) NeedSyncCypressPatch() ComponentStatus {
 	if !yc.cypressPatch.Exists() {
-		return true
+		return NewComponentStatus(SyncStatusPending, fmt.Sprintf("Need to create %s", yc.cypressPatch.Name()))
 	}
 
 	if yc.configOverrides != nil && yc.configOverrides.Exists() {
 		patchOverridesVersion := yc.cypressPatch.OldObject().Labels[consts.ConfigOverridesVersionLabelName]
 		overridesVersion := yc.configOverrides.OldObject().ResourceVersion
 		if overridesVersion != patchOverridesVersion {
-			return true
+			return NewComponentStatus(SyncStatusPending, fmt.Sprintf("Need to update overrides in %s", yc.cypressPatch.Name()))
 		}
 	}
 
-	if yc.ytsaurus.IsStatusConditionFalse(consts.ConditionCypressPatchApplied) {
-		return true
+	if !yc.ytsaurus.IsStatusConditionTrue(consts.ConditionCypressPatchApplied) {
+		if yc.shouldSkipCypressOperations() {
+			return NewComponentStatus(SyncStatusReady, "Cypress patch applying is skipped")
+		}
+		return NewComponentStatus(SyncStatusPending, "Need to apply cypress patch")
 	}
 
-	return false
+	return NewComponentStatus(SyncStatusReady, "Cypress patch is up to date and applied")
 }
 
 func (yc *YtsaurusClient) Status(ctx context.Context) (ComponentStatus, error) {
@@ -680,7 +677,8 @@ func (yc *YtsaurusClient) BuildCypressPatch(ctx context.Context) (ypatch.PatchSe
 			return nil, fmt.Errorf("cannot format component cypress patch %s: %w", patchFileName, err)
 		}
 
-		if yc.ytsaurus.GetClusterState() == ytv1.ClusterStateInitializing || IsUpdatingComponent(yc.ytsaurus, component) {
+		if !yc.cypressPatch.Exists() || IsUpdatingComponent(yc.ytsaurus, component) ||
+			yc.ytsaurus.GetClusterState() == ytv1.ClusterStateInitializing {
 			// Include empty patches for clarity.
 			yc.cypressPatch.NewObject().Data[patchFileName] = string(componentPatchData)
 			currentPatch.AddPatchSet(componentPatch)
