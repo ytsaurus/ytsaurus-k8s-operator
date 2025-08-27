@@ -18,6 +18,7 @@ type CRIConfigGenerator struct {
 	Isolated       bool
 	StoragePath    *string
 	MonitoringPort int32
+	HasGPU         bool
 }
 
 func NewCRIConfigGenerator(spec *ytv1.ExecNodesSpec) *CRIConfigGenerator {
@@ -33,6 +34,7 @@ func NewCRIConfigGenerator(spec *ytv1.ExecNodesSpec) *CRIConfigGenerator {
 		Service:        ptr.Deref(criSpec.CRIService, ytv1.CRIServiceContainerd),
 		Isolated:       ptr.Deref(envSpec.Isolated, true),
 		MonitoringPort: ptr.Deref(criSpec.MonitoringPort, consts.CRIServiceMonitoringPort),
+		HasGPU:         resourceListHasGPU(spec.JobResources.Requests) || resourceListHasGPU(spec.JobResources.Limits),
 	}
 	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeImageCache); location != nil {
 		config.StoragePath = &location.Path
@@ -93,6 +95,8 @@ func (cri *CRIConfigGenerator) GetCRIOEnv() []corev1.EnvVar {
 }
 
 func (cri *CRIConfigGenerator) GetContainerdConfig() ([]byte, error) {
+	runtimes, defaultRuntimeName := cri.defineContainerdRuntimes()
+
 	// See https://github.com/containerd/containerd/blob/main/docs/cri/config.md
 	config := map[string]any{
 		"version": 2,
@@ -116,16 +120,8 @@ func (cri *CRIConfigGenerator) GetContainerdConfig() ([]byte, error) {
 				},
 
 				"containerd": map[string]any{
-					"default_runtime_name": "runc",
-					"runtimes": map[string]any{
-						"runc": map[string]any{
-							"runtime_type": "io.containerd.runc.v2",
-							"sandbox_mode": "podsandbox",
-							"options": map[string]any{
-								"SystemdCgroup": false,
-							},
-						},
-					},
+					"default_runtime_name": defaultRuntimeName,
+					"runtimes":             runtimes,
 				},
 
 				"registry": map[string]any{
@@ -143,4 +139,39 @@ func (cri *CRIConfigGenerator) GetContainerdConfig() ([]byte, error) {
 
 	// TODO(khlebnikov): Refactor and remove this mess with formats.
 	return marshallYsonConfig(config)
+}
+
+func (cri *CRIConfigGenerator) defineContainerdRuntimes() (map[string]any, string) {
+	runtimes := map[string]any{
+		"runc": map[string]any{
+			"runtime_type": "io.containerd.runc.v2",
+			"sandbox_mode": "podsandbox",
+			"options": map[string]any{
+				"SystemdCgroup": false,
+			},
+		},
+	}
+	defaultRuntimeName := "runc"
+
+	if cri.HasGPU {
+		runtimes["nvidia"] = map[string]any{
+			"runtime_type": "io.containerd.nvidia.v1",
+			"sandbox_mode": "podsandbox",
+			"options": map[string]any{
+				"BinaryName": "/usr/bin/nvidia-container-runtime",
+			},
+		}
+		defaultRuntimeName = "nvidia"
+	}
+
+	return runtimes, defaultRuntimeName
+}
+
+func resourceListHasGPU(resourceList corev1.ResourceList) bool {
+	for resource := range resourceList {
+		if resource == "nvidia.com/gpu" {
+			return true
+		}
+	}
+	return false
 }
