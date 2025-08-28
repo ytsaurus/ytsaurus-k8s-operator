@@ -34,7 +34,7 @@ func NewCRIConfigGenerator(spec *ytv1.ExecNodesSpec) *CRIConfigGenerator {
 		Service:        ptr.Deref(criSpec.CRIService, ytv1.CRIServiceContainerd),
 		Isolated:       ptr.Deref(envSpec.Isolated, true),
 		MonitoringPort: ptr.Deref(criSpec.MonitoringPort, consts.CRIServiceMonitoringPort),
-		HasGPU:         resourceListHasGPU(spec.JobResources.Requests) || resourceListHasGPU(spec.JobResources.Limits),
+		HasGPU:         execNodesRequestsGPU(spec),
 	}
 	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeImageCache); location != nil {
 		config.StoragePath = &location.Path
@@ -165,6 +165,13 @@ func (cri *CRIConfigGenerator) defineContainerdRuntimes() (runtimes map[string]a
 	}
 
 	return runtimes, defaultRuntimeName
+}
+
+func execNodesRequestsGPU(spec *ytv1.ExecNodesSpec) bool {
+	if spec.JobResources == nil {
+		return false
+	}
+	return resourceListHasGPU(spec.JobResources.Requests) || resourceListHasGPU(spec.JobResources.Limits)
 }
 
 func resourceListHasGPU(resourceList corev1.ResourceList) bool {
