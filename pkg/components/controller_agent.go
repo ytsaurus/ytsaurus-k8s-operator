@@ -52,7 +52,7 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(ca.ytsaurus.GetClusterState()) && ca.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {

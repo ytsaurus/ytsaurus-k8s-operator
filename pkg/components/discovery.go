@@ -52,7 +52,7 @@ func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(d.ytsaurus.GetClusterState()) && d.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {

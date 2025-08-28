@@ -14,7 +14,7 @@ metadata:
 spec:
   # https://ytsaurus.tech/docs/en/admin-guide/releases#ytsaurus-server
   # https://github.com/ytsaurus/ytsaurus/pkgs/container/ytsaurus
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-23.2.0-relwithdebinfo
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.1.0-relwithdebinfo
 
   # Default "docker_image" for jobs
   jobImage: mirror.gcr.io/library/python:3.12-slim
@@ -33,18 +33,23 @@ spec:
   ephemeralCluster: true
 
   useIpv4: true
-  # useIpv6: true
+  useIpv6: true
 
   # To run all components in host network you need at least max(instanceCount) worker nodes due to port clash.
   # hostNetwork: true
 
   # Setup TLS for internal communications
+  #
   # caBundle:
+  #  # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#fileobjectreference
   #  name: ytsaurus-ca-bundle
+  #
   # nativeTransport:
+  #  # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#rpctransportspec
   #  tlsSecret:
   #    name: ytsaurus-native-secret
-  #  tlsRequired: true
+  #  tlsRequired: true|false
+  #  tlsInsecure: true|false
   #  tlsPeerAlternativeHostName: ...
 
   ui:
@@ -318,9 +323,11 @@ spec:
           memory: 10Gi
 
       jobEnvironment:
-        # Add CRI containerd sidecar
+        # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#jobenvironmentspec
+        userSlots: 20
+        # Add CRI service sidecar
         cri:
-          # criService: crio
+          # criService: crio|containerd
           apiRetryTimeoutSeconds: 180
           # registryConfigPath: /config/registry
 
@@ -393,7 +400,7 @@ spec:
     instanceCount: 1
 
     # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
-    image: ghcr.io/ytsaurus/query-tracker:0.0.6-relwithdebinfo
+    image: ghcr.io/ytsaurus/query-tracker:0.0.10-relwithdebinfo
 
     loggers: *loggers
 
@@ -417,7 +424,7 @@ spec:
     instanceCount: 1
 
     # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
-    image: ghcr.io/ytsaurus/query-tracker:0.0.6-relwithdebinfo
+    image: ghcr.io/ytsaurus/query-tracker:0.0.10-relwithdebinfo
 
     loggers: *loggers
 
@@ -440,7 +447,7 @@ spec:
     # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#strawberrycontrollerspec
 
     # https://ytsaurus.tech/docs/en/admin-guide/releases#strawberry
-    image: ghcr.io/ytsaurus/strawberry:0.0.11
+    image: ghcr.io/ytsaurus/strawberry:0.0.13
 
     resources:
       limits:

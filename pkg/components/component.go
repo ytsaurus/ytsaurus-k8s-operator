@@ -15,15 +15,15 @@ import (
 type SyncStatus string
 
 const (
-	SyncStatusBlocked         SyncStatus = "Blocked"
-	SyncStatusNeedLocalUpdate SyncStatus = "NeedLocalUpdate"
-	SyncStatusPending         SyncStatus = "Pending"
-	SyncStatusReady           SyncStatus = "Ready"
-	SyncStatusUpdating        SyncStatus = "Updating"
+	SyncStatusReady      SyncStatus = "Ready"      // Running, reconciliation is not required
+	SyncStatusBlocked    SyncStatus = "Blocked"    // Reconciliation is impossible
+	SyncStatusPending    SyncStatus = "Pending"    // Reconciliation is possible
+	SyncStatusNeedUpdate SyncStatus = "NeedUpdate" // Running, update is required
+	SyncStatusUpdating   SyncStatus = "Updating"   // Update in progress
 )
 
 func IsRunningStatus(status SyncStatus) bool {
-	return status == SyncStatusReady || status == SyncStatusNeedLocalUpdate
+	return status == SyncStatusReady || status == SyncStatusNeedUpdate
 }
 
 type ComponentStatus struct {
