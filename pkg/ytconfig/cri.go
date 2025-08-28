@@ -155,7 +155,7 @@ func (cri *CRIConfigGenerator) defineContainerdRuntimes() (runtimes map[string]a
 
 	if cri.HasGPU {
 		runtimes["nvidia"] = map[string]any{
-			"runtime_type": "io.containerd.nvidia.v1",
+			"runtime_type": "io.containerd.runc.v2",
 			"sandbox_mode": "podsandbox",
 			"options": map[string]any{
 				"BinaryName": "/usr/bin/nvidia-container-runtime",
