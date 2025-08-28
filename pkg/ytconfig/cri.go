@@ -141,8 +141,8 @@ func (cri *CRIConfigGenerator) GetContainerdConfig() ([]byte, error) {
 	return marshallYsonConfig(config)
 }
 
-func (cri *CRIConfigGenerator) defineContainerdRuntimes() (map[string]any, string) {
-	runtimes := map[string]any{
+func (cri *CRIConfigGenerator) defineContainerdRuntimes() (runtimes map[string]any, defaultRuntimeName string) {
+	runtimes = map[string]any{
 		"runc": map[string]any{
 			"runtime_type": "io.containerd.runc.v2",
 			"sandbox_mode": "podsandbox",
@@ -151,7 +151,7 @@ func (cri *CRIConfigGenerator) defineContainerdRuntimes() (map[string]any, strin
 			},
 		},
 	}
-	defaultRuntimeName := "runc"
+	defaultRuntimeName = "runc"
 
 	if cri.HasGPU {
 		runtimes["nvidia"] = map[string]any{
