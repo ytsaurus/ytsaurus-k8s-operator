@@ -187,13 +187,13 @@ spec:
 status:
   conditions:
   - lastTransitionTime: null
-    message: Ready
+    message: Nothing to do now
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: DiscoveryReady
   - lastTransitionTime: null
-    message: Ready
+    message: Nothing to do now
     observedGeneration: 1
     reason: Ready
     status: "True"
@@ -211,37 +211,37 @@ status:
     status: "True"
     type: MasterReady
   - lastTransitionTime: null
-    message: Ready
+    message: Nothing to do now
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: DataNodeReady
   - lastTransitionTime: null
-    message: Ready
+    message: Nothing to do now
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: ExecNodeReady
   - lastTransitionTime: null
-    message: Ready
+    message: Nothing to do now
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: ControllerAgentReady
   - lastTransitionTime: null
-    message: Ready
+    message: Nothing to do now
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: HttpProxyReady
   - lastTransitionTime: null
-    message: Ready
+    message: Nothing to do now
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: RpcProxyReady
   - lastTransitionTime: null
-    message: Ready
+    message: Nothing to do now
     observedGeneration: 1
     reason: Ready
     status: "True"
@@ -265,7 +265,7 @@ status:
     status: "True"
     type: yql-agent-update-environmentYqlAgentInitJobCompleted
   - lastTransitionTime: null
-    message: Ready
+    message: Nothing to do now
     observedGeneration: 1
     reason: Ready
     status: "True"
@@ -277,7 +277,7 @@ status:
     status: "True"
     type: YqlAgentReady
   - lastTransitionTime: null
-    message: Ready
+    message: Nothing to do now
     observedGeneration: 1
     reason: Ready
     status: "True"
