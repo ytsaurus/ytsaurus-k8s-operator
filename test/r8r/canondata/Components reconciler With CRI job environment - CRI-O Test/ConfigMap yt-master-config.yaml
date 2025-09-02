@@ -108,6 +108,11 @@ data:
         };
         "secondary_masters"=[
         ];
+        "discovery_server"={
+            addresses=[
+                "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
+            ];
+        };
     }
 kind: ConfigMap
 metadata:
