@@ -174,4 +174,11 @@
     };
     "secondary_masters"=[
     ];
+    "discovery_server"={
+        addresses=[
+            "ds-test-0.discovery-test.fake.svc.fake.zone:9020";
+            "ds-test-1.discovery-test.fake.svc.fake.zone:9020";
+            "ds-test-2.discovery-test.fake.svc.fake.zone:9020";
+        ];
+    };
 }
