@@ -17,7 +17,7 @@ func (r *SpytReconciler) Sync(ctx context.Context, resource *ytv1.Spyt, ytsaurus
 
 	spyt := apiproxy.NewSpyt(resource, r.Client, r.Recorder, r.Scheme)
 
-	cfgen := ytconfig.NewLocalNodeGenerator(ytsaurus, resource.Name, getClusterDomain(ctx, spyt.APIProxy().Client()))
+	cfgen := ytconfig.NewLocalNodeGenerator(ytsaurus, resource.Name, r.ClusterDomain)
 
 	component := components.NewSpyt(cfgen, spyt, ytsaurus)
 

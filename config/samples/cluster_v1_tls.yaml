@@ -1,37 +1,27 @@
-#
 # This configuration is for experiments and is not suited to production as is.
 #
 # Documentation for YTsaurus specification:
 # https://ytsaurus.tech/docs/en/admin-guide/prepare-spec
 #
 # Automatically generated reference for all supported options:
-# https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#ytsaurusspec
+# https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#ytsaurusspec
 #
-# CA bundle management requires trust-manager:
-# helm upgrade -i trust-manager jetstack/trust-manager --namespace cert-manager --wait
+# Certificate management requires cert-manager: https://cert-manager.io/docs/installation/
 #
 # How to access via yt cli:
-# kubectl -n ytsaurus-dev get configmaps ytsaurus-ca-bundle -o jsonpath='{.data.ca\.crt}' > ytsaurus-ca-bundle.crt
-# YT_CONFIG_PATCHES='{ proxy={ ca_bundle_path="ytsaurus-ca-bundle.crt" }; }'
-# YT_PROXY="https://..."
-# yt list /
+# kubectl -n cert-manager get secrets ytsaurus-ca-secret -o jsonpath='{.data.tls\.crt}' | base64 -d >ytsaurus-ca.crt
+# yt --proxy "https://..." --config '{proxy={ca_bundle_path="ytsaurus-ca.crt"}}' whoami
 #
-
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ytsaurus-dev
 
 ---
 apiVersion: cluster.ytsaurus.tech/v1
 kind: Ytsaurus
 metadata:
-  namespace: ytsaurus-dev
   name: ytsaurus
 spec:
   # https://ytsaurus.tech/docs/en/admin-guide/releases#ytsaurus-server
   # https://github.com/ytsaurus/ytsaurus/pkgs/container/ytsaurus
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-23.2.0-relwithdebinfo
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.1.0-relwithdebinfo
 
   # Default "docker_image" for jobs
   jobImage: mirror.gcr.io/library/python:3.12-slim
@@ -50,31 +40,38 @@ spec:
   ephemeralCluster: true
 
   useIpv4: true
-  # useIpv6: true
+  useIpv6: true
 
   # To run all components in host network you need at least max(instanceCount) worker nodes due to port clash.
   # hostNetwork: true
 
   # Install certificate for internal CA.
   caBundle:
-    name: ytsaurus-ca-bundle
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#fileobjectreference
+    kind: Secret
+    name: ytsaurus-ca-secret
+    key: tls.crt
 
   # Setup TLS for internal communications.
   nativeTransport:
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#rpctransportspec
     tlsSecret:
       name: ytsaurus-native-cert
-    tlsRequired: true
-    tlsPeerAlternativeHostName: "ytsaurus-dev.svc.cluster.local"
+    tlsClientSecret:
+      name: ytsaurus-native-cert
+    tlsRequired: true # require TLS both by client and server sides
+    tlsInsecure: true # mTLS is not working in release images yet
+    tlsPeerAlternativeHostName: "interconnect.ytsaurus-dev.svc.cluster.local"
 
 
   ui:
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#uispec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#uispec
     instanceCount: 1
     serviceType: NodePort
 
 
   discovery:
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#discoveryspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#discoveryspec
     instanceCount: 1
 
     # Make reusable loggers config with yaml anchor.
@@ -118,7 +115,7 @@ spec:
 
   primaryMasters:
     # https://ytsaurus.tech/docs/en/admin-guide/components#master
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#mastersspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#mastersspec
     instanceCount: 1
 
     cellTag: 1
@@ -154,7 +151,7 @@ spec:
 
   httpProxies:
     # https://ytsaurus.tech/docs/en/admin-guide/components#proxy
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#httpproxiesspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#httpproxiesspec
     - instanceCount: 1
 
       loggers: *loggers
@@ -178,14 +175,14 @@ spec:
 
       # Setup HTTPS protocol
       transport:
-        disableHttp: true
+        # disableHttp: true
         httpsSecret:
           name: ytsaurus-https-cert
 
 
   rpcProxies:
     # https://ytsaurus.tech/docs/en/admin-guide/components#proxy
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#rpcproxiesspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#rpcproxiesspec
     - instanceCount: 1
 
       loggers: *loggers
@@ -211,12 +208,11 @@ spec:
         tlsSecret:
           name: ytsaurus-rpc-cert
         tlsRequired: true
-        # tlsPeerAlternativeHostName: ...
 
 
   dataNodes:
     # https://ytsaurus.tech/docs/en/admin-guide/components#data-nodes
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#datanodesspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#datanodesspec
     # Could be 1, but that is still broken sometimes due to hard-coded replication_factor=2|3.
     - instanceCount: 3
 
@@ -249,7 +245,7 @@ spec:
 
   execNodes:
     # https://ytsaurus.tech/docs/en/admin-guide/components#exec-nodes
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#execnodesspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#execnodesspec
     - instanceCount: 1
 
       loggers: *loggers
@@ -305,11 +301,11 @@ spec:
         #   mountPath: /config/registry
         #   readOnly: true
 
-      volumes:
-        # - name: config-registry
-        #   hostPath:
-        #     path: /etc/containerd/certs.d
-        #     type: Directory
+      # volumes:
+      #   - name: config-registry
+      #     hostPath:
+      #       path: /etc/containerd/certs.d
+      #       type: Directory
 
       volumeClaimTemplates:
         - metadata:
@@ -335,14 +331,17 @@ spec:
           memory: 10Gi
 
       jobEnvironment:
-        # Add CRI containerd sidecar
+        # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#jobenvironmentspec
+        userSlots: 20
+        # Add CRI service sidecar
         cri:
+          # criService: crio|containerd
           apiRetryTimeoutSeconds: 180
           # registryConfigPath: /config/registry
 
   schedulers:
     # https://ytsaurus.tech/docs/en/admin-guide/components#scheduler
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#schedulersspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#schedulersspec
     instanceCount: 1
 
     loggers: *loggers
@@ -363,7 +362,7 @@ spec:
 
   controllerAgents:
     # https://ytsaurus.tech/docs/en/admin-guide/components#scheduler
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#controlleragentsspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#controlleragentsspec
     instanceCount: 1
 
     loggers: *loggers
@@ -384,7 +383,7 @@ spec:
 
   tabletNodes:
     # https://ytsaurus.tech/docs/en/admin-guide/components#tablet-nodes
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#tabletnodesspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#tabletnodesspec
     - instanceCount: 1
 
       loggers: *loggers
@@ -405,11 +404,11 @@ spec:
 
   yqlAgents:
     # https://ytsaurus.tech/docs/en/admin-guide/components#yql-agent
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#yqlagentspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#yqlagentspec
     instanceCount: 1
 
     # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
-    image: ghcr.io/ytsaurus/query-tracker:0.0.6-relwithdebinfo
+    image: ghcr.io/ytsaurus/query-tracker:0.0.10-relwithdebinfo
 
     loggers: *loggers
 
@@ -429,11 +428,11 @@ spec:
 
   queryTrackers:
     # https://ytsaurus.tech/docs/en/admin-guide/components#yql-agent
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#queueagentspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#queueagentspec
     instanceCount: 1
 
     # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
-    image: ghcr.io/ytsaurus/query-tracker:0.0.6-relwithdebinfo
+    image: ghcr.io/ytsaurus/query-tracker:0.0.10-relwithdebinfo
 
     loggers: *loggers
 
@@ -453,10 +452,10 @@ spec:
 
   strawberry:
     # https://ytsaurus.tech/docs/en/admin-guide/chyt
-    # https://github.com/ytsaurus/yt-k8s-operator/blob/main/docs/api.md#strawberrycontrollerspec
+    # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#strawberrycontrollerspec
 
     # https://ytsaurus.tech/docs/en/admin-guide/releases#strawberry
-    image: ghcr.io/ytsaurus/strawberry:0.0.11
+    image: ghcr.io/ytsaurus/strawberry:0.0.13
 
     resources:
       limits:
@@ -466,7 +465,6 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
-  namespace: ytsaurus-dev
   name: ytsaurus-admin-credentials
 type: Opaque
 data:
@@ -478,18 +476,26 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  namespace: ytsaurus-dev
   name: ytsaurus-config-overrides
 data:
 
 ---
-#
-# Bootstrap internal CA
-#
+apiVersion: cluster.ytsaurus.tech/v1
+kind: Chyt
+metadata:
+  name: ytsaurus-chyt
+spec:
+  ytsaurus:
+    name:
+      ytsaurus
+  image: ghcr.io/ytsaurus/chyt:2.17.3
+  makeDefault: true
+  createPublicClique: true
+
+---
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  namespace: cert-manager
   name: ytsaurus-selfsigned-issuer
 spec:
   selfSigned: {}
@@ -498,7 +504,6 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  namespace: cert-manager
   name: ytsaurus-ca
 spec:
   isCA: true
@@ -513,49 +518,26 @@ spec:
 
 ---
 apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
+kind: Issuer
 metadata:
-  namespace: cert-manager
   name: ytsaurus-ca-issuer
 spec:
   ca:
     secretName: ytsaurus-ca-secret
 
 ---
-apiVersion: trust.cert-manager.io/v1alpha1
-kind: Bundle
-metadata:
-  namespace: ytsaurus-dev
-  name: ytsaurus-ca-bundle
-spec:
-  sources:
-  - useDefaultCAs: false
-  - secret:
-      name: "ytsaurus-ca-secret"
-      key: "tls.crt"
-  target:
-    configMap:
-      key: "ca.crt"
-    namespaceSelector:
-      matchLabels:
-        kubernetes.io/metadata.name: ytsaurus-dev
-
----
-#
-# Issue cluster certificates.
-#
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  namespace: ytsaurus-dev
   name: ytsaurus-native-cert
 spec:
   dnsNames:
-  - "ytsaurus-dev.svc.cluster.local"
-  - "*.masters.ytsaurus-dev.svc.cluster.local"
-  - "*.discovery.ytsaurus-dev.svc.cluster.local"
+  - "interconnect.ytsaurus-dev.svc.cluster.local"
+  usages:
+    - client auth
+    - server auth
   issuerRef:
-    kind: ClusterIssuer
+    kind: Issuer
     name: ytsaurus-ca-issuer
   secretName: ytsaurus-native-cert
 
@@ -563,7 +545,6 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  namespace: ytsaurus-dev
   name: ytsaurus-https-cert
 spec:
   dnsNames:
@@ -572,7 +553,7 @@ spec:
   - "*.http-proxies.ytsaurus-dev.svc"
   - "*.http-proxies.ytsaurus-dev.svc.cluster.local"
   issuerRef:
-    kind: ClusterIssuer
+    kind: Issuer
     name: ytsaurus-ca-issuer
   secretName: ytsaurus-https-cert
 
@@ -580,13 +561,12 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  namespace: ytsaurus-dev
   name: ytsaurus-rpc-cert
 spec:
   dnsNames:
   - "*.rpc-proxies.ytsaurus-dev.svc"
   - "*.rpc-proxies.ytsaurus-dev.svc.cluster.local"
   issuerRef:
-    kind: ClusterIssuer
+    kind: Issuer
     name: ytsaurus-ca-issuer
   secretName: ytsaurus-rpc-cert

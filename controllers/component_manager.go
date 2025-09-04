@@ -31,11 +31,15 @@ type ComponentManagerStatus struct {
 func NewComponentManager(
 	ctx context.Context,
 	ytsaurus *apiProxy.Ytsaurus,
+	clusterDomain string,
 ) (*ComponentManager, error) {
 	logger := log.FromContext(ctx)
 	resource := ytsaurus.GetResource()
 
-	clusterDomain := getClusterDomain(ctx, ytsaurus.APIProxy().Client())
+	if clusterDomain == "" {
+		return nil, fmt.Errorf("cluster domain is not defined")
+	}
+
 	cfgen := ytconfig.NewGenerator(resource, clusterDomain)
 	nodeCfgGen := &cfgen.NodeGenerator
 

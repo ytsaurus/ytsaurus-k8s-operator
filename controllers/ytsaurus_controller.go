@@ -39,8 +39,9 @@ import (
 // YtsaurusReconciler reconciles a Ytsaurus object
 type YtsaurusReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	ClusterDomain string
+	Scheme        *runtime.Scheme
+	Recorder      record.EventRecorder
 }
 
 const configOverridesField = ".spec.configOverrides"

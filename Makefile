@@ -177,12 +177,14 @@ canonize: generate-code manifests envtest-assets ## Canonize test results.
 	rm -fr pkg/components/canondata pkg/ytconfig/canondata test/r8r/canondata
 	CANONIZE=y \
 	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./...
+	! git status --porcelain '**/canondata/*' | grep .
 
 .PHONY: canonize-ytconfig
 canonize-ytconfig: generate-code fmt vet ## Canonize ytconfig and reconciler test results.
 	rm -fr pkg/ytconfig/canondata test/r8r/canondata
 	CANONIZE=y \
 	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./pkg/ytconfig/... ./test/r8r/...
+	! git status --porcelain '**/canondata/*' | grep .
 
 ##@ K8s operations
 
@@ -305,7 +307,11 @@ helm-uninstall: ## Uninstal helm chart.
 kind-deploy-ytsaurus: ## Deploy sample ytsaurus cluster and all requirements.
 	$(MAKE) kind-create-cluster
 	$(MAKE) helm-kind-install
-	-$(KUBECTL) create namespace $(YTSAURUS_NAMESPACE)
+	$(MAKE) kind-create-ytsaurus
+
+.PHONY: kind-create-ytsaurus
+kind-create-ytsaurus: ## Create sample ytsaurus cluster.
+	$(KUBECTL) create namespace $(YTSAURUS_NAMESPACE)
 	$(KUBECTL) apply --server-side -n $(YTSAURUS_NAMESPACE) -f $(YTSAURUS_SPEC)
 	$(KUBECTL) wait -n $(YTSAURUS_NAMESPACE) --timeout=10m --for=jsonpath='{.status.state}=Running' --all ytsaurus
 	$(MAKE) kind-yt-info
@@ -341,6 +347,7 @@ build: generate-code ## Build manager binary.
 
 .PHONY: run
 run: generate-code manifests ## Run a controller from your host.
+	K8S_CLUSTER_DOMAIN=cluster.local \
 	go run ./main.go
 
 .PHONY: docker-build
