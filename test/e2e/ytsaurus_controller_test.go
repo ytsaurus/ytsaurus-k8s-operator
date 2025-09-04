@@ -486,6 +486,20 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
+		if len(ytsaurus.Spec.ExecNodes) == 0 || len(ytsaurus.Spec.DataNodes) == 0 {
+			log.Info("Skipping testing map operations without exec or data nodes")
+			return
+		}
+
+		By("Checking map operation")
+		op := NewMapTestOperation(ytClient)
+		Expect(op.Start()).Should(Succeed())
+		By("Waiting operation completion", func() {
+			op.Wait()
+		})
+	})
+
+	JustBeforeEach(func(ctx context.Context) {
 		if chyt == nil {
 			return
 		}
@@ -1395,6 +1409,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytBuilder.WithScheduler()
 				ytBuilder.WithControllerAgents()
 				ytBuilder.WithExecNodes()
+				ytBuilder.WithDataNodes()
 
 				By("Adding CRI job environment")
 				ytBuilder.WithCRIJobEnvironment()
@@ -1417,6 +1432,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytBuilder.WithScheduler()
 				ytBuilder.WithControllerAgents()
 				ytBuilder.WithExecNodes()
+				ytBuilder.WithDataNodes()
 
 				By("Adding CRI-O job environment")
 				ytBuilder.CRIService = ptr.To(ytv1.CRIServiceCRIO)
@@ -1890,4 +1906,55 @@ func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
 	sort.Strings(keys)
 	Expect(rows).Should(Equal(keys))
 	return op
+}
+
+func NewMapTestOperation(ytClient yt.Client) *TestOperation {
+	testTablePathIn := ypath.Path("//tmp/testmap-in")
+	testTablePathOut := ypath.Path("//tmp/testmap-out")
+	_, err := ytClient.CreateNode(
+		ctx,
+		testTablePathIn,
+		yt.NodeTable,
+		nil,
+	)
+	Expect(err).Should(Succeed())
+	_, err = ytClient.CreateNode(
+		ctx,
+		testTablePathOut,
+		yt.NodeTable,
+		nil,
+	)
+	Expect(err).Should(Succeed())
+
+	type Row struct {
+		Key string `yson:"key"`
+	}
+	keys := []string{
+		"a",
+		"b",
+		"c",
+	}
+	writer, err := ytClient.WriteTable(ctx, testTablePathIn, nil)
+	Expect(err).Should(Succeed())
+	for _, key := range keys {
+		err = writer.Write(Row{Key: key})
+		Expect(err).Should(Succeed())
+	}
+	err = writer.Commit()
+	Expect(err).Should(Succeed())
+
+	return &TestOperation{
+		Client: ytClient,
+		Spec: &ytspec.Spec{
+			Type:             yt.OperationMap,
+			Title:            "e2e test map operation",
+			InputTablePaths:  []ypath.YPath{testTablePathIn},
+			OutputTablePaths: []ypath.YPath{testTablePathOut},
+			Mapper: &ytspec.UserScript{
+				Command:  "cat",
+				CPULimit: 0,
+			},
+			MaxFailedJobCount: 1,
+		},
+	}
 }
