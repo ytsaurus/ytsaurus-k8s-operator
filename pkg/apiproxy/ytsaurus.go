@@ -95,7 +95,7 @@ func (c *Ytsaurus) SetBlockedComponents(components []ytv1.Component) bool {
 func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
 	c.ytsaurus.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
 	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
-	c.ytsaurus.Status.UpdateStatus.MasterMonitoringPaths = make([]string, 0)
+	c.ytsaurus.Status.UpdateStatus.MasterBuildingSnapshotInfos = make([]ytv1.MasterBuildingSnapshotInfo, 0)
 	c.SetUpdatingComponents(nil)
 	return c.apiProxy.UpdateStatus(ctx)
 }

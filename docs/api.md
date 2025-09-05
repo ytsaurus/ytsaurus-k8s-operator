@@ -1166,6 +1166,23 @@ _Appears in:_
 | `stderr` |  |
 
 
+#### MasterBuildingSnapshotInfo
+
+
+
+
+
+
+
+_Appears in:_
+- [UpdateStatus](#updatestatus)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `monitoringPath` _string_ |  |  |  |
+| `hydraBeforeBuilding` _[MasterHydra](#masterhydra)_ |  |  |  |
+
+
 #### MasterCachesConnectionSpec
 
 
@@ -1245,6 +1262,43 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `cellTag` _integer_ |  |  |  |
 | `hostAddresses` _string array_ |  |  |  |
+
+
+#### MasterHydra
+
+
+
+
+
+
+
+_Appears in:_
+- [MasterBuildingSnapshotInfo](#masterbuildingsnapshotinfo)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `read_only` _boolean_ |  |  |  |
+| `last_snapshot_read_only` _boolean_ |  |  |  |
+| `last_snapshot_id` _integer_ |  |  |  |
+| `active` _boolean_ |  |  |  |
+| `state` _[MasterState](#masterstate)_ |  |  |  |
+
+
+#### MasterState
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [MasterHydra](#masterhydra)
+
+| Field | Description |
+| --- | --- |
+| `leading` |  |
+| `following` |  |
 
 
 #### MastersSpec
@@ -2445,7 +2499,7 @@ _Appears in:_
 | `flow` _[UpdateFlow](#updateflow)_ | Flow is an internal field that is needed to persist the chosen flow until the end of an update.<br />Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage<br />executes steps corresponding to that update flow.<br />Deprecated: Use updatingComponents instead. |  |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
 | `tabletCellBundles` _[TabletCellBundleInfo](#tabletcellbundleinfo) array_ |  |  |  |
-| `masterMonitoringPaths` _string array_ |  |  |  |
+| `masterBuildingSnapshotInfos` _[MasterBuildingSnapshotInfo](#masterbuildingsnapshotinfo) array_ |  |  |  |
 
 
 #### YQLAgentSpec
