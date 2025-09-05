@@ -340,6 +340,7 @@ func (b *YtsaurusBuilder) CreateHTTPProxiesSpec() ytv1.HTTPProxiesSpec {
 			Loggers:               b.CreateLoggersSpec(),
 		},
 		HttpNodePort: getPortFromEnv("E2E_HTTP_PROXY_INTERNAL_PORT"),
+		ChytProxy:    &ytv1.CHYTProxiesSpec{},
 	}
 }
 

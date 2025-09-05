@@ -95,6 +95,25 @@ _Appears in:_
 | `default` _[BundleBootstrapSpec](#bundlebootstrapspec)_ |  |  |  |
 
 
+#### CHYTProxiesSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [HTTPProxiesSpec](#httpproxiesspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `httpPort` _integer_ |  | 8123 |  |
+| `httpNodePort` _integer_ |  |  |  |
+| `httpsPort` _integer_ |  | 8443 |  |
+| `httpsNodePort` _integer_ |  |  |  |
+
+
 #### CRIJobEnvironmentSpec
 
 
@@ -764,6 +783,7 @@ _Appears in:_
 | `httpsPort` _integer_ |  | 443 |  |
 | `httpNodePort` _integer_ |  |  |  |
 | `httpsNodePort` _integer_ |  |  |  |
+| `chytProxy` _[CHYTProxiesSpec](#chytproxiesspec)_ |  |  |  |
 | `role` _string_ |  | default | MinLength: 1 <br /> |
 | `transport` _[HTTPTransportSpec](#httptransportspec)_ |  |  |  |
 

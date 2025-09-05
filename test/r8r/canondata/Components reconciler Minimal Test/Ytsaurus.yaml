@@ -21,7 +21,8 @@ spec:
   ephemeralCluster: true
   hostNetwork: false
   httpProxies:
-  - instanceCount: 1
+  - chytProxy: {}
+    instanceCount: 1
     loggers:
     - minLogLevel: info
       name: info-stderr

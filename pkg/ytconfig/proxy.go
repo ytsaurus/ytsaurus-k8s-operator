@@ -73,12 +73,14 @@ type HTTPSServer struct {
 
 type HTTPProxyServer struct {
 	CommonServer
-	Port        int          `yson:"port"`
-	Auth        Auth         `yson:"auth"`
-	Coordinator Coordinator  `yson:"coordinator"`
-	Driver      Driver       `yson:"driver"`
-	Role        string       `yson:"role"`
-	HTTPSServer *HTTPSServer `yson:"https_server,omitempty"`
+	Port            int          `yson:"port"`
+	Auth            Auth         `yson:"auth"`
+	Coordinator     Coordinator  `yson:"coordinator"`
+	Driver          Driver       `yson:"driver"`
+	Role            string       `yson:"role"`
+	HTTPSServer     *HTTPSServer `yson:"https_server,omitempty"`
+	ChytHttpServer  *HTTPServer  `yson:"chyt_http_server,omitempty"`
+	ChytHttpsServer *HTTPSServer `yson:"chyt_https_server,omitempty"`
 }
 
 type RPCProxyServer struct {
@@ -111,6 +113,29 @@ func getHTTPProxyLogging(spec *ytv1.HTTPProxiesSpec) Logging {
 		&spec.InstanceSpec,
 		consts.GetServiceKebabCase(consts.HttpProxyType),
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
+}
+
+func setupChytServer(spec *ytv1.HTTPProxiesSpec, srv *HTTPProxyServer) {
+	srv.ChytHttpServer = &HTTPServer{
+		Port: int(ptr.Deref(spec.ChytProxy.HttpNodePort, int32(consts.HTTPProxyChytHttpPort))),
+	}
+
+	if spec.Transport.HTTPSSecret != nil {
+		srv.ChytHttpsServer = &HTTPSServer{
+			HTTPServer: HTTPServer{
+				Port: int(ptr.Deref(spec.ChytProxy.HttpsPort, int32(consts.HTTPProxyChytHttpsPort))),
+			},
+			Credentials: HTTPSServerCredentials{
+				CertChain: PemBlob{
+					FileName: path.Join(consts.HTTPSSecretMountPoint, corev1.TLSCertKey),
+				},
+				PrivateKey: PemBlob{
+					FileName: path.Join(consts.HTTPSSecretMountPoint, corev1.TLSPrivateKeyKey),
+				},
+				UpdatePeriod: yson.Duration(consts.HTTPSSecretUpdatePeriod),
+			},
+		}
+	}
 }
 
 func getHTTPProxyServerCarcass(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, error) {
@@ -152,6 +177,10 @@ func getHTTPProxyServerCarcass(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, err
 				UpdatePeriod: yson.Duration(consts.HTTPSSecretUpdatePeriod),
 			},
 		}
+	}
+
+	if spec.ChytProxy != nil {
+		setupChytServer(spec, &c)
 	}
 
 	return c, nil

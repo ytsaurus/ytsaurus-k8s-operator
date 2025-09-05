@@ -13960,6 +13960,23 @@ spec:
                               x-kubernetes-list-type: atomic
                           type: object
                       type: object
+                    chytProxy:
+                      properties:
+                        httpNodePort:
+                          format: int32
+                          type: integer
+                        httpPort:
+                          default: 8123
+                          format: int32
+                          type: integer
+                        httpsNodePort:
+                          format: int32
+                          type: integer
+                        httpsPort:
+                          default: 8443
+                          format: int32
+                          type: integer
+                      type: object
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings for
                         the pods.
