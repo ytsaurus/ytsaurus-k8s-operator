@@ -856,6 +856,26 @@ type ComponentUpdateSelector struct {
 
 type UpdateFlow string
 
+type MasterState string
+
+const (
+	MasterStateLeading   MasterState = "leading"
+	MasterStateFollowing MasterState = "following"
+)
+
+type MasterHydra struct {
+	ReadOnly             bool        `yson:"read_only" json:"read_only"`
+	LastSnapshotReadOnly bool        `yson:"last_snapshot_read_only" json:"last_snapshot_read_only"`
+	LastSnapshotID       int         `yson:"last_snapshot_id" json:"last_snapshot_id"`
+	Active               bool        `yson:"active" json:"active"`
+	State                MasterState `yson:"state" json:"state"`
+}
+
+type MasterBuildingSnapshotInfo struct {
+	MonitoringPath      string      `json:"monitoringPath"`
+	HydraBeforeBuilding MasterHydra `json:"hydraBeforeBuilding"`
+}
+
 type UpdateStatus struct {
 	//+kubebuilder:default:=None
 	State UpdateState `json:"state,omitempty"`
@@ -870,10 +890,10 @@ type UpdateStatus struct {
 	// Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage
 	// executes steps corresponding to that update flow.
 	// Deprecated: Use updatingComponents instead.
-	Flow                  UpdateFlow             `json:"flow,omitempty"`
-	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
-	TabletCellBundles     []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
-	MasterMonitoringPaths []string               `json:"masterMonitoringPaths,omitempty"`
+	Flow                        UpdateFlow                   `json:"flow,omitempty"`
+	Conditions                  []metav1.Condition           `json:"conditions,omitempty"`
+	TabletCellBundles           []TabletCellBundleInfo       `json:"tabletCellBundles,omitempty"`
+	MasterBuildingSnapshotInfos []MasterBuildingSnapshotInfo `json:"masterBuildingSnapshotInfos,omitempty"`
 }
 
 type Component struct {

@@ -44983,9 +44983,34 @@ spec:
                     description: Flow is an internal field that is needed to persist
                       the chosen flow until the...
                     type: string
-                  masterMonitoringPaths:
+                  masterBuildingSnapshotInfos:
                     items:
-                      type: string
+                      properties:
+                        hydraBeforeBuilding:
+                          properties:
+                            active:
+                              type: boolean
+                            last_snapshot_id:
+                              type: integer
+                            last_snapshot_read_only:
+                              type: boolean
+                            read_only:
+                              type: boolean
+                            state:
+                              type: string
+                          required:
+                          - active
+                          - last_snapshot_id
+                          - last_snapshot_read_only
+                          - read_only
+                          - state
+                          type: object
+                        monitoringPath:
+                          type: string
+                      required:
+                      - hydraBeforeBuilding
+                      - monitoringPath
+                      type: object
                     type: array
                   state:
                     default: None
