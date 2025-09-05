@@ -59,6 +59,11 @@ func NewHTTPProxy(
 				ContainerPort: ptr.Deref(spec.HttpsPort, consts.HTTPProxyHTTPSPort),
 				Protocol:      corev1.ProtocolTCP,
 			},
+			corev1.ContainerPort{
+				Name:          consts.CHYTHttpServerName,
+				ContainerPort: ptr.Deref(spec.ChytHttpServerPort, int32(consts.HTTPProxyChytHttpPort)),
+				Protocol:      corev1.ProtocolTCP,
+			},
 		),
 		WithCustomReadinessProbeEndpointPort(ptr.Deref(spec.HttpPort, consts.HTTPProxyHTTPPort)),
 		WithCustomReadinessProbeEndpointPath("/ping"),
@@ -82,6 +87,9 @@ func NewHTTPProxy(
 	balancingService.SetHttpsPort(spec.HttpsPort)
 	balancingService.SetHttpNodePort(spec.HttpNodePort)
 	balancingService.SetHttpsNodePort(spec.HttpsNodePort)
+
+	balancingService.SetChytHttpServerPort(spec.ChytHttpServerPort)
+	balancingService.SetChytHttpServerNodePort(spec.ChytHttpServerNodePort)
 
 	return &HttpProxy{
 		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),

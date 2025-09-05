@@ -13,11 +13,13 @@ import (
 type HTTPService struct {
 	BaseManagedResource[*corev1.Service]
 
-	transport     *ytv1.HTTPTransportSpec
-	httpPort      *int32
-	httpsPort     *int32
-	httpNodePort  *int32
-	httpsNodePort *int32
+	transport              *ytv1.HTTPTransportSpec
+	httpPort               *int32
+	httpsPort              *int32
+	httpNodePort           *int32
+	httpsNodePort          *int32
+	chytHttpServerPort     *int32
+	chytHttpServerNodePort *int32
 }
 
 func NewHTTPService(name string, transport *ytv1.HTTPTransportSpec, labeller *labeller.Labeller, apiProxy apiproxy.APIProxy) *HTTPService {
@@ -38,6 +40,14 @@ func NewHTTPService(name string, transport *ytv1.HTTPTransportSpec, labeller *la
 
 func (s *HTTPService) SetHttpPort(port *int32) {
 	s.httpPort = port
+}
+
+func (s *HTTPService) SetChytHttpServerPort(port *int32) {
+	s.chytHttpServerPort = port
+}
+
+func (s *HTTPService) SetChytHttpServerNodePort(port *int32) {
+	s.chytHttpServerNodePort = port
 }
 
 func (s *HTTPService) SetHttpsPort(port *int32) {
@@ -61,7 +71,22 @@ func (s *HTTPService) Build() *corev1.Service {
 	httpPort := ptr.Deref(s.httpPort, consts.HTTPProxyHTTPPort)
 	httpsPort := ptr.Deref(s.httpsPort, consts.HTTPProxyHTTPSPort)
 
-	s.newObject.Spec.Ports = make([]corev1.ServicePort, 0, 2)
+	s.newObject.Spec.Ports = make([]corev1.ServicePort, 0, 3)
+	if s.chytHttpServerPort != nil {
+		chytHttpPort := ptr.Deref(s.chytHttpServerPort, consts.HTTPProxyChytHttpPort)
+		chytPort := corev1.ServicePort{
+			Name:       consts.CHYTHttpServerName,
+			Port:       chytHttpPort,
+			TargetPort: intstr.FromInt32(chytHttpPort),
+		}
+
+		if s.chytHttpServerNodePort != nil {
+			chytPort.NodePort = *s.chytHttpServerNodePort
+		}
+
+		s.newObject.Spec.Ports = append(s.newObject.Spec.Ports, chytPort)
+	}
+
 	if !s.transport.DisableHTTP {
 		port := corev1.ServicePort{
 			Name:       consts.HTTPPortName,
