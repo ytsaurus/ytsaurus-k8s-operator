@@ -73,12 +73,13 @@ type HTTPSServer struct {
 
 type HTTPProxyServer struct {
 	CommonServer
-	Port        int          `yson:"port"`
-	Auth        Auth         `yson:"auth"`
-	Coordinator Coordinator  `yson:"coordinator"`
-	Driver      Driver       `yson:"driver"`
-	Role        string       `yson:"role"`
-	HTTPSServer *HTTPSServer `yson:"https_server,omitempty"`
+	Port           int          `yson:"port"`
+	Auth           Auth         `yson:"auth"`
+	Coordinator    Coordinator  `yson:"coordinator"`
+	Driver         Driver       `yson:"driver"`
+	Role           string       `yson:"role"`
+	HTTPSServer    *HTTPSServer `yson:"https_server,omitempty"`
+	ChytHttpServer *HTTPServer  `yson:"chyt_http_server,omitempty"`
 }
 
 type RPCProxyServer struct {
@@ -130,6 +131,7 @@ func getHTTPProxyServerCarcass(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, err
 	c.RPCPort = consts.HTTPProxyRPCPort
 	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.HTTPProxyMonitoringPort)
 	c.Port = int(ptr.Deref(spec.HttpPort, int32(consts.HTTPProxyHTTPPort)))
+	c.ChytHttpServer.Port = int(ptr.Deref(spec.ChytHttpServerPort, int32(consts.HTTPProxyChytHttpPort)))
 
 	c.Role = spec.Role
 
