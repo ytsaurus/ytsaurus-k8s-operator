@@ -95,6 +95,25 @@ _Appears in:_
 | `default` _[BundleBootstrapSpec](#bundlebootstrapspec)_ |  |  |  |
 
 
+#### CHYTProxySpec
+
+
+
+
+
+
+
+_Appears in:_
+- [HTTPProxiesSpec](#httpproxiesspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `httpPort` _integer_ |  | 8123 |  |
+| `httpNodePort` _integer_ |  |  |  |
+| `httpsPort` _integer_ |  | 8443 |  |
+| `httpsNodePort` _integer_ |  |  |  |
+
+
 #### CRIJobEnvironmentSpec
 
 
@@ -268,6 +287,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `rpcProxyHavePublicAddress` _boolean_ | RPC proxy have "public_rpc" address. Required for separated internal/public TLS CA. |  |  |
+| `httpProxyHaveChytAddress` _boolean_ | HTTP proxy have "chyt_http_server" and "chyt_https_server". Opens ports for access to chyt via HTTP proxy. |  |  |
 
 
 #### ClusterNodesSpec
@@ -764,6 +784,7 @@ _Appears in:_
 | `httpsPort` _integer_ |  | 443 |  |
 | `httpNodePort` _integer_ |  |  |  |
 | `httpsNodePort` _integer_ |  |  |  |
+| `chytProxy` _[CHYTProxySpec](#chytproxyspec)_ |  |  |  |
 | `role` _string_ |  | default | MinLength: 1 <br /> |
 | `transport` _[HTTPTransportSpec](#httptransportspec)_ |  |  |  |
 

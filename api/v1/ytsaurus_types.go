@@ -345,6 +345,15 @@ type HTTPTransportSpec struct {
 	DisableHTTP bool `json:"disableHttp,omitempty"`
 }
 
+type CHYTProxySpec struct {
+	//+kubebuilder:default:=8123
+	HttpPort     *int32 `json:"httpPort,omitempty"`
+	HttpNodePort *int32 `json:"httpNodePort,omitempty"`
+	//+kubebuilder:default:=8443
+	HttpsPort     *int32 `json:"httpsPort,omitempty"`
+	HttpsNodePort *int32 `json:"httpsNodePort,omitempty"`
+}
+
 type HTTPProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	//+kubebuilder:default:=NodePort
@@ -352,9 +361,10 @@ type HTTPProxiesSpec struct {
 	//+kubebuilder:default:=80
 	HttpPort *int32 `json:"httpPort,omitempty"`
 	//+kubebuilder:default:=443
-	HttpsPort     *int32 `json:"httpsPort,omitempty"`
-	HttpNodePort  *int32 `json:"httpNodePort,omitempty"`
-	HttpsNodePort *int32 `json:"httpsNodePort,omitempty"`
+	HttpsPort     *int32         `json:"httpsPort,omitempty"`
+	HttpNodePort  *int32         `json:"httpNodePort,omitempty"`
+	HttpsNodePort *int32         `json:"httpsNodePort,omitempty"`
+	ChytProxy     *CHYTProxySpec `json:"chytProxy,omitempty"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`
@@ -638,6 +648,8 @@ type CypressProxiesSpec struct {
 type ClusterFeatures struct {
 	// RPC proxy have "public_rpc" address. Required for separated internal/public TLS CA.
 	RPCProxyHavePublicAddress bool `json:"rpcProxyHavePublicAddress,omitempty"`
+	// HTTP proxy have "chyt_http_server" and "chyt_https_server". Opens ports for access to chyt via HTTP proxy.
+	HTTPProxyHaveChytAddress bool `json:"httpProxyHaveChytAddress,omitempty"`
 }
 
 // CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.

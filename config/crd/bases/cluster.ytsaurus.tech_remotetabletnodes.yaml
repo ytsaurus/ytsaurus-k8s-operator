@@ -742,6 +742,9 @@ spec:
                 type: object
               clusterFeatures:
                 properties:
+                  httpProxyHaveChytAddress:
+                    description: HTTP proxy have "chyt_http_server" and "chyt_https_server".
+                    type: boolean
                   rpcProxyHavePublicAddress:
                     description: RPC proxy have "public_rpc" address.
                     type: boolean

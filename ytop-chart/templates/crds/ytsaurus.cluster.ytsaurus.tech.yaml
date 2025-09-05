@@ -124,6 +124,9 @@ spec:
                 type: object
               clusterFeatures:
                 properties:
+                  httpProxyHaveChytAddress:
+                    description: HTTP proxy have "chyt_http_server" and "chyt_https_server".
+                    type: boolean
                   rpcProxyHavePublicAddress:
                     description: RPC proxy have "public_rpc" address.
                     type: boolean
@@ -13970,6 +13973,23 @@ spec:
                               type: array
                               x-kubernetes-list-type: atomic
                           type: object
+                      type: object
+                    chytProxy:
+                      properties:
+                        httpNodePort:
+                          format: int32
+                          type: integer
+                        httpPort:
+                          default: 8123
+                          format: int32
+                          type: integer
+                        httpsNodePort:
+                          format: int32
+                          type: integer
+                        httpsPort:
+                          default: 8443
+                          format: int32
+                          type: integer
                       type: object
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings for

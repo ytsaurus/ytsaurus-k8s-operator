@@ -313,6 +313,57 @@ func TestGetHTTPProxyConfigWithCustomPorts(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetHTTPProxyWithChytServer(t *testing.T) {
+	spec := getYtsaurusWithoutNodes()
+	spec.Spec.OauthService = nil
+	spec.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
+		HTTPProxyHaveChytAddress: true,
+	}
+	g := NewGenerator(spec, testClusterDomain)
+	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
+	proxySpec := getHTTPProxySpec()
+	canonize.AssertStruct(t, "http-proxy", proxySpec)
+	cfg, err := g.GetHTTPProxyConfig(proxySpec)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetHTTPProxyWithChytServerNoTls(t *testing.T) {
+	spec := getYtsaurusWithoutNodes()
+	spec.Spec.OauthService = nil
+	spec.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
+		HTTPProxyHaveChytAddress: true,
+	}
+	g := NewGenerator(spec, testClusterDomain)
+	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
+	proxySpec := getHTTPProxySpec()
+	proxySpec.Transport.HTTPSSecret = nil
+	canonize.AssertStruct(t, "http-proxy", proxySpec)
+	cfg, err := g.GetHTTPProxyConfig(proxySpec)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetHTTPProxyWithChytCustomSpecServerNoTls(t *testing.T) {
+	spec := getYtsaurusWithoutNodes()
+	spec.Spec.OauthService = nil
+	spec.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
+		HTTPProxyHaveChytAddress: true,
+	}
+	g := NewGenerator(spec, testClusterDomain)
+	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
+	proxySpec := getHTTPProxySpec()
+	proxySpec.ChytProxy = &ytv1.CHYTProxySpec{
+		HttpPort:  ptr.To(int32(18123)),
+		HttpsPort: ptr.To(int32(18443)),
+	}
+	proxySpec.Transport.HTTPSSecret = nil
+	canonize.AssertStruct(t, "http-proxy", proxySpec)
+	cfg, err := g.GetHTTPProxyConfig(proxySpec)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetMasterWithFixedHostsConfig(t *testing.T) {
 	ytsaurus := withFixedMasterHosts(getYtsaurus())
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)

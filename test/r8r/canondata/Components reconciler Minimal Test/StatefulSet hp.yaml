@@ -71,6 +71,12 @@ spec:
         - containerPort: 443
           name: https
           protocol: TCP
+        - containerPort: 8123
+          name: chyt-http
+          protocol: TCP
+        - containerPort: 8443
+          name: chyt-https
+          protocol: TCP
         readinessProbe:
           httpGet:
             path: /ping

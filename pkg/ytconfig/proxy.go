@@ -73,12 +73,14 @@ type HTTPSServer struct {
 
 type HTTPProxyServer struct {
 	CommonServer
-	Port        int          `yson:"port"`
-	Auth        Auth         `yson:"auth"`
-	Coordinator Coordinator  `yson:"coordinator"`
-	Driver      Driver       `yson:"driver"`
-	Role        string       `yson:"role"`
-	HTTPSServer *HTTPSServer `yson:"https_server,omitempty"`
+	Port            int          `yson:"port"`
+	Auth            Auth         `yson:"auth"`
+	Coordinator     Coordinator  `yson:"coordinator"`
+	Driver          Driver       `yson:"driver"`
+	Role            string       `yson:"role"`
+	HTTPSServer     *HTTPSServer `yson:"https_server,omitempty"`
+	ChytHttpServer  *HTTPServer  `yson:"chyt_http_server,omitempty"`
+	ChytHttpsServer *HTTPSServer `yson:"chyt_https_server,omitempty"`
 }
 
 type RPCProxyServer struct {

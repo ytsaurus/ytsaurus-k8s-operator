@@ -33,6 +33,41 @@ func NewHTTPProxy(
 ) *HttpProxy {
 	l := cfgen.GetComponentLabeller(consts.HttpProxyType, spec.Role)
 
+	containerPorts := []corev1.ContainerPort{
+		{
+			Name:          consts.YTRPCPortName,
+			ContainerPort: consts.HTTPProxyRPCPort,
+			Protocol:      corev1.ProtocolTCP,
+		},
+		{
+			Name:          consts.HTTPPortName,
+			ContainerPort: ptr.Deref(spec.HttpPort, consts.HTTPProxyHTTPPort),
+			Protocol:      corev1.ProtocolTCP,
+		},
+		{
+			Name:          consts.HTTPSPortName,
+			ContainerPort: ptr.Deref(spec.HttpsPort, consts.HTTPProxyHTTPSPort),
+			Protocol:      corev1.ProtocolTCP,
+		},
+	}
+
+	if ytsaurus.GetCommonSpec().ClusterFeatures.HTTPProxyHaveChytAddress {
+		chytProxy := ptr.Deref(spec.ChytProxy, ytv1.CHYTProxySpec{
+			HttpPort:  ptr.To(int32(consts.HTTPProxyChytHttpPort)),
+			HttpsPort: ptr.To(int32(consts.HTTPProxyChytHttpsPort)),
+		})
+		containerPorts = append(containerPorts, corev1.ContainerPort{
+			Name:          consts.CHYTHttpProxyName,
+			ContainerPort: ptr.Deref(chytProxy.HttpPort, int32(consts.HTTPProxyChytHttpPort)),
+			Protocol:      corev1.ProtocolTCP,
+		})
+		containerPorts = append(containerPorts, corev1.ContainerPort{
+			Name:          consts.CHYTHttpsProxyName,
+			ContainerPort: ptr.Deref(chytProxy.HttpsPort, int32(consts.HTTPProxyChytHttpsPort)),
+			Protocol:      corev1.ProtocolTCP,
+		})
+	}
+
 	srv := newServer(
 		l,
 		ytsaurus,
@@ -43,23 +78,7 @@ func NewHTTPProxy(
 			return cfgen.GetHTTPProxyConfig(spec)
 		},
 		consts.HTTPProxyMonitoringPort,
-		WithContainerPorts(
-			corev1.ContainerPort{
-				Name:          consts.YTRPCPortName,
-				ContainerPort: consts.HTTPProxyRPCPort,
-				Protocol:      corev1.ProtocolTCP,
-			},
-			corev1.ContainerPort{
-				Name:          consts.HTTPPortName,
-				ContainerPort: ptr.Deref(spec.HttpPort, consts.HTTPProxyHTTPPort),
-				Protocol:      corev1.ProtocolTCP,
-			},
-			corev1.ContainerPort{
-				Name:          consts.HTTPSPortName,
-				ContainerPort: ptr.Deref(spec.HttpsPort, consts.HTTPProxyHTTPSPort),
-				Protocol:      corev1.ProtocolTCP,
-			},
-		),
+		WithContainerPorts(containerPorts...),
 		WithCustomReadinessProbeEndpointPort(ptr.Deref(spec.HttpPort, consts.HTTPProxyHTTPPort)),
 		WithCustomReadinessProbeEndpointPath("/ping"),
 	)
@@ -82,6 +101,9 @@ func NewHTTPProxy(
 	balancingService.SetHttpsPort(spec.HttpsPort)
 	balancingService.SetHttpNodePort(spec.HttpNodePort)
 	balancingService.SetHttpsNodePort(spec.HttpsNodePort)
+	if spec.ChytProxy != nil {
+		balancingService.SetChytProxy(spec.ChytProxy)
+	}
 
 	return &HttpProxy{
 		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),

@@ -9,6 +9,8 @@ const (
 	YTMonitoringContainerPortName = "metrics"
 	YTMonitoringServicePortName   = "ytsaurus-metrics"
 	CRIServiceMonitoringPortName  = "cri-metrics"
+	CHYTHttpProxyName             = "chyt-http"
+	CHYTHttpsProxyName            = "chyt-https"
 )
 
 const (
@@ -50,6 +52,8 @@ const (
 	HTTPProxyMonitoringPort = 10016
 	HTTPProxyHTTPPort       = 80
 	HTTPProxyHTTPSPort      = 443
+	HTTPProxyChytHttpPort   = 8123
+	HTTPProxyChytHttpsPort  = 8443
 
 	TCPProxyMonitoringPort = 10017
 

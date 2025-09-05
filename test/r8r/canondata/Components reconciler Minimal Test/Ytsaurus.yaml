@@ -7,6 +7,8 @@ metadata:
   namespace: ytsaurus-components
   resourceVersion: "13"
 spec:
+  clusterFeatures:
+    httpProxyHaveChytAddress: true
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
   discovery:
     instanceCount: 1

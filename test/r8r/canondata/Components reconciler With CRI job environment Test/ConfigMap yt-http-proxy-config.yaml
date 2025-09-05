@@ -91,6 +91,9 @@ data:
         driver={
         };
         role="";
+        "chyt_http_server"={
+            port=8123;
+        };
     }
 kind: ConfigMap
 metadata:
