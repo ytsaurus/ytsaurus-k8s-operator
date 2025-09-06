@@ -864,9 +864,9 @@ const (
 )
 
 type MasterHydra struct {
-	ReadOnly             bool        `yson:"read_only" json:"read_only"`
-	LastSnapshotReadOnly bool        `yson:"last_snapshot_read_only" json:"last_snapshot_read_only"`
-	LastSnapshotID       int         `yson:"last_snapshot_id" json:"last_snapshot_id"`
+	ReadOnly             bool        `yson:"read_only" json:"readOnly"`
+	LastSnapshotReadOnly bool        `yson:"last_snapshot_read_only" json:"lastSnapshotReadOnly"`
+	LastSnapshotID       int         `yson:"last_snapshot_id" json:"lastSnapshotId"`
 	Active               bool        `yson:"active" json:"active"`
 	State                MasterState `yson:"state" json:"state"`
 }
