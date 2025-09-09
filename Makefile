@@ -21,7 +21,7 @@ YTSAURUS_SPEC ?= config/samples/cluster_v1_cri.yaml
 ## Version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.24.2
 
-CERT_MANAGER_VERSION = v1.14.4
+CERT_MANAGER_VERSION = v1.17.4
 TRUST_MANAGER_VERSION = v0.17.1
 
 ## YTsaurus operator image name.
@@ -195,7 +195,7 @@ endif
 
 .PHONY: kind-create-cluster
 kind-create-cluster: ## Create kind kubernetes cluster.
-	@if ! $(KIND) get clusters | grep -q $(KIND_CLUSTER_NAME); then \
+	if ! $(KIND) get clusters | grep -q $(KIND_CLUSTER_NAME); then \
 		$(KIND) create cluster --name $(KIND_CLUSTER_NAME) $(KIND_CLUSTER_CREATE_FLAGS); \
 	fi
 	$(MAKE) k8s-install-cert-manager
@@ -213,7 +213,7 @@ kind-use-context: ## Switch kubectl default context and namespace.
 
 .PHONY: kind-delete-cluster
 kind-delete-cluster: ## Delete kind kubernetes cluster.
-	@if $(KIND) get clusters | grep -q $(KIND_CLUSTER_NAME); then \
+	if $(KIND) get clusters | grep -q $(KIND_CLUSTER_NAME); then \
 		$(KIND) delete cluster --name $(KIND_CLUSTER_NAME); \
 	fi
 
@@ -260,10 +260,14 @@ kind-load-sample-images:
 
 .PHONY: k8s-install-cert-manager
 k8s-install-cert-manager:
-	@if ! $(KUBECTL) get namespace/cert-manager &>/dev/null; then \
+	if ! $(KUBECTL) get namespace/cert-manager &>/dev/null; then \
 		$(KUBECTL) apply --server-side -f "https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MANAGER_VERSION)/cert-manager.yaml"; \
 		$(KUBECTL) -n cert-manager wait --timeout=60s --for=condition=available --all deployment; \
 	fi
+
+.PHONY: k8s-uninstall-cert-manager
+k8s-uninstall-cert-manager:
+	$(KUBECTL) delete namespace cert-manager
 
 .PHONY: k8s-install-trust-manager
 k8s-install-trust-manager:
@@ -277,7 +281,7 @@ k8s-install-trust-manager:
 
 .PHONY: k8s-install-ytsaurus-dev-ca
 k8s-install-ytsaurus-dev-ca:
-	@if ! $(KUBECTL) -n cert-manager get clusterissuer ytsaurus-dev-ca &>/dev/null; then \
+	if ! $(KUBECTL) -n cert-manager get issuer ytsaurus-dev-selfsigned &>/dev/null; then \
 		$(KUBECTL) apply -n cert-manager --server-side -f config/certmanager/ytsaurus-dev-ca.yaml; \
 	fi
 
