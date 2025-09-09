@@ -40,9 +40,9 @@ spec:
       containers:
       - command:
         - /usr/bin/chyt-controller
+        - run
         - --config-path
         - /config/strawberry-controller.yson
-        - run
         env:
         - name: K8S_POD_NAME
           valueFrom:
