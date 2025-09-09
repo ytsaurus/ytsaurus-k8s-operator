@@ -238,7 +238,7 @@ func TestGetExecNodeConfigWithCri(t *testing.T) {
 
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
-			spec := withCri(getExecNodeSpec(nil), test.JobResources, test.Isolated, test.Service)
+			spec := withCri(getExecNodeSpec(nil), test.JobResources, test.Isolated, test.Service, nil)
 			canonize.AssertStruct(t, "exec-node-"+name, spec)
 			cfg, err := g.GetExecNodeConfig(spec)
 			require.NoError(t, err)
@@ -250,7 +250,7 @@ func TestGetExecNodeConfigWithCri(t *testing.T) {
 func TestGetContainerdConfig(t *testing.T) {
 	ytsaurus := getYtsaurusWithoutNodes()
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
-	spec := withCri(getExecNodeSpec(nil), nil, false, nil)
+	spec := withCri(getExecNodeSpec(nil), nil, false, nil, nil)
 	canonize.AssertStruct(t, "exec-node", spec)
 	g := NewCRIConfigGenerator(&spec)
 	cfg, err := g.GetContainerdConfig()
@@ -258,14 +258,10 @@ func TestGetContainerdConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
-func TestGetContainerdConfigWithGPU(t *testing.T) {
+func TestGetContainerdConfigWithNvidia(t *testing.T) {
 	ytsaurus := getYtsaurusWithoutNodes()
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
-	spec := withCri(getExecNodeSpec(nil), &corev1.ResourceRequirements{
-		Requests: corev1.ResourceList{
-			corev1.ResourceName("nvidia.com/gpu"): resource.MustParse("1"),
-		},
-	}, false, nil)
+	spec := withCri(getExecNodeSpec(nil), nil, false, nil, &ytv1.JobRuntimeSpec{Nvidia: &ytv1.NvidiaRuntimeSpec{}})
 	canonize.AssertStruct(t, "exec-node", spec)
 	g := NewCRIConfigGenerator(&spec)
 	cfg, err := g.GetContainerdConfig()
@@ -912,7 +908,13 @@ func getExecNodeSpec(jobResources *corev1.ResourceRequirements) ytv1.ExecNodesSp
 	}
 }
 
-func withCri(spec ytv1.ExecNodesSpec, jobResources *corev1.ResourceRequirements, isolated bool, criService *ytv1.CRIServiceType) ytv1.ExecNodesSpec {
+func withCri(
+	spec ytv1.ExecNodesSpec,
+	jobResources *corev1.ResourceRequirements,
+	isolated bool,
+	criService *ytv1.CRIServiceType,
+	runtime *ytv1.JobRuntimeSpec,
+) ytv1.ExecNodesSpec {
 	spec.Locations = append(spec.Locations, testLocationImageCache)
 	spec.JobResources = jobResources
 	spec.JobEnvironment = &ytv1.JobEnvironmentSpec{
@@ -927,6 +929,7 @@ func withCri(spec ytv1.ExecNodesSpec, jobResources *corev1.ResourceRequirements,
 		UseArtifactBinds: ptr.To(true),
 		DoNotSetUserId:   ptr.To(true),
 		Isolated:         ptr.To(isolated),
+		Runtime:          runtime,
 	}
 	return spec
 }

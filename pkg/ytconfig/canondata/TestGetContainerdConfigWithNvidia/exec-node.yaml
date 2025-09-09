@@ -7,6 +7,8 @@ jobEnvironment:
     sandboxImage: registry.k8s.io/pause:3.8
   doNotSetUserId: true
   isolated: false
+  runtime:
+    nvidia: {}
   useArtifactBinds: true
   userSlots: 42
 jobProxyLoggers:
@@ -24,9 +26,6 @@ jobProxyLoggers:
     rotationPeriodMilliseconds: 900000
   useTimestampSuffix: false
   writerType: file
-jobResources:
-  requests:
-    nvidia.com/gpu: "1"
 locations:
 - locationType: ChunkCache
   path: /yt/hdd1/chunk-cache
