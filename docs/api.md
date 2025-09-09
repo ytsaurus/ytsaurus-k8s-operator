@@ -2102,6 +2102,7 @@ _Appears in:_
 | `controllerFamilies` _string array_ | Supported controller families, for example: "chyt", "jupyt", "livy". |  |  |
 | `defaultRouteFamily` _string_ | The family that will receive requests for domains that are not explicitly specified in http_controller_mappings.<br />For example, "chyt" (with `ControllerFamilies` set to \{"chyt", "jupyt"\} would mean<br />that requests to "foo.<domain>" will be processed by chyt controller. |  |  |
 | `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
+| `logToStderr` _boolean_ | Write logs to stderr. |  |  |
 
 
 #### StructuredLoggerSpec
