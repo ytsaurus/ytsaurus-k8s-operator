@@ -82,6 +82,7 @@ data:
         "skynet_http_port"=11029;
         "job_resource_manager"={
             "resource_limits"={
+                "user_slots"=5;
             };
         };
         "exec_node"={
@@ -107,6 +108,7 @@ data:
             };
             "job_controller"={
                 "resource_limits"={
+                    "user_slots"=5;
                 };
                 "gpu_manager"={
                     "gpu_info_source"={
