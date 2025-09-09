@@ -14,7 +14,7 @@ data:
     set -e
     set -x
 
-    /usr/bin/chyt-controller --config-path /config/chyt-init-cluster.yson init-cluster
+    /usr/bin/chyt-controller init-cluster --config-path /config/chyt-init-cluster.yson
 kind: ConfigMap
 metadata:
   creationTimestamp: null

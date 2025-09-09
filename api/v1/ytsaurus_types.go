@@ -604,6 +604,8 @@ type StrawberryControllerSpec struct {
 	// DNSConfig allows customizing the DNS settings for the pods.
 	//+optional
 	DNSConfig *corev1.PodDNSConfig `json:"dnsConfig,omitempty"`
+	// Write logs to stderr.
+	LogToStderr bool `json:"logToStderr,omitempty"`
 }
 
 type YQLAgentSpec struct {

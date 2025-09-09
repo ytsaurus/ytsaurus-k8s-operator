@@ -32,6 +32,7 @@ type StrawberryController struct {
 	dataNodes []Component
 
 	name string
+	spec *ytv1.StrawberryControllerSpec
 }
 
 const ControllerConfigFileName = "strawberry-controller.yson"
@@ -137,6 +138,7 @@ func NewStrawberryController(
 		busClientSecret: busClientSecret,
 		busServerSecret: busServerSecret,
 		name:            "strawberry",
+		spec:            resource.Spec.StrawberryController,
 		master:          master,
 		scheduler:       scheduler,
 		dataNodes:       dataNodes,
@@ -170,11 +172,23 @@ func (c *StrawberryController) createInitUserAndUrlScript() string {
 	return strings.Join(script, "\n")
 }
 
+func (c *StrawberryController) getCommand(action, config string) []string {
+	command := []string{
+		"/usr/bin/chyt-controller",
+		action,
+		"--config-path",
+		path.Join(consts.ConfigMountPoint, config),
+	}
+	if c.spec.LogToStderr {
+		command = append(command, "--log-to-stderr")
+	}
+	return command
+}
+
 func (c *StrawberryController) createInitChytClusterScript() string {
 	script := []string{
 		initJobPrologue,
-		fmt.Sprintf("/usr/bin/chyt-controller --config-path %s init-cluster",
-			path.Join(consts.ConfigMountPoint, ChytInitClusterJobConfigFileName)),
+		strings.Join(c.getCommand("init-cluster", ChytInitClusterJobConfigFileName), " "),
 	}
 
 	return strings.Join(script, "\n")
@@ -215,12 +229,7 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 			Name:    consts.StrawberryContainerName,
 			EnvFrom: c.getEnvSource(),
 			Env:     getDefaultEnv(),
-			Command: []string{
-				"/usr/bin/chyt-controller",
-				"--config-path",
-				path.Join(consts.ConfigMountPoint, ControllerConfigFileName),
-				"run",
-			},
+			Command: c.getCommand("run", ControllerConfigFileName),
 			Ports: []corev1.ContainerPort{
 				{
 					Name:          consts.HTTPPortName,
