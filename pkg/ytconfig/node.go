@@ -625,10 +625,8 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 		c.JobResourceManager.ResourceLimits.UserSlots = ptr.To(*spec.JobEnvironment.UserSlots)
 	} else {
 		// Dummy heuristic.
-		jobCpu := ptr.Deref(c.ResourceLimits.TotalCpu, 0) - ptr.Deref(c.ResourceLimits.NodeDedicatedCpu, 0)
-		if jobCpu > 0 {
-			c.JobResourceManager.ResourceLimits.UserSlots = ptr.To(int(5 * jobCpu))
-		}
+		jobCPU := ptr.Deref(c.ResourceLimits.TotalCpu, 0) - ptr.Deref(c.ResourceLimits.NodeDedicatedCpu, 0)
+		c.JobResourceManager.ResourceLimits.UserSlots = ptr.To(int(5 * max(1, jobCPU)))
 	}
 
 	if err := fillJobEnvironment(&c.ExecNode, spec, commonSpec); err != nil {
