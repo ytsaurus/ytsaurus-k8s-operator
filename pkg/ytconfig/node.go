@@ -162,29 +162,20 @@ type JobResourceLimits struct {
 	UserSlots *int `yson:"user_slots,omitempty"`
 }
 
-type GpuInfoSource struct {
-	Type GpuInfoSourceType `yson:"type"`
+type GpuAgentSpec struct {
+	Address     string `yson:"address,omitempty"`
+	ServiceName string `yson:"service_name,omitempty"`
 }
 
-type GpuInfoSourceConfig struct {
-	GpuInfoSource
-	Address     string `yson:"address,omitempty"`      // for gpuagent
-	ServiceName string `yson:"service_name,omitempty"` // for gpuagent
+type GpuInfoSource struct {
+	Type GpuInfoSourceType `yson:"type"`
+	GpuAgentSpec
 }
 
 const GpuAgentPort = 23105
 
-func (s *GpuInfoSource) MarshalYSON() ([]byte, error) {
-	config := GpuInfoSourceConfig{GpuInfoSource: *s}
-	if s.Type == GpuInfoSourceTypeGpuAgent {
-		config.Address = fmt.Sprintf("localhost:%d", GpuAgentPort)
-		config.ServiceName = "NYT.NGpuAgent.NProto.GpuAgent"
-	}
-	return yson.Marshal(config)
-}
-
 type GpuManager struct {
-	GpuInfoSource GpuInfoSource `yson:"gpu_info_provider"`
+	GpuInfoSource GpuInfoSource `yson:"gpu_info_source"`
 }
 
 type JobController struct {
@@ -645,13 +636,14 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	}
 
 	runtime := spec.JobEnvironment.Runtime
-	var gpuInfoSourceType GpuInfoSourceType
+	gpuInfoSource := &c.ExecNode.GpuManager.GpuInfoSource
 	if runtime != nil && runtime.Nvidia != nil {
-		gpuInfoSourceType = GpuInfoSourceTypeGpuAgent
+		gpuInfoSource.Type = GpuInfoSourceTypeGpuAgent
+		gpuInfoSource.Address = fmt.Sprintf("localhost:%d", GpuAgentPort)
+		gpuInfoSource.ServiceName = "NYT.NGpuAgent.NProto.GpuAgent"
 	} else {
-		gpuInfoSourceType = GpuInfoSourceTypeNvidiaSmi
+		gpuInfoSource.Type = GpuInfoSourceTypeNvidiaSmi
 	}
-	c.ExecNode.GpuManager.GpuInfoSource.Type = gpuInfoSourceType
 
 	c.Logging = getExecNodeLogging(spec)
 
