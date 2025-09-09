@@ -477,6 +477,14 @@ type CRIJobEnvironmentSpec struct {
 	ImagePullPeriodSeconds *int32 `json:"imagePullPeriodSeconds,omitempty"`
 }
 
+type NvidiaRuntimeSpec struct{}
+
+type JobRuntimeSpec struct {
+	// Use nvidia-container-runtime to access Nvidia GPU.
+	//+optional
+	Nvidia *NvidiaRuntimeSpec `json:"nvidia,omitempty"`
+}
+
 type JobEnvironmentSpec struct {
 	// Isolate job execution environment from exec node or not, by default true when possible.
 	//+optional
@@ -493,6 +501,9 @@ type JobEnvironmentSpec struct {
 	// Do not use slot user id for running jobs.
 	//+optional
 	DoNotSetUserId *bool `json:"doNotSetUserId,omitempty"`
+	// Define custom job runtime.
+	//+optional
+	Runtime *JobRuntimeSpec `json:"runtime,omitempty"`
 }
 
 type ExecNodesSpec struct {

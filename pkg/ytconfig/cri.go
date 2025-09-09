@@ -15,10 +15,10 @@ import (
 type CRIConfigGenerator struct {
 	Service        ytv1.CRIServiceType
 	Spec           ytv1.CRIJobEnvironmentSpec
+	Runtime        *ytv1.JobRuntimeSpec
 	Isolated       bool
 	StoragePath    *string
 	MonitoringPort int32
-	HasGPU         bool
 }
 
 func NewCRIConfigGenerator(spec *ytv1.ExecNodesSpec) *CRIConfigGenerator {
@@ -31,10 +31,10 @@ func NewCRIConfigGenerator(spec *ytv1.ExecNodesSpec) *CRIConfigGenerator {
 	criSpec := envSpec.CRI
 	config := &CRIConfigGenerator{
 		Spec:           *criSpec,
+		Runtime:        envSpec.Runtime,
 		Service:        ptr.Deref(criSpec.CRIService, ytv1.CRIServiceContainerd),
 		Isolated:       ptr.Deref(envSpec.Isolated, true),
 		MonitoringPort: ptr.Deref(criSpec.MonitoringPort, consts.CRIServiceMonitoringPort),
-		HasGPU:         execNodesRequestsGPU(spec),
 	}
 	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeImageCache); location != nil {
 		config.StoragePath = &location.Path
@@ -153,7 +153,7 @@ func (cri *CRIConfigGenerator) defineContainerdRuntimes() (runtimes map[string]a
 	}
 	defaultRuntimeName = "runc"
 
-	if cri.HasGPU {
+	if cri.Runtime != nil && cri.Runtime.Nvidia != nil {
 		runtimes["nvidia"] = map[string]any{
 			"runtime_type": "io.containerd.runc.v2",
 			"sandbox_mode": "podsandbox",
@@ -165,20 +165,4 @@ func (cri *CRIConfigGenerator) defineContainerdRuntimes() (runtimes map[string]a
 	}
 
 	return runtimes, defaultRuntimeName
-}
-
-func execNodesRequestsGPU(spec *ytv1.ExecNodesSpec) bool {
-	if spec.JobResources == nil {
-		return false
-	}
-	return resourceListHasGPU(spec.JobResources.Requests) || resourceListHasGPU(spec.JobResources.Limits)
-}
-
-func resourceListHasGPU(resourceList corev1.ResourceList) bool {
-	for resource := range resourceList {
-		if resource == "nvidia.com/gpu" {
-			return true
-		}
-	}
-	return false
 }
