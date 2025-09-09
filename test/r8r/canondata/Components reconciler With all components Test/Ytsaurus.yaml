@@ -39,7 +39,7 @@ spec:
         - ReadWriteOnce
         resources:
           requests:
-            storage: 5Gi
+            storage: 10Gi
     volumeMounts:
     - mountPath: /yt/node-data
       name: node-data

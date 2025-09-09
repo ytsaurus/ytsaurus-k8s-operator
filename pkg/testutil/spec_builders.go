@@ -62,7 +62,7 @@ var (
 
 var (
 	masterVolumeSize   = resource.MustParse("5Gi")
-	dataNodeVolumeSize = resource.MustParse("5Gi")
+	dataNodeVolumeSize = resource.MustParse("10Gi")
 	execNodeVolumeSize = resource.MustParse("5Gi")
 )
 
