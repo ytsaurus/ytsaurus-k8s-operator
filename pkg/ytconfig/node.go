@@ -635,9 +635,8 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 		return c, err
 	}
 
-	runtime := spec.JobEnvironment.Runtime
 	gpuInfoSource := &c.ExecNode.GpuManager.GpuInfoSource
-	if runtime != nil && runtime.Nvidia != nil {
+	if spec.JobEnvironment != nil && spec.JobEnvironment.Runtime != nil && spec.JobEnvironment.Runtime.Nvidia != nil {
 		gpuInfoSource.Type = GpuInfoSourceTypeGpuAgent
 		gpuInfoSource.Address = fmt.Sprintf("localhost:%d", GpuAgentPort)
 		gpuInfoSource.ServiceName = "NYT.NGpuAgent.NProto.GpuAgent"
