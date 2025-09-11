@@ -2,7 +2,6 @@ package components
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"path"
 
@@ -139,7 +138,7 @@ func (n *baseExecNode) addCRIServiceSidecar(cri *ytconfig.CRIConfigGenerator, po
 
 	command := make([]string, 0, 1+len(wrapper))
 	command = append(command, wrapper...)
-	command = append(command, "/etc/jobs_entrypoint.sh")
+	command = append(command, string(cri.Service))
 
 	container := corev1.Container{
 		Name:         consts.JobsContainerName,
@@ -152,8 +151,10 @@ func (n *baseExecNode) addCRIServiceSidecar(cri *ytconfig.CRIConfigGenerator, po
 		},
 	}
 
-	containerdConfigPath := path.Join(consts.ContainerdConfigMountPoint, consts.ContainerdConfigFileName)
-	container.Args = []string{string(cri.Service), fmt.Sprint(ytconfig.GpuAgentPort), containerdConfigPath}
+	if cri.Service == ytv1.CRIServiceContainerd {
+		configPath := path.Join(consts.ContainerdConfigMountPoint, consts.ContainerdConfigFileName)
+		container.Args = []string{"--config", configPath}
+	}
 
 	n.addCRIServiceConfig(cri, &container)
 
