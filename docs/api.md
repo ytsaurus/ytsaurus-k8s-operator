@@ -920,6 +920,23 @@ _Appears in:_
 | `cri` _[CRIJobEnvironmentSpec](#crijobenvironmentspec)_ | CRI service configuration for running jobs in sidecar container. |  |  |
 | `useArtifactBinds` _boolean_ | Pass artifacts as read-only bind-mounts rather than symlinks. |  |  |
 | `doNotSetUserId` _boolean_ | Do not use slot user id for running jobs. |  |  |
+| `runtime` _[JobRuntimeSpec](#jobruntimespec)_ | Define custom job runtime. |  |  |
+
+
+#### JobRuntimeSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [JobEnvironmentSpec](#jobenvironmentspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `nvidia` _[NvidiaRuntimeSpec](#nvidiaruntimespec)_ | Use nvidia-container-runtime to access Nvidia GPU. |  |  |
 
 
 #### KafkaProxiesSpec
@@ -1256,6 +1273,19 @@ _Appears in:_
 | `hydraPersistenceUploader` _[HydraPersistenceUploaderSpec](#hydrapersistenceuploaderspec)_ |  |  |  |
 | `timbertruck` _[TimbertruckSpec](#timbertruckspec)_ |  |  |  |
 | `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
+
+
+#### NvidiaRuntimeSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [JobRuntimeSpec](#jobruntimespec)
+
 
 
 #### OauthServiceSpec

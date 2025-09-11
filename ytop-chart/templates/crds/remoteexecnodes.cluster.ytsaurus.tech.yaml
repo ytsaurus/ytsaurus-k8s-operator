@@ -913,6 +913,14 @@ spec:
                     description: Isolate job execution environment from exec node
                       or not, by default true when...
                     type: boolean
+                  runtime:
+                    description: Define custom job runtime.
+                    properties:
+                      nvidia:
+                        description: Use nvidia-container-runtime to access Nvidia
+                          GPU.
+                        type: object
+                    type: object
                   useArtifactBinds:
                     description: Pass artifacts as read-only bind-mounts rather than
                       symlinks.

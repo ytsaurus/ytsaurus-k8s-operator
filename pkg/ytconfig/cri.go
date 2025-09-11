@@ -95,7 +95,7 @@ func (cri *CRIConfigGenerator) GetCRIOEnv() []corev1.EnvVar {
 }
 
 func (cri *CRIConfigGenerator) GetContainerdConfig() ([]byte, error) {
-	runtimes, defaultRuntimeName := cri.defineContainerdRuntimes()
+	runtimes, defaultRuntimeName := cri.getContainerdRuntimes()
 
 	// See https://github.com/containerd/containerd/blob/main/docs/cri/config.md
 	config := map[string]any{
@@ -141,7 +141,7 @@ func (cri *CRIConfigGenerator) GetContainerdConfig() ([]byte, error) {
 	return marshallYsonConfig(config)
 }
 
-func (cri *CRIConfigGenerator) defineContainerdRuntimes() (runtimes map[string]any, defaultRuntimeName string) {
+func (cri *CRIConfigGenerator) getContainerdRuntimes() (runtimes map[string]any, defaultRuntimeName string) {
 	runtimes = map[string]any{
 		"runc": map[string]any{
 			"runtime_type": "io.containerd.runc.v2",
