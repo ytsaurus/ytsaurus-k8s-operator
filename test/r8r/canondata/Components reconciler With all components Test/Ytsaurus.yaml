@@ -5,7 +5,7 @@ metadata:
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "13"
+  resourceVersion: "16"
 spec:
   clusterFeatures:
     httpProxyHaveChytAddress: true
@@ -172,6 +172,9 @@ spec:
       writerType: stderr
     minReadyInstanceCount: 0
     resources: {}
+  strawberry:
+    image: ghcr.io/ytsaurus/strawberry:0.0.13
+    resources: {}
   useIpv4: false
   useIpv6: false
   usePorto: false
@@ -265,7 +268,7 @@ status:
     observedGeneration: 1
     reason: InitJobCompleted
     status: "True"
-    type: yql-agent-update-environmentYqlAgentInitJobCompleted
+    type: userStrawberryControllerInitJobCompleted
   - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
@@ -273,17 +276,35 @@ status:
     status: "True"
     type: YtsaurusClientReady
   - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: TimbertruckReady
+  - lastTransitionTime: null
+    message: Init job successfully completed
+    observedGeneration: 1
+    reason: InitJobCompleted
+    status: "True"
+    type: yql-agent-update-environmentYqlAgentInitJobCompleted
+  - lastTransitionTime: null
     message: yt-yql-agent-init-job-yql-agent-update-environment completed
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: YqlAgentReady
   - lastTransitionTime: null
+    message: Init job successfully completed
+    observedGeneration: 1
+    reason: InitJobCompleted
+    status: "True"
+    type: clusterStrawberryControllerInitJobCompleted
+  - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
     reason: Ready
     status: "True"
-    type: TimbertruckReady
+    type: StrawberryControllerReady
   observedGeneration: 1
   state: Running
   updateStatus: {}
