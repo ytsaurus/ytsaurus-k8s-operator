@@ -85,14 +85,14 @@ data:
             "store_locations"=[
                 {
                     path="/yt/node-data/chunk-store";
-                    quota=5368709120;
+                    quota=10737418240;
                     "io_config"={
                         "enable_sync"=%false;
                     };
-                    "high_watermark"=268435456;
-                    "low_watermark"=536870912;
-                    "disable_writes_watermark"=134217728;
-                    "trash_cleanup_watermark"=536870912;
+                    "high_watermark"=536870912;
+                    "low_watermark"=1073741824;
+                    "disable_writes_watermark"=268435456;
+                    "trash_cleanup_watermark"=1073741824;
                 };
             ];
             "cache_locations"=[
