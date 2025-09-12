@@ -36703,6 +36703,9 @@ spec:
                     type: string
                   image:
                     type: string
+                  logToStderr:
+                    description: Write logs to stderr.
+                    type: boolean
                   nodeSelector:
                     additionalProperties:
                       type: string
