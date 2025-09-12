@@ -903,11 +903,11 @@ spec:
                       or not, by default true when...
                     type: boolean
                   runtime:
-                    description: Define custom job runtime.
+                    description: 'Container Runtime configuration for CRI service.
+                      Default: runc.'
                     properties:
                       nvidia:
-                        description: Use nvidia-container-runtime to access Nvidia
-                          GPU.
+                        description: Use NVIDIA Container Runtime.
                         type: object
                     type: object
                   useArtifactBinds:

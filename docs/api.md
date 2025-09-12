@@ -920,7 +920,7 @@ _Appears in:_
 | `cri` _[CRIJobEnvironmentSpec](#crijobenvironmentspec)_ | CRI service configuration for running jobs in sidecar container. |  |  |
 | `useArtifactBinds` _boolean_ | Pass artifacts as read-only bind-mounts rather than symlinks. |  |  |
 | `doNotSetUserId` _boolean_ | Do not use slot user id for running jobs. |  |  |
-| `runtime` _[JobRuntimeSpec](#jobruntimespec)_ | Define custom job runtime. |  |  |
+| `runtime` _[JobRuntimeSpec](#jobruntimespec)_ | Container Runtime configuration for CRI service. Default: runc. |  |  |
 
 
 #### JobRuntimeSpec
@@ -936,7 +936,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `nvidia` _[NvidiaRuntimeSpec](#nvidiaruntimespec)_ | Use nvidia-container-runtime to access Nvidia GPU. |  |  |
+| `nvidia` _[NvidiaRuntimeSpec](#nvidiaruntimespec)_ | Use NVIDIA Container Runtime. |  |  |
 
 
 #### KafkaProxiesSpec

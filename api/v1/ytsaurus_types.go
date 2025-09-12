@@ -480,7 +480,7 @@ type CRIJobEnvironmentSpec struct {
 type NvidiaRuntimeSpec struct{}
 
 type JobRuntimeSpec struct {
-	// Use nvidia-container-runtime to access Nvidia GPU.
+	// Use NVIDIA Container Runtime.
 	//+optional
 	Nvidia *NvidiaRuntimeSpec `json:"nvidia,omitempty"`
 }
@@ -501,7 +501,7 @@ type JobEnvironmentSpec struct {
 	// Do not use slot user id for running jobs.
 	//+optional
 	DoNotSetUserId *bool `json:"doNotSetUserId,omitempty"`
-	// Define custom job runtime.
+	// Container Runtime configuration for CRI service. Default: runc.
 	//+optional
 	Runtime *JobRuntimeSpec `json:"runtime,omitempty"`
 }

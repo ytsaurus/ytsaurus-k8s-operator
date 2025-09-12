@@ -238,7 +238,7 @@ func TestGetExecNodeConfigWithCri(t *testing.T) {
 
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
-			spec := withCri(getExecNodeSpec(nil), test.JobResources, test.Isolated, test.Service, nil)
+			spec := withCri(getExecNodeSpec(nil), test.JobResources, test.Isolated, test.Service)
 			canonize.AssertStruct(t, "exec-node-"+name, spec)
 			cfg, err := g.GetExecNodeConfig(spec)
 			require.NoError(t, err)
@@ -250,7 +250,7 @@ func TestGetExecNodeConfigWithCri(t *testing.T) {
 func TestGetContainerdConfig(t *testing.T) {
 	ytsaurus := getYtsaurusWithoutNodes()
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
-	spec := withCri(getExecNodeSpec(nil), nil, false, nil, nil)
+	spec := withCri(getExecNodeSpec(nil), nil, false, nil)
 	canonize.AssertStruct(t, "exec-node", spec)
 	g := NewCRIConfigGenerator(&spec)
 	cfg, err := g.GetContainerdConfig()
@@ -261,7 +261,7 @@ func TestGetContainerdConfig(t *testing.T) {
 func TestGetContainerdConfigWithNvidia(t *testing.T) {
 	ytsaurus := getYtsaurusWithoutNodes()
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
-	spec := withCri(getExecNodeSpec(nil), nil, false, nil, &ytv1.JobRuntimeSpec{Nvidia: &ytv1.NvidiaRuntimeSpec{}})
+	spec := withRuntime(withCri(getExecNodeSpec(nil), nil, false, nil), &ytv1.JobRuntimeSpec{Nvidia: &ytv1.NvidiaRuntimeSpec{}})
 	canonize.AssertStruct(t, "exec-node", spec)
 	g := NewCRIConfigGenerator(&spec)
 	cfg, err := g.GetContainerdConfig()
@@ -908,13 +908,7 @@ func getExecNodeSpec(jobResources *corev1.ResourceRequirements) ytv1.ExecNodesSp
 	}
 }
 
-func withCri(
-	spec ytv1.ExecNodesSpec,
-	jobResources *corev1.ResourceRequirements,
-	isolated bool,
-	criService *ytv1.CRIServiceType,
-	runtime *ytv1.JobRuntimeSpec,
-) ytv1.ExecNodesSpec {
+func withCri(spec ytv1.ExecNodesSpec, jobResources *corev1.ResourceRequirements, isolated bool, criService *ytv1.CRIServiceType) ytv1.ExecNodesSpec {
 	spec.Locations = append(spec.Locations, testLocationImageCache)
 	spec.JobResources = jobResources
 	spec.JobEnvironment = &ytv1.JobEnvironmentSpec{
@@ -929,8 +923,15 @@ func withCri(
 		UseArtifactBinds: ptr.To(true),
 		DoNotSetUserId:   ptr.To(true),
 		Isolated:         ptr.To(isolated),
-		Runtime:          runtime,
 	}
+	return spec
+}
+
+func withRuntime(
+	spec ytv1.ExecNodesSpec,
+	runtime *ytv1.JobRuntimeSpec,
+) ytv1.ExecNodesSpec {
+	spec.JobEnvironment.Runtime = runtime
 	return spec
 }
 
