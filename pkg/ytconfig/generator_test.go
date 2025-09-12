@@ -258,6 +258,17 @@ func TestGetContainerdConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetContainerdConfigWithNvidia(t *testing.T) {
+	ytsaurus := getYtsaurusWithoutNodes()
+	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
+	spec := withRuntime(withCri(getExecNodeSpec(nil), nil, false, nil), &ytv1.JobRuntimeSpec{Nvidia: &ytv1.NvidiaRuntimeSpec{}})
+	canonize.AssertStruct(t, "exec-node", spec)
+	g := NewCRIConfigGenerator(&spec)
+	cfg, err := g.GetContainerdConfig()
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetExecNodeWithoutYtsaurusConfig(t *testing.T) {
 	remoteYtsaurus := getRemoteYtsaurus()
 	commonSpec := getCommonSpec()
@@ -913,6 +924,14 @@ func withCri(spec ytv1.ExecNodesSpec, jobResources *corev1.ResourceRequirements,
 		DoNotSetUserId:   ptr.To(true),
 		Isolated:         ptr.To(isolated),
 	}
+	return spec
+}
+
+func withRuntime(
+	spec ytv1.ExecNodesSpec,
+	runtime *ytv1.JobRuntimeSpec,
+) ytv1.ExecNodesSpec {
+	spec.JobEnvironment.Runtime = runtime
 	return spec
 }
 
