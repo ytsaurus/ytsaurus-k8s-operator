@@ -1,0 +1,12 @@
+chytProxy:
+  httpPort: 8123
+  httpsPort: 8443
+httpNodePort: 10000
+httpsNodePort: 10001
+instanceCount: 3
+resources: {}
+role: control
+serviceType: NodePort
+transport:
+  httpsSecret:
+    name: yt-test-infra-wildcard
