@@ -93,6 +93,9 @@ data:
   yt-scheduler-cypress-patch.yson: |-
     {
     }
+  yt-strawberry-controller-cypress-patch.yson: |-
+    {
+    }
   yt-timbertruck-cypress-patch.yson: |-
     {
     }
