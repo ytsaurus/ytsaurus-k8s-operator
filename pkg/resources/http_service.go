@@ -44,7 +44,7 @@ func (s *HTTPService) SetHttpPort(port *int32) {
 	s.httpPort = port
 }
 
-func (s *HTTPService) SetChytProxy(chytProxy *ytv1.CHYTProxiesSpec) {
+func (s *HTTPService) SetChytProxy(chytProxy *ytv1.CHYTProxySpec) {
 	s.chytHttpProxyPort = chytProxy.HttpPort
 	s.chytHttpProxyNodePort = chytProxy.HttpNodePort
 	s.chytHttpsProxyPort = chytProxy.HttpsPort

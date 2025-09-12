@@ -95,7 +95,7 @@ _Appears in:_
 | `default` _[BundleBootstrapSpec](#bundlebootstrapspec)_ |  |  |  |
 
 
-#### CHYTProxiesSpec
+#### CHYTProxySpec
 
 
 
@@ -783,7 +783,7 @@ _Appears in:_
 | `httpsPort` _integer_ |  | 443 |  |
 | `httpNodePort` _integer_ |  |  |  |
 | `httpsNodePort` _integer_ |  |  |  |
-| `chytProxy` _[CHYTProxiesSpec](#chytproxiesspec)_ |  |  |  |
+| `chytProxy` _[CHYTProxySpec](#chytproxyspec)_ |  |  |  |
 | `role` _string_ |  | default | MinLength: 1 <br /> |
 | `transport` _[HTTPTransportSpec](#httptransportspec)_ |  |  |  |
 

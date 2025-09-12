@@ -345,7 +345,7 @@ type HTTPTransportSpec struct {
 	DisableHTTP bool `json:"disableHttp,omitempty"`
 }
 
-type CHYTProxiesSpec struct {
+type CHYTProxySpec struct {
 	//+kubebuilder:default:=8123
 	HttpPort     *int32 `json:"httpPort,omitempty"`
 	HttpNodePort *int32 `json:"httpNodePort,omitempty"`
@@ -361,10 +361,10 @@ type HTTPProxiesSpec struct {
 	//+kubebuilder:default:=80
 	HttpPort *int32 `json:"httpPort,omitempty"`
 	//+kubebuilder:default:=443
-	HttpsPort     *int32           `json:"httpsPort,omitempty"`
-	HttpNodePort  *int32           `json:"httpNodePort,omitempty"`
-	HttpsNodePort *int32           `json:"httpsNodePort,omitempty"`
-	ChytProxy     *CHYTProxiesSpec `json:"chytProxy,omitempty"`
+	HttpsPort     *int32         `json:"httpsPort,omitempty"`
+	HttpNodePort  *int32         `json:"httpNodePort,omitempty"`
+	HttpsNodePort *int32         `json:"httpsNodePort,omitempty"`
+	ChytProxy     *CHYTProxySpec `json:"chytProxy,omitempty"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`

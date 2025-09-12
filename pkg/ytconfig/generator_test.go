@@ -319,7 +319,7 @@ func TestGetHTTPProxyWithChytServer(t *testing.T) {
 	g := NewGenerator(spec, testClusterDomain)
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
 	proxySpec := getHTTPProxySpec()
-	proxySpec.ChytProxy = &ytv1.CHYTProxiesSpec{
+	proxySpec.ChytProxy = &ytv1.CHYTProxySpec{
 		HttpPort:  ptr.To(int32(8123)),
 		HttpsPort: ptr.To(int32(8443)),
 	}
@@ -335,7 +335,7 @@ func TestGetHTTPProxyWithChytServerNoTls(t *testing.T) {
 	g := NewGenerator(spec, testClusterDomain)
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
 	proxySpec := getHTTPProxySpec()
-	proxySpec.ChytProxy = &ytv1.CHYTProxiesSpec{
+	proxySpec.ChytProxy = &ytv1.CHYTProxySpec{
 		HttpPort:  ptr.To(int32(8123)),
 		HttpsPort: ptr.To(int32(8443)),
 	}
