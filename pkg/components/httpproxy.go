@@ -32,7 +32,6 @@ func NewHTTPProxy(
 	spec ytv1.HTTPProxiesSpec,
 ) *HttpProxy {
 	l := cfgen.GetComponentLabeller(consts.HttpProxyType, spec.Role)
-
 	containerPorts := []corev1.ContainerPort{
 		{
 			Name:          consts.YTRPCPortName,
@@ -50,12 +49,16 @@ func NewHTTPProxy(
 			Protocol:      corev1.ProtocolTCP,
 		},
 	}
-
+	var chytProxy *ytv1.CHYTProxySpec
 	if ytsaurus.GetCommonSpec().ClusterFeatures.HTTPProxyHaveChytAddress {
-		chytProxy := ptr.Deref(spec.ChytProxy, ytv1.CHYTProxySpec{
-			HttpPort:  ptr.To(int32(consts.HTTPProxyChytHttpPort)),
-			HttpsPort: ptr.To(int32(consts.HTTPProxyChytHttpsPort)),
-		})
+		var err error
+		chytProxy, err = ytconfig.MakeChytProxySpec(spec)
+		if err != nil {
+			return nil
+		}
+	}
+
+	if chytProxy != nil {
 		containerPorts = append(containerPorts, corev1.ContainerPort{
 			Name:          consts.CHYTHttpProxyName,
 			ContainerPort: ptr.Deref(chytProxy.HttpPort, int32(consts.HTTPProxyChytHttpPort)),
@@ -101,8 +104,8 @@ func NewHTTPProxy(
 	balancingService.SetHttpsPort(spec.HttpsPort)
 	balancingService.SetHttpNodePort(spec.HttpNodePort)
 	balancingService.SetHttpsNodePort(spec.HttpsNodePort)
-	if spec.ChytProxy != nil {
-		balancingService.SetChytProxy(spec.ChytProxy)
+	if chytProxy != nil {
+		balancingService.SetChytProxy(chytProxy)
 	}
 
 	return &HttpProxy{

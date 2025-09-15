@@ -341,11 +341,12 @@ func fillBusServer(b *BusServer, s *ytv1.RPCTransportSpec, keyring *Keyring) {
 	}
 }
 
-func fillChytServer(spec *ytv1.HTTPProxiesSpec, srv *HTTPProxyServer) {
-	chytProxy := ptr.Deref(spec.ChytProxy, ytv1.CHYTProxySpec{
-		HttpPort:  ptr.To(int32(consts.HTTPProxyChytHttpPort)),
-		HttpsPort: ptr.To(int32(consts.HTTPProxyChytHttpsPort)),
-	})
+func fillChytServer(spec *ytv1.HTTPProxiesSpec, srv *HTTPProxyServer) error {
+	var chytProxy *ytv1.CHYTProxySpec
+	chytProxy, err := MakeChytProxySpec(*spec)
+	if err != nil {
+		return err
+	}
 
 	srv.ChytHttpServer = &HTTPServer{
 		Port: int(*chytProxy.HttpPort),
@@ -367,6 +368,7 @@ func fillChytServer(spec *ytv1.HTTPProxiesSpec, srv *HTTPProxyServer) {
 			},
 		}
 	}
+	return nil
 }
 
 func (g *NodeGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s *ytv1.RPCTransportSpec, keyring *Keyring) {
@@ -869,8 +871,10 @@ func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProx
 	}
 
 	if g.clusterFeatures.HTTPProxyHaveChytAddress {
-		// check for zero ports
-		fillChytServer(spec, &c)
+		err := fillChytServer(spec, &c)
+		if err != nil {
+			return c, err
+		}
 	}
 
 	return c, nil
