@@ -50,7 +50,7 @@ func NewHTTPProxy(
 		},
 	}
 	var chytProxy *ytv1.CHYTProxySpec
-	if ytsaurus.GetCommonSpec().ClusterFeatures.HTTPProxyHaveChytAddress {
+	if ytsaurus.GetClusterFeatures().HTTPProxyHaveChytAddress {
 		var err error
 		chytProxy, err = ytconfig.MakeChytProxySpec(spec)
 		if err != nil {
