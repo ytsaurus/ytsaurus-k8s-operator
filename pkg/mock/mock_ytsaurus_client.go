@@ -467,6 +467,21 @@ func (mr *MockClientMockRecorder) GetInSyncReplicas(ctx, path, ts, keys, options
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInSyncReplicas", reflect.TypeOf((*MockClient)(nil).GetInSyncReplicas), ctx, path, ts, keys, options)
 }
 
+// GetJob mocks base method.
+func (m *MockClient) GetJob(ctx context.Context, opID yt.OperationID, jobID yt.JobID, options *yt.GetJobOptions) (*yt.JobStatus, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetJob", ctx, opID, jobID, options)
+	ret0, _ := ret[0].(*yt.JobStatus)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetJob indicates an expected call of GetJob.
+func (mr *MockClientMockRecorder) GetJob(ctx, opID, jobID, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetJob", reflect.TypeOf((*MockClient)(nil).GetJob), ctx, opID, jobID, options)
+}
+
 // GetJobStderr mocks base method.
 func (m *MockClient) GetJobStderr(ctx context.Context, opID yt.OperationID, jobID yt.JobID, options *yt.GetJobStderrOptions) ([]byte, error) {
 	m.ctrl.T.Helper()
@@ -773,6 +788,21 @@ func (m *MockClient) MultisetAttributes(ctx context.Context, path ypath.YPath, a
 func (mr *MockClientMockRecorder) MultisetAttributes(ctx, path, attributes, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultisetAttributes", reflect.TypeOf((*MockClient)(nil).MultisetAttributes), ctx, path, attributes, options)
+}
+
+// NewBatchRequest mocks base method.
+func (m *MockClient) NewBatchRequest() (yt.BatchRequest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewBatchRequest")
+	ret0, _ := ret[0].(yt.BatchRequest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// NewBatchRequest indicates an expected call of NewBatchRequest.
+func (mr *MockClientMockRecorder) NewBatchRequest() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewBatchRequest", reflect.TypeOf((*MockClient)(nil).NewBatchRequest))
 }
 
 // NewRowBatchWriter mocks base method.
