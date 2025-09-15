@@ -48,7 +48,7 @@ func (c *Ytsaurus) GetCommonSpec() ytv1.CommonSpec {
 }
 
 func (c *Ytsaurus) GetClusterFeatures() ytv1.ClusterFeatures {
-	return ptr.Deref(c.GetResource().Spec.CommonSpec.ClusterFeatures, ytv1.ClusterFeatures{})
+	return ptr.Deref(c.GetCommonSpec().ClusterFeatures, ytv1.ClusterFeatures{})
 }
 
 func (c *Ytsaurus) GetClusterState() ytv1.ClusterState {
