@@ -1,0 +1,21 @@
+mkdir -p /etc/timbertruck; echo 'json_logs:
+- log_file: /yt/master-logs/master.access.log.json
+  name: master-access
+  yt_queue:
+  - cluster: http-proxies-lb.ytsaurus-dev.svc.cluster.local
+    producer_path: //sys/admin/logs/master-access/producer
+    queue_path: //sys/admin/logs/master-access/queue
+- log_file: /yt/master-logs/master.security.log.yson.zstd
+  name: master-security
+  yt_queue:
+  - cluster: http-proxies-lb.ytsaurus-dev.svc.cluster.local
+    producer_path: //sys/admin/logs/master-security/producer
+    queue_path: //sys/admin/logs/master-security/queue
+- log_file: /yt/master-logs/master.other.log.zstd
+  name: master-other
+  yt_queue:
+  - cluster: http-proxies-lb.ytsaurus-dev.svc.cluster.local
+    producer_path: //sys/admin/logs/master-other/producer
+    queue_path: //sys/admin/logs/master-other/queue
+work_dir: /yt/master-logs/timbertruck
+' > /etc/timbertruck/config.yaml; chmod 644 /etc/timbertruck/config.yaml; /usr/bin/timbertruck_os -config /etc/timbertruck/config.yaml

@@ -13,9 +13,9 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
-	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 type Timbertruck struct {
