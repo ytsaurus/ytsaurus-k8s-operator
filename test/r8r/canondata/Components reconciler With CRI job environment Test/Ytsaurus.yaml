@@ -7,8 +7,6 @@ metadata:
   namespace: ytsaurus-components
   resourceVersion: "13"
 spec:
-  clusterFeatures:
-    httpProxyHaveChytAddress: true
   configOverrides:
     name: test-overrides
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1

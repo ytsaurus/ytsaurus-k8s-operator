@@ -120,9 +120,6 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 				UseShortNames:    true,
 				CoreImage:        b.YtsaurusImage,
 				JobImage:         b.JobImage,
-				ClusterFeatures: &ytv1.ClusterFeatures{
-					HTTPProxyHaveChytAddress: true,
-				},
 			},
 			EnableFullUpdate: true,
 			IsManaged:        true,
@@ -213,6 +210,12 @@ func (b *YtsaurusBuilder) WithMasterCaches() {
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
 			Loggers:               b.CreateLoggersSpec(),
 		},
+	}
+}
+
+func (b *YtsaurusBuilder) WithClusterFeatures() {
+	b.Ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
+		HTTPProxyHaveChytAddress: true,
 	}
 }
 

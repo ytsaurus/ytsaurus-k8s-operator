@@ -379,6 +379,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithQueryTracker()
 			ytBuilder.WithQueueAgent()
 			ytBuilder.WithYqlAgent()
+			ytBuilder.WithClusterFeatures()
 		})
 		It("Test", func(ctx context.Context) {})
 	})

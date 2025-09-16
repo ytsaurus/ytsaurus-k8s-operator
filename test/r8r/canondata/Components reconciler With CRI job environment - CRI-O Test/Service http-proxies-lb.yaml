@@ -22,9 +22,6 @@ metadata:
   resourceVersion: "1"
 spec:
   ports:
-  - name: chyt-http
-    port: 8123
-    targetPort: 8123
   - name: http
     port: 80
     targetPort: 80

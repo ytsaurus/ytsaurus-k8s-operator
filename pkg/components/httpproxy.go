@@ -51,11 +51,7 @@ func NewHTTPProxy(
 	}
 	var chytProxy *ytv1.CHYTProxySpec
 	if ytsaurus.GetClusterFeatures().HTTPProxyHaveChytAddress {
-		var err error
-		chytProxy, err = ytconfig.MakeChytProxySpec(spec)
-		if err != nil {
-			return nil
-		}
+		chytProxy = ptr.To(ptr.Deref(spec.ChytProxy, ytv1.CHYTProxySpec{}))
 	}
 
 	if chytProxy != nil {
@@ -105,7 +101,10 @@ func NewHTTPProxy(
 	balancingService.SetHttpNodePort(spec.HttpNodePort)
 	balancingService.SetHttpsNodePort(spec.HttpsNodePort)
 	if chytProxy != nil {
-		balancingService.SetChytProxy(chytProxy)
+		balancingService.SetChytProxyHttpPort(ptr.To(ptr.Deref(chytProxy.HttpPort, int32(consts.HTTPProxyChytHttpPort))))
+		balancingService.SetChytProxyHttpNodePort(chytProxy.HttpNodePort)
+		balancingService.SetChytProxyHttpsPort(ptr.To(ptr.Deref(chytProxy.HttpsPort, int32(consts.HTTPProxyChytHttpsPort))))
+		balancingService.SetChytProxyHttpsNodePort(chytProxy.HttpsNodePort)
 	}
 
 	return &HttpProxy{

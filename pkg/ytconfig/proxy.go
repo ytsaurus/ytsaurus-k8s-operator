@@ -1,7 +1,6 @@
 package ytconfig
 
 import (
-	"fmt"
 	"path"
 
 	"go.ytsaurus.tech/yt/go/yson"
@@ -107,18 +106,6 @@ type KafkaProxyServer struct {
 	Role string `yson:"role"`
 	Port int    `yson:"port"`
 	Auth Auth   `yson:"auth"`
-}
-
-func MakeChytProxySpec(spec ytv1.HTTPProxiesSpec) (*ytv1.CHYTProxySpec, error) {
-	chytProxy := ptr.To(ptr.Deref(spec.ChytProxy, ytv1.CHYTProxySpec{
-		HttpPort:  ptr.To(int32(consts.HTTPProxyChytHttpPort)),
-		HttpsPort: ptr.To(int32(consts.HTTPProxyChytHttpsPort)),
-	}))
-
-	if *chytProxy.HttpPort == 0 || *chytProxy.HttpsPort == 0 {
-		return chytProxy, fmt.Errorf("HttpPort or HttpsPort cannot be zero for ChytServer")
-	}
-	return chytProxy, nil
 }
 
 func getHTTPProxyLogging(spec *ytv1.HTTPProxiesSpec) Logging {

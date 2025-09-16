@@ -342,20 +342,18 @@ func fillBusServer(b *BusServer, s *ytv1.RPCTransportSpec, keyring *Keyring) {
 }
 
 func fillChytServer(spec *ytv1.HTTPProxiesSpec, srv *HTTPProxyServer) error {
-	var chytProxy *ytv1.CHYTProxySpec
-	chytProxy, err := MakeChytProxySpec(*spec)
-	if err != nil {
-		return err
-	}
+	chytProxy := ptr.Deref(spec.ChytProxy, ytv1.CHYTProxySpec{})
+	httpPort := ptr.Deref(chytProxy.HttpPort, consts.HTTPProxyChytHttpPort)
 
 	srv.ChytHttpServer = &HTTPServer{
-		Port: int(*chytProxy.HttpPort),
+		Port: int(httpPort),
 	}
 
 	if spec.Transport.HTTPSSecret != nil {
+		httpsPort := ptr.Deref(chytProxy.HttpPort, consts.HTTPProxyChytHttpsPort)
 		srv.ChytHttpsServer = &HTTPSServer{
 			HTTPServer: HTTPServer{
-				Port: int(*chytProxy.HttpsPort),
+				Port: int(httpsPort),
 			},
 			Credentials: HTTPSServerCredentials{
 				CertChain: PemBlob{
