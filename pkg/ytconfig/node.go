@@ -105,6 +105,7 @@ type GpuInfoSourceType string
 const (
 	GpuInfoSourceTypeNvGpuManager GpuInfoSourceType = "nv_gpu_manager"
 	GpuInfoSourceTypeNvidiaSmi    GpuInfoSourceType = "nvidia_smi"
+	GpuInfoSourceTypeGpuAgent     GpuInfoSourceType = "gpu_agent"
 )
 
 type CriExecutor struct {
@@ -161,9 +162,17 @@ type JobResourceLimits struct {
 	UserSlots *int `yson:"user_slots,omitempty"`
 }
 
+type GpuAgentSpec struct {
+	Address     string `yson:"address,omitempty"`
+	ServiceName string `yson:"service_name,omitempty"`
+}
+
 type GpuInfoSource struct {
 	Type GpuInfoSourceType `yson:"type"`
+	GpuAgentSpec
 }
+
+const GpuAgentPort = 23105
 
 type GpuManager struct {
 	GpuInfoSource GpuInfoSource `yson:"gpu_info_source"`
@@ -626,7 +635,14 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 		return c, err
 	}
 
-	c.ExecNode.GpuManager.GpuInfoSource.Type = GpuInfoSourceTypeNvidiaSmi
+	gpuInfoSource := &c.ExecNode.GpuManager.GpuInfoSource
+	if spec.JobEnvironment != nil && spec.JobEnvironment.Runtime != nil && spec.JobEnvironment.Runtime.Nvidia != nil {
+		gpuInfoSource.Type = GpuInfoSourceTypeGpuAgent
+		gpuInfoSource.Address = fmt.Sprintf("localhost:%d", GpuAgentPort)
+		gpuInfoSource.ServiceName = "NYT.NGpuAgent.NProto.GpuAgent"
+	} else {
+		gpuInfoSource.Type = GpuInfoSourceTypeNvidiaSmi
+	}
 
 	c.Logging = getExecNodeLogging(spec)
 

@@ -15,6 +15,7 @@ import (
 type CRIConfigGenerator struct {
 	Service        ytv1.CRIServiceType
 	Spec           ytv1.CRIJobEnvironmentSpec
+	Runtime        *ytv1.JobRuntimeSpec
 	Isolated       bool
 	StoragePath    *string
 	MonitoringPort int32
@@ -30,6 +31,7 @@ func NewCRIConfigGenerator(spec *ytv1.ExecNodesSpec) *CRIConfigGenerator {
 	criSpec := envSpec.CRI
 	config := &CRIConfigGenerator{
 		Spec:           *criSpec,
+		Runtime:        envSpec.Runtime,
 		Service:        ptr.Deref(criSpec.CRIService, ytv1.CRIServiceContainerd),
 		Isolated:       ptr.Deref(envSpec.Isolated, true),
 		MonitoringPort: ptr.Deref(criSpec.MonitoringPort, consts.CRIServiceMonitoringPort),
@@ -93,6 +95,8 @@ func (cri *CRIConfigGenerator) GetCRIOEnv() []corev1.EnvVar {
 }
 
 func (cri *CRIConfigGenerator) GetContainerdConfig() ([]byte, error) {
+	runtimes, defaultRuntimeName := cri.getContainerdRuntimes()
+
 	// See https://github.com/containerd/containerd/blob/main/docs/cri/config.md
 	config := map[string]any{
 		"version": 2,
@@ -116,16 +120,8 @@ func (cri *CRIConfigGenerator) GetContainerdConfig() ([]byte, error) {
 				},
 
 				"containerd": map[string]any{
-					"default_runtime_name": "runc",
-					"runtimes": map[string]any{
-						"runc": map[string]any{
-							"runtime_type": "io.containerd.runc.v2",
-							"sandbox_mode": "podsandbox",
-							"options": map[string]any{
-								"SystemdCgroup": false,
-							},
-						},
-					},
+					"default_runtime_name": defaultRuntimeName,
+					"runtimes":             runtimes,
 				},
 
 				"registry": map[string]any{
@@ -143,4 +139,30 @@ func (cri *CRIConfigGenerator) GetContainerdConfig() ([]byte, error) {
 
 	// TODO(khlebnikov): Refactor and remove this mess with formats.
 	return marshallYsonConfig(config)
+}
+
+func (cri *CRIConfigGenerator) getContainerdRuntimes() (runtimes map[string]any, defaultRuntimeName string) {
+	runtimes = map[string]any{
+		"runc": map[string]any{
+			"runtime_type": "io.containerd.runc.v2",
+			"sandbox_mode": "podsandbox",
+			"options": map[string]any{
+				"SystemdCgroup": false,
+			},
+		},
+	}
+	defaultRuntimeName = "runc"
+
+	if cri.Runtime != nil && cri.Runtime.Nvidia != nil {
+		runtimes["nvidia"] = map[string]any{
+			"runtime_type": "io.containerd.runc.v2",
+			"sandbox_mode": "podsandbox",
+			"options": map[string]any{
+				"BinaryName": "/usr/bin/nvidia-container-runtime",
+			},
+		}
+		defaultRuntimeName = "nvidia"
+	}
+
+	return runtimes, defaultRuntimeName
 }
