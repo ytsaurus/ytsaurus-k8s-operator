@@ -1,0 +1,7 @@
+httpNodePort: 10000
+httpsNodePort: 10001
+instanceCount: 3
+resources: {}
+role: control
+serviceType: NodePort
+transport: {}

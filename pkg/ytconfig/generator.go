@@ -341,6 +341,34 @@ func fillBusServer(b *BusServer, s *ytv1.RPCTransportSpec, keyring *Keyring) {
 	}
 }
 
+func fillChytServer(spec *ytv1.HTTPProxiesSpec, srv *HTTPProxyServer) error {
+	chytProxy := ptr.Deref(spec.ChytProxy, ytv1.CHYTProxySpec{})
+	httpPort := ptr.Deref(chytProxy.HttpPort, consts.HTTPProxyChytHttpPort)
+
+	srv.ChytHttpServer = &HTTPServer{
+		Port: int(httpPort),
+	}
+
+	if spec.Transport.HTTPSSecret != nil {
+		httpsPort := ptr.Deref(chytProxy.HttpPort, consts.HTTPProxyChytHttpsPort)
+		srv.ChytHttpsServer = &HTTPSServer{
+			HTTPServer: HTTPServer{
+				Port: int(httpsPort),
+			},
+			Credentials: HTTPSServerCredentials{
+				CertChain: PemBlob{
+					FileName: path.Join(consts.HTTPSSecretMountPoint, corev1.TLSCertKey),
+				},
+				PrivateKey: PemBlob{
+					FileName: path.Join(consts.HTTPSSecretMountPoint, corev1.TLSPrivateKeyKey),
+				},
+				UpdatePeriod: yson.Duration(consts.HTTPSSecretUpdatePeriod),
+			},
+		}
+	}
+	return nil
+}
+
 func (g *NodeGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s *ytv1.RPCTransportSpec, keyring *Keyring) {
 	if s == nil {
 		// Use common bus transport config
@@ -837,6 +865,13 @@ func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProx
 		}
 		c.Auth.OauthTokenAuthenticator = &OauthTokenAuthenticator{
 			CreateUserIfNotExists: createUserIfNotExist,
+		}
+	}
+
+	if g.clusterFeatures.HTTPProxyHaveChytAddress {
+		err := fillChytServer(spec, &c)
+		if err != nil {
+			return c, err
 		}
 	}
 

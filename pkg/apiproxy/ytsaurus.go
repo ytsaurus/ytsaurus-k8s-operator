@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -44,6 +45,10 @@ func (c *Ytsaurus) GetResource() *ytv1.Ytsaurus {
 
 func (c *Ytsaurus) GetCommonSpec() ytv1.CommonSpec {
 	return c.GetResource().Spec.CommonSpec
+}
+
+func (c *Ytsaurus) GetClusterFeatures() ytv1.ClusterFeatures {
+	return ptr.Deref(c.GetCommonSpec().ClusterFeatures, ytv1.ClusterFeatures{})
 }
 
 func (c *Ytsaurus) GetClusterState() ytv1.ClusterState {

@@ -213,6 +213,12 @@ func (b *YtsaurusBuilder) WithMasterCaches() {
 	}
 }
 
+func (b *YtsaurusBuilder) WithClusterFeatures() {
+	b.Ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
+		HTTPProxyHaveChytAddress: true,
+	}
+}
+
 // TODO (l0kix2): merge with ytconfig build spec helpers.
 func (b *YtsaurusBuilder) WithDataNodes() {
 	b.WithDataNodesCount(3, nil)
