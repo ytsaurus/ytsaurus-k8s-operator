@@ -870,10 +870,9 @@ type UpdateStatus struct {
 	// Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage
 	// executes steps corresponding to that update flow.
 	// Deprecated: Use updatingComponents instead.
-	Flow                  UpdateFlow             `json:"flow,omitempty"`
-	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
-	TabletCellBundles     []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
-	MasterMonitoringPaths []string               `json:"masterMonitoringPaths,omitempty"`
+	Flow              UpdateFlow             `json:"flow,omitempty"`
+	Conditions        []metav1.Condition     `json:"conditions,omitempty"`
+	TabletCellBundles []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
 }
 
 type Component struct {

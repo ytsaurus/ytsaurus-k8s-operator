@@ -44994,10 +44994,6 @@ spec:
                     description: Flow is an internal field that is needed to persist
                       the chosen flow until the...
                     type: string
-                  masterMonitoringPaths:
-                    items:
-                      type: string
-                    type: array
                   state:
                     default: None
                     type: string
