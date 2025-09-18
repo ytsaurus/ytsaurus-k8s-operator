@@ -45021,19 +45021,19 @@ spec:
                           properties:
                             active:
                               type: boolean
-                            lastSnapshotId:
+                            last_snapshot_id:
                               type: integer
-                            lastSnapshotReadOnly:
+                            last_snapshot_read_only:
                               type: boolean
-                            readOnly:
+                            read_only:
                               type: boolean
                             state:
                               type: string
                           required:
                           - active
-                          - lastSnapshotId
-                          - lastSnapshotReadOnly
-                          - readOnly
+                          - last_snapshot_id
+                          - last_snapshot_read_only
+                          - read_only
                           - state
                           type: object
                         monitoringPath:

@@ -1277,9 +1277,9 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `readOnly` _boolean_ |  |  |  |
-| `lastSnapshotReadOnly` _boolean_ |  |  |  |
-| `lastSnapshotId` _integer_ |  |  |  |
+| `read_only` _boolean_ |  |  |  |
+| `last_snapshot_read_only` _boolean_ |  |  |  |
+| `last_snapshot_id` _integer_ |  |  |  |
 | `active` _boolean_ |  |  |  |
 | `state` _[MasterState](#masterstate)_ |  |  |  |
 
