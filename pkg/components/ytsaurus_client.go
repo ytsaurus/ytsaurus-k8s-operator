@@ -317,45 +317,12 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 	case ytv1.UpdateStateWaitingForSnapshots:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnaphotsSaved) {
-			if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnapshotsMonitoringInfoSaved) {
-				monitoringPaths, err := yc.GetMasterMonitoringPaths(ctx)
-				if err != nil {
-					return SimpleStatus(SyncStatusUpdating), err
-				}
-				yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths = monitoringPaths
-
-				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-					Type:    consts.ConditionSnapshotsMonitoringInfoSaved,
-					Status:  metav1.ConditionTrue,
-					Reason:  "Update",
-					Message: "Snapshots monitoring info saved",
-				})
-			}
-
-			if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnapshotsBuildingStarted) {
-				dnds, err := yc.getDataNodesInfo(ctx)
-				if err != nil {
-					return SimpleStatus(SyncStatusUpdating), err
-				}
-				log.FromContext(ctx).Info("data nodes before snapshots building", "dataNodes", dnds)
-				if err := yc.StartBuildMasterSnapshots(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths); err != nil {
-					return SimpleStatus(SyncStatusUpdating), err
-				}
-
-				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-					Type:    consts.ConditionSnapshotsBuildingStarted,
-					Status:  metav1.ConditionTrue,
-					Reason:  "Update",
-					Message: "Snapshots building started",
-				})
-			}
-
-			built, err := yc.AreMasterSnapshotsBuilt(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths)
+			dnds, err := yc.getDataNodesInfo(ctx)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
 			}
-
-			if !built {
+			log.FromContext(ctx).Info("data nodes before snapshots building", "dataNodes", dnds)
+			if err := yc.BuildMasterSnapshots(ctx); err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
 			}
 
@@ -896,28 +863,9 @@ func (yc *YtsaurusClient) GetMasterMonitoringPaths(ctx context.Context) ([]strin
 	}
 	return monitoringPaths, nil
 }
-func (yc *YtsaurusClient) StartBuildMasterSnapshots(ctx context.Context, monitoringPaths []string) error {
-	var err error
-
-	allMastersReadOnly := true
-	for _, monitoringPath := range monitoringPaths {
-		masterHydra, err := yc.getMasterHydra(ctx, monitoringPath)
-		if err != nil {
-			return err
-		}
-		if !masterHydra.ReadOnly {
-			allMastersReadOnly = false
-			break
-		}
-	}
-
-	if allMastersReadOnly {
-		// build_master_snapshot was called before, do nothing.
-		return nil
-	}
-
-	_, err = yc.ytClient.BuildMasterSnapshots(ctx, &yt.BuildMasterSnapshotsOptions{
-		WaitForSnapshotCompletion: ptr.To(false),
+func (yc *YtsaurusClient) BuildMasterSnapshots(ctx context.Context) error {
+	_, err := yc.ytClient.BuildMasterSnapshots(ctx, &yt.BuildMasterSnapshotsOptions{
+		WaitForSnapshotCompletion: ptr.To(true),
 		SetReadOnly:               ptr.To(true),
 	})
 
