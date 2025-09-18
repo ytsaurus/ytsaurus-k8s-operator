@@ -3,7 +3,7 @@ kind: Ytsaurus
 metadata:
   name: minisaurus
 spec:
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.1.0
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-23.2.0-relwithdebinfo
 
   discovery:
     instanceCount: 1
