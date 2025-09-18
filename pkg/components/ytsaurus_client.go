@@ -159,12 +159,6 @@ func (yc *YtsaurusClient) getAllMasters(ctx context.Context) ([]MasterInfo, erro
 	return append(secondaryMasters, primaryMaster), nil
 }
 
-func (yc *YtsaurusClient) getMasterHydra(ctx context.Context, path string) (MasterHydra, error) {
-	var masterHydra MasterHydra
-	err := yc.ytClient.GetNode(ctx, ypath.Path(path), &masterHydra, getReadOnlyGetOptions())
-	return masterHydra, err
-}
-
 // shouldSkipCypressOperations returns true when no alive masters are expected.
 func (yc *YtsaurusClient) shouldSkipCypressOperations() bool {
 	resource := yc.ytsaurus.GetResource()
