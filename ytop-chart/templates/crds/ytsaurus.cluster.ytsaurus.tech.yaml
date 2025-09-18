@@ -1087,6 +1087,10 @@ spec:
                               description: Name must match the name of one entry in
                                 pod.spec.
                               type: string
+                            request:
+                              description: Request is the name chosen for a request
+                                in the referenced claim.
+                              type: string
                           required:
                           - name
                           type: object
@@ -1474,6 +1478,7 @@ spec:
                                 blob storage
                               type: string
                             fsType:
+                              default: ext4
                               description: fsType is Filesystem type to mount.
                               type: string
                             kind:
@@ -1481,6 +1486,7 @@ spec:
                                 blob disks per storage account ...'
                               type: string
                             readOnly:
+                              default: false
                               description: readOnly Defaults to false (read/write).
                               type: boolean
                           required:
@@ -2059,6 +2065,18 @@ spec:
                           required:
                           - path
                           type: object
+                        image:
+                          description: image represents an OCI object (a container
+                            image or artifact) pulled and...
+                          properties:
+                            pullPolicy:
+                              description: Policy for pulling OCI objects.
+                              type: string
+                            reference:
+                              description: 'Required: Image or artifact reference
+                                to be used.'
+                              type: string
+                          type: object
                         iscsi:
                           description: |-
                             iscsi represents an ISCSI Disk resource that is attached to a
@@ -2084,6 +2102,7 @@ spec:
                               description: iqn is the target iSCSI Qualified Name.
                               type: string
                             iscsiInterface:
+                              default: default
                               description: iscsiInterface is the interface Name that
                                 uses an iSCSI transport.
                               type: string
@@ -2205,10 +2224,10 @@ spec:
                               format: int32
                               type: integer
                             sources:
-                              description: sources is the list of volume projections
+                              description: sources is the list of volume projections.
                               items:
                                 description: Projection that may be projected along
-                                  with other supported volume types
+                                  with other supported volume types.
                                 properties:
                                   clusterTrustBundle:
                                     description: ClusterTrustBundle allows a pod to
@@ -2506,6 +2525,7 @@ spec:
                                 More info: https://examples.k8s.
                               type: string
                             keyring:
+                              default: /etc/ceph/keyring
                               description: |-
                                 keyring is the path to key ring for RBDUser.
                                 Default is /etc/ceph/keyring.
@@ -2519,6 +2539,7 @@ spec:
                               type: array
                               x-kubernetes-list-type: atomic
                             pool:
+                              default: rbd
                               description: |-
                                 pool is the rados pool name.
                                 Default is rbd.
@@ -2539,6 +2560,7 @@ spec:
                               type: object
                               x-kubernetes-map-type: atomic
                             user:
+                              default: admin
                               description: |-
                                 user is the rados user name.
                                 Default is admin.
@@ -2553,6 +2575,7 @@ spec:
                             attached and mounted on...
                           properties:
                             fsType:
+                              default: xfs
                               description: fsType is the filesystem type to mount.
                               type: string
                             gateway:
@@ -2582,6 +2605,7 @@ spec:
                                 with Gateway, default false
                               type: boolean
                             storageMode:
+                              default: ThinProvisioned
                               description: storageMode indicates whether the storage
                                 for a volume should be...
                               type: string
@@ -3652,6 +3676,10 @@ spec:
                               description: Name must match the name of one entry in
                                 pod.spec.
                               type: string
+                            request:
+                              description: Request is the name chosen for a request
+                                in the referenced claim.
+                              type: string
                           required:
                           - name
                           type: object
@@ -4039,6 +4067,7 @@ spec:
                                 blob storage
                               type: string
                             fsType:
+                              default: ext4
                               description: fsType is Filesystem type to mount.
                               type: string
                             kind:
@@ -4046,6 +4075,7 @@ spec:
                                 blob disks per storage account ...'
                               type: string
                             readOnly:
+                              default: false
                               description: readOnly Defaults to false (read/write).
                               type: boolean
                           required:
@@ -4624,6 +4654,18 @@ spec:
                           required:
                           - path
                           type: object
+                        image:
+                          description: image represents an OCI object (a container
+                            image or artifact) pulled and...
+                          properties:
+                            pullPolicy:
+                              description: Policy for pulling OCI objects.
+                              type: string
+                            reference:
+                              description: 'Required: Image or artifact reference
+                                to be used.'
+                              type: string
+                          type: object
                         iscsi:
                           description: |-
                             iscsi represents an ISCSI Disk resource that is attached to a
@@ -4649,6 +4691,7 @@ spec:
                               description: iqn is the target iSCSI Qualified Name.
                               type: string
                             iscsiInterface:
+                              default: default
                               description: iscsiInterface is the interface Name that
                                 uses an iSCSI transport.
                               type: string
@@ -4770,10 +4813,10 @@ spec:
                               format: int32
                               type: integer
                             sources:
-                              description: sources is the list of volume projections
+                              description: sources is the list of volume projections.
                               items:
                                 description: Projection that may be projected along
-                                  with other supported volume types
+                                  with other supported volume types.
                                 properties:
                                   clusterTrustBundle:
                                     description: ClusterTrustBundle allows a pod to
@@ -5071,6 +5114,7 @@ spec:
                                 More info: https://examples.k8s.
                               type: string
                             keyring:
+                              default: /etc/ceph/keyring
                               description: |-
                                 keyring is the path to key ring for RBDUser.
                                 Default is /etc/ceph/keyring.
@@ -5084,6 +5128,7 @@ spec:
                               type: array
                               x-kubernetes-list-type: atomic
                             pool:
+                              default: rbd
                               description: |-
                                 pool is the rados pool name.
                                 Default is rbd.
@@ -5104,6 +5149,7 @@ spec:
                               type: object
                               x-kubernetes-map-type: atomic
                             user:
+                              default: admin
                               description: |-
                                 user is the rados user name.
                                 Default is admin.
@@ -5118,6 +5164,7 @@ spec:
                             attached and mounted on...
                           properties:
                             fsType:
+                              default: xfs
                               description: fsType is the filesystem type to mount.
                               type: string
                             gateway:
@@ -5147,6 +5194,7 @@ spec:
                                 with Gateway, default false
                               type: boolean
                             storageMode:
+                              default: ThinProvisioned
                               description: storageMode indicates whether the storage
                                 for a volume should be...
                               type: string
@@ -6230,6 +6278,10 @@ spec:
                                 description: Name must match the name of one entry
                                   in pod.spec.
                                 type: string
+                              request:
+                                description: Request is the name chosen for a request
+                                  in the referenced claim.
+                                type: string
                             required:
                             - name
                             type: object
@@ -6623,6 +6675,7 @@ spec:
                                   blob storage
                                 type: string
                               fsType:
+                                default: ext4
                                 description: fsType is Filesystem type to mount.
                                 type: string
                               kind:
@@ -6630,6 +6683,7 @@ spec:
                                   blob disks per storage account ...'
                                 type: string
                               readOnly:
+                                default: false
                                 description: readOnly Defaults to false (read/write).
                                 type: boolean
                             required:
@@ -7210,6 +7264,18 @@ spec:
                             required:
                             - path
                             type: object
+                          image:
+                            description: image represents an OCI object (a container
+                              image or artifact) pulled and...
+                            properties:
+                              pullPolicy:
+                                description: Policy for pulling OCI objects.
+                                type: string
+                              reference:
+                                description: 'Required: Image or artifact reference
+                                  to be used.'
+                                type: string
+                            type: object
                           iscsi:
                             description: |-
                               iscsi represents an ISCSI Disk resource that is attached to a
@@ -7235,6 +7301,7 @@ spec:
                                 description: iqn is the target iSCSI Qualified Name.
                                 type: string
                               iscsiInterface:
+                                default: default
                                 description: iscsiInterface is the interface Name
                                   that uses an iSCSI transport.
                                 type: string
@@ -7356,10 +7423,10 @@ spec:
                                 format: int32
                                 type: integer
                               sources:
-                                description: sources is the list of volume projections
+                                description: sources is the list of volume projections.
                                 items:
                                   description: Projection that may be projected along
-                                    with other supported volume types
+                                    with other supported volume types.
                                   properties:
                                     clusterTrustBundle:
                                       description: ClusterTrustBundle allows a pod
@@ -7663,6 +7730,7 @@ spec:
                                   More info: https://examples.k8s.
                                 type: string
                               keyring:
+                                default: /etc/ceph/keyring
                                 description: |-
                                   keyring is the path to key ring for RBDUser.
                                   Default is /etc/ceph/keyring.
@@ -7676,6 +7744,7 @@ spec:
                                 type: array
                                 x-kubernetes-list-type: atomic
                               pool:
+                                default: rbd
                                 description: |-
                                   pool is the rados pool name.
                                   Default is rbd.
@@ -7696,6 +7765,7 @@ spec:
                                 type: object
                                 x-kubernetes-map-type: atomic
                               user:
+                                default: admin
                                 description: |-
                                   user is the rados user name.
                                   Default is admin.
@@ -7710,6 +7780,7 @@ spec:
                               attached and mounted on...
                             properties:
                               fsType:
+                                default: xfs
                                 description: fsType is the filesystem type to mount.
                                 type: string
                               gateway:
@@ -7739,6 +7810,7 @@ spec:
                                   with Gateway, default false
                                 type: boolean
                               storageMode:
+                                default: ThinProvisioned
                                 description: storageMode indicates whether the storage
                                   for a volume should be...
                                 type: string
@@ -8807,6 +8879,10 @@ spec:
                               description: Name must match the name of one entry in
                                 pod.spec.
                               type: string
+                            request:
+                              description: Request is the name chosen for a request
+                                in the referenced claim.
+                              type: string
                           required:
                           - name
                           type: object
@@ -9194,6 +9270,7 @@ spec:
                                 blob storage
                               type: string
                             fsType:
+                              default: ext4
                               description: fsType is Filesystem type to mount.
                               type: string
                             kind:
@@ -9201,6 +9278,7 @@ spec:
                                 blob disks per storage account ...'
                               type: string
                             readOnly:
+                              default: false
                               description: readOnly Defaults to false (read/write).
                               type: boolean
                           required:
@@ -9779,6 +9857,18 @@ spec:
                           required:
                           - path
                           type: object
+                        image:
+                          description: image represents an OCI object (a container
+                            image or artifact) pulled and...
+                          properties:
+                            pullPolicy:
+                              description: Policy for pulling OCI objects.
+                              type: string
+                            reference:
+                              description: 'Required: Image or artifact reference
+                                to be used.'
+                              type: string
+                          type: object
                         iscsi:
                           description: |-
                             iscsi represents an ISCSI Disk resource that is attached to a
@@ -9804,6 +9894,7 @@ spec:
                               description: iqn is the target iSCSI Qualified Name.
                               type: string
                             iscsiInterface:
+                              default: default
                               description: iscsiInterface is the interface Name that
                                 uses an iSCSI transport.
                               type: string
@@ -9925,10 +10016,10 @@ spec:
                               format: int32
                               type: integer
                             sources:
-                              description: sources is the list of volume projections
+                              description: sources is the list of volume projections.
                               items:
                                 description: Projection that may be projected along
-                                  with other supported volume types
+                                  with other supported volume types.
                                 properties:
                                   clusterTrustBundle:
                                     description: ClusterTrustBundle allows a pod to
@@ -10226,6 +10317,7 @@ spec:
                                 More info: https://examples.k8s.
                               type: string
                             keyring:
+                              default: /etc/ceph/keyring
                               description: |-
                                 keyring is the path to key ring for RBDUser.
                                 Default is /etc/ceph/keyring.
@@ -10239,6 +10331,7 @@ spec:
                               type: array
                               x-kubernetes-list-type: atomic
                             pool:
+                              default: rbd
                               description: |-
                                 pool is the rados pool name.
                                 Default is rbd.
@@ -10259,6 +10352,7 @@ spec:
                               type: object
                               x-kubernetes-map-type: atomic
                             user:
+                              default: admin
                               description: |-
                                 user is the rados user name.
                                 Default is admin.
@@ -10273,6 +10367,7 @@ spec:
                             attached and mounted on...
                           properties:
                             fsType:
+                              default: xfs
                               description: fsType is the filesystem type to mount.
                               type: string
                             gateway:
@@ -10302,6 +10397,7 @@ spec:
                                 with Gateway, default false
                               type: boolean
                             storageMode:
+                              default: ThinProvisioned
                               description: storageMode indicates whether the storage
                                 for a volume should be...
                               type: string
@@ -11396,6 +11492,10 @@ spec:
                                 description: Name must match the name of one entry
                                   in pod.spec.
                                 type: string
+                              request:
+                                description: Request is the name chosen for a request
+                                  in the referenced claim.
+                                type: string
                             required:
                             - name
                             type: object
@@ -11633,6 +11733,10 @@ spec:
                               name:
                                 description: Name must match the name of one entry
                                   in pod.spec.
+                                type: string
+                              request:
+                                description: Request is the name chosen for a request
+                                  in the referenced claim.
                                 type: string
                             required:
                             - name
@@ -12032,6 +12136,7 @@ spec:
                                   blob storage
                                 type: string
                               fsType:
+                                default: ext4
                                 description: fsType is Filesystem type to mount.
                                 type: string
                               kind:
@@ -12039,6 +12144,7 @@ spec:
                                   blob disks per storage account ...'
                                 type: string
                               readOnly:
+                                default: false
                                 description: readOnly Defaults to false (read/write).
                                 type: boolean
                             required:
@@ -12619,6 +12725,18 @@ spec:
                             required:
                             - path
                             type: object
+                          image:
+                            description: image represents an OCI object (a container
+                              image or artifact) pulled and...
+                            properties:
+                              pullPolicy:
+                                description: Policy for pulling OCI objects.
+                                type: string
+                              reference:
+                                description: 'Required: Image or artifact reference
+                                  to be used.'
+                                type: string
+                            type: object
                           iscsi:
                             description: |-
                               iscsi represents an ISCSI Disk resource that is attached to a
@@ -12644,6 +12762,7 @@ spec:
                                 description: iqn is the target iSCSI Qualified Name.
                                 type: string
                               iscsiInterface:
+                                default: default
                                 description: iscsiInterface is the interface Name
                                   that uses an iSCSI transport.
                                 type: string
@@ -12765,10 +12884,10 @@ spec:
                                 format: int32
                                 type: integer
                               sources:
-                                description: sources is the list of volume projections
+                                description: sources is the list of volume projections.
                                 items:
                                   description: Projection that may be projected along
-                                    with other supported volume types
+                                    with other supported volume types.
                                   properties:
                                     clusterTrustBundle:
                                       description: ClusterTrustBundle allows a pod
@@ -13072,6 +13191,7 @@ spec:
                                   More info: https://examples.k8s.
                                 type: string
                               keyring:
+                                default: /etc/ceph/keyring
                                 description: |-
                                   keyring is the path to key ring for RBDUser.
                                   Default is /etc/ceph/keyring.
@@ -13085,6 +13205,7 @@ spec:
                                 type: array
                                 x-kubernetes-list-type: atomic
                               pool:
+                                default: rbd
                                 description: |-
                                   pool is the rados pool name.
                                   Default is rbd.
@@ -13105,6 +13226,7 @@ spec:
                                 type: object
                                 x-kubernetes-map-type: atomic
                               user:
+                                default: admin
                                 description: |-
                                   user is the rados user name.
                                   Default is admin.
@@ -13119,6 +13241,7 @@ spec:
                               attached and mounted on...
                             properties:
                               fsType:
+                                default: xfs
                                 description: fsType is the filesystem type to mount.
                                 type: string
                               gateway:
@@ -13148,6 +13271,7 @@ spec:
                                   with Gateway, default false
                                 type: boolean
                               storageMode:
+                                default: ThinProvisioned
                                 description: storageMode indicates whether the storage
                                   for a volume should be...
                                 type: string
@@ -14266,6 +14390,10 @@ spec:
                                 description: Name must match the name of one entry
                                   in pod.spec.
                                 type: string
+                              request:
+                                description: Request is the name chosen for a request
+                                  in the referenced claim.
+                                type: string
                             required:
                             - name
                             type: object
@@ -14677,6 +14805,7 @@ spec:
                                   blob storage
                                 type: string
                               fsType:
+                                default: ext4
                                 description: fsType is Filesystem type to mount.
                                 type: string
                               kind:
@@ -14684,6 +14813,7 @@ spec:
                                   blob disks per storage account ...'
                                 type: string
                               readOnly:
+                                default: false
                                 description: readOnly Defaults to false (read/write).
                                 type: boolean
                             required:
@@ -15264,6 +15394,18 @@ spec:
                             required:
                             - path
                             type: object
+                          image:
+                            description: image represents an OCI object (a container
+                              image or artifact) pulled and...
+                            properties:
+                              pullPolicy:
+                                description: Policy for pulling OCI objects.
+                                type: string
+                              reference:
+                                description: 'Required: Image or artifact reference
+                                  to be used.'
+                                type: string
+                            type: object
                           iscsi:
                             description: |-
                               iscsi represents an ISCSI Disk resource that is attached to a
@@ -15289,6 +15431,7 @@ spec:
                                 description: iqn is the target iSCSI Qualified Name.
                                 type: string
                               iscsiInterface:
+                                default: default
                                 description: iscsiInterface is the interface Name
                                   that uses an iSCSI transport.
                                 type: string
@@ -15410,10 +15553,10 @@ spec:
                                 format: int32
                                 type: integer
                               sources:
-                                description: sources is the list of volume projections
+                                description: sources is the list of volume projections.
                                 items:
                                   description: Projection that may be projected along
-                                    with other supported volume types
+                                    with other supported volume types.
                                   properties:
                                     clusterTrustBundle:
                                       description: ClusterTrustBundle allows a pod
@@ -15717,6 +15860,7 @@ spec:
                                   More info: https://examples.k8s.
                                 type: string
                               keyring:
+                                default: /etc/ceph/keyring
                                 description: |-
                                   keyring is the path to key ring for RBDUser.
                                   Default is /etc/ceph/keyring.
@@ -15730,6 +15874,7 @@ spec:
                                 type: array
                                 x-kubernetes-list-type: atomic
                               pool:
+                                default: rbd
                                 description: |-
                                   pool is the rados pool name.
                                   Default is rbd.
@@ -15750,6 +15895,7 @@ spec:
                                 type: object
                                 x-kubernetes-map-type: atomic
                               user:
+                                default: admin
                                 description: |-
                                   user is the rados user name.
                                   Default is admin.
@@ -15764,6 +15910,7 @@ spec:
                               attached and mounted on...
                             properties:
                               fsType:
+                                default: xfs
                                 description: fsType is the filesystem type to mount.
                                 type: string
                               gateway:
@@ -15793,6 +15940,7 @@ spec:
                                   with Gateway, default false
                                 type: boolean
                               storageMode:
+                                default: ThinProvisioned
                                 description: storageMode indicates whether the storage
                                   for a volume should be...
                                 type: string
@@ -16889,6 +17037,10 @@ spec:
                                 description: Name must match the name of one entry
                                   in pod.spec.
                                 type: string
+                              request:
+                                description: Request is the name chosen for a request
+                                  in the referenced claim.
+                                type: string
                             required:
                             - name
                             type: object
@@ -17285,6 +17437,7 @@ spec:
                                   blob storage
                                 type: string
                               fsType:
+                                default: ext4
                                 description: fsType is Filesystem type to mount.
                                 type: string
                               kind:
@@ -17292,6 +17445,7 @@ spec:
                                   blob disks per storage account ...'
                                 type: string
                               readOnly:
+                                default: false
                                 description: readOnly Defaults to false (read/write).
                                 type: boolean
                             required:
@@ -17872,6 +18026,18 @@ spec:
                             required:
                             - path
                             type: object
+                          image:
+                            description: image represents an OCI object (a container
+                              image or artifact) pulled and...
+                            properties:
+                              pullPolicy:
+                                description: Policy for pulling OCI objects.
+                                type: string
+                              reference:
+                                description: 'Required: Image or artifact reference
+                                  to be used.'
+                                type: string
+                            type: object
                           iscsi:
                             description: |-
                               iscsi represents an ISCSI Disk resource that is attached to a
@@ -17897,6 +18063,7 @@ spec:
                                 description: iqn is the target iSCSI Qualified Name.
                                 type: string
                               iscsiInterface:
+                                default: default
                                 description: iscsiInterface is the interface Name
                                   that uses an iSCSI transport.
                                 type: string
@@ -18018,10 +18185,10 @@ spec:
                                 format: int32
                                 type: integer
                               sources:
-                                description: sources is the list of volume projections
+                                description: sources is the list of volume projections.
                                 items:
                                   description: Projection that may be projected along
-                                    with other supported volume types
+                                    with other supported volume types.
                                   properties:
                                     clusterTrustBundle:
                                       description: ClusterTrustBundle allows a pod
@@ -18325,6 +18492,7 @@ spec:
                                   More info: https://examples.k8s.
                                 type: string
                               keyring:
+                                default: /etc/ceph/keyring
                                 description: |-
                                   keyring is the path to key ring for RBDUser.
                                   Default is /etc/ceph/keyring.
@@ -18338,6 +18506,7 @@ spec:
                                 type: array
                                 x-kubernetes-list-type: atomic
                               pool:
+                                default: rbd
                                 description: |-
                                   pool is the rados pool name.
                                   Default is rbd.
@@ -18358,6 +18527,7 @@ spec:
                                 type: object
                                 x-kubernetes-map-type: atomic
                               user:
+                                default: admin
                                 description: |-
                                   user is the rados user name.
                                   Default is admin.
@@ -18372,6 +18542,7 @@ spec:
                               attached and mounted on...
                             properties:
                               fsType:
+                                default: xfs
                                 description: fsType is the filesystem type to mount.
                                 type: string
                               gateway:
@@ -18401,6 +18572,7 @@ spec:
                                   with Gateway, default false
                                 type: boolean
                               storageMode:
+                                default: ThinProvisioned
                                 description: storageMode indicates whether the storage
                                   for a volume should be...
                                 type: string
@@ -19478,6 +19650,10 @@ spec:
                               description: Name must match the name of one entry in
                                 pod.spec.
                               type: string
+                            request:
+                              description: Request is the name chosen for a request
+                                in the referenced claim.
+                              type: string
                           required:
                           - name
                           type: object
@@ -19865,6 +20041,7 @@ spec:
                                 blob storage
                               type: string
                             fsType:
+                              default: ext4
                               description: fsType is Filesystem type to mount.
                               type: string
                             kind:
@@ -19872,6 +20049,7 @@ spec:
                                 blob disks per storage account ...'
                               type: string
                             readOnly:
+                              default: false
                               description: readOnly Defaults to false (read/write).
                               type: boolean
                           required:
@@ -20450,6 +20628,18 @@ spec:
                           required:
                           - path
                           type: object
+                        image:
+                          description: image represents an OCI object (a container
+                            image or artifact) pulled and...
+                          properties:
+                            pullPolicy:
+                              description: Policy for pulling OCI objects.
+                              type: string
+                            reference:
+                              description: 'Required: Image or artifact reference
+                                to be used.'
+                              type: string
+                          type: object
                         iscsi:
                           description: |-
                             iscsi represents an ISCSI Disk resource that is attached to a
@@ -20475,6 +20665,7 @@ spec:
                               description: iqn is the target iSCSI Qualified Name.
                               type: string
                             iscsiInterface:
+                              default: default
                               description: iscsiInterface is the interface Name that
                                 uses an iSCSI transport.
                               type: string
@@ -20596,10 +20787,10 @@ spec:
                               format: int32
                               type: integer
                             sources:
-                              description: sources is the list of volume projections
+                              description: sources is the list of volume projections.
                               items:
                                 description: Projection that may be projected along
-                                  with other supported volume types
+                                  with other supported volume types.
                                 properties:
                                   clusterTrustBundle:
                                     description: ClusterTrustBundle allows a pod to
@@ -20897,6 +21088,7 @@ spec:
                                 More info: https://examples.k8s.
                               type: string
                             keyring:
+                              default: /etc/ceph/keyring
                               description: |-
                                 keyring is the path to key ring for RBDUser.
                                 Default is /etc/ceph/keyring.
@@ -20910,6 +21102,7 @@ spec:
                               type: array
                               x-kubernetes-list-type: atomic
                             pool:
+                              default: rbd
                               description: |-
                                 pool is the rados pool name.
                                 Default is rbd.
@@ -20930,6 +21123,7 @@ spec:
                               type: object
                               x-kubernetes-map-type: atomic
                             user:
+                              default: admin
                               description: |-
                                 user is the rados user name.
                                 Default is admin.
@@ -20944,6 +21138,7 @@ spec:
                             attached and mounted on...
                           properties:
                             fsType:
+                              default: xfs
                               description: fsType is the filesystem type to mount.
                               type: string
                             gateway:
@@ -20973,6 +21168,7 @@ spec:
                                 with Gateway, default false
                               type: boolean
                             storageMode:
+                              default: ThinProvisioned
                               description: storageMode indicates whether the storage
                                 for a volume should be...
                               type: string
@@ -22137,6 +22333,10 @@ spec:
                               description: Name must match the name of one entry in
                                 pod.spec.
                               type: string
+                            request:
+                              description: Request is the name chosen for a request
+                                in the referenced claim.
+                              type: string
                           required:
                           - name
                           type: object
@@ -22536,6 +22736,7 @@ spec:
                                 blob storage
                               type: string
                             fsType:
+                              default: ext4
                               description: fsType is Filesystem type to mount.
                               type: string
                             kind:
@@ -22543,6 +22744,7 @@ spec:
                                 blob disks per storage account ...'
                               type: string
                             readOnly:
+                              default: false
                               description: readOnly Defaults to false (read/write).
                               type: boolean
                           required:
@@ -23121,6 +23323,18 @@ spec:
                           required:
                           - path
                           type: object
+                        image:
+                          description: image represents an OCI object (a container
+                            image or artifact) pulled and...
+                          properties:
+                            pullPolicy:
+                              description: Policy for pulling OCI objects.
+                              type: string
+                            reference:
+                              description: 'Required: Image or artifact reference
+                                to be used.'
+                              type: string
+                          type: object
                         iscsi:
                           description: |-
                             iscsi represents an ISCSI Disk resource that is attached to a
@@ -23146,6 +23360,7 @@ spec:
                               description: iqn is the target iSCSI Qualified Name.
                               type: string
                             iscsiInterface:
+                              default: default
                               description: iscsiInterface is the interface Name that
                                 uses an iSCSI transport.
                               type: string
@@ -23267,10 +23482,10 @@ spec:
                               format: int32
                               type: integer
                             sources:
-                              description: sources is the list of volume projections
+                              description: sources is the list of volume projections.
                               items:
                                 description: Projection that may be projected along
-                                  with other supported volume types
+                                  with other supported volume types.
                                 properties:
                                   clusterTrustBundle:
                                     description: ClusterTrustBundle allows a pod to
@@ -23568,6 +23783,7 @@ spec:
                                 More info: https://examples.k8s.
                               type: string
                             keyring:
+                              default: /etc/ceph/keyring
                               description: |-
                                 keyring is the path to key ring for RBDUser.
                                 Default is /etc/ceph/keyring.
@@ -23581,6 +23797,7 @@ spec:
                               type: array
                               x-kubernetes-list-type: atomic
                             pool:
+                              default: rbd
                               description: |-
                                 pool is the rados pool name.
                                 Default is rbd.
@@ -23601,6 +23818,7 @@ spec:
                               type: object
                               x-kubernetes-map-type: atomic
                             user:
+                              default: admin
                               description: |-
                                 user is the rados user name.
                                 Default is admin.
@@ -23615,6 +23833,7 @@ spec:
                             attached and mounted on...
                           properties:
                             fsType:
+                              default: xfs
                               description: fsType is the filesystem type to mount.
                               type: string
                             gateway:
@@ -23644,6 +23863,7 @@ spec:
                                 with Gateway, default false
                               type: boolean
                             storageMode:
+                              default: ThinProvisioned
                               description: storageMode indicates whether the storage
                                 for a volume should be...
                               type: string
@@ -24712,6 +24932,10 @@ spec:
                               description: Name must match the name of one entry in
                                 pod.spec.
                               type: string
+                            request:
+                              description: Request is the name chosen for a request
+                                in the referenced claim.
+                              type: string
                           required:
                           - name
                           type: object
@@ -25099,6 +25323,7 @@ spec:
                                 blob storage
                               type: string
                             fsType:
+                              default: ext4
                               description: fsType is Filesystem type to mount.
                               type: string
                             kind:
@@ -25106,6 +25331,7 @@ spec:
                                 blob disks per storage account ...'
                               type: string
                             readOnly:
+                              default: false
                               description: readOnly Defaults to false (read/write).
                               type: boolean
                           required:
@@ -25684,6 +25910,18 @@ spec:
                           required:
                           - path
                           type: object
+                        image:
+                          description: image represents an OCI object (a container
+                            image or artifact) pulled and...
+                          properties:
+                            pullPolicy:
+                              description: Policy for pulling OCI objects.
+                              type: string
+                            reference:
+                              description: 'Required: Image or artifact reference
+                                to be used.'
+                              type: string
+                          type: object
                         iscsi:
                           description: |-
                             iscsi represents an ISCSI Disk resource that is attached to a
@@ -25709,6 +25947,7 @@ spec:
                               description: iqn is the target iSCSI Qualified Name.
                               type: string
                             iscsiInterface:
+                              default: default
                               description: iscsiInterface is the interface Name that
                                 uses an iSCSI transport.
                               type: string
@@ -25830,10 +26069,10 @@ spec:
                               format: int32
                               type: integer
                             sources:
-                              description: sources is the list of volume projections
+                              description: sources is the list of volume projections.
                               items:
                                 description: Projection that may be projected along
-                                  with other supported volume types
+                                  with other supported volume types.
                                 properties:
                                   clusterTrustBundle:
                                     description: ClusterTrustBundle allows a pod to
@@ -26131,6 +26370,7 @@ spec:
                                 More info: https://examples.k8s.
                               type: string
                             keyring:
+                              default: /etc/ceph/keyring
                               description: |-
                                 keyring is the path to key ring for RBDUser.
                                 Default is /etc/ceph/keyring.
@@ -26144,6 +26384,7 @@ spec:
                               type: array
                               x-kubernetes-list-type: atomic
                             pool:
+                              default: rbd
                               description: |-
                                 pool is the rados pool name.
                                 Default is rbd.
@@ -26164,6 +26405,7 @@ spec:
                               type: object
                               x-kubernetes-map-type: atomic
                             user:
+                              default: admin
                               description: |-
                                 user is the rados user name.
                                 Default is admin.
@@ -26178,6 +26420,7 @@ spec:
                             attached and mounted on...
                           properties:
                             fsType:
+                              default: xfs
                               description: fsType is the filesystem type to mount.
                               type: string
                             gateway:
@@ -26207,6 +26450,7 @@ spec:
                                 with Gateway, default false
                               type: boolean
                             storageMode:
+                              default: ThinProvisioned
                               description: storageMode indicates whether the storage
                                 for a volume should be...
                               type: string
@@ -27273,6 +27517,10 @@ spec:
                               description: Name must match the name of one entry in
                                 pod.spec.
                               type: string
+                            request:
+                              description: Request is the name chosen for a request
+                                in the referenced claim.
+                              type: string
                           required:
                           - name
                           type: object
@@ -27660,6 +27908,7 @@ spec:
                                 blob storage
                               type: string
                             fsType:
+                              default: ext4
                               description: fsType is Filesystem type to mount.
                               type: string
                             kind:
@@ -27667,6 +27916,7 @@ spec:
                                 blob disks per storage account ...'
                               type: string
                             readOnly:
+                              default: false
                               description: readOnly Defaults to false (read/write).
                               type: boolean
                           required:
@@ -28245,6 +28495,18 @@ spec:
                           required:
                           - path
                           type: object
+                        image:
+                          description: image represents an OCI object (a container
+                            image or artifact) pulled and...
+                          properties:
+                            pullPolicy:
+                              description: Policy for pulling OCI objects.
+                              type: string
+                            reference:
+                              description: 'Required: Image or artifact reference
+                                to be used.'
+                              type: string
+                          type: object
                         iscsi:
                           description: |-
                             iscsi represents an ISCSI Disk resource that is attached to a
@@ -28270,6 +28532,7 @@ spec:
                               description: iqn is the target iSCSI Qualified Name.
                               type: string
                             iscsiInterface:
+                              default: default
                               description: iscsiInterface is the interface Name that
                                 uses an iSCSI transport.
                               type: string
@@ -28391,10 +28654,10 @@ spec:
                               format: int32
                               type: integer
                             sources:
-                              description: sources is the list of volume projections
+                              description: sources is the list of volume projections.
                               items:
                                 description: Projection that may be projected along
-                                  with other supported volume types
+                                  with other supported volume types.
                                 properties:
                                   clusterTrustBundle:
                                     description: ClusterTrustBundle allows a pod to
@@ -28692,6 +28955,7 @@ spec:
                                 More info: https://examples.k8s.
                               type: string
                             keyring:
+                              default: /etc/ceph/keyring
                               description: |-
                                 keyring is the path to key ring for RBDUser.
                                 Default is /etc/ceph/keyring.
@@ -28705,6 +28969,7 @@ spec:
                               type: array
                               x-kubernetes-list-type: atomic
                             pool:
+                              default: rbd
                               description: |-
                                 pool is the rados pool name.
                                 Default is rbd.
@@ -28725,6 +28990,7 @@ spec:
                               type: object
                               x-kubernetes-map-type: atomic
                             user:
+                              default: admin
                               description: |-
                                 user is the rados user name.
                                 Default is admin.
@@ -28739,6 +29005,7 @@ spec:
                             attached and mounted on...
                           properties:
                             fsType:
+                              default: xfs
                               description: fsType is the filesystem type to mount.
                               type: string
                             gateway:
@@ -28768,6 +29035,7 @@ spec:
                                 with Gateway, default false
                               type: boolean
                             storageMode:
+                              default: ThinProvisioned
                               description: storageMode indicates whether the storage
                                 for a volume should be...
                               type: string
@@ -29847,6 +30115,10 @@ spec:
                                 description: Name must match the name of one entry
                                   in pod.spec.
                                 type: string
+                              request:
+                                description: Request is the name chosen for a request
+                                  in the referenced claim.
+                                type: string
                             required:
                             - name
                             type: object
@@ -30278,6 +30550,7 @@ spec:
                                   blob storage
                                 type: string
                               fsType:
+                                default: ext4
                                 description: fsType is Filesystem type to mount.
                                 type: string
                               kind:
@@ -30285,6 +30558,7 @@ spec:
                                   blob disks per storage account ...'
                                 type: string
                               readOnly:
+                                default: false
                                 description: readOnly Defaults to false (read/write).
                                 type: boolean
                             required:
@@ -30865,6 +31139,18 @@ spec:
                             required:
                             - path
                             type: object
+                          image:
+                            description: image represents an OCI object (a container
+                              image or artifact) pulled and...
+                            properties:
+                              pullPolicy:
+                                description: Policy for pulling OCI objects.
+                                type: string
+                              reference:
+                                description: 'Required: Image or artifact reference
+                                  to be used.'
+                                type: string
+                            type: object
                           iscsi:
                             description: |-
                               iscsi represents an ISCSI Disk resource that is attached to a
@@ -30890,6 +31176,7 @@ spec:
                                 description: iqn is the target iSCSI Qualified Name.
                                 type: string
                               iscsiInterface:
+                                default: default
                                 description: iscsiInterface is the interface Name
                                   that uses an iSCSI transport.
                                 type: string
@@ -31011,10 +31298,10 @@ spec:
                                 format: int32
                                 type: integer
                               sources:
-                                description: sources is the list of volume projections
+                                description: sources is the list of volume projections.
                                 items:
                                   description: Projection that may be projected along
-                                    with other supported volume types
+                                    with other supported volume types.
                                   properties:
                                     clusterTrustBundle:
                                       description: ClusterTrustBundle allows a pod
@@ -31318,6 +31605,7 @@ spec:
                                   More info: https://examples.k8s.
                                 type: string
                               keyring:
+                                default: /etc/ceph/keyring
                                 description: |-
                                   keyring is the path to key ring for RBDUser.
                                   Default is /etc/ceph/keyring.
@@ -31331,6 +31619,7 @@ spec:
                                 type: array
                                 x-kubernetes-list-type: atomic
                               pool:
+                                default: rbd
                                 description: |-
                                   pool is the rados pool name.
                                   Default is rbd.
@@ -31351,6 +31640,7 @@ spec:
                                 type: object
                                 x-kubernetes-map-type: atomic
                               user:
+                                default: admin
                                 description: |-
                                   user is the rados user name.
                                   Default is admin.
@@ -31365,6 +31655,7 @@ spec:
                               attached and mounted on...
                             properties:
                               fsType:
+                                default: xfs
                                 description: fsType is the filesystem type to mount.
                                 type: string
                               gateway:
@@ -31394,6 +31685,7 @@ spec:
                                   with Gateway, default false
                                 type: boolean
                               storageMode:
+                                default: ThinProvisioned
                                 description: storageMode indicates whether the storage
                                   for a volume should be...
                                 type: string
@@ -32461,6 +32753,10 @@ spec:
                               description: Name must match the name of one entry in
                                 pod.spec.
                               type: string
+                            request:
+                              description: Request is the name chosen for a request
+                                in the referenced claim.
+                              type: string
                           required:
                           - name
                           type: object
@@ -32848,6 +33144,7 @@ spec:
                                 blob storage
                               type: string
                             fsType:
+                              default: ext4
                               description: fsType is Filesystem type to mount.
                               type: string
                             kind:
@@ -32855,6 +33152,7 @@ spec:
                                 blob disks per storage account ...'
                               type: string
                             readOnly:
+                              default: false
                               description: readOnly Defaults to false (read/write).
                               type: boolean
                           required:
@@ -33433,6 +33731,18 @@ spec:
                           required:
                           - path
                           type: object
+                        image:
+                          description: image represents an OCI object (a container
+                            image or artifact) pulled and...
+                          properties:
+                            pullPolicy:
+                              description: Policy for pulling OCI objects.
+                              type: string
+                            reference:
+                              description: 'Required: Image or artifact reference
+                                to be used.'
+                              type: string
+                          type: object
                         iscsi:
                           description: |-
                             iscsi represents an ISCSI Disk resource that is attached to a
@@ -33458,6 +33768,7 @@ spec:
                               description: iqn is the target iSCSI Qualified Name.
                               type: string
                             iscsiInterface:
+                              default: default
                               description: iscsiInterface is the interface Name that
                                 uses an iSCSI transport.
                               type: string
@@ -33579,10 +33890,10 @@ spec:
                               format: int32
                               type: integer
                             sources:
-                              description: sources is the list of volume projections
+                              description: sources is the list of volume projections.
                               items:
                                 description: Projection that may be projected along
-                                  with other supported volume types
+                                  with other supported volume types.
                                 properties:
                                   clusterTrustBundle:
                                     description: ClusterTrustBundle allows a pod to
@@ -33880,6 +34191,7 @@ spec:
                                 More info: https://examples.k8s.
                               type: string
                             keyring:
+                              default: /etc/ceph/keyring
                               description: |-
                                 keyring is the path to key ring for RBDUser.
                                 Default is /etc/ceph/keyring.
@@ -33893,6 +34205,7 @@ spec:
                               type: array
                               x-kubernetes-list-type: atomic
                             pool:
+                              default: rbd
                               description: |-
                                 pool is the rados pool name.
                                 Default is rbd.
@@ -33913,6 +34226,7 @@ spec:
                               type: object
                               x-kubernetes-map-type: atomic
                             user:
+                              default: admin
                               description: |-
                                 user is the rados user name.
                                 Default is admin.
@@ -33927,6 +34241,7 @@ spec:
                             attached and mounted on...
                           properties:
                             fsType:
+                              default: xfs
                               description: fsType is the filesystem type to mount.
                               type: string
                             gateway:
@@ -33956,6 +34271,7 @@ spec:
                                 with Gateway, default false
                               type: boolean
                             storageMode:
+                              default: ThinProvisioned
                               description: storageMode indicates whether the storage
                                 for a volume should be...
                               type: string
@@ -35049,6 +35365,10 @@ spec:
                                 description: Name must match the name of one entry
                                   in pod.spec.
                                 type: string
+                              request:
+                                description: Request is the name chosen for a request
+                                  in the referenced claim.
+                                type: string
                             required:
                             - name
                             type: object
@@ -35449,6 +35769,7 @@ spec:
                                   blob storage
                                 type: string
                               fsType:
+                                default: ext4
                                 description: fsType is Filesystem type to mount.
                                 type: string
                               kind:
@@ -35456,6 +35777,7 @@ spec:
                                   blob disks per storage account ...'
                                 type: string
                               readOnly:
+                                default: false
                                 description: readOnly Defaults to false (read/write).
                                 type: boolean
                             required:
@@ -36036,6 +36358,18 @@ spec:
                             required:
                             - path
                             type: object
+                          image:
+                            description: image represents an OCI object (a container
+                              image or artifact) pulled and...
+                            properties:
+                              pullPolicy:
+                                description: Policy for pulling OCI objects.
+                                type: string
+                              reference:
+                                description: 'Required: Image or artifact reference
+                                  to be used.'
+                                type: string
+                            type: object
                           iscsi:
                             description: |-
                               iscsi represents an ISCSI Disk resource that is attached to a
@@ -36061,6 +36395,7 @@ spec:
                                 description: iqn is the target iSCSI Qualified Name.
                                 type: string
                               iscsiInterface:
+                                default: default
                                 description: iscsiInterface is the interface Name
                                   that uses an iSCSI transport.
                                 type: string
@@ -36182,10 +36517,10 @@ spec:
                                 format: int32
                                 type: integer
                               sources:
-                                description: sources is the list of volume projections
+                                description: sources is the list of volume projections.
                                 items:
                                   description: Projection that may be projected along
-                                    with other supported volume types
+                                    with other supported volume types.
                                   properties:
                                     clusterTrustBundle:
                                       description: ClusterTrustBundle allows a pod
@@ -36489,6 +36824,7 @@ spec:
                                   More info: https://examples.k8s.
                                 type: string
                               keyring:
+                                default: /etc/ceph/keyring
                                 description: |-
                                   keyring is the path to key ring for RBDUser.
                                   Default is /etc/ceph/keyring.
@@ -36502,6 +36838,7 @@ spec:
                                 type: array
                                 x-kubernetes-list-type: atomic
                               pool:
+                                default: rbd
                                 description: |-
                                   pool is the rados pool name.
                                   Default is rbd.
@@ -36522,6 +36859,7 @@ spec:
                                 type: object
                                 x-kubernetes-map-type: atomic
                               user:
+                                default: admin
                                 description: |-
                                   user is the rados user name.
                                   Default is admin.
@@ -36536,6 +36874,7 @@ spec:
                               attached and mounted on...
                             properties:
                               fsType:
+                                default: xfs
                                 description: fsType is the filesystem type to mount.
                                 type: string
                               gateway:
@@ -36565,6 +36904,7 @@ spec:
                                   with Gateway, default false
                                 type: boolean
                               storageMode:
+                                default: ThinProvisioned
                                 description: storageMode indicates whether the storage
                                   for a volume should be...
                                 type: string
@@ -36762,6 +37102,10 @@ spec:
                             name:
                               description: Name must match the name of one entry in
                                 pod.spec.
+                              type: string
+                            request:
+                              description: Request is the name chosen for a request
+                                in the referenced claim.
                               type: string
                           required:
                           - name
@@ -37784,6 +38128,10 @@ spec:
                                 description: Name must match the name of one entry
                                   in pod.spec.
                                 type: string
+                              request:
+                                description: Request is the name chosen for a request
+                                  in the referenced claim.
+                                type: string
                             required:
                             - name
                             type: object
@@ -38177,6 +38525,7 @@ spec:
                                   blob storage
                                 type: string
                               fsType:
+                                default: ext4
                                 description: fsType is Filesystem type to mount.
                                 type: string
                               kind:
@@ -38184,6 +38533,7 @@ spec:
                                   blob disks per storage account ...'
                                 type: string
                               readOnly:
+                                default: false
                                 description: readOnly Defaults to false (read/write).
                                 type: boolean
                             required:
@@ -38764,6 +39114,18 @@ spec:
                             required:
                             - path
                             type: object
+                          image:
+                            description: image represents an OCI object (a container
+                              image or artifact) pulled and...
+                            properties:
+                              pullPolicy:
+                                description: Policy for pulling OCI objects.
+                                type: string
+                              reference:
+                                description: 'Required: Image or artifact reference
+                                  to be used.'
+                                type: string
+                            type: object
                           iscsi:
                             description: |-
                               iscsi represents an ISCSI Disk resource that is attached to a
@@ -38789,6 +39151,7 @@ spec:
                                 description: iqn is the target iSCSI Qualified Name.
                                 type: string
                               iscsiInterface:
+                                default: default
                                 description: iscsiInterface is the interface Name
                                   that uses an iSCSI transport.
                                 type: string
@@ -38910,10 +39273,10 @@ spec:
                                 format: int32
                                 type: integer
                               sources:
-                                description: sources is the list of volume projections
+                                description: sources is the list of volume projections.
                                 items:
                                   description: Projection that may be projected along
-                                    with other supported volume types
+                                    with other supported volume types.
                                   properties:
                                     clusterTrustBundle:
                                       description: ClusterTrustBundle allows a pod
@@ -39217,6 +39580,7 @@ spec:
                                   More info: https://examples.k8s.
                                 type: string
                               keyring:
+                                default: /etc/ceph/keyring
                                 description: |-
                                   keyring is the path to key ring for RBDUser.
                                   Default is /etc/ceph/keyring.
@@ -39230,6 +39594,7 @@ spec:
                                 type: array
                                 x-kubernetes-list-type: atomic
                               pool:
+                                default: rbd
                                 description: |-
                                   pool is the rados pool name.
                                   Default is rbd.
@@ -39250,6 +39615,7 @@ spec:
                                 type: object
                                 x-kubernetes-map-type: atomic
                               user:
+                                default: admin
                                 description: |-
                                   user is the rados user name.
                                   Default is admin.
@@ -39264,6 +39630,7 @@ spec:
                               attached and mounted on...
                             properties:
                               fsType:
+                                default: xfs
                                 description: fsType is the filesystem type to mount.
                                 type: string
                               gateway:
@@ -39293,6 +39660,7 @@ spec:
                                   with Gateway, default false
                                 type: boolean
                               storageMode:
+                                default: ThinProvisioned
                                 description: storageMode indicates whether the storage
                                   for a volume should be...
                                 type: string
@@ -40379,6 +40747,10 @@ spec:
                                 description: Name must match the name of one entry
                                   in pod.spec.
                                 type: string
+                              request:
+                                description: Request is the name chosen for a request
+                                  in the referenced claim.
+                                type: string
                             required:
                             - name
                             type: object
@@ -40775,6 +41147,7 @@ spec:
                                   blob storage
                                 type: string
                               fsType:
+                                default: ext4
                                 description: fsType is Filesystem type to mount.
                                 type: string
                               kind:
@@ -40782,6 +41155,7 @@ spec:
                                   blob disks per storage account ...'
                                 type: string
                               readOnly:
+                                default: false
                                 description: readOnly Defaults to false (read/write).
                                 type: boolean
                             required:
@@ -41362,6 +41736,18 @@ spec:
                             required:
                             - path
                             type: object
+                          image:
+                            description: image represents an OCI object (a container
+                              image or artifact) pulled and...
+                            properties:
+                              pullPolicy:
+                                description: Policy for pulling OCI objects.
+                                type: string
+                              reference:
+                                description: 'Required: Image or artifact reference
+                                  to be used.'
+                                type: string
+                            type: object
                           iscsi:
                             description: |-
                               iscsi represents an ISCSI Disk resource that is attached to a
@@ -41387,6 +41773,7 @@ spec:
                                 description: iqn is the target iSCSI Qualified Name.
                                 type: string
                               iscsiInterface:
+                                default: default
                                 description: iscsiInterface is the interface Name
                                   that uses an iSCSI transport.
                                 type: string
@@ -41508,10 +41895,10 @@ spec:
                                 format: int32
                                 type: integer
                               sources:
-                                description: sources is the list of volume projections
+                                description: sources is the list of volume projections.
                                 items:
                                   description: Projection that may be projected along
-                                    with other supported volume types
+                                    with other supported volume types.
                                   properties:
                                     clusterTrustBundle:
                                       description: ClusterTrustBundle allows a pod
@@ -41815,6 +42202,7 @@ spec:
                                   More info: https://examples.k8s.
                                 type: string
                               keyring:
+                                default: /etc/ceph/keyring
                                 description: |-
                                   keyring is the path to key ring for RBDUser.
                                   Default is /etc/ceph/keyring.
@@ -41828,6 +42216,7 @@ spec:
                                 type: array
                                 x-kubernetes-list-type: atomic
                               pool:
+                                default: rbd
                                 description: |-
                                   pool is the rados pool name.
                                   Default is rbd.
@@ -41848,6 +42237,7 @@ spec:
                                 type: object
                                 x-kubernetes-map-type: atomic
                               user:
+                                default: admin
                                 description: |-
                                   user is the rados user name.
                                   Default is admin.
@@ -41862,6 +42252,7 @@ spec:
                               attached and mounted on...
                             properties:
                               fsType:
+                                default: xfs
                                 description: fsType is the filesystem type to mount.
                                 type: string
                               gateway:
@@ -41891,6 +42282,7 @@ spec:
                                   with Gateway, default false
                                 type: boolean
                               storageMode:
+                                default: ThinProvisioned
                                 description: storageMode indicates whether the storage
                                   for a volume should be...
                                 type: string
@@ -42221,6 +42613,10 @@ spec:
                             name:
                               description: Name must match the name of one entry in
                                 pod.spec.
+                              type: string
+                            request:
+                              description: Request is the name chosen for a request
+                                in the referenced claim.
                               type: string
                           required:
                           - name
@@ -43290,6 +43686,10 @@ spec:
                               description: Name must match the name of one entry in
                                 pod.spec.
                               type: string
+                            request:
+                              description: Request is the name chosen for a request
+                                in the referenced claim.
+                              type: string
                           required:
                           - name
                           type: object
@@ -43677,6 +44077,7 @@ spec:
                                 blob storage
                               type: string
                             fsType:
+                              default: ext4
                               description: fsType is Filesystem type to mount.
                               type: string
                             kind:
@@ -43684,6 +44085,7 @@ spec:
                                 blob disks per storage account ...'
                               type: string
                             readOnly:
+                              default: false
                               description: readOnly Defaults to false (read/write).
                               type: boolean
                           required:
@@ -44262,6 +44664,18 @@ spec:
                           required:
                           - path
                           type: object
+                        image:
+                          description: image represents an OCI object (a container
+                            image or artifact) pulled and...
+                          properties:
+                            pullPolicy:
+                              description: Policy for pulling OCI objects.
+                              type: string
+                            reference:
+                              description: 'Required: Image or artifact reference
+                                to be used.'
+                              type: string
+                          type: object
                         iscsi:
                           description: |-
                             iscsi represents an ISCSI Disk resource that is attached to a
@@ -44287,6 +44701,7 @@ spec:
                               description: iqn is the target iSCSI Qualified Name.
                               type: string
                             iscsiInterface:
+                              default: default
                               description: iscsiInterface is the interface Name that
                                 uses an iSCSI transport.
                               type: string
@@ -44408,10 +44823,10 @@ spec:
                               format: int32
                               type: integer
                             sources:
-                              description: sources is the list of volume projections
+                              description: sources is the list of volume projections.
                               items:
                                 description: Projection that may be projected along
-                                  with other supported volume types
+                                  with other supported volume types.
                                 properties:
                                   clusterTrustBundle:
                                     description: ClusterTrustBundle allows a pod to
@@ -44709,6 +45124,7 @@ spec:
                                 More info: https://examples.k8s.
                               type: string
                             keyring:
+                              default: /etc/ceph/keyring
                               description: |-
                                 keyring is the path to key ring for RBDUser.
                                 Default is /etc/ceph/keyring.
@@ -44722,6 +45138,7 @@ spec:
                               type: array
                               x-kubernetes-list-type: atomic
                             pool:
+                              default: rbd
                               description: |-
                                 pool is the rados pool name.
                                 Default is rbd.
@@ -44742,6 +45159,7 @@ spec:
                               type: object
                               x-kubernetes-map-type: atomic
                             user:
+                              default: admin
                               description: |-
                                 user is the rados user name.
                                 Default is admin.
@@ -44756,6 +45174,7 @@ spec:
                             attached and mounted on...
                           properties:
                             fsType:
+                              default: xfs
                               description: fsType is the filesystem type to mount.
                               type: string
                             gateway:
@@ -44785,6 +45204,7 @@ spec:
                                 with Gateway, default false
                               type: boolean
                             storageMode:
+                              default: ThinProvisioned
                               description: storageMode indicates whether the storage
                                 for a volume should be...
                               type: string
