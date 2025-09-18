@@ -108,9 +108,6 @@ data:
         };
     }'
     fi
-    if [ $(/usr/bin/yt exists //sys/controller_agents/config/operation_options/spec_template) = 'false' ]; then
-    /usr/bin/yt set //sys/controller_agents/config/operation_options/spec_template '{enable_partitioned_data_balancing=%false}' -r
-    fi
     if [ $(/usr/bin/yt exists //sys/users/admin) = 'false' ]; then
     /usr/bin/yt create user --attributes '{name="admin"}' --ignore-existing
     /usr/bin/yt execute set_user_password '{user=admin;new_password_sha256="5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"}'
