@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/go-logr/logr/testr"
@@ -19,6 +20,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/retry"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -91,6 +93,10 @@ func (h *TestHelper) Start(reconcilerSetup func(mgr ctrl.Manager) error) {
 			BindAddress: "0",
 		},
 		HealthProbeBindAddress: "0",
+		Controller: config.Controller{
+			// Tests register controllers more than once.
+			SkipNameValidation: ptr.To(true),
+		},
 	})
 	require.NoError(t, err)
 
