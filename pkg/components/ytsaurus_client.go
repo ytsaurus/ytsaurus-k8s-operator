@@ -127,6 +127,20 @@ func getReadOnlyGetOptions() *yt.GetNodeOptions {
 	}
 }
 
+type MasterState string
+
+const (
+	MasterStateLeading   MasterState = "leading"
+	MasterStateFollowing MasterState = "following"
+)
+
+type MasterHydra struct {
+	ReadOnly             bool        `yson:"read_only"`
+	LastSnapshotReadOnly bool        `yson:"last_snapshot_read_only"`
+	Active               bool        `yson:"active"`
+	State                MasterState `yson:"state"`
+}
+
 func (yc *YtsaurusClient) getAllMasters(ctx context.Context) ([]MasterInfo, error) {
 	var primaryMaster MasterInfo
 	err := yc.ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection/primary_master"), &primaryMaster, getReadOnlyGetOptions())
@@ -145,8 +159,8 @@ func (yc *YtsaurusClient) getAllMasters(ctx context.Context) ([]MasterInfo, erro
 	return append(secondaryMasters, primaryMaster), nil
 }
 
-func (yc *YtsaurusClient) getMasterHydra(ctx context.Context, path string) (ytv1.MasterHydra, error) {
-	var masterHydra ytv1.MasterHydra
+func (yc *YtsaurusClient) getMasterHydra(ctx context.Context, path string) (MasterHydra, error) {
+	var masterHydra MasterHydra
 	err := yc.ytClient.GetNode(ctx, ypath.Path(path), &masterHydra, getReadOnlyGetOptions())
 	return masterHydra, err
 }
@@ -303,18 +317,18 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 	case ytv1.UpdateStateWaitingForSnapshots:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnaphotsSaved) {
-			if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterBuildingSnapshotInfosSaved) {
-				masterBuildingSnapshotInfos, err := yc.GetMasterBuildingSnapshotInfos(ctx)
+			if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnapshotsMonitoringInfoSaved) {
+				monitoringPaths, err := yc.GetMasterMonitoringPaths(ctx)
 				if err != nil {
 					return SimpleStatus(SyncStatusUpdating), err
 				}
-				yc.ytsaurus.GetResource().Status.UpdateStatus.MasterBuildingSnapshotInfos = masterBuildingSnapshotInfos
+				yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths = monitoringPaths
 
 				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-					Type:    consts.ConditionMasterBuildingSnapshotInfosSaved,
+					Type:    consts.ConditionSnapshotsMonitoringInfoSaved,
 					Status:  metav1.ConditionTrue,
 					Reason:  "Update",
-					Message: "Master snapshot infos saved",
+					Message: "Snapshots monitoring info saved",
 				})
 			}
 
@@ -324,7 +338,7 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 					return SimpleStatus(SyncStatusUpdating), err
 				}
 				log.FromContext(ctx).Info("data nodes before snapshots building", "dataNodes", dnds)
-				if err := yc.StartBuildMasterSnapshots(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.MasterBuildingSnapshotInfos); err != nil {
+				if err := yc.StartBuildMasterSnapshots(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths); err != nil {
 					return SimpleStatus(SyncStatusUpdating), err
 				}
 
@@ -336,7 +350,7 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 				})
 			}
 
-			built, err := yc.AreMasterSnapshotsBuilt(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.MasterBuildingSnapshotInfos)
+			built, err := yc.AreMasterSnapshotsBuilt(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.MasterMonitoringPaths)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
 			}
@@ -559,7 +573,7 @@ func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 	followingPrimaryMasterCount := 0
 
 	for _, primaryMasterAddress := range primaryMasterAddresses {
-		var hydra ytv1.MasterHydra
+		var hydra MasterHydra
 		err = yc.ytClient.GetNode(
 			ctx,
 			ypath.Path(fmt.Sprintf("//sys/primary_masters/%v/orchid/monitoring/hydra", primaryMasterAddress)),
@@ -575,9 +589,9 @@ func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 		}
 
 		switch hydra.State {
-		case ytv1.MasterStateLeading:
+		case MasterStateLeading:
 			leadingPrimaryMasterCount += 1
-		case ytv1.MasterStateFollowing:
+		case MasterStateFollowing:
 			followingPrimaryMasterCount += 1
 		}
 	}
@@ -867,8 +881,8 @@ func (yc *YtsaurusClient) RecoverTableCells(ctx context.Context, bundles []ytv1.
 
 // Master actions.
 
-func (yc *YtsaurusClient) GetMasterBuildingSnapshotInfos(ctx context.Context) ([]ytv1.MasterBuildingSnapshotInfo, error) {
-	var masterBuildingSnapshotInfos []ytv1.MasterBuildingSnapshotInfo
+func (yc *YtsaurusClient) GetMasterMonitoringPaths(ctx context.Context) ([]string, error) {
+	var monitoringPaths []string
 	mastersInfo, err := yc.getAllMasters(ctx)
 	if err != nil {
 		return nil, err
@@ -877,24 +891,17 @@ func (yc *YtsaurusClient) GetMasterBuildingSnapshotInfos(ctx context.Context) ([
 	for _, masterInfo := range mastersInfo {
 		for _, address := range masterInfo.Addresses {
 			monitoringPath := fmt.Sprintf("//sys/cluster_masters/%s/orchid/monitoring/hydra", address)
-			masterHydra, err := yc.getMasterHydra(ctx, monitoringPath)
-			if err != nil {
-				return nil, err
-			}
-			masterBuildingSnapshotInfos = append(masterBuildingSnapshotInfos, ytv1.MasterBuildingSnapshotInfo{
-				MonitoringPath:      monitoringPath,
-				HydraBeforeBuilding: masterHydra,
-			})
+			monitoringPaths = append(monitoringPaths, monitoringPath)
 		}
 	}
-	return masterBuildingSnapshotInfos, nil
+	return monitoringPaths, nil
 }
-func (yc *YtsaurusClient) StartBuildMasterSnapshots(ctx context.Context, masterBuildingSnapshotInfos []ytv1.MasterBuildingSnapshotInfo) error {
+func (yc *YtsaurusClient) StartBuildMasterSnapshots(ctx context.Context, monitoringPaths []string) error {
 	var err error
 
 	allMastersReadOnly := true
-	for _, masterBuildingSnapshotInfo := range masterBuildingSnapshotInfos {
-		masterHydra, err := yc.getMasterHydra(ctx, masterBuildingSnapshotInfo.MonitoringPath)
+	for _, monitoringPath := range monitoringPaths {
+		masterHydra, err := yc.getMasterHydra(ctx, monitoringPath)
 		if err != nil {
 			return err
 		}
@@ -916,17 +923,15 @@ func (yc *YtsaurusClient) StartBuildMasterSnapshots(ctx context.Context, masterB
 
 	return err
 }
-func (yc *YtsaurusClient) AreMasterSnapshotsBuilt(ctx context.Context, masterBuildingSnapshotInfos []ytv1.MasterBuildingSnapshotInfo) (bool, error) {
-	for _, masterBuildingSnapshotInfo := range masterBuildingSnapshotInfos {
-		var masterHydra ytv1.MasterHydra
-		err := yc.ytClient.GetNode(ctx, ypath.Path(masterBuildingSnapshotInfo.MonitoringPath), &masterHydra, getReadOnlyGetOptions())
+func (yc *YtsaurusClient) AreMasterSnapshotsBuilt(ctx context.Context, monitoringPaths []string) (bool, error) {
+	for _, monitoringPath := range monitoringPaths {
+		var masterHydra MasterHydra
+		err := yc.ytClient.GetNode(ctx, ypath.Path(monitoringPath), &masterHydra, getReadOnlyGetOptions())
 		if err != nil {
 			return false, err
 		}
+
 		if !masterHydra.LastSnapshotReadOnly {
-			return false, nil
-		}
-		if !masterBuildingSnapshotInfo.HydraBeforeBuilding.ReadOnly && masterHydra.LastSnapshotID == masterBuildingSnapshotInfo.HydraBeforeBuilding.LastSnapshotID {
 			return false, nil
 		}
 	}
