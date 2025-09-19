@@ -52,6 +52,8 @@ func ComponentLabel(component ComponentType) string {
 		return "yt-yql-agent"
 	case StrawberryControllerType:
 		return "yt-strawberry-controller"
+	case BundleControllerType:
+		return "yt-bundle-controller"
 	case ChytType:
 		return "yt-chyt"
 	case SpytType:

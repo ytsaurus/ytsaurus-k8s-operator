@@ -79,4 +79,7 @@ const (
 
 	CypressProxyRPCPort        = 9031
 	CypressProxyMonitoringPort = 10031
+
+	BundleControllerRPCPort        = 9025
+	BundleControllerMonitoringPort = 10025
 )
