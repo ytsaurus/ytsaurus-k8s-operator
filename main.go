@@ -24,6 +24,7 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
+	controllerconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
@@ -59,11 +60,13 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
+	var maxConcurrentReconciles int
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.IntVar(&maxConcurrentReconciles, "max-concurrent-reconciles", 10, "The maximum number of concurrent Reconciles which can be run")
 	opts := zap.Options{
 		Development: true,
 		TimeEncoder: zapcore.ISO8601TimeEncoder,
@@ -108,6 +111,9 @@ func main() {
 		// if you are doing or is intended to do any operation such as perform cleanups
 		// after the manager stops then its usage might be unsafe.
 		// LeaderElectionReleaseOnCancel: true,
+		Controller: controllerconfig.Controller{
+			MaxConcurrentReconciles: maxConcurrentReconciles,
+		},
 	}
 
 	watchNamespace, ok := os.LookupEnv("WATCH_NAMESPACE")
