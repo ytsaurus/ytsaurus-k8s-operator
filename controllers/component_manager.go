@@ -156,6 +156,11 @@ func NewComponentManager(
 		allComponents = append(allComponents, cyp)
 	}
 
+	if resource.Spec.BundleController != nil {
+		bc := components.NewBundleController(cfgen, ytsaurus)
+		allComponents = append(allComponents, bc)
+	}
+
 	tt := components.NewTimbertruck(cfgen, ytsaurus, tnds, yc)
 	allComponents = append(allComponents, tt)
 

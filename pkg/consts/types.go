@@ -3,6 +3,7 @@ package consts
 type ComponentType string
 
 const (
+	BundleControllerType     ComponentType = "BundleController"
 	ControllerAgentType      ComponentType = "ControllerAgent"
 	CypressProxyType         ComponentType = "CypressProxy"
 	DataNodeType             ComponentType = "DataNode"
@@ -41,6 +42,7 @@ const (
 
 var (
 	LocalComponentTypes = []ComponentType{
+		BundleControllerType,
 		ControllerAgentType,
 		DataNodeType,
 		DiscoveryType,

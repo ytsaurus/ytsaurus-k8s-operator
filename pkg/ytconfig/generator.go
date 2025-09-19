@@ -974,6 +974,27 @@ func (g *Generator) GetYQLAgentConfig(spec *ytv1.YQLAgentSpec) ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
+func (g *Generator) getBundleControllerConfigImpl(spec *ytv1.BundleControllerSpec) (BundleControllerServer, error) {
+	c, err := getBundleControllerServerCarcass(spec)
+	if err != nil {
+		return BundleControllerServer{}, err
+	}
+
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+	c.BundleController.Cluster = g.ytsaurus.Name
+
+	return c, nil
+}
+
+func (g *Generator) GetBundleControllerConfig(spec *ytv1.BundleControllerSpec) ([]byte, error) {
+	c, err := g.getBundleControllerConfigImpl(spec)
+	if err != nil {
+		return nil, err
+	}
+	return marshallYsonConfig(c)
+}
+
 func (g *Generator) GetUIClustersConfig() ([]byte, error) {
 	if g.ytsaurus.Spec.UI == nil {
 		return []byte{}, nil
