@@ -78,6 +78,48 @@ _Appears in:_
 | `nodeTagFilter` _string_ |  |  |  |
 
 
+#### BundleControllerSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
+| `instanceCount` _integer_ |  |  |  |
+| `minReadyInstanceCount` _integer_ |  |  |  |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `runtimeClassName` _string_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
+| `monitoringPort` _integer_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ |  |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
+| `disable` _boolean_ |  |  |  |
+
+
 #### BundlesBootstrapSpec
 
 
@@ -619,6 +661,7 @@ It contains TypeMeta and a reduced ObjectMeta.
 
 
 _Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
 - [ControllerAgentsSpec](#controlleragentsspec)
 - [CypressProxiesSpec](#cypressproxiesspec)
 - [DataNodesSpec](#datanodesspec)
@@ -794,6 +837,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
 - [ControllerAgentsSpec](#controlleragentsspec)
 - [CypressProxiesSpec](#cypressproxiesspec)
 - [DataNodesSpec](#datanodesspec)
@@ -850,6 +894,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
 - [ControllerAgentsSpec](#controlleragentsspec)
 - [CypressProxiesSpec](#cypressproxiesspec)
 - [DataNodesSpec](#datanodesspec)
@@ -974,6 +1019,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
 - [ControllerAgentsSpec](#controlleragentsspec)
 - [CypressProxiesSpec](#cypressproxiesspec)
 - [DataNodesSpec](#datanodesspec)
@@ -1450,6 +1496,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
 - [CommonSpec](#commonspec)
 - [ControllerAgentsSpec](#controlleragentsspec)
 - [CypressProxiesSpec](#cypressproxiesspec)
@@ -2062,6 +2109,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
 - [ControllerAgentsSpec](#controlleragentsspec)
 - [CypressProxiesSpec](#cypressproxiesspec)
 - [DataNodesSpec](#datanodesspec)
@@ -2211,6 +2259,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
 - [ControllerAgentsSpec](#controlleragentsspec)
 - [CypressProxiesSpec](#cypressproxiesspec)
 - [DataNodesSpec](#datanodesspec)
@@ -2515,6 +2564,7 @@ _Appears in:_
 | `yqlAgents` _[YQLAgentSpec](#yqlagentspec)_ |  |  |  |
 | `queueAgents` _[QueueAgentSpec](#queueagentspec)_ |  |  |  |
 | `cypressProxies` _[CypressProxiesSpec](#cypressproxiesspec)_ |  |  |  |
+| `bundleController` _[BundleControllerSpec](#bundlecontrollerspec)_ |  |  |  |
 | `ui` _[UISpec](#uispec)_ |  |  |  |
 
 
