@@ -1183,6 +1183,10 @@ func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string,
 		if g.ytsaurus.Spec.YQLAgents != nil {
 			names = append(names, "")
 		}
+	case consts.BundleControllerType:
+		if g.ytsaurus.Spec.BundleController != nil {
+			names = append(names, "")
+		}
 	default:
 		return nil, fmt.Errorf("unknown component %v", component)
 	}
@@ -1281,6 +1285,10 @@ func (g *Generator) GetComponentConfig(component consts.ComponentType, name stri
 	case consts.YqlAgentType:
 		if name == "" {
 			return g.GetYQLAgentConfig(g.ytsaurus.Spec.YQLAgents)
+		}
+	case consts.BundleControllerType:
+		if name == "" {
+			return g.GetBundleControllerConfig(g.ytsaurus.Spec.BundleController)
 		}
 	}
 
