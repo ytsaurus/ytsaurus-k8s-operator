@@ -974,6 +974,27 @@ func (g *Generator) GetYQLAgentConfig(spec *ytv1.YQLAgentSpec) ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
+func (g *Generator) getBundleControllerConfigImpl(spec *ytv1.BundleControllerSpec) (BundleControllerServer, error) {
+	c, err := getBundleControllerServerCarcass(spec)
+	if err != nil {
+		return BundleControllerServer{}, err
+	}
+
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+	c.BundleController.Cluster = g.ytsaurus.Name
+
+	return c, nil
+}
+
+func (g *Generator) GetBundleControllerConfig(spec *ytv1.BundleControllerSpec) ([]byte, error) {
+	c, err := g.getBundleControllerConfigImpl(spec)
+	if err != nil {
+		return nil, err
+	}
+	return marshallYsonConfig(c)
+}
+
 func (g *Generator) GetUIClustersConfig() ([]byte, error) {
 	if g.ytsaurus.Spec.UI == nil {
 		return []byte{}, nil
@@ -1162,6 +1183,10 @@ func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string,
 		if g.ytsaurus.Spec.YQLAgents != nil {
 			names = append(names, "")
 		}
+	case consts.BundleControllerType:
+		if g.ytsaurus.Spec.BundleController != nil {
+			names = append(names, "")
+		}
 	default:
 		return nil, fmt.Errorf("unknown component %v", component)
 	}
@@ -1260,6 +1285,10 @@ func (g *Generator) GetComponentConfig(component consts.ComponentType, name stri
 	case consts.YqlAgentType:
 		if name == "" {
 			return g.GetYQLAgentConfig(g.ytsaurus.Spec.YQLAgents)
+		}
+	case consts.BundleControllerType:
+		if name == "" {
+			return g.GetBundleControllerConfig(g.ytsaurus.Spec.BundleController)
 		}
 	}
 

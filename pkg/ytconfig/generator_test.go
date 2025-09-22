@@ -536,6 +536,15 @@ func TestGetCypressProxiesConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetBundleControllerConfig(t *testing.T) {
+	ytsaurus := getYtsaurusWithoutNodes()
+	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetBundleControllerConfig(ytsaurus.Spec.BundleController)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetYtsaurusComponents(t *testing.T) {
 	ytsaurus := getYtsaurusWithAllComponents()
 
@@ -749,6 +758,7 @@ func getYtsaurusWithoutNodes() *ytv1.Ytsaurus {
 	ytsaurus = withYQLAgent(ytsaurus)
 	ytsaurus = withMasterCaches(ytsaurus)
 	ytsaurus = withCypressProxies(ytsaurus)
+	ytsaurus = withBundleController(ytsaurus)
 	return ytsaurus
 }
 
@@ -893,6 +903,11 @@ func withCypressProxies(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 		InstanceSpec: testBasicInstanceSpec,
 		Disable:      nil,
 	}
+	return ytsaurus
+}
+
+func withBundleController(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
+	ytsaurus.Spec.BundleController = &ytv1.BundleControllerSpec{InstanceSpec: testBasicInstanceSpec}
 	return ytsaurus
 }
 

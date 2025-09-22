@@ -3,6 +3,9 @@ metadata:
   name: test
   namespace: fake
 spec:
+  bundleController:
+    instanceCount: 3
+    resources: {}
   clusterFeatures:
     httpProxyHaveChytAddress: true
   controllerAgents:
