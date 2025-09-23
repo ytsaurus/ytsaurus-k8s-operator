@@ -30,8 +30,10 @@ jobs:
             filter: "basic"
           - name: "selector and remote"
             filter: "selector || remote"
+          - name: "tls"
+            filter: "tls"
           - name: "other"
-            filter: "!basic && !selector && !remote"
+            filter: "!basic && !selector && !remote && !tls"
           - name: "${{ inputs.e2e_filter }}"
             filter: "${{ inputs.e2e_filter }}"
             from_input: true
