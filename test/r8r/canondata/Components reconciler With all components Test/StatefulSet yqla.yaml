@@ -64,7 +64,7 @@ spec:
         envFrom:
         - secretRef:
             name: yt-yql-agent-secret
-        image: ghcr.io/ytsaurus/query-tracker:0.0.10
+        image: ghcr.io/ytsaurus/query-tracker:0.0.11
         name: ytserver
         ports:
         - containerPort: 10019
@@ -103,7 +103,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: ghcr.io/ytsaurus/query-tracker:0.0.10
+        image: ghcr.io/ytsaurus/query-tracker:0.0.11
         name: prepare-locations
         resources: {}
         volumeMounts:
@@ -137,7 +137,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: ghcr.io/ytsaurus/query-tracker:0.0.10
+        image: ghcr.io/ytsaurus/query-tracker:0.0.11
         name: postprocess-config
         resources: {}
         volumeMounts:

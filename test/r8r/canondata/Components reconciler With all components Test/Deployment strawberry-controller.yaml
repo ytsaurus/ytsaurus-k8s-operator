@@ -59,7 +59,7 @@ spec:
         envFrom:
         - secretRef:
             name: yt-strawberry-controller-secret
-        image: ghcr.io/ytsaurus/strawberry:0.0.13
+        image: ghcr.io/ytsaurus/strawberry:0.0.14
         name: strawberry
         ports:
         - containerPort: 80
