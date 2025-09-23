@@ -442,6 +442,52 @@ func queryClickHouseID(ytProxyAddress string) (guid.GUID, error) {
 	return guid.ParseString(strings.TrimSpace(result))
 }
 
+func makeQuery(ctx context.Context, ytClient yt.Client, engine yt.QueryEngine, query string) []map[string]any {
+	id, err := ytClient.StartQuery(ctx, engine, query, nil)
+	Expect(err).To(Succeed())
+	log.Info("Query started", "id", id)
+
+	var previousState yt.QueryState
+	Eventually(func() (yt.QueryState, error) {
+		result, err := ytClient.GetQuery(ctx, id, &yt.GetQueryOptions{
+			Attributes: []string{"state", "error"},
+		})
+		if err != nil || result.State == nil {
+			return yt.QueryStateFailed, err
+		}
+		if previousState != *result.State {
+			log.Info("Query state", "id", id, "state", *result.State, "error", result.Err)
+			previousState = *result.State
+		}
+		return *result.State, nil
+	}, "60s").To(BeElementOf(yt.QueryStateAborted, yt.QueryStateCompleted, yt.QueryStateFailed))
+
+	result, err := ytClient.GetQuery(ctx, id, nil)
+	Expect(err).To(Succeed())
+
+	Expect(result.State).To(HaveValue(Equal(yt.QueryStateCompleted)))
+	Expect(result.ResultCount).To(HaveValue(Equal(int64(1))))
+
+	_, err = ytClient.GetQueryResult(ctx, id, 0, nil)
+	Expect(err).To(Succeed())
+
+	reader, err := ytClient.ReadQueryResult(ctx, id, 0, nil)
+	Expect(err).To(Succeed())
+
+	var rows []map[string]any
+	for reader.Next() {
+		var row map[string]any
+		Expect(reader.Scan(&row)).To(Succeed())
+		rows = append(rows, row)
+	}
+	Expect(reader.Err()).To(Succeed())
+	Expect(reader.Close()).To(Succeed())
+
+	log.Info("Query result", "id", id, "rows", rows)
+
+	return rows
+}
+
 func readFileObject(namespace string, source ytv1.FileObjectReference) ([]byte, error) {
 	objectName := types.NamespacedName{
 		Namespace: namespace,

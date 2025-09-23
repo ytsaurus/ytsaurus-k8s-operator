@@ -568,6 +568,24 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		).MustPassRepeatedly(3).Should(Equal("1\n"))
 	})
 
+	JustBeforeEach(func(ctx context.Context) {
+		if chyt == nil || ytsaurus.Spec.QueryTrackers == nil {
+			return
+		}
+
+		By("Checking CHYT via query tracker")
+		Expect(makeQuery(ctx, ytClient, yt.QueryEngineCHYT, "SELECT 1")).To(HaveLen(1))
+	})
+
+	JustBeforeEach(func(ctx context.Context) {
+		if ytsaurus.Spec.YQLAgents == nil || ytsaurus.Spec.QueryTrackers == nil {
+			return
+		}
+
+		By("Checking YQL via query tracker")
+		Expect(makeQuery(ctx, ytClient, yt.QueryEngineYQL, "SELECT 1")).To(HaveLen(1))
+	})
+
 	JustAfterEach(func(ctx context.Context) {
 		if CurrentSpecReport().Failed() {
 			return
