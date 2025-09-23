@@ -26,6 +26,18 @@ const (
 	RemoteResourceName = "rmt"
 )
 
+type YtsaurusImages struct {
+	Job          string
+	Core         string
+	Strawberry   string
+	Chyt         string
+	QueryTracker string
+
+	MutualTLSReady bool
+
+	StrawberryHandlesRestarts bool
+}
+
 // Images are should be set by TEST_ENV include in Makefile
 var (
 	// NOTE: The same image is used for YTsaurus integration tests.
@@ -34,30 +46,124 @@ var (
 	YtsaurusImage23_2 = GetenvOr("YTSAURUS_IMAGE_23_2", "ghcr.io/ytsaurus/ytsaurus:stable-23.2.0")
 	YtsaurusImage24_1 = GetenvOr("YTSAURUS_IMAGE_24_1", "ghcr.io/ytsaurus/ytsaurus:stable-24.1.0")
 	YtsaurusImage24_2 = GetenvOr("YTSAURUS_IMAGE_24_2", "ghcr.io/ytsaurus/ytsaurus:stable-24.2.1")
-	YtsaurusImage25_1 = GetenvOr("YTSAURUS_IMAGE_25_1", "")
-	YtsaurusImage25_2 = GetenvOr("YTSAURUS_IMAGE_25_2", "")
+	YtsaurusImage25_1 = GetenvOr("YTSAURUS_IMAGE_25_1", "ghcr.io/ytsaurus/ytsaurus:stable-25.1.0")
+	YtsaurusImage25_2 = GetenvOr("YTSAURUS_IMAGE_25_2", "ghcr.io/ytsaurus/ytsaurus:stable-25.2.0")
 
 	YtsaurusImagePrevious = GetenvOr("YTSAURUS_IMAGE_PREVIOUS", YtsaurusImage24_1)
 	YtsaurusImageCurrent  = GetenvOr("YTSAURUS_IMAGE_CURRENT", YtsaurusImage24_2)
-	YtsaurusImageFuture   = GetenvOr("YTSAURUS_IMAGE_FUTURE", YtsaurusImage25_1)
+	YtsaurusImageFuture   = GetenvOr("YTSAURUS_IMAGE_FUTURE", YtsaurusImage25_2)
 	YtsaurusImageNightly  = GetenvOr("YTSAURUS_IMAGE_NIGHTLY", "")
 
-	YtsaurusTLSReady = os.Getenv("YTSAURUS_TLS_READY") != ""
+	YtsaurusMutualTLSReady = os.Getenv("YTSAURUS_TLS_READY") != ""
 
-	QueryTrackerImagePrevious = GetenvOr("QUERY_TRACKER_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/query-tracker:0.0.9")
-	QueryTrackerImageCurrent  = GetenvOr("QUERY_TRACKER_IMAGE_CURRENT", "ghcr.io/ytsaurus/query-tracker:0.0.10")
-	QueryTrackerImageFuture   = GetenvOr("QUERY_TRACKER_IMAGE_FUTURE", "")
+	QueryTrackerImagePrevious = GetenvOr("QUERY_TRACKER_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/query-tracker:0.0.10")
+	QueryTrackerImageCurrent  = GetenvOr("QUERY_TRACKER_IMAGE_CURRENT", "ghcr.io/ytsaurus/query-tracker:0.0.11")
+	QueryTrackerImageFuture   = GetenvOr("QUERY_TRACKER_IMAGE_FUTURE", "ghcr.io/ytsaurus/query-tracker:0.0.11")
 	QueryTrackerImageNightly  = GetenvOr("QUERY_TRACKER_IMAGE_NIGHTLY", "")
 
-	StrawberryImagePrevious = GetenvOr("STRAWBERRY_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/strawberry:0.0.12")
-	StrawberryImageCurrent  = GetenvOr("STRAWBERRY_IMAGE_CURRENT", "ghcr.io/ytsaurus/strawberry:0.0.13")
-	StrawberryImageFuture   = GetenvOr("STRAWBERRY_IMAGE_FUTURE", "")
+	StrawberryImagePrevious = GetenvOr("STRAWBERRY_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/strawberry:0.0.13")
+	StrawberryImageCurrent  = GetenvOr("STRAWBERRY_IMAGE_CURRENT", "ghcr.io/ytsaurus/strawberry:0.0.14")
+	StrawberryImageFuture   = GetenvOr("STRAWBERRY_IMAGE_FUTURE", "ghcr.io/ytsaurus/strawberry:0.0.15")
 	StrawberryImageNightly  = GetenvOr("STRAWBERRY_IMAGE_NIGHTLY", "")
 
 	ChytImagePrevious = GetenvOr("CHYT_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/chyt:2.16.0")
-	ChytImageCurrent  = GetenvOr("CHYT_IMAGE_CURRENT", "ghcr.io/ytsaurus/chyt:2.17.2")
-	ChytImageFuture   = GetenvOr("CHYT_IMAGE_FUTURE", "")
+	ChytImageCurrent  = GetenvOr("CHYT_IMAGE_CURRENT", "ghcr.io/ytsaurus/chyt:2.16.0")
+	ChytImageFuture   = GetenvOr("CHYT_IMAGE_FUTURE", "ghcr.io/ytsaurus/chyt:2.17.4")
 	ChytImageNightly  = GetenvOr("CHYT_IMAGE_NIGHTLY", "")
+
+	PreviousImages = YtsaurusImages{
+		Job:          YtsaurusJobImage,
+		Core:         YtsaurusImagePrevious,
+		Strawberry:   StrawberryImageCurrent,
+		Chyt:         ChytImageCurrent,
+		QueryTracker: QueryTrackerImageCurrent,
+
+		MutualTLSReady: YtsaurusMutualTLSReady,
+	}
+
+	CurrentImages = YtsaurusImages{
+		Job:          YtsaurusJobImage,
+		Core:         YtsaurusImageCurrent,
+		Strawberry:   StrawberryImageCurrent,
+		Chyt:         ChytImageCurrent,
+		QueryTracker: QueryTrackerImageCurrent,
+
+		MutualTLSReady: YtsaurusMutualTLSReady,
+	}
+
+	FutureImages = YtsaurusImages{
+		Job:            YtsaurusJobImage,
+		Core:           YtsaurusImageFuture,
+		Strawberry:     StrawberryImageFuture,
+		Chyt:           ChytImageFuture,
+		QueryTracker:   QueryTrackerImageFuture,
+		MutualTLSReady: YtsaurusMutualTLSReady,
+
+		StrawberryHandlesRestarts: true,
+	}
+
+	TwilightImages = YtsaurusImages{
+		Job:            YtsaurusJobImage,
+		Core:           YtsaurusImageNightly,
+		Strawberry:     StrawberryImageFuture,
+		Chyt:           ChytImageFuture,
+		QueryTracker:   QueryTrackerImageFuture,
+		MutualTLSReady: YtsaurusMutualTLSReady,
+
+		StrawberryHandlesRestarts: true,
+	}
+
+	NightlyImages = YtsaurusImages{
+		Job:          YtsaurusJobImage,
+		Core:         YtsaurusImageNightly,
+		Strawberry:   StrawberryImageNightly,
+		Chyt:         ChytImageNightly,
+		QueryTracker: QueryTrackerImageNightly,
+
+		MutualTLSReady:            true,
+		StrawberryHandlesRestarts: true,
+	}
+
+	YtsaurusImages24_1 = YtsaurusImages{
+		Job:          YtsaurusJobImage,
+		Core:         YtsaurusImage24_1,
+		Strawberry:   StrawberryImagePrevious,
+		Chyt:         ChytImagePrevious,
+		QueryTracker: QueryTrackerImagePrevious,
+
+		MutualTLSReady: false,
+	}
+
+	YtsaurusImages24_2 = YtsaurusImages{
+		Job:          YtsaurusJobImage,
+		Core:         YtsaurusImage24_2,
+		Strawberry:   StrawberryImageCurrent,
+		Chyt:         ChytImageCurrent,
+		QueryTracker: QueryTrackerImageCurrent,
+
+		MutualTLSReady: YtsaurusMutualTLSReady,
+	}
+
+	YtsaurusImages25_1 = YtsaurusImages{
+		Job:          YtsaurusJobImage,
+		Core:         YtsaurusImage25_1,
+		Strawberry:   StrawberryImageCurrent,
+		Chyt:         ChytImageCurrent,
+		QueryTracker: QueryTrackerImageCurrent,
+
+		MutualTLSReady: YtsaurusMutualTLSReady,
+	}
+
+	YtsaurusImages25_2 = YtsaurusImages{
+		Job:          YtsaurusJobImage,
+		Core:         YtsaurusImage25_2,
+		Strawberry:   StrawberryImageFuture,
+		Chyt:         ChytImageFuture,
+		QueryTracker: QueryTrackerImageFuture,
+
+		MutualTLSReady:            YtsaurusMutualTLSReady,
+		StrawberryHandlesRestarts: true,
+	}
 )
 
 var (
@@ -67,14 +173,12 @@ var (
 )
 
 type YtsaurusBuilder struct {
-	Namespace         string
-	YtsaurusImage     string
-	JobImage          *string
-	SandboxImage      *string
-	CRIService        *ytv1.CRIServiceType
-	QueryTrackerImage string
-	Ytsaurus          *ytv1.Ytsaurus
-	Overrides         *corev1.ConfigMap
+	Images       YtsaurusImages
+	Namespace    string
+	SandboxImage *string
+	CRIService   *ytv1.CRIServiceType
+	Ytsaurus     *ytv1.Ytsaurus
+	Overrides    *corev1.ConfigMap
 
 	// Set MinReadyInstanceCount for all components
 	MinReadyInstanceCount *int
@@ -118,8 +222,8 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 			CommonSpec: ytv1.CommonSpec{
 				EphemeralCluster: true,
 				UseShortNames:    true,
-				CoreImage:        b.YtsaurusImage,
-				JobImage:         b.JobImage,
+				CoreImage:        b.Images.Core,
+				JobImage:         ptr.To(b.Images.Job),
 			},
 			EnableFullUpdate: true,
 			IsManaged:        true,
@@ -178,10 +282,8 @@ func (b *YtsaurusBuilder) WithBaseComponents() {
 
 func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
 	builder := YtsaurusBuilder{
-		Namespace:         namespace,
-		YtsaurusImage:     YtsaurusImageCurrent,
-		JobImage:          ptr.To(YtsaurusJobImage),
-		QueryTrackerImage: QueryTrackerImageCurrent,
+		Images:    CurrentImages,
+		Namespace: namespace,
 	}
 	builder.CreateMinimal()
 	builder.WithBaseComponents()
@@ -296,7 +398,7 @@ func (b *YtsaurusBuilder) WithBootstrap() {
 func (b *YtsaurusBuilder) WithQueryTracker() {
 	b.Ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			Image:                 ptr.To(b.QueryTrackerImage),
+			Image:                 ptr.To(b.Images.QueryTracker),
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
 			Loggers:               b.CreateLoggersSpec(),
@@ -307,7 +409,7 @@ func (b *YtsaurusBuilder) WithQueryTracker() {
 func (b *YtsaurusBuilder) WithYqlAgent() {
 	b.Ytsaurus.Spec.YQLAgents = &ytv1.YQLAgentSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			Image:                 ptr.To(b.QueryTrackerImage),
+			Image:                 ptr.To(b.Images.QueryTracker),
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
 			Loggers:               b.CreateLoggersSpec(),
@@ -316,7 +418,7 @@ func (b *YtsaurusBuilder) WithYqlAgent() {
 }
 
 func (b *YtsaurusBuilder) WithQueueAgent() {
-	image := b.YtsaurusImage
+	image := b.Images.Core
 	// Older version doesn't have /usr/bin/ytserver-queue-agent
 	if image == YtsaurusImage23_2 {
 		image = YtsaurusImage24_1
@@ -456,7 +558,7 @@ func (b *YtsaurusBuilder) CreateTabletNodeSpec(instanceCount int32) ytv1.Instanc
 
 func (b *YtsaurusBuilder) WithStrawberryController() {
 	b.Ytsaurus.Spec.StrawberryController = &ytv1.StrawberryControllerSpec{
-		Image: ptr.To(StrawberryImageCurrent),
+		Image: ptr.To(b.Images.Strawberry),
 	}
 }
 
@@ -470,7 +572,7 @@ func (b *YtsaurusBuilder) CreateChyt() *ytv1.Chyt {
 			Ytsaurus: &corev1.LocalObjectReference{
 				Name: YtsaurusName,
 			},
-			Image:              ChytImageCurrent,
+			Image:              b.Images.Chyt,
 			MakeDefault:        true,
 			CreatePublicClique: ptr.To(true),
 		},

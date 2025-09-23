@@ -125,14 +125,14 @@ func getMasterPod(name, namespace string) corev1.Pod {
 
 func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client) {
 	By("Run cluster impossible update")
-	Expect(ytsaurus.Spec.CoreImage).To(Equal(testutil.YtsaurusImageCurrent))
-	ytsaurus.Spec.CoreImage = testutil.YtsaurusImageFuture
+	Expect(ytsaurus.Spec.CoreImage).To(Equal(testutil.CurrentImages.Core))
+	ytsaurus.Spec.CoreImage = testutil.FutureImages.Core
 	UpdateObject(ctx, ytsaurus)
 
 	EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStateImpossibleToStart))
 
 	By("Set previous core image")
-	ytsaurus.Spec.CoreImage = testutil.YtsaurusImageCurrent
+	ytsaurus.Spec.CoreImage = testutil.CurrentImages.Core
 	UpdateObject(ctx, ytsaurus)
 
 	By("Wait for running")
@@ -246,10 +246,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		By("Creating minimal Ytsaurus spec")
 		ytBuilder = &testutil.YtsaurusBuilder{
-			Namespace:         namespace,
-			YtsaurusImage:     testutil.YtsaurusImageCurrent,
-			JobImage:          ptr.To(testutil.YtsaurusJobImage),
-			QueryTrackerImage: testutil.QueryTrackerImageCurrent,
+			Images:    testutil.CurrentImages,
+			Namespace: namespace,
 		}
 		ytBuilder.CreateMinimal()
 		ytsaurus = ytBuilder.Ytsaurus
@@ -1220,8 +1218,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 							Name: testutil.RemoteResourceName,
 						},
 						CommonSpec: ytv1.CommonSpec{
-							CoreImage: testutil.YtsaurusImageCurrent,
-							JobImage:  ptr.To(testutil.YtsaurusJobImage),
+							CoreImage: testutil.CurrentImages.Core,
+							JobImage:  ptr.To(testutil.CurrentImages.Job),
 						},
 						ExecNodesSpec: ytBuilder.CreateExecNodeSpec(),
 					},
@@ -1275,7 +1273,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 							Name: testutil.RemoteResourceName,
 						},
 						CommonSpec: ytv1.CommonSpec{
-							CoreImage: testutil.YtsaurusImageCurrent,
+							CoreImage: testutil.CurrentImages.Core,
 						},
 						DataNodesSpec: ytv1.DataNodesSpec{
 							InstanceSpec: ytBuilder.CreateDataNodeInstanceSpec(3),
@@ -1317,7 +1315,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 							Name: testutil.RemoteResourceName,
 						},
 						CommonSpec: ytv1.CommonSpec{
-							CoreImage: testutil.YtsaurusImageCurrent,
+							CoreImage: testutil.CurrentImages.Core,
 						},
 						TabletNodesSpec: ytv1.TabletNodesSpec{
 							InstanceSpec: ytBuilder.CreateTabletNodeSpec(3),
@@ -1553,16 +1551,21 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		}) // integration chyt
 
-		DescribeTableSubtree("With Bus RPC TLS", Label("tls"), func(coreImage, chytImage string) {
+		DescribeTableSubtree("With Bus RPC TLS", Label("tls"), func(images testutil.YtsaurusImages) {
 			var nativeServerCert, nativeClientCert *certv1.Certificate
 
 			BeforeEach(func() {
-				log.Info("YTsaurus images", "coreImage", coreImage, "chytImage", chytImage)
-				if coreImage == "" || chytImage == "" {
-					Skip("Ytsaurus or chyt image is not specified")
+				log.Info("YTsaurus images",
+					"coreImage", images.Core,
+					"chytImage", images.Chyt,
+					"strawberry", images.Strawberry,
+					"queryTracker", images.QueryTracker,
+				)
+				if images.Core == "" || images.Chyt == "" || images.Strawberry == "" || images.QueryTracker == "" {
+					Skip("One of required images is not specified")
 				}
 
-				requiredImages = append(requiredImages, chytImage)
+				requiredImages = append(requiredImages, images.Core, images.Chyt, images.Strawberry, images.QueryTracker)
 
 				By("Adding native transport TLS certificates")
 				nativeServerCert = certBuilder.BuildCertificate(ytsaurus.Name+"-server", []string{
@@ -1588,7 +1591,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					TLSPeerAlternativeHostName: ytsaurus.Name,
 				}
 
-				if testutil.YtsaurusTLSReady {
+				if images.MutualTLSReady {
 					By("Enabling RPC proxy public address")
 					ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
 						RPCProxyHavePublicAddress: true,
@@ -1605,7 +1608,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				}
 
 				By("Adding all components")
-				ytsaurus.Spec.CoreImage = coreImage
+				ytsaurus.Spec.CoreImage = images.Core
+				ytBuilder.Images = images
 				ytBuilder.WithBaseComponents()
 				ytBuilder.WithRPCProxies()
 				ytBuilder.WithQueryTracker()
@@ -1617,7 +1621,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Adding CHYT instance")
 				chyt = ytBuilder.CreateChyt()
-				chyt.Spec.Image = chytImage
+				chyt.Spec.Image = images.Chyt
 				objects = append(objects, chyt)
 			})
 
@@ -1659,7 +1663,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					ytClient = getYtClient(ytProxyAddress)
 				})
 
-				if testutil.YtsaurusTLSReady {
+				if images.StrawberryHandlesRestarts {
 					By("Waiting for chyt operation restart by strawberry")
 					Eventually(queryClickHouseID, chytBootstrapTimeout).WithArguments(ytProxyAddress).ToNot(Equal(clickHouseID))
 				} else {
@@ -1679,9 +1683,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				)).To(Equal("0\n"))
 			})
 		},
-			Entry("YTsaurus current", Label("current"), testutil.YtsaurusImageCurrent, testutil.ChytImageCurrent),
-			Entry("YTsaurus future", Label("future"), testutil.YtsaurusImageFuture, testutil.ChytImageFuture),
-			Entry("YTsaurus nightly", Label("nightly"), testutil.YtsaurusImageNightly, testutil.ChytImageNightly),
+			Entry("YTsaurus 24.2", Label("24.2"), testutil.YtsaurusImages24_2),
+			Entry("YTsaurus 25.1", Label("25.1"), testutil.YtsaurusImages25_1),
+			Entry("YTsaurus 25.2", Label("25.2"), testutil.YtsaurusImages25_2),
+			Entry("YTsaurus twilight", Label("twilight"), testutil.TwilightImages),
+			Entry("YTsaurus nightly", Label("nightly"), testutil.NightlyImages),
 		) // integration tls
 
 	}) // integration
