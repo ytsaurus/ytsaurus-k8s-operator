@@ -342,6 +342,66 @@ func (c *ClusterHealthReport) Collect(ytClient yt.Client) {
 	c.CollectTablets(ytClient, "//sys/tablet_cells", []string{"id", "health", "tablet_cell_bundle", "tablet_cell_life_stage", "status"})
 }
 
+type ClusterComponent struct {
+	Client  yt.Client
+	Type    consts.ComponentType
+	Address string
+	Orchid  ypath.Path
+}
+
+type BusService struct {
+	Name      string `yson:"name"`
+	Version   string `yson:"version"`
+	StartTime string `yson:"start_time"`
+	BuildTime string `yson:"build_time"`
+	BuildHost string `yson:"build_host"`
+}
+
+func (c *ClusterComponent) GetBusService(ctx context.Context) (BusService, error) {
+	var result BusService
+	err := c.Client.GetNode(ctx, c.Orchid.JoinChild("service"), &result, nil)
+	return result, err
+}
+
+type BusConnection struct {
+	Address          string           `yson:"address"`
+	Encrypted        bool             `yson:"encrypted"`
+	MultiplexingBand string           `yson:"multiplexing_band"`
+	Statistics       map[string]int64 `yson:"statistics"`
+}
+
+func (c *ClusterComponent) GetBusConnections(ctx context.Context) (map[string]BusConnection, error) {
+	var result map[string]BusConnection
+	err := c.Client.GetNode(ctx, c.Orchid.JoinChild("tcp_dispatcher", "connections"), &result, nil)
+	return result, err
+}
+
+func ListClusterComponents(ctx context.Context, ytClient yt.Client) ([]ClusterComponent, error) {
+	var nodes []ClusterComponent
+	for _, componentType := range consts.LocalComponentTypes {
+		compomentCypressPath := ypath.Path(consts.ComponentCypressPath(componentType))
+		if compomentCypressPath == "" {
+			continue
+		}
+		var addresses []string
+		if err := ytClient.ListNode(ctx, compomentCypressPath, &addresses, nil); err != nil {
+			if yterrors.ContainsResolveError(err) {
+				continue
+			}
+			return nil, err
+		}
+		for _, address := range addresses {
+			nodes = append(nodes, ClusterComponent{
+				Client:  ytClient,
+				Type:    componentType,
+				Address: address,
+				Orchid:  compomentCypressPath.JoinChild(address, "orchid"),
+			})
+		}
+	}
+	return nodes, nil
+}
+
 func queryClickHouse(ytProxyAddress, query string) (string, error) {
 	// See https://ytsaurus.tech/docs/en/user-guide/data-processing/chyt/try-chyt
 	url := fmt.Sprintf("http://%s/chyt?chyt.clique_alias=ch_public", ytProxyAddress)

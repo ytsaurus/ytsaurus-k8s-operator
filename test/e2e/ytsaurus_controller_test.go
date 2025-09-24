@@ -168,6 +168,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var ytRPCProxyAddress string
 	var ytRPCClient yt.Client
 	var ytRPCTLSClient yt.Client
+	var remoteComponentNames map[consts.ComponentType][]string
 
 	// NOTE: execution order for each test spec:
 	// - BeforeEach               (configuration)
@@ -261,6 +262,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 
 		generator = ytconfig.NewGenerator(ytsaurus, "cluster.local")
+		remoteComponentNames = make(map[consts.ComponentType][]string)
 
 		certBuilder = &testutil.CertBuilder{
 			Namespace:   namespace,
@@ -497,6 +499,52 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		By("Waiting operation completion", func() {
 			op.Wait()
 		})
+	})
+
+	JustBeforeEach(func(ctx context.Context) {
+		By("Checking cluster components")
+		clusterComponents, err := ListClusterComponents(ctx, ytClient)
+		Expect(err).To(Succeed())
+
+		componentGroups := func(componentType consts.ComponentType) []string {
+			names, err := generator.GetComponentNames(componentType)
+			Expect(err).To(Succeed())
+			return append(names, remoteComponentNames[componentType]...)
+		}
+
+		instances := map[consts.ComponentType]int{}
+		for _, component := range clusterComponents {
+			var busService BusService
+			Eventually(func(ctx context.Context) error {
+				var err error
+				busService, err = component.GetBusService(ctx)
+				return err
+			}, bootstrapTimeout, pollInterval, ctx).Should(Succeed())
+
+			log.Info("Cluster component instance",
+				"type", component.Type,
+				"address", component.Address,
+				"name", busService.Name,
+				"version", busService.Version,
+				"start_time", busService.StartTime,
+				"build_time", busService.BuildTime,
+			)
+			Expect(componentGroups(component.Type)).ToNot(BeEmpty(), "component %q", component.Type)
+			instances[component.Type] += 1
+		}
+
+		for _, componentType := range consts.LocalComponentTypes {
+			if consts.ComponentCypressPath(componentType) == "" {
+				continue
+			}
+			groups := componentGroups(componentType)
+			log.Info("Cluster component", "type", componentType, "groups", len(groups), "instances", instances[componentType])
+			if len(groups) == 0 {
+				Expect(instances[componentType]).To(BeZero(), "component %q", componentType)
+			} else {
+				Expect(instances[componentType]).To(BeNumerically(">=", len(groups)), "component %q", componentType)
+			}
+		}
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
@@ -1208,6 +1256,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				// Ensure that no local exec nodes exist, only remote ones (which will be created later).
 				ytsaurus.Spec.ExecNodes = nil
 
+				remoteComponentNames[consts.ExecNodeType] = []string{testutil.RemoteResourceName}
 				remoteNodes = &ytv1.RemoteExecNodes{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      testutil.RemoteResourceName,
@@ -1263,6 +1312,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Context("With remote data nodes", Label("data"), func() {
 			BeforeEach(func() {
 				By("Adding remote data nodes")
+				remoteComponentNames[consts.DataNodeType] = []string{testutil.RemoteResourceName}
 				remoteNodes = &ytv1.RemoteDataNodes{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      testutil.RemoteResourceName,
@@ -1305,6 +1355,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytBuilder.WithDataNodes()
 
 				By("Adding remote tablet nodes")
+				remoteComponentNames[consts.TabletNodeType] = []string{testutil.RemoteResourceName}
 				remoteNodes = &ytv1.RemoteTabletNodes{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      testutil.RemoteResourceName,
@@ -1625,10 +1676,27 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				objects = append(objects, chyt)
 			})
 
-			It("Verify that mTLS is active", func(ctx context.Context) {
-				// TODO(khlebnikov): Poke all RPC servers.
-				// TODO(khlebnikov): Check all RPC connections in orchid.
+			JustAfterEach(func(ctx context.Context) {
+				// TODO(khlebnikov): Ping component pairs.
+				// TODO(khlebnikov): Poke CHYT servers orchid.
+				By("Checking connections between cluster components")
+				clusterComponents, err := ListClusterComponents(ctx, ytClient)
+				Expect(err).To(Succeed())
+				for _, component := range clusterComponents {
+					// NOTE: This triggers connection between master and instance to fetch orchid.
+					conns, err := component.GetBusConnections(ctx)
+					Expect(err).To(Succeed())
+					log.Info("Bus connections", "type", component.Type, "node", component.Address, "count", len(conns))
+					for connID, conn := range conns {
+						if !conn.Encrypted && component.Type == consts.RpcProxyType {
+							continue
+						}
+						Expect(conn.Encrypted).To(BeTrue(), "connection %q between %q and %q band %q", connID, component.Address, conn.Address, conn.MultiplexingBand)
+					}
+				}
+			})
 
+			It("Verify that mTLS is active", func(ctx context.Context) {
 				By("Getting CHYT operation id")
 				clickHouseID, err := queryClickHouseID(ytProxyAddress)
 				Expect(err).To(Succeed())
@@ -1661,6 +1729,16 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					}, bootstrapTimeout, pollInterval, ctx).MustPassRepeatedly(5).Should(Succeed())
 					ytClient.Stop()
 					ytClient = getYtClient(ytProxyAddress)
+
+					// FIXME(khlebnikov): Workaround for DNS issues inside cluster.
+					components, err := ListClusterComponents(ctx, ytClient)
+					Expect(err).To(Succeed())
+					for _, component := range components {
+						Eventually(func(ctx context.Context) error {
+							_, err := component.GetBusService(ctx)
+							return err
+						}, bootstrapTimeout, pollInterval, ctx).Should(Succeed())
+					}
 				})
 
 				if images.StrawberryHandlesRestarts {
