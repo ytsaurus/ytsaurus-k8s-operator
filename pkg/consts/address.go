@@ -82,4 +82,7 @@ const (
 
 	BundleControllerRPCPort        = 9025
 	BundleControllerMonitoringPort = 10025
+
+	OffshoreNodeProxyRPCPort        = 9032
+	OffshoreNodeProxyMonitoringPort = 10032
 )

@@ -663,6 +663,10 @@ type BundleControllerSpec struct {
 	Disable      *bool `json:"disable,omitempty"`
 }
 
+type OffshoreNodeProxiesSpec struct {
+	InstanceSpec `json:",inline"`
+}
+
 type ClusterFeatures struct {
 	// RPC proxy have "public_rpc" address. Required for separated internal/public TLS CA.
 	RPCProxyHavePublicAddress bool `json:"rpcProxyHavePublicAddress,omitempty"`
@@ -797,6 +801,7 @@ type YtsaurusSpec struct {
 	QueueAgents          *QueueAgentSpec           `json:"queueAgents,omitempty"`
 	CypressProxies       *CypressProxiesSpec       `json:"cypressProxies,omitempty"`
 	BundleController     *BundleControllerSpec     `json:"bundleController,omitempty"`
+	OffshoreNodeProxies  *OffshoreNodeProxiesSpec  `json:"offshoreNodeProxies,omitempty"`
 
 	UI *UISpec `json:"ui,omitempty"`
 }

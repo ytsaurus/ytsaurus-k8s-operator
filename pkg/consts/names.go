@@ -44,6 +44,8 @@ func ComponentServicePrefix(component ComponentType) string {
 		return "yql-agents"
 	case TimbertruckType:
 		return "timbertrucks"
+	case OffshoreNodeProxyType:
+		return "offshore-node-proxies"
 	}
 
 	panic(fmt.Sprintf("No service is defined for component type: %s", component))
@@ -87,6 +89,8 @@ func GetServiceKebabCase(component ComponentType) string {
 		return "yql-agent"
 	case TimbertruckType:
 		return "timbertruck"
+	case OffshoreNodeProxyType:
+		return "offshore-node-proxy"
 	}
 	panic(fmt.Sprintf("No kebab case service name is defined for component type: %s", component))
 }
@@ -129,6 +133,8 @@ func GetStatefulSetPrefix(component ComponentType) string {
 		return "yqla"
 	case TimbertruckType:
 		return "tt"
+	case OffshoreNodeProxyType:
+		return "onp"
 	}
 	return ""
 }

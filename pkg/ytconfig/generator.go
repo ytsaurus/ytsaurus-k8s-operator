@@ -1112,6 +1112,29 @@ func (g *Generator) GetCypressProxiesConfig(spec *ytv1.CypressProxiesSpec) ([]by
 	return marshallYsonConfig(c)
 }
 
+func (g *Generator) getOffshoreNodeProxiesConfigImpl(spec *ytv1.OffshoreNodeProxiesSpec) (OffshoreNodeProxyServer, error) {
+	c, err := getOffshoreNodeProxiesCarcass(spec)
+	if err != nil {
+		return OffshoreNodeProxyServer{}, err
+	}
+
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+	c.BusClient = c.ClusterConnection.BusClient
+	return c, nil
+}
+
+func (g *Generator) GetOffshoreNodeProxiesConfig(spec *ytv1.OffshoreNodeProxiesSpec) ([]byte, error) {
+	if spec == nil {
+		return []byte{}, nil
+	}
+	c, err := g.getOffshoreNodeProxiesConfigImpl(spec)
+	if err != nil {
+		return nil, err
+	}
+	return marshallYsonConfig(c)
+}
+
 func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string, error) {
 	var names []string
 	switch component {

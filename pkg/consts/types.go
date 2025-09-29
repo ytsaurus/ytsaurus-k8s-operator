@@ -28,6 +28,7 @@ const (
 	ClusterConnectionType    ComponentType = "ClusterConnection"
 	NativeClientConfigType   ComponentType = "NativeClientConfig"
 	TimbertruckType          ComponentType = "Timbertruck"
+	OffshoreNodeProxyType    ComponentType = "OffshoreNodeProxy"
 )
 
 type ComponentClass string

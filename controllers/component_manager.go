@@ -161,6 +161,11 @@ func NewComponentManager(
 		allComponents = append(allComponents, bc)
 	}
 
+	if resource.Spec.OffshoreNodeProxies != nil {
+		onp := components.NewOffshoreNodeProxy(cfgen, ytsaurus)
+		allComponents = append(allComponents, onp)
+	}
+
 	tt := components.NewTimbertruck(cfgen, ytsaurus, tnds, yc)
 	allComponents = append(allComponents, tt)
 
