@@ -19,6 +19,7 @@ package controllers_test
 import (
 	"context"
 	"flag"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -65,11 +66,15 @@ var clientset *kubernetes.Clientset
 var ctx context.Context
 var log = logf.Log
 
-var enableE2E = flag.Bool("enable-e2e", false, "")
+func getDefaultE2EEnabled() bool {
+	return os.Getenv("YTOP_ENABLE_E2E") == "true"
+}
+
+var enableE2E = flag.Bool("enable-e2e", getDefaultE2EEnabled(), "Enable e2e tests (can also be set via YTOP_ENABLE_E2E environment variable)")
 
 var _ = BeforeEach(func() {
 	if !*enableE2E {
-		Skip("skipping E2E tests: add option --enable-e2e")
+		Skip("skipping E2E tests: add option --enable-e2e or set YTOP_ENABLE_E2E=true")
 	}
 })
 

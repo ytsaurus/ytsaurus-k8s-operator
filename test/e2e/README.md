@@ -7,7 +7,16 @@ The flow:
 2) build the YTsaurus operator helm chart
 3) install helm chart in the Kind cluster
 4) preload test YTsaurus images in kind so pods wouldn't have to download them in tests every time
-5) run e2e tests with `make test-e2e`
+5) run e2e tests with `make test-e2e` or `make test-e2e-env` (using environment variable)
+
+## Enabling E2E Tests
+
+E2E tests can be enabled in two ways:
+
+1. **CLI flag**: Use `make test-e2e` which passes the `--enable-e2e` flag
+2. **Environment variable**: Set `YTOP_ENABLE_E2E=true` and run tests with `make test-e2e-env` or directly with ginkgo
+
+The environment variable approach is useful when you want to enable e2e tests without modifying command line arguments, for example in CI/CD pipelines or when running tests through IDEs.
 
 ## Development
 In the development, kind cluster (with preloaded images) can be created once and reused between e2e runs. 
