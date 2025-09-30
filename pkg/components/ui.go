@@ -266,7 +266,7 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && u.microservice.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -275,14 +275,14 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 				if !dry {
 					err = removePods(ctx, u.microservice, &u.localComponent)
 				}
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+				return ComponentStatusUpdateStep("pods removal"), err
 			}
 
 			if u.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
-				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
+				return ComponentStatusReady(), err
 			}
 		} else {
-			return NewComponentStatus(SyncStatusReady, "Not updating component"), err
+			return ComponentStatusReadyAfter("Not updating component"), err
 		}
 	}
 
@@ -290,8 +290,8 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	if err != nil {
 		return masterStatus, err
 	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, u.master.GetFullName()), err
+	if !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(u.master.GetFullName()), err
 	}
 
 	if u.secret.NeedSync(consts.TokenSecretKey, "") {
@@ -304,7 +304,7 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 			}
 			err = u.secret.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, u.secret.Name()), err
+		return ComponentStatusWaitingFor(u.secret.Name()), err
 	}
 
 	if !dry {
@@ -319,14 +319,14 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		if !dry {
 			err = u.syncComponents(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !u.microservice.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusPending, "pods"), err
+		return ComponentStatusWaitingFor("pods"), err
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (u *UI) Status(ctx context.Context) (ComponentStatus, error) {

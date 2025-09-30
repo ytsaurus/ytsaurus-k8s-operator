@@ -52,7 +52,7 @@ func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(d.ytsaurus.GetClusterState()) && d.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -65,14 +65,14 @@ func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		if !dry {
 			err = d.server.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !d.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (d *Discovery) Status(ctx context.Context) (ComponentStatus, error) {

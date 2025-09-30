@@ -59,7 +59,7 @@ func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && n.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -77,22 +77,22 @@ func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	if err != nil {
 		return masterStatus, err
 	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, n.master.GetFullName()), err
+	if !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(n.master.GetFullName()), err
 	}
 
 	if n.NeedSync() {
 		if !dry {
 			err = n.server.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !n.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (n *DataNode) Status(ctx context.Context) (ComponentStatus, error) {
@@ -122,5 +122,5 @@ func (n *DataNode) handleImaginaryChunksMigration(ctx context.Context, dry bool)
 			&n.localComponent,
 		)
 	}
-	return ptr.To(WaitingStatus(SyncStatusUpdating, "pods removal for imaginary chunks migration")), err
+	return ptr.To(ComponentStatusUpdateStep("pods removal for imaginary chunks migration")), err
 }

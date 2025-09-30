@@ -169,14 +169,14 @@ func handleUpdatingClusterState(
 			if !dry {
 				err = removePods(ctx, server, cmpBase)
 			}
-			return ptr.To(WaitingStatus(SyncStatusUpdating, "pods removal")), err
+			return ptr.To(ComponentStatusUpdateStep("pods removal")), err
 		}
 
 		if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
-			return ptr.To(NewComponentStatus(SyncStatusReady, "Nothing to do now")), err
+			return ptr.To(ComponentStatusReady()), err
 		}
 	} else {
-		return ptr.To(NewComponentStatus(SyncStatusReady, "Not updating component")), err
+		return ptr.To(ComponentStatusReadyAfter("Not updating component")), err
 	}
 	return nil, err
 }

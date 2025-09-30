@@ -120,7 +120,7 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	var err error
 
 	if ytv1.IsReadyToUpdateClusterState(s.ytsaurus.GetClusterState()) && s.server.needUpdate() {
-		return SimpleStatus(SyncStatusNeedLocalUpdate), err
+		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
 	if s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -129,7 +129,7 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 				if !dry {
 					err = removePods(ctx, s.server, &s.localComponent)
 				}
-				return WaitingStatus(SyncStatusUpdating, "pods removal"), err
+				return ComponentStatusUpdateStep("pods removal"), err
 			}
 
 			if status, err := s.updateOpArchive(ctx, dry); status != nil {
@@ -138,10 +138,10 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 
 			if s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
 				s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForOpArchiveUpdate {
-				return NewComponentStatus(SyncStatusReady, "Nothing to do now"), err
+				return ComponentStatusReady(), err
 			}
 		} else {
-			return NewComponentStatus(SyncStatusReady, "Not updating component"), err
+			return ComponentStatusReadyAfter("Not updating component"), err
 		}
 	}
 
@@ -149,8 +149,8 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	if err != nil {
 		return masterStatus, err
 	}
-	if !IsRunningStatus(masterStatus.SyncStatus) {
-		return WaitingStatus(SyncStatusBlocked, s.master.GetFullName()), err
+	if !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(s.master.GetFullName()), err
 	}
 
 	for _, end := range s.execNodes {
@@ -158,9 +158,9 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		if err != nil {
 			return endStatus, err
 		}
-		if !IsRunningStatus(endStatus.SyncStatus) {
+		if !endStatus.IsRunning() {
 			// It makes no sense to start scheduler without exec nodes.
-			return WaitingStatus(SyncStatusBlocked, end.GetFullName()), err
+			return ComponentStatusBlockedBy(end.GetFullName()), err
 		}
 	}
 
@@ -172,23 +172,23 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 			}
 			err = s.secret.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, s.secret.Name()), err
+		return ComponentStatusWaitingFor(s.secret.Name()), err
 	}
 
 	if s.NeedSync() {
 		if !dry {
 			err = s.server.Sync(ctx)
 		}
-		return WaitingStatus(SyncStatusPending, "components"), err
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	if !s.server.arePodsReady(ctx) {
-		return WaitingStatus(SyncStatusBlocked, "pods"), err
+		return ComponentStatusBlockedBy("pods"), err
 	}
 
 	if !s.needOpArchiveInit() {
 		// Don't initialize operations archive.
-		return SimpleStatus(SyncStatusReady), err
+		return ComponentStatusReady(), err
 	}
 
 	return s.initOpArchive(ctx, dry)
@@ -209,9 +209,9 @@ func (s *Scheduler) initOpArchive(ctx context.Context, dry bool) (ComponentStatu
 		if err != nil {
 			return tndStatus, err
 		}
-		if !IsRunningStatus(tndStatus.SyncStatus) {
+		if !tndStatus.IsRunning() {
 			// Wait for tablet nodes to proceed with operations archive init.
-			return WaitingStatus(SyncStatusBlocked, tnd.GetFullName()), err
+			return ComponentStatusBlockedBy(tnd.GetFullName()), err
 		}
 	}
 
