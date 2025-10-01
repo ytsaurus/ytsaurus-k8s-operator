@@ -19,8 +19,16 @@ import (
 )
 
 const (
-	defaultHostAddressLabel = "kubernetes.io/hostname"
-	mediumInitQuota         = 1 << 30 // enough to start the cluster
+	defaultHostAddressLabel                  = "kubernetes.io/hostname"
+	mediumInitQuota                          = 1 << 30 // enough to start the cluster
+	hydraPersistenceUploaderSupervisorScript = `
+while true; do
+	/usr/bin/hydra_persistence_uploader &
+	PID=$!
+	wait $PID
+	echo "hydra_persistence_uploader process with PID $PID exited. Restarting in 10 seconds..."
+	sleep 10
+done`
 )
 
 type Master struct {
@@ -616,7 +624,7 @@ func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.Pod
 		corev1.Container{
 			Name:    consts.HydraPersistenceUploaderContainerName,
 			Image:   hydraImage,
-			Command: []string{"/usr/bin/hydra_persistence_uploader"},
+			Command: []string{"/bin/bash", "-c", hydraPersistenceUploaderSupervisorScript},
 			Env: append([]corev1.EnvVar{
 				{
 					Name: consts.TokenSecretKey,
