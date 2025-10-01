@@ -116,7 +116,7 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minRe
 
 	readyInstanceCount := 0
 	for _, pod := range podList.Items {
-		ready := false
+		var ready bool
 		if len(byContainerNames) > 0 {
 			ready = checkReadinessByContainers(pod, byContainerNames)
 		} else {
