@@ -287,11 +287,14 @@ k8s-install-ytsaurus-dev-ca:
 
 .PHONY: helm-install
 helm-install: ## Install helm chart from sources.
-	$(HELM) upgrade --install --wait $(OPERATOR_INSTANCE) $(OPERATOR_CHART) \
-		-n $(OPERATOR_NAMESPACE) --create-namespace \
+	-$(KUBECTL) create ns $(OPERATOR_NAMESPACE)
+	$(HELM) template $(OPERATOR_INSTANCE) $(OPERATOR_CHART) \
+		-n $(OPERATOR_NAMESPACE) \
 		--set controllerManager.manager.image.repository=${OPERATOR_IMAGE} \
-		--set controllerManager.manager.image.tag=${OPERATOR_TAG}
+		--set controllerManager.manager.image.tag=${OPERATOR_TAG} | \
+	$(KUBECTL) apply -n $(OPERATOR_NAMESPACE) --server-side -f -
 	$(KUBECTL) -n $(OPERATOR_NAMESPACE) rollout restart deployment -l app.kubernetes.io/instance=$(OPERATOR_INSTANCE)
+	$(KUBECTL) -n $(OPERATOR_NAMESPACE) wait deployment --for=condition=available --all --timeout=1m
 
 .PHONY: helm-kind-install
 helm-kind-install: helm-chart docker-build ## Build docker image, load into kind and install helm chart.
@@ -305,7 +308,9 @@ helm-minikube-install: helm-chart ## Build docker image in minikube and install 
 
 .PHONY: helm-uninstall
 helm-uninstall: ## Uninstal helm chart.
-	$(HELM) uninstall -n $(OPERATOR_NAMESPACE) $(OPERATOR_INSTANCE)
+	$(HELM) template $(OPERATOR_INSTANCE) $(OPERATOR_CHART) \
+		-n $(OPERATOR_NAMESPACE) | \
+	$(KUBECTL) delete -n $(OPERATOR_NAMESPACE) -f -
 
 .PHONY: kind-deploy-ytsaurus
 kind-deploy-ytsaurus: ## Deploy sample ytsaurus cluster and all requirements.
