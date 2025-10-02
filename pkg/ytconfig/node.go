@@ -293,7 +293,7 @@ func findVolumeClaimTemplate(volumeName string, spec ytv1.InstanceSpec) *ytv1.Em
 	return nil
 }
 
-func findVolume(volumeName string, spec ytv1.InstanceSpec) *corev1.Volume {
+func findVolume(volumeName string, spec ytv1.InstanceSpec) *ytv1.Volume {
 	for _, volume := range spec.Volumes {
 		if volume.Name == volumeName {
 			return &volume

@@ -93,7 +93,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -104,7 +104,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -150,10 +150,10 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `httpPort` _integer_ |  | 8123 |  |
-| `httpNodePort` _integer_ |  |  |  |
-| `httpsPort` _integer_ |  | 8443 |  |
-| `httpsNodePort` _integer_ |  |  |  |
+| `httpPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  | 8123 |  |
+| `httpNodePort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `httpsPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  | 8443 |  |
+| `httpsNodePort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 
 
 #### CRIJobEnvironmentSpec
@@ -170,17 +170,17 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `criService` _[CRIServiceType](#criservicetype)_ | CRI service: containerd (default), crio, none. |  | Enum: [containerd crio none] <br /> |
-| `monitoringPort` _integer_ | CRI service monitoring port, default is 10026, set 0 to disable. |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ | CRI service monitoring port, default is 10026, set 0 to disable. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for CRI service command, default: ["tini", "--"]. |  |  |
 | `sandboxImage` _string_ | Sandbox (pause) image. |  |  |
-| `apiRetryTimeoutSeconds` _integer_ | Timeout for retrying CRI API calls. |  |  |
+| `apiRetryTimeoutSeconds` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ | Timeout for retrying CRI API calls. |  |  |
 | `criNamespace` _string_ | CRI namespace for jobs containers. |  |  |
 | `baseCgroup` _string_ | Base cgroup for jobs. |  |  |
 | `registryConfigPath` _string_ | For containerd: https://github.com/containerd/containerd/blob/main/docs/hosts.md |  |  |
 | `imageSizeEstimation` _integer_ | Initial estimation for space required for pulling image into cache. |  |  |
-| `imageCompressionRatioEstimation` _integer_ | Multiplier for image size to account space used by unpacked images. |  |  |
+| `imageCompressionRatioEstimation` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ | Multiplier for image size to account space used by unpacked images. |  |  |
 | `alwaysPullLatestImage` _boolean_ | Always pull "latest" images. |  |  |
-| `imagePullPeriodSeconds` _integer_ | Pull images periodically. |  |  |
+| `imagePullPeriodSeconds` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ | Pull images periodically. |  |  |
 
 
 #### CRIServiceType
@@ -481,7 +481,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -492,7 +492,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -522,7 +522,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -533,7 +533,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -565,7 +565,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -576,7 +576,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -626,7 +626,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -637,7 +637,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -726,7 +726,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -737,7 +737,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -798,7 +798,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -809,7 +809,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -823,10 +823,10 @@ _Appears in:_
 | `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  | NodePort |  |
-| `httpPort` _integer_ |  | 80 |  |
-| `httpsPort` _integer_ |  | 443 |  |
-| `httpNodePort` _integer_ |  |  |  |
-| `httpsNodePort` _integer_ |  |  |  |
+| `httpPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  | 80 |  |
+| `httpsPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  | 443 |  |
+| `httpNodePort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `httpsNodePort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `chytProxy` _[CHYTProxySpec](#chytproxyspec)_ |  |  |  |
 | `role` _string_ |  | default | MinLength: 1 <br /> |
 | `transport` _[HTTPTransportSpec](#httptransportspec)_ |  |  |  |
@@ -941,7 +941,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -952,7 +952,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1020,7 +1020,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -1031,7 +1031,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1246,7 +1246,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -1257,7 +1257,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1308,7 +1308,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -1319,7 +1319,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1426,7 +1426,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -1437,7 +1437,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1467,7 +1467,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -1478,7 +1478,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1508,7 +1508,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -1519,7 +1519,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1533,7 +1533,7 @@ _Appears in:_
 | `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  |  |  |
-| `nodePort` _integer_ |  |  |  |
+| `nodePort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `role` _string_ |  | default | MinLength: 1 <br /> |
 | `transport` _[RPCTransportSpec](#rpctransportspec)_ |  |  |  |
 
@@ -1651,7 +1651,7 @@ _Appears in:_
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -1662,7 +1662,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1748,7 +1748,7 @@ _Appears in:_
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -1759,7 +1759,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1890,7 +1890,7 @@ _Appears in:_
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -1901,7 +1901,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1972,7 +1972,7 @@ _Appears in:_
 | `hostAddresses` _string array_ |  |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -1983,7 +1983,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -2029,7 +2029,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -2040,7 +2040,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -2210,7 +2210,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -2221,7 +2221,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -2273,7 +2273,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -2284,7 +2284,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -2378,7 +2378,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ |  |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  | NodePort |  |
-| `httpNodePort` _integer_ |  |  |  |
+| `httpNodePort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `useInsecureCookies` _boolean_ | If defined allows insecure (over http) authentication. | true |  |
 | `secure` _boolean_ | Use secure connection to the cluster's http-proxies. | false |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -2496,6 +2496,85 @@ _Appears in:_
 | `tabletCellBundles` _[TabletCellBundleInfo](#tabletcellbundleinfo) array_ |  |  |  |
 
 
+#### Volume
+
+
+
+Volume is a reduced version of core/v1 Volume.
+Represents a named volume in a pod that may be accessed by any container in the pod.
+
+
+
+_Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
+- [ControllerAgentsSpec](#controlleragentsspec)
+- [CypressProxiesSpec](#cypressproxiesspec)
+- [DataNodesSpec](#datanodesspec)
+- [DiscoverySpec](#discoveryspec)
+- [ExecNodesSpec](#execnodesspec)
+- [HTTPProxiesSpec](#httpproxiesspec)
+- [InstanceSpec](#instancespec)
+- [KafkaProxiesSpec](#kafkaproxiesspec)
+- [MasterCachesSpec](#mastercachesspec)
+- [MastersSpec](#mastersspec)
+- [QueryTrackerSpec](#querytrackerspec)
+- [QueueAgentSpec](#queueagentspec)
+- [RPCProxiesSpec](#rpcproxiesspec)
+- [RemoteDataNodesSpec](#remotedatanodesspec)
+- [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
+- [RemoteYtsaurusSpec](#remoteytsaurusspec)
+- [SchedulersSpec](#schedulersspec)
+- [TCPProxiesSpec](#tcpproxiesspec)
+- [TabletNodesSpec](#tabletnodesspec)
+- [YQLAgentSpec](#yqlagentspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | name of the volume.<br />Must be a DNS_LABEL and unique within the pod.<br />More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names |  |  |
+| `hostPath` _[HostPathVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#hostpathvolumesource-v1-core)_ | hostPath represents a pre-existing file or directory on the host<br />machine that is directly exposed to the container. This is generally<br />used for system agents or other privileged things that are allowed<br />to see the host machine. Most containers will NOT need this.<br />More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath |  |  |
+| `emptyDir` _[EmptyDirVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#emptydirvolumesource-v1-core)_ | emptyDir represents a temporary directory that shares a pod's lifetime.<br />More info: https://kubernetes.io/docs/concepts/storage/volumes#emptydir |  |  |
+| `secret` _[SecretVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#secretvolumesource-v1-core)_ | secret represents a secret that should populate this volume.<br />More info: https://kubernetes.io/docs/concepts/storage/volumes#secret |  |  |
+| `nfs` _[NFSVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#nfsvolumesource-v1-core)_ | nfs represents an NFS mount on the host that shares a pod's lifetime<br />More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs |  |  |
+| `iscsi` _[ISCSIVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#iscsivolumesource-v1-core)_ | iscsi represents an ISCSI Disk resource that is attached to a<br />kubelet's host machine and then exposed to the pod.<br />More info: https://examples.k8s.io/volumes/iscsi/README.md |  |  |
+| `persistentVolumeClaim` _[PersistentVolumeClaimVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#persistentvolumeclaimvolumesource-v1-core)_ | persistentVolumeClaimVolumeSource represents a reference to a<br />PersistentVolumeClaim in the same namespace.<br />More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims |  |  |
+| `downwardAPI` _[DownwardAPIVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#downwardapivolumesource-v1-core)_ | downwardAPI represents downward API about the pod that should populate this volume |  |  |
+| `fc` _[FCVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#fcvolumesource-v1-core)_ | fc represents a Fibre Channel resource that is attached to a kubelet's host machine and then exposed to the pod. |  |  |
+| `configMap` _[ConfigMapVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#configmapvolumesource-v1-core)_ | configMap represents a configMap that should populate this volume |  |  |
+| `csi` _[CSIVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#csivolumesource-v1-core)_ | csi (Container Storage Interface) represents ephemeral storage that is handled by certain external CSI drivers (Beta feature). |  |  |
+| `ephemeral` _[EphemeralVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#ephemeralvolumesource-v1-core)_ | ephemeral represents a volume that is handled by a cluster storage driver.<br />The volume's lifecycle is tied to the pod that defines it - it will be created before the pod starts,<br />and deleted when the pod is removed.<br />Use this if:<br />a) the volume is only needed while the pod runs,<br />b) features of normal volumes like restoring from snapshot or capacity<br />   tracking are needed,<br />c) the storage driver is specified through a storage class, and<br />d) the storage driver supports dynamic volume provisioning through<br />   a PersistentVolumeClaim (see EphemeralVolumeSource for more<br />   information on the connection between this volume type<br />   and PersistentVolumeClaim).<br />Use PersistentVolumeClaim or one of the vendor-specific<br />APIs for volumes that persist for longer than the lifecycle<br />of an individual pod.<br />Use CSI for light-weight local ephemeral volumes if the CSI driver is meant to<br />be used that way - see the documentation of the driver for<br />more information.<br />A pod can use both types of ephemeral volumes and<br />persistent volumes at the same time. |  |  |
+| `image` _[ImageVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#imagevolumesource-v1-core)_ | image represents an OCI object (a container image or artifact) pulled and mounted on the kubelet's host machine.<br />The volume is resolved at pod startup depending on which PullPolicy value is provided:<br />- Always: the kubelet always attempts to pull the reference. Container creation will fail If the pull fails.<br />- Never: the kubelet never pulls the reference and only uses a local image or artifact. Container creation will fail if the reference isn't present.<br />- IfNotPresent: the kubelet pulls if the reference isn't already present on disk. Container creation will fail if the reference isn't present and the pull fails.<br />The volume gets re-resolved if the pod gets deleted and recreated, which means that new remote content will become available on pod recreation.<br />A failure to resolve or pull the image during pod startup will block containers from starting and may add significant latency. Failures will be retried using normal volume backoff and will be reported on the pod reason and message.<br />The types of objects that may be mounted by this volume are defined by the container runtime implementation on a host machine and at minimum must include all valid types supported by the container image field.<br />The OCI object gets mounted in a single directory (spec.containers[*].volumeMounts.mountPath) by merging the manifest layers in the same way as for container images.<br />The volume will be mounted read-only (ro) and non-executable files (noexec).<br />Sub path mounts for containers are not supported (spec.containers[*].volumeMounts.subpath).<br />The field spec.securityContext.fsGroupChangePolicy has no effect on this volume type. |  |  |
+
+
+#### VolumeSource
+
+
+
+VolumeSource is a reduced version of core/v1 VolumeSource.
+Represents the source of a volume to mount.
+Only one of its members may be specified.
+
+
+
+_Appears in:_
+- [Volume](#volume)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `hostPath` _[HostPathVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#hostpathvolumesource-v1-core)_ | hostPath represents a pre-existing file or directory on the host<br />machine that is directly exposed to the container. This is generally<br />used for system agents or other privileged things that are allowed<br />to see the host machine. Most containers will NOT need this.<br />More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath |  |  |
+| `emptyDir` _[EmptyDirVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#emptydirvolumesource-v1-core)_ | emptyDir represents a temporary directory that shares a pod's lifetime.<br />More info: https://kubernetes.io/docs/concepts/storage/volumes#emptydir |  |  |
+| `secret` _[SecretVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#secretvolumesource-v1-core)_ | secret represents a secret that should populate this volume.<br />More info: https://kubernetes.io/docs/concepts/storage/volumes#secret |  |  |
+| `nfs` _[NFSVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#nfsvolumesource-v1-core)_ | nfs represents an NFS mount on the host that shares a pod's lifetime<br />More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs |  |  |
+| `iscsi` _[ISCSIVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#iscsivolumesource-v1-core)_ | iscsi represents an ISCSI Disk resource that is attached to a<br />kubelet's host machine and then exposed to the pod.<br />More info: https://examples.k8s.io/volumes/iscsi/README.md |  |  |
+| `persistentVolumeClaim` _[PersistentVolumeClaimVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#persistentvolumeclaimvolumesource-v1-core)_ | persistentVolumeClaimVolumeSource represents a reference to a<br />PersistentVolumeClaim in the same namespace.<br />More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims |  |  |
+| `downwardAPI` _[DownwardAPIVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#downwardapivolumesource-v1-core)_ | downwardAPI represents downward API about the pod that should populate this volume |  |  |
+| `fc` _[FCVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#fcvolumesource-v1-core)_ | fc represents a Fibre Channel resource that is attached to a kubelet's host machine and then exposed to the pod. |  |  |
+| `configMap` _[ConfigMapVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#configmapvolumesource-v1-core)_ | configMap represents a configMap that should populate this volume |  |  |
+| `csi` _[CSIVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#csivolumesource-v1-core)_ | csi (Container Storage Interface) represents ephemeral storage that is handled by certain external CSI drivers (Beta feature). |  |  |
+| `ephemeral` _[EphemeralVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#ephemeralvolumesource-v1-core)_ | ephemeral represents a volume that is handled by a cluster storage driver.<br />The volume's lifecycle is tied to the pod that defines it - it will be created before the pod starts,<br />and deleted when the pod is removed.<br />Use this if:<br />a) the volume is only needed while the pod runs,<br />b) features of normal volumes like restoring from snapshot or capacity<br />   tracking are needed,<br />c) the storage driver is specified through a storage class, and<br />d) the storage driver supports dynamic volume provisioning through<br />   a PersistentVolumeClaim (see EphemeralVolumeSource for more<br />   information on the connection between this volume type<br />   and PersistentVolumeClaim).<br />Use PersistentVolumeClaim or one of the vendor-specific<br />APIs for volumes that persist for longer than the lifecycle<br />of an individual pod.<br />Use CSI for light-weight local ephemeral volumes if the CSI driver is meant to<br />be used that way - see the documentation of the driver for<br />more information.<br />A pod can use both types of ephemeral volumes and<br />persistent volumes at the same time. |  |  |
+| `image` _[ImageVolumeSource](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#imagevolumesource-v1-core)_ | image represents an OCI object (a container image or artifact) pulled and mounted on the kubelet's host machine.<br />The volume is resolved at pod startup depending on which PullPolicy value is provided:<br />- Always: the kubelet always attempts to pull the reference. Container creation will fail If the pull fails.<br />- Never: the kubelet never pulls the reference and only uses a local image or artifact. Container creation will fail if the reference isn't present.<br />- IfNotPresent: the kubelet pulls if the reference isn't already present on disk. Container creation will fail if the reference isn't present and the pull fails.<br />The volume gets re-resolved if the pod gets deleted and recreated, which means that new remote content will become available on pod recreation.<br />A failure to resolve or pull the image during pod startup will block containers from starting and may add significant latency. Failures will be retried using normal volume backoff and will be reported on the pod reason and message.<br />The types of objects that may be mounted by this volume are defined by the container runtime implementation on a host machine and at minimum must include all valid types supported by the container image field.<br />The OCI object gets mounted in a single directory (spec.containers[*].volumeMounts.mountPath) by merging the manifest layers in the same way as for container images.<br />The volume will be mounted read-only (ro) and non-executable files (noexec).<br />Sub path mounts for containers are not supported (spec.containers[*].volumeMounts.subpath).<br />The field spec.securityContext.fsGroupChangePolicy has no effect on this volume type. |  |  |
+
+
 #### YQLAgentSpec
 
 
@@ -2511,7 +2590,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
@@ -2522,7 +2601,7 @@ _Appears in:_
 | `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
