@@ -25,6 +25,30 @@ func createVolumeClaims(specVolumeClaimTemplates []ytv1.EmbeddedPersistentVolume
 	return volumeClaims
 }
 
+func createVolumes(specVolumes []ytv1.Volume) []corev1.Volume {
+	volumes := make([]corev1.Volume, 0, len(specVolumes))
+	for _, volume := range specVolumes {
+		volumes = append(volumes, corev1.Volume{
+			Name: volume.Name,
+			VolumeSource: corev1.VolumeSource{
+				HostPath:              volume.HostPath,
+				EmptyDir:              volume.EmptyDir,
+				Secret:                volume.Secret,
+				NFS:                   volume.NFS,
+				ISCSI:                 volume.ISCSI,
+				PersistentVolumeClaim: volume.PersistentVolumeClaim,
+				DownwardAPI:           volume.DownwardAPI,
+				FC:                    volume.FC,
+				ConfigMap:             volume.ConfigMap,
+				CSI:                   volume.CSI,
+				Ephemeral:             volume.Ephemeral,
+				Image:                 volume.Image,
+			},
+		})
+	}
+	return volumes
+}
+
 func createConfigTemplateVolumeMount() corev1.VolumeMount {
 	return corev1.VolumeMount{
 		Name:      consts.ConfigTemplateVolumeName,
@@ -72,9 +96,9 @@ func createConfigEmptyDir() corev1.Volume {
 	}
 }
 
-func createServerVolumes(specVolumes []corev1.Volume, configMapName string) []corev1.Volume {
+func createServerVolumes(specVolumes []ytv1.Volume, configMapName string) []corev1.Volume {
 	volumes := make([]corev1.Volume, 0, len(specVolumes)+1)
-	volumes = append(volumes, specVolumes...)
+	volumes = append(volumes, createVolumes(specVolumes)...)
 
 	volumes = append(volumes, createConfigVolume(consts.ConfigTemplateVolumeName, configMapName, nil))
 	volumes = append(volumes, createConfigEmptyDir())

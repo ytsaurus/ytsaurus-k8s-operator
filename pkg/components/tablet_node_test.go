@@ -74,10 +74,10 @@ var _ = Describe("Tablet node test", func() {
 								Path:         "/yt/master-data/master-snapshots",
 							},
 						},
-						Volumes: []corev1.Volume{
+						Volumes: []ytv1.Volume{
 							{
 								Name: "master-data",
-								VolumeSource: corev1.VolumeSource{
+								VolumeSource: ytv1.VolumeSource{
 									EmptyDir: &corev1.EmptyDirVolumeSource{
 										SizeLimit: &masterVolumeSize,
 									},
@@ -113,10 +113,10 @@ var _ = Describe("Tablet node test", func() {
 									Path:         "/yt/node-data/chunk-store",
 								},
 							},
-							Volumes: []corev1.Volume{
+							Volumes: []ytv1.Volume{
 								{
 									Name: "node-data",
-									VolumeSource: corev1.VolumeSource{
+									VolumeSource: ytv1.VolumeSource{
 										EmptyDir: &corev1.EmptyDirVolumeSource{
 											SizeLimit: &masterVolumeSize,
 										},

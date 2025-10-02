@@ -287,6 +287,9 @@ linters:
           - gocritic
         text: "ifElseChain: rewrite if-else to switch statement"
 
+      - path: api/v1/ytsaurus_types.go
+        text: "json\\(camel\\): got 'downwardAPI' want 'downwardApi'"
+
       - path: 'main\.go'
         linters:
           - gochecknoglobals
