@@ -319,6 +319,32 @@ rules:
     - get
     - patch
     - update
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - remoteoffshorenodeproxies
+  verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - remoteoffshorenodeproxies/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - remoteoffshorenodeproxies/status
+  verbs:
+  - get
+  - patch
+  - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
