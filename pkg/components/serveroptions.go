@@ -12,6 +12,8 @@ type options struct {
 	readinessProbeEndpointPath string
 
 	sidecarImages map[string]string
+
+	readinessByContainers []string
 }
 
 type Option func(opts *options)
@@ -40,5 +42,11 @@ func WithSidecarImage(name, image string) Option {
 			opts.sidecarImages = make(map[string]string)
 		}
 		opts.sidecarImages[name] = image
+	}
+}
+
+func WithReadinessByContainer(name string) Option {
+	return func(opts *options) {
+		opts.readinessByContainers = append(opts.readinessByContainers, name)
 	}
 }

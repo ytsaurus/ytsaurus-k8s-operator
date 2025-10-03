@@ -64,6 +64,7 @@ type serverImpl struct {
 
 	readinessProbePort     intstr.IntOrString
 	readinessProbeHTTPPath string
+	readinessByContainers  []string
 }
 
 func newServer(
@@ -191,6 +192,7 @@ func newServerConfigured(
 
 		readinessProbePort:     opts.readinessProbeEndpointPort,
 		readinessProbeHTTPPath: opts.readinessProbeEndpointPath,
+		readinessByContainers:  opts.readinessByContainers,
 	}
 }
 
@@ -291,7 +293,7 @@ func (s *serverImpl) needUpdate() bool {
 }
 
 func (s *serverImpl) arePodsReady(ctx context.Context) bool {
-	return s.statefulSet.ArePodsReady(ctx, int(s.instanceSpec.InstanceCount), s.instanceSpec.MinReadyInstanceCount)
+	return s.statefulSet.ArePodsReady(ctx, int(s.instanceSpec.InstanceCount), s.instanceSpec.MinReadyInstanceCount, s.readinessByContainers)
 }
 
 func (s *serverImpl) buildStatefulSet() *appsv1.StatefulSet {

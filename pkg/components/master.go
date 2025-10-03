@@ -45,6 +45,7 @@ func buildMasterOptions(resource *ytv1.Ytsaurus) []Option {
 			ContainerPort: consts.MasterRPCPort,
 			Protocol:      corev1.ProtocolTCP,
 		}),
+		WithReadinessByContainer(consts.YTServerContainerName),
 	}
 
 	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil && resource.Spec.PrimaryMasters.HydraPersistenceUploader.Image != nil {

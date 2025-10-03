@@ -25,8 +25,9 @@ func NewHeadlessService(name string, labeller *labeller2.Labeller, apiProxy apip
 func (s *HeadlessService) Build() *corev1.Service {
 	s.newObject.ObjectMeta = s.labeller.GetObjectMeta(s.name)
 	s.newObject.Spec = corev1.ServiceSpec{
-		ClusterIP: "None",
-		Selector:  s.labeller.GetSelectorLabelMap(),
+		ClusterIP:                "None",
+		Selector:                 s.labeller.GetSelectorLabelMap(),
+		PublishNotReadyAddresses: true,
 	}
 
 	return s.newObject
