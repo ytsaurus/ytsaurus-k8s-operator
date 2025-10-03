@@ -94,7 +94,7 @@ func checkReadinessByContainers(pod corev1.Pod, byContainerNames []string) bool 
 				continue
 			}
 			if !containerStatus.Ready {
-				break
+				return false
 			}
 			found++
 		}
