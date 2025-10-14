@@ -22,6 +22,7 @@ metadata:
   resourceVersion: "1"
 spec:
   clusterIP: None
+  publishNotReadyAddresses: true
   selector:
     yt_component: test-ytsaurus-yt-exec-node
 status:

@@ -86,7 +86,23 @@ func (s *StatefulSet) ArePodsRemoved(ctx context.Context) bool {
 	return true
 }
 
-func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minReadyInstanceCount *int) bool {
+func checkReadinessByContainers(pod corev1.Pod, byContainerNames []string) bool {
+	found := 0
+	for _, containerNameToCheck := range byContainerNames {
+		for _, containerStatus := range pod.Status.ContainerStatuses {
+			if containerStatus.Name != containerNameToCheck {
+				continue
+			}
+			if !containerStatus.Ready {
+				return false
+			}
+			found++
+		}
+	}
+	return found == len(byContainerNames)
+}
+
+func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minReadyInstanceCount *int, byContainerNames []string) bool {
 	logger := log.FromContext(ctx)
 	podList := s.getPods(ctx)
 	if podList == nil {
@@ -100,7 +116,13 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minRe
 
 	readyInstanceCount := 0
 	for _, pod := range podList.Items {
-		if pod.Status.Phase != corev1.PodRunning {
+		var ready bool
+		if len(byContainerNames) > 0 {
+			ready = checkReadinessByContainers(pod, byContainerNames)
+		} else {
+			ready = pod.Status.Phase == corev1.PodRunning
+		}
+		if !ready {
 			logger.Info("pod is not yet running", "podName", pod.Name, "phase", pod.Status.Phase)
 		} else {
 			readyInstanceCount += 1
