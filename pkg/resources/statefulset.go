@@ -11,6 +11,8 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	labeller2 "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
+
+	"k8s.io/apimachinery/pkg/api/equality"
 )
 
 type StatefulSet struct {
@@ -152,107 +154,37 @@ func (s *StatefulSet) NeedSync(replicas int32) bool {
 		return true
 	}
 
-	// Check if the StatefulSet spec has changed by comparing with the new object
-	return s.specChanged()
-}
-
-func (s *StatefulSet) specChanged() bool {
-	if !s.built {
-		return false
-	}
-
-	oldSpec := s.oldObject.Spec
-	newSpec := s.newObject.Spec
-
-	// Compare pod template spec which includes containers, volumes, resources, etc.
-	if !podTemplateSpecEqual(oldSpec.Template, newSpec.Template) {
-		return true
-	}
-
-	// Compare volume claim templates
-	if len(oldSpec.VolumeClaimTemplates) != len(newSpec.VolumeClaimTemplates) {
+	// Safely compare specs using equality.Semantic.DeepEqual
+	if !statefulSetSpecEqual(s.oldObject.Spec, s.newObject.Spec) {
 		return true
 	}
 
 	return false
 }
 
-func podTemplateSpecEqual(oldTemplate, newTemplate corev1.PodTemplateSpec) bool {
-	if len(oldTemplate.Spec.Containers) != len(newTemplate.Spec.Containers) {
+func statefulSetSpecEqual(oldSpec, newSpec appsv1.StatefulSetSpec) bool {
+	// Compare main pod template
+	if !equality.Semantic.DeepEqual(oldSpec.Template, newSpec.Template) {
 		return false
 	}
 
-	for i := range oldTemplate.Spec.Containers {
-		if !containerEqual(oldTemplate.Spec.Containers[i], newTemplate.Spec.Containers[i]) {
+	// Compare volume claims
+	if len(oldSpec.VolumeClaimTemplates) != len(newSpec.VolumeClaimTemplates) {
+		return false
+	}
+	for i := range oldSpec.VolumeClaimTemplates {
+		if !equality.Semantic.DeepEqual(oldSpec.VolumeClaimTemplates[i].Spec,
+			newSpec.VolumeClaimTemplates[i].Spec) {
 			return false
 		}
 	}
 
-	// Compare init containers
-	if len(oldTemplate.Spec.InitContainers) != len(newTemplate.Spec.InitContainers) {
+	// Compare other meaningful fields
+	if !equality.Semantic.DeepEqual(oldSpec.UpdateStrategy, newSpec.UpdateStrategy) {
 		return false
 	}
-
-	for i := range oldTemplate.Spec.InitContainers {
-		if !containerEqual(oldTemplate.Spec.InitContainers[i], newTemplate.Spec.InitContainers[i]) {
-			return false
-		}
-	}
-
-	// Compare volumes
-	if len(oldTemplate.Spec.Volumes) != len(newTemplate.Spec.Volumes) {
+	if !equality.Semantic.DeepEqual(oldSpec.PodManagementPolicy, newSpec.PodManagementPolicy) {
 		return false
-	}
-
-	return true
-}
-
-func containerEqual(oldContainer, newContainer corev1.Container) bool {
-	// Compare image
-	if oldContainer.Image != newContainer.Image {
-		return false
-	}
-
-	// Compare resources
-	if !resourcesEqual(oldContainer.Resources, newContainer.Resources) {
-		return false
-	}
-
-	// Compare volume mounts
-	if len(oldContainer.VolumeMounts) != len(newContainer.VolumeMounts) {
-		return false
-	}
-
-	return true
-}
-
-func resourcesEqual(oldResources, newResources corev1.ResourceRequirements) bool {
-	// Compare requests
-	if !resourceListEqual(oldResources.Requests, newResources.Requests) {
-		return false
-	}
-
-	// Compare limits
-	if !resourceListEqual(oldResources.Limits, newResources.Limits) {
-		return false
-	}
-
-	return true
-}
-
-func resourceListEqual(oldList, newList corev1.ResourceList) bool {
-	if len(oldList) != len(newList) {
-		return false
-	}
-
-	for key, oldValue := range oldList {
-		newValue, exists := newList[key]
-		if !exists {
-			return false
-		}
-		if oldValue.Cmp(newValue) != 0 {
-			return false
-		}
 	}
 
 	return true
