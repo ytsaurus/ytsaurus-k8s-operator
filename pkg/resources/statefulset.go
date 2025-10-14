@@ -177,77 +177,76 @@ func (s *StatefulSet) specChanged() bool {
 	return false
 }
 
-func podTemplateSpecEqual(old, new corev1.PodTemplateSpec) bool {
-	// Compare containers
-	if len(old.Spec.Containers) != len(new.Spec.Containers) {
+func podTemplateSpecEqual(oldTemplate, newTemplate corev1.PodTemplateSpec) bool {
+	if len(oldTemplate.Spec.Containers) != len(newTemplate.Spec.Containers) {
 		return false
 	}
 
-	for i := range old.Spec.Containers {
-		if !containerEqual(old.Spec.Containers[i], new.Spec.Containers[i]) {
+	for i := range oldTemplate.Spec.Containers {
+		if !containerEqual(oldTemplate.Spec.Containers[i], newTemplate.Spec.Containers[i]) {
 			return false
 		}
 	}
 
 	// Compare init containers
-	if len(old.Spec.InitContainers) != len(new.Spec.InitContainers) {
+	if len(oldTemplate.Spec.InitContainers) != len(newTemplate.Spec.InitContainers) {
 		return false
 	}
 
-	for i := range old.Spec.InitContainers {
-		if !containerEqual(old.Spec.InitContainers[i], new.Spec.InitContainers[i]) {
+	for i := range oldTemplate.Spec.InitContainers {
+		if !containerEqual(oldTemplate.Spec.InitContainers[i], newTemplate.Spec.InitContainers[i]) {
 			return false
 		}
 	}
 
 	// Compare volumes
-	if len(old.Spec.Volumes) != len(new.Spec.Volumes) {
+	if len(oldTemplate.Spec.Volumes) != len(newTemplate.Spec.Volumes) {
 		return false
 	}
 
 	return true
 }
 
-func containerEqual(old, new corev1.Container) bool {
+func containerEqual(oldContainer, newContainer corev1.Container) bool {
 	// Compare image
-	if old.Image != new.Image {
+	if oldContainer.Image != newContainer.Image {
 		return false
 	}
 
 	// Compare resources
-	if !resourcesEqual(old.Resources, new.Resources) {
+	if !resourcesEqual(oldContainer.Resources, newContainer.Resources) {
 		return false
 	}
 
 	// Compare volume mounts
-	if len(old.VolumeMounts) != len(new.VolumeMounts) {
+	if len(oldContainer.VolumeMounts) != len(newContainer.VolumeMounts) {
 		return false
 	}
 
 	return true
 }
 
-func resourcesEqual(old, new corev1.ResourceRequirements) bool {
+func resourcesEqual(oldResources, newResources corev1.ResourceRequirements) bool {
 	// Compare requests
-	if !resourceListEqual(old.Requests, new.Requests) {
+	if !resourceListEqual(oldResources.Requests, newResources.Requests) {
 		return false
 	}
 
 	// Compare limits
-	if !resourceListEqual(old.Limits, new.Limits) {
+	if !resourceListEqual(oldResources.Limits, newResources.Limits) {
 		return false
 	}
 
 	return true
 }
 
-func resourceListEqual(old, new corev1.ResourceList) bool {
-	if len(old) != len(new) {
+func resourceListEqual(oldList, newList corev1.ResourceList) bool {
+	if len(oldList) != len(newList) {
 		return false
 	}
 
-	for key, oldValue := range old {
-		newValue, exists := new[key]
+	for key, oldValue := range oldList {
+		newValue, exists := newList[key]
 		if !exists {
 			return false
 		}
