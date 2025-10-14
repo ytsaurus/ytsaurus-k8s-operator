@@ -148,6 +148,113 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minRe
 }
 
 func (s *StatefulSet) NeedSync(replicas int32) bool {
-	return s.oldObject.Spec.Replicas == nil ||
-		*s.oldObject.Spec.Replicas != replicas
+	if s.oldObject.Spec.Replicas == nil || *s.oldObject.Spec.Replicas != replicas {
+		return true
+	}
+
+	// Check if the StatefulSet spec has changed by comparing with the new object
+	return s.specChanged()
+}
+
+func (s *StatefulSet) specChanged() bool {
+	if !s.built {
+		return false
+	}
+
+	oldSpec := s.oldObject.Spec
+	newSpec := s.newObject.Spec
+
+	// Compare pod template spec which includes containers, volumes, resources, etc.
+	if !podTemplateSpecEqual(oldSpec.Template, newSpec.Template) {
+		return true
+	}
+
+	// Compare volume claim templates
+	if len(oldSpec.VolumeClaimTemplates) != len(newSpec.VolumeClaimTemplates) {
+		return true
+	}
+
+	return false
+}
+
+func podTemplateSpecEqual(old, new corev1.PodTemplateSpec) bool {
+	// Compare containers
+	if len(old.Spec.Containers) != len(new.Spec.Containers) {
+		return false
+	}
+
+	for i := range old.Spec.Containers {
+		if !containerEqual(old.Spec.Containers[i], new.Spec.Containers[i]) {
+			return false
+		}
+	}
+
+	// Compare init containers
+	if len(old.Spec.InitContainers) != len(new.Spec.InitContainers) {
+		return false
+	}
+
+	for i := range old.Spec.InitContainers {
+		if !containerEqual(old.Spec.InitContainers[i], new.Spec.InitContainers[i]) {
+			return false
+		}
+	}
+
+	// Compare volumes
+	if len(old.Spec.Volumes) != len(new.Spec.Volumes) {
+		return false
+	}
+
+	return true
+}
+
+func containerEqual(old, new corev1.Container) bool {
+	// Compare image
+	if old.Image != new.Image {
+		return false
+	}
+
+	// Compare resources
+	if !resourcesEqual(old.Resources, new.Resources) {
+		return false
+	}
+
+	// Compare volume mounts
+	if len(old.VolumeMounts) != len(new.VolumeMounts) {
+		return false
+	}
+
+	return true
+}
+
+func resourcesEqual(old, new corev1.ResourceRequirements) bool {
+	// Compare requests
+	if !resourceListEqual(old.Requests, new.Requests) {
+		return false
+	}
+
+	// Compare limits
+	if !resourceListEqual(old.Limits, new.Limits) {
+		return false
+	}
+
+	return true
+}
+
+func resourceListEqual(old, new corev1.ResourceList) bool {
+	if len(old) != len(new) {
+		return false
+	}
+
+	for key, oldValue := range old {
+		newValue, exists := new[key]
+		if !exists {
+			return false
+		}
+		if oldValue.Cmp(newValue) != 0 {
+			return false
+		}
+	}
+
+	return true
 }

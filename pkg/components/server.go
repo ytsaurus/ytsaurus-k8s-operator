@@ -289,7 +289,17 @@ func (s *serverImpl) needUpdate() bool {
 	if err != nil {
 		return false
 	}
-	return needReload
+	if needReload {
+		return true
+	}
+
+	// Check if StatefulSet spec has changed
+	_ = s.rebuildStatefulSet()
+	if s.statefulSet.NeedSync(s.instanceSpec.InstanceCount) {
+		return true
+	}
+
+	return false
 }
 
 func (s *serverImpl) arePodsReady(ctx context.Context) bool {
