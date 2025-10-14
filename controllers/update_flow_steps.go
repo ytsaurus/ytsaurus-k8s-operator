@@ -58,10 +58,6 @@ func newConditionalForkStep(updateState ytv1.UpdateState, unhappyNext *flowStep)
 
 func (s *flowStep) checkCondition(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 	condition := flowConditions[s.updateState]
-	if condition == nil {
-		// If no condition is defined for this state, consider it satisfied
-		return stepResultMarkHappy
-	}
 	return condition(ctx, ytsaurus, componentManager)
 }
 
