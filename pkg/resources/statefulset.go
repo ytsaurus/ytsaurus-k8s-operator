@@ -5,14 +5,13 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	labeller2 "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
-
-	"k8s.io/apimachinery/pkg/api/equality"
 )
 
 type StatefulSet struct {
@@ -150,19 +149,44 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minRe
 }
 
 func (s *StatefulSet) NeedSync(replicas int32) bool {
-	if s.oldObject.Spec.Replicas == nil || *s.oldObject.Spec.Replicas != replicas {
-		return true
+	return s.oldObject.Spec.Replicas == nil ||
+		*s.oldObject.Spec.Replicas != replicas
+}
+
+// SpecChanged compares the old StatefulSet spec with a new spec to detect changes
+func (s *StatefulSet) SpecChanged(newSpec appsv1.StatefulSetSpec) bool {
+	return !statefulSetSpecEqual(s.oldObject.Spec, newSpec)
+}
+
+// Sync overrides the base Sync method to add spec comparison logic
+func (s *StatefulSet) Sync(ctx context.Context) error {
+	logger := log.FromContext(ctx)
+
+	// If the StatefulSet doesn't exist yet, create it
+	if !s.Exists() {
+		return s.BaseManagedResource.Sync(ctx)
 	}
 
-	// Safely compare specs using equality.Semantic.DeepEqual
-	if !statefulSetSpecEqual(s.oldObject.Spec, s.newObject.Spec) {
-		return true
+	// Compare specs to see if update is needed
+	if statefulSetSpecEqual(s.oldObject.Spec, s.newObject.Spec) {
+		logger.V(1).Info("StatefulSet spec unchanged, skipping sync",
+			"name", s.name,
+			"component", s.labeller.GetFullComponentName())
+		return nil
 	}
 
-	return false
+	logger.Info("StatefulSet spec changed, syncing",
+		"name", s.name,
+		"component", s.labeller.GetFullComponentName())
+	return s.BaseManagedResource.Sync(ctx)
 }
 
 func statefulSetSpecEqual(oldSpec, newSpec appsv1.StatefulSetSpec) bool {
+	// Compare replicas
+	if !equality.Semantic.DeepEqual(oldSpec.Replicas, newSpec.Replicas) {
+		return false
+	}
+
 	// Compare main pod template
 	if !equality.Semantic.DeepEqual(oldSpec.Template, newSpec.Template) {
 		return false

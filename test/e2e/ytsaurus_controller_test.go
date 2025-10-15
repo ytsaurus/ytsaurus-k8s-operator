@@ -32,7 +32,9 @@ import (
 	"go.ytsaurus.tech/yt/go/yt/ytrpc"
 	"go.ytsaurus.tech/yt/go/yterrors"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	certv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
@@ -1001,6 +1003,49 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}) // update overrides
 
 		Context("Misc update test cases", Label("misc"), func() {
+
+			It("StatefulSet should be updated when discovery server resources are changed", func(ctx context.Context) {
+				By("Waiting for cluster to become running")
+				EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
+
+				By("Changing discovery server resource limits")
+				newCPULimit := "1"
+				newMemoryLimit := "2Gi"
+				ytsaurus.Spec.Discovery.InstanceSpec.Resources.Limits = corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse(newCPULimit),
+					corev1.ResourceMemory: resource.MustParse(newMemoryLimit),
+				}
+				UpdateObject(ctx, ytsaurus)
+
+				By("Waiting for StatefulSet to be updated with new resources")
+				Eventually(func(g Gomega) {
+					var statefulSetAfter appsv1.StatefulSet
+					err := k8sClient.Get(ctx, client.ObjectKey{
+						Name:      "ds",
+						Namespace: namespace,
+					}, &statefulSetAfter)
+					g.Expect(err).Should(Succeed())
+
+					// Check that the StatefulSet spec has been updated
+					updatedCPU := statefulSetAfter.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String()
+					updatedMemory := statefulSetAfter.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String()
+
+					log.Info("Checking discovery server resources",
+						"cpu", updatedCPU,
+						"memory", updatedMemory,
+						"expectedCPU", newCPULimit,
+						"expectedMemory", newMemoryLimit)
+
+					g.Expect(updatedCPU).Should(Equal(newCPULimit), "CPU limit should be updated")
+					g.Expect(updatedMemory).Should(Equal(newMemoryLimit), "Memory limit should be updated")
+				}, reactionTimeout, pollInterval).Should(Succeed())
+
+				By("Waiting for cluster to stabilize after resource change")
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+
+				By("Verifying cluster is still functional")
+				checkClusterBaseViability(ytClient)
+			})
 
 			// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
 			It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", func(ctx context.Context) {
