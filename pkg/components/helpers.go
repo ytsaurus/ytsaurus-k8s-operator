@@ -22,9 +22,6 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 )
 
-const timbertruckInitScriptPrefix = "mkdir -p /etc/timbertruck; echo '"
-const timbertruckInitScriptSuffix = "' > /etc/timbertruck/config.yaml; chmod 644 /etc/timbertruck/config.yaml; /usr/bin/timbertruck_os -config /etc/timbertruck/config.yaml"
-
 func CreateTabletCells(ctx context.Context, ytClient yt.Client, bundle string, tabletCellCount int) error {
 	logger := log.FromContext(ctx)
 

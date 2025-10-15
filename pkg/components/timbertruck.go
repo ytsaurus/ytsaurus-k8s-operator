@@ -18,6 +18,22 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const timbertruckSupervisorScriptTemplate = `
+mkdir -p /etc/timbertruck
+cat <<'EOF' > /etc/timbertruck/config.yaml
+%s
+EOF
+chmod 644 /etc/timbertruck/config.yaml
+echo "Starting timbertruck supervisor loop..."
+while true; do
+	/usr/bin/timbertruck_os -config /etc/timbertruck/config.yaml &
+	PID=$!
+	wait $PID
+	echo "timbertruck process with PID $PID exited. Restarting in 10 seconds..."
+	sleep 10
+done
+`
+
 type Timbertruck struct {
 	localComponent
 
@@ -292,12 +308,12 @@ func (tt *Timbertruck) prepareTimbertruckTables(ctx context.Context) error {
 	return nil
 }
 
-func getTimbertruckInitScript(timbertruckConfig *ytconfig.TimbertruckConfig) (string, error) {
+func getTimbertruckSupervisorScript(timbertruckConfig *ytconfig.TimbertruckConfig) (string, error) {
 	configText, err := yaml.Marshal(timbertruckConfig)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal Timbertruck config: %w", err)
 	}
-	return fmt.Sprintf("%s%s%s", timbertruckInitScriptPrefix, string(configText), timbertruckInitScriptSuffix), nil
+	return fmt.Sprintf(timbertruckSupervisorScriptTemplate, string(configText)), nil
 }
 
 func prepareTimbertruckTablesFromConfig(ctx context.Context, ytClient yt.Client, timbertruckConfig *ytconfig.TimbertruckConfig, logsDeliveryPath string) error {
@@ -444,15 +460,15 @@ func checkAndAddTimbertruckToPodSpec(timbertruck *ytv1.TimbertruckSpec, podSpec 
 		return nil
 	}
 
-	timbertruckInitScript, err := getTimbertruckInitScript(timbertruckConfig)
+	timbertruckSupervisorScript, err := getTimbertruckSupervisorScript(timbertruckConfig)
 	if err != nil {
-		return fmt.Errorf("failed to get timbertruck init script: %w", err)
+		return fmt.Errorf("failed to get timbertruck supervisor script: %w", err)
 	}
 
 	podSpec.Containers = append(podSpec.Containers, corev1.Container{
 		Name:    consts.TimbertruckContainerName,
 		Image:   *timbertruck.Image,
-		Command: []string{"/bin/bash", "-c", timbertruckInitScript},
+		Command: []string{"/bin/bash", "-c", timbertruckSupervisorScript},
 		Env: append([]corev1.EnvVar{
 			{
 				Name: consts.TokenSecretKey,

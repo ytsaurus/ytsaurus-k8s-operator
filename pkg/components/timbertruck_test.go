@@ -9,7 +9,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
-func TestGetTimbertruckInitScript(t *testing.T) {
+func TestGetTimbertruckSupervisorScript(t *testing.T) {
 	timbertruckConfig := ytconfig.NewTimbertruckConfig(
 		[]v1.StructuredLoggerSpec{
 			{
@@ -44,7 +44,7 @@ func TestGetTimbertruckInitScript(t *testing.T) {
 		"http-proxies-lb.ytsaurus-dev.svc.cluster.local",
 		"//sys/admin/logs",
 	)
-	timbertruckInitScript, err := getTimbertruckInitScript(timbertruckConfig)
+	timbertruckSupervisorScript, err := getTimbertruckSupervisorScript(timbertruckConfig)
 	require.NoError(t, err)
-	canonize.Assert(t, []byte(timbertruckInitScript))
+	canonize.Assert(t, []byte(timbertruckSupervisorScript))
 }

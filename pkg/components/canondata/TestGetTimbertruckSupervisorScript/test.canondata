@@ -1,4 +1,7 @@
-mkdir -p /etc/timbertruck; echo 'json_logs:
+
+mkdir -p /etc/timbertruck
+cat <<'EOF' > /etc/timbertruck/config.yaml
+json_logs:
 - log_file: /yt/master-logs/master.access.log.json
   name: master-access
   yt_queue:
@@ -18,4 +21,14 @@ mkdir -p /etc/timbertruck; echo 'json_logs:
     producer_path: //sys/admin/logs/master-other/producer
     queue_path: //sys/admin/logs/master-other/queue
 work_dir: /yt/master-logs/timbertruck
-' > /etc/timbertruck/config.yaml; chmod 644 /etc/timbertruck/config.yaml; /usr/bin/timbertruck_os -config /etc/timbertruck/config.yaml
+
+EOF
+chmod 644 /etc/timbertruck/config.yaml
+echo "Starting timbertruck supervisor loop..."
+while true; do
+	/usr/bin/timbertruck_os -config /etc/timbertruck/config.yaml &
+	PID=$!
+	wait $PID
+	echo "timbertruck process with PID $PID exited. Restarting in 10 seconds..."
+	sleep 10
+done
