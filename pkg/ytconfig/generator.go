@@ -841,6 +841,26 @@ func (g *NodeGenerator) GetTabletNodeConfig(spec ytv1.TabletNodesSpec) ([]byte, 
 	return marshallYsonConfig(c)
 }
 
+func (g *NodeGenerator) getOffshoreNodeProxiesConfigImpl(spec *ytv1.OffshoreNodeProxiesSpec) (OffshoreNodeProxyServer, error) {
+	c, err := getOffshoreNodeProxiesCarcass(spec)
+	if err != nil {
+		return OffshoreNodeProxyServer{}, err
+	}
+
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+	c.BusClient = c.ClusterConnection.BusClient
+	return c, nil
+}
+
+func (g *NodeGenerator) GetOffshoreNodeProxiesConfig(spec ytv1.OffshoreNodeProxiesSpec) ([]byte, error) {
+	c, err := g.getOffshoreNodeProxiesConfigImpl(&spec)
+	if err != nil {
+		return nil, err
+	}
+	return marshallYsonConfig(c)
+}
+
 func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, error) {
 	c, err := getHTTPProxyServerCarcass(spec)
 	if err != nil {

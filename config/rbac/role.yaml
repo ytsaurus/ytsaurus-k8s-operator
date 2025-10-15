@@ -65,6 +65,7 @@ rules:
   - chyts
   - remotedatanodes
   - remoteexecnodes
+  - remoteoffshorenodeproxies
   - remotetabletnodes
   - remoteytsaurus
   - spyts
@@ -83,6 +84,7 @@ rules:
   - chyts/finalizers
   - remotedatanodes/finalizers
   - remoteexecnodes/finalizers
+  - remoteoffshorenodeproxies/finalizers
   - remotetabletnodes/finalizers
   - remoteytsaurus/finalizers
   - spyts/finalizers
@@ -95,6 +97,7 @@ rules:
   - chyts/status
   - remotedatanodes/status
   - remoteexecnodes/status
+  - remoteoffshorenodeproxies/status
   - remotetabletnodes/status
   - remoteytsaurus/status
   - spyts/status
