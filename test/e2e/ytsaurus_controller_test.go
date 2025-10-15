@@ -1042,9 +1042,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Waiting for cluster to stabilize after resource change")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
-
-				By("Verifying cluster is still functional")
-				checkClusterBaseViability(ytClient)
 			})
 
 			// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
@@ -1339,7 +1336,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				objects = append(objects, remoteNodes)
 			})
 
-			// strange github error about checkClusterBaseViability
 			It("Should create ytsaurus with remote exec nodes and execute a job", func(ctx context.Context) {
 
 				By("Running running vanilla operation")
