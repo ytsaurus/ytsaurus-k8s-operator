@@ -1339,6 +1339,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				objects = append(objects, remoteNodes)
 			})
 
+			// strange github error about checkClusterBaseViability
 			It("Should create ytsaurus with remote exec nodes and execute a job", func(ctx context.Context) {
 
 				By("Running running vanilla operation")
