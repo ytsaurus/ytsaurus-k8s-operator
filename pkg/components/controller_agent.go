@@ -51,7 +51,7 @@ func (ca *ControllerAgent) Fetch(ctx context.Context) error {
 func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(ca.ytsaurus.GetClusterState()) && ca.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(ca.ytsaurus.GetClusterState()) && ca.server.needUpdate() && canComponentBeUpdated(ca.ytsaurus, ca) {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 

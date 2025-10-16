@@ -15,35 +15,12 @@ import (
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 )
 
-func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
-	for _, selector := range selectors {
-		if selector.Class != consts.ComponentClassUnspecified {
-			switch selector.Class {
-			case consts.ComponentClassEverything:
-				return true
-			case consts.ComponentClassNothing:
-				return false
-			case consts.ComponentClassStateless:
-				if component.Type != consts.DataNodeType && component.Type != consts.TabletNodeType && component.Type != consts.MasterType {
-					return true
-				}
-			default:
-				return false
-			}
-		}
-		if selector.Component.Type == component.Type && (selector.Component.Name == "" || selector.Component.Name == component.Name) {
-			return true
-		}
-	}
-	return false
-}
-
 // Considers splits all the components in two groups: ones that can be updated and ones which update isblocked.
 func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []ytv1.Component, allComponents []ytv1.Component) (canUpdate []ytv1.Component, cannotUpdate []ytv1.Component) {
-	configuredSelectors := getEffectiveSelectors(spec)
+	configuredSelectors := components.GetEffectiveUpdateSelectors(spec)
 
 	for _, component := range needUpdate {
-		upd := canUpdateComponent(configuredSelectors, component)
+		upd := components.CanUpdateComponent(configuredSelectors, component)
 		if upd {
 			canUpdate = append(canUpdate, component)
 		} else {
@@ -74,59 +51,12 @@ func hasEverythingSelector(selectors []ytv1.ComponentUpdateSelector) bool {
 func needFullUpdate(needUpdate []ytv1.Component) bool {
 	statelessSelector := []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassStateless}}
 	for _, component := range needUpdate {
-		isStateless := canUpdateComponent(statelessSelector, component)
+		isStateless := components.CanUpdateComponent(statelessSelector, component)
 		if !isStateless {
 			return true
 		}
 	}
 	return false
-}
-
-func getEffectiveSelectors(spec ytv1.YtsaurusSpec) []ytv1.ComponentUpdateSelector {
-	if spec.UpdatePlan != nil {
-		return spec.UpdatePlan
-	}
-
-	if spec.UpdateSelector != ytv1.UpdateSelectorUnspecified {
-		switch spec.UpdateSelector {
-		case ytv1.UpdateSelectorNothing:
-			return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassNothing}}
-		case ytv1.UpdateSelectorMasterOnly:
-			return []ytv1.ComponentUpdateSelector{{
-				Component: ytv1.Component{
-					Type: consts.MasterType,
-				},
-			}}
-		case ytv1.UpdateSelectorDataNodesOnly:
-			return []ytv1.ComponentUpdateSelector{{
-				Component: ytv1.Component{
-					Type: consts.DataNodeType,
-				},
-			}}
-		case ytv1.UpdateSelectorTabletNodesOnly:
-			return []ytv1.ComponentUpdateSelector{{
-				Component: ytv1.Component{
-					Type: consts.TabletNodeType,
-				},
-			}}
-		case ytv1.UpdateSelectorExecNodesOnly:
-			return []ytv1.ComponentUpdateSelector{{
-				Component: ytv1.Component{
-					Type: consts.ExecNodeType,
-				},
-			}}
-		case ytv1.UpdateSelectorStatelessOnly:
-			return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassStateless}}
-		case ytv1.UpdateSelectorEverything:
-			return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
-		}
-	}
-
-	if spec.EnableFullUpdate {
-		return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
-	}
-
-	return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassStateless}}
 }
 
 func convertToComponent(components []components.Component) []ytv1.Component {

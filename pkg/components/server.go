@@ -293,7 +293,7 @@ func (s *serverImpl) needUpdate() bool {
 		return true
 	}
 
-	// Check if StatefulSet spec has changed (e.g., resources, affinity, etc.)
+	// Check if StatefulSet spec has changed
 	desiredSpec := s.buildStatefulSet().Spec
 	if s.statefulSet.SpecChanged(desiredSpec) {
 		return true

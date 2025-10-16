@@ -5,7 +5,6 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -158,37 +157,8 @@ func (s *StatefulSet) SpecChanged(newSpec appsv1.StatefulSetSpec) bool {
 	return !statefulSetSpecEqual(s.oldObject.Spec, newSpec)
 }
 
-// Sync overrides the base Sync method to add spec comparison logic
-func (s *StatefulSet) Sync(ctx context.Context) error {
-	logger := log.FromContext(ctx)
-
-	// If the StatefulSet doesn't exist yet, create it
-	if !s.Exists() {
-		return s.BaseManagedResource.Sync(ctx)
-	}
-
-	// Compare specs to see if update is needed
-	if statefulSetSpecEqual(s.oldObject.Spec, s.newObject.Spec) {
-		logger.V(1).Info("StatefulSet spec unchanged, skipping sync",
-			"name", s.name,
-			"component", s.labeller.GetFullComponentName())
-		return nil
-	}
-
-	logger.Info("StatefulSet spec changed, syncing",
-		"name", s.name,
-		"component", s.labeller.GetFullComponentName())
-	return s.BaseManagedResource.Sync(ctx)
-}
-
 func statefulSetSpecEqual(oldSpec, newSpec appsv1.StatefulSetSpec) bool {
-	// Compare replicas
-	if !equality.Semantic.DeepEqual(oldSpec.Replicas, newSpec.Replicas) {
-		return false
-	}
-
-	// Compare main pod template
-	if !equality.Semantic.DeepEqual(oldSpec.Template, newSpec.Template) {
+	if !podTemplateSpecEqual(oldSpec.Template, newSpec.Template) {
 		return false
 	}
 
@@ -196,19 +166,120 @@ func statefulSetSpecEqual(oldSpec, newSpec appsv1.StatefulSetSpec) bool {
 	if len(oldSpec.VolumeClaimTemplates) != len(newSpec.VolumeClaimTemplates) {
 		return false
 	}
-	for i := range oldSpec.VolumeClaimTemplates {
-		if !equality.Semantic.DeepEqual(oldSpec.VolumeClaimTemplates[i].Spec,
-			newSpec.VolumeClaimTemplates[i].Spec) {
+	// Compare update strategy
+	if !updateStrategyEqual(oldSpec.UpdateStrategy, newSpec.UpdateStrategy) {
+		return false
+	}
+
+	return true
+}
+
+// podTemplateSpecEqual compares only the fields we explicitly set, avoiding false positives
+// from Kubernetes-added defaults and normalizations.
+func podTemplateSpecEqual(oldTemplate, newTemplate corev1.PodTemplateSpec) bool {
+	oldPodSpec := oldTemplate.Spec
+	newPodSpec := newTemplate.Spec
+
+	// Compare containers
+	if len(oldPodSpec.Containers) != len(newPodSpec.Containers) {
+		return false
+	}
+	for i := range oldPodSpec.Containers {
+		oldContainer := oldPodSpec.Containers[i]
+		newContainer := newPodSpec.Containers[i]
+
+		// Compare resource requirements (only if new spec has resources defined)
+		if !resourceRequirementsEqual(oldContainer.Resources, newContainer.Resources) {
 			return false
 		}
 	}
 
-	// Compare other meaningful fields
-	if !equality.Semantic.DeepEqual(oldSpec.UpdateStrategy, newSpec.UpdateStrategy) {
+	// Compare init containers
+	if len(oldPodSpec.InitContainers) != len(newPodSpec.InitContainers) {
 		return false
 	}
-	if !equality.Semantic.DeepEqual(oldSpec.PodManagementPolicy, newSpec.PodManagementPolicy) {
+	for i := range oldPodSpec.InitContainers {
+		oldContainer := oldPodSpec.InitContainers[i]
+		newContainer := newPodSpec.InitContainers[i]
+
+		if !resourceRequirementsEqual(oldContainer.Resources, newContainer.Resources) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// resourceRequirementsEqual compares resource requirements, handling nil vs empty cases
+func resourceRequirementsEqual(old, new corev1.ResourceRequirements) bool {
+	// Compare requests
+	if !resourceListEqual(old.Requests, new.Requests) {
 		return false
+	}
+
+	// Compare limits
+	if !resourceListEqual(old.Limits, new.Limits) {
+		return false
+	}
+
+	return true
+}
+
+// resourceListEqual compares resource lists, treating nil and empty as equivalent
+func resourceListEqual(old, new corev1.ResourceList) bool {
+	// If both are nil or empty, they're equal
+	if len(old) == 0 && len(new) == 0 {
+		return true
+	}
+
+	// If one is empty and the other isn't, they're not equal
+	if len(old) != len(new) {
+		return false
+	}
+
+	// Compare each resource
+	for key, newVal := range new {
+		oldVal, exists := old[key]
+		if !exists || !oldVal.Equal(newVal) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// updateStrategyEqual compares StatefulSet update strategies
+func updateStrategyEqual(old, new appsv1.StatefulSetUpdateStrategy) bool {
+	// Compare strategy type
+	if old.Type != new.Type {
+		return false
+	}
+
+	// If both are RollingUpdate, compare the rolling update config
+	if old.Type == appsv1.RollingUpdateStatefulSetStrategyType {
+		// Handle nil cases
+		if old.RollingUpdate == nil && new.RollingUpdate == nil {
+			return true
+		}
+		if old.RollingUpdate == nil || new.RollingUpdate == nil {
+			return true
+		}
+
+		// Compare partition if both are set
+		if old.RollingUpdate.Partition != nil && new.RollingUpdate.Partition != nil {
+			return *old.RollingUpdate.Partition == *new.RollingUpdate.Partition
+		}
+
+		// If one has partition and the other doesn't, treat nil as 0
+		oldPartition := int32(0)
+		if old.RollingUpdate.Partition != nil {
+			oldPartition = *old.RollingUpdate.Partition
+		}
+		newPartition := int32(0)
+		if new.RollingUpdate.Partition != nil {
+			newPartition = *new.RollingUpdate.Partition
+		}
+		return oldPartition == newPartition
 	}
 
 	return true

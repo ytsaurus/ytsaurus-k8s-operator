@@ -90,7 +90,7 @@ func NewExecNode(
 func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && (n.server.needUpdate() || n.sidecarConfigNeedsReload()) {
+	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && (n.server.needUpdate() || n.sidecarConfigNeedsReload()) && canComponentBeUpdated(n.ytsaurus, n) {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 

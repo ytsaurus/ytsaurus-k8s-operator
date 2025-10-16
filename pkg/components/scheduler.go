@@ -119,7 +119,7 @@ func (s *Scheduler) Sync(ctx context.Context) error {
 func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(s.ytsaurus.GetClusterState()) && s.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(s.ytsaurus.GetClusterState()) && s.server.needUpdate() && canComponentBeUpdated(s.ytsaurus, s) {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 

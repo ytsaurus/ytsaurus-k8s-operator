@@ -20,6 +20,7 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 const timbertruckInitScriptPrefix = "mkdir -p /etc/timbertruck; echo '"
@@ -311,4 +312,93 @@ func getDNSConfigWithDefault(componentDNSConfig, defaultDNSConfig *corev1.PodDNS
 
 func buildUserCredentialsSecretname(username string) string {
 	return fmt.Sprintf("%s-secret", username)
+}
+
+// canComponentBeUpdated checks if a component can be updated based on the current update selector configuration.
+// This should be called before reporting SyncStatusNeedLocalUpdate to avoid triggering unnecessary cluster updates.
+func canComponentBeUpdated(ytsaurus *apiproxy.Ytsaurus, component Component) bool {
+	spec := ytsaurus.GetResource().Spec
+	selectors := GetEffectiveUpdateSelectors(spec)
+
+	componentInfo := ytv1.Component{
+		Type: component.GetType(),
+		Name: component.GetShortName(),
+	}
+
+	return CanUpdateComponent(selectors, componentInfo)
+}
+
+// GetEffectiveUpdateSelectors returns the effective update selectors based on the spec configuration.
+// This is exported so it can be used by both components and controllers.
+func GetEffectiveUpdateSelectors(spec ytv1.YtsaurusSpec) []ytv1.ComponentUpdateSelector {
+	if spec.UpdatePlan != nil {
+		return spec.UpdatePlan
+	}
+
+	if spec.UpdateSelector != ytv1.UpdateSelectorUnspecified {
+		switch spec.UpdateSelector {
+		case ytv1.UpdateSelectorNothing:
+			return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassNothing}}
+		case ytv1.UpdateSelectorMasterOnly:
+			return []ytv1.ComponentUpdateSelector{{
+				Component: ytv1.Component{
+					Type: consts.MasterType,
+				},
+			}}
+		case ytv1.UpdateSelectorDataNodesOnly:
+			return []ytv1.ComponentUpdateSelector{{
+				Component: ytv1.Component{
+					Type: consts.DataNodeType,
+				},
+			}}
+		case ytv1.UpdateSelectorTabletNodesOnly:
+			return []ytv1.ComponentUpdateSelector{{
+				Component: ytv1.Component{
+					Type: consts.TabletNodeType,
+				},
+			}}
+		case ytv1.UpdateSelectorExecNodesOnly:
+			return []ytv1.ComponentUpdateSelector{{
+				Component: ytv1.Component{
+					Type: consts.ExecNodeType,
+				},
+			}}
+		case ytv1.UpdateSelectorStatelessOnly:
+			return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassStateless}}
+		case ytv1.UpdateSelectorEverything:
+			return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
+		}
+	}
+
+	if spec.EnableFullUpdate {
+		return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
+	}
+
+	return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassStateless}}
+}
+
+// CanUpdateComponent checks if a component matches any of the given selectors.
+// This is exported so it can be used by both components and controllers.
+func CanUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
+	for _, selector := range selectors {
+		if selector.Class != consts.ComponentClassUnspecified {
+			switch selector.Class {
+			case consts.ComponentClassEverything:
+				return true
+			case consts.ComponentClassNothing:
+				return false
+			case consts.ComponentClassStateless:
+				// Stateless components are everything except data_node, tablet_node, and master
+				if component.Type != consts.DataNodeType && component.Type != consts.TabletNodeType && component.Type != consts.MasterType {
+					return true
+				}
+			default:
+				return false
+			}
+		}
+		if selector.Component.Type == component.Type && (selector.Component.Name == "" || selector.Component.Name == component.Name) {
+			return true
+		}
+	}
+	return false
 }
