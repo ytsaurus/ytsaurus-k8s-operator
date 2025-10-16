@@ -938,6 +938,88 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		}) // update selector
 
+		Context("Resource limits updates", Label("resources"), func() {
+			BeforeEach(func() {
+				By("Setting 24.2 image for resource update tests")
+				ytsaurus.Spec.CoreImage = testutil.YtsaurusImage24_2
+			})
+
+			It("Should update Discovery resource limits with UpdateSelector", func(ctx context.Context) {
+
+				By("Waiting for discovery StatefulSet to be created and ready")
+				var statefulSetBefore appsv1.StatefulSet
+				Eventually(func(g Gomega) {
+					err := k8sClient.Get(ctx, client.ObjectKey{
+						Name:      "ds",
+						Namespace: namespace,
+					}, &statefulSetBefore)
+					g.Expect(err).Should(Succeed())
+					g.Expect(len(statefulSetBefore.Spec.Template.Spec.Containers)).Should(BeNumerically(">", 0))
+				}, bootstrapTimeout, pollInterval).Should(Succeed())
+
+				By("Recording original discovery server resource limits")
+				originalCPU := statefulSetBefore.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String()
+				originalMemory := statefulSetBefore.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String()
+				log.Info("Original discovery server resources",
+					"cpu", originalCPU,
+					"memory", originalMemory)
+
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+					Component: ytv1.Component{
+						Type: consts.DiscoveryType,
+					},
+				}}
+
+				UpdateObject(ctx, ytsaurus)
+
+				By("Updating discovery server resource limits with UpdateSelector for Discovery")
+				newCPULimit := "500m"
+				newMemoryLimit := "1Gi"
+
+				ytsaurus.Spec.Discovery.InstanceSpec.Resources.Limits = corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse(newCPULimit),
+					corev1.ResourceMemory: resource.MustParse(newMemoryLimit),
+				}
+
+				UpdateObject(ctx, ytsaurus)
+
+				log.Info("Updated Ytsaurus spec with new resources and UpdatePlan=Discovery", "newCPU", newCPULimit, "newMemory", newMemoryLimit)
+
+				By("Waiting for operator to observe the spec change")
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(consts.DiscoveryType))
+
+				By("Verifying StatefulSet spec was updated with new resource limits")
+				Eventually(func(g Gomega) {
+					var statefulSetAfter appsv1.StatefulSet
+					err := k8sClient.Get(ctx, client.ObjectKey{
+						Name:      "ds",
+						Namespace: namespace,
+					}, &statefulSetAfter)
+					g.Expect(err).Should(Succeed())
+
+					g.Expect(len(statefulSetAfter.Spec.Template.Spec.Containers)).Should(BeNumerically(">", 0))
+
+					updatedCPU := statefulSetAfter.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String()
+					updatedMemory := statefulSetAfter.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String()
+
+					log.Info("Checking updated StatefulSet resources",
+						"cpu", updatedCPU,
+						"memory", updatedMemory,
+						"expectedCPU", newCPULimit,
+						"expectedMemory", newMemoryLimit)
+
+					g.Expect(updatedCPU).Should(Equal(newCPULimit), "CPU limit should be updated for Discovery")
+					g.Expect(updatedMemory).Should(Equal(newMemoryLimit), "Memory limit should be updated for Discovery")
+				}, upgradeTimeout, pollInterval).Should(Succeed())
+
+				By("Waiting for cluster to complete update and return to Running state")
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+
+				By("Test completed successfully - Discovery resource limits were updated via UpdateSelector")
+			})
+		}) // resource limits updates
+
 		Context("With config overrides", Label("overrides"), func() {
 			var overrides *corev1.ConfigMap
 
@@ -1003,46 +1085,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}) // update overrides
 
 		Context("Misc update test cases", Label("misc"), func() {
-
-			It("StatefulSet should be updated when discovery server resources are changed", func(ctx context.Context) {
-				By("Waiting for cluster to become running")
-				EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
-
-				By("Changing discovery server resource limits")
-				newCPULimit := "1"
-				newMemoryLimit := "2Gi"
-				ytsaurus.Spec.Discovery.InstanceSpec.Resources.Limits = corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse(newCPULimit),
-					corev1.ResourceMemory: resource.MustParse(newMemoryLimit),
-				}
-				UpdateObject(ctx, ytsaurus)
-
-				By("Waiting for StatefulSet to be updated with new resources")
-				Eventually(func(g Gomega) {
-					var statefulSetAfter appsv1.StatefulSet
-					err := k8sClient.Get(ctx, client.ObjectKey{
-						Name:      "ds",
-						Namespace: namespace,
-					}, &statefulSetAfter)
-					g.Expect(err).Should(Succeed())
-
-					// Check that the StatefulSet spec has been updated
-					updatedCPU := statefulSetAfter.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String()
-					updatedMemory := statefulSetAfter.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String()
-
-					log.Info("Checking discovery server resources",
-						"cpu", updatedCPU,
-						"memory", updatedMemory,
-						"expectedCPU", newCPULimit,
-						"expectedMemory", newMemoryLimit)
-
-					g.Expect(updatedCPU).Should(Equal(newCPULimit), "CPU limit should be updated")
-					g.Expect(updatedMemory).Should(Equal(newMemoryLimit), "Memory limit should be updated")
-				}, reactionTimeout, pollInterval).Should(Succeed())
-
-				By("Waiting for cluster to stabilize after resource change")
-				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
-			})
 
 			// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
 			It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", func(ctx context.Context) {
