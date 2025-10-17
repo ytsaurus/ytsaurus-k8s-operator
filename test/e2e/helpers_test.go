@@ -47,9 +47,16 @@ func getKindControlPlaneNode() corev1.Node {
 	nodeList := corev1.NodeList{}
 	err := k8sClient.List(ctx, &nodeList)
 	Expect(err).Should(Succeed())
-	Expect(nodeList.Items).To(HaveLen(1))
-	Expect(nodeList.Items[0].Name).To(HaveSuffix("kind-control-plane"))
-	return nodeList.Items[0]
+
+	// Find the control plane node in multi-node Kind clusters
+	for _, node := range nodeList.Items {
+		if strings.HasSuffix(node.Name, "kind-control-plane") {
+			return node
+		}
+	}
+
+	Fail("No control plane node found")
+	return corev1.Node{} // unreachable
 }
 
 func getNodesAddresses() []string {

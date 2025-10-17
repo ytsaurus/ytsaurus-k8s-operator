@@ -18,6 +18,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	mock_yt "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/mock"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ypatch"
 )
 
@@ -135,6 +136,14 @@ func (fs *FakeServer) Sync(ctx context.Context) error {
 
 func (fs *FakeServer) buildStatefulSet() *appsv1.StatefulSet {
 	return nil
+}
+
+func (fs *FakeServer) getStatefulSet() *resources.StatefulSet {
+	return nil
+}
+
+func (fs *FakeServer) needUpdateWithSpecCheck(specCheckFunc func() bool) bool {
+	return false
 }
 
 func (fs *FakeServer) rebuildStatefulSet() *appsv1.StatefulSet {

@@ -109,6 +109,12 @@ func newFlowTree(head *flowStep) *flowTree {
 func (f *flowTree) execute(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) (bool, error) {
 	var err error
 	currentState := ytsaurus.GetUpdateState()
+	// If UpdateState is empty (initial state), default to UpdateStateNone.
+	// This happens when an update is triggered for the first time before SaveUpdateState() is called.
+	// Otherwise, we would get a nil pointer dereference when looking up f.index[""].
+	if currentState == "" {
+		currentState = ytv1.UpdateStateNone
+	}
 	currentStep := f.index[currentState]
 
 	// will execute one step at a time
