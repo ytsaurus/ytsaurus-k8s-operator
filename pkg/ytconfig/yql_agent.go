@@ -27,6 +27,7 @@ type YQLAgent struct {
 	GatewayConfig          GatewayConfig `yson:"gateway_config"`
 	YqlPluginSharedLibrary string        `yson:"yql_plugin_shared_library"`
 	YTTokenPath            string        `yson:"yt_token_path"`
+	UIOrigin               string        `yson:"ui_origin,omitempty"`
 
 	// For backward compatibility.
 	MRJobBinary          string                `yson:"mr_job_binary"`
@@ -67,6 +68,9 @@ func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	}
 	c.YQLAgent.GatewayConfig.MRJobBinary = "/usr/bin/mrjob"
 	c.YQLAgent.YqlPluginSharedLibrary = "/usr/lib/yql/libyqlplugin.so"
+	if spec.UIOrigin != nil {
+		c.YQLAgent.UIOrigin = *spec.UIOrigin
+	}
 
 	// For backward compatibility.
 	c.YQLAgent.UDFDirectory = "/usr/lib/yql"

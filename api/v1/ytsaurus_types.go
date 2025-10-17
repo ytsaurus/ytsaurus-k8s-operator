@@ -735,6 +735,7 @@ type StrawberryControllerSpec struct {
 
 type YQLAgentSpec struct {
 	InstanceSpec `json:",inline"`
+	UIOrigin     *string `json:"uiOrigin,omitempty"`
 }
 
 type QueueAgentSpec struct {
