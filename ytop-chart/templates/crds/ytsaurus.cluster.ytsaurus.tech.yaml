@@ -33556,6 +33556,8 @@ spec:
                           type: string
                       type: object
                     type: array
+                  uiOrigin:
+                    type: string
                   volumeClaimTemplates:
                     items:
                       description: EmbeddedPersistentVolumeClaim is an embedded version
