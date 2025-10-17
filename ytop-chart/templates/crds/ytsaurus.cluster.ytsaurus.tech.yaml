@@ -32425,6 +32425,9 @@ spec:
                           type: string
                       type: object
                     type: array
+                  uiBaseUrl:
+                    description: URL for creating links to the existing UI.
+                    type: string
                   useInsecureCookies:
                     default: true
                     description: If defined allows insecure (over http) authentication.
@@ -33556,8 +33559,6 @@ spec:
                           type: string
                       type: object
                     type: array
-                  uiOrigin:
-                    type: string
                   volumeClaimTemplates:
                     items:
                       description: EmbeddedPersistentVolumeClaim is an embedded version

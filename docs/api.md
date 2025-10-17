@@ -2385,6 +2385,7 @@ _Appears in:_
 | `instanceCount` _integer_ |  |  |  |
 | `externalProxy` _string_ | If defined it will be used for direct heavy url/commands like: read_table, write_table, etc. |  |  |
 | `odinBaseUrl` _string_ | Odin is a service for monitoring the availability of YTsaurus clusters. |  |  |
+| `uiBaseUrl` _string_ | URL for creating links to the existing UI. |  |  |
 | `extraEnvVariables` _[EnvVar](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#envvar-v1-core) array_ |  |  |  |
 | `environment` _string_ |  | testing |  |
 | `theme` _string_ |  | lavander |  |
@@ -2614,7 +2615,6 @@ _Appears in:_
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
-| `uiOrigin` _string_ |  |  |  |
 
 
 #### Ytsaurus

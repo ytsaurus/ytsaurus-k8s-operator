@@ -68,9 +68,6 @@ func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	}
 	c.YQLAgent.GatewayConfig.MRJobBinary = "/usr/bin/mrjob"
 	c.YQLAgent.YqlPluginSharedLibrary = "/usr/lib/yql/libyqlplugin.so"
-	if spec.UIOrigin != nil {
-		c.YQLAgent.UIOrigin = *spec.UIOrigin
-	}
 
 	// For backward compatibility.
 	c.YQLAgent.UDFDirectory = "/usr/lib/yql"
