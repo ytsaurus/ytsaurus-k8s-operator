@@ -295,8 +295,8 @@ func (s *serverImpl) needUpdate() bool {
 	}
 
 	// Check if StatefulSet spec has changed
-	// Use rebuildStatefulSet() to get fresh spec from current CRD, not cached version
-	desiredSpec := s.rebuildStatefulSet().Spec
+	// Use buildStatefulSet() to ensure we compare with the same spec that Sync() will use
+	desiredSpec := s.buildStatefulSet().Spec
 	return s.statefulSet.SpecChanged(desiredSpec)
 }
 
