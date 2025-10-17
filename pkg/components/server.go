@@ -289,12 +289,14 @@ func (s *serverImpl) needUpdate() bool {
 	if err != nil {
 		return false
 	}
+	// return needReload
 	if needReload {
 		return true
 	}
 
 	// Check if StatefulSet spec has changed
-	desiredSpec := s.buildStatefulSet().Spec
+	// Use rebuildStatefulSet() to get fresh spec from current CRD, not cached version
+	desiredSpec := s.rebuildStatefulSet().Spec
 	return s.statefulSet.SpecChanged(desiredSpec)
 }
 

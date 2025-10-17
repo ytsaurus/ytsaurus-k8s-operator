@@ -58,7 +58,7 @@ func (n *DataNode) Fetch(ctx context.Context) error {
 func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && n.server.needUpdate() && canComponentBeUpdated(n.ytsaurus, n) {
+	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && n.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 

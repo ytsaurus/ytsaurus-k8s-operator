@@ -163,13 +163,13 @@ func statefulSetSpecEqual(oldSpec, newSpec appsv1.StatefulSetSpec) bool {
 	}
 
 	// Compare volume claims
-	if len(oldSpec.VolumeClaimTemplates) != len(newSpec.VolumeClaimTemplates) {
-		return false
-	}
-	// Compare update strategy
-	if !updateStrategyEqual(oldSpec.UpdateStrategy, newSpec.UpdateStrategy) {
-		return false
-	}
+	// if len(oldSpec.VolumeClaimTemplates) != len(newSpec.VolumeClaimTemplates) {
+	// 	return false
+	// }
+	// // Compare update strategy
+	// if !updateStrategyEqual(oldSpec.UpdateStrategy, newSpec.UpdateStrategy) {
+	// 	return false
+	// }
 
 	return true
 }
@@ -195,17 +195,17 @@ func podTemplateSpecEqual(oldTemplate, newTemplate corev1.PodTemplateSpec) bool 
 	}
 
 	// Compare init containers
-	if len(oldPodSpec.InitContainers) != len(newPodSpec.InitContainers) {
-		return false
-	}
-	for i := range oldPodSpec.InitContainers {
-		oldContainer := oldPodSpec.InitContainers[i]
-		newContainer := newPodSpec.InitContainers[i]
+	// if len(oldPodSpec.InitContainers) != len(newPodSpec.InitContainers) {
+	// 	return false
+	// }
+	// for i := range oldPodSpec.InitContainers {
+	// 	oldContainer := oldPodSpec.InitContainers[i]
+	// 	newContainer := newPodSpec.InitContainers[i]
 
-		if !resourceRequirementsEqual(oldContainer.Resources, newContainer.Resources) {
-			return false
-		}
-	}
+	// 	if !resourceRequirementsEqual(oldContainer.Resources, newContainer.Resources) {
+	// 		return false
+	// 	}
+	// }
 
 	return true
 }

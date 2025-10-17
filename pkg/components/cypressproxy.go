@@ -49,7 +49,7 @@ func (cyp *CypressProxy) Fetch(ctx context.Context) error {
 func (cyp *CypressProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(cyp.ytsaurus.GetClusterState()) && cyp.server.needUpdate() && canComponentBeUpdated(cyp.ytsaurus, cyp) {
+	if ytv1.IsReadyToUpdateClusterState(cyp.ytsaurus.GetClusterState()) && cyp.server.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
