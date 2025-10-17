@@ -29,11 +29,13 @@ type server interface {
 	resources.Syncable
 	podsManager
 	needUpdate() bool
+	needUpdateWithSpecCheck(specCheckFunc func() bool) bool
 	configNeedsReload() bool
 	needBuild() bool
 	needSync() bool
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
+	getStatefulSet() *resources.StatefulSet
 	addCABundleMount(c *corev1.Container)
 	addTlsSecretMount(c *corev1.Container)
 	addMonitoringPort(port corev1.ServicePort)
@@ -276,7 +278,9 @@ func (s *serverImpl) podsImageCorrespondsToSpec() bool {
 	return found == len(s.sidecarImages)
 }
 
-func (s *serverImpl) needUpdate() bool {
+// needUpdateWithSpecCheck provides the common update checking logic.
+// It accepts a spec checking function to allow component-specific spec comparisons.
+func (s *serverImpl) needUpdateWithSpecCheck(specCheckFunc func() bool) bool {
 	if !s.exists() {
 		return false
 	}
@@ -289,14 +293,21 @@ func (s *serverImpl) needUpdate() bool {
 	if err != nil {
 		return false
 	}
-	// return needReload
 	if needReload {
 		return true
 	}
 
-	// Check if StatefulSet spec has changed
-	// Use buildStatefulSet() to ensure we compare with the same spec that Sync() will use
-	desiredSpec := s.buildStatefulSet().Spec
+	return specCheckFunc()
+}
+
+func (s *serverImpl) needUpdate() bool {
+	// Use the common helper with the base spec check
+	return s.needUpdateWithSpecCheck(s.needStatefulSetSpecUpdate)
+}
+
+// needStatefulSetSpecUpdate checks if the StatefulSet spec has changed
+func (s *serverImpl) needStatefulSetSpecUpdate() bool {
+	desiredSpec := s.rebuildStatefulSet().Spec
 	return s.statefulSet.SpecChanged(desiredSpec)
 }
 
@@ -436,6 +447,10 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 
 	s.builtStatefulSet = statefulSet
 	return statefulSet
+}
+
+func (s *serverImpl) getStatefulSet() *resources.StatefulSet {
+	return s.statefulSet
 }
 
 func (s *serverImpl) removePods(ctx context.Context) error {

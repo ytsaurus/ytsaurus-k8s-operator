@@ -24,8 +24,68 @@ type baseExecNode struct {
 	sidecarConfig *ConfigMapBuilder
 }
 
+// addResourceList adds resources from newList to list, summing quantities for existing keys
+func addResourceList(list, newList corev1.ResourceList) {
+	if newList == nil {
+		return
+	}
+	for name, quantity := range newList {
+		if value, ok := list[name]; ok {
+			value.Add(quantity)
+			list[name] = value
+		} else {
+			list[name] = quantity.DeepCopy()
+		}
+	}
+}
+
+// addJobResourcesToResources adds JobResources to the given ResourceRequirements if conditions are met
+func (n *baseExecNode) addJobResourcesToResources(resources *corev1.ResourceRequirements) {
+	if n.spec.JobResources == nil || n.criConfig.Isolated {
+		return
+	}
+
+	// Ensure resource lists are initialized
+	if resources.Requests == nil {
+		resources.Requests = corev1.ResourceList{}
+	}
+	if resources.Limits == nil {
+		resources.Limits = corev1.ResourceList{}
+	}
+
+	addResourceList(resources.Requests, n.spec.JobResources.Requests)
+	addResourceList(resources.Limits, n.spec.JobResources.Limits)
+}
+
 func (n *baseExecNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, n.server, n.sidecarConfig)
+}
+
+// needUpdate overrides the server's needUpdate to use ExecNode-specific resource comparison
+func (n *baseExecNode) needUpdate() bool {
+	return n.server.needUpdateWithSpecCheck(n.needStatefulSetSpecUpdate)
+}
+
+// needStatefulSetSpecUpdate checks if resources have changed for ExecNode explicitly
+// ExecNode adds JobResources to NodeResources, so we need to compute the expected total
+func (n *baseExecNode) needStatefulSetSpecUpdate() bool {
+	oldSts := n.server.getStatefulSet().OldObject()
+
+	if oldSts.GetResourceVersion() == "" {
+		return false
+	}
+
+	if len(oldSts.Spec.Template.Spec.Containers) == 0 {
+		return false
+	}
+	oldContainer := oldSts.Spec.Template.Spec.Containers[0]
+
+	// Compute expected resources (NodeResources + JobResources if not isolated)
+	expectedResources := n.spec.InstanceSpec.Resources.DeepCopy()
+	n.addJobResourcesToResources(expectedResources)
+
+	// Compare expected with actual
+	return !resources.ResourceRequirementsEqual(oldContainer.Resources, *expectedResources)
 }
 
 func (n *baseExecNode) doBuildBase() error {
@@ -61,24 +121,8 @@ func (n *baseExecNode) doBuildBase() error {
 		setContainerPrivileged(&podSpec.Containers[i])
 	}
 
-	if n.spec.JobResources != nil && !n.criConfig.Isolated {
-		// Pour job resources into node container if jobs are not isolated.
-		container := &podSpec.Containers[0]
-
-		addResourceList := func(list, newList corev1.ResourceList) {
-			for name, quantity := range newList {
-				if value, ok := list[name]; ok {
-					value.Add(quantity)
-					list[name] = value
-				} else {
-					list[name] = quantity.DeepCopy()
-				}
-			}
-		}
-
-		addResourceList(container.Resources.Requests, n.spec.JobResources.Requests)
-		addResourceList(container.Resources.Limits, n.spec.JobResources.Limits)
-	}
+	// Pour job resources into node container if jobs are not isolated.
+	n.addJobResourcesToResources(&podSpec.Containers[0].Resources)
 
 	if n.criConfig.Service != ytv1.CRIServiceNone {
 		if n.criConfig.Isolated {

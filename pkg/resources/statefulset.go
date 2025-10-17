@@ -189,7 +189,7 @@ func podTemplateSpecEqual(oldTemplate, newTemplate corev1.PodTemplateSpec) bool 
 		newContainer := newPodSpec.Containers[i]
 
 		// Compare resource requirements (only if new spec has resources defined)
-		if !resourceRequirementsEqual(oldContainer.Resources, newContainer.Resources) {
+		if !ResourceRequirementsEqual(oldContainer.Resources, newContainer.Resources) {
 			return false
 		}
 	}
@@ -202,7 +202,7 @@ func podTemplateSpecEqual(oldTemplate, newTemplate corev1.PodTemplateSpec) bool 
 	// 	oldContainer := oldPodSpec.InitContainers[i]
 	// 	newContainer := newPodSpec.InitContainers[i]
 
-	// 	if !resourceRequirementsEqual(oldContainer.Resources, newContainer.Resources) {
+	// 	if !ResourceRequirementsEqual(oldContainer.Resources, newContainer.Resources) {
 	// 		return false
 	// 	}
 	// }
@@ -210,23 +210,23 @@ func podTemplateSpecEqual(oldTemplate, newTemplate corev1.PodTemplateSpec) bool 
 	return true
 }
 
-// resourceRequirementsEqual compares resource requirements, handling nil vs empty cases
-func resourceRequirementsEqual(oldResourceRequirements, newResourceRequirements corev1.ResourceRequirements) bool {
+// ResourceRequirementsEqual compares resource requirements, handling nil vs empty cases
+func ResourceRequirementsEqual(oldResourceRequirements, newResourceRequirements corev1.ResourceRequirements) bool {
 	// Compare requests
-	if !resourceListEqual(oldResourceRequirements.Requests, newResourceRequirements.Requests) {
+	if !ResourceListEqual(oldResourceRequirements.Requests, newResourceRequirements.Requests) {
 		return false
 	}
 
 	// Compare limits
-	if !resourceListEqual(oldResourceRequirements.Limits, newResourceRequirements.Limits) {
+	if !ResourceListEqual(oldResourceRequirements.Limits, newResourceRequirements.Limits) {
 		return false
 	}
 
 	return true
 }
 
-// resourceListEqual compares resource lists, treating nil and empty as equivalent
-func resourceListEqual(oldResourceList, newResourceList corev1.ResourceList) bool {
+// ResourceListEqual compares resource lists, treating nil and empty as equivalent
+func ResourceListEqual(oldResourceList, newResourceList corev1.ResourceList) bool {
 	// If both are nil or empty, they're equal
 	if len(oldResourceList) == 0 && len(newResourceList) == 0 {
 		return true

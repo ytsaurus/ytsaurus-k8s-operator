@@ -90,7 +90,9 @@ func NewExecNode(
 func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && (n.server.needUpdate() || n.sidecarConfigNeedsReload()) {
+	// Call needUpdate on self (uses baseExecNode.needUpdate) instead of n.server.needUpdate
+	// This ensures ExecNode-specific resource comparison is used
+	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && (n.needUpdate() || n.sidecarConfigNeedsReload()) {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
