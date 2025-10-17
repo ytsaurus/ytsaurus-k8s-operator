@@ -690,6 +690,9 @@ type UISpec struct {
 	// Odin is a service for monitoring the availability of YTsaurus clusters.
 	//+optional
 	OdinBaseUrl *string `json:"odinBaseUrl,omitempty"`
+	// URL for creating links to the existing UI.
+	//+optional
+	UIBaseUrl *string `json:"uiBaseUrl,omitempty"`
 
 	ExtraEnvVariables []corev1.EnvVar `json:"extraEnvVariables,omitempty"`
 

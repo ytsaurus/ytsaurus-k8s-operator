@@ -2073,6 +2073,11 @@ func (in *UISpec) DeepCopyInto(out *UISpec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.UIBaseUrl != nil {
+		in, out := &in.UIBaseUrl, &out.UIBaseUrl
+		*out = new(string)
+		**out = **in
+	}
 	if in.ExtraEnvVariables != nil {
 		in, out := &in.ExtraEnvVariables, &out.ExtraEnvVariables
 		*out = make([]corev1.EnvVar, len(*in))
