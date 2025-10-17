@@ -954,7 +954,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Namespace: namespace,
 					}, &statefulSetBefore)
 					g.Expect(err).Should(Succeed())
-					g.Expect(len(statefulSetBefore.Spec.Template.Spec.Containers)).Should(BeNumerically(">", 0))
+					g.Expect(statefulSetBefore.Spec.Template.Spec.Containers).ShouldNot(BeEmpty())
 				}, bootstrapTimeout, pollInterval).Should(Succeed())
 
 				By("Recording original discovery server resource limits")
@@ -997,8 +997,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Namespace: namespace,
 					}, &statefulSetAfter)
 					g.Expect(err).Should(Succeed())
-
-					g.Expect(len(statefulSetAfter.Spec.Template.Spec.Containers)).Should(BeNumerically(">", 0))
+					g.Expect(statefulSetAfter.Spec.Template.Spec.Containers).ShouldNot(BeEmpty())
 
 					updatedCPU := statefulSetAfter.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String()
 					updatedMemory := statefulSetAfter.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String()

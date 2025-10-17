@@ -295,11 +295,7 @@ func (s *serverImpl) needUpdate() bool {
 
 	// Check if StatefulSet spec has changed
 	desiredSpec := s.buildStatefulSet().Spec
-	if s.statefulSet.SpecChanged(desiredSpec) {
-		return true
-	}
-
-	return false
+	return s.statefulSet.SpecChanged(desiredSpec)
 }
 
 func (s *serverImpl) arePodsReady(ctx context.Context) bool {

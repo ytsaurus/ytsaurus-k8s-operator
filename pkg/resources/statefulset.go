@@ -211,14 +211,14 @@ func podTemplateSpecEqual(oldTemplate, newTemplate corev1.PodTemplateSpec) bool 
 }
 
 // resourceRequirementsEqual compares resource requirements, handling nil vs empty cases
-func resourceRequirementsEqual(old, new corev1.ResourceRequirements) bool {
+func resourceRequirementsEqual(oldResourceRequirements, newResourceRequirements corev1.ResourceRequirements) bool {
 	// Compare requests
-	if !resourceListEqual(old.Requests, new.Requests) {
+	if !resourceListEqual(oldResourceRequirements.Requests, newResourceRequirements.Requests) {
 		return false
 	}
 
 	// Compare limits
-	if !resourceListEqual(old.Limits, new.Limits) {
+	if !resourceListEqual(oldResourceRequirements.Limits, newResourceRequirements.Limits) {
 		return false
 	}
 
@@ -226,20 +226,20 @@ func resourceRequirementsEqual(old, new corev1.ResourceRequirements) bool {
 }
 
 // resourceListEqual compares resource lists, treating nil and empty as equivalent
-func resourceListEqual(old, new corev1.ResourceList) bool {
+func resourceListEqual(oldResourceList, newResourceList corev1.ResourceList) bool {
 	// If both are nil or empty, they're equal
-	if len(old) == 0 && len(new) == 0 {
+	if len(oldResourceList) == 0 && len(newResourceList) == 0 {
 		return true
 	}
 
 	// If one is empty and the other isn't, they're not equal
-	if len(old) != len(new) {
+	if len(oldResourceList) != len(newResourceList) {
 		return false
 	}
 
 	// Compare each resource
-	for key, newVal := range new {
-		oldVal, exists := old[key]
+	for key, newVal := range newResourceList {
+		oldVal, exists := oldResourceList[key]
 		if !exists || !oldVal.Equal(newVal) {
 			return false
 		}
@@ -249,35 +249,35 @@ func resourceListEqual(old, new corev1.ResourceList) bool {
 }
 
 // updateStrategyEqual compares StatefulSet update strategies
-func updateStrategyEqual(old, new appsv1.StatefulSetUpdateStrategy) bool {
+func updateStrategyEqual(oldStrategy, newStrategy appsv1.StatefulSetUpdateStrategy) bool {
 	// Compare strategy type
-	if old.Type != new.Type {
+	if oldStrategy.Type != newStrategy.Type {
 		return false
 	}
 
 	// If both are RollingUpdate, compare the rolling update config
-	if old.Type == appsv1.RollingUpdateStatefulSetStrategyType {
+	if oldStrategy.Type == appsv1.RollingUpdateStatefulSetStrategyType {
 		// Handle nil cases
-		if old.RollingUpdate == nil && new.RollingUpdate == nil {
+		if oldStrategy.RollingUpdate == nil && newStrategy.RollingUpdate == nil {
 			return true
 		}
-		if old.RollingUpdate == nil || new.RollingUpdate == nil {
+		if oldStrategy.RollingUpdate == nil || newStrategy.RollingUpdate == nil {
 			return true
 		}
 
 		// Compare partition if both are set
-		if old.RollingUpdate.Partition != nil && new.RollingUpdate.Partition != nil {
-			return *old.RollingUpdate.Partition == *new.RollingUpdate.Partition
+		if oldStrategy.RollingUpdate.Partition != nil && newStrategy.RollingUpdate.Partition != nil {
+			return *oldStrategy.RollingUpdate.Partition == *newStrategy.RollingUpdate.Partition
 		}
 
 		// If one has partition and the other doesn't, treat nil as 0
 		oldPartition := int32(0)
-		if old.RollingUpdate.Partition != nil {
-			oldPartition = *old.RollingUpdate.Partition
+		if oldStrategy.RollingUpdate.Partition != nil {
+			oldPartition = *oldStrategy.RollingUpdate.Partition
 		}
 		newPartition := int32(0)
-		if new.RollingUpdate.Partition != nil {
-			newPartition = *new.RollingUpdate.Partition
+		if newStrategy.RollingUpdate.Partition != nil {
+			newPartition = *newStrategy.RollingUpdate.Partition
 		}
 		return oldPartition == newPartition
 	}
