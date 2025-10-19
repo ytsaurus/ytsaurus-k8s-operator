@@ -74,6 +74,7 @@ func containersEqual(a, b []corev1.Container) bool {
 		if !envsEqual(ca.Env, cb.Env) {
 			return false
 		}
+
 		if !ResourceRequirementsEqual(ca.Resources, cb.Resources) {
 			return false
 		}

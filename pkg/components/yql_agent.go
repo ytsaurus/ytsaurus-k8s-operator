@@ -143,10 +143,38 @@ func (yqla *YqlAgent) createUpdateScript() string {
 	return strings.Join(script, "\n")
 }
 
+// applyYqlAgentContainerModifications applies YqlAgent-specific modifications to the container
+func (yqla *YqlAgent) applyYqlAgentContainerModifications(container *corev1.Container) {
+	container.Command = []string{"sh", "-c", fmt.Sprintf("echo -n $YT_TOKEN > %s; %s", consts.DefaultYqlTokenPath, strings.Join(container.Command, " "))}
+	container.EnvFrom = []corev1.EnvFromSource{yqla.secret.GetEnvSource()}
+	if yqla.ytsaurus.GetResource().Spec.UseIPv6 && !yqla.ytsaurus.GetResource().Spec.UseIPv4 {
+		container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "1"}}
+	} else if !yqla.ytsaurus.GetResource().Spec.UseIPv6 && yqla.ytsaurus.GetResource().Spec.UseIPv4 {
+		container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "1"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
+	} else {
+		container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
+	}
+	container.Env = append(container.Env, getDefaultEnv()...)
+}
+
+// needUpdate checks if YqlAgent needs an update, applying YqlAgent-specific modifications
+func (yqla *YqlAgent) needUpdate() bool {
+	return yqla.server.needUpdateWithSpecCheck(yqla.needStatefulSetSpecUpdate)
+}
+
+// needStatefulSetSpecUpdate checks if the StatefulSet spec has changed
+// This applies YqlAgent-specific modifications before comparison
+func (yqla *YqlAgent) needStatefulSetSpecUpdate() bool {
+	ss := yqla.server.rebuildStatefulSet()
+	container := &ss.Spec.Template.Spec.Containers[0]
+	yqla.applyYqlAgentContainerModifications(container)
+	return yqla.server.getStatefulSet().SpecChanged(ss.Spec)
+}
+
 func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(yqla.ytsaurus.GetClusterState()) && yqla.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(yqla.ytsaurus.GetClusterState()) && yqla.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
@@ -194,17 +222,7 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		if !dry {
 			ss := yqla.server.buildStatefulSet()
 			container := &ss.Spec.Template.Spec.Containers[0]
-			container.Command = []string{"sh", "-c", fmt.Sprintf("echo -n $YT_TOKEN > %s; %s", consts.DefaultYqlTokenPath, strings.Join(container.Command, " "))}
-			container.EnvFrom = []corev1.EnvFromSource{yqla.secret.GetEnvSource()}
-			if yqla.ytsaurus.GetResource().Spec.UseIPv6 && !yqla.ytsaurus.GetResource().Spec.UseIPv4 {
-				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "1"}}
-			} else if !yqla.ytsaurus.GetResource().Spec.UseIPv6 && yqla.ytsaurus.GetResource().Spec.UseIPv4 {
-				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "1"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
-			} else {
-				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
-			}
-
-			container.Env = append(container.Env, getDefaultEnv()...)
+			yqla.applyYqlAgentContainerModifications(container)
 			err = yqla.server.Sync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err
