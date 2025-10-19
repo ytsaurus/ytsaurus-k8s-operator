@@ -162,8 +162,7 @@ func (yqla *YqlAgent) needUpdate() bool {
 	return yqla.server.needUpdateWithSpecCheck(yqla.needStatefulSetSpecUpdate)
 }
 
-// needStatefulSetSpecUpdate checks if the StatefulSet spec has changed
-// This applies YqlAgent-specific modifications before comparison
+// needStatefulSetSpecUpdate this applies YqlAgent-specific modifications before comparison
 func (yqla *YqlAgent) needStatefulSetSpecUpdate() bool {
 	ss := yqla.server.rebuildStatefulSet()
 	container := &ss.Spec.Template.Spec.Containers[0]

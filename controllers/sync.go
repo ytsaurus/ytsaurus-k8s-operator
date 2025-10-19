@@ -25,7 +25,6 @@ func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1
 			case consts.ComponentClassNothing:
 				return false
 			case consts.ComponentClassStateless:
-				// Stateless components are everything except data_node, tablet_node, and master
 				if component.Type != consts.DataNodeType && component.Type != consts.TabletNodeType && component.Type != consts.MasterType {
 					return true
 				}

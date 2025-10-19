@@ -78,7 +78,7 @@ func NewRemoteExecNodes(
 func (n *RemoteExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	// Call needUpdate on self (uses baseExecNode.needUpdate) to get ExecNode-specific resource comparison
+	// Call needUpdate on self to get ExecNode-specific resource comparison
 	if n.server.needSync() || n.needUpdate() || n.sidecarConfigNeedsReload() {
 		return n.doSyncBase(ctx, dry)
 	}

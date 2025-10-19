@@ -662,7 +662,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					}
 				})
 
-				It("Triggers cluster update", Label("basic"), func(ctx context.Context) {
+				It("Triggers cluster update", func(ctx context.Context) {
 					By("Checking jobs order")
 					completedJobs := namespaceWatcher.GetCompletedJobNames()
 					Expect(completedJobs).Should(Equal(getInitializingStageJobNames()))

@@ -57,7 +57,7 @@ func getKindControlPlaneNode() corev1.Node {
 	}
 
 	Fail("No control plane node found")
-	return corev1.Node{} // unreachable
+	return corev1.Node{}
 }
 
 func getNodesAddresses() []string {

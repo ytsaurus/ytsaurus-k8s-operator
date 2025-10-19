@@ -301,7 +301,6 @@ func (s *serverImpl) needUpdateWithSpecCheck(specCheckFunc func() bool) bool {
 }
 
 func (s *serverImpl) needUpdate() bool {
-	// Use the common helper with the base spec check
 	return s.needUpdateWithSpecCheck(s.needStatefulSetSpecUpdate)
 }
 
