@@ -730,9 +730,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					"pods shouldn't be recreated when update is blocked",
 				)
 
-				By("Update cluster update with selector: class=Everything")
-				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
-				UpdateObject(ctx, ytsaurus)
+				setUpdatePlanAndUpdateYT(ctx, ytsaurus, ytv1.ComponentUpdateSelector{Class: consts.ComponentClassEverything}, "Update cluster update with selector: class=Everything")
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(
@@ -794,13 +792,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Updated).To(ConsistOf("end-0"), "updated")
 
-				By("Run cluster update with selector:TabletNodesOnly")
-				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
-					Component: ytv1.Component{
-						Type: consts.TabletNodeType,
-					},
-				}}
-				UpdateObject(ctx, ytsaurus)
+				setUpdatePlanForComponentAndUpdateYT(ctx, ytsaurus, consts.TabletNodeType)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(consts.TabletNodeType))
@@ -854,11 +846,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Updated).To(ConsistOf("ms-0"), "updated")
 
-				By("Run cluster update with selector:StatelessOnly")
-				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
-					Class: consts.ComponentClassStateless,
-				}}
-				UpdateObject(ctx, ytsaurus)
+				setUpdatePlanAndUpdateYT(ctx, ytsaurus, ytv1.ComponentUpdateSelector{Class: consts.ComponentClassStateless}, "Run cluster update with selector:StatelessOnly")
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 				Expect(ytsaurus).Should(HaveClusterUpdatingComponents(
@@ -1791,9 +1779,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	}) // integration
 })
 
-// Standalone test suite for resource limits updates
-// This test doesn't need full YT cluster functionality, only validates K8s resource updates
-var _ = Describe("Resource limits update test", Label("e2e", "resources"), func() {
+// Standalone test suite for statefulset spec updates
+var _ = Describe("Statefulset spec update test", Label("statefulsetUpdate"), func() {
 	var namespace string
 	var ytsaurus *ytv1.Ytsaurus
 	var ytBuilder *testutil.YtsaurusBuilder
@@ -1859,15 +1846,7 @@ var _ = Describe("Resource limits update test", Label("e2e", "resources"), func(
 
 	It("Should update Discovery resource limits with UpdateSelector", func(ctx context.Context) {
 		By("Waiting for discovery StatefulSet to be created and ready")
-		var statefulSetBefore appsv1.StatefulSet
-		Eventually(func(g Gomega) {
-			err := k8sClient.Get(ctx, client.ObjectKey{
-				Name:      "ds",
-				Namespace: namespace,
-			}, &statefulSetBefore)
-			g.Expect(err).Should(Succeed())
-			g.Expect(statefulSetBefore.Spec.Template.Spec.Containers).ShouldNot(BeEmpty())
-		}, bootstrapTimeout, pollInterval).Should(Succeed())
+		statefulSetBefore := getStatefulSet(ctx, "ds", namespace, bootstrapTimeout)
 
 		By("Recording original discovery server resource limits")
 		originalCPU := statefulSetBefore.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String()
@@ -1876,13 +1855,11 @@ var _ = Describe("Resource limits update test", Label("e2e", "resources"), func(
 			"cpu", originalCPU,
 			"memory", originalMemory)
 
-		By("Setting UpdatePlan to allow only Discovery updates")
-		ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
-			Component: ytv1.Component{
-				Type: consts.DiscoveryType,
-			},
-		}}
-		UpdateObject(ctx, ytsaurus)
+		// Record Master and HttpProxy StatefulSet ResourceVersions to verify they don't restart
+		By("Recording Master and HttpProxy StatefulSet ResourceVersions before update")
+		otherComponentVersions := recordComponentVersions(ctx, namespace, "ms", "hp")
+
+		setUpdatePlanForComponentAndUpdateYT(ctx, ytsaurus, consts.DiscoveryType)
 
 		By("Updating discovery server resource limits")
 		newCPULimit := "500m"
@@ -1926,7 +1903,148 @@ var _ = Describe("Resource limits update test", Label("e2e", "resources"), func(
 		By("Waiting for cluster to complete update and return to Running state")
 		EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 
+		By("Verifying Master and HttpProxy StatefulSets were NOT restarted")
+		verifyComponentVersionsUnchanged(ctx, namespace, otherComponentVersions)
+
 		By("Test completed successfully - Discovery resource limits were updated via UpdateSelector")
+	})
+
+	It("Should update Discovery node selectors with UpdateSelector", func(ctx context.Context) {
+		By("Waiting for discovery StatefulSet to be created and ready")
+		statefulSetBefore := getStatefulSet(ctx, "ds", namespace, bootstrapTimeout)
+
+		By("Recording original discovery server node selectors")
+		originalNodeSelectorCount := len(statefulSetBefore.Spec.Template.Spec.NodeSelector)
+		log.Info("Original discovery server node selectors",
+			"count", originalNodeSelectorCount,
+			"selectors", statefulSetBefore.Spec.Template.Spec.NodeSelector)
+
+		// Record Master and HttpProxy StatefulSet ResourceVersions to verify they don't restart
+		By("Recording Master and HttpProxy StatefulSet ResourceVersions before update")
+		otherComponentVersions := recordComponentVersions(ctx, namespace, "ms", "hp")
+
+		setUpdatePlanForComponentAndUpdateYT(ctx, ytsaurus, consts.DiscoveryType)
+
+		By("Adding node selector to discovery server")
+		nodeSelectorKey := "test-node-label-doesnt-exist"
+		nodeSelectorValue := "test-value-doesnt-exist"
+
+		// Add node selector to Discovery component
+		if ytsaurus.Spec.Discovery.InstanceSpec.NodeSelector == nil {
+			ytsaurus.Spec.Discovery.InstanceSpec.NodeSelector = make(map[string]string)
+		}
+		ytsaurus.Spec.Discovery.InstanceSpec.NodeSelector[nodeSelectorKey] = nodeSelectorValue
+		UpdateObject(ctx, ytsaurus)
+
+		log.Info("Updated Ytsaurus spec with new node selector",
+			"key", nodeSelectorKey,
+			"value", nodeSelectorValue)
+
+		By("Waiting for operator to observe the spec change")
+		EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+		Expect(ytsaurus).Should(HaveClusterUpdatingComponents(consts.DiscoveryType))
+
+		By("Verifying StatefulSet spec was updated with new node selector")
+		Eventually(func(g Gomega) {
+			var statefulSetAfter appsv1.StatefulSet
+			err := k8sClient.Get(ctx, client.ObjectKey{
+				Name:      "ds",
+				Namespace: namespace,
+			}, &statefulSetAfter)
+			g.Expect(err).Should(Succeed())
+			g.Expect(statefulSetAfter.Spec.Template.Spec.Containers).ShouldNot(BeEmpty())
+
+			nodeSelector := statefulSetAfter.Spec.Template.Spec.NodeSelector
+			log.Info("Checking updated StatefulSet node selector",
+				"nodeSelector", nodeSelector,
+				"expectedKey", nodeSelectorKey,
+				"expectedValue", nodeSelectorValue)
+
+			g.Expect(nodeSelector).Should(HaveKeyWithValue(nodeSelectorKey, nodeSelectorValue),
+				"Node selector should be updated for Discovery")
+		}, upgradeTimeout, pollInterval).Should(Succeed())
+
+		By("Verifying Master and HttpProxy StatefulSets were NOT restarted")
+		verifyComponentVersionsUnchanged(ctx, namespace, otherComponentVersions)
+
+		By("Test completed successfully - Discovery node selectors were updated via UpdateSelector")
+	})
+
+	It("Should update Discovery environment variables with UpdateSelector", func(ctx context.Context) {
+		By("Waiting for discovery StatefulSet to be created and ready")
+		statefulSetBefore := getStatefulSet(ctx, "ds", namespace, bootstrapTimeout)
+
+		By("Recording original discovery server environment variables")
+		originalEnvCount := len(statefulSetBefore.Spec.Template.Spec.Containers[0].Env)
+		log.Info("Original discovery server environment",
+			"envCount", originalEnvCount)
+
+		// Record Master and HttpProxy StatefulSet ResourceVersions to verify they don't restart
+		By("Recording Master and HttpProxy StatefulSet ResourceVersions before update")
+		otherComponentVersions := recordComponentVersions(ctx, namespace, "ms", "hp")
+
+		setUpdatePlanForComponentAndUpdateYT(ctx, ytsaurus, consts.DiscoveryType)
+
+		// Manually add environment variables to Discovery StatefulSet spec
+		var statefulSet appsv1.StatefulSet
+		Expect(k8sClient.Get(ctx, client.ObjectKey{
+			Name:      "ds",
+			Namespace: namespace,
+		}, &statefulSet)).Should(Succeed())
+
+		env1Val := "foobar"
+		env2Val := "bazbar"
+		statefulSet.Spec.Template.Spec.Containers[0].Env = append(
+			statefulSet.Spec.Template.Spec.Containers[0].Env,
+			corev1.EnvVar{
+				Name:  "YTSAURUS_DISCOVERY_UPDATE_TEST_ENV_1",
+				Value: env1Val,
+			},
+			corev1.EnvVar{
+				Name:  "YTSAURUS_DISCOVERY_UPDATE_TEST_ENV_2",
+				Value: env2Val,
+			},
+		)
+		Expect(k8sClient.Update(ctx, &statefulSet)).Should(Succeed())
+
+		By("Verifying StatefulSet spec was updated with new environment variables")
+		Eventually(func(g Gomega) {
+			var statefulSetAfter appsv1.StatefulSet
+			err := k8sClient.Get(ctx, client.ObjectKey{
+				Name:      "ds",
+				Namespace: namespace,
+			}, &statefulSetAfter)
+			g.Expect(err).Should(Succeed())
+			g.Expect(statefulSetAfter.Spec.Template.Spec.Containers).ShouldNot(BeEmpty())
+
+			container := statefulSetAfter.Spec.Template.Spec.Containers[0]
+			log.Info("Checking updated StatefulSet environment",
+				"envCount", len(container.Env))
+
+			// Find the new environment variables
+			foundEnv1 := false
+			foundEnv2 := false
+			for _, env := range container.Env {
+				if env.Name == "YTSAURUS_DISCOVERY_UPDATE_TEST_ENV_1" {
+					g.Expect(env.Value).Should(Equal(env1Val), "env1 var should have correct value")
+					foundEnv1 = true
+				}
+				if env.Name == "YTSAURUS_DISCOVERY_UPDATE_TEST_ENV_2" {
+					g.Expect(env.Value).Should(Equal(env2Val), "env2 var should have correct value")
+					foundEnv2 = true
+				}
+			}
+			g.Expect(foundEnv1).Should(BeTrue(), "env1 var should be present in container")
+			g.Expect(foundEnv2).Should(BeTrue(), "env2 var should be present in container")
+		}, upgradeTimeout, pollInterval).Should(Succeed())
+
+		By("Waiting for cluster to complete update and return to Running state")
+		EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+
+		By("Verifying Master and HttpProxy StatefulSets were NOT restarted")
+		verifyComponentVersionsUnchanged(ctx, namespace, otherComponentVersions)
+
+		By("Test completed successfully - Discovery environment variables were updated via UpdateSelector")
 	})
 
 	It("Should NOT update Discovery when UpdatePlan blocks updates", Label("resources", "blocked"), func(ctx context.Context) {
@@ -1953,6 +2071,8 @@ var _ = Describe("Resource limits update test", Label("e2e", "resources"), func(
 		originalPodUID := discoveryPodBefore.UID
 		log.Info("Original discovery pod", "uid", originalPodUID)
 
+		blockAllComponentUpdates(ctx, ytsaurus)
+
 		By("Updating discovery server resource limits with UpdatePlan blocking all updates")
 		newCPULimit := "600m"
 		newMemoryLimit := "2Gi"
@@ -1961,10 +2081,6 @@ var _ = Describe("Resource limits update test", Label("e2e", "resources"), func(
 			corev1.ResourceCPU:    resource.MustParse(newCPULimit),
 			corev1.ResourceMemory: resource.MustParse(newMemoryLimit),
 		}
-		// Explicitly set UpdatePlan to block all updates (ComponentClassNothing)
-		ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
-			Class: consts.ComponentClassNothing,
-		}}
 		UpdateObject(ctx, ytsaurus)
 
 		log.Info("Updated Ytsaurus spec with new resources but UpdatePlan blocks all updates", "newCPU", newCPULimit, "newMemory", newMemoryLimit)
