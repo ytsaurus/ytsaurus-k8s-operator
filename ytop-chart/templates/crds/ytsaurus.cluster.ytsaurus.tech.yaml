@@ -32425,14 +32425,14 @@ spec:
                           type: string
                       type: object
                     type: array
-                  uiBaseUrl:
-                    description: URL for creating links to the existing UI.
-                    type: string
                   useInsecureCookies:
                     default: true
                     description: If defined allows insecure (over http) authentication.
                     type: boolean
                 type: object
+              uiBaseUrl:
+                description: URL for creating links to the existing UI.
+                type: string
               uiImage:
                 type: string
               updatePlan:
