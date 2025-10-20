@@ -938,7 +938,7 @@ func (g *Generator) GetQueueAgentConfig(spec *ytv1.QueueAgentSpec) ([]byte, erro
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getYQLAgentConfigImpl(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
+func (g *Generator) getYQLAgentConfigImpl(spec *ytv1.YQLAgentSpec, uiOrigin string) (YQLAgentServer, error) {
 	c, err := getYQLAgentServerCarcass(spec)
 	if err != nil {
 		return c, err
@@ -959,15 +959,16 @@ func (g *Generator) getYQLAgentConfigImpl(spec *ytv1.YQLAgentSpec) (YQLAgentServ
 		g.ytsaurus.Name: g.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole),
 	}
 	c.YQLAgent.DefaultCluster = g.ytsaurus.Name
+	c.YQLAgent.UIOrigin = uiOrigin
 
 	return c, nil
 }
 
-func (g *Generator) GetYQLAgentConfig(spec *ytv1.YQLAgentSpec) ([]byte, error) {
+func (g *Generator) GetYQLAgentConfig(spec *ytv1.YQLAgentSpec, uiOrigin string) ([]byte, error) {
 	if spec == nil {
 		return []byte{}, nil
 	}
-	c, err := g.getYQLAgentConfigImpl(spec)
+	c, err := g.getYQLAgentConfigImpl(spec, uiOrigin)
 	if err != nil {
 		return nil, err
 	}
@@ -1284,7 +1285,7 @@ func (g *Generator) GetComponentConfig(component consts.ComponentType, name stri
 		}
 	case consts.YqlAgentType:
 		if name == "" {
-			return g.GetYQLAgentConfig(g.ytsaurus.Spec.YQLAgents)
+			return g.GetYQLAgentConfig(g.ytsaurus.Spec.YQLAgents, g.ytsaurus.Spec.UIBaseUrl)
 		}
 	case consts.BundleControllerType:
 		if name == "" {

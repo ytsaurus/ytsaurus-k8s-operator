@@ -849,6 +849,9 @@ type CommonRemoteNodeStatus struct {
 type YtsaurusSpec struct {
 	CommonSpec `json:",inline"`
 	UIImage    string `json:"uiImage,omitempty"`
+	// URL for creating links to the existing UI.
+	//+optional
+	UIBaseUrl string `json:"uiBaseUrl,omitempty"`
 
 	AdminCredentials *corev1.LocalObjectReference `json:"adminCredentials,omitempty"`
 
