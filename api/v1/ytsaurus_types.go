@@ -40,6 +40,110 @@ type EmbeddedPersistentVolumeClaim struct {
 	Spec corev1.PersistentVolumeClaimSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 }
 
+// Volume is a reduced version of core/v1 Volume.
+// Represents a named volume in a pod that may be accessed by any container in the pod.
+type Volume struct {
+	// name of the volume.
+	// Must be a DNS_LABEL and unique within the pod.
+	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
+	// volumeSource represents the location and type of the mounted volume.
+	// If not specified, the Volume is implied to be an EmptyDir.
+	// This implied behavior is deprecated and will be removed in a future version.
+	VolumeSource `json:",inline" protobuf:"bytes,2,opt,name=volumeSource"`
+}
+
+// VolumeSource is a reduced version of core/v1 VolumeSource.
+// Represents the source of a volume to mount.
+// Only one of its members may be specified.
+type VolumeSource struct {
+	// hostPath represents a pre-existing file or directory on the host
+	// machine that is directly exposed to the container. This is generally
+	// used for system agents or other privileged things that are allowed
+	// to see the host machine. Most containers will NOT need this.
+	// More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath
+	// +optional
+	HostPath *corev1.HostPathVolumeSource `json:"hostPath,omitempty" protobuf:"bytes,1,opt,name=hostPath"`
+	// emptyDir represents a temporary directory that shares a pod's lifetime.
+	// More info: https://kubernetes.io/docs/concepts/storage/volumes#emptydir
+	// +optional
+	EmptyDir *corev1.EmptyDirVolumeSource `json:"emptyDir,omitempty" protobuf:"bytes,2,opt,name=emptyDir"`
+	// secret represents a secret that should populate this volume.
+	// More info: https://kubernetes.io/docs/concepts/storage/volumes#secret
+	// +optional
+	Secret *corev1.SecretVolumeSource `json:"secret,omitempty" protobuf:"bytes,6,opt,name=secret"`
+	// nfs represents an NFS mount on the host that shares a pod's lifetime
+	// More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs
+	// +optional
+	NFS *corev1.NFSVolumeSource `json:"nfs,omitempty" protobuf:"bytes,7,opt,name=nfs"`
+	// iscsi represents an ISCSI Disk resource that is attached to a
+	// kubelet's host machine and then exposed to the pod.
+	// More info: https://examples.k8s.io/volumes/iscsi/README.md
+	// +optional
+	ISCSI *corev1.ISCSIVolumeSource `json:"iscsi,omitempty" protobuf:"bytes,8,opt,name=iscsi"`
+	// persistentVolumeClaimVolumeSource represents a reference to a
+	// PersistentVolumeClaim in the same namespace.
+	// More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims
+	// +optional
+	PersistentVolumeClaim *corev1.PersistentVolumeClaimVolumeSource `json:"persistentVolumeClaim,omitempty" protobuf:"bytes,10,opt,name=persistentVolumeClaim"`
+	// downwardAPI represents downward API about the pod that should populate this volume
+	// +optional
+	DownwardAPI *corev1.DownwardAPIVolumeSource `json:"downwardAPI,omitempty" protobuf:"bytes,16,opt,name=downwardAPI"`
+	// fc represents a Fibre Channel resource that is attached to a kubelet's host machine and then exposed to the pod.
+	// +optional
+	FC *corev1.FCVolumeSource `json:"fc,omitempty" protobuf:"bytes,17,opt,name=fc"`
+	// configMap represents a configMap that should populate this volume
+	// +optional
+	ConfigMap *corev1.ConfigMapVolumeSource `json:"configMap,omitempty" protobuf:"bytes,19,opt,name=configMap"`
+	// csi (Container Storage Interface) represents ephemeral storage that is handled by certain external CSI drivers (Beta feature).
+	// +optional
+	CSI *corev1.CSIVolumeSource `json:"csi,omitempty" protobuf:"bytes,28,opt,name=csi"`
+	// ephemeral represents a volume that is handled by a cluster storage driver.
+	// The volume's lifecycle is tied to the pod that defines it - it will be created before the pod starts,
+	// and deleted when the pod is removed.
+	//
+	// Use this if:
+	// a) the volume is only needed while the pod runs,
+	// b) features of normal volumes like restoring from snapshot or capacity
+	//    tracking are needed,
+	// c) the storage driver is specified through a storage class, and
+	// d) the storage driver supports dynamic volume provisioning through
+	//    a PersistentVolumeClaim (see EphemeralVolumeSource for more
+	//    information on the connection between this volume type
+	//    and PersistentVolumeClaim).
+	//
+	// Use PersistentVolumeClaim or one of the vendor-specific
+	// APIs for volumes that persist for longer than the lifecycle
+	// of an individual pod.
+	//
+	// Use CSI for light-weight local ephemeral volumes if the CSI driver is meant to
+	// be used that way - see the documentation of the driver for
+	// more information.
+	//
+	// A pod can use both types of ephemeral volumes and
+	// persistent volumes at the same time.
+	//
+	// +optional
+	Ephemeral *corev1.EphemeralVolumeSource `json:"ephemeral,omitempty" protobuf:"bytes,29,opt,name=ephemeral"`
+	// image represents an OCI object (a container image or artifact) pulled and mounted on the kubelet's host machine.
+	// The volume is resolved at pod startup depending on which PullPolicy value is provided:
+	//
+	// - Always: the kubelet always attempts to pull the reference. Container creation will fail If the pull fails.
+	// - Never: the kubelet never pulls the reference and only uses a local image or artifact. Container creation will fail if the reference isn't present.
+	// - IfNotPresent: the kubelet pulls if the reference isn't already present on disk. Container creation will fail if the reference isn't present and the pull fails.
+	//
+	// The volume gets re-resolved if the pod gets deleted and recreated, which means that new remote content will become available on pod recreation.
+	// A failure to resolve or pull the image during pod startup will block containers from starting and may add significant latency. Failures will be retried using normal volume backoff and will be reported on the pod reason and message.
+	// The types of objects that may be mounted by this volume are defined by the container runtime implementation on a host machine and at minimum must include all valid types supported by the container image field.
+	// The OCI object gets mounted in a single directory (spec.containers[*].volumeMounts.mountPath) by merging the manifest layers in the same way as for container images.
+	// The volume will be mounted read-only (ro) and non-executable files (noexec).
+	// Sub path mounts for containers are not supported (spec.containers[*].volumeMounts.subpath).
+	// The field spec.securityContext.fsGroupChangePolicy has no effect on this volume type.
+	// +featureGate=ImageVolume
+	// +optional
+	Image *corev1.ImageVolumeSource `json:"image,omitempty" protobuf:"bytes,30,opt,name=image"`
+}
+
 // EmbeddedObjectMetadata contains a subset of the fields included in k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
 // Only fields which are relevant to embedded resources are included.
 type EmbeddedObjectMetadata struct {
@@ -267,7 +371,7 @@ type InstanceSpec struct {
 	// Specifies wrapper for component container command.
 	//+optional
 	EntrypointWrapper []string             `json:"entrypointWrapper,omitempty"`
-	Volumes           []corev1.Volume      `json:"volumes,omitempty"`
+	Volumes           []Volume             `json:"volumes,omitempty"`
 	VolumeMounts      []corev1.VolumeMount `json:"volumeMounts,omitempty"`
 	//+optional
 	ReadinessProbeParams  *HealthcheckProbeParams         `json:"readinessProbeParams,omitempty"`
