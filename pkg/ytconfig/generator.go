@@ -1287,10 +1287,7 @@ func (g *Generator) GetComponentConfig(component consts.ComponentType, name stri
 		}
 	case consts.YqlAgentType:
 		if name == "" {
-			if g.ytsaurus.Spec.UI != nil {
-				return g.GetYQLAgentConfig(g.ytsaurus.Spec.YQLAgents, g.ytsaurus.Spec.UI.UIBaseUrl)
-			}
-			return g.GetYQLAgentConfig(g.ytsaurus.Spec.YQLAgents, nil)
+			return g.GetYQLAgentConfig(g.ytsaurus.Spec.YQLAgents, g.ytsaurus.Spec.UIBaseUrl)
 		}
 	case consts.BundleControllerType:
 		if name == "" {

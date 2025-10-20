@@ -39,10 +39,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		"/usr/bin/ytserver-yql-agent",
 		"ytserver-yql-agent.yson",
 		func() ([]byte, error) {
-			if resource.Spec.UI != nil {
-				return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents, resource.Spec.UI.UIBaseUrl)
-			}
-			return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents, nil)
+			return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents, resource.Spec.UIBaseUrl)
 		},
 		consts.YQLAgentMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
