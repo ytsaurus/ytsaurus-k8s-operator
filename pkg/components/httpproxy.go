@@ -125,10 +125,32 @@ func (hp *HttpProxy) Fetch(ctx context.Context) error {
 	)
 }
 
+// needUpdate overrides the server's needUpdate to account for HTTPS secret volumes
+// that are added after StatefulSet build
+func (hp *HttpProxy) needUpdate() bool {
+	return hp.server.needUpdateWithSpecCheck(hp.needStatefulSetSpecUpdate)
+}
+
+// needStatefulSetSpecUpdate checks if the StatefulSet spec has changed
+func (hp *HttpProxy) needStatefulSetSpecUpdate() bool {
+	// Rebuild the StatefulSet with HTTPS secret included
+	desiredSpec := hp.server.rebuildStatefulSet().Spec
+	hp.applyHttpsSecret(&desiredSpec.Template.Spec)
+	return hp.server.getStatefulSet().SpecChanged(desiredSpec)
+}
+
+// applyHttpsSecret applies HTTPS secret volume and mount to the pod spec
+func (hp *HttpProxy) applyHttpsSecret(podSpec *corev1.PodSpec) {
+	if hp.httpsSecret != nil {
+		hp.httpsSecret.AddVolume(podSpec)
+		hp.httpsSecret.AddVolumeMount(&podSpec.Containers[0])
+	}
+}
+
 func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(hp.ytsaurus.GetClusterState()) && hp.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(hp.ytsaurus.GetClusterState()) && hp.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
@@ -149,10 +171,7 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	if hp.NeedSync() {
 		if !dry {
 			statefulSet := hp.server.buildStatefulSet()
-			if hp.httpsSecret != nil {
-				hp.httpsSecret.AddVolume(&statefulSet.Spec.Template.Spec)
-				hp.httpsSecret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
-			}
+			hp.applyHttpsSecret(&statefulSet.Spec.Template.Spec)
 			err = hp.server.Sync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err

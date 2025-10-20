@@ -75,6 +75,10 @@ func containersEqual(a, b []corev1.Container) bool {
 			return false
 		}
 
+		if !envFromEqual(ca.EnvFrom, cb.EnvFrom) {
+			return false
+		}
+
 		if !ResourceRequirementsEqual(ca.Resources, cb.Resources) {
 			return false
 		}
@@ -102,6 +106,43 @@ func envsEqual(a, b []corev1.EnvVar) bool {
 			return false
 		}
 		if (a[i].ValueFrom == nil) != (b[i].ValueFrom == nil) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func envFromEqual(a, b []corev1.EnvFromSource) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	getKey := func(e corev1.EnvFromSource) string {
+		if e.ConfigMapRef != nil {
+			return "cm:" + e.ConfigMapRef.Name
+		}
+		if e.SecretRef != nil {
+			return "secret:" + e.SecretRef.Name
+		}
+		return ""
+	}
+	a, b = sortPair(a, b, getKey)
+
+	for i := range a {
+		// Compare ConfigMapRef
+		if !nilnessEqual(a[i].ConfigMapRef, b[i].ConfigMapRef) {
+			return false
+		}
+		if a[i].ConfigMapRef != nil && a[i].ConfigMapRef.Name != b[i].ConfigMapRef.Name {
+			return false
+		}
+
+		// Compare SecretRef
+		if !nilnessEqual(a[i].SecretRef, b[i].SecretRef) {
+			return false
+		}
+		if a[i].SecretRef != nil && a[i].SecretRef.Name != b[i].SecretRef.Name {
 			return false
 		}
 	}

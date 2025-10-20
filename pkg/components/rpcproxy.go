@@ -115,10 +115,32 @@ func (rp *RpcProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, fetchable...)
 }
 
+// needUpdate overrides the server's needUpdate to account for TLS secret volumes
+// that are added after StatefulSet build
+func (rp *RpcProxy) needUpdate() bool {
+	return rp.server.needUpdateWithSpecCheck(rp.needStatefulSetSpecUpdate)
+}
+
+// needStatefulSetSpecUpdate checks if the StatefulSet spec has changed
+func (rp *RpcProxy) needStatefulSetSpecUpdate() bool {
+	// Rebuild the StatefulSet with TLS secret included
+	desiredSpec := rp.server.rebuildStatefulSet().Spec
+	rp.applyTlsSecret(&desiredSpec.Template.Spec)
+	return rp.server.getStatefulSet().SpecChanged(desiredSpec)
+}
+
+// applyTlsSecret applies TLS secret volume and mount to the pod spec
+func (rp *RpcProxy) applyTlsSecret(podSpec *corev1.PodSpec) {
+	if rp.tlsSecret != nil {
+		rp.tlsSecret.AddVolume(podSpec)
+		rp.tlsSecret.AddVolumeMount(&podSpec.Containers[0])
+	}
+}
+
 func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(rp.ytsaurus.GetClusterState()) && rp.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(rp.ytsaurus.GetClusterState()) && rp.needUpdate() {
 		return SimpleStatus(SyncStatusNeedLocalUpdate), err
 	}
 
@@ -139,10 +161,7 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	if rp.NeedSync() {
 		if !dry {
 			statefulSet := rp.server.buildStatefulSet()
-			if secret := rp.tlsSecret; secret != nil {
-				secret.AddVolume(&statefulSet.Spec.Template.Spec)
-				secret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
-			}
+			rp.applyTlsSecret(&statefulSet.Spec.Template.Spec)
 			err = rp.server.Sync(ctx)
 		}
 		return WaitingStatus(SyncStatusPending, "components"), err
