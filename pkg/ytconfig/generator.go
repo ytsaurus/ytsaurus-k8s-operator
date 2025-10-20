@@ -938,7 +938,7 @@ func (g *Generator) GetQueueAgentConfig(spec *ytv1.QueueAgentSpec) ([]byte, erro
 	return marshallYsonConfig(c)
 }
 
-func (g *Generator) getYQLAgentConfigImpl(spec *ytv1.YQLAgentSpec, uiOrigin *string) (YQLAgentServer, error) {
+func (g *Generator) getYQLAgentConfigImpl(spec *ytv1.YQLAgentSpec, uiOrigin string) (YQLAgentServer, error) {
 	c, err := getYQLAgentServerCarcass(spec)
 	if err != nil {
 		return c, err
@@ -959,14 +959,12 @@ func (g *Generator) getYQLAgentConfigImpl(spec *ytv1.YQLAgentSpec, uiOrigin *str
 		g.ytsaurus.Name: g.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole),
 	}
 	c.YQLAgent.DefaultCluster = g.ytsaurus.Name
-	if uiOrigin != nil {
-		c.YQLAgent.UIOrigin = *uiOrigin
-	}
+	c.YQLAgent.UIOrigin = uiOrigin
 
 	return c, nil
 }
 
-func (g *Generator) GetYQLAgentConfig(spec *ytv1.YQLAgentSpec, uiOrigin *string) ([]byte, error) {
+func (g *Generator) GetYQLAgentConfig(spec *ytv1.YQLAgentSpec, uiOrigin string) ([]byte, error) {
 	if spec == nil {
 		return []byte{}, nil
 	}

@@ -851,7 +851,7 @@ type YtsaurusSpec struct {
 	UIImage    string `json:"uiImage,omitempty"`
 	// URL for creating links to the existing UI.
 	//+optional
-	UIBaseUrl *string `json:"uiBaseUrl,omitempty"`
+	UIBaseUrl string `json:"uiBaseUrl,omitempty"`
 
 	AdminCredentials *corev1.LocalObjectReference `json:"adminCredentials,omitempty"`
 

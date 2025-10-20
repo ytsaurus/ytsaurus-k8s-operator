@@ -2333,11 +2333,6 @@ func (in *YtsaurusList) DeepCopyObject() runtime.Object {
 func (in *YtsaurusSpec) DeepCopyInto(out *YtsaurusSpec) {
 	*out = *in
 	in.CommonSpec.DeepCopyInto(&out.CommonSpec)
-	if in.UIBaseUrl != nil {
-		in, out := &in.UIBaseUrl, &out.UIBaseUrl
-		*out = new(string)
-		**out = **in
-	}
 	if in.AdminCredentials != nil {
 		in, out := &in.AdminCredentials, &out.AdminCredentials
 		*out = new(corev1.LocalObjectReference)
