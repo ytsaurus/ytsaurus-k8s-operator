@@ -898,8 +898,11 @@ spec:
                       type: string
                   type: object
                 type: array
-              metricsExporter:
+              metricExporter:
                 properties:
+                  gridStep:
+                    format: int32
+                    type: integer
                   host:
                     type: string
                   instanceTags:

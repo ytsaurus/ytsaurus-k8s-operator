@@ -108,6 +108,7 @@ type SolomonExporter struct {
 	Host         *string                 `yson:"host,omitempty"`
 	InstanceTags map[string]string       `yson:"instance_tags,omitempty"`
 	Shards       map[string]SolomonShard `yson:"shards,omitempty"`
+	GridStep     int32                   `yson:"grid_step,omitempty"`
 }
 
 type PemBlob struct {

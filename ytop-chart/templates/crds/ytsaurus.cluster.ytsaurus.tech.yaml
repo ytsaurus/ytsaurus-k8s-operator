@@ -968,6 +968,30 @@ spec:
                           type: string
                       type: object
                     type: array
+                  metricExporter:
+                    properties:
+                      gridStep:
+                        format: int32
+                        type: integer
+                      host:
+                        type: string
+                      instanceTags:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      shards:
+                        additionalProperties:
+                          properties:
+                            filter:
+                              items:
+                                type: string
+                              type: array
+                            gridStep:
+                              format: int32
+                              type: integer
+                          type: object
+                        type: object
+                    type: object
                   minReadyInstanceCount:
                     type: integer
                   monitoringPort:
@@ -2836,6 +2860,30 @@ spec:
                           type: string
                       type: object
                     type: array
+                  metricExporter:
+                    properties:
+                      gridStep:
+                        format: int32
+                        type: integer
+                      host:
+                        type: string
+                      instanceTags:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      shards:
+                        additionalProperties:
+                          properties:
+                            filter:
+                              items:
+                                type: string
+                              type: array
+                            gridStep:
+                              format: int32
+                              type: integer
+                          type: object
+                        type: object
+                    type: object
                   minReadyInstanceCount:
                     type: integer
                   monitoringPort:
@@ -4672,6 +4720,30 @@ spec:
                           type: string
                       type: object
                     type: array
+                  metricExporter:
+                    properties:
+                      gridStep:
+                        format: int32
+                        type: integer
+                      host:
+                        type: string
+                      instanceTags:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      shards:
+                        additionalProperties:
+                          properties:
+                            filter:
+                              items:
+                                type: string
+                              type: array
+                            gridStep:
+                              format: int32
+                              type: integer
+                          type: object
+                        type: object
+                    type: object
                   minReadyInstanceCount:
                     type: integer
                   monitoringPort:
@@ -6514,6 +6586,30 @@ spec:
                             type: string
                         type: object
                       type: array
+                    metricExporter:
+                      properties:
+                        gridStep:
+                          format: int32
+                          type: integer
+                        host:
+                          type: string
+                        instanceTags:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        shards:
+                          additionalProperties:
+                            properties:
+                              filter:
+                                items:
+                                  type: string
+                                type: array
+                              gridStep:
+                                format: int32
+                                type: integer
+                            type: object
+                          type: object
+                      type: object
                     minReadyInstanceCount:
                       type: integer
                     monitoringPort:
@@ -8363,6 +8459,30 @@ spec:
                           type: string
                       type: object
                     type: array
+                  metricExporter:
+                    properties:
+                      gridStep:
+                        format: int32
+                        type: integer
+                      host:
+                        type: string
+                      instanceTags:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      shards:
+                        additionalProperties:
+                          properties:
+                            filter:
+                              items:
+                                type: string
+                              type: array
+                            gridStep:
+                              format: int32
+                              type: integer
+                          type: object
+                        type: object
+                    type: object
                   minReadyInstanceCount:
                     type: integer
                   monitoringPort:
@@ -10455,6 +10575,30 @@ spec:
                             type: string
                         type: object
                       type: array
+                    metricExporter:
+                      properties:
+                        gridStep:
+                          format: int32
+                          type: integer
+                        host:
+                          type: string
+                        instanceTags:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        shards:
+                          additionalProperties:
+                            properties:
+                              filter:
+                                items:
+                                  type: string
+                                type: array
+                              gridStep:
+                                format: int32
+                                type: integer
+                            type: object
+                          type: object
+                      type: object
                     minReadyInstanceCount:
                       type: integer
                     monitoringPort:
@@ -12362,6 +12506,30 @@ spec:
                             type: string
                         type: object
                       type: array
+                    metricExporter:
+                      properties:
+                        gridStep:
+                          format: int32
+                          type: integer
+                        host:
+                          type: string
+                        instanceTags:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        shards:
+                          additionalProperties:
+                            properties:
+                              filter:
+                                items:
+                                  type: string
+                                type: array
+                              gridStep:
+                                format: int32
+                                type: integer
+                            type: object
+                          type: object
+                      type: object
                     minReadyInstanceCount:
                       type: integer
                     monitoringPort:
@@ -14250,6 +14418,30 @@ spec:
                             type: string
                         type: object
                       type: array
+                    metricExporter:
+                      properties:
+                        gridStep:
+                          format: int32
+                          type: integer
+                        host:
+                          type: string
+                        instanceTags:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        shards:
+                          additionalProperties:
+                            properties:
+                              filter:
+                                items:
+                                  type: string
+                                type: array
+                              gridStep:
+                                format: int32
+                                type: integer
+                            type: object
+                          type: object
+                      type: object
                     minReadyInstanceCount:
                       type: integer
                     monitoringPort:
@@ -16104,6 +16296,30 @@ spec:
                           type: string
                       type: object
                     type: array
+                  metricExporter:
+                    properties:
+                      gridStep:
+                        format: int32
+                        type: integer
+                      host:
+                        type: string
+                      instanceTags:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      shards:
+                        additionalProperties:
+                          properties:
+                            filter:
+                              items:
+                                type: string
+                              type: array
+                            gridStep:
+                              format: int32
+                              type: integer
+                          type: object
+                        type: object
+                    type: object
                   minReadyInstanceCount:
                     type: integer
                   monitoringPort:
@@ -18034,6 +18250,30 @@ spec:
                     type: integer
                   maxSnapshotCountToKeep:
                     type: integer
+                  metricExporter:
+                    properties:
+                      gridStep:
+                        format: int32
+                        type: integer
+                      host:
+                        type: string
+                      instanceTags:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      shards:
+                        additionalProperties:
+                          properties:
+                            filter:
+                              items:
+                                type: string
+                              type: array
+                            gridStep:
+                              format: int32
+                              type: integer
+                          type: object
+                        type: object
+                    type: object
                   minReadyInstanceCount:
                     type: integer
                   monitoringPort:
@@ -19880,6 +20120,30 @@ spec:
                           type: string
                       type: object
                     type: array
+                  metricExporter:
+                    properties:
+                      gridStep:
+                        format: int32
+                        type: integer
+                      host:
+                        type: string
+                      instanceTags:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      shards:
+                        additionalProperties:
+                          properties:
+                            filter:
+                              items:
+                                type: string
+                              type: array
+                            gridStep:
+                              format: int32
+                              type: integer
+                          type: object
+                        type: object
+                    type: object
                   minReadyInstanceCount:
                     type: integer
                   monitoringPort:
@@ -21712,6 +21976,30 @@ spec:
                           type: string
                       type: object
                     type: array
+                  metricExporter:
+                    properties:
+                      gridStep:
+                        format: int32
+                        type: integer
+                      host:
+                        type: string
+                      instanceTags:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      shards:
+                        additionalProperties:
+                          properties:
+                            filter:
+                              items:
+                                type: string
+                              type: array
+                            gridStep:
+                              format: int32
+                              type: integer
+                          type: object
+                        type: object
+                    type: object
                   minReadyInstanceCount:
                     type: integer
                   monitoringPort:
@@ -23554,6 +23842,30 @@ spec:
                             type: string
                         type: object
                       type: array
+                    metricExporter:
+                      properties:
+                        gridStep:
+                          format: int32
+                          type: integer
+                        host:
+                          type: string
+                        instanceTags:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        shards:
+                          additionalProperties:
+                            properties:
+                              filter:
+                                items:
+                                  type: string
+                                type: array
+                              gridStep:
+                                format: int32
+                                type: integer
+                            type: object
+                          type: object
+                      type: object
                     minReadyInstanceCount:
                       type: integer
                     monitoringPort:
@@ -25436,6 +25748,30 @@ spec:
                           type: string
                       type: object
                     type: array
+                  metricExporter:
+                    properties:
+                      gridStep:
+                        format: int32
+                        type: integer
+                      host:
+                        type: string
+                      instanceTags:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      shards:
+                        additionalProperties:
+                          properties:
+                            filter:
+                              items:
+                                type: string
+                              type: array
+                            gridStep:
+                              format: int32
+                              type: integer
+                          type: object
+                        type: object
+                    type: object
                   minReadyInstanceCount:
                     type: integer
                   monitoringPort:
@@ -27295,6 +27631,30 @@ spec:
                       type: integer
                     maxSnapshotCountToKeep:
                       type: integer
+                    metricExporter:
+                      properties:
+                        gridStep:
+                          format: int32
+                          type: integer
+                        host:
+                          type: string
+                        instanceTags:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        shards:
+                          additionalProperties:
+                            properties:
+                              filter:
+                                items:
+                                  type: string
+                                type: array
+                              gridStep:
+                                format: int32
+                                type: integer
+                            type: object
+                          type: object
+                      type: object
                     minReadyInstanceCount:
                       type: integer
                     monitoringPort:
@@ -29292,6 +29652,30 @@ spec:
                             type: string
                         type: object
                       type: array
+                    metricExporter:
+                      properties:
+                        gridStep:
+                          format: int32
+                          type: integer
+                        host:
+                          type: string
+                        instanceTags:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        shards:
+                          additionalProperties:
+                            properties:
+                              filter:
+                                items:
+                                  type: string
+                                type: array
+                              gridStep:
+                                format: int32
+                                type: integer
+                            type: object
+                          type: object
+                      type: object
                     minReadyInstanceCount:
                       type: integer
                     monitoringPort:
@@ -31150,6 +31534,30 @@ spec:
                             type: string
                         type: object
                       type: array
+                    metricExporter:
+                      properties:
+                        gridStep:
+                          format: int32
+                          type: integer
+                        host:
+                          type: string
+                        instanceTags:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        shards:
+                          additionalProperties:
+                            properties:
+                              filter:
+                                items:
+                                  type: string
+                                type: array
+                              gridStep:
+                                format: int32
+                                type: integer
+                            type: object
+                          type: object
+                      type: object
                     minPort:
                       default: 32000
                       format: int32
@@ -33339,6 +33747,30 @@ spec:
                           type: string
                       type: object
                     type: array
+                  metricExporter:
+                    properties:
+                      gridStep:
+                        format: int32
+                        type: integer
+                      host:
+                        type: string
+                      instanceTags:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      shards:
+                        additionalProperties:
+                          properties:
+                            filter:
+                              items:
+                                type: string
+                              type: array
+                            gridStep:
+                              format: int32
+                              type: integer
+                          type: object
+                        type: object
+                    type: object
                   minReadyInstanceCount:
                     type: integer
                   monitoringPort:

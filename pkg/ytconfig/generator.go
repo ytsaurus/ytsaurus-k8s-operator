@@ -247,10 +247,10 @@ func (g *NodeGenerator) fillAddressResolver(c *AddressResolver) {
 	c.Retries = &retries
 }
 
-func (g *NodeGenerator) fillSolomonExporter(c *SolomonExporter, m *ytv1.MetricsExporter) {
-	c.Host = ptr.To("{POD_SHORT_HOSTNAME}")
+func (g *NodeGenerator) fillSolomonExporter(s *SolomonExporter, m *ytv1.MetricExporter) {
+	s.Host = ptr.To("{POD_SHORT_HOSTNAME}")
 	if m != nil && m.Host != nil {
-		c.Host = m.Host
+		s.Host = m.Host
 	}
 
 	tags := map[string]string{
@@ -259,20 +259,24 @@ func (g *NodeGenerator) fillSolomonExporter(c *SolomonExporter, m *ytv1.MetricsE
 	if m != nil && len(m.InstanceTags) > 0 {
 		maps.Copy(tags, m.InstanceTags)
 	}
-	c.InstanceTags = tags
+	s.InstanceTags = tags
 
 	if m != nil && len(m.Shards) > 0 {
-		c.Shards = make(map[string]SolomonShard, len(m.Shards))
+		s.Shards = make(map[string]SolomonShard, len(m.Shards))
 		for shardName, shardData := range m.Shards {
-			s := SolomonShard{}
+			shard := SolomonShard{}
 			if shardData.GridStep > 0 {
-				s.GridStep = shardData.GridStep
+				shard.GridStep = shardData.GridStep
 			}
 			if len(shardData.Filter) > 0 {
-				s.Filter = shardData.Filter
+				shard.Filter = shardData.Filter
 			}
-			c.Shards[shardName] = s
+			s.Shards[shardName] = shard
 		}
+	}
+
+	if m != nil && m.GridStep > 0 {
+		s.GridStep = m.GridStep
 	}
 }
 
@@ -321,7 +325,7 @@ func (g *NodeGenerator) fillCypressAnnotations(c *CommonServer) {
 func (g *NodeGenerator) fillCommonService(c *CommonServer, s *ytv1.InstanceSpec) {
 	// ToDo(psushin): enable porto resource tracker?
 	g.fillAddressResolver(&c.AddressResolver)
-	g.fillSolomonExporter(&c.SolomonExporter, s.MetricsExporter)
+	g.fillSolomonExporter(&c.SolomonExporter, s.MetricExporter)
 	keyring := getMountKeyring(g.commonSpec, s.NativeTransport)
 	g.fillClusterConnection(&c.ClusterConnection, s.NativeTransport, keyring)
 	g.fillCypressAnnotations(c)
