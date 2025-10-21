@@ -63,9 +63,9 @@ rules:
   - cluster.ytsaurus.tech
   resources:
   - chyts
+  - offshoredatagateways
   - remotedatanodes
   - remoteexecnodes
-  - offshoredatagateways
   - remotetabletnodes
   - remoteytsaurus
   - spyts
@@ -82,9 +82,9 @@ rules:
   - cluster.ytsaurus.tech
   resources:
   - chyts/finalizers
+  - offshoredatagateways/finalizers
   - remotedatanodes/finalizers
   - remoteexecnodes/finalizers
-  - offshoredatagateways/finalizers
   - remotetabletnodes/finalizers
   - remoteytsaurus/finalizers
   - spyts/finalizers
@@ -95,9 +95,9 @@ rules:
   - cluster.ytsaurus.tech
   resources:
   - chyts/status
+  - offshoredatagateways/status
   - remotedatanodes/status
   - remoteexecnodes/status
-  - offshoredatagateways/status
   - remotetabletnodes/status
   - remoteytsaurus/status
   - spyts/status

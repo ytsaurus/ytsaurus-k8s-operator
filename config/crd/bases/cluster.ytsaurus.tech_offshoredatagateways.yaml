@@ -11,8 +11,8 @@ spec:
     categories:
     - ytsaurus-all
     - yt-all
-    kind: offshoredatagateways
-    listKind: offshoredatagatewaysList
+    kind: OffshoreDataGateways
+    listKind: OffshoreDataGatewaysList
     plural: offshoredatagateways
     singular: offshoredatagateways
   scope: Namespaced
@@ -25,7 +25,7 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: offshoredatagateways is the Schema for the offshoredatagateways
+        description: OffshoreDataGateways is the Schema for the OffshoreDataGateways
           API
         properties:
           apiVersion:
@@ -39,7 +39,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: offshoredatagatewaysSpec defines the desired state of...
+            description: OffshoreDataGatewaysSpec defines the desired state of OffshoreDataGateways
             properties:
               affinity:
                 description: Affinity is a group of affinity scheduling rules.
@@ -1938,8 +1938,8 @@ spec:
             - remoteClusterSpec
             type: object
           status:
-            description: offshoredatagatewaysStatus defines the observed state
-              of...
+            description: OffshoreDataGatewaysStatus defines the observed state of
+              OffshoreDataGateways
             properties:
               observedGeneration:
                 description: Reflects resource generation which was used for updating

@@ -43,9 +43,9 @@ type OffshoreDataGatewaysReconciler struct {
 	Recorder record.EventRecorder
 }
 
-//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=OffshoreDataGateways,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=OffshoreDataGateways/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=OffshoreDataGateways/finalizers,verbs=update
+//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=offshoredatagateways,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=offshoredatagateways/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=offshoredatagateways/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps,resources=statefulset,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=statefulset/status,verbs=get
 //+kubebuilder:rbac:groups=core,resources=pod,verbs=get;list;watch;create;update;patch;delete
