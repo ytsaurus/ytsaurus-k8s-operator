@@ -12,21 +12,21 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
-func (r *RemoteOffshoreNodeProxiesReconciler) Sync(
+func (r *OffshoreDataGatewaysReconciler) Sync(
 	ctx context.Context,
-	resource *ytv1.RemoteOffshoreNodeProxies,
+	resource *ytv1.OffshoreDataGateways,
 	remoteYtsaurus *ytv1.RemoteYtsaurus,
 ) (ctrl.Result, error) {
-	logger := log.FromContext(ctx).WithValues("component", "remoteOffshorenodeproxies")
+	logger := log.FromContext(ctx).WithValues("component", "OffshoreDataGateways")
 	apiProxy := apiproxy.NewAPIProxy(resource, r.Client, r.Recorder, r.Scheme)
 
 	cfgen := ytconfig.NewRemoteNodeGenerator(remoteYtsaurus, resource.GetName(), r.ClusterDomain, &resource.Spec.CommonSpec)
 
-	component := components.NewRemoteOffshoreNodeProxies(
+	component := components.NewOffshoreDataGateways(
 		cfgen,
 		resource,
 		apiProxy,
-		resource.Spec.OffshoreNodeProxiesSpec,
+		resource.Spec.OffshoreDataGatewaySpec,
 		resource.Spec.CommonSpec,
 	)
 	err := component.Fetch(ctx)
@@ -51,10 +51,10 @@ func (r *RemoteOffshoreNodeProxiesReconciler) Sync(
 	}
 	resource.Status.ObservedGeneration = resource.Generation
 
-	logger.Info("Setting status for remote offshore node proxies", "status", resource.Status.ReleaseStatus)
+	logger.Info("Setting status for offshore data gateways", "status", resource.Status.ReleaseStatus)
 	err = r.Client.Status().Update(ctx, resource)
 	if err != nil {
-		logger.Error(err, "failed to update status for remote offshore node proxies")
+		logger.Error(err, "failed to update status for offshore data gateways")
 		return ctrl.Result{Requeue: true}, err
 	}
 

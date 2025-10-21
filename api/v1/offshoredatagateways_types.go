@@ -21,15 +21,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// RemoteOffshoreNodeProxiesSpec defines the desired state of RemoteOffshoreNodeProxies
-type RemoteOffshoreNodeProxiesSpec struct {
+// OffshoreDataGatewaysSpec defines the desired state of OffshoreDataGateways
+type OffshoreDataGatewaysSpec struct {
 	RemoteClusterSpec       *corev1.LocalObjectReference `json:"remoteClusterSpec"`
 	CommonSpec              `json:",inline"`
-	OffshoreNodeProxiesSpec `json:",inline"`
+	OffshoreDataGatewaySpec `json:",inline"`
 }
 
-// RemoteOffshoreNodeProxiesStatus defines the observed state of RemoteOffshoreNodeProxies
-type RemoteOffshoreNodeProxiesStatus struct {
+// OffshoreDataGatewaysStatus defines the observed state of OffshoreDataGateways
+type OffshoreDataGatewaysStatus struct {
 	CommonRemoteNodeStatus `json:",inline"`
 }
 
@@ -38,24 +38,24 @@ type RemoteOffshoreNodeProxiesStatus struct {
 //+kubebuilder:resource:categories=ytsaurus-all;yt-all
 //+kubebuilder:subresource:status
 
-// RemoteOffshoreNodeProxies is the Schema for the RemoteOffshoreNodeProxies API
-type RemoteOffshoreNodeProxies struct {
+// OffshoreDataGateways is the Schema for the OffshoreDataGateways API
+type OffshoreDataGateways struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   RemoteOffshoreNodeProxiesSpec   `json:"spec,omitempty"`
-	Status RemoteOffshoreNodeProxiesStatus `json:"status,omitempty"`
+	Spec   OffshoreDataGatewaysSpec   `json:"spec,omitempty"`
+	Status OffshoreDataGatewaysStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// RemoteOffshoreNodeProxiesList contains a list of RemoteOffshoreNodeProxies
-type RemoteOffshoreNodeProxiesList struct {
+// OffshoreDataGatewaysList contains a list of OffshoreDataGateways
+type OffshoreDataGatewaysList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []RemoteOffshoreNodeProxies `json:"items"`
+	Items           []OffshoreDataGateways `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&RemoteOffshoreNodeProxies{}, &RemoteOffshoreNodeProxiesList{})
+	SchemeBuilder.Register(&OffshoreDataGateways{}, &OffshoreDataGatewaysList{})
 }

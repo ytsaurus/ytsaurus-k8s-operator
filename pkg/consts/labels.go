@@ -36,8 +36,8 @@ func ComponentLabel(component ComponentType) string {
 		return "yt-exec-node"
 	case TabletNodeType:
 		return "yt-tablet-node"
-	case RemoteOffshoreNodeProxyType:
-		return "yt-remote-offshore-node-proxy"
+	case OffshoreDataGatewayType:
+		return "yt-offshore-data-gateway"
 	case HttpProxyType:
 		return "yt-http-proxy"
 	case RpcProxyType:

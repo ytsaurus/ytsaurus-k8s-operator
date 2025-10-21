@@ -35,17 +35,17 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
 
-// RemoteOffshoreNodeProxiesReconciler reconciles a RemoteOffshoreNodeProxies object
-type RemoteOffshoreNodeProxiesReconciler struct {
+// OffshoreDataGatewaysReconciler reconciles a OffshoreDataGateways object
+type OffshoreDataGatewaysReconciler struct {
 	ClusterDomain string
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
 }
 
-//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=remoteoffshorenodeproxies,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=remoteoffshorenodeproxies/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=remoteoffshorenodeproxies/finalizers,verbs=update
+//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=OffshoreDataGateways,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=OffshoreDataGateways/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=OffshoreDataGateways/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps,resources=statefulset,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=statefulset/status,verbs=get
 //+kubebuilder:rbac:groups=core,resources=pod,verbs=get;list;watch;create;update;patch;delete
@@ -54,18 +54,18 @@ type RemoteOffshoreNodeProxiesReconciler struct {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
-// the RemoteOffshoreNodeProxies object against the actual cluster state, and then
+// the OffshoreDataGateways object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.4/pkg/reconcile
-func (r *RemoteOffshoreNodeProxiesReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *OffshoreDataGatewaysReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	var nodes ytv1.RemoteOffshoreNodeProxies
+	var nodes ytv1.OffshoreDataGateways
 	if err := r.Get(ctx, req.NamespacedName, &nodes); err != nil {
-		logger.Error(err, "unable to fetch remote offshore node proxies")
+		logger.Error(err, "unable to fetch offshore data gateways")
 		// We'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
 		// on deleted requests.
@@ -82,20 +82,20 @@ func (r *RemoteOffshoreNodeProxiesReconciler) Reconcile(ctx context.Context, req
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *RemoteOffshoreNodeProxiesReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *OffshoreDataGatewaysReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// See https://book.kubebuilder.io/reference/watching-resources/externally-managed for the reference implementation
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &ytv1.RemoteOffshoreNodeProxies{}, remoteClusterSpecField, func(rawObj client.Object) []string {
-		RemoteOffshoreNodeProxies := rawObj.(*ytv1.RemoteOffshoreNodeProxies)
-		if RemoteOffshoreNodeProxies.Spec.RemoteClusterSpec == nil {
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &ytv1.OffshoreDataGateways{}, remoteClusterSpecField, func(rawObj client.Object) []string {
+		OffshoreDataGateways := rawObj.(*ytv1.OffshoreDataGateways)
+		if OffshoreDataGateways.Spec.RemoteClusterSpec == nil {
 			return nil
 		}
-		return []string{RemoteOffshoreNodeProxies.Spec.RemoteClusterSpec.Name}
+		return []string{OffshoreDataGateways.Spec.RemoteClusterSpec.Name}
 	}); err != nil {
 		return err
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&ytv1.RemoteOffshoreNodeProxies{}).
+		For(&ytv1.OffshoreDataGateways{}).
 		Watches(
 			&ytv1.RemoteYtsaurus{},
 			handler.EnqueueRequestsFromMapFunc(r.findRemoteNodesForRemoteYtsaurus),
@@ -104,20 +104,20 @@ func (r *RemoteOffshoreNodeProxiesReconciler) SetupWithManager(mgr ctrl.Manager)
 		Complete(r)
 }
 
-func (r *RemoteOffshoreNodeProxiesReconciler) findRemoteNodesForRemoteYtsaurus(ctx context.Context, remoteYtsaurus client.Object) []reconcile.Request {
+func (r *OffshoreDataGatewaysReconciler) findRemoteNodesForRemoteYtsaurus(ctx context.Context, remoteYtsaurus client.Object) []reconcile.Request {
 	// See https://book.kubebuilder.io/reference/watching-resources/externally-managed for the reference implementation
-	attachedRemoteOffshoreNodeProxies := &ytv1.RemoteOffshoreNodeProxiesList{}
+	attachedOffshoreDataGateways := &ytv1.OffshoreDataGatewaysList{}
 	listOps := &client.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector(remoteClusterSpecField, remoteYtsaurus.GetName()),
 		Namespace:     remoteYtsaurus.GetNamespace(),
 	}
-	err := r.List(ctx, attachedRemoteOffshoreNodeProxies, listOps)
+	err := r.List(ctx, attachedOffshoreDataGateways, listOps)
 	if err != nil {
 		return []reconcile.Request{}
 	}
 
-	requests := make([]reconcile.Request, len(attachedRemoteOffshoreNodeProxies.Items))
-	for i, item := range attachedRemoteOffshoreNodeProxies.Items {
+	requests := make([]reconcile.Request, len(attachedOffshoreDataGateways.Items))
+	for i, item := range attachedOffshoreDataGateways.Items {
 		requests[i] = reconcile.Request{
 			NamespacedName: types.NamespacedName{
 				Name:      item.GetName(),

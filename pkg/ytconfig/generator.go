@@ -841,10 +841,10 @@ func (g *NodeGenerator) GetTabletNodeConfig(spec ytv1.TabletNodesSpec) ([]byte, 
 	return marshallYsonConfig(c)
 }
 
-func (g *NodeGenerator) getOffshoreNodeProxiesConfigImpl(spec *ytv1.OffshoreNodeProxiesSpec) (OffshoreNodeProxyServer, error) {
-	c, err := getOffshoreNodeProxiesCarcass(spec)
+func (g *NodeGenerator) getOffshoreDataGatewaysConfigImpl(spec *ytv1.OffshoreDataGatewaySpec) (OffshoreDataGatewayServer, error) {
+	c, err := getOffshoreDataGatewaysCarcass(spec)
 	if err != nil {
-		return OffshoreNodeProxyServer{}, err
+		return OffshoreDataGatewayServer{}, err
 	}
 
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
@@ -853,8 +853,8 @@ func (g *NodeGenerator) getOffshoreNodeProxiesConfigImpl(spec *ytv1.OffshoreNode
 	return c, nil
 }
 
-func (g *NodeGenerator) GetOffshoreNodeProxiesConfig(spec ytv1.OffshoreNodeProxiesSpec) ([]byte, error) {
-	c, err := g.getOffshoreNodeProxiesConfigImpl(&spec)
+func (g *NodeGenerator) GetOffshoreDataGatewaysConfig(spec ytv1.OffshoreDataGatewaySpec) ([]byte, error) {
+	c, err := g.getOffshoreDataGatewaysConfigImpl(&spec)
 	if err != nil {
 		return nil, err
 	}

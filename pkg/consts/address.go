@@ -37,8 +37,8 @@ const (
 	ExecNodeRPCPort        = 9029
 	ExecNodeMonitoringPort = 10029
 
-	OffshoreNodeProxyRPCPort        = 9032
-	OffshoreNodeProxyMonitoringPort = 10032
+	OffshoreDataGatewayRPCPort        = 9032
+	OffshoreDataGatewayMonitoringPort = 10032
 
 	CRIServiceMonitoringPort = 10026
 

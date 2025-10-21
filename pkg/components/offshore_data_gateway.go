@@ -12,21 +12,21 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
-type RemoteOffshoreNodeProxy struct {
+type OffshoreDataGateway struct {
 	server server
 	cfgen  *ytconfig.NodeGenerator
-	spec   *ytv1.OffshoreNodeProxiesSpec
+	spec   *ytv1.OffshoreDataGatewaySpec
 	baseComponent
 }
 
-func NewRemoteOffshoreNodeProxies(
+func NewOffshoreDataGateways(
 	cfgen *ytconfig.NodeGenerator,
-	nodes *ytv1.RemoteOffshoreNodeProxies,
+	nodes *ytv1.OffshoreDataGateways,
 	proxy apiproxy.APIProxy,
-	spec ytv1.OffshoreNodeProxiesSpec,
+	spec ytv1.OffshoreDataGatewaySpec,
 	commonSpec ytv1.CommonSpec,
-) *RemoteOffshoreNodeProxy {
-	l := cfgen.GetComponentLabeller(consts.RemoteOffshoreNodeProxyType, "")
+) *OffshoreDataGateway {
+	l := cfgen.GetComponentLabeller(consts.OffshoreDataGatewayType, "")
 
 	srv := newServerConfigured(
 		l,
@@ -36,16 +36,16 @@ func NewRemoteOffshoreNodeProxies(
 		"/usr/bin/ytserver-offshore-node-proxy",
 		"ytserver-offshore-node-proxy.yson",
 		func() ([]byte, error) {
-			return cfgen.GetOffshoreNodeProxiesConfig(spec)
+			return cfgen.GetOffshoreDataGatewaysConfig(spec)
 		},
-		consts.OffshoreNodeProxyMonitoringPort,
+		consts.OffshoreDataGatewayMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
-			ContainerPort: consts.OffshoreNodeProxyRPCPort,
+			ContainerPort: consts.OffshoreDataGatewayRPCPort,
 			Protocol:      corev1.ProtocolTCP,
 		}),
 	)
-	return &RemoteOffshoreNodeProxy{
+	return &OffshoreDataGateway{
 		baseComponent: baseComponent{labeller: l},
 		server:        srv,
 		cfgen:         cfgen,
@@ -53,7 +53,7 @@ func NewRemoteOffshoreNodeProxies(
 	}
 }
 
-func (p *RemoteOffshoreNodeProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (p *OffshoreDataGateway) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if p.server.needSync() || p.server.needUpdate() {
@@ -70,14 +70,14 @@ func (p *RemoteOffshoreNodeProxy) doSync(ctx context.Context, dry bool) (Compone
 	return SimpleStatus(SyncStatusReady), err
 }
 
-func (p *RemoteOffshoreNodeProxy) GetType() consts.ComponentType {
-	return consts.RemoteOffshoreNodeProxyType
+func (p *OffshoreDataGateway) GetType() consts.ComponentType {
+	return consts.OffshoreDataGatewayType
 }
 
-func (p *RemoteOffshoreNodeProxy) Sync(ctx context.Context) (ComponentStatus, error) {
+func (p *OffshoreDataGateway) Sync(ctx context.Context) (ComponentStatus, error) {
 	return p.doSync(ctx, false)
 }
 
-func (p *RemoteOffshoreNodeProxy) Fetch(ctx context.Context) error {
+func (p *OffshoreDataGateway) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, p.server)
 }

@@ -4,4 +4,4 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: $(WEBHOOK_CERTIFICATE_NAMESPACE)/$(WEBHOOK_CERTIFICATE_NAME)
-  name: remoteoffshorenodeproxies.cluster.ytsaurus.tech
+  name: offshoredatagateways.cluster.ytsaurus.tech

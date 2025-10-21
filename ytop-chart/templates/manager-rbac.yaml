@@ -322,7 +322,7 @@ rules:
 - apiGroups:
   - cluster.ytsaurus.tech
   resources:
-  - remoteoffshorenodeproxies
+  - offshoredatagateways
   verbs:
     - create
     - delete
@@ -334,13 +334,13 @@ rules:
 - apiGroups:
   - cluster.ytsaurus.tech
   resources:
-  - remoteoffshorenodeproxies/finalizers
+  - offshoredatagateways/finalizers
   verbs:
   - update
 - apiGroups:
   - cluster.ytsaurus.tech
   resources:
-  - remoteoffshorenodeproxies/status
+  - offshoredatagateways/status
   verbs:
   - get
   - patch

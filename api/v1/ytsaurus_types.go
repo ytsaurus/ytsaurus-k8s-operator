@@ -653,7 +653,7 @@ type TabletNodesSpec struct {
 	Name string `json:"name,omitempty"`
 }
 
-type OffshoreNodeProxiesSpec struct {
+type OffshoreDataGatewaySpec struct {
 	// label filter (for daemonset)
 	InstanceSpec `json:",inline"`
 }
