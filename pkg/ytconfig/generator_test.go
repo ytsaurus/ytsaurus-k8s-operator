@@ -645,6 +645,24 @@ func TestMetricsExporter(t *testing.T) {
 		"pod":       "fakePod",
 		"container": "fakeContainer",
 	}
+	customMetricsShards := map[string]ytv1.MetricsShard{
+		"cpu": {
+			Filter: []string{"yt/cpu/", "yt/concurrency/", "yt/action_queue/"},
+		},
+		"default": {
+			Filter:   []string{"yt/"},
+			GridStep: 30000,
+		},
+	}
+	expectedSolomonShards := map[string]SolomonShard{
+		"cpu": {
+			Filter: []string{"yt/cpu/", "yt/concurrency/", "yt/action_queue/"},
+		},
+		"default": {
+			Filter:   []string{"yt/"},
+			GridStep: 30000,
+		},
+	}
 
 	ytsaurus := getYtsaurus()
 	g := NewGenerator(ytsaurus, testClusterDomain)
@@ -653,16 +671,19 @@ func TestMetricsExporter(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, defaultHost, *defaultCfg.SolomonExporter.Host)
 	require.Equal(t, defaultInstanceTags, defaultCfg.SolomonExporter.InstanceTags)
+	require.Nil(t, defaultCfg.SolomonExporter.Shards)
 
 	ytsaurus.Spec.PrimaryMasters.MetricsExporter = &ytv1.MetricsExporter{
 		Host:         ptr.To(customHost),
 		InstanceTags: customInstanceTags,
+		Shards:       customMetricsShards,
 	}
 
 	customMetricsExporterCfg, err := g.getMasterConfigImpl(&ytsaurus.Spec.PrimaryMasters)
 	require.NoError(t, err)
 	require.Equal(t, customHost, *customMetricsExporterCfg.SolomonExporter.Host)
 	require.Equal(t, customInstanceTags, customMetricsExporterCfg.SolomonExporter.InstanceTags)
+	require.Equal(t, expectedSolomonShards, customMetricsExporterCfg.SolomonExporter.Shards)
 }
 
 func getYtsaurus() *ytv1.Ytsaurus {

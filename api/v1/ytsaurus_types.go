@@ -364,9 +364,15 @@ type HealthcheckProbeParams struct {
 	FailureThreshold int32 `json:"failureThreshold,omitempty"`
 }
 
+type MetricsShard struct {
+	Filter   []string `json:"filter,omitempty"`
+	GridStep int32    `json:"gridStep,omitempty"`
+}
+
 type MetricsExporter struct {
-	Host         *string           `json:"host,omitempty"`
-	InstanceTags map[string]string `json:"instanceTags,omitempty"`
+	Host         *string                 `json:"host,omitempty"`
+	InstanceTags map[string]string       `json:"instanceTags,omitempty"`
+	Shards       map[string]MetricsShard `json:"shards,omitempty"`
 }
 
 type InstanceSpec struct {

@@ -260,6 +260,20 @@ func (g *NodeGenerator) fillSolomonExporter(c *SolomonExporter, m *ytv1.MetricsE
 		maps.Copy(tags, m.InstanceTags)
 	}
 	c.InstanceTags = tags
+
+	if m != nil && len(m.Shards) > 0 {
+		c.Shards = make(map[string]SolomonShard, len(m.Shards))
+		for shardName, shardData := range m.Shards {
+			s := SolomonShard{}
+			if shardData.GridStep > 0 {
+				s.GridStep = shardData.GridStep
+			}
+			if len(shardData.Filter) > 0 {
+				s.Filter = shardData.Filter
+			}
+			c.Shards[shardName] = s
+		}
+	}
 }
 
 func (g *NodeGenerator) fillPrimaryMaster(c *MasterCell) {

@@ -898,13 +898,25 @@ spec:
                       type: string
                   type: object
                 type: array
-              metrics_exporter:
+              metricsExporter:
                 properties:
                   host:
                     type: string
-                  instance_tags:
+                  instanceTags:
                     additionalProperties:
                       type: string
+                    type: object
+                  shards:
+                    additionalProperties:
+                      properties:
+                        filter:
+                          items:
+                            type: string
+                          type: array
+                        gridStep:
+                          format: int32
+                          type: integer
+                      type: object
                     type: object
                 type: object
               minReadyInstanceCount:
