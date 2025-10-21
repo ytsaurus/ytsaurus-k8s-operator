@@ -954,6 +954,15 @@ spec:
                       type: string
                   type: object
                 type: array
+              metrics_exporter:
+                properties:
+                  host:
+                    type: string
+                  instance_tags:
+                    additionalProperties:
+                      type: string
+                    type: object
+                type: object
               minReadyInstanceCount:
                 type: integer
               monitoringPort:

@@ -364,6 +364,11 @@ type HealthcheckProbeParams struct {
 	FailureThreshold int32 `json:"failureThreshold,omitempty"`
 }
 
+type MetricsExporter struct {
+	Host         *string           `json:"host,omitempty"`
+	InstanceTags map[string]string `json:"instanceTags,omitempty"`
+}
+
 type InstanceSpec struct {
 	// Overrides coreImage for component.
 	//+optional
@@ -389,6 +394,7 @@ type InstanceSpec struct {
 	HostNetwork *bool `json:"hostNetwork,omitempty"`
 	//+optional
 	MonitoringPort    *int32                 `json:"monitoringPort,omitempty"`
+	MetricsExporter   *MetricsExporter       `json:"metricsExporter,omitempty"`
 	Loggers           []TextLoggerSpec       `json:"loggers,omitempty"`
 	StructuredLoggers []StructuredLoggerSpec `json:"structuredLoggers,omitempty"`
 	Affinity          *corev1.Affinity       `json:"affinity,omitempty"`

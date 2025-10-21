@@ -637,6 +637,34 @@ func TestGetYtsaurusWithMutualTLSInterconnect(t *testing.T) {
 	}
 }
 
+func TestMetricsExporter(t *testing.T) {
+	defaultHost := "{POD_SHORT_HOSTNAME}"
+	defaultInstanceTags := map[string]string{"pod": "{K8S_POD_NAME}"}
+	customHost := "fakeHost"
+	customInstanceTags := map[string]string{
+		"pod":       "fakePod",
+		"container": "fakeContainer",
+	}
+
+	ytsaurus := getYtsaurus()
+	g := NewGenerator(ytsaurus, testClusterDomain)
+
+	defaultCfg, err := g.getMasterConfigImpl(&ytsaurus.Spec.PrimaryMasters)
+	require.NoError(t, err)
+	require.Equal(t, defaultHost, *defaultCfg.SolomonExporter.Host)
+	require.Equal(t, defaultInstanceTags, defaultCfg.SolomonExporter.InstanceTags)
+
+	ytsaurus.Spec.PrimaryMasters.MetricsExporter = &ytv1.MetricsExporter{
+		Host:         ptr.To(customHost),
+		InstanceTags: customInstanceTags,
+	}
+
+	customMetricsExporterCfg, err := g.getMasterConfigImpl(&ytsaurus.Spec.PrimaryMasters)
+	require.NoError(t, err)
+	require.Equal(t, customHost, *customMetricsExporterCfg.SolomonExporter.Host)
+	require.Equal(t, customInstanceTags, customMetricsExporterCfg.SolomonExporter.InstanceTags)
+}
+
 func getYtsaurus() *ytv1.Ytsaurus {
 	return &ytv1.Ytsaurus{
 		ObjectMeta: testObjectMeta,

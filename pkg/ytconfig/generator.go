@@ -2,6 +2,7 @@ package ytconfig
 
 import (
 	"fmt"
+	"maps"
 	"net"
 	"path"
 	"strconv"
@@ -246,11 +247,19 @@ func (g *NodeGenerator) fillAddressResolver(c *AddressResolver) {
 	c.Retries = &retries
 }
 
-func (g *NodeGenerator) fillSolomonExporter(c *SolomonExporter) {
+func (g *NodeGenerator) fillSolomonExporter(c *SolomonExporter, m *ytv1.MetricsExporter) {
 	c.Host = ptr.To("{POD_SHORT_HOSTNAME}")
-	c.InstanceTags = map[string]string{
+	if m != nil && m.Host != nil {
+		c.Host = m.Host
+	}
+
+	tags := map[string]string{
 		"pod": fmt.Sprintf("{%s}", consts.ENV_K8S_POD_NAME),
 	}
+	if m != nil && len(m.InstanceTags) > 0 {
+		maps.Copy(tags, m.InstanceTags)
+	}
+	c.InstanceTags = tags
 }
 
 func (g *NodeGenerator) fillPrimaryMaster(c *MasterCell) {
@@ -298,7 +307,7 @@ func (g *NodeGenerator) fillCypressAnnotations(c *CommonServer) {
 func (g *NodeGenerator) fillCommonService(c *CommonServer, s *ytv1.InstanceSpec) {
 	// ToDo(psushin): enable porto resource tracker?
 	g.fillAddressResolver(&c.AddressResolver)
-	g.fillSolomonExporter(&c.SolomonExporter)
+	g.fillSolomonExporter(&c.SolomonExporter, s.MetricsExporter)
 	keyring := getMountKeyring(g.commonSpec, s.NativeTransport)
 	g.fillClusterConnection(&c.ClusterConnection, s.NativeTransport, keyring)
 	g.fillCypressAnnotations(c)
