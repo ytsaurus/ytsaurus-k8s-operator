@@ -2,6 +2,7 @@ package ytconfig
 
 import (
 	"fmt"
+	"maps"
 	"net"
 	"path"
 	"strconv"
@@ -246,10 +247,36 @@ func (g *NodeGenerator) fillAddressResolver(c *AddressResolver) {
 	c.Retries = &retries
 }
 
-func (g *NodeGenerator) fillSolomonExporter(c *SolomonExporter) {
-	c.Host = ptr.To("{POD_SHORT_HOSTNAME}")
-	c.InstanceTags = map[string]string{
+func (g *NodeGenerator) fillSolomonExporter(s *SolomonExporter, m *ytv1.MetricExporter) {
+	s.Host = ptr.To("{POD_SHORT_HOSTNAME}")
+	if m != nil && m.Host != nil {
+		s.Host = m.Host
+	}
+
+	tags := map[string]string{
 		"pod": fmt.Sprintf("{%s}", consts.ENV_K8S_POD_NAME),
+	}
+	if m != nil && len(m.InstanceTags) > 0 {
+		maps.Copy(tags, m.InstanceTags)
+	}
+	s.InstanceTags = tags
+
+	if m != nil && len(m.Shards) > 0 {
+		s.Shards = make(map[string]SolomonShard, len(m.Shards))
+		for shardName, shardData := range m.Shards {
+			shard := SolomonShard{}
+			if shardData.GridStep > 0 {
+				shard.GridStep = shardData.GridStep
+			}
+			if len(shardData.Filter) > 0 {
+				shard.Filter = shardData.Filter
+			}
+			s.Shards[shardName] = shard
+		}
+	}
+
+	if m != nil && m.GridStep > 0 {
+		s.GridStep = m.GridStep
 	}
 }
 
@@ -298,7 +325,7 @@ func (g *NodeGenerator) fillCypressAnnotations(c *CommonServer) {
 func (g *NodeGenerator) fillCommonService(c *CommonServer, s *ytv1.InstanceSpec) {
 	// ToDo(psushin): enable porto resource tracker?
 	g.fillAddressResolver(&c.AddressResolver)
-	g.fillSolomonExporter(&c.SolomonExporter)
+	g.fillSolomonExporter(&c.SolomonExporter, s.MetricExporter)
 	keyring := getMountKeyring(g.commonSpec, s.NativeTransport)
 	g.fillClusterConnection(&c.ClusterConnection, s.NativeTransport, keyring)
 	g.fillCypressAnnotations(c)

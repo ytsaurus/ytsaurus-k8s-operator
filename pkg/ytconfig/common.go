@@ -99,9 +99,16 @@ type StrawberryControllerFamiliesConfig struct {
 	ExternalProxy      *string  `yson:"external_proxy,omitempty"`
 }
 
+type SolomonShard struct {
+	Filter   []string `yson:"filter,omitempty"`
+	GridStep int32    `yson:"grid_step,omitempty"`
+}
+
 type SolomonExporter struct {
-	Host         *string           `yson:"host,omitempty"`
-	InstanceTags map[string]string `yson:"instance_tags,omitempty"`
+	Host         *string                 `yson:"host,omitempty"`
+	InstanceTags map[string]string       `yson:"instance_tags,omitempty"`
+	Shards       map[string]SolomonShard `yson:"shards,omitempty"`
+	GridStep     int32                   `yson:"grid_step,omitempty"`
 }
 
 type PemBlob struct {
