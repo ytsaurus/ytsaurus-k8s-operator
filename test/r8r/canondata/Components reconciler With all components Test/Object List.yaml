@@ -1,6 +1,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/instance-hash: 182fde72f767765db951d96fc9498b9596f8da2e68e17e990cc23b751bd05060
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -23,6 +24,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: 59694d7d739f49c896f65a99686237f661c571fb0e622147a61d7de824987a16
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -44,6 +46,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -65,6 +68,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -87,6 +91,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -108,6 +113,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -130,6 +136,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/instance-hash: 99101637f07c253effd59c0e82b7940fad2d2f3a47333fdf278426f6a57809c9
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -152,6 +159,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/instance-hash: 0b901e7a7a34339d76349194b4d925f3f803c554ce64495b991c8136e9ee742e
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -174,6 +182,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/instance-hash: 6d265deab0d7c11525a5c732f37f094ce8d76dd32c14bd636dcefe63d5b4a101
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -195,6 +204,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -217,6 +227,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/instance-hash: 5d6cd547bc29127a20b3487a548584afc8104607410feef2a6248698a4bdd70e
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -238,6 +249,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -259,6 +271,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -280,6 +293,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -301,6 +315,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -323,6 +338,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/instance-hash: 68650833db0098068ebe81af70fc8403e12e7e7ef2629d5a4b14d109c06f1d5b
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -345,6 +361,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/instance-hash: 583309ae61181a0f0eb1974010beba643a163dc054d01bbc7c6878062b24478d
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -367,6 +384,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/instance-hash: 5b05d3d42b2a6890dc242877ddeb4f88650f4e87e020e4890155837d1a2d6283
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -388,6 +406,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -409,6 +428,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -431,6 +451,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/instance-hash: c593847c6d3f2258b70238d3a5930d9865a86b422e02bd527ce79f40fedf4d8d
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -452,6 +473,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -473,6 +495,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -495,6 +518,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/instance-hash: ed0c384b2935f39e1495b042b4edc0a24005836b938ad9cc2d3166257b59dd1b
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -522,6 +546,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -544,6 +569,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -566,6 +592,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -588,6 +615,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -609,6 +637,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -631,6 +660,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/instance-hash: dc82429d9bc6347fdb23e4f8b95f4e46aea435d8fdebab29b07645b27fa8dad8
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -652,6 +682,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -675,6 +706,7 @@
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: 85a0c252433a5c659280adbedba6180f3840e46a016cafdf5a3bf6d503b2615c
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -694,7 +726,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-controller-agent
@@ -719,6 +753,7 @@
     kubernetes.io/description: |
       overrides-version: 1
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -742,6 +777,7 @@
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: ab958ae3482113a2cc58c7e2ce13b5249aa70ca6c00ae005657209cb2c31c25d
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -761,7 +797,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-data-node
@@ -785,6 +823,7 @@
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: e0f0e72f1c971a7c6243b9688d481a8ca832ee1a1e57b47e1e26542200ad51a2
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -804,7 +843,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-discovery
@@ -828,6 +869,7 @@
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: e5a6e8e9a1e108e1220a02b5c0fb1272c445de86855fd723822b0fbe8c6be978
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -851,6 +893,7 @@
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: c57e84a54702d032e59c461f749b88f229c9825c9bb773e678770ceb1df18e70
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -870,7 +913,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-exec-node
@@ -894,6 +939,7 @@
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: 2b96be601ec679481e93ca1c5517c99019e0b0c217091f4e5dc15c61e6ba9226
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -913,7 +959,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
@@ -937,6 +985,7 @@
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: a5222d43560fa08b2a44061c821e7f0e5fb81059ab8c5c1e04577bff6649096a
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -956,7 +1005,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master-cache
@@ -980,6 +1031,7 @@
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: 0b38b4319bbfebbceaa9325e3f34cae51d56a4076b65af9619ced7d90161d14e
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -1001,6 +1053,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -1020,7 +1073,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "2"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master
@@ -1044,6 +1099,7 @@
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: 6535f5d75ffdfda62700088f98344982814ec6f81d2595c6d643e2a92b381dbe
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -1063,7 +1119,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-rpc-proxy
@@ -1087,6 +1145,7 @@
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: bcd354814d51bfc5f8399b1fcc5593213812b44088d93bcb3b2a2a2aa0bc667c
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -1106,7 +1165,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-scheduler
@@ -1130,6 +1191,7 @@
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: 2c9afde2f3803b0e9f5e5467e7fab1e5a624f3c9fb8ead34dec9e4295b0c5f0b
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -1151,6 +1213,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -1172,6 +1235,7 @@
   resourceVersion: "2"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -1195,6 +1259,7 @@
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: b5c3657ed765892f2c5ea2e32e878078d8f1c205316ed714cc95ce2fbfeb2ff3
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -1216,6 +1281,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -1237,6 +1303,7 @@
   resourceVersion: "2"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -1256,7 +1323,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "2"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-yql-agent

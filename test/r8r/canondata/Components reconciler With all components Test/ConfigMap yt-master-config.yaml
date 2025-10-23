@@ -162,6 +162,7 @@ metadata:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: 0b38b4319bbfebbceaa9325e3f34cae51d56a4076b65af9619ced7d90161d14e
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
