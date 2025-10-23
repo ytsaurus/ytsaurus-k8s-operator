@@ -41,6 +41,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -61,6 +63,11 @@ func main() {
 	var enableLeaderElection bool
 	var probeAddr string
 	var maxConcurrentReconciles int
+	flag.BoolFunc("version", "print the version", func(s string) error {
+		version.PrintVersion()
+		os.Exit(0)
+		return nil
+	})
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -78,6 +85,8 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	ctx := ctrl.SetupSignalHandler()
+
+	setupLog.Info("Starting ytsaurus operator", "version", version.GetVersion())
 
 	var clusterDomain string
 	if domain := os.Getenv("K8S_CLUSTER_DOMAIN"); domain != "" {
