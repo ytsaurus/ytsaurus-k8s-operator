@@ -305,6 +305,12 @@ status:
     reason: Ready
     status: "True"
     type: StrawberryControllerReady
+  - lastTransitionTime: null
+    message: (devel)
+    observedGeneration: 1
+    reason: Observed
+    status: "True"
+    type: OperatorVersion
   observedGeneration: 1
   state: Running
   updateStatus: {}

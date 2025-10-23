@@ -1,5 +1,6 @@
 package consts
 
+const ConditionOperatorVersion = "OperatorVersion"
 const ConditionHasPossibility = "HasPossibility"
 const ConditionNoPossibility = "NoPossibility"
 const ConditionSafeModeEnabled = "SafeModeEnabled"
