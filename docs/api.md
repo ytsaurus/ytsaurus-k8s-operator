@@ -10,6 +10,8 @@ Package v1 contains API Schema definitions for the cluster v1 API group
 
 ### Resource Types
 - [Chyt](#chyt)
+- [OffshoreDataGateways](#offshoredatagateways)
+- [OffshoreDataGatewaysList](#offshoredatagatewayslist)
 - [RemoteDataNodes](#remotedatanodes)
 - [RemoteDataNodesList](#remotedatanodeslist)
 - [RemoteExecNodes](#remoteexecnodes)
@@ -321,6 +323,7 @@ _Appears in:_
 
 _Appears in:_
 - [CommonSpec](#commonspec)
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
@@ -386,6 +389,7 @@ It is inlined in these specs.
 
 
 _Appears in:_
+- [OffshoreDataGatewaysStatus](#offshoredatagatewaysstatus)
 - [RemoteDataNodesStatus](#remotedatanodesstatus)
 - [RemoteExecNodesStatus](#remoteexecnodesstatus)
 - [RemoteTabletNodesStatus](#remotetabletnodesstatus)
@@ -406,6 +410,7 @@ It is inlined in these specs.
 
 
 _Appears in:_
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
@@ -692,6 +697,8 @@ _Appears in:_
 - [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
+- [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -771,6 +778,7 @@ A reference to a specific 'key' within a ConfigMap or Secret resource.
 
 _Appears in:_
 - [CommonSpec](#commonspec)
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
@@ -869,6 +877,8 @@ _Appears in:_
 - [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
+- [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -925,6 +935,8 @@ _Appears in:_
 - [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
+- [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -1068,6 +1080,8 @@ _Appears in:_
 - [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
+- [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -1411,6 +1425,160 @@ _Appears in:_
 | `replacement` _string_ |  |  |  |
 
 
+#### OffshoreDataGatewaySpec
+
+
+
+
+
+
+
+_Appears in:_
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
+| `instanceCount` _integer_ |  |  |  |
+| `minReadyInstanceCount` _integer_ |  |  |  |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `runtimeClassName` _string_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ |  |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
+
+
+#### OffshoreDataGateways
+
+
+
+OffshoreDataGateways is the Schema for the OffshoreDataGateways API
+
+
+
+_Appears in:_
+- [OffshoreDataGatewaysList](#offshoredatagatewayslist)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `OffshoreDataGateways` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)_ |  |  |  |
+| `status` _[OffshoreDataGatewaysStatus](#offshoredatagatewaysstatus)_ |  |  |  |
+
+
+#### OffshoreDataGatewaysList
+
+
+
+OffshoreDataGatewaysList contains a list of OffshoreDataGateways
+
+
+
+
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `OffshoreDataGatewaysList` | | |
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `items` _[OffshoreDataGateways](#offshoredatagateways) array_ |  |  |  |
+
+
+#### OffshoreDataGatewaysSpec
+
+
+
+OffshoreDataGatewaysSpec defines the desired state of OffshoreDataGateways
+
+
+
+_Appears in:_
+- [OffshoreDataGateways](#offshoredatagateways)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
+| `coreImage` _string_ |  |  |  |
+| `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
+| `jobImage` _string_ | Default docker image for user jobs. |  |  |
+| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted certificates. Default kind="ConfigMap", key="ca.crt". |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
+| `ephemeralCluster` _boolean_ | Allow prioritizing performance over data safety. Useful for tests and experiments. | false |  |
+| `useIpv6` _boolean_ |  | false |  |
+| `useIpv4` _boolean_ |  | false |  |
+| `keepSocket` _boolean_ |  |  |  |
+| `forceTcp` _boolean_ |  |  |  |
+| `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
+| `usePorto` _boolean_ |  | false |  |
+| `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
+| `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
+| `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
+| `instanceCount` _integer_ |  |  |  |
+| `minReadyInstanceCount` _integer_ |  |  |  |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `runtimeClassName` _string_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ |  |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
+
+
+#### OffshoreDataGatewaysStatus
+
+
+
+OffshoreDataGatewaysStatus defines the observed state of OffshoreDataGateways
+
+
+
+_Appears in:_
+- [OffshoreDataGateways](#offshoredatagateways)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `observedGeneration` _integer_ | Reflects resource generation which was used for updating status. |  |  |
+| `releaseStatus` _[RemoteNodeReleaseStatus](#remotenodereleasestatus)_ |  |  |  |
+
+
 #### QueryTrackerSpec
 
 
@@ -1559,6 +1727,8 @@ _Appears in:_
 - [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
+- [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -1810,6 +1980,7 @@ _Underlying type:_ _string_
 
 _Appears in:_
 - [CommonRemoteNodeStatus](#commonremotenodestatus)
+- [OffshoreDataGatewaysStatus](#offshoredatagatewaysstatus)
 - [RemoteDataNodesStatus](#remotedatanodesstatus)
 - [RemoteExecNodesStatus](#remoteexecnodesstatus)
 - [RemoteTabletNodesStatus](#remotetabletnodesstatus)
@@ -2172,6 +2343,8 @@ _Appears in:_
 - [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
+- [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -2322,6 +2495,8 @@ _Appears in:_
 - [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
+- [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -2517,6 +2692,8 @@ _Appears in:_
 - [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
+- [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
