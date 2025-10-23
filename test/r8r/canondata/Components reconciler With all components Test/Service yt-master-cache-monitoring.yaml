@@ -11,6 +11,7 @@ metadata:
     yt_component: test-ytsaurus-yt-master-cache
     yt_metrics: "true"
     ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/owner-resource-generation: "1"
   name: yt-master-cache-monitoring
   namespace: ytsaurus-components
   ownerReferences:

@@ -71,6 +71,7 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-yql-agent
     ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/owner-resource-generation: "1"
   name: yql-agent-environment-yt-yql-agent-init-job-config
   namespace: ytsaurus-components
   ownerReferences:
