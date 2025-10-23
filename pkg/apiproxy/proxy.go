@@ -6,6 +6,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -13,6 +14,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 )
 
 type APIProxy interface {
@@ -25,6 +29,7 @@ type APIProxy interface {
 	DeleteObject(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error
 
 	UpdateStatus(ctx context.Context) error
+	UpdateOperatorVersion(conditions *[]metav1.Condition) bool
 }
 
 type ConditionManager interface {
@@ -179,4 +184,20 @@ func (c *apiProxy) createAndReferenceObject(ctx context.Context, obj client.Obje
 
 func (c *apiProxy) UpdateStatus(ctx context.Context) error {
 	return c.client.Status().Update(ctx, c.object)
+}
+
+func (c *apiProxy) UpdateOperatorVersion(conditions *[]metav1.Condition) bool {
+	operatorVersion := version.GetVersion()
+	condition := meta.FindStatusCondition(*conditions, consts.ConditionOperatorVersion)
+	if condition != nil && condition.Message != operatorVersion {
+		// Remove condition to update transition time.
+		meta.RemoveStatusCondition(conditions, consts.ConditionOperatorVersion)
+	}
+	return meta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               consts.ConditionOperatorVersion,
+		Status:             metav1.ConditionTrue,
+		ObservedGeneration: c.object.GetGeneration(),
+		Reason:             "Observed",
+		Message:            operatorVersion,
+	})
 }

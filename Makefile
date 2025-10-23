@@ -35,6 +35,12 @@ OPERATOR_CHART_NAME = ytop-chart
 OPERATOR_CHART_CRDS = $(OPERATOR_CHART)/templates/crds
 OPERATOR_INSTANCE = ytsaurus-dev
 
+ifdef RELEASE_VERSION
+OPERATOR_VERSION = $(RELEASE_VERSION)
+else
+OPERATOR_VERSION = $(OPERATOR_TAG)
+endif
+
 ifdef RELEASE_SUFFIX
 	OPERATOR_IMAGE_RELEASE=$(OPERATOR_IMAGE)$(RELEASE_SUFFIX)
 	OPERATOR_CHART_NAME_RELEASE=$(OPERATOR_CHART_NAME)$(RELEASE_SUFFIX)
@@ -42,14 +48,11 @@ else
 	OPERATOR_IMAGE_RELEASE=$(OPERATOR_IMAGE)
 	OPERATOR_CHART_NAME_RELEASE=$(OPERATOR_CHART_NAME)
 endif
+
 ## K8s namespace for YTsaurus operator.
 OPERATOR_NAMESPACE = ytsaurus-operator
 
-ifdef RELEASE_VERSION
-DOCKER_BUILD_ARGS += --build-arg VERSION="$(RELEASE_VERSION)"
-else
-DOCKER_BUILD_ARGS += --build-arg VERSION="$(OPERATOR_TAG)"
-endif
+DOCKER_BUILD_ARGS += --build-arg VERSION="$(OPERATOR_VERSION)"
 DOCKER_BUILD_ARGS += --build-arg REVISION="$(shell git rev-parse HEAD)"
 DOCKER_BUILD_ARGS += --build-arg BUILD_DATE="$(shell date -Iseconds -u)"
 
@@ -59,6 +62,8 @@ GOBIN=$(shell go env GOPATH)/bin
 else
 GOBIN=$(shell go env GOBIN)
 endif
+
+GO_LDFLAGS = -X github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version.version=$(OPERATOR_VERSION)
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -347,7 +352,7 @@ kind-yt-info:
 
 .PHONY: build
 build: generate-code ## Build manager binary.
-	go build -o bin/manager main.go
+	go build -ldflags "$(GO_LDFLAGS)" -o bin/manager main.go
 
 .PHONY: run
 run: generate-code manifests ## Run a controller from your host.

@@ -148,6 +148,12 @@ status:
     reason: Ready
     status: "True"
     type: TimbertruckReady
+  - lastTransitionTime: null
+    message: (devel)
+    observedGeneration: 1
+    reason: Observed
+    status: "True"
+    type: OperatorVersion
   observedGeneration: 1
   state: Running
   updateStatus: {}

@@ -1,5 +1,11 @@
+ARG VERSION
+ARG REVISION
+ARG BUILD_DATE
+
 # Build the manager binary
 FROM golang:1.24 AS builder
+
+ARG VERSION
 
 WORKDIR /workspace
 
@@ -18,8 +24,10 @@ COPY api/ api/
 COPY pkg/ pkg/
 COPY controllers/ controllers/
 
+ARG GO_LDFLAGS="-X github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version.version=${VERSION}"
+
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "${GO_LDFLAGS}" -a -o manager main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
@@ -28,9 +36,9 @@ WORKDIR /
 COPY --from=builder /workspace/manager .
 USER 65532:65532
 
-ARG VERSION=UNSET
-ARG REVISION=UNSET
-ARG BUILD_DATE=UNSET
+ARG VERSION
+ARG REVISION
+ARG BUILD_DATE
 
 LABEL org.opencontainers.image.title="YTsaurus Operator for Kubernetes"
 LABEL org.opencontainers.image.url="https://ytsaurus.tech"

@@ -119,11 +119,15 @@ func (c *Ytsaurus) SaveClusterState(ctx context.Context, clusterState ytv1.Clust
 // SyncObservedGeneration confirms that current generation was observed.
 // Returns true if generation actually has been changed and status must be saved.
 func (c *Ytsaurus) SyncObservedGeneration() bool {
-	if c.ytsaurus.Status.ObservedGeneration == c.ytsaurus.Generation {
-		return false
+	updated := false
+	if c.ytsaurus.Status.ObservedGeneration != c.ytsaurus.Generation {
+		c.ytsaurus.Status.ObservedGeneration = c.ytsaurus.Generation
+		updated = true
 	}
-	c.ytsaurus.Status.ObservedGeneration = c.ytsaurus.Generation
-	return true
+	if c.apiProxy.UpdateOperatorVersion(&c.ytsaurus.Status.Conditions) {
+		updated = true
+	}
+	return updated
 }
 
 func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateState) error {
