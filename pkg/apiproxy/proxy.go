@@ -13,6 +13,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 type APIProxy interface {
@@ -21,6 +23,7 @@ type APIProxy interface {
 	ListObjects(ctx context.Context, objList client.ObjectList, opts ...client.ListOption) error
 	RecordWarning(reason, message string)
 	RecordNormal(reason, message string)
+	ObjectNeedSync(obj client.Object) bool
 	SyncObject(ctx context.Context, oldObj, newObj client.Object) error
 	DeleteObject(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error
 
@@ -94,9 +97,22 @@ func (c *apiProxy) RecordNormal(reason, message string) {
 		message)
 }
 
+func (c *apiProxy) ObjectNeedSync(obj client.Object) bool {
+	return obj.GetLabels()[consts.OwnerResourceGenerationLabelName] != fmt.Sprintf("%d", c.object.GetGeneration())
+}
+
 func (c *apiProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object) error {
 	if newObj.GetName() == "" {
 		return fmt.Errorf("cannot sync uninitialized object, object type %T", oldObj)
+	}
+
+	{
+		labels := newObj.GetLabels()
+		if labels == nil {
+			labels = make(map[string]string)
+		}
+		labels[consts.OwnerResourceGenerationLabelName] = fmt.Sprintf("%d", c.object.GetGeneration())
+		newObj.SetLabels(labels)
 	}
 
 	if oldObj.GetResourceVersion() == "" {

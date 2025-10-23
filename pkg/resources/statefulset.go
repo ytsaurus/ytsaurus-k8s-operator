@@ -149,5 +149,6 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minRe
 
 func (s *StatefulSet) NeedSync(replicas int32) bool {
 	return s.oldObject.Spec.Replicas == nil ||
-		*s.oldObject.Spec.Replicas != replicas
+		*s.oldObject.Spec.Replicas != replicas ||
+		s.BaseManagedResource.NeedSync()
 }

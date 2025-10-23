@@ -91,6 +91,7 @@ metadata:
     yt_component: test-ytsaurus-yt-discovery
     ytsaurus.tech/cluster-name: test-ytsaurus
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/owner-resource-generation: "1"
   name: yt-discovery-config
   namespace: ytsaurus-components
   ownerReferences:

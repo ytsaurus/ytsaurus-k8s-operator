@@ -10,6 +10,7 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-rpc-proxy
     ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/owner-resource-generation: "1"
   name: rp
   namespace: ytsaurus-components
   ownerReferences:
