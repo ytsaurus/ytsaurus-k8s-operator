@@ -50,6 +50,7 @@ func (r *RemoteDataNodesReconciler) Sync(
 		requeue = false
 	}
 	resource.Status.ObservedGeneration = resource.Generation
+	apiProxy.UpdateOperatorVersion(&resource.Status.Conditions)
 
 	logger.Info("Setting status for remote data nodes", "status", resource.Status.ReleaseStatus)
 	err = r.Client.Status().Update(ctx, resource)
