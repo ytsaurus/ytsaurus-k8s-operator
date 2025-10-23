@@ -85,6 +85,7 @@ kind: ConfigMap
 metadata:
   annotations:
     kubernetes.io/description: ""
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:

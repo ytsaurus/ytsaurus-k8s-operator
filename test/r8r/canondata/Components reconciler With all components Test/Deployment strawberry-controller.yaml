@@ -4,6 +4,7 @@ metadata:
   annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/instance-hash: ed0c384b2935f39e1495b042b4edc0a24005836b938ad9cc2d3166257b59dd1b
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:

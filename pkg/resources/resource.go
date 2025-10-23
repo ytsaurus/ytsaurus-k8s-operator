@@ -62,6 +62,10 @@ func (r *BaseManagedResource[T]) Exists() bool {
 	return r.oldObject.GetResourceVersion() != ""
 }
 
+func (r *BaseManagedResource[T]) IsUpdated() bool {
+	return r.proxy.IsObjectUpdated(r.oldObject)
+}
+
 func (r *BaseManagedResource[T]) Sync(ctx context.Context) error {
 	return r.proxy.SyncObject(ctx, r.oldObject, r.newObject)
 }

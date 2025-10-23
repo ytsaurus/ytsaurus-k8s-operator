@@ -3,6 +3,7 @@ kind: Job
 metadata:
   annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
