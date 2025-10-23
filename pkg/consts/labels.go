@@ -21,6 +21,9 @@ const (
 	// Instance hash is computed from template of pod spec.
 	InstanceHashAnnotationName = "ytsaurus.tech/instance-hash"
 
+	// Observed generation of owner resource at the time of last update.
+	ObservedGenerationAnnotationName = "ytsaurus.tech/observed-generation"
+
 	YTOperatorInstanceLabelName = "ytsaurus.tech/operator-instance"
 )
 

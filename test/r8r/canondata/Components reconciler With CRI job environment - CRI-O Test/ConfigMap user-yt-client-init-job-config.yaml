@@ -58,6 +58,7 @@ kind: ConfigMap
 metadata:
   annotations:
     ytsaurus.tech/config-hash: 3030056a0a5008f39287424b1095be879d140fdb6378d7f8c89f0d0f6a609c62
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:

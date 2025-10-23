@@ -3,6 +3,7 @@ kind: StatefulSet
 metadata:
   annotations:
     ytsaurus.tech/instance-hash: 86e0bd456a2b69fa1ea94570e8e61b080e671932e9ec6f0cb121ffaec92b478a
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:

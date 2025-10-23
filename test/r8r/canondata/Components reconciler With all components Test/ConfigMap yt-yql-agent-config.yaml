@@ -137,6 +137,7 @@ metadata:
   annotations:
     ytsaurus.tech/config-hash: b5c3657ed765892f2c5ea2e32e878078d8f1c205316ed714cc95ce2fbfeb2ff3
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
