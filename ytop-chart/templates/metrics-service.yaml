@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "ytop-chart.fullname" . }}-controller-manager-metrics-service
+  name: {{ include "ytop-chart.name" . }}-controller-manager-metrics-service
   labels:
     control-plane: controller-manager
   {{- include "ytop-chart.labels" . | nindent 4 }}

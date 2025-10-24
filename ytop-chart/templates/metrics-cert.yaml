@@ -1,14 +1,14 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ include "ytop-chart.fullname" . }}-metrics-cert
+  name: {{ include "ytop-chart.name" . }}-metrics-cert
   labels:
   {{- include "ytop-chart.labels" . | nindent 4 }}
 spec:
   dnsNames:
-  - '{{ include "ytop-chart.fullname" . }}-controller-manager-metrics-service.{{ .Release.Namespace
+  - '{{ include "ytop-chart.name" . }}-controller-manager-metrics-service.{{ .Release.Namespace
     }}.svc'
-  - '{{ include "ytop-chart.fullname" . }}-controller-manager-metrics-service.{{ .Release.Namespace
+  - '{{ include "ytop-chart.name" . }}-controller-manager-metrics-service.{{ .Release.Namespace
     }}.svc.{{ .Values.kubernetesClusterDomain }}'
   issuerRef:
     kind: Issuer
