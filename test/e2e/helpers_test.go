@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -47,9 +48,16 @@ func getKindControlPlaneNode() corev1.Node {
 	nodeList := corev1.NodeList{}
 	err := k8sClient.List(ctx, &nodeList)
 	Expect(err).Should(Succeed())
-	Expect(nodeList.Items).To(HaveLen(1))
-	Expect(nodeList.Items[0].Name).To(HaveSuffix("kind-control-plane"))
-	return nodeList.Items[0]
+
+	// Find the control plane node in multi-node Kind clusters
+	for _, node := range nodeList.Items {
+		if strings.HasSuffix(node.Name, "kind-control-plane") {
+			return node
+		}
+	}
+
+	Fail("No control plane node found")
+	return corev1.Node{}
 }
 
 func getNodesAddresses() []string {
@@ -628,4 +636,77 @@ func restartPod(ctx context.Context, namespace, name string) {
 		HaveField("ObjectMeta.UID", Not(Equal(oldUID))),
 		HaveField("Status.Phase", Equal(corev1.PodRunning)),
 	))
+}
+
+// getStatefulSet retrieves a StatefulSet and waits for it to have containers
+func getStatefulSet(ctx context.Context, name, namespace string, timeout time.Duration) appsv1.StatefulSet {
+	var sts appsv1.StatefulSet
+	Eventually(func(g Gomega) {
+		err := k8sClient.Get(ctx, ctrlcli.ObjectKey{
+			Name:      name,
+			Namespace: namespace,
+		}, &sts)
+		g.Expect(err).Should(Succeed())
+		g.Expect(sts.Spec.Template.Spec.Containers).ShouldNot(BeEmpty())
+	}, timeout, pollInterval).Should(Succeed())
+	return sts
+}
+
+// componentResourceVersions stores ResourceVersions of multiple components
+type componentResourceVersions map[string]string
+
+// recordComponentVersions records ResourceVersions for multiple StatefulSets to verify they don't change
+func recordComponentVersions(ctx context.Context, namespace string, componentNames ...string) componentResourceVersions {
+	versions := make(componentResourceVersions)
+	for _, name := range componentNames {
+		var sts appsv1.StatefulSet
+		Expect(k8sClient.Get(ctx, ctrlcli.ObjectKey{
+			Name:      name,
+			Namespace: namespace,
+		}, &sts)).Should(Succeed())
+		versions[name] = sts.ResourceVersion
+	}
+	log.Info("Recorded StatefulSet versions", "versions", versions)
+	return versions
+}
+
+// verifyComponentVersionsUnchanged verifies that StatefulSet ResourceVersions haven't changed
+func verifyComponentVersionsUnchanged(ctx context.Context, namespace string, versionsBefore componentResourceVersions) {
+	for name, versionBefore := range versionsBefore {
+		var sts appsv1.StatefulSet
+		Expect(k8sClient.Get(ctx, ctrlcli.ObjectKey{
+			Name:      name,
+			Namespace: namespace,
+		}, &sts)).Should(Succeed())
+		versionAfter := sts.ResourceVersion
+		log.Info("Comparing StatefulSet version",
+			"component", name,
+			"before", versionBefore,
+			"after", versionAfter)
+		Expect(versionAfter).Should(Equal(versionBefore),
+			"StatefulSet %s should NOT be updated when not in UpdateSelector", name)
+	}
+}
+
+// setUpdatePlanAndUpdateYT sets UpdatePlan with given selector and updates Ytsaurus object
+func setUpdatePlanAndUpdateYT(ctx context.Context, ytsaurus *ytv1.Ytsaurus, selector ytv1.ComponentUpdateSelector, description string) {
+	By(description)
+	ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{selector}
+	UpdateObject(ctx, ytsaurus)
+}
+
+// setUpdatePlanForComponentAndUpdateYT sets UpdatePlan to allow only specific component updates and updates Ytsaurus object
+func setUpdatePlanForComponentAndUpdateYT(ctx context.Context, ytsaurus *ytv1.Ytsaurus, componentType consts.ComponentType) {
+	setUpdatePlanAndUpdateYT(ctx, ytsaurus, ytv1.ComponentUpdateSelector{
+		Component: ytv1.Component{
+			Type: componentType,
+		},
+	}, fmt.Sprintf("Setting UpdatePlan to allow only %s updates", componentType))
+}
+
+// blockAllComponentUpdates sets UpdatePlan to block all component updates
+func blockAllComponentUpdates(ctx context.Context, ytsaurus *ytv1.Ytsaurus) {
+	setUpdatePlanAndUpdateYT(ctx, ytsaurus, ytv1.ComponentUpdateSelector{
+		Class: consts.ComponentClassNothing,
+	}, "Setting UpdatePlan to block all component updates")
 }

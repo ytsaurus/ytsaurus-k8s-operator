@@ -15,6 +15,7 @@ import (
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 )
 
+// canUpdateComponent checks if a component matches any of the given selectors.
 func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
 	for _, selector := range selectors {
 		if selector.Class != consts.ComponentClassUnspecified {
@@ -40,7 +41,7 @@ func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1
 
 // Considers splits all the components in two groups: ones that can be updated and ones which update isblocked.
 func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []ytv1.Component, allComponents []ytv1.Component) (canUpdate []ytv1.Component, cannotUpdate []ytv1.Component) {
-	configuredSelectors := getEffectiveSelectors(spec)
+	configuredSelectors := getEffectiveUpdateSelectors(spec)
 
 	for _, component := range needUpdate {
 		upd := canUpdateComponent(configuredSelectors, component)
@@ -82,7 +83,8 @@ func needFullUpdate(needUpdate []ytv1.Component) bool {
 	return false
 }
 
-func getEffectiveSelectors(spec ytv1.YtsaurusSpec) []ytv1.ComponentUpdateSelector {
+// getEffectiveUpdateSelectors returns the effective update selectors based on the spec configuration.
+func getEffectiveUpdateSelectors(spec ytv1.YtsaurusSpec) []ytv1.ComponentUpdateSelector {
 	if spec.UpdatePlan != nil {
 		return spec.UpdatePlan
 	}

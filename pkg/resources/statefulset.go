@@ -151,3 +151,8 @@ func (s *StatefulSet) NeedSync(replicas int32) bool {
 	return s.oldObject.Spec.Replicas == nil ||
 		*s.oldObject.Spec.Replicas != replicas
 }
+
+// SpecChanged compares the old StatefulSet spec with a new spec to detect changes.
+func (s *StatefulSet) SpecChanged(newSpec appsv1.StatefulSetSpec) bool {
+	return !podTemplateSpecEqual(s.oldObject.Spec.Template, newSpec.Template)
+}
