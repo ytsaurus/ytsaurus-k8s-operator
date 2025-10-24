@@ -1471,6 +1471,8 @@ _Appears in:_
 
 
 OffshoreDataGateways is the Schema for the OffshoreDataGateways API
+Be careful: this component is experimental and is not part of the public
+API yet, so there are no guarantees it will work even when configured
 
 
 

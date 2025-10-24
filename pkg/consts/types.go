@@ -18,20 +18,17 @@ const (
 	SchedulerType            ComponentType = "Scheduler"
 	StrawberryControllerType ComponentType = "StrawberryController"
 	TabletNodeType           ComponentType = "TabletNode"
-	// OffshoreDataGateway is experimental and is not a part of the public
-	// API yet, so there are no guarantess it will work when configured
-	// TODO(pavel-bash): remove this warning when the component is released to open-source
-	OffshoreDataGatewayType ComponentType = "OffshoreDataGateway"
-	TcpProxyType            ComponentType = "TcpProxy"
-	KafkaProxyType          ComponentType = "KafkaProxy"
-	UIType                  ComponentType = "UI"
-	YqlAgentType            ComponentType = "YqlAgent"
-	YtsaurusClientType      ComponentType = "YtsaurusClient"
-	ChytType                ComponentType = "CHYT"
-	SpytType                ComponentType = "SPYT"
-	ClusterConnectionType   ComponentType = "ClusterConnection"
-	NativeClientConfigType  ComponentType = "NativeClientConfig"
-	TimbertruckType         ComponentType = "Timbertruck"
+	OffshoreDataGatewayType  ComponentType = "OffshoreDataGateway"
+	TcpProxyType             ComponentType = "TcpProxy"
+	KafkaProxyType           ComponentType = "KafkaProxy"
+	UIType                   ComponentType = "UI"
+	YqlAgentType             ComponentType = "YqlAgent"
+	YtsaurusClientType       ComponentType = "YtsaurusClient"
+	ChytType                 ComponentType = "CHYT"
+	SpytType                 ComponentType = "SPYT"
+	ClusterConnectionType    ComponentType = "ClusterConnection"
+	NativeClientConfigType   ComponentType = "NativeClientConfig"
+	TimbertruckType          ComponentType = "Timbertruck"
 )
 
 type ComponentClass string

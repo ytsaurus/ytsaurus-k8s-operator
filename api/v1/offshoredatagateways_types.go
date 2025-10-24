@@ -39,6 +39,9 @@ type OffshoreDataGatewaysStatus struct {
 //+kubebuilder:subresource:status
 
 // OffshoreDataGateways is the Schema for the OffshoreDataGateways API
+// Be careful: this component is experimental and is not part of the public
+// API yet, so there are no guarantees it will work even when configured
+// TODO(pavel-bash): remove this warning when the component is released to open-source
 type OffshoreDataGateways struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
