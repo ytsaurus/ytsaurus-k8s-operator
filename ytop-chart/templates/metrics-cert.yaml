@@ -1,7 +1,7 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ include "ytop-chart.name" . }}-metrics-cert
+  name: {{ include "ytop-chart.fullname" . }}-metrics-cert
   labels:
   {{- include "ytop-chart.labels" . | nindent 4 }}
 spec:
