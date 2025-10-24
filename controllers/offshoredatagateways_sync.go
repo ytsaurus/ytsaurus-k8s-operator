@@ -24,7 +24,6 @@ func (r *OffshoreDataGatewaysReconciler) Sync(
 
 	component := components.NewOffshoreDataGateways(
 		cfgen,
-		resource,
 		apiProxy,
 		resource.Spec.OffshoreDataGatewaySpec,
 		resource.Spec.CommonSpec,

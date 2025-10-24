@@ -21,7 +21,6 @@ type OffshoreDataGateway struct {
 
 func NewOffshoreDataGateways(
 	cfgen *ytconfig.NodeGenerator,
-	nodes *ytv1.OffshoreDataGateways,
 	proxy apiproxy.APIProxy,
 	spec ytv1.OffshoreDataGatewaySpec,
 	commonSpec ytv1.CommonSpec,

@@ -63,8 +63,8 @@ type OffshoreDataGatewaysReconciler struct {
 func (r *OffshoreDataGatewaysReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	var nodes ytv1.OffshoreDataGateways
-	if err := r.Get(ctx, req.NamespacedName, &nodes); err != nil {
+	var gateways ytv1.OffshoreDataGateways
+	if err := r.Get(ctx, req.NamespacedName, &gateways); err != nil {
 		logger.Error(err, "unable to fetch offshore data gateways")
 		// We'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
@@ -72,13 +72,13 @@ func (r *OffshoreDataGatewaysReconciler) Reconcile(ctx context.Context, req ctrl
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	var remoteYtsaurus ytv1.RemoteYtsaurus
-	ytsaurusName := types.NamespacedName{Name: nodes.Spec.RemoteClusterSpec.Name, Namespace: req.Namespace}
+	ytsaurusName := types.NamespacedName{Name: gateways.Spec.RemoteClusterSpec.Name, Namespace: req.Namespace}
 	if err := r.Get(ctx, ytsaurusName, &remoteYtsaurus); err != nil {
-		logger.Error(err, "unable to fetch remote YTsaurus for the remote nodes")
+		logger.Error(err, "unable to fetch remote YTsaurus for the remote gateways")
 		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
 
-	return r.Sync(ctx, &nodes, &remoteYtsaurus)
+	return r.Sync(ctx, &gateways, &remoteYtsaurus)
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -98,13 +98,13 @@ func (r *OffshoreDataGatewaysReconciler) SetupWithManager(mgr ctrl.Manager) erro
 		For(&ytv1.OffshoreDataGateways{}).
 		Watches(
 			&ytv1.RemoteYtsaurus{},
-			handler.EnqueueRequestsFromMapFunc(r.findRemoteNodesForRemoteYtsaurus),
+			handler.EnqueueRequestsFromMapFunc(r.findRemoteGatewaysForRemoteYtsaurus),
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		).
 		Complete(r)
 }
 
-func (r *OffshoreDataGatewaysReconciler) findRemoteNodesForRemoteYtsaurus(ctx context.Context, remoteYtsaurus client.Object) []reconcile.Request {
+func (r *OffshoreDataGatewaysReconciler) findRemoteGatewaysForRemoteYtsaurus(ctx context.Context, remoteYtsaurus client.Object) []reconcile.Request {
 	// See https://book.kubebuilder.io/reference/watching-resources/externally-managed for the reference implementation
 	attachedOffshoreDataGateways := &ytv1.OffshoreDataGatewaysList{}
 	listOps := &client.ListOptions{

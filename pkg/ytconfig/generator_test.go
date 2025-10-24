@@ -465,6 +465,20 @@ func TestGetTabletNodeWithoutYtsaurusConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetOffshoreDataGatewaysWithoutYtsaurusConfig(t *testing.T) {
+	g := NewRemoteNodeGenerator(
+		getRemoteYtsaurus(),
+		testYtsaurusName,
+		testClusterDomain,
+		getCommonSpec(),
+	)
+	offshoreDataGatewaySpec := getOffhoreDataGatewaySpec()
+	canonize.AssertStruct(t, "offshore-data-gateway", offshoreDataGatewaySpec)
+	cfg, err := g.GetOffshoreDataGatewaysConfig(offshoreDataGatewaySpec)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetTCPProxyConfig(t *testing.T) {
 	g := NewGenerator(getYtsaurusWithoutNodes(), testClusterDomain)
 	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
@@ -1014,6 +1028,17 @@ func getTabletNodeSpec() ytv1.TabletNodesSpec {
 			VolumeClaimTemplates: testVolumeClaimTemplates,
 		},
 		ClusterNodesSpec: testClusterNodeSpec,
+	}
+}
+
+func getOffhoreDataGatewaySpec() ytv1.OffshoreDataGatewaySpec {
+	return ytv1.OffshoreDataGatewaySpec{
+		InstanceSpec: ytv1.InstanceSpec{
+			InstanceCount:        3,
+			Resources:            testResourceReqs,
+			VolumeMounts:         testVolumeMounts,
+			VolumeClaimTemplates: testVolumeClaimTemplates,
+		},
 	}
 }
 

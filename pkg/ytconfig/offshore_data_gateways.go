@@ -21,10 +21,10 @@ func getOffshoreDataGatewaysLogging(spec *ytv1.OffshoreDataGatewaySpec) Logging 
 }
 
 func getOffshoreDataGatewaysCarcass(spec *ytv1.OffshoreDataGatewaySpec) (OffshoreDataGatewayServer, error) {
-	var onps OffshoreDataGatewayServer
-	onps.RPCPort = consts.OffshoreDataGatewayRPCPort
-	onps.MonitoringPort = ptr.Deref(spec.MonitoringPort, consts.OffshoreDataGatewayMonitoringPort)
-	onps.Logging = getOffshoreDataGatewaysLogging(spec)
+	var odgs OffshoreDataGatewayServer
+	odgs.RPCPort = consts.OffshoreDataGatewayRPCPort
+	odgs.MonitoringPort = ptr.Deref(spec.MonitoringPort, consts.OffshoreDataGatewayMonitoringPort)
+	odgs.Logging = getOffshoreDataGatewaysLogging(spec)
 
-	return onps, nil
+	return odgs, nil
 }
