@@ -653,6 +653,11 @@ type TabletNodesSpec struct {
 	Name string `json:"name,omitempty"`
 }
 
+type OffshoreDataGatewaySpec struct {
+	// label filter (for daemonset)
+	InstanceSpec `json:",inline"`
+}
+
 type SchedulersSpec struct {
 	// label filter (for daemonset)
 	InstanceSpec `json:",inline"`

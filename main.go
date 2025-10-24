@@ -214,6 +214,16 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteTabletNodes")
 		os.Exit(1)
 	}
+
+	if err = (&controllers.OffshoreDataGatewaysReconciler{
+		ClusterDomain: clusterDomain,
+		Client:        mgr.GetClient(),
+		Scheme:        mgr.GetScheme(),
+		Recorder:      mgr.GetEventRecorderFor("offshoredatagateways-controller"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "OffshoreDataGateways")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

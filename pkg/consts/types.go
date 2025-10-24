@@ -18,6 +18,7 @@ const (
 	SchedulerType            ComponentType = "Scheduler"
 	StrawberryControllerType ComponentType = "StrawberryController"
 	TabletNodeType           ComponentType = "TabletNode"
+	OffshoreDataGatewayType  ComponentType = "OffshoreDataGateway"
 	TcpProxyType             ComponentType = "TcpProxy"
 	KafkaProxyType           ComponentType = "KafkaProxy"
 	UIType                   ComponentType = "UI"
@@ -67,5 +68,6 @@ var (
 		DataNodeType,
 		ExecNodeType,
 		TabletNodeType,
+		OffshoreDataGatewayType,
 	}
 )

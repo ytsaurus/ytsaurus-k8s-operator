@@ -36,6 +36,8 @@ func ComponentServicePrefix(component ComponentType) string {
 		return "strawberry"
 	case TabletNodeType:
 		return "tablet-nodes"
+	case OffshoreDataGatewayType:
+		return "offshore-data-gateways"
 	case TcpProxyType:
 		return "tcp-proxies"
 	case KafkaProxyType:
@@ -79,6 +81,8 @@ func GetServiceKebabCase(component ComponentType) string {
 		return "strawberry-controller"
 	case TabletNodeType:
 		return "tablet-node"
+	case OffshoreDataGatewayType:
+		return "offshore-data-gateway"
 	case TcpProxyType:
 		return "tcp-proxy"
 	case KafkaProxyType:
@@ -121,6 +125,8 @@ func GetStatefulSetPrefix(component ComponentType) string {
 		return "sch"
 	case TabletNodeType:
 		return "tnd"
+	case OffshoreDataGatewayType:
+		return "odg"
 	case TcpProxyType:
 		return "tp"
 	case KafkaProxyType:

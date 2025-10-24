@@ -37,6 +37,9 @@ const (
 	ExecNodeRPCPort        = 9029
 	ExecNodeMonitoringPort = 10029
 
+	OffshoreDataGatewayRPCPort        = 9032
+	OffshoreDataGatewayMonitoringPort = 10032
+
 	CRIServiceMonitoringPort = 10026
 
 	// TODO(zlobober): temporary until YT-20036.

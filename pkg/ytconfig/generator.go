@@ -841,6 +841,26 @@ func (g *NodeGenerator) GetTabletNodeConfig(spec ytv1.TabletNodesSpec) ([]byte, 
 	return marshallYsonConfig(c)
 }
 
+func (g *NodeGenerator) getOffshoreDataGatewaysConfigImpl(spec *ytv1.OffshoreDataGatewaySpec) (OffshoreDataGatewayServer, error) {
+	c, err := getOffshoreDataGatewaysCarcass(spec)
+	if err != nil {
+		return OffshoreDataGatewayServer{}, err
+	}
+
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+	c.BusClient = c.ClusterConnection.BusClient
+	return c, nil
+}
+
+func (g *NodeGenerator) GetOffshoreDataGatewaysConfig(spec ytv1.OffshoreDataGatewaySpec) ([]byte, error) {
+	c, err := g.getOffshoreDataGatewaysConfigImpl(&spec)
+	if err != nil {
+		return nil, err
+	}
+	return marshallYsonConfig(c)
+}
+
 func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, error) {
 	c, err := getHTTPProxyServerCarcass(spec)
 	if err != nil {
