@@ -313,6 +313,7 @@ metadata:
     yt_component: test-ytsaurus-yt-exec-node
     ytsaurus.tech/cluster-name: test-ytsaurus
     ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/owner-resource-generation: "1"
   name: yt-exec-node-config
   namespace: ytsaurus-components
   ownerReferences:

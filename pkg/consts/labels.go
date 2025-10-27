@@ -10,8 +10,9 @@ const (
 	YTComponentLabelName = "yt_component"
 	YTMetricsLabelName   = "yt_metrics"
 
-	DescriptionAnnotation           = "kubernetes.io/description"
-	ConfigOverridesVersionLabelName = "ytsaurus.tech/config-overrides-version"
+	DescriptionAnnotation            = "kubernetes.io/description"
+	OwnerResourceGenerationLabelName = "ytsaurus.tech/owner-resource-generation"
+	ConfigOverridesVersionLabelName  = "ytsaurus.tech/config-overrides-version"
 )
 
 func ComponentLabel(component ComponentType) string {

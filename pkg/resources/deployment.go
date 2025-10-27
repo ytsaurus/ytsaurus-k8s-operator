@@ -70,7 +70,8 @@ func (d *Deployment) Build() *appsv1.Deployment {
 func (d *Deployment) NeedSync(replicas int32) bool {
 	return d.oldObject.Spec.Replicas == nil ||
 		*d.oldObject.Spec.Replicas != replicas ||
-		len(d.oldObject.Spec.Template.Spec.Containers) != 1
+		len(d.oldObject.Spec.Template.Spec.Containers) != 1 ||
+		d.BaseManagedResource.NeedSync()
 }
 
 func (d *Deployment) ArePodsRemoved(ctx context.Context) bool {

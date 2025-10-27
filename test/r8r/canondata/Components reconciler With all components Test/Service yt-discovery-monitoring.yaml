@@ -11,6 +11,7 @@ metadata:
     yt_component: test-ytsaurus-yt-discovery
     yt_metrics: "true"
     ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/owner-resource-generation: "1"
   name: yt-discovery-monitoring
   namespace: ytsaurus-components
   ownerReferences:
