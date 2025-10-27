@@ -107,6 +107,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -498,6 +499,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -539,6 +541,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -582,6 +585,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -643,6 +647,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -745,6 +750,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -818,6 +824,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -965,6 +972,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1044,6 +1052,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1272,6 +1281,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1334,6 +1344,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1354,6 +1365,63 @@ _Appears in:_
 | `hydraPersistenceUploader` _[HydraPersistenceUploaderSpec](#hydrapersistenceuploaderspec)_ |  |  |  |
 | `timbertruck` _[TimbertruckSpec](#timbertruckspec)_ |  |  |  |
 | `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
+
+
+#### MetricExporter
+
+
+
+
+
+
+
+_Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
+- [ControllerAgentsSpec](#controlleragentsspec)
+- [CypressProxiesSpec](#cypressproxiesspec)
+- [DataNodesSpec](#datanodesspec)
+- [DiscoverySpec](#discoveryspec)
+- [ExecNodesSpec](#execnodesspec)
+- [HTTPProxiesSpec](#httpproxiesspec)
+- [InstanceSpec](#instancespec)
+- [KafkaProxiesSpec](#kafkaproxiesspec)
+- [MasterCachesSpec](#mastercachesspec)
+- [MastersSpec](#mastersspec)
+- [QueryTrackerSpec](#querytrackerspec)
+- [QueueAgentSpec](#queueagentspec)
+- [RPCProxiesSpec](#rpcproxiesspec)
+- [RemoteDataNodesSpec](#remotedatanodesspec)
+- [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
+- [RemoteYtsaurusSpec](#remoteytsaurusspec)
+- [SchedulersSpec](#schedulersspec)
+- [TCPProxiesSpec](#tcpproxiesspec)
+- [TabletNodesSpec](#tabletnodesspec)
+- [YQLAgentSpec](#yqlagentspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `host` _string_ |  |  |  |
+| `instanceTags` _object (keys:string, values:string)_ |  |  |  |
+| `shards` _object (keys:string, values:[MetricShard](#metricshard))_ |  |  |  |
+| `gridStep` _integer_ |  |  |  |
+
+
+#### MetricShard
+
+
+
+
+
+
+
+_Appears in:_
+- [MetricExporter](#metricexporter)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `filter` _string array_ |  |  |  |
+| `gridStep` _integer_ |  |  |  |
 
 
 #### NvidiaRuntimeSpec
@@ -1608,6 +1676,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1649,6 +1718,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1690,6 +1760,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1835,6 +1906,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1932,6 +2004,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -2075,6 +2148,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -2157,6 +2231,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -2214,6 +2289,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -2397,6 +2473,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -2460,6 +2537,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -2781,6 +2859,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
