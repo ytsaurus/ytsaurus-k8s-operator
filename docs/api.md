@@ -1388,6 +1388,8 @@ _Appears in:_
 - [KafkaProxiesSpec](#kafkaproxiesspec)
 - [MasterCachesSpec](#mastercachesspec)
 - [MastersSpec](#mastersspec)
+- [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -1521,6 +1523,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1619,6 +1622,7 @@ _Appears in:_
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
@@ -1646,6 +1650,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
 | `observedGeneration` _integer_ | Reflects resource generation which was used for updating status. |  |  |
 | `releaseStatus` _[RemoteNodeReleaseStatus](#remotenodereleasestatus)_ |  |  |  |
 
