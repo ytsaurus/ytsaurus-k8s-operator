@@ -32838,6 +32838,9 @@ spec:
                     description: If defined allows insecure (over http) authentication.
                     type: boolean
                 type: object
+              uiBaseUrl:
+                description: URL for creating links to the existing UI.
+                type: string
               uiImage:
                 type: string
               updatePlan:
