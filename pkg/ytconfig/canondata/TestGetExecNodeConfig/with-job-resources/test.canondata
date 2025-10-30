@@ -100,6 +100,12 @@
         "total_memory"=111669149696;
         "total_cpu"=119.000000;
         "node_dedicated_cpu"=20.000000;
+        "memory_limits"={
+            "user_jobs"={
+                type=static;
+                value=106300440576;
+            };
+        };
     };
     tags=[
         "rack:xn-a";
