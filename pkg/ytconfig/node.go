@@ -77,10 +77,67 @@ type SlotLocation struct {
 	EnableDiskQuota *bool `yson:"enable_disk_quota,omitempty"`
 }
 
+// NYT::EMemoryCategory
+type MemoryCategory string
+
+const (
+	MemoryCategoryFootprint                MemoryCategory = "footprint"
+	MemoryCategoryBlockCache               MemoryCategory = "block_cache"
+	MemoryCategoryChunkMeta                MemoryCategory = "chunk_meta"
+	MemoryCategoryChunkBlockMeta           MemoryCategory = "chunk_block_meta"
+	MemoryCategoryChunkBlocksExt           MemoryCategory = "chunk_blocks_ext"
+	MemoryCategoryChunkJournalIndex        MemoryCategory = "chunk_journal_index"
+	MemoryCategoryRpc                      MemoryCategory = "rpc"
+	MemoryCategoryUserJobs                 MemoryCategory = "user_jobs"
+	MemoryCategoryTabletStatic             MemoryCategory = "tablet_static"
+	MemoryCategoryTabletDynamic            MemoryCategory = "tablet_dynamic"
+	MemoryCategoryPendingDiskRead          MemoryCategory = "pending_disk_read"
+	MemoryCategoryPendingDiskWrite         MemoryCategory = "pending_disk_write"
+	MemoryCategoryVersionedChunkMeta       MemoryCategory = "versioned_chunk_meta"
+	MemoryCategorySystemJobs               MemoryCategory = "system_jobs"
+	MemoryCategoryQuery                    MemoryCategory = "query"
+	MemoryCategoryTmpfsLayers              MemoryCategory = "tmpfs_layers"
+	MemoryCategoryMasterCache              MemoryCategory = "master_cache"
+	MemoryCategoryLookup                   MemoryCategory = "lookup"
+	MemoryCategoryLookupRowsCache          MemoryCategory = "lookup_rows_cache"
+	MemoryCategoryAllocFragmentation       MemoryCategory = "alloc_fragmentation"
+	MemoryCategoryP2P                      MemoryCategory = "p2p"
+	MemoryCategoryUnknown                  MemoryCategory = "unknown"
+	MemoryCategoryMixed                    MemoryCategory = "mixed"
+	MemoryCategoryTabletBackground         MemoryCategory = "tablet_background"
+	MemoryCategoryJobInputBlockCache       MemoryCategory = "job_input_block_cache"
+	MemoryCategoryJobInputChunkMetaCache   MemoryCategory = "job_input_chunk_meta_cache"
+	MemoryCategoryTableReplication         MemoryCategory = "table_replication"
+	MemoryCategoryChaosReplicationIncoming MemoryCategory = "chaos_replication_incoming"
+	MemoryCategoryChaosReplicationOutgoing MemoryCategory = "chaos_replication_outgoing"
+	MemoryCategoryReadTable                MemoryCategory = "read_table"
+	MemoryCategoryUnrecognized             MemoryCategory = "unrecognized"
+	MemoryCategoryProfiling                MemoryCategory = "profiling"
+	MemoryCategoryLogging                  MemoryCategory = "logging"
+	MemoryCategoryChunkReplicaCache        MemoryCategory = "chunk_replica_cache"
+	MemoryCategoryHeavyRequest             MemoryCategory = "heavy_request"
+)
+
+type MemoryLimitType string
+
+const (
+	MemoryLimitTypeNone    MemoryLimitType = "none"
+	MemoryLimitTypeStatic  MemoryLimitType = "static"
+	MemoryLimitTypeDynamic MemoryLimitType = "dynamic"
+)
+
+type MemoryLimit struct {
+	Type  *MemoryLimitType `yson:"type,omitempty"`
+	Value *int64           `yson:"value,omitempty"`
+}
+
+// NYT::NClusterNode::TResourceLimitsConfig
 type ResourceLimits struct {
 	TotalMemory      int64    `yson:"total_memory,omitempty"`
 	TotalCpu         *float32 `yson:"total_cpu,omitempty"`
 	NodeDedicatedCpu *float32 `yson:"node_dedicated_cpu,omitempty"`
+
+	MemoryLimits map[MemoryCategory]MemoryLimit `yson:"memory_limits,omitempty"`
 }
 
 type DataNode struct {
@@ -433,24 +490,33 @@ func getExecNodeResourceLimits(spec *ytv1.ExecNodesSpec) ResourceLimits {
 	var resourceLimits ResourceLimits
 
 	nodeMemory := getResourceQuantity(&spec.Resources, corev1.ResourceMemory)
-	nodeCpu := getResourceQuantity(&spec.Resources, corev1.ResourceCPU)
+	nodeCPU := getResourceQuantity(&spec.Resources, corev1.ResourceCPU)
 
 	totalMemory := nodeMemory
-	totalCpu := nodeCpu
+	totalCPU := nodeCPU
 
 	if spec.JobResources != nil {
-		totalMemory.Add(getResourceQuantity(spec.JobResources, corev1.ResourceMemory))
-		totalCpu.Add(getResourceQuantity(spec.JobResources, corev1.ResourceCPU))
+		jobMemory := getResourceQuantity(spec.JobResources, corev1.ResourceMemory)
+		jobCPU := getResourceQuantity(spec.JobResources, corev1.ResourceCPU)
 
-		resourceLimits.NodeDedicatedCpu = ptr.To(float32(nodeCpu.AsApproximateFloat64()))
+		totalMemory.Add(jobMemory)
+		totalCPU.Add(jobCPU)
+
+		resourceLimits.NodeDedicatedCpu = ptr.To(float32(nodeCPU.AsApproximateFloat64()))
+		resourceLimits.MemoryLimits = map[MemoryCategory]MemoryLimit{
+			MemoryCategoryUserJobs: {
+				Type:  ptr.To(MemoryLimitTypeStatic),
+				Value: ptr.To(jobMemory.Value()),
+			},
+		}
 	} else {
 		// TODO(khlebnikov): Add better defaults.
 		resourceLimits.NodeDedicatedCpu = ptr.To(float32(0))
 	}
 
 	resourceLimits.TotalMemory = totalMemory.Value()
-	if !totalCpu.IsZero() {
-		resourceLimits.TotalCpu = ptr.To(float32(totalCpu.AsApproximateFloat64()))
+	if !totalCPU.IsZero() {
+		resourceLimits.TotalCpu = ptr.To(float32(totalCPU.AsApproximateFloat64()))
 	}
 
 	return resourceLimits
