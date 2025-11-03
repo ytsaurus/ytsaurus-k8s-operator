@@ -1,0 +1,108 @@
+apiVersion: v1
+data:
+  cypress-patch.yson: |-
+    {
+        "//sys/@cluster_connection"=[
+            {
+                op=replace;
+                path="/primary_master/addresses";
+                value=[
+                    "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/primary_master/peers";
+                value=[
+                    {
+                        address="ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+            };
+            {
+                op=remove;
+                path="/bus_client";
+            };
+        ];
+        "<>//sys/clusters"=[
+            {
+                op=copy;
+                path="/test-ytsaurus";
+                from="//sys/@cluster_connection";
+            };
+        ];
+    }
+  yt-client-cypress-patch.yson: |-
+    {
+        "<>//sys/clusters"=[
+            {
+                op=copy;
+                path="/test-ytsaurus";
+                from="//sys/@cluster_connection";
+            };
+        ];
+    }
+  yt-discovery-cypress-patch.yson: |-
+    {
+    }
+  yt-exec-node-cypress-patch.yson: |-
+    {
+    }
+  yt-http-proxy-cypress-patch.yson: |-
+    {
+    }
+  yt-master-cypress-patch.yson: |-
+    {
+        "//sys/@cluster_connection"=[
+            {
+                op=replace;
+                path="/primary_master/addresses";
+                value=[
+                    "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/primary_master/peers";
+                value=[
+                    {
+                        address="ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+            };
+            {
+                op=remove;
+                path="/bus_client";
+            };
+        ];
+    }
+  yt-timbertruck-cypress-patch.yson: |-
+    {
+    }
+kind: ConfigMap
+metadata:
+  annotations:
+    kubernetes.io/description: |
+      overrides-version: 1
+  creationTimestamp: null
+  generation: 1
+  labels:
+    app.kubernetes.io/component: yt-client
+    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
+    app.kubernetes.io/name: yt-client
+    app.kubernetes.io/part-of: yt-test-ytsaurus
+    yt_component: test-ytsaurus-yt-client
+    ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/config-overrides-version: "1"
+  name: yt-cypress-patch
+  namespace: ytsaurus-components
+  ownerReferences:
+  - apiVersion: cluster.ytsaurus.tech/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Ytsaurus
+    name: test-ytsaurus
+    uid: ""
+  resourceVersion: "1"
