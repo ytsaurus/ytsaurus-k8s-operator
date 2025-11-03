@@ -46,24 +46,12 @@ func NewExecNode(
 	)
 
 	criConfig := ytconfig.NewCRIConfigGenerator(&spec)
-
-	var sidecarConfig *ConfigMapBuilder
-	if criConfig.Service == ytv1.CRIServiceContainerd {
-		sidecarConfig = NewConfigMapBuilder(
-			l,
-			ytsaurus.APIProxy(),
-			l.GetSidecarConfigMapName(consts.JobsContainerName),
-			ytsaurus.GetResource().Spec.ConfigOverrides,
-		)
-
-		sidecarConfig.AddGenerator(
-			consts.ContainerdConfigFileName,
-			ConfigFormatToml,
-			func() ([]byte, error) {
-				return criConfig.GetContainerdConfig()
-			},
-		)
-	}
+	sidecarConfig := NewJobsSidecarConfig(
+		l,
+		ytsaurus.APIProxy(),
+		criConfig,
+		ytsaurus.GetCommonSpec().ConfigOverrides,
+	)
 
 	if criConfig.MonitoringPort != 0 {
 		srv.addMonitoringPort(corev1.ServicePort{

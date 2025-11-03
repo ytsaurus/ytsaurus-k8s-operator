@@ -4,6 +4,7 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -44,23 +45,20 @@ func NewRemoteExecNodes(
 	)
 
 	criConfig := ytconfig.NewCRIConfigGenerator(&spec)
+	sidecarConfig := NewJobsSidecarConfig(
+		l,
+		proxy,
+		criConfig,
+		commonSpec.ConfigOverrides,
+	)
 
-	var sidecarConfig *ConfigMapBuilder
-	if criConfig.Service == ytv1.CRIServiceContainerd {
-		sidecarConfig = NewConfigMapBuilder(
-			l,
-			proxy,
-			l.GetSidecarConfigMapName(consts.JobsContainerName),
-			commonSpec.ConfigOverrides,
-		)
-
-		sidecarConfig.AddGenerator(
-			consts.ContainerdConfigFileName,
-			ConfigFormatToml,
-			func() ([]byte, error) {
-				return criConfig.GetContainerdConfig()
-			},
-		)
+	if criConfig.MonitoringPort != 0 {
+		srv.addMonitoringPort(corev1.ServicePort{
+			Name:       consts.CRIServiceMonitoringPortName,
+			Protocol:   corev1.ProtocolTCP,
+			Port:       criConfig.MonitoringPort,
+			TargetPort: intstr.FromInt32(criConfig.MonitoringPort),
+		})
 	}
 
 	return &RemoteExecNode{
