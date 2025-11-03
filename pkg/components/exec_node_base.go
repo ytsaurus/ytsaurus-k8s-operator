@@ -10,7 +10,9 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
@@ -110,7 +112,11 @@ func (n *baseExecNode) addCRIServiceConfig(cri *ytconfig.CRIConfigGenerator, con
 	case ytv1.CRIServiceNone:
 		return
 	case ytv1.CRIServiceCRIO:
-		container.Env = append(container.Env, cri.GetCRIOEnv()...)
+		container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
+			Name:      consts.CRIOConfigVolumeName,
+			MountPath: consts.CRIOConfigMountPoint,
+			ReadOnly:  true,
+		})
 	case ytv1.CRIServiceContainerd:
 		container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
 			Name:      consts.ContainerdConfigVolumeName,
@@ -151,9 +157,13 @@ func (n *baseExecNode) addCRIServiceSidecar(cri *ytconfig.CRIConfigGenerator, po
 		},
 	}
 
-	if cri.Service == ytv1.CRIServiceContainerd {
+	switch cri.Service {
+	case ytv1.CRIServiceContainerd:
 		configPath := path.Join(consts.ContainerdConfigMountPoint, consts.ContainerdConfigFileName)
 		container.Args = []string{"--config", configPath}
+	case ytv1.CRIServiceCRIO:
+		configPath := path.Join(consts.CRIOConfigMountPoint, consts.CRIOConfigFileName)
+		container.Args = []string{"--config", configPath, "--config-dir", ""}
 	}
 
 	n.addCRIServiceConfig(cri, &container)
@@ -203,4 +213,41 @@ func (n *baseExecNode) sidecarConfigNeedsReload() bool {
 		return false
 	}
 	return needsReload
+}
+
+func NewJobsSidecarConfig(
+	labeller *labeller.Labeller,
+	apiProxy apiproxy.APIProxy,
+	criConfig *ytconfig.CRIConfigGenerator,
+	configOverrides *corev1.LocalObjectReference,
+) *ConfigMapBuilder {
+	config := NewConfigMapBuilder(
+		labeller,
+		apiProxy,
+		labeller.GetSidecarConfigMapName(consts.JobsContainerName),
+		configOverrides,
+	)
+
+	switch criConfig.Service {
+	case ytv1.CRIServiceNone:
+		config = nil
+	case ytv1.CRIServiceContainerd:
+		config.AddGenerator(
+			consts.ContainerdConfigFileName,
+			ConfigFormatToml,
+			func() ([]byte, error) {
+				return criConfig.GetContainerdConfig()
+			},
+		)
+	case ytv1.CRIServiceCRIO:
+		config.AddGenerator(
+			consts.CRIOConfigFileName,
+			ConfigFormatToml,
+			func() ([]byte, error) {
+				return criConfig.GetCRIOConfig()
+			},
+		)
+	}
+
+	return config
 }
