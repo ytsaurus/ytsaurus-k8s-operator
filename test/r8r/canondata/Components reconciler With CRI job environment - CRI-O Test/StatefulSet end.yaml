@@ -82,7 +82,12 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
-      - command:
+      - args:
+        - --config
+        - /config/crio/crio.conf
+        - --config-dir
+        - ""
+        command:
         - tini
         - --
         - crio
@@ -99,19 +104,6 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        - name: CONTAINER_LISTEN
-          value: /yt/node-data/image-cache/cri.sock
-        - name: CONTAINER_CGROUP_MANAGER
-          value: cgroupfs
-        - name: CONTAINER_CONMON_CGROUP
-          value: pod
-        - name: CONTAINER_ROOT
-          value: /yt/node-data/image-cache
-        - name: CONTAINER_ENABLE_METRICS
-          value: "true"
-        - name: CONTAINER_METRICS_HOST
-        - name: CONTAINER_METRICS_PORT
-          value: "10026"
         - name: CONTAINER_RUNTIME_ENDPOINT
           value: unix:///yt/node-data/image-cache/cri.sock
         image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
@@ -131,6 +123,9 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+        - mountPath: /config/crio
+          name: config-crio
+          readOnly: true
       enableServiceLinks: false
       initContainers:
       - command:
@@ -208,6 +203,9 @@ spec:
         name: config-template
       - emptyDir: {}
         name: config
+      - configMap:
+          name: yt-exec-node-jobs-config
+        name: config-containerd
   updateStrategy: {}
   volumeClaimTemplates:
   - metadata:
