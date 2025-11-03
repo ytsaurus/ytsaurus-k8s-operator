@@ -402,4 +402,24 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		})
 		It("Test", func(ctx context.Context) {})
 	})
+
+	Context("With CRI and NVIDIA container runtime", func() {
+		BeforeEach(func() {
+			ytBuilder.WithNvidiaContainerRuntime = true
+			ytBuilder.WithExecNodes()
+			ytBuilder.WithCRIJobEnvironment()
+			ytBuilder.WithOverrides()
+		})
+		It("Test", func(ctx context.Context) {})
+	})
+
+	Context("With CRI and NVIDIA container runtime - CRI-O", Label("crio"), func() {
+		BeforeEach(func() {
+			ytBuilder.WithNvidiaContainerRuntime = true
+			ytBuilder.CRIService = ptr.To(ytv1.CRIServiceCRIO)
+			ytBuilder.WithExecNodes()
+			ytBuilder.WithCRIJobEnvironment()
+		})
+		It("Test", func(ctx context.Context) {})
+	})
 })
