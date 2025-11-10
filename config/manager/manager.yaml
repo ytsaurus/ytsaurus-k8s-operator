@@ -46,6 +46,8 @@ spec:
             value: DEBUG
           - name: WATCH_NAMESPACE
             value: ""
+          - name: IGNORE_NAMESPACES
+            value: ""
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

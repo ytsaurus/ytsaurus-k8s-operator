@@ -32,6 +32,10 @@ spec:
         - name: WATCH_NAMESPACE
           value: {{ tpl (.Release.Namespace) $ }}
         {{- end }}
+        {{- if .Values.controllerManager.manager.ignoreNamespaces }}
+        - name: IGNORE_NAMESPACES
+          value: {{ join "," .Values.controllerManager.manager.ignoreNamespaces | quote }}
+        {{- end }}
         - name: K8S_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}
         image: {{ .Values.controllerManager.manager.image.repository }}:{{ .Values.controllerManager.manager.image.tag

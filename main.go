@@ -32,6 +32,7 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -125,19 +126,24 @@ func main() {
 		},
 	}
 
-	watchNamespace, ok := os.LookupEnv("WATCH_NAMESPACE")
 	// We can't setup managerOptions.Cache.DefaultNamespaces = map[cache.AllNamespaces]cache.Config{} due to
 	// https://github.com/kubernetes-sigs/controller-runtime/issues/2628
-	if ok && watchNamespace != "" {
+	if watchNamespace := os.Getenv("WATCH_NAMESPACE"); watchNamespace != "" {
 		managerOptions.Cache.DefaultNamespaces = map[string]cache.Config{}
-		if strings.Contains(watchNamespace, ",") {
-			for _, namespace := range strings.Split(watchNamespace, ",") {
-				managerOptions.Cache.DefaultNamespaces[namespace] = cache.Config{}
-			}
-		} else {
-			managerOptions.Cache.DefaultNamespaces[watchNamespace] = cache.Config{}
+		for namespace := range strings.SplitSeq(watchNamespace, ",") {
+			managerOptions.Cache.DefaultNamespaces[namespace] = cache.Config{}
+			setupLog.Info("Watching namespace", "namespace", namespace)
+		}
+		if len(managerOptions.Cache.DefaultNamespaces) == 1 {
 			managerOptions.LeaderElectionNamespace = watchNamespace
 		}
+	} else if ignoreNamespaces := os.Getenv("IGNORE_NAMESPACES"); ignoreNamespaces != "" {
+		selectors := []fields.Selector{}
+		for namespace := range strings.SplitSeq(ignoreNamespaces, ",") {
+			selectors = append(selectors, fields.OneTermNotEqualSelector("metadata.namespace", namespace))
+			setupLog.Info("Ignoring namespace", "namespace", namespace)
+		}
+		managerOptions.Cache.DefaultFieldSelector = fields.AndSelectors(selectors...)
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), managerOptions)
