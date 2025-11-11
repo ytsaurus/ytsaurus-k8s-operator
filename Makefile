@@ -370,7 +370,7 @@ docker-push: ## Push docker image with the manager.
 .PHONY: helm-chart
 helm-chart: manifests ## Generate helm chart.
 	rm -f $(OPERATOR_CHART_CRDS)/*.yaml
-	cp -t $(OPERATOR_CHART_CRDS)/ config/crd/bases/*.yaml
+	go run ./hack/helm-crds.go $(OPERATOR_CHART_CRDS)/ config/crd/bases/*.yaml
 	$(YQ) '.name="$(OPERATOR_CHART_NAME_RELEASE)" | .version="$(OPERATOR_VERSION)" | .appVersion="$(OPERATOR_VERSION)"' <config/helm/Chart.yaml >$(OPERATOR_CHART)/Chart.yaml
 
 ##@ Deployment
