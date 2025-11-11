@@ -1,31 +1,20 @@
+---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "ytop-chart.fullname"
-      . }}-webhook-cert'
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: remotetabletnodes.cluster.ytsaurus.tech
+  name: remotedatanodes.cluster.ytsaurus.tech
 spec:
-  conversion:
-    strategy: Webhook
-    webhook:
-      clientConfig:
-        service:
-          name: '{{ include "ytop-chart.fullname" . }}-webhook-service'
-          namespace: '{{ .Release.Namespace }}'
-          path: /convert
-      conversionReviewVersions:
-      - v1
   group: cluster.ytsaurus.tech
   names:
     categories:
     - ytsaurus-all
     - yt-all
-    kind: RemoteTabletNodes
-    listKind: RemoteTabletNodesList
-    plural: remotetabletnodes
-    singular: remotetabletnodes
+    kind: RemoteDataNodes
+    listKind: RemoteDataNodesList
+    plural: remotedatanodes
+    singular: remotedatanodes
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -36,7 +25,7 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: RemoteTabletNodes is the Schema for the remotetabletnodes API
+        description: RemoteDataNodes is the Schema for the remotedatanodes API
         properties:
           apiVersion:
             description: APIVersion defines the versioned schema of this representation
@@ -49,7 +38,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: RemoteTabletNodesSpec defines the desired state of RemoteTabletNodes
+            description: RemoteDataNodesSpec defines the desired state of RemoteDataNodes
             properties:
               affinity:
                 description: Affinity is a group of affinity scheduling rules.
@@ -1984,7 +1973,7 @@ spec:
             - remoteClusterSpec
             type: object
           status:
-            description: RemoteTabletNodesStatus defines the observed state of RemoteTabletNodes
+            description: RemoteDataNodesStatus defines the observed state of RemoteDataNodes
             properties:
               conditions:
                 items:

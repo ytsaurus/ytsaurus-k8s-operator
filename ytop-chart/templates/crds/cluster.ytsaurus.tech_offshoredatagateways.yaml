@@ -1,31 +1,20 @@
+---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "ytop-chart.fullname"
-      . }}-webhook-cert'
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: remotedatanodes.cluster.ytsaurus.tech
+  name: offshoredatagateways.cluster.ytsaurus.tech
 spec:
-  conversion:
-    strategy: Webhook
-    webhook:
-      clientConfig:
-        service:
-          name: '{{ include "ytop-chart.fullname" . }}-webhook-service'
-          namespace: '{{ .Release.Namespace }}'
-          path: /convert
-      conversionReviewVersions:
-      - v1
   group: cluster.ytsaurus.tech
   names:
     categories:
     - ytsaurus-all
     - yt-all
-    kind: RemoteDataNodes
-    listKind: RemoteDataNodesList
-    plural: remotedatanodes
-    singular: remotedatanodes
+    kind: OffshoreDataGateways
+    listKind: OffshoreDataGatewaysList
+    plural: offshoredatagateways
+    singular: offshoredatagateways
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -36,7 +25,9 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: RemoteDataNodes is the Schema for the remotedatanodes API
+        description: |-
+          OffshoreDataGateways is the Schema for the OffshoreDataGateways API
+          Be careful:...
         properties:
           apiVersion:
             description: APIVersion defines the versioned schema of this representation
@@ -49,7 +40,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: RemoteDataNodesSpec defines the desired state of RemoteDataNodes
+            description: OffshoreDataGatewaysSpec defines the desired state of OffshoreDataGateways
             properties:
               affinity:
                 description: Affinity is a group of affinity scheduling rules.
@@ -994,10 +985,6 @@ spec:
               monitoringPort:
                 format: int32
                 type: integer
-              name:
-                default: default
-                minLength: 1
-                type: string
               nativeTransport:
                 description: Common config for native RPC bus transport.
                 properties:
@@ -1045,9 +1032,6 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
-              rack:
-                description: Name of the node rack.
-                type: string
               readinessProbeParams:
                 properties:
                   failureThreshold:
@@ -1184,11 +1168,6 @@ spec:
                       default: false
                       type: boolean
                   type: object
-                type: array
-              tags:
-                description: List of the node tags.
-                items:
-                  type: string
                 type: array
               terminationGracePeriodSeconds:
                 description: Optional duration in seconds the pod needs to terminate
@@ -1984,7 +1963,8 @@ spec:
             - remoteClusterSpec
             type: object
           status:
-            description: RemoteDataNodesStatus defines the observed state of RemoteDataNodes
+            description: OffshoreDataGatewaysStatus defines the observed state of
+              OffshoreDataGateways
             properties:
               conditions:
                 items:
