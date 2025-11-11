@@ -369,8 +369,9 @@ docker-push: ## Push docker image with the manager.
 
 .PHONY: helm-chart
 helm-chart: manifests ## Generate helm chart.
-	$(KUSTOMIZE) build config/helm | name="$(OPERATOR_CHART)" $(ENVSUBST) | $(KUBECTL_SLICE) -q -o $(OPERATOR_CHART_CRDS) -t "{{.metadata.name}}.yaml" --prune
-	name="$(OPERATOR_CHART_NAME_RELEASE)" version="$(RELEASE_VERSION)" $(ENVSUBST) < config/helm/Chart.yaml > $(OPERATOR_CHART)/Chart.yaml
+	rm -f $(OPERATOR_CHART_CRDS)/*.yaml
+	cp -t $(OPERATOR_CHART_CRDS)/ config/crd/bases/*.yaml
+	$(YQ) '.name="$(OPERATOR_CHART_NAME_RELEASE)" | .version="$(OPERATOR_VERSION)" | .appVersion="$(OPERATOR_VERSION)"' <config/helm/Chart.yaml >$(OPERATOR_CHART)/Chart.yaml
 
 ##@ Deployment
 
@@ -442,8 +443,6 @@ GOLANGCI_LINT   ?= go tool -modfile=${CURDIR}/tool/golangci-lint/go.mod golangci
 GINKGO          ?= ${GO_TOOL_EXEC} ginkgo
 CRD_REF_DOCS    ?= ${GO_TOOL_EXEC} crd-ref-docs
 KIND            ?= ${GO_TOOL_EXEC} kind
-ENVSUBST        ?= ${GO_TOOL_EXEC} envsubst
-KUBECTL_SLICE   ?= ${GO_TOOL_EXEC} kubectl-slice
 YQ              ?= ${GO_TOOL_EXEC} yq
 
 .PHONY: envtest-assets

@@ -1,37 +1,31 @@
+---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "ytop-chart.fullname"
-      . }}-webhook-cert'
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: remoteytsaurus.cluster.ytsaurus.tech
+  name: remoteexecnodes.cluster.ytsaurus.tech
 spec:
-  conversion:
-    strategy: Webhook
-    webhook:
-      clientConfig:
-        service:
-          name: '{{ include "ytop-chart.fullname" . }}-webhook-service'
-          namespace: '{{ .Release.Namespace }}'
-          path: /convert
-      conversionReviewVersions:
-      - v1
   group: cluster.ytsaurus.tech
   names:
     categories:
     - ytsaurus-all
     - yt-all
-    kind: RemoteYtsaurus
-    listKind: RemoteYtsaurusList
-    plural: remoteytsaurus
-    singular: remoteytsaurus
+    kind: RemoteExecNodes
+    listKind: RemoteExecNodesList
+    plural: remoteexecnodes
+    singular: remoteexecnodes
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - description: Release status
+      jsonPath: .status.releaseStatus
+      name: ReleaseStatus
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
-        description: RemoteYtsaurus is the Schema for the remoteytsauruses API
+        description: RemoteExecNodes is the Schema for the remoteexecnodes API
         properties:
           apiVersion:
             description: APIVersion defines the versioned schema of this representation
@@ -44,7 +38,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: RemoteYtsaurusSpec defines the desired state of RemoteYtsaurus
+            description: RemoteExecNodesSpec defines the desired state of RemoteExecNodes
             properties:
               affinity:
                 description: Affinity is a group of affinity scheduling rules.
@@ -729,10 +723,44 @@ spec:
                         x-kubernetes-list-type: atomic
                     type: object
                 type: object
-              cellTag:
-                type: integer
-              cellTagMasterCaches:
-                type: integer
+              caBundle:
+                description: Reference to trusted certificates. Default kind="ConfigMap",
+                  key="ca.crt".
+                properties:
+                  key:
+                    description: Key is the name of entry in ConfigMap or Secret.
+                    type: string
+                  kind:
+                    description: 'Kind is the type of resource: ConfigMap or Secret.'
+                    enum:
+                    - ConfigMap
+                    - Secret
+                    type: string
+                  name:
+                    description: Name is the name of resource being referenced
+                    type: string
+                type: object
+              clusterFeatures:
+                properties:
+                  httpProxyHaveChytAddress:
+                    description: HTTP proxy have "chyt_http_server" and "chyt_https_server".
+                    type: boolean
+                  rpcProxyHavePublicAddress:
+                    description: RPC proxy have "public_rpc" address.
+                    type: boolean
+                type: object
+              configOverrides:
+                description: LocalObjectReference contains enough information to let
+                  you locate the...
+                properties:
+                  name:
+                    default: ""
+                    description: Name of the referent.
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
+              coreImage:
+                type: string
               dnsConfig:
                 description: DNSConfig allows customizing the DNS settings for the
                   pods.
@@ -775,26 +803,252 @@ spec:
                 items:
                   type: string
                 type: array
-              hostAddresses:
-                items:
+              ephemeralCluster:
+                default: false
+                description: Allow prioritizing performance over data safety.
+                type: boolean
+              extraPodAnnotations:
+                additionalProperties:
                   type: string
-                type: array
-              hostAddressesLabel:
-                type: string
-              hostAddressesMasterCaches:
-                items:
-                  type: string
-                type: array
+                type: object
+              forceTcp:
+                type: boolean
               hostNetwork:
-                description: Use the host's network namespace, this overrides global
-                  option.
+                default: false
+                description: Use the host's network namespace for all components.
                 type: boolean
               image:
                 description: Overrides coreImage for component.
                 type: string
+              imagePullSecrets:
+                items:
+                  description: LocalObjectReference contains enough information to
+                    let you locate the...
+                  properties:
+                    name:
+                      default: ""
+                      description: Name of the referent.
+                      type: string
+                  type: object
+                  x-kubernetes-map-type: atomic
+                type: array
+              initContainers:
+                description: List of init containers as yaml of core/v1 Container.
+                items:
+                  type: string
+                type: array
               instanceCount:
                 format: int32
                 type: integer
+              jobEnvironment:
+                properties:
+                  cri:
+                    description: CRI service configuration for running jobs in sidecar
+                      container.
+                    properties:
+                      alwaysPullLatestImage:
+                        description: Always pull "latest" images.
+                        type: boolean
+                      apiRetryTimeoutSeconds:
+                        description: Timeout for retrying CRI API calls.
+                        format: int32
+                        type: integer
+                      baseCgroup:
+                        description: Base cgroup for jobs.
+                        type: string
+                      criNamespace:
+                        description: CRI namespace for jobs containers.
+                        type: string
+                      criService:
+                        description: 'CRI service: containerd (default), crio, none.'
+                        enum:
+                        - containerd
+                        - crio
+                        - none
+                        type: string
+                      entrypointWrapper:
+                        description: 'Specifies wrapper for CRI service command, default:
+                          ["tini", "--"].'
+                        items:
+                          type: string
+                        type: array
+                      imageCompressionRatioEstimation:
+                        description: Multiplier for image size to account space used
+                          by unpacked images.
+                        format: int32
+                        type: integer
+                      imagePullPeriodSeconds:
+                        description: Pull images periodically.
+                        format: int32
+                        type: integer
+                      imageSizeEstimation:
+                        description: Initial estimation for space required for pulling
+                          image into cache.
+                        format: int64
+                        type: integer
+                      monitoringPort:
+                        description: CRI service monitoring port, default is 10026,
+                          set 0 to disable.
+                        format: int32
+                        type: integer
+                      registryConfigPath:
+                        description: 'For containerd: https://github.com/containerd/containerd/blob/main/docs/hosts.md'
+                        type: string
+                      sandboxImage:
+                        description: Sandbox (pause) image.
+                        type: string
+                    type: object
+                  doNotSetUserId:
+                    description: Do not use slot user id for running jobs.
+                    type: boolean
+                  isolated:
+                    description: Isolate job execution environment from exec node
+                      or not, by default true when...
+                    type: boolean
+                  runtime:
+                    description: 'Container Runtime configuration for CRI service.
+                      Default: runc.'
+                    properties:
+                      nvidia:
+                        description: Use NVIDIA Container Runtime.
+                        type: object
+                    type: object
+                  useArtifactBinds:
+                    description: Pass artifacts as read-only bind-mounts rather than
+                      symlinks.
+                    type: boolean
+                  userSlots:
+                    description: Count of slots for user jobs on each exec node, default
+                      is 5 per CPU.
+                    type: integer
+                type: object
+              jobImage:
+                description: Default docker image for user jobs.
+                type: string
+              jobProxyLoggers:
+                items:
+                  properties:
+                    categoriesFilter:
+                      properties:
+                        type:
+                          description: CategoriesFilterType string describes types
+                            of possible log CategoriesFilter.
+                          enum:
+                          - exclude
+                          - include
+                          type: string
+                        values:
+                          items:
+                            type: string
+                          minItems: 1
+                          type: array
+                      type: object
+                    compression:
+                      default: none
+                      enum:
+                      - none
+                      - gzip
+                      - zstd
+                      type: string
+                    format:
+                      default: plain_text
+                      enum:
+                      - plain_text
+                      - json
+                      - yson
+                      type: string
+                    minLogLevel:
+                      default: info
+                      description: LogLevel string describes possible Ytsaurus logging
+                        level.
+                      enum:
+                      - trace
+                      - debug
+                      - info
+                      - warning
+                      - error
+                      type: string
+                    name:
+                      minLength: 1
+                      type: string
+                    rotationPolicy:
+                      properties:
+                        maxSegmentCountToKeep:
+                          format: int64
+                          type: integer
+                        maxSegmentSize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxTotalSizeToKeep:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        rotationPeriodMilliseconds:
+                          format: int64
+                          type: integer
+                      type: object
+                    useTimestampSuffix:
+                      default: false
+                      type: boolean
+                    writerType:
+                      description: LogWriterType string describes types of possible
+                        log writers.
+                      enum:
+                      - file
+                      - stderr
+                      type: string
+                  type: object
+                type: array
+              jobResources:
+                description: Resources dedicated for running jobs.
+                properties:
+                  claims:
+                    description: Claims lists the names of resources, defined in spec.
+                    items:
+                      description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                      properties:
+                        name:
+                          description: Name must match the name of one entry in pod.spec.
+                          type: string
+                        request:
+                          description: Request is the name chosen for a request in
+                            the referenced claim.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                  limits:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: Limits describes the maximum amount of compute resources
+                      allowed.
+                    type: object
+                  requests:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: Requests describes the minimum amount of compute
+                      resources required.
+                    type: object
+                type: object
+              keepSocket:
+                type: boolean
               locations:
                 items:
                   properties:
@@ -938,8 +1192,12 @@ spec:
               monitoringPort:
                 format: int32
                 type: integer
+              name:
+                default: default
+                minLength: 1
+                type: string
               nativeTransport:
-                description: Component config for native RPC bus transport.
+                description: Common config for native RPC bus transport.
                 properties:
                   tlsClientSecret:
                     description: Client certificate. Reference to kubernetes.io/tls
@@ -985,6 +1243,12 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              privileged:
+                default: true
+                type: boolean
+              rack:
+                description: Name of the node rack.
+                type: string
               readinessProbeParams:
                 properties:
                   failureThreshold:
@@ -1003,6 +1267,16 @@ spec:
                     format: int32
                     type: integer
                 type: object
+              remoteClusterSpec:
+                description: LocalObjectReference contains enough information to let
+                  you locate the...
+                properties:
+                  name:
+                    default: ""
+                    description: Name of the referent.
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
               resources:
                 description: ResourceRequirements describes the compute resource requirements.
                 properties:
@@ -1053,6 +1327,11 @@ spec:
                 description: SetHostnameAsFQDN indicates whether to set the hostname
                   as FQDN.
                 type: boolean
+              sidecars:
+                description: List of sidecar containers as yaml of core/v1 Container.
+                items:
+                  type: string
+                type: array
               structuredLoggers:
                 items:
                   properties:
@@ -1112,6 +1391,11 @@ spec:
                       type: boolean
                   type: object
                 type: array
+              tags:
+                description: List of the node tags.
+                items:
+                  type: string
+                type: array
               terminationGracePeriodSeconds:
                 description: Optional duration in seconds the pod needs to terminate
                   gracefully.
@@ -1146,6 +1430,20 @@ spec:
                       type: string
                   type: object
                 type: array
+              useIpv4:
+                default: false
+                type: boolean
+              useIpv6:
+                default: false
+                type: boolean
+              usePorto:
+                default: false
+                type: boolean
+              useShortNames:
+                default: true
+                description: Do not add resource name into names of resources under
+                  control.
+                type: boolean
               volumeClaimTemplates:
                 items:
                   description: EmbeddedPersistentVolumeClaim is an embedded version
@@ -1889,11 +2187,65 @@ spec:
                   type: object
                 type: array
             required:
-            - cellTag
-            - cellTagMasterCaches
+            - remoteClusterSpec
             type: object
           status:
-            description: RemoteYtsaurusStatus defines the observed state of RemoteYtsaurus
+            description: RemoteExecNodesStatus defines the observed state of RemoteExecNodes
+            properties:
+              conditions:
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API...
+                  properties:
+                    lastTransitionTime:
+                      description: lastTransitionTime is the last time the condition
+                        transitioned from one status...
+                      format: date-time
+                      type: string
+                    message:
+                      description: message is a human readable message indicating
+                        details about the transition.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: observedGeneration represents the .metadata.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: reason contains a programmatic identifier indicating
+                        the reason for the...
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              observedGeneration:
+                description: Reflects resource generation which was used for updating
+                  status.
+                format: int64
+                type: integer
+              releaseStatus:
+                type: string
             type: object
         type: object
     served: true
