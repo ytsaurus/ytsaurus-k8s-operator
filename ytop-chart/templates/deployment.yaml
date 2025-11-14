@@ -28,9 +28,13 @@ spec:
         env:
         - name: YT_LOG_LEVEL
           value: {{ quote .Values.controllerManager.manager.env.ytLogLevel }}
+        {{- if .Values.controllerManager.manager.instanceScope }}
+        - name: WATCH_OPERATOR_INSTANCE
+          value: '{{ .Release.Name }}'
+        {{- end }}
         {{- if .Values.controllerManager.manager.namespacedScope }}
         - name: WATCH_NAMESPACE
-          value: {{ tpl (.Release.Namespace) $ }}
+          value: '{{ .Release.Namespace }}'
         {{- end }}
         - name: K8S_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}
