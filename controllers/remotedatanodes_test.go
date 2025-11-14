@@ -30,10 +30,12 @@ const (
 func setupRemoteDataNodesReconciler() func(mgr ctrl.Manager) error {
 	return func(mgr ctrl.Manager) error {
 		return (&controllers.RemoteDataNodesReconciler{
-			ClusterDomain: "cluster.local",
-			Client:        mgr.GetClient(),
-			Scheme:        mgr.GetScheme(),
-			Recorder:      mgr.GetEventRecorderFor("remotedatanodes-controller"),
+			BaseReconciler: controllers.BaseReconciler{
+				ClusterDomain: "cluster.local",
+				Client:        mgr.GetClient(),
+				Scheme:        mgr.GetScheme(),
+				Recorder:      mgr.GetEventRecorderFor("remotedatanodes-controller"),
+			},
 		}).SetupWithManager(mgr)
 	}
 }

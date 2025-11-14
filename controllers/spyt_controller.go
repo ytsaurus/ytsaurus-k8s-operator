@@ -22,9 +22,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -34,10 +32,7 @@ import (
 
 // SpytReconciler reconciles a Spyt object
 type SpytReconciler struct {
-	ClusterDomain string
-	client.Client
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	BaseReconciler
 }
 
 //+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=spyts,verbs=get;list;watch;create;update;patch;delete
