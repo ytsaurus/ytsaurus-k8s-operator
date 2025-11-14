@@ -9,6 +9,9 @@ import (
 	"k8s.io/client-go/tools/record"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 const (
@@ -36,4 +39,20 @@ type BaseReconciler struct {
 
 	OperatorInstance string
 	ClusterDomain    string
+}
+
+func (r *BaseReconciler) ShouldIgnoreResource(ctx context.Context, object client.Object) bool {
+	// Redundant check and prevention for possible misconfiguration.
+	// Normally resources should be filtered by controller runtime cache management.
+	// Ignore resources with operator instance label even when started without instance scope.
+	if instance := object.GetLabels()[consts.YTOperatorInstanceLabelName]; instance != r.OperatorInstance {
+		logger := log.FromContext(ctx)
+		logger.Info(
+			"Resource is managed by other operator instance",
+			"resourceInstance", instance,
+			"operatorInstance", r.OperatorInstance,
+		)
+		return true
+	}
+	return false
 }

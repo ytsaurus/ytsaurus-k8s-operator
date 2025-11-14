@@ -12,6 +12,8 @@ const (
 
 	DescriptionAnnotation           = "kubernetes.io/description"
 	ConfigOverridesVersionLabelName = "ytsaurus.tech/config-overrides-version"
+
+	YTOperatorInstanceLabelName = "ytsaurus.tech/operator-instance"
 )
 
 func ComponentLabel(component ComponentType) string {
