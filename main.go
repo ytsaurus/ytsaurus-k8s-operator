@@ -146,11 +146,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	baseReconciler := func(name string) controllers.BaseReconciler {
+		return controllers.BaseReconciler{
+			ClusterDomain: clusterDomain,
+			Client:        mgr.GetClient(),
+			Scheme:        mgr.GetScheme(),
+			Recorder:      mgr.GetEventRecorderFor(name),
+		}
+	}
+
 	if err = (&controllers.YtsaurusReconciler{
-		ClusterDomain: clusterDomain,
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("ytsaurus-controller"),
+		BaseReconciler: baseReconciler("ytsaurus-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Ytsaurus")
 		os.Exit(1)
@@ -164,10 +170,7 @@ func main() {
 	}
 
 	if err = (&controllers.SpytReconciler{
-		ClusterDomain: clusterDomain,
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("spyt-controller"),
+		BaseReconciler: baseReconciler("spyt-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Spyt")
 		os.Exit(1)
@@ -180,10 +183,7 @@ func main() {
 		}
 	}
 	if err = (&controllers.ChytReconciler{
-		ClusterDomain: clusterDomain,
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("chyt-controller"),
+		BaseReconciler: baseReconciler("chyt-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Chyt")
 		os.Exit(1)
@@ -195,40 +195,28 @@ func main() {
 		}
 	}
 	if err = (&controllers.RemoteExecNodesReconciler{
-		ClusterDomain: clusterDomain,
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("remoteexecnodes-controller"),
+		BaseReconciler: baseReconciler("remoteexecnodes-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteExecNodes")
 		os.Exit(1)
 	}
 
 	if err = (&controllers.RemoteDataNodesReconciler{
-		ClusterDomain: clusterDomain,
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("remotedatanodes-controller"),
+		BaseReconciler: baseReconciler("remotedatanodes-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteDataNodes")
 		os.Exit(1)
 	}
 
 	if err = (&controllers.RemoteTabletNodesReconciler{
-		ClusterDomain: clusterDomain,
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("remotetabletnodes-controller"),
+		BaseReconciler: baseReconciler("remotetabletnodes-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteTabletNodes")
 		os.Exit(1)
 	}
 
 	if err = (&controllers.OffshoreDataGatewaysReconciler{
-		ClusterDomain: clusterDomain,
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("offshoredatagateways-controller"),
+		BaseReconciler: baseReconciler("offshoredatagateways-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OffshoreDataGateways")
 		os.Exit(1)
