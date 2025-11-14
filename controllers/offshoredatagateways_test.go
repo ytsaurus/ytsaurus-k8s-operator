@@ -30,10 +30,12 @@ const (
 func setupOffshoreDataGatewaysReconciler() func(mgr ctrl.Manager) error {
 	return func(mgr ctrl.Manager) error {
 		return (&controllers.OffshoreDataGatewaysReconciler{
-			ClusterDomain: "cluster.local",
-			Client:        mgr.GetClient(),
-			Scheme:        mgr.GetScheme(),
-			Recorder:      mgr.GetEventRecorderFor("offshoredatagateways-controller"),
+			BaseReconciler: controllers.BaseReconciler{
+				ClusterDomain: "cluster.local",
+				Client:        mgr.GetClient(),
+				Scheme:        mgr.GetScheme(),
+				Recorder:      mgr.GetEventRecorderFor("offshoredatagateways-controller"),
+			},
 		}).SetupWithManager(mgr)
 	}
 }

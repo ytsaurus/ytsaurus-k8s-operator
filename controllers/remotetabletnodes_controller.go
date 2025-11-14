@@ -21,9 +21,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -37,10 +35,7 @@ import (
 
 // RemoteTabletNodesReconciler reconciles a RemoteTabletNodes object
 type RemoteTabletNodesReconciler struct {
-	ClusterDomain string
-	client.Client
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	BaseReconciler
 }
 
 //+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=remotetabletnodes,verbs=get;list;watch;create;update;patch;delete
