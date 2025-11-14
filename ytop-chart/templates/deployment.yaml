@@ -91,8 +91,8 @@ spec:
       - name: webhook-cert
         secret:
           defaultMode: 420
-          secretName: yt-operator-webhook-cert
+          secretName: {{ include "ytop-chart.fullname" . }}-webhook-cert
       - name: metrics-cert
         secret:
           defaultMode: 420
-          secretName: yt-operator-metrics-cert
+          secretName: {{ include "ytop-chart.fullname" . }}-metrics-cert
