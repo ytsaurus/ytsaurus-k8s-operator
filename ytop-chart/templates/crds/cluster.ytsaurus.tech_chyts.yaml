@@ -1,31 +1,24 @@
+{{- if .Values.crds.enabled }}
+---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "ytop-chart.fullname"
-      . }}-webhook-cert'
+    {{- if .Values.crds.keep }}
+    helm.sh/resource-policy: keep
+    {{- end }}
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: spyts.cluster.ytsaurus.tech
+  name: chyts.cluster.ytsaurus.tech
 spec:
-  conversion:
-    strategy: Webhook
-    webhook:
-      clientConfig:
-        service:
-          name: '{{ include "ytop-chart.fullname" . }}-webhook-service'
-          namespace: '{{ .Release.Namespace }}'
-          path: /convert
-      conversionReviewVersions:
-      - v1
   group: cluster.ytsaurus.tech
   names:
     categories:
     - ytsaurus-all
     - yt-all
-    kind: Spyt
-    listKind: SpytList
-    plural: spyts
-    singular: spyt
+    kind: Chyt
+    listKind: ChytList
+    plural: chyts
+    singular: chyt
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -36,7 +29,7 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: Spyt is the Schema for the spyts API
+        description: Chyt is the Schema for the chyts API
         properties:
           apiVersion:
             description: APIVersion defines the versioned schema of this representation
@@ -49,8 +42,12 @@ spec:
           metadata:
             type: object
           spec:
-            description: SpytSpec defines the desired state of Spyt
+            description: ChytSpec defines the desired state of Chyt
             properties:
+              createPublicClique:
+                description: Create ch_public clique, which is used by default when
+                  running CHYT queries.
+                type: boolean
               image:
                 type: string
               imagePullSecrets:
@@ -65,6 +62,10 @@ spec:
                   type: object
                   x-kubernetes-map-type: atomic
                 type: array
+              makeDefault:
+                default: false
+                description: Mark specified image as default for cliques.
+                type: boolean
               ytsaurus:
                 description: LocalObjectReference contains enough information to let
                   you locate the...
@@ -75,9 +76,11 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
+            required:
+            - makeDefault
             type: object
           status:
-            description: SpytStatus defines the observed state of Spyt
+            description: ChytStatus defines the observed state of Chyt
             properties:
               conditions:
                 items:
@@ -134,3 +137,4 @@ spec:
     storage: true
     subresources:
       status: {}
+{{- end }}

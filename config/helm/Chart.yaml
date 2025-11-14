@@ -1,8 +1,8 @@
 apiVersion: v2
-name: ${name}
+name: "<name>"
 description: A Helm chart for Kubernetes
 type: application
-version: "${version:-0.0.0-alpha}"
-appVersion: "${version:-0.0.0-alpha}"
+version: "<version>"
+appVersion: "<version>"
 sources:
   - https://github.com/ytsaurus/ytsaurus-k8s-operator

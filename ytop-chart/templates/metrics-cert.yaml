@@ -13,4 +13,4 @@ spec:
   issuerRef:
     kind: Issuer
     name: '{{ include "ytop-chart.fullname" . }}-selfsigned-issuer'
-  secretName: yt-operator-metrics-cert
+  secretName: {{ include "ytop-chart.fullname" . }}-metrics-cert

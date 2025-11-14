@@ -308,6 +308,10 @@ linters:
         linters:
           - gosec
 
+      - path: 'hack'
+        linters:
+          - gosec
+
       - path: 'pkg/consts'
         linters:
           - gochecknoglobals

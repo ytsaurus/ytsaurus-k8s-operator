@@ -1,31 +1,24 @@
+{{- if .Values.crds.enabled }}
+---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "ytop-chart.fullname"
-      . }}-webhook-cert'
+    {{- if .Values.crds.keep }}
+    helm.sh/resource-policy: keep
+    {{- end }}
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: offshoredatagateways.cluster.ytsaurus.tech
+  name: remotetabletnodes.cluster.ytsaurus.tech
 spec:
-  conversion:
-    strategy: Webhook
-    webhook:
-      clientConfig:
-        service:
-          name: '{{ include "ytop-chart.fullname" . }}-webhook-service'
-          namespace: '{{ .Release.Namespace }}'
-          path: /convert
-      conversionReviewVersions:
-      - v1
   group: cluster.ytsaurus.tech
   names:
     categories:
     - ytsaurus-all
     - yt-all
-    kind: OffshoreDataGateways
-    listKind: OffshoreDataGatewaysList
-    plural: offshoredatagateways
-    singular: offshoredatagateways
+    kind: RemoteTabletNodes
+    listKind: RemoteTabletNodesList
+    plural: remotetabletnodes
+    singular: remotetabletnodes
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -36,9 +29,7 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: |-
-          OffshoreDataGateways is the Schema for the OffshoreDataGateways API
-          Be careful:...
+        description: RemoteTabletNodes is the Schema for the remotetabletnodes API
         properties:
           apiVersion:
             description: APIVersion defines the versioned schema of this representation
@@ -51,7 +42,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: OffshoreDataGatewaysSpec defines the desired state of OffshoreDataGateways
+            description: RemoteTabletNodesSpec defines the desired state of RemoteTabletNodes
             properties:
               affinity:
                 description: Affinity is a group of affinity scheduling rules.
@@ -996,6 +987,10 @@ spec:
               monitoringPort:
                 format: int32
                 type: integer
+              name:
+                default: default
+                minLength: 1
+                type: string
               nativeTransport:
                 description: Common config for native RPC bus transport.
                 properties:
@@ -1043,6 +1038,9 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              rack:
+                description: Name of the node rack.
+                type: string
               readinessProbeParams:
                 properties:
                   failureThreshold:
@@ -1179,6 +1177,11 @@ spec:
                       default: false
                       type: boolean
                   type: object
+                type: array
+              tags:
+                description: List of the node tags.
+                items:
+                  type: string
                 type: array
               terminationGracePeriodSeconds:
                 description: Optional duration in seconds the pod needs to terminate
@@ -1974,8 +1977,7 @@ spec:
             - remoteClusterSpec
             type: object
           status:
-            description: OffshoreDataGatewaysStatus defines the observed state of
-              OffshoreDataGateways
+            description: RemoteTabletNodesStatus defines the observed state of RemoteTabletNodes
             properties:
               conditions:
                 items:
@@ -2037,3 +2039,4 @@ spec:
     storage: true
     subresources:
       status: {}
+{{- end }}
