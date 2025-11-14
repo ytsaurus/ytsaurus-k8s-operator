@@ -26,6 +26,7 @@ controllerManager:
         cpu: 5m
         memory: 64Mi
   manager:
+    instanceScope: false
     namespacedScope: false
     args:
       - --health-probe-bind-address=:8081

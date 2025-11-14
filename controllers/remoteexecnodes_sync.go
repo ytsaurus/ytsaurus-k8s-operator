@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -18,6 +19,11 @@ func (r *RemoteExecNodesReconciler) Sync(
 	remoteYtsaurus *ytv1.RemoteYtsaurus,
 ) (ctrl.Result, error) {
 	logger := log.FromContext(ctx).WithValues("component", "remoteexecnodes")
+
+	if r.ShouldIgnoreResource(ctx, resource) {
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	}
+
 	apiProxy := apiproxy.NewAPIProxy(resource, r.Client, r.Recorder, r.Scheme)
 
 	cfgen := ytconfig.NewRemoteNodeGenerator(remoteYtsaurus, resource.GetName(), r.ClusterDomain, &resource.Spec.CommonSpec)

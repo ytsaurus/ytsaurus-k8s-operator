@@ -20,7 +20,9 @@ limitations under the License.
 package v1
 
 import (
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 
@@ -29,10 +31,25 @@ var (
 	GroupVersion = schema.GroupVersion{Group: "cluster.ytsaurus.tech", Version: "v1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
-	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}
+	SchemeBuilder = &schemeBuilder{
+		Builder: scheme.Builder{
+			GroupVersion: GroupVersion,
+		},
+	}
 
 	// AddToScheme adds the types in this group-version to the given scheme.
 	AddToScheme = SchemeBuilder.AddToScheme
 
 	YtsaurusGVK = GroupVersion.WithKind("Ytsaurus")
 )
+
+type schemeBuilder struct {
+	scheme.Builder
+	Objects []client.Object
+}
+
+func (bld *schemeBuilder) Register(object client.Object, objectList runtime.Object) *schemeBuilder {
+	bld.Builder.Register(object, objectList)
+	bld.Objects = append(bld.Objects, object)
+	return bld
+}
