@@ -241,10 +241,12 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 		By("Running ytsaurus reconciler", func() {
 			ytsaurusReconciler := controllers.YtsaurusReconciler{
-				ClusterDomain: "cluster.local",
-				Client:        k8sClient,
-				Scheme:        k8sScheme,
-				Recorder:      k8sEventBroadcaster.NewRecorder(k8sScheme, corev1.EventSource{Component: "ytsaurus"}),
+				BaseReconciler: controllers.BaseReconciler{
+					ClusterDomain: "cluster.local",
+					Client:        k8sClient,
+					Scheme:        k8sScheme,
+					Recorder:      k8sEventBroadcaster.NewRecorder(k8sScheme, corev1.EventSource{Component: "ytsaurus"}),
+				},
 			}
 
 			// Override crypto/rand reader to generate deterministic tokens.

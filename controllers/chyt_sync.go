@@ -15,6 +15,10 @@ import (
 func (r *ChytReconciler) Sync(ctx context.Context, resource *ytv1.Chyt, ytsaurus *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
+	if r.ShouldIgnoreResource(ctx, resource) {
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	}
+
 	chyt := apiproxy.NewChyt(resource, r.Client, r.Recorder, r.Scheme)
 
 	cfgen := ytconfig.NewLocalNodeGenerator(ytsaurus, resource.Name, r.ClusterDomain)

@@ -12,6 +12,24 @@ KIND_CLUSTER_CONFIG =
 ## K8s context for kind cluster
 KIND_KUBE_CONTEXT = kind-$(KIND_CLUSTER_NAME)
 
+## K8s operator instance name.
+OPERATOR_INSTANCE = ytsaurus-dev
+
+## If "true" k8s operator watches only resources with matching label "ytsaurus.tech/operator-instance".
+OPERATOR_INSTANCE_SCOPE = false
+
+## K8s namespace for YTsaurus operator.
+OPERATOR_NAMESPACE = ytsaurus-operator
+
+## If "true" k8s operator watches only own namespace.
+OPERATOR_NAMESPACED_SCOPE = false
+
+## If "false" CRDs will not be installed. Only single operator instance may install them.
+OPERATOR_CRDS_ENABLED = true
+
+## If "false" CRDs will be removed at operator uninstall.
+OPERATOR_CRDS_KEEP = true
+
 ## K8s namespace for sample cluster.
 YTSAURUS_NAMESPACE ?= ytsaurus-dev
 
@@ -33,7 +51,6 @@ OPERATOR_TAG = 0.0.0-alpha
 OPERATOR_CHART = ytop-chart
 OPERATOR_CHART_NAME = ytop-chart
 OPERATOR_CHART_CRDS = $(OPERATOR_CHART)/templates/crds
-OPERATOR_INSTANCE = ytsaurus-dev
 
 ifdef RELEASE_VERSION
 OPERATOR_VERSION = $(RELEASE_VERSION)
@@ -48,9 +65,6 @@ else
 	OPERATOR_IMAGE_RELEASE=$(OPERATOR_IMAGE)
 	OPERATOR_CHART_NAME_RELEASE=$(OPERATOR_CHART_NAME)
 endif
-
-## K8s namespace for YTsaurus operator.
-OPERATOR_NAMESPACE = ytsaurus-operator
 
 DOCKER_BUILD_ARGS += --build-arg VERSION="$(OPERATOR_VERSION)"
 DOCKER_BUILD_ARGS += --build-arg REVISION="$(shell git rev-parse HEAD)"
@@ -290,12 +304,18 @@ k8s-install-ytsaurus-dev-ca:
 		$(KUBECTL) apply -n cert-manager --server-side -f config/certmanager/ytsaurus-dev-ca.yaml; \
 	fi
 
+HELM_INSTALL_ARGS += $(OPERATOR_INSTANCE) $(OPERATOR_CHART)
+HELM_INSTALL_ARGS += -n $(OPERATOR_NAMESPACE) --create-namespace
+HELM_INSTALL_ARGS += --set controllerManager.manager.image.repository=${OPERATOR_IMAGE}
+HELM_INSTALL_ARGS += --set controllerManager.manager.image.tag=${OPERATOR_TAG}
+HELM_INSTALL_ARGS += --set controllerManager.manager.instanceScope=${OPERATOR_INSTANCE_SCOPE}
+HELM_INSTALL_ARGS += --set controllerManager.manager.namespacedScope=${OPERATOR_NAMESPACED_SCOPE}
+HELM_INSTALL_ARGS += --set crds.enabled=${OPERATOR_CRDS_ENABLED}
+HELM_INSTALL_ARGS += --set crds.keep=${OPERATOR_CRDS_KEEP}
+
 .PHONY: helm-install
 helm-install: ## Install helm chart from sources.
-	$(HELM) upgrade --install --wait $(OPERATOR_INSTANCE) $(OPERATOR_CHART) \
-		-n $(OPERATOR_NAMESPACE) --create-namespace \
-		--set controllerManager.manager.image.repository=${OPERATOR_IMAGE} \
-		--set controllerManager.manager.image.tag=${OPERATOR_TAG}
+	$(HELM) upgrade --install --wait $(HELM_INSTALL_ARGS)
 	$(KUBECTL) -n $(OPERATOR_NAMESPACE) rollout restart deployment -l app.kubernetes.io/instance=$(OPERATOR_INSTANCE)
 
 .PHONY: helm-kind-install

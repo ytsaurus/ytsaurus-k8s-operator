@@ -15,6 +15,10 @@ import (
 func (r *SpytReconciler) Sync(ctx context.Context, resource *ytv1.Spyt, ytsaurus *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
+	if r.ShouldIgnoreResource(ctx, resource) {
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	}
+
 	spyt := apiproxy.NewSpyt(resource, r.Client, r.Recorder, r.Scheme)
 
 	cfgen := ytconfig.NewLocalNodeGenerator(ytsaurus, resource.Name, r.ClusterDomain)

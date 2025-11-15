@@ -3,7 +3,7 @@ kind: ValidatingWebhookConfiguration
 metadata:
   name: {{ include "ytop-chart.fullname" . }}-validating-webhook-configuration
   annotations:
-    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "ytop-chart.fullname" . }}-webhook-cert
+    cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "ytop-chart.fullname" . }}-webhook-cert'
   labels:
   {{- include "ytop-chart.labels" . | nindent 4 }}
 webhooks:
@@ -16,10 +16,15 @@ webhooks:
       path: /validate-cluster-ytsaurus-tech-v1-chyt
   failurePolicy: Fail
   name: vchyt.kb.io
+  {{- if .Values.controllerManager.manager.instanceScope }}
+  objectSelector:
+    matchLabels:
+      ytsaurus.tech/operator-instance: '{{ .Release.Name }}'
+  {{- end }}
   {{- if .Values.controllerManager.manager.namespacedScope }}
   namespaceSelector:
     matchLabels:
-      kubernetes.io/metadata.name: {{ .Release.Namespace }}
+      kubernetes.io/metadata.name: '{{ .Release.Namespace }}'
   {{- end }}
   rules:
   - apiGroups:
@@ -41,10 +46,15 @@ webhooks:
       path: /validate-cluster-ytsaurus-tech-v1-spyt
   failurePolicy: Fail
   name: vspyt.kb.io
+  {{- if .Values.controllerManager.manager.instanceScope }}
+  objectSelector:
+    matchLabels:
+      ytsaurus.tech/operator-instance: '{{ .Release.Name }}'
+  {{- end }}
   {{- if .Values.controllerManager.manager.namespacedScope }}
   namespaceSelector:
     matchLabels:
-      kubernetes.io/metadata.name: {{ .Release.Namespace }}
+      kubernetes.io/metadata.name: '{{ .Release.Namespace }}'
   {{- end }}
   rules:
   - apiGroups:
@@ -66,10 +76,15 @@ webhooks:
       path: /validate-cluster-ytsaurus-tech-v1-ytsaurus
   failurePolicy: Fail
   name: vytsaurus.kb.io
+  {{- if .Values.controllerManager.manager.instanceScope }}
+  objectSelector:
+    matchLabels:
+      ytsaurus.tech/operator-instance: '{{ .Release.Name }}'
+  {{- end }}
   {{- if .Values.controllerManager.manager.namespacedScope }}
   namespaceSelector:
     matchLabels:
-      kubernetes.io/metadata.name: {{ .Release.Namespace }}
+      kubernetes.io/metadata.name: '{{ .Release.Namespace }}'
   {{- end }}
   rules:
   - apiGroups:

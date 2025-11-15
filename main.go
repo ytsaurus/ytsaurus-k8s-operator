@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"strings"
 
@@ -32,16 +33,21 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 	//+kubebuilder:scaffold:imports
 )
@@ -59,6 +65,7 @@ func init() {
 }
 
 func main() {
+	var operatorInstance string
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -68,6 +75,8 @@ func main() {
 		os.Exit(0)
 		return nil
 	})
+	flag.StringVar(&operatorInstance, "watch-operator-instance", os.Getenv("WATCH_OPERATOR_INSTANCE"),
+		fmt.Sprintf("Restricts reconciler scope to resources with matching label %q", consts.YTOperatorInstanceLabelName))
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -86,8 +95,6 @@ func main() {
 
 	ctx := ctrl.SetupSignalHandler()
 
-	setupLog.Info("Starting ytsaurus operator", "version", version.GetVersion())
-
 	var clusterDomain string
 	if domain := os.Getenv("K8S_CLUSTER_DOMAIN"); domain != "" {
 		clusterDomain = domain
@@ -97,6 +104,13 @@ func main() {
 		setupLog.Error(err, "unable to guess cluster domain")
 		os.Exit(1)
 	}
+
+	setupLog.Info(
+		"Starting ytsaurus operator",
+		"version", version.GetVersion(),
+		"operatorInstance", operatorInstance,
+		"clusterDomain", clusterDomain,
+	)
 
 	managerOptions := ctrl.Options{
 		Scheme: scheme,
@@ -125,18 +139,44 @@ func main() {
 		},
 	}
 
-	watchNamespace, ok := os.LookupEnv("WATCH_NAMESPACE")
 	// We can't setup managerOptions.Cache.DefaultNamespaces = map[cache.AllNamespaces]cache.Config{} due to
 	// https://github.com/kubernetes-sigs/controller-runtime/issues/2628
-	if ok && watchNamespace != "" {
+	if watchNamespace := os.Getenv("WATCH_NAMESPACE"); watchNamespace != "" {
 		managerOptions.Cache.DefaultNamespaces = map[string]cache.Config{}
-		if strings.Contains(watchNamespace, ",") {
-			for _, namespace := range strings.Split(watchNamespace, ",") {
-				managerOptions.Cache.DefaultNamespaces[namespace] = cache.Config{}
-			}
-		} else {
-			managerOptions.Cache.DefaultNamespaces[watchNamespace] = cache.Config{}
+		for _, namespace := range strings.Split(watchNamespace, ",") {
+			managerOptions.Cache.DefaultNamespaces[namespace] = cache.Config{}
+			setupLog.Info("Watching namespace", "namespace", namespace)
+		}
+		if len(managerOptions.Cache.DefaultNamespaces) == 1 {
 			managerOptions.LeaderElectionNamespace = watchNamespace
+		}
+	}
+
+	if operatorInstance != "" {
+		managerOptions.LeaderElectionID += "--" + operatorInstance
+
+		matchOperatorInstance, err := labels.NewRequirement(
+			consts.YTOperatorInstanceLabelName,
+			selection.Equals,
+			[]string{operatorInstance},
+		)
+		if err != nil {
+			setupLog.Error(err, "unable to construct operator instance selector")
+			os.Exit(1)
+		}
+		labelSelector := labels.NewSelector().Add(*matchOperatorInstance)
+
+		managerOptions.Cache.ByObject = map[client.Object]cache.ByObject{}
+		for _, object := range ytv1.SchemeBuilder.Objects {
+			gvk, err := apiutil.GVKForObject(object, scheme)
+			if err != nil {
+				setupLog.Error(err, "unable to construct operator instance selector")
+				os.Exit(1)
+			}
+			setupLog.Info("Cache label selector", "GVK", gvk, "selector", labelSelector)
+			managerOptions.Cache.ByObject[object] = cache.ByObject{
+				Label: labelSelector,
+			}
 		}
 	}
 
@@ -146,11 +186,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	baseReconciler := func(name string) controllers.BaseReconciler {
+		return controllers.BaseReconciler{
+			OperatorInstance: operatorInstance,
+			ClusterDomain:    clusterDomain,
+			Client:           mgr.GetClient(),
+			Scheme:           mgr.GetScheme(),
+			Recorder:         mgr.GetEventRecorderFor(name),
+		}
+	}
+
 	if err = (&controllers.YtsaurusReconciler{
-		ClusterDomain: clusterDomain,
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("ytsaurus-controller"),
+		BaseReconciler: baseReconciler("ytsaurus-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Ytsaurus")
 		os.Exit(1)
@@ -164,10 +211,7 @@ func main() {
 	}
 
 	if err = (&controllers.SpytReconciler{
-		ClusterDomain: clusterDomain,
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("spyt-controller"),
+		BaseReconciler: baseReconciler("spyt-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Spyt")
 		os.Exit(1)
@@ -180,10 +224,7 @@ func main() {
 		}
 	}
 	if err = (&controllers.ChytReconciler{
-		ClusterDomain: clusterDomain,
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("chyt-controller"),
+		BaseReconciler: baseReconciler("chyt-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Chyt")
 		os.Exit(1)
@@ -195,40 +236,28 @@ func main() {
 		}
 	}
 	if err = (&controllers.RemoteExecNodesReconciler{
-		ClusterDomain: clusterDomain,
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("remoteexecnodes-controller"),
+		BaseReconciler: baseReconciler("remoteexecnodes-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteExecNodes")
 		os.Exit(1)
 	}
 
 	if err = (&controllers.RemoteDataNodesReconciler{
-		ClusterDomain: clusterDomain,
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("remotedatanodes-controller"),
+		BaseReconciler: baseReconciler("remotedatanodes-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteDataNodes")
 		os.Exit(1)
 	}
 
 	if err = (&controllers.RemoteTabletNodesReconciler{
-		ClusterDomain: clusterDomain,
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("remotetabletnodes-controller"),
+		BaseReconciler: baseReconciler("remotetabletnodes-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteTabletNodes")
 		os.Exit(1)
 	}
 
 	if err = (&controllers.OffshoreDataGatewaysReconciler{
-		ClusterDomain: clusterDomain,
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("offshoredatagateways-controller"),
+		BaseReconciler: baseReconciler("offshoredatagateways-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OffshoreDataGateways")
 		os.Exit(1)
