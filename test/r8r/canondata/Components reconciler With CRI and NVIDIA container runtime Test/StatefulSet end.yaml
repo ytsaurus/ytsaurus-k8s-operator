@@ -56,8 +56,12 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: CONTAINERD_ADDRESS
+          value: /yt/node-data/image-cache/containerd.sock
+        - name: CONTAINERD_NAMESPACE
+          value: k8s.io
         - name: CONTAINER_RUNTIME_ENDPOINT
-          value: unix:///yt/node-data/image-cache/cri.sock
+          value: unix:///yt/node-data/image-cache/containerd.sock
         image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
         name: ytserver
         ports:
@@ -84,13 +88,11 @@ spec:
           name: config
       - args:
         - --config
-        - /config/crio/crio.conf
-        - --config-dir
-        - ""
+        - /config/containerd/containerd.toml
         command:
         - tini
         - --
-        - crio
+        - containerd
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -104,8 +106,12 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: CONTAINERD_ADDRESS
+          value: /yt/node-data/image-cache/containerd.sock
+        - name: CONTAINERD_NAMESPACE
+          value: k8s.io
         - name: CONTAINER_RUNTIME_ENDPOINT
-          value: unix:///yt/node-data/image-cache/cri.sock
+          value: unix:///yt/node-data/image-cache/containerd.sock
         image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
         name: jobs
         ports:
@@ -123,8 +129,8 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
-        - mountPath: /config/crio
-          name: config-crio
+        - mountPath: /config/containerd
+          name: config-containerd
           readOnly: true
       enableServiceLinks: false
       initContainers:

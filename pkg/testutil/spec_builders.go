@@ -180,6 +180,8 @@ type YtsaurusBuilder struct {
 	Ytsaurus     *ytv1.Ytsaurus
 	Overrides    *corev1.ConfigMap
 
+	WithNvidiaContainerRuntime bool
+
 	// Set MinReadyInstanceCount for all components
 	MinReadyInstanceCount *int
 }
@@ -516,6 +518,11 @@ func (b *YtsaurusBuilder) SetupCRIJobEnvironment(node *ytv1.ExecNodesSpec) {
 			CRIService:   b.CRIService,
 			SandboxImage: b.SandboxImage,
 		},
+	}
+	if b.WithNvidiaContainerRuntime {
+		node.JobEnvironment.Runtime = &ytv1.JobRuntimeSpec{
+			Nvidia: &ytv1.NvidiaRuntimeSpec{},
+		}
 	}
 }
 
