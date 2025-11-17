@@ -770,6 +770,7 @@ _Appears in:_
 | `initContainers` _string array_ | List of init containers as yaml of core/v1 Container. |  |  |
 | `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
 | `privileged` _boolean_ |  | true |  |
+| `gpuManager` _[GPUManagerSpec](#gpumanagerspec)_ |  |  |  |
 | `jobProxyLoggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `jobResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for running jobs. |  |  |
 | `jobEnvironment` _[JobEnvironmentSpec](#jobenvironmentspec)_ |  |  |  |
@@ -796,6 +797,41 @@ _Appears in:_
 | `kind` _string_ | Kind is the type of resource: ConfigMap or Secret. |  | Enum: [ConfigMap Secret] <br /> |
 | `name` _string_ | Name is the name of resource being referenced |  |  |
 | `key` _string_ | Key is the name of entry in ConfigMap or Secret. |  |  |
+
+
+#### GPUInfoProviderType
+
+_Underlying type:_ _string_
+
+GPU information provider.
+
+
+
+_Appears in:_
+- [GPUManagerSpec](#gpumanagerspec)
+
+| Field | Description |
+| --- | --- |
+| `nvidia_smi` |  |
+| `gpu_agent` |  |
+| `nv_gpu_manager` |  |
+
+
+#### GPUManagerSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [ExecNodesSpec](#execnodesspec)
+- [RemoteExecNodesSpec](#remoteexecnodesspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `gpuInfoProvider` _[GPUInfoProviderType](#gpuinfoprovidertype)_ |  |  |  |
 
 
 #### HTTPProxiesSpec
@@ -2030,6 +2066,7 @@ _Appears in:_
 | `initContainers` _string array_ | List of init containers as yaml of core/v1 Container. |  |  |
 | `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
 | `privileged` _boolean_ |  | true |  |
+| `gpuManager` _[GPUManagerSpec](#gpumanagerspec)_ |  |  |  |
 | `jobProxyLoggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `jobResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for running jobs. |  |  |
 | `jobEnvironment` _[JobEnvironmentSpec](#jobenvironmentspec)_ |  |  |  |

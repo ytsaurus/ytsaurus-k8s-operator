@@ -604,6 +604,20 @@ type CRIJobEnvironmentSpec struct {
 	ImagePullPeriodSeconds *int32 `json:"imagePullPeriodSeconds,omitempty"`
 }
 
+// GPU information provider.
+// +enum
+type GPUInfoProviderType string
+
+const (
+	GPUInfoProviderNvidiaSMI    GPUInfoProviderType = "nvidia_smi"
+	GPUInfoProviderGPUAgent     GPUInfoProviderType = "gpu_agent"
+	GPUInfoProviderNvGpuManager GPUInfoProviderType = "nv_gpu_manager"
+)
+
+type GPUManagerSpec struct {
+	GPUInfoProvider *GPUInfoProviderType `json:"gpuInfoProvider,omitempty"`
+}
+
 type NvidiaRuntimeSpec struct{}
 
 type JobRuntimeSpec struct {
@@ -647,7 +661,9 @@ type ExecNodesSpec struct {
 	Sidecars []string `json:"sidecars,omitempty"`
 	//+kubebuilder:default:=true
 	//+optional
-	Privileged      bool             `json:"privileged"`
+	Privileged bool `json:"privileged"`
+	//+optional
+	GPUManager      *GPUManagerSpec  `json:"gpuManager,omitempty"`
 	JobProxyLoggers []TextLoggerSpec `json:"jobProxyLoggers,omitempty"`
 	// Resources dedicated for running jobs.
 	//+optional
