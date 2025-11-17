@@ -10227,6 +10227,12 @@ spec:
                       items:
                         type: string
                       type: array
+                    gpuManager:
+                      properties:
+                        gpuInfoProvider:
+                          description: GPU information provider.
+                          type: string
+                      type: object
                     hostNetwork:
                       description: Use the host's network namespace, this overrides
                         global option.
