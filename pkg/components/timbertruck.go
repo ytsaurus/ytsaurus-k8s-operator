@@ -336,11 +336,13 @@ func prepareQueue(ctx context.Context, ytClient yt.Client, queuePath, exportPath
 				"static_export_config": map[string]any{
 					"default": map[string]any{
 						"export_directory": exportPath,
-						"export_period":    4 * 60 * 60 * 1000, // 4 hours
+						"export_period":    30 * 60 * 1000,           // 30 min
+						"export_ttl":       14 * 24 * 60 * 60 * 1000, // 14 days
 					},
 				},
-				"commit_ordering": "strong",
-				"optimize_for":    "scan",
+				"tablet_cell_bundle": "sys",
+				"commit_ordering":    "strong",
+				"optimize_for":       "scan",
 			},
 			Recursive:      true,
 			IgnoreExisting: true,
@@ -362,9 +364,10 @@ func prepareProducer(ctx context.Context, ytClient yt.Client, producerPath strin
 		yt.NodeQueueProducer,
 		&yt.CreateNodeOptions{
 			Attributes: map[string]any{
-				"min_data_versions": 0,
-				"min_data_ttl":      0,
-				"max_data_ttl":      2592000000,
+				"min_data_versions":  0,
+				"min_data_ttl":       0,
+				"max_data_ttl":       2592000000,
+				"tablet_cell_bundle": "sys",
 			},
 			Recursive:      true,
 			IgnoreExisting: true,
