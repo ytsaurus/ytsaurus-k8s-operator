@@ -176,6 +176,10 @@ test-e2e: generate-code manifests ## Run e2e tests.
 clean-e2e: ## Delete k8s namespaces created by e2e tests.
 	$(KUBECTL) delete namespaces -l app.kubernetes.io/part-of=ytsaurus-dev
 
+.PHONY: test-helm-chart
+test-helm-chart: generate ## Run helm chart tests.
+	./compat_test.sh
+
 .PHONY: lint
 lint: ## Run golangci-lint linter.
 	$(GOLANGCI_LINT) run
