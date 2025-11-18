@@ -22,13 +22,13 @@ export YTSAURUS_IMAGE_24_2 = ${YTSAURUS_REGISTRY}/ytsaurus:stable-24.2.1
 export YTSAURUS_IMAGE_25_1 = ${YTSAURUS_REGISTRY}/ytsaurus:stable-25.1.0
 # export YTSAURUS_IMAGE_25_1 = ${YTSAURUS_REGISTRY}/ytsaurus-nightly:dev-25.1-2025-07-28-b75342ada631c8d78b95c29c4de46225c877f1d2
 
-export YTSAURUS_IMAGE_25_2 = ${YTSAURUS_REGISTRY}/ytsaurus:stable-25.2.0
+export YTSAURUS_IMAGE_25_2 = ${YTSAURUS_REGISTRY}/ytsaurus:stable-25.2.1
 # export YTSAURUS_IMAGE_25_2 = ${YTSAURUS_REGISTRY}/ytsaurus-nightly:dev-25.2-2025-09-24-8779082dedb3ca96c30a5cba04dd4d3b9f05fa90
 
 export YTSAURUS_IMAGE_PREVIOUS = ${YTSAURUS_IMAGE_24_1}
 export YTSAURUS_IMAGE_CURRENT = ${YTSAURUS_IMAGE_24_2}
 export YTSAURUS_IMAGE_FUTURE = ${YTSAURUS_IMAGE_25_2}
-# export YTSAURUS_IMAGE_NIGHTLY = ${YTSAURUS_REGISTRY}/ytsaurus-nightly:dev-2025-09-23-a893ff5b05ad41707df82e33b0512f7ef3f9256b
+export YTSAURUS_IMAGE_NIGHTLY = ${YTSAURUS_REGISTRY}/ytsaurus-nightly:dev-2025-11-11-1ea9f902e888db24630cdef436de8348b433ac4f
 
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/query-tracker
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/query-tracker-nightly
@@ -36,7 +36,7 @@ export YTSAURUS_IMAGE_FUTURE = ${YTSAURUS_IMAGE_25_2}
 export QUERY_TRACKER_IMAGE_PREVIOUS = ${YTSAURUS_REGISTRY}/query-tracker:0.0.10
 export QUERY_TRACKER_IMAGE_CURRENT = ${YTSAURUS_REGISTRY}/query-tracker:0.0.11
 export QUERY_TRACKER_IMAGE_FUTURE = ${YTSAURUS_REGISTRY}/query-tracker:0.0.11
-# export QUERY_TRACKER_IMAGE_NIGHTLY = ${YTSAURUS_REGISTRY}/query-tracker-nightly:dev-2025-09-23-a893ff5b05ad41707df82e33b0512f7ef3f9256b
+export QUERY_TRACKER_IMAGE_NIGHTLY = ${YTSAURUS_REGISTRY}/query-tracker-nightly:dev-2025-11-11-1ea9f902e888db24630cdef436de8348b433ac4f
 
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/strawberry
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/strawberry-nightly
@@ -44,7 +44,7 @@ export QUERY_TRACKER_IMAGE_FUTURE = ${YTSAURUS_REGISTRY}/query-tracker:0.0.11
 export STRAWBERRY_IMAGE_PREVIOUS = ${YTSAURUS_REGISTRY}/strawberry:0.0.13
 export STRAWBERRY_IMAGE_CURRENT = ${YTSAURUS_REGISTRY}/strawberry:0.0.14
 export STRAWBERRY_IMAGE_FUTURE = ${YTSAURUS_REGISTRY}/strawberry:0.0.15
-# export STRAWBERRY_IMAGE_NIGHTLY = ${YTSAURUS_REGISTRY}/strawberry-nightly:dev-2025-09-26-deb6baa8fd8f9ca32ce99055e7a8b439e4d0e8cc
+export STRAWBERRY_IMAGE_NIGHTLY = ${YTSAURUS_REGISTRY}/strawberry-nightly:dev-2025-11-11-1c0bdefd8ef465063372487e8a7c2be8625418e3
 
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/chyt
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/chyt-nightly
@@ -52,7 +52,7 @@ export STRAWBERRY_IMAGE_FUTURE = ${YTSAURUS_REGISTRY}/strawberry:0.0.15
 export CHYT_IMAGE_PREVIOUS = ${YTSAURUS_REGISTRY}/chyt:2.16.0
 export CHYT_IMAGE_CURRENT = ${YTSAURUS_REGISTRY}/chyt:2.16.0
 export CHYT_IMAGE_FUTURE = ${YTSAURUS_REGISTRY}/chyt:2.17.4
-# export CHYT_IMAGE_NIGHTLY = ${YTSAURUS_REGISTRY}/chyt-nightly:dev-2025-09-23-a893ff5b05ad41707df82e33b0512f7ef3f9256b
+export CHYT_IMAGE_NIGHTLY = ${YTSAURUS_REGISTRY}/chyt-nightly:dev-2025-11-11-1ea9f902e888db24630cdef436de8348b433ac4f
 
 define LOAD_TEST_IMAGES
 ${YTSAURUS_IMAGE_23_2}
