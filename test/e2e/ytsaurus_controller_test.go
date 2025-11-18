@@ -1813,8 +1813,17 @@ func checkClusterHealth(ytClient yt.Client) {
 
 func createTestUser(ytClient yt.Client) {
 	By("Create a test user")
-	_, err := ytClient.CreateObject(ctx, yt.NodeUser, &yt.CreateObjectOptions{Attributes: map[string]any{"name": "test-user"}})
-	Expect(err).Should(Succeed())
+	Eventually(func() (bool, error) {
+		_, err := ytClient.CreateObject(ctx, yt.NodeUser, &yt.CreateObjectOptions{
+			Attributes: map[string]any{"name": "test-user"},
+		})
+		// FIXME(khlebnikov): Access denied for user "admin": ...
+		if yterrors.ContainsErrorCode(err, yterrors.CodeAuthorizationError) {
+			log.Error(err, "CreateObject")
+			return false, nil
+		}
+		return true, err
+	}).Should(BeTrue())
 
 	By("Check that test user cannot access things they shouldn't")
 	hasPermission, err := ytClient.CheckPermission(ctx, "test-user", yt.PermissionWrite, ypath.Path("//sys/groups/superusers"), nil)
