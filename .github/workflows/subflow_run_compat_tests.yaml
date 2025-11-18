@@ -40,5 +40,4 @@ jobs:
         shell: bash
         run: |
           make kind-create-cluster
-          make kind-load-sample-images
-          ./compat_test.sh --from-version 0.4.1 --to-version trunk
+          make test-helm-chart

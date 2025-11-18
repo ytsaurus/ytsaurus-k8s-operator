@@ -1,9 +1,14 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 script_name=$0
 
-from_version="0.4.1"
+from_version="0.27.0"
 to_version="trunk"
+helm_chart="oci://ghcr.io/ytsaurus/ytop-chart"
+cluster_spec="config/samples/cluster_v1_local.yaml"
+cluster_name="minisaurus"
+
+KIND="go tool -modfile=tool/go.mod kind"
 
 print_usage() {
     cat << EOF
@@ -33,48 +38,41 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-step=0
+set -eux -o pipefail
 
-helm install ytsaurus oci://registry-1.docker.io/ytsaurus/ytop-chart --version ${from_version}
+helm install ytsaurus ${helm_chart} --version ${from_version} --wait
 
-until [ $step -eq 30 ] || kubectl get pod | grep "ytsaurus-ytop-chart-controller-manager" | grep "2/2" | grep "Running"; do
-    echo "Waiting for controller pods"
-    sleep 10
-    let step=step+1
-done
+kubectl get crd -l app.kubernetes.io/part-of=ytsaurus-k8s-operator -L app.kubernetes.io/version
 
-kubectl apply -f config/samples/${from_version}/cluster_v1_minikube.yaml
+kubectl create -f ${cluster_spec}
 
-let step=0
-until [ $step -eq 60 ] || kubectl get ytsaurus | grep "Running"; do
-    echo "Waiting for ytsaurus is Running"
-    sleep 10
-    let step=step+1
-done
+kubectl wait ytsaurus/${cluster_name} --for=jsonpath='{.status.state}=Running' --timeout=10m
+
+kubectl get ytsaurus/${cluster_name} -o jsonpath-as-json="{.status.conditions[?(@.type=='OperatorVersion')].message}"
 
 if [[ "$to_version" == "trunk" ]]; then
-    docker build -t ytsaurus/k8s-operator:0.0.0-alpha .
-    kind load docker-image ytsaurus/k8s-operator:0.0.0-alpha
-    helm upgrade ytsaurus ytop-chart
+    docker build -t ytsaurus/k8s-operator:trunk --build-arg VERSION="trunk" .
+    $KIND load docker-image ytsaurus/k8s-operator:trunk
+    helm upgrade ytsaurus ytop-chart --wait \
+        --set controllerManager.manager.image.repository=ytsaurus/k8s-operator \
+        --set controllerManager.manager.image.tag=trunk
+    kubectl wait ytsaurus/${cluster_name} --for=jsonpath="{.status.conditions[?(@.type=='OperatorVersion')].message}='${to_version}'" --timeout=1m
 else
-    helm upgrade ytsaurus --install oci://docker.io/ytsaurus/ytop-chart --version ${to_version}
+    helm upgrade ytsaurus --install ${helm_chart} --version ${to_version} --wait
 fi
 
-sleep 10
+kubectl get crd -l app.kubernetes.io/part-of=ytsaurus-k8s-operator -L app.kubernetes.io/version
 
-until [ $step -eq 30 ] || kubectl get pod | grep "ytsaurus-ytop-chart-controller-manager" | grep "2/2" | grep "Running"; do
-    echo "Waiting for controller pods"
-    sleep 10
-    let step=step+1
-done
+kubectl wait ytsaurus/${cluster_name} --for=jsonpath='{.status.state}=Running' --timeout=10m
 
-sleep 20
+helm uninstall ytsaurus --wait
 
-let step=0
-until [ $step -eq 60 ] || kubectl get ytsaurus | grep "Running"; do
-    echo "Waiting for ytsaurus is Running again"
-    sleep 10
-    let step=step+1
-done
+kubectl get crd -l app.kubernetes.io/part-of=ytsaurus-k8s-operator -L app.kubernetes.io/version
 
-helm uninstall ytsaurus
+# Current chart version by default does not remove CRDs and clusters at uninstall.
+kubectl get crd/ytsaurus.cluster.ytsaurus.tech
+kubectl get ytsaurus/${cluster_name}
+
+kubectl delete -f ${cluster_spec} --cascade=foreground
+
+kubectl delete crd -l app.kubernetes.io/part-of=ytsaurus-k8s-operator
