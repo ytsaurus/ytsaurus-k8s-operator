@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -18,16 +19,24 @@ func main() {
 		}
 		out := strings.Builder{}
 		out.WriteString("{{- if .Values.crds.enabled }}\n")
+		labelsFound := 0
 		annotationsFound := 0
 		for line := range strings.SplitAfterSeq(string(data), "\n") {
 			out.WriteString(line)
+			if line == "  labels:\n" {
+				out.WriteString("    {{- include \"ytop-chart.labels\" . | nindent 4 }}\n")
+				labelsFound += 1
+			}
 			if line == "  annotations:\n" {
 				out.WriteString("    {{- if .Values.crds.keep }}\n    helm.sh/resource-policy: keep\n    {{- end }}\n")
 				annotationsFound += 1
 			}
 		}
+		if labelsFound != 1 {
+			panic(fmt.Sprintf("%v labels found in %v", labelsFound, inPath))
+		}
 		if annotationsFound != 1 {
-			panic("annotations")
+			panic(fmt.Sprintf("%v annotations found in %v", annotationsFound, inPath))
 		}
 		out.WriteString("{{- end }}\n")
 		outPath := path.Join(outDir, path.Base(inPath))

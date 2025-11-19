@@ -1081,6 +1081,7 @@ type YtsaurusStatus struct {
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 
 //+kubebuilder:object:root=true
+//+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 //+kubebuilder:printcolumn:name="ClusterState",type="string",JSONPath=".status.state",description="State of Ytsaurus cluster"
 //+kubebuilder:printcolumn:name="UpdateState",type="string",JSONPath=".status.updateStatus.state",description="Update state of Ytsaurus cluster"
 //+kubebuilder:printcolumn:name="UpdatingComponents",type="string",JSONPath=".status.updateStatus.updatingComponentsSummary",description="Updating components"
@@ -1097,6 +1098,7 @@ type Ytsaurus struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 
 // YtsaurusList contains a list of Ytsaurus
 type YtsaurusList struct {

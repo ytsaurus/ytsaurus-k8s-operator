@@ -51,6 +51,7 @@ type ChytStatus struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 //+kubebuilder:printcolumn:name="ReleaseStatus",type="string",JSONPath=".status.releaseStatus",description="Status of release"
 //+kubebuilder:resource:categories=ytsaurus-all;yt-all
 //+kubebuilder:subresource:status
@@ -65,6 +66,7 @@ type Chyt struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 
 // ChytList contains a list of Chyt
 type ChytList struct {
