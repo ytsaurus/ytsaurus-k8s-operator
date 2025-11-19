@@ -4,6 +4,8 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
+  labels:
+    app.kubernetes.io/part-of: ytsaurus-k8s-operator
   name: offshoredatagateways.cluster.ytsaurus.tech
 spec:
   group: cluster.ytsaurus.tech

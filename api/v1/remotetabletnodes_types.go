@@ -34,6 +34,7 @@ type RemoteTabletNodesStatus struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 //+kubebuilder:printcolumn:name="ReleaseStatus",type="string",JSONPath=".status.releaseStatus",description="Release status"
 //+kubebuilder:resource:categories=ytsaurus-all;yt-all
 //+kubebuilder:subresource:status
@@ -48,6 +49,7 @@ type RemoteTabletNodes struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 
 // RemoteTabletNodesList contains a list of RemoteTabletNodes
 type RemoteTabletNodesList struct {

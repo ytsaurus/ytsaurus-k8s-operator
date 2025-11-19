@@ -34,6 +34,7 @@ type RemoteDataNodesStatus struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 //+kubebuilder:printcolumn:name="ReleaseStatus",type="string",JSONPath=".status.releaseStatus",description="Release status"
 //+kubebuilder:resource:categories=ytsaurus-all;yt-all
 //+kubebuilder:subresource:status
@@ -48,6 +49,7 @@ type RemoteDataNodes struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 
 // RemoteDataNodesList contains a list of RemoteDataNodes
 type RemoteDataNodesList struct {
