@@ -31,6 +31,7 @@ type RemoteYtsaurusStatus struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 //+kubebuilder:resource:path=remoteytsaurus,categories=ytsaurus-all;yt-all
 //+kubebuilder:subresource:status
 
@@ -44,6 +45,7 @@ type RemoteYtsaurus struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 
 // RemoteYtsaurusList contains a list of RemoteYtsaurus
 type RemoteYtsaurusList struct {

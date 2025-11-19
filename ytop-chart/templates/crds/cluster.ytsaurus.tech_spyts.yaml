@@ -8,6 +8,9 @@ metadata:
     helm.sh/resource-policy: keep
     {{- end }}
     controller-gen.kubebuilder.io/version: v0.18.0
+  labels:
+    {{- include "ytop-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/part-of: ytsaurus-k8s-operator
   name: spyts.cluster.ytsaurus.tech
 spec:
   group: cluster.ytsaurus.tech
