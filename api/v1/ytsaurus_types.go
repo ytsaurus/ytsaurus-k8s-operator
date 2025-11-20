@@ -792,6 +792,8 @@ type ClusterFeatures struct {
 	HTTPProxyHaveChytAddress bool `json:"httpProxyHaveChytAddress,omitempty"`
 	// HTTP proxies have "https" address. Use HTTPS for all communications.
 	HTTPProxyHaveHTTPSAddress bool `json:"httpProxyHaveHttpsAddress,omitempty"`
+	// Allow only secure transports for all cluster connections.
+	SecureClusterTransports bool `json:"secureClusterTransports,omitempty"`
 }
 
 // CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.

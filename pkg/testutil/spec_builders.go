@@ -329,16 +329,6 @@ func (b *YtsaurusBuilder) WithBaseComponents() {
 	b.WithExecNodes()
 }
 
-func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
-	builder := YtsaurusBuilder{
-		Images:    CurrentImages,
-		Namespace: namespace,
-	}
-	builder.CreateMinimal()
-	builder.WithBaseComponents()
-	return builder.Ytsaurus
-}
-
 func (b *YtsaurusBuilder) WithOverrides() {
 	b.Overrides = &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -369,6 +359,7 @@ func (b *YtsaurusBuilder) WithAllClusterFeatures() {
 		RPCProxyHavePublicAddress: true,
 		HTTPProxyHaveChytAddress:  true,
 		HTTPProxyHaveHTTPSAddress: true,
+		SecureClusterTransports:   false, // Turned off to increase coverage.
 	}
 }
 

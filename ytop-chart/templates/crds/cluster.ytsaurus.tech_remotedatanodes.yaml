@@ -728,7 +728,7 @@ spec:
                     type: object
                 type: object
               caBundle:
-                description: Reference to trusted native transport certificatest.
+                description: Reference to trusted native transport certificates.
                 properties:
                   key:
                     description: Key is the name of entry in ConfigMap or Secret.
@@ -770,6 +770,9 @@ spec:
                     type: boolean
                   rpcProxyHavePublicAddress:
                     description: RPC proxies have "public_rpc" address.
+                    type: boolean
+                  secureClusterTransports:
+                    description: Allow only secure transports for all cluster connections.
                     type: boolean
                 type: object
               configOverrides:
