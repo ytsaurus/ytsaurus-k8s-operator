@@ -334,6 +334,7 @@ _Appears in:_
 | `rpcProxyHavePublicAddress` _boolean_ | RPC proxies have "public_rpc" address. Required for separated internal/public TLS CA. |  |  |
 | `httpProxyHaveChytAddress` _boolean_ | HTTP proxies have "chyt_http_server" and "chyt_https_server". Opens ports for access to chyt via HTTP proxy. |  |  |
 | `httpProxyHaveHttpsAddress` _boolean_ | HTTP proxies have "https" address. Use HTTPS for all communications. |  |  |
+| `secureClusterTransports` _boolean_ | Validate that only secure transports are allowed for cluster connections. |  |  |
 
 
 #### ClusterNodesSpec
