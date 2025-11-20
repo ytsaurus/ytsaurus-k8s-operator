@@ -820,6 +820,10 @@ spec:
                   rpcProxyHavePublicAddress:
                     description: RPC proxies have "public_rpc" address.
                     type: boolean
+                  secureClusterTransports:
+                    description: Validate that only secure transports are allowed
+                      for cluster connections.
+                    type: boolean
                 type: object
               configOverrides:
                 description: LocalObjectReference contains enough information to let

@@ -2355,6 +2355,10 @@
             "rpcProxyHavePublicAddress": {
               "description": "RPC proxies have \"public_rpc\" address.",
               "type": "boolean"
+            },
+            "secureClusterTransports": {
+              "description": "Validate that only secure transports are allowed for cluster connections.",
+              "type": "boolean"
             }
           }
         },

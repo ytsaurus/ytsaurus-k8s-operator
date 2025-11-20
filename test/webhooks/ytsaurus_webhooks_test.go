@@ -35,6 +35,106 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			ytsaurus = newYtsaurus()
 		})
 
+		Context("Secure cluster transports", func() {
+			BeforeEach(func() {
+				builder.WithRPCProxies()
+				ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
+					RPCProxyHavePublicAddress: true,
+					HTTPProxyHaveHTTPSAddress: true,
+					SecureClusterTransports:   true,
+				}
+				ytsaurus.Spec.NativeTransport = &ytv1.RPCTransportSpec{
+					TLSSecret: &corev1.LocalObjectReference{
+						Name: "server-cert",
+					},
+					TLSClientSecret: &corev1.LocalObjectReference{
+						Name: "client-cert",
+					},
+					TLSRequired: true,
+					TLSInsecure: false,
+				}
+				ytsaurus.Spec.HTTPProxies[0].Transport = ytv1.HTTPTransportSpec{
+					HTTPSSecret: &corev1.LocalObjectReference{
+						Name: "https-secret",
+					},
+					DisableHTTP: true,
+				}
+				ytsaurus.Spec.RPCProxies[0].Transport = ytv1.RPCTransportSpec{
+					TLSSecret: &corev1.LocalObjectReference{
+						Name: "rpc-proxy-secret",
+					},
+					TLSRequired: true,
+				}
+
+				By("Checking success", func() {
+					ytsaurus1 := ytsaurus.DeepCopy()
+					Expect(k8sClient.Create(ctx, ytsaurus1)).Should(Succeed())
+					Expect(k8sClient.Delete(ctx, ytsaurus1)).Should(Succeed())
+				})
+			})
+
+			AfterEach(func() {
+				ytsaurus1 := ytsaurus.DeepCopy()
+				By("Checking failure", func() {
+					err := k8sClient.Create(ctx, ytsaurus)
+					Expect(err).ShouldNot(Succeed())
+				})
+				By("Checking success without secure cluster", func() {
+					ytsaurus1.Spec.ClusterFeatures.HTTPProxyHaveHTTPSAddress = false
+					ytsaurus1.Spec.ClusterFeatures.SecureClusterTransports = false
+					Expect(k8sClient.Create(ctx, ytsaurus1)).Should(Succeed())
+					Expect(k8sClient.Delete(ctx, ytsaurus1)).Should(Succeed())
+				})
+			})
+
+			DescribeTable("Failures",
+				func(fn func()) {
+					fn()
+				},
+				Entry("no rpc public address", func() {
+					ytsaurus.Spec.ClusterFeatures.RPCProxyHavePublicAddress = false
+				}),
+				Entry("no https proxy address", func() {
+					ytsaurus.Spec.ClusterFeatures.HTTPProxyHaveHTTPSAddress = false
+				}),
+				Entry("no tls setup", func() {
+					ytsaurus.Spec.NativeTransport = nil
+				}),
+				Entry("tls optional", func() {
+					ytsaurus.Spec.NativeTransport.TLSRequired = false
+				}),
+				Entry("tls insecure", func() {
+					ytsaurus.Spec.NativeTransport.TLSInsecure = true
+				}),
+				Entry("no client cert", func() {
+					ytsaurus.Spec.NativeTransport.TLSClientSecret = nil
+					ytsaurus.Spec.NativeTransport.TLSInsecure = true
+				}),
+				Entry("instance tls optional", func() {
+					transport := *ytsaurus.Spec.NativeTransport
+					transport.TLSRequired = false
+					ytsaurus.Spec.PrimaryMasters.NativeTransport = &transport
+				}),
+				Entry("instance tls insecure", func() {
+					transport := *ytsaurus.Spec.NativeTransport
+					transport.TLSInsecure = true
+					ytsaurus.Spec.PrimaryMasters.NativeTransport = &transport
+				}),
+				Entry("no https", func() {
+					ytsaurus.Spec.HTTPProxies[0].Transport = ytv1.HTTPTransportSpec{}
+				}),
+				Entry("not https-only", func() {
+					ytsaurus.Spec.HTTPProxies[0].Transport.DisableHTTP = false
+				}),
+				Entry("rpc-proxy without tls", func() {
+					ytsaurus.Spec.RPCProxies[0].Transport = ytv1.RPCTransportSpec{}
+				}),
+				Entry("rpc-proxy not tls-only", func() {
+					ytsaurus.Spec.RPCProxies[0].Transport.TLSRequired = false
+				}),
+			)
+		})
+
 		It("Should not accept feature httpProxyHaveHttpsAddress without httpsSecret", func() {
 			ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
 				HTTPProxyHaveHTTPSAddress: true,

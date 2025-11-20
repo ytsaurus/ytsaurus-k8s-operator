@@ -69,10 +69,53 @@ func (r *Ytsaurus) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 //////////////////////////////////////////////////
 
+func (r *baseValidator) validateTransportSecurity(spec *RPCTransportSpec, commonSpec *CommonSpec, path *field.Path) field.ErrorList {
+	var allErrors field.ErrorList
+
+	features := ptr.Deref(commonSpec.ClusterFeatures, ClusterFeatures{})
+
+	if spec == nil {
+		spec = commonSpec.NativeTransport
+	}
+
+	if spec == nil {
+		if features.SecureClusterTransports {
+			allErrors = append(allErrors, field.Required(path, "Secure cluster transport demands TLS setup"))
+		}
+		return allErrors
+	}
+
+	secretPath := path.Child("tlsSecret")
+	clientSecretPath := path.Child("tlsClientSecret")
+	if spec.TLSSecret == nil && (spec.TLSRequired || !spec.TLSInsecure) {
+		allErrors = append(allErrors, field.Required(secretPath, "TLS certificate for native transport is required"))
+	}
+	if spec.TLSClientSecret == nil && (spec.TLSRequired && !spec.TLSInsecure) {
+		allErrors = append(allErrors, field.Required(clientSecretPath, "Client TLS certificate for native transport is required"))
+	}
+
+	if features.SecureClusterTransports {
+		if !spec.TLSRequired {
+			allErrors = append(allErrors, field.Forbidden(path.Child("tlsRequired"), "Secure cluster transport demands TLS-only native transport"))
+		}
+		if spec.TLSInsecure {
+			allErrors = append(allErrors, field.Forbidden(path.Child("tlsInsecure"), "Secure cluster transport demands TLS certificate validation"))
+		}
+		if spec.TLSSecret == nil {
+			allErrors = append(allErrors, field.Required(secretPath, "Secure cluster transport demands TLS certificate for native transport"))
+		}
+		if spec.TLSClientSecret == nil {
+			allErrors = append(allErrors, field.Required(clientSecretPath, "Secure cluster transport demands client TLS certificate for native transport"))
+		}
+	}
+
+	return allErrors
+}
+
 func (r *ytsaurusValidator) validateDiscovery(newYtsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
-	allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.Discovery.InstanceSpec, field.NewPath("spec").Child("discovery"))...)
+	allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.Discovery.InstanceSpec, &newYtsaurus.Spec.CommonSpec, field.NewPath("spec").Child("discovery"))...)
 
 	return allErrors
 }
@@ -80,7 +123,7 @@ func (r *ytsaurusValidator) validateDiscovery(newYtsaurus *Ytsaurus) field.Error
 func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus *Ytsaurus, mastersSpec, oldMastersSpec *MastersSpec, path *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
-	allErrors = append(allErrors, r.validateInstanceSpec(mastersSpec.InstanceSpec, path)...)
+	allErrors = append(allErrors, r.validateInstanceSpec(mastersSpec.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
 	allErrors = append(allErrors, r.validateHostAddresses(newYtsaurus, mastersSpec, path)...)
 
 	if FindFirstLocation(mastersSpec.Locations, LocationTypeMasterChangelogs) == nil {
@@ -178,12 +221,19 @@ func (r *ytsaurusValidator) validateHTTPProxies(newYtsaurus *Ytsaurus) field.Err
 		}
 		httpRoles[hp.Role] = true
 
-		allErrors = append(allErrors, r.validateInstanceSpec(hp.InstanceSpec, path)...)
+		allErrors = append(allErrors, r.validateInstanceSpec(hp.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
 
 		if features.HTTPProxyHaveHTTPSAddress && hp.Transport.HTTPSSecret == nil {
 			allErrors = append(allErrors, field.Required(
 				path.Child("transport").Child("httpsSecret"),
 				"Cluster feature httpProxyHaveHttpsAddress requires HTTPS for all HTTP proxies",
+			))
+		}
+
+		if features.SecureClusterTransports && !hp.Transport.DisableHTTP {
+			allErrors = append(allErrors, field.Forbidden(
+				path.Child("transport").Child("disableHttp"),
+				"Secure cluster transport demands HTTPS-only proxies",
 			))
 		}
 	}
@@ -200,6 +250,7 @@ func (r *ytsaurusValidator) validateHTTPProxies(newYtsaurus *Ytsaurus) field.Err
 func (r *ytsaurusValidator) validateRPCProxies(newYtsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
+	features := ptr.Deref(newYtsaurus.Spec.ClusterFeatures, ClusterFeatures{})
 	rpcRoles := make(map[string]bool)
 	for i, rp := range newYtsaurus.Spec.RPCProxies {
 		path := field.NewPath("spec").Child("rpcProxies").Index(i)
@@ -208,7 +259,24 @@ func (r *ytsaurusValidator) validateRPCProxies(newYtsaurus *Ytsaurus) field.Erro
 		}
 		rpcRoles[rp.Role] = true
 
-		allErrors = append(allErrors, r.validateInstanceSpec(rp.InstanceSpec, path)...)
+		allErrors = append(allErrors, r.validateInstanceSpec(rp.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
+
+		transportPath := path.Child("transport")
+		if rp.Transport.TLSRequired && rp.Transport.TLSSecret == nil {
+			allErrors = append(allErrors, field.Required(transportPath.Child("tlsSecret"), "TLS-only RPC proxy requires certificate"))
+		}
+
+		if features.SecureClusterTransports {
+			if !rp.Transport.TLSRequired {
+				allErrors = append(allErrors, field.Required(transportPath.Child("tlsRequired"), "Secure cluster transport demands TLS-only RPC proxies"))
+			}
+			if rp.Transport.TLSInsecure {
+				allErrors = append(allErrors, field.Forbidden(transportPath.Child("tlsInsecure"), "Secure cluster transport demands TLS certificate validation"))
+			}
+			if rp.Transport.TLSSecret == nil {
+				allErrors = append(allErrors, field.Required(transportPath.Child("tlsSecret"), "Secure cluster transport demands RPC proxy certificate"))
+			}
+		}
 	}
 
 	return allErrors
@@ -225,7 +293,7 @@ func (r *ytsaurusValidator) validateTCPProxies(newYtsaurus *Ytsaurus) field.Erro
 		}
 		tcpRoles[rp.Role] = true
 
-		allErrors = append(allErrors, r.validateInstanceSpec(rp.InstanceSpec, path)...)
+		allErrors = append(allErrors, r.validateInstanceSpec(rp.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
 	}
 
 	return allErrors
@@ -243,7 +311,7 @@ func (r *ytsaurusValidator) validateDataNodes(newYtsaurus *Ytsaurus) field.Error
 		}
 		names[dn.Name] = true
 
-		allErrors = append(allErrors, r.validateInstanceSpec(dn.InstanceSpec, path)...)
+		allErrors = append(allErrors, r.validateInstanceSpec(dn.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
 
 		if FindFirstLocation(dn.Locations, LocationTypeChunkStore) == nil {
 			allErrors = append(allErrors, field.NotFound(path.Child("locations"), LocationTypeChunkStore))
@@ -312,7 +380,7 @@ func (r *ytsaurusValidator) validateExecNodes(newYtsaurus *Ytsaurus) field.Error
 		}
 		names[en.Name] = true
 
-		allErrors = append(allErrors, r.validateInstanceSpec(en.InstanceSpec, path)...)
+		allErrors = append(allErrors, r.validateInstanceSpec(en.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
 
 		if FindFirstLocation(en.Locations, LocationTypeChunkCache) == nil {
 			allErrors = append(allErrors, field.NotFound(path.Child("locations"), LocationTypeChunkCache))
@@ -345,7 +413,7 @@ func (r *ytsaurusValidator) validateSchedulers(newYtsaurus *Ytsaurus) field.Erro
 
 	if newYtsaurus.Spec.Schedulers != nil {
 		path := field.NewPath("spec").Child("schedulers")
-		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.Schedulers.InstanceSpec, path)...)
+		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.Schedulers.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
 
 		if newYtsaurus.Spec.ControllerAgents == nil {
 			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("controllerAgents"),
@@ -361,7 +429,7 @@ func (r *ytsaurusValidator) validateControllerAgents(newYtsaurus *Ytsaurus) fiel
 
 	if newYtsaurus.Spec.ControllerAgents != nil {
 		path := field.NewPath("spec").Child("controllerAgents")
-		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.ControllerAgents.InstanceSpec, path)...)
+		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.ControllerAgents.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
 
 		if newYtsaurus.Spec.Schedulers == nil {
 			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"),
@@ -384,7 +452,7 @@ func (r *ytsaurusValidator) validateTabletNodes(newYtsaurus *Ytsaurus) field.Err
 		}
 		names[tn.Name] = true
 
-		allErrors = append(allErrors, r.validateInstanceSpec(tn.InstanceSpec, path)...)
+		allErrors = append(allErrors, r.validateInstanceSpec(tn.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
 	}
 
 	return allErrors
@@ -414,7 +482,7 @@ func (r *ytsaurusValidator) validateQueryTrackers(newYtsaurus *Ytsaurus) field.E
 
 	if newYtsaurus.Spec.QueryTrackers != nil {
 		path := field.NewPath("spec").Child("queryTrackers")
-		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.QueryTrackers.InstanceSpec, path)...)
+		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.QueryTrackers.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
 
 		if len(newYtsaurus.Spec.TabletNodes) == 0 {
 			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("tabletNodes"),
@@ -435,7 +503,7 @@ func (r *ytsaurusValidator) validateQueueAgents(newYtsaurus *Ytsaurus) field.Err
 
 	if newYtsaurus.Spec.QueueAgents != nil {
 		path := field.NewPath("spec").Child("queueAgents")
-		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.QueueAgents.InstanceSpec, path)...)
+		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.QueueAgents.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
 
 		if len(newYtsaurus.Spec.TabletNodes) == 0 {
 			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("tabletNodes"),
@@ -463,7 +531,7 @@ func (r *ytsaurusValidator) validateYQLAgents(newYtsaurus *Ytsaurus) field.Error
 
 	if newYtsaurus.Spec.YQLAgents != nil {
 		path := field.NewPath("spec").Child("YQLAgents")
-		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.YQLAgents.InstanceSpec, path)...)
+		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.YQLAgents.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
 
 		if newYtsaurus.Spec.QueryTrackers == nil {
 			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("queryTrackers"),
@@ -494,7 +562,7 @@ func (r *ytsaurusValidator) validateUi(newYtsaurus *Ytsaurus) field.ErrorList {
 	return allErrors
 }
 
-func (r *baseValidator) validateInstanceSpec(instanceSpec InstanceSpec, path *field.Path) field.ErrorList {
+func (r *baseValidator) validateInstanceSpec(instanceSpec InstanceSpec, commonSpec *CommonSpec, path *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
 	allErrors = append(allErrors, v1validation.ValidateLabels(instanceSpec.PodLabels, path.Child("podLabels"))...)
@@ -504,6 +572,8 @@ func (r *baseValidator) validateInstanceSpec(instanceSpec InstanceSpec, path *fi
 		allErrors = append(allErrors, field.Invalid(path.Child("EnableAntiAffinity"), instanceSpec.EnableAntiAffinity,
 			"EnableAntiAffinity is deprecated, use Affinity instead"))
 	}
+
+	allErrors = append(allErrors, r.validateTransportSecurity(instanceSpec.NativeTransport, commonSpec, path.Child("nativeTransport"))...)
 
 	if instanceSpec.Locations != nil {
 		for locationIdx, location := range instanceSpec.Locations {
@@ -555,7 +625,25 @@ func (r *baseValidator) validateCommonSpec(spec *CommonSpec) field.ErrorList {
 	var allErrors field.ErrorList
 	path := field.NewPath("spec")
 
+	if features := spec.ClusterFeatures; features != nil {
+		if features.SecureClusterTransports {
+			if !features.RPCProxyHavePublicAddress {
+				allErrors = append(allErrors, field.Required(
+					path.Child("clusterFeatures").Child("rpcProxyHavePublicAddress"),
+					"Secure cluster transport demands public address for RPC proxies",
+				))
+			}
+			if !features.HTTPProxyHaveHTTPSAddress {
+				allErrors = append(allErrors, field.Required(
+					path.Child("clusterFeatures").Child("httpProxyHaveHttpsAddress"),
+					"Secure cluster transport demands HTTPS for HTTP proxies",
+				))
+			}
+		}
+	}
+
 	allErrors = append(allErrors, validation.ValidateAnnotations(spec.ExtraPodAnnotations, path.Child("extraPodAnnotations"))...)
+	allErrors = append(allErrors, r.validateTransportSecurity(spec.NativeTransport, spec, path.Child("nativeTransport"))...)
 
 	return allErrors
 }
