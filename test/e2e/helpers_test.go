@@ -402,17 +402,16 @@ func ListClusterComponents(ctx context.Context, ytClient yt.Client) ([]ClusterCo
 	return nodes, nil
 }
 
-func queryClickHouse(ytProxyAddress, query string) (string, error) {
+func queryClickHouse(httpClient *http.Client, ytProxyAddress, query string) (string, error) {
 	// See https://ytsaurus.tech/docs/en/user-guide/data-processing/chyt/try-chyt
-	url := fmt.Sprintf("http://%s/chyt?chyt.clique_alias=ch_public", ytProxyAddress)
+	url := ytProxyAddress + "/chyt?chyt.clique_alias=ch_public"
 	request, err := http.NewRequest(http.MethodPost, url, strings.NewReader(query))
 	if err != nil {
 		return "", err
 	}
 	request.Header.Add("Authorization", "OAuth "+consts.DefaultAdminPassword)
 
-	client := http.Client{}
-	response, err := client.Do(request)
+	response, err := httpClient.Do(request)
 	if err != nil {
 		return "", err
 	}
@@ -433,9 +432,9 @@ func queryClickHouse(ytProxyAddress, query string) (string, error) {
 	return string(content), nil
 }
 
-func queryClickHouseID(ytProxyAddress string) (guid.GUID, error) {
+func queryClickHouseID(httpClient *http.Client, ytProxyAddress string) (guid.GUID, error) {
 	// Actually this is operation id. This is not properly documented feature.
-	result, err := queryClickHouse(ytProxyAddress, "SELECT clique_id FROM system.clique WHERE self;")
+	result, err := queryClickHouse(httpClient, ytProxyAddress, "SELECT clique_id FROM system.clique WHERE self;")
 	if err != nil {
 		return guid.GUID{}, err
 	}
@@ -520,8 +519,8 @@ func readFileObject(namespace string, source ytv1.FileObjectReference) ([]byte, 
 	return nil, fmt.Errorf("Key %v not found in %v/%v", source.Key, source.Kind, source.Name)
 }
 
-func discoverProxies(proxyAddress string, params url.Values) []string {
-	resp, err := http.Get(proxyAddress + "/api/v4/discover_proxies?" + params.Encode())
+func discoverProxies(httpClient *http.Client, proxyAddress string, params url.Values) []string {
+	resp, err := httpClient.Get(proxyAddress + "/api/v4/discover_proxies?" + params.Encode())
 	Expect(err).NotTo(HaveOccurred())
 	defer func() {
 		Expect(resp.Body.Close()).To(Succeed())
