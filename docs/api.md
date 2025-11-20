@@ -335,6 +335,7 @@ _Appears in:_
 | `rpcProxyHavePublicAddress` _boolean_ | RPC proxies have "public_rpc" address. Required for separated internal/public TLS CA. |  |  |
 | `httpProxyHaveChytAddress` _boolean_ | HTTP proxies have "chyt_http_server" and "chyt_https_server". Opens ports for access to chyt via HTTP proxy. |  |  |
 | `httpProxyHaveHttpsAddress` _boolean_ | HTTP proxies have "https" address. Use HTTPS for all communications. |  |  |
+| `secureClusterTransports` _boolean_ | Allow only secure transports for all cluster connections. |  |  |
 
 
 #### ClusterNodesSpec
@@ -424,8 +425,8 @@ _Appears in:_
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
-| `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA bundle in all server and job containers. |  |  |
-| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificatest. Default kind="ConfigMap", key="ca.crt".<br />If unset will use system CA bundle, which could be set by caRootBundle. |  |  |
+| `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
+| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
 | `ephemeralCluster` _boolean_ | Allow prioritizing performance over data safety. Useful for tests and experiments. | false |  |
 | `useIpv6` _boolean_ |  | false |  |
@@ -1633,8 +1634,8 @@ _Appears in:_
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
-| `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA bundle in all server and job containers. |  |  |
-| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificatest. Default kind="ConfigMap", key="ca.crt".<br />If unset will use system CA bundle, which could be set by caRootBundle. |  |  |
+| `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
+| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
 | `ephemeralCluster` _boolean_ | Allow prioritizing performance over data safety. Useful for tests and experiments. | false |  |
 | `useIpv6` _boolean_ |  | false |  |
@@ -1924,8 +1925,8 @@ _Appears in:_
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
-| `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA bundle in all server and job containers. |  |  |
-| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificatest. Default kind="ConfigMap", key="ca.crt".<br />If unset will use system CA bundle, which could be set by caRootBundle. |  |  |
+| `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
+| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
 | `ephemeralCluster` _boolean_ | Allow prioritizing performance over data safety. Useful for tests and experiments. | false |  |
 | `useIpv6` _boolean_ |  | false |  |
@@ -2024,8 +2025,8 @@ _Appears in:_
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
-| `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA bundle in all server and job containers. |  |  |
-| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificatest. Default kind="ConfigMap", key="ca.crt".<br />If unset will use system CA bundle, which could be set by caRootBundle. |  |  |
+| `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
+| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
 | `ephemeralCluster` _boolean_ | Allow prioritizing performance over data safety. Useful for tests and experiments. | false |  |
 | `useIpv6` _boolean_ |  | false |  |
@@ -2171,8 +2172,8 @@ _Appears in:_
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
-| `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA bundle in all server and job containers. |  |  |
-| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificatest. Default kind="ConfigMap", key="ca.crt".<br />If unset will use system CA bundle, which could be set by caRootBundle. |  |  |
+| `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
+| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
 | `ephemeralCluster` _boolean_ | Allow prioritizing performance over data safety. Useful for tests and experiments. | false |  |
 | `useIpv6` _boolean_ |  | false |  |
@@ -2961,8 +2962,8 @@ _Appears in:_
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
-| `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA bundle in all server and job containers. |  |  |
-| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificatest. Default kind="ConfigMap", key="ca.crt".<br />If unset will use system CA bundle, which could be set by caRootBundle. |  |  |
+| `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
+| `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
 | `ephemeralCluster` _boolean_ | Allow prioritizing performance over data safety. Useful for tests and experiments. | false |  |
 | `useIpv6` _boolean_ |  | false |  |

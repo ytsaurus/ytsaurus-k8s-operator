@@ -201,7 +201,7 @@ func (g *NodeGenerator) getHTTPProxyAddress(ytsaurus *ytv1.YtsaurusSpec, role, h
 	defaultPort := int32(consts.HTTPProxyHTTPPort)
 
 	// NOTE: Some ancient code does not support schema in proxy address.
-	if g.clusterFeatures.HTTPProxyHaveHTTPSAddress {
+	if g.clusterFeatures.SecureClusterTransports || g.clusterFeatures.HTTPProxyHaveHTTPSAddress {
 		portName = consts.HTTPSPortName
 		defaultPort = consts.HTTPProxyHTTPSPort
 		address.WriteString("https://")
