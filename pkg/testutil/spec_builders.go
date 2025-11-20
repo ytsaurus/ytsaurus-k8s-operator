@@ -182,6 +182,11 @@ type YtsaurusBuilder struct {
 
 	// Set MinReadyInstanceCount for all components
 	MinReadyInstanceCount *int
+
+	WithHTTPSProxy     bool
+	WithHTTPSOnlyProxy bool
+	WithRPCProxy       bool
+	WithRPCProxyTLS    bool
 }
 
 func (b *YtsaurusBuilder) CreateVolumeClaim(name string, size resource.Quantity) ytv1.EmbeddedPersistentVolumeClaim {
@@ -295,6 +300,9 @@ func (b *YtsaurusBuilder) WithNativeTransportTLS(serverCert, clientCert string) 
 }
 
 func (b *YtsaurusBuilder) WithHTTPSProxies(httpsCert string, httpsOnly bool) {
+	b.WithHTTPSProxy = true
+	b.WithHTTPSOnlyProxy = httpsOnly
+
 	for i := range b.Ytsaurus.Spec.HTTPProxies {
 		b.Ytsaurus.Spec.HTTPProxies[i].Transport = ytv1.HTTPTransportSpec{
 			HTTPSSecret: &corev1.LocalObjectReference{
@@ -470,6 +478,8 @@ func (b *YtsaurusBuilder) WithQueueAgent() {
 }
 
 func (b *YtsaurusBuilder) WithRPCProxies() {
+	b.WithRPCProxy = true
+
 	b.Ytsaurus.Spec.RPCProxies = []ytv1.RPCProxiesSpec{
 		b.CreateRPCProxiesSpec(),
 	}
