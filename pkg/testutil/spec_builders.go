@@ -182,6 +182,11 @@ type YtsaurusBuilder struct {
 
 	// Set MinReadyInstanceCount for all components
 	MinReadyInstanceCount *int
+
+	WithHTTPSProxy   bool
+	WithoutHTTPProxy bool
+	WithRPCProxy     bool
+	WithRPCProxyTLS  bool
 }
 
 func (b *YtsaurusBuilder) CreateVolumeClaim(name string, size resource.Quantity) ytv1.EmbeddedPersistentVolumeClaim {
@@ -434,6 +439,7 @@ func (b *YtsaurusBuilder) WithQueueAgent() {
 }
 
 func (b *YtsaurusBuilder) WithRPCProxies() {
+	b.WithRPCProxy = true
 	b.Ytsaurus.Spec.RPCProxies = []ytv1.RPCProxiesSpec{
 		b.CreateRPCProxiesSpec(),
 	}
