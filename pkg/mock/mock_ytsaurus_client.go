@@ -776,6 +776,21 @@ func (mr *MockClientMockRecorder) MoveNode(ctx, src, dst, options any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveNode", reflect.TypeOf((*MockClient)(nil).MoveNode), ctx, src, dst, options)
 }
 
+// MultiLookupRows mocks base method.
+func (m *MockClient) MultiLookupRows(ctx context.Context, subrequests []yt.MultiLookupSubrequest, options *yt.MultiLookupRowsOptions) ([]yt.TableReader, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MultiLookupRows", ctx, subrequests, options)
+	ret0, _ := ret[0].([]yt.TableReader)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MultiLookupRows indicates an expected call of MultiLookupRows.
+func (mr *MockClientMockRecorder) MultiLookupRows(ctx, subrequests, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiLookupRows", reflect.TypeOf((*MockClient)(nil).MultiLookupRows), ctx, subrequests, options)
+}
+
 // MultisetAttributes mocks base method.
 func (m *MockClient) MultisetAttributes(ctx context.Context, path ypath.YPath, attributes map[string]any, options *yt.MultisetAttributesOptions) error {
 	m.ctrl.T.Helper()
