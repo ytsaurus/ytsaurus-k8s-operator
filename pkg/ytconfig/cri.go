@@ -12,6 +12,24 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
+const (
+	runtimeTypeOCI = "oci"
+
+	runtimeNameRunc     = "runc"
+	crioRuntimePathRunc = "/usr/libexec/crio/runc"
+
+	runtimeNameCrun     = "crun"
+	crioRuntimePathCrun = "/usr/libexec/crio/crun"
+
+	runtimeNameNvidia = "nvidia"
+	runtimePathNvidia = "/usr/bin/nvidia-container-runtime"
+
+	crioMonitorCgroup = "pod"
+	crioMonitorPath   = "/usr/libexec/crio/conmon"
+
+	shmSizeAnnotation = "io.kubernetes.cri-o.ShmSize"
+)
+
 type CRIConfigGenerator struct {
 	Service        ytv1.CRIServiceType
 	Spec           ytv1.CRIJobEnvironmentSpec
@@ -69,29 +87,84 @@ func (cri *CRIConfigGenerator) GetCRIToolsEnv() []corev1.EnvVar {
 	return env
 }
 
-func (cri *CRIConfigGenerator) GetCRIOEnv() []corev1.EnvVar {
-	var env []corev1.EnvVar
+func (cri *CRIConfigGenerator) GetCRIOConfig() ([]byte, error) {
+	// See https://github.com/cri-o/cri-o/blob/main/docs/crio.conf.5.md
 
-	// See https://github.com/cri-o/cri-o/blob/main/docs/crio.8.md
-	env = append(env,
-		corev1.EnvVar{Name: "CONTAINER_LISTEN", Value: cri.GetSocketPath()},
-		corev1.EnvVar{Name: "CONTAINER_CGROUP_MANAGER", Value: "cgroupfs"},
-		corev1.EnvVar{Name: "CONTAINER_CONMON_CGROUP", Value: "pod"},
-	)
+	crioAPI := map[string]any{
+		"listen": cri.GetSocketPath(),
+	}
+
+	crioImage := map[string]any{}
+
+	crioMetrics := map[string]any{}
+
+	crioRuntimeRuntimes := map[string]any{
+		runtimeNameRunc: map[string]any{
+			"runtime_type": runtimeTypeOCI,
+			"runtime_path": crioRuntimePathRunc,
+			"allowed_annotations": []string{
+				shmSizeAnnotation,
+			},
+			"monitor_cgroup": crioMonitorCgroup,
+			"monitor_path":   crioMonitorPath,
+		},
+		runtimeNameCrun: map[string]any{
+			"runtime_type": runtimeTypeOCI,
+			"runtime_path": crioRuntimePathCrun,
+			"allowed_annotations": []string{
+				shmSizeAnnotation,
+			},
+			"monitor_cgroup": crioMonitorCgroup,
+			"monitor_path":   crioMonitorPath,
+		},
+	}
+
+	crioRuntime := map[string]any{
+		"cgroup_manager":  "cgroupfs",
+		"conmon_cgroup":   crioMonitorCgroup,
+		"default_runtime": runtimeNameCrun,
+		"runtimes":        crioRuntimeRuntimes,
+	}
+
+	crio := map[string]any{
+		"api":     crioAPI,
+		"image":   crioImage,
+		"metrics": crioMetrics,
+		"runtime": crioRuntime,
+	}
+
+	config := map[string]any{
+		"crio": crio,
+	}
+
 	if cri.StoragePath != nil {
-		env = append(env, corev1.EnvVar{Name: "CONTAINER_ROOT", Value: *cri.StoragePath})
+		crio["root"] = *cri.StoragePath
 	}
+
 	if cri.Spec.SandboxImage != nil {
-		env = append(env, corev1.EnvVar{Name: "CONTAINER_PAUSE_IMAGE", Value: *cri.Spec.SandboxImage})
+		crioImage["pause_image"] = *cri.Spec.SandboxImage
 	}
+
 	if cri.MonitoringPort != 0 {
-		env = append(env,
-			corev1.EnvVar{Name: "CONTAINER_ENABLE_METRICS", Value: "true"},
-			corev1.EnvVar{Name: "CONTAINER_METRICS_HOST", Value: ""},
-			corev1.EnvVar{Name: "CONTAINER_METRICS_PORT", Value: fmt.Sprintf("%d", cri.MonitoringPort)},
-		)
+		crioMetrics["enable_metrics"] = true
+		crioMetrics["metrics_host"] = ""
+		crioMetrics["metrics_port"] = cri.MonitoringPort
 	}
-	return env
+
+	if cri.Runtime != nil && cri.Runtime.Nvidia != nil {
+		crioRuntimeRuntimes[runtimeNameNvidia] = map[string]any{
+			"runtime_type": runtimeTypeOCI,
+			"runtime_path": runtimePathNvidia,
+			"allowed_annotations": []string{
+				shmSizeAnnotation,
+			},
+			"monitor_cgroup": crioMonitorCgroup,
+			"monitor_path":   crioMonitorPath,
+		}
+		crioRuntime["default_runtime"] = runtimeNameNvidia
+	}
+
+	return marshallYsonConfig(config)
 }
 
 func (cri *CRIConfigGenerator) GetContainerdConfig() ([]byte, error) {
@@ -143,7 +216,7 @@ func (cri *CRIConfigGenerator) GetContainerdConfig() ([]byte, error) {
 
 func (cri *CRIConfigGenerator) getContainerdRuntimes() (runtimes map[string]any, defaultRuntimeName string) {
 	runtimes = map[string]any{
-		"runc": map[string]any{
+		runtimeNameRunc: map[string]any{
 			"runtime_type": "io.containerd.runc.v2",
 			"sandbox_mode": "podsandbox",
 			"options": map[string]any{
@@ -151,17 +224,17 @@ func (cri *CRIConfigGenerator) getContainerdRuntimes() (runtimes map[string]any,
 			},
 		},
 	}
-	defaultRuntimeName = "runc"
+	defaultRuntimeName = runtimeNameRunc
 
 	if cri.Runtime != nil && cri.Runtime.Nvidia != nil {
-		runtimes["nvidia"] = map[string]any{
+		runtimes[runtimeNameNvidia] = map[string]any{
 			"runtime_type": "io.containerd.runc.v2",
 			"sandbox_mode": "podsandbox",
 			"options": map[string]any{
-				"BinaryName": "/usr/bin/nvidia-container-runtime",
+				"BinaryName": runtimePathNvidia,
 			},
 		}
-		defaultRuntimeName = "nvidia"
+		defaultRuntimeName = runtimeNameNvidia
 	}
 
 	return runtimes, defaultRuntimeName

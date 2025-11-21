@@ -908,7 +908,7 @@
     namespace: ytsaurus-components
     resourceVersion: "5"
   lastTimestamp: null
-  message: Config crio.conf needs creation
+  message: Config containerd.toml needs creation
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components

@@ -4,13 +4,13 @@ metadata:
   creationTimestamp: null
   generation: 1
   labels:
-    app.kubernetes.io/component: yt-exec-node
+    app.kubernetes.io/component: yt-master
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-exec-node
+    app.kubernetes.io/name: yt-master
     app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-exec-node
+    yt_component: test-ytsaurus-yt-master
     ytsaurus.tech/cluster-name: test-ytsaurus
-  name: end
+  name: ms
   namespace: ytsaurus-components
   ownerReferences:
   - apiVersion: cluster.ytsaurus.tech/v1
@@ -25,24 +25,24 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      yt_component: test-ytsaurus-yt-exec-node
-  serviceName: exec-nodes
+      yt_component: test-ytsaurus-yt-master
+  serviceName: masters
   template:
     metadata:
       creationTimestamp: null
       labels:
-        app.kubernetes.io/component: yt-exec-node
+        app.kubernetes.io/component: yt-master
         app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-        app.kubernetes.io/name: yt-exec-node
+        app.kubernetes.io/name: yt-master
         app.kubernetes.io/part-of: yt-test-ytsaurus
-        yt_component: test-ytsaurus-yt-exec-node
+        yt_component: test-ytsaurus-yt-master
         ytsaurus.tech/cluster-name: test-ytsaurus
     spec:
       containers:
       - command:
-        - /usr/bin/ytserver-node
+        - /usr/bin/ytserver-master
         - --config
-        - /config/ytserver-exec-node.yson
+        - /config/ytserver-master.yson
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -56,15 +56,13 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        - name: CONTAINER_RUNTIME_ENDPOINT
-          value: unix:///yt/node-data/image-cache/cri.sock
         image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
         name: ytserver
         ports:
-        - containerPort: 10029
+        - containerPort: 10010
           name: metrics
           protocol: TCP
-        - containerPort: 9029
+        - containerPort: 9010
           name: rpc
           protocol: TCP
         readinessProbe:
@@ -72,67 +70,21 @@ spec:
             path: /orchid/service
             port: metrics
         resources: {}
-        securityContext:
-          privileged: false
         volumeMounts:
-        - mountPath: /yt/node-data
-          name: node-data
+        - mountPath: /yt/master-data
+          name: master-data
         - mountPath: /config_template
           name: config-template
           readOnly: true
         - mountPath: /config
           name: config
-      - args:
-        - --config
-        - /config/crio/crio.conf
-        - --config-dir
-        - ""
-        command:
-        - tini
-        - --
-        - crio
-        env:
-        - name: K8S_POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: K8S_POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: K8S_NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        - name: CONTAINER_RUNTIME_ENDPOINT
-          value: unix:///yt/node-data/image-cache/cri.sock
-        image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
-        name: jobs
-        ports:
-        - containerPort: 10026
-          name: cri-metrics
-          protocol: TCP
-        resources: {}
-        securityContext:
-          privileged: true
-        volumeMounts:
-        - mountPath: /yt/node-data
-          name: node-data
-        - mountPath: /config_template
-          name: config-template
-          readOnly: true
-        - mountPath: /config
-          name: config
-        - mountPath: /config/crio
-          name: config-crio
-          readOnly: true
       enableServiceLinks: false
       initContainers:
       - command:
         - bash
         - -xc
-        - 'echo ''Init locations''; mkdir -p /yt/node-data/chunk-cache; mkdir -p /yt/node-data/slots;
-          mkdir -p /yt/node-data/image-cache; '
+        - 'echo ''Init locations''; mkdir -p /yt/master-data/master-changelogs; mkdir
+          -p /yt/master-data/master-snapshots; '
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -149,11 +101,9 @@ spec:
         image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
         name: prepare-locations
         resources: {}
-        securityContext:
-          privileged: false
         volumeMounts:
-        - mountPath: /yt/node-data
-          name: node-data
+        - mountPath: /yt/master-data
+          name: master-data
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -162,15 +112,15 @@ spec:
       - command:
         - bash
         - -xc
-        - 'echo ''Postprocess config ytserver-exec-node.yson'';echo ''cp /config_template/ytserver-exec-node.yson
-          /config/ytserver-exec-node.yson; sed -i -s "s/{K8S_POD_NAME}/${K8S_POD_NAME}/g"
-          /config/ytserver-exec-node.yson; sed -i -s "s/{K8S_POD_NAMESPACE}/${K8S_POD_NAMESPACE}/g"
-          /config/ytserver-exec-node.yson; sed -i -s "s/{K8S_NODE_NAME}/${K8S_NODE_NAME}/g"
-          /config/ytserver-exec-node.yson; sed -i -s "s/{POD_FQDN}/$(hostname -f)/g"
-          /config/ytserver-exec-node.yson; sed -i -s "s/{POD_SHORT_HOSTNAME}/$(hostname
-          -s)/g" /config/ytserver-exec-node.yson; '' > /config/postprocess-config.sh;
+        - 'echo ''Postprocess config ytserver-master.yson'';echo ''cp /config_template/ytserver-master.yson
+          /config/ytserver-master.yson; sed -i -s "s/{K8S_POD_NAME}/${K8S_POD_NAME}/g"
+          /config/ytserver-master.yson; sed -i -s "s/{K8S_POD_NAMESPACE}/${K8S_POD_NAMESPACE}/g"
+          /config/ytserver-master.yson; sed -i -s "s/{K8S_NODE_NAME}/${K8S_NODE_NAME}/g"
+          /config/ytserver-master.yson; sed -i -s "s/{POD_FQDN}/$(hostname -f)/g"
+          /config/ytserver-master.yson; sed -i -s "s/{POD_SHORT_HOSTNAME}/$(hostname
+          -s)/g" /config/ytserver-master.yson; '' > /config/postprocess-config.sh;
           chmod +x ''/config/postprocess-config.sh''; source /config/postprocess-config.sh;
-          cat /config/ytserver-exec-node.yson; '
+          cat /config/ytserver-master.yson; '
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -187,11 +137,9 @@ spec:
         image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
         name: postprocess-config
         resources: {}
-        securityContext:
-          privileged: false
         volumeMounts:
-        - mountPath: /yt/node-data
-          name: node-data
+        - mountPath: /yt/master-data
+          name: master-data
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -199,18 +147,15 @@ spec:
           name: config
       volumes:
       - configMap:
-          name: yt-exec-node-config
+          name: yt-master-config
         name: config-template
       - emptyDir: {}
         name: config
-      - configMap:
-          name: yt-exec-node-jobs-config
-        name: config-containerd
   updateStrategy: {}
   volumeClaimTemplates:
   - metadata:
       creationTimestamp: null
-      name: node-data
+      name: master-data
     spec:
       accessModes:
       - ReadWriteOnce

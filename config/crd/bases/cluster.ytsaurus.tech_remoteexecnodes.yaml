@@ -813,6 +813,12 @@ spec:
                 type: object
               forceTcp:
                 type: boolean
+              gpuManager:
+                properties:
+                  gpuInfoProvider:
+                    description: GPU information provider.
+                    type: string
+                type: object
               hostNetwork:
                 default: false
                 description: Use the host's network namespace for all components.
