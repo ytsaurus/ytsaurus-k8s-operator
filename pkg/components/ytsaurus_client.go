@@ -42,6 +42,7 @@ type YtsaurusClient struct {
 	initUserJob *InitJob
 
 	secret   *resources.StringSecret
+	caBundle *resources.CABundleCertificate
 	ytClient yt.Client
 }
 
@@ -58,6 +59,11 @@ func NewYtsaurusClient(
 	var configOverrides *resources.ConfigMap
 	if overrides := resource.Spec.ConfigOverrides; overrides != nil {
 		configOverrides = resources.NewConfigMap(overrides.Name, l, ytsaurus.APIProxy())
+	}
+
+	var caBundle *resources.CABundleCertificate
+	if caBundleSpec := resource.Spec.CABundle; caBundleSpec != nil {
+		caBundle = resources.NewCABundleCertificate(*caBundleSpec, ytsaurus.APIProxy())
 	}
 
 	return &YtsaurusClient{
@@ -89,12 +95,14 @@ func NewYtsaurusClient(
 			l.GetSecretName(),
 			l,
 			ytsaurus.APIProxy()),
+		caBundle: caBundle,
 	}
 }
 
 func (yc *YtsaurusClient) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		yc.secret,
+		yc.caBundle,
 		yc.initUserJob,
 		yc.httpProxy,
 		yc.configOverrides,
@@ -417,11 +425,19 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 			proxy = yc.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 			disableProxyDiscovery = false
 		}
+		var caBundleCertificate []byte
+		if yc.caBundle != nil {
+			caBundleCertificate, err = yc.caBundle.Get()
+			if err != nil {
+				return ComponentStatusPending("Cannot get CA bundle certificate"), err
+			}
+		}
 		yc.ytClient, err = ythttp.NewClient(&yt.Config{
-			Proxy:                 proxy,
-			Token:                 token,
-			LightRequestTimeout:   &timeout,
-			DisableProxyDiscovery: disableProxyDiscovery,
+			Proxy:                    proxy,
+			Token:                    token,
+			CertificateAuthorityData: caBundleCertificate,
+			LightRequestTimeout:      &timeout,
+			DisableProxyDiscovery:    disableProxyDiscovery,
 		})
 
 		if err != nil {

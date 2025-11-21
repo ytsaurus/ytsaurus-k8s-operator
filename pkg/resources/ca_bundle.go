@@ -1,10 +1,14 @@
 package resources
 
 import (
+	"context"
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
@@ -61,4 +65,60 @@ func (t *CABundle) AddVolumeMount(container *corev1.Container) {
 		MountPath: t.MountPath,
 		ReadOnly:  true,
 	})
+}
+
+type CABundleCertificate struct {
+	key       string
+	secret    *BaseManagedResource[*corev1.Secret]
+	configMap *BaseManagedResource[*corev1.ConfigMap]
+}
+
+func NewCABundleCertificate(source ytv1.FileObjectReference, proxy apiproxy.APIProxy) *CABundleCertificate {
+	cert := &CABundleCertificate{
+		key: source.Key,
+	}
+	if cert.key == "" {
+		cert.key = consts.CABundleFileName
+	}
+	switch source.Kind {
+	case "", "ConfigMap":
+		cert.configMap = &BaseManagedResource[*corev1.ConfigMap]{
+			proxy:     proxy,
+			name:      source.Name,
+			oldObject: &corev1.ConfigMap{},
+		}
+	case "Secret":
+		cert.secret = &BaseManagedResource[*corev1.Secret]{
+			proxy:     proxy,
+			name:      source.Name,
+			oldObject: &corev1.Secret{},
+		}
+	}
+	return cert
+}
+
+func (c *CABundleCertificate) Fetch(ctx context.Context) error {
+	return Fetch(ctx, c.secret, c.configMap)
+}
+
+func (c *CABundleCertificate) Get() ([]byte, error) {
+	if c.configMap != nil {
+		object := c.configMap.oldObject
+		if data, found := object.Data[c.key]; found {
+			return []byte(data), nil
+		}
+
+		if data, found := object.BinaryData[c.key]; found {
+			return data, nil
+		}
+		return nil, fmt.Errorf("ca bundle configmap %q has no %q", object.Name, c.key)
+	}
+	if c.secret != nil {
+		object := c.secret.oldObject
+		if data, found := object.Data[c.key]; found {
+			return data, nil
+		}
+		return nil, fmt.Errorf("ca bundle secret %q has no %q", object.Name, c.key)
+	}
+	return nil, fmt.Errorf("unknown CA bundle source")
 }
