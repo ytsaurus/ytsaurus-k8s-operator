@@ -58,23 +58,27 @@ const (
 	operationTimeout      = time.Second * 120
 )
 
-func getYtClient(proxyAddress string) yt.Client {
-	ytClient, err := ythttp.NewClient(&yt.Config{
+func getYtClient(httpClient *http.Client, proxyAddress string) yt.Client {
+	config := &yt.Config{
 		Proxy:                 proxyAddress,
 		Token:                 consts.DefaultAdminPassword,
 		DisableProxyDiscovery: true,
-	})
+		HTTPClient:            httpClient,
+	}
+
+	ytClient, err := ythttp.NewClient(config)
 	Expect(err).Should(Succeed())
 
 	return ytClient
 }
 
-func getYtRPCClient(proxyAddress, rpcProxyAddress string) yt.Client {
+func getYtRPCClient(httpClient *http.Client, proxyAddress, rpcProxyAddress string) yt.Client {
 	ytClient, err := ytrpc.NewClient(&yt.Config{
 		Proxy:                 proxyAddress,
 		RPCProxy:              rpcProxyAddress,
 		Token:                 consts.DefaultAdminPassword,
 		DisableProxyDiscovery: true,
+		HTTPClient:            httpClient,
 	})
 	Expect(err).Should(Succeed())
 	return ytClient
@@ -156,15 +160,15 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var ytBuilder *testutil.YtsaurusBuilder
 	var ytsaurus *ytv1.Ytsaurus
 	var chyt *ytv1.Chyt
-	var ytProxyAddress string
-	var ytClient yt.Client
 	var generator *ytconfig.Generator
 	var certBuilder *testutil.CertBuilder
-	var clusterWithTLS bool
 	var caBundleCertificates []byte
 	var caBundleCertPool *x509.CertPool
-	var ytHTTPSProxyAddress string
-	var ytHTTPSClient yt.Client
+	var httpClient *http.Client
+	var ytProxyAddress string
+	var ytClient yt.Client
+	var ytProxyAddressHTTPS string
+	var ytClientHTTPS yt.Client
 	var ytRPCProxyAddress string
 	var ytRPCClient yt.Client
 	var ytRPCTLSClient yt.Client
@@ -182,13 +186,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	// https://onsi.github.io/ginkgo/#spec-cleanup-aftereach-and-defercleanup
 	// https://onsi.github.io/ginkgo/#separating-diagnostics-collection-and-teardown-justaftereach
 
-	withHTTPSProxy := func() {
+	withHTTPSProxy := func(withoutHTTP bool) {
 		By("Adding HTTPS proxy TLS certificates")
-		clusterWithTLS = true
+		ytBuilder.WithHTTPSProxy = true
 
 		httpProxyCert := certBuilder.BuildCertificate(ytsaurus.Name+"-http-proxy", []string{
-			generator.GetHTTPProxiesServiceAddress(""),
-			generator.GetComponentLabeller(consts.HttpProxyType, "").GetInstanceAddressWildcard(),
+			generator.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+			generator.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole),
+			generator.GetComponentLabeller(consts.HttpProxyType, consts.DefaultHTTPProxyRole).GetInstanceAddressWildcard(),
 		})
 		objects = append(objects, httpProxyCert)
 
@@ -196,6 +201,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			HTTPSSecret: &corev1.LocalObjectReference{
 				Name: httpProxyCert.Name,
 			},
+		}
+
+		if withoutHTTP {
+			By("Disabling plain HTTP proxy")
+			ytBuilder.WithoutHTTPProxy = true
+			ytsaurus.Spec.HTTPProxies[0].Transport.DisableHTTP = true
 		}
 	}
 
@@ -206,6 +217,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		})
 		objects = append(objects, rpcProxyCert)
 
+		ytBuilder.WithRPCProxyTLS = true
 		ytsaurus.Spec.RPCProxies[0].Transport = ytv1.RPCTransportSpec{
 			TLSSecret: &corev1.LocalObjectReference{
 				Name: rpcProxyCert.Name,
@@ -302,11 +314,23 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}))
 
 		DeferCleanup(AttachProgressReporter(func() string {
-			ytProxyAddress, err := getHTTPProxyAddress(generator, namespace, consts.HTTPPortName)
+			portName := consts.HTTPPortName
+			var httpClient *http.Client
+			if ytBuilder.WithoutHTTPProxy {
+				portName = consts.HTTPSPortName
+				httpClient = &http.Client{
+					Transport: &http.Transport{
+						TLSClientConfig: &tls.Config{
+							InsecureSkipVerify: true,
+						},
+					},
+				}
+			}
+			ytProxyAddress, err := getHTTPProxyAddress(generator, namespace, portName)
 			if err != nil {
 				return fmt.Sprintf("cannot find proxy address: %v", err)
 			}
-			ytClient := getYtClient(ytProxyAddress)
+			ytClient := getYtClient(httpClient, ytProxyAddress)
 			if _, err := ytClient.WhoAmI(ctx, nil); err != nil {
 				return fmt.Sprintf("ytsaurus api error: %v", err)
 			}
@@ -333,14 +357,62 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		By("Checking that Ytsaurus state is equal to `Running`", func() {
 			EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
 		})
+	})
 
-		By("Creating ytsaurus client")
+	JustBeforeEach(func(ctx context.Context) {
 		var err error
-		ytProxyAddress, err = getHTTPProxyAddress(generator, namespace, consts.HTTPPortName)
-		Expect(err).ToNot(HaveOccurred())
+
+		By("Creating HTTP(s) client")
+		httpTransport := &http.Transport{
+			// FIXME(khlebnikov): Workaround for https://github.com/ytsaurus/ytsaurus/issues/1450
+			DisableKeepAlives: true,
+		}
+		httpClient = &http.Client{
+			Transport: httpTransport,
+		}
+
+		if ytBuilder.WithHTTPSProxy {
+			By("Fetching CA bundle certificates")
+			caBundleCertificates, err = readFileObject(namespace, ytv1.FileObjectReference{
+				Name: testutil.TestTrustBundleName,
+				Key:  consts.CABundleFileName,
+			})
+			Expect(err).To(Succeed())
+			Expect(caBundleCertificates).ToNot(BeEmpty())
+			caBundleCertPool = x509.NewCertPool()
+			Expect(caBundleCertPool.AppendCertsFromPEM(caBundleCertificates)).To(BeTrue())
+
+			httpTransport.TLSClientConfig = &tls.Config{
+				RootCAs: caBundleCertPool,
+			}
+		}
+
+		if ytBuilder.WithHTTPSProxy {
+			By("Creating YTsaurus HTTPS client")
+			ytProxyAddressHTTPS, err = getHTTPProxyAddress(generator, namespace, consts.HTTPSPortName)
+			Expect(err).ToNot(HaveOccurred())
+			ytProxyAddressHTTPS = "https://" + ytProxyAddressHTTPS
+
+			ytClientHTTPS = getYtClient(httpClient, ytProxyAddressHTTPS)
+			Expect(ytClientHTTPS.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
+		}
+
+		if ytBuilder.WithoutHTTPProxy {
+			ytProxyAddress = ytProxyAddressHTTPS
+			ytClient = ytClientHTTPS
+		} else {
+			By("Creating YTsaurus HTTP client")
+			ytProxyAddress, err = getHTTPProxyAddress(generator, namespace, consts.HTTPPortName)
+			Expect(err).ToNot(HaveOccurred())
+			ytProxyAddress = "http://" + ytProxyAddress
+
+			ytClient = getYtClient(httpClient, ytProxyAddress)
+			Expect(ytClient.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
+		}
 
 		log.Info("Ytsaurus access",
 			"YT_PROXY", ytProxyAddress,
+			"HTTPS", ytProxyAddressHTTPS,
 			"YT_TOKEN", consts.DefaultAdminPassword,
 			"login", consts.DefaultAdminLogin,
 			"password", consts.DefaultAdminPassword,
@@ -350,44 +422,20 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			return fmt.Sprintf("YT_PROXY=%s YT_TOKEN=%s", ytProxyAddress, consts.DefaultAdminPassword)
 		}))
 
-		ytClient = getYtClient(ytProxyAddress)
-		Expect(ytClient.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
-
 		checkClusterHealth(ytClient)
 
 		createTestUser(ytClient)
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
-		if !clusterWithTLS {
+		if !ytBuilder.WithHTTPSProxy {
 			return
 		}
 
 		var err error
 
-		By("Fetching CA bundle certificates")
-		caBundleCertificates, err = readFileObject(namespace, ytv1.FileObjectReference{
-			Name: testutil.TestTrustBundleName,
-			Key:  consts.CABundleFileName,
-		})
-		Expect(err).To(Succeed())
-		Expect(caBundleCertificates).ToNot(BeEmpty())
-		caBundleCertPool = x509.NewCertPool()
-		Expect(caBundleCertPool.AppendCertsFromPEM(caBundleCertificates)).To(BeTrue())
-
-		ytHTTPSProxyAddress, err = getHTTPProxyAddress(generator, namespace, consts.HTTPSPortName)
-		Expect(err).ToNot(HaveOccurred())
-		ytHTTPSProxyAddress = "https://" + ytHTTPSProxyAddress
-
 		By("Checking YT Proxy HTTPS", func() {
-			httpClient := http.Client{
-				Transport: &http.Transport{
-					TLSClientConfig: &tls.Config{
-						RootCAs: caBundleCertPool,
-					},
-				},
-			}
-			resp, err := httpClient.Get(ytHTTPSProxyAddress + "/api")
+			resp, err := httpClient.Get(ytProxyAddressHTTPS + "/api")
 			Expect(err).NotTo(HaveOccurred())
 			defer func() {
 				Expect(resp.Body.Close()).To(Succeed())
@@ -400,21 +448,21 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		})
 
 		By("Checking YT HTTPS Client")
-		ytHTTPSClient, err = ythttp.NewClient(&yt.Config{
-			Proxy:                    ytHTTPSProxyAddress,
+		ytClientHTTPS, err = ythttp.NewClient(&yt.Config{
+			Proxy:                    ytProxyAddressHTTPS,
 			CertificateAuthorityData: caBundleCertificates,
 			Token:                    consts.DefaultAdminPassword,
 			DisableProxyDiscovery:    true,
 		})
 		Expect(err).Should(Succeed())
-		Expect(ytHTTPSClient.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
+		Expect(ytClientHTTPS.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
 
-		_, err = ytHTTPSClient.NodeExists(ctx, ypath.Path("/"), nil)
+		_, err = ytClientHTTPS.NodeExists(ctx, ypath.Path("/"), nil)
 		Expect(err).Should(Succeed())
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
-		if len(ytsaurus.Spec.RPCProxies) == 0 {
+		if !ytBuilder.WithRPCProxy {
 			return
 		}
 
@@ -427,14 +475,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Expect(rpcProxies).Should(HaveLen(int(ytsaurus.Spec.RPCProxies[0].InstanceCount)))
 
 		By("Checking YT RPC Proxy discovery")
-		proxies := discoverProxies("http://"+ytProxyAddress, nil)
+		proxies := discoverProxies(ytProxyAddress, nil)
 		Expect(proxies).ToNot(BeEmpty())
 		Expect(proxies).To(HaveEach(HaveSuffix(fmt.Sprintf(":%v", consts.RPCProxyPublicRPCPort))))
 
 		By("Creating ytsaurus RPC client")
 		ytRPCProxyAddress, err = getRPCProxyAddress(generator, namespace)
 		Expect(err).ToNot(HaveOccurred())
-		ytRPCClient = getYtRPCClient(ytProxyAddress, ytRPCProxyAddress)
+		ytRPCClient = getYtRPCClient(httpClient, ytProxyAddress, ytRPCProxyAddress)
 
 		By("Checking RPC proxy is working")
 		// Expect(ytTLSRPCClient.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
@@ -443,7 +491,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
-		if !clusterWithTLS || len(ytsaurus.Spec.RPCProxies) == 0 {
+		if !ytBuilder.WithRPCProxyTLS {
 			return
 		}
 
@@ -451,11 +499,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		By("Checking YT RPC TLS Client")
 		ytRPCTLSClient, err = ytrpc.NewClient(&yt.Config{
-			Proxy:                    ytHTTPSProxyAddress,
+			Proxy:                    ytProxyAddressHTTPS,
 			RPCProxy:                 ytRPCProxyAddress,
 			CertificateAuthorityData: caBundleCertificates,
 			Token:                    consts.DefaultAdminPassword,
 			DisableProxyDiscovery:    true,
+			HTTPClient:               httpClient,
 		})
 		Expect(err).Should(Succeed())
 		// Expect(ytTLSRPCClient.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
@@ -564,7 +613,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		By("Checking CHYT readiness")
 		// FIXME(khlebnikov): There is no reliable readiness signal.
 		Eventually(queryClickHouse, chytBootstrapTimeout, pollInterval).WithArguments(
-			ytProxyAddress, "SELECT 1",
+			httpClient, ytProxyAddress, "SELECT 1",
 		).MustPassRepeatedly(3).Should(Equal("1\n"))
 	})
 
@@ -1535,7 +1584,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(yterrors.ContainsErrorCode(err, yterrors.CodeRPCAuthenticationError)).Should(BeTrue())
 
 				By("Checking RPC proxy works with token")
-				cli = getYtRPCClient(ytProxyAddress, ytRPCProxyAddress)
+				cli = getYtRPCClient(httpClient, ytProxyAddress, ytRPCProxyAddress)
 				// Expect(cli.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
 
 				_, err = cli.NodeExists(ctx, ypath.Path("/"), nil)
@@ -1613,6 +1662,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			It("Checks ClickHouse", func(ctx context.Context) {
 				By("Creating table")
 				Expect(queryClickHouse(
+					httpClient,
 					ytProxyAddress,
 					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one",
 				)).To(Equal(""))
@@ -1648,6 +1698,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					nativeClientCert,
 				)
 
+				ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{}
+
 				ytsaurus.Spec.CABundle = &ytv1.FileObjectReference{
 					Name: testutil.TestTrustBundleName,
 				}
@@ -1662,9 +1714,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				if images.MutualTLSReady {
 					By("Enabling RPC proxy public address")
-					ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
-						RPCProxyHavePublicAddress: true,
-					}
+					ytsaurus.Spec.ClusterFeatures.RPCProxyHavePublicAddress = true
 
 					By("Activating mutual TLS interconnect")
 					ytsaurus.Spec.NativeTransport.TLSInsecure = false
@@ -1685,7 +1735,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytBuilder.WithYqlAgent()
 				ytBuilder.WithStrawberryController()
 
-				withHTTPSProxy()
+				By("Activating HTTPS-only proxies")
+				withHTTPSProxy(true)
+				ytsaurus.Spec.ClusterFeatures.HTTPProxyHaveHTTPSAddress = true
+
 				withRPCTLSProxy()
 
 				By("Adding CHYT instance")
@@ -1716,11 +1769,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			It("Verify that mTLS is active", func(ctx context.Context) {
 				By("Getting CHYT operation id")
-				clickHouseID, err := queryClickHouseID(ytProxyAddress)
+				clickHouseID, err := queryClickHouseID(httpClient, ytProxyAddress)
 				Expect(err).To(Succeed())
 
 				By("Creating table //tmp/chyt_test")
 				Expect(queryClickHouse(
+					httpClient,
 					ytProxyAddress,
 					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one;",
 				)).To(Equal(""))
@@ -1740,13 +1794,13 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				// FIXME(khlebnikov): Workaround for bug yt client retrying logic.
 				By("Waiting http proxy", func() {
 					ytClient.Stop()
-					ytClient = getYtClient(ytProxyAddress)
+					ytClient = getYtClient(httpClient, ytProxyAddress)
 					Eventually(func(ctx context.Context) error {
 						_, err := ytClient.WhoAmI(ctx, nil)
 						return err
 					}, bootstrapTimeout, pollInterval, ctx).MustPassRepeatedly(5).Should(Succeed())
 					ytClient.Stop()
-					ytClient = getYtClient(ytProxyAddress)
+					ytClient = getYtClient(httpClient, ytProxyAddress)
 
 					// FIXME(khlebnikov): Workaround for DNS issues inside cluster.
 					components, err := ListClusterComponents(ctx, ytClient)
@@ -1761,7 +1815,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				if images.StrawberryHandlesRestarts {
 					By("Waiting for chyt operation restart by strawberry")
-					Eventually(queryClickHouseID, chytBootstrapTimeout).WithArguments(ytProxyAddress).ToNot(Equal(clickHouseID))
+					Eventually(queryClickHouseID, chytBootstrapTimeout).WithArguments(httpClient, ytProxyAddress).ToNot(Equal(clickHouseID))
 				} else {
 					By("Aborting chyt operation")
 					Expect(ytClient.AbortOperation(ctx, yt.OperationID(clickHouseID), nil)).To(Succeed())
@@ -1769,11 +1823,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Waiting CHYT readiness")
 				Eventually(queryClickHouse, chytBootstrapTimeout, pollInterval).WithArguments(
-					ytProxyAddress, "SELECT 1",
+					httpClient, ytProxyAddress, "SELECT 1",
 				).MustPassRepeatedly(3).Should(Equal("1\n"))
 
 				By("Checking table //tmp/chyt_test")
 				Expect(queryClickHouse(
+					httpClient,
 					ytProxyAddress,
 					"SELECT * FROM `//tmp/chyt_test`;",
 				)).To(Equal("0\n"))
