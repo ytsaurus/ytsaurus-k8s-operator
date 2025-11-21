@@ -34,6 +34,7 @@ type OffshoreDataGatewaysStatus struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 //+kubebuilder:printcolumn:name="ReleaseStatus",type="string",JSONPath=".status.releaseStatus",description="Release status"
 //+kubebuilder:resource:categories=ytsaurus-all;yt-all
 //+kubebuilder:subresource:status
@@ -51,6 +52,7 @@ type OffshoreDataGateways struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 
 // OffshoreDataGatewaysList contains a list of OffshoreDataGateways
 type OffshoreDataGatewaysList struct {
