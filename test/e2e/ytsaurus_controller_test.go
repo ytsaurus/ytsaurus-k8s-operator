@@ -1757,7 +1757,10 @@ exec "$@"`
 				ytBuilder.WithYqlAgent()
 				ytBuilder.WithStrawberryController()
 
-				withHTTPSProxy(false)
+				// FIXME(khlebnikov): Workaround for bug in strawberry controller logging.
+				ytsaurus.Spec.StrawberryController.LogToStderr = true
+
+				withHTTPSProxy(true)
 
 				withRPCTLSProxy()
 

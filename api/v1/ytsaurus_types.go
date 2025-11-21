@@ -802,10 +802,12 @@ type BundleControllerSpec struct {
 }
 
 type ClusterFeatures struct {
-	// RPC proxy have "public_rpc" address. Required for separated internal/public TLS CA.
+	// RPC proxies have "public_rpc" address. Required for separated internal/public TLS CA.
 	RPCProxyHavePublicAddress bool `json:"rpcProxyHavePublicAddress,omitempty"`
-	// HTTP proxy have "chyt_http_server" and "chyt_https_server". Opens ports for access to chyt via HTTP proxy.
+	// HTTP proxies have "chyt_http_server" and "chyt_https_server". Opens ports for access to chyt via HTTP proxy.
 	HTTPProxyHaveChytAddress bool `json:"httpProxyHaveChytAddress,omitempty"`
+	// HTTP proxies have "https" address. Use HTTPS for all communications.
+	HTTPProxyHaveHTTPSAddress bool `json:"httpProxyHaveHttpsAddress,omitempty"`
 }
 
 // CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.

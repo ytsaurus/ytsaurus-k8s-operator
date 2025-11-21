@@ -34,6 +34,13 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			ytsaurus = newYtsaurus()
 		})
 
+		It("Should not accept feature httpProxyHaveHttpsAddress without httpsSecret", func() {
+			ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
+				HTTPProxyHaveHTTPSAddress: true,
+			}
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("Cluster feature httpProxyHaveHttpsAddress requires HTTPS for all HTTP proxies")))
+		})
+
 		It("Should not accept a Ytsaurus resource without `default` http proxy role", func() {
 			ytsaurus.Spec.HTTPProxies = []ytv1.HTTPProxiesSpec{
 				{

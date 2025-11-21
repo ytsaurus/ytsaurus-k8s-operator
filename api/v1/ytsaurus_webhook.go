@@ -164,6 +164,7 @@ func (r *ytsaurusValidator) validateHostAddresses(newYtsaurus *Ytsaurus, masters
 func (r *ytsaurusValidator) validateHTTPProxies(newYtsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
+	features := ptr.Deref(newYtsaurus.Spec.ClusterFeatures, ClusterFeatures{})
 	httpRoles := make(map[string]bool)
 	hasDefaultHTTPProxy := false
 	for i, hp := range newYtsaurus.Spec.HTTPProxies {
@@ -177,6 +178,13 @@ func (r *ytsaurusValidator) validateHTTPProxies(newYtsaurus *Ytsaurus) field.Err
 		httpRoles[hp.Role] = true
 
 		allErrors = append(allErrors, r.validateInstanceSpec(hp.InstanceSpec, path)...)
+
+		if features.HTTPProxyHaveHTTPSAddress && hp.Transport.HTTPSSecret == nil {
+			allErrors = append(allErrors, field.Required(
+				path.Child("transport").Child("httpsSecret"),
+				"Cluster feature httpProxyHaveHttpsAddress requires HTTPS for all HTTP proxies",
+			))
+		}
 	}
 
 	if !hasDefaultHTTPProxy {

@@ -6,6 +6,7 @@ import (
 	"net"
 	"path"
 	"strconv"
+	"strings"
 
 	"k8s.io/utils/ptr"
 
@@ -161,35 +162,68 @@ func (g *Generator) GetHTTPProxiesServiceName(role string) string {
 	return g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceName()
 }
 
-func getHttpProxyPortOverride(ytsaurus *ytv1.YtsaurusSpec, role string) *int32 {
+func getHTTPProxyPort(ytsaurus *ytv1.YtsaurusSpec, role, portName string) int32 {
+	var port int32
+	switch portName {
+	case consts.HTTPPortName:
+		port = consts.HTTPProxyHTTPPort
+	case consts.HTTPSPortName:
+		port = consts.HTTPProxyHTTPSPort
+	case consts.CHYTHttpProxyName:
+		port = consts.HTTPProxyChytHttpPort
+	case consts.CHYTHttpsProxyName:
+		port = consts.HTTPProxyChytHttpsPort
+	default:
+		panic(portName)
+	}
 	for _, p := range ytsaurus.HTTPProxies {
 		if p.Role == role {
-			return p.HttpPort
+			switch portName {
+			case consts.HTTPPortName:
+				port = ptr.Deref(p.HttpPort, port)
+			case consts.HTTPSPortName:
+				port = ptr.Deref(p.HttpsPort, port)
+			case consts.CHYTHttpProxyName:
+				port = ptr.Deref(ptr.Deref(p.ChytProxy, ytv1.CHYTProxySpec{}).HttpPort, port)
+			case consts.CHYTHttpsProxyName:
+				port = ptr.Deref(ptr.Deref(p.ChytProxy, ytv1.CHYTProxySpec{}).HttpsPort, port)
+			}
+			break
 		}
 	}
-	return nil
+	return port
+}
+
+func (g *NodeGenerator) getHTTPProxyAddress(ytsaurus *ytv1.YtsaurusSpec, role, hostname string) string {
+	var address strings.Builder
+
+	portName := consts.HTTPPortName
+	defaultPort := int32(consts.HTTPProxyHTTPPort)
+
+	// NOTE: Adding scheme only for https - some ancient code does not support URLs.
+	if g.clusterFeatures.HTTPProxyHaveHTTPSAddress {
+		portName = consts.HTTPSPortName
+		defaultPort = consts.HTTPProxyHTTPSPort
+		address.WriteString("https://")
+	}
+
+	address.WriteString(hostname)
+
+	if port := getHTTPProxyPort(ytsaurus, role, portName); port != defaultPort {
+		address.WriteString(fmt.Sprintf(":%v", port))
+	}
+
+	return address.String()
 }
 
 func (g *Generator) GetHTTPProxiesServiceAddress(role string) string {
-	port := getHttpProxyPortOverride(&g.ytsaurus.Spec, role)
-	if port == nil || *port == consts.HTTPProxyHTTPPort {
-		return g.GetComponentLabeller(consts.HttpProxyType, role).GetHeadlessServiceAddress()
-	}
-	return fmt.Sprintf("%s:%d",
-		g.GetComponentLabeller(consts.HttpProxyType, role).GetHeadlessServiceAddress(),
-		*port,
-	)
+	hostname := g.GetComponentLabeller(consts.HttpProxyType, role).GetHeadlessServiceAddress()
+	return g.getHTTPProxyAddress(&g.ytsaurus.Spec, role, hostname)
 }
 
 func (g *NodeGenerator) GetHTTPProxiesAddress(ytsaurus *ytv1.YtsaurusSpec, role string) string {
-	port := getHttpProxyPortOverride(ytsaurus, role)
-	if port == nil || *port == consts.HTTPProxyHTTPPort {
-		return g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceAddress()
-	}
-	return fmt.Sprintf("%s:%d",
-		g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceAddress(),
-		*port,
-	)
+	hostname := g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceAddress()
+	return g.getHTTPProxyAddress(ytsaurus, role, hostname)
 }
 
 func (g *Generator) GetHTTPProxiesAddress(role string) string {

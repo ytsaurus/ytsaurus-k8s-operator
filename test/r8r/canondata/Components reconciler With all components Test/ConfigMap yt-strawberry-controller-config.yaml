@@ -3,7 +3,7 @@ data:
   strawberry-controller.yson: |-
     {
         "location_proxies"=[
-            "http-proxies-lb.ytsaurus-components.svc.cluster.local";
+            "https://http-proxies-lb.ytsaurus-components.svc.cluster.local";
         ];
         strawberry={
             root="//sys/strawberry";
@@ -47,7 +47,7 @@ data:
         };
         "http_api_endpoint"=":80";
         "http_location_aliases"={
-            "http-proxies-lb.ytsaurus-components.svc.cluster.local"=[
+            "https://http-proxies-lb.ytsaurus-components.svc.cluster.local"=[
                 "test-ytsaurus";
             ];
         };
