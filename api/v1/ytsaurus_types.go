@@ -790,6 +790,8 @@ type ClusterFeatures struct {
 	RPCProxyHavePublicAddress bool `json:"rpcProxyHavePublicAddress,omitempty"`
 	// HTTP proxy have "chyt_http_server" and "chyt_https_server". Opens ports for access to chyt via HTTP proxy.
 	HTTPProxyHaveChytAddress bool `json:"httpProxyHaveChytAddress,omitempty"`
+	// HTTP proxy have HTTPS server and might have no HTTP server. Use HTTPS for all communications.
+	HTTPProxyHaveHTTPSAddress bool `json:"httpProxyHaveHttpsAddress,omitempty"`
 }
 
 // CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.
