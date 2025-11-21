@@ -13,6 +13,7 @@ spec:
     name: ytsaurus-dev-ca-root-bundle
   clusterFeatures:
     httpProxyHaveChytAddress: true
+    httpProxyHaveHttpsAddress: true
     rpcProxyHavePublicAddress: true
   configOverrides:
     name: test-overrides

@@ -109,7 +109,7 @@ data:
                 "cluster_mapping"=[
                     {
                         name="test-ytsaurus";
-                        cluster="http-proxies.ytsaurus-components.svc.cluster.local";
+                        cluster="https://http-proxies.ytsaurus-components.svc.cluster.local";
                         default=%true;
                     };
                 ];
@@ -119,7 +119,7 @@ data:
             "mr_job_binary"="/usr/bin/mrjob";
             "udf_directory"="/usr/lib/yql";
             "additional_clusters"={
-                "test-ytsaurus"="http-proxies.ytsaurus-components.svc.cluster.local";
+                "test-ytsaurus"="https://http-proxies.ytsaurus-components.svc.cluster.local";
             };
             "default_cluster"="test-ytsaurus";
             "additional_system_libs"=[

@@ -305,6 +305,8 @@ func (b *YtsaurusBuilder) WithHTTPSProxies(httpsCert string, httpsOnly bool) {
 	b.WithHTTPSProxy = true
 	b.WithHTTPSOnlyProxy = httpsOnly
 
+	b.Ytsaurus.Spec.ClusterFeatures.HTTPProxyHaveHTTPSAddress = true
+
 	b.Ytsaurus.Spec.CARootBundle = &ytv1.FileObjectReference{
 		Name: TestCARootBundleName,
 	}
@@ -358,6 +360,7 @@ func (b *YtsaurusBuilder) WithAllClusterFeatures() {
 	b.Ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
 		RPCProxyHavePublicAddress: true,
 		HTTPProxyHaveChytAddress:  true,
+		HTTPProxyHaveHTTPSAddress: true,
 	}
 }
 
