@@ -104,7 +104,7 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus *Ytsaurus, mastersSpe
 
 	allErrors = append(allErrors, r.validateHydraPersistenceUploaderSpec(mastersSpec.HydraPersistenceUploader, path.Child("hydraPersistenceUploader"))...)
 
-	allErrors = append(allErrors, r.validateTimbertruckSpec(mastersSpec.Timbertruck, path.Child("timbertruck"))...)
+	allErrors = append(allErrors, r.validateTimbertruckSpec(mastersSpec.Timbertruck, mastersSpec.StructuredLoggers, path)...)
 
 	allErrors = append(allErrors, r.validateSidecars(mastersSpec.Sidecars, path.Child("sidecars"))...)
 
@@ -256,13 +256,17 @@ func (r *baseValidator) validateHydraPersistenceUploaderSpec(
 }
 
 func (r *baseValidator) validateTimbertruckSpec(
-	timbertruck *TimbertruckSpec, path *field.Path) field.ErrorList {
+	timbertruck *TimbertruckSpec, structuredLoggers []StructuredLoggerSpec, parentPath *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
-	if timbertruck != nil && timbertruck.Image == nil {
-		allErrors = append(allErrors, field.Required(path.Child("image"), "timbertruck image is required"))
+	if timbertruck != nil {
+		if timbertruck.Image == nil {
+			allErrors = append(allErrors, field.Required(parentPath.Child("timbertruck", "image"), "timbertruck image is required"))
+		}
+		if len(structuredLoggers) == 0 {
+			allErrors = append(allErrors, field.Required(parentPath.Child("structuredLoggers"), "structuredLoggers must be configured when timbertruck is enabled"))
+		}
 	}
-
 	return allErrors
 }
 
