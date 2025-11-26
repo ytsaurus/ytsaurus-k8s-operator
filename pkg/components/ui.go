@@ -39,11 +39,6 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		image = *resource.Spec.UI.Image
 	}
 
-	var caBundle *resources.CABundle
-	if caBundleSpec := resource.Spec.CABundle; caBundleSpec != nil {
-		caBundle = resources.NewCABundle(*caBundleSpec, consts.CABundleVolumeName, consts.CABundleMountPoint)
-	}
-
 	microservice := newMicroservice(
 		l,
 		ytsaurus,
@@ -89,7 +84,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			l.GetSecretName(),
 			l,
 			ytsaurus.APIProxy()),
-		caBundle: caBundle,
+		caBundle: resources.NewCABundle(resource.Spec.CABundle),
 		master:   master,
 	}
 }
@@ -252,11 +247,10 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 		},
 	}
 
-	if u.caBundle != nil {
-		u.caBundle.AddVolume(&deployment.Spec.Template.Spec)
-		for i := range deployment.Spec.Template.Spec.Containers {
-			u.caBundle.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[i])
-		}
+	u.caBundle.AddVolume(&deployment.Spec.Template.Spec)
+
+	for i := range deployment.Spec.Template.Spec.Containers {
+		u.caBundle.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[i])
 	}
 
 	return u.microservice.Sync(ctx)
