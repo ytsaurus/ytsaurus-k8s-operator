@@ -34,7 +34,7 @@ type server interface {
 	needSync() bool
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
-	addCABundleMount(c *corev1.Container)
+	addCARootBundle(c *corev1.Container)
 	addTlsSecretMount(c *corev1.Container)
 	addMonitoringPort(port corev1.ServicePort)
 }
@@ -53,6 +53,7 @@ type serverImpl struct {
 	statefulSet       *resources.StatefulSet
 	headlessService   *resources.HeadlessService
 	monitoringService *resources.MonitoringService
+	caRootBundle      *resources.CABundle
 	caBundle          *resources.CABundle
 	busServerSecret   *resources.TLSSecret
 	busClientSecret   *resources.TLSSecret
@@ -179,6 +180,7 @@ func newServerConfigured(
 			l,
 			proxy,
 		),
+		caRootBundle:    resources.NewCARootBundle(commonSpec.CARootBundle),
 		caBundle:        resources.NewCABundle(commonSpec.CABundle),
 		busServerSecret: busServerSecret,
 		busClientSecret: busClientSecret,
@@ -401,15 +403,17 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		podSpec.DNSPolicy = s.instanceSpec.DNSPolicy
 	}
 
+	s.caRootBundle.AddVolume(podSpec)
 	s.caBundle.AddVolume(podSpec)
 	s.busServerSecret.AddVolume(podSpec)
 	s.busClientSecret.AddVolume(podSpec)
 
-	for i := range statefulSet.Spec.Template.Spec.Containers {
-		s.addCABundleMount(&statefulSet.Spec.Template.Spec.Containers[i])
+	// Add CA root bundle into all containers.
+	for i := range podSpec.Containers {
+		s.addCARootBundle(&podSpec.Containers[i])
 	}
-	for i := range statefulSet.Spec.Template.Spec.InitContainers {
-		s.addCABundleMount(&statefulSet.Spec.Template.Spec.InitContainers[i])
+	for i := range podSpec.InitContainers {
+		s.addCARootBundle(&podSpec.InitContainers[i])
 	}
 
 	serverContainer := &podSpec.Containers[0]
@@ -427,11 +431,13 @@ func (s *serverImpl) removePods(ctx context.Context) error {
 	return s.Sync(ctx)
 }
 
-func (s *serverImpl) addCABundleMount(c *corev1.Container) {
-	s.caBundle.AddVolumeMount(c)
+func (s *serverImpl) addCARootBundle(c *corev1.Container) {
+	s.caRootBundle.AddVolumeMount(c)
+	s.caRootBundle.AddContainerEnv(c)
 }
 
 func (s *serverImpl) addTlsSecretMount(c *corev1.Container) {
+	s.caBundle.AddVolumeMount(c)
 	s.busServerSecret.AddVolumeMount(c)
 	s.busClientSecret.AddVolumeMount(c)
 }

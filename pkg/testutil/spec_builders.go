@@ -305,6 +305,10 @@ func (b *YtsaurusBuilder) WithHTTPSProxies(httpsCert string, httpsOnly bool) {
 	b.WithHTTPSProxy = true
 	b.WithHTTPSOnlyProxy = httpsOnly
 
+	b.Ytsaurus.Spec.CARootBundle = &ytv1.FileObjectReference{
+		Name: TestCARootBundleName,
+	}
+
 	for i := range b.Ytsaurus.Spec.HTTPProxies {
 		b.Ytsaurus.Spec.HTTPProxies[i].Transport = ytv1.HTTPTransportSpec{
 			HTTPSSecret: &corev1.LocalObjectReference{

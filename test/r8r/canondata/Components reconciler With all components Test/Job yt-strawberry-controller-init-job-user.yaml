@@ -53,6 +53,12 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: SSL_CERT_FILE
+          value: /etc/ssl/certs/ca-certificates.crt
+        - name: SSL_CERT_DIR
+          value: /etc/ssl/certs
+        - name: REQUESTS_CA_BUNDLE
+          value: /etc/ssl/certs/ca-certificates.crt
         image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
         name: ytsaurus-init
         resources: {}
@@ -60,6 +66,9 @@ spec:
         volumeMounts:
         - mountPath: /config
           name: config
+        - mountPath: /etc/ssl/certs
+          name: ca-root-bundle
+          readOnly: true
         - mountPath: /tls/ca_bundle
           name: ca-bundle
           readOnly: true
@@ -72,6 +81,9 @@ spec:
           defaultMode: 320
           name: user-yt-strawberry-controller-init-job-config
         name: config
+      - configMap:
+          name: ytsaurus-dev-ca-root-bundle
+        name: ca-root-bundle
       - configMap:
           name: ytsaurus-dev-ca.crt
         name: ca-bundle

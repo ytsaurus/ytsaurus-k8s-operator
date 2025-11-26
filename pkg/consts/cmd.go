@@ -12,6 +12,7 @@ const (
 	BusServerSecretMountPoint  = "/tls/bus_secret"
 	BusClientSecretMountPoint  = "/tls/bus_client_secret"
 	CABundleMountPoint         = "/tls/ca_bundle"
+	CARootBundleMountPoint     = "/etc/ssl/certs"
 	UIClustersConfigMountPoint = "/opt/app"
 	UICustomConfigMountPoint   = "/opt/app/dist/server/configs/custom"
 	UISecretsMountPoint        = "/opt/app/secrets"
@@ -42,6 +43,10 @@ const (
 	UIClusterConfigFileName = "clusters-config.json"
 	UISecretFileName        = "yt-interface-secret.json"
 	CABundleFileName        = "ca.crt"
+	CARootBundleFileName    = "ca-certificates.crt"
+	SSLCertFileKey          = "SSL_CERT_FILE"
+	SSLCertDirKey           = "SSL_CERT_DIR"
+	RequestsCABundleKey     = "REQUESTS_CA_BUNDLE"
 	TokenSecretKey          = "YT_TOKEN"
 )
 
@@ -71,6 +76,7 @@ const (
 	RPCProxySecretVolumeName  = "rpc-secret"
 	BusServerSecretVolumeName = "bus-secret"
 	BusClientSecretVolumeName = "bus-client-secret"
+	CARootBundleVolumeName    = "ca-root-bundle"
 	CABundleVolumeName        = "ca-bundle"
 	InitScriptVolumeName      = "init-script"
 	UIVaultVolumeName         = "vault"

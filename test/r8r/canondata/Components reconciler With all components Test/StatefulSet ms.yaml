@@ -56,6 +56,12 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: SSL_CERT_FILE
+          value: /etc/ssl/certs/ca-certificates.crt
+        - name: SSL_CERT_DIR
+          value: /etc/ssl/certs
+        - name: REQUESTS_CA_BUNDLE
+          value: /etc/ssl/certs/ca-certificates.crt
         image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
         name: ytserver
         ports:
@@ -78,6 +84,9 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+        - mountPath: /etc/ssl/certs
+          name: ca-root-bundle
+          readOnly: true
         - mountPath: /tls/ca_bundle
           name: ca-bundle
           readOnly: true
@@ -107,6 +116,12 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: SSL_CERT_FILE
+          value: /etc/ssl/certs/ca-certificates.crt
+        - name: SSL_CERT_DIR
+          value: /etc/ssl/certs
+        - name: REQUESTS_CA_BUNDLE
+          value: /etc/ssl/certs/ca-certificates.crt
         image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
         name: prepare-locations
         resources: {}
@@ -118,8 +133,8 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
-        - mountPath: /tls/ca_bundle
-          name: ca-bundle
+        - mountPath: /etc/ssl/certs
+          name: ca-root-bundle
           readOnly: true
       - command:
         - bash
@@ -146,6 +161,12 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: SSL_CERT_FILE
+          value: /etc/ssl/certs/ca-certificates.crt
+        - name: SSL_CERT_DIR
+          value: /etc/ssl/certs
+        - name: REQUESTS_CA_BUNDLE
+          value: /etc/ssl/certs/ca-certificates.crt
         image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
         name: postprocess-config
         resources: {}
@@ -157,8 +178,8 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
-        - mountPath: /tls/ca_bundle
-          name: ca-bundle
+        - mountPath: /etc/ssl/certs
+          name: ca-root-bundle
           readOnly: true
       volumes:
       - configMap:
@@ -166,6 +187,9 @@ spec:
         name: config-template
       - emptyDir: {}
         name: config
+      - configMap:
+          name: ytsaurus-dev-ca-root-bundle
+        name: ca-root-bundle
       - configMap:
           name: ytsaurus-dev-ca.crt
         name: ca-bundle
