@@ -13,20 +13,28 @@ type CABundle struct {
 	Source     ytv1.FileObjectReference
 	VolumeName string
 	MountPath  string
+	FileName   string
 }
 
-func NewCABundle(source ytv1.FileObjectReference, volumeName string, mountPath string) *CABundle {
+func NewCABundle(source *ytv1.FileObjectReference) *CABundle {
+	if source == nil {
+		return nil
+	}
 	return &CABundle{
-		Source:     source,
-		VolumeName: volumeName,
-		MountPath:  mountPath,
+		Source:     *source,
+		VolumeName: consts.CABundleVolumeName,
+		MountPath:  consts.CABundleMountPoint,
+		FileName:   consts.CABundleFileName,
 	}
 }
 
 func (t *CABundle) AddVolume(podSpec *corev1.PodSpec) {
+	if t == nil {
+		return
+	}
 	var items []corev1.KeyToPath
 	if t.Source.Key != "" {
-		items = []corev1.KeyToPath{{Key: t.Source.Key, Path: consts.CABundleFileName}}
+		items = []corev1.KeyToPath{{Key: t.Source.Key, Path: t.FileName}}
 	}
 
 	switch t.Source.Kind {
@@ -56,6 +64,9 @@ func (t *CABundle) AddVolume(podSpec *corev1.PodSpec) {
 }
 
 func (t *CABundle) AddVolumeMount(container *corev1.Container) {
+	if t == nil {
+		return
+	}
 	container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
 		Name:      t.VolumeName,
 		MountPath: t.MountPath,
