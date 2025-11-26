@@ -158,9 +158,6 @@ func (n *baseExecNode) addCRIServiceSidecar(cri *ytconfig.CRIConfigGenerator, po
 
 	n.addCRIServiceConfig(cri, &container)
 
-	n.server.addCABundleMount(&container)
-	n.server.addTlsSecretMount(&container)
-
 	// Replace mount propagation "Bidirectional" -> "HostToContainer".
 	// Tmpfs are propagated: exec-node -> host -> containerd.
 	for i := range container.VolumeMounts {
@@ -178,7 +175,7 @@ func (n *baseExecNode) addCRIServiceSidecar(cri *ytconfig.CRIConfigGenerator, po
 		container.Resources.Limits = n.spec.Resources.Limits
 	}
 
-	podSpec.Containers = append(podSpec.Containers, container)
+	n.server.addContainer(&container)
 }
 
 func (n *baseExecNode) doSyncBase(ctx context.Context, dry bool) (ComponentStatus, error) {
