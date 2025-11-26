@@ -189,7 +189,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	// https://onsi.github.io/ginkgo/#spec-cleanup-aftereach-and-defercleanup
 	// https://onsi.github.io/ginkgo/#separating-diagnostics-collection-and-teardown-justaftereach
 
-	withHTTPSProxy := func() {
+	withHTTPSProxy := func(httpsOnly bool) {
 		By("Adding HTTPS proxy TLS certificates")
 		clusterWithTLS = true
 
@@ -200,11 +200,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		})
 		objects = append(objects, httpProxyCert)
 
-		ytsaurus.Spec.HTTPProxies[0].Transport = ytv1.HTTPTransportSpec{
-			HTTPSSecret: &corev1.LocalObjectReference{
-				Name: httpProxyCert.Name,
-			},
-		}
+		ytBuilder.WithHTTPSProxies(httpProxyCert.Name, httpsOnly)
 	}
 
 	withRPCTLSProxy := func() {
@@ -1743,7 +1739,7 @@ exec "$@"`
 				ytBuilder.WithYqlAgent()
 				ytBuilder.WithStrawberryController()
 
-				withHTTPSProxy()
+				withHTTPSProxy(false)
 				withRPCTLSProxy()
 
 				By("Adding CHYT instance")
