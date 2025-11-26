@@ -28,6 +28,12 @@ spec:
   - name: http
     port: 80
     targetPort: 80
+  - name: https
+    port: 443
+    targetPort: 443
+  - name: chyt-https
+    port: 8443
+    targetPort: 8443
   selector:
     yt_component: test-ytsaurus-yt-http-proxy
   type: NodePort
