@@ -521,6 +521,95 @@ func getExecNodeLogging(spec *ytv1.ExecNodesSpec) Logging {
 		[]ytv1.TextLoggerSpec{defaultInfoLoggerSpec(), defaultStderrLoggerSpec()})
 }
 
+func fillJobEnvironmentCRI(
+	execNode *ExecNode,
+	spec *ytv1.ExecNodesSpec,
+	commonSpec *ytv1.CommonSpec,
+	envSpec *ytv1.JobEnvironmentSpec,
+	jobEnv *JobEnvironment,
+) error {
+	cri := NewCRIConfigGenerator(spec)
+
+	jobEnv.Type = JobEnvironmentTypeCRI
+
+	if jobImage := commonSpec.JobImage; jobImage != nil {
+		jobEnv.JobProxyImage = *jobImage
+	} else {
+		jobEnv.JobProxyImage = ptr.Deref(spec.Image, commonSpec.CoreImage)
+	}
+
+	jobEnv.UseJobProxyFromImage = ptr.To(false)
+
+	endpoint := "unix://" + cri.GetSocketPath()
+
+	jobEnv.CriExecutor = &CriExecutor{
+		RuntimeEndpoint: endpoint,
+		ImageEndpoint:   endpoint,
+		Namespace:       ptr.Deref(envSpec.CRI.CRINamespace, consts.CRINamespace),
+		BaseCgroup:      ptr.Deref(envSpec.CRI.BaseCgroup, consts.CRIBaseCgroup),
+	}
+
+	if timeout := envSpec.CRI.APIRetryTimeoutSeconds; timeout != nil {
+		jobEnv.CriExecutor.RetryingChannel = RetryingChannel{
+			RetryBackoffTime: yson.Duration(time.Second),
+			RetryAttempts:    *timeout,
+			RetryTimeout:     yson.Duration(time.Duration(*timeout) * time.Second),
+		}
+	}
+
+	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeImageCache); location != nil {
+		jobEnv.CriImageCache = &CriImageCache{
+			Capacity:            findQuotaForLocation(*location, spec.InstanceSpec),
+			ImageSizeEstimation: envSpec.CRI.ImageSizeEstimation,
+			AlwaysPullLatest:    envSpec.CRI.AlwaysPullLatestImage,
+		}
+		if ratio := envSpec.CRI.ImageCompressionRatioEstimation; ratio != nil {
+			jobEnv.CriImageCache.ImageCompressionRatioEstimation = ptr.To(float32(*ratio))
+		}
+		if period := envSpec.CRI.ImagePullPeriodSeconds; period != nil {
+			jobEnv.CriImageCache.PullPeriod = yson.Duration(time.Duration(*period) * time.Second)
+		}
+	}
+
+	// NOTE: Default was "false", now it's "true" and option was moved into dynamic config.
+	execNode.UseArtifactBindsLegacy = ptr.To(ptr.Deref(envSpec.UseArtifactBinds, true))
+	if !*execNode.UseArtifactBindsLegacy {
+		// Bind mount chunk cache into job containers if artifact are passed via symlinks.
+		for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
+			jobEnv.JobProxyBindMounts = append(jobEnv.JobProxyBindMounts, BindMount{
+				InternalPath: location.Path,
+				ExternalPath: location.Path,
+				ReadOnly:     true,
+			})
+		}
+	}
+
+	// FIXME(khlebnikov): For now running jobs as non-root is more likely broken.
+	execNode.SlotManager.DoNotSetUserId = ptr.To(ptr.Deref(envSpec.DoNotSetUserId, true))
+
+	// Enable tmpfs if exec node can mount and propagate into job container.
+	execNode.SlotManager.EnableTmpfs = ptr.To(func() bool {
+		if !spec.Privileged {
+			return false
+		}
+		if !ptr.Deref(envSpec.Isolated, true) {
+			return true
+		}
+		for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeSlots) {
+			mount := findVolumeMountForPath(location.Path, spec.InstanceSpec)
+			if mount == nil || mount.MountPropagation == nil || *mount.MountPropagation != corev1.MountPropagationBidirectional {
+				return false
+			}
+		}
+		return true
+	}())
+
+	// Forward environment variables set in docker image from job proxy to user job process.
+	execNode.JobProxy.ForwardAllEnvironmentVariables = ptr.To(true)
+
+	return nil
+}
+
 func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonSpec) error {
 	envSpec := spec.JobEnvironment
 	jobEnv := &execNode.SlotManager.JobEnvironment
@@ -528,84 +617,7 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 	jobEnv.StartUID = consts.StartUID
 
 	if envSpec != nil && envSpec.CRI != nil {
-		cri := NewCRIConfigGenerator(spec)
-
-		jobEnv.Type = JobEnvironmentTypeCRI
-
-		if jobImage := commonSpec.JobImage; jobImage != nil {
-			jobEnv.JobProxyImage = *jobImage
-		} else {
-			jobEnv.JobProxyImage = ptr.Deref(spec.Image, commonSpec.CoreImage)
-		}
-
-		jobEnv.UseJobProxyFromImage = ptr.To(false)
-
-		endpoint := "unix://" + cri.GetSocketPath()
-
-		jobEnv.CriExecutor = &CriExecutor{
-			RuntimeEndpoint: endpoint,
-			ImageEndpoint:   endpoint,
-			Namespace:       ptr.Deref(envSpec.CRI.CRINamespace, consts.CRINamespace),
-			BaseCgroup:      ptr.Deref(envSpec.CRI.BaseCgroup, consts.CRIBaseCgroup),
-		}
-
-		if timeout := envSpec.CRI.APIRetryTimeoutSeconds; timeout != nil {
-			jobEnv.CriExecutor.RetryingChannel = RetryingChannel{
-				RetryBackoffTime: yson.Duration(time.Second),
-				RetryAttempts:    *timeout,
-				RetryTimeout:     yson.Duration(time.Duration(*timeout) * time.Second),
-			}
-		}
-
-		if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeImageCache); location != nil {
-			jobEnv.CriImageCache = &CriImageCache{
-				Capacity:            findQuotaForLocation(*location, spec.InstanceSpec),
-				ImageSizeEstimation: envSpec.CRI.ImageSizeEstimation,
-				AlwaysPullLatest:    envSpec.CRI.AlwaysPullLatestImage,
-			}
-			if ratio := envSpec.CRI.ImageCompressionRatioEstimation; ratio != nil {
-				jobEnv.CriImageCache.ImageCompressionRatioEstimation = ptr.To(float32(*ratio))
-			}
-			if period := envSpec.CRI.ImagePullPeriodSeconds; period != nil {
-				jobEnv.CriImageCache.PullPeriod = yson.Duration(time.Duration(*period) * time.Second)
-			}
-		}
-
-		// NOTE: Default was "false", now it's "true" and option was moved into dynamic config.
-		execNode.UseArtifactBindsLegacy = ptr.To(ptr.Deref(envSpec.UseArtifactBinds, true))
-		if !*execNode.UseArtifactBindsLegacy {
-			// Bind mount chunk cache into job containers if artifact are passed via symlinks.
-			for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
-				jobEnv.JobProxyBindMounts = append(jobEnv.JobProxyBindMounts, BindMount{
-					InternalPath: location.Path,
-					ExternalPath: location.Path,
-					ReadOnly:     true,
-				})
-			}
-		}
-
-		// FIXME(khlebnikov): For now running jobs as non-root is more likely broken.
-		execNode.SlotManager.DoNotSetUserId = ptr.To(ptr.Deref(envSpec.DoNotSetUserId, true))
-
-		// Enable tmpfs if exec node can mount and propagate into job container.
-		execNode.SlotManager.EnableTmpfs = ptr.To(func() bool {
-			if !spec.Privileged {
-				return false
-			}
-			if !ptr.Deref(envSpec.Isolated, true) {
-				return true
-			}
-			for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeSlots) {
-				mount := findVolumeMountForPath(location.Path, spec.InstanceSpec)
-				if mount == nil || mount.MountPropagation == nil || *mount.MountPropagation != corev1.MountPropagationBidirectional {
-					return false
-				}
-			}
-			return true
-		}())
-
-		// Forward environment variables set in docker image from job proxy to user job process.
-		execNode.JobProxy.ForwardAllEnvironmentVariables = ptr.To(true)
+		return fillJobEnvironmentCRI(execNode, spec, commonSpec, envSpec, jobEnv)
 	} else if commonSpec.UsePorto {
 		jobEnv.Type = JobEnvironmentTypePorto
 		execNode.SlotManager.EnableTmpfs = ptr.To(true)
