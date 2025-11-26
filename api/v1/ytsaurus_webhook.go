@@ -104,7 +104,7 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus *Ytsaurus, mastersSpe
 
 	allErrors = append(allErrors, r.validateHydraPersistenceUploaderSpec(mastersSpec.HydraPersistenceUploader, path.Child("hydraPersistenceUploader"))...)
 
-	allErrors = append(allErrors, r.validateTimbertruckSpec(mastersSpec.Timbertruck, mastersSpec.StructuredLoggers, path)...)
+	allErrors = append(allErrors, r.validateTimbertruckSpec(mastersSpec.Timbertruck, mastersSpec.StructuredLoggers, mastersSpec.Locations, path)...)
 
 	allErrors = append(allErrors, r.validateSidecars(mastersSpec.Sidecars, path.Child("sidecars"))...)
 
@@ -256,7 +256,7 @@ func (r *baseValidator) validateHydraPersistenceUploaderSpec(
 }
 
 func (r *baseValidator) validateTimbertruckSpec(
-	timbertruck *TimbertruckSpec, structuredLoggers []StructuredLoggerSpec, parentPath *field.Path) field.ErrorList {
+	timbertruck *TimbertruckSpec, structuredLoggers []StructuredLoggerSpec, locations []LocationSpec, parentPath *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
 	if timbertruck != nil {
@@ -265,6 +265,9 @@ func (r *baseValidator) validateTimbertruckSpec(
 		}
 		if len(structuredLoggers) == 0 {
 			allErrors = append(allErrors, field.Required(parentPath.Child("structuredLoggers"), "structuredLoggers must be configured when timbertruck is enabled"))
+		}
+		if logLocation := FindFirstLocation(locations, LocationTypeLogs); logLocation == nil {
+			allErrors = append(allErrors, field.Required(parentPath.Child("locations"), "logs location must be configured when timbertruck is enabled"))
 		}
 	}
 	return allErrors
