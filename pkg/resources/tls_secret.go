@@ -21,6 +21,9 @@ func NewTLSSecret(secretName string, volumeName string, mountPath string) *TLSSe
 }
 
 func (t *TLSSecret) AddVolume(podSpec *corev1.PodSpec) {
+	if t == nil {
+		return
+	}
 	podSpec.Volumes = append(podSpec.Volumes, corev1.Volume{
 		Name: t.VolumeName,
 		VolumeSource: corev1.VolumeSource{
@@ -32,6 +35,9 @@ func (t *TLSSecret) AddVolume(podSpec *corev1.PodSpec) {
 }
 
 func (t *TLSSecret) AddVolumeMount(container *corev1.Container) {
+	if t == nil {
+		return
+	}
 	container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
 		Name:      t.VolumeName,
 		MountPath: t.MountPath,
