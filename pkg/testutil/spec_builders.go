@@ -270,6 +270,30 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 	}
 }
 
+func (b *YtsaurusBuilder) WithNativeTransportTLS(serverCert, clientCert string) {
+	b.Ytsaurus.Spec.CABundle = &ytv1.FileObjectReference{
+		Name: TestCABundleName,
+	}
+
+	transport := ytv1.RPCTransportSpec{
+		TLSSecret: &corev1.LocalObjectReference{
+			Name: serverCert,
+		},
+		TLSRequired:                true,
+		TLSInsecure:                true,
+		TLSPeerAlternativeHostName: b.Ytsaurus.Name,
+	}
+
+	if clientCert != "" {
+		transport.TLSClientSecret = &corev1.LocalObjectReference{
+			Name: clientCert,
+		}
+		transport.TLSInsecure = false
+	}
+
+	b.Ytsaurus.Spec.NativeTransport = &transport
+}
+
 func (b *YtsaurusBuilder) WithBaseComponents() {
 	b.WithMasterCaches()
 	b.WithBootstrap()
@@ -315,9 +339,10 @@ func (b *YtsaurusBuilder) WithMasterCaches() {
 	}
 }
 
-func (b *YtsaurusBuilder) WithClusterFeatures() {
+func (b *YtsaurusBuilder) WithAllClusterFeatures() {
 	b.Ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
-		HTTPProxyHaveChytAddress: true,
+		RPCProxyHavePublicAddress: true,
+		HTTPProxyHaveChytAddress:  true,
 	}
 }
 
