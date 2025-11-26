@@ -123,6 +123,7 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-controller-agent
     ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/config-overrides-version: "1"
   name: yt-controller-agent-config
   namespace: ytsaurus-components
   ownerReferences:

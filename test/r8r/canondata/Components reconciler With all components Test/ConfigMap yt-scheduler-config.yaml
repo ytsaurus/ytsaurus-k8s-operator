@@ -118,6 +118,7 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-scheduler
     ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/config-overrides-version: "1"
   name: yt-scheduler-config
   namespace: ytsaurus-components
   ownerReferences:
