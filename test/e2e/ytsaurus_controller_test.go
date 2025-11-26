@@ -260,6 +260,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 		ytBuilder.CreateMinimal()
 		ytsaurus = ytBuilder.Ytsaurus
+		ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{}
 
 		requiredImages = nil
 		objects = []client.Object{ytsaurus}
@@ -298,7 +299,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			// NOTE: CA bundle instead of full CA root bundle for more strict TLS verification.
 			Eventually(func() (err error) {
 				caBundleCertificates, err = readFileObject(namespace, ytv1.FileObjectReference{
-					Name: testutil.TestTrustBundleName,
+					Name: testutil.TestCABundleName,
 					Key:  consts.CABundleFileName,
 				})
 				return err
@@ -1722,32 +1723,15 @@ exec "$@"`
 					nativeClientCert,
 				)
 
-				ytsaurus.Spec.CABundle = &ytv1.FileObjectReference{
-					Name: testutil.TestTrustBundleName,
-				}
-
-				ytsaurus.Spec.NativeTransport = &ytv1.RPCTransportSpec{
-					TLSSecret: &corev1.LocalObjectReference{
-						Name: nativeServerCert.Name,
-					},
-					TLSRequired:                true,
-					TLSPeerAlternativeHostName: ytsaurus.Name,
-				}
-
 				if images.MutualTLSReady {
 					By("Enabling RPC proxy public address")
-					ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
-						RPCProxyHavePublicAddress: true,
-					}
+					ytsaurus.Spec.ClusterFeatures.RPCProxyHavePublicAddress = true
 
 					By("Activating mutual TLS interconnect")
-					ytsaurus.Spec.NativeTransport.TLSInsecure = false
-					ytsaurus.Spec.NativeTransport.TLSClientSecret = &corev1.LocalObjectReference{
-						Name: nativeClientCert.Name,
-					}
+					ytBuilder.WithNativeTransportTLS(nativeServerCert.Name, nativeClientCert.Name)
 				} else {
 					By("Activating TLS-only interconnect")
-					ytsaurus.Spec.NativeTransport.TLSInsecure = true
+					ytBuilder.WithNativeTransportTLS(nativeServerCert.Name, "")
 				}
 
 				By("Adding all components")
