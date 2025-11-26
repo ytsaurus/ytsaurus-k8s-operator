@@ -136,6 +136,13 @@ data:
                         capacity=5368709120;
                     };
                     "job_proxy_image"="docker.io/library/python:3.8-slim";
+                    "job_proxy_bind_mounts"=[
+                        {
+                            "external_path"="/etc/ssl/certs";
+                            "internal_path"="/etc/ssl/certs";
+                            "read_only"=%true;
+                        };
+                    ];
                     "use_job_proxy_from_image"=%false;
                 };
                 "do_not_set_user_id"=%true;
@@ -233,6 +240,21 @@ data:
                     mode=simple;
                 };
                 "environment_variables"=[
+                    {
+                        name="SSL_CERT_FILE";
+                        value="/etc/ssl/certs/ca-certificates.crt";
+                        export=%true;
+                    };
+                    {
+                        name="SSL_CERT_DIR";
+                        value="/etc/ssl/certs";
+                        export=%true;
+                    };
+                    {
+                        name="REQUESTS_CA_BUNDLE";
+                        value="/etc/ssl/certs/ca-certificates.crt";
+                        export=%true;
+                    };
                     {
                         name="YT_SECURE_VAULT_YT_BUS_CA_BUNDLE";
                         "file_name"="/tls/ca_bundle/ca.crt";

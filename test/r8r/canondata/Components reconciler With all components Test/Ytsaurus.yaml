@@ -9,6 +9,8 @@ metadata:
 spec:
   caBundle:
     name: ytsaurus-dev-ca.crt
+  caRootBundle:
+    name: ytsaurus-dev-ca-root-bundle
   clusterFeatures:
     httpProxyHaveChytAddress: true
     rpcProxyHavePublicAddress: true

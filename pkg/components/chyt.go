@@ -168,16 +168,16 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		job := c.initEnvironment.Build()
 		container := &job.Spec.Template.Spec.Containers[0]
 		token, _ := c.secret.GetValue(consts.TokenSecretKey)
-		container.Env = []corev1.EnvVar{
-			{
+		container.Env = append(container.Env,
+			corev1.EnvVar{
 				Name:  "YT_PROXY",
 				Value: c.cfgen.GetHTTPProxiesAddress(&c.ytsaurus.Spec, consts.DefaultHTTPProxyRole),
 			},
-			{
+			corev1.EnvVar{
 				Name:  "YT_TOKEN",
 				Value: token,
 			},
-		}
+		)
 	}
 
 	status, err = c.initEnvironment.Sync(ctx, dry)

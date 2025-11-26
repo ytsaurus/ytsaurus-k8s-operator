@@ -24,6 +24,7 @@ type UI struct {
 	initJob      *InitJob
 	master       Component
 	secret       *resources.StringSecret
+	caRootBundle *resources.CABundle
 	caBundle     *resources.CABundle
 }
 
@@ -84,8 +85,9 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			l.GetSecretName(),
 			l,
 			ytsaurus.APIProxy()),
-		caBundle: resources.NewCABundle(resource.Spec.CABundle),
-		master:   master,
+		caRootBundle: resources.NewCARootBundle(resource.Spec.CARootBundle),
+		caBundle:     resources.NewCABundle(resource.Spec.CABundle),
+		master:       master,
 	}
 }
 
@@ -165,10 +167,16 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 		})
 	}
 
-	if u.caBundle != nil {
+	// FIXME(khlebnikov): UI node should have no use for native transport CA certificate.
+	// For compatibility add CA bundle unless have CA root bundle.
+	caBundle := u.caRootBundle
+	if caBundle == nil {
+		caBundle = u.caBundle
+	}
+	if caBundle != nil {
 		env = append(env, corev1.EnvVar{
 			Name:  "NODE_EXTRA_CA_CERTS",
-			Value: fmt.Sprintf("%s/ca.crt", u.caBundle.MountPath),
+			Value: path.Join(caBundle.MountPath, caBundle.FileName),
 		})
 	}
 
@@ -247,10 +255,12 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 		},
 	}
 
-	u.caBundle.AddVolume(&deployment.Spec.Template.Spec)
-
+	caBundle.AddVolume(&deployment.Spec.Template.Spec)
 	for i := range deployment.Spec.Template.Spec.Containers {
-		u.caBundle.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[i])
+		ct := &deployment.Spec.Template.Spec.Containers[i]
+		caBundle.AddVolumeMount(ct)
+		// NOTE: Add standard environment variables only in case CA root bundle.
+		u.caRootBundle.AddContainerEnv(ct)
 	}
 
 	return u.microservice.Sync(ctx)

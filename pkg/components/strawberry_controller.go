@@ -23,6 +23,7 @@ type StrawberryController struct {
 	initUserAndUrlJob  *InitJob
 	initChytClusterJob *InitJob
 	secret             *resources.StringSecret
+	caRootBundle       *resources.CABundle
 	caBundle           *resources.CABundle
 	busClientSecret    *resources.TLSSecret
 	busServerSecret    *resources.TLSSecret
@@ -126,6 +127,7 @@ func NewStrawberryController(
 			l.GetSecretName(),
 			l,
 			ytsaurus.APIProxy()),
+		caRootBundle:    resources.NewCARootBundle(resource.Spec.CARootBundle),
 		caBundle:        resources.NewCABundle(resource.Spec.CABundle),
 		busClientSecret: busClientSecret,
 		busServerSecret: busServerSecret,
@@ -243,6 +245,10 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 	deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
 		createConfigVolume(consts.ConfigVolumeName, c.labeller.GetMainConfigMapName(), nil),
 	}
+
+	c.caRootBundle.AddVolume(&deployment.Spec.Template.Spec)
+	c.caRootBundle.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[0])
+	c.caRootBundle.AddContainerEnv(&deployment.Spec.Template.Spec.Containers[0])
 
 	// Strawberry forwards native transport certificates via operation secure vault.
 	c.caBundle.AddVolume(&deployment.Spec.Template.Spec)

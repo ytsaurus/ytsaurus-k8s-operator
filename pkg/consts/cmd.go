@@ -12,6 +12,7 @@ const (
 	BusServerSecretMountPoint  = "/tls/bus_secret"
 	BusClientSecretMountPoint  = "/tls/bus_client_secret"
 	CABundleMountPoint         = "/tls/ca_bundle"
+	CARootBundleMountPoint     = "/etc/ssl/certs"
 	UIClustersConfigMountPoint = "/opt/app"
 	UICustomConfigMountPoint   = "/opt/app/dist/server/configs/custom"
 	UISecretsMountPoint        = "/opt/app/secrets"
@@ -42,7 +43,12 @@ const (
 	UIClusterConfigFileName = "clusters-config.json"
 	UISecretFileName        = "yt-interface-secret.json"
 	CABundleFileName        = "ca.crt"
-	TokenSecretKey          = "YT_TOKEN"
+	CARootBundleFileName    = "ca-certificates.crt"
+	// NOTE: See https://github.com/ytsaurus/ytsaurus/issues/1524
+	SSLCertFileKey      = "SSL_CERT_FILE"
+	SSLCertDirKey       = "SSL_CERT_DIR"
+	RequestsCABundleKey = "REQUESTS_CA_BUNDLE"
+	TokenSecretKey      = "YT_TOKEN"
 )
 
 const (
@@ -71,6 +77,7 @@ const (
 	RPCProxySecretVolumeName  = "rpc-secret"
 	BusServerSecretVolumeName = "bus-secret"
 	BusClientSecretVolumeName = "bus-client-secret"
+	CARootBundleVolumeName    = "ca-root-bundle"
 	CABundleVolumeName        = "ca-bundle"
 	InitScriptVolumeName      = "init-script"
 	UIVaultVolumeName         = "vault"
