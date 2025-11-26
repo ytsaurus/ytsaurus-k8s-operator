@@ -384,6 +384,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithYqlAgent()
 			ytBuilder.WithAllClusterFeatures()
 			ytBuilder.WithNativeTransportTLS("native-server-cert", "native-client-cert")
+			ytBuilder.WithHTTPSProxies("https-server-cert", false)
 		})
 		It("Test", func(ctx context.Context) {})
 	})

@@ -97,6 +97,9 @@ spec:
         - mountPath: /tls/bus_client_secret
           name: bus-client-secret
           readOnly: true
+        - mountPath: /tls/https_secret
+          name: https-secret
+          readOnly: true
       enableServiceLinks: false
       initContainers:
       - command:
@@ -180,6 +183,9 @@ spec:
       - name: bus-client-secret
         secret:
           secretName: native-client-cert
+      - name: https-secret
+        secret:
+          secretName: https-server-cert
   updateStrategy: {}
 status:
   availableReplicas: 0

@@ -296,6 +296,17 @@ func (b *YtsaurusBuilder) WithNativeTransportTLS(serverCert, clientCert string) 
 	b.Ytsaurus.Spec.NativeTransport = &transport
 }
 
+func (b *YtsaurusBuilder) WithHTTPSProxies(httpsCert string, httpsOnly bool) {
+	for i := range b.Ytsaurus.Spec.HTTPProxies {
+		b.Ytsaurus.Spec.HTTPProxies[i].Transport = ytv1.HTTPTransportSpec{
+			HTTPSSecret: &corev1.LocalObjectReference{
+				Name: httpsCert,
+			},
+			DisableHTTP: httpsOnly,
+		}
+	}
+}
+
 func (b *YtsaurusBuilder) WithBaseComponents() {
 	b.WithMasterCaches()
 	b.WithBootstrap()
