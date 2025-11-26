@@ -120,8 +120,32 @@ data:
             "default_rpc_proxy_address_type"="public_rpc";
         };
         role="";
+        "https_server"={
+            port=443;
+            credentials={
+                "cert_chain"={
+                    "file_name"="/tls/https_secret/tls.crt";
+                };
+                "private_key"={
+                    "file_name"="/tls/https_secret/tls.key";
+                };
+                "update_period"=60000;
+            };
+        };
         "chyt_http_server"={
             port=8123;
+        };
+        "chyt_https_server"={
+            port=8443;
+            credentials={
+                "cert_chain"={
+                    "file_name"="/tls/https_secret/tls.crt";
+                };
+                "private_key"={
+                    "file_name"="/tls/https_secret/tls.key";
+                };
+                "update_period"=60000;
+            };
         };
     }
 kind: ConfigMap

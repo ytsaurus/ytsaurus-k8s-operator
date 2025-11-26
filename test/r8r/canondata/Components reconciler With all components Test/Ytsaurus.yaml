@@ -102,7 +102,9 @@ spec:
     minReadyInstanceCount: 0
     resources: {}
     serviceType: NodePort
-    transport: {}
+    transport:
+      httpsSecret:
+        name: https-server-cert
   isManaged: true
   jobImage: docker.io/library/python:3.8-slim
   masterCaches:
