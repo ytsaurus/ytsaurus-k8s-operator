@@ -60,12 +60,24 @@ spec:
         volumeMounts:
         - mountPath: /config
           name: config
+        - mountPath: /tls/ca_bundle
+          name: ca-bundle
+          readOnly: true
+        - mountPath: /tls/bus_client_secret
+          name: bus-client-secret
+          readOnly: true
       restartPolicy: OnFailure
       volumes:
       - configMap:
           defaultMode: 320
           name: yql-agent-environment-yt-yql-agent-init-job-config
         name: config
+      - configMap:
+          name: ytsaurus-dev-ca.crt
+        name: ca-bundle
+      - name: bus-client-secret
+        secret:
+          secretName: native-client-cert
   ttlSecondsAfterFinished: 600
 status:
   succeeded: 1

@@ -17,6 +17,30 @@ data:
                     "enable_ipv6"=%false;
                     retries=1000;
                 };
+                "bus_server"={
+                    "encryption_mode"=required;
+                    "cert_chain"={
+                        "environment_variable"="YT_SECURE_VAULT_YT_BUS_SERVER_CERTIFICATE";
+                        "file_name"="/tls/bus_secret/tls.crt";
+                    };
+                    "private_key"={
+                        "environment_variable"="YT_SECURE_VAULT_YT_BUS_SERVER_PRIVATE_KEY";
+                        "file_name"="/tls/bus_secret/tls.key";
+                    };
+                    ca={
+                        "environment_variable"="YT_SECURE_VAULT_YT_BUS_CA_BUNDLE";
+                        "file_name"="/tls/ca_bundle/ca.crt";
+                    };
+                    "verification_mode"=full;
+                    "peer_alternative_host_name"="test-ytsaurus";
+                };
+                "secure_vault_files"={
+                    "YT_BUS_CA_BUNDLE"="/tls/ca_bundle/ca.crt";
+                    "YT_BUS_CLIENT_CERTIFICATE"="/tls/bus_client_secret/tls.crt";
+                    "YT_BUS_CLIENT_PRIVATE_KEY"="/tls/bus_client_secret/tls.key";
+                    "YT_BUS_SERVER_CERTIFICATE"="/tls/bus_secret/tls.crt";
+                    "YT_BUS_SERVER_PRIVATE_KEY"="/tls/bus_secret/tls.key";
+                };
             };
             jupyt={
             };
