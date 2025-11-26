@@ -26,6 +26,10 @@ spec:
   - name: ytsaurus-metrics
     port: 10000
     targetPort: 10029
+  - name: cri-metrics
+    port: 10026
+    protocol: TCP
+    targetPort: 10026
   selector:
     yt_component: test-ytsaurus-yt-exec-node
 status:
