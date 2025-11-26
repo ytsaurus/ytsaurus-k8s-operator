@@ -76,6 +76,9 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+        - mountPath: /etc/ssl/certs
+          name: ca-root-bundle
+          readOnly: true
         - mountPath: /tls/ca_bundle
           name: ca-bundle
           readOnly: true
@@ -113,6 +116,9 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+        - mountPath: /etc/ssl/certs
+          name: ca-root-bundle
+          readOnly: true
       - command:
         - bash
         - -xc
@@ -147,12 +153,18 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+        - mountPath: /etc/ssl/certs
+          name: ca-root-bundle
+          readOnly: true
       volumes:
       - configMap:
           name: yt-scheduler-config
         name: config-template
       - emptyDir: {}
         name: config
+      - configMap:
+          name: ytsaurus-dev-ca-root-bundle
+        name: ca-root-bundle
       - configMap:
           name: ytsaurus-dev-ca.crt
         name: ca-bundle

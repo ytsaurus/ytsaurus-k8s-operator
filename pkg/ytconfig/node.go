@@ -548,6 +548,15 @@ func fillJobEnvironmentCRI(
 
 	jobEnv.UseJobProxyFromImage = ptr.To(false)
 
+	// Bind mount CA root bundle to job proxy container.
+	if commonSpec.CARootBundle != nil {
+		jobEnv.JobProxyBindMounts = append(jobEnv.JobProxyBindMounts, BindMount{
+			InternalPath: consts.CARootBundleMountPoint,
+			ExternalPath: consts.CARootBundleMountPoint,
+			ReadOnly:     true,
+		})
+	}
+
 	endpoint := "unix://" + cri.GetSocketPath()
 
 	jobEnv.CriExecutor = &CriExecutor{

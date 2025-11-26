@@ -52,6 +52,7 @@ type serverImpl struct {
 	statefulSet       *resources.StatefulSet
 	headlessService   *resources.HeadlessService
 	monitoringService *resources.MonitoringService
+	caRootBundle      *resources.CABundle
 	caBundle          *resources.CABundle
 	busServerSecret   *resources.TLSSecret
 	busClientSecret   *resources.TLSSecret
@@ -178,6 +179,7 @@ func newServerConfigured(
 			l,
 			proxy,
 		),
+		caRootBundle:    resources.NewCARootBundle(commonSpec.CARootBundle),
 		caBundle:        resources.NewCABundle(commonSpec.CABundle),
 		busServerSecret: busServerSecret,
 		busClientSecret: busClientSecret,
@@ -400,9 +402,18 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		podSpec.DNSPolicy = s.instanceSpec.DNSPolicy
 	}
 
+	s.caRootBundle.AddVolume(podSpec)
 	s.caBundle.AddVolume(podSpec)
 	s.busServerSecret.AddVolume(podSpec)
 	s.busClientSecret.AddVolume(podSpec)
+
+	// Add CA root bundle into all containers.
+	for i := range podSpec.Containers {
+		s.caRootBundle.AddVolumeMount(&podSpec.Containers[i])
+	}
+	for i := range podSpec.InitContainers {
+		s.caRootBundle.AddVolumeMount(&podSpec.InitContainers[i])
+	}
 
 	serverContainer := &podSpec.Containers[0]
 
@@ -419,6 +430,8 @@ func (s *serverImpl) addContainer(container *corev1.Container) *corev1.Container
 	podSpec := &s.statefulSet.NewObject().Spec.Template.Spec
 	podSpec.Containers = append(podSpec.Containers, *container)
 	container = &podSpec.Containers[len(podSpec.Containers)-1]
+
+	s.caRootBundle.AddVolumeMount(container)
 
 	return container
 }
