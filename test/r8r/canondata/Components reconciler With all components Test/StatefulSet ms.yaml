@@ -118,9 +118,6 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
-        - mountPath: /tls/ca_bundle
-          name: ca-bundle
-          readOnly: true
       - command:
         - bash
         - -xc
@@ -157,9 +154,6 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
-        - mountPath: /tls/ca_bundle
-          name: ca-bundle
-          readOnly: true
       volumes:
       - configMap:
           name: yt-master-config

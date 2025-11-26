@@ -141,15 +141,6 @@ spec:
         - mountPath: /config/containerd
           name: config-containerd
           readOnly: true
-        - mountPath: /tls/ca_bundle
-          name: ca-bundle
-          readOnly: true
-        - mountPath: /tls/bus_secret
-          name: bus-secret
-          readOnly: true
-        - mountPath: /tls/bus_client_secret
-          name: bus-client-secret
-          readOnly: true
       enableServiceLinks: false
       initContainers:
       - command:
@@ -183,9 +174,6 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
-        - mountPath: /tls/ca_bundle
-          name: ca-bundle
-          readOnly: true
       - command:
         - bash
         - -xc
@@ -224,9 +212,6 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
-        - mountPath: /tls/ca_bundle
-          name: ca-bundle
-          readOnly: true
       volumes:
       - configMap:
           name: yt-exec-node-config

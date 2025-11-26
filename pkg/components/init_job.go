@@ -69,12 +69,7 @@ func NewInitJob(
 	dnsConfig *corev1.PodDNSConfig,
 	commonSpec *ytv1.CommonSpec,
 ) *InitJob {
-	var caBundle *resources.CABundle
 	var busClientSecret *resources.TLSSecret
-
-	if caBundleSpec := commonSpec.CABundle; caBundleSpec != nil {
-		caBundle = resources.NewCABundle(*caBundleSpec, consts.CABundleVolumeName, consts.CABundleMountPoint)
-	}
 
 	if transportSpec := commonSpec.NativeTransport; transportSpec != nil {
 		if transportSpec.TLSClientSecret != nil {
@@ -105,7 +100,7 @@ func NewInitJob(
 			labeller,
 			apiProxy,
 		),
-		caBundle:        caBundle,
+		caBundle:        resources.NewCABundle(commonSpec.CABundle),
 		busClientSecret: busClientSecret,
 		configs:         configs,
 	}
@@ -152,15 +147,11 @@ func (j *InitJob) Build() *batchv1.Job {
 		},
 	}
 
-	if j.caBundle != nil {
-		j.caBundle.AddVolume(&job.Spec.Template.Spec)
-		j.caBundle.AddVolumeMount(&job.Spec.Template.Spec.Containers[0])
-	}
+	j.caBundle.AddVolume(&job.Spec.Template.Spec)
+	j.caBundle.AddVolumeMount(&job.Spec.Template.Spec.Containers[0])
 
-	if j.busClientSecret != nil {
-		j.busClientSecret.AddVolume(&job.Spec.Template.Spec)
-		j.busClientSecret.AddVolumeMount(&job.Spec.Template.Spec.Containers[0])
-	}
+	j.busClientSecret.AddVolume(&job.Spec.Template.Spec)
+	j.busClientSecret.AddVolumeMount(&job.Spec.Template.Spec.Containers[0])
 
 	j.builtJob = job
 	return job
