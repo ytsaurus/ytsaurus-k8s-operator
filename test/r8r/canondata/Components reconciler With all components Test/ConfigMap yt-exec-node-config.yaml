@@ -110,7 +110,7 @@ data:
         "skynet_http_port"=11029;
         "job_resource_manager"={
             "resource_limits"={
-                "user_slots"=5;
+                "user_slots"=4;
             };
         };
         "exec_node"={
@@ -124,9 +124,21 @@ data:
                     };
                 ];
                 "job_environment"={
-                    type=simple;
+                    type=cri;
                     "start_uid"=19500;
+                    "cri_executor"={
+                        "runtime_endpoint"="unix:///yt/node-data/image-cache/containerd.sock";
+                        "image_endpoint"="unix:///yt/node-data/image-cache/containerd.sock";
+                        namespace=yt;
+                        "base_cgroup"="/yt";
+                    };
+                    "cri_image_cache"={
+                        capacity=5368709120;
+                    };
+                    "job_proxy_image"="docker.io/library/python:3.8-slim";
+                    "use_job_proxy_from_image"=%false;
                 };
+                "do_not_set_user_id"=%true;
                 "enable_tmpfs"=%false;
             };
             "gpu_manager"={
@@ -136,7 +148,7 @@ data:
             };
             "job_controller"={
                 "resource_limits"={
-                    "user_slots"=5;
+                    "user_slots"=4;
                 };
                 "gpu_manager"={
                     "gpu_info_source"={
@@ -237,6 +249,7 @@ data:
                         export=%false;
                     };
                 ];
+                "forward_all_environment_variables"=%true;
                 "cluster_connection"={
                     "cluster_name"="test-ytsaurus";
                     "primary_master"={
@@ -342,6 +355,9 @@ data:
                 ];
                 "flush_period"=3000;
             };
+            "do_not_set_user_id"=%true;
+            "forward_all_environment_variables"=%true;
+            "use_artifact_binds"=%true;
             "job_proxy_log_manager"={
                 directory="/var/log/job-proxy";
                 "sharding_key_length"=2;
@@ -403,6 +419,7 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-exec-node
     ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/config-overrides-version: "1"
   name: yt-exec-node-config
   namespace: ytsaurus-components
   ownerReferences:

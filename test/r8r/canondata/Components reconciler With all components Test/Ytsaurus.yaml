@@ -12,6 +12,8 @@ spec:
   clusterFeatures:
     httpProxyHaveChytAddress: true
     rpcProxyHavePublicAddress: true
+  configOverrides:
+    name: test-overrides
   controllerAgents:
     instanceCount: 1
     loggers:
@@ -59,11 +61,16 @@ spec:
   ephemeralCluster: true
   execNodes:
   - instanceCount: 1
+    jobEnvironment:
+      cri: {}
+      userSlots: 4
     locations:
     - locationType: ChunkCache
       path: /yt/node-data/chunk-cache
     - locationType: Slots
       path: /yt/node-data/slots
+    - locationType: ImageCache
+      path: /yt/node-data/image-cache
     loggers:
     - minLogLevel: info
       name: info-stderr

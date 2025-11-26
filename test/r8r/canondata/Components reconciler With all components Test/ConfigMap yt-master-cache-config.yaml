@@ -127,6 +127,7 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-master-cache
     ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/config-overrides-version: "1"
   name: yt-master-cache-config
   namespace: ytsaurus-components
   ownerReferences:
