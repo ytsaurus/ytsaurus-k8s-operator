@@ -7,8 +7,11 @@ metadata:
   namespace: ytsaurus-components
   resourceVersion: "16"
 spec:
+  caBundle:
+    name: ytsaurus-dev-ca.crt
   clusterFeatures:
     httpProxyHaveChytAddress: true
+    rpcProxyHavePublicAddress: true
   controllerAgents:
     instanceCount: 1
     loggers:
@@ -105,6 +108,13 @@ spec:
       writerType: stderr
     minReadyInstanceCount: 0
     resources: {}
+  nativeTransport:
+    tlsClientSecret:
+      name: native-client-cert
+    tlsPeerAlternativeHostName: test-ytsaurus
+    tlsRequired: true
+    tlsSecret:
+      name: native-server-cert
   primaryMasters:
     cellTag: 1
     instanceCount: 1

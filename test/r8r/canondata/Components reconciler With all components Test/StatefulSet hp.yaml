@@ -88,6 +88,15 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+        - mountPath: /tls/ca_bundle
+          name: ca-bundle
+          readOnly: true
+        - mountPath: /tls/bus_secret
+          name: bus-secret
+          readOnly: true
+        - mountPath: /tls/bus_client_secret
+          name: bus-client-secret
+          readOnly: true
       enableServiceLinks: false
       initContainers:
       - command:
@@ -116,6 +125,9 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+        - mountPath: /tls/ca_bundle
+          name: ca-bundle
+          readOnly: true
       - command:
         - bash
         - -xc
@@ -150,12 +162,24 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+        - mountPath: /tls/ca_bundle
+          name: ca-bundle
+          readOnly: true
       volumes:
       - configMap:
           name: yt-http-proxy-config
         name: config-template
       - emptyDir: {}
         name: config
+      - configMap:
+          name: ytsaurus-dev-ca.crt
+        name: ca-bundle
+      - name: bus-secret
+        secret:
+          secretName: native-server-cert
+      - name: bus-client-secret
+        secret:
+          secretName: native-client-cert
   updateStrategy: {}
 status:
   availableReplicas: 0

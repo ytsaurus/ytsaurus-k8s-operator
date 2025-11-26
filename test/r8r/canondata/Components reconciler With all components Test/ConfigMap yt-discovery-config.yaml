@@ -35,6 +35,20 @@ data:
         };
         "monitoring_port"=10020;
         "rpc_port"=9020;
+        "bus_server"={
+            "encryption_mode"=required;
+            "cert_chain"={
+                "file_name"="/tls/bus_secret/tls.crt";
+            };
+            "private_key"={
+                "file_name"="/tls/bus_secret/tls.key";
+            };
+            ca={
+                "file_name"="/tls/ca_bundle/ca.crt";
+            };
+            "verification_mode"=full;
+            "peer_alternative_host_name"="test-ytsaurus";
+        };
         "timestamp_provider"={
             addresses=[
                 "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
@@ -59,6 +73,20 @@ data:
                     "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
                 ];
             };
+            "bus_client"={
+                "encryption_mode"=required;
+                "cert_chain"={
+                    "file_name"="/tls/bus_client_secret/tls.crt";
+                };
+                "private_key"={
+                    "file_name"="/tls/bus_client_secret/tls.key";
+                };
+                ca={
+                    "file_name"="/tls/ca_bundle/ca.crt";
+                };
+                "verification_mode"=full;
+                "peer_alternative_host_name"="test-ytsaurus";
+            };
             "master_cache"={
                 addresses=[
                     "msc-0.master-caches.ytsaurus-components.svc.cluster.local:9018";
@@ -72,6 +100,20 @@ data:
             "k8s_pod_name"="{K8S_POD_NAME}";
             "k8s_pod_namespace"="{K8S_POD_NAMESPACE}";
             "physical_host"="{K8S_NODE_NAME}";
+        };
+        "bus_client"={
+            "encryption_mode"=required;
+            "cert_chain"={
+                "file_name"="/tls/bus_client_secret/tls.crt";
+            };
+            "private_key"={
+                "file_name"="/tls/bus_client_secret/tls.key";
+            };
+            ca={
+                "file_name"="/tls/ca_bundle/ca.crt";
+            };
+            "verification_mode"=full;
+            "peer_alternative_host_name"="test-ytsaurus";
         };
         "discovery_server"={
             "server_addresses"=[
