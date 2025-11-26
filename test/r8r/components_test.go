@@ -368,6 +368,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 	Context("With all components", func() {
 		BeforeEach(func() {
+			ytBuilder.WithOverrides()
 			ytBuilder.WithMasterCaches()
 			ytBuilder.WithRPCProxies()
 			ytBuilder.WithDataNodes()
@@ -376,6 +377,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithScheduler()
 			ytBuilder.WithControllerAgents()
 			ytBuilder.WithExecNodes()
+			ytBuilder.WithCRIJobEnvironment()
 			ytBuilder.WithStrawberryController()
 			ytBuilder.WithQueryTracker()
 			ytBuilder.WithQueueAgent()
