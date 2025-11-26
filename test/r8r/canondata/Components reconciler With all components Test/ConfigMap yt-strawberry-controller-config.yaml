@@ -66,6 +66,7 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-strawberry-controller
     ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/config-overrides-version: "1"
   name: yt-strawberry-controller-config
   namespace: ytsaurus-components
   ownerReferences:
