@@ -179,8 +179,7 @@ func (n *baseExecNode) addCRIServiceSidecar(cri *ytconfig.CRIConfigGenerator, po
 
 	n.addCRIServiceConfig(cri, podSpec, &container)
 
-	n.server.addCABundleMount(&container)
-	n.server.addTlsSecretMount(&container)
+	n.server.addCARootBundle(&container)
 
 	// Replace mount propagation "Bidirectional" -> "HostToContainer".
 	// Tmpfs are propagated: exec-node -> host -> containerd.

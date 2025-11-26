@@ -806,6 +806,28 @@ func (g *NodeGenerator) GetExecNodeConfig(spec ytv1.ExecNodesSpec) ([]byte, erro
 		return []byte{}, err
 	}
 
+	// Add CA root bundle environment variables to job proxy and job containers.
+	if g.commonSpec.CARootBundle != nil {
+		c.ExecNode.JobProxy.EnvironmentVariables = append(
+			c.ExecNode.JobProxy.EnvironmentVariables,
+			EnvironmentVariable{
+				Name:   consts.SSLCertFileKey,
+				Value:  ptr.To(path.Join(consts.CARootBundleMountPoint, consts.CARootBundleFileName)),
+				Export: ptr.To(true),
+			},
+			EnvironmentVariable{
+				Name:   consts.SSLCertDirKey,
+				Value:  ptr.To(consts.CARootBundleMountPoint),
+				Export: ptr.To(true),
+			},
+			EnvironmentVariable{
+				Name:   consts.RequestsCABundleKey,
+				Value:  ptr.To(path.Join(consts.CARootBundleMountPoint, consts.CARootBundleFileName)),
+				Export: ptr.To(true),
+			},
+		)
+	}
+
 	if c.ClusterConnection.BusClient != nil {
 		var clusterConnection ClusterConnection
 

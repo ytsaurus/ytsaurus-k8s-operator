@@ -819,7 +819,13 @@ type CommonSpec struct {
 	//+optional
 	JobImage *string `json:"jobImage,omitempty"`
 
-	// Reference to trusted certificates. Default kind="ConfigMap", key="ca.crt".
+	// Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".
+	// Will replace system CA root bundle for all server and job containers.
+	//+optional
+	CARootBundle *FileObjectReference `json:"caRootBundle,omitempty"`
+
+	// Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".
+	// By default will use system CA bundle, which could be set by caRootBundle.
 	//+optional
 	CABundle *FileObjectReference `json:"caBundle,omitempty"`
 

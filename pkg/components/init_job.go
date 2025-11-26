@@ -44,6 +44,7 @@ type InitJob struct {
 	initJob *resources.Job
 	configs *ConfigMapBuilder
 
+	caRootBundle    *resources.CABundle
 	caBundle        *resources.CABundle
 	busClientSecret *resources.TLSSecret
 
@@ -100,6 +101,7 @@ func NewInitJob(
 			labeller,
 			apiProxy,
 		),
+		caRootBundle:    resources.NewCARootBundle(commonSpec.CARootBundle),
 		caBundle:        resources.NewCABundle(commonSpec.CABundle),
 		busClientSecret: busClientSecret,
 		configs:         configs,
@@ -146,6 +148,10 @@ func (j *InitJob) Build() *batchv1.Job {
 			DNSConfig:     j.dnsConfig,
 		},
 	}
+
+	j.caRootBundle.AddVolume(&job.Spec.Template.Spec)
+	j.caRootBundle.AddVolumeMount(&job.Spec.Template.Spec.Containers[0])
+	j.caRootBundle.AddContainerEnv(&job.Spec.Template.Spec.Containers[0])
 
 	j.caBundle.AddVolume(&job.Spec.Template.Spec)
 	j.caBundle.AddVolumeMount(&job.Spec.Template.Spec.Containers[0])

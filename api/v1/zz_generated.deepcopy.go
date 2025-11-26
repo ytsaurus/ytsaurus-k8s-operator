@@ -453,6 +453,11 @@ func (in *CommonSpec) DeepCopyInto(out *CommonSpec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.CARootBundle != nil {
+		in, out := &in.CARootBundle, &out.CARootBundle
+		*out = new(FileObjectReference)
+		**out = **in
+	}
 	if in.CABundle != nil {
 		in, out := &in.CABundle, &out.CABundle
 		*out = new(FileObjectReference)

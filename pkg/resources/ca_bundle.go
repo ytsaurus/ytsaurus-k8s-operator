@@ -1,6 +1,8 @@
 package resources
 
 import (
+	"path"
+
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -25,6 +27,18 @@ func NewCABundle(source *ytv1.FileObjectReference) *CABundle {
 		VolumeName: consts.CABundleVolumeName,
 		MountPath:  consts.CABundleMountPoint,
 		FileName:   consts.CABundleFileName,
+	}
+}
+
+func NewCARootBundle(source *ytv1.FileObjectReference) *CABundle {
+	if source == nil {
+		return nil
+	}
+	return &CABundle{
+		Source:     *source,
+		VolumeName: consts.CARootBundleVolumeName,
+		MountPath:  consts.CARootBundleMountPoint,
+		FileName:   consts.CARootBundleFileName,
 	}
 }
 
@@ -72,4 +86,24 @@ func (t *CABundle) AddVolumeMount(container *corev1.Container) {
 		MountPath: t.MountPath,
 		ReadOnly:  true,
 	})
+}
+
+func (t *CABundle) AddContainerEnv(container *corev1.Container) {
+	if t == nil {
+		return
+	}
+	container.Env = append(container.Env,
+		corev1.EnvVar{
+			Name:  consts.SSLCertFileKey,
+			Value: path.Join(t.MountPath, t.FileName),
+		},
+		corev1.EnvVar{
+			Name:  consts.SSLCertDirKey,
+			Value: t.MountPath,
+		},
+		corev1.EnvVar{
+			Name:  consts.RequestsCABundleKey,
+			Value: path.Join(t.MountPath, t.FileName),
+		},
+	)
 }
