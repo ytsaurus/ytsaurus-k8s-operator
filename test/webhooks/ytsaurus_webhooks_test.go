@@ -332,38 +332,26 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
 		})
 
-		It("Should not accept Timbertruck without StructuredLoggers", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
-
-			image := "ghcr.io/ytsaurus/sidecars:0.0.0"
-			ytsaurus.Spec.PrimaryMasters.Timbertruck = &ytv1.TimbertruckSpec{
-				Image: &image,
-			}
-
-			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.primaryMasters.structuredLoggers: Required value: structuredLoggers must be configured when timbertruck is enabled")))
-		})
-
-		It("Should not accept Timbertruck without Image", func() {
+		It("Should not accept Timbertruck without structured loggers, logs location and Image", func() {
 			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 
 			ytsaurus.Spec.PrimaryMasters.Timbertruck = &ytv1.TimbertruckSpec{}
-			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{
-				{BaseLoggerSpec: ytv1.BaseLoggerSpec{Name: "access"}, Category: "Access"},
-			}
 
-			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.primaryMasters.timbertruck.image: Required value: timbertruck image is required")))
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(SatisfyAll(
+				ContainSubstring("spec.primaryMasters.timbertruck.image: Required value: timbertruck image is required"),
+				ContainSubstring("spec.primaryMasters.structuredLoggers: Required value: structuredLoggers must be configured when timbertruck is enabled"),
+				ContainSubstring("spec.primaryMasters.locations: Required value: logs location must be configured when timbertruck is enabled"),
+			)))
 		})
 
-		It("Should accept Timbertruck with StructuredLoggers and Image", func() {
+		It("Should accept Timbertruck with structured loggers, logs location and Image", func() {
 			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 
 			image := "ghcr.io/ytsaurus/sidecars:0.0.0"
-			ytsaurus.Spec.PrimaryMasters.Timbertruck = &ytv1.TimbertruckSpec{
-				Image: &image,
-			}
-			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{
-				{BaseLoggerSpec: ytv1.BaseLoggerSpec{Name: "access"}, Category: "Access"},
-			}
+			ytsaurus.Spec.PrimaryMasters.Timbertruck = &ytv1.TimbertruckSpec{Image: &image}
+			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{BaseLoggerSpec: ytv1.BaseLoggerSpec{Name: "access"}, Category: "Access"}}
+			ytsaurus.Spec.PrimaryMasters.Locations = append(ytsaurus.Spec.PrimaryMasters.Locations, ytv1.LocationSpec{LocationType: ytv1.LocationTypeLogs, Path: "/yt/master-logs"})
+			ytsaurus.Spec.PrimaryMasters.VolumeMounts = append(ytsaurus.Spec.PrimaryMasters.VolumeMounts, corev1.VolumeMount{Name: "master-logs", MountPath: "/yt/master-logs"})
 
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
 			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
