@@ -174,7 +174,7 @@ test-e2e: generate-code manifests ## Run e2e tests.
 
 .PHONY: clean-e2e
 clean-e2e: ## Delete k8s namespaces created by e2e tests.
-	$(KUBECTL) delete namespaces -l app.kubernetes.io/part-of=ytsaurus-dev
+	$(KUBECTL) delete namespaces -l "app.kubernetes.io/part-of=ytsaurus-dev,app.kubernetes.io/component=test"
 
 .PHONY: test-helm-chart
 test-helm-chart: generate ## Run helm chart tests.
@@ -309,17 +309,21 @@ k8s-install-ytsaurus-dev-ca:
 	fi
 
 HELM_INSTALL_ARGS += $(OPERATOR_INSTANCE) $(OPERATOR_CHART)
-HELM_INSTALL_ARGS += -n $(OPERATOR_NAMESPACE) --create-namespace
 HELM_INSTALL_ARGS += --set controllerManager.manager.image.repository=${OPERATOR_IMAGE}
 HELM_INSTALL_ARGS += --set controllerManager.manager.image.tag=${OPERATOR_TAG}
 HELM_INSTALL_ARGS += --set controllerManager.manager.instanceScope=${OPERATOR_INSTANCE_SCOPE}
 HELM_INSTALL_ARGS += --set controllerManager.manager.namespacedScope=${OPERATOR_NAMESPACED_SCOPE}
 HELM_INSTALL_ARGS += --set crds.enabled=${OPERATOR_CRDS_ENABLED}
 HELM_INSTALL_ARGS += --set crds.keep=${OPERATOR_CRDS_KEEP}
+HELM_INSTALL_ARGS += --set caRootBundle.kind=ConfigMap
+HELM_INSTALL_ARGS += --set caRootBundle.name=ytsaurus-dev-ca-root-bundle
+HELM_INSTALL_ARGS += --set caRootBundle.key=ca-certificates.crt
 
 .PHONY: helm-install
 helm-install: ## Install helm chart from sources.
-	$(HELM) upgrade --install --wait $(HELM_INSTALL_ARGS)
+	-$(KUBECTL) create namespace $(OPERATOR_NAMESPACE)
+	$(KUBECTL) label namespace $(OPERATOR_NAMESPACE) app.kubernetes.io/part-of=ytsaurus-dev
+	$(HELM) upgrade -n $(OPERATOR_NAMESPACE) --install --wait $(HELM_INSTALL_ARGS)
 	$(KUBECTL) -n $(OPERATOR_NAMESPACE) rollout restart deployment -l app.kubernetes.io/instance=$(OPERATOR_INSTANCE)
 
 .PHONY: helm-kind-install
@@ -345,6 +349,7 @@ kind-deploy-ytsaurus: ## Deploy sample ytsaurus cluster and all requirements.
 .PHONY: kind-create-ytsaurus
 kind-create-ytsaurus: ## Create sample ytsaurus cluster.
 	$(KUBECTL) create namespace $(YTSAURUS_NAMESPACE)
+	$(KUBECTL) label namespace $(YTSAURUS_NAMESPACE) app.kubernetes.io/part-of=ytsaurus-dev
 	$(KUBECTL) apply --server-side -n $(YTSAURUS_NAMESPACE) -f $(YTSAURUS_SPEC)
 	$(KUBECTL) wait -n $(YTSAURUS_NAMESPACE) --timeout=10m --for=jsonpath='{.status.state}=Running' --all ytsaurus
 	$(MAKE) kind-yt-info

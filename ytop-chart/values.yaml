@@ -1,3 +1,7 @@
+# caRootBundle:
+#   kind: ConfigMap
+#   name: ca-root-bundle
+#   key: ca-certificates.crt
 crds:
   enabled: true
   keep: true
