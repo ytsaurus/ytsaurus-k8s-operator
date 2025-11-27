@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	TestIssuerName   = "ytsaurus-dev-ca"
-	TestCABundleName = "ytsaurus-dev-ca.crt"
+	TestIssuerName       = "ytsaurus-dev-ca"
+	TestCABundleName     = "ytsaurus-dev-ca.crt"
+	TestCARootBundleName = "ytsaurus-dev-ca-root-bundle"
 )
 
 type CertBuilder struct {
