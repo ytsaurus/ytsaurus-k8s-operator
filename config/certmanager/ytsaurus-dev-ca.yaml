@@ -51,3 +51,21 @@ spec:
     namespaceSelector:
       matchLabels:
         "app.kubernetes.io/part-of": "ytsaurus-dev"
+
+---
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: "ytsaurus-dev-ca-root-bundle"
+spec:
+  sources:
+  - useDefaultCAs: true
+  - secret:
+      name: "ytsaurus-dev-ca"
+      key: "tls.crt"
+  target:
+    configMap:
+      key: "ca-certificates.crt"
+    namespaceSelector:
+      matchLabels:
+        "app.kubernetes.io/part-of": "ytsaurus-dev"

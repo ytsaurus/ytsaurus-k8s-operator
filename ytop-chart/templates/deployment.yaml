@@ -62,6 +62,11 @@ spec:
         securityContext: {{- toYaml .Values.controllerManager.manager.containerSecurityContext
           | nindent 10 }}
         volumeMounts:
+        {{- with .Values.caRootBundle }}
+        - mountPath: /etc/ssl/certs
+          name: ca-root-bundle
+          readOnly: true
+        {{- end }}
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: webhook-cert
           readOnly: true
@@ -92,6 +97,23 @@ spec:
       serviceAccountName: {{ include "ytop-chart.fullname" . }}-controller-manager
       terminationGracePeriodSeconds: 10
       volumes:
+      {{- with .Values.caRootBundle }}
+      {{- if eq .kind "ConfigMap" }}
+      - name: ca-root-bundle
+        configMap:
+          name: {{ .name }}
+          items:
+          - key: {{ .key }}
+            path: ca-certificates.crt
+      {{- else if eq .kind "Secret" }}
+      - name: ca-root-bundle
+        secret:
+          secretName: {{ .name }}
+          items:
+          - key: {{ .key }}
+            path: ca-certificates.crt
+      {{- end }}
+      {{- end }}
       - name: webhook-cert
         secret:
           defaultMode: 420
