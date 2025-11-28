@@ -17,7 +17,13 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
-    resources: {}
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
   dataNodes:
   - instanceCount: 3
@@ -30,7 +36,13 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
-    resources: {}
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
     volumeClaimTemplates:
     - metadata:
         name: node-data
@@ -51,11 +63,24 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
-    resources: {}
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
   enableFullUpdate: true
   ephemeralCluster: true
   execNodes:
   - instanceCount: 1
+    jobResources:
+      limits:
+        cpu: "4"
+        memory: 8Gi
+      requests:
+        cpu: "0"
+        memory: "0"
     locations:
     - locationType: ChunkCache
       path: /yt/node-data/chunk-cache
@@ -68,7 +93,13 @@ spec:
       writerType: stderr
     minReadyInstanceCount: 0
     privileged: false
-    resources: {}
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
     volumeClaimTemplates:
     - metadata:
         name: node-data
@@ -90,7 +121,13 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
-    resources: {}
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
     serviceType: NodePort
     transport: {}
   isManaged: true
@@ -104,7 +141,13 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
-    resources: {}
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
   primaryMasters:
     cellTag: 1
     instanceCount: 1
@@ -119,7 +162,13 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
-    resources: {}
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
     volumeClaimTemplates:
     - metadata:
         name: master-data
@@ -141,7 +190,13 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
-    resources: {}
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
   queueAgents:
     image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
     instanceCount: 1
@@ -151,7 +206,13 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
-    resources: {}
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
   rpcProxies:
   - instanceCount: 1
     loggers:
@@ -160,7 +221,13 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
-    resources: {}
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
     serviceType: NodePort
     transport: {}
   schedulers:
@@ -171,7 +238,13 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
-    resources: {}
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
   strawberry:
     image: ghcr.io/ytsaurus/strawberry:0.0.14
     resources: {}
@@ -188,7 +261,13 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
-    resources: {}
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
 status:
   conditions:
   - lastTransitionTime: null

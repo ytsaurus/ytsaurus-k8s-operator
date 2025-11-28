@@ -69,7 +69,13 @@ spec:
           httpGet:
             path: /orchid/service
             port: metrics
-        resources: {}
+        resources:
+          limits:
+            cpu: "5"
+            memory: 10Gi
+          requests:
+            cpu: "0"
+            memory: "0"
         securityContext:
           privileged: false
         volumeMounts:

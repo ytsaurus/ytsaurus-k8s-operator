@@ -16,7 +16,13 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
-    resources: {}
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
   enableFullUpdate: true
   ephemeralCluster: true
   hostNetwork: false
@@ -28,7 +34,13 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
-    resources: {}
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
     serviceType: NodePort
     transport: {}
   isManaged: true
@@ -47,7 +59,13 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
-    resources: {}
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
     volumeClaimTemplates:
     - metadata:
         name: master-data
