@@ -66,6 +66,7 @@ func getYtClient(httpClient *http.Client, proxyAddress string) yt.Client {
 		CompressionCodec:      yt.ClientCodecNone,
 		DisableProxyDiscovery: true,
 		HTTPClient:            httpClient,
+		Logger:                ytLogger,
 	}
 
 	ytClient, err := ythttp.NewClient(config)
@@ -81,6 +82,7 @@ func getYtRPCClient(httpClient *http.Client, proxyAddress, rpcProxyAddress strin
 		Token:                 consts.DefaultAdminPassword,
 		DisableProxyDiscovery: true,
 		HTTPClient:            httpClient,
+		Logger:                ytLogger,
 	})
 	Expect(err).Should(Succeed())
 	return ytClient
@@ -331,6 +333,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				CompressionCodec:      yt.ClientCodecNone,
 				DisableProxyDiscovery: true,
 				HTTPClient:            httpClient,
+				Logger:                ytLogger,
 			}
 			client, err := ythttp.NewClient(config)
 			if err != nil {
@@ -492,6 +495,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			Token:                    consts.DefaultAdminPassword,
 			DisableProxyDiscovery:    true,
 			HTTPClient:               httpClient,
+			Logger:                   ytLogger,
 		})
 		Expect(err).Should(Succeed())
 		// Expect(ytTLSRPCClient.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
@@ -1564,6 +1568,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					Proxy:                 ytProxyAddress,
 					RPCProxy:              ytRPCProxyAddress,
 					DisableProxyDiscovery: true,
+					Logger:                ytLogger,
 				})
 				Expect(err).Should(Succeed())
 
