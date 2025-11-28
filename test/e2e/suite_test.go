@@ -26,6 +26,12 @@ import (
 
 	"k8s.io/utils/ptr"
 
+	"github.com/go-logr/zapr"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	logy "go.ytsaurus.tech/library/go/core/log/zap"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
 	. "github.com/onsi/ginkgo/v2"
 	gtypes "github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
@@ -43,8 +49,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -65,6 +69,7 @@ var k8sClient client.WithWatch
 var clientset *kubernetes.Clientset
 var ctx context.Context
 var log = logf.Log
+var ytLogger *logy.Logger
 
 func getDefaultE2EEnabled() bool {
 	return os.Getenv("YTOP_ENABLE_E2E") == "true"
@@ -84,8 +89,22 @@ func TestE2E(t *testing.T) {
 	RunSpecs(t, "E2E Tests")
 }
 
+func setLogger() {
+	logger := zap.New(
+		zapcore.NewCore(
+			zapcore.NewConsoleEncoder(
+				zap.NewDevelopmentEncoderConfig(),
+			),
+			zapcore.AddSync(GinkgoWriter),
+			zap.DebugLevel,
+		),
+	)
+	logf.SetLogger(zapr.NewLogger(logger))
+	ytLogger = &logy.Logger{L: logger}
+}
+
 var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+	setLogger()
 
 	if !*enableE2E {
 		return nil
@@ -108,7 +127,7 @@ var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	// Cannot serialize rest config here - just load again in each process and check host to be sure.
 	return []byte(cfg.Host)
 }, func(ctx context.Context, host []byte) {
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+	setLogger()
 
 	if !*enableE2E {
 		return
