@@ -170,6 +170,17 @@ var (
 	masterVolumeSize   = resource.MustParse("5Gi")
 	dataNodeVolumeSize = resource.MustParse("10Gi")
 	execNodeVolumeSize = resource.MustParse("5Gi")
+
+	execNodeResources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("0"),
+			corev1.ResourceMemory: resource.MustParse("0"),
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("4"),
+			corev1.ResourceMemory: resource.MustParse("4Gi"),
+		},
+	}
 )
 
 type YtsaurusBuilder struct {
@@ -526,6 +537,7 @@ func (b *YtsaurusBuilder) CreateExecNodeSpec() ytv1.ExecNodesSpec {
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
 			Loggers:               b.CreateLoggersSpec(),
+			Resources:             *execNodeResources.DeepCopy(),
 			Locations: []ytv1.LocationSpec{
 				{
 					LocationType: ytv1.LocationTypeChunkCache,
@@ -555,7 +567,6 @@ func (b *YtsaurusBuilder) SetupCRIJobEnvironment(node *ytv1.ExecNodesSpec) {
 		Path:         "/yt/node-data/image-cache",
 	})
 	node.JobEnvironment = &ytv1.JobEnvironmentSpec{
-		UserSlots: ptr.To(4),
 		CRI: &ytv1.CRIJobEnvironmentSpec{
 			CRIService:   b.CRIService,
 			SandboxImage: b.SandboxImage,

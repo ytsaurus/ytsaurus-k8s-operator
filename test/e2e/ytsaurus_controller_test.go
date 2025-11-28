@@ -2022,7 +2022,7 @@ func NewVanillaOperation(ytClient yt.Client) *TestOperation {
 			Tasks: map[string]*ytspec.UserScript{
 				"test": {
 					Command:  "true",
-					CPULimit: 0,
+					CPULimit: 0.1,
 					JobCount: 1,
 				},
 			},
@@ -2138,7 +2138,7 @@ func NewMapTestOperation(ytClient yt.Client) *TestOperation {
 			OutputTablePaths: []ypath.YPath{testTablePathOut},
 			Mapper: &ytspec.UserScript{
 				Command:  "cat",
-				CPULimit: 0,
+				CPULimit: 0.1,
 			},
 			MaxFailedJobCount: 1,
 		},

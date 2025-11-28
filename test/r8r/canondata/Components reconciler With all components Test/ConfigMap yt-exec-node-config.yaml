@@ -105,12 +105,14 @@ data:
             exec;
         ];
         "resource_limits"={
+            "total_memory"=4294967296;
+            "total_cpu"=4.000000;
             "node_dedicated_cpu"=0.000000;
         };
         "skynet_http_port"=11029;
         "job_resource_manager"={
             "resource_limits"={
-                "user_slots"=4;
+                "user_slots"=20;
             };
         };
         "exec_node"={
@@ -155,7 +157,7 @@ data:
             };
             "job_controller"={
                 "resource_limits"={
-                    "user_slots"=4;
+                    "user_slots"=20;
                 };
                 "gpu_manager"={
                     "gpu_info_source"={
