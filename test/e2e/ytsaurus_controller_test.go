@@ -63,9 +63,9 @@ func getYtClient(proxyAddress string) yt.Client {
 		Proxy:                 proxyAddress,
 		Token:                 consts.DefaultAdminPassword,
 		DisableProxyDiscovery: true,
+		Logger:                ytLogger,
 	})
 	Expect(err).Should(Succeed())
-
 	return ytClient
 }
 
@@ -75,6 +75,7 @@ func getYtRPCClient(proxyAddress, rpcProxyAddress string) yt.Client {
 		RPCProxy:              rpcProxyAddress,
 		Token:                 consts.DefaultAdminPassword,
 		DisableProxyDiscovery: true,
+		Logger:                ytLogger,
 	})
 	Expect(err).Should(Succeed())
 	return ytClient
@@ -405,6 +406,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			CertificateAuthorityData: caBundleCertificates,
 			Token:                    consts.DefaultAdminPassword,
 			DisableProxyDiscovery:    true,
+			Logger:                   ytLogger,
 		})
 		Expect(err).Should(Succeed())
 		Expect(ytHTTPSClient.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
@@ -456,6 +458,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			CertificateAuthorityData: caBundleCertificates,
 			Token:                    consts.DefaultAdminPassword,
 			DisableProxyDiscovery:    true,
+			Logger:                   ytLogger,
 		})
 		Expect(err).Should(Succeed())
 		// Expect(ytTLSRPCClient.WhoAmI(ctx, nil)).To(HaveField("Login", consts.DefaultAdminLogin))
@@ -1583,6 +1586,7 @@ exec "$@"`
 					Proxy:                 ytProxyAddress,
 					RPCProxy:              ytRPCProxyAddress,
 					DisableProxyDiscovery: true,
+					Logger:                ytLogger,
 				})
 				Expect(err).Should(Succeed())
 
