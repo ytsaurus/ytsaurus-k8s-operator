@@ -170,6 +170,31 @@ var (
 	masterVolumeSize   = resource.MustParse("5Gi")
 	dataNodeVolumeSize = resource.MustParse("10Gi")
 	execNodeVolumeSize = resource.MustParse("5Gi")
+
+	defaultNodeResources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("0"),
+			corev1.ResourceMemory: resource.MustParse("0"),
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("1"),
+			corev1.ResourceMemory: resource.MustParse("2Gi"),
+		},
+	}
+	dataNodeResources   = defaultNodeResources
+	tabletNodeResources = defaultNodeResources
+	execNodeResources   = defaultNodeResources
+
+	execNodeJobResources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("0"),
+			corev1.ResourceMemory: resource.MustParse("0"),
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("4"),
+			corev1.ResourceMemory: resource.MustParse("8Gi"),
+		},
+	}
 )
 
 type YtsaurusBuilder struct {
@@ -237,6 +262,7 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount:         1,
 					MinReadyInstanceCount: b.MinReadyInstanceCount,
+					Resources:             *defaultNodeResources.DeepCopy(),
 					Loggers:               b.CreateLoggersSpec(),
 				},
 			},
@@ -247,6 +273,7 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount:         1,
 					MinReadyInstanceCount: b.MinReadyInstanceCount,
+					Resources:             *defaultNodeResources.DeepCopy(),
 					Locations: []ytv1.LocationSpec{
 						{
 							LocationType: "MasterChangelogs",
@@ -350,6 +377,7 @@ func (b *YtsaurusBuilder) WithMasterCaches() {
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Resources:             *defaultNodeResources.DeepCopy(),
 			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
@@ -405,6 +433,7 @@ func (b *YtsaurusBuilder) WithScheduler() {
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Resources:             *defaultNodeResources.DeepCopy(),
 			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
@@ -415,6 +444,7 @@ func (b *YtsaurusBuilder) WithControllerAgents() {
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Resources:             *defaultNodeResources.DeepCopy(),
 			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
@@ -443,6 +473,7 @@ func (b *YtsaurusBuilder) WithQueryTracker() {
 			Image:                 ptr.To(b.Images.QueryTracker),
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Resources:             *defaultNodeResources.DeepCopy(),
 			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
@@ -454,6 +485,7 @@ func (b *YtsaurusBuilder) WithYqlAgent() {
 			Image:                 ptr.To(b.Images.QueryTracker),
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Resources:             *defaultNodeResources.DeepCopy(),
 			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
@@ -469,6 +501,7 @@ func (b *YtsaurusBuilder) WithQueueAgent() {
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Resources:             *defaultNodeResources.DeepCopy(),
 			Loggers:               b.CreateLoggersSpec(),
 			Image:                 ptr.To(image),
 		},
@@ -489,6 +522,7 @@ func (b *YtsaurusBuilder) CreateHTTPProxiesSpec() ytv1.HTTPProxiesSpec {
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Resources:             *defaultNodeResources.DeepCopy(),
 			Loggers:               b.CreateLoggersSpec(),
 		},
 		HttpNodePort: getPortFromEnv("E2E_HTTP_PROXY_INTERNAL_PORT"),
@@ -502,6 +536,7 @@ func (b *YtsaurusBuilder) CreateRPCProxiesSpec() ytv1.RPCProxiesSpec {
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Resources:             *defaultNodeResources.DeepCopy(),
 			Loggers:               b.CreateLoggersSpec(),
 		},
 		NodePort: getPortFromEnv("E2E_RPC_PROXY_INTERNAL_PORT"),
@@ -525,6 +560,7 @@ func (b *YtsaurusBuilder) CreateExecNodeSpec() ytv1.ExecNodesSpec {
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Resources:             *execNodeResources.DeepCopy(),
 			Loggers:               b.CreateLoggersSpec(),
 			Locations: []ytv1.LocationSpec{
 				{
@@ -546,6 +582,7 @@ func (b *YtsaurusBuilder) CreateExecNodeSpec() ytv1.ExecNodesSpec {
 				},
 			},
 		},
+		JobResources: execNodeJobResources.DeepCopy(),
 	}
 }
 
@@ -555,7 +592,6 @@ func (b *YtsaurusBuilder) SetupCRIJobEnvironment(node *ytv1.ExecNodesSpec) {
 		Path:         "/yt/node-data/image-cache",
 	})
 	node.JobEnvironment = &ytv1.JobEnvironmentSpec{
-		UserSlots: ptr.To(4),
 		CRI: &ytv1.CRIJobEnvironmentSpec{
 			CRIService:             b.CRIService,
 			SandboxImage:           b.SandboxImage,
@@ -582,6 +618,7 @@ func (b *YtsaurusBuilder) CreateDataNodeInstanceSpec(instanceCount int32) ytv1.I
 	return ytv1.InstanceSpec{
 		InstanceCount:         instanceCount,
 		MinReadyInstanceCount: b.MinReadyInstanceCount,
+		Resources:             *dataNodeResources.DeepCopy(),
 		Loggers:               b.CreateLoggersSpec(),
 		Locations: []ytv1.LocationSpec{
 			{
@@ -605,6 +642,7 @@ func (b *YtsaurusBuilder) CreateTabletNodeSpec(instanceCount int32) ytv1.Instanc
 	return ytv1.InstanceSpec{
 		InstanceCount:         instanceCount,
 		MinReadyInstanceCount: b.MinReadyInstanceCount,
+		Resources:             *tabletNodeResources.DeepCopy(),
 		Loggers:               b.CreateLoggersSpec(),
 	}
 }

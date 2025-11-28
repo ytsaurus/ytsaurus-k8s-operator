@@ -105,12 +105,20 @@ data:
             exec;
         ];
         "resource_limits"={
-            "node_dedicated_cpu"=0.000000;
+            "total_memory"=10737418240;
+            "total_cpu"=5.000000;
+            "node_dedicated_cpu"=1.000000;
+            "memory_limits"={
+                "user_jobs"={
+                    type=static;
+                    value=8589934592;
+                };
+            };
         };
         "skynet_http_port"=11029;
         "job_resource_manager"={
             "resource_limits"={
-                "user_slots"=4;
+                "user_slots"=20;
             };
         };
         "exec_node"={
@@ -158,7 +166,7 @@ data:
             };
             "job_controller"={
                 "resource_limits"={
-                    "user_slots"=4;
+                    "user_slots"=20;
                 };
                 "gpu_manager"={
                     "gpu_info_source"={
