@@ -54,6 +54,9 @@ const (
 
 	chytBootstrapTimeout = time.Minute * 2
 
+	operationCPULimit    = 1
+	operationMemoryLimit = 256 << 20
+
 	operationPollInterval = time.Millisecond * 250
 	operationTimeout      = time.Second * 120
 	lightRequestTimeout   = time.Minute * 2
@@ -2076,9 +2079,10 @@ func NewVanillaOperation(ytClient yt.Client) *TestOperation {
 			Title: "e2e test operation",
 			Tasks: map[string]*ytspec.UserScript{
 				"test": {
-					Command:  "true",
-					CPULimit: 0,
-					JobCount: 1,
+					Command:     "true",
+					CPULimit:    operationCPULimit,
+					MemoryLimit: operationMemoryLimit,
+					JobCount:    1,
 				},
 			},
 			MaxFailedJobCount: 1,
@@ -2192,8 +2196,9 @@ func NewMapTestOperation(ytClient yt.Client) *TestOperation {
 			InputTablePaths:  []ypath.YPath{testTablePathIn},
 			OutputTablePaths: []ypath.YPath{testTablePathOut},
 			Mapper: &ytspec.UserScript{
-				Command:  "cat",
-				CPULimit: 0,
+				Command:     "cat",
+				CPULimit:    operationCPULimit,
+				MemoryLimit: operationMemoryLimit,
 			},
 			MaxFailedJobCount: 1,
 		},
