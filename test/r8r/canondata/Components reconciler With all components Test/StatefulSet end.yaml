@@ -81,7 +81,13 @@ spec:
           httpGet:
             path: /orchid/service
             port: metrics
-        resources: {}
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: "0"
+            memory: "0"
         securityContext:
           privileged: false
         volumeMounts:
@@ -142,7 +148,13 @@ spec:
         - containerPort: 10026
           name: cri-metrics
           protocol: TCP
-        resources: {}
+        resources:
+          limits:
+            cpu: "4"
+            memory: 8Gi
+          requests:
+            cpu: "0"
+            memory: "0"
         securityContext:
           privileged: true
         volumeMounts:
