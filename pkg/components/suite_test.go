@@ -141,14 +141,12 @@ func (fs *FakeServer) rebuildStatefulSet() *appsv1.StatefulSet {
 	return nil
 }
 
-func (fs *FakeServer) removePods(ctx context.Context) error {
+func (fs *FakeServer) addContainer(*corev1.Container) *corev1.Container {
 	return nil
 }
 
-func (fs *FakeServer) addCABundleMount(c *corev1.Container) {
-}
-
-func (fs *FakeServer) addTlsSecretMount(c *corev1.Container) {
+func (fs *FakeServer) removePods(ctx context.Context) error {
+	return nil
 }
 
 func (fs *FakeServer) addMonitoringPort(port corev1.ServicePort) {

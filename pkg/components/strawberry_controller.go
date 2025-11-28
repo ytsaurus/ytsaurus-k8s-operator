@@ -55,16 +55,8 @@ func NewStrawberryController(
 		image = *resource.Spec.StrawberryController.Image
 	}
 
-	var caBundle *resources.CABundle
 	var busClientSecret *resources.TLSSecret
 	var busServerSecret *resources.TLSSecret
-
-	if caBundleSpec := resource.Spec.CABundle; caBundleSpec != nil {
-		caBundle = resources.NewCABundle(
-			*caBundleSpec,
-			consts.CABundleVolumeName,
-			consts.CABundleMountPoint)
-	}
 
 	if transportSpec := resource.Spec.NativeTransport; transportSpec != nil {
 		if transportSpec.TLSSecret != nil {
@@ -134,7 +126,7 @@ func NewStrawberryController(
 			l.GetSecretName(),
 			l,
 			ytsaurus.APIProxy()),
-		caBundle:        caBundle,
+		caBundle:        resources.NewCABundle(resource.Spec.CABundle),
 		busClientSecret: busClientSecret,
 		busServerSecret: busServerSecret,
 		name:            "strawberry",
@@ -252,20 +244,15 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 		createConfigVolume(consts.ConfigVolumeName, c.labeller.GetMainConfigMapName(), nil),
 	}
 
-	if c.caBundle != nil {
-		c.caBundle.AddVolume(&deployment.Spec.Template.Spec)
-		c.caBundle.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[0])
-	}
+	// Strawberry forwards native transport certificates via operation secure vault.
+	c.caBundle.AddVolume(&deployment.Spec.Template.Spec)
+	c.caBundle.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[0])
 
-	if c.busClientSecret != nil {
-		c.busClientSecret.AddVolume(&deployment.Spec.Template.Spec)
-		c.busClientSecret.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[0])
-	}
+	c.busClientSecret.AddVolume(&deployment.Spec.Template.Spec)
+	c.busClientSecret.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[0])
 
-	if c.busServerSecret != nil {
-		c.busServerSecret.AddVolume(&deployment.Spec.Template.Spec)
-		c.busServerSecret.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[0])
-	}
+	c.busServerSecret.AddVolume(&deployment.Spec.Template.Spec)
+	c.busServerSecret.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[0])
 
 	return c.microservice.Sync(ctx)
 }
