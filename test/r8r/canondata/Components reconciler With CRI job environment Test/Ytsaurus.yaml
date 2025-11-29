@@ -25,7 +25,6 @@ spec:
   - instanceCount: 1
     jobEnvironment:
       cri: {}
-      userSlots: 4
     locations:
     - locationType: ChunkCache
       path: /yt/node-data/chunk-cache
@@ -40,7 +39,13 @@ spec:
       writerType: stderr
     minReadyInstanceCount: 0
     privileged: false
-    resources: {}
+    resources:
+      limits:
+        cpu: "4"
+        memory: 4Gi
+      requests:
+        cpu: "0"
+        memory: "0"
     volumeClaimTemplates:
     - metadata:
         name: node-data

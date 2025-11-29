@@ -1953,8 +1953,23 @@ spec:
                     type: array
                 type: object
               caBundle:
-                description: Reference to trusted certificates. Default kind="ConfigMap",
-                  key="ca.crt".
+                description: Reference to trusted native transport certificates.
+                properties:
+                  key:
+                    description: Key is the name of entry in ConfigMap or Secret.
+                    type: string
+                  kind:
+                    description: 'Kind is the type of resource: ConfigMap or Secret.'
+                    enum:
+                    - ConfigMap
+                    - Secret
+                    type: string
+                  name:
+                    description: Name is the name of resource being referenced
+                    type: string
+                type: object
+              caRootBundle:
+                description: Reference to trusted root certificates.
                 properties:
                   key:
                     description: Key is the name of entry in ConfigMap or Secret.
@@ -1972,10 +1987,17 @@ spec:
               clusterFeatures:
                 properties:
                   httpProxyHaveChytAddress:
-                    description: HTTP proxy have "chyt_http_server" and "chyt_https_server".
+                    description: HTTP proxies have "chyt_http_server" and "chyt_https_server".
+                    type: boolean
+                  httpProxyHaveHttpsAddress:
+                    description: HTTP proxies have "https" address. Use HTTPS for
+                      all communications.
                     type: boolean
                   rpcProxyHavePublicAddress:
-                    description: RPC proxy have "public_rpc" address.
+                    description: RPC proxies have "public_rpc" address.
+                    type: boolean
+                  secureClusterTransports:
+                    description: Allow only secure transports for all cluster connections.
                     type: boolean
                 type: object
               configOverrides:

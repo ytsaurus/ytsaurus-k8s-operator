@@ -170,6 +170,17 @@ var (
 	masterVolumeSize   = resource.MustParse("5Gi")
 	dataNodeVolumeSize = resource.MustParse("10Gi")
 	execNodeVolumeSize = resource.MustParse("5Gi")
+
+	execNodeResources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("0"),
+			corev1.ResourceMemory: resource.MustParse("0"),
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("4"),
+			corev1.ResourceMemory: resource.MustParse("4Gi"),
+		},
+	}
 )
 
 type YtsaurusBuilder struct {
@@ -182,6 +193,11 @@ type YtsaurusBuilder struct {
 
 	// Set MinReadyInstanceCount for all components
 	MinReadyInstanceCount *int
+
+	WithHTTPSProxy     bool
+	WithHTTPSOnlyProxy bool
+	WithRPCProxy       bool
+	WithRPCProxyTLS    bool
 }
 
 func (b *YtsaurusBuilder) CreateVolumeClaim(name string, size resource.Quantity) ytv1.EmbeddedPersistentVolumeClaim {
@@ -270,6 +286,50 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 	}
 }
 
+func (b *YtsaurusBuilder) WithNativeTransportTLS(serverCert, clientCert string) {
+	b.Ytsaurus.Spec.CABundle = &ytv1.FileObjectReference{
+		Name: TestCABundleName,
+	}
+
+	transport := ytv1.RPCTransportSpec{
+		TLSSecret: &corev1.LocalObjectReference{
+			Name: serverCert,
+		},
+		TLSRequired:                true,
+		TLSInsecure:                true,
+		TLSPeerAlternativeHostName: b.Ytsaurus.Name,
+	}
+
+	if clientCert != "" {
+		transport.TLSClientSecret = &corev1.LocalObjectReference{
+			Name: clientCert,
+		}
+		transport.TLSInsecure = false
+	}
+
+	b.Ytsaurus.Spec.NativeTransport = &transport
+}
+
+func (b *YtsaurusBuilder) WithHTTPSProxies(httpsCert string, httpsOnly bool) {
+	b.WithHTTPSProxy = true
+	b.WithHTTPSOnlyProxy = httpsOnly
+
+	b.Ytsaurus.Spec.ClusterFeatures.HTTPProxyHaveHTTPSAddress = true
+
+	b.Ytsaurus.Spec.CARootBundle = &ytv1.FileObjectReference{
+		Name: TestCARootBundleName,
+	}
+
+	for i := range b.Ytsaurus.Spec.HTTPProxies {
+		b.Ytsaurus.Spec.HTTPProxies[i].Transport = ytv1.HTTPTransportSpec{
+			HTTPSSecret: &corev1.LocalObjectReference{
+				Name: httpsCert,
+			},
+			DisableHTTP: httpsOnly,
+		}
+	}
+}
+
 func (b *YtsaurusBuilder) WithBaseComponents() {
 	b.WithMasterCaches()
 	b.WithBootstrap()
@@ -278,16 +338,6 @@ func (b *YtsaurusBuilder) WithBaseComponents() {
 	b.WithDataNodes()
 	b.WithTabletNodes()
 	b.WithExecNodes()
-}
-
-func CreateBaseYtsaurusResource(namespace string) *ytv1.Ytsaurus {
-	builder := YtsaurusBuilder{
-		Images:    CurrentImages,
-		Namespace: namespace,
-	}
-	builder.CreateMinimal()
-	builder.WithBaseComponents()
-	return builder.Ytsaurus
 }
 
 func (b *YtsaurusBuilder) WithOverrides() {
@@ -315,9 +365,12 @@ func (b *YtsaurusBuilder) WithMasterCaches() {
 	}
 }
 
-func (b *YtsaurusBuilder) WithClusterFeatures() {
+func (b *YtsaurusBuilder) WithAllClusterFeatures() {
 	b.Ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
-		HTTPProxyHaveChytAddress: true,
+		RPCProxyHavePublicAddress: true,
+		HTTPProxyHaveChytAddress:  true,
+		HTTPProxyHaveHTTPSAddress: true,
+		SecureClusterTransports:   false, // Turned off to increase coverage.
 	}
 }
 
@@ -434,6 +487,8 @@ func (b *YtsaurusBuilder) WithQueueAgent() {
 }
 
 func (b *YtsaurusBuilder) WithRPCProxies() {
+	b.WithRPCProxy = true
+
 	b.Ytsaurus.Spec.RPCProxies = []ytv1.RPCProxiesSpec{
 		b.CreateRPCProxiesSpec(),
 	}
@@ -482,6 +537,7 @@ func (b *YtsaurusBuilder) CreateExecNodeSpec() ytv1.ExecNodesSpec {
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
 			Loggers:               b.CreateLoggersSpec(),
+			Resources:             *execNodeResources.DeepCopy(),
 			Locations: []ytv1.LocationSpec{
 				{
 					LocationType: ytv1.LocationTypeChunkCache,
@@ -511,7 +567,6 @@ func (b *YtsaurusBuilder) SetupCRIJobEnvironment(node *ytv1.ExecNodesSpec) {
 		Path:         "/yt/node-data/image-cache",
 	})
 	node.JobEnvironment = &ytv1.JobEnvironmentSpec{
-		UserSlots: ptr.To(4),
 		CRI: &ytv1.CRIJobEnvironmentSpec{
 			CRIService:   b.CRIService,
 			SandboxImage: b.SandboxImage,

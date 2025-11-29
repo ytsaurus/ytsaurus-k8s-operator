@@ -7,8 +7,16 @@ metadata:
   namespace: ytsaurus-components
   resourceVersion: "16"
 spec:
+  caBundle:
+    name: ytsaurus-dev-ca.crt
+  caRootBundle:
+    name: ytsaurus-dev-ca-root-bundle
   clusterFeatures:
     httpProxyHaveChytAddress: true
+    httpProxyHaveHttpsAddress: true
+    rpcProxyHavePublicAddress: true
+  configOverrides:
+    name: test-overrides
   controllerAgents:
     instanceCount: 1
     loggers:
@@ -56,11 +64,15 @@ spec:
   ephemeralCluster: true
   execNodes:
   - instanceCount: 1
+    jobEnvironment:
+      cri: {}
     locations:
     - locationType: ChunkCache
       path: /yt/node-data/chunk-cache
     - locationType: Slots
       path: /yt/node-data/slots
+    - locationType: ImageCache
+      path: /yt/node-data/image-cache
     loggers:
     - minLogLevel: info
       name: info-stderr
@@ -68,7 +80,13 @@ spec:
       writerType: stderr
     minReadyInstanceCount: 0
     privileged: false
-    resources: {}
+    resources:
+      limits:
+        cpu: "4"
+        memory: 4Gi
+      requests:
+        cpu: "0"
+        memory: "0"
     volumeClaimTemplates:
     - metadata:
         name: node-data
@@ -92,7 +110,9 @@ spec:
     minReadyInstanceCount: 0
     resources: {}
     serviceType: NodePort
-    transport: {}
+    transport:
+      httpsSecret:
+        name: https-server-cert
   isManaged: true
   jobImage: docker.io/library/python:3.8-slim
   masterCaches:
@@ -105,6 +125,13 @@ spec:
       writerType: stderr
     minReadyInstanceCount: 0
     resources: {}
+  nativeTransport:
+    tlsClientSecret:
+      name: native-client-cert
+    tlsPeerAlternativeHostName: test-ytsaurus
+    tlsRequired: true
+    tlsSecret:
+      name: native-server-cert
   primaryMasters:
     cellTag: 1
     instanceCount: 1

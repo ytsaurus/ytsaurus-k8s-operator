@@ -24,6 +24,7 @@ type UI struct {
 	initJob      *InitJob
 	master       Component
 	secret       *resources.StringSecret
+	caRootBundle *resources.CABundle
 	caBundle     *resources.CABundle
 }
 
@@ -37,11 +38,6 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 	image := resource.Spec.UIImage
 	if resource.Spec.UI.Image != nil {
 		image = *resource.Spec.UI.Image
-	}
-
-	var caBundle *resources.CABundle
-	if caBundleSpec := resource.Spec.CABundle; caBundleSpec != nil {
-		caBundle = resources.NewCABundle(*caBundleSpec, consts.CABundleVolumeName, consts.CABundleMountPoint)
 	}
 
 	microservice := newMicroservice(
@@ -89,8 +85,9 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			l.GetSecretName(),
 			l,
 			ytsaurus.APIProxy()),
-		caBundle: caBundle,
-		master:   master,
+		caRootBundle: resources.NewCARootBundle(resource.Spec.CARootBundle),
+		caBundle:     resources.NewCABundle(resource.Spec.CABundle),
+		master:       master,
 	}
 }
 
@@ -170,7 +167,9 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 		})
 	}
 
-	if u.caBundle != nil {
+	// FIXME(khlebnikov): UI node should have no use for native transport CA certificate.
+	// For compatibility add CA bundle unless have CA root bundle.
+	if u.caBundle != nil && u.caRootBundle == nil {
 		env = append(env, corev1.EnvVar{
 			Name:  "NODE_EXTRA_CA_CERTS",
 			Value: fmt.Sprintf("%s/ca.crt", u.caBundle.MountPath),
@@ -252,11 +251,14 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 		},
 	}
 
-	if u.caBundle != nil {
-		u.caBundle.AddVolume(&deployment.Spec.Template.Spec)
-		for i := range deployment.Spec.Template.Spec.Containers {
-			u.caBundle.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[i])
-		}
+	// For compatibility add CA bundle unless have CA root bundle.
+	bundle := u.caRootBundle
+	if bundle == nil {
+		bundle = u.caBundle
+	}
+	bundle.AddVolume(&deployment.Spec.Template.Spec)
+	for i := range deployment.Spec.Template.Spec.Containers {
+		bundle.AddVolumeMount(&deployment.Spec.Template.Spec.Containers[i])
 	}
 
 	return u.microservice.Sync(ctx)

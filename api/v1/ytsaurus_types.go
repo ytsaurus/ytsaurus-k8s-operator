@@ -786,10 +786,14 @@ type BundleControllerSpec struct {
 }
 
 type ClusterFeatures struct {
-	// RPC proxy have "public_rpc" address. Required for separated internal/public TLS CA.
+	// RPC proxies have "public_rpc" address. Required for separated internal/public TLS CA.
 	RPCProxyHavePublicAddress bool `json:"rpcProxyHavePublicAddress,omitempty"`
-	// HTTP proxy have "chyt_http_server" and "chyt_https_server". Opens ports for access to chyt via HTTP proxy.
+	// HTTP proxies have "chyt_http_server" and "chyt_https_server". Opens ports for access to chyt via HTTP proxy.
 	HTTPProxyHaveChytAddress bool `json:"httpProxyHaveChytAddress,omitempty"`
+	// HTTP proxies have "https" address. Use HTTPS for all communications.
+	HTTPProxyHaveHTTPSAddress bool `json:"httpProxyHaveHttpsAddress,omitempty"`
+	// Allow only secure transports for all cluster connections.
+	SecureClusterTransports bool `json:"secureClusterTransports,omitempty"`
 }
 
 // CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.
@@ -803,7 +807,13 @@ type CommonSpec struct {
 	//+optional
 	JobImage *string `json:"jobImage,omitempty"`
 
-	// Reference to trusted certificates. Default kind="ConfigMap", key="ca.crt".
+	// Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".
+	// Will replace system CA root bundle for all server and job containers.
+	//+optional
+	CARootBundle *FileObjectReference `json:"caRootBundle,omitempty"`
+
+	// Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".
+	// By default will use system CA bundle, which could be set by caRootBundle.
 	//+optional
 	CABundle *FileObjectReference `json:"caBundle,omitempty"`
 

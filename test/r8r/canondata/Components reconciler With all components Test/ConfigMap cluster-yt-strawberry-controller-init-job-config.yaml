@@ -2,7 +2,7 @@ apiVersion: v1
 data:
   chyt-init-cluster.yson: |-
     {
-        proxy="http-proxies-lb.ytsaurus-components.svc.cluster.local";
+        proxy="https://http-proxies-lb.ytsaurus-components.svc.cluster.local";
         "strawberry_root"="//sys/strawberry";
         families=[
             chyt;

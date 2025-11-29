@@ -15,11 +15,28 @@ import (
 
 var _ = Describe("Test for Ytsaurus webhooks", func() {
 	const namespace string = "default"
+	var builder *testutil.YtsaurusBuilder
+	var ytsaurus *ytv1.Ytsaurus
 
 	Context("When setting up the test environment", func() {
-		It("Should not accept a Ytsaurus resource without `default` http proxy role", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+		newYtsaurus := func() {
+			builder = &testutil.YtsaurusBuilder{
+				Images:    testutil.CurrentImages,
+				Namespace: namespace,
+			}
+			By("Creating new ytsaurus spec")
+			ytsaurus = nil
+			builder.Ytsaurus = nil
+			builder.CreateMinimal()
+			builder.WithBaseComponents()
+			ytsaurus = builder.Ytsaurus
+		}
 
+		BeforeEach(func() {
+			newYtsaurus()
+		})
+
+		It("Should not accept a Ytsaurus resource without `default` http proxy role", func() {
 			ytsaurus.Spec.HTTPProxies = []ytv1.HTTPProxiesSpec{
 				{
 					Role: "not_default",
@@ -33,8 +50,6 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("Should not accept a Ytsaurus resource with the same RPC proxies roles", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
-
 			ytsaurus.Spec.RPCProxies = []ytv1.RPCProxiesSpec{
 				{
 					InstanceSpec: ytv1.InstanceSpec{
@@ -52,8 +67,6 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("Should not accept a Ytsaurus resource with the same TCP proxies roles", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
-
 			ytsaurus.Spec.TCPProxies = []ytv1.TCPProxiesSpec{
 				{
 					InstanceSpec: ytv1.InstanceSpec{
@@ -71,8 +84,6 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("Should not accept a Ytsaurus resource with the same HTTP proxies roles", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
-
 			ytsaurus.Spec.HTTPProxies = []ytv1.HTTPProxiesSpec{
 				{
 					InstanceSpec: ytv1.InstanceSpec{
@@ -90,8 +101,6 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("Should not accept a Ytsaurus resource with the same node names", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
-
 			ytsaurus.Spec.DataNodes = []ytv1.DataNodesSpec{
 				{
 					InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1},
@@ -103,7 +112,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.dataNodes[1].name: Duplicate value: \"default\"")))
 
-			ytsaurus = testutil.CreateBaseYtsaurusResource(namespace)
+			newYtsaurus()
 			ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{
 				{
 					InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1},
@@ -114,7 +123,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			}
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.tabletNodes[1].name: Duplicate value: \"default\"")))
 
-			ytsaurus = testutil.CreateBaseYtsaurusResource(namespace)
+			newYtsaurus()
 			ytsaurus.Spec.ExecNodes = []ytv1.ExecNodesSpec{
 				{
 					InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1},
@@ -128,8 +137,6 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("Should not accept a cell tag update", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
-
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
 			Expect(k8sClient.Get(ctx, types.NamespacedName{
 				Name:      testutil.YtsaurusName,
@@ -143,7 +150,6 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("Should not accept data nodes without chunk locations", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 			ytsaurus.Spec.DataNodes = []ytv1.DataNodesSpec{
 				{
 					InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1},
@@ -154,8 +160,6 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("Should not accept a Ytsaurus resource with EnableAntiAffinity flag set in different spec fields", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
-
 			trueEnableAntiAffinity := true
 			falseEnableAntiAffinity := false
 
@@ -242,7 +246,6 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("Should not accept invalid Sidecars", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 			ytsaurus.Spec.ExecNodes = []ytv1.ExecNodesSpec{
 				{
 					InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1},
@@ -251,7 +254,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			}
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.execNodes[0].sidecars[0]: Invalid value")))
 
-			ytsaurus = testutil.CreateBaseYtsaurusResource(namespace)
+			newYtsaurus()
 			ytsaurus.Spec.ExecNodes = []ytv1.ExecNodesSpec{
 				{
 					InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1},
@@ -262,28 +265,26 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("Check combination of schedulers, controllerAgents and execNodes", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 			ytsaurus.Spec.Schedulers = nil
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.schedulers")))
 
-			ytsaurus = testutil.CreateBaseYtsaurusResource(namespace)
+			newYtsaurus()
 			ytsaurus.Spec.ControllerAgents = nil
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.controllerAgents")))
 
-			ytsaurus = testutil.CreateBaseYtsaurusResource(namespace)
+			newYtsaurus()
 			ytsaurus.Spec.Schedulers = nil
 			ytsaurus.Spec.ControllerAgents = nil
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.schedulers: Required value: execNodes doesn't make sense without schedulers")))
 		})
 
 		It("Should not accept queryTracker without tabletNodes and scheduler", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 			ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
 			ytsaurus.Spec.TabletNodes = nil
 
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.tabletNodes: Required")))
 
-			ytsaurus = testutil.CreateBaseYtsaurusResource(namespace)
+			newYtsaurus()
 			ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
 			ytsaurus.Spec.Schedulers = nil
 
@@ -291,7 +292,6 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("Should not accept queueAgent without tabletNodes", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 			ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
 			ytsaurus.Spec.TabletNodes = nil
 
@@ -299,14 +299,12 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("Check volumeMounts for locations", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 			ytsaurus.Spec.PrimaryMasters.VolumeMounts = []corev1.VolumeMount{}
 
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("location path is not in any volume mount")))
 		})
 
 		It("Should not accept non-empty primaryMaster/hostAddresses with HostNetwork=false", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 			ytsaurus.Spec.HostNetwork = false
 			ytsaurus.Spec.PrimaryMasters.HostAddresses = []string{"test.yt.address"}
 
@@ -314,7 +312,6 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("primaryMaster/hostAddresses length should be equal to instanceCount", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
 			ytsaurus.Spec.HostNetwork = true
 			ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
 			ytsaurus.Spec.PrimaryMasters.HostAddresses = []string{"test.yt.address"}
@@ -323,13 +320,104 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("should deny the creation of another YTsaurus CRD in the same namespace", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+			ytsaurus1 := ytsaurus
+			newYtsaurus()
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
-			ytsaurus1 := testutil.CreateBaseYtsaurusResource(namespace)
 			Expect(k8sClient.Create(ctx, ytsaurus1)).Should(MatchError(ContainSubstring("already exists")))
 			ytsaurus1.Name += "1"
 			Expect(k8sClient.Create(ctx, ytsaurus1)).Should(MatchError(ContainSubstring("already exists")))
 			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
+		})
+
+		Context("secure cluster transports", func() {
+			BeforeEach(func() {
+				builder.WithRPCProxies()
+				ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
+					SecureClusterTransports: true,
+				}
+				ytsaurus.Spec.NativeTransport = &ytv1.RPCTransportSpec{
+					TLSSecret: &corev1.LocalObjectReference{
+						Name: "server-cert",
+					},
+					TLSClientSecret: &corev1.LocalObjectReference{
+						Name: "client-cert",
+					},
+					TLSRequired: true,
+					TLSInsecure: false,
+				}
+				ytsaurus.Spec.HTTPProxies[0].Transport = ytv1.HTTPTransportSpec{
+					HTTPSSecret: &corev1.LocalObjectReference{
+						Name: "https-secret",
+					},
+					DisableHTTP: true,
+				}
+				ytsaurus.Spec.RPCProxies[0].Transport = ytv1.RPCTransportSpec{
+					TLSSecret: &corev1.LocalObjectReference{
+						Name: "rpc-proxy-secret",
+					},
+					TLSRequired: true,
+				}
+
+				By("Checking success", func() {
+					ytsaurus1 := ytsaurus.DeepCopy()
+					Expect(k8sClient.Create(ctx, ytsaurus1)).Should(Succeed())
+					Expect(k8sClient.Delete(ctx, ytsaurus1)).Should(Succeed())
+				})
+			})
+
+			AfterEach(func() {
+				ytsaurus1 := ytsaurus.DeepCopy()
+				By("Checking failure", func() {
+					err := k8sClient.Create(ctx, ytsaurus)
+					Expect(err).ShouldNot(Succeed())
+				})
+				By("Checking success without secure cluster", func() {
+					ytsaurus1.Spec.ClusterFeatures.SecureClusterTransports = false
+					Expect(k8sClient.Create(ctx, ytsaurus1)).Should(Succeed())
+					Expect(k8sClient.Delete(ctx, ytsaurus1)).Should(Succeed())
+				})
+			})
+
+			DescribeTable("Failures",
+				func(fn func()) {
+					fn()
+				},
+				Entry("no tls setup", func() {
+					ytsaurus.Spec.NativeTransport = nil
+				}),
+				Entry("tls optional", func() {
+					ytsaurus.Spec.NativeTransport.TLSRequired = false
+				}),
+				Entry("tls insecure", func() {
+					ytsaurus.Spec.NativeTransport.TLSInsecure = true
+				}),
+				Entry("no client cert", func() {
+					ytsaurus.Spec.NativeTransport.TLSClientSecret = nil
+					ytsaurus.Spec.NativeTransport.TLSInsecure = true
+				}),
+				Entry("instance tls optional", func() {
+					transport := *ytsaurus.Spec.NativeTransport
+					transport.TLSRequired = false
+					ytsaurus.Spec.PrimaryMasters.NativeTransport = &transport
+				}),
+				Entry("instance tls insecure", func() {
+					transport := *ytsaurus.Spec.NativeTransport
+					transport.TLSInsecure = true
+					ytsaurus.Spec.PrimaryMasters.NativeTransport = &transport
+				}),
+				Entry("no https", func() {
+					ytsaurus.Spec.HTTPProxies[0].Transport = ytv1.HTTPTransportSpec{}
+				}),
+				Entry("not https-only", func() {
+					ytsaurus.Spec.HTTPProxies[0].Transport.DisableHTTP = false
+				}),
+				Entry("rpc-proxy without tls", func() {
+					ytsaurus.Spec.RPCProxies[0].Transport = ytv1.RPCTransportSpec{}
+				}),
+				Entry("rpc-proxy not tls-only", func() {
+					ytsaurus.Spec.RPCProxies[0].Transport.TLSRequired = false
+				}),
+			)
 		})
 	})
 })

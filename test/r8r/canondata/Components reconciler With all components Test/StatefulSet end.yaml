@@ -56,6 +56,12 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: CONTAINERD_ADDRESS
+          value: /yt/node-data/image-cache/containerd.sock
+        - name: CONTAINERD_NAMESPACE
+          value: k8s.io
+        - name: CONTAINER_RUNTIME_ENDPOINT
+          value: unix:///yt/node-data/image-cache/containerd.sock
         image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
         name: ytserver
         ports:
@@ -69,7 +75,13 @@ spec:
           httpGet:
             path: /orchid/service
             port: metrics
-        resources: {}
+        resources:
+          limits:
+            cpu: "4"
+            memory: 4Gi
+          requests:
+            cpu: "0"
+            memory: "0"
         securityContext:
           privileged: false
         volumeMounts:
@@ -80,12 +92,77 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+        - mountPath: /etc/ssl/certs
+          name: ca-root-bundle
+          readOnly: true
+        - mountPath: /tls/ca_bundle
+          name: ca-bundle
+          readOnly: true
+        - mountPath: /tls/bus_secret
+          name: bus-secret
+          readOnly: true
+        - mountPath: /tls/bus_client_secret
+          name: bus-client-secret
+          readOnly: true
+      - args:
+        - --config
+        - /config/containerd/containerd.toml
+        command:
+        - tini
+        - --
+        - containerd
+        env:
+        - name: K8S_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: K8S_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: K8S_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: CONTAINERD_ADDRESS
+          value: /yt/node-data/image-cache/containerd.sock
+        - name: CONTAINERD_NAMESPACE
+          value: k8s.io
+        - name: CONTAINER_RUNTIME_ENDPOINT
+          value: unix:///yt/node-data/image-cache/containerd.sock
+        image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
+        name: jobs
+        ports:
+        - containerPort: 10026
+          name: cri-metrics
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "4"
+            memory: 4Gi
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /yt/node-data
+          name: node-data
+        - mountPath: /config_template
+          name: config-template
+          readOnly: true
+        - mountPath: /config
+          name: config
+        - mountPath: /config/containerd
+          name: config-containerd
+          readOnly: true
+        - mountPath: /etc/ssl/certs
+          name: ca-root-bundle
+          readOnly: true
       enableServiceLinks: false
       initContainers:
       - command:
         - bash
         - -xc
-        - 'echo ''Init locations''; mkdir -p /yt/node-data/chunk-cache; mkdir -p /yt/node-data/slots; '
+        - 'echo ''Init locations''; mkdir -p /yt/node-data/chunk-cache; mkdir -p /yt/node-data/slots;
+          mkdir -p /yt/node-data/image-cache; '
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -112,6 +189,9 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+        - mountPath: /etc/ssl/certs
+          name: ca-root-bundle
+          readOnly: true
       - command:
         - bash
         - -xc
@@ -150,12 +230,30 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+        - mountPath: /etc/ssl/certs
+          name: ca-root-bundle
+          readOnly: true
       volumes:
       - configMap:
           name: yt-exec-node-config
         name: config-template
       - emptyDir: {}
         name: config
+      - configMap:
+          name: ytsaurus-dev-ca-root-bundle
+        name: ca-root-bundle
+      - configMap:
+          name: ytsaurus-dev-ca.crt
+        name: ca-bundle
+      - name: bus-secret
+        secret:
+          secretName: native-server-cert
+      - name: bus-client-secret
+        secret:
+          secretName: native-client-cert
+      - configMap:
+          name: yt-exec-node-jobs-config
+        name: config-containerd
   updateStrategy: {}
   volumeClaimTemplates:
   - metadata:
