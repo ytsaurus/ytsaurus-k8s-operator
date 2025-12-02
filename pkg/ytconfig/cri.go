@@ -87,6 +87,18 @@ func (cri *CRIConfigGenerator) GetCRIToolsEnv() []corev1.EnvVar {
 	return env
 }
 
+func (cri *CRIConfigGenerator) GetCRIOSignaturePolicy() ([]byte, error) {
+	// Allow any container images.
+	policy := map[string]any{
+		"default": []map[string]any{
+			{
+				"type": "insecureAcceptAnything",
+			},
+		},
+	}
+	return marshallYsonConfig(policy)
+}
+
 func (cri *CRIConfigGenerator) GetCRIOConfig() ([]byte, error) {
 	// See https://github.com/cri-o/cri-o/blob/main/docs/crio.conf.5.md
 
@@ -94,7 +106,9 @@ func (cri *CRIConfigGenerator) GetCRIOConfig() ([]byte, error) {
 		"listen": cri.GetSocketPath(),
 	}
 
-	crioImage := map[string]any{}
+	crioImage := map[string]any{
+		"signature_policy": path.Join(consts.CRIOConfigMountPoint, consts.CRIOSignaturePolicyFileName),
+	}
 
 	crioMetrics := map[string]any{}
 
