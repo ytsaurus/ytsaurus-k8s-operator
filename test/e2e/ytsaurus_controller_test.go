@@ -1493,9 +1493,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Context("With CRI-O", Label("cri"), Label("crio"), func() {
 
 			BeforeEach(func() {
-				if os.Getenv("YTSAURUS_CRIO_READY") == "" {
-					Skip("YTsaurus is not ready for CRI-O")
-				}
+				ytsaurus.Spec.CoreImage = testutil.YtsaurusImage25_2
+				requiredImages = append(requiredImages, ytsaurus.Spec.CoreImage)
 
 				By("Adding exec nodes")
 				ytBuilder.WithScheduler()
@@ -1506,6 +1505,62 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Adding CRI-O job environment")
 				ytBuilder.CRIService = ptr.To(ytv1.CRIServiceCRIO)
 				ytBuilder.WithCRIJobEnvironment()
+
+				if os.Getenv("YTSAURUS_CRIO_READY") == "" {
+					By("Adding CRI-O install script")
+
+					installCRIOScript := `#!/bin/bash
+# Install CRI-O and CRI tools, see https://cri-o.io/
+set -eux -o pipefail
+: ${K8S_VERSION=v1.32}
+: ${CRIO_VERSION=v1.32}
+mkdir -p /etc/apt/keyrings
+curl -fsSL "https://pkgs.k8s.io/core:/stable:/${K8S_VERSION}/deb/Release.key" -o /etc/apt/keyrings/kubernetes-apt-keyring.asc
+curl -fsSL "https://download.opensuse.org/repositories/isv:/cri-o:/stable:/${CRIO_VERSION}/deb/Release.key" -o /etc/apt/keyrings/cri-o-apt-keyring.asc
+tee /etc/apt/sources.list.d/kubernetes.list <<EOF
+deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/${K8S_VERSION}/deb/ /
+EOF
+tee /etc/apt/sources.list.d/cri-o.list <<EOF
+deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.asc] https://download.opensuse.org/repositories/isv:/cri-o:/stable:/${CRIO_VERSION}/deb/ /
+EOF
+export DEBIAN_FRONTEND=noninteractive
+apt update -q --error-on=any
+apt install -y --no-install-recommends cri-tools cri-o
+exec "$@"`
+
+					scripts := corev1.ConfigMap{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "scripts",
+						},
+						Data: map[string]string{
+							"install-crio.sh": installCRIOScript,
+						},
+					}
+
+					objects = append(objects, &scripts)
+					execNode := &ytsaurus.Spec.ExecNodes[0]
+					execNode.Volumes = append(execNode.Volumes, ytv1.Volume{
+						Name: "scripts",
+						VolumeSource: ytv1.VolumeSource{
+							ConfigMap: &corev1.ConfigMapVolumeSource{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "scripts",
+								},
+								DefaultMode: ptr.To(int32(0o555)),
+							},
+						},
+					})
+					execNode.VolumeMounts = append(execNode.VolumeMounts, corev1.VolumeMount{
+						Name:      "scripts",
+						MountPath: "/yt/scripts",
+						ReadOnly:  true,
+					})
+					execNode.JobEnvironment.CRI.EntrypointWrapper = []string{
+						"tini",
+						"--",
+						"/yt/scripts/install-crio.sh",
+					}
+				}
 			})
 
 			It("Verify CRI-O job environment", func(ctx context.Context) {
