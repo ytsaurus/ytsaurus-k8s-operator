@@ -224,6 +224,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	}
 
 	BeforeEach(func(ctx context.Context) {
+		By("Logging nodes state", func() {
+			logNodesState(ctx)
+		})
+
 		By("Creating namespace")
 		currentSpec := CurrentSpecReport()
 		namespaceObject := corev1.Namespace{
@@ -367,9 +371,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}))
 
 		DeferCleanup(AttachProgressReporterWithContext(specCtx, func(ctx context.Context) string {
-			failedPods := fetchFailedPods(ctx, namespace)
-			if len(failedPods) != 0 {
-				return fmt.Sprintf("Failed pods: %v", failedPods)
+			pending, failed := fetchStuckPods(specCtx, namespace)
+			if len(pending) != 0 {
+				logNodesState(specCtx)
+			}
+			if len(pending)+len(failed) != 0 {
+				return fmt.Sprintf("Pods pending: %v, failed: %v", pending, failed)
 			}
 			return ""
 		}))
@@ -387,6 +394,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
+		By("Logging nodes state", func() {
+			logNodesState(ctx)
+		})
+
 		var err error
 
 		if !ytBuilder.WithHTTPSOnlyProxy {

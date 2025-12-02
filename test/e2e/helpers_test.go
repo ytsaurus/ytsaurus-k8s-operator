@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/component-helpers/resource"
 	"k8s.io/utils/ptr"
 	ctrlcli "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -51,6 +52,44 @@ func getKindControlPlaneNode(ctx context.Context) corev1.Node {
 	Expect(nodeList.Items).To(HaveLen(1))
 	Expect(nodeList.Items[0].Name).To(HaveSuffix("kind-control-plane"))
 	return nodeList.Items[0]
+}
+
+func logNodesState(ctx context.Context) {
+	var nodes corev1.NodeList
+	var pods corev1.PodList
+	Expect(k8sClient.List(ctx, &nodes)).Should(Succeed())
+	Expect(k8sClient.List(ctx, &pods)).Should(Succeed())
+	for _, node := range nodes.Items {
+		available := node.Status.Allocatable.DeepCopy()
+		for _, pod := range pods.Items {
+			if pod.Spec.NodeName != node.Name {
+				continue
+			}
+			requests := resource.PodRequests(&pod, resource.PodResourcesOptions{})
+			log.Info("Pod",
+				"namespace", pod.Namespace,
+				"name", pod.Name,
+				"qosClass", pod.Status.QOSClass,
+				"phase", pod.Status.Phase,
+				"reason", pod.Status.Reason,
+				"message", pod.Status.Message,
+				"requests", requests,
+			)
+			if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
+				continue
+			}
+			for k, v := range requests {
+				res := available[k]
+				res.Sub(v)
+				available[k] = res
+			}
+		}
+		log.Info("Node",
+			"name", node.Name,
+			"allocatable", node.Status.Allocatable,
+			"available", available,
+		)
+	}
 }
 
 func getNodesAddresses(ctx context.Context) []string {
@@ -556,22 +595,35 @@ func discoverProxies(httpClient *http.Client, proxyAddress string, params url.Va
 	return proxies.Proxies
 }
 
-func fetchFailedPods(ctx context.Context, namespace string) []string {
+func fetchStuckPods(ctx context.Context, namespace string) (pending, failed []string) {
 	podList := corev1.PodList{}
 	err := k8sClient.List(ctx, &podList, ctrlcli.InNamespace(namespace))
 	Expect(err).Should(Succeed())
 
-	var failedPods []string
 	for _, pod := range podList.Items {
+		switch pod.Status.Phase {
+		case corev1.PodPending:
+			pending = append(pending, pod.Name)
+		case corev1.PodFailed:
+			failed = append(failed, pod.Name)
+		default:
+			continue
+		}
+
+		requests := resource.PodRequests(&pod, resource.PodResourcesOptions{})
+		log.Info("Pod",
+			"name", pod.Name,
+			"phase", pod.Status.Phase,
+			"message", pod.Status.Message,
+			"reason", pod.Status.Reason,
+			"requests", requests,
+			"nodeName", pod.Spec.NodeName,
+			"conditions", pod.Status.Conditions,
+		)
+
 		if pod.Status.Phase != corev1.PodFailed {
 			continue
 		}
-		failedPods = append(failedPods, pod.Name)
-		log.Info("Failed pod",
-			"pod", pod.Name,
-			"message", pod.Status.Message,
-			"reason", pod.Status.Reason,
-		)
 
 		logRequest := clientset.CoreV1().Pods(namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
 			Timestamps: true,
@@ -588,7 +640,7 @@ func fetchFailedPods(ctx context.Context, namespace string) []string {
 		Expect(err).To(Succeed())
 	}
 
-	return failedPods
+	return pending, failed
 }
 
 func pullImages(ctx context.Context, namaspace string, images []string, timeout time.Duration) {
