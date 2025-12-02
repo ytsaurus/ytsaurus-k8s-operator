@@ -88,7 +88,7 @@ func (n *baseExecNode) doBuildBase() error {
 			n.addCRIServiceSidecar(n.criConfig, podSpec)
 		} else {
 			// CRI service is supposed to be started by exec node entrypoint wrapper.
-			n.addCRIServiceConfig(n.criConfig, &podSpec.Containers[0])
+			n.addCRIServiceConfig(n.criConfig, podSpec, &podSpec.Containers[0])
 		}
 
 		toolsEnv := n.criConfig.GetCRIToolsEnv()
@@ -98,26 +98,35 @@ func (n *baseExecNode) doBuildBase() error {
 	}
 
 	if n.sidecarConfig != nil {
-		podSpec.Volumes = append(podSpec.Volumes, createConfigVolume(consts.ContainerdConfigVolumeName,
-			n.sidecarConfig.labeller.GetSidecarConfigMapName(consts.JobsContainerName), nil))
-
 		n.sidecarConfig.Build()
 	}
 
 	return nil
 }
 
-func (n *baseExecNode) addCRIServiceConfig(cri *ytconfig.CRIConfigGenerator, container *corev1.Container) {
-	switch cri.Service {
-	case ytv1.CRIServiceNone:
+func (n *baseExecNode) addCRIServiceConfig(cri *ytconfig.CRIConfigGenerator, podSpec *corev1.PodSpec, container *corev1.Container) {
+	if n.sidecarConfig == nil {
 		return
+	}
+
+	switch cri.Service {
 	case ytv1.CRIServiceCRIO:
+		podSpec.Volumes = append(podSpec.Volumes, createConfigVolume(
+			consts.CRIOConfigVolumeName,
+			n.sidecarConfig.GetConfigMapName(),
+			nil,
+		))
 		container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
 			Name:      consts.CRIOConfigVolumeName,
 			MountPath: consts.CRIOConfigMountPoint,
 			ReadOnly:  true,
 		})
 	case ytv1.CRIServiceContainerd:
+		podSpec.Volumes = append(podSpec.Volumes, createConfigVolume(
+			consts.ContainerdConfigVolumeName,
+			n.sidecarConfig.GetConfigMapName(),
+			nil,
+		))
 		container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
 			Name:      consts.ContainerdConfigVolumeName,
 			MountPath: consts.ContainerdConfigMountPoint,
@@ -166,7 +175,7 @@ func (n *baseExecNode) addCRIServiceSidecar(cri *ytconfig.CRIConfigGenerator, po
 		container.Args = []string{"--config", configPath, "--config-dir", ""}
 	}
 
-	n.addCRIServiceConfig(cri, &container)
+	n.addCRIServiceConfig(cri, podSpec, &container)
 
 	n.server.addCABundleMount(&container)
 	n.server.addTlsSecretMount(&container)
@@ -235,17 +244,13 @@ func NewJobsSidecarConfig(
 		config.AddGenerator(
 			consts.ContainerdConfigFileName,
 			ConfigFormatToml,
-			func() ([]byte, error) {
-				return criConfig.GetContainerdConfig()
-			},
+			criConfig.GetContainerdConfig,
 		)
 	case ytv1.CRIServiceCRIO:
 		config.AddGenerator(
 			consts.CRIOConfigFileName,
 			ConfigFormatToml,
-			func() ([]byte, error) {
-				return criConfig.GetCRIOConfig()
-			},
+			criConfig.GetCRIOConfig,
 		)
 	}
 

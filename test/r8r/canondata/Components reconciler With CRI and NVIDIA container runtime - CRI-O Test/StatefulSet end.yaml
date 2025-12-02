@@ -205,7 +205,7 @@ spec:
         name: config
       - configMap:
           name: yt-exec-node-jobs-config
-        name: config-containerd
+        name: config-crio
   updateStrategy: {}
   volumeClaimTemplates:
   - metadata:
