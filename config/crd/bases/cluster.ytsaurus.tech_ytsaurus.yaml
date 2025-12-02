@@ -807,9 +807,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -2718,9 +2721,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -4578,9 +4584,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -6443,9 +6452,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -8317,9 +8329,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -9479,9 +9494,12 @@ spec:
                         of a pod.
                       properties:
                         name:
-                          description: Required.
+                          description: |-
+                            Name is this DNS resolver option's name.
+                            Required.
                           type: string
                         value:
+                          description: Value is this DNS resolver option's value.
                           type: string
                       type: object
                     type: array
@@ -10220,9 +10238,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -12355,9 +12376,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -14281,9 +14305,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -16154,9 +16181,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -18099,9 +18129,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -19984,9 +20017,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -21840,9 +21876,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -23705,9 +23744,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -25612,9 +25654,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -27479,9 +27524,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -28694,9 +28742,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -29506,9 +29557,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -31371,9 +31425,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -33253,9 +33310,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -34477,9 +34537,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -35482,9 +35545,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
