@@ -36,6 +36,7 @@ const (
 type ConfigGeneratorFunc func() ([]byte, error)
 
 type ConfigGenerator struct {
+	FileName string
 	// Format is the desired serialization format for config map.
 	// Note that conversion from YSON to Format (if needed) is performed as a very last
 	// step of config generation pipeline.
@@ -48,7 +49,7 @@ type ConfigMapBuilder struct {
 	labeller *labeller.Labeller
 	apiProxy apiproxy.APIProxy
 
-	generators map[string]ConfigGenerator
+	generators []ConfigGenerator
 
 	configOverrides *corev1.LocalObjectReference
 	overridesMap    corev1.ConfigMap
@@ -71,13 +72,11 @@ func NewConfigMapBuilder(
 }
 
 func (h *ConfigMapBuilder) AddGenerator(fileName string, format ConfigFormat, generator ConfigGeneratorFunc) {
-	if h.generators == nil {
-		h.generators = make(map[string]ConfigGenerator)
-	}
-	h.generators[fileName] = ConfigGenerator{
+	h.generators = append(h.generators, ConfigGenerator{
+		FileName:  fileName,
 		Format:    format,
 		Generator: generator,
-	}
+	})
 }
 
 func mergeMapsRecursively(dst, src map[string]interface{}) map[string]interface{} {
@@ -125,8 +124,8 @@ func overrideYsonConfigs(base []byte, overrides []byte) ([]byte, error) {
 
 func (h *ConfigMapBuilder) GetFileNames() []string {
 	fileNames := []string{}
-	for fileName := range h.generators {
-		fileNames = append(fileNames, fileName)
+	for _, gen := range h.generators {
+		fileNames = append(fileNames, gen.FileName)
 	}
 	return fileNames
 }
@@ -135,24 +134,19 @@ func (h *ConfigMapBuilder) GetConfigMapName() string {
 	return h.configMap.Name()
 }
 
-func (h *ConfigMapBuilder) getConfig(fileName string) ([]byte, error) {
-	descriptor, ok := h.generators[fileName]
-	if !ok {
-		return nil, nil
-	}
-
+func (h *ConfigMapBuilder) getConfig(descriptor ConfigGenerator) ([]byte, error) {
 	serializedConfig, err := descriptor.Generator()
 	if err != nil {
 		h.apiProxy.RecordWarning(
 			"Reconciling",
-			fmt.Sprintf("Failed to build config %s: %s", fileName, err))
+			fmt.Sprintf("Failed to build config %s: %s", descriptor.FileName, err))
 		return nil, err
 	}
 
 	if h.overridesMap.GetResourceVersion() != "" {
 		overrideNames := []string{
-			fileName,
-			fmt.Sprintf("%s--%s", h.GetConfigMapName(), fileName),
+			descriptor.FileName,
+			fmt.Sprintf("%s--%s", h.GetConfigMapName(), descriptor.FileName),
 		}
 		for _, overrideName := range overrideNames {
 			if value, ok := h.overridesMap.Data[overrideName]; ok {
@@ -163,7 +157,7 @@ func (h *ConfigMapBuilder) getConfig(fileName string) ([]byte, error) {
 					// ToDo(psushin): better error handling.
 					h.apiProxy.RecordWarning(
 						"Reconciling",
-						fmt.Sprintf("Failed to apply config override %s for %s, skipping: %s", overrideName, fileName, err))
+						fmt.Sprintf("Failed to apply config override %s for %s, skipping: %s", overrideName, descriptor.FileName, err))
 				}
 			}
 		}
@@ -214,22 +208,22 @@ func (h *ConfigMapBuilder) getCurrentConfigValue(fileName string) []byte {
 }
 
 func (h *ConfigMapBuilder) NeedReload() (bool, error) {
-	for fileName := range h.generators {
-		newConfig, err := h.getConfig(fileName)
+	for _, descriptor := range h.generators {
+		newConfig, err := h.getConfig(descriptor)
 		if err != nil {
 			return false, err
 		}
-		curConfig := h.getCurrentConfigValue(fileName)
+		curConfig := h.getCurrentConfigValue(descriptor.FileName)
 		if !cmp.Equal(curConfig, newConfig) {
 			if curConfig == nil {
 				h.apiProxy.RecordNormal(
 					"Reconciliation",
-					fmt.Sprintf("Config %s needs creation", fileName))
+					fmt.Sprintf("Config %s needs creation", descriptor.FileName))
 			} else {
 				configsDiff := cmp.Diff(string(curConfig), string(newConfig))
 				h.apiProxy.RecordNormal(
 					"Reconciliation",
-					fmt.Sprintf("Config %s needs reload. Diff: %s", fileName, configsDiff))
+					fmt.Sprintf("Config %s needs reload. Diff: %s", descriptor.FileName, configsDiff))
 			}
 			return true, nil
 		}
@@ -248,14 +242,14 @@ func (h *ConfigMapBuilder) Build() *corev1.ConfigMap {
 		metav1.SetMetaDataLabel(&cm.ObjectMeta, consts.ConfigOverridesVersionLabelName, version)
 	}
 
-	for fileName := range h.generators {
-		data, err := h.getConfig(fileName)
+	for _, descriptor := range h.generators {
+		data, err := h.getConfig(descriptor)
 		if err != nil {
 			return nil
 		}
 
 		if data != nil {
-			cm.Data[fileName] = string(data)
+			cm.Data[descriptor.FileName] = string(data)
 		}
 	}
 
