@@ -6,6 +6,7 @@ data:
       [crio.api]
         listen = "/yt/node-data/image-cache/cri.sock"
       [crio.image]
+        signature_policy = "/config/crio/policy.json"
       [crio.metrics]
         enable_metrics = true
         metrics_host = ""
@@ -33,6 +34,7 @@ data:
             monitor_path = "/usr/libexec/crio/conmon"
             runtime_path = "/usr/libexec/crio/runc"
             runtime_type = "oci"
+  policy.json: '{"default":[{"type":"insecureAcceptAnything"}]}'
 kind: ConfigMap
 metadata:
   creationTimestamp: null

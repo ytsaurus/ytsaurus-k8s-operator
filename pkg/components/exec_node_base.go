@@ -252,6 +252,11 @@ func NewJobsSidecarConfig(
 			ConfigFormatToml,
 			criConfig.GetCRIOConfig,
 		)
+		config.AddGenerator(
+			consts.CRIOSignaturePolicyFileName,
+			ConfigFormatJson,
+			criConfig.GetCRIOSignaturePolicy,
+		)
 	}
 
 	return config
