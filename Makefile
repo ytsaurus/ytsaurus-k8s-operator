@@ -199,7 +199,7 @@ lint-generated: generate helm-chart ## Check that generated files are uptodate a
 canonize: generate-code manifests envtest-assets ## Canonize test results.
 	rm -fr pkg/components/canondata pkg/ytconfig/canondata test/r8r/canondata
 	CANONIZE=y \
-	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./...
+	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./pkg/ytconfig ./pkg/components ./test/r8r
 	! git status --porcelain '**/canondata/*' | grep .
 
 .PHONY: canonize-ytconfig
