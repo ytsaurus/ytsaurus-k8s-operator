@@ -151,23 +151,16 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(yqla.ytsaurus, yqla) {
-			if yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(yqla.ytsaurus, yqla) {
-				if !dry {
-					err = removePods(ctx, yqla.server, &yqla.localComponent)
-				}
-				return ComponentStatusUpdateStep("pods removal"), err
-			}
+		if status, err := handleUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.localComponent, yqla.server, dry); status != nil {
+			return *status, err
+		}
 
-			if status, err := yqla.updateYqla(ctx, dry); status != nil {
-				return *status, err
-			}
-			if yqla.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
-				yqla.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForYqlaUpdate {
-				return ComponentStatusReady(), err
-			}
-		} else {
-			return ComponentStatusReadyAfter("Not updating component"), err
+		if status, err := yqla.updateYqla(ctx, dry); status != nil {
+			return *status, err
+		}
+		if yqla.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+			yqla.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForYqlaUpdate {
+			return ComponentStatusReady(), err
 		}
 	}
 

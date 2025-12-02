@@ -98,23 +98,15 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	}
 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(qt.ytsaurus, qt) {
-			if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(qt.ytsaurus, qt) {
-				if !dry {
-					err = removePods(ctx, qt.server, &qt.localComponent)
-				}
-				return ComponentStatusUpdateStep("pods removal"), err
-			}
-
-			if status, err := qt.updateQTState(ctx, dry); status != nil {
-				return *status, err
-			}
-			if qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
-				qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQTStateUpdate {
-				return ComponentStatusReady(), err
-			}
-		} else {
-			return ComponentStatusReadyAfter("Not updating component"), err
+		if status, err := handleUpdatingClusterState(ctx, qt.ytsaurus, qt, &qt.localComponent, qt.server, dry); status != nil {
+			return *status, err
+		}
+		if status, err := qt.updateQTState(ctx, dry); status != nil {
+			return *status, err
+		}
+		if qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+			qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQTStateUpdate {
+			return ComponentStatusReady(), err
 		}
 	}
 
