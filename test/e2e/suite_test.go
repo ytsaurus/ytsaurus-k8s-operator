@@ -160,6 +160,10 @@ var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	clientset, err = kubernetes.NewForConfig(cfg)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(clientset).NotTo(BeNil())
+
+	By("Logging nodes state", func() {
+		logNodesState(ctx)
+	})
 })
 
 func ShouldPreserveArtifacts() bool {
