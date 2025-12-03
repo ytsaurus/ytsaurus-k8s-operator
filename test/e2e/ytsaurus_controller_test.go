@@ -1310,7 +1310,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			qtPodsAfter := getComponentPods(ctx, namespace)
 			changed := getChangedPods(qtInitialPods, qtPodsAfter)
-			Expect(changed.Updated).To(ContainElements("qt-0", "qt-1", "qt-2"))
+
+			// In bulk update, pods are deleted and recreated, not updated in-place
+			allChanged := append(changed.Deleted, changed.Created...)
+			Expect(allChanged).To(ContainElements("qt-0", "qt-1", "qt-2"))
+
 			for name, pod := range qtPodsAfter {
 				if strings.HasPrefix(name, "qt-") {
 					Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.QueryTrackers.Image))
