@@ -38,12 +38,10 @@ func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1
 	return false
 }
 
-// Considers splits all the components in two groups: ones that can be updated and ones which update isblocked.
-func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []ytv1.Component, allComponents []ytv1.Component) (canUpdate []ytv1.Component, cannotUpdate []ytv1.Component) {
-	configuredSelectors := getEffectiveSelectors(spec)
-
+// Considers splits all the components in two groups: ones that can be updated and ones which update is blocked.
+func chooseUpdatingComponents(selectors []ytv1.ComponentUpdateSelector, needUpdate []ytv1.Component, allComponents []ytv1.Component) (canUpdate []ytv1.Component, cannotUpdate []ytv1.Component) {
 	for _, component := range needUpdate {
-		upd := canUpdateComponent(configuredSelectors, component)
+		upd := canUpdateComponent(selectors, component)
 		if upd {
 			canUpdate = append(canUpdate, component)
 		} else {
@@ -54,7 +52,7 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []ytv1.Componen
 	if len(canUpdate) == 0 {
 		return nil, cannotUpdate
 	}
-	if hasEverythingSelector(configuredSelectors) && needFullUpdate(needUpdate) {
+	if hasEverythingSelector(selectors) && needFullUpdate(needUpdate) {
 		// Here we update not only components that are not up-to-date, but all cluster.
 		return allComponents, nil
 	}
@@ -140,6 +138,41 @@ func convertToComponent(components []components.Component) []ytv1.Component {
 	return result
 }
 
+// buildComponentProgress builds a list of ComponentUpdateProgress for the given components.
+func buildComponentProgress(selectors []ytv1.ComponentUpdateSelector, components []ytv1.Component) []ytv1.ComponentUpdateProgress {
+	progress := make([]ytv1.ComponentUpdateProgress, 0, len(components))
+	for _, component := range components {
+		progress = append(progress, ytv1.ComponentUpdateProgress{
+			Component:    component,
+			Mode:         resolveComponentUpdateMode(selectors, component),
+			RunPreChecks: shouldRunPreChecks(selectors, component),
+			Phase:        ytv1.ComponentUpdatePhasePending,
+		})
+	}
+	return progress
+}
+
+func resolveComponentUpdateMode(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) ytv1.ComponentUpdateModeType {
+	for _, selector := range selectors {
+		if selector.Component.Type == component.Type && (selector.Component.Name == "" || selector.Component.Name == component.Name) {
+			return selector.GetUpdateModeType()
+		}
+	}
+	return ytv1.ComponentUpdateModeTypeBulkUpdate
+}
+
+func shouldRunPreChecks(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
+	for _, selector := range selectors {
+		if selector.Component.Type == component.Type && (selector.Component.Name == "" || selector.Component.Name == component.Name) {
+			if selector.UpdateMode == nil {
+				return true
+			}
+			return selector.UpdateMode.RunPreChecks
+		}
+	}
+	return true
+}
+
 func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
@@ -176,9 +209,11 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		}
 
 	case ytv1.ClusterStateRunning:
+		spec := ytsaurus.GetResource().Spec
 		needUpdate := componentManager.status.needUpdate
+		selectors := getEffectiveSelectors(spec)
 		canUpdate, cannotUpdate := chooseUpdatingComponents(
-			ytsaurus.GetResource().Spec,
+			selectors,
 			convertToComponent(needUpdate),
 			convertToComponent(componentManager.allUpdatableComponents()),
 		)
@@ -208,6 +243,8 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			logger.Info("Ytsaurus components needs update", "canUpdate", canUpdate, "cannotUpdate", cannotUpdate)
 			// We do not update BlockedComponentsSummary here, it should be updated first thing in Running state.
 			ytsaurus.SetUpdatingComponents(canUpdate)
+			// For backward compatibility with we update ComponentProgress here.
+			ytsaurus.SetComponentProgress(buildComponentProgress(selectors, canUpdate))
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdating)
 			return ctrl.Result{Requeue: true}, err
 

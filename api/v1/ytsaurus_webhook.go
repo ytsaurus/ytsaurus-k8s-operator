@@ -562,29 +562,103 @@ func (r *baseValidator) validateCommonSpec(spec *CommonSpec) field.ErrorList {
 func (r *baseValidator) validateUpdateSelectors(newYtsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 	hasNothing := false
+	planPath := field.NewPath("spec").Child("updatePlan")
 
 	if newYtsaurus.Spec.UpdatePlan != nil {
 		if len(newYtsaurus.Spec.UpdatePlan) == 0 {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("updatePlan"), "updatePlan should not be empty"))
+			allErrors = append(allErrors, field.Required(planPath, "updatePlan should not be empty"))
 		}
 
 		for i, updateSelector := range newYtsaurus.Spec.UpdatePlan {
+			entryPath := planPath.Index(i)
 			if updateSelector.Class != consts.ComponentClassUnspecified && (updateSelector.Component.Type != "" || updateSelector.Component.Name != "") {
-				allErrors = append(allErrors, field.Invalid(field.NewPath("spec").Child("updatePlan").Index(i).Child("component"), updateSelector.Component, "Only one of component or class should be specified"))
+				allErrors = append(allErrors, field.Invalid(entryPath.Child("component"), updateSelector.Component, "Only one of component or class should be specified"))
 			}
 			if updateSelector.Class == consts.ComponentClassUnspecified && updateSelector.Component.Type == "" && updateSelector.Component.Name == "" {
-				allErrors = append(allErrors, field.Invalid(field.NewPath("spec").Child("updatePlan").Index(i).Child("component"), updateSelector.Component, "Either component or class should be specified"))
+				allErrors = append(allErrors, field.Invalid(entryPath.Child("component"), updateSelector.Component, "Either component or class should be specified"))
 			}
 			if updateSelector.Class == consts.ComponentClassNothing {
 				hasNothing = true
 			}
+			allErrors = append(allErrors, validateUpdateModeForSelector(updateSelector, entryPath.Child("updateMode"))...)
 		}
 		if hasNothing && len(newYtsaurus.Spec.UpdatePlan) > 1 {
-			allErrors = append(allErrors, field.Invalid(field.NewPath("spec").Child("updatePlan"), newYtsaurus.Spec.UpdatePlan, "updatePlan should contain only one Nothing class"))
+			allErrors = append(allErrors, field.Invalid(planPath, newYtsaurus.Spec.UpdatePlan, "updatePlan should contain only one Nothing class"))
 		}
 	}
 
 	return allErrors
+}
+
+var bulkOnlyComponentTypes = map[consts.ComponentType]struct{}{
+	consts.QueueAgentType:   {},
+	consts.QueryTrackerType: {},
+	consts.YqlAgentType:     {},
+}
+
+func validateUpdateModeForSelector(selector ComponentUpdateSelector, path *field.Path) field.ErrorList {
+	if selector.UpdateMode == nil && selector.Class == consts.ComponentClassUnspecified {
+		// defaults to bulk update, nothing to validate besides component-type restrictions
+		if _, bulkOnly := bulkOnlyComponentTypes[selector.Component.Type]; !bulkOnly {
+			return nil
+		}
+	}
+
+	var errs field.ErrorList
+	modeType := selector.GetUpdateModeType()
+
+	// updateMode currently supported only for concrete components
+	if selector.Class != consts.ComponentClassUnspecified && modeType != ComponentUpdateModeTypeBulkUpdate {
+		errs = append(errs, field.Invalid(path.Child("type"), modeType, "updateMode is supported only for specific components"))
+		return errs
+	}
+
+	if selector.Class == consts.ComponentClassUnspecified {
+		if selector.Component.Type == "" {
+			errs = append(errs, field.Invalid(path, selector.UpdateMode, "component.type must be set to use updateMode"))
+			return errs
+		}
+		if _, bulkOnly := bulkOnlyComponentTypes[selector.Component.Type]; bulkOnly && modeType != ComponentUpdateModeTypeBulkUpdate {
+			errs = append(errs, field.Invalid(path.Child("type"), modeType, fmt.Sprintf("%s supports only BulkUpdate mode", selector.Component.Type)))
+			return errs
+		}
+	}
+
+	switch modeType {
+	case ComponentUpdateModeTypeBulkUpdate:
+		if selector.UpdateMode != nil {
+			if selector.UpdateMode.Rolling != nil {
+				errs = append(errs, field.Invalid(path.Child("rolling"), selector.UpdateMode.Rolling, "rolling configuration is not valid for BulkUpdate"))
+			}
+			if selector.UpdateMode.OnDelete != nil {
+				errs = append(errs, field.Invalid(path.Child("onDelete"), selector.UpdateMode.OnDelete, "onDelete configuration is not valid for BulkUpdate"))
+			}
+		}
+	case ComponentUpdateModeTypeRollingUpdate:
+		if selector.Component.Type == "" {
+			errs = append(errs, field.Invalid(path.Child("type"), modeType, "rolling update requires a concrete component selector"))
+		}
+		if selector.UpdateMode == nil || selector.UpdateMode.Rolling == nil {
+			errs = append(errs, field.Required(path.Child("rolling"), "rolling configuration (batchSize) must be provided when type=RollingUpdate"))
+		} else if selector.UpdateMode.Rolling.BatchSize != nil && *selector.UpdateMode.Rolling.BatchSize <= 0 {
+			errs = append(errs, field.Invalid(path.Child("rolling").Child("batchSize"), *selector.UpdateMode.Rolling.BatchSize, "batchSize must be positive"))
+		}
+		if selector.UpdateMode != nil && selector.UpdateMode.OnDelete != nil {
+			errs = append(errs, field.Invalid(path.Child("onDelete"), selector.UpdateMode.OnDelete, "onDelete configuration is not valid for RollingUpdate"))
+		}
+	case ComponentUpdateModeTypeOnDelete:
+		if selector.Component.Type == "" {
+			errs = append(errs, field.Invalid(path.Child("type"), modeType, "onDelete update requires a concrete component selector"))
+		}
+		if selector.UpdateMode == nil || selector.UpdateMode.OnDelete == nil {
+			errs = append(errs, field.Required(path.Child("onDelete"), "onDelete configuration (waitTime) must be provided when type=OnDelete"))
+		}
+		if selector.UpdateMode != nil && selector.UpdateMode.Rolling != nil {
+			errs = append(errs, field.Invalid(path.Child("rolling"), selector.UpdateMode.Rolling, "rolling configuration is not valid for OnDelete"))
+		}
+	}
+
+	return errs
 }
 
 func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, oldYtsaurus *Ytsaurus) field.ErrorList {

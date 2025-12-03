@@ -32879,6 +32879,34 @@ spec:
                         type:
                           type: string
                       type: object
+                    updateMode:
+                      properties:
+                        onDelete:
+                          properties:
+                            waitTime:
+                              description: WaitTime defines how long controller should
+                                wait for manual intervention before...
+                              type: string
+                          type: object
+                        rolling:
+                          properties:
+                            batchSize:
+                              description: BatchSize controls how many replicas can
+                                be rolled at once.
+                              format: int32
+                              type: integer
+                          type: object
+                        runPreChecks:
+                          default: true
+                          type: boolean
+                        type:
+                          default: BulkUpdate
+                          enum:
+                          - BulkUpdate
+                          - RollingUpdate
+                          - OnDelete
+                          type: string
+                      type: object
                   type: object
                 type: array
               updateSelector:
@@ -34826,6 +34854,49 @@ spec:
                 properties:
                   blockedComponentsSummary:
                     type: string
+                  componentProgress:
+                    items:
+                      properties:
+                        component:
+                          properties:
+                            name:
+                              type: string
+                            type:
+                              type: string
+                          type: object
+                        currentPartition:
+                          description: Rolling update metrics.
+                          format: int32
+                          type: integer
+                        currentRevision:
+                          type: string
+                        lastError:
+                          type: string
+                        lastTransitionTime:
+                          format: date-time
+                          type: string
+                        message:
+                          type: string
+                        mode:
+                          type: string
+                        phase:
+                          type: string
+                        runPreChecks:
+                          description: RunPreChecks indicates whether pre-checks are
+                            enabled for this component during...
+                          type: boolean
+                        totalReplicas:
+                          format: int32
+                          type: integer
+                        updateRevision:
+                          type: string
+                        updatedReplicas:
+                          format: int32
+                          type: integer
+                      required:
+                      - component
+                      type: object
+                    type: array
                   components:
                     description: 'Deprecated: Use updatingComponents instead.'
                     items:

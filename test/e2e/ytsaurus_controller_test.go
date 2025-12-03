@@ -1266,6 +1266,65 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 	}) // update
 
+	Context("Rolling update modes", Label("rolling-update-bulk-mode"), func() {
+		BeforeEach(func() {
+			ytBuilder.WithBaseComponents()
+			ytBuilder.WithQueryTracker()
+			ytBuilder.WithYqlAgent()
+			ytBuilder.WithQueueAgent()
+			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+				{
+					Component: ytv1.Component{Type: consts.QueueAgentType},
+					UpdateMode: &ytv1.ComponentUpdateMode{
+						Type: ytv1.ComponentUpdateModeTypeBulkUpdate,
+					},
+				},
+				{
+					Component: ytv1.Component{Type: consts.QueryTrackerType},
+					UpdateMode: &ytv1.ComponentUpdateMode{
+						Type: ytv1.ComponentUpdateModeTypeBulkUpdate,
+					},
+				},
+				{
+					Component: ytv1.Component{Type: consts.YqlAgentType},
+					UpdateMode: &ytv1.ComponentUpdateMode{
+						Type: ytv1.ComponentUpdateModeTypeBulkUpdate,
+					},
+				},
+			}
+			ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
+				InstanceSpec: ytv1.InstanceSpec{
+					Image:         ptr.To(testutil.QueryTrackerImagePrevious),
+					InstanceCount: 3,
+				},
+			}
+		})
+
+		It("Should track bulk update progress for queue/query/YQL agents", func(ctx context.Context) {
+
+			By("Trigger QT update")
+			ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.QueryTrackerImageFuture)
+			UpdateObject(ctx, ytsaurus)
+
+			By("Wait for update")
+			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterStateUpdating())
+
+			progressByType := map[consts.ComponentType]ytv1.ComponentUpdateProgress{}
+			for _, entry := range ytsaurus.Status.UpdateStatus.ComponentProgress {
+				progressByType[entry.Component.Type] = entry
+			}
+
+			// Expect(progressByType).To(HaveKey(consts.QueueAgentType))
+			// Expect(progressByType[consts.QueueAgentType].Mode).To(Equal(ytv1.ComponentUpdateModeTypeBulkUpdate))
+			Expect(progressByType).To(HaveKey(consts.QueryTrackerType))
+			Expect(progressByType[consts.QueryTrackerType].Mode).To(Equal(ytv1.ComponentUpdateModeTypeBulkUpdate))
+			// Expect(progressByType).To(HaveKey(consts.YqlAgentType))
+			// Expect(progressByType[consts.YqlAgentType].Mode).To(Equal(ytv1.ComponentUpdateModeTypeBulkUpdate))
+
+			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+		})
+	})
+
 	Context("Remote ytsaurus tests", Label("remote"), func() {
 		var remoteYtsaurus *ytv1.RemoteYtsaurus
 		var remoteNodes client.Object

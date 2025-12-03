@@ -449,6 +449,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [ComponentUpdateProgress](#componentupdateprogress)
 - [ComponentUpdateSelector](#componentupdateselector)
 - [UpdateStatus](#updatestatus)
 
@@ -456,6 +457,127 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `name` _string_ |  |  |  |
 | `type` _[ComponentType](#componenttype)_ |  |  |  |
+
+
+#### ComponentOnDeleteUpdateMode
+
+
+
+
+
+
+
+_Appears in:_
+- [ComponentUpdateMode](#componentupdatemode)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `waitTime` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#duration-v1-meta)_ | WaitTime defines how long controller should wait for manual intervention before declaring failure. |  |  |
+
+
+#### ComponentRollingUpdateMode
+
+
+
+
+
+
+
+_Appears in:_
+- [ComponentUpdateMode](#componentupdatemode)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `batchSize` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ | BatchSize controls how many replicas can be rolled at once. |  |  |
+
+
+#### ComponentUpdateMode
+
+
+
+
+
+
+
+_Appears in:_
+- [ComponentUpdateSelector](#componentupdateselector)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `type` _[ComponentUpdateModeType](#componentupdatemodetype)_ |  | BulkUpdate | Enum: [BulkUpdate RollingUpdate OnDelete] <br /> |
+| `runPreChecks` _boolean_ |  | true |  |
+| `rolling` _[ComponentRollingUpdateMode](#componentrollingupdatemode)_ |  |  |  |
+| `onDelete` _[ComponentOnDeleteUpdateMode](#componentondeleteupdatemode)_ |  |  |  |
+
+
+#### ComponentUpdateModeType
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [ComponentUpdateMode](#componentupdatemode)
+- [ComponentUpdateProgress](#componentupdateprogress)
+
+| Field | Description |
+| --- | --- |
+| `BulkUpdate` |  |
+| `RollingUpdate` |  |
+| `OnDelete` |  |
+
+
+#### ComponentUpdatePhase
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [ComponentUpdateProgress](#componentupdateprogress)
+
+| Field | Description |
+| --- | --- |
+| `Pending` |  |
+| `PreChecks` |  |
+| `ScalingDown` |  |
+| `Rolling` |  |
+| `AwaitingManualAction` |  |
+| `Finalizing` |  |
+| `Completed` |  |
+| `Blocked` |  |
+| `Stuck` |  |
+
+
+#### ComponentUpdateProgress
+
+
+
+
+
+
+
+_Appears in:_
+- [UpdateStatus](#updatestatus)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `component` _[Component](#component)_ |  |  |  |
+| `mode` _[ComponentUpdateModeType](#componentupdatemodetype)_ |  |  |  |
+| `runPreChecks` _boolean_ | RunPreChecks indicates whether pre-checks are enabled for this component during the current update.<br />we need it here to know if we should run pre-checks for this component if |  |  |
+| `phase` _[ComponentUpdatePhase](#componentupdatephase)_ |  |  |  |
+| `currentPartition` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ | Rolling update metrics. |  |  |
+| `totalReplicas` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `updatedReplicas` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `updateRevision` _string_ |  |  |  |
+| `currentRevision` _string_ |  |  |  |
+| `lastTransitionTime` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#time-v1-meta)_ |  |  |  |
+| `message` _string_ |  |  |  |
+| `lastError` _string_ |  |  |  |
 
 
 #### ComponentUpdateSelector
@@ -473,6 +595,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `class` _[ComponentClass](#componentclass)_ |  |  | Enum: [ Nothing Stateless Everything] <br /> |
 | `component` _[Component](#component)_ |  |  |  |
+| `updateMode` _[ComponentUpdateMode](#componentupdatemode)_ |  |  |  |
 
 
 #### ControllerAgentsSpec
@@ -2801,6 +2924,7 @@ _Appears in:_
 | `flow` _[UpdateFlow](#updateflow)_ | Flow is an internal field that is needed to persist the chosen flow until the end of an update.<br />Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage<br />executes steps corresponding to that update flow.<br />Deprecated: Use updatingComponents instead. |  |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
 | `tabletCellBundles` _[TabletCellBundleInfo](#tabletcellbundleinfo) array_ |  |  |  |
+| `componentProgress` _[ComponentUpdateProgress](#componentupdateprogress) array_ |  |  |  |
 
 
 #### Volume
