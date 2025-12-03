@@ -5,8 +5,10 @@ import (
 	"log"
 	"path"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
@@ -193,8 +195,14 @@ func (n *baseExecNode) addCRIServiceSidecar(cri *ytconfig.CRIConfigGenerator, po
 	if n.spec.JobResources != nil {
 		container.Resources = *n.spec.JobResources.DeepCopy()
 	} else {
-		// Without dedicated job resources enforce same limits as for node.
-		container.Resources.Limits = n.spec.Resources.Limits
+		// Without dedicated job resources enforce same limits as for node, with zero requests.
+		container.Resources = corev1.ResourceRequirements{
+			Limits:   n.spec.Resources.Limits.DeepCopy(),
+			Requests: make(corev1.ResourceList, len(n.spec.Resources.Limits)),
+		}
+		for name := range container.Resources.Limits {
+			container.Resources.Requests[name] = resource.Quantity{}
+		}
 	}
 
 	podSpec.Containers = append(podSpec.Containers, container)
