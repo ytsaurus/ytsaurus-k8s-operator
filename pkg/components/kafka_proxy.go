@@ -134,3 +134,7 @@ func (kp *KafkaProxy) Sync(ctx context.Context) error {
 	_, err := kp.doSync(ctx, false)
 	return err
 }
+
+func (kp *KafkaProxy) HasCustomUpdateState() bool {
+	return false
+}

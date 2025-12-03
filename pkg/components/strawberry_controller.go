@@ -358,3 +358,7 @@ func (c *StrawberryController) Sync(ctx context.Context) error {
 	_, err := c.doSync(ctx, false)
 	return err
 }
+
+func (c *StrawberryController) HasCustomUpdateState() bool {
+	return false
+}
