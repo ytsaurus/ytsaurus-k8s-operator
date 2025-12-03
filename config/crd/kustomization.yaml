@@ -1,0 +1,9 @@
+resources:
+- bases/cluster.ytsaurus.tech_ytsaurus.yaml
+- bases/cluster.ytsaurus.tech_spyts.yaml
+- bases/cluster.ytsaurus.tech_chyts.yaml
+- bases/cluster.ytsaurus.tech_remoteytsaurus.yaml
+- bases/cluster.ytsaurus.tech_remoteexecnodes.yaml
+- bases/cluster.ytsaurus.tech_remotedatanodes.yaml
+- bases/cluster.ytsaurus.tech_remotetabletnodes.yaml
+- bases/cluster.ytsaurus.tech_offshoredatagateways.yaml
