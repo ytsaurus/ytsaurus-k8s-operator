@@ -386,7 +386,8 @@ type InstanceSpec struct {
 	Volumes           []Volume             `json:"volumes,omitempty"`
 	VolumeMounts      []corev1.VolumeMount `json:"volumeMounts,omitempty"`
 	//+optional
-	ReadinessProbeParams  *HealthcheckProbeParams         `json:"readinessProbeParams,omitempty"`
+	ReadinessProbeParams *HealthcheckProbeParams `json:"readinessProbeParams,omitempty"`
+	// Resources dedicated for component. Capacity is defined by requests, or limits for zero requests.
 	Resources             corev1.ResourceRequirements     `json:"resources,omitempty"`
 	InstanceCount         int32                           `json:"instanceCount,omitempty"`
 	MinReadyInstanceCount *int                            `json:"minReadyInstanceCount,omitempty"`
@@ -665,7 +666,7 @@ type ExecNodesSpec struct {
 	//+optional
 	GPUManager      *GPUManagerSpec  `json:"gpuManager,omitempty"`
 	JobProxyLoggers []TextLoggerSpec `json:"jobProxyLoggers,omitempty"`
-	// Resources dedicated for running jobs.
+	// Resources dedicated for running jobs. Capacity is defined by requests, or limits for zero requests. Default: same limits as exec node with zero requests.
 	//+optional
 	JobResources *corev1.ResourceRequirements `json:"jobResources,omitempty"`
 	//+optional
