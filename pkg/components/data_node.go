@@ -124,3 +124,7 @@ func (n *DataNode) handleImaginaryChunksMigration(ctx context.Context, dry bool)
 	}
 	return ptr.To(ComponentStatusUpdateStep("pods removal for imaginary chunks migration")), err
 }
+
+func (n *DataNode) HasCustomUpdateState() bool {
+	return false
+}

@@ -182,3 +182,7 @@ func (hp *HttpProxy) Sync(ctx context.Context) error {
 	_, err := hp.doSync(ctx, false)
 	return err
 }
+
+func (hp *HttpProxy) HasCustomUpdateState() bool {
+	return false
+}

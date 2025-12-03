@@ -84,6 +84,7 @@ type Component interface {
 	GetLabeller() *labeller.Labeller
 
 	GetCypressPatch() ypatch.PatchSet
+	HasCustomUpdateState() bool
 }
 
 // Following structs are used as a base for implementing YTsaurus components objects.

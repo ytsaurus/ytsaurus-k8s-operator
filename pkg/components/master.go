@@ -676,3 +676,7 @@ func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.Pod
 		},
 	)
 }
+
+func (m *Master) HasCustomUpdateState() bool {
+	return false
+}

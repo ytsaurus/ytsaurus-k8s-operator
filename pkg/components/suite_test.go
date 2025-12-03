@@ -87,6 +87,10 @@ func (fc *FakeComponent) GetCypressPatch() ypatch.PatchSet {
 
 func (fc *FakeComponent) SetReadyCondition(status ComponentStatus) {}
 
+func (fc *FakeComponent) HasCustomUpdateState() bool {
+	return false
+}
+
 type FakeServer struct {
 	podsReady bool
 }

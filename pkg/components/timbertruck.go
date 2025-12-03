@@ -489,3 +489,7 @@ func checkAndAddTimbertruckToServerOptions(options *[]Option, timbertruck *ytv1.
 		))
 	}
 }
+
+func (tt *Timbertruck) HasCustomUpdateState() bool {
+	return false
+}

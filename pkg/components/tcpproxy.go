@@ -118,3 +118,7 @@ func (tp *TcpProxy) Sync(ctx context.Context) error {
 	_, err := tp.doSync(ctx, false)
 	return err
 }
+
+func (tp *TcpProxy) HasCustomUpdateState() bool {
+	return false
+}
