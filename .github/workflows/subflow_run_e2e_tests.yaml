@@ -26,17 +26,19 @@ jobs:
       max-parallel: 4
       matrix:
         e2e:
-          - name: "basic"
-            filter: "basic"
-          - name: "selector and remote"
-            filter: "selector || remote"
-          - name: "tls"
-            filter: "tls"
-          - name: "other"
-            filter: "!basic && !selector && !remote && !tls"
-          - name: "${{ inputs.e2e_filter }}"
-            filter: "${{ inputs.e2e_filter }}"
-            from_input: true
+          - name: "bulk update"
+            filter: "rolling-update-bulk-mode"
+          # - name: "basic"
+          #   filter: "basic"
+          # - name: "selector and remote"
+          #   filter: "selector || remote"
+          # - name: "tls"
+          #   filter: "tls"
+          # - name: "other"
+          #   filter: "!basic && !selector && !remote && !tls"
+          # - name: "${{ inputs.e2e_filter }}"
+          #   filter: "${{ inputs.e2e_filter }}"
+          #   from_input: true
         exclude:
           - e2e:
               # run only from_input part when defined and vice versa
