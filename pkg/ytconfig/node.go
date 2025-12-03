@@ -401,21 +401,13 @@ func fillClusterNodeServerCarcass(n *NodeServer, flavor NodeFlavor, spec ytv1.Cl
 }
 
 func getDataNodeResourceLimits(spec *ytv1.DataNodesSpec) ResourceLimits {
-	var resourceLimits ResourceLimits
-
-	var cpu float32 = 0
-	resourceLimits.NodeDedicatedCpu = &cpu
-	resourceLimits.TotalCpu = &cpu
-
-	memoryRequest := spec.Resources.Requests.Memory()
-	memoryLimit := spec.Resources.Limits.Memory()
-	if memoryRequest != nil && !memoryRequest.IsZero() {
-		resourceLimits.TotalMemory = memoryRequest.Value()
-	} else if memoryLimit != nil && !memoryLimit.IsZero() {
-		resourceLimits.TotalMemory = memoryLimit.Value()
+	nodeMemory := getResourceQuantity(&spec.Resources, corev1.ResourceMemory)
+	nodeCPU := getResourceQuantity(&spec.Resources, corev1.ResourceCPU)
+	return ResourceLimits{
+		TotalMemory:      nodeMemory.Value(),
+		TotalCpu:         ptr.To(float32(nodeCPU.AsApproximateFloat64())),
+		NodeDedicatedCpu: ptr.To(float32(nodeCPU.AsApproximateFloat64())),
 	}
-
-	return resourceLimits
 }
 
 func getDataNodeLogging(spec *ytv1.DataNodesSpec) Logging {
@@ -782,16 +774,12 @@ func getTabletNodeServerCarcass(spec *ytv1.TabletNodesSpec) (TabletNodeServer, e
 	var c TabletNodeServer
 	fillClusterNodeServerCarcass(&c.NodeServer, NodeFlavorTablet, spec.ClusterNodesSpec, &spec.InstanceSpec)
 
-	var cpu float32 = 0
-	c.ResourceLimits.NodeDedicatedCpu = &cpu
-	c.ResourceLimits.TotalCpu = &cpu
-
-	memoryRequest := spec.Resources.Requests.Memory()
-	memoryLimit := spec.Resources.Limits.Memory()
-	if memoryRequest != nil && !memoryRequest.IsZero() {
-		c.ResourceLimits.TotalMemory = memoryRequest.Value()
-	} else if memoryLimit != nil && !memoryLimit.IsZero() {
-		c.ResourceLimits.TotalMemory = memoryLimit.Value()
+	nodeMemory := getResourceQuantity(&spec.Resources, corev1.ResourceMemory)
+	nodeCPU := getResourceQuantity(&spec.Resources, corev1.ResourceCPU)
+	c.ResourceLimits = ResourceLimits{
+		TotalMemory:      nodeMemory.Value(),
+		TotalCpu:         ptr.To(float32(nodeCPU.AsApproximateFloat64())),
+		NodeDedicatedCpu: ptr.To(float32(nodeCPU.AsApproximateFloat64())),
 	}
 
 	c.Logging = getTabletNodeLogging(spec)
