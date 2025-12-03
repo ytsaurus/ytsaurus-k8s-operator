@@ -355,6 +355,41 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
 		})
 
+		DescribeTable("Forbidden update plans",
+			func(plan []ytv1.ComponentUpdateSelector, msg string) {
+				ytsaurus.Spec.UpdatePlan = plan
+				Expect(k8sClient.Create(ctx, ytsaurus)).To(MatchError(ContainSubstring(msg)))
+			},
+			Entry("empty entry", []ytv1.ComponentUpdateSelector{
+				{},
+			}, "Either component or class should be specified"),
+			Entry("both class and component", []ytv1.ComponentUpdateSelector{
+				{Class: consts.ComponentClassStateless, Component: ytv1.Component{Type: consts.MasterType}},
+			}, "Only one of component or class should be specified"),
+			Entry("unknown type", []ytv1.ComponentUpdateSelector{
+				{Component: ytv1.Component{Type: "Unknown"}},
+			}, "Unknown component type"),
+			Entry("unknown class", []ytv1.ComponentUpdateSelector{
+				{Class: "Unknown"},
+			}, "Unsupported value"),
+			Entry("nothing, something", []ytv1.ComponentUpdateSelector{
+				{Class: consts.ComponentClassNothing},
+				{Component: ytv1.Component{Type: consts.MasterType}},
+			}, "Update plan already contains class Nothing"),
+			Entry("everything, something", []ytv1.ComponentUpdateSelector{
+				{Class: consts.ComponentClassEverything},
+				{Component: ytv1.Component{Type: consts.MasterType}},
+			}, "Update plan already contains class Everything"),
+			Entry("something, nothing", []ytv1.ComponentUpdateSelector{
+				{Component: ytv1.Component{Type: consts.MasterType}},
+				{Class: consts.ComponentClassNothing},
+			}, "Should be first and only entry"),
+			Entry("something, everything", []ytv1.ComponentUpdateSelector{
+				{Component: ytv1.Component{Type: consts.MasterType}},
+				{Class: consts.ComponentClassEverything},
+			}, "Should be first and only entry"),
+		)
+
 		It("Should not accept bulk-only components with non-BulkUpdate mode", func() {
 			testCases := []struct {
 				componentType    consts.ComponentType
