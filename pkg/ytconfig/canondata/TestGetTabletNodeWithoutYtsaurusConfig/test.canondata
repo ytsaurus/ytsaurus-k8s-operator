@@ -100,8 +100,8 @@
     ];
     "resource_limits"={
         "total_memory"=5368709120;
-        "total_cpu"=0.000000;
-        "node_dedicated_cpu"=0.000000;
+        "total_cpu"=20.000000;
+        "node_dedicated_cpu"=20.000000;
     };
     tags=[
         "rack:xn-a";

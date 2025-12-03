@@ -106,8 +106,8 @@ data:
         ];
         "resource_limits"={
             "total_memory"=2147483648;
-            "total_cpu"=0.000000;
-            "node_dedicated_cpu"=0.000000;
+            "total_cpu"=1.000000;
+            "node_dedicated_cpu"=1.000000;
         };
         "skynet_http_port"=11012;
         "data_node"={
