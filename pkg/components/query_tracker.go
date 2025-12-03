@@ -20,6 +20,13 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
+func init() {
+	RegisterUpdatePreChecker(consts.QueryTrackerType, UpdatePreCheckerFunc(func(ctx context.Context, component Component) error {
+		// checks will be added later
+		return nil
+	}))
+}
+
 type QueryTracker struct {
 	localServerComponent
 	cfgen *ytconfig.Generator

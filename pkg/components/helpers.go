@@ -7,6 +7,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"sigs.k8s.io/yaml"
 
@@ -163,19 +164,36 @@ func handleUpdatingClusterState(
 	dry bool,
 ) (*ComponentStatus, error) {
 	var err error
+	component := componentToAPIComponent(cmp)
 
 	if IsUpdatingComponent(ytsaurus, cmp) {
 		if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			if ytsaurus.ShouldRunPreChecks(component) {
+				setComponentPhase(ytsaurus, component, ytv1.ComponentUpdatePhasePreChecks, "running pre-checks")
+				if err := RunUpdatePreCheck(ctx, cmp); err != nil {
+					setComponentPhaseWithError(ytsaurus, component, ytv1.ComponentUpdatePhaseBlocked, err)
+					return ptr.To(ComponentStatusBlocked(err.Error())), err
+				}
+				ytsaurus.UpdateComponentProgress(component, func(progress *ytv1.ComponentUpdateProgress) {
+					progress.RunPreChecks = false
+				})
+			}
 			if !dry {
+				setComponentPhase(ytsaurus, component, ytv1.ComponentUpdatePhaseScalingDown, "removing pods")
 				err = removePods(ctx, server, cmpBase)
 			}
 			return ptr.To(ComponentStatusUpdateStep("pods removal")), err
 		}
+		if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
+			setComponentPhase(ytsaurus, component, ytv1.ComponentUpdatePhaseRolling, "")
+		}
 
 		if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+			setComponentPhase(ytsaurus, component, ytv1.ComponentUpdatePhaseFinalizing, "")
 			return ptr.To(ComponentStatusReady()), err
 		}
 	} else {
+		setComponentPhase(ytsaurus, component, ytv1.ComponentUpdatePhaseCompleted, "Not updating component")
 		return ptr.To(ComponentStatusReadyAfter("Not updating component")), err
 	}
 	return nil, err
@@ -216,6 +234,26 @@ func RunIfExists(path string, commands ...string) string {
 func SetWithIgnoreExisting(path string, value string) string {
 	return RunIfNonexistent(path, fmt.Sprintf("/usr/bin/yt set %s %s", path, value))
 }
+
+func componentToAPIComponent(c Component) ytv1.Component {
+	return ytv1.Component{
+		Name: c.GetShortName(),
+		Type: c.GetType(),
+	}
+}
+
+// // getComponentUpdateMode returns the update mode for the given component.
+// // will be needed when we implement rolling and onDelete updates
+// func getComponentUpdateMode(ytsaurus *apiproxy.Ytsaurus, component ytv1.Component) ytv1.ComponentUpdateModeType {
+// 	progressEntry := ytsaurus.GetComponentProgress(component)
+// 	if progressEntry == nil {
+// 		return ytv1.ComponentUpdateModeTypeBulkUpdate
+// 	}
+// 	if progressEntry.Mode == "" {
+// 		return ytv1.ComponentUpdateModeTypeBulkUpdate
+// 	}
+// 	return progressEntry.Mode
+// }
 
 func AddAffinity(statefulSet *appsv1.StatefulSet,
 	nodeSelectorRequirementKey string,
@@ -311,4 +349,24 @@ func getDNSConfigWithDefault(componentDNSConfig, defaultDNSConfig *corev1.PodDNS
 
 func buildUserCredentialsSecretname(username string) string {
 	return fmt.Sprintf("%s-secret", username)
+}
+
+func setComponentPhase(ytsaurus *apiproxy.Ytsaurus, component ytv1.Component, phase ytv1.ComponentUpdatePhase, message string) {
+	ytsaurus.UpdateComponentProgress(component, func(progress *ytv1.ComponentUpdateProgress) {
+		progress.Phase = phase
+		progress.Message = message
+		progress.LastError = ""
+		now := metav1.Now()
+		progress.LastTransitionTime = &now
+	})
+}
+
+func setComponentPhaseWithError(ytsaurus *apiproxy.Ytsaurus, component ytv1.Component, phase ytv1.ComponentUpdatePhase, err error) {
+	ytsaurus.UpdateComponentProgress(component, func(progress *ytv1.ComponentUpdateProgress) {
+		progress.Phase = phase
+		progress.LastError = err.Error()
+		progress.Message = err.Error()
+		now := metav1.Now()
+		progress.LastTransitionTime = &now
+	})
 }

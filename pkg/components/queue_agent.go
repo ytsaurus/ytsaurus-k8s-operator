@@ -19,6 +19,13 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
+func init() {
+	RegisterUpdatePreChecker(consts.QueueAgentType, UpdatePreCheckerFunc(func(ctx context.Context, component Component) error {
+		// checks will be added later
+		return nil
+	}))
+}
+
 type QueueAgent struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
