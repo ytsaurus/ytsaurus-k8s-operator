@@ -355,6 +355,143 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
 		})
 
+		DescribeTable("Forbidden update plans",
+			func(plan []ytv1.ComponentUpdateSelector, msg string) {
+				ytsaurus.Spec.UpdatePlan = plan
+				Expect(k8sClient.Create(ctx, ytsaurus)).To(MatchError(ContainSubstring(msg)))
+			},
+			Entry("empty entry", []ytv1.ComponentUpdateSelector{
+				{},
+			}, "Either component or class should be specified"),
+			Entry("both class and component", []ytv1.ComponentUpdateSelector{
+				{Class: consts.ComponentClassStateless, Component: ytv1.Component{Type: consts.MasterType}},
+			}, "Only one of component or class should be specified"),
+			Entry("unknown type", []ytv1.ComponentUpdateSelector{
+				{Component: ytv1.Component{Type: "Unknown"}},
+			}, "Unknown component type"),
+			Entry("unknown class", []ytv1.ComponentUpdateSelector{
+				{Class: "Unknown"},
+			}, "Unsupported value"),
+			Entry("nothing, something", []ytv1.ComponentUpdateSelector{
+				{Class: consts.ComponentClassNothing},
+				{Component: ytv1.Component{Type: consts.MasterType}},
+			}, "Update plan already contains class Nothing"),
+			Entry("everything, something", []ytv1.ComponentUpdateSelector{
+				{Class: consts.ComponentClassEverything},
+				{Component: ytv1.Component{Type: consts.MasterType}},
+			}, "Update plan already contains class Everything"),
+			Entry("something, nothing", []ytv1.ComponentUpdateSelector{
+				{Component: ytv1.Component{Type: consts.MasterType}},
+				{Class: consts.ComponentClassNothing},
+			}, "Should be first and only entry"),
+			Entry("something, everything", []ytv1.ComponentUpdateSelector{
+				{Component: ytv1.Component{Type: consts.MasterType}},
+				{Class: consts.ComponentClassEverything},
+			}, "Should be first and only entry"),
+		)
+
+		It("Should not accept bulk-only components with non-BulkUpdate mode", func() {
+			testCases := []struct {
+				componentType    consts.ComponentType
+				updateStrategy   *ytv1.ComponentUpdateStrategy
+				setupComponent   func(*ytv1.Ytsaurus)
+				expectedErrorMsg string
+			}{
+				{
+					componentType: consts.QueryTrackerType,
+					updateStrategy: &ytv1.ComponentUpdateStrategy{
+						RollingUpdate: &ytv1.ComponentRollingUpdateMode{},
+					},
+					setupComponent: func(yts *ytv1.Ytsaurus) {
+						yts.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
+						yts.Spec.TabletNodes = []ytv1.TabletNodesSpec{
+							{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}},
+						}
+					},
+					expectedErrorMsg: "QueryTracker supports only BulkUpdate mode",
+				},
+				{
+					componentType: consts.QueueAgentType,
+					updateStrategy: &ytv1.ComponentUpdateStrategy{
+						OnDelete: &ytv1.ComponentOnDeleteUpdateMode{},
+					},
+					setupComponent: func(yts *ytv1.Ytsaurus) {
+						yts.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
+						yts.Spec.TabletNodes = []ytv1.TabletNodesSpec{
+							{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}},
+						}
+					},
+					expectedErrorMsg: "QueueAgent supports only BulkUpdate mode",
+				},
+				{
+					componentType: consts.YqlAgentType,
+					updateStrategy: &ytv1.ComponentUpdateStrategy{
+						RollingUpdate: &ytv1.ComponentRollingUpdateMode{},
+					},
+					setupComponent: func(yts *ytv1.Ytsaurus) {
+						yts.Spec.YQLAgents = &ytv1.YQLAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
+					},
+					expectedErrorMsg: "YqlAgent supports only BulkUpdate mode",
+				},
+			}
+
+			for _, tc := range testCases {
+				ytsaurus := newYtsaurus()
+				tc.setupComponent(ytsaurus)
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+					{
+						Component: ytv1.Component{Type: tc.componentType},
+						Strategy:  tc.updateStrategy,
+					},
+				}
+
+				Expect(k8sClient.Create(ctx, ytsaurus)).Should(
+					MatchError(ContainSubstring(tc.expectedErrorMsg)),
+					"Failed for component: %s with strategy: %v", tc.componentType, tc.updateStrategy,
+				)
+			}
+		})
+
+		It("Should accept QueryTracker/QueueAgent with BulkUpdate mode", func() {
+			testCases := []struct {
+				componentType  consts.ComponentType
+				setupComponent func(*ytv1.Ytsaurus)
+			}{
+				{
+					componentType: consts.QueryTrackerType,
+					setupComponent: func(yts *ytv1.Ytsaurus) {
+						yts.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
+						yts.Spec.TabletNodes = []ytv1.TabletNodesSpec{
+							{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}},
+						}
+					},
+				},
+				{
+					componentType: consts.QueueAgentType,
+					setupComponent: func(yts *ytv1.Ytsaurus) {
+						yts.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
+						yts.Spec.TabletNodes = []ytv1.TabletNodesSpec{
+							{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}},
+						}
+					},
+				},
+			}
+
+			for _, tc := range testCases {
+				ytsaurus := newYtsaurus()
+				tc.setupComponent(ytsaurus)
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+					{
+						Component: ytv1.Component{Type: tc.componentType},
+						Strategy:  &ytv1.ComponentUpdateStrategy{}, // BulkUpdate
+					},
+				}
+
+				Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+				Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
+			}
+		})
+
 		It("Should accept component update without updateMode (backward compatibility)", func() {
 			ytsaurus := newYtsaurus()
 			ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
