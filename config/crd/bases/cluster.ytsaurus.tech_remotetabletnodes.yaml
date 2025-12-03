@@ -1090,7 +1090,7 @@ spec:
                 type: object
                 x-kubernetes-map-type: atomic
               resources:
-                description: ResourceRequirements describes the compute resource requirements.
+                description: Resources dedicated for component.
                 properties:
                   claims:
                     description: Claims lists the names of resources, defined in spec.
