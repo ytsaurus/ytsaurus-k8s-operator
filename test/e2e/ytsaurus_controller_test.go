@@ -1854,6 +1854,50 @@ exec "$@"`
 		) // integration tls
 
 	}) // integration
+
+	Context("Query tracker update tests", Label("qt-update"), func() {
+		var qtInitialPods map[string]corev1.Pod
+
+		BeforeEach(func() {
+			ytBuilder.WithBaseComponents()
+			ytBuilder.WithQueryTracker()
+			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+				Component: ytv1.Component{
+					Type: consts.QueryTrackerType,
+				},
+			}}
+			ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
+				InstanceSpec: ytv1.InstanceSpec{
+					Image:         ptr.To(testutil.QueryTrackerImagePrevious),
+					InstanceCount: 3,
+				},
+			}
+			qtInitialPods = getComponentPods(ctx, namespace)
+		})
+
+		It("Should update query tracker and have Running state", func(ctx context.Context) {
+			By("Trigger QT update")
+			ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.QueryTrackerImageFuture)
+
+			UpdateObject(ctx, ytsaurus)
+			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+
+			By("Waiting cluster update completes")
+			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+
+			qtPodsAfter := getComponentPods(ctx, namespace)
+			changed := getChangedPods(qtInitialPods, qtPodsAfter)
+
+			allChanged := append(changed.Deleted, changed.Created...)
+			Expect(allChanged).To(ContainElements("qt-0", "qt-1", "qt-2"))
+
+			for name, pod := range qtPodsAfter {
+				if strings.HasPrefix(name, "qt-") {
+					Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.QueryTrackers.Image))
+				}
+			}
+		})
+	})
 })
 
 func checkClusterHealth(ytClient yt.Client) {
