@@ -80,3 +80,7 @@ func (p *OffshoreDataGateway) Sync(ctx context.Context) (ComponentStatus, error)
 func (p *OffshoreDataGateway) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, p.server)
 }
+
+func (p *OffshoreDataGateway) HasCustomUpdateState() bool {
+	return false
+}

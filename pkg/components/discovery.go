@@ -83,3 +83,7 @@ func (d *Discovery) Sync(ctx context.Context) error {
 	_, err := d.doSync(ctx, false)
 	return err
 }
+
+func (d *Discovery) HasCustomUpdateState() bool {
+	return false
+}

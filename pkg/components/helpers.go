@@ -172,7 +172,8 @@ func handleUpdatingClusterState(
 			return ptr.To(ComponentStatusUpdateStep("pods removal")), err
 		}
 
-		if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+		if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+			!cmp.HasCustomUpdateState() {
 			return ptr.To(ComponentStatusReady()), err
 		}
 	} else {

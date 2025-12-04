@@ -172,3 +172,7 @@ func (rp *RpcProxy) Sync(ctx context.Context) error {
 	_, err := rp.doSync(ctx, false)
 	return err
 }
+
+func (rp *RpcProxy) HasCustomUpdateState() bool {
+	return false
+}

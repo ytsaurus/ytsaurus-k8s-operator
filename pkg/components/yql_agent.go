@@ -272,3 +272,7 @@ func (yqla *YqlAgent) Sync(ctx context.Context) error {
 	_, err := yqla.doSync(ctx, false)
 	return err
 }
+
+func (yqla *YqlAgent) HasCustomUpdateState() bool {
+	return true
+}

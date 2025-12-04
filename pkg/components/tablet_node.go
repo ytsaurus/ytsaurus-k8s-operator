@@ -258,3 +258,7 @@ func (tn *TabletNode) Sync(ctx context.Context) error {
 func (tn *TabletNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, tn.server)
 }
+
+func (tn *TabletNode) HasCustomUpdateState() bool {
+	return false
+}

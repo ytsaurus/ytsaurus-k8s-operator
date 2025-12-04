@@ -91,3 +91,7 @@ func (ca *ControllerAgent) Sync(ctx context.Context) error {
 	_, err := ca.doSync(ctx, false)
 	return err
 }
+
+func (ca *ControllerAgent) HasCustomUpdateState() bool {
+	return false
+}

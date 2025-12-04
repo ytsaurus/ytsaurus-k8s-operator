@@ -124,24 +124,16 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(s.ytsaurus, s) {
-			if s.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-				if !dry {
-					err = removePods(ctx, s.server, &s.localComponent)
-				}
-				return ComponentStatusUpdateStep("pods removal"), err
-			}
+		if status, err := handleUpdatingClusterState(ctx, s.ytsaurus, s, &s.localComponent, s.server, dry); status != nil {
+			return *status, err
+		}
+		if status, err := s.updateOpArchive(ctx, dry); status != nil {
+			return *status, err
+		}
 
-			if status, err := s.updateOpArchive(ctx, dry); status != nil {
-				return *status, err
-			}
-
-			if s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
-				s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForOpArchiveUpdate {
-				return ComponentStatusReady(), err
-			}
-		} else {
-			return ComponentStatusReadyAfter("Not updating component"), err
+		if s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+			s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForOpArchiveUpdate {
+			return ComponentStatusReady(), err
 		}
 	}
 
@@ -312,4 +304,8 @@ func (s *Scheduler) prepareInitOperationsArchive() {
 	job := s.initOpArchiveJob.Build()
 	container := &job.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{s.secret.GetEnvSource()}
+}
+
+func (s *Scheduler) HasCustomUpdateState() bool {
+	return true
 }
