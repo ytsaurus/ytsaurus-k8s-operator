@@ -67,7 +67,7 @@ import (
 
 var k8sClient client.WithWatch
 var clientset *kubernetes.Clientset
-var ctx context.Context
+var specCtx context.Context
 var log = logf.Log
 var ytLogger *logy.Logger
 
@@ -159,6 +159,10 @@ var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	clientset, err = kubernetes.NewForConfig(cfg)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(clientset).NotTo(BeNil())
+
+	By("Logging nodes state", func() {
+		logNodesState(ctx)
+	})
 })
 
 func ShouldPreserveArtifacts() bool {
@@ -171,10 +175,11 @@ func ShouldPreserveArtifacts() bool {
 
 var _ = BeforeEach(func() {
 	var cancel context.CancelFunc
-	ctx, cancel = context.WithCancel(context.TODO())
+	Expect(specCtx).To(BeNil())
+	specCtx, cancel = context.WithCancel(context.TODO())
 	DeferCleanup(func() {
 		cancel()
-		ctx = nil
+		specCtx = nil
 	})
 })
 

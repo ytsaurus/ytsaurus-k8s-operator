@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/component-helpers/resource"
 	"k8s.io/utils/ptr"
 	ctrlcli "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -45,16 +46,54 @@ func YsonPretty(value any) string {
 
 func getKindControlPlaneNode() corev1.Node {
 	nodeList := corev1.NodeList{}
-	err := k8sClient.List(ctx, &nodeList)
+	err := k8sClient.List(specCtx, &nodeList)
 	Expect(err).Should(Succeed())
 	Expect(nodeList.Items).To(HaveLen(1))
 	Expect(nodeList.Items[0].Name).To(HaveSuffix("kind-control-plane"))
 	return nodeList.Items[0]
 }
 
+func logNodesState(ctx context.Context) {
+	var nodes corev1.NodeList
+	var pods corev1.PodList
+	Expect(k8sClient.List(ctx, &nodes)).Should(Succeed())
+	Expect(k8sClient.List(ctx, &pods)).Should(Succeed())
+	for _, node := range nodes.Items {
+		available := node.Status.Allocatable.DeepCopy()
+		for _, pod := range pods.Items {
+			if pod.Spec.NodeName != node.Name {
+				continue
+			}
+			requests := resource.PodRequests(&pod, resource.PodResourcesOptions{})
+			log.Info("Pod",
+				"namespace", pod.Namespace,
+				"name", pod.Name,
+				"qosClass", pod.Status.QOSClass,
+				"phase", pod.Status.Phase,
+				"reason", pod.Status.Reason,
+				"message", pod.Status.Message,
+				"requests", requests,
+			)
+			if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
+				continue
+			}
+			for k, v := range requests {
+				res := available[k]
+				res.Sub(v)
+				available[k] = res
+			}
+		}
+		log.Info("Node",
+			"name", node.Name,
+			"allocatable", node.Status.Allocatable,
+			"available", available,
+		)
+	}
+}
+
 func getNodesAddresses() []string {
 	var nodes corev1.NodeList
-	Expect(k8sClient.List(ctx, &nodes)).Should(Succeed())
+	Expect(k8sClient.List(specCtx, &nodes)).Should(Succeed())
 	var addrs []string
 	for _, node := range nodes.Items {
 		for _, address := range node.Status.Addresses {
@@ -69,7 +108,7 @@ func getNodesAddresses() []string {
 
 func getServiceAddress(namespace, serviceName, portName string) (string, error) {
 	svc := corev1.Service{}
-	err := k8sClient.Get(ctx, types.NamespacedName{Name: serviceName, Namespace: namespace}, &svc)
+	err := k8sClient.Get(specCtx, types.NamespacedName{Name: serviceName, Namespace: namespace}, &svc)
 	if err != nil {
 		return "", err
 	}
@@ -233,7 +272,7 @@ func (c *ClusterHealthReport) AddWarning(warning yterrors.Error, warningPath ypa
 
 func (c *ClusterHealthReport) CollectAlerts(ytClient yt.Client, alertPath ypath.Path) {
 	var alerts []yterrors.Error
-	if err := ytClient.GetNode(ctx, alertPath, &alerts, nil); err != nil {
+	if err := ytClient.GetNode(specCtx, alertPath, &alerts, nil); err != nil {
 		if yterrors.ContainsResolveError(err) {
 			log.Info("Cannot collect alerts", "error", err, "alert_path", alertPath)
 		} else {
@@ -252,7 +291,7 @@ func (c *ClusterHealthReport) CollectNodes(ytClient yt.Client, basePath ypath.Pa
 		Alerts []yterrors.Error `yson:"alerts,attr"`
 	}
 	var nodes []nodeAlerts
-	err := ytClient.ListNode(ctx, basePath, &nodes, &yt.ListNodeOptions{
+	err := ytClient.ListNode(specCtx, basePath, &nodes, &yt.ListNodeOptions{
 		Attributes: []string{"alerts"},
 	})
 	if err != nil {
@@ -269,7 +308,7 @@ func (c *ClusterHealthReport) CollectNodes(ytClient yt.Client, basePath ypath.Pa
 
 func (c *ClusterHealthReport) CollectLostChunks(ytClient yt.Client, countPath ypath.Path) {
 	var count int
-	err := ytClient.GetNode(ctx, countPath, &count, nil)
+	err := ytClient.GetNode(specCtx, countPath, &count, nil)
 	if err != nil {
 		c.AddError(err, countPath)
 		return
@@ -295,7 +334,7 @@ func (c *ClusterHealthReport) CollectTablets(ytClient yt.Client, basePath ypath.
 	var nodes []node
 
 	err := ytClient.ListNode(
-		ctx,
+		specCtx,
 		basePath,
 		&nodes,
 		&yt.ListNodeOptions{
@@ -495,7 +534,7 @@ func readFileObject(namespace string, source ytv1.FileObjectReference) ([]byte, 
 	switch source.Kind {
 	case "", "ConfigMap":
 		var object corev1.ConfigMap
-		if err := k8sClient.Get(ctx, objectName, &object); err != nil {
+		if err := k8sClient.Get(specCtx, objectName, &object); err != nil {
 			return nil, err
 		}
 		if data, ok := object.Data[source.Key]; ok {
@@ -506,7 +545,7 @@ func readFileObject(namespace string, source ytv1.FileObjectReference) ([]byte, 
 		}
 	case "Secret":
 		var object corev1.Secret
-		if err := k8sClient.Get(ctx, objectName, &object); err != nil {
+		if err := k8sClient.Get(specCtx, objectName, &object); err != nil {
 			return nil, err
 		}
 		if data, ok := object.Data[source.Key]; ok {
@@ -533,22 +572,35 @@ func discoverProxies(httpClient *http.Client, proxyAddress string, params url.Va
 	return proxies.Proxies
 }
 
-func fetchFailedPods(namespace string) []string {
+func fetchStuckPods(ctx context.Context, namespace string) (pending, failed []string) {
 	podList := corev1.PodList{}
 	err := k8sClient.List(ctx, &podList, ctrlcli.InNamespace(namespace))
 	Expect(err).Should(Succeed())
 
-	var failedPods []string
 	for _, pod := range podList.Items {
+		switch pod.Status.Phase {
+		case corev1.PodPending:
+			pending = append(pending, pod.Name)
+		case corev1.PodFailed:
+			failed = append(failed, pod.Name)
+		default:
+			continue
+		}
+
+		requests := resource.PodRequests(&pod, resource.PodResourcesOptions{})
+		log.Info("Pod",
+			"name", pod.Name,
+			"phase", pod.Status.Phase,
+			"message", pod.Status.Message,
+			"reason", pod.Status.Reason,
+			"requests", requests,
+			"nodeName", pod.Spec.NodeName,
+			"conditions", pod.Status.Conditions,
+		)
+
 		if pod.Status.Phase != corev1.PodFailed {
 			continue
 		}
-		failedPods = append(failedPods, pod.Name)
-		log.Info("Failed pod",
-			"pod", pod.Name,
-			"message", pod.Status.Message,
-			"reason", pod.Status.Reason,
-		)
 
 		logRequest := clientset.CoreV1().Pods(namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
 			Timestamps: true,
@@ -565,7 +617,7 @@ func fetchFailedPods(namespace string) []string {
 		Expect(err).To(Succeed())
 	}
 
-	return failedPods
+	return pending, failed
 }
 
 func pullImages(ctx context.Context, namaspace string, images []string, timeout time.Duration) {

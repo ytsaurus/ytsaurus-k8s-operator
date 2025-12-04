@@ -814,9 +814,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -1060,8 +1063,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -2706,9 +2708,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -2952,8 +2957,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -4566,9 +4570,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -4812,8 +4819,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -6431,9 +6437,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -6685,8 +6694,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -8305,9 +8313,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -8551,8 +8562,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -9467,9 +9477,12 @@ spec:
                         of a pod.
                       properties:
                         name:
-                          description: Required.
+                          description: |-
+                            Name is this DNS resolver option's name.
+                            Required.
                           type: string
                         value:
+                          description: Value is this DNS resolver option's value.
                           type: string
                       type: object
                     type: array
@@ -10208,9 +10221,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -10683,8 +10699,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -12343,9 +12358,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -12604,8 +12622,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -14269,9 +14286,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -14516,8 +14536,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -16142,9 +16161,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -16394,8 +16416,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -18087,9 +18108,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -18348,8 +18372,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -19972,9 +19995,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -20218,8 +20244,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -21828,9 +21853,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -22074,8 +22102,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -23693,9 +23720,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -23943,8 +23973,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -25600,9 +25629,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -25846,8 +25878,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -27467,9 +27498,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -27729,8 +27763,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -28682,9 +28715,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -29503,9 +29539,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -29757,8 +29796,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -31385,9 +31423,12 @@ spec:
                               of a pod.
                             properties:
                               name:
-                                description: Required.
+                                description: |-
+                                  Name is this DNS resolver option's name.
+                                  Required.
                                 type: string
                               value:
+                                description: Value is this DNS resolver option's value.
                                 type: string
                             type: object
                           type: array
@@ -31641,8 +31682,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -32609,9 +32649,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -33599,9 +33642,12 @@ spec:
                             of a pod.
                           properties:
                             name:
-                              description: Required.
+                              description: |-
+                                Name is this DNS resolver option's name.
+                                Required.
                               type: string
                             value:
+                              description: Value is this DNS resolver option's value.
                               type: string
                           type: object
                         type: array
@@ -33845,8 +33891,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
