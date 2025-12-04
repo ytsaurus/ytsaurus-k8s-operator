@@ -100,7 +100,9 @@ func setLogger() {
 		),
 	)
 	logf.SetLogger(zapr.NewLogger(logger))
-	ytLogger = &logy.Logger{L: logger}
+	ytLogger = &logy.Logger{
+		L: logger.WithOptions(zap.IncreaseLevel(zap.InfoLevel)),
+	}
 }
 
 var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
