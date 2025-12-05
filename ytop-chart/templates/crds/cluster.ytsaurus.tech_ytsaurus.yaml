@@ -32881,7 +32881,6 @@ spec:
                           default: true
                           type: boolean
                         type:
-                          default: BulkUpdate
                           enum:
                           - BulkUpdate
                           - RollingUpdate
