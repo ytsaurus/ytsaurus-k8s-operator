@@ -89,7 +89,3 @@ func (bc *BundleController) Sync(ctx context.Context) error {
 func (bc *BundleController) doServerSync(ctx context.Context) error {
 	return bc.server.Sync(ctx)
 }
-
-func (bc *BundleController) HasCustomUpdateState() bool {
-	return false
-}

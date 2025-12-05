@@ -952,7 +952,3 @@ func (yc *YtsaurusClient) areActiveDataNodesWithImaginaryChunksExist(ctx context
 	)
 	return true, nil
 }
-
-func (yc *YtsaurusClient) HasCustomUpdateState() bool {
-	return false
-}

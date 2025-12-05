@@ -188,8 +188,7 @@ func handleUpdatingClusterState(
 			setComponentPhase(ytsaurus, component, ytv1.ComponentUpdatePhaseRolling, "")
 		}
 
-		if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
-			!cmp.HasCustomUpdateState() {
+		if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
 			setComponentPhase(ytsaurus, component, ytv1.ComponentUpdatePhaseFinalizing, "")
 			return ptr.To(ComponentStatusReady()), err
 		}

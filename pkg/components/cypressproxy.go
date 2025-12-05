@@ -85,7 +85,3 @@ func (cyp *CypressProxy) Sync(ctx context.Context) error {
 func (cyp *CypressProxy) doServerSync(ctx context.Context) error {
 	return cyp.server.Sync(ctx)
 }
-
-func (cyp *CypressProxy) HasCustomUpdateState() bool {
-	return false
-}

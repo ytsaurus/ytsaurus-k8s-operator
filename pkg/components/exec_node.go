@@ -115,7 +115,3 @@ func (n *ExecNode) Sync(ctx context.Context) error {
 	_, err := n.doSync(ctx, false)
 	return err
 }
-
-func (n *ExecNode) HasCustomUpdateState() bool {
-	return false
-}
