@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -349,6 +350,145 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{BaseLoggerSpec: ytv1.BaseLoggerSpec{Name: "access"}, Category: "Access"}}
 			ytsaurus.Spec.PrimaryMasters.Locations = append(ytsaurus.Spec.PrimaryMasters.Locations, ytv1.LocationSpec{LocationType: ytv1.LocationTypeLogs, Path: "/yt/master-logs"})
 			ytsaurus.Spec.PrimaryMasters.VolumeMounts = append(ytsaurus.Spec.PrimaryMasters.VolumeMounts, corev1.VolumeMount{Name: "master-logs", MountPath: "/yt/master-logs"})
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
+		})
+
+		It("Should not accept bulk-only components with non-BulkUpdate mode", func() {
+			testCases := []struct {
+				componentType    consts.ComponentType
+				updateModeType   ytv1.ComponentUpdateModeType
+				setupComponent   func(*ytv1.Ytsaurus)
+				expectedErrorMsg string
+			}{
+				{
+					componentType:  consts.QueryTrackerType,
+					updateModeType: ytv1.ComponentUpdateModeTypeRollingUpdate,
+					setupComponent: func(yts *ytv1.Ytsaurus) {
+						yts.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
+						yts.Spec.TabletNodes = []ytv1.TabletNodesSpec{
+							{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}},
+						}
+					},
+					expectedErrorMsg: "QueryTracker supports only BulkUpdate mode",
+				},
+				{
+					componentType:  consts.QueueAgentType,
+					updateModeType: ytv1.ComponentUpdateModeTypeOnDelete,
+					setupComponent: func(yts *ytv1.Ytsaurus) {
+						yts.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
+						yts.Spec.TabletNodes = []ytv1.TabletNodesSpec{
+							{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}},
+						}
+					},
+					expectedErrorMsg: "QueueAgent supports only BulkUpdate mode",
+				},
+				{
+					componentType:  consts.YqlAgentType,
+					updateModeType: ytv1.ComponentUpdateModeTypeRollingUpdate,
+					setupComponent: func(yts *ytv1.Ytsaurus) {
+						yts.Spec.YQLAgents = &ytv1.YQLAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
+					},
+					expectedErrorMsg: "YqlAgent supports only BulkUpdate mode",
+				},
+			}
+
+			for _, tc := range testCases {
+				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+				tc.setupComponent(ytsaurus)
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+					{
+						Component: ytv1.Component{Type: tc.componentType},
+						UpdateMode: &ytv1.ComponentUpdateMode{
+							Type: tc.updateModeType,
+						},
+					},
+				}
+
+				Expect(k8sClient.Create(ctx, ytsaurus)).Should(
+					MatchError(ContainSubstring(tc.expectedErrorMsg)),
+					"Failed for component: %s with mode: %s", tc.componentType, tc.updateModeType,
+				)
+			}
+		})
+
+		It("Should accept QueryTracker/QueueAgent with BulkUpdate mode", func() {
+			testCases := []struct {
+				componentType  consts.ComponentType
+				updateModeType ytv1.ComponentUpdateModeType
+				setupComponent func(*ytv1.Ytsaurus)
+			}{
+				{
+					componentType:  consts.QueryTrackerType,
+					updateModeType: ytv1.ComponentUpdateModeTypeBulkUpdate,
+					setupComponent: func(yts *ytv1.Ytsaurus) {
+						yts.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
+						yts.Spec.TabletNodes = []ytv1.TabletNodesSpec{
+							{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}},
+						}
+					},
+				},
+				{
+					componentType:  consts.QueueAgentType,
+					updateModeType: ytv1.ComponentUpdateModeTypeBulkUpdate,
+					setupComponent: func(yts *ytv1.Ytsaurus) {
+						yts.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
+						yts.Spec.TabletNodes = []ytv1.TabletNodesSpec{
+							{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}},
+						}
+					},
+				},
+			}
+
+			for _, tc := range testCases {
+				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+				tc.setupComponent(ytsaurus)
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+					{
+						Component: ytv1.Component{Type: tc.componentType},
+						UpdateMode: &ytv1.ComponentUpdateMode{
+							Type: tc.updateModeType,
+						},
+					},
+				}
+
+				Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+				Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
+			}
+		})
+
+		It("Should not accept updateMode without type field", func() {
+			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
+			ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{
+				{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}},
+			}
+			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+				{
+					Component: ytv1.Component{Type: consts.QueueAgentType},
+					UpdateMode: &ytv1.ComponentUpdateMode{
+						// Type field is missing - should be rejected
+						RunPreChecks: true,
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("type must be set when updateMode is specified")))
+		})
+
+		It("Should accept component update without updateMode (backward compatibility)", func() {
+			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+			ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
+			ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{
+				{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}},
+			}
+			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+				{
+					Component: ytv1.Component{Type: consts.QueueAgentType},
+					// No UpdateMode specified - allowed for backward compatibility
+				},
+			}
 
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
 			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())

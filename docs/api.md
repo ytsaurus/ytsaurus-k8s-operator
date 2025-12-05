@@ -545,6 +545,7 @@ _Appears in:_
 | `Pending` |  |
 | `PreChecks` |  |
 | `ScalingDown` |  |
+| `ScalingUp` |  |
 | `Rolling` |  |
 | `AwaitingManualAction` |  |
 | `Finalizing` |  |

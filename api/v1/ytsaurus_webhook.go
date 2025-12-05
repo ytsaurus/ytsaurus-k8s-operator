@@ -597,29 +597,29 @@ var bulkOnlyComponentTypes = map[consts.ComponentType]struct{}{
 }
 
 func validateUpdateModeForSelector(selector ComponentUpdateSelector, path *field.Path) field.ErrorList {
-	if selector.UpdateMode == nil && selector.Class == consts.ComponentClassUnspecified {
-		// defaults to bulk update, nothing to validate besides component-type restrictions
-		if _, bulkOnly := bulkOnlyComponentTypes[selector.Component.Type]; !bulkOnly {
-			return nil
-		}
+	var errs field.ErrorList
+
+	// If updateMode is specified, type field is required
+	if selector.UpdateMode != nil && selector.UpdateMode.Type == "" {
+		errs = append(errs, field.Required(path.Child("updateMode").Child("type"), "type must be set when updateMode is specified"))
+		return errs
 	}
 
-	var errs field.ErrorList
 	modeType := selector.GetUpdateModeType()
 
 	// updateMode currently supported only for concrete components
-	if selector.Class != consts.ComponentClassUnspecified && modeType != ComponentUpdateModeTypeBulkUpdate {
-		errs = append(errs, field.Invalid(path.Child("type"), modeType, "updateMode is supported only for specific components"))
+	if selector.Class != consts.ComponentClassUnspecified && modeType != "" {
+		errs = append(errs, field.Invalid(path.Child("updateMode"), modeType, "updateMode is supported only for specific components, not for component classes"))
 		return errs
 	}
 
 	if selector.Class == consts.ComponentClassUnspecified {
-		if selector.Component.Type == "" {
+		if selector.Component.Type == "" && selector.UpdateMode != nil {
 			errs = append(errs, field.Invalid(path, selector.UpdateMode, "component.type must be set to use updateMode"))
 			return errs
 		}
 		if _, bulkOnly := bulkOnlyComponentTypes[selector.Component.Type]; bulkOnly && modeType != ComponentUpdateModeTypeBulkUpdate {
-			errs = append(errs, field.Invalid(path.Child("type"), modeType, fmt.Sprintf("%s supports only BulkUpdate mode", selector.Component.Type)))
+			errs = append(errs, field.Invalid(path.Child("updateMode").Child("type"), modeType, fmt.Sprintf("%s supports only BulkUpdate mode", selector.Component.Type)))
 			return errs
 		}
 	}
