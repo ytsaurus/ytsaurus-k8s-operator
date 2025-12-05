@@ -1293,6 +1293,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			By("Trigger QT update")
 			ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.QueryTrackerImageFuture)
 			UpdateObject(ctx, ytsaurus)
+			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 
 			Eventually(ctx, func(ctx context.Context) (ytv1.ComponentUpdateModeType, error) {
 				if err := k8sClient.Get(ctx, name, ytsaurus); err != nil {

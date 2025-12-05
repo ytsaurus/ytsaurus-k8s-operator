@@ -1079,6 +1079,7 @@ const (
 	ComponentUpdatePhasePending              ComponentUpdatePhase = "Pending"
 	ComponentUpdatePhasePreChecks            ComponentUpdatePhase = "PreChecks"
 	ComponentUpdatePhaseScalingDown          ComponentUpdatePhase = "ScalingDown"
+	ComponentUpdatePhaseScalingUp            ComponentUpdatePhase = "ScalingUp"
 	ComponentUpdatePhaseRolling              ComponentUpdatePhase = "Rolling"
 	ComponentUpdatePhaseAwaitingManualAction ComponentUpdatePhase = "AwaitingManualAction"
 	ComponentUpdatePhaseFinalizing           ComponentUpdatePhase = "Finalizing"

@@ -106,11 +106,39 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(qt.ytsaurus, qt) {
-			if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(qt.ytsaurus, qt) {
-				if !dry {
-					err = removePods(ctx, qt.server, &qt.localComponent)
+			if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+				if doesComponentUseNewUpdateMode(qt.ytsaurus, componentToAPIComponent(qt)) {
+
+					component := componentToAPIComponent(qt)
+					// Check if we need to Run PreChecks for the new update mode
+					if qt.ytsaurus.ShouldRunPreChecks(component) {
+						setComponentPhase(qt.ytsaurus, component, ytv1.ComponentUpdatePhasePreChecks, "running pre-checks")
+						// Run PreChecks
+						if err := RunUpdatePreCheck(ctx, qt); err != nil {
+							setComponentPhaseWithError(qt.ytsaurus, component, ytv1.ComponentUpdatePhaseBlocked, err)
+							return ComponentStatusBlocked(err.Error()), err
+						}
+						// prevents the operator from re-running the same pre-checks on every reconcile
+						qt.ytsaurus.UpdateComponentProgress(component, func(progress *ytv1.ComponentUpdateProgress) {
+							progress.RunPreChecks = false
+						})
+					}
+					if !dry {
+						setComponentPhase(qt.ytsaurus, component, ytv1.ComponentUpdatePhaseScalingDown, "removing pods")
+						err = removePods(ctx, qt.server, &qt.localComponent)
+					}
+
+					if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
+						setComponentPhase(qt.ytsaurus, component, ytv1.ComponentUpdatePhaseScalingUp, "creating new pods")
+					}
+					return ComponentStatusUpdateStep("pods removal"), err
+				} else {
+					// Legacy update mode
+					if !dry {
+						err = removePods(ctx, qt.server, &qt.localComponent)
+					}
+					return ComponentStatusUpdateStep("pods removal"), err
 				}
-				return ComponentStatusUpdateStep("pods removal"), err
 			}
 
 			if status, err := qt.updateQTState(ctx, dry); status != nil {
