@@ -428,7 +428,3 @@ func (qa *QueueAgent) Sync(ctx context.Context) error {
 	_, err := qa.doSync(ctx, false)
 	return err
 }
-
-func (qa *QueueAgent) HasCustomUpdateState() bool {
-	return true
-}

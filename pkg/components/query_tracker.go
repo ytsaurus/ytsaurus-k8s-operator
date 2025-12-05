@@ -465,7 +465,3 @@ func (qt *QueryTracker) setConditionQTStateUpdated(ctx context.Context) {
 		Message: "Query tracker state updated",
 	})
 }
-
-func (qt *QueryTracker) HasCustomUpdateState() bool {
-	return true
-}

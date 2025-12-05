@@ -99,7 +99,3 @@ func (mc *MasterCache) getHostAddressLabel() string {
 	}
 	return defaultHostAddressLabel
 }
-
-func (mc *MasterCache) HasCustomUpdateState() bool {
-	return false
-}

@@ -313,7 +313,3 @@ func (s *Scheduler) prepareInitOperationsArchive() {
 	container := &job.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{s.secret.GetEnvSource()}
 }
-
-func (s *Scheduler) HasCustomUpdateState() bool {
-	return true
-}

@@ -341,7 +341,3 @@ func (u *UI) Sync(ctx context.Context) error {
 	_, err := u.doSync(ctx, false)
 	return err
 }
-
-func (u *UI) HasCustomUpdateState() bool {
-	return false
-}
