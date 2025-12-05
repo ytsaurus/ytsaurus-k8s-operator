@@ -18,7 +18,6 @@ import (
 	"go.ytsaurus.tech/yt/go/yterrors"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 )
 
@@ -154,6 +153,7 @@ func IsUpdatingComponent(ytsaurus *apiproxy.Ytsaurus, component Component) bool 
 	return false
 }
 
+// TODO: Temporary compat wrapper. Replace with handleServerUpgrade and remove.
 func handleUpdatingClusterState(
 	ctx context.Context,
 	ytsaurus *apiproxy.Ytsaurus,
@@ -162,23 +162,16 @@ func handleUpdatingClusterState(
 	server server,
 	dry bool,
 ) (*ComponentStatus, error) {
-	var err error
-
-	if IsUpdatingComponent(ytsaurus, cmp) {
-		if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			if !dry {
-				err = removePods(ctx, server, cmpBase)
-			}
-			return ptr.To(ComponentStatusUpdateStep("pods removal")), err
-		}
-
-		if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
-			return ptr.To(ComponentStatusReady()), err
-		}
-	} else {
-		return ptr.To(ComponentStatusReadyAfter("Not updating component")), err
+	if !dry && !IsUpdatingComponent(ytsaurus, cmp) {
+		return ptr.To(ComponentStatusReadyAfter("Not updating component")), fmt.Errorf("should be already handled by component manager")
 	}
-	return nil, err
+	if status := cmpBase.handleServerUpgrade(ctx, server, dry); status.IsWaiting() {
+		return &status, status.Error
+	} else if !status.IsPending() {
+		return ptr.To(ComponentStatusReady()), nil
+	} else {
+		return nil, nil
+	}
 }
 
 func SetPathAcl(path string, acl []yt.ACE) (string, error) {

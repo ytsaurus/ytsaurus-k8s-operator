@@ -9,7 +9,6 @@ import (
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -101,14 +100,12 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, qa.ytsaurus, qa, &qa.localComponent, qa.server, dry); status != nil {
-			return *status, err
+		if status := qa.handleServerUpgrade(ctx, qa.server, dry); status.IsWaiting() {
+			return status.Unpack()
 		}
-
-		if status, err := qa.updateQAState(ctx, dry); status != nil {
-			return *status, err
+		if status := qa.updateQAState(ctx, dry); status.IsWaiting() {
+			return status.Unpack()
 		}
-
 		if qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
 			qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQAStateUpdate {
 			return ComponentStatusReady(), err
@@ -370,39 +367,41 @@ func (qa *QueueAgent) initQAState(ctx context.Context, dry bool) (ComponentStatu
 	return qa.initQAStateJob.Sync(ctx, dry)
 }
 
-func (qa *QueueAgent) updateQAState(ctx context.Context, dry bool) (*ComponentStatus, error) {
-	var err error
+func (qa *QueueAgent) updateQAState(ctx context.Context, dry bool) ComponentStatus {
 	switch qa.ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStateWaitingForQAStateUpdatingPrepare:
 		if !qa.needQAStateInit() {
 			if !dry {
 				qa.setConditionQAStatePreparedForUpdating(ctx)
 			}
-			return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
+			return ComponentStatusUpdating("qa state")
 		}
 		if !qa.initQAStateJob.isRestartPrepared() {
-			return ptr.To(SimpleStatus(SyncStatusUpdating)), qa.initQAStateJob.prepareRestart(ctx, dry)
+			if err := qa.initQAStateJob.prepareRestart(ctx, dry); err != nil {
+				return ComponentStatusError("qa state", err)
+			}
+			return ComponentStatusUpdating("qa state")
 		}
 		if !dry {
 			qa.setConditionQAStatePreparedForUpdating(ctx)
 		}
-		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
+		return ComponentStatusUpdating("qa state")
 	case ytv1.UpdateStateWaitingForQAStateUpdate:
 		if !qa.needQAStateInit() {
 			if !dry {
 				qa.setConditionQAStateUpdated(ctx)
 			}
-			return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
+			return ComponentStatusUpdating("qa state")
 		}
 		if !qa.initQAStateJob.isRestartCompleted() {
-			return nil, nil
+			return ComponentStatusPending("qa state")
 		}
 		if !dry {
 			qa.setConditionQAStateUpdated(ctx)
 		}
-		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
+		return ComponentStatusUpdating("qa state")
 	default:
-		return nil, nil
+		return ComponentStatusUndefined()
 	}
 }
 

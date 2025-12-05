@@ -15,6 +15,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/mock v0.5.0
 	go.uber.org/zap v1.27.0
+	go.ytsaurus.tech/library/go/core/log v0.0.4
 	go.ytsaurus.tech/yt/go v0.0.29
 	k8s.io/api v0.31.13
 	k8s.io/apimachinery v0.31.13
@@ -74,7 +75,6 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	go.ytsaurus.tech/library/go/blockcodecs v0.0.3 // indirect
 	go.ytsaurus.tech/library/go/core/buildinfo v0.0.0-20250809130132-fa050e73ac17 // indirect
-	go.ytsaurus.tech/library/go/core/log v0.0.4 // indirect
 	go.ytsaurus.tech/library/go/core/xerrors v0.0.4 // indirect
 	go.ytsaurus.tech/library/go/ptr v0.0.2 // indirect
 	go.ytsaurus.tech/library/go/x/xreflect v0.0.3 // indirect

@@ -205,6 +205,16 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 			"message", status.Message,
 		)
 
+		if cm.ytsaurus.IsUpdating() {
+			if component.GetType() == consts.YtsaurusClientType {
+				// Always need sync.
+			} else if component.GetType() == consts.TimbertruckType {
+				// FIXME(khlebnikov): Timbertruck update logic seems broken.
+			} else if !components.IsUpdatingComponent(cm.ytsaurus, component) {
+				status = components.ComponentStatusReadyAfter("not updating")
+			}
+		}
+
 		switch status.SyncStatus {
 		case components.SyncStatusReady:
 			readyComponents = append(readyComponents, component.GetFullName())
@@ -257,8 +267,22 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 			return ctrl.Result{Requeue: true}, fmt.Errorf("failed to get status for %s: %w", c.GetFullName(), err)
 		}
 
-		if status.SyncStatus == components.SyncStatusPending ||
-			status.SyncStatus == components.SyncStatusUpdating {
+		if cm.ytsaurus.IsUpdating() {
+			if c.GetType() == consts.YtsaurusClientType {
+				// Always need sync.
+			} else if c.GetType() == consts.TimbertruckType {
+				// FIXME(khlebnikov): Timbertruck update logic seems broken.
+			} else if !components.IsUpdatingComponent(cm.ytsaurus, c) {
+				logger.Info("component is not updating",
+					"component", c.GetFullName(),
+					"status", status.SyncStatus,
+					"message", status.Message,
+				)
+				continue
+			}
+		}
+
+		if status.SyncStatus == components.SyncStatusPending || status.SyncStatus == components.SyncStatusUpdating {
 			hasPending = true
 			logger.Info("component sync", "component", c.GetFullName())
 			if err := c.Sync(ctx); err != nil {

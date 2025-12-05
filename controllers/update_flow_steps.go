@@ -214,6 +214,8 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 		return stepResultMarkUnsatisfied
 	},
 	ytv1.UpdateStateWaitingForPodsCreation: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
+		// FIXME(khlebnikov): This should check creation of pods, not this random stuff.
+		// TODO: Add separate aggregated condition for this.
 		if componentManager.status.allReadyOrUpdating {
 			return stepResultMarkHappy
 		}

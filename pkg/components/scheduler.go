@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/utils/ptr"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -124,24 +122,15 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(s.ytsaurus, s) {
-			if s.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-				if !dry {
-					err = removePods(ctx, s.server, &s.localComponent)
-				}
-				return ComponentStatusUpdateStep("pods removal"), err
-			}
-
-			if status, err := s.updateOpArchive(ctx, dry); status != nil {
-				return *status, err
-			}
-
-			if s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
-				s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForOpArchiveUpdate {
-				return ComponentStatusReady(), err
-			}
-		} else {
-			return ComponentStatusReadyAfter("Not updating component"), err
+		if status := s.handleServerUpgrade(ctx, s.server, dry); status.IsWaiting() {
+			return status.Unpack()
+		}
+		if status := s.updateOpArchive(ctx, dry); status.IsWaiting() {
+			return status.Unpack()
+		}
+		if s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+			s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForOpArchiveUpdate {
+			return ComponentStatusReady(), err
 		}
 	}
 
@@ -221,39 +210,41 @@ func (s *Scheduler) initOpArchive(ctx context.Context, dry bool) (ComponentStatu
 	return s.initOpArchiveJob.Sync(ctx, dry)
 }
 
-func (s *Scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentStatus, error) {
-	var err error
+func (s *Scheduler) updateOpArchive(ctx context.Context, dry bool) ComponentStatus {
 	switch s.ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
 		if !s.needOpArchiveInit() {
 			if !dry {
 				s.setConditionOpArchivePreparedForUpdating(ctx)
 			}
-			return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
+			return ComponentStatusUpdating("op archive")
 		}
 		if !s.initOpArchiveJob.isRestartPrepared() {
-			return ptr.To(SimpleStatus(SyncStatusUpdating)), s.initOpArchiveJob.prepareRestart(ctx, dry)
+			if err := s.initOpArchiveJob.prepareRestart(ctx, dry); err != nil {
+				return ComponentStatusError("op archive", err)
+			}
+			return ComponentStatusUpdating("op archive")
 		}
 		if !dry {
 			s.setConditionOpArchivePreparedForUpdating(ctx)
 		}
-		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
+		return ComponentStatusUpdating("op archive")
 	case ytv1.UpdateStateWaitingForOpArchiveUpdate:
 		if !s.needOpArchiveInit() {
 			if !dry {
 				s.setConditionOpArchiveUpdated(ctx)
 			}
-			return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
+			return ComponentStatusUpdating("op archive")
 		}
 		if !s.initOpArchiveJob.isRestartCompleted() {
-			return nil, nil
+			return ComponentStatusPending("op archive")
 		}
 		if !dry {
 			s.setConditionOpArchiveUpdated(ctx)
 		}
-		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
+		return ComponentStatusUpdating("op archive")
 	default:
-		return nil, nil
+		return ComponentStatusUndefined()
 	}
 }
 

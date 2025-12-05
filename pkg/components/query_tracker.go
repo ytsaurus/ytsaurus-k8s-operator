@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/utils/ptr"
-
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
@@ -98,11 +96,11 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	}
 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, qt.ytsaurus, qt, &qt.localComponent, qt.server, dry); status != nil {
-			return *status, err
+		if status := qt.handleServerUpgrade(ctx, qt.server, dry); status.IsWaiting() {
+			return status.Unpack()
 		}
-		if status, err := qt.updateQTState(ctx, dry); status != nil {
-			return *status, err
+		if status := qt.updateQTState(ctx, dry); status.IsWaiting() {
+			return status.Unpack()
 		}
 		if qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
 			qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQTStateUpdate {
@@ -409,27 +407,29 @@ func (qt *QueryTracker) prepareInitQueryTrackerState() {
 	container.EnvFrom = []corev1.EnvFromSource{qt.secret.GetEnvSource()}
 }
 
-func (qt *QueryTracker) updateQTState(ctx context.Context, dry bool) (*ComponentStatus, error) {
-	var err error
+func (qt *QueryTracker) updateQTState(ctx context.Context, dry bool) ComponentStatus {
 	switch qt.ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:
 		if !qt.initQTState.isRestartPrepared() {
-			return ptr.To(SimpleStatus(SyncStatusUpdating)), qt.initQTState.prepareRestart(ctx, dry)
+			if err := qt.initQTState.prepareRestart(ctx, dry); err != nil {
+				return ComponentStatusError("qt state", err)
+			}
+			return ComponentStatusUpdating("qt state")
 		}
 		if !dry {
 			qt.setConditionQTStatePreparedForUpdating(ctx)
 		}
-		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
+		return ComponentStatusUpdating("qt state")
 	case ytv1.UpdateStateWaitingForQTStateUpdate:
 		if !qt.initQTState.isRestartCompleted() {
-			return nil, nil
+			return ComponentStatusPending("qt state")
 		}
 		if !dry {
 			qt.setConditionQTStateUpdated(ctx)
 		}
-		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
+		return ComponentStatusUpdating("qt state")
 	default:
-		return nil, nil
+		return ComponentStatusUndefined()
 	}
 }
 

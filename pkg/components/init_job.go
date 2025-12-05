@@ -172,7 +172,8 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return ComponentStatus{
 			SyncStatusReady,
 			fmt.Sprintf("%s completed", j.initJob.Name()),
-		}, err
+			nil,
+		}, nil
 	}
 
 	// Deal with init job.
