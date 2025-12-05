@@ -101,17 +101,24 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, qa.ytsaurus, qa, &qa.localComponent, qa.server, dry); status != nil {
-			return *status, err
-		}
+		if IsUpdatingComponent(qa.ytsaurus, qa) {
+			if qa.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+				if !dry {
+					err = removePods(ctx, qa.server, &qa.localComponent)
+				}
+				return ComponentStatusUpdateStep("pods removal"), err
+			}
 
-		if status, err := qa.updateQAState(ctx, dry); status != nil {
-			return *status, err
-		}
+			if status, err := qa.updateQAState(ctx, dry); status != nil {
+				return *status, err
+			}
 
-		if qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
-			qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQAStateUpdate {
-			return ComponentStatusReady(), err
+			if qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+				qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQAStateUpdate {
+				return ComponentStatusReady(), err
+			}
+		} else {
+			return ComponentStatusReadyAfter("Not updating component"), err
 		}
 	}
 
