@@ -1035,7 +1035,6 @@ type ComponentOnDeleteUpdateMode struct {
 }
 
 type ComponentUpdateMode struct {
-	//+kubebuilder:default:=BulkUpdate
 	//+kubebuilder:validation:Enum=BulkUpdate;RollingUpdate;OnDelete
 	Type ComponentUpdateModeType `json:"type,omitempty"`
 	//+kubebuilder:default:=true
