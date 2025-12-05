@@ -182,6 +182,61 @@ func handleUpdatingClusterState(
 	return nil, err
 }
 
+// handleBulkUpdatingClusterState handles the BulkUpdate mode with pre-checks and phase tracking.
+func handleBulkUpdatingClusterState(
+	ctx context.Context,
+	ytsaurus *apiproxy.Ytsaurus,
+	cmp Component,
+	cmpBase *localComponent,
+	server server,
+	dry bool,
+) (*ComponentStatus, error) {
+	var err error
+
+	if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsRemoval {
+		// Not in the pod removal phase, let the component handle other update states
+		return nil, err
+	}
+
+	component := componentToAPIComponent(cmp)
+
+	// Check if this component is using the new update mode
+	if !doesComponentUseNewUpdateMode(ytsaurus, component) {
+		if !dry {
+			err = removePods(ctx, server, cmpBase)
+		}
+		return ptr.To(ComponentStatusUpdateStep("pods removal")), err
+	}
+
+	// New update mode with pre-checks and phase tracking
+
+	// Run pre-checks if needed
+	if ytsaurus.ShouldRunPreChecks(component) {
+		setComponentPhase(ytsaurus, component, ytv1.ComponentUpdatePhasePreChecks, "running pre-checks")
+		if err := RunUpdatePreCheck(ctx, cmp); err != nil {
+			setComponentPhaseWithError(ytsaurus, component, ytv1.ComponentUpdatePhaseBlocked, err)
+			return ptr.To(ComponentStatusBlocked(err.Error())), err
+		}
+		// Prevent re-running the same pre-checks on every reconcile
+		ytsaurus.UpdateComponentProgress(component, func(progress *ytv1.ComponentUpdateProgress) {
+			progress.RunPreChecks = false
+		})
+	}
+
+	// Remove pods
+	if !dry {
+		setComponentPhase(ytsaurus, component, ytv1.ComponentUpdatePhaseScalingDown, "removing pods")
+		err = removePods(ctx, server, cmpBase)
+	}
+
+	// Update phase if state has progressed to pod creation
+	if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
+		setComponentPhase(ytsaurus, component, ytv1.ComponentUpdatePhaseScalingUp, "creating new pods")
+	}
+
+	return ptr.To(ComponentStatusUpdateStep("pods removal")), err
+}
+
 func SetPathAcl(path string, acl []yt.ACE) (string, error) {
 	formattedAcl, err := yson.MarshalFormat(acl, yson.FormatText)
 	if err != nil {

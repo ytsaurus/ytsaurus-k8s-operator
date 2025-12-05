@@ -159,11 +159,9 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(yqla.ytsaurus, yqla) {
-			if yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-				if !dry {
-					err = removePods(ctx, yqla.server, &yqla.localComponent)
-				}
-				return ComponentStatusUpdateStep("pods removal"), err
+			// Handle bulk update with pre-checks and phase tracking
+			if status, err := handleBulkUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.localComponent, yqla.server, dry); status != nil {
+				return *status, err
 			}
 
 			if status, err := yqla.updateYqla(ctx, dry); status != nil {
