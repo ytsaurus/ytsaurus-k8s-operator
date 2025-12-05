@@ -618,7 +618,8 @@ func validateUpdateModeForSelector(selector ComponentUpdateSelector, path *field
 			errs = append(errs, field.Invalid(path, selector.UpdateMode, "component.type must be set to use updateMode"))
 			return errs
 		}
-		if _, bulkOnly := bulkOnlyComponentTypes[selector.Component.Type]; bulkOnly && modeType != ComponentUpdateModeTypeBulkUpdate {
+		// Only validate bulk-only restriction if updateMode is actually specified
+		if _, bulkOnly := bulkOnlyComponentTypes[selector.Component.Type]; bulkOnly && modeType != "" && modeType != ComponentUpdateModeTypeBulkUpdate {
 			errs = append(errs, field.Invalid(path.Child("updateMode").Child("type"), modeType, fmt.Sprintf("%s supports only BulkUpdate mode", selector.Component.Type)))
 			return errs
 		}
