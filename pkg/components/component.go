@@ -3,7 +3,9 @@ package components
 import (
 	"context"
 	"fmt"
+	"runtime"
 
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -15,11 +17,12 @@ import (
 type SyncStatus string
 
 const (
-	SyncStatusReady      SyncStatus = "Ready"      // Running, reconciliation is not required
-	SyncStatusBlocked    SyncStatus = "Blocked"    // Reconciliation is impossible
+	SyncStatusUndefined  SyncStatus = ""           // Status is undecided or unknown
 	SyncStatusPending    SyncStatus = "Pending"    // Reconciliation is possible
-	SyncStatusNeedUpdate SyncStatus = "NeedUpdate" // Running, update is required
-	SyncStatusUpdating   SyncStatus = "Updating"   // Update in progress
+	SyncStatusReady      SyncStatus = "Ready"      // Running, Reconciliation is not required
+	SyncStatusNeedUpdate SyncStatus = "NeedUpdate" // Running, Update is required
+	SyncStatusBlocked    SyncStatus = "Blocked"    // Waiting, Reconciliation is blocked
+	SyncStatusUpdating   SyncStatus = "Updating"   // Waiting, Update in progress, reconciliation is waiting
 )
 
 type ComponentStatus struct {
@@ -27,8 +30,24 @@ type ComponentStatus struct {
 	Message    string
 }
 
+func (cs ComponentStatus) IsDefined() bool {
+	return cs.SyncStatus != SyncStatusUndefined
+}
+
+func (cs ComponentStatus) IsPending() bool {
+	return cs.SyncStatus == SyncStatusPending
+}
+
 func (cs ComponentStatus) IsRunning() bool {
 	return cs.SyncStatus == SyncStatusReady || cs.SyncStatus == SyncStatusNeedUpdate
+}
+
+func (cs ComponentStatus) IsWaiting() bool {
+	return cs.SyncStatus == SyncStatusBlocked || cs.SyncStatus == SyncStatusUpdating
+}
+
+func ComponentStatusUndefined() ComponentStatus {
+	return ComponentStatus{SyncStatusUndefined, "Undefined"}
 }
 
 func ComponentStatusReady() ComponentStatus {
@@ -69,7 +88,8 @@ func ComponentStatusUpdateStep(part string) ComponentStatus {
 
 // TODO(khlebnikov): Replace this stub with status with meaningful message.
 func SimpleStatus(status SyncStatus) ComponentStatus {
-	return ComponentStatus{status, string(status)}
+	_, file, line, _ := runtime.Caller(1)
+	return ComponentStatus{status, fmt.Sprintf("%v: at %v:%v", status, file, line)}
 }
 
 type Component interface {
@@ -152,6 +172,25 @@ func (c *localComponent) SetReadyCondition(status ComponentStatus) {
 		Reason:  string(status.SyncStatus),
 		Message: status.Message,
 	})
+}
+
+// handleServerUpgrade decides what to do with server depending on update state.
+// at UpdateStateWaitingForPodsRemoval -> Updating (pods removal).
+// at UpdateStateWaitingForPodsCreation -> Pending (pods creation) - called should create resources.
+// otherwise -> Undefined.
+func (c *localComponent) handleServerUpgrade(ctx context.Context, server server, dry bool) (ComponentStatus, error) {
+	switch c.ytsaurus.GetUpdateState() {
+	case ytv1.UpdateStateWaitingForPodsRemoval:
+		var err error
+		if !dry {
+			err = removePods(ctx, server, c)
+		}
+		return ComponentStatusUpdateStep("pods removal"), err
+	case ytv1.UpdateStateWaitingForPodsCreation:
+		return ComponentStatusPending("pods creation"), nil
+	default:
+		return ComponentStatusUndefined(), nil
+	}
 }
 
 func newLocalServerComponent(

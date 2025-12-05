@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/utils/ptr"
-
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -151,12 +149,11 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.localComponent, yqla.server, dry); status != nil {
-			return *status, err
+		if status, err := yqla.handleServerUpgrade(ctx, yqla.server, dry); status.IsWaiting() {
+			return status, err
 		}
-
-		if status, err := yqla.updateYqla(ctx, dry); status != nil {
-			return *status, err
+		if status, err := yqla.updateYqla(ctx, dry); status.IsWaiting() {
+			return status, err
 		}
 		if yqla.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
 			yqla.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForYqlaUpdate {
@@ -222,27 +219,27 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	return yqla.updateEnvironment.Sync(ctx, dry)
 }
 
-func (yqla *YqlAgent) updateYqla(ctx context.Context, dry bool) (*ComponentStatus, error) {
-	var err error
+func (yqla *YqlAgent) updateYqla(ctx context.Context, dry bool) (ComponentStatus, error) {
 	switch yqla.ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStateWaitingForYqlaUpdatingPrepare:
 		if !yqla.updateEnvironment.isRestartPrepared() {
-			return ptr.To(SimpleStatus(SyncStatusUpdating)), yqla.updateEnvironment.prepareRestart(ctx, dry)
+			err := yqla.updateEnvironment.prepareRestart(ctx, dry)
+			return ComponentStatusUpdating("environment"), err
 		}
 		if !dry {
 			yqla.setConditionYqlaPreparedForUpdating(ctx)
 		}
-		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
+		return SimpleStatus(SyncStatusUpdating), nil
 	case ytv1.UpdateStateWaitingForYqlaUpdate:
 		if !yqla.updateEnvironment.isRestartCompleted() {
-			return nil, nil
+			return ComponentStatusPending("environment"), nil
 		}
 		if !dry {
 			yqla.setConditionYqlaUpdated(ctx)
 		}
-		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
+		return ComponentStatusUpdating("environment"), nil
 	default:
-		return nil, nil
+		return ComponentStatusUndefined(), nil
 	}
 }
 
