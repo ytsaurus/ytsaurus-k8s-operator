@@ -158,7 +158,7 @@ func resolveComponentUpdateMode(selectors []ytv1.ComponentUpdateSelector, compon
 			return selector.GetUpdateModeType()
 		}
 	}
-	return ytv1.ComponentUpdateModeTypeBulkUpdate
+	return ""
 }
 
 func shouldRunPreChecks(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) bool {

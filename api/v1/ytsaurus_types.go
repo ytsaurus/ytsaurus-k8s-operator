@@ -1057,8 +1057,8 @@ type ComponentUpdateSelector struct {
 }
 
 func (selector *ComponentUpdateSelector) GetUpdateModeType() ComponentUpdateModeType {
-	if selector == nil || selector.UpdateMode == nil || selector.UpdateMode.Type == "" {
-		return ComponentUpdateModeTypeBulkUpdate
+	if selector == nil || selector.UpdateMode == nil {
+		return ""
 	}
 	return selector.UpdateMode.Type
 }
