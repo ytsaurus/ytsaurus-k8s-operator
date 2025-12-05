@@ -504,7 +504,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `type` _[ComponentUpdateModeType](#componentupdatemodetype)_ |  | BulkUpdate | Enum: [BulkUpdate RollingUpdate OnDelete] <br /> |
+| `type` _[ComponentUpdateModeType](#componentupdatemodetype)_ |  |  | Enum: [BulkUpdate RollingUpdate OnDelete] <br /> |
 | `runPreChecks` _boolean_ |  | true |  |
 | `rolling` _[ComponentRollingUpdateMode](#componentrollingupdatemode)_ |  |  |  |
 | `onDelete` _[ComponentOnDeleteUpdateMode](#componentondeleteupdatemode)_ |  |  |  |
