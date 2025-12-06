@@ -21,10 +21,14 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
-const timbertruckInitScriptPrefix = "mkdir -p /etc/timbertruck; echo '"
-const timbertruckInitScriptSuffix = "' > /etc/timbertruck/config.yaml; chmod 644 /etc/timbertruck/config.yaml; /usr/bin/timbertruck_os -config /etc/timbertruck/config.yaml"
+const (
+	BulkUpdateModeName          = "BulkUpdate"
+	timbertruckInitScriptPrefix = "mkdir -p /etc/timbertruck; echo '"
+	timbertruckInitScriptSuffix = "' > /etc/timbertruck/config.yaml; chmod 644 /etc/timbertruck/config.yaml; /usr/bin/timbertruck_os -config /etc/timbertruck/config.yaml"
+)
 
 func CreateTabletCells(ctx context.Context, ytClient yt.Client, bundle string, tabletCellCount int) error {
 	logger := log.FromContext(ctx)
@@ -208,13 +212,21 @@ func handleBulkUpdatingClusterState(
 		return ptr.To(ComponentStatusUpdateStep("pods removal")), err
 	}
 
-	// New update mode with pre-checks and phase tracking
-
 	// Run pre-checks if needed
 	if ytsaurus.ShouldRunPreChecks(component) {
-		setComponentPhase(ytsaurus, component, ytv1.ComponentUpdatePhasePreChecks, "running pre-checks")
+		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    fmt.Sprintf("%s%s%s", component.String(), BulkUpdateModeName, consts.ConditionPreChecks),
+			Status:  metav1.ConditionTrue,
+			Reason:  "RunningPreChecks",
+			Message: "running pre-checks",
+		})
 		if err := RunUpdatePreCheck(ctx, cmp); err != nil {
-			setComponentPhaseWithError(ytsaurus, component, ytv1.ComponentUpdatePhaseBlocked, err)
+			ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+				Type:    fmt.Sprintf("%s%s%s", component.String(), BulkUpdateModeName, consts.ConditionBlocked),
+				Status:  metav1.ConditionTrue,
+				Reason:  "PreChecksFailed",
+				Message: err.Error(),
+			})
 			return ptr.To(ComponentStatusBlocked(err.Error())), err
 		}
 		// Prevent re-running the same pre-checks on every reconcile
@@ -225,13 +237,23 @@ func handleBulkUpdatingClusterState(
 
 	// Remove pods
 	if !dry {
-		setComponentPhase(ytsaurus, component, ytv1.ComponentUpdatePhaseScalingDown, "removing pods")
+		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    fmt.Sprintf("%s%s%s", component.String(), BulkUpdateModeName, consts.ConditionScalingDown),
+			Status:  metav1.ConditionTrue,
+			Reason:  "RemovingPods",
+			Message: "removing pods",
+		})
 		err = removePods(ctx, server, cmpBase)
 	}
 
-	// Update phase if state has progressed to pod creation
+	// Update condition if state has progressed to pod creation
 	if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
-		setComponentPhase(ytsaurus, component, ytv1.ComponentUpdatePhaseScalingUp, "creating new pods")
+		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    fmt.Sprintf("%s%s%s", component.String(), BulkUpdateModeName, consts.ConditionScalingUp),
+			Status:  metav1.ConditionTrue,
+			Reason:  "CreatingPods",
+			Message: "creating new pods",
+		})
 	}
 
 	return ptr.To(ComponentStatusUpdateStep("pods removal")), err
@@ -382,24 +404,4 @@ func getDNSConfigWithDefault(componentDNSConfig, defaultDNSConfig *corev1.PodDNS
 
 func buildUserCredentialsSecretname(username string) string {
 	return fmt.Sprintf("%s-secret", username)
-}
-
-func setComponentPhase(ytsaurus *apiproxy.Ytsaurus, component ytv1.Component, phase ytv1.ComponentUpdatePhase, message string) {
-	ytsaurus.UpdateComponentProgress(component, func(progress *ytv1.ComponentUpdateProgress) {
-		progress.Phase = phase
-		progress.Message = message
-		progress.LastError = ""
-		now := metav1.Now()
-		progress.LastTransitionTime = &now
-	})
-}
-
-func setComponentPhaseWithError(ytsaurus *apiproxy.Ytsaurus, component ytv1.Component, phase ytv1.ComponentUpdatePhase, err error) {
-	ytsaurus.UpdateComponentProgress(component, func(progress *ytv1.ComponentUpdateProgress) {
-		progress.Phase = phase
-		progress.LastError = err.Error()
-		progress.Message = err.Error()
-		now := metav1.Now()
-		progress.LastTransitionTime = &now
-	})
 }
