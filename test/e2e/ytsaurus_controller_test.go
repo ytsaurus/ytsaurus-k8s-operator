@@ -1857,8 +1857,6 @@ exec "$@"`
 	}) // integration
 
 	Context("Query tracker update tests", Label("qt-update"), func() {
-		var qtInitialPods map[string]corev1.Pod
-
 		BeforeEach(func() {
 			ytBuilder.WithBaseComponents()
 			ytBuilder.WithQueryTracker()
@@ -1873,10 +1871,11 @@ exec "$@"`
 					InstanceCount: 3,
 				},
 			}
-			qtInitialPods = getComponentPods(ctx, namespace)
 		})
 
 		It("Should update query tracker and have Running state", func(ctx context.Context) {
+			podsBefore := getComponentPods(ctx, namespace)
+
 			By("Trigger QT update")
 			ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.QueryTrackerImageFuture)
 
@@ -1886,13 +1885,12 @@ exec "$@"`
 			By("Waiting cluster update completes")
 			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 
-			qtPodsAfter := getComponentPods(ctx, namespace)
-			changed := getChangedPods(qtInitialPods, qtPodsAfter)
+			podsAfter := getComponentPods(ctx, namespace)
+			pods := getChangedPods(podsBefore, podsAfter)
 
-			allChanged := append(changed.Deleted, changed.Created...)
-			Expect(allChanged).To(ContainElements("qt-0", "qt-1", "qt-2"))
+			Expect(pods.Updated).To(ConsistOf("qt-0", "qt-1", "qt-2"))
 
-			for name, pod := range qtPodsAfter {
+			for name, pod := range podsAfter {
 				if strings.HasPrefix(name, "qt-") {
 					Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.QueryTrackers.Image))
 				}
