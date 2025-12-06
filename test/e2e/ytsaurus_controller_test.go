@@ -56,13 +56,15 @@ const (
 
 	operationPollInterval = time.Millisecond * 250
 	operationTimeout      = time.Second * 120
+	lightRequestTimeout   = time.Minute * 2
+	httpRequestTimeout    = time.Minute * 5
 )
 
 func getYtClient(httpClient *http.Client, proxyAddress string) yt.Client {
 	ytClient, err := ythttp.NewClient(&yt.Config{
 		Proxy:                 proxyAddress,
 		Token:                 consts.DefaultAdminPassword,
-		LightRequestTimeout:   ptr.To(30 * time.Second),
+		LightRequestTimeout:   ptr.To(lightRequestTimeout),
 		CompressionCodec:      yt.ClientCodecNone,
 		DisableProxyDiscovery: true,
 		Logger:                ytLogger,
@@ -288,7 +290,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 		httpClient = &http.Client{
 			Transport: httpTransport,
-			Timeout:   60 * time.Second,
+			Timeout:   httpRequestTimeout,
 		}
 
 		if clusterWithTLS {
