@@ -20,6 +20,13 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
+func init() {
+	RegisterUpdatePreChecker(consts.QueryTrackerType, UpdatePreCheckerFunc(func(ctx context.Context, component Component) error {
+		// checks will be added later
+		return nil
+	}))
+}
+
 type QueryTracker struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
@@ -98,15 +105,21 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	}
 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, qt.ytsaurus, qt, &qt.localComponent, qt.server, dry); status != nil {
-			return *status, err
-		}
-		if status, err := qt.updateQTState(ctx, dry); status != nil {
-			return *status, err
-		}
-		if qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
-			qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQTStateUpdate {
-			return ComponentStatusReady(), err
+		if IsUpdatingComponent(qt.ytsaurus, qt) {
+			// Handle bulk update with pre-checks and phase tracking
+			if status, err := handleBulkUpdatingClusterState(ctx, qt.ytsaurus, qt, &qt.localComponent, qt.server, dry); status != nil {
+				return *status, err
+			}
+
+			if status, err := qt.updateQTState(ctx, dry); status != nil {
+				return *status, err
+			}
+			if qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+				qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQTStateUpdate {
+				return ComponentStatusReady(), err
+			}
+		} else {
+			return ComponentStatusReadyAfter("Not updating component"), err
 		}
 	}
 

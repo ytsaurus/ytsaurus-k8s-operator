@@ -19,6 +19,13 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
+func init() {
+	RegisterUpdatePreChecker(consts.QueueAgentType, UpdatePreCheckerFunc(func(ctx context.Context, component Component) error {
+		// checks will be added later
+		return nil
+	}))
+}
+
 type QueueAgent struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
@@ -101,17 +108,22 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, qa.ytsaurus, qa, &qa.localComponent, qa.server, dry); status != nil {
-			return *status, err
-		}
+		if IsUpdatingComponent(qa.ytsaurus, qa) {
+			// Handle bulk update with pre-checks and phase tracking
+			if status, err := handleBulkUpdatingClusterState(ctx, qa.ytsaurus, qa, &qa.localComponent, qa.server, dry); status != nil {
+				return *status, err
+			}
 
-		if status, err := qa.updateQAState(ctx, dry); status != nil {
-			return *status, err
-		}
+			if status, err := qa.updateQAState(ctx, dry); status != nil {
+				return *status, err
+			}
 
-		if qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
-			qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQAStateUpdate {
-			return ComponentStatusReady(), err
+			if qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+				qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQAStateUpdate {
+				return ComponentStatusReady(), err
+			}
+		} else {
+			return ComponentStatusReadyAfter("Not updating component"), err
 		}
 	}
 

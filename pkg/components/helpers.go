@@ -7,6 +7,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"sigs.k8s.io/yaml"
 
@@ -20,10 +21,14 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
-const timbertruckInitScriptPrefix = "mkdir -p /etc/timbertruck; echo '"
-const timbertruckInitScriptSuffix = "' > /etc/timbertruck/config.yaml; chmod 644 /etc/timbertruck/config.yaml; /usr/bin/timbertruck_os -config /etc/timbertruck/config.yaml"
+const (
+	BulkUpdateModeName          = "BulkUpdate"
+	timbertruckInitScriptPrefix = "mkdir -p /etc/timbertruck; echo '"
+	timbertruckInitScriptSuffix = "' > /etc/timbertruck/config.yaml; chmod 644 /etc/timbertruck/config.yaml; /usr/bin/timbertruck_os -config /etc/timbertruck/config.yaml"
+)
 
 func CreateTabletCells(ctx context.Context, ytClient yt.Client, bundle string, tabletCellCount int) error {
 	logger := log.FromContext(ctx)
@@ -181,6 +186,79 @@ func handleUpdatingClusterState(
 	return nil, err
 }
 
+// handleBulkUpdatingClusterState handles the BulkUpdate mode with pre-checks and phase tracking.
+func handleBulkUpdatingClusterState(
+	ctx context.Context,
+	ytsaurus *apiproxy.Ytsaurus,
+	cmp Component,
+	cmpBase *localComponent,
+	server server,
+	dry bool,
+) (*ComponentStatus, error) {
+	var err error
+
+	if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsRemoval {
+		// Not in the pod removal phase, let the component handle other update states
+		return nil, err
+	}
+
+	component := componentToAPIComponent(cmp)
+
+	// Check if this component is using the new update mode
+	if !doesComponentUseNewUpdateMode(ytsaurus, component) {
+		if !dry {
+			err = removePods(ctx, server, cmpBase)
+		}
+		return ptr.To(ComponentStatusUpdateStep("pods removal")), err
+	}
+
+	// Run pre-checks if needed
+	if ytsaurus.ShouldRunPreChecks(component) {
+		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    fmt.Sprintf("%s%s%s", component.String(), BulkUpdateModeName, consts.ConditionPreChecks),
+			Status:  metav1.ConditionTrue,
+			Reason:  "RunningPreChecks",
+			Message: "running pre-checks",
+		})
+		if err := RunUpdatePreCheck(ctx, cmp); err != nil {
+			ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+				Type:    fmt.Sprintf("%s%s%s", component.String(), BulkUpdateModeName, consts.ConditionBlocked),
+				Status:  metav1.ConditionTrue,
+				Reason:  "PreChecksFailed",
+				Message: err.Error(),
+			})
+			return ptr.To(ComponentStatusBlocked(err.Error())), err
+		}
+		// Prevent re-running the same pre-checks on every reconcile
+		ytsaurus.UpdateComponentProgress(component, func(progress *ytv1.ComponentUpdateProgress) {
+			progress.RunPreChecks = false
+		})
+	}
+
+	// Remove pods
+	if !dry {
+		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    fmt.Sprintf("%s%s%s", component.String(), BulkUpdateModeName, consts.ConditionScalingDown),
+			Status:  metav1.ConditionTrue,
+			Reason:  "RemovingPods",
+			Message: "removing pods",
+		})
+		err = removePods(ctx, server, cmpBase)
+	}
+
+	// Update condition if state has progressed to pod creation
+	if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
+		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    fmt.Sprintf("%s%s%s", component.String(), BulkUpdateModeName, consts.ConditionScalingUp),
+			Status:  metav1.ConditionTrue,
+			Reason:  "CreatingPods",
+			Message: "creating new pods",
+		})
+	}
+
+	return ptr.To(ComponentStatusUpdateStep("pods removal")), err
+}
+
 func SetPathAcl(path string, acl []yt.ACE) (string, error) {
 	formattedAcl, err := yson.MarshalFormat(acl, yson.FormatText)
 	if err != nil {
@@ -215,6 +293,21 @@ func RunIfExists(path string, commands ...string) string {
 
 func SetWithIgnoreExisting(path string, value string) string {
 	return RunIfNonexistent(path, fmt.Sprintf("/usr/bin/yt set %s %s", path, value))
+}
+
+func componentToAPIComponent(c Component) ytv1.Component {
+	return ytv1.Component{
+		Name: c.GetShortName(),
+		Type: c.GetType(),
+	}
+}
+
+func doesComponentUseNewUpdateMode(ytsaurus *apiproxy.Ytsaurus, component ytv1.Component) bool {
+	if entry := ytsaurus.GetComponentProgress(component); entry != nil && entry.Mode != "" {
+		return true
+	}
+
+	return false
 }
 
 func AddAffinity(statefulSet *appsv1.StatefulSet,
