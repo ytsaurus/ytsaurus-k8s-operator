@@ -163,7 +163,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var chyt *ytv1.Chyt
 	var generator *ytconfig.Generator
 	var certBuilder *testutil.CertBuilder
-	var clusterWithTLS bool
 	var caBundleCertificates []byte
 	var httpClient *http.Client
 	var ytProxyAddress string
@@ -187,10 +186,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	// https://onsi.github.io/ginkgo/#spec-cleanup-aftereach-and-defercleanup
 	// https://onsi.github.io/ginkgo/#separating-diagnostics-collection-and-teardown-justaftereach
 
-	withHTTPSProxy := func() {
+	withHTTPSProxy := func(httpsOnly bool) {
 		By("Adding HTTPS proxy TLS certificates")
-		clusterWithTLS = true
-
 		httpProxyCert := certBuilder.BuildCertificate(ytsaurus.Name+"-http-proxy", []string{
 			generator.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
 			generator.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole),
@@ -198,11 +195,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		})
 		objects = append(objects, httpProxyCert)
 
-		ytsaurus.Spec.HTTPProxies[0].Transport = ytv1.HTTPTransportSpec{
-			HTTPSSecret: &corev1.LocalObjectReference{
-				Name: httpProxyCert.Name,
-			},
+		if httpsOnly {
+			By("Adding HTTPS-only proxies")
+		} else {
+			By("Adding HTTP/HTTPS proxies")
 		}
+		ytBuilder.WithHTTPSProxies(httpProxyCert.Name, httpsOnly)
 	}
 
 	withRPCTLSProxy := func() {
@@ -212,6 +210,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		})
 		objects = append(objects, rpcProxyCert)
 
+		ytBuilder.WithRPCProxyTLS = true
 		ytsaurus.Spec.RPCProxies[0].Transport = ytv1.RPCTransportSpec{
 			TLSSecret: &corev1.LocalObjectReference{
 				Name: rpcProxyCert.Name,
@@ -258,6 +257,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 		ytBuilder.CreateMinimal()
 		ytsaurus = ytBuilder.Ytsaurus
+		ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{}
 
 		requiredImages = nil
 		objects = []client.Object{ytsaurus}
@@ -291,12 +291,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			Timeout:   60 * time.Second,
 		}
 
-		if clusterWithTLS {
+		if ytBuilder.WithHTTPSProxy {
 			By("Fetching CA bundle certificates")
 			// NOTE: CA bundle instead of full CA root bundle for more strict TLS verification.
 			Eventually(func() (err error) {
 				caBundleCertificates, err = readFileObject(namespace, ytv1.FileObjectReference{
-					Name: testutil.TestTrustBundleName,
+					Name: testutil.TestCABundleName,
 					Key:  consts.CABundleFileName,
 				})
 				return err
@@ -343,12 +343,15 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		By("Starting cluster health reporter")
 		DeferCleanup(AttachProgressReporter(func() string {
-			ytProxyAddress, err := getHTTPProxyAddress(generator, namespace, consts.HTTPPortName)
+			proxyPort := consts.HTTPPortName
+			if ytBuilder.WithHTTPSOnlyProxy {
+				proxyPort = consts.HTTPSPortName
+			}
+			proxyAddress, err := getHTTPProxyAddress(generator, namespace, proxyPort)
 			if err != nil {
 				return fmt.Sprintf("cannot find proxy address: %v", err)
 			}
-			ytProxyAddress = "http://" + ytProxyAddress
-			ytClient := getYtClient(httpClient, ytProxyAddress)
+			ytClient := getYtClient(httpClient, proxyPort+"://"+proxyAddress)
 			// NOTE: WhoAmI right now does not retry.
 			if _, err := ytClient.WhoAmI(ctx, nil); err != nil {
 				return fmt.Sprintf("ytsaurus api error: %v", err)
@@ -376,36 +379,30 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		By("Checking that Ytsaurus state is equal to `Running`", func() {
 			EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
 		})
+	})
 
-		By("Creating ytsaurus client")
+	JustBeforeEach(func(ctx context.Context) {
 		var err error
-		ytProxyAddress, err = getHTTPProxyAddress(generator, namespace, consts.HTTPPortName)
-		Expect(err).ToNot(HaveOccurred())
-		ytProxyAddress = "http://" + ytProxyAddress
 
-		log.Info("Ytsaurus access",
-			"YT_PROXY", ytProxyAddress,
-			"YT_TOKEN", consts.DefaultAdminPassword,
-			"login", consts.DefaultAdminLogin,
-			"password", consts.DefaultAdminPassword,
-		)
+		if !ytBuilder.WithHTTPSOnlyProxy {
+			By("Creating YTsaurus HTTP client")
+			ytProxyAddress, err = getHTTPProxyAddress(generator, namespace, consts.HTTPPortName)
+			Expect(err).ToNot(HaveOccurred())
+			ytProxyAddress = "http://" + ytProxyAddress
 
-		DeferCleanup(AttachProgressReporter(func() string {
-			return fmt.Sprintf("YT_PROXY=%s YT_TOKEN=%s", ytProxyAddress, consts.DefaultAdminPassword)
-		}))
+			ytClient = getYtClient(httpClient, ytProxyAddress)
 
-		ytClient = getYtClient(httpClient, ytProxyAddress)
+			By("Checking YTsaurus HTTP client", func() {
+				// NOTE: NodeExists retries - see ReadRetryParams.
+				Expect(ytClient.NodeExists(ctx, ypath.Path("/"), nil)).To(BeTrue())
+				// NOTE: WhoAmI right now does not retry.
+				Eventually(ctx, func(ctx context.Context) (*yt.WhoAmIResult, error) {
+					return ytClient.WhoAmI(ctx, nil)
+				}).To(HaveField("Login", consts.DefaultAdminLogin))
+			})
+		}
 
-		By("Checking YTsaurus HTTP client", func() {
-			// NOTE: NodeExists retries - see ReadRetryParams.
-			Expect(ytClient.NodeExists(ctx, ypath.Path("/"), nil)).To(BeTrue())
-			// NOTE: WhoAmI right now does not retry.
-			Eventually(ctx, func(ctx context.Context) (*yt.WhoAmIResult, error) {
-				return ytClient.WhoAmI(ctx, nil)
-			}).To(HaveField("Login", consts.DefaultAdminLogin))
-		})
-
-		if clusterWithTLS {
+		if ytBuilder.WithHTTPSProxy {
 			By("Creating YTsaurus HTTPS client")
 			ytProxyAddressHTTPS, err = getHTTPProxyAddress(generator, namespace, consts.HTTPSPortName)
 			Expect(err).ToNot(HaveOccurred())
@@ -418,10 +415,27 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytClientHTTPS.NodeExists(ctx, ypath.Path("/"), nil)).To(BeTrue())
 				// NOTE: WhoAmI right now does not retry.
 				Eventually(ctx, func(ctx context.Context) (*yt.WhoAmIResult, error) {
-					return ytClient.WhoAmI(ctx, nil)
+					return ytClientHTTPS.WhoAmI(ctx, nil)
 				}).To(HaveField("Login", consts.DefaultAdminLogin))
 			})
+
+			if ytBuilder.WithHTTPSOnlyProxy {
+				ytProxyAddress = ytProxyAddressHTTPS
+				ytClient = ytClientHTTPS
+			}
 		}
+
+		DeferCleanup(AttachProgressReporter(func() string {
+			return fmt.Sprintf("YT_PROXY=%s YT_TOKEN=%s", ytProxyAddress, consts.DefaultAdminPassword)
+		}))
+
+		log.Info("Ytsaurus access",
+			"YT_PROXY", ytProxyAddress,
+			"YT_PROXY HTTPS", ytProxyAddressHTTPS,
+			"YT_TOKEN", consts.DefaultAdminPassword,
+			"login", consts.DefaultAdminLogin,
+			"password", consts.DefaultAdminPassword,
+		)
 
 		checkClusterHealth(ytClient)
 
@@ -429,7 +443,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
-		if len(ytsaurus.Spec.RPCProxies) == 0 {
+		if !ytBuilder.WithRPCProxy {
 			return
 		}
 
@@ -456,7 +470,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
-		if !clusterWithTLS || len(ytsaurus.Spec.RPCProxies) == 0 {
+		if !ytBuilder.WithRPCProxyTLS {
 			return
 		}
 
@@ -1720,32 +1734,15 @@ exec "$@"`
 					nativeClientCert,
 				)
 
-				ytsaurus.Spec.CABundle = &ytv1.FileObjectReference{
-					Name: testutil.TestTrustBundleName,
-				}
-
-				ytsaurus.Spec.NativeTransport = &ytv1.RPCTransportSpec{
-					TLSSecret: &corev1.LocalObjectReference{
-						Name: nativeServerCert.Name,
-					},
-					TLSRequired:                true,
-					TLSPeerAlternativeHostName: ytsaurus.Name,
-				}
-
 				if images.MutualTLSReady {
 					By("Enabling RPC proxy public address")
-					ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
-						RPCProxyHavePublicAddress: true,
-					}
+					ytsaurus.Spec.ClusterFeatures.RPCProxyHavePublicAddress = true
 
 					By("Activating mutual TLS interconnect")
-					ytsaurus.Spec.NativeTransport.TLSInsecure = false
-					ytsaurus.Spec.NativeTransport.TLSClientSecret = &corev1.LocalObjectReference{
-						Name: nativeClientCert.Name,
-					}
+					ytBuilder.WithNativeTransportTLS(nativeServerCert.Name, nativeClientCert.Name)
 				} else {
 					By("Activating TLS-only interconnect")
-					ytsaurus.Spec.NativeTransport.TLSInsecure = true
+					ytBuilder.WithNativeTransportTLS(nativeServerCert.Name, "")
 				}
 
 				By("Adding all components")
@@ -1757,7 +1754,11 @@ exec "$@"`
 				ytBuilder.WithYqlAgent()
 				ytBuilder.WithStrawberryController()
 
-				withHTTPSProxy()
+				// FIXME(khlebnikov): Workaround for bug in strawberry controller logging.
+				ytsaurus.Spec.StrawberryController.LogToStderr = true
+
+				withHTTPSProxy(true)
+
 				withRPCTLSProxy()
 
 				By("Adding CHYT instance")

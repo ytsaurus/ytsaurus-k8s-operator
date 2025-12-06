@@ -35,6 +35,20 @@ data:
         };
         "monitoring_port"=10029;
         "rpc_port"=9029;
+        "bus_server"={
+            "encryption_mode"=required;
+            "cert_chain"={
+                "file_name"="/tls/bus_secret/tls.crt";
+            };
+            "private_key"={
+                "file_name"="/tls/bus_secret/tls.key";
+            };
+            ca={
+                "file_name"="/tls/ca_bundle/ca.crt";
+            };
+            "verification_mode"=full;
+            "peer_alternative_host_name"="test-ytsaurus";
+        };
         "timestamp_provider"={
             addresses=[
                 "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
@@ -59,6 +73,20 @@ data:
                     "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
                 ];
             };
+            "bus_client"={
+                "encryption_mode"=required;
+                "cert_chain"={
+                    "file_name"="/tls/bus_client_secret/tls.crt";
+                };
+                "private_key"={
+                    "file_name"="/tls/bus_client_secret/tls.key";
+                };
+                ca={
+                    "file_name"="/tls/ca_bundle/ca.crt";
+                };
+                "verification_mode"=full;
+                "peer_alternative_host_name"="test-ytsaurus";
+            };
             "master_cache"={
                 addresses=[
                     "msc-0.master-caches.ytsaurus-components.svc.cluster.local:9018";
@@ -82,7 +110,7 @@ data:
         "skynet_http_port"=11029;
         "job_resource_manager"={
             "resource_limits"={
-                "user_slots"=5;
+                "user_slots"=4;
             };
         };
         "exec_node"={
@@ -96,9 +124,28 @@ data:
                     };
                 ];
                 "job_environment"={
-                    type=simple;
+                    type=cri;
                     "start_uid"=19500;
+                    "cri_executor"={
+                        "runtime_endpoint"="unix:///yt/node-data/image-cache/containerd.sock";
+                        "image_endpoint"="unix:///yt/node-data/image-cache/containerd.sock";
+                        namespace=yt;
+                        "base_cgroup"="/yt";
+                    };
+                    "cri_image_cache"={
+                        capacity=5368709120;
+                    };
+                    "job_proxy_image"="docker.io/library/python:3.8-slim";
+                    "job_proxy_bind_mounts"=[
+                        {
+                            "external_path"="/etc/ssl/certs";
+                            "internal_path"="/etc/ssl/certs";
+                            "read_only"=%true;
+                        };
+                    ];
+                    "use_job_proxy_from_image"=%false;
                 };
+                "do_not_set_user_id"=%true;
                 "enable_tmpfs"=%false;
             };
             "gpu_manager"={
@@ -108,7 +155,7 @@ data:
             };
             "job_controller"={
                 "resource_limits"={
-                    "user_slots"=5;
+                    "user_slots"=4;
                 };
                 "gpu_manager"={
                     "gpu_info_source"={
@@ -192,6 +239,101 @@ data:
                     };
                     mode=simple;
                 };
+                "environment_variables"=[
+                    {
+                        name="SSL_CERT_FILE";
+                        value="/etc/ssl/certs/ca-certificates.crt";
+                        export=%true;
+                    };
+                    {
+                        name="SSL_CERT_DIR";
+                        value="/etc/ssl/certs";
+                        export=%true;
+                    };
+                    {
+                        name="REQUESTS_CA_BUNDLE";
+                        value="/etc/ssl/certs/ca-certificates.crt";
+                        export=%true;
+                    };
+                    {
+                        name="YT_SECURE_VAULT_YT_BUS_CA_BUNDLE";
+                        "file_name"="/tls/ca_bundle/ca.crt";
+                        export=%false;
+                    };
+                    {
+                        name="YT_SECURE_VAULT_YT_BUS_CLIENT_CERTIFICATE";
+                        "file_name"="/tls/bus_client_secret/tls.crt";
+                        export=%false;
+                    };
+                    {
+                        name="YT_SECURE_VAULT_YT_BUS_CLIENT_PRIVATE_KEY";
+                        "file_name"="/tls/bus_client_secret/tls.key";
+                        export=%false;
+                    };
+                ];
+                "forward_all_environment_variables"=%true;
+                "cluster_connection"={
+                    "cluster_name"="test-ytsaurus";
+                    "primary_master"={
+                        addresses=[
+                            "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                        ];
+                        peers=[
+                            {
+                                address="ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                                voting=%true;
+                            };
+                        ];
+                        "cell_id"="65726e65-ad6b7562-10259-79747361";
+                    };
+                    "discovery_connection"={
+                        addresses=[
+                            "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
+                        ];
+                    };
+                    "bus_client"={
+                        "encryption_mode"=required;
+                        "cert_chain"={
+                            "environment_variable"="YT_SECURE_VAULT_YT_BUS_CLIENT_CERTIFICATE";
+                            "file_name"="/tls/bus_client_secret/tls.crt";
+                        };
+                        "private_key"={
+                            "environment_variable"="YT_SECURE_VAULT_YT_BUS_CLIENT_PRIVATE_KEY";
+                            "file_name"="/tls/bus_client_secret/tls.key";
+                        };
+                        ca={
+                            "environment_variable"="YT_SECURE_VAULT_YT_BUS_CA_BUNDLE";
+                            "file_name"="/tls/ca_bundle/ca.crt";
+                        };
+                        "verification_mode"=full;
+                        "peer_alternative_host_name"="test-ytsaurus";
+                    };
+                    "master_cache"={
+                        addresses=[
+                            "msc-0.master-caches.ytsaurus-components.svc.cluster.local:9018";
+                        ];
+                        "cell_id"="65726e65-ad6b7562-10259-79747361";
+                        "enable_master_cache_discovery"=%false;
+                    };
+                };
+                "supervisor_connection"={
+                    "encryption_mode"=required;
+                    "cert_chain"={
+                        "environment_variable"="YT_SECURE_VAULT_YT_BUS_CLIENT_CERTIFICATE";
+                        "file_name"="/tls/bus_client_secret/tls.crt";
+                    };
+                    "private_key"={
+                        "environment_variable"="YT_SECURE_VAULT_YT_BUS_CLIENT_PRIVATE_KEY";
+                        "file_name"="/tls/bus_client_secret/tls.key";
+                    };
+                    ca={
+                        "environment_variable"="YT_SECURE_VAULT_YT_BUS_CA_BUNDLE";
+                        "file_name"="/tls/ca_bundle/ca.crt";
+                    };
+                    "verification_mode"=full;
+                    "peer_alternative_host_name"="test-ytsaurus";
+                    address="127.0.0.1:9029";
+                };
             };
             "job_proxy_authentication_manager"={
                 "cypress_cookie_manager"={
@@ -235,6 +377,9 @@ data:
                 ];
                 "flush_period"=3000;
             };
+            "do_not_set_user_id"=%true;
+            "forward_all_environment_variables"=%true;
+            "use_artifact_binds"=%true;
             "job_proxy_log_manager"={
                 directory="/var/log/job-proxy";
                 "sharding_key_length"=2;
@@ -296,6 +441,7 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-exec-node
     ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/config-overrides-version: "1"
   name: yt-exec-node-config
   namespace: ytsaurus-components
   ownerReferences:

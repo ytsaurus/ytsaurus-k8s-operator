@@ -145,7 +145,7 @@ func (fs *FakeServer) removePods(ctx context.Context) error {
 	return nil
 }
 
-func (fs *FakeServer) addCABundleMount(c *corev1.Container) {
+func (fs *FakeServer) addCARootBundle(c *corev1.Container) {
 }
 
 func (fs *FakeServer) addTlsSecretMount(c *corev1.Container) {

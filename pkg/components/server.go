@@ -34,7 +34,7 @@ type server interface {
 	needSync() bool
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
-	addCABundleMount(c *corev1.Container)
+	addCARootBundle(c *corev1.Container)
 	addTlsSecretMount(c *corev1.Container)
 	addMonitoringPort(port corev1.ServicePort)
 }
@@ -53,6 +53,7 @@ type serverImpl struct {
 	statefulSet       *resources.StatefulSet
 	headlessService   *resources.HeadlessService
 	monitoringService *resources.MonitoringService
+	caRootBundle      *resources.CABundle
 	caBundle          *resources.CABundle
 	busServerSecret   *resources.TLSSecret
 	busClientSecret   *resources.TLSSecret
@@ -103,11 +104,6 @@ func newServerConfigured(
 	image := commonSpec.CoreImage
 	if instanceSpec.Image != nil {
 		image = *instanceSpec.Image
-	}
-
-	var caBundle *resources.CABundle
-	if caBundleSpec := commonSpec.CABundle; caBundleSpec != nil {
-		caBundle = resources.NewCABundle(*caBundleSpec, consts.CABundleVolumeName, consts.CABundleMountPoint)
 	}
 
 	var busServerSecret *resources.TLSSecret
@@ -184,7 +180,8 @@ func newServerConfigured(
 			l,
 			proxy,
 		),
-		caBundle:        caBundle,
+		caRootBundle:    resources.NewCARootBundle(commonSpec.CARootBundle),
+		caBundle:        resources.NewCABundle(commonSpec.CABundle),
 		busServerSecret: busServerSecret,
 		busClientSecret: busClientSecret,
 
@@ -341,7 +338,8 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	command = append(command, s.instanceSpec.EntrypointWrapper...)
 	command = append(command, s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, fileNames[0]))
 
-	statefulSet.Spec.Template.Spec = corev1.PodSpec{
+	podSpec := &statefulSet.Spec.Template.Spec
+	*podSpec = corev1.PodSpec{
 		RuntimeClassName:   s.instanceSpec.RuntimeClassName,
 		ImagePullSecrets:   s.commonSpec.ImagePullSecrets,
 		SetHostnameAsFQDN:  s.instanceSpec.SetHostnameAsFQDN,
@@ -396,35 +394,32 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		DNSConfig:    s.instanceSpec.DNSConfig,
 	}
 
-	var stsDNSPolicy corev1.DNSPolicy
 	if ptr.Deref(s.instanceSpec.HostNetwork, s.commonSpec.HostNetwork) {
-		statefulSet.Spec.Template.Spec.HostNetwork = true
+		podSpec.HostNetwork = true
 		// https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy
-		stsDNSPolicy = corev1.DNSClusterFirstWithHostNet
+		podSpec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
 	}
 	if s.instanceSpec.DNSPolicy != "" {
-		stsDNSPolicy = s.instanceSpec.DNSPolicy
-	}
-	statefulSet.Spec.Template.Spec.DNSPolicy = stsDNSPolicy
-
-	if s.caBundle != nil {
-		s.caBundle.AddVolume(&statefulSet.Spec.Template.Spec)
-		for i := range statefulSet.Spec.Template.Spec.Containers {
-			s.addCABundleMount(&statefulSet.Spec.Template.Spec.Containers[i])
-		}
-		for i := range statefulSet.Spec.Template.Spec.InitContainers {
-			s.addCABundleMount(&statefulSet.Spec.Template.Spec.InitContainers[i])
-		}
+		podSpec.DNSPolicy = s.instanceSpec.DNSPolicy
 	}
 
-	if s.busServerSecret != nil {
-		s.busServerSecret.AddVolume(&statefulSet.Spec.Template.Spec)
+	s.caRootBundle.AddVolume(podSpec)
+	s.caBundle.AddVolume(podSpec)
+	s.busServerSecret.AddVolume(podSpec)
+	s.busClientSecret.AddVolume(podSpec)
+
+	// Add CA root bundle into all containers.
+	for i := range podSpec.Containers {
+		s.addCARootBundle(&podSpec.Containers[i])
 	}
-	if s.busClientSecret != nil {
-		s.busClientSecret.AddVolume(&statefulSet.Spec.Template.Spec)
+	for i := range podSpec.InitContainers {
+		s.addCARootBundle(&podSpec.InitContainers[i])
 	}
 
-	s.addTlsSecretMount(&statefulSet.Spec.Template.Spec.Containers[0])
+	serverContainer := &podSpec.Containers[0]
+
+	// Native transport certificates are required only in server container.
+	s.addTlsSecretMount(serverContainer)
 
 	s.builtStatefulSet = statefulSet
 	return statefulSet
@@ -436,19 +431,15 @@ func (s *serverImpl) removePods(ctx context.Context) error {
 	return s.Sync(ctx)
 }
 
-func (s *serverImpl) addCABundleMount(c *corev1.Container) {
-	if s.caBundle != nil {
-		s.caBundle.AddVolumeMount(c)
-	}
+func (s *serverImpl) addCARootBundle(c *corev1.Container) {
+	s.caRootBundle.AddVolumeMount(c)
+	s.caRootBundle.AddContainerEnv(c)
 }
 
 func (s *serverImpl) addTlsSecretMount(c *corev1.Container) {
-	if s.busServerSecret != nil {
-		s.busServerSecret.AddVolumeMount(c)
-	}
-	if s.busClientSecret != nil {
-		s.busClientSecret.AddVolumeMount(c)
-	}
+	s.caBundle.AddVolumeMount(c)
+	s.busServerSecret.AddVolumeMount(c)
+	s.busClientSecret.AddVolumeMount(c)
 }
 
 func (s *serverImpl) addMonitoringPort(port corev1.ServicePort) {
