@@ -34873,8 +34873,6 @@ spec:
                           type: string
                         mode:
                           type: string
-                        phase:
-                          type: string
                         runPreChecks:
                           description: RunPreChecks indicates whether pre-checks are
                             enabled for this component during...

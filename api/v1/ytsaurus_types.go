@@ -1072,28 +1072,12 @@ func (selector *ComponentUpdateSelector) GetUpdateModeType() ComponentUpdateMode
 
 type UpdateFlow string
 
-type ComponentUpdatePhase string
-
-const (
-	ComponentUpdatePhasePending              ComponentUpdatePhase = "Pending"
-	ComponentUpdatePhasePreChecks            ComponentUpdatePhase = "PreChecks"
-	ComponentUpdatePhaseScalingDown          ComponentUpdatePhase = "ScalingDown"
-	ComponentUpdatePhaseScalingUp            ComponentUpdatePhase = "ScalingUp"
-	ComponentUpdatePhaseRolling              ComponentUpdatePhase = "Rolling"
-	ComponentUpdatePhaseAwaitingManualAction ComponentUpdatePhase = "AwaitingManualAction"
-	ComponentUpdatePhaseFinalizing           ComponentUpdatePhase = "Finalizing"
-	ComponentUpdatePhaseCompleted            ComponentUpdatePhase = "Completed"
-	ComponentUpdatePhaseBlocked              ComponentUpdatePhase = "Blocked"
-	ComponentUpdatePhaseStuck                ComponentUpdatePhase = "Stuck"
-)
-
 type ComponentUpdateProgress struct {
 	Component Component               `json:"component"`
 	Mode      ComponentUpdateModeType `json:"mode,omitempty"`
 	// RunPreChecks indicates whether pre-checks are enabled for this component during the current update.
 	// we need it here to know if we should run pre-checks for this component if
-	RunPreChecks bool                 `json:"runPreChecks,omitempty"`
-	Phase        ComponentUpdatePhase `json:"phase,omitempty"`
+	RunPreChecks bool `json:"runPreChecks,omitempty"`
 
 	// Rolling update metrics.
 	CurrentPartition *int32 `json:"currentPartition,omitempty"`

@@ -146,7 +146,6 @@ func buildComponentProgress(selectors []ytv1.ComponentUpdateSelector, components
 			Component:    component,
 			Mode:         resolveComponentUpdateMode(selectors, component),
 			RunPreChecks: shouldRunPreChecks(selectors, component),
-			Phase:        ytv1.ComponentUpdatePhasePending,
 		})
 	}
 	return progress
