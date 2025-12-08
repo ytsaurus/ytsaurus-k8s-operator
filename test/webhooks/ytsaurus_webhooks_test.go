@@ -395,7 +395,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			}
 
 			for _, tc := range testCases {
-				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+				ytsaurus := newYtsaurus()
 				tc.setupComponent(ytsaurus)
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 					{
@@ -442,7 +442,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			}
 
 			for _, tc := range testCases {
-				ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+				ytsaurus := newYtsaurus()
 				tc.setupComponent(ytsaurus)
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 					{
@@ -459,7 +459,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("Should not accept updateMode without type field", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+			ytsaurus := newYtsaurus()
 			ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
 			ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{
 				{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}},
@@ -478,7 +478,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("Should accept component update without updateMode (backward compatibility)", func() {
-			ytsaurus := testutil.CreateBaseYtsaurusResource(namespace)
+			ytsaurus := newYtsaurus()
 			ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
 			ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{
 				{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}},
