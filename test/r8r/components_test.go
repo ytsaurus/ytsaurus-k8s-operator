@@ -102,6 +102,7 @@ func CompleteOneJob(ctx context.Context, k8sClient client.WithWatch, namespace s
 }
 
 var _ = Describe("Components reconciler", Label("reconciler"), func() {
+	var specCtx context.Context
 	var namespace string
 	var ytBuilder *testutil.YtsaurusBuilder
 	var ytsaurus *ytv1.Ytsaurus
@@ -124,8 +125,20 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	// https://onsi.github.io/ginkgo/#separating-creation-and-configuration-justbeforeeach
 	// https://onsi.github.io/ginkgo/#spec-cleanup-aftereach-and-defercleanup
 	// https://onsi.github.io/ginkgo/#separating-diagnostics-collection-and-teardown-justaftereach
+	// NOTE: cross-node operations must use specCtx, in-node operations should use node ctx.
 
 	BeforeEach(func(ctx context.Context) {
+		By("Creating spec context", func() {
+			var cancel context.CancelFunc
+			Expect(specCtx).To(BeNil())
+			specCtx, cancel = context.WithCancel(context.Background())
+			DeferCleanup(func() {
+				cancel()
+				Expect(specCtx).ToNot(BeNil())
+				specCtx = nil
+			})
+		})
+
 		By("Creating fake k8s client", func() {
 			k8sScheme = runtime.NewScheme()
 			Expect(clientgoscheme.AddToScheme(k8sScheme)).To(Succeed())
@@ -204,7 +217,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 		namespace = "ytsaurus-components"
 
-		DeferCleanup(LogObjectEvents(ctx, k8sClient, namespace))
+		DeferCleanup(LogObjectEvents(specCtx, k8sClient, namespace))
 
 		By("Creating minimal Ytsaurus spec", func() {
 			ytBuilder = &testutil.YtsaurusBuilder{

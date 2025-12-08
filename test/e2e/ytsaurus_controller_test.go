@@ -125,7 +125,7 @@ func getRPCProxyAddress(g *ytconfig.Generator, namespace string) (string, error)
 
 func getMasterPod(name, namespace string) corev1.Pod {
 	msPod := corev1.Pod{}
-	err := k8sClient.Get(ctx, client.ObjectKey{Name: name, Namespace: namespace}, &msPod)
+	err := k8sClient.Get(specCtx, client.ObjectKey{Name: name, Namespace: namespace}, &msPod)
 	Expect(err).Should(Succeed())
 	return msPod
 }
@@ -134,20 +134,20 @@ func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client)
 	By("Run cluster impossible update")
 	Expect(ytsaurus.Spec.CoreImage).To(Equal(testutil.CurrentImages.Core))
 	ytsaurus.Spec.CoreImage = testutil.FutureImages.Core
-	UpdateObject(ctx, ytsaurus)
+	UpdateObject(specCtx, ytsaurus)
 
-	EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStateImpossibleToStart))
+	EventuallyYtsaurus(specCtx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStateImpossibleToStart))
 
 	By("Set previous core image")
 	ytsaurus.Spec.CoreImage = testutil.CurrentImages.Core
-	UpdateObject(ctx, ytsaurus)
+	UpdateObject(specCtx, ytsaurus)
 
 	By("Wait for running")
-	EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+	EventuallyYtsaurus(specCtx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 
 	By("Check that cluster alive after update")
 	res := make([]string, 0)
-	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
+	Expect(ytClient.ListNode(specCtx, ypath.Path("/"), &res, nil)).Should(Succeed())
 }
 
 type testRow struct {
@@ -187,6 +187,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	// https://onsi.github.io/ginkgo/#separating-creation-and-configuration-justbeforeeach
 	// https://onsi.github.io/ginkgo/#spec-cleanup-aftereach-and-defercleanup
 	// https://onsi.github.io/ginkgo/#separating-diagnostics-collection-and-teardown-justaftereach
+	// NOTE: cross-node operations must use specCtx, in-node operations should use node ctx.
 
 	withHTTPSProxy := func(httpsOnly bool) {
 		By("Adding HTTPS proxy TLS certificates")
@@ -220,7 +221,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 	}
 
-	BeforeEach(func() {
+	BeforeEach(func(ctx context.Context) {
 		By("Creating namespace")
 		currentSpec := CurrentSpecReport()
 		namespaceObject := corev1.Namespace{
@@ -245,10 +246,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}))
 
 		By("Logging all events in namespace")
-		DeferCleanup(LogObjectEvents(ctx, namespace))
+		DeferCleanup(LogObjectEvents(specCtx, namespace))
 
 		By("Logging some other objects in namespace")
-		namespaceWatcher = NewNamespaceWatcher(ctx, namespace)
+		namespaceWatcher = NewNamespaceWatcher(specCtx, namespace)
 		namespaceWatcher.Start()
 		DeferCleanup(namespaceWatcher.Stop)
 
@@ -355,7 +356,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			}
 			ytClient := getYtClient(httpClient, proxyPort+"://"+proxyAddress)
 			// NOTE: WhoAmI right now does not retry.
-			if _, err := ytClient.WhoAmI(ctx, nil); err != nil {
+			if _, err := ytClient.WhoAmI(specCtx, nil); err != nil {
 				return fmt.Sprintf("ytsaurus api error: %v", err)
 			}
 			var clusterHealth ClusterHealthReport
@@ -666,7 +667,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			ytBuilder.WithBaseComponents()
 		})
 
-		JustBeforeEach(func() {
+		JustBeforeEach(func(ctx context.Context) {
 			By("Getting pods before actions")
 			podsBeforeUpdate = getComponentPods(ctx, namespace)
 		})
@@ -1288,7 +1289,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			remoteNodes = nil
 		})
 
-		JustBeforeEach(func() {
+		JustBeforeEach(func(ctx context.Context) {
 			By("Waiting remote nodes are Running")
 			Expect(remoteNodes).ToNot(BeNil())
 			// FIXME(khlebnikov): Why timeout is so large?
@@ -1859,7 +1860,7 @@ exec "$@"`
 func checkClusterHealth(ytClient yt.Client) {
 	By("Checking that cluster is alive")
 	var res []string
-	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
+	Expect(ytClient.ListNode(specCtx, ypath.Path("/"), &res, nil)).Should(Succeed())
 
 	By("Checking cluster alerts", func() {
 		var clusterHealth ClusterHealthReport
@@ -1870,7 +1871,7 @@ func checkClusterHealth(ytClient yt.Client) {
 
 	By("Checking that tablet cell bundles are in `good` health")
 	Eventually(func() bool {
-		notGoodBundles, err := components.GetNotGoodTabletCellBundles(ctx, ytClient)
+		notGoodBundles, err := components.GetNotGoodTabletCellBundles(specCtx, ytClient)
 		if err != nil {
 			return false
 		}
@@ -1881,7 +1882,7 @@ func checkClusterHealth(ytClient yt.Client) {
 func createTestUser(ytClient yt.Client) {
 	By("Create a test user")
 	Eventually(func() (bool, error) {
-		_, err := ytClient.CreateObject(ctx, yt.NodeUser, &yt.CreateObjectOptions{
+		_, err := ytClient.CreateObject(specCtx, yt.NodeUser, &yt.CreateObjectOptions{
 			Attributes: map[string]any{"name": "test-user"},
 		})
 		// FIXME(khlebnikov): Access denied for user "admin": ...
@@ -1893,7 +1894,7 @@ func createTestUser(ytClient yt.Client) {
 	}).Should(BeTrue())
 
 	By("Check that test user cannot access things they shouldn't")
-	hasPermission, err := ytClient.CheckPermission(ctx, "test-user", yt.PermissionWrite, ypath.Path("//sys/groups/superusers"), nil)
+	hasPermission, err := ytClient.CheckPermission(specCtx, "test-user", yt.PermissionWrite, ypath.Path("//sys/groups/superusers"), nil)
 	Expect(err).Should(Succeed())
 	Expect(hasPermission.Action).Should(Equal(yt.ActionDeny))
 }
@@ -1965,14 +1966,14 @@ func checkChunkLocations(ytClient yt.Client) {
 	// FIXME(khlebnikov): Check master reigh.
 	realChunkLocationPath := "//sys/@config/node_tracker/enable_real_chunk_locations"
 	var realChunkLocationsValue bool
-	err := ytClient.GetNode(ctx, ypath.Path(realChunkLocationPath), &realChunkLocationsValue, nil)
+	err := ytClient.GetNode(specCtx, ypath.Path(realChunkLocationPath), &realChunkLocationsValue, nil)
 	Expect(err).Should(Or(Succeed(), Satisfy(yterrors.ContainsResolveError)))
 	if err == nil {
 		Expect(realChunkLocationsValue).Should(BeTrue())
 	}
 
 	var values []yson.ValueWithAttrs
-	Expect(ytClient.ListNode(ctx, ypath.Path("//sys/data_nodes"), &values, &yt.ListNodeOptions{
+	Expect(ytClient.ListNode(specCtx, ypath.Path("//sys/data_nodes"), &values, &yt.ListNodeOptions{
 		Attributes: []string{"use_imaginary_chunk_locations"},
 	})).Should(Succeed())
 
@@ -1988,7 +1989,7 @@ type TestOperation struct {
 }
 
 func (o *TestOperation) Start() error {
-	id, err := o.Client.StartOperation(ctx, o.Spec.Type, o.Spec, nil)
+	id, err := o.Client.StartOperation(specCtx, o.Spec.Type, o.Spec, nil)
 	if err == nil {
 		log.Info("Operation started", "id", id)
 		o.Id = id
@@ -1997,11 +1998,11 @@ func (o *TestOperation) Start() error {
 }
 
 func (o *TestOperation) Status() (*yt.OperationStatus, error) {
-	return o.Client.GetOperation(ctx, o.Id, nil)
+	return o.Client.GetOperation(specCtx, o.Id, nil)
 }
 
 func (o *TestOperation) Abort() error {
-	err := o.Client.AbortOperation(ctx, o.Id, nil)
+	err := o.Client.AbortOperation(specCtx, o.Id, nil)
 	if err == nil {
 		log.Info("Operation aborted", "id", o.Id)
 	}
@@ -2046,7 +2047,7 @@ func (o *TestOperation) Wait() *yt.OperationStatus {
 			return true
 		}
 		return false
-	}, operationTimeout, operationPollInterval, ctx).Should(BeTrue())
+	}, operationTimeout, operationPollInterval, specCtx).Should(BeTrue())
 	return opStatus
 }
 
@@ -2078,14 +2079,14 @@ func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
 	testTablePathIn := ypath.Path("//tmp/testexec")
 	testTablePathOut := ypath.Path("//tmp/testexec-out")
 	_, err := ytClient.CreateNode(
-		ctx,
+		specCtx,
 		testTablePathIn,
 		yt.NodeTable,
 		nil,
 	)
 	Expect(err).Should(Succeed())
 	_, err = ytClient.CreateNode(
-		ctx,
+		specCtx,
 		testTablePathOut,
 		yt.NodeTable,
 		nil,
@@ -2100,7 +2101,7 @@ func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
 		"aaa",
 		"bbb",
 	}
-	writer, err := ytClient.WriteTable(ctx, testTablePathIn, nil)
+	writer, err := ytClient.WriteTable(specCtx, testTablePathIn, nil)
 	Expect(err).Should(Succeed())
 	for _, key := range keys {
 		err = writer.Write(Row{Key: key})
@@ -2121,7 +2122,7 @@ func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
 	err = op.Wait()
 	Expect(err).Should(Succeed())
 
-	reader, err := ytClient.ReadTable(ctx, testTablePathOut, nil)
+	reader, err := ytClient.ReadTable(specCtx, testTablePathOut, nil)
 	Expect(err).Should(Succeed())
 
 	var rows []string
@@ -2141,14 +2142,14 @@ func NewMapTestOperation(ytClient yt.Client) *TestOperation {
 	testTablePathIn := ypath.Path("//tmp/testmap-in")
 	testTablePathOut := ypath.Path("//tmp/testmap-out")
 	_, err := ytClient.CreateNode(
-		ctx,
+		specCtx,
 		testTablePathIn,
 		yt.NodeTable,
 		nil,
 	)
 	Expect(err).Should(Succeed())
 	_, err = ytClient.CreateNode(
-		ctx,
+		specCtx,
 		testTablePathOut,
 		yt.NodeTable,
 		nil,
@@ -2163,7 +2164,7 @@ func NewMapTestOperation(ytClient yt.Client) *TestOperation {
 		"b",
 		"c",
 	}
-	writer, err := ytClient.WriteTable(ctx, testTablePathIn, nil)
+	writer, err := ytClient.WriteTable(specCtx, testTablePathIn, nil)
 	Expect(err).Should(Succeed())
 	for _, key := range keys {
 		err = writer.Write(Row{Key: key})
