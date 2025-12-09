@@ -93,6 +93,7 @@ func (c *Ytsaurus) UpdateComponentProgress(component ytv1.Component, update func
 	}
 }
 
+// ShouldRunPreChecks is status-based and can flip to false after successful execution.
 func (c *Ytsaurus) ShouldRunPreChecks(component ytv1.Component) bool {
 	progress := c.getComponentProgressEntry(component)
 	if progress == nil {

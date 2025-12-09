@@ -1075,8 +1075,7 @@ type UpdateFlow string
 type ComponentUpdateProgress struct {
 	Component Component               `json:"component"`
 	Mode      ComponentUpdateModeType `json:"mode,omitempty"`
-	// RunPreChecks indicates whether pre-checks are enabled for this component during the current update.
-	// we need it here to know if we should run pre-checks for this component if
+	// RunPreChecks is true until pre-checks have successfully completed for this component in the current update.
 	RunPreChecks bool `json:"runPreChecks,omitempty"`
 
 	// Rolling update metrics.

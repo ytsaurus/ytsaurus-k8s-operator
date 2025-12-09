@@ -170,7 +170,7 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(yqla.ytsaurus, yqla) {
-			// Handle bulk update with pre-checks and phase tracking
+			// Handle bulk update with pre-checks
 			if status, err := handleBulkUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.localComponent, yqla.server, dry); status != nil {
 				return *status, err
 			}

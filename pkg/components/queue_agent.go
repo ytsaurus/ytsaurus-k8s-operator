@@ -118,7 +118,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 
 	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(qa.ytsaurus, qa) {
-			// Handle bulk update with pre-checks and phase tracking
+			// Handle bulk update with pre-checks
 			if status, err := handleBulkUpdatingClusterState(ctx, qa.ytsaurus, qa, &qa.localComponent, qa.server, dry); status != nil {
 				return *status, err
 			}

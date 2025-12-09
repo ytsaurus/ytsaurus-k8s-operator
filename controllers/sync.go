@@ -145,7 +145,7 @@ func buildComponentProgress(selectors []ytv1.ComponentUpdateSelector, components
 		progress = append(progress, ytv1.ComponentUpdateProgress{
 			Component:    component,
 			Mode:         resolveComponentUpdateMode(selectors, component),
-			RunPreChecks: shouldRunPreChecks(selectors, component),
+			RunPreChecks: shouldEnablePreChecksFromSpec(selectors, component),
 		})
 	}
 	return progress
@@ -160,7 +160,7 @@ func resolveComponentUpdateMode(selectors []ytv1.ComponentUpdateSelector, compon
 	return ""
 }
 
-func shouldRunPreChecks(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
+func shouldEnablePreChecksFromSpec(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
 	for _, selector := range selectors {
 		if selector.Component.Type == component.Type && (selector.Component.Name == "" || selector.Component.Name == component.Name) {
 			if selector.UpdateMode == nil {
@@ -242,7 +242,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			logger.Info("Ytsaurus components needs update", "canUpdate", canUpdate, "cannotUpdate", cannotUpdate)
 			// We do not update BlockedComponentsSummary here, it should be updated first thing in Running state.
 			ytsaurus.SetUpdatingComponents(canUpdate)
-			// For backward compatibility with we update ComponentProgress here.
+			// For backward compatibility we update ComponentProgress here.
 			ytsaurus.SetComponentProgress(buildComponentProgress(selectors, canUpdate))
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdating)
 			return ctrl.Result{Requeue: true}, err
