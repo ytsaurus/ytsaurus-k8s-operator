@@ -1266,65 +1266,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 	}) // update
 
-	Context("Rolling update modes", Label("rolling-update-bulk-mode"), func() {
-
-		BeforeEach(func() {
-			ytBuilder.WithBaseComponents()
-			ytBuilder.WithQueryTracker()
-			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
-				{
-					Component: ytv1.Component{Type: consts.QueryTrackerType},
-					UpdateMode: &ytv1.ComponentUpdateMode{
-						Type: ytv1.ComponentUpdateModeTypeBulkUpdate,
-					},
-				},
-			}
-			ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
-				InstanceSpec: ytv1.InstanceSpec{
-					Image:         ptr.To(testutil.QueryTrackerImagePrevious),
-					InstanceCount: 3,
-				},
-			}
-		})
-
-		It("Should track bulk update progress for query-tracker", func(ctx context.Context) {
-			podsBefore := getComponentPods(ctx, namespace)
-
-			By("Trigger QT update")
-			ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.QueryTrackerImageFuture)
-
-			UpdateObject(ctx, ytsaurus)
-			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-
-			Eventually(ctx, func(ctx context.Context) (ytv1.ComponentUpdateModeType, error) {
-				if err := k8sClient.Get(ctx, name, ytsaurus); err != nil {
-					return "", err
-				}
-				for _, entry := range ytsaurus.Status.UpdateStatus.ComponentProgress {
-					if entry.Component.Type == consts.QueryTrackerType {
-						return entry.Mode, nil
-					}
-				}
-				return "", fmt.Errorf("query tracker progress not found")
-			}, reactionTimeout, pollInterval).Should(Equal(ytv1.ComponentUpdateModeTypeBulkUpdate))
-
-			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
-
-			podsAfter := getComponentPods(ctx, namespace)
-			changed := getChangedPods(podsBefore, podsAfter)
-
-			// In bulk update, pods are deleted and recreated, not updated in-place
-			allChanged := append(changed.Deleted, changed.Created...)
-			Expect(allChanged).To(ContainElements("qt-0", "qt-1", "qt-2"))
-
-			for name, pod := range podsAfter {
-				if strings.HasPrefix(name, "qt-") {
-					Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.QueryTrackers.Image))
-				}
-			}
-		})
-	})
-
 	Context("Remote ytsaurus tests", Label("remote"), func() {
 		var remoteYtsaurus *ytv1.RemoteYtsaurus
 		var remoteNodes client.Object
@@ -1918,15 +1859,18 @@ exec "$@"`
 
 	}) // integration
 
-	Context("Query tracker update tests", Label("qt-update"), func() {
+	Context("Rolling update for query tracker update tests", Label("rolling-update-bulk-mode"), func() {
 		BeforeEach(func() {
 			ytBuilder.WithBaseComponents()
 			ytBuilder.WithQueryTracker()
-			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
-				Component: ytv1.Component{
-					Type: consts.QueryTrackerType,
+			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+				{
+					Component: ytv1.Component{Type: consts.QueryTrackerType},
+					UpdateMode: &ytv1.ComponentUpdateMode{
+						Type: ytv1.ComponentUpdateModeTypeBulkUpdate,
+					},
 				},
-			}}
+			}
 			ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
 				InstanceSpec: ytv1.InstanceSpec{
 					Image:         ptr.To(testutil.QueryTrackerImagePrevious),
@@ -1935,7 +1879,7 @@ exec "$@"`
 			}
 		})
 
-		It("Should update query tracker and have Running state", func(ctx context.Context) {
+		It("Should update query tracker in bulkUpdate mode and have Running state", func(ctx context.Context) {
 			podsBefore := getComponentPods(ctx, namespace)
 
 			By("Trigger QT update")
@@ -1943,6 +1887,18 @@ exec "$@"`
 
 			UpdateObject(ctx, ytsaurus)
 			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+
+			Eventually(ctx, func(ctx context.Context) (ytv1.ComponentUpdateModeType, error) {
+				if err := k8sClient.Get(ctx, name, ytsaurus); err != nil {
+					return "", err
+				}
+				for _, entry := range ytsaurus.Status.UpdateStatus.ComponentProgress {
+					if entry.Component.Type == consts.QueryTrackerType {
+						return entry.Mode, nil
+					}
+				}
+				return "", fmt.Errorf("query tracker progress not found")
+			}, reactionTimeout, pollInterval).Should(Equal(ytv1.ComponentUpdateModeTypeBulkUpdate))
 
 			By("Waiting cluster update completes")
 			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
