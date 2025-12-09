@@ -22,8 +22,17 @@ import (
 
 func init() {
 	RegisterUpdatePreChecker(consts.QueryTrackerType, UpdatePreCheckerFunc(func(ctx context.Context, component Component) error {
-		// checks will be added later
-		return nil
+		qt := component.(*QueryTracker)
+
+		// Get YT client from the ytsaurusClient component
+		if qt.ytsaurusClient == nil {
+			return fmt.Errorf("YtsaurusClient component is not available")
+		}
+		ytClient := qt.ytsaurusClient.GetYtClient()
+
+		// Check that the number of instances in YT matches the expected instanceCount
+		expectedCount := int(qt.ytsaurus.GetResource().Spec.QueryTrackers.InstanceCount)
+		return IsInstanceCountEqualYTSpec(ctx, ytClient, consts.QueryTrackerType, expectedCount)
 	}))
 }
 

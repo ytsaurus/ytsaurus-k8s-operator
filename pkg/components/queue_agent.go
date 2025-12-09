@@ -21,8 +21,17 @@ import (
 
 func init() {
 	RegisterUpdatePreChecker(consts.QueueAgentType, UpdatePreCheckerFunc(func(ctx context.Context, component Component) error {
-		// checks will be added later
-		return nil
+		qa := component.(*QueueAgent)
+
+		// Get YT client from the ytsaurusClient component
+		if qa.ytsaurusClient == nil {
+			return fmt.Errorf("YtsaurusClient component is not available")
+		}
+		ytClient := qa.ytsaurusClient.GetYtClient()
+
+		// Check that the number of instances in YT matches the expected instanceCount
+		expectedCount := int(qa.ytsaurus.GetResource().Spec.QueueAgents.InstanceCount)
+		return IsInstanceCountEqualYTSpec(ctx, ytClient, consts.QueueAgentType, expectedCount)
 	}))
 }
 

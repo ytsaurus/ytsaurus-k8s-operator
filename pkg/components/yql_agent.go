@@ -20,8 +20,17 @@ import (
 
 func init() {
 	RegisterUpdatePreChecker(consts.YqlAgentType, UpdatePreCheckerFunc(func(ctx context.Context, component Component) error {
-		// checks will be added later
-		return nil
+		yqla := component.(*YqlAgent)
+
+		// Get YT client from the ytsaurusClient component
+		if yqla.ytsaurusClient == nil {
+			return fmt.Errorf("YtsaurusClient component is not available")
+		}
+		ytClient := yqla.ytsaurusClient.GetYtClient()
+
+		// Check that the number of instances in YT matches the expected instanceCount
+		expectedCount := int(yqla.ytsaurus.GetResource().Spec.YQLAgents.InstanceCount)
+		return IsInstanceCountEqualYTSpec(ctx, ytClient, consts.YqlAgentType, expectedCount)
 	}))
 }
 
@@ -29,12 +38,13 @@ type YqlAgent struct {
 	localServerComponent
 	cfgen             *ytconfig.Generator
 	master            Component
+	ytsaurusClient    internalYtsaurusClient
 	initEnvironment   *InitJob
 	updateEnvironment *InitJob
 	secret            *resources.StringSecret
 }
 
-func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *YqlAgent {
+func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc internalYtsaurusClient, master Component) *YqlAgent {
 	l := cfgen.GetComponentLabeller(consts.YqlAgentType, "")
 
 	resource := ytsaurus.GetResource()
@@ -60,6 +70,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               master,
+		ytsaurusClient:       yc,
 		initEnvironment: NewInitJob(
 			l,
 			ytsaurus.APIProxy(),
