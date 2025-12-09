@@ -544,7 +544,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `component` _[Component](#component)_ |  |  |  |
 | `mode` _[ComponentUpdateModeType](#componentupdatemodetype)_ |  |  |  |
-| `runPreChecks` _boolean_ | RunPreChecks indicates whether pre-checks are enabled for this component during the current update.<br />we need it here to know if we should run pre-checks for this component if |  |  |
+| `runPreChecks` _boolean_ | RunPreChecks is true until pre-checks have successfully completed for this component in the current update. |  |  |
 | `currentPartition` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ | Rolling update metrics. |  |  |
 | `totalReplicas` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
 | `updatedReplicas` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |

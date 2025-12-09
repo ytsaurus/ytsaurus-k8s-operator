@@ -34874,8 +34874,8 @@ spec:
                         mode:
                           type: string
                         runPreChecks:
-                          description: RunPreChecks indicates whether pre-checks are
-                            enabled for this component during...
+                          description: RunPreChecks is true until pre-checks have
+                            successfully completed for this...
                           type: boolean
                         totalReplicas:
                           format: int32
