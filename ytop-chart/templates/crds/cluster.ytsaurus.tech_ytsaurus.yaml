@@ -1060,8 +1060,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -2952,8 +2951,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -4812,8 +4810,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -6685,8 +6682,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -8551,8 +8547,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -10683,8 +10678,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -12604,8 +12598,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -14516,8 +14509,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -16394,8 +16386,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -18348,8 +18339,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -20218,8 +20208,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -22074,8 +22063,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -23943,8 +23931,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -25846,8 +25833,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
@@ -27729,8 +27715,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -29757,8 +29742,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -31641,8 +31625,7 @@ spec:
                           type: integer
                       type: object
                     resources:
-                      description: ResourceRequirements describes the compute resource
-                        requirements.
+                      description: Resources dedicated for component.
                       properties:
                         claims:
                           description: Claims lists the names of resources, defined
@@ -33845,8 +33828,7 @@ spec:
                         type: integer
                     type: object
                   resources:
-                    description: ResourceRequirements describes the compute resource
-                      requirements.
+                    description: Resources dedicated for component.
                     properties:
                       claims:
                         description: Claims lists the names of resources, defined
