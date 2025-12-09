@@ -186,7 +186,7 @@ func handleUpdatingClusterState(
 	return nil, err
 }
 
-// handleBulkUpdatingClusterState handles the BulkUpdate mode with pre-checks and phase tracking.
+// handleBulkUpdatingClusterState handles the BulkUpdate mode with pre-checks.
 func handleBulkUpdatingClusterState(
 	ctx context.Context,
 	ytsaurus *apiproxy.Ytsaurus,
@@ -201,7 +201,6 @@ func handleBulkUpdatingClusterState(
 		// Not in the pod removal phase, let the component handle other update states
 		return nil, err
 	}
-
 	component := componentToAPIComponent(cmp)
 
 	// Check if this component is using the new update mode

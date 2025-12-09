@@ -1267,7 +1267,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	}) // update
 
 	Context("Rolling update modes", Label("rolling-update-bulk-mode"), func() {
-		var qtInitialPods map[string]corev1.Pod
 
 		BeforeEach(func() {
 			ytBuilder.WithBaseComponents()
@@ -1286,12 +1285,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					InstanceCount: 3,
 				},
 			}
-			qtInitialPods = getComponentPods(ctx, namespace)
 		})
 
 		It("Should track bulk update progress for query-tracker", func(ctx context.Context) {
+			podsBefore := getComponentPods(ctx, namespace)
+
 			By("Trigger QT update")
 			ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.QueryTrackerImageFuture)
+
 			UpdateObject(ctx, ytsaurus)
 			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 
@@ -1309,14 +1310,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 
-			qtPodsAfter := getComponentPods(ctx, namespace)
-			changed := getChangedPods(qtInitialPods, qtPodsAfter)
+			podsAfter := getComponentPods(ctx, namespace)
+			changed := getChangedPods(podsBefore, podsAfter)
 
 			// In bulk update, pods are deleted and recreated, not updated in-place
 			allChanged := append(changed.Deleted, changed.Created...)
 			Expect(allChanged).To(ContainElements("qt-0", "qt-1", "qt-2"))
 
-			for name, pod := range qtPodsAfter {
+			for name, pod := range podsAfter {
 				if strings.HasPrefix(name, "qt-") {
 					Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.QueryTrackers.Image))
 				}
