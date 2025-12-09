@@ -54,6 +54,9 @@ const (
 
 	chytBootstrapTimeout = time.Minute * 2
 
+	operationCPULimit    = 1
+	operationMemoryLimit = 256 << 20
+
 	operationPollInterval = time.Millisecond * 250
 	operationTimeout      = time.Second * 120
 	lightRequestTimeout   = time.Minute * 2
@@ -222,6 +225,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	}
 
 	BeforeEach(func(ctx context.Context) {
+		By("Logging nodes state", func() {
+			logNodesState(ctx)
+		})
+
 		By("Creating namespace")
 		currentSpec := CurrentSpecReport()
 		namespaceObject := corev1.Namespace{
@@ -365,9 +372,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}))
 
 		DeferCleanup(AttachProgressReporter(func() string {
-			failedPods := fetchFailedPods(namespace)
-			if len(failedPods) != 0 {
-				return fmt.Sprintf("Failed pods: %v", failedPods)
+			pending, failed := fetchStuckPods(specCtx, namespace)
+			if len(pending) != 0 {
+				logNodesState(specCtx)
+			}
+			if len(pending)+len(failed) != 0 {
+				return fmt.Sprintf("Pods pending: %v, failed: %v", pending, failed)
 			}
 			return ""
 		}))
@@ -385,6 +395,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
+		By("Logging nodes state", func() {
+			logNodesState(ctx)
+		})
+
 		var err error
 
 		if !ytBuilder.WithHTTPSOnlyProxy {
@@ -2107,9 +2121,10 @@ func NewVanillaOperation(ytClient yt.Client) *TestOperation {
 			Title: "e2e test operation",
 			Tasks: map[string]*ytspec.UserScript{
 				"test": {
-					Command:  "true",
-					CPULimit: 0,
-					JobCount: 1,
+					Command:     "true",
+					CPULimit:    operationCPULimit,
+					MemoryLimit: operationMemoryLimit,
+					JobCount:    1,
 				},
 			},
 			MaxFailedJobCount: 1,
@@ -2223,8 +2238,9 @@ func NewMapTestOperation(ytClient yt.Client) *TestOperation {
 			InputTablePaths:  []ypath.YPath{testTablePathIn},
 			OutputTablePaths: []ypath.YPath{testTablePathOut},
 			Mapper: &ytspec.UserScript{
-				Command:  "cat",
-				CPULimit: 0,
+				Command:     "cat",
+				CPULimit:    operationCPULimit,
+				MemoryLimit: operationMemoryLimit,
 			},
 			MaxFailedJobCount: 1,
 		},
