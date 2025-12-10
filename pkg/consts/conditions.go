@@ -7,17 +7,12 @@ const ConditionSafeModeEnabled = "SafeModeEnabled"
 
 // Component update phase condition suffixes
 const (
-	ConditionPending               = "Pending"
 	ConditionBulkUpdateModeStarted = "BulkUpdateModeStarted"
 	ConditionPreChecksRunning      = "PreChecksRunning"
 	ConditionPreChecksCompleted    = "PreChecksCompleted"
 	ConditionScalingDown           = "ScalingDown"
 	ConditionScalingUp             = "ScalingUp"
-	ConditionRolling               = "Rolling"
 	ConditionAwaitingManualAction  = "AwaitingManualAction"
-	ConditionFinalizing            = "Finalizing"
-	ConditionCompleted             = "Completed"
-	ConditionBlocked               = "Blocked"
 )
 const ConditionTabletCellsSaved = "TabletCellsSaved"
 const ConditionTabletCellsRemovingStarted = "TabletCellsRemovingStarted"

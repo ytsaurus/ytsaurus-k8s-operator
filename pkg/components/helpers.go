@@ -232,7 +232,7 @@ func handleBulkUpdatingClusterState(
 				msg = "pre-checks failed"
 			}
 			ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    fmt.Sprintf("%s%s%s", cmp.GetShortName(), BulkUpdateModeName, consts.ConditionBlocked),
+				Type:    fmt.Sprintf("%s%s%s", cmp.GetShortName(), BulkUpdateModeName, string(SyncStatusBlocked)),
 				Status:  metav1.ConditionTrue,
 				Reason:  "PreChecksFailed",
 				Message: msg,
