@@ -138,15 +138,6 @@ func convertToComponent(components []components.Component) []ytv1.Component {
 	return result
 }
 
-// func resolveComponentUpdateMode(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) ytv1.ComponentUpdateModeType {
-// 	for _, selector := range selectors {
-// 		if selector.Component.Type == component.Type && (selector.Component.Name == "" || selector.Component.Name == component.Name) {
-// 			return selector.GetUpdateModeType()
-// 		}
-// 	}
-// 	return ""
-// }
-
 func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 

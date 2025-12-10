@@ -84,16 +84,16 @@ func (c *Ytsaurus) SetUpdatingComponents(canUpdate []ytv1.Component) {
 }
 
 // ShouldRunPreChecks is status-based and can flip to false after successful execution.
-func (c *Ytsaurus) ShouldRunPreChecks(component ytv1.Component) bool {
+func (c *Ytsaurus) ShouldRunPreChecks(componentType consts.ComponentType, componentName string) bool {
 	// is RunPreChecks enabled for this component at all?
-	if !c.shouldEnablePreChecksFromSpec(component) {
+	if !c.shouldEnablePreChecksFromSpec(componentType, componentName) {
 		return false
 	}
 
 	// have we already completed pre-checks for this component?
 	cond := meta.FindStatusCondition(
 		c.ytsaurus.Status.UpdateStatus.Conditions,
-		fmt.Sprintf("%s%s", component.String(), consts.ConditionPreChecksCompleted),
+		fmt.Sprintf("%s%s", componentName, consts.ConditionPreChecksCompleted),
 	)
 	if cond != nil && cond.Status == metav1.ConditionTrue {
 		// interpret as "already completed"
@@ -102,10 +102,10 @@ func (c *Ytsaurus) ShouldRunPreChecks(component ytv1.Component) bool {
 	return true
 }
 
-func (c *Ytsaurus) shouldEnablePreChecksFromSpec(component ytv1.Component) bool {
+func (c *Ytsaurus) shouldEnablePreChecksFromSpec(componentType consts.ComponentType, componentName string) bool {
 	for _, selector := range c.ytsaurus.Spec.UpdatePlan {
-		if selector.Component.Type == component.Type &&
-			(selector.Component.Name == "" || selector.Component.Name == component.Name) {
+		if selector.Component.Type == componentType &&
+			(selector.Component.Name == "" || selector.Component.Name == componentName) {
 			if selector.Strategy != nil {
 				return ptr.Deref(selector.Strategy.RunPreChecks, true)
 			}

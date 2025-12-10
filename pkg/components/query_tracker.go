@@ -20,22 +20,6 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
-func init() {
-	RegisterUpdatePreChecker(consts.QueryTrackerType, UpdatePreCheckerFunc(func(ctx context.Context, component Component) error {
-		qt := component.(*QueryTracker)
-
-		// Get YT client from the ytsaurusClient component
-		if qt.ytsaurusClient == nil {
-			return fmt.Errorf("YtsaurusClient component is not available")
-		}
-		ytClient := qt.ytsaurusClient.GetYtClient()
-
-		// Check that the number of instances in YT matches the expected instanceCount
-		expectedCount := int(qt.ytsaurus.GetResource().Spec.QueryTrackers.InstanceCount)
-		return IsInstanceCountEqualYTSpec(ctx, ytClient, consts.QueryTrackerType, expectedCount)
-	}))
-}
-
 type QueryTracker struct {
 	localServerComponent
 	cfgen *ytconfig.Generator
@@ -471,4 +455,20 @@ func (qt *QueryTracker) setConditionQTStateUpdated(ctx context.Context) {
 		Reason:  "QTStateUpdated",
 		Message: "Query tracker state updated",
 	})
+}
+
+func (qt *QueryTracker) UpdatePreCheck() ComponentStatus {
+	// Get YT client from the ytsaurusClient component
+	if qt.ytsaurusClient == nil {
+		return ComponentStatusBlocked("YtsaurusClient component is not available")
+	}
+	ytClient := qt.ytsaurusClient.GetYtClient()
+
+	// Check that the number of instances in YT matches the expected instanceCount
+	expectedCount := int(qt.ytsaurus.GetResource().Spec.QueryTrackers.InstanceCount)
+	if err := IsInstanceCountEqualYTSpec(context.Background(), ytClient, consts.QueryTrackerType, expectedCount); err != nil {
+		return ComponentStatusBlocked(err.Error())
+	}
+
+	return ComponentStatusReady()
 }

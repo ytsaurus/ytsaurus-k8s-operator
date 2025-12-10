@@ -201,10 +201,9 @@ func handleBulkUpdatingClusterState(
 		// Not in the pod removal phase, let the component handle other update states
 		return nil, err
 	}
-	component := componentToAPIComponent(cmp)
 
 	// Check if this component is using the new update mode
-	if !doesComponentUseNewUpdateMode(ytsaurus, component) {
+	if !doesComponentUseNewUpdateMode(ytsaurus, cmp.GetType(), cmp.GetShortName()) {
 		if !dry {
 			err = removePods(ctx, server, cmpBase)
 		}
@@ -212,32 +211,37 @@ func handleBulkUpdatingClusterState(
 	}
 
 	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    fmt.Sprintf("%s%s", component.String(), consts.ConditionBulkUpdateModeStarted),
+		Type:    fmt.Sprintf("%s%s", cmp.GetShortName(), consts.ConditionBulkUpdateModeStarted),
 		Status:  metav1.ConditionTrue,
 		Reason:  "BulkUpdateModeStarted",
 		Message: "bulk update mode started",
 	})
 
 	// Run pre-checks if needed
-	if ytsaurus.ShouldRunPreChecks(component) {
+	if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetShortName()) {
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    fmt.Sprintf("%s%s%s", component.String(), BulkUpdateModeName, consts.ConditionPreChecksRunning),
+			Type:    fmt.Sprintf("%s%s%s", cmp.GetShortName(), BulkUpdateModeName, consts.ConditionPreChecksRunning),
 			Status:  metav1.ConditionTrue,
 			Reason:  "RunningPreChecks",
 			Message: "running pre-checks",
 		})
-		if err := RunUpdatePreCheck(ctx, cmp); err != nil {
+		preCheckStatus := cmp.UpdatePreCheck()
+		if preCheckStatus.SyncStatus != SyncStatusReady {
+			msg := preCheckStatus.Message
+			if msg == "" {
+				msg = "pre-checks failed"
+			}
 			ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    fmt.Sprintf("%s%s%s", component.String(), BulkUpdateModeName, consts.ConditionBlocked),
+				Type:    fmt.Sprintf("%s%s%s", cmp.GetShortName(), BulkUpdateModeName, consts.ConditionBlocked),
 				Status:  metav1.ConditionTrue,
 				Reason:  "PreChecksFailed",
-				Message: err.Error(),
+				Message: msg,
 			})
-			return ptr.To(ComponentStatusBlocked(err.Error())), err
+			return ptr.To(ComponentStatusBlocked(msg)), yterrors.Err(msg)
 		}
 		// Set PreChecksCompleted condition for this component
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    fmt.Sprintf("%s%s", component.String(), consts.ConditionPreChecksCompleted),
+			Type:    fmt.Sprintf("%s%s", cmp.GetShortName(), consts.ConditionPreChecksCompleted),
 			Status:  metav1.ConditionTrue,
 			Reason:  "PreChecksCompleted",
 			Message: "pre-checks completed",
@@ -247,7 +251,7 @@ func handleBulkUpdatingClusterState(
 	// Remove pods
 	if !dry {
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    fmt.Sprintf("%s%s%s", component.String(), BulkUpdateModeName, consts.ConditionScalingDown),
+			Type:    fmt.Sprintf("%s%s%s", cmp.GetShortName(), BulkUpdateModeName, consts.ConditionScalingDown),
 			Status:  metav1.ConditionTrue,
 			Reason:  "RemovingPods",
 			Message: "removing pods",
@@ -258,7 +262,7 @@ func handleBulkUpdatingClusterState(
 	// Update condition if state has progressed to pod creation
 	if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    fmt.Sprintf("%s%s%s", component.String(), BulkUpdateModeName, consts.ConditionScalingUp),
+			Type:    fmt.Sprintf("%s%s%s", cmp.GetShortName(), BulkUpdateModeName, consts.ConditionScalingUp),
 			Status:  metav1.ConditionTrue,
 			Reason:  "CreatingPods",
 			Message: "creating new pods",
@@ -304,17 +308,10 @@ func SetWithIgnoreExisting(path string, value string) string {
 	return RunIfNonexistent(path, fmt.Sprintf("/usr/bin/yt set %s %s", path, value))
 }
 
-func componentToAPIComponent(c Component) ytv1.Component {
-	return ytv1.Component{
-		Name: c.GetShortName(),
-		Type: c.GetType(),
-	}
-}
-
-func doesComponentUseNewUpdateMode(ytsaurus *apiproxy.Ytsaurus, component ytv1.Component) bool {
+func doesComponentUseNewUpdateMode(ytsaurus *apiproxy.Ytsaurus, componentType consts.ComponentType, componentName string) bool {
 	for _, selector := range ytsaurus.GetResource().Spec.UpdatePlan {
-		if selector.Component.Type == component.Type &&
-			(selector.Component.Name == "" || selector.Component.Name == component.Name) {
+		if selector.Component.Type == componentType &&
+			(selector.Component.Name == "" || selector.Component.Name == componentName) {
 			return selector.Strategy != nil
 		}
 	}
