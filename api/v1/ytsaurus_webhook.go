@@ -599,12 +599,6 @@ var bulkOnlyComponentTypes = map[consts.ComponentType]struct{}{
 func validateUpdateModeForSelector(selector ComponentUpdateSelector, path *field.Path) field.ErrorList {
 	var errs field.ErrorList
 
-	// If updateMode is specified, type field is required
-	if selector.UpdateMode != nil && selector.UpdateMode.Type == "" {
-		errs = append(errs, field.Required(path.Child("updateMode").Child("type"), "type must be set when updateMode is specified"))
-		return errs
-	}
-
 	modeType := selector.GetUpdateModeType()
 
 	// updateMode currently supported only for concrete components
@@ -618,9 +612,9 @@ func validateUpdateModeForSelector(selector ComponentUpdateSelector, path *field
 			errs = append(errs, field.Invalid(path, selector.UpdateMode, "component.type must be set to use updateMode"))
 			return errs
 		}
-		// Only validate bulk-only restriction if updateMode is actually specified
+		// Only validate bulk-only restriction
 		if _, bulkOnly := bulkOnlyComponentTypes[selector.Component.Type]; bulkOnly && modeType != "" && modeType != ComponentUpdateModeTypeBulkUpdate {
-			errs = append(errs, field.Invalid(path.Child("updateMode").Child("type"), modeType, fmt.Sprintf("%s supports only BulkUpdate mode", selector.Component.Type)))
+			errs = append(errs, field.Invalid(path.Child("updateMode"), modeType, fmt.Sprintf("%s supports only BulkUpdate mode", selector.Component.Type)))
 			return errs
 		}
 	}
@@ -628,25 +622,25 @@ func validateUpdateModeForSelector(selector ComponentUpdateSelector, path *field
 	switch modeType {
 	case ComponentUpdateModeTypeBulkUpdate:
 		if selector.UpdateMode != nil {
-			if selector.UpdateMode.Rolling != nil {
-				errs = append(errs, field.Invalid(path.Child("rolling"), selector.UpdateMode.Rolling, "rolling configuration is not valid for BulkUpdate"))
+			if selector.UpdateMode.RollingUpdate != nil {
+				errs = append(errs, field.Invalid(path.Child("rollingUpdate"), selector.UpdateMode.RollingUpdate, "rolling configuration is not valid for BulkUpdate"))
 			}
 		}
 	case ComponentUpdateModeTypeRollingUpdate:
 		if selector.Component.Type == "" {
 			errs = append(errs, field.Invalid(path.Child("type"), modeType, "rolling update requires a concrete component selector"))
 		}
-		if selector.UpdateMode == nil || selector.UpdateMode.Rolling == nil {
-			errs = append(errs, field.Required(path.Child("rolling"), "rolling configuration (batchSize) must be provided when type=RollingUpdate"))
-		} else if selector.UpdateMode.Rolling.BatchSize != nil && *selector.UpdateMode.Rolling.BatchSize <= 0 {
-			errs = append(errs, field.Invalid(path.Child("rolling").Child("batchSize"), *selector.UpdateMode.Rolling.BatchSize, "batchSize must be positive"))
+		if selector.UpdateMode == nil || selector.UpdateMode.RollingUpdate == nil {
+			errs = append(errs, field.Required(path.Child("rollingUpdate"), "rolling configuration (batchSize) must be provided when type=RollingUpdate"))
+		} else if selector.UpdateMode.RollingUpdate.BatchSize != nil && *selector.UpdateMode.RollingUpdate.BatchSize <= 0 {
+			errs = append(errs, field.Invalid(path.Child("rollingUpdate").Child("batchSize"), *selector.UpdateMode.RollingUpdate.BatchSize, "batchSize must be positive"))
 		}
 	case ComponentUpdateModeTypeOnDelete:
 		if selector.Component.Type == "" {
 			errs = append(errs, field.Invalid(path.Child("type"), modeType, "onDelete update requires a concrete component selector"))
 		}
-		if selector.UpdateMode != nil && selector.UpdateMode.Rolling != nil {
-			errs = append(errs, field.Invalid(path.Child("rolling"), selector.UpdateMode.Rolling, "rolling configuration is not valid for OnDelete"))
+		if selector.UpdateMode != nil && selector.UpdateMode.RollingUpdate != nil {
+			errs = append(errs, field.Invalid(path.Child("rollingUpdate"), selector.UpdateMode.RollingUpdate, "rolling configuration is not valid for OnDelete"))
 		}
 	}
 

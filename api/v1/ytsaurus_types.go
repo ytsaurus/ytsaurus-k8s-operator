@@ -1036,13 +1036,14 @@ type ComponentRollingUpdateMode struct {
 	BatchSize *int32 `json:"batchSize,omitempty"`
 }
 
+type ComponentOnDeleteUpdateMode struct {
+	// empty struct for now
+}
+
 type ComponentUpdateMode struct {
-	//+kubebuilder:validation:Enum=BulkUpdate;RollingUpdate;OnDelete
-	Type ComponentUpdateModeType `json:"type,omitempty"`
-	//+kubebuilder:default:=true
-	RunPreChecks *bool `json:"runPreChecks,omitempty"`
-	//+optional
-	Rolling *ComponentRollingUpdateMode `json:"rolling,omitempty"`
+	RunPreChecks  *bool                        `json:"runPreChecks,omitempty"`
+	RollingUpdate *ComponentRollingUpdateMode  `json:"rollingUpdate,omitempty"`
+	OnDelete      *ComponentOnDeleteUpdateMode `json:"onDelete,omitempty"`
 }
 
 type ComponentUpdateSelector struct {
@@ -1055,11 +1056,22 @@ type ComponentUpdateSelector struct {
 	UpdateMode *ComponentUpdateMode `json:"updateMode,omitempty"`
 }
 
+func (m *ComponentUpdateMode) Type() ComponentUpdateModeType {
+	switch {
+	case m.RollingUpdate != nil:
+		return ComponentUpdateModeTypeRollingUpdate
+	case m.OnDelete != nil:
+		return ComponentUpdateModeTypeOnDelete
+	default:
+		return ComponentUpdateModeTypeBulkUpdate
+	}
+}
+
 func (selector *ComponentUpdateSelector) GetUpdateModeType() ComponentUpdateModeType {
 	if selector == nil || selector.UpdateMode == nil {
 		return ""
 	}
-	return selector.UpdateMode.Type
+	return selector.UpdateMode.Type()
 }
 
 type UpdateFlow string

@@ -458,6 +458,19 @@ _Appears in:_
 | `type` _[ComponentType](#componenttype)_ |  |  |  |
 
 
+#### ComponentOnDeleteUpdateMode
+
+
+
+
+
+
+
+_Appears in:_
+- [ComponentUpdateMode](#componentupdatemode)
+
+
+
 #### ComponentRollingUpdateMode
 
 
@@ -487,27 +500,11 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `type` _[ComponentUpdateModeType](#componentupdatemodetype)_ |  |  | Enum: [BulkUpdate RollingUpdate OnDelete] <br /> |
-| `runPreChecks` _boolean_ |  | true |  |
-| `rolling` _[ComponentRollingUpdateMode](#componentrollingupdatemode)_ |  |  |  |
+| `runPreChecks` _boolean_ |  |  |  |
+| `rollingUpdate` _[ComponentRollingUpdateMode](#componentrollingupdatemode)_ |  |  |  |
+| `onDelete` _[ComponentOnDeleteUpdateMode](#componentondeleteupdatemode)_ |  |  |  |
 
 
-#### ComponentUpdateModeType
-
-_Underlying type:_ _string_
-
-
-
-
-
-_Appears in:_
-- [ComponentUpdateMode](#componentupdatemode)
-
-| Field | Description |
-| --- | --- |
-| `BulkUpdate` |  |
-| `RollingUpdate` |  |
-| `OnDelete` |  |
 
 
 #### ComponentUpdateSelector

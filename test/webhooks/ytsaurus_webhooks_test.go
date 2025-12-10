@@ -12,7 +12,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/ptr"
 )
 
 var _ = Describe("Test for Ytsaurus webhooks", func() {
@@ -359,13 +358,15 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		It("Should not accept bulk-only components with non-BulkUpdate mode", func() {
 			testCases := []struct {
 				componentType    consts.ComponentType
-				updateModeType   ytv1.ComponentUpdateModeType
+				updateMode       *ytv1.ComponentUpdateMode
 				setupComponent   func(*ytv1.Ytsaurus)
 				expectedErrorMsg string
 			}{
 				{
-					componentType:  consts.QueryTrackerType,
-					updateModeType: ytv1.ComponentUpdateModeTypeRollingUpdate,
+					componentType: consts.QueryTrackerType,
+					updateMode: &ytv1.ComponentUpdateMode{
+						RollingUpdate: &ytv1.ComponentRollingUpdateMode{},
+					},
 					setupComponent: func(yts *ytv1.Ytsaurus) {
 						yts.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
 						yts.Spec.TabletNodes = []ytv1.TabletNodesSpec{
@@ -375,8 +376,10 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 					expectedErrorMsg: "QueryTracker supports only BulkUpdate mode",
 				},
 				{
-					componentType:  consts.QueueAgentType,
-					updateModeType: ytv1.ComponentUpdateModeTypeOnDelete,
+					componentType: consts.QueueAgentType,
+					updateMode: &ytv1.ComponentUpdateMode{
+						OnDelete: &ytv1.ComponentOnDeleteUpdateMode{},
+					},
 					setupComponent: func(yts *ytv1.Ytsaurus) {
 						yts.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
 						yts.Spec.TabletNodes = []ytv1.TabletNodesSpec{
@@ -386,8 +389,10 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 					expectedErrorMsg: "QueueAgent supports only BulkUpdate mode",
 				},
 				{
-					componentType:  consts.YqlAgentType,
-					updateModeType: ytv1.ComponentUpdateModeTypeRollingUpdate,
+					componentType: consts.YqlAgentType,
+					updateMode: &ytv1.ComponentUpdateMode{
+						RollingUpdate: &ytv1.ComponentRollingUpdateMode{},
+					},
 					setupComponent: func(yts *ytv1.Ytsaurus) {
 						yts.Spec.YQLAgents = &ytv1.YQLAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
 					},
@@ -400,16 +405,14 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 				tc.setupComponent(ytsaurus)
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 					{
-						Component: ytv1.Component{Type: tc.componentType},
-						UpdateMode: &ytv1.ComponentUpdateMode{
-							Type: tc.updateModeType,
-						},
+						Component:  ytv1.Component{Type: tc.componentType},
+						UpdateMode: tc.updateMode,
 					},
 				}
 
 				Expect(k8sClient.Create(ctx, ytsaurus)).Should(
 					MatchError(ContainSubstring(tc.expectedErrorMsg)),
-					"Failed for component: %s with mode: %s", tc.componentType, tc.updateModeType,
+					"Failed for component: %s with mode: %v", tc.componentType, tc.updateMode,
 				)
 			}
 		})
@@ -417,12 +420,10 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		It("Should accept QueryTracker/QueueAgent with BulkUpdate mode", func() {
 			testCases := []struct {
 				componentType  consts.ComponentType
-				updateModeType ytv1.ComponentUpdateModeType
 				setupComponent func(*ytv1.Ytsaurus)
 			}{
 				{
-					componentType:  consts.QueryTrackerType,
-					updateModeType: ytv1.ComponentUpdateModeTypeBulkUpdate,
+					componentType: consts.QueryTrackerType,
 					setupComponent: func(yts *ytv1.Ytsaurus) {
 						yts.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
 						yts.Spec.TabletNodes = []ytv1.TabletNodesSpec{
@@ -431,8 +432,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 					},
 				},
 				{
-					componentType:  consts.QueueAgentType,
-					updateModeType: ytv1.ComponentUpdateModeTypeBulkUpdate,
+					componentType: consts.QueueAgentType,
 					setupComponent: func(yts *ytv1.Ytsaurus) {
 						yts.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
 						yts.Spec.TabletNodes = []ytv1.TabletNodesSpec{
@@ -447,35 +447,14 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 				tc.setupComponent(ytsaurus)
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 					{
-						Component: ytv1.Component{Type: tc.componentType},
-						UpdateMode: &ytv1.ComponentUpdateMode{
-							Type: tc.updateModeType,
-						},
+						Component:  ytv1.Component{Type: tc.componentType},
+						UpdateMode: &ytv1.ComponentUpdateMode{}, // BulkUpdate
 					},
 				}
 
 				Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
 				Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
 			}
-		})
-
-		It("Should not accept updateMode without type field", func() {
-			ytsaurus := newYtsaurus()
-			ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
-			ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{
-				{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}},
-			}
-			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
-				{
-					Component: ytv1.Component{Type: consts.QueueAgentType},
-					UpdateMode: &ytv1.ComponentUpdateMode{
-						// Type field is missing - should be rejected
-						RunPreChecks: ptr.To(true),
-					},
-				},
-			}
-
-			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("type must be set when updateMode is specified")))
 		})
 
 		It("Should accept component update without updateMode (backward compatibility)", func() {

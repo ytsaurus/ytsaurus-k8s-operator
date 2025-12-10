@@ -32881,7 +32881,9 @@ spec:
                       type: object
                     updateMode:
                       properties:
-                        rolling:
+                        onDelete:
+                          type: object
+                        rollingUpdate:
                           properties:
                             batchSize:
                               description: BatchSize controls how many replicas can
@@ -32890,14 +32892,7 @@ spec:
                               type: integer
                           type: object
                         runPreChecks:
-                          default: true
                           type: boolean
-                        type:
-                          enum:
-                          - BulkUpdate
-                          - RollingUpdate
-                          - OnDelete
-                          type: string
                       type: object
                   type: object
                 type: array
