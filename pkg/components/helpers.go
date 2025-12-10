@@ -211,10 +211,17 @@ func handleBulkUpdatingClusterState(
 		return ptr.To(ComponentStatusUpdateStep("pods removal")), err
 	}
 
+	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    fmt.Sprintf("%s%s", component.String(), consts.ConditionBulkUpdateModeStarted),
+		Status:  metav1.ConditionTrue,
+		Reason:  "BulkUpdateModeStarted",
+		Message: "bulk update mode started",
+	})
+
 	// Run pre-checks if needed
 	if ytsaurus.ShouldRunPreChecks(component) {
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    fmt.Sprintf("%s%s%s", component.String(), BulkUpdateModeName, consts.ConditionPreChecks),
+			Type:    fmt.Sprintf("%s%s%s", component.String(), BulkUpdateModeName, consts.ConditionPreChecksRunning),
 			Status:  metav1.ConditionTrue,
 			Reason:  "RunningPreChecks",
 			Message: "running pre-checks",
@@ -228,9 +235,12 @@ func handleBulkUpdatingClusterState(
 			})
 			return ptr.To(ComponentStatusBlocked(err.Error())), err
 		}
-		// Prevent re-running the same pre-checks on every reconcile
-		ytsaurus.UpdateComponentProgress(component, func(progress *ytv1.ComponentUpdateProgress) {
-			progress.RunPreChecks = false
+		// Set PreChecksCompleted condition for this component
+		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    fmt.Sprintf("%s%s", component.String(), consts.ConditionPreChecksCompleted),
+			Status:  metav1.ConditionTrue,
+			Reason:  "PreChecksCompleted",
+			Message: "pre-checks completed",
 		})
 	}
 
@@ -302,10 +312,12 @@ func componentToAPIComponent(c Component) ytv1.Component {
 }
 
 func doesComponentUseNewUpdateMode(ytsaurus *apiproxy.Ytsaurus, component ytv1.Component) bool {
-	if entry := ytsaurus.GetComponentProgress(component); entry != nil && entry.Mode != "" {
-		return true
+	for _, selector := range ytsaurus.GetResource().Spec.UpdatePlan {
+		if selector.Component.Type == component.Type &&
+			(selector.Component.Name == "" || selector.Component.Name == component.Name) {
+			return selector.UpdateMode != nil
+		}
 	}
-
 	return false
 }
 

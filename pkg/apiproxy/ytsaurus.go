@@ -83,28 +83,40 @@ func (c *Ytsaurus) SetUpdatingComponents(canUpdate []ytv1.Component) {
 	c.ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary = buildComponentsSummary(canUpdate)
 }
 
-func (c *Ytsaurus) SetComponentProgress(progress []ytv1.ComponentUpdateProgress) {
-	c.ytsaurus.Status.UpdateStatus.ComponentProgress = progress
-}
-
-func (c *Ytsaurus) UpdateComponentProgress(component ytv1.Component, update func(progress *ytv1.ComponentUpdateProgress)) {
-	if progress := c.getComponentProgressEntry(component); progress != nil {
-		update(progress)
-	}
-}
-
 // ShouldRunPreChecks is status-based and can flip to false after successful execution.
 func (c *Ytsaurus) ShouldRunPreChecks(component ytv1.Component) bool {
-	progress := c.getComponentProgressEntry(component)
-	if progress == nil {
-		return true
+	// is RunPreChecks enabled for this component at all?
+	if !c.shouldEnablePreChecksFromSpec(component) {
+		return false
 	}
-	return progress.RunPreChecks
+
+	// have we already completed pre-checks for this component?
+	cond := meta.FindStatusCondition(
+		c.ytsaurus.Status.UpdateStatus.Conditions,
+		fmt.Sprintf("%s%s", component.String(), consts.ConditionPreChecksCompleted),
+	)
+	if cond != nil && cond.Status == metav1.ConditionTrue {
+		// interpret as "already completed"
+		return false
+	}
+	return true
 }
 
-func (c *Ytsaurus) GetComponentProgress(component ytv1.Component) *ytv1.ComponentUpdateProgress {
-	return c.getComponentProgressEntry(component)
+func (c *Ytsaurus) shouldEnablePreChecksFromSpec(component ytv1.Component) bool {
+	for _, selector := range c.ytsaurus.Spec.UpdatePlan {
+		if selector.Component.Type == component.Type &&
+			(selector.Component.Name == "" || selector.Component.Name == component.Name) {
+			if selector.UpdateMode != nil {
+				return ptr.Deref(selector.UpdateMode.RunPreChecks, true)
+			}
+		}
+	}
+	return true
 }
+
+// func (c *Ytsaurus) GetComponentProgress(component ytv1.Component) *ytv1.ComponentUpdateProgress {
+// 	return c.getComponentProgressEntry(component)
+// }
 
 func (c *Ytsaurus) SetBlockedComponents(components []ytv1.Component) bool {
 	summary := buildComponentsSummary(components)
@@ -119,7 +131,6 @@ func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
 	c.ytsaurus.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
 	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
 	c.SetUpdatingComponents(nil)
-	c.SetComponentProgress(nil)
 	return c.apiProxy.UpdateStatus(ctx)
 }
 
@@ -205,18 +216,4 @@ func buildComponentsSummary(components []ytv1.Component) string {
 		componentNames = append(componentNames, name)
 	}
 	return "{" + strings.Join(componentNames, " ") + "}"
-}
-
-func componentEquals(a, b ytv1.Component) bool {
-	return a.Type == b.Type && a.Name == b.Name
-}
-
-func (c *Ytsaurus) getComponentProgressEntry(component ytv1.Component) *ytv1.ComponentUpdateProgress {
-	for i := range c.ytsaurus.Status.UpdateStatus.ComponentProgress {
-		progress := &c.ytsaurus.Status.UpdateStatus.ComponentProgress[i]
-		if componentEquals(progress.Component, component) {
-			return progress
-		}
-	}
-	return nil
 }

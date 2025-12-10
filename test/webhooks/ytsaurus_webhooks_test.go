@@ -12,6 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 )
 
 var _ = Describe("Test for Ytsaurus webhooks", func() {
@@ -469,7 +470,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 					Component: ytv1.Component{Type: consts.QueueAgentType},
 					UpdateMode: &ytv1.ComponentUpdateMode{
 						// Type field is missing - should be rejected
-						RunPreChecks: true,
+						RunPreChecks: ptr.To(true),
 					},
 				},
 			}

@@ -34848,47 +34848,6 @@ spec:
                 properties:
                   blockedComponentsSummary:
                     type: string
-                  componentProgress:
-                    items:
-                      properties:
-                        component:
-                          properties:
-                            name:
-                              type: string
-                            type:
-                              type: string
-                          type: object
-                        currentPartition:
-                          description: Rolling update metrics.
-                          format: int32
-                          type: integer
-                        currentRevision:
-                          type: string
-                        lastError:
-                          type: string
-                        lastTransitionTime:
-                          format: date-time
-                          type: string
-                        message:
-                          type: string
-                        mode:
-                          type: string
-                        runPreChecks:
-                          description: RunPreChecks is true until pre-checks have
-                            successfully completed for this...
-                          type: boolean
-                        totalReplicas:
-                          format: int32
-                          type: integer
-                        updateRevision:
-                          type: string
-                        updatedReplicas:
-                          format: int32
-                          type: integer
-                      required:
-                      - component
-                      type: object
-                    type: array
                   components:
                     description: 'Deprecated: Use updatingComponents instead.'
                     items:

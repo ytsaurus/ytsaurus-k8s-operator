@@ -1888,18 +1888,6 @@ exec "$@"`
 			UpdateObject(ctx, ytsaurus)
 			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 
-			Eventually(ctx, func(ctx context.Context) (ytv1.ComponentUpdateModeType, error) {
-				if err := k8sClient.Get(ctx, name, ytsaurus); err != nil {
-					return "", err
-				}
-				for _, entry := range ytsaurus.Status.UpdateStatus.ComponentProgress {
-					if entry.Component.Type == consts.QueryTrackerType {
-						return entry.Mode, nil
-					}
-				}
-				return "", fmt.Errorf("query tracker progress not found")
-			}, reactionTimeout, pollInterval).Should(Equal(ytv1.ComponentUpdateModeTypeBulkUpdate))
-
 			By("Waiting cluster update completes")
 			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 

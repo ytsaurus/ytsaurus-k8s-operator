@@ -1046,7 +1046,7 @@ type ComponentUpdateMode struct {
 	//+kubebuilder:validation:Enum=BulkUpdate;RollingUpdate;OnDelete
 	Type ComponentUpdateModeType `json:"type,omitempty"`
 	//+kubebuilder:default:=true
-	RunPreChecks bool `json:"runPreChecks,omitempty"`
+	RunPreChecks *bool `json:"runPreChecks,omitempty"`
 	//+optional
 	Rolling *ComponentRollingUpdateMode `json:"rolling,omitempty"`
 	//+optional
@@ -1072,24 +1072,6 @@ func (selector *ComponentUpdateSelector) GetUpdateModeType() ComponentUpdateMode
 
 type UpdateFlow string
 
-type ComponentUpdateProgress struct {
-	Component Component               `json:"component"`
-	Mode      ComponentUpdateModeType `json:"mode,omitempty"`
-	// RunPreChecks is true until pre-checks have successfully completed for this component in the current update.
-	RunPreChecks bool `json:"runPreChecks,omitempty"`
-
-	// Rolling update metrics.
-	CurrentPartition *int32 `json:"currentPartition,omitempty"`
-	TotalReplicas    *int32 `json:"totalReplicas,omitempty"`
-	UpdatedReplicas  *int32 `json:"updatedReplicas,omitempty"`
-	UpdateRevision   string `json:"updateRevision,omitempty"`
-	CurrentRevision  string `json:"currentRevision,omitempty"`
-
-	LastTransitionTime *metav1.Time `json:"lastTransitionTime,omitempty"`
-	Message            string       `json:"message,omitempty"`
-	LastError          string       `json:"lastError,omitempty"`
-}
-
 type UpdateStatus struct {
 	//+kubebuilder:default:=None
 	State UpdateState `json:"state,omitempty"`
@@ -1104,10 +1086,9 @@ type UpdateStatus struct {
 	// Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage
 	// executes steps corresponding to that update flow.
 	// Deprecated: Use updatingComponents instead.
-	Flow              UpdateFlow                `json:"flow,omitempty"`
-	Conditions        []metav1.Condition        `json:"conditions,omitempty"`
-	TabletCellBundles []TabletCellBundleInfo    `json:"tabletCellBundles,omitempty"`
-	ComponentProgress []ComponentUpdateProgress `json:"componentProgress,omitempty"`
+	Flow              UpdateFlow             `json:"flow,omitempty"`
+	Conditions        []metav1.Condition     `json:"conditions,omitempty"`
+	TabletCellBundles []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
 }
 
 type Component struct {

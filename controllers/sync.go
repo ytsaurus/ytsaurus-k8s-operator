@@ -138,39 +138,14 @@ func convertToComponent(components []components.Component) []ytv1.Component {
 	return result
 }
 
-// buildComponentProgress builds a list of ComponentUpdateProgress for the given components.
-func buildComponentProgress(selectors []ytv1.ComponentUpdateSelector, components []ytv1.Component) []ytv1.ComponentUpdateProgress {
-	progress := make([]ytv1.ComponentUpdateProgress, 0, len(components))
-	for _, component := range components {
-		progress = append(progress, ytv1.ComponentUpdateProgress{
-			Component:    component,
-			Mode:         resolveComponentUpdateMode(selectors, component),
-			RunPreChecks: shouldEnablePreChecksFromSpec(selectors, component),
-		})
-	}
-	return progress
-}
-
-func resolveComponentUpdateMode(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) ytv1.ComponentUpdateModeType {
-	for _, selector := range selectors {
-		if selector.Component.Type == component.Type && (selector.Component.Name == "" || selector.Component.Name == component.Name) {
-			return selector.GetUpdateModeType()
-		}
-	}
-	return ""
-}
-
-func shouldEnablePreChecksFromSpec(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
-	for _, selector := range selectors {
-		if selector.Component.Type == component.Type && (selector.Component.Name == "" || selector.Component.Name == component.Name) {
-			if selector.UpdateMode == nil {
-				return true
-			}
-			return selector.UpdateMode.RunPreChecks
-		}
-	}
-	return true
-}
+// func resolveComponentUpdateMode(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) ytv1.ComponentUpdateModeType {
+// 	for _, selector := range selectors {
+// 		if selector.Component.Type == component.Type && (selector.Component.Name == "" || selector.Component.Name == component.Name) {
+// 			return selector.GetUpdateModeType()
+// 		}
+// 	}
+// 	return ""
+// }
 
 func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
@@ -242,8 +217,6 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			logger.Info("Ytsaurus components needs update", "canUpdate", canUpdate, "cannotUpdate", cannotUpdate)
 			// We do not update BlockedComponentsSummary here, it should be updated first thing in Running state.
 			ytsaurus.SetUpdatingComponents(canUpdate)
-			// For backward compatibility we update ComponentProgress here.
-			ytsaurus.SetComponentProgress(buildComponentProgress(selectors, canUpdate))
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdating)
 			return ctrl.Result{Requeue: true}, err
 

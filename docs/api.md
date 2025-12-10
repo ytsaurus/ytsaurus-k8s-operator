@@ -449,7 +449,6 @@ _Appears in:_
 
 
 _Appears in:_
-- [ComponentUpdateProgress](#componentupdateprogress)
 - [ComponentUpdateSelector](#componentupdateselector)
 - [UpdateStatus](#updatestatus)
 
@@ -520,39 +519,12 @@ _Underlying type:_ _string_
 
 _Appears in:_
 - [ComponentUpdateMode](#componentupdatemode)
-- [ComponentUpdateProgress](#componentupdateprogress)
 
 | Field | Description |
 | --- | --- |
 | `BulkUpdate` |  |
 | `RollingUpdate` |  |
 | `OnDelete` |  |
-
-
-#### ComponentUpdateProgress
-
-
-
-
-
-
-
-_Appears in:_
-- [UpdateStatus](#updatestatus)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `component` _[Component](#component)_ |  |  |  |
-| `mode` _[ComponentUpdateModeType](#componentupdatemodetype)_ |  |  |  |
-| `runPreChecks` _boolean_ | RunPreChecks is true until pre-checks have successfully completed for this component in the current update. |  |  |
-| `currentPartition` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ | Rolling update metrics. |  |  |
-| `totalReplicas` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
-| `updatedReplicas` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
-| `updateRevision` _string_ |  |  |  |
-| `currentRevision` _string_ |  |  |  |
-| `lastTransitionTime` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#time-v1-meta)_ |  |  |  |
-| `message` _string_ |  |  |  |
-| `lastError` _string_ |  |  |  |
 
 
 #### ComponentUpdateSelector
@@ -2899,7 +2871,6 @@ _Appears in:_
 | `flow` _[UpdateFlow](#updateflow)_ | Flow is an internal field that is needed to persist the chosen flow until the end of an update.<br />Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage<br />executes steps corresponding to that update flow.<br />Deprecated: Use updatingComponents instead. |  |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
 | `tabletCellBundles` _[TabletCellBundleInfo](#tabletcellbundleinfo) array_ |  |  |  |
-| `componentProgress` _[ComponentUpdateProgress](#componentupdateprogress) array_ |  |  |  |
 
 
 #### Volume
