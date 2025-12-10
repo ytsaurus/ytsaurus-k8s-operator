@@ -32879,7 +32879,7 @@ spec:
                         type:
                           type: string
                       type: object
-                    updateMode:
+                    strategy:
                       properties:
                         onDelete:
                           type: object

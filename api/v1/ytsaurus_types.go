@@ -1040,7 +1040,7 @@ type ComponentOnDeleteUpdateMode struct {
 	// empty struct for now
 }
 
-type ComponentUpdateMode struct {
+type ComponentUpdateStrategy struct {
 	RunPreChecks  *bool                        `json:"runPreChecks,omitempty"`
 	RollingUpdate *ComponentRollingUpdateMode  `json:"rollingUpdate,omitempty"`
 	OnDelete      *ComponentOnDeleteUpdateMode `json:"onDelete,omitempty"`
@@ -1053,10 +1053,10 @@ type ComponentUpdateSelector struct {
 	//+optional
 	Component Component `json:"component,omitempty"`
 	//+optional
-	UpdateMode *ComponentUpdateMode `json:"updateMode,omitempty"`
+	Strategy *ComponentUpdateStrategy `json:"strategy,omitempty"`
 }
 
-func (m *ComponentUpdateMode) Type() ComponentUpdateModeType {
+func (m *ComponentUpdateStrategy) Type() ComponentUpdateModeType {
 	switch {
 	case m.RollingUpdate != nil:
 		return ComponentUpdateModeTypeRollingUpdate
@@ -1067,11 +1067,11 @@ func (m *ComponentUpdateMode) Type() ComponentUpdateModeType {
 	}
 }
 
-func (selector *ComponentUpdateSelector) GetUpdateModeType() ComponentUpdateModeType {
-	if selector == nil || selector.UpdateMode == nil {
+func (selector *ComponentUpdateSelector) GetUpdateStrategyType() ComponentUpdateModeType {
+	if selector == nil || selector.Strategy == nil {
 		return ""
 	}
-	return selector.UpdateMode.Type()
+	return selector.Strategy.Type()
 }
 
 type UpdateFlow string

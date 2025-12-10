@@ -467,7 +467,7 @@ _Appears in:_
 
 
 _Appears in:_
-- [ComponentUpdateMode](#componentupdatemode)
+- [ComponentUpdateStrategy](#componentupdatestrategy)
 
 
 
@@ -480,29 +480,11 @@ _Appears in:_
 
 
 _Appears in:_
-- [ComponentUpdateMode](#componentupdatemode)
+- [ComponentUpdateStrategy](#componentupdatestrategy)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `batchSize` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ | BatchSize controls how many replicas can be rolled at once. |  |  |
-
-
-#### ComponentUpdateMode
-
-
-
-
-
-
-
-_Appears in:_
-- [ComponentUpdateSelector](#componentupdateselector)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `runPreChecks` _boolean_ |  |  |  |
-| `rollingUpdate` _[ComponentRollingUpdateMode](#componentrollingupdatemode)_ |  |  |  |
-| `onDelete` _[ComponentOnDeleteUpdateMode](#componentondeleteupdatemode)_ |  |  |  |
 
 
 
@@ -522,7 +504,25 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `class` _[ComponentClass](#componentclass)_ |  |  | Enum: [ Nothing Stateless Everything] <br /> |
 | `component` _[Component](#component)_ |  |  |  |
-| `updateMode` _[ComponentUpdateMode](#componentupdatemode)_ |  |  |  |
+| `strategy` _[ComponentUpdateStrategy](#componentupdatestrategy)_ |  |  |  |
+
+
+#### ComponentUpdateStrategy
+
+
+
+
+
+
+
+_Appears in:_
+- [ComponentUpdateSelector](#componentupdateselector)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `runPreChecks` _boolean_ |  |  |  |
+| `rollingUpdate` _[ComponentRollingUpdateMode](#componentrollingupdatemode)_ |  |  |  |
+| `onDelete` _[ComponentOnDeleteUpdateMode](#componentondeleteupdatemode)_ |  |  |  |
 
 
 #### ControllerAgentsSpec

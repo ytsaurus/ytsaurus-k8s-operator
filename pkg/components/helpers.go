@@ -315,7 +315,7 @@ func doesComponentUseNewUpdateMode(ytsaurus *apiproxy.Ytsaurus, component ytv1.C
 	for _, selector := range ytsaurus.GetResource().Spec.UpdatePlan {
 		if selector.Component.Type == component.Type &&
 			(selector.Component.Name == "" || selector.Component.Name == component.Name) {
-			return selector.UpdateMode != nil
+			return selector.Strategy != nil
 		}
 	}
 	return false

@@ -358,13 +358,13 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		It("Should not accept bulk-only components with non-BulkUpdate mode", func() {
 			testCases := []struct {
 				componentType    consts.ComponentType
-				updateMode       *ytv1.ComponentUpdateMode
+				updateStrategy   *ytv1.ComponentUpdateStrategy
 				setupComponent   func(*ytv1.Ytsaurus)
 				expectedErrorMsg string
 			}{
 				{
 					componentType: consts.QueryTrackerType,
-					updateMode: &ytv1.ComponentUpdateMode{
+					updateStrategy: &ytv1.ComponentUpdateStrategy{
 						RollingUpdate: &ytv1.ComponentRollingUpdateMode{},
 					},
 					setupComponent: func(yts *ytv1.Ytsaurus) {
@@ -377,7 +377,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 				},
 				{
 					componentType: consts.QueueAgentType,
-					updateMode: &ytv1.ComponentUpdateMode{
+					updateStrategy: &ytv1.ComponentUpdateStrategy{
 						OnDelete: &ytv1.ComponentOnDeleteUpdateMode{},
 					},
 					setupComponent: func(yts *ytv1.Ytsaurus) {
@@ -390,7 +390,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 				},
 				{
 					componentType: consts.YqlAgentType,
-					updateMode: &ytv1.ComponentUpdateMode{
+					updateStrategy: &ytv1.ComponentUpdateStrategy{
 						RollingUpdate: &ytv1.ComponentRollingUpdateMode{},
 					},
 					setupComponent: func(yts *ytv1.Ytsaurus) {
@@ -405,14 +405,14 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 				tc.setupComponent(ytsaurus)
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 					{
-						Component:  ytv1.Component{Type: tc.componentType},
-						UpdateMode: tc.updateMode,
+						Component: ytv1.Component{Type: tc.componentType},
+						Strategy:  tc.updateStrategy,
 					},
 				}
 
 				Expect(k8sClient.Create(ctx, ytsaurus)).Should(
 					MatchError(ContainSubstring(tc.expectedErrorMsg)),
-					"Failed for component: %s with mode: %v", tc.componentType, tc.updateMode,
+					"Failed for component: %s with strategy: %v", tc.componentType, tc.updateStrategy,
 				)
 			}
 		})
@@ -447,8 +447,8 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 				tc.setupComponent(ytsaurus)
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 					{
-						Component:  ytv1.Component{Type: tc.componentType},
-						UpdateMode: &ytv1.ComponentUpdateMode{}, // BulkUpdate
+						Component: ytv1.Component{Type: tc.componentType},
+						Strategy:  &ytv1.ComponentUpdateStrategy{}, // BulkUpdate
 					},
 				}
 

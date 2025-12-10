@@ -1865,8 +1865,10 @@ exec "$@"`
 			ytBuilder.WithQueryTracker()
 			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 				{
-					Component:  ytv1.Component{Type: consts.QueryTrackerType},
-					UpdateMode: &ytv1.ComponentUpdateMode{}, // BulkUpdate
+					Component: ytv1.Component{Type: consts.QueryTrackerType},
+					Strategy: &ytv1.ComponentUpdateStrategy{
+						RunPreChecks: ptr.To(true),
+					},
 				},
 			}
 			ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{

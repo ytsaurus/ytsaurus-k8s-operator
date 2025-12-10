@@ -106,8 +106,8 @@ func (c *Ytsaurus) shouldEnablePreChecksFromSpec(component ytv1.Component) bool 
 	for _, selector := range c.ytsaurus.Spec.UpdatePlan {
 		if selector.Component.Type == component.Type &&
 			(selector.Component.Name == "" || selector.Component.Name == component.Name) {
-			if selector.UpdateMode != nil {
-				return ptr.Deref(selector.UpdateMode.RunPreChecks, true)
+			if selector.Strategy != nil {
+				return ptr.Deref(selector.Strategy.RunPreChecks, true)
 			}
 		}
 	}

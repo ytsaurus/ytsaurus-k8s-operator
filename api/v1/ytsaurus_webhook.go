@@ -599,48 +599,48 @@ var bulkOnlyComponentTypes = map[consts.ComponentType]struct{}{
 func validateUpdateModeForSelector(selector ComponentUpdateSelector, path *field.Path) field.ErrorList {
 	var errs field.ErrorList
 
-	modeType := selector.GetUpdateModeType()
+	modeType := selector.GetUpdateStrategyType()
 
-	// updateMode currently supported only for concrete components
+	// updateStrategy currently supported only for concrete components
 	if selector.Class != consts.ComponentClassUnspecified && modeType != "" {
-		errs = append(errs, field.Invalid(path.Child("updateMode"), modeType, "updateMode is supported only for specific components, not for component classes"))
+		errs = append(errs, field.Invalid(path.Child("updateStrategy"), modeType, "updateStrategy is supported only for specific components, not for component classes"))
 		return errs
 	}
 
 	if selector.Class == consts.ComponentClassUnspecified {
-		if selector.Component.Type == "" && selector.UpdateMode != nil {
-			errs = append(errs, field.Invalid(path, selector.UpdateMode, "component.type must be set to use updateMode"))
+		if selector.Component.Type == "" && selector.Strategy != nil {
+			errs = append(errs, field.Invalid(path, selector.Strategy, "component.type must be set to use updateStrategy"))
 			return errs
 		}
 		// Only validate bulk-only restriction
 		if _, bulkOnly := bulkOnlyComponentTypes[selector.Component.Type]; bulkOnly && modeType != "" && modeType != ComponentUpdateModeTypeBulkUpdate {
-			errs = append(errs, field.Invalid(path.Child("updateMode"), modeType, fmt.Sprintf("%s supports only BulkUpdate mode", selector.Component.Type)))
+			errs = append(errs, field.Invalid(path.Child("updateStrategy"), modeType, fmt.Sprintf("%s supports only BulkUpdate mode", selector.Component.Type)))
 			return errs
 		}
 	}
 
 	switch modeType {
 	case ComponentUpdateModeTypeBulkUpdate:
-		if selector.UpdateMode != nil {
-			if selector.UpdateMode.RollingUpdate != nil {
-				errs = append(errs, field.Invalid(path.Child("rollingUpdate"), selector.UpdateMode.RollingUpdate, "rolling configuration is not valid for BulkUpdate"))
+		if selector.Strategy != nil {
+			if selector.Strategy.RollingUpdate != nil {
+				errs = append(errs, field.Invalid(path.Child("rollingUpdate"), selector.Strategy.RollingUpdate, "rolling configuration is not valid for BulkUpdate"))
 			}
 		}
 	case ComponentUpdateModeTypeRollingUpdate:
 		if selector.Component.Type == "" {
 			errs = append(errs, field.Invalid(path.Child("type"), modeType, "rolling update requires a concrete component selector"))
 		}
-		if selector.UpdateMode == nil || selector.UpdateMode.RollingUpdate == nil {
+		if selector.Strategy == nil || selector.Strategy.RollingUpdate == nil {
 			errs = append(errs, field.Required(path.Child("rollingUpdate"), "rolling configuration (batchSize) must be provided when type=RollingUpdate"))
-		} else if selector.UpdateMode.RollingUpdate.BatchSize != nil && *selector.UpdateMode.RollingUpdate.BatchSize <= 0 {
-			errs = append(errs, field.Invalid(path.Child("rollingUpdate").Child("batchSize"), *selector.UpdateMode.RollingUpdate.BatchSize, "batchSize must be positive"))
+		} else if selector.Strategy.RollingUpdate.BatchSize != nil && *selector.Strategy.RollingUpdate.BatchSize <= 0 {
+			errs = append(errs, field.Invalid(path.Child("rollingUpdate").Child("batchSize"), *selector.Strategy.RollingUpdate.BatchSize, "batchSize must be positive"))
 		}
 	case ComponentUpdateModeTypeOnDelete:
 		if selector.Component.Type == "" {
 			errs = append(errs, field.Invalid(path.Child("type"), modeType, "onDelete update requires a concrete component selector"))
 		}
-		if selector.UpdateMode != nil && selector.UpdateMode.RollingUpdate != nil {
-			errs = append(errs, field.Invalid(path.Child("rollingUpdate"), selector.UpdateMode.RollingUpdate, "rolling configuration is not valid for OnDelete"))
+		if selector.Strategy != nil && selector.Strategy.OnDelete != nil {
+			errs = append(errs, field.Invalid(path.Child("onDelete"), selector.Strategy.OnDelete, "rolling configuration is not valid for OnDelete"))
 		}
 	}
 
