@@ -32881,13 +32881,6 @@ spec:
                       type: object
                     updateMode:
                       properties:
-                        onDelete:
-                          properties:
-                            waitTime:
-                              description: WaitTime defines how long controller should
-                                wait for manual intervention before...
-                              type: string
-                          type: object
                         rolling:
                           properties:
                             batchSize:

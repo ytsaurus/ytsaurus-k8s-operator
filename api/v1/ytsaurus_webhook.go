@@ -631,9 +631,6 @@ func validateUpdateModeForSelector(selector ComponentUpdateSelector, path *field
 			if selector.UpdateMode.Rolling != nil {
 				errs = append(errs, field.Invalid(path.Child("rolling"), selector.UpdateMode.Rolling, "rolling configuration is not valid for BulkUpdate"))
 			}
-			if selector.UpdateMode.OnDelete != nil {
-				errs = append(errs, field.Invalid(path.Child("onDelete"), selector.UpdateMode.OnDelete, "onDelete configuration is not valid for BulkUpdate"))
-			}
 		}
 	case ComponentUpdateModeTypeRollingUpdate:
 		if selector.Component.Type == "" {
@@ -644,15 +641,9 @@ func validateUpdateModeForSelector(selector ComponentUpdateSelector, path *field
 		} else if selector.UpdateMode.Rolling.BatchSize != nil && *selector.UpdateMode.Rolling.BatchSize <= 0 {
 			errs = append(errs, field.Invalid(path.Child("rolling").Child("batchSize"), *selector.UpdateMode.Rolling.BatchSize, "batchSize must be positive"))
 		}
-		if selector.UpdateMode != nil && selector.UpdateMode.OnDelete != nil {
-			errs = append(errs, field.Invalid(path.Child("onDelete"), selector.UpdateMode.OnDelete, "onDelete configuration is not valid for RollingUpdate"))
-		}
 	case ComponentUpdateModeTypeOnDelete:
 		if selector.Component.Type == "" {
 			errs = append(errs, field.Invalid(path.Child("type"), modeType, "onDelete update requires a concrete component selector"))
-		}
-		if selector.UpdateMode == nil || selector.UpdateMode.OnDelete == nil {
-			errs = append(errs, field.Required(path.Child("onDelete"), "onDelete configuration (waitTime) must be provided when type=OnDelete"))
 		}
 		if selector.UpdateMode != nil && selector.UpdateMode.Rolling != nil {
 			errs = append(errs, field.Invalid(path.Child("rolling"), selector.UpdateMode.Rolling, "rolling configuration is not valid for OnDelete"))

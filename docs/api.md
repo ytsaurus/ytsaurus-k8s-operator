@@ -458,22 +458,6 @@ _Appears in:_
 | `type` _[ComponentType](#componenttype)_ |  |  |  |
 
 
-#### ComponentOnDeleteUpdateMode
-
-
-
-
-
-
-
-_Appears in:_
-- [ComponentUpdateMode](#componentupdatemode)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `waitTime` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#duration-v1-meta)_ | WaitTime defines how long controller should wait for manual intervention before declaring failure. |  |  |
-
-
 #### ComponentRollingUpdateMode
 
 
@@ -506,7 +490,6 @@ _Appears in:_
 | `type` _[ComponentUpdateModeType](#componentupdatemodetype)_ |  |  | Enum: [BulkUpdate RollingUpdate OnDelete] <br /> |
 | `runPreChecks` _boolean_ |  | true |  |
 | `rolling` _[ComponentRollingUpdateMode](#componentrollingupdatemode)_ |  |  |  |
-| `onDelete` _[ComponentOnDeleteUpdateMode](#componentondeleteupdatemode)_ |  |  |  |
 
 
 #### ComponentUpdateModeType

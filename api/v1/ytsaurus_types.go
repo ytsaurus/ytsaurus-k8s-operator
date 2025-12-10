@@ -1036,12 +1036,6 @@ type ComponentRollingUpdateMode struct {
 	BatchSize *int32 `json:"batchSize,omitempty"`
 }
 
-type ComponentOnDeleteUpdateMode struct {
-	// WaitTime defines how long controller should wait for manual intervention before declaring failure.
-	//+optional
-	WaitTime *metav1.Duration `json:"waitTime,omitempty"`
-}
-
 type ComponentUpdateMode struct {
 	//+kubebuilder:validation:Enum=BulkUpdate;RollingUpdate;OnDelete
 	Type ComponentUpdateModeType `json:"type,omitempty"`
@@ -1049,8 +1043,6 @@ type ComponentUpdateMode struct {
 	RunPreChecks *bool `json:"runPreChecks,omitempty"`
 	//+optional
 	Rolling *ComponentRollingUpdateMode `json:"rolling,omitempty"`
-	//+optional
-	OnDelete *ComponentOnDeleteUpdateMode `json:"onDelete,omitempty"`
 }
 
 type ComponentUpdateSelector struct {
