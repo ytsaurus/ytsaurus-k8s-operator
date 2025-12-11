@@ -102,11 +102,9 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 
 	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(qa.ytsaurus, qa) {
-			if qa.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-				if !dry {
-					err = removePods(ctx, qa.server, &qa.localComponent)
-				}
-				return ComponentStatusUpdateStep("pods removal"), err
+			// Handle bulk update with pre-checks
+			if status, err := handleBulkUpdatingClusterState(ctx, qa.ytsaurus, qa, &qa.localComponent, qa.server, dry); status != nil {
+				return *status, err
 			}
 
 			if status, err := qa.updateQAState(ctx, dry); status != nil {
@@ -420,4 +418,20 @@ func (qa *QueueAgent) Status(ctx context.Context) (ComponentStatus, error) {
 func (qa *QueueAgent) Sync(ctx context.Context) error {
 	_, err := qa.doSync(ctx, false)
 	return err
+}
+
+func (qa *QueueAgent) UpdatePreCheck() ComponentStatus {
+	// Get YT client from the ytsaurusClient component
+	if qa.ytsaurusClient == nil {
+		return ComponentStatusBlocked("YtsaurusClient component is not available")
+	}
+	ytClient := qa.ytsaurusClient.GetYtClient()
+
+	// Check that the number of instances in YT matches the expected instanceCount
+	expectedCount := int(qa.ytsaurus.GetResource().Spec.QueueAgents.InstanceCount)
+	if err := IsInstanceCountEqualYTSpec(context.Background(), ytClient, consts.QueueAgentType, expectedCount); err != nil {
+		return ComponentStatusBlocked(err.Error())
+	}
+
+	return ComponentStatusReady()
 }

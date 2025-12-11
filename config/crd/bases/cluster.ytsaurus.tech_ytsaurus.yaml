@@ -32874,6 +32874,21 @@ spec:
                         type:
                           type: string
                       type: object
+                    strategy:
+                      properties:
+                        onDelete:
+                          type: object
+                        rollingUpdate:
+                          properties:
+                            batchSize:
+                              description: BatchSize controls how many replicas can
+                                be rolled at once.
+                              format: int32
+                              type: integer
+                          type: object
+                        runPreChecks:
+                          type: boolean
+                      type: object
                   type: object
                 type: array
               updateSelector:

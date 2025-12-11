@@ -38,12 +38,10 @@ func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1
 	return false
 }
 
-// Considers splits all the components in two groups: ones that can be updated and ones which update isblocked.
-func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []ytv1.Component, allComponents []ytv1.Component) (canUpdate []ytv1.Component, cannotUpdate []ytv1.Component) {
-	configuredSelectors := getEffectiveSelectors(spec)
-
+// Considers splits all the components in two groups: ones that can be updated and ones which update is blocked.
+func chooseUpdatingComponents(selectors []ytv1.ComponentUpdateSelector, needUpdate []ytv1.Component, allComponents []ytv1.Component) (canUpdate []ytv1.Component, cannotUpdate []ytv1.Component) {
 	for _, component := range needUpdate {
-		upd := canUpdateComponent(configuredSelectors, component)
+		upd := canUpdateComponent(selectors, component)
 		if upd {
 			canUpdate = append(canUpdate, component)
 		} else {
@@ -54,7 +52,7 @@ func chooseUpdatingComponents(spec ytv1.YtsaurusSpec, needUpdate []ytv1.Componen
 	if len(canUpdate) == 0 {
 		return nil, cannotUpdate
 	}
-	if hasEverythingSelector(configuredSelectors) && needFullUpdate(needUpdate) {
+	if hasEverythingSelector(selectors) && needFullUpdate(needUpdate) {
 		// Here we update not only components that are not up-to-date, but all cluster.
 		return allComponents, nil
 	}
@@ -176,9 +174,11 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		}
 
 	case ytv1.ClusterStateRunning:
+		spec := ytsaurus.GetResource().Spec
 		needUpdate := componentManager.status.needUpdate
+		selectors := getEffectiveSelectors(spec)
 		canUpdate, cannotUpdate := chooseUpdatingComponents(
-			ytsaurus.GetResource().Spec,
+			selectors,
 			convertToComponent(needUpdate),
 			convertToComponent(componentManager.allUpdatableComponents()),
 		)

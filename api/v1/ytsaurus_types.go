@@ -1023,13 +1023,55 @@ const (
 	UpdateSelectorEverything UpdateSelector = "Everything"
 )
 
+type ComponentUpdateModeType string
+
+const (
+	ComponentUpdateModeTypeBulkUpdate    ComponentUpdateModeType = "BulkUpdate"
+	ComponentUpdateModeTypeRollingUpdate ComponentUpdateModeType = "RollingUpdate"
+	ComponentUpdateModeTypeOnDelete      ComponentUpdateModeType = "OnDelete"
+)
+
+type ComponentRollingUpdateMode struct {
+	// BatchSize controls how many replicas can be rolled at once.
+	BatchSize *int32 `json:"batchSize,omitempty"`
+}
+
+type ComponentOnDeleteUpdateMode struct {
+	// empty struct for now
+}
+
+type ComponentUpdateStrategy struct {
+	RunPreChecks  *bool                        `json:"runPreChecks,omitempty"`
+	RollingUpdate *ComponentRollingUpdateMode  `json:"rollingUpdate,omitempty"`
+	OnDelete      *ComponentOnDeleteUpdateMode `json:"onDelete,omitempty"`
+}
+
 type ComponentUpdateSelector struct {
 	//+optional
 	//+kubebuilder:validation:Enum={"","Nothing","Stateless","Everything"}
 	Class consts.ComponentClass `json:"class,omitempty"`
 	//+optional
 	Component Component `json:"component,omitempty"`
-	// TODO(#325): Add rolling options
+	//+optional
+	Strategy *ComponentUpdateStrategy `json:"strategy,omitempty"`
+}
+
+func (m *ComponentUpdateStrategy) Type() ComponentUpdateModeType {
+	switch {
+	case m.RollingUpdate != nil:
+		return ComponentUpdateModeTypeRollingUpdate
+	case m.OnDelete != nil:
+		return ComponentUpdateModeTypeOnDelete
+	default:
+		return ComponentUpdateModeTypeBulkUpdate
+	}
+}
+
+func (selector *ComponentUpdateSelector) GetUpdateStrategyType() ComponentUpdateModeType {
+	if selector == nil || selector.Strategy == nil {
+		return ""
+	}
+	return selector.Strategy.Type()
 }
 
 type UpdateFlow string

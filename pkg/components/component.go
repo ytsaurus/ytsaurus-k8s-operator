@@ -84,6 +84,7 @@ type Component interface {
 	GetLabeller() *labeller.Labeller
 
 	GetCypressPatch() ypatch.PatchSet
+	UpdatePreCheck() ComponentStatus
 }
 
 // Following structs are used as a base for implementing YTsaurus components objects.
@@ -115,6 +116,10 @@ func (c *baseComponent) GetLabeller() *labeller.Labeller {
 
 func (c *baseComponent) GetCypressPatch() ypatch.PatchSet {
 	return nil
+}
+
+func (c *baseComponent) UpdatePreCheck() ComponentStatus {
+	return ComponentStatusReady()
 }
 
 // localComponent is a base structs for components which have access to ytsaurus resource,

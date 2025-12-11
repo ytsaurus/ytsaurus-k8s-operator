@@ -1859,15 +1859,18 @@ exec "$@"`
 
 	}) // integration
 
-	Context("Query tracker update tests", Label("qt-update"), func() {
+	Context("Rolling update for query tracker update tests", Label("rolling-update-bulk-mode"), func() {
 		BeforeEach(func() {
 			ytBuilder.WithBaseComponents()
 			ytBuilder.WithQueryTracker()
-			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
-				Component: ytv1.Component{
-					Type: consts.QueryTrackerType,
+			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+				{
+					Component: ytv1.Component{Type: consts.QueryTrackerType},
+					Strategy: &ytv1.ComponentUpdateStrategy{
+						RunPreChecks: ptr.To(true),
+					},
 				},
-			}}
+			}
 			ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
 				InstanceSpec: ytv1.InstanceSpec{
 					Image:         ptr.To(testutil.QueryTrackerImagePrevious),
@@ -1876,7 +1879,7 @@ exec "$@"`
 			}
 		})
 
-		It("Should update query tracker and have Running state", func(ctx context.Context) {
+		It("Should update query tracker in bulkUpdate mode and have Running state", func(ctx context.Context) {
 			podsBefore := getComponentPods(ctx, namespace)
 
 			By("Trigger QT update")

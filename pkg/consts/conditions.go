@@ -4,6 +4,16 @@ const ConditionOperatorVersion = "OperatorVersion"
 const ConditionHasPossibility = "HasPossibility"
 const ConditionNoPossibility = "NoPossibility"
 const ConditionSafeModeEnabled = "SafeModeEnabled"
+
+// Component update phase condition suffixes
+const (
+	ConditionBulkUpdateModeStarted = "BulkUpdateModeStarted"
+	ConditionPreChecksRunning      = "PreChecksRunning"
+	ConditionPreChecksCompleted    = "PreChecksCompleted"
+	ConditionScalingDown           = "ScalingDown"
+	ConditionScalingUp             = "ScalingUp"
+	ConditionAwaitingManualAction  = "AwaitingManualAction"
+)
 const ConditionTabletCellsSaved = "TabletCellsSaved"
 const ConditionTabletCellsRemovingStarted = "TabletCellsRemovingStarted"
 const ConditionTabletCellsRemoved = "TabletCellsRemoved"

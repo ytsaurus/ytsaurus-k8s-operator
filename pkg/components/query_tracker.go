@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -99,11 +99,9 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(qt.ytsaurus, qt) {
-			if qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(qt.ytsaurus, qt) {
-				if !dry {
-					err = removePods(ctx, qt.server, &qt.localComponent)
-				}
-				return ComponentStatusUpdateStep("pods removal"), err
+			// Handle bulk update with pre-checks
+			if status, err := handleBulkUpdatingClusterState(ctx, qt.ytsaurus, qt, &qt.localComponent, qt.server, dry); status != nil {
+				return *status, err
 			}
 
 			if status, err := qt.updateQTState(ctx, dry); status != nil {
@@ -457,4 +455,20 @@ func (qt *QueryTracker) setConditionQTStateUpdated(ctx context.Context) {
 		Reason:  "QTStateUpdated",
 		Message: "Query tracker state updated",
 	})
+}
+
+func (qt *QueryTracker) UpdatePreCheck() ComponentStatus {
+	// Get YT client from the ytsaurusClient component
+	if qt.ytsaurusClient == nil {
+		return ComponentStatusBlocked("YtsaurusClient component is not available")
+	}
+	ytClient := qt.ytsaurusClient.GetYtClient()
+
+	// Check that the number of instances in YT matches the expected instanceCount
+	expectedCount := int(qt.ytsaurus.GetResource().Spec.QueryTrackers.InstanceCount)
+	if err := IsInstanceCountEqualYTSpec(context.Background(), ytClient, consts.QueryTrackerType, expectedCount); err != nil {
+		return ComponentStatusBlocked(err.Error())
+	}
+
+	return ComponentStatusReady()
 }

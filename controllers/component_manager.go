@@ -137,7 +137,7 @@ func NewComponentManager(
 
 	var yqla components.Component
 	if resource.Spec.YQLAgents != nil {
-		yqla = components.NewYQLAgent(cfgen, ytsaurus, m)
+		yqla = components.NewYQLAgent(cfgen, ytsaurus, yc, m)
 		allComponents = append(allComponents, yqla)
 	}
 

@@ -22,12 +22,13 @@ type YqlAgent struct {
 	localServerComponent
 	cfgen             *ytconfig.Generator
 	master            Component
+	ytsaurusClient    internalYtsaurusClient
 	initEnvironment   *InitJob
 	updateEnvironment *InitJob
 	secret            *resources.StringSecret
 }
 
-func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *YqlAgent {
+func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc internalYtsaurusClient, master Component) *YqlAgent {
 	l := cfgen.GetComponentLabeller(consts.YqlAgentType, "")
 
 	resource := ytsaurus.GetResource()
@@ -53,6 +54,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master 
 		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		master:               master,
+		ytsaurusClient:       yc,
 		initEnvironment: NewInitJob(
 			l,
 			ytsaurus.APIProxy(),
@@ -152,11 +154,9 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(yqla.ytsaurus, yqla) {
-			if yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval && IsUpdatingComponent(yqla.ytsaurus, yqla) {
-				if !dry {
-					err = removePods(ctx, yqla.server, &yqla.localComponent)
-				}
-				return ComponentStatusUpdateStep("pods removal"), err
+			// Handle bulk update with pre-checks
+			if status, err := handleBulkUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.localComponent, yqla.server, dry); status != nil {
+				return *status, err
 			}
 
 			if status, err := yqla.updateYqla(ctx, dry); status != nil {
@@ -278,4 +278,20 @@ func (yqla *YqlAgent) Status(ctx context.Context) (ComponentStatus, error) {
 func (yqla *YqlAgent) Sync(ctx context.Context) error {
 	_, err := yqla.doSync(ctx, false)
 	return err
+}
+
+func (yqla *YqlAgent) UpdatePreCheck() ComponentStatus {
+	// Get YT client from the ytsaurusClient component
+	if yqla.ytsaurusClient == nil {
+		return ComponentStatusBlocked("YtsaurusClient component is not available")
+	}
+	ytClient := yqla.ytsaurusClient.GetYtClient()
+
+	// Check that the number of instances in YT matches the expected instanceCount
+	expectedCount := int(yqla.ytsaurus.GetResource().Spec.YQLAgents.InstanceCount)
+	if err := IsInstanceCountEqualYTSpec(context.Background(), ytClient, consts.YqlAgentType, expectedCount); err != nil {
+		return ComponentStatusBlocked(err.Error())
+	}
+
+	return ComponentStatusReady()
 }

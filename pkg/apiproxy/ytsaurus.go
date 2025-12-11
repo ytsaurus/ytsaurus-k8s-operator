@@ -83,6 +83,41 @@ func (c *Ytsaurus) SetUpdatingComponents(canUpdate []ytv1.Component) {
 	c.ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary = buildComponentsSummary(canUpdate)
 }
 
+// ShouldRunPreChecks is status-based and can flip to false after successful execution.
+func (c *Ytsaurus) ShouldRunPreChecks(componentType consts.ComponentType, componentName string) bool {
+	// is RunPreChecks enabled for this component at all?
+	if !c.shouldEnablePreChecksFromSpec(componentType, componentName) {
+		return false
+	}
+
+	// have we already completed pre-checks for this component?
+	cond := meta.FindStatusCondition(
+		c.ytsaurus.Status.UpdateStatus.Conditions,
+		fmt.Sprintf("%s%s", componentName, consts.ConditionPreChecksCompleted),
+	)
+	if cond != nil && cond.Status == metav1.ConditionTrue {
+		// interpret as "already completed"
+		return false
+	}
+	return true
+}
+
+func (c *Ytsaurus) shouldEnablePreChecksFromSpec(componentType consts.ComponentType, componentName string) bool {
+	for _, selector := range c.ytsaurus.Spec.UpdatePlan {
+		if selector.Component.Type == componentType &&
+			(selector.Component.Name == "" || selector.Component.Name == componentName) {
+			if selector.Strategy != nil {
+				return ptr.Deref(selector.Strategy.RunPreChecks, true)
+			}
+		}
+	}
+	return true
+}
+
+// func (c *Ytsaurus) GetComponentProgress(component ytv1.Component) *ytv1.ComponentUpdateProgress {
+// 	return c.getComponentProgressEntry(component)
+// }
+
 func (c *Ytsaurus) SetBlockedComponents(components []ytv1.Component) bool {
 	summary := buildComponentsSummary(components)
 	if c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary == summary {
