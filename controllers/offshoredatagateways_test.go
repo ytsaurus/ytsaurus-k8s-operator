@@ -24,7 +24,7 @@ const (
 	offshoreDataGatewaysName            = "test-offshore-data-gateways"
 	statefulSetNameOffshoreDataGateways = "odg-test-offshore-data-gateways"
 	offshoreDataGatewayConfigMapName    = "yt-offshore-data-gateway-config"
-	offshoreDataGatewayConfigMapYsonKey = "ytserver-offshore-node-proxy.yson"
+	offshoreDataGatewayConfigMapYsonKey = "ytserver-offshore-data-gateway.yson"
 )
 
 func setupOffshoreDataGatewaysReconciler() func(mgr ctrl.Manager) error {

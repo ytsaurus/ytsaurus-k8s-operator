@@ -32,8 +32,8 @@ func NewOffshoreDataGateways(
 		proxy,
 		commonSpec,
 		&spec.InstanceSpec,
-		"/usr/bin/ytserver-offshore-node-proxy",
-		"ytserver-offshore-node-proxy.yson",
+		"/usr/bin/ytserver-offshore-data-gateway",
+		"ytserver-offshore-data-gateway.yson",
 		func() ([]byte, error) {
 			return cfgen.GetOffshoreDataGatewaysConfig(spec)
 		},
