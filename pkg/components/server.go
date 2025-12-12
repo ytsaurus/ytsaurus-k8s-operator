@@ -319,14 +319,15 @@ func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 		return false
 	}
 
+	// if currentRevision == updateRevision, it means all pods have been updated to the new revision
 	if sts.Status.CurrentRevision == sts.Status.UpdateRevision {
 		logger.Info("Update complete: currentRevision matches updateRevision",
 			"component", s.labeller.GetFullComponentName(),
 			"revision", sts.Status.CurrentRevision)
-		// All pods are on the new revision and the StatefulSet controller has confirmed it
 		return true
 	}
 
+	// currentRevision != updateRevision: update in progress
 	logger.Info("Update in progress: waiting for currentRevision to match updateRevision",
 		"component", s.labeller.GetFullComponentName(),
 		"currentRevision", sts.Status.CurrentRevision,

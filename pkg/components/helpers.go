@@ -298,34 +298,34 @@ func handleOnDeleteUpdatingClusterState(
 
 		logger.Info("StatefulSet synced with OnDelete strategy and updated spec",
 			"component", cmp.GetFullName())
-	}
 
-	// Set condition that OnDelete mode has started
-	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionOnDeleteModeStarted),
-		Status:  metav1.ConditionTrue,
-		Reason:  "OnDeleteModeStarted",
-		Message: "OnDelete update mode started, waiting for manual pod update",
-	})
-
-	// Check if all pods are updated to the new revision
-	if server.arePodsUpdatedToNewRevision(ctx) {
-		logger.Info("All pods have been updated to new revision, proceeding with update",
-			"component", cmp.GetFullName())
-
-		// Clear the awaiting manual action condition
+		// Set condition that OnDelete mode has started
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionAwaitingManualAction),
-			Status:  metav1.ConditionFalse,
-			Reason:  "PodsUpdated",
-			Message: "All pods have been updated to new revision",
+			Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionOnDeleteModeStarted),
+			Status:  metav1.ConditionTrue,
+			Reason:  "OnDeleteModeStarted",
+			Message: "OnDelete update mode started, waiting for manual pod update",
 		})
 
-		// Return nil to allow the flow to continue to updateOpArchive
-		return nil, err
+		// Check if all pods are updated to the new revision
+		if server.arePodsUpdatedToNewRevision(ctx) {
+			logger.Info("All pods have been updated to new revision, proceeding with update",
+				"component", cmp.GetFullName())
+
+			// Clear the awaiting manual action condition
+			ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+				Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionAwaitingManualAction),
+				Status:  metav1.ConditionFalse,
+				Reason:  "PodsUpdated",
+				Message: "All pods have been updated to new revision",
+			})
+
+			// Return nil to allow the flow to continue to updateOpArchive
+			return nil, err
+		}
 	}
 
-	// Pods are still present, continue waiting
+	// Pods are not yet updated, continue waiting
 	// Set condition that we're awaiting manual action
 	awaitingConditionType := fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionAwaitingManualAction)
 	awaitingCondition := meta.FindStatusCondition(
