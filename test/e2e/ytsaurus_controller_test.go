@@ -1867,7 +1867,7 @@ exec "$@"`
 			ytBuilder.WithQueryTracker()
 			ytsaurus.Spec.Schedulers = &ytv1.SchedulersSpec{
 				InstanceSpec: ytv1.InstanceSpec{
-					Image:         ptr.To(testutil.YtsaurusImagePrevious),
+					Image:         ptr.To(testutil.YtsaurusImageCurrent),
 					InstanceCount: 3,
 				},
 			}
@@ -1894,13 +1894,13 @@ exec "$@"`
 			}
 		})
 
-		It("Should update query-tracker in bulkUpdate mode and have Running state", func(ctx context.Context) {
+		It("Should update query tracker in bulkUpdate mode and have Running state", func(ctx context.Context) {
 
 			UpdateObject(ctx, ytsaurus)
 
 			podsBefore := getComponentPods(ctx, namespace)
 
-			By("Trigger qt update")
+			By("Trigger QT update")
 			ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.QueryTrackerImageFuture)
 
 			UpdateObject(ctx, ytsaurus)

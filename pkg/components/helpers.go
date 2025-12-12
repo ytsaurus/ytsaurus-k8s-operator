@@ -284,12 +284,16 @@ func handleOnDeleteUpdatingClusterState(
 		logger.Info("Setting StatefulSet update strategy to OnDelete",
 			"component", cmp.GetFullName())
 
-		// CRITICAL: Sync the StatefulSet to apply both the OnDelete strategy AND the updated spec
-		// This updates the StatefulSet template (image, config, etc.) so that when pods are
-		// manually deleted, they will be recreated with the new spec
+		// Sync the StatefulSet to apply both the OnDelete strategy AND the updated spec
 		if err := server.Sync(ctx); err != nil {
 			logger.Error(err, "Failed to sync StatefulSet in OnDelete mode", "component", cmp.GetFullName())
 			return ptr.To(ComponentStatusBlocked("Failed to sync StatefulSet")), err
+		}
+
+		// Fetch the StatefulSet to get the updated status from Kubernetes.
+		if err := server.Fetch(ctx); err != nil {
+			logger.Error(err, "Failed to fetch StatefulSet after sync", "component", cmp.GetFullName())
+			return ptr.To(ComponentStatusBlocked("Failed to fetch StatefulSet")), err
 		}
 
 		logger.Info("StatefulSet synced with OnDelete strategy and updated spec",

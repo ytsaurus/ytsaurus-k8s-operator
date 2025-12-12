@@ -305,6 +305,12 @@ func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 		return false
 	}
 
+	// Fetch the latest StatefulSet status from Kubernetes to ensure we have up-to-date revision info
+	if err := s.statefulSet.Fetch(ctx); err != nil {
+		logger.Error(err, "Failed to fetch StatefulSet status", "component", s.labeller.GetFullComponentName())
+		return false
+	}
+
 	sts := s.statefulSet.OldObject()
 
 	// Check if StatefulSet has update revision
