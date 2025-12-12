@@ -52,7 +52,7 @@ const (
 	upgradeTimeout   = time.Minute * 10
 	imagePullTimeout = time.Minute * 10
 
-	chytBootstrapTimeout = time.Minute * 2
+	chytBootstrapTimeout = time.Minute * 5
 
 	operationPollInterval = time.Millisecond * 250
 	operationTimeout      = time.Second * 120
@@ -608,6 +608,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		By("Checking CHYT via query tracker")
 		Expect(makeQuery(ctx, ytClient, yt.QueryEngineCHYT, "SELECT 1")).To(HaveLen(1))
+
+		By("Creating table")
+		Expect(makeQuery(ctx, ytClient, yt.QueryEngineCHYT,
+			"CREATE TABLE `//tmp/chqt_test` ENGINE = YtTable() AS SELECT 1",
+		)).To(BeNil())
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
@@ -617,6 +622,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		By("Checking YQL via query tracker")
 		Expect(makeQuery(ctx, ytClient, yt.QueryEngineYQL, "SELECT 1")).To(HaveLen(1))
+
+		// FIXME(khlebnikov): CA Root Bundle handing is broken inside YQL DQ: https://github.com/ydb-platform/ydb/pull/30703
+		if !ytBuilder.WithHTTPSProxy {
+			By("Creating table")
+			Expect(makeQuery(ctx, ytClient, yt.QueryEngineYQL,
+				"INSERT INTO `//tmp/yql_test` SELECT 1",
+			)).To(BeNil())
+		}
 	})
 
 	JustAfterEach(func(ctx context.Context) {
@@ -1704,7 +1717,7 @@ exec "$@"`
 				Expect(queryClickHouse(
 					httpClient,
 					ytProxyAddress,
-					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one",
+					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT 1",
 				)).To(Equal(""))
 			})
 
@@ -1800,7 +1813,7 @@ exec "$@"`
 				Expect(queryClickHouse(
 					httpClient,
 					ytProxyAddress,
-					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one;",
+					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT 1",
 				)).To(Equal(""))
 
 				By("Reissuing RPC TLS certificates", func() {
@@ -1848,7 +1861,7 @@ exec "$@"`
 					httpClient,
 					ytProxyAddress,
 					"SELECT * FROM `//tmp/chyt_test`;",
-				)).To(Equal("0\n"))
+				)).To(Equal("1\n"))
 			})
 		},
 			Entry("YTsaurus 24.2", Label("24.2"), testutil.YtsaurusImages24_2),
