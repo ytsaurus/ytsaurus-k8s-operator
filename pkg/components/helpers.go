@@ -279,18 +279,10 @@ func handleOnDeleteUpdatingClusterState(
 
 	// Ensure the StatefulSet is in OnDelete mode and sync the updated spec
 	if !dry {
-		sts := server.buildStatefulSet()
-		needsStrategyChange := sts.Spec.UpdateStrategy.Type != appsv1.OnDeleteStatefulSetStrategyType
-
-		if needsStrategyChange {
-			logger.Info("Setting StatefulSet update strategy to OnDelete",
-				"component", cmp.GetFullName(),
-				"currentStrategy", sts.Spec.UpdateStrategy.Type)
-
-			sts.Spec.UpdateStrategy = appsv1.StatefulSetUpdateStrategy{
-				Type: appsv1.OnDeleteStatefulSetStrategyType,
-			}
-		}
+		// Set the update strategy to OnDelete
+		server.setUpdateStrategy(appsv1.OnDeleteStatefulSetStrategyType)
+		logger.Info("Setting StatefulSet update strategy to OnDelete",
+			"component", cmp.GetFullName())
 
 		// CRITICAL: Sync the StatefulSet to apply both the OnDelete strategy AND the updated spec
 		// This updates the StatefulSet template (image, config, etc.) so that when pods are
@@ -300,13 +292,8 @@ func handleOnDeleteUpdatingClusterState(
 			return ptr.To(ComponentStatusBlocked("Failed to sync StatefulSet")), err
 		}
 
-		if needsStrategyChange {
-			logger.Info("StatefulSet synced with OnDelete strategy and updated spec",
-				"component", cmp.GetFullName())
-		} else {
-			logger.Info("StatefulSet spec updated in OnDelete mode",
-				"component", cmp.GetFullName())
-		}
+		logger.Info("StatefulSet synced with OnDelete strategy and updated spec",
+			"component", cmp.GetFullName())
 	}
 
 	// Set condition that OnDelete mode has started

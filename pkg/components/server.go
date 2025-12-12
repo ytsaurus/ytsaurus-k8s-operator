@@ -35,6 +35,7 @@ type server interface {
 	needSync() bool
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
+	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType)
 	addCARootBundle(c *corev1.Container)
 	addTlsSecretMount(c *corev1.Container)
 	addMonitoringPort(port corev1.ServicePort)
@@ -61,6 +62,9 @@ type serverImpl struct {
 	configs           *ConfigMapBuilder
 
 	builtStatefulSet *appsv1.StatefulSet
+
+	// updateStrategy stores the desired StatefulSet update strategy (e.g., OnDelete, RollingUpdate)
+	updateStrategy *appsv1.StatefulSetUpdateStrategyType
 
 	componentContainerPorts []corev1.ContainerPort
 
@@ -353,6 +357,13 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	statefulSet.Spec.ServiceName = s.headlessService.Name()
 	statefulSet.Spec.VolumeClaimTemplates = createVolumeClaims(s.instanceSpec.VolumeClaimTemplates)
 
+	// Set update strategy if specified
+	if s.updateStrategy != nil {
+		statefulSet.Spec.UpdateStrategy = appsv1.StatefulSetUpdateStrategy{
+			Type: *s.updateStrategy,
+		}
+	}
+
 	fileNames := s.configs.GetFileNames()
 	if len(fileNames) != 1 {
 		log.Panicf("expected exactly one config filename, found %v", len(fileNames))
@@ -472,6 +483,13 @@ func (s *serverImpl) addTlsSecretMount(c *corev1.Container) {
 	s.caBundle.AddVolumeMount(c)
 	s.busServerSecret.AddVolumeMount(c)
 	s.busClientSecret.AddVolumeMount(c)
+}
+
+// setUpdateStrategy sets the desired StatefulSet update strategy
+func (s *serverImpl) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType) {
+	s.updateStrategy = &strategy
+	// Clear the built StatefulSet so it will be rebuilt with the new strategy
+	s.builtStatefulSet = nil
 }
 
 func (s *serverImpl) addMonitoringPort(port corev1.ServicePort) {
