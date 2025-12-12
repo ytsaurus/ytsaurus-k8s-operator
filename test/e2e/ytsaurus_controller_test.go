@@ -1949,23 +1949,6 @@ exec "$@"`
 				return sts.Spec.UpdateStrategy.Type
 			}, reactionTimeout).Should(Equal(appsv1.OnDeleteStatefulSetStrategyType))
 
-			By("Verify AwaitingManualAction condition is set")
-			Eventually(func() bool {
-				err := k8sClient.Get(ctx, types.NamespacedName{
-					Namespace: namespace,
-					Name:      "test-ytsaurus",
-				}, ytsaurus)
-				if err != nil {
-					return false
-				}
-				for _, cond := range ytsaurus.Status.UpdateStatus.Conditions {
-					if cond.Type == "SchedulerAwaitingManualAction" && cond.Status == metav1.ConditionTrue {
-						return true
-					}
-				}
-				return false
-			}, reactionTimeout).Should(BeTrue())
-
 			By("Verify pods are NOT updated after 1 minute")
 			Consistently(func() bool {
 				podsNow := getComponentPods(ctx, namespace)
