@@ -464,6 +464,11 @@ func makeQuery(ctx context.Context, ytClient yt.Client, engine yt.QueryEngine, q
 	result, err := ytClient.GetQuery(ctx, id, nil)
 	Expect(err).To(Succeed())
 
+	if ptr.Deref(result.ResultCount, 0) == 0 {
+		log.Info("Query result", "id", id, "result_count", 0)
+		return nil
+	}
+
 	Expect(result.State).To(HaveValue(Equal(yt.QueryStateCompleted)))
 	Expect(result.ResultCount).To(HaveValue(Equal(int64(1))))
 

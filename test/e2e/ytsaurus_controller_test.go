@@ -607,6 +607,16 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		By("Checking CHYT via query tracker")
 		Expect(makeQuery(ctx, ytClient, yt.QueryEngineCHYT, "SELECT 1")).To(HaveLen(1))
+
+		By("Creating table")
+		Expect(makeQuery(ctx, ytClient, yt.QueryEngineCHYT,
+			"CREATE TABLE `//tmp/chqt_test` ENGINE = YtTable() AS SELECT 1",
+		)).To(BeNil())
+
+		By("Reading table")
+		Expect(makeQuery(ctx, ytClient, yt.QueryEngineCHYT,
+			"SELECT * FROM `//tmp/chqt_test`",
+		)).To(HaveLen(1))
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
@@ -616,6 +626,29 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		By("Checking YQL via query tracker")
 		Expect(makeQuery(ctx, ytClient, yt.QueryEngineYQL, "SELECT 1")).To(HaveLen(1))
+
+		By("Creating table")
+		Expect(makeQuery(ctx, ytClient, yt.QueryEngineYQL,
+			"INSERT INTO `//tmp/yql_test` SELECT 1",
+		)).To(BeNil())
+
+		By("Reading table without dq")
+		Expect(makeQuery(ctx, ytClient, yt.QueryEngineYQL,
+			"pragma yt.QueryCacheMode = 'disable'; pragma DqEngine = 'disable'; SELECT * FROM `//tmp/yql_test`",
+		)).To(HaveLen(1))
+
+		if !ytBuilder.WithHTTPSProxy {
+			// FIXME(khlebnikov): CA Root Bundle handing is broken inside YQL DQ.
+			By("Reading table with dq")
+			Expect(makeQuery(ctx, ytClient, yt.QueryEngineYQL,
+				"pragma yt.QueryCacheMode = 'disable'; pragma DqEngine = 'force'; SELECT * FROM `//tmp/yql_test`",
+			)).To(HaveLen(1))
+		}
+
+		By("Reading table by map")
+		Expect(makeQuery(ctx, ytClient, yt.QueryEngineYQL,
+			"pragma yt.QueryCacheMode = 'disable'; pragma DqEngine = 'disable'; SELECT 1 FROM `//tmp/yql_test`",
+		)).To(HaveLen(1))
 	})
 
 	JustAfterEach(func(ctx context.Context) {
@@ -1703,8 +1736,15 @@ exec "$@"`
 				Expect(queryClickHouse(
 					httpClient,
 					ytProxyAddress,
-					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one",
+					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT 1",
 				)).To(Equal(""))
+
+				By("Reading table")
+				Expect(queryClickHouse(
+					httpClient,
+					ytProxyAddress,
+					"SELECT * FROM `//tmp/chyt_test`",
+				)).To(Equal("1\n"))
 			})
 
 		}) // integration chyt
@@ -1799,7 +1839,7 @@ exec "$@"`
 				Expect(queryClickHouse(
 					httpClient,
 					ytProxyAddress,
-					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT * FROM system.one;",
+					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT 1",
 				)).To(Equal(""))
 
 				By("Reissuing RPC TLS certificates", func() {
@@ -1847,7 +1887,7 @@ exec "$@"`
 					httpClient,
 					ytProxyAddress,
 					"SELECT * FROM `//tmp/chyt_test`;",
-				)).To(Equal("0\n"))
+				)).To(Equal("1\n"))
 			})
 		},
 			Entry("YTsaurus 24.2", Label("24.2"), testutil.YtsaurusImages24_2),
