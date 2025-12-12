@@ -473,5 +473,33 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
 			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
 		})
+
+		It("Should not accept Master/Scheduler with RollingUpdate mode", func() {
+			testCases := []struct {
+				componentType    consts.ComponentType
+				expectedErrorMsg string
+			}{
+				{
+					componentType:    consts.MasterType,
+					expectedErrorMsg: "Master doesn't support RollingUpdate mode",
+				},
+				{
+					componentType:    consts.SchedulerType,
+					expectedErrorMsg: "Scheduler doesn't support RollingUpdate mode",
+				},
+			}
+
+			for _, tc := range testCases {
+				ytsaurus := newYtsaurus()
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+					{
+						Component: ytv1.Component{Type: tc.componentType},
+						Strategy:  &ytv1.ComponentUpdateStrategy{RollingUpdate: &ytv1.ComponentRollingUpdateMode{}},
+					},
+				}
+
+				Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring(tc.expectedErrorMsg)))
+			}
+		})
 	})
 })

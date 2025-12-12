@@ -8,6 +8,8 @@ const ConditionSafeModeEnabled = "SafeModeEnabled"
 // Component update phase condition suffixes
 const (
 	ConditionBulkUpdateModeStarted = "BulkUpdateModeStarted"
+	ConditionOnDeleteModeStarted   = "OnDeleteModeStarted"
+	ConditionOnDeleteModeTimeout   = "OnDeleteModeTimeout"
 	ConditionPreChecksRunning      = "PreChecksRunning"
 	ConditionPreChecksCompleted    = "PreChecksCompleted"
 	ConditionScalingDown           = "ScalingDown"
