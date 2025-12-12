@@ -12,6 +12,7 @@ type podsManager interface {
 	arePodsRemoved(ctx context.Context) bool
 	arePodsReady(ctx context.Context) bool
 	podsImageCorrespondsToSpec() bool
+	arePodsUpdatedToNewRevision(ctx context.Context) bool
 }
 
 func removePods(ctx context.Context, manager podsManager, c *localComponent) error {

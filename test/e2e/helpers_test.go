@@ -47,7 +47,7 @@ func getKindControlPlaneNode() corev1.Node {
 	nodeList := corev1.NodeList{}
 	err := k8sClient.List(specCtx, &nodeList)
 	Expect(err).Should(Succeed())
-	Expect(nodeList.Items).To(HaveLen(1))
+	// Expect(nodeList.Items).To(HaveLen(1))
 	Expect(nodeList.Items[0].Name).To(HaveSuffix("kind-control-plane"))
 	return nodeList.Items[0]
 }

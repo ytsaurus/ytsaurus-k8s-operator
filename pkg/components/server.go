@@ -7,6 +7,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
+	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -291,6 +292,37 @@ func (s *serverImpl) needUpdate() bool {
 
 func (s *serverImpl) arePodsReady(ctx context.Context) bool {
 	return s.statefulSet.ArePodsReady(ctx, int(s.instanceSpec.InstanceCount), s.instanceSpec.MinReadyInstanceCount, s.readinessByContainers)
+}
+
+func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
+	logger := ctrllog.FromContext(ctx)
+
+	if !resources.Exists(s.statefulSet) {
+		return false
+	}
+
+	sts := s.statefulSet.OldObject()
+
+	// Check if StatefulSet has update revision
+	if sts.Status.UpdateRevision == "" {
+		logger.Info("StatefulSet has no update revision yet", "component", s.labeller.GetFullComponentName())
+		return false
+	}
+
+	if sts.Status.CurrentRevision == sts.Status.UpdateRevision {
+		logger.Info("Update complete: currentRevision matches updateRevision",
+			"component", s.labeller.GetFullComponentName(),
+			"revision", sts.Status.CurrentRevision)
+		// All pods are on the new revision and the StatefulSet controller has confirmed it
+		return true
+	}
+
+	logger.Info("Update in progress: waiting for currentRevision to match updateRevision",
+		"component", s.labeller.GetFullComponentName(),
+		"currentRevision", sts.Status.CurrentRevision,
+		"updateRevision", sts.Status.UpdateRevision)
+
+	return false
 }
 
 func (s *serverImpl) buildStatefulSet() *appsv1.StatefulSet {

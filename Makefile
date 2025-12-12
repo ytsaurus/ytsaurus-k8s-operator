@@ -315,9 +315,9 @@ HELM_INSTALL_ARGS += --set controllerManager.manager.instanceScope=${OPERATOR_IN
 HELM_INSTALL_ARGS += --set controllerManager.manager.namespacedScope=${OPERATOR_NAMESPACED_SCOPE}
 HELM_INSTALL_ARGS += --set crds.enabled=${OPERATOR_CRDS_ENABLED}
 HELM_INSTALL_ARGS += --set crds.keep=${OPERATOR_CRDS_KEEP}
-HELM_INSTALL_ARGS += --set caRootBundle.kind=ConfigMap
-HELM_INSTALL_ARGS += --set caRootBundle.name=ytsaurus-dev-ca-root-bundle
-HELM_INSTALL_ARGS += --set caRootBundle.key=ca-certificates.crt
+#HELM_INSTALL_ARGS += --set caRootBundle.kind=ConfigMap
+#HELM_INSTALL_ARGS += --set caRootBundle.name=ytsaurus-dev-ca-root-bundle
+#HELM_INSTALL_ARGS += --set caRootBundle.key=ca-certificates.crt
 
 .PHONY: helm-install
 helm-install: ## Install helm chart from sources.
