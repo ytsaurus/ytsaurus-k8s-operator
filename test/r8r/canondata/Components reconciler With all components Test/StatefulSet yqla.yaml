@@ -45,10 +45,6 @@ spec:
         - echo -n $YT_TOKEN > /usr/yql_agent_token; /usr/bin/ytserver-yql-agent --config
           /config/ytserver-yql-agent.yson
         env:
-        - name: YT_FORCE_IPV4
-          value: "0"
-        - name: YT_FORCE_IPV6
-          value: "0"
         - name: K8S_POD_NAME
           valueFrom:
             fieldRef:
@@ -61,6 +57,16 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: SSL_CERT_FILE
+          value: /etc/ssl/certs/ca-certificates.crt
+        - name: SSL_CERT_DIR
+          value: /etc/ssl/certs
+        - name: REQUESTS_CA_BUNDLE
+          value: /etc/ssl/certs/ca-certificates.crt
+        - name: YT_FORCE_IPV4
+          value: "0"
+        - name: YT_FORCE_IPV6
+          value: "0"
         envFrom:
         - secretRef:
             name: yt-yql-agent-secret
