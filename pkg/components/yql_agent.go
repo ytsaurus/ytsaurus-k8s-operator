@@ -196,15 +196,19 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 			container := &ss.Spec.Template.Spec.Containers[0]
 			container.Command = []string{"sh", "-c", fmt.Sprintf("echo -n $YT_TOKEN > %s; %s", consts.DefaultYqlTokenPath, strings.Join(container.Command, " "))}
 			container.EnvFrom = []corev1.EnvFromSource{yqla.secret.GetEnvSource()}
-			if yqla.ytsaurus.GetResource().Spec.UseIPv6 && !yqla.ytsaurus.GetResource().Spec.UseIPv4 {
-				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "1"}}
-			} else if !yqla.ytsaurus.GetResource().Spec.UseIPv6 && yqla.ytsaurus.GetResource().Spec.UseIPv4 {
-				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "1"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
-			} else {
-				container.Env = []corev1.EnvVar{{Name: "YT_FORCE_IPV4", Value: "0"}, {Name: "YT_FORCE_IPV6", Value: "0"}}
-			}
 
-			container.Env = append(container.Env, getDefaultEnv()...)
+			forceIPv4 := "0"
+			forceIPv6 := "0"
+			if yqla.ytsaurus.GetResource().Spec.UseIPv6 && !yqla.ytsaurus.GetResource().Spec.UseIPv4 {
+				forceIPv6 = "1"
+			} else if !yqla.ytsaurus.GetResource().Spec.UseIPv6 && yqla.ytsaurus.GetResource().Spec.UseIPv4 {
+				forceIPv4 = "1"
+			}
+			container.Env = append(container.Env,
+				corev1.EnvVar{Name: "YT_FORCE_IPV4", Value: forceIPv4},
+				corev1.EnvVar{Name: "YT_FORCE_IPV6", Value: forceIPv6},
+			)
+
 			err = yqla.server.Sync(ctx)
 		}
 		return ComponentStatusWaitingFor("components"), err
