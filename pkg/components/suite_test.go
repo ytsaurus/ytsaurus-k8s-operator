@@ -129,6 +129,14 @@ func (fs *FakeServer) arePodsReady(ctx context.Context) bool {
 	return fs.podsReady
 }
 
+func (fs *FakeServer) arePodsUpdatedToNewRevision(ctx context.Context) bool {
+	return true
+}
+
+func (fs *FakeServer) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType) {
+	// No-op for fake server
+}
+
 func (fs *FakeServer) Sync(ctx context.Context) error {
 	return nil
 }

@@ -305,5 +305,7 @@ func (cm *ComponentManager) allUpdatableComponents() []components.Component {
 }
 
 func (cm *ComponentManager) areComponentPodsRemoved(component components.Component) bool {
-	return cm.ytsaurus.IsUpdateStatusConditionTrue(component.GetLabeller().GetPodsRemovedCondition())
+	// Check for either PodsRemoved (bulk update) or PodsUpdated (OnDelete mode)
+	return cm.ytsaurus.IsUpdateStatusConditionTrue(component.GetLabeller().GetPodsRemovedCondition()) ||
+		cm.ytsaurus.IsUpdateStatusConditionTrue(component.GetLabeller().GetPodsUpdatedCondition())
 }
