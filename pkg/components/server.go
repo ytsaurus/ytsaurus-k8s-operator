@@ -319,19 +319,38 @@ func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 		return false
 	}
 
-	// if currentRevision == updateRevision, it means all pods have been updated to the new revision
+	// Log detailed StatefulSet status for debugging
+	logger.Info("StatefulSet revision status",
+		"component", s.labeller.GetFullComponentName(),
+		"currentRevision", sts.Status.CurrentRevision,
+		"updateRevision", sts.Status.UpdateRevision,
+		"currentReplicas", sts.Status.CurrentReplicas,
+		"updatedReplicas", sts.Status.UpdatedReplicas,
+		"readyReplicas", sts.Status.ReadyReplicas,
+		"replicas", sts.Status.Replicas)
+
+	// In OnDelete mode, currentRevision doesn't automatically update to match updateRevision.
+	// see https://github.com/kubernetes/kubernetes/issues/106055
+	if sts.Status.UpdateRevision != "" &&
+		sts.Status.UpdateRevision != sts.Status.CurrentRevision &&
+		sts.Spec.Replicas != nil &&
+		sts.Status.UpdatedReplicas == *sts.Spec.Replicas &&
+		sts.Status.ReadyReplicas == *sts.Spec.Replicas {
+		logger.Info("OnDelete update complete: all pods updated and ready",
+			"component", s.labeller.GetFullComponentName(),
+			"updatedReplicas", sts.Status.UpdatedReplicas,
+			"readyReplicas", sts.Status.ReadyReplicas,
+			"totalReplicas", *sts.Spec.Replicas)
+		return true
+	}
+
+	// For RollingUpdate mode, currentRevision will eventually match updateRevision
 	if sts.Status.CurrentRevision == sts.Status.UpdateRevision {
 		logger.Info("Update complete: currentRevision matches updateRevision",
 			"component", s.labeller.GetFullComponentName(),
 			"revision", sts.Status.CurrentRevision)
 		return true
 	}
-
-	// currentRevision != updateRevision: update in progress
-	logger.Info("Update in progress: waiting for currentRevision to match updateRevision",
-		"component", s.labeller.GetFullComponentName(),
-		"currentRevision", sts.Status.CurrentRevision,
-		"updateRevision", sts.Status.UpdateRevision)
 
 	return false
 }

@@ -189,6 +189,14 @@ func (l *Labeller) GetPodsRemovedCondition() string {
 	return fmt.Sprintf("%sPodsRemoved", l.GetFullComponentName())
 }
 
+func (l *Labeller) GetPodsUpdatedCondition() string {
+	return fmt.Sprintf("%sPodsUpdated", l.GetFullComponentName())
+}
+
+func (l *Labeller) GetAwaitingManualActionCondition() string {
+	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionAwaitingManualAction)
+}
+
 func (l *Labeller) GetReadyCondition() string {
 	return fmt.Sprintf("%sReady", l.GetFullComponentName())
 }

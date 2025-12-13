@@ -265,6 +265,16 @@ func handleOnDeleteUpdatingClusterState(
 	logger := log.FromContext(ctx)
 	var err error
 
+	// Dry run logic:
+	// If OnDeleteModeStarted not set → "OnDelete mode setup" (triggers sync)
+	// If OnDeleteModeStarted is set → "manual pod update by user" (always wait)
+	// Non-dry run logic:
+	// Syncs StatefulSet with new image
+	// Sets OnDeleteModeStarted condition
+	// Checks if pods are updated
+	// If yes → Continue
+	// If no → Set awaiting condition
+
 	if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsRemoval {
 		// Not in the pod removal phase, let the component handle other update states
 		return nil, err
@@ -276,58 +286,67 @@ func handleOnDeleteUpdatingClusterState(
 			return status, err
 		}
 	}
-
-	// Ensure the StatefulSet is in OnDelete mode and sync the updated spec
-	if !dry {
-		// Set the update strategy to OnDelete
-		server.setUpdateStrategy(appsv1.OnDeleteStatefulSetStrategyType)
-		logger.Info("Setting StatefulSet update strategy to OnDelete",
-			"component", cmp.GetFullName())
-
-		// Sync the StatefulSet to apply both the OnDelete strategy AND the updated spec
-		if err := server.Sync(ctx); err != nil {
-			logger.Error(err, "Failed to sync StatefulSet in OnDelete mode", "component", cmp.GetFullName())
-			return ptr.To(ComponentStatusBlocked("Failed to sync StatefulSet")), err
+	onDeleteStartedCondition := fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionOnDeleteModeStarted)
+	// If this is a dry run, check the update status
+	if dry {
+		// Check if we've already synced the StatefulSet with OnDelete strategy
+		if !ytsaurus.IsUpdateStatusConditionTrue(onDeleteStartedCondition) {
+			// StatefulSet hasn't been synced yet
+			return ptr.To(ComponentStatusWaitingFor("OnDelete mode setup")), nil
 		}
 
-		// Fetch the StatefulSet to get the updated status from Kubernetes.
-		if err := server.Fetch(ctx); err != nil {
-			logger.Error(err, "Failed to fetch StatefulSet after sync", "component", cmp.GetFullName())
-			return ptr.To(ComponentStatusBlocked("Failed to fetch StatefulSet")), err
-		}
+		// Pods not updated yet, wait for manual action
+		return ptr.To(ComponentStatusWaitingFor("manual pod update by user")), nil
+	}
 
-		logger.Info("StatefulSet synced with OnDelete strategy and updated spec",
+	// This is not a dry run, actually sync the StatefulSet
+	// Set the update strategy to OnDelete
+	server.setUpdateStrategy(appsv1.OnDeleteStatefulSetStrategyType)
+	logger.Info("Setting StatefulSet update strategy to OnDelete",
+		"component", cmp.GetFullName())
+
+	// Sync the StatefulSet to apply both the OnDelete strategy and the updated spec
+	if err := server.Sync(ctx); err != nil {
+		logger.Error(err, "Failed to sync StatefulSet in OnDelete mode", "component", cmp.GetFullName())
+		return ptr.To(ComponentStatusBlocked("Failed to sync StatefulSet")), err
+	}
+
+	// Fetch the StatefulSet to get the updated status from Kubernetes.
+	if err := server.Fetch(ctx); err != nil {
+		logger.Error(err, "Failed to fetch StatefulSet after sync", "component", cmp.GetFullName())
+		return ptr.To(ComponentStatusBlocked("Failed to fetch StatefulSet")), err
+	}
+
+	logger.Info("StatefulSet synced with OnDelete strategy and updated spec",
+		"component", cmp.GetFullName())
+
+	// Set condition that OnDelete mode has started
+	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    onDeleteStartedCondition,
+		Status:  metav1.ConditionTrue,
+		Reason:  "OnDeleteModeStarted",
+		Message: "OnDelete update mode started, StatefulSet synced, waiting for manual pod update",
+	})
+
+	// Check if all pods are updated to the new revision
+	if server.arePodsUpdatedToNewRevision(ctx) {
+		logger.Info("All pods have been updated to the new revision, proceeding with update",
 			"component", cmp.GetFullName())
 
-		// Set condition that OnDelete mode has started
+		// Set pods updated condition
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionOnDeleteModeStarted),
+			Type:    cmp.GetLabeller().GetPodsUpdatedCondition(),
 			Status:  metav1.ConditionTrue,
-			Reason:  "OnDeleteModeStarted",
-			Message: "OnDelete update mode started, waiting for manual pod update",
+			Reason:  "PodsUpdated",
+			Message: "All pods have been updated to new revision",
 		})
 
-		// Check if all pods are updated to the new revision
-		if server.arePodsUpdatedToNewRevision(ctx) {
-			logger.Info("All pods have been updated to new revision, proceeding with update",
-				"component", cmp.GetFullName())
-
-			// Clear the awaiting manual action condition
-			ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionAwaitingManualAction),
-				Status:  metav1.ConditionFalse,
-				Reason:  "PodsUpdated",
-				Message: "All pods have been updated to new revision",
-			})
-
-			// Return nil to allow the flow to continue to updateOpArchive
-			return nil, err
-		}
+		// Return nil to allow the flow to continue to updateOpArchive
+		return nil, nil
 	}
 
 	// Pods are not yet updated, continue waiting
-	// Set condition that we're awaiting manual action
-	awaitingConditionType := fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionAwaitingManualAction)
+	awaitingConditionType := cmp.GetLabeller().GetAwaitingManualActionCondition()
 	awaitingCondition := meta.FindStatusCondition(
 		ytsaurus.GetResource().Status.UpdateStatus.Conditions,
 		awaitingConditionType,
