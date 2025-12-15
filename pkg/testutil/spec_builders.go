@@ -179,6 +179,7 @@ type YtsaurusBuilder struct {
 	CRIService   *ytv1.CRIServiceType
 	Ytsaurus     *ytv1.Ytsaurus
 	Overrides    *corev1.ConfigMap
+	Chyt         *ytv1.Chyt
 
 	WithNvidiaContainerRuntime bool
 
@@ -613,7 +614,7 @@ func (b *YtsaurusBuilder) WithStrawberryController() {
 }
 
 func (b *YtsaurusBuilder) CreateChyt() *ytv1.Chyt {
-	chyt := ytv1.Chyt{
+	b.Chyt = &ytv1.Chyt{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      YtsaurusName,
 			Namespace: b.Namespace,
@@ -627,5 +628,5 @@ func (b *YtsaurusBuilder) CreateChyt() *ytv1.Chyt {
 			CreatePublicClique: ptr.To(true),
 		},
 	}
-	return &chyt
+	return b.Chyt
 }

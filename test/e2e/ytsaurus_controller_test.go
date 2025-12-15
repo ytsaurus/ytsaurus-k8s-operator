@@ -155,6 +155,7 @@ type testRow struct {
 }
 
 var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() {
+	// NOTE: All context variables must be initialized BeforeEach, to prevent crosstalk.
 	var namespace string
 	var requiredImages []string
 	var objects []client.Object
@@ -162,7 +163,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var name client.ObjectKey
 	var ytBuilder *testutil.YtsaurusBuilder
 	var ytsaurus *ytv1.Ytsaurus
-	var chyt *ytv1.Chyt
 	var generator *ytconfig.Generator
 	var certBuilder *testutil.CertBuilder
 	var caBundleCertificates []byte
@@ -177,7 +177,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var remoteComponentNames map[consts.ComponentType][]string
 
 	// NOTE: execution order for each test spec:
-	// - BeforeEach               (configuration)
+	// - BeforeEach               (init, configuration)
 	// - JustBeforeEach           (creation, validation)
 	// - It                       (test itself)
 	// - JustAfterEach            (diagnosis, validation)
@@ -580,6 +580,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
+		chyt := ytBuilder.Chyt
 		if chyt == nil {
 			return
 		}
@@ -601,7 +602,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
-		if chyt == nil || ytsaurus.Spec.QueryTrackers == nil {
+		if ytBuilder.Chyt == nil || ytsaurus.Spec.QueryTrackers == nil {
 			return
 		}
 
@@ -1694,7 +1695,7 @@ exec "$@"`
 				ytBuilder.WithStrawberryController()
 
 				By("Adding CHYT instance")
-				chyt = ytBuilder.CreateChyt()
+				chyt := ytBuilder.CreateChyt()
 				objects = append(objects, chyt)
 			})
 
@@ -1765,7 +1766,7 @@ exec "$@"`
 				withRPCTLSProxy()
 
 				By("Adding CHYT instance")
-				chyt = ytBuilder.CreateChyt()
+				chyt := ytBuilder.CreateChyt()
 				chyt.Spec.Image = images.Chyt
 				objects = append(objects, chyt)
 			})
