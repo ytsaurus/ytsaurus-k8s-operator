@@ -114,10 +114,6 @@ func (c *Ytsaurus) shouldEnablePreChecksFromSpec(componentType consts.ComponentT
 	return true
 }
 
-// func (c *Ytsaurus) GetComponentProgress(component ytv1.Component) *ytv1.ComponentUpdateProgress {
-// 	return c.getComponentProgressEntry(component)
-// }
-
 func (c *Ytsaurus) SetBlockedComponents(components []ytv1.Component) bool {
 	summary := buildComponentsSummary(components)
 	if c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary == summary {

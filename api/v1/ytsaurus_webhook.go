@@ -596,6 +596,11 @@ var bulkOnlyComponentTypes = map[consts.ComponentType]struct{}{
 	consts.YqlAgentType:     {},
 }
 
+var rollingUpdateDeniedComponentTypes = map[consts.ComponentType]struct{}{
+	consts.SchedulerType: {},
+	consts.MasterType:    {},
+}
+
 func validateUpdateModeForSelector(selector ComponentUpdateSelector, path *field.Path) field.ErrorList {
 	var errs field.ErrorList
 
@@ -612,9 +617,14 @@ func validateUpdateModeForSelector(selector ComponentUpdateSelector, path *field
 			errs = append(errs, field.Invalid(path, selector.Strategy, "component.type must be set to use updateStrategy"))
 			return errs
 		}
-		// Only validate bulk-only restriction
+		// validate bulk-only restriction
 		if _, bulkOnly := bulkOnlyComponentTypes[selector.Component.Type]; bulkOnly && modeType != "" && modeType != ComponentUpdateModeTypeBulkUpdate {
 			errs = append(errs, field.Invalid(path.Child("updateStrategy"), modeType, fmt.Sprintf("%s supports only BulkUpdate mode", selector.Component.Type)))
+			return errs
+		}
+		// validate rolling update denied restriction
+		if _, rollingUpdateDenied := rollingUpdateDeniedComponentTypes[selector.Component.Type]; rollingUpdateDenied && modeType != "" && modeType == ComponentUpdateModeTypeRollingUpdate {
+			errs = append(errs, field.Invalid(path.Child("updateStrategy"), modeType, fmt.Sprintf("%s doesn't support RollingUpdate mode", selector.Component.Type)))
 			return errs
 		}
 	}
@@ -638,9 +648,6 @@ func validateUpdateModeForSelector(selector ComponentUpdateSelector, path *field
 	case ComponentUpdateModeTypeOnDelete:
 		if selector.Component.Type == "" {
 			errs = append(errs, field.Invalid(path.Child("type"), modeType, "onDelete update requires a concrete component selector"))
-		}
-		if selector.Strategy != nil && selector.Strategy.OnDelete != nil {
-			errs = append(errs, field.Invalid(path.Child("onDelete"), selector.Strategy.OnDelete, "rolling configuration is not valid for OnDelete"))
 		}
 	}
 
