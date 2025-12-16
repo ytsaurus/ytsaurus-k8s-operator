@@ -230,7 +230,7 @@ func handleBulkUpdatingClusterState(
 	// Remove pods
 	if !dry {
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionScalingDown),
+			Type:    cmp.GetLabeller().GetScalingDownCondition(),
 			Status:  metav1.ConditionTrue,
 			Reason:  "RemovingPods",
 			Message: "removing pods",
@@ -241,7 +241,7 @@ func handleBulkUpdatingClusterState(
 	// Update condition if state has progressed to pod creation
 	if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionScalingUp),
+			Type:    cmp.GetLabeller().GetScalingUpCondition(),
 			Status:  metav1.ConditionTrue,
 			Reason:  "CreatingPods",
 			Message: "creating new pods",
@@ -268,7 +268,7 @@ func handleOnDeleteUpdatingClusterState(
 		return nil, err
 	}
 
-	onDeleteStartedCondition := fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionOnDeleteModeStarted)
+	onDeleteStartedCondition := cmp.GetLabeller().GetOnDeleteModeStartedCondition()
 	// If this is a dry run, check the update status
 	if dry {
 		// Check if we've already synced the StatefulSet with OnDelete strategy
@@ -369,7 +369,7 @@ func handleOnDeleteUpdatingClusterState(
 
 func runPrechecks(ctx context.Context, ytsaurus *apiproxy.Ytsaurus, cmp Component) (*ComponentStatus, error) {
 	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionPreChecksRunning),
+		Type:    cmp.GetLabeller().GetPreChecksRunningCondition(),
 		Status:  metav1.ConditionTrue,
 		Reason:  "RunningPreChecks",
 		Message: "running pre-checks",
@@ -381,8 +381,8 @@ func runPrechecks(ctx context.Context, ytsaurus *apiproxy.Ytsaurus, cmp Componen
 			msg = "pre-checks failed"
 		}
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), string(SyncStatusBlocked)),
-			Status:  metav1.ConditionTrue,
+			Type:    cmp.GetLabeller().GetReadyCondition(),
+			Status:  metav1.ConditionFalse,
 			Reason:  "PreChecksFailed",
 			Message: msg,
 		})
@@ -390,7 +390,7 @@ func runPrechecks(ctx context.Context, ytsaurus *apiproxy.Ytsaurus, cmp Componen
 	}
 	// Set PreChecksCompleted condition for this component
 	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionPreChecksCompleted),
+		Type:    cmp.GetLabeller().GetReadyCondition(),
 		Status:  metav1.ConditionTrue,
 		Reason:  "PreChecksCompleted",
 		Message: "pre-checks completed",

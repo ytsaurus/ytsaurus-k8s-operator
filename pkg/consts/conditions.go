@@ -15,6 +15,9 @@ const (
 	ConditionScalingDown           = "ScalingDown"
 	ConditionScalingUp             = "ScalingUp"
 	ConditionAwaitingManualAction  = "AwaitingManualAction"
+	ConditionPodsUpdated           = "PodsUpdated"
+	ConditionPodsRemoved           = "PodsRemoved"
+	ConditionPodsRemovingStarted   = "PodsRemovingStarted"
 )
 const ConditionTabletCellsSaved = "TabletCellsSaved"
 const ConditionTabletCellsRemovingStarted = "TabletCellsRemovingStarted"

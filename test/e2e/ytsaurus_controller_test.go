@@ -1885,8 +1885,6 @@ exec "$@"`
 
 		It("Should update query tracker in bulkUpdate mode and have Running state", func(ctx context.Context) {
 
-			UpdateObject(ctx, ytsaurus)
-
 			podsBefore := getComponentPods(ctx, namespace)
 
 			By("Trigger QT update")
@@ -1932,7 +1930,6 @@ exec "$@"`
 		})
 		It("Should update scheduler in onDelete mode and have Running state", func(ctx context.Context) {
 
-			UpdateObject(ctx, ytsaurus)
 			podsBefore := getComponentPods(ctx, namespace)
 
 			By("Trigger sch update")
