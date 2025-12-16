@@ -205,12 +205,8 @@ func (l *Labeller) GetScalingUpCondition() string {
 	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionScalingUp)
 }
 
-func (l *Labeller) GetOnDeleteModeStartedCondition() string {
-	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionOnDeleteModeStarted)
-}
-
-func (l *Labeller) GetAwaitingManualActionCondition() string {
-	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionAwaitingManualAction)
+func (l *Labeller) GetWaitingOnDeleteUpdateCondition() string {
+	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionWaitingOnDeleteUpdate)
 }
 
 func (l *Labeller) GetReadyCondition() string {

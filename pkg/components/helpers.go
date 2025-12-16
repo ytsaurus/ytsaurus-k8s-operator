@@ -7,7 +7,6 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"sigs.k8s.io/yaml"
@@ -268,11 +267,11 @@ func handleOnDeleteUpdatingClusterState(
 		return nil, err
 	}
 
-	onDeleteStartedCondition := cmp.GetLabeller().GetOnDeleteModeStartedCondition()
+	onDeleteWaitingCondition := cmp.GetLabeller().GetWaitingOnDeleteUpdateCondition()
 	// If this is a dry run, check the update status
 	if dry {
 		// Check if we've already synced the StatefulSet with OnDelete strategy
-		if !ytsaurus.IsUpdateStatusConditionTrue(onDeleteStartedCondition) {
+		if !ytsaurus.IsUpdateStatusConditionTrue(onDeleteWaitingCondition) {
 			return ptr.To(ComponentStatusWaitingFor("OnDelete mode setup")), nil
 		}
 
@@ -309,7 +308,7 @@ func handleOnDeleteUpdatingClusterState(
 
 	// Set condition that OnDelete mode has started
 	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    onDeleteStartedCondition,
+		Type:    onDeleteWaitingCondition,
 		Status:  metav1.ConditionTrue,
 		Reason:  "OnDeleteModeStarted",
 		Message: "OnDelete update mode started, StatefulSet synced, waiting for manual pod update",
@@ -327,42 +326,17 @@ func handleOnDeleteUpdatingClusterState(
 			Reason:  "PodsUpdated",
 			Message: "All pods have been updated to new revision",
 		})
+		ytsaurus.UpdateOnDeleteComponentsSummary(ctx, onDeleteWaitingCondition, false)
 
 		return nil, nil
 	}
 
 	// Pods are not yet updated, continue waiting
-	awaitingConditionType := cmp.GetLabeller().GetAwaitingManualActionCondition()
-	awaitingCondition := meta.FindStatusCondition(
-		ytsaurus.GetResource().Status.UpdateStatus.Conditions,
-		awaitingConditionType,
-	)
+	// TODO: add prometheus metric in order to build alert for long-running OnDelete waits
+	// This metric should track the duration since OnDeleteModeStarted condition was set
 
-	now := metav1.Now()
-	if awaitingCondition == nil {
-		// First time setting this condition
-		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    awaitingConditionType,
-			Status:  metav1.ConditionTrue,
-			Reason:  "AwaitingManualPodUpdate",
-			Message: "Waiting for user to manually delete and recreate pods with new version",
-		})
-	} else {
-		// Check if we've been waiting for more than 15 minutes
-		waitingDuration := now.Time.Sub(awaitingCondition.LastTransitionTime.Time).Seconds()
-		if waitingDuration > OnDeleteUpdateModeWarningTimeout {
-			logger.Info("WARNING: Component has been waiting for manual pod update for more than 15 minutes",
-				"component", cmp.GetFullName(),
-				"waitingDuration", fmt.Sprintf("%.0f seconds", waitingDuration))
-
-			ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionOnDeleteModeTimeout),
-				Status:  metav1.ConditionTrue,
-				Reason:  "OnDeleteModeTimeout",
-				Message: fmt.Sprintf("Waiting for manual pod update for %.0f seconds (>15 minutes)", waitingDuration),
-			})
-		}
-	}
+	// Update the summary with waiting time information
+	ytsaurus.UpdateOnDeleteComponentsSummary(ctx, onDeleteWaitingCondition, true)
 
 	return ptr.To(ComponentStatusUpdateStep("pods removal")), err
 }

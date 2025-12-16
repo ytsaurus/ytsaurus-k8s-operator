@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -93,7 +94,7 @@ func (c *Ytsaurus) ShouldRunPreChecks(componentType consts.ComponentType, compon
 	// have we already completed pre-checks for this component?
 	cond := meta.FindStatusCondition(
 		c.ytsaurus.Status.UpdateStatus.Conditions,
-		fmt.Sprintf("%s%s", componentName, consts.ConditionPreChecksCompleted),
+		fmt.Sprintf("%sReady", componentName),
 	)
 	if cond != nil && cond.Status == metav1.ConditionTrue {
 		// interpret as "already completed"
@@ -202,14 +203,51 @@ func buildComponentsSummary(components []ytv1.Component) string {
 	var componentNames []string
 	for _, comp := range components {
 		// TODO: we better use labeller here after support deployment names in it.
-		name := consts.GetShortName(comp.Type)
-		if name == "" {
-			name = strings.ToLower(string(comp.Type))
-		}
-		if comp.Name != "" {
-			name += fmt.Sprintf("-%s", comp.Name)
-		}
+		name := getComponentName(comp)
 		componentNames = append(componentNames, name)
 	}
 	return "{" + strings.Join(componentNames, " ") + "}"
+}
+
+func getComponentName(component ytv1.Component) string {
+	// TODO: we better use labeller here after support deployment names in it.
+	name := consts.GetShortName(component.Type)
+	if name == "" {
+		name = strings.ToLower(string(component.Type))
+	}
+	if component.Name != "" {
+		name += fmt.Sprintf("-%s", component.Name)
+	}
+	return name
+}
+
+// UpdateOnDeleteComponentsSummary updates the UpdatingComponentsSummary with waiting time information
+// for components in OnDelete mode
+func (r *Ytsaurus) UpdateOnDeleteComponentsSummary(ctx context.Context, waitingOnDeleteConditionType string, includeWaitinDuration bool) {
+	if r.GetResource().Status.UpdateStatus.State != ytv1.UpdateStateWaitingForPodsRemoval {
+		return
+	}
+
+	var summaryParts []string
+
+	// Find all components that are waiting on delete
+	for _, component := range r.GetResource().Status.UpdateStatus.UpdatingComponents {
+		condition := meta.FindStatusCondition(r.GetResource().Status.UpdateStatus.Conditions, waitingOnDeleteConditionType)
+
+		if condition != nil && condition.Status == "True" {
+			componentName := getComponentName(component)
+			if includeWaitinDuration {
+				waitingDuration := time.Since(condition.LastTransitionTime.Time)
+				summaryParts = append(summaryParts, fmt.Sprintf("{%s (waiting %s)}",
+					componentName,
+					waitingDuration.Truncate(time.Second).String()))
+			} else {
+				summaryParts = append(summaryParts, fmt.Sprintf("{%s}", componentName))
+			}
+		}
+	}
+
+	if len(summaryParts) > 0 {
+		r.GetResource().Status.UpdateStatus.UpdatingComponentsSummary = strings.Join(summaryParts, ", ")
+	}
 }
