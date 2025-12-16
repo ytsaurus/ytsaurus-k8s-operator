@@ -19,6 +19,7 @@ package v1
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -561,29 +562,41 @@ func (r *baseValidator) validateCommonSpec(spec *CommonSpec) field.ErrorList {
 
 func (r *baseValidator) validateUpdateSelectors(newYtsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
-	hasNothing := false
 	planPath := field.NewPath("spec").Child("updatePlan")
+	exclusiveClass := consts.ComponentClassUnspecified
 
 	if newYtsaurus.Spec.UpdatePlan != nil {
 		if len(newYtsaurus.Spec.UpdatePlan) == 0 {
 			allErrors = append(allErrors, field.Required(planPath, "updatePlan should not be empty"))
 		}
 
-		for i, updateSelector := range newYtsaurus.Spec.UpdatePlan {
+		for i, entry := range newYtsaurus.Spec.UpdatePlan {
 			entryPath := planPath.Index(i)
-			if updateSelector.Class != consts.ComponentClassUnspecified && (updateSelector.Component.Type != "" || updateSelector.Component.Name != "") {
-				allErrors = append(allErrors, field.Invalid(entryPath.Child("component"), updateSelector.Component, "Only one of component or class should be specified"))
+			if entry.Class != consts.ComponentClassUnspecified && (entry.Component.Type != "" || entry.Component.Name != "") {
+				allErrors = append(allErrors, field.Invalid(entryPath.Child("component"), entry.Component, "Only one of component or class should be specified"))
 			}
-			if updateSelector.Class == consts.ComponentClassUnspecified && updateSelector.Component.Type == "" && updateSelector.Component.Name == "" {
-				allErrors = append(allErrors, field.Invalid(entryPath.Child("component"), updateSelector.Component, "Either component or class should be specified"))
+			if entry.Class == consts.ComponentClassUnspecified && entry.Component.Type == "" && entry.Component.Name == "" {
+				allErrors = append(allErrors, field.Invalid(entryPath.Child("component"), entry.Component, "Either component or class should be specified"))
 			}
-			if updateSelector.Class == consts.ComponentClassNothing {
-				hasNothing = true
+			if entry.Component.Type != "" && !slices.Contains(consts.LocalComponentTypes, entry.Component.Type) {
+				allErrors = append(allErrors, field.Invalid(entryPath.Child("component").Child("type"), entry.Component.Type, "Unknown component type"))
 			}
-			allErrors = append(allErrors, validateUpdateModeForSelector(updateSelector, entryPath.Child("updateMode"))...)
-		}
-		if hasNothing && len(newYtsaurus.Spec.UpdatePlan) > 1 {
-			allErrors = append(allErrors, field.Invalid(planPath, newYtsaurus.Spec.UpdatePlan, "updatePlan should contain only one Nothing class"))
+			if exclusiveClass != consts.ComponentClassUnspecified {
+				allErrors = append(allErrors, field.Invalid(entryPath, entry, fmt.Sprintf("Update plan already contains class %s", exclusiveClass)))
+			}
+
+			switch entry.Class {
+			case consts.ComponentClassNothing, consts.ComponentClassEverything:
+				exclusiveClass = entry.Class
+				if i > 0 {
+					allErrors = append(allErrors, field.Invalid(entryPath.Child("class"), entry.Class, "Should be first and only entry"))
+				}
+			case consts.ComponentClassStateless, consts.ComponentClassUnspecified:
+			default:
+				allErrors = append(allErrors, field.Invalid(entryPath.Child("class"), entry.Class, "Unknown class"))
+			}
+
+			allErrors = append(allErrors, validateUpdateModeForSelector(entry, entryPath.Child("updateMode"))...)
 		}
 	}
 
