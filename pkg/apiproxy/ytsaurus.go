@@ -223,16 +223,16 @@ func getComponentName(component ytv1.Component) string {
 
 // UpdateOnDeleteComponentsSummary updates the UpdatingComponentsSummary with waiting time information
 // for components in OnDelete mode
-func (r *Ytsaurus) UpdateOnDeleteComponentsSummary(ctx context.Context, waitingOnDeleteConditionType string, includeWaitinDuration bool) {
-	if r.GetResource().Status.UpdateStatus.State != ytv1.UpdateStateWaitingForPodsRemoval {
+func (c *Ytsaurus) UpdateOnDeleteComponentsSummary(ctx context.Context, waitingOnDeleteConditionType string, includeWaitinDuration bool) {
+	if c.GetResource().Status.UpdateStatus.State != ytv1.UpdateStateWaitingForPodsRemoval {
 		return
 	}
 
 	var summaryParts []string
 
 	// Find all components that are waiting on delete
-	for _, component := range r.GetResource().Status.UpdateStatus.UpdatingComponents {
-		condition := meta.FindStatusCondition(r.GetResource().Status.UpdateStatus.Conditions, waitingOnDeleteConditionType)
+	for _, component := range c.GetResource().Status.UpdateStatus.UpdatingComponents {
+		condition := meta.FindStatusCondition(c.GetResource().Status.UpdateStatus.Conditions, waitingOnDeleteConditionType)
 
 		if condition != nil && condition.Status == "True" {
 			componentName := getComponentName(component)
@@ -248,6 +248,6 @@ func (r *Ytsaurus) UpdateOnDeleteComponentsSummary(ctx context.Context, waitingO
 	}
 
 	if len(summaryParts) > 0 {
-		r.GetResource().Status.UpdateStatus.UpdatingComponentsSummary = strings.Join(summaryParts, ", ")
+		c.GetResource().Status.UpdateStatus.UpdatingComponentsSummary = strings.Join(summaryParts, ", ")
 	}
 }
