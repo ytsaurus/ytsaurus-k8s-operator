@@ -803,7 +803,6 @@ type BundleControllerSpec struct {
 
 type TabletBalancerSpec struct {
 	InstanceSpec `json:",inline"`
-	Disable      *bool `json:"disable,omitempty"`
 }
 
 type ClusterFeatures struct {
