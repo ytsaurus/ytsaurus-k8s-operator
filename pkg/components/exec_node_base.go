@@ -264,6 +264,11 @@ func NewJobsSidecarConfig(
 			ConfigFormatJson,
 			criConfig.GetCRIOSignaturePolicy,
 		)
+		config.AddGenerator(
+			consts.CRIOSeccompPrivilegedFileName,
+			ConfigFormatJson,
+			criConfig.GetCRIOSeccompPrivilegedPolicy,
+		)
 	}
 
 	return config

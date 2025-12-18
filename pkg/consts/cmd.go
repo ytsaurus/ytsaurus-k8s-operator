@@ -56,10 +56,11 @@ const (
 
 	CRIServiceSocketName = "cri.sock"
 
-	CRIOConfigVolumeName        = "config-crio"
-	CRIOConfigMountPoint        = "/config/crio"
-	CRIOConfigFileName          = "crio.conf"
-	CRIOSignaturePolicyFileName = "policy.json"
+	CRIOConfigVolumeName          = "config-crio"
+	CRIOConfigMountPoint          = "/config/crio"
+	CRIOConfigFileName            = "crio.conf"
+	CRIOSignaturePolicyFileName   = "policy.json"
+	CRIOSeccompPrivilegedFileName = "seccomp-privileged.json"
 
 	CRINamespace  = "yt"
 	CRIBaseCgroup = "/yt"

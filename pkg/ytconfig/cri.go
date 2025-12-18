@@ -99,6 +99,14 @@ func (cri *CRIConfigGenerator) GetCRIOSignaturePolicy() ([]byte, error) {
 	return marshallYsonConfig(policy)
 }
 
+func (cri *CRIConfigGenerator) GetCRIOSeccompPrivilegedPolicy() ([]byte, error) {
+	// See https://github.com/cri-o/cri-o/issues/9675
+	policy := map[string]any{
+		"defaultAction": "SCMP_ACT_ALLOW",
+	}
+	return marshallYsonConfig(policy)
+}
+
 func (cri *CRIConfigGenerator) GetCRIOConfig() ([]byte, error) {
 	// See https://github.com/cri-o/cri-o/blob/main/docs/crio.conf.5.md
 
@@ -134,10 +142,11 @@ func (cri *CRIConfigGenerator) GetCRIOConfig() ([]byte, error) {
 	}
 
 	crioRuntime := map[string]any{
-		"cgroup_manager":  "cgroupfs",
-		"conmon_cgroup":   crioMonitorCgroup,
-		"default_runtime": runtimeNameCrun,
-		"runtimes":        crioRuntimeRuntimes,
+		"cgroup_manager":             "cgroupfs",
+		"conmon_cgroup":              crioMonitorCgroup,
+		"default_runtime":            runtimeNameCrun,
+		"runtimes":                   crioRuntimeRuntimes,
+		"privileged_seccomp_profile": path.Join(consts.CRIOConfigMountPoint, consts.CRIOSeccompPrivilegedFileName),
 	}
 
 	crio := map[string]any{
