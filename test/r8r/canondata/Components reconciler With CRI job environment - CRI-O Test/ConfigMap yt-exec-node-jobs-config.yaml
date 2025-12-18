@@ -15,6 +15,7 @@ data:
         cgroup_manager = "cgroupfs"
         conmon_cgroup = "pod"
         default_runtime = "crun"
+        privileged_seccomp_profile = "/config/crio/seccomp-privileged.json"
         [crio.runtime.runtimes]
           [crio.runtime.runtimes.crun]
             allowed_annotations = ["io.kubernetes.cri-o.ShmSize"]
@@ -29,6 +30,7 @@ data:
             runtime_path = "/usr/libexec/crio/runc"
             runtime_type = "oci"
   policy.json: '{"default":[{"type":"insecureAcceptAnything"}]}'
+  seccomp-privileged.json: '{"defaultAction":"SCMP_ACT_ALLOW"}'
 kind: ConfigMap
 metadata:
   creationTimestamp: null

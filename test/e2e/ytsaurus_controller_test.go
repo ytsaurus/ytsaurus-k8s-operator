@@ -1560,8 +1560,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					installCRIOScript := `#!/bin/bash
 # Install CRI-O and CRI tools, see https://cri-o.io/
 set -eux -o pipefail
-: ${K8S_VERSION=v1.32}
-: ${CRIO_VERSION=v1.32}
+: ${K8S_VERSION=v1.34}
+: ${CRIO_VERSION=v1.34}
 mkdir -p /etc/apt/keyrings
 curl -fsSL "https://pkgs.k8s.io/core:/stable:/${K8S_VERSION}/deb/Release.key" -o /etc/apt/keyrings/kubernetes-apt-keyring.asc
 curl -fsSL "https://download.opensuse.org/repositories/isv:/cri-o:/stable:/${CRIO_VERSION}/deb/Release.key" -o /etc/apt/keyrings/cri-o-apt-keyring.asc
@@ -1613,6 +1613,25 @@ exec "$@"`
 
 			It("Verify CRI-O job environment", func(ctx context.Context) {
 				// TODO(khlebnikov): Check docker image and resource limits.
+			})
+
+			Context("With runc runtime", Label("runc"), func() {
+				BeforeEach(func() {
+					ytBuilder.WithOverrides()
+					overrides := ytBuilder.Overrides
+					objects = append(objects, overrides)
+					overrides.Data["crio.conf"] = `{"crio" = { "runtime" = { "default_runtime" = "runc" }}}`
+				})
+				It("Verify CRI-O job environment", func(ctx context.Context) {
+				})
+			})
+
+			Context("With nvidia runtime", Label("nvidia"), func() {
+				BeforeEach(func() {
+					ytBuilder.WithNvidiaContainerRuntime()
+				})
+				It("Verify CRI-O job environment", func(ctx context.Context) {
+				})
 			})
 
 		}) // integration crio
