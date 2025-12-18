@@ -162,8 +162,8 @@ func NewComponentManager(
 	}
 
 	if resource.Spec.TabletBalancer != nil {
-		bc := components.NewTabletBalancer(cfgen, ytsaurus)
-		allComponents = append(allComponents, bc)
+		tb := components.NewTabletBalancer(cfgen, ytsaurus)
+		allComponents = append(allComponents, tb)
 	}
 
 	tt := components.NewTimbertruck(cfgen, ytsaurus, tnds, yc)
