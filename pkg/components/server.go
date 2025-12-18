@@ -231,7 +231,9 @@ func (s *serverImpl) needSync() bool {
 }
 
 func (s *serverImpl) Sync(ctx context.Context) error {
-	_ = s.configs.Build()
+	if _, err := s.configs.Build(); err != nil {
+		return err
+	}
 	_ = s.headlessService.Build()
 	_ = s.monitoringService.Build()
 	_ = s.buildStatefulSet()

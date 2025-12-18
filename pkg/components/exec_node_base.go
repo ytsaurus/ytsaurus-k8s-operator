@@ -100,7 +100,9 @@ func (n *baseExecNode) doBuildBase() error {
 	}
 
 	if n.sidecarConfig != nil {
-		n.sidecarConfig.Build()
+		if _, err := n.sidecarConfig.Build(); err != nil {
+			return err
+		}
 	}
 
 	return nil
