@@ -8,6 +8,8 @@ func ComponentServicePrefix(component ComponentType) string {
 	switch component {
 	case BundleControllerType:
 		return "bundle-controllers"
+	case TabletBalancerType:
+		return "tablet-balancers"
 	case ControllerAgentType:
 		return "controller-agents"
 	case CypressProxyType:
@@ -55,6 +57,8 @@ func GetServiceKebabCase(component ComponentType) string {
 	switch component {
 	case BundleControllerType:
 		return "bundle-controller"
+	case TabletBalancerType:
+		return "tablet-balancer"
 	case ControllerAgentType:
 		return "controller-agent"
 	case DataNodeType:
@@ -99,6 +103,8 @@ func GetStatefulSetPrefix(component ComponentType) string {
 	switch component {
 	case BundleControllerType:
 		return "bc"
+	case TabletBalancerType:
+		return "tb"
 	case ControllerAgentType:
 		return "ca"
 	case CypressProxyType:

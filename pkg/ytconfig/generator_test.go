@@ -559,6 +559,15 @@ func TestGetBundleControllerConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetTabletBalancerConfig(t *testing.T) {
+	ytsaurus := getYtsaurusWithoutNodes()
+	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetTabletBalancerConfig(ytsaurus.Spec.TabletBalancer)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetYtsaurusComponents(t *testing.T) {
 	ytsaurus := getYtsaurusWithAllComponents()
 
@@ -826,6 +835,7 @@ func getYtsaurusWithoutNodes() *ytv1.Ytsaurus {
 	ytsaurus = withMasterCaches(ytsaurus)
 	ytsaurus = withCypressProxies(ytsaurus)
 	ytsaurus = withBundleController(ytsaurus)
+	ytsaurus = withTabletBalancer(ytsaurus)
 	return ytsaurus
 }
 
@@ -975,6 +985,11 @@ func withCypressProxies(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 
 func withBundleController(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.BundleController = &ytv1.BundleControllerSpec{InstanceSpec: testBasicInstanceSpec}
+	return ytsaurus
+}
+
+func withTabletBalancer(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
+	ytsaurus.Spec.TabletBalancer = &ytv1.TabletBalancerSpec{InstanceSpec: testBasicInstanceSpec}
 	return ytsaurus
 }
 

@@ -187,6 +187,9 @@ spec:
       limits:
         cpu: "20"
         memory: 5Gi
+  tabletBalancers:
+    instanceCount: 3
+    resources: {}
   tabletNodes:
   - instanceCount: 100
     locations:

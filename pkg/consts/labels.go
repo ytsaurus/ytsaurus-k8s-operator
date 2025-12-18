@@ -58,6 +58,8 @@ func ComponentLabel(component ComponentType) string {
 		return "yt-strawberry-controller"
 	case BundleControllerType:
 		return "yt-bundle-controller"
+	case TabletBalancerType:
+		return "yt-tablet-balancer"
 	case ChytType:
 		return "yt-chyt"
 	case SpytType:
