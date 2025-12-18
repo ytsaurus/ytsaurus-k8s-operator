@@ -99,6 +99,9 @@ data:
                     type=cri;
                     "start_uid"=19500;
                     "cri_executor"={
+                        "retry_backoff_time"=1000;
+                        "retry_attempts"=120;
+                        "retry_timeout"=120000;
                         "runtime_endpoint"="unix:///yt/node-data/image-cache/containerd.sock";
                         "image_endpoint"="unix:///yt/node-data/image-cache/containerd.sock";
                         namespace=yt;

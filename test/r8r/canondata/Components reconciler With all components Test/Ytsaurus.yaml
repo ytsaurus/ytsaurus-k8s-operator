@@ -65,7 +65,8 @@ spec:
   execNodes:
   - instanceCount: 1
     jobEnvironment:
-      cri: {}
+      cri:
+        apiRetryTimeoutSeconds: 120
       userSlots: 4
     locations:
     - locationType: ChunkCache
