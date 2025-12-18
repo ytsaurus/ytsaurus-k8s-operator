@@ -84,7 +84,7 @@ type Component interface {
 	GetLabeller() *labeller.Labeller
 
 	GetCypressPatch() ypatch.PatchSet
-	UpdatePreCheck() ComponentStatus
+	UpdatePreCheck(ctx context.Context) ComponentStatus
 }
 
 // Following structs are used as a base for implementing YTsaurus components objects.
@@ -118,7 +118,7 @@ func (c *baseComponent) GetCypressPatch() ypatch.PatchSet {
 	return nil
 }
 
-func (c *baseComponent) UpdatePreCheck() ComponentStatus {
+func (c *baseComponent) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	return ComponentStatusReady()
 }
 

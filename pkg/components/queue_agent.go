@@ -420,7 +420,7 @@ func (qa *QueueAgent) Sync(ctx context.Context) error {
 	return err
 }
 
-func (qa *QueueAgent) UpdatePreCheck() ComponentStatus {
+func (qa *QueueAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	// Get YT client from the ytsaurusClient component
 	if qa.ytsaurusClient == nil {
 		return ComponentStatusBlocked("YtsaurusClient component is not available")
@@ -429,7 +429,7 @@ func (qa *QueueAgent) UpdatePreCheck() ComponentStatus {
 
 	// Check that the number of instances in YT matches the expected instanceCount
 	expectedCount := int(qa.ytsaurus.GetResource().Spec.QueueAgents.InstanceCount)
-	if err := IsInstanceCountEqualYTSpec(context.Background(), ytClient, consts.QueueAgentType, expectedCount); err != nil {
+	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.QueueAgentType, expectedCount); err != nil {
 		return ComponentStatusBlocked(err.Error())
 	}
 

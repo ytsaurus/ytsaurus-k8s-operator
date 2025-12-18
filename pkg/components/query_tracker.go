@@ -457,7 +457,7 @@ func (qt *QueryTracker) setConditionQTStateUpdated(ctx context.Context) {
 	})
 }
 
-func (qt *QueryTracker) UpdatePreCheck() ComponentStatus {
+func (qt *QueryTracker) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	// Get YT client from the ytsaurusClient component
 	if qt.ytsaurusClient == nil {
 		return ComponentStatusBlocked("YtsaurusClient component is not available")
@@ -466,7 +466,7 @@ func (qt *QueryTracker) UpdatePreCheck() ComponentStatus {
 
 	// Check that the number of instances in YT matches the expected instanceCount
 	expectedCount := int(qt.ytsaurus.GetResource().Spec.QueryTrackers.InstanceCount)
-	if err := IsInstanceCountEqualYTSpec(context.Background(), ytClient, consts.QueryTrackerType, expectedCount); err != nil {
+	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.QueryTrackerType, expectedCount); err != nil {
 		return ComponentStatusBlocked(err.Error())
 	}
 

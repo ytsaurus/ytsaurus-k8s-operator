@@ -168,6 +168,11 @@ func (m *microserviceImpl) arePodsRemoved(ctx context.Context) bool {
 	return m.deployment.ArePodsRemoved(ctx)
 }
 
+func (m *microserviceImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
+	// For now, return true
+	return true
+}
+
 func (m *microserviceImpl) needUpdate() bool {
 	if !m.exists() {
 		return false

@@ -284,7 +284,7 @@ func (yqla *YqlAgent) Sync(ctx context.Context) error {
 	return err
 }
 
-func (yqla *YqlAgent) UpdatePreCheck() ComponentStatus {
+func (yqla *YqlAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	// Get YT client from the ytsaurusClient component
 	if yqla.ytsaurusClient == nil {
 		return ComponentStatusBlocked("YtsaurusClient component is not available")
@@ -293,7 +293,7 @@ func (yqla *YqlAgent) UpdatePreCheck() ComponentStatus {
 
 	// Check that the number of instances in YT matches the expected instanceCount
 	expectedCount := int(yqla.ytsaurus.GetResource().Spec.YQLAgents.InstanceCount)
-	if err := IsInstanceCountEqualYTSpec(context.Background(), ytClient, consts.YqlAgentType, expectedCount); err != nil {
+	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.YqlAgentType, expectedCount); err != nil {
 		return ComponentStatusBlocked(err.Error())
 	}
 

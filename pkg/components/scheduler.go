@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"go.ytsaurus.tech/yt/go/ypath"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -19,12 +21,18 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
+const (
+	schedulerAlertsPath = "//sys/scheduler/@alerts"
+	orchidPath          = "//sys/scheduler/orchid"
+)
+
 type Scheduler struct {
 	localServerComponent
 	cfgen            *ytconfig.Generator
 	master           Component
 	execNodes        []Component
 	tabletNodes      []Component
+	ytsaurusClient   internalYtsaurusClient
 	initUserJob      *InitJob
 	initOpArchiveJob *InitJob
 	secret           *resources.StringSecret
@@ -34,6 +42,7 @@ func NewScheduler(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
+	yc internalYtsaurusClient,
 	execNodes, tabletNodes []Component,
 ) *Scheduler {
 	l := cfgen.GetComponentLabeller(consts.SchedulerType, "")
@@ -63,6 +72,7 @@ func NewScheduler(
 		master:               master,
 		execNodes:            execNodes,
 		tabletNodes:          tabletNodes,
+		ytsaurusClient:       yc,
 		initUserJob: NewInitJob(
 			l,
 			ytsaurus.APIProxy(),
@@ -125,11 +135,15 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 
 	if s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(s.ytsaurus, s) {
-			if s.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-				if !dry {
-					err = removePods(ctx, s.server, &s.localComponent)
+			switch getComponentUpdateStrategy(s.ytsaurus, consts.SchedulerType, s.GetShortName()) {
+			case ytv1.ComponentUpdateModeTypeOnDelete:
+				if status, err := handleOnDeleteUpdatingClusterState(ctx, s.ytsaurus, s, &s.localComponent, s.server, dry); status != nil {
+					return *status, err
 				}
-				return ComponentStatusUpdateStep("pods removal"), err
+			default:
+				if status, err := handleBulkUpdatingClusterState(ctx, s.ytsaurus, s, &s.localComponent, s.server, dry); status != nil {
+					return *status, err
+				}
 			}
 
 			if status, err := s.updateOpArchive(ctx, dry); status != nil {
@@ -312,4 +326,36 @@ func (s *Scheduler) prepareInitOperationsArchive() {
 	job := s.initOpArchiveJob.Build()
 	container := &job.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{s.secret.GetEnvSource()}
+}
+
+func (s *Scheduler) UpdatePreCheck(ctx context.Context) ComponentStatus {
+	logger := log.FromContext(ctx)
+
+	if s.ytsaurusClient == nil {
+		return ComponentStatusBlocked("YtsaurusClient component is not available")
+	}
+
+	ytClient := s.ytsaurusClient.GetYtClient()
+	if ytClient == nil {
+		return ComponentStatusBlocked("YT client is not available")
+	}
+
+	// Check for scheduler alerts
+	var schedulerAlerts []string
+	if err := ytClient.GetNode(ctx, ypath.Path(schedulerAlertsPath), &schedulerAlerts, nil); err != nil {
+		return ComponentStatusBlocked(fmt.Sprintf("Could not check scheduler alerts: %v", err))
+	}
+
+	if len(schedulerAlerts) > 0 {
+		return ComponentStatusBlocked(fmt.Sprintf("Scheduler has %d alerts: %v", len(schedulerAlerts), schedulerAlerts))
+	}
+
+	// Try to get orchid data
+	var orchidData map[string]interface{}
+	if err := ytClient.GetNode(ctx, ypath.Path(orchidPath), &orchidData, nil); err != nil {
+		return ComponentStatusBlocked(fmt.Sprintf("Failed to get scheduler orchid data: %v", err))
+	}
+	logger.Info("Scheduler orchid data retrieved successfully")
+
+	return ComponentStatusReady()
 }

@@ -25,9 +25,11 @@ import (
 )
 
 const (
-	BulkUpdateModeName          = "BulkUpdate"
 	timbertruckInitScriptPrefix = "mkdir -p /etc/timbertruck; echo '"
 	timbertruckInitScriptSuffix = "' > /etc/timbertruck/config.yaml; chmod 644 /etc/timbertruck/config.yaml; /usr/bin/timbertruck_os -config /etc/timbertruck/config.yaml"
+	// OnDeleteUpdateModeWarningTimeout is the duration after which a warning is logged
+	// if the component is still waiting for manual pod deletion in OnDelete mode
+	OnDeleteUpdateModeWarningTimeout = 15 * 60 // 15 minutes in seconds
 )
 
 func CreateTabletCells(ctx context.Context, ytClient yt.Client, bundle string, tabletCellCount int) error {
@@ -203,7 +205,7 @@ func handleBulkUpdatingClusterState(
 	}
 
 	// Check if this component is using the new update mode
-	if !doesComponentUseNewUpdateMode(ytsaurus, cmp.GetType(), cmp.GetShortName()) {
+	if !doesComponentUseNewUpdateMode(ytsaurus, cmp.GetType(), cmp.GetFullName()) {
 		if !dry {
 			err = removePods(ctx, server, cmpBase)
 		}
@@ -211,47 +213,23 @@ func handleBulkUpdatingClusterState(
 	}
 
 	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    fmt.Sprintf("%s%s", cmp.GetShortName(), consts.ConditionBulkUpdateModeStarted),
+		Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionBulkUpdateModeStarted),
 		Status:  metav1.ConditionTrue,
 		Reason:  "BulkUpdateModeStarted",
 		Message: "bulk update mode started",
 	})
 
 	// Run pre-checks if needed
-	if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetShortName()) {
-		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    fmt.Sprintf("%s%s%s", cmp.GetShortName(), BulkUpdateModeName, consts.ConditionPreChecksRunning),
-			Status:  metav1.ConditionTrue,
-			Reason:  "RunningPreChecks",
-			Message: "running pre-checks",
-		})
-		preCheckStatus := cmp.UpdatePreCheck()
-		if preCheckStatus.SyncStatus != SyncStatusReady {
-			msg := preCheckStatus.Message
-			if msg == "" {
-				msg = "pre-checks failed"
-			}
-			ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    fmt.Sprintf("%s%s%s", cmp.GetShortName(), BulkUpdateModeName, string(SyncStatusBlocked)),
-				Status:  metav1.ConditionTrue,
-				Reason:  "PreChecksFailed",
-				Message: msg,
-			})
-			return ptr.To(ComponentStatusBlocked(msg)), yterrors.Err(msg)
+	if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
+		if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
+			return status, err
 		}
-		// Set PreChecksCompleted condition for this component
-		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    fmt.Sprintf("%s%s", cmp.GetShortName(), consts.ConditionPreChecksCompleted),
-			Status:  metav1.ConditionTrue,
-			Reason:  "PreChecksCompleted",
-			Message: "pre-checks completed",
-		})
 	}
 
 	// Remove pods
 	if !dry {
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    fmt.Sprintf("%s%s%s", cmp.GetShortName(), BulkUpdateModeName, consts.ConditionScalingDown),
+			Type:    cmp.GetLabeller().GetScalingDownCondition(),
 			Status:  metav1.ConditionTrue,
 			Reason:  "RemovingPods",
 			Message: "removing pods",
@@ -262,7 +240,7 @@ func handleBulkUpdatingClusterState(
 	// Update condition if state has progressed to pod creation
 	if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    fmt.Sprintf("%s%s%s", cmp.GetShortName(), BulkUpdateModeName, consts.ConditionScalingUp),
+			Type:    cmp.GetLabeller().GetScalingUpCondition(),
 			Status:  metav1.ConditionTrue,
 			Reason:  "CreatingPods",
 			Message: "creating new pods",
@@ -270,6 +248,128 @@ func handleBulkUpdatingClusterState(
 	}
 
 	return ptr.To(ComponentStatusUpdateStep("pods removal")), err
+}
+
+// handleOnDeleteUpdatingClusterState handles the OnDelete mode where pods must be manually deleted by the user.
+func handleOnDeleteUpdatingClusterState(
+	ctx context.Context,
+	ytsaurus *apiproxy.Ytsaurus,
+	cmp Component,
+	cmpBase *localComponent,
+	server server,
+	dry bool,
+) (*ComponentStatus, error) {
+	logger := log.FromContext(ctx)
+	var err error
+
+	if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsRemoval {
+		// Not in the pod removal phase, let the component handle other update states
+		return nil, err
+	}
+
+	onDeleteWaitingCondition := cmp.GetLabeller().GetWaitingOnDeleteUpdateCondition()
+	// If this is a dry run, check the update status
+	if dry {
+		// Check if we've already synced the StatefulSet with OnDelete strategy
+		if !ytsaurus.IsUpdateStatusConditionTrue(onDeleteWaitingCondition) {
+			return ptr.To(ComponentStatusWaitingFor("OnDelete mode setup")), nil
+		}
+
+		// Pods not updated yet, wait for manual action
+		return ptr.To(ComponentStatusWaitingFor("manual pod update by user")), nil
+	}
+
+	// Run pre-checks if needed
+	if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
+		if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
+			return status, err
+		}
+	}
+
+	// Set the update strategy to OnDelete
+	server.setUpdateStrategy(appsv1.OnDeleteStatefulSetStrategyType)
+	logger.Info("Setting StatefulSet update strategy to OnDelete",
+		"component", cmp.GetFullName())
+
+	// Sync the StatefulSet
+	if err := server.Sync(ctx); err != nil {
+		logger.Error(err, "Failed to sync StatefulSet in OnDelete mode", "component", cmp.GetFullName())
+		return ptr.To(ComponentStatusBlocked("Failed to sync StatefulSet")), err
+	}
+
+	// Fetch the StatefulSet to get the updated status from Kubernetes.
+	if err := server.Fetch(ctx); err != nil {
+		logger.Error(err, "Failed to fetch StatefulSet after sync", "component", cmp.GetFullName())
+		return ptr.To(ComponentStatusBlocked("Failed to fetch StatefulSet")), err
+	}
+
+	logger.Info("StatefulSet synced with OnDelete strategy and updated spec",
+		"component", cmp.GetFullName())
+
+	// Set condition that OnDelete mode has started
+	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    onDeleteWaitingCondition,
+		Status:  metav1.ConditionTrue,
+		Reason:  "OnDeleteModeStarted",
+		Message: "OnDelete update mode started, StatefulSet synced, waiting for manual pod update",
+	})
+
+	// Check if all pods are updated to the new revision
+	if server.arePodsUpdatedToNewRevision(ctx) {
+		logger.Info("All pods have been updated to the new revision, proceeding with update",
+			"component", cmp.GetFullName())
+
+		// Set pods updated condition
+		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    cmp.GetLabeller().GetPodsUpdatedCondition(),
+			Status:  metav1.ConditionTrue,
+			Reason:  "PodsUpdated",
+			Message: "All pods have been updated to new revision",
+		})
+		ytsaurus.UpdateOnDeleteComponentsSummary(ctx, onDeleteWaitingCondition, false)
+
+		return nil, nil
+	}
+
+	// Pods are not yet updated, continue waiting
+	// TODO: add prometheus metric in order to build alert for long-running OnDelete waits
+	// This metric should track the duration since OnDeleteModeStarted condition was set
+
+	// Update the summary with waiting time information
+	ytsaurus.UpdateOnDeleteComponentsSummary(ctx, onDeleteWaitingCondition, true)
+
+	return ptr.To(ComponentStatusUpdateStep("pods removal")), err
+}
+
+func runPrechecks(ctx context.Context, ytsaurus *apiproxy.Ytsaurus, cmp Component) (*ComponentStatus, error) {
+	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    cmp.GetLabeller().GetPreChecksRunningCondition(),
+		Status:  metav1.ConditionTrue,
+		Reason:  "RunningPreChecks",
+		Message: "running pre-checks",
+	})
+	preCheckStatus := cmp.UpdatePreCheck(ctx)
+	if preCheckStatus.SyncStatus != SyncStatusReady {
+		msg := preCheckStatus.Message
+		if msg == "" {
+			msg = "pre-checks failed"
+		}
+		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    cmp.GetLabeller().GetReadyCondition(),
+			Status:  metav1.ConditionFalse,
+			Reason:  "PreChecksFailed",
+			Message: msg,
+		})
+		return ptr.To(ComponentStatusBlocked(msg)), yterrors.Err(msg)
+	}
+	// Set PreChecksCompleted condition for this component
+	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    cmp.GetLabeller().GetReadyCondition(),
+		Status:  metav1.ConditionTrue,
+		Reason:  "PreChecksCompleted",
+		Message: "pre-checks completed",
+	})
+	return nil, nil
 }
 
 func SetPathAcl(path string, acl []yt.ACE) (string, error) {
@@ -316,6 +416,16 @@ func doesComponentUseNewUpdateMode(ytsaurus *apiproxy.Ytsaurus, componentType co
 		}
 	}
 	return false
+}
+
+func getComponentUpdateStrategy(ytsaurus *apiproxy.Ytsaurus, componentType consts.ComponentType, componentName string) ytv1.ComponentUpdateModeType {
+	for _, selector := range ytsaurus.GetResource().Spec.UpdatePlan {
+		if selector.Component.Type == componentType &&
+			(selector.Component.Name == "" || selector.Component.Name == componentName) {
+			return selector.Strategy.Type()
+		}
+	}
+	return ""
 }
 
 func AddAffinity(statefulSet *appsv1.StatefulSet,

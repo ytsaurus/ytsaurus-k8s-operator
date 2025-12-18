@@ -182,11 +182,31 @@ func (l *Labeller) GetInitJobCompletedCondition(name string) string {
 }
 
 func (l *Labeller) GetPodsRemovingStartedCondition() string {
-	return fmt.Sprintf("%sPodsRemovingStarted", l.GetFullComponentName())
+	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionPodsRemovingStarted)
 }
 
 func (l *Labeller) GetPodsRemovedCondition() string {
-	return fmt.Sprintf("%sPodsRemoved", l.GetFullComponentName())
+	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionPodsRemoved)
+}
+
+func (l *Labeller) GetPodsUpdatedCondition() string {
+	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionPodsUpdated)
+}
+
+func (l *Labeller) GetPreChecksRunningCondition() string {
+	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionPreChecksRunning)
+}
+
+func (l *Labeller) GetScalingDownCondition() string {
+	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionScalingDown)
+}
+
+func (l *Labeller) GetScalingUpCondition() string {
+	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionScalingUp)
+}
+
+func (l *Labeller) GetWaitingOnDeleteUpdateCondition() string {
+	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionWaitingOnDeleteUpdate)
 }
 
 func (l *Labeller) GetReadyCondition() string {

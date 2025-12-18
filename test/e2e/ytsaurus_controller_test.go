@@ -32,8 +32,10 @@ import (
 	"go.ytsaurus.tech/yt/go/yt/ytrpc"
 	"go.ytsaurus.tech/yt/go/yterrors"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	certv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 
@@ -1873,10 +1875,17 @@ exec "$@"`
 
 	}) // integration
 
-	Context("Rolling update for query tracker update tests", Label("rolling-update-bulk-mode"), func() {
+	Context("Rolling update, bulk mode tests", Label("rolling-update-bulk-mode"), func() {
 		BeforeEach(func() {
+			By("Adding base components")
 			ytBuilder.WithBaseComponents()
 			ytBuilder.WithQueryTracker()
+			ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
+				InstanceSpec: ytv1.InstanceSpec{
+					Image:         ptr.To(testutil.QueryTrackerImagePrevious),
+					InstanceCount: 3,
+				},
+			}
 			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 				{
 					Component: ytv1.Component{Type: consts.QueryTrackerType},
@@ -1885,15 +1894,10 @@ exec "$@"`
 					},
 				},
 			}
-			ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
-				InstanceSpec: ytv1.InstanceSpec{
-					Image:         ptr.To(testutil.QueryTrackerImagePrevious),
-					InstanceCount: 3,
-				},
-			}
 		})
 
 		It("Should update query tracker in bulkUpdate mode and have Running state", func(ctx context.Context) {
+
 			podsBefore := getComponentPods(ctx, namespace)
 
 			By("Trigger QT update")
@@ -1913,6 +1917,96 @@ exec "$@"`
 			for name, pod := range podsAfter {
 				if strings.HasPrefix(name, "qt-") {
 					Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.QueryTrackers.Image))
+				}
+			}
+		})
+	})
+
+	Context("Rolling update, onDelete tests for schedulers", Label("rolling-update-ondelete-mode"), func() {
+		BeforeEach(func() {
+			ytBuilder.WithBaseComponents()
+			ytsaurus.Spec.Schedulers = &ytv1.SchedulersSpec{
+				InstanceSpec: ytv1.InstanceSpec{
+					Image:         ptr.To(testutil.YtsaurusImagePrevious),
+					InstanceCount: 3,
+				},
+			}
+			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+				{
+					Component: ytv1.Component{Type: consts.SchedulerType},
+					Strategy: &ytv1.ComponentUpdateStrategy{
+						OnDelete:     &ytv1.ComponentOnDeleteUpdateMode{},
+						RunPreChecks: ptr.To(true),
+					},
+				},
+			}
+		})
+		It("Should update scheduler in onDelete mode and have Running state", func(ctx context.Context) {
+
+			podsBefore := getComponentPods(ctx, namespace)
+
+			By("Trigger sch update")
+			ytsaurus.Spec.Schedulers.Image = ptr.To(testutil.YtsaurusImageCurrent)
+
+			UpdateObject(ctx, ytsaurus)
+			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+
+			By("Verify OnDelete mode is activated")
+			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
+				HaveClusterUpdateState(ytv1.UpdateStateWaitingForPodsRemoval),
+			)
+
+			By("Verify StatefulSet has OnDelete update strategy")
+			Eventually(func() appsv1.StatefulSetUpdateStrategyType {
+				var sts appsv1.StatefulSet
+				err := k8sClient.Get(ctx, types.NamespacedName{
+					Namespace: namespace,
+					Name:      "sch",
+				}, &sts)
+				if err != nil {
+					return ""
+				}
+				return sts.Spec.UpdateStrategy.Type
+			}, reactionTimeout).Should(Equal(appsv1.OnDeleteStatefulSetStrategyType))
+
+			By("Verify pods are NOT updated after 1 minute")
+			Consistently(func() bool {
+				podsNow := getComponentPods(ctx, namespace)
+				for name, pod := range podsNow {
+					if strings.HasPrefix(name, "sch-") {
+						if pod.Spec.Containers[0].Image == *ytsaurus.Spec.Schedulers.Image {
+							return false // Pod was updated, which shouldn't happen
+						}
+					}
+				}
+				return true // All pods still on old image
+			}, 1*time.Minute, 5*time.Second).Should(BeTrue())
+
+			By("Manually delete scheduler pods")
+			for name := range podsBefore {
+				if strings.HasPrefix(name, "sch-") {
+					var pod corev1.Pod
+					err := k8sClient.Get(ctx, types.NamespacedName{
+						Namespace: namespace,
+						Name:      name,
+					}, &pod)
+					if err == nil {
+						Expect(k8sClient.Delete(ctx, &pod)).Should(Succeed())
+					}
+				}
+			}
+
+			By("Waiting cluster update completes")
+			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+
+			podsAfter := getComponentPods(ctx, namespace)
+			pods := getChangedPods(podsBefore, podsAfter)
+
+			Expect(pods.Updated).To(ConsistOf("sch-0", "sch-1", "sch-2"))
+
+			for name, pod := range podsAfter {
+				if strings.HasPrefix(name, "sch-") {
+					Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.Schedulers.Image))
 				}
 			}
 		})

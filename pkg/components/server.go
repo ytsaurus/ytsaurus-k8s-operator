@@ -11,6 +11,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -34,6 +35,7 @@ type server interface {
 	needSync() bool
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
+	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType)
 	addCARootBundle(c *corev1.Container)
 	addTlsSecretMount(c *corev1.Container)
 	addMonitoringPort(port corev1.ServicePort)
@@ -60,6 +62,8 @@ type serverImpl struct {
 	configs           *ConfigMapBuilder
 
 	builtStatefulSet *appsv1.StatefulSet
+
+	updateStrategy *appsv1.StatefulSetUpdateStrategyType
 
 	componentContainerPorts []corev1.ContainerPort
 
@@ -293,6 +297,64 @@ func (s *serverImpl) arePodsReady(ctx context.Context) bool {
 	return s.statefulSet.ArePodsReady(ctx, int(s.instanceSpec.InstanceCount), s.instanceSpec.MinReadyInstanceCount, s.readinessByContainers)
 }
 
+func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
+	logger := ctrllog.FromContext(ctx)
+
+	if !resources.Exists(s.statefulSet) {
+		return false
+	}
+
+	// Fetch the latest StatefulSet status from Kubernetes to ensure we have up-to-date revision info
+	if err := s.statefulSet.Fetch(ctx); err != nil {
+		logger.Error(err, "Failed to fetch StatefulSet status", "component", s.labeller.GetFullComponentName())
+		return false
+	}
+
+	sts := s.statefulSet.OldObject()
+
+	if sts.Status.UpdateRevision == "" {
+		logger.Info("StatefulSet has no update revision yet", "component", s.labeller.GetFullComponentName())
+		return false
+	}
+
+	logger.Info("StatefulSet revision status",
+		"component", s.labeller.GetFullComponentName(),
+		"currentRevision", sts.Status.CurrentRevision,
+		"updateRevision", sts.Status.UpdateRevision,
+		"currentReplicas", sts.Status.CurrentReplicas,
+		"updatedReplicas", sts.Status.UpdatedReplicas,
+		"readyReplicas", sts.Status.ReadyReplicas,
+		"replicas", sts.Status.Replicas)
+
+	// In OnDelete mode, currentRevision doesn't automatically update to match updateRevision.
+	// see https://github.com/kubernetes/kubernetes/issues/106055
+	isOnDelete := sts.Spec.UpdateStrategy.Type == appsv1.OnDeleteStatefulSetStrategyType
+	if isOnDelete {
+		if sts.Status.UpdateRevision != "" &&
+			sts.Status.UpdateRevision != sts.Status.CurrentRevision &&
+			sts.Spec.Replicas != nil &&
+			sts.Status.UpdatedReplicas == *sts.Spec.Replicas &&
+			sts.Status.ReadyReplicas == *sts.Spec.Replicas {
+			logger.Info("OnDelete update complete: all pods updated and ready",
+				"component", s.labeller.GetFullComponentName(),
+				"updatedReplicas", sts.Status.UpdatedReplicas,
+				"readyReplicas", sts.Status.ReadyReplicas,
+				"totalReplicas", *sts.Spec.Replicas)
+			return true
+		}
+	} else {
+		// For RollingUpdate mode, currentRevision will eventually match updateRevision
+		if sts.Status.CurrentRevision == sts.Status.UpdateRevision {
+			logger.Info("Update complete: currentRevision matches updateRevision",
+				"component", s.labeller.GetFullComponentName(),
+				"revision", sts.Status.CurrentRevision)
+			return true
+		}
+	}
+
+	return false
+}
+
 func (s *serverImpl) buildStatefulSet() *appsv1.StatefulSet {
 	if s.builtStatefulSet != nil {
 		return s.builtStatefulSet
@@ -320,6 +382,12 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	statefulSet.Spec.Replicas = &s.instanceSpec.InstanceCount
 	statefulSet.Spec.ServiceName = s.headlessService.Name()
 	statefulSet.Spec.VolumeClaimTemplates = createVolumeClaims(s.instanceSpec.VolumeClaimTemplates)
+
+	if s.updateStrategy != nil {
+		statefulSet.Spec.UpdateStrategy = appsv1.StatefulSetUpdateStrategy{
+			Type: *s.updateStrategy,
+		}
+	}
 
 	fileNames := s.configs.GetFileNames()
 	if len(fileNames) != 1 {
@@ -440,6 +508,13 @@ func (s *serverImpl) addTlsSecretMount(c *corev1.Container) {
 	s.caBundle.AddVolumeMount(c)
 	s.busServerSecret.AddVolumeMount(c)
 	s.busClientSecret.AddVolumeMount(c)
+}
+
+// setUpdateStrategy sets the desired StatefulSet update strategy
+func (s *serverImpl) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType) {
+	s.updateStrategy = &strategy
+	// Clear the built StatefulSet so it will be rebuilt with the new strategy
+	s.builtStatefulSet = nil
 }
 
 func (s *serverImpl) addMonitoringPort(port corev1.ServicePort) {
