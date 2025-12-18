@@ -1957,17 +1957,8 @@ exec "$@"`
 			)
 
 			By("Verify StatefulSet has OnDelete update strategy")
-			Eventually(func() appsv1.StatefulSetUpdateStrategyType {
-				var sts appsv1.StatefulSet
-				err := k8sClient.Get(ctx, types.NamespacedName{
-					Namespace: namespace,
-					Name:      "sch",
-				}, &sts)
-				if err != nil {
-					return ""
-				}
-				return sts.Spec.UpdateStrategy.Type
-			}, reactionTimeout).Should(Equal(appsv1.OnDeleteStatefulSetStrategyType))
+			sch := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "sch"}}
+			EventuallyObject(ctx, &sch, reactionTimeout).Should(HaveField("Spec.UpdateStrategy.Type", appsv1.OnDeleteStatefulSetStrategyType))
 
 			By("Verify pods are NOT updated after 1 minute")
 			Consistently(func() bool {
