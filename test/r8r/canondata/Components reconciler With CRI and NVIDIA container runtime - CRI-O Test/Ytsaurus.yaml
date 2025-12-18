@@ -23,6 +23,7 @@ spec:
   - instanceCount: 1
     jobEnvironment:
       cri:
+        apiRetryTimeoutSeconds: 120
         criService: crio
       runtime:
         nvidia: {}

@@ -24,7 +24,8 @@ spec:
   execNodes:
   - instanceCount: 1
     jobEnvironment:
-      cri: {}
+      cri:
+        apiRetryTimeoutSeconds: 120
       runtime:
         nvidia: {}
       userSlots: 4

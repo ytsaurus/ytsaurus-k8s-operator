@@ -559,8 +559,9 @@ func (b *YtsaurusBuilder) SetupCRIJobEnvironment(node *ytv1.ExecNodesSpec) {
 	node.JobEnvironment = &ytv1.JobEnvironmentSpec{
 		UserSlots: ptr.To(4),
 		CRI: &ytv1.CRIJobEnvironmentSpec{
-			CRIService:   b.CRIService,
-			SandboxImage: b.SandboxImage,
+			CRIService:             b.CRIService,
+			SandboxImage:           b.SandboxImage,
+			APIRetryTimeoutSeconds: ptr.To(int32(120)),
 		},
 	}
 	if b.WithNvidiaContainerRuntime {
