@@ -798,7 +798,6 @@ type CypressProxiesSpec struct {
 
 type BundleControllerSpec struct {
 	InstanceSpec `json:",inline"`
-	Disable      *bool `json:"disable,omitempty"`
 }
 
 type TabletBalancerSpec struct {
