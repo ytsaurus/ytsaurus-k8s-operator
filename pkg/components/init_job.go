@@ -113,8 +113,9 @@ func (j *InitJob) IsCompleted() bool {
 }
 
 func (j *InitJob) SetInitScript(script string) {
-	cm := j.configs.Build()
-	cm.Data[consts.InitClusterScriptFileName] = script
+	if cm, err := j.configs.Build(); err == nil {
+		cm.Data[consts.InitClusterScriptFileName] = script
+	}
 }
 
 func (j *InitJob) Build() *batchv1.Job {

@@ -29,7 +29,6 @@ type microservice interface {
 	getHttpService() *resources.HTTPService
 	buildDeployment() *appsv1.Deployment
 	buildService() *corev1.Service
-	buildConfig() *corev1.ConfigMap
 }
 
 type microserviceImpl struct {
@@ -44,7 +43,6 @@ type microserviceImpl struct {
 
 	builtDeployment *appsv1.Deployment
 	builtService    *corev1.Service
-	builtConfig     *corev1.ConfigMap
 }
 
 func newMicroservice(
@@ -89,8 +87,10 @@ func newMicroservice(
 	}
 }
 
-func (m *microserviceImpl) Sync(ctx context.Context) (err error) {
-	_ = m.buildConfig()
+func (m *microserviceImpl) Sync(ctx context.Context) error {
+	if _, err := m.configs.Build(); err != nil {
+		return err
+	}
 	_ = m.buildDeployment()
 	_ = m.buildService()
 
@@ -148,13 +148,6 @@ func (m *microserviceImpl) buildService() *corev1.Service {
 		m.builtService = m.service.Build()
 	}
 	return m.builtService
-}
-
-func (m *microserviceImpl) buildConfig() *corev1.ConfigMap {
-	if m.builtConfig == nil {
-		m.builtConfig = m.configs.Build()
-	}
-	return m.builtConfig
 }
 
 func (m *microserviceImpl) arePodsReady(ctx context.Context) bool {

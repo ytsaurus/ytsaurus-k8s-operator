@@ -135,30 +135,31 @@ func (h *ConfigMapBuilder) GetConfigMapName() string {
 }
 
 func (h *ConfigMapBuilder) getConfig(descriptor ConfigGenerator) ([]byte, error) {
+	name := h.GetConfigMapName()
 	serializedConfig, err := descriptor.Generator()
 	if err != nil {
-		h.apiProxy.RecordWarning(
-			"Reconciling",
-			fmt.Sprintf("Failed to build config %s: %s", descriptor.FileName, err))
-		return nil, err
+		h.apiProxy.RecordWarning("Failure", fmt.Sprintf("Cannot build configmap/%s %q: %s",
+			name, descriptor.FileName, err))
+		return nil, fmt.Errorf("failed to generate configmap/%s %q: %w", name, descriptor.FileName, err)
 	}
 
 	if h.overridesMap.GetResourceVersion() != "" {
 		overrideNames := []string{
 			descriptor.FileName,
-			fmt.Sprintf("%s--%s", h.GetConfigMapName(), descriptor.FileName),
+			fmt.Sprintf("%s--%s", name, descriptor.FileName),
 		}
 		for _, overrideName := range overrideNames {
 			if value, ok := h.overridesMap.Data[overrideName]; ok {
 				configWithOverrides, err := overrideYsonConfigs(serializedConfig, []byte(value))
-				if err == nil {
-					serializedConfig = configWithOverrides
-				} else {
-					// ToDo(psushin): better error handling.
-					h.apiProxy.RecordWarning(
-						"Reconciling",
-						fmt.Sprintf("Failed to apply config override %s for %s, skipping: %s", overrideName, descriptor.FileName, err))
+				if err != nil {
+					h.apiProxy.RecordWarning("Failure", fmt.Sprintf("Cannot apply configmap/%s %q override %q: %s",
+						name, descriptor.FileName, overrideName, err))
+					return nil, fmt.Errorf("failed to apply configmap/%s %q override %q: %w",
+						name, descriptor.FileName, overrideName, err)
 				}
+				h.apiProxy.RecordNormal("Override", fmt.Sprintf("Applied configmap/%s %q override %q",
+					name, descriptor.FileName, overrideName))
+				serializedConfig = configWithOverrides
 			}
 		}
 	}
@@ -235,7 +236,7 @@ func (h *ConfigMapBuilder) NeedInit() bool {
 	return !resources.Exists(h.configMap)
 }
 
-func (h *ConfigMapBuilder) Build() *corev1.ConfigMap {
+func (h *ConfigMapBuilder) Build() (*corev1.ConfigMap, error) {
 	cm := h.configMap.Build()
 
 	if version := h.overridesMap.ResourceVersion; version != "" {
@@ -245,21 +246,20 @@ func (h *ConfigMapBuilder) Build() *corev1.ConfigMap {
 	for _, descriptor := range h.generators {
 		data, err := h.getConfig(descriptor)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-
 		if data != nil {
 			cm.Data[descriptor.FileName] = string(data)
 		}
 	}
 
-	return cm
+	return cm, nil
 }
 
 func (h *ConfigMapBuilder) Sync(ctx context.Context) error {
 	needReload, err := h.NeedReload()
 	if err != nil {
-		needReload = false
+		return err
 	}
 	if !h.NeedInit() && !needReload {
 		return nil
