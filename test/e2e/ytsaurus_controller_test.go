@@ -688,7 +688,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			podsBeforeUpdate = getComponentPods(ctx, namespace)
 		})
 
-		DescribeTableSubtree("Updating Ytsaurus image",
+		DescribeTableSubtree("Updating Ytsaurus image", Label("basic"),
 			func(oldImage, newImage string) {
 				BeforeEach(func() {
 					if oldImage == "" || newImage == "" {
@@ -735,13 +735,13 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					CurrentlyObject(ctx, ytsaurus).Should(HaveObservedGeneration())
 				})
 			},
-			Entry("When update Ytsaurus 23.2 -> 24.1", Label("basic"), testutil.YtsaurusImage23_2, testutil.YtsaurusImage24_1),
-			Entry("When update Ytsaurus 24.1 -> 24.2", Label("basic"), testutil.YtsaurusImage24_1, testutil.YtsaurusImage24_2),
-			Entry("When update Ytsaurus 24.2 -> 25.1", Label("basic"), testutil.YtsaurusImage24_2, testutil.YtsaurusImage25_1),
-			Entry("When update Ytsaurus 25.1 -> 25.2", Label("basic"), testutil.YtsaurusImage25_1, testutil.YtsaurusImage25_2),
+			Entry("When update Ytsaurus 23.2 -> 24.1", Label("24.1"), testutil.YtsaurusImage23_2, testutil.YtsaurusImage24_1),
+			Entry("When update Ytsaurus 24.1 -> 24.2", Label("24.2"), testutil.YtsaurusImage24_1, testutil.YtsaurusImage24_2),
+			Entry("When update Ytsaurus 24.2 -> 25.1", Label("25.1"), testutil.YtsaurusImage24_2, testutil.YtsaurusImage25_1),
+			Entry("When update Ytsaurus 25.1 -> 25.2", Label("25.2"), testutil.YtsaurusImage25_1, testutil.YtsaurusImage25_2),
 		)
 
-		Context("Test UpdateSelector", Label("selector"), func() {
+		Context("Test update plan selector", Label("plan", "selector"), func() {
 
 			BeforeEach(func() {
 				By("Setting 24.2+ image for update selector tests")
@@ -1051,7 +1051,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Context("Misc update test cases", Label("misc"), func() {
 
 			// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
-			It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", func(ctx context.Context) {
+			It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", Label("master"), func(ctx context.Context) {
 
 				By("Store master pod creation time")
 				msPod := getMasterPod(testutil.MasterPodName, namespace)
@@ -1519,7 +1519,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 	Context("Integration tests", Label("integration"), func() {
 
-		Context("With CRI job environment", Label("cri"), func() {
+		Context("With CRI job environment", Label("cri", "containerd"), func() {
 
 			BeforeEach(func() {
 				By("Adding exec nodes")
@@ -1538,7 +1538,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		}) // integration cri
 
-		Context("With CRI-O", Label("cri"), Label("crio"), func() {
+		Context("With CRI-O", Label("cri", "crio"), func() {
 
 			BeforeEach(func() {
 				ytsaurus.Spec.CoreImage = testutil.YtsaurusImage25_2
@@ -1611,7 +1611,7 @@ exec "$@"`
 				}
 			})
 
-			It("Verify CRI-O job environment", func(ctx context.Context) {
+			It("Verify CRI-O job environment", Label("crun"), func(ctx context.Context) {
 				// TODO(khlebnikov): Check docker image and resource limits.
 			})
 
@@ -1894,7 +1894,7 @@ exec "$@"`
 
 	}) // integration
 
-	Context("Rolling update, bulk mode tests", Label("rolling-update-bulk-mode"), func() {
+	Context("Test update plan strategy", Label("update", "plan", "strategy"), func() {
 		BeforeEach(func() {
 			By("Adding base components")
 			ytBuilder.WithBaseComponents()
@@ -1915,7 +1915,7 @@ exec "$@"`
 			}
 		})
 
-		It("Should update query tracker in bulkUpdate mode and have Running state", func(ctx context.Context) {
+		It("Should update query tracker by bulk strategy and have Running state", Label("query-tracker", "bulk"), func(ctx context.Context) {
 
 			podsBefore := getComponentPods(ctx, namespace)
 
@@ -1941,7 +1941,7 @@ exec "$@"`
 		})
 	})
 
-	Context("Rolling update, onDelete tests for schedulers", Label("rolling-update-ondelete-mode"), func() {
+	Context("on-delete strategy for schedulers", Label("update", "plan", "strategy", "scheduler", "ondelete"), func() {
 		BeforeEach(func() {
 			ytBuilder.WithBaseComponents()
 			ytsaurus.Spec.Schedulers = &ytv1.SchedulersSpec{
