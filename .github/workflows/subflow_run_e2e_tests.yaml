@@ -23,17 +23,19 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 5
       matrix:
         e2e:
-          - name: "basic"
-            filter: "basic"
-          - name: "selector and remote"
-            filter: "selector || remote"
+          - name: "update basic"
+            filter: "update && basic"
+          - name: "update plan"
+            filter: "update && plan"
+          - name: "update other"
+            filter: "update && !(basic || plan)"
           - name: "tls"
             filter: "tls"
           - name: "other"
-            filter: "!basic && !selector && !remote && !tls"
+            filter: "!(update || tls)"
           - name: "${{ inputs.e2e_filter }}"
             filter: "${{ inputs.e2e_filter }}"
             from_input: true

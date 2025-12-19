@@ -7,28 +7,28 @@ KIND_CLUSTER_NAME ?= ${USER}-yt-kind
 export KIND_CLUSTER_NAME
 
 ## Path to kind cluster config.
-KIND_CLUSTER_CONFIG =
+KIND_CLUSTER_CONFIG ?=
 
 ## K8s context for kind cluster
-KIND_KUBE_CONTEXT = kind-$(KIND_CLUSTER_NAME)
+KIND_KUBE_CONTEXT ?= kind-$(KIND_CLUSTER_NAME)
 
 ## K8s operator instance name.
-OPERATOR_INSTANCE = ytsaurus-dev
+OPERATOR_INSTANCE ?= ytsaurus-dev
 
 ## If "true" k8s operator watches only resources with matching label "ytsaurus.tech/operator-instance".
-OPERATOR_INSTANCE_SCOPE = false
+OPERATOR_INSTANCE_SCOPE ?= false
 
 ## K8s namespace for YTsaurus operator.
-OPERATOR_NAMESPACE = ytsaurus-operator
+OPERATOR_NAMESPACE ?= ytsaurus-operator
 
 ## If "true" k8s operator watches only own namespace.
-OPERATOR_NAMESPACED_SCOPE = false
+OPERATOR_NAMESPACED_SCOPE ?= false
 
 ## If "false" CRDs will not be installed. Only single operator instance may install them.
-OPERATOR_CRDS_ENABLED = true
+OPERATOR_CRDS_ENABLED ?= true
 
 ## If "false" CRDs will be removed at operator uninstall.
-OPERATOR_CRDS_KEEP = true
+OPERATOR_CRDS_KEEP ?= true
 
 ## K8s namespace for sample cluster.
 YTSAURUS_NAMESPACE ?= ytsaurus-dev
@@ -37,20 +37,20 @@ YTSAURUS_NAMESPACE ?= ytsaurus-dev
 YTSAURUS_SPEC ?= config/samples/cluster_v1_cri.yaml
 
 ## Version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.24.2
+ENVTEST_K8S_VERSION ?= 1.24.2
 
-CERT_MANAGER_VERSION = v1.17.4
-TRUST_MANAGER_VERSION = v0.17.1
+CERT_MANAGER_VERSION ?= v1.17.4
+TRUST_MANAGER_VERSION ?= v0.17.1
 
 ## YTsaurus operator image name.
-OPERATOR_IMAGE = ytsaurus/k8s-operator
+OPERATOR_IMAGE ?= ytsaurus/k8s-operator
 
 ## YTsaurus operator image tag.
-OPERATOR_TAG = 0.0.0-alpha
+OPERATOR_TAG ?= 0.0.0-alpha
 
-OPERATOR_CHART = ytop-chart
-OPERATOR_CHART_NAME = ytop-chart
-OPERATOR_CHART_CRDS = $(OPERATOR_CHART)/templates/crds
+OPERATOR_CHART ?= ytop-chart
+OPERATOR_CHART_NAME ?= ytop-chart
+OPERATOR_CHART_CRDS ?= $(OPERATOR_CHART)/templates/crds
 
 ifdef RELEASE_VERSION
 OPERATOR_VERSION = $(RELEASE_VERSION)
@@ -85,18 +85,27 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 ## Test environment include
-TEST_ENV = test-env.inc
+TEST_ENV ?= test-env.inc
 include ${TEST_ENV}
 
-## Enable debug options.
-DEBUG =
+## Enable test debug options: fail fast, keep artifacts.
+DEBUG ?=
+
+## Dry run tests.
+DRYRUN ?=
+
+## Filter tests by regular expression.
+FOCUS ?=
+
+## Filter tests by labels: 'a && !(b || c)'
+GINKGO_LABEL_FILTER ?=
 
 ## Tests parallelism.
 GINKGO_PROCS ?= 2
 
 GINKGO_FLAGS += --vv
+GINKGO_FLAGS += --silence-skips
 GINKGO_FLAGS += --trace
-GINKGO_FLAGS += --procs="$(GINKGO_PROCS)"
 GINKGO_FLAGS += --timeout=1h
 GINKGO_FLAGS += --poll-progress-after=2m
 GINKGO_FLAGS += --poll-progress-interval=1m
@@ -106,12 +115,26 @@ ifneq ($(GITHUB_ACTION),)
 	GINKGO_FLAGS += --github-output
 endif
 
+ifneq ($(FOCUS),)
+	GINKGO_FLAGS += --focus="$(FOCUS)"
+endif
+
 ifneq ($(GINKGO_LABEL_FILTER),)
 	GINKGO_FLAGS += --label-filter="$(GINKGO_LABEL_FILTER)"
 endif
 
 ifneq ($(DEBUG),)
 	GINKGO_FLAGS += --fail-fast
+endif
+
+ifeq ($(DRYRUN),)
+ifneq ($(GINKGO_PROCS),)
+	GINKGO_FLAGS += --procs="$(GINKGO_PROCS)"
+endif
+	REMOVE_CANONIZED = rm -fr
+else
+	GINKGO_FLAGS += --dry-run
+	REMOVE_CANONIZED = : dry-run rm -fr
 endif
 
 GO_TEST_FLAGS += -timeout 1800s
@@ -197,14 +220,14 @@ lint-generated: generate helm-chart ## Check that generated files are uptodate a
 
 .PHONY: canonize
 canonize: generate-code manifests envtest-assets ## Canonize test results.
-	rm -fr pkg/components/canondata pkg/ytconfig/canondata test/r8r/canondata
+	$(REMOVE_CANONIZED) pkg/components/canondata pkg/ytconfig/canondata test/r8r/canondata
 	CANONIZE=y \
 	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./pkg/ytconfig ./pkg/components ./test/r8r
 	! git status --porcelain '**/canondata/*' | grep .
 
 .PHONY: canonize-ytconfig
 canonize-ytconfig: generate-code fmt vet ## Canonize ytconfig and reconciler test results.
-	rm -fr pkg/ytconfig/canondata test/r8r/canondata
+	$(REMOVE_CANONIZED) pkg/ytconfig/canondata test/r8r/canondata
 	CANONIZE=y \
 	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./pkg/ytconfig/... ./test/r8r/...
 	! git status --porcelain '**/canondata/*' | grep .
