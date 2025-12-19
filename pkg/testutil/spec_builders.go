@@ -43,15 +43,16 @@ var (
 	// NOTE: The same image is used for YTsaurus integration tests.
 	YtsaurusJobImage = GetenvOr("YTSAURUS_JOB_IMAGE", "docker.io/library/python:3.8-slim")
 
-	YtsaurusImage23_2 = GetenvOr("YTSAURUS_IMAGE_23_2", "ghcr.io/ytsaurus/ytsaurus:stable-23.2.0")
 	YtsaurusImage24_1 = GetenvOr("YTSAURUS_IMAGE_24_1", "ghcr.io/ytsaurus/ytsaurus:stable-24.1.0")
 	YtsaurusImage24_2 = GetenvOr("YTSAURUS_IMAGE_24_2", "ghcr.io/ytsaurus/ytsaurus:stable-24.2.1")
 	YtsaurusImage25_1 = GetenvOr("YTSAURUS_IMAGE_25_1", "ghcr.io/ytsaurus/ytsaurus:stable-25.1.0")
-	YtsaurusImage25_2 = GetenvOr("YTSAURUS_IMAGE_25_2", "ghcr.io/ytsaurus/ytsaurus:stable-25.2.0")
+	YtsaurusImage25_2 = GetenvOr("YTSAURUS_IMAGE_25_2", "ghcr.io/ytsaurus/ytsaurus:stable-25.2.1")
+	YtsaurusImage25_3 = GetenvOr("YTSAURUS_IMAGE_25_3", "")
+	YtsaurusImage25_4 = GetenvOr("YTSAURUS_IMAGE_25_4", "")
 
-	YtsaurusImagePrevious = GetenvOr("YTSAURUS_IMAGE_PREVIOUS", YtsaurusImage24_1)
-	YtsaurusImageCurrent  = GetenvOr("YTSAURUS_IMAGE_CURRENT", YtsaurusImage24_2)
-	YtsaurusImageFuture   = GetenvOr("YTSAURUS_IMAGE_FUTURE", YtsaurusImage25_2)
+	YtsaurusImagePrevious = GetenvOr("YTSAURUS_IMAGE_PREVIOUS", YtsaurusImage24_2)
+	YtsaurusImageCurrent  = GetenvOr("YTSAURUS_IMAGE_CURRENT", YtsaurusImage25_2)
+	YtsaurusImageFuture   = GetenvOr("YTSAURUS_IMAGE_FUTURE", YtsaurusImage25_3)
 	YtsaurusImageNightly  = GetenvOr("YTSAURUS_IMAGE_NIGHTLY", "")
 
 	YtsaurusMutualTLSReady = os.Getenv("YTSAURUS_TLS_READY") != ""
@@ -124,16 +125,6 @@ var (
 		StrawberryHandlesRestarts: true,
 	}
 
-	YtsaurusImages24_1 = YtsaurusImages{
-		Job:          YtsaurusJobImage,
-		Core:         YtsaurusImage24_1,
-		Strawberry:   StrawberryImagePrevious,
-		Chyt:         ChytImagePrevious,
-		QueryTracker: QueryTrackerImagePrevious,
-
-		MutualTLSReady: false,
-	}
-
 	YtsaurusImages24_2 = YtsaurusImages{
 		Job:          YtsaurusJobImage,
 		Core:         YtsaurusImage24_2,
@@ -162,6 +153,17 @@ var (
 		QueryTracker: QueryTrackerImageFuture,
 
 		MutualTLSReady:            YtsaurusMutualTLSReady,
+		StrawberryHandlesRestarts: true,
+	}
+
+	YtsaurusImages25_3 = YtsaurusImages{
+		Job:          YtsaurusJobImage,
+		Core:         YtsaurusImage25_3,
+		Strawberry:   StrawberryImageFuture,
+		Chyt:         ChytImageFuture,
+		QueryTracker: QueryTrackerImageFuture,
+
+		MutualTLSReady:            true,
 		StrawberryHandlesRestarts: true,
 	}
 )
@@ -460,17 +462,11 @@ func (b *YtsaurusBuilder) WithYqlAgent() {
 }
 
 func (b *YtsaurusBuilder) WithQueueAgent() {
-	image := b.Images.Core
-	// Older version doesn't have /usr/bin/ytserver-queue-agent
-	if image == YtsaurusImage23_2 {
-		image = YtsaurusImage24_1
-	}
 	b.Ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
 			Loggers:               b.CreateLoggersSpec(),
-			Image:                 ptr.To(image),
 		},
 	}
 }

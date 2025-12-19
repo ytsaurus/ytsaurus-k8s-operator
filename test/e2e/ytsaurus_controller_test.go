@@ -701,11 +701,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 					By("Setting old core image for testing upgrade")
 					ytsaurus.Spec.CoreImage = oldImage
-
-					if oldImage == testutil.YtsaurusImage23_2 {
-						By("Disabling master caches in 23.2")
-						ytsaurus.Spec.MasterCaches = nil
-					}
 				})
 
 				It("Triggers cluster update", func(ctx context.Context) {
@@ -735,22 +730,13 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					CurrentlyObject(ctx, ytsaurus).Should(HaveObservedGeneration())
 				})
 			},
-			Entry("When update Ytsaurus 23.2 -> 24.1", Label("24.1"), testutil.YtsaurusImage23_2, testutil.YtsaurusImage24_1),
 			Entry("When update Ytsaurus 24.1 -> 24.2", Label("24.2"), testutil.YtsaurusImage24_1, testutil.YtsaurusImage24_2),
 			Entry("When update Ytsaurus 24.2 -> 25.1", Label("25.1"), testutil.YtsaurusImage24_2, testutil.YtsaurusImage25_1),
 			Entry("When update Ytsaurus 25.1 -> 25.2", Label("25.2"), testutil.YtsaurusImage25_1, testutil.YtsaurusImage25_2),
+			Entry("When update Ytsaurus 25.2 -> 25.3", Label("25.3"), testutil.YtsaurusImage25_2, testutil.YtsaurusImage25_3),
 		)
 
 		Context("Test update plan selector", Label("plan", "selector"), func() {
-
-			BeforeEach(func() {
-				By("Setting 24.2+ image for update selector tests")
-				// This image is used for update selector tests because for earlier images
-				// there will be migration of imaginary chunks locations which restarts datanodes
-				// and makes it hard to test updateSelector.
-				// For 24.2+ image no migration is needed.
-				ytsaurus.Spec.CoreImage = testutil.YtsaurusImage24_2
-			})
 
 			It("Should be updated according to UpdateSelector=Everything", func(ctx context.Context) {
 
@@ -1541,7 +1527,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Context("With CRI-O", Label("cri", "crio"), func() {
 
 			BeforeEach(func() {
-				ytsaurus.Spec.CoreImage = testutil.YtsaurusImage25_2
 				requiredImages = append(requiredImages, ytsaurus.Spec.CoreImage)
 
 				By("Adding exec nodes")
@@ -1888,6 +1873,7 @@ exec "$@"`
 			Entry("YTsaurus 24.2", Label("24.2"), testutil.YtsaurusImages24_2),
 			Entry("YTsaurus 25.1", Label("25.1"), testutil.YtsaurusImages25_1),
 			Entry("YTsaurus 25.2", Label("25.2"), testutil.YtsaurusImages25_2),
+			Entry("YTsaurus 25.3", Label("25.3"), testutil.YtsaurusImages25_3),
 			Entry("YTsaurus twilight", Label("twilight"), testutil.TwilightImages),
 			Entry("YTsaurus nightly", Label("nightly"), testutil.NightlyImages),
 		) // integration tls

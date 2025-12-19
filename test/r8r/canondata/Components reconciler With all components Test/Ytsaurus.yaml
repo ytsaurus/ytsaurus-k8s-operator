@@ -166,7 +166,6 @@ spec:
     minReadyInstanceCount: 0
     resources: {}
   queueAgents:
-    image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
     instanceCount: 1
     loggers:
     - minLogLevel: info
