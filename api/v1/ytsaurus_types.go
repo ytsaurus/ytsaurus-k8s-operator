@@ -798,7 +798,10 @@ type CypressProxiesSpec struct {
 
 type BundleControllerSpec struct {
 	InstanceSpec `json:",inline"`
-	Disable      *bool `json:"disable,omitempty"`
+}
+
+type TabletBalancerSpec struct {
+	InstanceSpec `json:",inline"`
 }
 
 type ClusterFeatures struct {
@@ -944,6 +947,7 @@ type YtsaurusSpec struct {
 	QueueAgents          *QueueAgentSpec           `json:"queueAgents,omitempty"`
 	CypressProxies       *CypressProxiesSpec       `json:"cypressProxies,omitempty"`
 	BundleController     *BundleControllerSpec     `json:"bundleController,omitempty"`
+	TabletBalancer       *TabletBalancerSpec       `json:"tabletBalancers,omitempty"`
 
 	UI *UISpec `json:"ui,omitempty"`
 }

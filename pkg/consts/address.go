@@ -85,4 +85,7 @@ const (
 
 	BundleControllerRPCPort        = 9025
 	BundleControllerMonitoringPort = 10025
+
+	TabletBalancerRPCPort        = 9024
+	TabletBalancerMonitoringPort = 10024
 )

@@ -120,7 +120,6 @@ _Appears in:_
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
-| `disable` _boolean_ |  |  |  |
 
 
 #### BundlesBootstrapSpec
@@ -766,6 +765,7 @@ _Appears in:_
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
+- [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
 
@@ -984,6 +984,7 @@ _Appears in:_
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
+- [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
 
@@ -1042,6 +1043,7 @@ _Appears in:_
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
+- [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
 
@@ -1189,6 +1191,7 @@ _Appears in:_
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
+- [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
 
@@ -1487,6 +1490,7 @@ _Appears in:_
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
+- [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
 
@@ -1906,6 +1910,7 @@ _Appears in:_
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
+- [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
 - [YtsaurusSpec](#ytsaurusspec)
@@ -2534,6 +2539,7 @@ _Appears in:_
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
+- [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
 
@@ -2592,6 +2598,48 @@ _Appears in:_
 | `minPort` _integer_ |  | 32000 |  |
 | `portCount` _integer_ | Number of ports to allocate for balancing service. | 20 |  |
 | `role` _string_ |  | default | MinLength: 1 <br /> |
+
+
+#### TabletBalancerSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
+| `instanceCount` _integer_ |  |  |  |
+| `minReadyInstanceCount` _integer_ |  |  |  |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `runtimeClassName` _string_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
+| `monitoringPort` _[int32](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#int32-v1-core)_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ |  |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 
 
 #### TabletCellBundleInfo
@@ -2688,6 +2736,7 @@ _Appears in:_
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
+- [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
 
@@ -2885,6 +2934,7 @@ _Appears in:_
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
+- [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
 
@@ -3056,6 +3106,7 @@ _Appears in:_
 | `queueAgents` _[QueueAgentSpec](#queueagentspec)_ |  |  |  |
 | `cypressProxies` _[CypressProxiesSpec](#cypressproxiesspec)_ |  |  |  |
 | `bundleController` _[BundleControllerSpec](#bundlecontrollerspec)_ |  |  |  |
+| `tabletBalancers` _[TabletBalancerSpec](#tabletbalancerspec)_ |  |  |  |
 | `ui` _[UISpec](#uispec)_ |  |  |  |
 
 
