@@ -51,6 +51,9 @@ spec:
         - containerPort: 9443
           name: webhook-server
           protocol: TCP
+        - containerPort: 8080
+          name: metrics
+          protocol: TCP
         readinessProbe:
           httpGet:
             path: /readyz
@@ -69,25 +72,6 @@ spec:
         {{- end }}
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: webhook-cert
-          readOnly: true
-      - args: {{- toYaml .Values.controllerManager.kubeRbacProxy.args | nindent 8 }}
-        env:
-        - name: KUBERNETES_CLUSTER_DOMAIN
-          value: {{ quote .Values.kubernetesClusterDomain }}
-        image: {{ .Values.controllerManager.kubeRbacProxy.image.repository }}:{{ .Values.controllerManager.kubeRbacProxy.image.tag
-          | default .Chart.AppVersion }}
-        name: kube-rbac-proxy
-        ports:
-        - containerPort: 8443
-          name: https
-          protocol: TCP
-        resources: {{- toYaml .Values.controllerManager.kubeRbacProxy.resources | nindent
-          10 }}
-        securityContext: {{- toYaml .Values.controllerManager.kubeRbacProxy.containerSecurityContext
-          | nindent 10 }}
-        volumeMounts:
-        - mountPath: /etc/certs/tls
-          name: metrics-cert
           readOnly: true
       nodeSelector: {{- toYaml .Values.controllerManager.nodeSelector | nindent 8 }}
       tolerations: {{- toYaml .Values.controllerManager.tolerations | nindent 8 }}
@@ -118,7 +102,3 @@ spec:
         secret:
           defaultMode: 420
           secretName: {{ include "ytop-chart.fullname" . }}-webhook-cert
-      - name: metrics-cert
-        secret:
-          defaultMode: 420
-          secretName: {{ include "ytop-chart.fullname" . }}-metrics-cert

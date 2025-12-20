@@ -2354,3 +2354,19 @@ func NewMapTestOperation(ytClient yt.Client) *TestOperation {
 		},
 	}
 }
+
+var _ = Describe("Check operator", Label("operator"), func() {
+	It("Tests operator metrics are available", Label("metrics"), func(ctx context.Context) {
+		metricsURL, err := getOperatorMetricsURL()
+		Expect(err).NotTo(HaveOccurred())
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, metricsURL, http.NoBody)
+		Expect(err).NotTo(HaveOccurred())
+		rsp, err := http.DefaultClient.Do(req)
+		Expect(err).NotTo(HaveOccurred())
+		DeferCleanup(rsp.Body.Close)
+		Expect(rsp.StatusCode).To(Equal(http.StatusOK))
+		body, err := io.ReadAll(rsp.Body)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(body).NotTo(BeEmpty())
+	})
+})

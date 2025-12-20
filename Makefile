@@ -14,12 +14,14 @@ KIND_KUBE_CONTEXT ?= kind-$(KIND_CLUSTER_NAME)
 
 ## K8s operator instance name.
 OPERATOR_INSTANCE ?= ytsaurus-dev
+export OPERATOR_INSTANCE
 
 ## If "true" k8s operator watches only resources with matching label "ytsaurus.tech/operator-instance".
 OPERATOR_INSTANCE_SCOPE ?= false
 
 ## K8s namespace for YTsaurus operator.
 OPERATOR_NAMESPACE ?= ytsaurus-operator
+export OPERATOR_NAMESPACE
 
 ## If "true" k8s operator watches only own namespace.
 OPERATOR_NAMESPACED_SCOPE ?= false
@@ -49,6 +51,8 @@ OPERATOR_IMAGE ?= ytsaurus/k8s-operator
 OPERATOR_TAG ?= 0.0.0-alpha
 
 OPERATOR_CHART ?= ytop-chart
+export OPERATOR_CHART
+
 OPERATOR_CHART_NAME ?= ytop-chart
 OPERATOR_CHART_CRDS ?= $(OPERATOR_CHART)/templates/crds
 
@@ -332,6 +336,7 @@ k8s-install-ytsaurus-dev-ca:
 	fi
 
 HELM_INSTALL_ARGS += $(OPERATOR_INSTANCE) $(OPERATOR_CHART)
+HELM_INSTALL_ARGS += --set metricsService.type=NodePort
 HELM_INSTALL_ARGS += --set controllerManager.manager.image.repository=${OPERATOR_IMAGE}
 HELM_INSTALL_ARGS += --set controllerManager.manager.image.tag=${OPERATOR_TAG}
 HELM_INSTALL_ARGS += --set controllerManager.manager.instanceScope=${OPERATOR_INSTANCE_SCOPE}

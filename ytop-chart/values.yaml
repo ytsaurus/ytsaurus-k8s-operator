@@ -6,35 +6,12 @@ crds:
   enabled: true
   keep: true
 controllerManager:
-  kubeRbacProxy:
-    args:
-      - --secure-listen-address=:8443
-      - --upstream=http://127.0.0.1:8080/
-      - --logtostderr=true
-      - --tls-cert-file=/etc/certs/tls/tls.crt
-      - --tls-private-key-file=/etc/certs/tls/tls.key
-      - --v=0
-    containerSecurityContext:
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-          - ALL
-    image:
-      repository: gcr.io/kubebuilder/kube-rbac-proxy
-      tag: v0.13.0
-    resources:
-      limits:
-        cpu: 500m
-        memory: 128Mi
-      requests:
-        cpu: 5m
-        memory: 64Mi
   manager:
     instanceScope: false
     namespacedScope: false
     args:
       - --health-probe-bind-address=:8081
-      - --metrics-bind-address=127.0.0.1:8080
+      - --metrics-bind-address=:8080
       - --leader-elect
     containerSecurityContext:
       allowPrivilegeEscalation: false
@@ -71,7 +48,7 @@ managerConfig:
     health:
       healthProbeBindAddress: :8081
     metrics:
-      bindAddress: 127.0.0.1:8080
+      bindAddress: :8080
     webhook:
       port: 9443
     leaderElection:
@@ -89,10 +66,10 @@ managerConfig:
     # leaderElectionReleaseOnCancel: true
 metricsService:
   ports:
-    - name: https
-      port: 8443
+    - name: metrics
+      port: 8080
       protocol: TCP
-      targetPort: https
+      targetPort: metrics
   type: ClusterIP
 webhookService:
   ports:

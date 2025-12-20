@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -99,6 +100,23 @@ func getServiceAddress(namespace, serviceName, portName string) (string, error) 
 	Expect(nodeAddress).ToNot(BeEmpty())
 
 	return fmt.Sprintf("%s:%v", nodeAddress, nodePort), nil
+}
+
+func getOperatorMetricsURL() (string, error) {
+	if url := os.Getenv("E2E_YT_OPERATOR_METRICS_URL"); url != "" {
+		return url, nil
+	}
+	namespace := os.Getenv("OPERATOR_NAMESPACE")
+	instance := os.Getenv("OPERATOR_INSTANCE")
+	chart := os.Getenv("OPERATOR_CHART")
+	if namespace == "" || instance == "" || chart == "" {
+		return "", fmt.Errorf("operator namespace, instance, or chart is not defined")
+	}
+	address, err := getServiceAddress(namespace, instance+"-"+chart+"-metrics", "metrics")
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("http://%s/metrics", address), nil
 }
 
 func getComponentPods(ctx context.Context, namespace string) map[string]corev1.Pod {
