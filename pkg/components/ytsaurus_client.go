@@ -25,6 +25,10 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
+const (
+	hydraPath = "orchid/monitoring/hydra"
+)
+
 type internalYtsaurusClient interface {
 	Component
 	GetYtClient() yt.Client
@@ -523,42 +527,12 @@ func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 		return false, msg, nil
 	}
 
-	// Check masters.
-	primaryMasterAddresses := make([]string, 0)
-	err = yc.ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &primaryMasterAddresses, nil)
+	// Check is masters quorum healthy
+	msg, err = yc.checkMastersQuorumHealth(ctx)
 	if err != nil {
 		return false, "", err
 	}
-
-	leadingPrimaryMasterCount := 0
-	followingPrimaryMasterCount := 0
-
-	for _, primaryMasterAddress := range primaryMasterAddresses {
-		var hydra MasterHydra
-		err = yc.ytClient.GetNode(
-			ctx,
-			ypath.Path(fmt.Sprintf("//sys/primary_masters/%v/orchid/monitoring/hydra", primaryMasterAddress)),
-			&hydra,
-			nil)
-		if err != nil {
-			return false, "", err
-		}
-
-		if !hydra.Active {
-			msg = fmt.Sprintf("There is a non-active master: %v", primaryMasterAddresses)
-			return false, msg, nil
-		}
-
-		switch hydra.State {
-		case MasterStateLeading:
-			leadingPrimaryMasterCount += 1
-		case MasterStateFollowing:
-			followingPrimaryMasterCount += 1
-		}
-	}
-
-	if !(leadingPrimaryMasterCount == 1 && followingPrimaryMasterCount+1 == len(primaryMasterAddresses)) {
-		msg = "There is no leader or some peer is not active"
+	if msg != "" {
 		return false, msg, nil
 	}
 
@@ -842,6 +816,61 @@ func (yc *YtsaurusClient) RecoverTableCells(ctx context.Context, bundles []ytv1.
 
 // Master actions.
 
+type MastersWithMaintenance struct {
+	Address     string `yson:",value"`
+	Maintenance bool   `yson:"maintenance,attr"`
+}
+
+func (yc *YtsaurusClient) checkMastersQuorumHealth(ctx context.Context) (string, error) {
+	primaryMastersWithMaintenance := make([]MastersWithMaintenance, 0)
+	cypressPath := consts.ComponentCypressPath(consts.MasterType)
+
+	err := yc.ytClient.ListNode(ctx, ypath.Path(cypressPath), &primaryMastersWithMaintenance, &yt.ListNodeOptions{
+		Attributes: []string{"maintenance"}})
+	if err != nil {
+		return "", err
+	}
+
+	leadingPrimaryMasterCount := 0
+	followingPrimaryMasterCount := 0
+
+	for _, primaryMaster := range primaryMastersWithMaintenance {
+		var hydra MasterHydra
+		err = yc.ytClient.GetNode(
+			ctx,
+			ypath.Path(fmt.Sprintf("%v/%v/%v", cypressPath, primaryMaster.Address, hydraPath)),
+			&hydra,
+			nil)
+		if err != nil {
+			return "", err
+		}
+
+		if !hydra.Active {
+			msg := fmt.Sprintf("There is a non-active master: %v", primaryMaster.Address)
+			return msg, nil
+		}
+
+		if primaryMaster.Maintenance {
+			msg := fmt.Sprintf("There is a master in maintenance: %v", primaryMaster.Address)
+			return msg, nil
+		}
+
+		switch hydra.State {
+		case MasterStateLeading:
+			leadingPrimaryMasterCount += 1
+		case MasterStateFollowing:
+			followingPrimaryMasterCount += 1
+		}
+	}
+
+	if !(leadingPrimaryMasterCount == 1 && followingPrimaryMasterCount+1 == len(primaryMastersWithMaintenance)) {
+		msg := fmt.Sprintf("Quorum health check failed: leading=%d, following=%d, total=%d",
+			leadingPrimaryMasterCount, followingPrimaryMasterCount, len(primaryMastersWithMaintenance))
+		return msg, nil
+	}
+	return "", nil
+}
+
 func (yc *YtsaurusClient) GetMasterMonitoringPaths(ctx context.Context) ([]string, error) {
 	var monitoringPaths []string
 	mastersInfo, err := yc.getAllMasters(ctx)
@@ -851,7 +880,7 @@ func (yc *YtsaurusClient) GetMasterMonitoringPaths(ctx context.Context) ([]strin
 
 	for _, masterInfo := range mastersInfo {
 		for _, address := range masterInfo.Addresses {
-			monitoringPath := fmt.Sprintf("//sys/cluster_masters/%s/orchid/monitoring/hydra", address)
+			monitoringPath := fmt.Sprintf("//sys/cluster_masters/%s/%v", address, hydraPath)
 			monitoringPaths = append(monitoringPaths, monitoringPath)
 		}
 	}
@@ -917,7 +946,7 @@ type DataNodeMeta struct {
 
 func (yc *YtsaurusClient) getDataNodesInfo(ctx context.Context) ([]DataNodeMeta, error) {
 	var dndMeta []DataNodeMeta
-	err := yc.ytClient.ListNode(ctx, ypath.Path("//sys/data_nodes"), &dndMeta, &yt.ListNodeOptions{
+	err := yc.ytClient.ListNode(ctx, ypath.Path(consts.ComponentCypressPath(consts.DataNodeType)), &dndMeta, &yt.ListNodeOptions{
 		Attributes: []string{
 			"use_imaginary_chunk_locations",
 			"state",

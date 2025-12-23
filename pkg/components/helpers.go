@@ -199,55 +199,55 @@ func handleBulkUpdatingClusterState(
 ) (*ComponentStatus, error) {
 	var err error
 
-	if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsRemoval {
-		// Not in the pod removal phase, let the component handle other update states
-		return nil, err
-	}
+	switch ytsaurus.GetUpdateState() {
+	case ytv1.UpdateStateWaitingForPodsRemoval:
+		// Check if this component is using the new update mode
+		if !doesComponentUseNewUpdateMode(ytsaurus, cmp.GetType(), cmp.GetFullName()) {
+			if !dry {
+				err = removePods(ctx, server, cmpBase)
+			}
+			return ptr.To(ComponentStatusUpdateStep("pods removal")), err
+		}
+		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionBulkUpdateModeStarted),
+			Status:  metav1.ConditionTrue,
+			Reason:  "BulkUpdateModeStarted",
+			Message: "bulk update mode started",
+		})
 
-	// Check if this component is using the new update mode
-	if !doesComponentUseNewUpdateMode(ytsaurus, cmp.GetType(), cmp.GetFullName()) {
+		// Run pre-checks if needed
+		if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
+			if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
+				return status, err
+			}
+		}
+
+		// Remove pods
 		if !dry {
+			ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+				Type:    cmp.GetLabeller().GetScalingDownCondition(),
+				Status:  metav1.ConditionTrue,
+				Reason:  "RemovingPods",
+				Message: "removing pods",
+			})
 			err = removePods(ctx, server, cmpBase)
 		}
 		return ptr.To(ComponentStatusUpdateStep("pods removal")), err
-	}
 
-	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionBulkUpdateModeStarted),
-		Status:  metav1.ConditionTrue,
-		Reason:  "BulkUpdateModeStarted",
-		Message: "bulk update mode started",
-	})
-
-	// Run pre-checks if needed
-	if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
-		if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
-			return status, err
-		}
-	}
-
-	// Remove pods
-	if !dry {
-		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    cmp.GetLabeller().GetScalingDownCondition(),
-			Status:  metav1.ConditionTrue,
-			Reason:  "RemovingPods",
-			Message: "removing pods",
-		})
-		err = removePods(ctx, server, cmpBase)
-	}
-
-	// Update condition if state has progressed to pod creation
-	if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
+	case ytv1.UpdateStateWaitingForPodsCreation:
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 			Type:    cmp.GetLabeller().GetScalingUpCondition(),
 			Status:  metav1.ConditionTrue,
 			Reason:  "CreatingPods",
 			Message: "creating new pods",
 		})
-	}
+		// Let the component handle its own post-removal / pod-creation logic.
+		return nil, err
 
-	return ptr.To(ComponentStatusUpdateStep("pods removal")), err
+	default:
+		// Not in the pod removal phase, let the component handle other update states
+		return nil, err
+	}
 }
 
 // handleOnDeleteUpdatingClusterState handles the OnDelete mode where pods must be manually deleted by the user.
@@ -421,7 +421,8 @@ func doesComponentUseNewUpdateMode(ytsaurus *apiproxy.Ytsaurus, componentType co
 func getComponentUpdateStrategy(ytsaurus *apiproxy.Ytsaurus, componentType consts.ComponentType, componentName string) ytv1.ComponentUpdateModeType {
 	for _, selector := range ytsaurus.GetResource().Spec.UpdatePlan {
 		if selector.Component.Type == componentType &&
-			(selector.Component.Name == "" || selector.Component.Name == componentName) {
+			(selector.Component.Name == "" || selector.Component.Name == componentName) &&
+			selector.Strategy != nil {
 			return selector.Strategy.Type()
 		}
 	}
