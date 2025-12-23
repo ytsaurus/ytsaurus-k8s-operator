@@ -358,7 +358,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			}
 			ytClient := getYtClient(httpClient, proxyPort+"://"+proxyAddress)
 			// NOTE: WhoAmI right now does not retry.
-			if _, err := ytClient.WhoAmI(ctx, nil); err != nil {
+			if _, err := ytClient.WhoAmI(specCtx, nil); err != nil {
 				return fmt.Sprintf("ytsaurus api error: %v", err)
 			}
 			var clusterHealth ClusterHealthReport
