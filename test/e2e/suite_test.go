@@ -181,6 +181,17 @@ var _ = BeforeEach(func() {
 	})
 })
 
+func AttachProgressReporterWithContext(parent context.Context, reporter func(context.Context) string) func() {
+	ctx, cancel := context.WithCancel(parent)
+	detach := AttachProgressReporter(func() string {
+		return reporter(ctx)
+	})
+	return func() {
+		detach()
+		cancel()
+	}
+}
+
 func LogObjectEvents(ctx context.Context, namespace string) func() {
 	watcher, err := k8sClient.Watch(ctx, &corev1.EventList{}, &client.ListOptions{
 		Namespace: namespace,

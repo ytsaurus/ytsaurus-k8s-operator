@@ -89,7 +89,7 @@ func getYtRPCClient(httpClient *http.Client, proxyAddress, rpcProxyAddress strin
 	return ytClient
 }
 
-func getHTTPProxyAddress(g *ytconfig.Generator, namespace, portName string) (string, error) {
+func getHTTPProxyAddress(ctx context.Context, g *ytconfig.Generator, namespace, portName string) (string, error) {
 	proxy := os.Getenv("E2E_YT_HTTP_PROXY")
 	if proxy != "" {
 		return proxy, nil
@@ -106,10 +106,10 @@ func getHTTPProxyAddress(g *ytconfig.Generator, namespace, portName string) (str
 
 	serviceName := g.GetHTTPProxiesServiceName(consts.DefaultHTTPProxyRole)
 
-	return getServiceAddress(namespace, serviceName, portName)
+	return getServiceAddress(ctx, namespace, serviceName, portName)
 }
 
-func getRPCProxyAddress(g *ytconfig.Generator, namespace string) (string, error) {
+func getRPCProxyAddress(ctx context.Context, g *ytconfig.Generator, namespace string) (string, error) {
 	proxy := os.Getenv("E2E_YT_RPC_PROXY")
 	if proxy != "" {
 		return proxy, nil
@@ -122,7 +122,7 @@ func getRPCProxyAddress(g *ytconfig.Generator, namespace string) (string, error)
 		portName = consts.YTPublicRPCPortName
 	}
 
-	return getServiceAddress(namespace, serviceName, portName)
+	return getServiceAddress(ctx, namespace, serviceName, portName)
 }
 
 func getMasterPod(name, namespace string) corev1.Pod {
@@ -277,7 +277,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		certBuilder = &testutil.CertBuilder{
 			Namespace:   namespace,
-			IPAddresses: getNodesAddresses(),
+			IPAddresses: getNodesAddresses(ctx),
 		}
 	})
 
@@ -300,7 +300,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			By("Fetching CA bundle certificates")
 			// NOTE: CA bundle instead of full CA root bundle for more strict TLS verification.
 			Eventually(func() (err error) {
-				caBundleCertificates, err = readFileObject(namespace, ytv1.FileObjectReference{
+				caBundleCertificates, err = readFileObject(ctx, namespace, ytv1.FileObjectReference{
 					Name: testutil.TestCABundleName,
 					Key:  consts.CABundleFileName,
 				})
@@ -347,27 +347,27 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}))
 
 		By("Starting cluster health reporter")
-		DeferCleanup(AttachProgressReporter(func() string {
+		DeferCleanup(AttachProgressReporterWithContext(specCtx, func(ctx context.Context) string {
 			proxyPort := consts.HTTPPortName
 			if ytBuilder.WithHTTPSOnlyProxy {
 				proxyPort = consts.HTTPSPortName
 			}
-			proxyAddress, err := getHTTPProxyAddress(generator, namespace, proxyPort)
+			proxyAddress, err := getHTTPProxyAddress(ctx, generator, namespace, proxyPort)
 			if err != nil {
 				return fmt.Sprintf("cannot find proxy address: %v", err)
 			}
 			ytClient := getYtClient(httpClient, proxyPort+"://"+proxyAddress)
 			// NOTE: WhoAmI right now does not retry.
-			if _, err := ytClient.WhoAmI(specCtx, nil); err != nil {
+			if _, err := ytClient.WhoAmI(ctx, nil); err != nil {
 				return fmt.Sprintf("ytsaurus api error: %v", err)
 			}
 			var clusterHealth ClusterHealthReport
-			clusterHealth.Collect(ytClient)
+			clusterHealth.Collect(ctx, ytClient)
 			return clusterHealth.String()
 		}))
 
-		DeferCleanup(AttachProgressReporter(func() string {
-			failedPods := fetchFailedPods(namespace)
+		DeferCleanup(AttachProgressReporterWithContext(specCtx, func(ctx context.Context) string {
+			failedPods := fetchFailedPods(ctx, namespace)
 			if len(failedPods) != 0 {
 				return fmt.Sprintf("Failed pods: %v", failedPods)
 			}
@@ -391,7 +391,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		if !ytBuilder.WithHTTPSOnlyProxy {
 			By("Creating YTsaurus HTTP client")
-			ytProxyAddress, err = getHTTPProxyAddress(generator, namespace, consts.HTTPPortName)
+			ytProxyAddress, err = getHTTPProxyAddress(ctx, generator, namespace, consts.HTTPPortName)
 			Expect(err).ToNot(HaveOccurred())
 			ytProxyAddress = "http://" + ytProxyAddress
 
@@ -409,7 +409,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		if ytBuilder.WithHTTPSProxy {
 			By("Creating YTsaurus HTTPS client")
-			ytProxyAddressHTTPS, err = getHTTPProxyAddress(generator, namespace, consts.HTTPSPortName)
+			ytProxyAddressHTTPS, err = getHTTPProxyAddress(ctx, generator, namespace, consts.HTTPSPortName)
 			Expect(err).ToNot(HaveOccurred())
 			ytProxyAddressHTTPS = "https://" + ytProxyAddressHTTPS
 
@@ -442,7 +442,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			"password", consts.DefaultAdminPassword,
 		)
 
-		checkClusterHealth(ytClient)
+		checkClusterHealth(ctx, ytClient)
 
 		createTestUser(ytClient)
 	})
@@ -466,7 +466,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Expect(proxies).To(HaveEach(HaveSuffix(fmt.Sprintf(":%v", consts.RPCProxyPublicRPCPort))))
 
 		By("Creating ytsaurus RPC client")
-		ytRPCProxyAddress, err = getRPCProxyAddress(generator, namespace)
+		ytRPCProxyAddress, err = getRPCProxyAddress(ctx, generator, namespace)
 		Expect(err).ToNot(HaveOccurred())
 		ytRPCClient = getYtRPCClient(httpClient, ytProxyAddress, ytRPCProxyAddress)
 
@@ -723,7 +723,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 					By("Waiting cluster update completes")
 					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
-					checkClusterHealth(ytClient)
+					checkClusterHealth(ctx, ytClient)
 					checkChunkLocations(ytClient)
 
 					podsAfterFullUpdate := getComponentPods(ctx, namespace)
@@ -832,7 +832,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				checkClusterHealth(ytClient)
+				checkClusterHealth(ctx, ytClient)
 
 				podsAfterEndUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterEndUpdate)
@@ -860,7 +860,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				checkClusterHealth(ytClient)
+				checkClusterHealth(ctx, ytClient)
 
 				podsAfterTndUpdate := getComponentPods(ctx, namespace)
 				pods = getChangedPods(podsAfterEndUpdate, podsAfterTndUpdate)
@@ -892,7 +892,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				checkClusterHealth(ytClient)
+				checkClusterHealth(ctx, ytClient)
 
 				podsAfterMasterUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterMasterUpdate)
@@ -925,7 +925,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				checkClusterHealth(ytClient)
+				checkClusterHealth(ctx, ytClient)
 				podsAfterStatelessUpdate := getComponentPods(ctx, namespace)
 				pods = getChangedPods(podsAfterMasterUpdate, podsAfterStatelessUpdate)
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
@@ -972,7 +972,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				checkClusterHealth(ytClient)
+				checkClusterHealth(ctx, ytClient)
 
 				podsAfterUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterUpdate)
@@ -1074,7 +1074,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Run cluster update")
 				ytsaurus.Spec.HostNetwork = true
 				ytsaurus.Spec.PrimaryMasters.HostAddresses = []string{
-					getKindControlPlaneNode().Name,
+					getKindControlPlaneNode(ctx).Name,
 				}
 				UpdateObject(ctx, ytsaurus)
 
@@ -2023,21 +2023,21 @@ exec "$@"`
 	})
 })
 
-func checkClusterHealth(ytClient yt.Client) {
+func checkClusterHealth(ctx context.Context, ytClient yt.Client) {
 	By("Checking that cluster is alive")
 	var res []string
-	Expect(ytClient.ListNode(specCtx, ypath.Path("/"), &res, nil)).Should(Succeed())
+	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
 
 	By("Checking cluster alerts", func() {
 		var clusterHealth ClusterHealthReport
-		clusterHealth.Collect(ytClient)
+		clusterHealth.Collect(ctx, ytClient)
 		Expect(clusterHealth.Alerts).To(BeEmpty())
 		Expect(clusterHealth.Errors).To(BeEmpty())
 	})
 
 	By("Checking that tablet cell bundles are in `good` health")
 	Eventually(func() bool {
-		notGoodBundles, err := components.GetNotGoodTabletCellBundles(specCtx, ytClient)
+		notGoodBundles, err := components.GetNotGoodTabletCellBundles(ctx, ytClient)
 		if err != nil {
 			return false
 		}
