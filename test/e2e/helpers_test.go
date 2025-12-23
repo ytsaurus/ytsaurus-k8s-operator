@@ -43,18 +43,18 @@ func YsonPretty(value any) string {
 	return string(data)
 }
 
-func getKindControlPlaneNode() corev1.Node {
+func getKindControlPlaneNode(ctx context.Context) corev1.Node {
 	nodeList := corev1.NodeList{}
-	err := k8sClient.List(specCtx, &nodeList)
+	err := k8sClient.List(ctx, &nodeList)
 	Expect(err).Should(Succeed())
 	Expect(nodeList.Items).To(HaveLen(1))
 	Expect(nodeList.Items[0].Name).To(HaveSuffix("kind-control-plane"))
 	return nodeList.Items[0]
 }
 
-func getNodesAddresses() []string {
+func getNodesAddresses(ctx context.Context) []string {
 	var nodes corev1.NodeList
-	Expect(k8sClient.List(specCtx, &nodes)).Should(Succeed())
+	Expect(k8sClient.List(ctx, &nodes)).Should(Succeed())
 	var addrs []string
 	for _, node := range nodes.Items {
 		for _, address := range node.Status.Addresses {
@@ -67,14 +67,14 @@ func getNodesAddresses() []string {
 	return addrs
 }
 
-func getServiceAddress(namespace, serviceName, portName string) (string, error) {
+func getServiceAddress(ctx context.Context, namespace, serviceName, portName string) (string, error) {
 	svc := corev1.Service{}
-	err := k8sClient.Get(specCtx, types.NamespacedName{Name: serviceName, Namespace: namespace}, &svc)
+	err := k8sClient.Get(ctx, types.NamespacedName{Name: serviceName, Namespace: namespace}, &svc)
 	if err != nil {
 		return "", err
 	}
 
-	k8sNode := getKindControlPlaneNode()
+	k8sNode := getKindControlPlaneNode(ctx)
 
 	Expect(svc.Spec.Type).To(Equal(corev1.ServiceTypeNodePort))
 	Expect(svc.Spec.IPFamilies[0]).To(Equal(corev1.IPv4Protocol))
@@ -231,9 +231,9 @@ func (c *ClusterHealthReport) AddWarning(warning yterrors.Error, warningPath ypa
 	c.Warnings[warningPath] = append(c.Warnings[warningPath], warning)
 }
 
-func (c *ClusterHealthReport) CollectAlerts(ytClient yt.Client, alertPath ypath.Path) {
+func (c *ClusterHealthReport) CollectAlerts(ctx context.Context, ytClient yt.Client, alertPath ypath.Path) {
 	var alerts []yterrors.Error
-	if err := ytClient.GetNode(specCtx, alertPath, &alerts, nil); err != nil {
+	if err := ytClient.GetNode(ctx, alertPath, &alerts, nil); err != nil {
 		if yterrors.ContainsResolveError(err) {
 			log.Info("Cannot collect alerts", "error", err, "alert_path", alertPath)
 		} else {
@@ -246,13 +246,13 @@ func (c *ClusterHealthReport) CollectAlerts(ytClient yt.Client, alertPath ypath.
 	}
 }
 
-func (c *ClusterHealthReport) CollectNodes(ytClient yt.Client, basePath ypath.Path) {
+func (c *ClusterHealthReport) CollectNodes(ctx context.Context, ytClient yt.Client, basePath ypath.Path) {
 	type nodeAlerts struct {
 		Name   string           `yson:",value"`
 		Alerts []yterrors.Error `yson:"alerts,attr"`
 	}
 	var nodes []nodeAlerts
-	err := ytClient.ListNode(specCtx, basePath, &nodes, &yt.ListNodeOptions{
+	err := ytClient.ListNode(ctx, basePath, &nodes, &yt.ListNodeOptions{
 		Attributes: []string{"alerts"},
 	})
 	if err != nil {
@@ -267,9 +267,9 @@ func (c *ClusterHealthReport) CollectNodes(ytClient yt.Client, basePath ypath.Pa
 	}
 }
 
-func (c *ClusterHealthReport) CollectLostChunks(ytClient yt.Client, countPath ypath.Path) {
+func (c *ClusterHealthReport) CollectLostChunks(ctx context.Context, ytClient yt.Client, countPath ypath.Path) {
 	var count int
-	err := ytClient.GetNode(specCtx, countPath, &count, nil)
+	err := ytClient.GetNode(ctx, countPath, &count, nil)
 	if err != nil {
 		c.AddError(err, countPath)
 		return
@@ -287,7 +287,7 @@ func (c *ClusterHealthReport) CollectLostChunks(ytClient yt.Client, countPath yp
 	}
 }
 
-func (c *ClusterHealthReport) CollectTablets(ytClient yt.Client, basePath ypath.Path, attrs []string) {
+func (c *ClusterHealthReport) CollectTablets(ctx context.Context, ytClient yt.Client, basePath ypath.Path, attrs []string) {
 	type node struct {
 		Name  string         `yson:",value"`
 		Attrs map[string]any `yson:",attrs"`
@@ -295,7 +295,7 @@ func (c *ClusterHealthReport) CollectTablets(ytClient yt.Client, basePath ypath.
 	var nodes []node
 
 	err := ytClient.ListNode(
-		specCtx,
+		ctx,
 		basePath,
 		&nodes,
 		&yt.ListNodeOptions{
@@ -327,19 +327,19 @@ func (c *ClusterHealthReport) Clear() {
 	c.Warnings = nil
 }
 
-func (c *ClusterHealthReport) Collect(ytClient yt.Client) {
+func (c *ClusterHealthReport) Collect(ctx context.Context, ytClient yt.Client) {
 	c.Clear()
-	c.CollectAlerts(ytClient, "//sys/@master_alerts")
-	c.CollectAlerts(ytClient, "//sys/scheduler/@alerts")
-	c.CollectLostChunks(ytClient, "//sys/lost_chunks/@count")
-	c.CollectLostChunks(ytClient, "//sys/lost_vital_chunks/@count")
-	c.CollectNodes(ytClient, "//sys/data_nodes")
-	c.CollectNodes(ytClient, "//sys/tablet_nodes")
-	c.CollectNodes(ytClient, "//sys/exec_nodes")
-	c.CollectNodes(ytClient, "//sys/cluster_nodes")
-	c.CollectNodes(ytClient, "//sys/controller_agents/instances")
-	c.CollectTablets(ytClient, "//sys/tablet_cell_bundles", []string{"id", "health", "tablet_cell_ids", "tablet_actions", "tablet_cell_life_stage"})
-	c.CollectTablets(ytClient, "//sys/tablet_cells", []string{"id", "health", "tablet_cell_bundle", "tablet_cell_life_stage", "status"})
+	c.CollectAlerts(ctx, ytClient, "//sys/@master_alerts")
+	c.CollectAlerts(ctx, ytClient, "//sys/scheduler/@alerts")
+	c.CollectLostChunks(ctx, ytClient, "//sys/lost_chunks/@count")
+	c.CollectLostChunks(ctx, ytClient, "//sys/lost_vital_chunks/@count")
+	c.CollectNodes(ctx, ytClient, "//sys/data_nodes")
+	c.CollectNodes(ctx, ytClient, "//sys/tablet_nodes")
+	c.CollectNodes(ctx, ytClient, "//sys/exec_nodes")
+	c.CollectNodes(ctx, ytClient, "//sys/cluster_nodes")
+	c.CollectNodes(ctx, ytClient, "//sys/controller_agents/instances")
+	c.CollectTablets(ctx, ytClient, "//sys/tablet_cell_bundles", []string{"id", "health", "tablet_cell_ids", "tablet_actions", "tablet_cell_life_stage"})
+	c.CollectTablets(ctx, ytClient, "//sys/tablet_cells", []string{"id", "health", "tablet_cell_bundle", "tablet_cell_life_stage", "status"})
 }
 
 type ClusterComponent struct {
@@ -492,7 +492,7 @@ func makeQuery(ctx context.Context, ytClient yt.Client, engine yt.QueryEngine, q
 	return rows
 }
 
-func readFileObject(namespace string, source ytv1.FileObjectReference) ([]byte, error) {
+func readFileObject(ctx context.Context, namespace string, source ytv1.FileObjectReference) ([]byte, error) {
 	objectName := types.NamespacedName{
 		Namespace: namespace,
 		Name:      source.Name,
@@ -500,7 +500,7 @@ func readFileObject(namespace string, source ytv1.FileObjectReference) ([]byte, 
 	switch source.Kind {
 	case "", "ConfigMap":
 		var object corev1.ConfigMap
-		if err := k8sClient.Get(specCtx, objectName, &object); err != nil {
+		if err := k8sClient.Get(ctx, objectName, &object); err != nil {
 			return nil, err
 		}
 		if data, ok := object.Data[source.Key]; ok {
@@ -511,7 +511,7 @@ func readFileObject(namespace string, source ytv1.FileObjectReference) ([]byte, 
 		}
 	case "Secret":
 		var object corev1.Secret
-		if err := k8sClient.Get(specCtx, objectName, &object); err != nil {
+		if err := k8sClient.Get(ctx, objectName, &object); err != nil {
 			return nil, err
 		}
 		if data, ok := object.Data[source.Key]; ok {
@@ -538,9 +538,9 @@ func discoverProxies(httpClient *http.Client, proxyAddress string, params url.Va
 	return proxies.Proxies
 }
 
-func fetchFailedPods(namespace string) []string {
+func fetchFailedPods(ctx context.Context, namespace string) []string {
 	podList := corev1.PodList{}
-	err := k8sClient.List(specCtx, &podList, ctrlcli.InNamespace(namespace))
+	err := k8sClient.List(ctx, &podList, ctrlcli.InNamespace(namespace))
 	Expect(err).Should(Succeed())
 
 	var failedPods []string
@@ -559,7 +559,7 @@ func fetchFailedPods(namespace string) []string {
 			Timestamps: true,
 			TailLines:  ptr.To[int64](20),
 		})
-		logStream, err := logRequest.Stream(specCtx)
+		logStream, err := logRequest.Stream(ctx)
 		if err != nil {
 			log.Error(err, "Cannot get logs")
 			continue
