@@ -420,8 +420,23 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForSidecarsInitializingPrepare || m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForSidecarsInitialize {
 			return m.sidecarsInit(ctx, dry)
 		}
-		if status, err := handleUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
-			return *status, err
+		if IsUpdatingComponent(m.ytsaurus, m) {
+			switch getComponentUpdateStrategy(m.ytsaurus, consts.MasterType, m.GetShortName()) {
+			case ytv1.ComponentUpdateModeTypeOnDelete:
+				if status, err := handleOnDeleteUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
+					return *status, err
+				}
+			default:
+				if status, err := handleBulkUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
+					return *status, err
+				}
+			}
+
+			if m.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+				return ComponentStatusReady(), err
+			}
+		} else {
+			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
 	}
 
