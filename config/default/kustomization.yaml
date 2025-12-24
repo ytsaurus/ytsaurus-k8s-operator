@@ -21,11 +21,6 @@ resources:
 #- ../prometheus
 
 patches:
-# Protect the /metrics endpoint by putting it behind auth.
-# If you want your controller-manager to expose the /metrics
-# endpoint w/o any authn/z, please comment the following line.
-- path: manager_auth_proxy_patch.yaml
-
 # Mount the controller config file for loading manager configurations
 # through a ComponentConfig type
 #- manager_config_patch.yaml
@@ -76,26 +71,6 @@ vars:
     kind: Service
     version: v1
     name: webhook-service
-- name: METRICS_SECRET_NAME
-  objref:
-    kind: Certificate
-    group: cert-manager.io
-    version: v1
-    name: metrics-cert # this name should match the one in certificate.yaml
-  fieldref:
-    fieldpath: spec.secretName
-- name: METRICS_SERVICE_NAMESPACE # namespace of the service
-  objref:
-    kind: Service
-    version: v1
-    name: controller-manager-metrics-service
-  fieldref:
-    fieldpath: metadata.namespace
-- name: METRICS_SERVICE_NAME
-  objref:
-    kind: Service
-    version: v1
-    name: controller-manager-metrics-service
 
 configurations:
   - kustomizeconfig.yaml
