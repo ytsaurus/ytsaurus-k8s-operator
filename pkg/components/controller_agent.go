@@ -2,7 +2,10 @@ package components
 
 import (
 	"context"
+	"fmt"
 
+	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -109,58 +112,58 @@ func (ca *ControllerAgent) Sync(ctx context.Context) error {
 	return err
 }
 
-// type ControllerAgentsWithMaintenance struct {
-// 	Address     string   `yson:",value"`
-// 	Maintenance bool     `yson:"maintenance,attr"`
-// 	Alerts      []string `yson:"alerts,attr"`
-// }
+type ControllerAgentsWithMaintenance struct {
+	Address     string   `yson:",value"`
+	Maintenance bool     `yson:"maintenance,attr"`
+	Alerts      []string `yson:"alerts,attr"`
+}
 
-// func (ca *ControllerAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {
-// 	if ca.ytsaurusClient == nil {
-// 		return ComponentStatusBlocked("YtsaurusClient component is not available")
-// 	}
+func (ca *ControllerAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {
+	if ca.ytsaurusClient == nil {
+		return ComponentStatusBlocked("YtsaurusClient component is not available")
+	}
 
-// 	ytClient := ca.ytsaurusClient.GetYtClient()
-// 	if ytClient == nil {
-// 		return ComponentStatusBlocked("YT client is not available")
-// 	}
+	ytClient := ca.ytsaurusClient.GetYtClient()
+	if ytClient == nil {
+		return ComponentStatusBlocked("YT client is not available")
+	}
 
-// 	// Check that the number of instances in YT matches the expected instanceCount
-// 	expectedCount := int(ca.ytsaurus.GetResource().Spec.ControllerAgents.InstanceCount)
-// 	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.ControllerAgentType, expectedCount); err != nil {
-// 		return ComponentStatusBlocked(err.Error())
-// 	}
+	// Check that the number of instances in YT matches the expected instanceCount
+	expectedCount := int(ca.ytsaurus.GetResource().Spec.ControllerAgents.InstanceCount)
+	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.ControllerAgentType, expectedCount); err != nil {
+		return ComponentStatusBlocked(err.Error())
+	}
 
-// 	controllerAgentsWithMaintenance := make([]ControllerAgentsWithMaintenance, 0)
-// 	cypressPath := consts.ComponentCypressPath(consts.ControllerAgentType)
+	controllerAgentsWithMaintenance := make([]ControllerAgentsWithMaintenance, 0)
+	cypressPath := consts.ComponentCypressPath(consts.ControllerAgentType)
 
-// 	err := ca.ytsaurusClient.GetYtClient().ListNode(ctx, ypath.Path(cypressPath), &controllerAgentsWithMaintenance, &yt.ListNodeOptions{
-// 		Attributes: []string{"maintenance", "alerts"}})
-// 	if err != nil {
-// 		return ComponentStatusBlocked(err.Error())
-// 	}
+	err := ca.ytsaurusClient.GetYtClient().ListNode(ctx, ypath.Path(cypressPath), &controllerAgentsWithMaintenance, &yt.ListNodeOptions{
+		Attributes: []string{"maintenance", "alerts"}})
+	if err != nil {
+		return ComponentStatusBlocked(err.Error())
+	}
 
-// 	for _, controllerAgent := range controllerAgentsWithMaintenance {
-// 		var connected bool
-// 		err = ca.ytsaurusClient.GetYtClient().GetNode(
-// 			ctx,
-// 			ypath.Path(fmt.Sprintf("%v/%v/orchid/controller_agent/service/connected", cypressPath, controllerAgent.Address)),
-// 			&connected,
-// 			nil)
-// 		if err != nil {
-// 			return ComponentStatusBlocked(err.Error())
-// 		}
+	for _, controllerAgent := range controllerAgentsWithMaintenance {
+		var connected bool
+		err = ca.ytsaurusClient.GetYtClient().GetNode(
+			ctx,
+			ypath.Path(fmt.Sprintf("%v/%v/orchid/controller_agent/service/connected", cypressPath, controllerAgent.Address)),
+			&connected,
+			nil)
+		if err != nil {
+			return ComponentStatusBlocked(err.Error())
+		}
 
-// 		if !connected {
-// 			msg := fmt.Sprintf("Controller agent is not connected: %v", controllerAgent.Address)
-// 			return ComponentStatusBlocked(msg)
-// 		}
+		if !connected {
+			msg := fmt.Sprintf("Controller agent is not connected: %v", controllerAgent.Address)
+			return ComponentStatusBlocked(msg)
+		}
 
-// 		if controllerAgent.Maintenance {
-// 			msg := fmt.Sprintf("There is a controller agent in maintenance: %v", controllerAgent.Address)
-// 			return ComponentStatusBlocked(msg)
-// 		}
-// 	}
+		if controllerAgent.Maintenance {
+			msg := fmt.Sprintf("There is a controller agent in maintenance: %v", controllerAgent.Address)
+			return ComponentStatusBlocked(msg)
+		}
+	}
 
-// 	return ComponentStatusReady()
-// }
+	return ComponentStatusReady()
+}
