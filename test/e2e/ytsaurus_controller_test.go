@@ -1958,6 +1958,7 @@ exec "$@"`
 			Entry("update query tracker", Label("qt"), consts.QueryTrackerType, consts.GetStatefulSetPrefix(consts.QueryTrackerType)),
 			Entry("update master", Label("ms"), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
 			Entry("update controller agent", Label("ca"), consts.ControllerAgentType, consts.GetStatefulSetPrefix(consts.ControllerAgentType)),
+			Entry("update discovery", Label("ds"), consts.DiscoveryType, consts.GetStatefulSetPrefix(consts.DiscoveryType)),
 		)
 
 		DescribeTableSubtree("on-delete strategy", Label("ondelete"),
