@@ -1912,7 +1912,21 @@ exec "$@"`
 					case consts.MasterType:
 						ytsaurus.Spec.CoreImage = testutil.YtsaurusImagePrevious
 						ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
+					case consts.MasterCacheType:
+						ytsaurus.Spec.MasterCaches = &ytv1.MasterCachesSpec{
+							InstanceSpec: ytv1.InstanceSpec{
+								Image:         ptr.To(testutil.YtsaurusImagePrevious),
+								InstanceCount: 3,
+							},
+						}
+					case consts.DiscoveryType:
+						ytsaurus.Spec.Discovery.Image = ptr.To(testutil.YtsaurusImagePrevious)
+						ytsaurus.Spec.Discovery.InstanceCount = 3
+					case consts.ControllerAgentType:
+						ytsaurus.Spec.ControllerAgents.Image = ptr.To(testutil.YtsaurusImagePrevious)
+						ytsaurus.Spec.ControllerAgents.InstanceCount = 3
 					}
+
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 						{
 							Component: ytv1.Component{Type: componentType},
@@ -1930,6 +1944,12 @@ exec "$@"`
 						ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.QueryTrackerImageCurrent)
 					case consts.MasterType:
 						ytsaurus.Spec.CoreImage = testutil.YtsaurusImageCurrent
+					case consts.DiscoveryType:
+						ytsaurus.Spec.Discovery.Image = ptr.To(testutil.YtsaurusImageCurrent)
+					case consts.MasterCacheType:
+						ytsaurus.Spec.MasterCaches.Image = ptr.To(testutil.YtsaurusImageCurrent)
+					case consts.ControllerAgentType:
+						ytsaurus.Spec.ControllerAgents.Image = ptr.To(testutil.YtsaurusImageCurrent)
 					}
 
 					UpdateObject(ctx, ytsaurus)
@@ -1947,6 +1967,12 @@ exec "$@"`
 								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.QueryTrackers.Image))
 							case consts.MasterType:
 								Expect(pod.Spec.Containers[0].Image).To(Equal(ytsaurus.Spec.CoreImage))
+							case consts.DiscoveryType:
+								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.Discovery.Image))
+							case consts.MasterCacheType:
+								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.MasterCaches.Image))
+							case consts.ControllerAgentType:
+								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.ControllerAgents.Image))
 							}
 						}
 					}
@@ -1959,6 +1985,7 @@ exec "$@"`
 			Entry("update master", Label("ms"), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
 			Entry("update controller agent", Label("ca"), consts.ControllerAgentType, consts.GetStatefulSetPrefix(consts.ControllerAgentType)),
 			Entry("update discovery", Label("ds"), consts.DiscoveryType, consts.GetStatefulSetPrefix(consts.DiscoveryType)),
+			Entry("update master cache", Label("msc"), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
 		)
 
 		DescribeTableSubtree("on-delete strategy", Label("ondelete"),

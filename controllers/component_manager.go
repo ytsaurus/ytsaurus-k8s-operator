@@ -147,7 +147,7 @@ func NewComponentManager(
 	}
 
 	if resource.Spec.MasterCaches != nil {
-		mc := components.NewMasterCache(cfgen, ytsaurus)
+		mc := components.NewMasterCache(cfgen, ytsaurus, yc)
 		allComponents = append(allComponents, mc)
 	}
 

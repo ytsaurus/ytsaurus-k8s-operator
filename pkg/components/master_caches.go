@@ -14,10 +14,11 @@ import (
 
 type MasterCache struct {
 	localServerComponent
-	cfgen *ytconfig.Generator
+	cfgen          *ytconfig.Generator
+	ytsaurusClient internalYtsaurusClient
 }
 
-func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *MasterCache {
+func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc internalYtsaurusClient) *MasterCache {
 	l := cfgen.GetComponentLabeller(consts.MasterCacheType, "")
 
 	resource := ytsaurus.GetResource()
@@ -39,6 +40,7 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Mas
 	return &MasterCache{
 		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
+		ytsaurusClient:       yc,
 	}
 }
 
@@ -54,8 +56,23 @@ func (mc *MasterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 	}
 
 	if mc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, mc.ytsaurus, mc, &mc.localComponent, mc.server, dry); status != nil {
-			return *status, err
+		if IsUpdatingComponent(mc.ytsaurus, mc) {
+			switch getComponentUpdateStrategy(mc.ytsaurus, consts.MasterCacheType, mc.GetShortName()) {
+			case ytv1.ComponentUpdateModeTypeOnDelete:
+				if status, err := handleOnDeleteUpdatingClusterState(ctx, mc.ytsaurus, mc, &mc.localComponent, mc.server, dry); status != nil {
+					return *status, err
+				}
+			default:
+				if status, err := handleBulkUpdatingClusterState(ctx, mc.ytsaurus, mc, &mc.localComponent, mc.server, dry); status != nil {
+					return *status, err
+				}
+			}
+
+			if mc.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+				return ComponentStatusReady(), err
+			}
+		} else {
+			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
 	}
 
@@ -98,4 +115,23 @@ func (mc *MasterCache) getHostAddressLabel() string {
 		return masterCachesSpec.HostAddressLabel
 	}
 	return defaultHostAddressLabel
+}
+
+func (mc *MasterCache) UpdatePreCheck(ctx context.Context) ComponentStatus {
+	if mc.ytsaurusClient == nil {
+		return ComponentStatusBlocked("YtsaurusClient component is not available")
+	}
+
+	ytClient := mc.ytsaurusClient.GetYtClient()
+	if ytClient == nil {
+		return ComponentStatusBlocked("YT client is not available")
+	}
+
+	// Check that the number of instances in YT matches the expected instanceCount
+	expectedCount := int(mc.ytsaurus.GetResource().Spec.MasterCaches.InstanceCount)
+	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.MasterCacheType, expectedCount); err != nil {
+		return ComponentStatusBlocked(err.Error())
+	}
+
+	return ComponentStatusReady()
 }
