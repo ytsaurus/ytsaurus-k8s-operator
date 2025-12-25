@@ -120,7 +120,7 @@ func NewComponentManager(
 	}
 
 	if resource.Spec.ControllerAgents != nil {
-		ca := components.NewControllerAgent(cfgen, ytsaurus, m)
+		ca := components.NewControllerAgent(cfgen, ytsaurus, m, yc)
 		allComponents = append(allComponents, ca)
 	}
 
