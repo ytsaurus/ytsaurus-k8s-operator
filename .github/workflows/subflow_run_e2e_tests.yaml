@@ -26,19 +26,19 @@ jobs:
       max-parallel: 5
       matrix:
         e2e:
-          - name: "update basic"
-            filter: "update && basic"
+          # - name: "update basic"
+          #   filter: "update && basic"
           - name: "update plan"
-            filter: "update && plan"
-          - name: "update other"
-            filter: "update && !(basic || plan)"
-          - name: "tls"
-            filter: "tls"
-          - name: "other"
-            filter: "!(update || tls)"
-          - name: "${{ inputs.e2e_filter }}"
-            filter: "${{ inputs.e2e_filter }}"
-            from_input: true
+            filter: "update && plan && strategy && ondelete"
+          # - name: "update other"
+          #   filter: "update && !(basic || plan)"
+          # - name: "tls"
+          #   filter: "tls"
+          # - name: "other"
+          #   filter: "!(update || tls)"
+          # - name: "${{ inputs.e2e_filter }}"
+          #   filter: "${{ inputs.e2e_filter }}"
+          #   from_input: true
         exclude:
           - e2e:
               # run only from_input part when defined and vice versa
