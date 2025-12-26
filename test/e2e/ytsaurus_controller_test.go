@@ -1894,8 +1894,8 @@ exec "$@"`
 
 	}) // integration
 
-	Context("update plan strategy testing", Label("update", "plan", "strategy"), func() {
-		DescribeTableSubtree("bulk strategy", Label("bulk"),
+	Context("update plan strategy testing", Label("update", "plan", "strategy", "bulk"), func() {
+		DescribeTableSubtree("bulk strategy",
 			func(componentType consts.ComponentType, stsName string) {
 				BeforeEach(func() {
 					ytBuilder.WithBaseComponents()
@@ -1987,8 +1987,10 @@ exec "$@"`
 			Entry("update discovery", Label("ds"), consts.DiscoveryType, consts.GetStatefulSetPrefix(consts.DiscoveryType)),
 			Entry("update master cache", Label("msc"), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
 		)
+	})
 
-		DescribeTableSubtree("on-delete strategy", Label("ondelete"),
+	Context("update plan strategy testing", Label("update", "plan", "strategy", "ondelete"), func() {
+		DescribeTableSubtree("on-delete strategy",
 			func(componentType consts.ComponentType, stsName string) {
 				BeforeEach(func() {
 					ytBuilder.WithBaseComponents()
