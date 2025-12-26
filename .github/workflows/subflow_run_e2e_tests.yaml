@@ -29,7 +29,7 @@ jobs:
           # - name: "update basic"
           #   filter: "update && basic"
           - name: "update plan"
-            filter: "update && plan && strategy && ondelete"
+            filter: "update && plan && strategy"
           # - name: "update other"
           #   filter: "update && !(basic || plan)"
           # - name: "tls"
