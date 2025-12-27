@@ -358,7 +358,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			}
 			ytClient := getYtClient(httpClient, proxyPort+"://"+proxyAddress)
 			// NOTE: WhoAmI right now does not retry.
-			if _, err := ytClient.WhoAmI(specCtx, nil); err != nil {
+			if _, err := ytClient.WhoAmI(ctx, nil); err != nil {
 				return fmt.Sprintf("ytsaurus api error: %v", err)
 			}
 			var clusterHealth ClusterHealthReport
@@ -1894,8 +1894,8 @@ exec "$@"`
 
 	}) // integration
 
-	Context("update plan strategy testing", Label("update", "plan", "strategy", "bulk"), func() {
-		DescribeTableSubtree("bulk strategy",
+	Context("update plan strategy testing", Label("update", "plan", "strategy"), func() {
+		DescribeTableSubtree("bulk strategy", Label("bulk"),
 			func(componentType consts.ComponentType, stsName string) {
 				BeforeEach(func() {
 					ytBuilder.WithBaseComponents()
@@ -1987,10 +1987,7 @@ exec "$@"`
 			Entry("update discovery", Label("ds"), consts.DiscoveryType, consts.GetStatefulSetPrefix(consts.DiscoveryType)),
 			Entry("update master cache", Label("msc"), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
 		)
-	})
-
-	Context("update plan strategy testing", Label("update", "plan", "strategy", "ondelete"), func() {
-		DescribeTableSubtree("on-delete strategy",
+		DescribeTableSubtree("on-delete strategy", Label("ondelete"),
 			func(componentType consts.ComponentType, stsName string) {
 				BeforeEach(func() {
 					ytBuilder.WithBaseComponents()
