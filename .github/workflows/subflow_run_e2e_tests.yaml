@@ -23,22 +23,24 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 5
+      max-parallel: 6
       matrix:
         e2e:
-          # - name: "update basic"
-          #   filter: "update && basic"
+          - name: "update basic"
+            filter: "update && basic"
           - name: "update plan"
+            filter: "update && plan && !strategy"
+          - name: "update strategy"
             filter: "update && plan && strategy"
-          # - name: "update other"
-          #   filter: "update && !(basic || plan)"
-          # - name: "tls"
-          #   filter: "tls"
-          # - name: "other"
-          #   filter: "!(update || tls)"
-          # - name: "${{ inputs.e2e_filter }}"
-          #   filter: "${{ inputs.e2e_filter }}"
-          #   from_input: true
+          - name: "update other"
+            filter: "update && !(basic || plan)"
+          - name: "tls"
+            filter: "tls"
+          - name: "other"
+            filter: "!(update || tls)"
+          - name: "${{ inputs.e2e_filter }}"
+            filter: "${{ inputs.e2e_filter }}"
+            from_input: true
         exclude:
           - e2e:
               # run only from_input part when defined and vice versa
