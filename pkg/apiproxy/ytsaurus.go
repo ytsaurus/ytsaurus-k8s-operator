@@ -18,6 +18,7 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/metrics"
 )
 
 type Ytsaurus struct {
@@ -241,8 +242,10 @@ func (c *Ytsaurus) UpdateOnDeleteComponentsSummary(ctx context.Context, waitingO
 				summaryParts = append(summaryParts, fmt.Sprintf("{%s (waiting %s)}",
 					componentName,
 					waitingDuration.Truncate(time.Second).String()))
+				metrics.ObserveOnDeleteWait(c.GetResource().Name, componentName, &condition.LastTransitionTime)
 			} else {
 				summaryParts = append(summaryParts, fmt.Sprintf("{%s}", componentName))
+				metrics.ObserveOnDeleteWait(c.GetResource().Name, componentName, nil)
 			}
 		}
 	}
