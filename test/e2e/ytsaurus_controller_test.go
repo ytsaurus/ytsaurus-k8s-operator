@@ -1958,18 +1958,7 @@ exec "$@"`
 				It("Should update "+stsName+" in bulkUpdate mode and have Running state", func(ctx context.Context) {
 
 					By("Trigger " + stsName + " update")
-					switch componentType {
-					case consts.QueryTrackerType:
-						ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.QueryTrackerImageCurrent)
-					case consts.MasterType:
-						ytsaurus.Spec.CoreImage = testutil.YtsaurusImageCurrent
-					case consts.DiscoveryType:
-						ytsaurus.Spec.Discovery.Image = ptr.To(testutil.YtsaurusImageCurrent)
-					case consts.MasterCacheType:
-						ytsaurus.Spec.MasterCaches.Image = ptr.To(testutil.YtsaurusImageCurrent)
-					case consts.ControllerAgentType:
-						ytsaurus.Spec.ControllerAgents.Image = ptr.To(testutil.YtsaurusImageCurrent)
-					}
+					setComponentImage(ytsaurus, componentType, currentImageForComponent(componentType))
 
 					UpdateObject(ctx, ytsaurus)
 					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
@@ -1978,25 +1967,11 @@ exec "$@"`
 					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 
 					podsAfter := getComponentPods(ctx, namespace)
+					expectedImage := getComponentImage(ytsaurus, componentType)
 
 					for name, pod := range podsAfter {
 						if strings.HasPrefix(name, stsName+"-") {
-							switch componentType {
-							case consts.QueryTrackerType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.QueryTrackers.Image))
-							case consts.MasterType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(ytsaurus.Spec.CoreImage))
-							case consts.DiscoveryType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.Discovery.Image))
-							case consts.MasterCacheType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.MasterCaches.Image))
-							case consts.ControllerAgentType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.ControllerAgents.Image))
-							case consts.RpcProxyType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.RPCProxies[0].Image))
-							case consts.HttpProxyType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.HTTPProxies[0].Image))
-							}
+							Expect(pod.Spec.Containers[0].Image).To(Equal(expectedImage))
 						}
 					}
 
@@ -2004,10 +1979,10 @@ exec "$@"`
 					checkChunkLocations(ytClient)
 				})
 			},
-			Entry("update query tracker", Label("qt"), consts.QueryTrackerType, consts.GetStatefulSetPrefix(consts.QueryTrackerType)),
-			Entry("update master", Label("ms"), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
-			Entry("update controller agent", Label("ca"), consts.ControllerAgentType, consts.GetStatefulSetPrefix(consts.ControllerAgentType)),
-			Entry("update discovery", Label("ds"), consts.DiscoveryType, consts.GetStatefulSetPrefix(consts.DiscoveryType)),
+			Entry("update query tracker", Label(consts.GetStatefulSetPrefix(consts.QueryTrackerType)), consts.QueryTrackerType, consts.GetStatefulSetPrefix(consts.QueryTrackerType)),
+			Entry("update master", Label(consts.GetStatefulSetPrefix(consts.MasterType)), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
+			Entry("update controller agent", Label(consts.GetStatefulSetPrefix(consts.ControllerAgentType)), consts.ControllerAgentType, consts.GetStatefulSetPrefix(consts.ControllerAgentType)),
+			Entry("update discovery", Label(consts.GetStatefulSetPrefix(consts.DiscoveryType)), consts.DiscoveryType, consts.GetStatefulSetPrefix(consts.DiscoveryType)),
 			Entry("update master cache", Label(consts.GetStatefulSetPrefix(consts.MasterCacheType)), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
 			Entry("update rpc proxy", Label(consts.GetStatefulSetPrefix(consts.RpcProxyType)), consts.RpcProxyType, consts.GetStatefulSetPrefix(consts.RpcProxyType)),
 			Entry("update http proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType)),
@@ -2061,16 +2036,7 @@ exec "$@"`
 					podsBefore := getComponentPods(ctx, namespace)
 
 					By("Trigger " + stsName + " update")
-					switch componentType {
-					case consts.SchedulerType:
-						ytsaurus.Spec.Schedulers.Image = ptr.To(testutil.YtsaurusImageCurrent)
-					case consts.MasterType:
-						ytsaurus.Spec.CoreImage = testutil.YtsaurusImageCurrent
-					case consts.RpcProxyType:
-						ytsaurus.Spec.RPCProxies[0].Image = ptr.To(testutil.YtsaurusImageCurrent)
-					case consts.HttpProxyType:
-						ytsaurus.Spec.HTTPProxies[0].Image = ptr.To(testutil.YtsaurusImageCurrent)
-					}
+					setComponentImage(ytsaurus, componentType, currentImageForComponent(componentType))
 
 					UpdateObject(ctx, ytsaurus)
 					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
@@ -2085,27 +2051,13 @@ exec "$@"`
 					EventuallyObject(ctx, &stsObject, reactionTimeout).Should(HaveField("Spec.UpdateStrategy.Type", appsv1.OnDeleteStatefulSetStrategyType))
 
 					By("Verify pods are NOT updated after 10 sec")
+					expectedImage := getComponentImage(ytsaurus, componentType)
 					Consistently(func() bool {
 						podsNow := getComponentPods(ctx, namespace)
 						for name, pod := range podsNow {
 							if strings.HasPrefix(name, stsName+"-") {
-								switch componentType {
-								case consts.SchedulerType:
-									if pod.Spec.Containers[0].Image == *ytsaurus.Spec.Schedulers.Image {
-										return false // Pod was updated, which shouldn't happen
-									}
-								case consts.MasterType:
-									if pod.Spec.Containers[0].Image == ytsaurus.Spec.CoreImage {
-										return false
-									}
-								case consts.RpcProxyType:
-									if pod.Spec.Containers[0].Image == *ytsaurus.Spec.RPCProxies[0].Image {
-										return false
-									}
-								case consts.HttpProxyType:
-									if pod.Spec.Containers[0].Image == *ytsaurus.Spec.HTTPProxies[0].Image {
-										return false
-									}
+								if pod.Spec.Containers[0].Image == expectedImage {
+									return false // Pod was updated, which shouldn't happen
 								}
 							}
 						}
@@ -2130,25 +2082,17 @@ exec "$@"`
 					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 
 					podsAfter := getComponentPods(ctx, namespace)
+					expectedImage = getComponentImage(ytsaurus, componentType)
 
 					for name, pod := range podsAfter {
 						if strings.HasPrefix(name, stsName+"-") {
-							switch componentType {
-							case consts.SchedulerType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.Schedulers.Image))
-							case consts.MasterType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(ytsaurus.Spec.CoreImage))
-							case consts.RpcProxyType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.RPCProxies[0].Image))
-							case consts.HttpProxyType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.HTTPProxies[0].Image))
-							}
+							Expect(pod.Spec.Containers[0].Image).To(Equal(expectedImage))
 						}
 					}
 				})
 			},
-			Entry("update scheduler", Label("sch"), consts.SchedulerType, consts.GetStatefulSetPrefix(consts.SchedulerType)),
-			Entry("update master", Label("ms"), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
+			Entry("update scheduler", Label(consts.GetStatefulSetPrefix(consts.SchedulerType)), consts.SchedulerType, consts.GetStatefulSetPrefix(consts.SchedulerType)),
+			Entry("update master", Label(consts.GetStatefulSetPrefix(consts.MasterType)), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
 			Entry("update rpc proxy", Label(consts.GetStatefulSetPrefix(consts.RpcProxyType)), consts.RpcProxyType, consts.GetStatefulSetPrefix(consts.RpcProxyType)),
 			Entry("update http proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType)),
 		)

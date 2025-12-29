@@ -134,7 +134,7 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 
 	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(hp.ytsaurus, hp) {
-			switch getComponentUpdateStrategy(hp.ytsaurus, consts.MasterCacheType, hp.GetShortName()) {
+			switch getComponentUpdateStrategy(hp.ytsaurus, consts.HttpProxyType, hp.GetShortName()) {
 			case ytv1.ComponentUpdateModeTypeOnDelete:
 				if status, err := handleOnDeleteUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.localComponent, hp.server, dry); status != nil {
 					return *status, err

@@ -29,6 +29,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 
 	"go.ytsaurus.tech/yt/go/guid"
 	"go.ytsaurus.tech/yt/go/ypath"
@@ -632,4 +633,55 @@ func restartPod(ctx context.Context, namespace, name string) {
 		HaveField("ObjectMeta.UID", Not(Equal(oldUID))),
 		HaveField("Status.Phase", Equal(corev1.PodRunning)),
 	))
+}
+
+func currentImageForComponent(componentType consts.ComponentType) string {
+	if componentType == consts.QueryTrackerType {
+		return testutil.QueryTrackerImageCurrent
+	}
+	return testutil.YtsaurusImageCurrent
+}
+
+func setComponentImage(ytsaurus *ytv1.Ytsaurus, componentType consts.ComponentType, image string) {
+	switch componentType {
+	case consts.QueryTrackerType:
+		ytsaurus.Spec.QueryTrackers.Image = ptr.To(image)
+	case consts.MasterType:
+		ytsaurus.Spec.CoreImage = image
+	case consts.DiscoveryType:
+		ytsaurus.Spec.Discovery.Image = ptr.To(image)
+	case consts.MasterCacheType:
+		ytsaurus.Spec.MasterCaches.Image = ptr.To(image)
+	case consts.ControllerAgentType:
+		ytsaurus.Spec.ControllerAgents.Image = ptr.To(image)
+	case consts.RpcProxyType:
+		ytsaurus.Spec.RPCProxies[0].Image = ptr.To(image)
+	case consts.HttpProxyType:
+		ytsaurus.Spec.HTTPProxies[0].Image = ptr.To(image)
+	case consts.SchedulerType:
+		ytsaurus.Spec.Schedulers.Image = ptr.To(image)
+	}
+}
+
+func getComponentImage(ytsaurus *ytv1.Ytsaurus, componentType consts.ComponentType) string {
+	switch componentType {
+	case consts.QueryTrackerType:
+		return *ytsaurus.Spec.QueryTrackers.Image
+	case consts.MasterType:
+		return ytsaurus.Spec.CoreImage
+	case consts.DiscoveryType:
+		return *ytsaurus.Spec.Discovery.Image
+	case consts.MasterCacheType:
+		return *ytsaurus.Spec.MasterCaches.Image
+	case consts.ControllerAgentType:
+		return *ytsaurus.Spec.ControllerAgents.Image
+	case consts.RpcProxyType:
+		return *ytsaurus.Spec.RPCProxies[0].Image
+	case consts.HttpProxyType:
+		return *ytsaurus.Spec.HTTPProxies[0].Image
+	case consts.SchedulerType:
+		return *ytsaurus.Spec.Schedulers.Image
+	default:
+		return "unsupported component type"
+	}
 }
