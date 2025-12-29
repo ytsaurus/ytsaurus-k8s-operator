@@ -1925,6 +1925,25 @@ exec "$@"`
 					case consts.ControllerAgentType:
 						ytsaurus.Spec.ControllerAgents.Image = ptr.To(testutil.YtsaurusImagePrevious)
 						ytsaurus.Spec.ControllerAgents.InstanceCount = 3
+					case consts.RpcProxyType:
+						ytBuilder.WithRPCProxies()
+						ytsaurus.Spec.RPCProxies = []ytv1.RPCProxiesSpec{
+							{
+								InstanceSpec: ytv1.InstanceSpec{
+									Image:         ptr.To(testutil.YtsaurusImagePrevious),
+									InstanceCount: 3,
+								},
+							},
+						}
+					case consts.HttpProxyType:
+						ytsaurus.Spec.HTTPProxies = []ytv1.HTTPProxiesSpec{
+							{
+								InstanceSpec: ytv1.InstanceSpec{
+									Image:         ptr.To(testutil.YtsaurusImagePrevious),
+									InstanceCount: 3,
+								},
+							},
+						}
 					}
 
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
@@ -1973,6 +1992,10 @@ exec "$@"`
 								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.MasterCaches.Image))
 							case consts.ControllerAgentType:
 								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.ControllerAgents.Image))
+							case consts.RpcProxyType:
+								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.RPCProxies[0].Image))
+							case consts.HttpProxyType:
+								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.HTTPProxies[0].Image))
 							}
 						}
 					}
@@ -1985,7 +2008,9 @@ exec "$@"`
 			Entry("update master", Label("ms"), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
 			Entry("update controller agent", Label("ca"), consts.ControllerAgentType, consts.GetStatefulSetPrefix(consts.ControllerAgentType)),
 			Entry("update discovery", Label("ds"), consts.DiscoveryType, consts.GetStatefulSetPrefix(consts.DiscoveryType)),
-			Entry("update master cache", Label("msc"), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
+			Entry("update master cache", Label(consts.GetStatefulSetPrefix(consts.MasterCacheType)), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
+			Entry("update rpc proxy", Label(consts.GetStatefulSetPrefix(consts.RpcProxyType)), consts.RpcProxyType, consts.GetStatefulSetPrefix(consts.RpcProxyType)),
+			Entry("update http proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType)),
 		)
 		DescribeTableSubtree("on-delete strategy", Label("ondelete"),
 			func(componentType consts.ComponentType, stsName string) {
@@ -2002,6 +2027,25 @@ exec "$@"`
 					case consts.MasterType:
 						ytsaurus.Spec.CoreImage = testutil.YtsaurusImagePrevious
 						ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
+					case consts.RpcProxyType:
+						ytBuilder.WithRPCProxies()
+						ytsaurus.Spec.RPCProxies = []ytv1.RPCProxiesSpec{
+							{
+								InstanceSpec: ytv1.InstanceSpec{
+									Image:         ptr.To(testutil.YtsaurusImagePrevious),
+									InstanceCount: 3,
+								},
+							},
+						}
+					case consts.HttpProxyType:
+						ytsaurus.Spec.HTTPProxies = []ytv1.HTTPProxiesSpec{
+							{
+								InstanceSpec: ytv1.InstanceSpec{
+									Image:         ptr.To(testutil.YtsaurusImagePrevious),
+									InstanceCount: 3,
+								},
+							},
+						}
 					}
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 						{
@@ -2022,6 +2066,10 @@ exec "$@"`
 						ytsaurus.Spec.Schedulers.Image = ptr.To(testutil.YtsaurusImageCurrent)
 					case consts.MasterType:
 						ytsaurus.Spec.CoreImage = testutil.YtsaurusImageCurrent
+					case consts.RpcProxyType:
+						ytsaurus.Spec.RPCProxies[0].Image = ptr.To(testutil.YtsaurusImageCurrent)
+					case consts.HttpProxyType:
+						ytsaurus.Spec.HTTPProxies[0].Image = ptr.To(testutil.YtsaurusImageCurrent)
 					}
 
 					UpdateObject(ctx, ytsaurus)
@@ -2048,7 +2096,15 @@ exec "$@"`
 									}
 								case consts.MasterType:
 									if pod.Spec.Containers[0].Image == ytsaurus.Spec.CoreImage {
-										return false // Pod was updated, which shouldn't happen
+										return false
+									}
+								case consts.RpcProxyType:
+									if pod.Spec.Containers[0].Image == *ytsaurus.Spec.RPCProxies[0].Image {
+										return false
+									}
+								case consts.HttpProxyType:
+									if pod.Spec.Containers[0].Image == *ytsaurus.Spec.HTTPProxies[0].Image {
+										return false
 									}
 								}
 							}
@@ -2082,6 +2138,10 @@ exec "$@"`
 								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.Schedulers.Image))
 							case consts.MasterType:
 								Expect(pod.Spec.Containers[0].Image).To(Equal(ytsaurus.Spec.CoreImage))
+							case consts.RpcProxyType:
+								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.RPCProxies[0].Image))
+							case consts.HttpProxyType:
+								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.HTTPProxies[0].Image))
 							}
 						}
 					}
@@ -2089,6 +2149,8 @@ exec "$@"`
 			},
 			Entry("update scheduler", Label("sch"), consts.SchedulerType, consts.GetStatefulSetPrefix(consts.SchedulerType)),
 			Entry("update master", Label("ms"), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
+			Entry("update rpc proxy", Label(consts.GetStatefulSetPrefix(consts.RpcProxyType)), consts.RpcProxyType, consts.GetStatefulSetPrefix(consts.RpcProxyType)),
+			Entry("update http proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType)),
 		)
 	})
 })
