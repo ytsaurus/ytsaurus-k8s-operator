@@ -233,7 +233,7 @@ func (c *ClusterHealthReport) AddWarning(warning yterrors.Error, warningPath ypa
 
 func (c *ClusterHealthReport) CollectAlerts(ctx context.Context, ytClient yt.Client, alertPath ypath.Path) {
 	var alerts []yterrors.Error
-	if err := ytClient.GetNode(specCtx, alertPath, &alerts, nil); err != nil {
+	if err := ytClient.GetNode(ctx, alertPath, &alerts, nil); err != nil {
 		if yterrors.ContainsResolveError(err) {
 			log.Info("Cannot collect alerts", "error", err, "alert_path", alertPath)
 		} else {
@@ -252,7 +252,7 @@ func (c *ClusterHealthReport) CollectNodes(ctx context.Context, ytClient yt.Clie
 		Alerts []yterrors.Error `yson:"alerts,attr"`
 	}
 	var nodes []nodeAlerts
-	err := ytClient.ListNode(specCtx, basePath, &nodes, &yt.ListNodeOptions{
+	err := ytClient.ListNode(ctx, basePath, &nodes, &yt.ListNodeOptions{
 		Attributes: []string{"alerts"},
 	})
 	if err != nil {
@@ -269,7 +269,7 @@ func (c *ClusterHealthReport) CollectNodes(ctx context.Context, ytClient yt.Clie
 
 func (c *ClusterHealthReport) CollectLostChunks(ctx context.Context, ytClient yt.Client, countPath ypath.Path) {
 	var count int
-	err := ytClient.GetNode(specCtx, countPath, &count, nil)
+	err := ytClient.GetNode(ctx, countPath, &count, nil)
 	if err != nil {
 		c.AddError(err, countPath)
 		return
@@ -295,7 +295,7 @@ func (c *ClusterHealthReport) CollectTablets(ctx context.Context, ytClient yt.Cl
 	var nodes []node
 
 	err := ytClient.ListNode(
-		specCtx,
+		ctx,
 		basePath,
 		&nodes,
 		&yt.ListNodeOptions{
