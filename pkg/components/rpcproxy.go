@@ -123,8 +123,23 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.localComponent, rp.server, dry); status != nil {
-			return *status, err
+		if IsUpdatingComponent(rp.ytsaurus, rp) {
+			switch getComponentUpdateStrategy(rp.ytsaurus, consts.RpcProxyType, rp.GetShortName()) {
+			case ytv1.ComponentUpdateModeTypeOnDelete:
+				if status, err := handleOnDeleteUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.localComponent, rp.server, dry); status != nil {
+					return *status, err
+				}
+			default:
+				if status, err := handleBulkUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.localComponent, rp.server, dry); status != nil {
+					return *status, err
+				}
+			}
+
+			if rp.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+				return ComponentStatusReady(), err
+			}
+		} else {
+			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
 	}
 

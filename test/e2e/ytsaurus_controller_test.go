@@ -358,7 +358,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			}
 			ytClient := getYtClient(httpClient, proxyPort+"://"+proxyAddress)
 			// NOTE: WhoAmI right now does not retry.
-			if _, err := ytClient.WhoAmI(ctx, nil); err != nil {
+			if _, err := ytClient.WhoAmI(specCtx, nil); err != nil {
 				return fmt.Sprintf("ytsaurus api error: %v", err)
 			}
 			var clusterHealth ClusterHealthReport
@@ -1894,132 +1894,184 @@ exec "$@"`
 
 	}) // integration
 
-	Context("Test update plan strategy", Label("update", "plan", "strategy"), func() {
-		BeforeEach(func() {
-			By("Adding base components")
-			ytBuilder.WithBaseComponents()
-			ytBuilder.WithQueryTracker()
-			ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
-				InstanceSpec: ytv1.InstanceSpec{
-					Image:         ptr.To(testutil.QueryTrackerImagePrevious),
-					InstanceCount: 3,
-				},
-			}
-			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
-				{
-					Component: ytv1.Component{Type: consts.QueryTrackerType},
-					Strategy: &ytv1.ComponentUpdateStrategy{
-						RunPreChecks: ptr.To(true),
-					},
-				},
-			}
-		})
+	Context("update plan strategy testing", Label("update", "plan", "strategy"), func() {
+		DescribeTableSubtree("bulk strategy", Label("bulk"),
+			func(componentType consts.ComponentType, stsName string) {
+				BeforeEach(func() {
+					ytBuilder.WithBaseComponents()
 
-		It("Should update query tracker by bulk strategy and have Running state", Label("query-tracker", "bulk"), func(ctx context.Context) {
+					switch componentType {
+					case consts.QueryTrackerType:
+						ytBuilder.WithQueryTracker()
+						ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
+							InstanceSpec: ytv1.InstanceSpec{
+								Image:         ptr.To(testutil.QueryTrackerImagePrevious),
+								InstanceCount: 3,
+							},
+						}
+					case consts.MasterType:
+						ytsaurus.Spec.CoreImage = testutil.YtsaurusImagePrevious
+						ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
+					case consts.MasterCacheType:
+						ytsaurus.Spec.MasterCaches = &ytv1.MasterCachesSpec{
+							InstanceSpec: ytv1.InstanceSpec{
+								Image:         ptr.To(testutil.YtsaurusImagePrevious),
+								InstanceCount: 3,
+							},
+						}
+					case consts.DiscoveryType:
+						ytsaurus.Spec.Discovery.Image = ptr.To(testutil.YtsaurusImagePrevious)
+						ytsaurus.Spec.Discovery.InstanceCount = 3
+					case consts.ControllerAgentType:
+						ytsaurus.Spec.ControllerAgents.Image = ptr.To(testutil.YtsaurusImagePrevious)
+						ytsaurus.Spec.ControllerAgents.InstanceCount = 3
+					case consts.RpcProxyType:
+						ytBuilder.WithRPCProxies()
+						ytsaurus.Spec.RPCProxies[0].Image = ptr.To(testutil.YtsaurusImagePrevious)
+						ytsaurus.Spec.RPCProxies[0].InstanceCount = 3
+					case consts.HttpProxyType:
+						ytsaurus.Spec.HTTPProxies[0].Image = ptr.To(testutil.YtsaurusImagePrevious)
+						ytsaurus.Spec.HTTPProxies[0].InstanceCount = 3
+					}
 
-			podsBefore := getComponentPods(ctx, namespace)
+					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+						{
+							Component: ytv1.Component{Type: componentType},
+							Strategy: &ytv1.ComponentUpdateStrategy{
+								RunPreChecks: ptr.To(true),
+							},
+						},
+					}
+				})
+				It("Should update "+stsName+" in bulkUpdate mode and have Running state", func(ctx context.Context) {
 
-			By("Trigger QT update")
-			ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.QueryTrackerImageFuture)
+					By("Trigger " + stsName + " update")
+					setComponentImage(ytsaurus, componentType, currentImageForComponent(componentType))
 
-			UpdateObject(ctx, ytsaurus)
-			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+					UpdateObject(ctx, ytsaurus)
+					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 
-			By("Waiting cluster update completes")
-			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+					By("Waiting cluster update completes")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 
-			podsAfter := getComponentPods(ctx, namespace)
-			pods := getChangedPods(podsBefore, podsAfter)
+					podsAfter := getComponentPods(ctx, namespace)
+					expectedImage := getComponentImage(ytsaurus, componentType)
 
-			Expect(pods.Updated).To(ConsistOf("qt-0", "qt-1", "qt-2"))
-
-			for name, pod := range podsAfter {
-				if strings.HasPrefix(name, "qt-") {
-					Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.QueryTrackers.Image))
-				}
-			}
-		})
-	})
-
-	Context("on-delete strategy for schedulers", Label("update", "plan", "strategy", "scheduler", "ondelete"), func() {
-		BeforeEach(func() {
-			ytBuilder.WithBaseComponents()
-			ytsaurus.Spec.Schedulers = &ytv1.SchedulersSpec{
-				InstanceSpec: ytv1.InstanceSpec{
-					Image:         ptr.To(testutil.YtsaurusImagePrevious),
-					InstanceCount: 3,
-				},
-			}
-			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
-				{
-					Component: ytv1.Component{Type: consts.SchedulerType},
-					Strategy: &ytv1.ComponentUpdateStrategy{
-						OnDelete:     &ytv1.ComponentOnDeleteUpdateMode{},
-						RunPreChecks: ptr.To(true),
-					},
-				},
-			}
-		})
-		It("Should update scheduler in onDelete mode and have Running state", func(ctx context.Context) {
-
-			podsBefore := getComponentPods(ctx, namespace)
-
-			By("Trigger sch update")
-			ytsaurus.Spec.Schedulers.Image = ptr.To(testutil.YtsaurusImageCurrent)
-
-			UpdateObject(ctx, ytsaurus)
-			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-
-			By("Verify OnDelete mode is activated")
-			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
-				HaveClusterUpdateState(ytv1.UpdateStateWaitingForPodsRemoval),
-			)
-
-			By("Verify StatefulSet has OnDelete update strategy")
-			sch := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "sch"}}
-			EventuallyObject(ctx, &sch, reactionTimeout).Should(HaveField("Spec.UpdateStrategy.Type", appsv1.OnDeleteStatefulSetStrategyType))
-
-			By("Verify pods are NOT updated after 1 minute")
-			Consistently(func() bool {
-				podsNow := getComponentPods(ctx, namespace)
-				for name, pod := range podsNow {
-					if strings.HasPrefix(name, "sch-") {
-						if pod.Spec.Containers[0].Image == *ytsaurus.Spec.Schedulers.Image {
-							return false // Pod was updated, which shouldn't happen
+					for name, pod := range podsAfter {
+						if strings.HasPrefix(name, stsName+"-") {
+							Expect(pod.Spec.Containers[0].Image).To(Equal(expectedImage))
 						}
 					}
-				}
-				return true // All pods still on old image
-			}, 1*time.Minute, 5*time.Second).Should(BeTrue())
 
-			By("Manually delete scheduler pods")
-			for name := range podsBefore {
-				if strings.HasPrefix(name, "sch-") {
-					var pod corev1.Pod
-					err := k8sClient.Get(ctx, types.NamespacedName{
-						Namespace: namespace,
-						Name:      name,
-					}, &pod)
-					if err == nil {
-						Expect(k8sClient.Delete(ctx, &pod)).Should(Succeed())
+					checkClusterHealth(ctx, ytClient)
+					checkChunkLocations(ytClient)
+				})
+			},
+			Entry("update query tracker", Label(consts.GetStatefulSetPrefix(consts.QueryTrackerType)), consts.QueryTrackerType, consts.GetStatefulSetPrefix(consts.QueryTrackerType)),
+			Entry("update master", Label(consts.GetStatefulSetPrefix(consts.MasterType)), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
+			Entry("update controller agent", Label(consts.GetStatefulSetPrefix(consts.ControllerAgentType)), consts.ControllerAgentType, consts.GetStatefulSetPrefix(consts.ControllerAgentType)),
+			Entry("update discovery", Label(consts.GetStatefulSetPrefix(consts.DiscoveryType)), consts.DiscoveryType, consts.GetStatefulSetPrefix(consts.DiscoveryType)),
+			Entry("update master cache", Label(consts.GetStatefulSetPrefix(consts.MasterCacheType)), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
+			Entry("update rpc proxy", Label(consts.GetStatefulSetPrefix(consts.RpcProxyType)), consts.RpcProxyType, consts.GetStatefulSetPrefix(consts.RpcProxyType)),
+			Entry("update http proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType)),
+		)
+		DescribeTableSubtree("on-delete strategy", Label("ondelete"),
+			func(componentType consts.ComponentType, stsName string) {
+				BeforeEach(func() {
+					ytBuilder.WithBaseComponents()
+					switch componentType {
+					case consts.SchedulerType:
+						ytsaurus.Spec.Schedulers = &ytv1.SchedulersSpec{
+							InstanceSpec: ytv1.InstanceSpec{
+								Image:         ptr.To(testutil.YtsaurusImagePrevious),
+								InstanceCount: 3,
+							},
+						}
+					case consts.MasterType:
+						ytsaurus.Spec.CoreImage = testutil.YtsaurusImagePrevious
+						ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
+					case consts.RpcProxyType:
+						ytBuilder.WithRPCProxies()
+						ytsaurus.Spec.RPCProxies[0].Image = ptr.To(testutil.YtsaurusImagePrevious)
+						ytsaurus.Spec.RPCProxies[0].InstanceCount = 3
+					case consts.HttpProxyType:
+						ytsaurus.Spec.HTTPProxies[0].Image = ptr.To(testutil.YtsaurusImagePrevious)
+						ytsaurus.Spec.HTTPProxies[0].InstanceCount = 3
 					}
-				}
-			}
+					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+						{
+							Component: ytv1.Component{Type: componentType},
+							Strategy: &ytv1.ComponentUpdateStrategy{
+								OnDelete:     &ytv1.ComponentOnDeleteUpdateMode{},
+								RunPreChecks: ptr.To(true),
+							},
+						},
+					}
+				})
+				It("should update "+stsName+" with OnDelete strategy and have cluster Running state", func(ctx context.Context) {
+					podsBefore := getComponentPods(ctx, namespace)
 
-			By("Waiting cluster update completes")
-			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+					By("Trigger " + stsName + " update")
+					setComponentImage(ytsaurus, componentType, currentImageForComponent(componentType))
 
-			podsAfter := getComponentPods(ctx, namespace)
-			pods := getChangedPods(podsBefore, podsAfter)
+					UpdateObject(ctx, ytsaurus)
+					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 
-			Expect(pods.Updated).To(ConsistOf("sch-0", "sch-1", "sch-2"))
+					By("Verify OnDelete mode is activated")
+					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
+						HaveClusterUpdateState(ytv1.UpdateStateWaitingForPodsRemoval),
+					)
 
-			for name, pod := range podsAfter {
-				if strings.HasPrefix(name, "sch-") {
-					Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.Schedulers.Image))
-				}
-			}
-		})
+					By("Verify StatefulSet has OnDelete update strategy")
+					stsObject := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: stsName}}
+					EventuallyObject(ctx, &stsObject, reactionTimeout).Should(HaveField("Spec.UpdateStrategy.Type", appsv1.OnDeleteStatefulSetStrategyType))
+
+					By("Verify pods are NOT updated after 10 sec")
+					expectedImage := getComponentImage(ytsaurus, componentType)
+					Consistently(func() bool {
+						podsNow := getComponentPods(ctx, namespace)
+						for name, pod := range podsNow {
+							if strings.HasPrefix(name, stsName+"-") {
+								if pod.Spec.Containers[0].Image == expectedImage {
+									return false // Pod was updated, which shouldn't happen
+								}
+							}
+						}
+						return true // All pods still on old image
+					}, 10*time.Second).Should(BeTrue())
+
+					By("Manually delete component pods")
+					for name := range podsBefore {
+						if strings.HasPrefix(name, stsName+"-") {
+							var pod corev1.Pod
+							err := k8sClient.Get(ctx, types.NamespacedName{
+								Namespace: namespace,
+								Name:      name,
+							}, &pod)
+							if err == nil {
+								Expect(k8sClient.Delete(ctx, &pod)).Should(Succeed())
+							}
+						}
+					}
+
+					By("Waiting cluster update completes")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+
+					podsAfter := getComponentPods(ctx, namespace)
+					expectedImage = getComponentImage(ytsaurus, componentType)
+
+					for name, pod := range podsAfter {
+						if strings.HasPrefix(name, stsName+"-") {
+							Expect(pod.Spec.Containers[0].Image).To(Equal(expectedImage))
+						}
+					}
+				})
+			},
+			Entry("update scheduler", Label(consts.GetStatefulSetPrefix(consts.SchedulerType)), consts.SchedulerType, consts.GetStatefulSetPrefix(consts.SchedulerType)),
+			Entry("update master", Label(consts.GetStatefulSetPrefix(consts.MasterType)), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
+			Entry("update rpc proxy", Label(consts.GetStatefulSetPrefix(consts.RpcProxyType)), consts.RpcProxyType, consts.GetStatefulSetPrefix(consts.RpcProxyType)),
+			Entry("update http proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType)),
+		)
 	})
 })
 
@@ -2139,7 +2191,7 @@ func checkChunkLocations(ytClient yt.Client) {
 	}
 
 	var values []yson.ValueWithAttrs
-	Expect(ytClient.ListNode(specCtx, ypath.Path("//sys/data_nodes"), &values, &yt.ListNodeOptions{
+	Expect(ytClient.ListNode(specCtx, ypath.Path(consts.ComponentCypressPath(consts.DataNodeType)), &values, &yt.ListNodeOptions{
 		Attributes: []string{"use_imaginary_chunk_locations"},
 	})).Should(Succeed())
 
