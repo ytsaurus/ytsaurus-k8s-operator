@@ -1930,14 +1930,8 @@ exec "$@"`
 						ytsaurus.Spec.RPCProxies[0].Image = ptr.To(testutil.YtsaurusImagePrevious)
 						ytsaurus.Spec.RPCProxies[0].InstanceCount = 3
 					case consts.HttpProxyType:
-						ytsaurus.Spec.HTTPProxies = []ytv1.HTTPProxiesSpec{
-							{
-								InstanceSpec: ytv1.InstanceSpec{
-									Image:         ptr.To(testutil.YtsaurusImagePrevious),
-									InstanceCount: 3,
-								},
-							},
-						}
+						ytsaurus.Spec.HTTPProxies[0].Image = ptr.To(testutil.YtsaurusImagePrevious)
+						ytsaurus.Spec.HTTPProxies[0].InstanceCount = 3
 					}
 
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
@@ -2001,14 +1995,8 @@ exec "$@"`
 						ytsaurus.Spec.RPCProxies[0].Image = ptr.To(testutil.YtsaurusImagePrevious)
 						ytsaurus.Spec.RPCProxies[0].InstanceCount = 3
 					case consts.HttpProxyType:
-						ytsaurus.Spec.HTTPProxies = []ytv1.HTTPProxiesSpec{
-							{
-								InstanceSpec: ytv1.InstanceSpec{
-									Image:         ptr.To(testutil.YtsaurusImagePrevious),
-									InstanceCount: 3,
-								},
-							},
-						}
+						ytsaurus.Spec.HTTPProxies[0].Image = ptr.To(testutil.YtsaurusImagePrevious)
+						ytsaurus.Spec.HTTPProxies[0].InstanceCount = 3
 					}
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 						{
