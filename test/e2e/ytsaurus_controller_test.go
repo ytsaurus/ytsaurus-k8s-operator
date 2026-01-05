@@ -2357,7 +2357,7 @@ func NewMapTestOperation(ytClient yt.Client) *TestOperation {
 
 var _ = Describe("Check operator", Label("operator"), func() {
 	It("Tests operator metrics are available", Label("metrics"), func(ctx context.Context) {
-		metricsURL, err := getOperatorMetricsURL()
+		metricsURL, err := getOperatorMetricsURL(ctx)
 		Expect(err).NotTo(HaveOccurred())
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, metricsURL, http.NoBody)
 		Expect(err).NotTo(HaveOccurred())

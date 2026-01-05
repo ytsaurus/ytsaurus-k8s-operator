@@ -102,7 +102,7 @@ func getServiceAddress(ctx context.Context, namespace, serviceName, portName str
 	return fmt.Sprintf("%s:%v", nodeAddress, nodePort), nil
 }
 
-func getOperatorMetricsURL() (string, error) {
+func getOperatorMetricsURL(ctx context.Context) (string, error) {
 	if url := os.Getenv("E2E_YT_OPERATOR_METRICS_URL"); url != "" {
 		return url, nil
 	}
@@ -112,7 +112,7 @@ func getOperatorMetricsURL() (string, error) {
 	if namespace == "" || instance == "" || chart == "" {
 		return "", fmt.Errorf("operator namespace, instance, or chart is not defined")
 	}
-	address, err := getServiceAddress(namespace, instance+"-"+chart+"-metrics", "metrics")
+	address, err := getServiceAddress(ctx, namespace, instance+"-"+chart+"-metrics", "metrics")
 	if err != nil {
 		return "", err
 	}
