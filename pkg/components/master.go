@@ -351,7 +351,8 @@ func (m *Master) initSchemaACLs() (string, error) {
 }
 
 func (m *Master) createInitScript() (string, error) {
-	clusterConnection, err := m.cfgen.GetClusterConnectionConfig()
+	clusterConn := m.cfgen.GetClusterConnection()
+	connConfig, err := yson.MarshalFormat(clusterConn, yson.FormatPretty)
 	if err != nil {
 		panic(err)
 	}
@@ -374,7 +375,8 @@ func (m *Master) createInitScript() (string, error) {
 		RunIfNonexistent("//sys/pools", "/usr/bin/yt link //sys/pool_trees/default //sys/pools"),
 		RunIfNonexistent("//sys/pool_trees/default/research", "/usr/bin/yt create scheduler_pool --attributes '{name=research; pool_tree=default}'"),
 		"/usr/bin/yt create map_node //home --ignore-existing",
-		RunIfExists("//sys/@provision_lock", fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection '%s'", string(clusterConnection))),
+		RunIfExists("//sys/@provision_lock", fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection '%s'", string(connConfig))),
+		RunIfExists("//sys/@provision_lock", fmt.Sprintf("/usr/bin/yt set //sys/@cluster_name '%s'", clusterConn.ClusterName)),
 		m.initAdminUser(),
 		m.initMedia(),
 	}
