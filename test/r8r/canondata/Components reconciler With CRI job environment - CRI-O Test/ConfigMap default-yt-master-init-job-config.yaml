@@ -108,6 +108,9 @@ data:
         };
     }'
     fi
+    if [ $(/usr/bin/yt exists //sys/@provision_lock) = 'true' ]; then
+    /usr/bin/yt set //sys/@cluster_name 'test-ytsaurus'
+    fi
     if [ $(/usr/bin/yt exists //sys/users/admin) = 'false' ]; then
     /usr/bin/yt create user --attributes '{name="admin"}' --ignore-existing
     /usr/bin/yt execute set_user_password '{user=admin;new_password_sha256="5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"}'
