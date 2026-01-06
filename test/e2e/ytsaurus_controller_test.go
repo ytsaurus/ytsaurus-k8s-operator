@@ -1951,7 +1951,7 @@ exec "$@"`
 						}
 					}
 
-					checkClusterHealth(ytClient)
+					checkClusterHealth(ctx, ytClient)
 					checkChunkLocations(ytClient)
 				})
 			},
