@@ -484,8 +484,9 @@ func (b *YtsaurusBuilder) WithRPCProxies() {
 }
 
 func (b *YtsaurusBuilder) CreateHTTPProxiesSpec() ytv1.HTTPProxiesSpec {
+	stype := corev1.ServiceTypeNodePort
 	return ytv1.HTTPProxiesSpec{
-		ServiceType: "NodePort",
+		ServiceType: stype,
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
