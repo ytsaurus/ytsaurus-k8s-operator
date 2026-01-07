@@ -77,7 +77,9 @@ data:
     if [ $(/usr/bin/yt exists //sys/pools) = 'false' ]; then
     /usr/bin/yt link //sys/pool_trees/default //sys/pools
     fi
-    /usr/bin/yt create scheduler_pool --attributes '{name=research; pool_tree=default}' --ignore-existing
+    if [ $(/usr/bin/yt exists //sys/pool_trees/default/research) = 'false' ]; then
+    /usr/bin/yt create scheduler_pool --attributes '{name=research; pool_tree=default}'
+    fi
     /usr/bin/yt create map_node //home --ignore-existing
     if [ $(/usr/bin/yt exists //sys/@provision_lock) = 'true' ]; then
     /usr/bin/yt set //sys/@cluster_connection '{

@@ -372,7 +372,7 @@ func (m *Master) createInitScript() (string, error) {
 		"/usr/bin/yt create scheduler_pool_tree --attributes '{name=default; config={nodes_filter=\"\"}}' --ignore-existing",
 		SetWithIgnoreExisting("//sys/pool_trees/@default_tree", "default"),
 		RunIfNonexistent("//sys/pools", "/usr/bin/yt link //sys/pool_trees/default //sys/pools"),
-		"/usr/bin/yt create scheduler_pool --attributes '{name=research; pool_tree=default}' --ignore-existing",
+		RunIfNonexistent("//sys/pool_trees/default/research", "/usr/bin/yt create scheduler_pool --attributes '{name=research; pool_tree=default}'"),
 		"/usr/bin/yt create map_node //home --ignore-existing",
 		RunIfExists("//sys/@provision_lock", fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection '%s'", string(clusterConnection))),
 		m.initAdminUser(),
