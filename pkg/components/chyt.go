@@ -119,7 +119,7 @@ func (c *Chyt) createInitChPublicScript() string {
 		"yt clickhouse ctl set-option --alias ch_public instance_cpu 1",
 		"yt clickhouse ctl set-option --alias ch_public instance_memory '{reader=100000000;chunk_meta_cache=100000000;compressed_cache=100000000;clickhouse=100000000;clickhouse_watermark=10;footprint=500000000;log_tailer=100000000;watchdog_oom_watermark=0;watchdog_oom_window_watermark=0}'",
 		"yt clickhouse ctl set-option --alias ch_public instance_count 1",
-		`yt set //sys/access_control_object_namespaces/chyt/ch_public/principal/@acl/end '[{action="allow"; subjects=["everyone"]; permissions=["use";]}]'`,
+		`yt set //sys/access_control_object_namespaces/chyt/ch_public/principal/@acl/end '{action="allow"; subjects=["everyone";]; permissions=["use";]}'`,
 		"yt clickhouse ctl start ch_public",
 	}
 
