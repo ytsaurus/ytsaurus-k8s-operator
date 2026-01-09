@@ -985,6 +985,9 @@ spec:
                       - gzip
                       - zstd
                       type: string
+                    enableAnchorProfiling:
+                      default: true
+                      type: boolean
                     format:
                       default: plain_text
                       enum:
@@ -1144,6 +1147,9 @@ spec:
                       - gzip
                       - zstd
                       type: string
+                    enableAnchorProfiling:
+                      default: true
+                      type: boolean
                     format:
                       default: plain_text
                       enum:
@@ -1379,6 +1385,9 @@ spec:
                       - gzip
                       - zstd
                       type: string
+                    enableAnchorProfiling:
+                      default: true
+                      type: boolean
                     format:
                       default: plain_text
                       enum:
