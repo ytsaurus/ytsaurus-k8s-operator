@@ -9,25 +9,25 @@ import (
 )
 
 //nolint:gochecknoglobals // Prometheus metrics are package-level for registration and reuse.
-var onDeleteWaitSeconds = prometheus.NewGaugeVec(
+var strategyOnDeleteWatingTimeSeconds = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Namespace: "ytop",
-		Subsystem: "update_strategy",
-		Name:      "on_delete_wait_seconds",
+		Subsystem: "strategy_on_delete",
+		Name:      "waiting_time_seconds",
 		Help:      "Seconds a component has been waiting in OnDelete mode since the mode started.",
 	},
-	[]string{"cluster", "component"},
+	[]string{"cluster", "cluster_namespace", "component_name"},
 )
 
 func init() {
-	ctrlmetrics.Registry.MustRegister(onDeleteWaitSeconds)
+	ctrlmetrics.Registry.MustRegister(strategyOnDeleteWatingTimeSeconds)
 }
 
-func ObserveOnDeleteWait(cluster, component string, startedAt *metav1.Time) {
-	lbl := []string{cluster, component}
+func ObserveOnDeleteWait(cluster, cluster_namespace, component_name string, startedAt *metav1.Time) {
+	lbl := []string{cluster, cluster_namespace, component_name}
 	if startedAt == nil || startedAt.IsZero() {
-		onDeleteWaitSeconds.DeleteLabelValues(lbl...)
+		strategyOnDeleteWatingTimeSeconds.DeleteLabelValues(lbl...)
 		return
 	}
-	onDeleteWaitSeconds.WithLabelValues(lbl...).Set(time.Since(startedAt.Time).Seconds())
+	strategyOnDeleteWatingTimeSeconds.WithLabelValues(lbl...).Set(time.Since(startedAt.Time).Seconds())
 }

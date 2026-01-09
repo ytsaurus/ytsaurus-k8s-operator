@@ -18,6 +18,7 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/metrics"
 )
 
@@ -203,23 +204,21 @@ func buildComponentsSummary(components []ytv1.Component) string {
 	}
 	var componentNames []string
 	for _, comp := range components {
-		// TODO: we better use labeller here after support deployment names in it.
-		name := getComponentName(comp)
+		name := getLabelerComponentName(comp)
 		componentNames = append(componentNames, name)
 	}
 	return "{" + strings.Join(componentNames, " ") + "}"
 }
 
-func getComponentName(component ytv1.Component) string {
-	// TODO: we better use labeller here after support deployment names in it.
-	name := consts.GetShortName(component.Type)
-	if name == "" {
-		name = strings.ToLower(string(component.Type))
-	}
-	if component.Name != "" {
-		name += fmt.Sprintf("-%s", component.Name)
-	}
-	return name
+func getComponentLabeler(component ytv1.Component) *labeller.Labeller {
+	l := (&labeller.Labeller{}).ForComponent(component.Type, component.Name)
+	return l
+}
+
+func getLabelerComponentName(component ytv1.Component) string {
+	l := getComponentLabeler(component)
+	l.UseShortNames = true
+	return l.GetComponentShortName()
 }
 
 // UpdateOnDeleteComponentsSummary updates the UpdatingComponentsSummary with waiting time information
@@ -236,16 +235,16 @@ func (c *Ytsaurus) UpdateOnDeleteComponentsSummary(ctx context.Context, waitingO
 		condition := meta.FindStatusCondition(c.GetResource().Status.UpdateStatus.Conditions, waitingOnDeleteConditionType)
 
 		if condition != nil && condition.Status == "True" {
-			componentName := getComponentName(component)
+			componentName := getLabelerComponentName(component)
 			if includeWaitinDuration {
 				waitingDuration := time.Since(condition.LastTransitionTime.Time)
 				summaryParts = append(summaryParts, fmt.Sprintf("{%s (waiting %s)}",
 					componentName,
 					waitingDuration.Truncate(time.Second).String()))
-				metrics.ObserveOnDeleteWait(c.GetResource().Name, componentName, &condition.LastTransitionTime)
+				metrics.ObserveOnDeleteWait(c.GetResource().Name, c.GetResource().Namespace, componentName, &condition.LastTransitionTime)
 			} else {
 				summaryParts = append(summaryParts, fmt.Sprintf("{%s}", componentName))
-				metrics.ObserveOnDeleteWait(c.GetResource().Name, componentName, nil)
+				metrics.ObserveOnDeleteWait(c.GetResource().Name, c.GetResource().Namespace, componentName, nil)
 			}
 		}
 	}

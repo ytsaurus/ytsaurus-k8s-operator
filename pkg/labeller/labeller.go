@@ -89,6 +89,10 @@ func (l *Labeller) GetInstanceGroup() string {
 	return l.InstanceGroup
 }
 
+func (l *Labeller) GetComponentShortName() string {
+	return l.getName(consts.GetShortName(l.ComponentType), "")
+}
+
 func (l *Labeller) GetServerStatefulSetName() string {
 	return l.getName(consts.ComponentStatefulSetPrefix(l.ComponentType), "")
 }
