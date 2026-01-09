@@ -42,6 +42,7 @@ _Appears in:_
 | `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info warning error] <br /> |
 | `compression` _[LogCompression](#logcompression)_ |  | none | Enum: [none gzip zstd] <br /> |
 | `useTimestampSuffix` _boolean_ |  | false |  |
+| `enableAnchorProfiling` _boolean_ |  | true |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 
 
@@ -2668,6 +2669,7 @@ _Appears in:_
 | `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info warning error] <br /> |
 | `compression` _[LogCompression](#logcompression)_ |  | none | Enum: [none gzip zstd] <br /> |
 | `useTimestampSuffix` _boolean_ |  | false |  |
+| `enableAnchorProfiling` _boolean_ |  | true |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 | `category` _string_ |  |  |  |
 
@@ -2865,6 +2867,7 @@ _Appears in:_
 | `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info warning error] <br /> |
 | `compression` _[LogCompression](#logcompression)_ |  | none | Enum: [none gzip zstd] <br /> |
 | `useTimestampSuffix` _boolean_ |  | false |  |
+| `enableAnchorProfiling` _boolean_ |  | true |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 | `writerType` _[LogWriterType](#logwritertype)_ |  |  | Enum: [file stderr] <br /> |
 | `categoriesFilter` _[CategoriesFilter](#categoriesfilter)_ |  |  |  |
