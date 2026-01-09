@@ -291,8 +291,11 @@ type BaseLoggerSpec struct {
 	Compression LogCompression `json:"compression,omitempty"`
 	//+kubebuilder:default:=false
 	//+optional
-	UseTimestampSuffix bool               `json:"useTimestampSuffix"`
-	RotationPolicy     *LogRotationPolicy `json:"rotationPolicy,omitempty"`
+	UseTimestampSuffix bool `json:"useTimestampSuffix"`
+	//+kubebuilder:default:=true
+	//+optional
+	EnableAnchorProfiling *bool              `json:"enableAnchorProfiling,omitempty"`
+	RotationPolicy        *LogRotationPolicy `json:"rotationPolicy,omitempty"`
 }
 
 type TextLoggerSpec struct {
