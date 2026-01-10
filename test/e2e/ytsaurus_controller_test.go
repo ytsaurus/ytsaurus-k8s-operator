@@ -475,7 +475,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Expect(rpcProxies).Should(HaveLen(int(ytsaurus.Spec.RPCProxies[0].InstanceCount)))
 
 		By("Checking YT RPC Proxy discovery")
-		proxies := discoverProxies(httpClient, ytProxyAddress, nil)
+		proxies := discoverProxies(ctx, httpClient, ytProxyAddress, nil)
 		Expect(proxies).ToNot(BeEmpty())
 		Expect(proxies).To(HaveEach(HaveSuffix(fmt.Sprintf(":%v", consts.RPCProxyPublicRPCPort))))
 
@@ -612,7 +612,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		By("Checking CHYT readiness")
 		// FIXME(khlebnikov): There is no reliable readiness signal.
-		Eventually(queryClickHouse, chytBootstrapTimeout, pollInterval).WithArguments(
+		Eventually(ctx, queryClickHouse, chytBootstrapTimeout, pollInterval).WithArguments(
 			httpClient, ytProxyAddress, "SELECT 1",
 		).MustPassRepeatedly(3).Should(Equal("1\n"))
 	})
@@ -1749,9 +1749,7 @@ exec "$@"`
 
 			It("Checks ClickHouse", func(ctx context.Context) {
 				By("Creating table")
-				Expect(queryClickHouse(
-					httpClient,
-					ytProxyAddress,
+				Expect(queryClickHouse(ctx, httpClient, ytProxyAddress,
 					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT 1",
 				)).To(Equal(""))
 			})
@@ -1841,13 +1839,11 @@ exec "$@"`
 
 			It("Verify that mTLS is active", func(ctx context.Context) {
 				By("Getting CHYT operation id")
-				clickHouseID, err := queryClickHouseID(httpClient, ytProxyAddress)
+				clickHouseID, err := queryClickHouseID(ctx, httpClient, ytProxyAddress)
 				Expect(err).To(Succeed())
 
 				By("Creating table //tmp/chyt_test")
-				Expect(queryClickHouse(
-					httpClient,
-					ytProxyAddress,
+				Expect(queryClickHouse(ctx, httpClient, ytProxyAddress,
 					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT 1",
 				)).To(Equal(""))
 
@@ -1880,21 +1876,19 @@ exec "$@"`
 
 				if images.StrawberryHandlesRestarts {
 					By("Waiting for chyt operation restart by strawberry")
-					Eventually(queryClickHouseID, chytBootstrapTimeout).WithArguments(httpClient, ytProxyAddress).ToNot(Equal(clickHouseID))
+					Eventually(ctx, queryClickHouseID, chytBootstrapTimeout).WithArguments(httpClient, ytProxyAddress).ToNot(Equal(clickHouseID))
 				} else {
 					By("Aborting chyt operation")
 					Expect(ytClient.AbortOperation(ctx, yt.OperationID(clickHouseID), nil)).To(Succeed())
 				}
 
 				By("Waiting CHYT readiness")
-				Eventually(queryClickHouse, chytBootstrapTimeout, pollInterval).WithArguments(
+				Eventually(ctx, queryClickHouse, chytBootstrapTimeout, pollInterval).WithArguments(
 					httpClient, ytProxyAddress, "SELECT 1",
 				).MustPassRepeatedly(3).Should(Equal("1\n"))
 
 				By("Checking table //tmp/chyt_test")
-				Expect(queryClickHouse(
-					httpClient,
-					ytProxyAddress,
+				Expect(queryClickHouse(ctx, httpClient, ytProxyAddress,
 					"SELECT * FROM `//tmp/chyt_test`;",
 				)).To(Equal("1\n"))
 			})
@@ -2239,8 +2233,8 @@ func (o *TestOperation) Start() error {
 	return err
 }
 
-func (o *TestOperation) Status() (*yt.OperationStatus, error) {
-	return o.Client.GetOperation(specCtx, o.Id, nil)
+func (o *TestOperation) Status(ctx context.Context) (*yt.OperationStatus, error) {
+	return o.Client.GetOperation(ctx, o.Id, nil)
 }
 
 func (o *TestOperation) Abort() error {
@@ -2281,7 +2275,7 @@ func (o *TestOperation) Wait() *yt.OperationStatus {
 	trackStatus := NewOprationStatusTracker()
 	Eventually(func(ctx context.Context) bool {
 		var err error
-		opStatus, err = o.Status()
+		opStatus, err = o.Status(ctx)
 		Expect(err).NotTo(HaveOccurred())
 		trackStatus(opStatus)
 		if opStatus.State.IsFinished() {
