@@ -459,10 +459,10 @@ func ListClusterComponents(ctx context.Context, ytClient yt.Client) ([]ClusterCo
 	return nodes, nil
 }
 
-func queryClickHouse(httpClient *http.Client, ytProxyAddress, query string) (string, error) {
+func queryClickHouse(ctx context.Context, httpClient *http.Client, ytProxyAddress, query string) (string, error) {
 	// See https://ytsaurus.tech/docs/en/user-guide/data-processing/chyt/try-chyt
 	url := ytProxyAddress + "/chyt?chyt.clique_alias=ch_public"
-	request, err := http.NewRequest(http.MethodPost, url, strings.NewReader(query))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, strings.NewReader(query))
 	if err != nil {
 		return "", err
 	}
@@ -489,9 +489,9 @@ func queryClickHouse(httpClient *http.Client, ytProxyAddress, query string) (str
 	return string(content), nil
 }
 
-func queryClickHouseID(httpClient *http.Client, ytProxyAddress string) (guid.GUID, error) {
+func queryClickHouseID(ctx context.Context, httpClient *http.Client, ytProxyAddress string) (guid.GUID, error) {
 	// Actually this is operation id. This is not properly documented feature.
-	result, err := queryClickHouse(httpClient, ytProxyAddress, "SELECT clique_id FROM system.clique WHERE self;")
+	result, err := queryClickHouse(ctx, httpClient, ytProxyAddress, "SELECT clique_id FROM system.clique WHERE self;")
 	if err != nil {
 		return guid.GUID{}, err
 	}
@@ -581,8 +581,11 @@ func readFileObject(ctx context.Context, namespace string, source ytv1.FileObjec
 	return nil, fmt.Errorf("Key %v not found in %v/%v", source.Key, source.Kind, source.Name)
 }
 
-func discoverProxies(httpClient *http.Client, proxyAddress string, params url.Values) []string {
-	resp, err := httpClient.Get(proxyAddress + "/api/v4/discover_proxies?" + params.Encode())
+func discoverProxies(ctx context.Context, httpClient *http.Client, proxyAddress string, params url.Values) []string {
+	url := proxyAddress + "/api/v4/discover_proxies?" + params.Encode()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
+	Expect(err).NotTo(HaveOccurred())
+	resp, err := httpClient.Do(req)
 	Expect(err).NotTo(HaveOccurred())
 	defer func() {
 		Expect(resp.Body.Close()).To(Succeed())
