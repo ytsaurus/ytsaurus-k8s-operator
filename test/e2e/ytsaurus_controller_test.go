@@ -1895,11 +1895,20 @@ exec "$@"`
 	}) // integration
 
 	Context("update plan strategy testing", Label("update", "plan", "strategy"), func() {
+		var podsBeforeUpdate map[string]corev1.Pod
+
+		BeforeEach(func() {
+			By("Adding base components")
+			ytBuilder.WithBaseComponents()
+		})
+
+		JustBeforeEach(func(ctx context.Context) {
+			By("Getting pods before actions")
+			podsBeforeUpdate = getComponentPods(ctx, namespace)
+		})
 		DescribeTableSubtree("bulk strategy", Label("bulk"),
 			func(componentType consts.ComponentType, stsName string) {
 				BeforeEach(func() {
-					ytBuilder.WithBaseComponents()
-
 					switch componentType {
 					case consts.QueryTrackerType:
 						ytBuilder.WithQueryTracker()
@@ -1936,61 +1945,40 @@ exec "$@"`
 						},
 					}
 				})
+
 				It("Should update "+stsName+" in bulkUpdate mode and have Running state", func(ctx context.Context) {
 
 					By("Trigger " + stsName + " update")
-					switch componentType {
-					case consts.QueryTrackerType:
-						ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.QueryTrackerImageCurrent)
-					case consts.MasterType:
-						ytsaurus.Spec.CoreImage = testutil.YtsaurusImageCurrent
-					case consts.DiscoveryType:
-						ytsaurus.Spec.Discovery.Image = ptr.To(testutil.YtsaurusImageCurrent)
-					case consts.MasterCacheType:
-						ytsaurus.Spec.MasterCaches.Image = ptr.To(testutil.YtsaurusImageCurrent)
-					case consts.ControllerAgentType:
-						ytsaurus.Spec.ControllerAgents.Image = ptr.To(testutil.YtsaurusImageCurrent)
-					}
-
+					updateSpecToTriggerAllComponentUpdate(ytsaurus)
 					UpdateObject(ctx, ytsaurus)
 					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 
+					Expect(ytsaurus).Should(HaveClusterUpdatingComponents(componentType))
 					By("Waiting cluster update completes")
 					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 
 					podsAfter := getComponentPods(ctx, namespace)
-
-					for name, pod := range podsAfter {
+					pods := getChangedPods(podsBeforeUpdate, podsAfter)
+					expectedUpdated := make([]string, 0)
+					for name := range podsBeforeUpdate {
 						if strings.HasPrefix(name, stsName+"-") {
-							switch componentType {
-							case consts.QueryTrackerType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.QueryTrackers.Image))
-							case consts.MasterType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(ytsaurus.Spec.CoreImage))
-							case consts.DiscoveryType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.Discovery.Image))
-							case consts.MasterCacheType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.MasterCaches.Image))
-							case consts.ControllerAgentType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.ControllerAgents.Image))
-							}
+							expectedUpdated = append(expectedUpdated, name)
 						}
 					}
-
-					checkClusterHealth(ctx, ytClient)
-					checkChunkLocations(ytClient)
+					Expect(pods.Created).To(BeEmpty(), "created")
+					Expect(pods.Deleted).To(BeEmpty(), "deleted")
+					Expect(pods.Updated).To(ConsistOf(expectedUpdated), "updated")
 				})
 			},
-			Entry("update query tracker", Label("qt"), consts.QueryTrackerType, consts.GetStatefulSetPrefix(consts.QueryTrackerType)),
-			Entry("update master", Label("ms"), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
-			Entry("update controller agent", Label("ca"), consts.ControllerAgentType, consts.GetStatefulSetPrefix(consts.ControllerAgentType)),
-			Entry("update discovery", Label("ds"), consts.DiscoveryType, consts.GetStatefulSetPrefix(consts.DiscoveryType)),
-			Entry("update master cache", Label("msc"), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
+			Entry("update query tracker", Label(consts.GetStatefulSetPrefix(consts.QueryTrackerType)), consts.QueryTrackerType, consts.GetStatefulSetPrefix(consts.QueryTrackerType)),
+			Entry("update master", Label(consts.GetStatefulSetPrefix(consts.MasterType)), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
+			Entry("update controller agent", Label(consts.GetStatefulSetPrefix(consts.ControllerAgentType)), consts.ControllerAgentType, consts.GetStatefulSetPrefix(consts.ControllerAgentType)),
+			Entry("update discovery", Label(consts.GetStatefulSetPrefix(consts.DiscoveryType)), consts.DiscoveryType, consts.GetStatefulSetPrefix(consts.DiscoveryType)),
+			Entry("update master cache", Label(consts.GetStatefulSetPrefix(consts.MasterCacheType)), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
 		)
 		DescribeTableSubtree("on-delete strategy", Label("ondelete"),
 			func(componentType consts.ComponentType, stsName string) {
 				BeforeEach(func() {
-					ytBuilder.WithBaseComponents()
 					switch componentType {
 					case consts.SchedulerType:
 						ytsaurus.Spec.Schedulers = &ytv1.SchedulersSpec{

@@ -23,15 +23,13 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 6
+      max-parallel: 5
       matrix:
         e2e:
           - name: "update basic"
             filter: "update && basic"
           - name: "update plan"
-            filter: "update && plan && !strategy"
-          - name: "update strategy"
-            filter: "update && plan && strategy"
+            filter: "update && plan"
           - name: "update other"
             filter: "update && !(basic || plan)"
           - name: "tls"
