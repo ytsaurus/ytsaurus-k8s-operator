@@ -299,6 +299,9 @@ linters:
         linters:
           - gochecknoglobals
 
+      - path: controllers/sync.go
+        text: "SA1019: spec.UpdateSelector is deprecated"
+
       - path: 'pkg/testutil'
         linters:
           - gochecknoglobals
@@ -318,6 +321,9 @@ linters:
       - path: 'api'
         linters:
           - gochecknoglobals
+
+      - path: test/e2e/suite_test.go
+        text: "SA1019: .*Status.UpdateStatus.Flow is deprecated"
 
       - path: '_test\.go'
         linters:
