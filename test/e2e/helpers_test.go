@@ -170,6 +170,16 @@ func getChangedPods(before, after map[string]corev1.Pod) changedObjects {
 	return ret
 }
 
+func getExpectedUpdatedPods(podsBeforeUpdate map[string]corev1.Pod, stsName string) []string {
+	expectedUpdated := make([]string, 0)
+	for name := range podsBeforeUpdate {
+		if strings.HasPrefix(name, stsName+"-") {
+			expectedUpdated = append(expectedUpdated, name)
+		}
+	}
+	return expectedUpdated
+}
+
 // updateSpecToTriggerAllComponentUpdate is a helper
 // that introduce spec change which should trigger change in all component static configs
 // and thus trigger all components update.
