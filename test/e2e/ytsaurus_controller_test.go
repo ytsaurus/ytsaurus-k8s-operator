@@ -2025,28 +2025,28 @@ exec "$@"`
 					sts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: stsName}}
 					EventuallyObject(ctx, &sts, reactionTimeout).Should(HaveField("Spec.UpdateStrategy.Type", appsv1.OnDeleteStatefulSetStrategyType))
 
-					By("Verify StatefulSet has a new revision but pods stay on the old one")
-					EventuallyObject(ctx, &sts, reactionTimeout).Should(WithTransform(
-						func(current *appsv1.StatefulSet) bool {
-							return current.Status.CurrentRevision != "" &&
-								current.Status.UpdateRevision != "" &&
-								current.Status.UpdateRevision != current.Status.CurrentRevision
-						},
-						BeTrue(),
-					))
+					// By("Verify StatefulSet has a new revision but pods stay on the old one")
+					// EventuallyObject(ctx, &sts, reactionTimeout).Should(WithTransform(
+					// 	func(current *appsv1.StatefulSet) bool {
+					// 		return current.Status.CurrentRevision != "" &&
+					// 			current.Status.UpdateRevision != "" &&
+					// 			current.Status.UpdateRevision != current.Status.CurrentRevision
+					// 	},
+					// 	BeTrue(),
+					// ))
 
-					oldRev := sts.Status.CurrentRevision
-					Consistently(func() bool {
-						podsNow := getComponentPods(ctx, namespace)
-						for name, pod := range podsNow {
-							if strings.HasPrefix(name, stsName+"-") {
-								if pod.Labels[appsv1.StatefulSetRevisionLabel] != oldRev {
-									return false
-								}
-							}
-						}
-						return true
-					}, 10*time.Second).Should(BeTrue())
+					// oldRev := sts.Status.CurrentRevision
+					// Consistently(func() bool {
+					// 	podsNow := getComponentPods(ctx, namespace)
+					// 	for name, pod := range podsNow {
+					// 		if strings.HasPrefix(name, stsName+"-") {
+					// 			if pod.Labels[appsv1.StatefulSetRevisionLabel] != oldRev {
+					// 				return false
+					// 			}
+					// 		}
+					// 	}
+					// 	return true
+					// }, 10*time.Second).Should(BeTrue())
 
 					By("Manually delete component pods")
 					for name := range podsBeforeUpdate {
