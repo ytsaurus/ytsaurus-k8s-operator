@@ -32,8 +32,6 @@ import (
 // FIXME(khlebnikov): Remove all this and rewrite with ginkgo.
 type TestHelper struct {
 	t          *testing.T
-	ctx        context.Context
-	cancel     context.CancelFunc
 	k8sTestEnv *envtest.Environment
 	k8sClient  client.Client
 	cfg        *rest.Config
@@ -59,12 +57,8 @@ func NewTestHelper(t *testing.T, namespace, topDirectoryPath string) *TestHelper
 		ControlPlane: envtest.ControlPlane{},
 	}
 
-	testCtx, testCancel := context.WithCancel(context.Background())
-
 	return &TestHelper{
 		t:          t,
-		ctx:        testCtx,
-		cancel:     testCancel,
 		k8sTestEnv: k8sTestEnv,
 		Namespace:  namespace,
 		ticker:     time.NewTicker(200 * time.Millisecond),
@@ -106,7 +100,9 @@ func (h *TestHelper) Start(reconcilerSetup func(mgr ctrl.Manager) error) {
 	require.NoError(t, err)
 
 	go func() {
-		err = mgr.Start(h.ctx)
+		// t.Context() is canceled before t.Cleanup().
+		// https://github.com/kubernetes-sigs/controller-runtime/issues/1571#issuecomment-945535598
+		err = mgr.Start(t.Context())
 		require.NoError(t, err)
 	}()
 
@@ -115,16 +111,15 @@ func (h *TestHelper) Start(reconcilerSetup func(mgr ctrl.Manager) error) {
 			MarkAllJobsCompleted(h)
 		}
 	}()
+
+	t.Cleanup(func() {
+		h.ticker.Stop()
+		err := h.k8sTestEnv.Stop()
+		require.NoError(h.t, err)
+	})
 }
 
-func (h *TestHelper) Stop() {
-	h.ticker.Stop()
-	// Should cancel ctx before Stop
-	// https://github.com/kubernetes-sigs/controller-runtime/issues/1571#issuecomment-945535598
-	h.cancel()
-	err := h.k8sTestEnv.Stop()
-	require.NoError(h.t, err)
-}
+func (h *TestHelper) Stop() {}
 
 func (h *TestHelper) GetK8sClient() client.Client {
 	if h.k8sClient == nil {
