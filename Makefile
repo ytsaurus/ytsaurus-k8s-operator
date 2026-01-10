@@ -134,7 +134,7 @@ endif
 
 ifeq ($(DRYRUN),)
 ifneq ($(GINKGO_PROCS),)
-	GINKGO_FLAGS += --procs="$(GINKGO_PROCS)"
+	GINKGO_FLAGS += -p
 endif
 	REMOVE_CANONIZED = rm -fr
 else
