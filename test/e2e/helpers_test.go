@@ -186,6 +186,16 @@ func getAllPods(ctx context.Context, namespace string) []corev1.Pod {
 	return podList.Items
 }
 
+func getExpectedUpdatedPods(podsBeforeUpdate map[string]corev1.Pod, stsName string) []string {
+	expectedUpdated := make([]string, 0)
+	for name := range podsBeforeUpdate {
+		if strings.HasPrefix(name, stsName+"-") {
+			expectedUpdated = append(expectedUpdated, name)
+		}
+	}
+	return expectedUpdated
+}
+
 type changedObjects struct {
 	Deleted, Updated, Created []string
 }

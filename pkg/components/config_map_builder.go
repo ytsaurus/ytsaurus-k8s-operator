@@ -3,6 +3,7 @@ package components
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -292,4 +293,29 @@ func (h *ConfigMapBuilder) RemoveIfExists(ctx context.Context) error {
 
 func (h *ConfigMapBuilder) Exists() bool {
 	return resources.Exists(h.configMap)
+}
+
+func (h *ConfigMapBuilder) ConfigChecksum() string {
+	if len(h.generators) == 0 {
+		return ""
+	}
+
+	data := make(map[string]string, len(h.generators))
+	for _, gen := range h.generators {
+		config, err := h.getConfig(gen)
+		if err != nil {
+			h.apiProxy.RecordWarning("Failure", fmt.Sprintf("Cannot build config checksum for %s: %v", gen.FileName, err))
+			return ""
+		}
+		data[gen.FileName] = string(config)
+	}
+
+	hasher := sha256.New()
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		h.apiProxy.RecordWarning("Failure", fmt.Sprintf("Cannot marshal config data for checksum: %v", err))
+		return ""
+	}
+	hasher.Write(jsonData)
+	return fmt.Sprintf("%x", hasher.Sum(nil))
 }
