@@ -429,6 +429,13 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, key, value)
 	}
 
+	existingConfigChecksum := s.statefulSet.OldObject().Spec.Template.Annotations[consts.ConfigChecksumAnnotationName]
+	if existingConfigChecksum != "" || s.configNeedsReload() {
+		if checksum := s.configs.ConfigChecksum(); checksum != "" {
+			metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, consts.ConfigChecksumAnnotationName, checksum)
+		}
+	}
+
 	statefulSet.Spec.Replicas = &s.instanceSpec.InstanceCount
 	statefulSet.Spec.ServiceName = s.headlessService.Name()
 	statefulSet.Spec.VolumeClaimTemplates = createVolumeClaims(s.instanceSpec.VolumeClaimTemplates)
