@@ -29,6 +29,8 @@ spec:
   serviceName: schedulers
   template:
     metadata:
+      annotations:
+        ytsaurus.tech/config-checksum: bcd354814d51bfc5f8399b1fcc5593213812b44088d93bcb3b2a2a2aa0bc667c
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-scheduler
