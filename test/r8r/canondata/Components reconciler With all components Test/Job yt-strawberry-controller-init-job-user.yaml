@@ -82,6 +82,13 @@ spec:
           name: user-yt-strawberry-controller-init-job-config
         name: config
       - configMap:
+          items:
+          - key: ca-certificates.crt
+            path: ca-certificates.crt
+          - key: ca-certificates.p12
+            path: ca-certificates.p12
+          - key: ca-certificates.jks
+            path: ca-certificates.jks
           name: ytsaurus-dev-ca-root-bundle
         name: ca-root-bundle
       - configMap:

@@ -335,6 +335,20 @@ func (b *YtsaurusBuilder) WithHTTPSProxies(httpsCert string, httpsOnly bool) {
 
 	b.Ytsaurus.Spec.CARootBundle = &ytv1.FileObjectReference{
 		Name: TestCARootBundleName,
+		Items: []corev1.KeyToPath{
+			{
+				Key:  "ca-certificates.crt",
+				Path: "ca-certificates.crt",
+			},
+			{
+				Key:  "ca-certificates.p12",
+				Path: "ca-certificates.p12",
+			},
+			{
+				Key:  "ca-certificates.jks",
+				Path: "ca-certificates.jks",
+			},
+		},
 	}
 
 	for i := range b.Ytsaurus.Spec.HTTPProxies {

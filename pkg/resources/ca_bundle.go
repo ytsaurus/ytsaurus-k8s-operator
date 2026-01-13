@@ -2,6 +2,7 @@ package resources
 
 import (
 	"path"
+	"slices"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -46,8 +47,9 @@ func (t *CABundle) AddVolume(podSpec *corev1.PodSpec) {
 	if t == nil {
 		return
 	}
-	var items []corev1.KeyToPath
-	if t.Source.Key != "" {
+
+	items := slices.Clone(t.Source.Items)
+	if len(items) == 0 && t.Source.Key != "" {
 		items = []corev1.KeyToPath{{Key: t.Source.Key, Path: t.FileName}}
 	}
 

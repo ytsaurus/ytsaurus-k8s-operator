@@ -1957,6 +1957,29 @@ spec:
               caBundle:
                 description: Reference to trusted native transport certificates.
                 properties:
+                  items:
+                    description: 'Items defines entries in ConfigMap or Secret, default:
+                      if Key is defined map to...'
+                    items:
+                      description: Maps a string key to a path within a volume.
+                      properties:
+                        key:
+                          description: key is the key to project.
+                          type: string
+                        mode:
+                          description: 'mode is Optional: mode bits used to set permissions
+                            on this file.'
+                          format: int32
+                          type: integer
+                        path:
+                          description: path is the relative path of the file to map
+                            the key to.
+                          type: string
+                      required:
+                      - key
+                      - path
+                      type: object
+                    type: array
                   key:
                     description: Key is the name of entry in ConfigMap or Secret.
                     type: string
@@ -1973,6 +1996,29 @@ spec:
               caRootBundle:
                 description: Reference to trusted root certificates.
                 properties:
+                  items:
+                    description: 'Items defines entries in ConfigMap or Secret, default:
+                      if Key is defined map to...'
+                    items:
+                      description: Maps a string key to a path within a volume.
+                      properties:
+                        key:
+                          description: key is the key to project.
+                          type: string
+                        mode:
+                          description: 'mode is Optional: mode bits used to set permissions
+                            on this file.'
+                          format: int32
+                          type: integer
+                        path:
+                          description: path is the relative path of the file to map
+                            the key to.
+                          type: string
+                      required:
+                      - key
+                      - path
+                      type: object
+                    type: array
                   key:
                     description: Key is the name of entry in ConfigMap or Secret.
                     type: string
