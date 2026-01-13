@@ -10,6 +10,13 @@ spec:
   caBundle:
     name: ytsaurus-dev-ca.crt
   caRootBundle:
+    items:
+    - key: ca-certificates.crt
+      path: ca-certificates.crt
+    - key: ca-certificates.p12
+      path: ca-certificates.p12
+    - key: ca-certificates.jks
+      path: ca-certificates.jks
     name: ytsaurus-dev-ca-root-bundle
   clusterFeatures:
     httpProxyHaveChytAddress: true

@@ -66,6 +66,14 @@ spec:
   target:
     configMap:
       key: "ca-certificates.crt"
+    additionalFormats:
+      pkcs12:
+        key: "ca-certificates.p12"
+        password: "none"
+        profile: "Modern2023"
+      jks:
+        key: "ca-certificates.jks"
+        password: "none"
     namespaceSelector:
       matchLabels:
         "app.kubernetes.io/part-of": "ytsaurus-dev"

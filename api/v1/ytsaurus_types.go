@@ -180,6 +180,8 @@ type FileObjectReference struct {
 	Name string `json:"name,omitempty"`
 	// Key is the name of entry in ConfigMap or Secret.
 	Key string `json:"key,omitempty"`
+	// Items defines entries in ConfigMap or Secret, default: if Key is defined map to Path: "ca-certificates.crt".
+	Items []corev1.KeyToPath `json:"items,omitempty"`
 }
 
 // LocationType string describes types of disk locations for YT components.
