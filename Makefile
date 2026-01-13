@@ -114,6 +114,7 @@ GINKGO_FLAGS += --timeout=1h
 GINKGO_FLAGS += --poll-progress-after=2m
 GINKGO_FLAGS += --poll-progress-interval=1m
 GINKGO_FLAGS += --junit-report=report.xml
+GINKGO_FLAGS += --ldflags="-X github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version.version=2.3.4"
 
 ifneq ($(GITHUB_ACTION),)
 	GINKGO_FLAGS += --github-output
@@ -198,10 +199,6 @@ test: generate-code manifests envtest-assets ## Run tests.
 .PHONY: test-e2e
 test-e2e: generate-code manifests ## Run e2e tests.
 	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./test/e2e/... -- --enable-e2e
-
-.PHONY: test-webhook
-test-webhook: generate-code manifests ## Run webhook tests.
-	$(GINKGO) $(GINKGO_FLAGS) --ldflags="-X github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version.version=2.3.4" $(GO_TEST_FLAGS) ./test/webhooks/...
 
 .PHONY: clean-e2e
 clean-e2e: ## Delete k8s namespaces created by e2e tests.
