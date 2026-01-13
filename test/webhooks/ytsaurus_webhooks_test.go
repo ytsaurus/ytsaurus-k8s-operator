@@ -589,7 +589,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 var _ = Describe("Tests for required operator version webhook validation", Label("webhook"), func() {
 	const (
 		namespace       string = "default"
-		operatorVersion        = "2.3.4"
+		operatorVersion string = "2.3.4"
 	)
 
 	var (
@@ -612,10 +612,6 @@ var _ = Describe("Tests for required operator version webhook validation", Label
 		ytsaurus = newYtsaurus()
 	})
 
-	AfterEach(func() {
-		_ = k8sClient.Delete(ctx, ytsaurus)
-	})
-
 	// A known string is required for tests to work reliably, other there is no way to
 	// write proper assertions, at least not easily.
 	It("Expect the tests to use a sentinel version string", func() {
@@ -628,12 +624,16 @@ var _ = Describe("Tests for required operator version webhook validation", Label
 			ytsaurus.Spec.RequiresOperatorVersion = constraint
 
 			err := k8sClient.Create(ctx, ytsaurus)
-
 			if errMsg != "" {
-				Expect(err).ToNot(BeNil())
+				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).Should(MatchRegexp(errMsg))
 			} else {
-				Expect(err).To(BeNil())
+				Expect(err).To(Not(HaveOccurred()))
+
+				DeferCleanup(func() {
+					err := k8sClient.Delete(ctx, ytsaurus)
+					Expect(err).NotTo(HaveOccurred())
+				})
 			}
 		},
 
