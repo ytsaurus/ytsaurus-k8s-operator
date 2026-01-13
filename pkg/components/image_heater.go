@@ -2,7 +2,7 @@ package components
 
 import (
 	"context"
-	"crypto/sha1"
+	"crypto/sha256"
 	"fmt"
 	"sort"
 	"strconv"
@@ -320,7 +320,7 @@ func (ih *ImageHeater) listImageHeaterDaemonSets(ctx context.Context) (*appsv1.D
 
 // imageHeaterInstanceGroup returns a stable instance group derived from the group key.
 func imageHeaterInstanceGroup(groupKey string) string {
-	sum := sha1.Sum([]byte(groupKey))
+	sum := sha256.Sum256([]byte(groupKey))
 	return fmt.Sprintf("group-%x", sum[:6])
 }
 
@@ -383,7 +383,7 @@ func imageHeaterSortedImages(images []string) []string {
 
 // imageHeaterContainerName creates a stable container name derived from the image.
 func imageHeaterContainerName(image string) string {
-	sum := sha1.Sum([]byte(image))
+	sum := sha256.Sum256([]byte(image))
 	return fmt.Sprintf("%s-%x", imageHeaterContainerNamePrefix, sum[:6])
 }
 

@@ -30,8 +30,6 @@ rules:
 - apiGroups:
   - apps
   resources:
-  - daemonset
-  - daemonsets
   - deployments
   - statefulset
   - statefulsets
@@ -46,7 +44,6 @@ rules:
 - apiGroups:
   - apps
   resources:
-  - daemonsets/status
   - statefulset/status
   verbs:
   - get

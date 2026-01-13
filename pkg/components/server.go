@@ -234,7 +234,7 @@ func (s *serverImpl) needSync() bool {
 	return s.configNeedsReload() || s.needBuild()
 }
 
-func (s *serverImpl) preheatSpec() ([]string, map[string]string, []corev1.Toleration) {
+func (s *serverImpl) preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration) {
 	return []string{s.image}, s.instanceSpec.NodeSelector, s.instanceSpec.Tolerations
 }
 

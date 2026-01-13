@@ -180,7 +180,7 @@ func newLocalServerComponent(
 	}
 }
 
-func (c *localServerComponent) PreheatSpec() ([]string, map[string]string, []corev1.Toleration) {
+func (c *localServerComponent) PreheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration) {
 	if c.server == nil {
 		return nil, nil, nil
 	}
