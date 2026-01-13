@@ -30,6 +30,7 @@ const (
 	ClusterConnectionType    ComponentType = "ClusterConnection"
 	NativeClientConfigType   ComponentType = "NativeClientConfig"
 	TimbertruckType          ComponentType = "Timbertruck"
+	ImageHeaterType          ComponentType = "ImageHeater"
 )
 
 type ComponentClass string
