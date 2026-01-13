@@ -206,6 +206,10 @@ test: generate-code manifests envtest-assets ## Run tests.
 test-e2e: generate-code manifests ## Run e2e tests.
 	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./test/e2e/... -- --enable-e2e
 
+.PHONY: test-webhook
+test-webhook: generate-code manifests ## Run webhook tests.
+	$(GINKGO) $(GINKGO_FLAGS) --ldflags="-X github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version.version=2.3.4" $(GO_TEST_FLAGS) ./test/webhooks/...
+
 .PHONY: clean-e2e
 clean-e2e: ## Delete k8s namespaces created by e2e tests.
 	$(KUBECTL) delete namespaces -l "app.kubernetes.io/part-of=ytsaurus-dev,app.kubernetes.io/component=test"

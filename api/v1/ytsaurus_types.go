@@ -901,6 +901,9 @@ type YtsaurusSpec struct {
 	CommonSpec `json:",inline"`
 	UIImage    string `json:"uiImage,omitempty"`
 
+	//+optional
+	RequiresOperatorVersion string `json:"requiresOperatorVersion,omitempty"`
+
 	AdminCredentials *corev1.LocalObjectReference `json:"adminCredentials,omitempty"`
 
 	OauthService *OauthServiceSpec `json:"oauthService,omitempty"`
