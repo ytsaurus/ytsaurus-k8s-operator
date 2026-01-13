@@ -25,6 +25,7 @@ const (
 	ObservedGenerationAnnotationName = "ytsaurus.tech/observed-generation"
 
 	YTOperatorInstanceLabelName = "ytsaurus.tech/operator-instance"
+	ImageHeaterLabelName        = "ytsaurus.tech/image-heater"
 )
 
 func ComponentLabel(component ComponentType) string {
@@ -81,6 +82,8 @@ func ComponentLabel(component ComponentType) string {
 		return "yt-ui"
 	case TimbertruckType:
 		return "yt-timbertruck"
+	case ImageHeaterType:
+		return "yt-image-heater"
 	}
 
 	panic(fmt.Sprintf("Unknown component type: %s", component))

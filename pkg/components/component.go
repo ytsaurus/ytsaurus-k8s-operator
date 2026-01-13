@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -85,6 +86,10 @@ type Component interface {
 
 	GetCypressPatch() ypatch.PatchSet
 	UpdatePreCheck(ctx context.Context) ComponentStatus
+}
+
+type PreheatSpecProvider interface {
+	PreheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration)
 }
 
 // Following structs are used as a base for implementing YTsaurus components objects.
@@ -173,6 +178,13 @@ func newLocalServerComponent(
 		},
 		server: server,
 	}
+}
+
+func (c *localServerComponent) PreheatSpec() ([]string, map[string]string, []corev1.Toleration) {
+	if c.server == nil {
+		return nil, nil, nil
+	}
+	return c.server.preheatSpec()
 }
 
 func (c *localServerComponent) NeedSync() bool {

@@ -172,6 +172,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateNone: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 		return stepResultMarkHappy
 	},
+	ytv1.UpdateStateWaitingForImagesHeated: flowCheckStatusCondition(consts.ConditionImagesHeated),
 	ytv1.UpdateStatePossibilityCheck: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionHasPossibility) {
 			return stepResultMarkHappy
@@ -235,6 +236,9 @@ func buildFlowTree(updatingComponents []ytv1.Component) *flowTree {
 	updYqlAgent := hasComponent(updatingComponents, consts.YqlAgentType)
 	updQueueAgent := hasComponent(updatingComponents, consts.QueueAgentType)
 
+	tree.chain(
+		st(ytv1.UpdateStateWaitingForImagesHeated),
+	)
 	// TODO: if validation conditions can be not mentioned here or needed
 	tree.chainIf(
 		updMasterOrTablet,

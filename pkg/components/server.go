@@ -34,6 +34,7 @@ type server interface {
 	configNeedsReload() bool
 	needBuild() bool
 	needSync() bool
+	preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration)
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
 	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType)
@@ -231,6 +232,10 @@ func (s *serverImpl) needBuild() bool {
 
 func (s *serverImpl) needSync() bool {
 	return s.configNeedsReload() || s.needBuild()
+}
+
+func (s *serverImpl) preheatSpec() ([]string, map[string]string, []corev1.Toleration) {
+	return []string{s.image}, s.instanceSpec.NodeSelector, s.instanceSpec.Tolerations
 }
 
 func (s *serverImpl) Sync(ctx context.Context) error {

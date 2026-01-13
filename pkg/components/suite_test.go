@@ -121,6 +121,10 @@ func (fs *FakeServer) needSync() bool {
 	return false
 }
 
+func (fs *FakeServer) preheatSpec() ([]string, map[string]string, []corev1.Toleration) {
+	return nil, nil, nil
+}
+
 func (fs *FakeServer) arePodsRemoved(ctx context.Context) bool {
 	return true
 }

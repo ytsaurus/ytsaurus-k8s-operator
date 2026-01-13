@@ -55,7 +55,7 @@ func NewComponentManager(
 		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
 	}
 	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0], getAllComponents)
-	d := components.NewDiscovery(cfgen, ytsaurus, yc)
+	ih := components.NewImageHeater(cfgen, ytsaurus, getAllComponents)
 
 	var dnds []components.Component
 	if len(resource.Spec.DataNodes) > 0 {
@@ -64,7 +64,7 @@ func NewComponentManager(
 		}
 	}
 
-	allComponents = append(allComponents, d, m, yc)
+	allComponents = append(allComponents, d, m, yc, ih)
 	allComponents = append(allComponents, dnds...)
 	allComponents = append(allComponents, hps...)
 
@@ -308,7 +308,9 @@ func (cm *ComponentManager) arePodsRemoved() bool {
 func (cm *ComponentManager) allUpdatableComponents() []components.Component {
 	var result []components.Component
 	for _, cmp := range cm.allComponents {
-		if cmp.GetType() != consts.YtsaurusClientType && cmp.GetType() != consts.TimbertruckType {
+		if cmp.GetType() != consts.YtsaurusClientType &&
+			cmp.GetType() != consts.TimbertruckType &&
+			cmp.GetType() != consts.ImageHeaterType {
 			result = append(result, cmp)
 		}
 	}
