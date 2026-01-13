@@ -121,7 +121,7 @@ func (fs *FakeServer) needSync() bool {
 	return false
 }
 
-func (fs *FakeServer) preheatSpec() ([]string, map[string]string, []corev1.Toleration) {
+func (fs *FakeServer) preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration) {
 	return nil, nil, nil
 }
 
