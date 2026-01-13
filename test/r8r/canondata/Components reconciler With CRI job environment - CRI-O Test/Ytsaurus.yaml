@@ -179,7 +179,7 @@ status:
     status: "True"
     type: TimbertruckReady
   - lastTransitionTime: null
-    message: (devel)
+    message: 2.3.4
     observedGeneration: 1
     reason: Observed
     status: "True"
