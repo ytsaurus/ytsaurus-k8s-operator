@@ -412,7 +412,7 @@ status:
     status: "True"
     type: StrawberryControllerReady
   - lastTransitionTime: null
-    message: (devel)
+    message: 2.3.4
     observedGeneration: 1
     reason: Observed
     status: "True"
