@@ -18,6 +18,10 @@ jobs:
     name: Run e2e tests
     uses: ./.github/workflows/subflow_run_e2e_tests.yaml
 
+  check-webhook:
+    name: Run webhook tests
+    uses: ./.github/workflows/subflow_run_webhook_tests.yaml
+
   check-compat:
     name: Run compat tests
     uses: ./.github/workflows/subflow_run_compat_tests.yaml

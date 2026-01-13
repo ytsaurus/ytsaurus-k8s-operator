@@ -1,0 +1,45 @@
+name: "Webhook Tests"
+
+on:
+  workflow_call: {}
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    name: "Webhook tests"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          large-packages: false
+
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.11.2
+
+      - name: Run tests
+        shell: bash
+        run: |
+          make test-webhook
+
+      - name: Report results
+        if: always()
+        uses: dorny/test-reporter@v2
+        with:
+          name: "Webhook tests"
+          path: "report.xml"
+          reporter: java-junit
