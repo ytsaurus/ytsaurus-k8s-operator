@@ -82,7 +82,7 @@ func (s *StatefulSet) getPods(ctx context.Context) *corev1.PodList {
 func (s *StatefulSet) ArePodsRemoved(ctx context.Context) bool {
 	logger := log.FromContext(ctx)
 
-	podList := s.getPods(ctx)
+	podList := s.listPods(ctx)
 	if podList == nil {
 		return false
 	}
@@ -112,7 +112,7 @@ func checkReadinessByContainers(pod corev1.Pod, byContainerNames []string) bool 
 
 func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minReadyInstanceCount *int, byContainerNames []string) bool {
 	logger := log.FromContext(ctx)
-	podList := s.getPods(ctx)
+	podList := s.listPods(ctx)
 	if podList == nil {
 		return false
 	}
