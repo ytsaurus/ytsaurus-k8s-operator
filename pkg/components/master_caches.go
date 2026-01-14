@@ -47,9 +47,12 @@ func (mc *MasterCache) Fetch(ctx context.Context) error {
 }
 
 func (mc *MasterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+	serverNeedsUpdate, err := mc.server.needUpdate()
+	if err != nil {
+		return SimpleStatus(SyncStatusNeedUpdate), err
+	}
 
-	if ytv1.IsReadyToUpdateClusterState(mc.ytsaurus.GetClusterState()) && mc.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(mc.ytsaurus.GetClusterState()) && serverNeedsUpdate {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
@@ -59,7 +62,12 @@ func (mc *MasterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 		}
 	}
 
-	if mc.NeedSync() {
+	needsSync, err := mc.NeedSync()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
+
+	if needsSync {
 		if !dry {
 			err = mc.doServerSync(ctx)
 		}
@@ -83,7 +91,11 @@ func (mc *MasterCache) Sync(ctx context.Context) error {
 }
 
 func (mc *MasterCache) doServerSync(ctx context.Context) error {
-	statefulSet := mc.server.buildStatefulSet()
+	statefulSet, err := mc.server.buildStatefulSet()
+	if err != nil {
+		return err
+	}
+
 	masterCachesSpec := mc.ytsaurus.GetResource().Spec.MasterCaches
 	if len(masterCachesSpec.HostAddresses) != 0 {
 		AddAffinity(statefulSet, mc.getHostAddressLabel(), masterCachesSpec.HostAddresses)

@@ -5,6 +5,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -138,16 +139,43 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minRe
 			"totalInstanceCount", len(podList.Items))
 		return false
 	}
+
 	logger.Info(
 		"pods are ready",
 		"component", s.labeller.GetFullComponentName(),
 		"readyInstanceCount", readyInstanceCount,
 		"minReadyInstanceCount", effectiveMinReadyInstanceCount,
-		"totalInstanceCount", len(podList.Items))
+		"totalInstanceCount", len(podList.Items),
+	)
+
 	return true
 }
 
 func (s *StatefulSet) NeedSync(replicas int32) bool {
 	return s.oldObject.Spec.Replicas == nil ||
 		*s.oldObject.Spec.Replicas != replicas
+}
+
+func (s *StatefulSet) SpecChanged(desired *appsv1.StatefulSet) bool {
+	if !s.Exists() {
+		return true
+	}
+
+	if s.oldObject.Spec.Replicas == nil || desired.Spec.Replicas == nil {
+		return true
+	}
+
+	specsEqual := apiequality.Semantic.DeepEqual(s.oldObject.Spec.Template, desired.Spec.Template) &&
+		apiequality.Semantic.DeepEqual(s.oldObject.Spec.UpdateStrategy, desired.Spec.UpdateStrategy) &&
+		apiequality.Semantic.DeepEqual(s.oldObject.Spec.VolumeClaimTemplates, desired.Spec.VolumeClaimTemplates) &&
+		apiequality.Semantic.DeepEqual(s.oldObject.Spec.PodManagementPolicy, desired.Spec.PodManagementPolicy) &&
+		apiequality.Semantic.DeepEqual(s.oldObject.Spec.ServiceName, desired.Spec.ServiceName) &&
+		apiequality.Semantic.DeepEqual(s.oldObject.Spec.RevisionHistoryLimit, desired.Spec.RevisionHistoryLimit) &&
+		apiequality.Semantic.DeepEqual(s.oldObject.Spec.PersistentVolumeClaimRetentionPolicy, desired.Spec.PersistentVolumeClaimRetentionPolicy)
+
+	if !specsEqual {
+		return true
+	}
+
+	return false
 }

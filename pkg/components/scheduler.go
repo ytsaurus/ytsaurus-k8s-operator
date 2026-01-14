@@ -127,9 +127,12 @@ func (s *Scheduler) Sync(ctx context.Context) error {
 }
 
 func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+	serverNeedsUpdate, err := s.server.needUpdate()
+	if err != nil {
+		return SimpleStatus(SyncStatusNeedUpdate), err
+	}
 
-	if ytv1.IsReadyToUpdateClusterState(s.ytsaurus.GetClusterState()) && s.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(s.ytsaurus.GetClusterState()) && serverNeedsUpdate {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
@@ -189,7 +192,12 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusWaitingFor(s.secret.Name()), err
 	}
 
-	if s.NeedSync() {
+	needsSync, err := s.NeedSync()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
+
+	if needsSync {
 		if !dry {
 			err = s.server.Sync(ctx)
 		}
@@ -214,7 +222,7 @@ func (s *Scheduler) initOpArchive(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	status, err := s.initUserJob.Sync(ctx, dry)
-	if status.SyncStatus != SyncStatusReady {
+	if err != nil || status.SyncStatus != SyncStatusReady {
 		return status, err
 	}
 

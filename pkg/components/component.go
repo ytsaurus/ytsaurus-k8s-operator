@@ -175,11 +175,20 @@ func newLocalServerComponent(
 	}
 }
 
-func (c *localServerComponent) NeedSync() bool {
+func (c *localServerComponent) NeedSync() (bool, error) {
 	return LocalServerNeedSync(c.server, c.ytsaurus)
 }
 
-func LocalServerNeedSync(srv server, ytsaurus *apiproxy.Ytsaurus) bool {
-	return (srv.configNeedsReload() && ytsaurus.IsUpdating()) ||
-		srv.needBuild()
+func LocalServerNeedSync(srv server, ytsaurus *apiproxy.Ytsaurus) (bool, error) {
+	needsReload, err := srv.configNeedsReload()
+	if err != nil {
+		return false, err
+	}
+
+	needsRebuild, err := srv.needBuild()
+	if err != nil {
+		return false, err
+	}
+
+	return (needsReload && ytsaurus.IsUpdating()) || needsRebuild, nil
 }

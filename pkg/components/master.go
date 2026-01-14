@@ -409,9 +409,12 @@ func (m *Master) createExitReadOnlyScript() string {
 }
 
 func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+	serverNeedsUpdate, err := m.server.needUpdate()
+	if err != nil {
+		return SimpleStatus(SyncStatusNeedUpdate), err
+	}
 
-	if ytv1.IsReadyToUpdateClusterState(m.ytsaurus.GetClusterState()) && m.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(m.ytsaurus.GetClusterState()) && serverNeedsUpdate {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
@@ -454,10 +457,16 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 		return ComponentStatusWaitingFor(m.sidecarSecrets.hydraPersistenceUploaderSecret.Name()), err
 	}
 
-	if m.NeedSync() {
+	needsSync, err := m.NeedSync()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
+
+	if needsSync {
 		if !dry {
 			err = m.doServerSync(ctx)
 		}
+
 		return ComponentStatusWaitingFor("components"), err
 	}
 
@@ -478,7 +487,11 @@ func (m *Master) Sync(ctx context.Context) error {
 }
 
 func (m *Master) doServerSync(ctx context.Context) error {
-	statefulSet := m.server.buildStatefulSet()
+	statefulSet, err := m.server.buildStatefulSet()
+	if err != nil {
+		return err
+	}
+
 	podSpec := &statefulSet.Spec.Template.Spec
 	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
 
@@ -490,10 +503,10 @@ func (m *Master) doServerSync(ctx context.Context) error {
 			buildUserCredentialsSecretname(consts.HydraPersistenceUploaderUserName),
 		)
 	}
-	if err := checkAndAddTimbertruckToPodSpec(primaryMastersSpec.Timbertruck, podSpec, &primaryMastersSpec.InstanceSpec, m.labeller, m.cfgen); err != nil {
+	if err = checkAndAddTimbertruckToPodSpec(primaryMastersSpec.Timbertruck, podSpec, &primaryMastersSpec.InstanceSpec, m.labeller, m.cfgen); err != nil {
 		return err
 	}
-	if err := AddSidecarsToPodSpec(primaryMastersSpec.Sidecars, podSpec); err != nil {
+	if err = AddSidecarsToPodSpec(primaryMastersSpec.Sidecars, podSpec); err != nil {
 		return err
 	}
 

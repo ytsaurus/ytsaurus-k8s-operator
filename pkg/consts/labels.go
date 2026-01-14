@@ -12,6 +12,7 @@ const (
 
 	DescriptionAnnotation           = "kubernetes.io/description"
 	ConfigOverridesVersionLabelName = "ytsaurus.tech/config-overrides-version"
+	ConfigHashAnnotationName        = "ytsaurus.tech/config-hash"
 
 	YTOperatorInstanceLabelName = "ytsaurus.tech/operator-instance"
 )

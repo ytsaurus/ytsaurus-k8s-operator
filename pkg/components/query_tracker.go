@@ -91,9 +91,12 @@ func (qt *QueryTracker) Fetch(ctx context.Context) error {
 }
 
 func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+	serverNeedsUpdate, err := qt.server.needUpdate()
+	if err != nil {
+		return SimpleStatus(SyncStatusNeedUpdate), err
+	}
 
-	if ytv1.IsReadyToUpdateClusterState(qt.ytsaurus.GetClusterState()) && qt.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(qt.ytsaurus.GetClusterState()) && serverNeedsUpdate {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
@@ -127,7 +130,12 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		return ComponentStatusWaitingFor(qt.secret.Name()), err
 	}
 
-	if qt.NeedSync() {
+	needsSync, err := qt.NeedSync()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
+
+	if needsSync {
 		if !dry {
 			err = qt.server.Sync(ctx)
 		}

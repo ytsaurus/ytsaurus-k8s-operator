@@ -54,9 +54,17 @@ func NewRemoteDataNodes(
 }
 
 func (n *RemoteDataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+	needsSync, err := n.server.needSync()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
 
-	if n.server.needSync() || n.server.needUpdate() {
+	needsUpdate, err := n.server.needUpdate()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
+
+	if needsSync || needsUpdate {
 		if !dry {
 			err = n.server.Sync(ctx)
 		}

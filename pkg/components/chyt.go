@@ -159,7 +159,7 @@ func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	status, err := c.initUser.Sync(ctx, dry)
-	if status.SyncStatus != SyncStatusReady {
+	if err != nil || status.SyncStatus != SyncStatusReady {
 		c.chyt.GetResource().Status.ReleaseStatus = ytv1.ChytReleaseStatusCreatingUser
 		return status, err
 	}

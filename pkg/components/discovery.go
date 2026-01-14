@@ -49,9 +49,12 @@ func (d *Discovery) Fetch(ctx context.Context) error {
 }
 
 func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+	serverNeedsUpdate, err := d.server.needUpdate()
+	if err != nil {
+		return SimpleStatus(SyncStatusNeedUpdate), err
+	}
 
-	if ytv1.IsReadyToUpdateClusterState(d.ytsaurus.GetClusterState()) && d.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(d.ytsaurus.GetClusterState()) && serverNeedsUpdate {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
@@ -61,7 +64,12 @@ func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	if d.NeedSync() {
+	needsSync, err := d.NeedSync()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
+
+	if needsSync {
 		if !dry {
 			err = d.server.Sync(ctx)
 		}

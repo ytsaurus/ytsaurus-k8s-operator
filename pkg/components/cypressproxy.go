@@ -47,9 +47,12 @@ func (cyp *CypressProxy) Fetch(ctx context.Context) error {
 }
 
 func (cyp *CypressProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+	serverNeedsUpdate, err := cyp.server.needUpdate()
+	if err != nil {
+		return SimpleStatus(SyncStatusNeedUpdate), err
+	}
 
-	if ytv1.IsReadyToUpdateClusterState(cyp.ytsaurus.GetClusterState()) && cyp.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(cyp.ytsaurus.GetClusterState()) && serverNeedsUpdate {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
@@ -59,7 +62,12 @@ func (cyp *CypressProxy) doSync(ctx context.Context, dry bool) (ComponentStatus,
 		}
 	}
 
-	if cyp.NeedSync() {
+	needsSync, err := cyp.NeedSync()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
+
+	if needsSync {
 		if !dry {
 			err = cyp.doServerSync(ctx)
 		}

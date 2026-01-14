@@ -2,10 +2,13 @@ package components
 
 import (
 	"bytes"
+	stdcmp "cmp"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 
 	"github.com/BurntSushi/toml"
 	"github.com/google/go-cmp/cmp"
@@ -234,6 +237,35 @@ func (h *ConfigMapBuilder) NeedReload() (bool, error) {
 
 func (h *ConfigMapBuilder) NeedInit() bool {
 	return !resources.Exists(h.configMap)
+}
+
+func (h *ConfigMapBuilder) Hash() (string, error) {
+	generators := slices.SortedFunc(
+		slices.Values(h.generators),
+		func(first ConfigGenerator, second ConfigGenerator) int {
+			firstKey := first.FileName + string(first.Format)
+			secondKey := second.FileName + string(second.Format)
+
+			return stdcmp.Compare(firstKey, secondKey)
+		},
+	)
+
+	hasher := sha256.New()
+
+	for _, generator := range generators {
+		data, err := h.getConfig(generator)
+		if err != nil {
+			return "", fmt.Errorf("unable to compute config hash. failed to generate config: %w", err)
+		}
+
+		hasher.Write([]byte(generator.FileName))
+		hasher.Write([]byte{0})
+		hasher.Write([]byte(generator.Format))
+		hasher.Write([]byte{0})
+		hasher.Write(data)
+	}
+
+	return fmt.Sprintf("%x", hasher.Sum(nil)), nil
 }
 
 func (h *ConfigMapBuilder) Build() (*corev1.ConfigMap, error) {

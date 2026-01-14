@@ -126,9 +126,12 @@ func (hp *HttpProxy) Fetch(ctx context.Context) error {
 }
 
 func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+	serverNeedsUpdate, err := hp.server.needUpdate()
+	if err != nil {
+		return SimpleStatus(SyncStatusNeedUpdate), err
+	}
 
-	if ytv1.IsReadyToUpdateClusterState(hp.ytsaurus.GetClusterState()) && hp.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(hp.ytsaurus.GetClusterState()) && serverNeedsUpdate {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
@@ -146,13 +149,23 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 		return ComponentStatusBlockedBy(hp.master.GetFullName()), err
 	}
 
-	if hp.NeedSync() {
+	needsSync, err := hp.NeedSync()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
+
+	if needsSync {
 		if !dry {
-			statefulSet := hp.server.buildStatefulSet()
+			statefulSet, err := hp.server.buildStatefulSet()
+			if err != nil {
+				return ComponentStatusWaitingFor("components"), err
+			}
+
 			if hp.httpsSecret != nil {
 				hp.httpsSecret.AddVolume(&statefulSet.Spec.Template.Spec)
 				hp.httpsSecret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
 			}
+
 			err = hp.server.Sync(ctx)
 		}
 		return ComponentStatusWaitingFor("components"), err

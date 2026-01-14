@@ -74,9 +74,17 @@ func NewRemoteExecNodes(
 }
 
 func (n *RemoteExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+	needsSync, err := n.server.needSync()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
 
-	if n.server.needSync() || n.server.needUpdate() || n.sidecarConfigNeedsReload() {
+	needsUpdate, err := n.server.needUpdate()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
+
+	if needsSync || needsUpdate || n.sidecarConfigNeedsReload() {
 		return n.doSyncBase(ctx, dry)
 	}
 

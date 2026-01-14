@@ -51,10 +51,13 @@ func (bc *BundleController) Fetch(ctx context.Context) error {
 }
 
 func (bc *BundleController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
-	if ytv1.IsReadyToUpdateClusterState(bc.ytsaurus.GetClusterState()) && bc.server.needUpdate() {
+	serverNeedsUpdate, err := bc.server.needUpdate()
+	if err != nil {
 		return SimpleStatus(SyncStatusNeedUpdate), err
+	}
+
+	if ytv1.IsReadyToUpdateClusterState(bc.ytsaurus.GetClusterState()) && serverNeedsUpdate {
+		return SimpleStatus(SyncStatusNeedUpdate), nil
 	}
 
 	if bc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -63,7 +66,12 @@ func (bc *BundleController) doSync(ctx context.Context, dry bool) (ComponentStat
 		}
 	}
 
-	if bc.NeedSync() {
+	needsSync, err := bc.NeedSync()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
+
+	if needsSync {
 		if !dry {
 			err = bc.doServerSync(ctx)
 		}

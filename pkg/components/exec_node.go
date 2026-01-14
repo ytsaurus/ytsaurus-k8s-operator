@@ -76,9 +76,12 @@ func NewExecNode(
 }
 
 func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+	needsUpdate, err := n.server.needUpdate()
+	if err != nil {
+		return SimpleStatus(SyncStatusNeedUpdate), err
+	}
 
-	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && (n.server.needUpdate() || n.sidecarConfigNeedsReload()) {
+	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && (needsUpdate || n.sidecarConfigNeedsReload()) {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
@@ -96,7 +99,12 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		return ComponentStatusBlockedBy(n.master.GetFullName()), err
 	}
 
-	if LocalServerNeedSync(n.server, n.ytsaurus) {
+	needsSync, err := LocalServerNeedSync(n.server, n.ytsaurus)
+	if err != nil {
+		return SimpleStatus(SyncStatusNeedUpdate), err
+	}
+
+	if needsSync {
 		return n.doSyncBase(ctx, dry)
 	}
 

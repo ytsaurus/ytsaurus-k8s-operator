@@ -116,7 +116,7 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		s.initUser.SetInitScript(s.createInitUserScript())
 	}
 	status, err := s.initUser.Sync(ctx, dry)
-	if status.SyncStatus != SyncStatusReady {
+	if err != nil || status.SyncStatus != SyncStatusReady {
 		s.spyt.GetResource().Status.ReleaseStatus = ytv1.SpytReleaseStatusCreatingUser
 		return status, err
 	}
@@ -143,7 +143,7 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	status, err = s.initEnvironment.Sync(ctx, dry)
-	if status.SyncStatus != SyncStatusReady {
+	if err != nil || status.SyncStatus != SyncStatusReady {
 		s.spyt.GetResource().Status.ReleaseStatus = ytv1.SpytReleaseStatusUploadingIntoCypress
 		return status, err
 	}

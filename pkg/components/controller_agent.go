@@ -49,9 +49,12 @@ func (ca *ControllerAgent) Fetch(ctx context.Context) error {
 }
 
 func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+	serverNeedsUpdate, err := ca.server.needUpdate()
+	if err != nil {
+		return SimpleStatus(SyncStatusNeedUpdate), err
+	}
 
-	if ytv1.IsReadyToUpdateClusterState(ca.ytsaurus.GetClusterState()) && ca.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(ca.ytsaurus.GetClusterState()) && serverNeedsUpdate {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
@@ -69,10 +72,16 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 		return ComponentStatusBlockedBy(ca.master.GetFullName()), err
 	}
 
-	if ca.NeedSync() {
+	needsSync, err := ca.NeedSync()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
+
+	if needsSync {
 		if !dry {
 			err = ca.server.Sync(ctx)
 		}
+
 		return ComponentStatusWaitingFor("components"), err
 	}
 

@@ -2,7 +2,7 @@ package components
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"path"
 
 	"k8s.io/utils/ptr"
@@ -33,18 +33,22 @@ func (n *baseExecNode) Fetch(ctx context.Context) error {
 }
 
 func (n *baseExecNode) doBuildBase() error {
-	statefulSet := n.server.buildStatefulSet()
-	podSpec := &statefulSet.Spec.Template.Spec
-
-	if len(podSpec.Containers) != 1 {
-		log.Panicf("Number of exec node containers is expected to be 1, actual %v", len(podSpec.Containers))
-	}
-
-	if err := AddInitContainersToPodSpec(n.spec.InitContainers, podSpec); err != nil {
+	statefulSet, err := n.server.buildStatefulSet()
+	if err != nil {
 		return err
 	}
 
-	if err := AddSidecarsToPodSpec(n.spec.Sidecars, podSpec); err != nil {
+	podSpec := &statefulSet.Spec.Template.Spec
+
+	if len(podSpec.Containers) != 1 {
+		return fmt.Errorf("number of exec node containers is expected to be 1, actual %d", len(podSpec.Containers))
+	}
+
+	if err = AddInitContainersToPodSpec(n.spec.InitContainers, podSpec); err != nil {
+		return err
+	}
+
+	if err = AddSidecarsToPodSpec(n.spec.Sidecars, podSpec); err != nil {
 		return err
 	}
 
@@ -100,7 +104,7 @@ func (n *baseExecNode) doBuildBase() error {
 	}
 
 	if n.sidecarConfig != nil {
-		if _, err := n.sidecarConfig.Build(); err != nil {
+		if _, err = n.sidecarConfig.Build(); err != nil {
 			return err
 		}
 	}

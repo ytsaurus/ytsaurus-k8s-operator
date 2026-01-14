@@ -94,9 +94,12 @@ func (qa *QueueAgent) Fetch(ctx context.Context) error {
 }
 
 func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+	serverNeedsUpdate, err := qa.server.needUpdate()
+	if err != nil {
+		return SimpleStatus(SyncStatusNeedUpdate), err
+	}
 
-	if ytv1.IsReadyToUpdateClusterState(qa.ytsaurus.GetClusterState()) && qa.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(qa.ytsaurus.GetClusterState()) && serverNeedsUpdate {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
@@ -153,7 +156,12 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return ComponentStatusWaitingFor(qa.secret.Name()), err
 	}
 
-	if qa.NeedSync() {
+	needsSync, err := qa.NeedSync()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
+
+	if needsSync {
 		if !dry {
 			err = qa.server.Sync(ctx)
 		}

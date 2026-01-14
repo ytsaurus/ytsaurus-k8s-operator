@@ -56,9 +56,12 @@ func (n *DataNode) Fetch(ctx context.Context) error {
 }
 
 func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+	serverNeedsUpdate, err := n.server.needUpdate()
+	if err != nil {
+		return SimpleStatus(SyncStatusNeedUpdate), err
+	}
 
-	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && n.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && serverNeedsUpdate {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
@@ -81,7 +84,12 @@ func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		return ComponentStatusBlockedBy(n.master.GetFullName()), err
 	}
 
-	if n.NeedSync() {
+	needsSync, err := n.NeedSync()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
+
+	if needsSync {
 		if !dry {
 			err = n.server.Sync(ctx)
 		}

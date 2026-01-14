@@ -101,24 +101,24 @@ func (fs *FakeServer) Fetch(ctx context.Context) error {
 	return nil
 }
 
-func (fs *FakeServer) needUpdate() bool {
-	return false
+func (fs *FakeServer) needUpdate() (bool, error) {
+	return false, nil
 }
 
 func (fs *FakeServer) podsImageCorrespondsToSpec() bool {
 	return true
 }
 
-func (fs *FakeServer) configNeedsReload() bool {
-	return false
+func (fs *FakeServer) configNeedsReload() (bool, error) {
+	return false, nil
 }
 
-func (fs *FakeServer) needBuild() bool {
-	return false
+func (fs *FakeServer) needBuild() (bool, error) {
+	return false, nil
 }
 
-func (fs *FakeServer) needSync() bool {
-	return false
+func (fs *FakeServer) needSync() (bool, error) {
+	return false, nil
 }
 
 func (fs *FakeServer) arePodsRemoved(ctx context.Context) bool {
@@ -141,12 +141,12 @@ func (fs *FakeServer) Sync(ctx context.Context) error {
 	return nil
 }
 
-func (fs *FakeServer) buildStatefulSet() *appsv1.StatefulSet {
-	return nil
+func (fs *FakeServer) buildStatefulSet() (*appsv1.StatefulSet, error) {
+	return nil, nil
 }
 
-func (fs *FakeServer) rebuildStatefulSet() *appsv1.StatefulSet {
-	return nil
+func (fs *FakeServer) rebuildStatefulSet() (*appsv1.StatefulSet, error) {
+	return nil, nil
 }
 
 func (fs *FakeServer) removePods(ctx context.Context) error {

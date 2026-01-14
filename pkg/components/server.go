@@ -2,7 +2,7 @@ package components
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"path"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -29,12 +29,12 @@ type server interface {
 	resources.Fetchable
 	resources.Syncable
 	podsManager
-	needUpdate() bool
-	configNeedsReload() bool
-	needBuild() bool
-	needSync() bool
-	buildStatefulSet() *appsv1.StatefulSet
-	rebuildStatefulSet() *appsv1.StatefulSet
+	needUpdate() (bool, error)
+	configNeedsReload() (bool, error)
+	needBuild() (bool, error)
+	needSync() (bool, error)
+	buildStatefulSet() (*appsv1.StatefulSet, error)
+	rebuildStatefulSet() (*appsv1.StatefulSet, error)
 	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType)
 	addCARootBundle(c *corev1.Container)
 	addTlsSecretMount(c *corev1.Container)
@@ -64,6 +64,7 @@ type serverImpl struct {
 	builtStatefulSet *appsv1.StatefulSet
 
 	updateStrategy *appsv1.StatefulSetUpdateStrategyType
+	configHash     string
 
 	componentContainerPorts []corev1.ContainerPort
 
@@ -212,22 +213,39 @@ func (s *serverImpl) exists() bool {
 		resources.Exists(s.monitoringService)
 }
 
-func (s *serverImpl) configNeedsReload() bool {
+func (s *serverImpl) configNeedsReload() (bool, error) {
 	needReload, err := s.configs.NeedReload()
 	if err != nil {
-		needReload = false
+		return false, err
 	}
-	return needReload
+
+	return needReload, nil
 }
 
-func (s *serverImpl) needBuild() bool {
+func (s *serverImpl) needBuild() (bool, error) {
+	desired, err := s.buildStatefulSet()
+	if err != nil {
+		return false, err
+	}
+
 	return s.configs.NeedInit() ||
 		!s.exists() ||
-		s.statefulSet.NeedSync(s.instanceSpec.InstanceCount)
+		s.statefulSet.NeedSync(s.instanceSpec.InstanceCount) ||
+		s.statefulSet.SpecChanged(desired), nil
 }
 
-func (s *serverImpl) needSync() bool {
-	return s.configNeedsReload() || s.needBuild()
+func (s *serverImpl) needSync() (bool, error) {
+	needsBuild, err := s.needBuild()
+	if err != nil {
+		return false, err
+	}
+
+	needsReload, err := s.configNeedsReload()
+	if err != nil {
+		return false, err
+	}
+
+	return needsBuild || needsReload, nil
 }
 
 func (s *serverImpl) Sync(ctx context.Context) error {
@@ -236,7 +254,11 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 	}
 	_ = s.headlessService.Build()
 	_ = s.monitoringService.Build()
-	_ = s.buildStatefulSet()
+
+	_, err := s.buildStatefulSet()
+	if err != nil {
+		return err
+	}
 
 	return resources.Sync(ctx,
 		s.statefulSet,
@@ -279,20 +301,21 @@ func (s *serverImpl) podsImageCorrespondsToSpec() bool {
 	return found == len(s.sidecarImages)
 }
 
-func (s *serverImpl) needUpdate() bool {
+func (s *serverImpl) needUpdate() (bool, error) {
 	if !s.exists() {
-		return false
+		return false, nil
 	}
 
 	if !s.podsImageCorrespondsToSpec() {
-		return true
+		return true, nil
 	}
 
 	needReload, err := s.configs.NeedReload()
 	if err != nil {
-		return false
+		return false, err
 	}
-	return needReload
+
+	return needReload, nil
 }
 
 func (s *serverImpl) arePodsReady(ctx context.Context) bool {
@@ -357,15 +380,22 @@ func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 	return false
 }
 
-func (s *serverImpl) buildStatefulSet() *appsv1.StatefulSet {
+func (s *serverImpl) buildStatefulSet() (*appsv1.StatefulSet, error) {
 	if s.builtStatefulSet != nil {
-		return s.builtStatefulSet
+		return s.builtStatefulSet, nil
 	}
 
 	return s.rebuildStatefulSet()
 }
 
-func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
+func (s *serverImpl) rebuildStatefulSet() (*appsv1.StatefulSet, error) {
+	hash, err := s.configs.Hash()
+	if err != nil {
+		return nil, err
+	}
+
+	s.configHash = hash
+
 	locationCreationCommand := getLocationInitCommand(s.instanceSpec.Locations)
 
 	volumes := createServerVolumes(s.instanceSpec.Volumes, s.labeller.GetMainConfigMapName())
@@ -393,7 +423,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 
 	fileNames := s.configs.GetFileNames()
 	if len(fileNames) != 1 {
-		log.Panicf("expected exactly one config filename, found %v", len(fileNames))
+		return nil, fmt.Errorf("expected exactly one config filename, found %d", len(fileNames))
 	}
 
 	configPostprocessingCommand := getConfigPostprocessingCommand(fileNames[0])
@@ -478,6 +508,13 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	s.busServerSecret.AddVolume(podSpec)
 	s.busClientSecret.AddVolume(podSpec)
 
+	// TODO(gufran): probably should only set the hash if we are already enrolled into
+	// this version of the operator, otherwise the upgrade will require a full cluster rollout.
+	// Not sure how to do this thoug.
+	if s.configHash != "" {
+		metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, consts.ConfigHashAnnotationName, s.configHash)
+	}
+
 	// Add CA root bundle into all containers.
 	for i := range podSpec.Containers {
 		s.addCARootBundle(&podSpec.Containers[i])
@@ -492,11 +529,15 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	s.addTlsSecretMount(serverContainer)
 
 	s.builtStatefulSet = statefulSet
-	return statefulSet
+	return statefulSet, nil
 }
 
 func (s *serverImpl) removePods(ctx context.Context) error {
-	ss := s.rebuildStatefulSet()
+	ss, err := s.rebuildStatefulSet()
+	if err != nil {
+		return err
+	}
+
 	ss.Spec.Replicas = ptr.To(int32(0))
 	return s.Sync(ctx)
 }

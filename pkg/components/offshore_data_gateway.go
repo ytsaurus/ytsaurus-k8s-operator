@@ -53,12 +53,21 @@ func NewOffshoreDataGateways(
 }
 
 func (p *OffshoreDataGateway) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+	needsSync, err := p.server.needSync()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
 
-	if p.server.needSync() || p.server.needUpdate() {
+	needsUpdate, err := p.server.needUpdate()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
+
+	if needsSync || needsUpdate {
 		if !dry {
 			err = p.server.Sync(ctx)
 		}
+
 		return ComponentStatusWaitingFor("components"), err
 	}
 

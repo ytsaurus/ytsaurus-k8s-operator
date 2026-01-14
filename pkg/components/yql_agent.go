@@ -146,9 +146,12 @@ func (yqla *YqlAgent) createUpdateScript() string {
 }
 
 func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
+	serverNeedsUpdate, err := yqla.server.needUpdate()
+	if err != nil {
+		return SimpleStatus(SyncStatusNeedUpdate), err
+	}
 
-	if ytv1.IsReadyToUpdateClusterState(yqla.ytsaurus.GetClusterState()) && yqla.server.needUpdate() {
+	if ytv1.IsReadyToUpdateClusterState(yqla.ytsaurus.GetClusterState()) && serverNeedsUpdate {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
@@ -190,9 +193,18 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return ComponentStatusWaitingFor(yqla.secret.Name()), err
 	}
 
-	if yqla.NeedSync() {
+	needsSync, err := yqla.NeedSync()
+	if err != nil {
+		return ComponentStatusWaitingFor("components"), err
+	}
+
+	if needsSync {
 		if !dry {
-			ss := yqla.server.buildStatefulSet()
+			ss, err := yqla.server.buildStatefulSet()
+			if err != nil {
+				return ComponentStatusWaitingFor("components"), err
+			}
+
 			container := &ss.Spec.Template.Spec.Containers[0]
 			container.Command = []string{"sh", "-c", fmt.Sprintf("echo -n $YT_TOKEN > %s; %s", consts.DefaultYqlTokenPath, strings.Join(container.Command, " "))}
 			container.EnvFrom = []corev1.EnvFromSource{yqla.secret.GetEnvSource()}
