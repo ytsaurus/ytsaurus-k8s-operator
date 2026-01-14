@@ -77,28 +77,23 @@ func (d *DaemonSet) Build() *appsv1.DaemonSet {
 
 func (d *DaemonSet) ArePodsReady(ctx context.Context) bool {
 	logger := log.FromContext(ctx)
-
-	desired := d.oldObject.Status.DesiredNumberScheduled
-	if desired == 0 {
-		return true
-	}
-
-	if d.oldObject.Status.UpdatedNumberScheduled != desired {
-		logger.Info("daemonset pods are not updated yet",
-			"daemonset", d.name,
-			"desiredNumberScheduled", desired,
-			"updatedNumberScheduled", d.oldObject.Status.UpdatedNumberScheduled,
-		)
+	logger.Info("Image heater checking daemonset pods", "daemonset", d.name)
+	podList := d.listPods(ctx)
+	if podList == nil {
+		logger.Info("Image heater podList is nil", "daemonset", d.name)
 		return false
 	}
 
-	if d.oldObject.Status.NumberReady != desired {
-		logger.Info("daemonset pods are not ready yet",
-			"daemonset", d.name,
-			"desiredNumberScheduled", desired,
-			"readyNumberScheduled", d.oldObject.Status.NumberReady,
-		)
+	if len(podList.Items) == 0 {
+		logger.Info("Image heater daemonset has no pods", "daemonset", d.name)
 		return false
+	}
+
+	for _, pod := range podList.Items {
+		if pod.Status.Phase != corev1.PodRunning {
+			logger.Info("Image heaterpod is not yet running", "podName", pod.Name, "phase", pod.Status.Phase)
+			return false
+		}
 	}
 
 	return true
