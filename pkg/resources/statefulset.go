@@ -59,22 +59,10 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 	return s.newObject
 }
 
-func (s *StatefulSet) getPods(ctx context.Context) *corev1.PodList {
-	logger := log.FromContext(ctx)
-	podList := &corev1.PodList{}
-	err := s.proxy.ListObjects(ctx, podList, s.labeller.GetListOptions()...)
-	if err != nil {
-		logger.Error(err, "unable to list pods for component", "component", s.labeller.GetFullComponentName())
-		return nil
-	}
-
-	return podList
-}
-
 func (s *StatefulSet) ArePodsRemoved(ctx context.Context) bool {
 	logger := log.FromContext(ctx)
 
-	podList := s.getPods(ctx)
+	podList := s.listPods(ctx)
 	if podList == nil {
 		return false
 	}
@@ -104,7 +92,7 @@ func checkReadinessByContainers(pod corev1.Pod, byContainerNames []string) bool 
 
 func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minReadyInstanceCount *int, byContainerNames []string) bool {
 	logger := log.FromContext(ctx)
-	podList := s.getPods(ctx)
+	podList := s.listPods(ctx)
 	if podList == nil {
 		return false
 	}

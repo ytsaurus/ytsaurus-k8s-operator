@@ -260,17 +260,11 @@ func (ih *ImageHeater) syncTargets(ctx context.Context, targets []imageHeaterTar
 		}
 	}
 
-	if !dry {
-		if err := ih.deleteStaleDaemonSets(ctx, expected); err != nil {
-			return false, err
-		}
-	}
-
 	return allReady, nil
 }
 
-// deleteStaleDaemonSets removes image-heater daemonsets not present in the keep set.
-func (ih *ImageHeater) deleteStaleDaemonSets(ctx context.Context, keep map[string]struct{}) error {
+// cleanupDaemonSets removes image-heater daemonsets.
+func (ih *ImageHeater) cleanupDaemonSets(ctx context.Context) error {
 	dsList, err := ih.listImageHeaterDaemonSets(ctx)
 	if err != nil {
 		return err
@@ -278,19 +272,12 @@ func (ih *ImageHeater) deleteStaleDaemonSets(ctx context.Context, keep map[strin
 
 	for i := range dsList.Items {
 		ds := &dsList.Items[i]
-		if _, ok := keep[ds.Name]; ok {
-			continue
-		}
 		if err := ih.ytsaurus.APIProxy().DeleteObject(ctx, ds); err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}
 	}
 
 	return nil
-}
-
-func (ih *ImageHeater) cleanupDaemonSets(ctx context.Context) error {
-	return ih.deleteStaleDaemonSets(ctx, map[string]struct{}{})
 }
 
 // hasDaemonSets returns true if any image-heater daemonsets exist.
