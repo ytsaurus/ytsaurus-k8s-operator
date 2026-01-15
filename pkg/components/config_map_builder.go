@@ -295,27 +295,27 @@ func (h *ConfigMapBuilder) Exists() bool {
 	return resources.Exists(h.configMap)
 }
 
-func (h *ConfigMapBuilder) ConfigChecksum() string {
-	if len(h.generators) == 0 {
-		return ""
+func configChecksumFromData(data map[string]string) (string, error) {
+	if len(data) == 0 {
+		return "", nil
 	}
 
-	data := make(map[string]string, len(h.generators))
-	for _, gen := range h.generators {
-		config, err := h.getConfig(gen)
-		if err != nil {
-			h.apiProxy.RecordWarning("Failure", fmt.Sprintf("Cannot build config checksum for %s: %v", gen.FileName, err))
-			return ""
-		}
-		data[gen.FileName] = string(config)
-	}
-
-	hasher := sha256.New()
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		h.apiProxy.RecordWarning("Failure", fmt.Sprintf("Cannot marshal config data for checksum: %v", err))
-		return ""
+		return "", err
 	}
-	hasher.Write(jsonData)
-	return fmt.Sprintf("%x", hasher.Sum(nil))
+	sum := sha256.Sum256(jsonData)
+	return fmt.Sprintf("%x", sum[:]), nil
+}
+
+func (h *ConfigMapBuilder) CurrentConfigChecksum() (string, bool) {
+	if !resources.Exists(h.configMap) {
+		return "", false
+	}
+	checksum, err := configChecksumFromData(h.configMap.OldObject().Data)
+	if err != nil {
+		h.apiProxy.RecordWarning("Failure", fmt.Sprintf("Cannot marshal current config data for checksum: %v", err))
+		return "", true
+	}
+	return checksum, true
 }

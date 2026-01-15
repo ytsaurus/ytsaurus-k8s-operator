@@ -29,8 +29,6 @@ spec:
   serviceName: masters
   template:
     metadata:
-      annotations:
-        ytsaurus.tech/config-checksum: 0b38b4319bbfebbceaa9325e3f34cae51d56a4076b65af9619ced7d90161d14e
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-master
