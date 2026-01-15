@@ -168,7 +168,7 @@ help: ## Display this help.
 ##@ Development
 
 .PHONY: generate
-generate: generate-code manifests helm-chart generate-docs ## Generate everything.
+generate: generate-code manifests helm-chart generate-docs generate-schema ## Generate everything.
 
 .PHONY: manifests
 manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
@@ -182,6 +182,11 @@ generate-code: ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyO
 .PHONY: generate-docs
 generate-docs: ## Generate documentation.
 	$(CRD_REF_DOCS) --config config/crd-ref-docs/config.yaml --renderer=markdown --source-path=api/v1 --output-path=docs/api.md
+
+.PHONY: generate-schema
+generate-schema: ## Generate CRD json schema.
+	rm -f config/crd/schema/*.json
+	go run tool/crd-schema/crd-schema.go config/crd/schema config/crd/bases/*.yaml
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
