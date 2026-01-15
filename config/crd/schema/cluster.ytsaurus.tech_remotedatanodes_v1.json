@@ -1,0 +1,2469 @@
+{
+  "description": "RemoteDataNodes is the Schema for the remotedatanodes API",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "description": "APIVersion defines the versioned schema of this representation of an object.",
+      "type": "string"
+    },
+    "kind": {
+      "description": "Kind is a string value representing the REST resource this object represents.",
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "spec": {
+      "description": "RemoteDataNodesSpec defines the desired state of RemoteDataNodes",
+      "type": "object",
+      "required": [
+        "remoteClusterSpec"
+      ],
+      "properties": {
+        "affinity": {
+          "description": "Affinity is a group of affinity scheduling rules.",
+          "type": "object",
+          "properties": {
+            "nodeAffinity": {
+              "description": "Describes node affinity scheduling rules for the pod.",
+              "type": "object",
+              "properties": {
+                "preferredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy\nthe affinity...",
+                  "type": "array",
+                  "items": {
+                    "description": "An empty preferred scheduling term matches all objects with implicit weight 0...",
+                    "type": "object",
+                    "required": [
+                      "preference",
+                      "weight"
+                    ],
+                    "properties": {
+                      "preference": {
+                        "description": "A node selector term, associated with the corresponding weight.",
+                        "type": "object",
+                        "properties": {
+                          "matchExpressions": {
+                            "description": "A list of node selector requirements by node's labels.",
+                            "type": "array",
+                            "items": {
+                              "description": "A node selector requirement is a selector that contains values, a key, and an...",
+                              "type": "object",
+                              "required": [
+                                "key",
+                                "operator"
+                              ],
+                              "properties": {
+                                "key": {
+                                  "description": "The label key that the selector applies to.",
+                                  "type": "string"
+                                },
+                                "operator": {
+                                  "description": "Represents a key's relationship to a set of values.",
+                                  "type": "string"
+                                },
+                                "values": {
+                                  "description": "An array of string values.",
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "x-kubernetes-list-type": "atomic"
+                                }
+                              }
+                            },
+                            "x-kubernetes-list-type": "atomic"
+                          },
+                          "matchFields": {
+                            "description": "A list of node selector requirements by node's fields.",
+                            "type": "array",
+                            "items": {
+                              "description": "A node selector requirement is a selector that contains values, a key, and an...",
+                              "type": "object",
+                              "required": [
+                                "key",
+                                "operator"
+                              ],
+                              "properties": {
+                                "key": {
+                                  "description": "The label key that the selector applies to.",
+                                  "type": "string"
+                                },
+                                "operator": {
+                                  "description": "Represents a key's relationship to a set of values.",
+                                  "type": "string"
+                                },
+                                "values": {
+                                  "description": "An array of string values.",
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "x-kubernetes-list-type": "atomic"
+                                }
+                              }
+                            },
+                            "x-kubernetes-list-type": "atomic"
+                          }
+                        },
+                        "x-kubernetes-map-type": "atomic"
+                      },
+                      "weight": {
+                        "description": "Weight associated with matching the corresponding nodeSelectorTerm, in the...",
+                        "type": "integer",
+                        "format": "int32"
+                      }
+                    }
+                  },
+                  "x-kubernetes-list-type": "atomic"
+                },
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "If the affinity requirements specified by this field are not met at\nscheduling...",
+                  "type": "object",
+                  "required": [
+                    "nodeSelectorTerms"
+                  ],
+                  "properties": {
+                    "nodeSelectorTerms": {
+                      "description": "Required. A list of node selector terms. The terms are ORed.",
+                      "type": "array",
+                      "items": {
+                        "description": "A null or empty node selector term matches no objects.",
+                        "type": "object",
+                        "properties": {
+                          "matchExpressions": {
+                            "description": "A list of node selector requirements by node's labels.",
+                            "type": "array",
+                            "items": {
+                              "description": "A node selector requirement is a selector that contains values, a key, and an...",
+                              "type": "object",
+                              "required": [
+                                "key",
+                                "operator"
+                              ],
+                              "properties": {
+                                "key": {
+                                  "description": "The label key that the selector applies to.",
+                                  "type": "string"
+                                },
+                                "operator": {
+                                  "description": "Represents a key's relationship to a set of values.",
+                                  "type": "string"
+                                },
+                                "values": {
+                                  "description": "An array of string values.",
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "x-kubernetes-list-type": "atomic"
+                                }
+                              }
+                            },
+                            "x-kubernetes-list-type": "atomic"
+                          },
+                          "matchFields": {
+                            "description": "A list of node selector requirements by node's fields.",
+                            "type": "array",
+                            "items": {
+                              "description": "A node selector requirement is a selector that contains values, a key, and an...",
+                              "type": "object",
+                              "required": [
+                                "key",
+                                "operator"
+                              ],
+                              "properties": {
+                                "key": {
+                                  "description": "The label key that the selector applies to.",
+                                  "type": "string"
+                                },
+                                "operator": {
+                                  "description": "Represents a key's relationship to a set of values.",
+                                  "type": "string"
+                                },
+                                "values": {
+                                  "description": "An array of string values.",
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "x-kubernetes-list-type": "atomic"
+                                }
+                              }
+                            },
+                            "x-kubernetes-list-type": "atomic"
+                          }
+                        },
+                        "x-kubernetes-map-type": "atomic"
+                      },
+                      "x-kubernetes-list-type": "atomic"
+                    }
+                  },
+                  "x-kubernetes-map-type": "atomic"
+                }
+              }
+            },
+            "podAffinity": {
+              "description": "Describes pod affinity scheduling rules (e.g.",
+              "type": "object",
+              "properties": {
+                "preferredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy\nthe affinity...",
+                  "type": "array",
+                  "items": {
+                    "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added...",
+                    "type": "object",
+                    "required": [
+                      "podAffinityTerm",
+                      "weight"
+                    ],
+                    "properties": {
+                      "podAffinityTerm": {
+                        "description": "Required. A pod affinity term, associated with the corresponding weight.",
+                        "type": "object",
+                        "required": [
+                          "topologyKey"
+                        ],
+                        "properties": {
+                          "labelSelector": {
+                            "description": "A label query over a set of resources, in this case pods.",
+                            "type": "object",
+                            "properties": {
+                              "matchExpressions": {
+                                "description": "matchExpressions is a list of label selector requirements.",
+                                "type": "array",
+                                "items": {
+                                  "description": "A label selector requirement is a selector that contains values, a key, and an...",
+                                  "type": "object",
+                                  "required": [
+                                    "key",
+                                    "operator"
+                                  ],
+                                  "properties": {
+                                    "key": {
+                                      "description": "key is the label key that the selector applies to.",
+                                      "type": "string"
+                                    },
+                                    "operator": {
+                                      "description": "operator represents a key's relationship to a set of values.",
+                                      "type": "string"
+                                    },
+                                    "values": {
+                                      "description": "values is an array of string values.",
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      },
+                                      "x-kubernetes-list-type": "atomic"
+                                    }
+                                  }
+                                },
+                                "x-kubernetes-list-type": "atomic"
+                              },
+                              "matchLabels": {
+                                "description": "matchLabels is a map of {key,value} pairs.",
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "x-kubernetes-map-type": "atomic"
+                          },
+                          "matchLabelKeys": {
+                            "description": "MatchLabelKeys is a set of pod label keys to select which pods will\nbe taken...",
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "x-kubernetes-list-type": "atomic"
+                          },
+                          "mismatchLabelKeys": {
+                            "description": "MismatchLabelKeys is a set of pod label keys to select which pods will\nbe taken...",
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "x-kubernetes-list-type": "atomic"
+                          },
+                          "namespaceSelector": {
+                            "description": "A label query over the set of namespaces that the term applies to.",
+                            "type": "object",
+                            "properties": {
+                              "matchExpressions": {
+                                "description": "matchExpressions is a list of label selector requirements.",
+                                "type": "array",
+                                "items": {
+                                  "description": "A label selector requirement is a selector that contains values, a key, and an...",
+                                  "type": "object",
+                                  "required": [
+                                    "key",
+                                    "operator"
+                                  ],
+                                  "properties": {
+                                    "key": {
+                                      "description": "key is the label key that the selector applies to.",
+                                      "type": "string"
+                                    },
+                                    "operator": {
+                                      "description": "operator represents a key's relationship to a set of values.",
+                                      "type": "string"
+                                    },
+                                    "values": {
+                                      "description": "values is an array of string values.",
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      },
+                                      "x-kubernetes-list-type": "atomic"
+                                    }
+                                  }
+                                },
+                                "x-kubernetes-list-type": "atomic"
+                              },
+                              "matchLabels": {
+                                "description": "matchLabels is a map of {key,value} pairs.",
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "x-kubernetes-map-type": "atomic"
+                          },
+                          "namespaces": {
+                            "description": "namespaces specifies a static list of namespace names that the term applies to.",
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "x-kubernetes-list-type": "atomic"
+                          },
+                          "topologyKey": {
+                            "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with...",
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "weight": {
+                        "description": "weight associated with matching the corresponding podAffinityTerm,\nin the range...",
+                        "type": "integer",
+                        "format": "int32"
+                      }
+                    }
+                  },
+                  "x-kubernetes-list-type": "atomic"
+                },
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "If the affinity requirements specified by this field are not met at\nscheduling...",
+                  "type": "array",
+                  "items": {
+                    "description": "Defines a set of pods (namely those matching the labelSelector\nrelative to the...",
+                    "type": "object",
+                    "required": [
+                      "topologyKey"
+                    ],
+                    "properties": {
+                      "labelSelector": {
+                        "description": "A label query over a set of resources, in this case pods.",
+                        "type": "object",
+                        "properties": {
+                          "matchExpressions": {
+                            "description": "matchExpressions is a list of label selector requirements.",
+                            "type": "array",
+                            "items": {
+                              "description": "A label selector requirement is a selector that contains values, a key, and an...",
+                              "type": "object",
+                              "required": [
+                                "key",
+                                "operator"
+                              ],
+                              "properties": {
+                                "key": {
+                                  "description": "key is the label key that the selector applies to.",
+                                  "type": "string"
+                                },
+                                "operator": {
+                                  "description": "operator represents a key's relationship to a set of values.",
+                                  "type": "string"
+                                },
+                                "values": {
+                                  "description": "values is an array of string values.",
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "x-kubernetes-list-type": "atomic"
+                                }
+                              }
+                            },
+                            "x-kubernetes-list-type": "atomic"
+                          },
+                          "matchLabels": {
+                            "description": "matchLabels is a map of {key,value} pairs.",
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "x-kubernetes-map-type": "atomic"
+                      },
+                      "matchLabelKeys": {
+                        "description": "MatchLabelKeys is a set of pod label keys to select which pods will\nbe taken...",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "x-kubernetes-list-type": "atomic"
+                      },
+                      "mismatchLabelKeys": {
+                        "description": "MismatchLabelKeys is a set of pod label keys to select which pods will\nbe taken...",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "x-kubernetes-list-type": "atomic"
+                      },
+                      "namespaceSelector": {
+                        "description": "A label query over the set of namespaces that the term applies to.",
+                        "type": "object",
+                        "properties": {
+                          "matchExpressions": {
+                            "description": "matchExpressions is a list of label selector requirements.",
+                            "type": "array",
+                            "items": {
+                              "description": "A label selector requirement is a selector that contains values, a key, and an...",
+                              "type": "object",
+                              "required": [
+                                "key",
+                                "operator"
+                              ],
+                              "properties": {
+                                "key": {
+                                  "description": "key is the label key that the selector applies to.",
+                                  "type": "string"
+                                },
+                                "operator": {
+                                  "description": "operator represents a key's relationship to a set of values.",
+                                  "type": "string"
+                                },
+                                "values": {
+                                  "description": "values is an array of string values.",
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "x-kubernetes-list-type": "atomic"
+                                }
+                              }
+                            },
+                            "x-kubernetes-list-type": "atomic"
+                          },
+                          "matchLabels": {
+                            "description": "matchLabels is a map of {key,value} pairs.",
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "x-kubernetes-map-type": "atomic"
+                      },
+                      "namespaces": {
+                        "description": "namespaces specifies a static list of namespace names that the term applies to.",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "x-kubernetes-list-type": "atomic"
+                      },
+                      "topologyKey": {
+                        "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with...",
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "x-kubernetes-list-type": "atomic"
+                }
+              }
+            },
+            "podAntiAffinity": {
+              "description": "Describes pod anti-affinity scheduling rules (e.g.",
+              "type": "object",
+              "properties": {
+                "preferredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy\nthe...",
+                  "type": "array",
+                  "items": {
+                    "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added...",
+                    "type": "object",
+                    "required": [
+                      "podAffinityTerm",
+                      "weight"
+                    ],
+                    "properties": {
+                      "podAffinityTerm": {
+                        "description": "Required. A pod affinity term, associated with the corresponding weight.",
+                        "type": "object",
+                        "required": [
+                          "topologyKey"
+                        ],
+                        "properties": {
+                          "labelSelector": {
+                            "description": "A label query over a set of resources, in this case pods.",
+                            "type": "object",
+                            "properties": {
+                              "matchExpressions": {
+                                "description": "matchExpressions is a list of label selector requirements.",
+                                "type": "array",
+                                "items": {
+                                  "description": "A label selector requirement is a selector that contains values, a key, and an...",
+                                  "type": "object",
+                                  "required": [
+                                    "key",
+                                    "operator"
+                                  ],
+                                  "properties": {
+                                    "key": {
+                                      "description": "key is the label key that the selector applies to.",
+                                      "type": "string"
+                                    },
+                                    "operator": {
+                                      "description": "operator represents a key's relationship to a set of values.",
+                                      "type": "string"
+                                    },
+                                    "values": {
+                                      "description": "values is an array of string values.",
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      },
+                                      "x-kubernetes-list-type": "atomic"
+                                    }
+                                  }
+                                },
+                                "x-kubernetes-list-type": "atomic"
+                              },
+                              "matchLabels": {
+                                "description": "matchLabels is a map of {key,value} pairs.",
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "x-kubernetes-map-type": "atomic"
+                          },
+                          "matchLabelKeys": {
+                            "description": "MatchLabelKeys is a set of pod label keys to select which pods will\nbe taken...",
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "x-kubernetes-list-type": "atomic"
+                          },
+                          "mismatchLabelKeys": {
+                            "description": "MismatchLabelKeys is a set of pod label keys to select which pods will\nbe taken...",
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "x-kubernetes-list-type": "atomic"
+                          },
+                          "namespaceSelector": {
+                            "description": "A label query over the set of namespaces that the term applies to.",
+                            "type": "object",
+                            "properties": {
+                              "matchExpressions": {
+                                "description": "matchExpressions is a list of label selector requirements.",
+                                "type": "array",
+                                "items": {
+                                  "description": "A label selector requirement is a selector that contains values, a key, and an...",
+                                  "type": "object",
+                                  "required": [
+                                    "key",
+                                    "operator"
+                                  ],
+                                  "properties": {
+                                    "key": {
+                                      "description": "key is the label key that the selector applies to.",
+                                      "type": "string"
+                                    },
+                                    "operator": {
+                                      "description": "operator represents a key's relationship to a set of values.",
+                                      "type": "string"
+                                    },
+                                    "values": {
+                                      "description": "values is an array of string values.",
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      },
+                                      "x-kubernetes-list-type": "atomic"
+                                    }
+                                  }
+                                },
+                                "x-kubernetes-list-type": "atomic"
+                              },
+                              "matchLabels": {
+                                "description": "matchLabels is a map of {key,value} pairs.",
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "x-kubernetes-map-type": "atomic"
+                          },
+                          "namespaces": {
+                            "description": "namespaces specifies a static list of namespace names that the term applies to.",
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "x-kubernetes-list-type": "atomic"
+                          },
+                          "topologyKey": {
+                            "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with...",
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "weight": {
+                        "description": "weight associated with matching the corresponding podAffinityTerm,\nin the range...",
+                        "type": "integer",
+                        "format": "int32"
+                      }
+                    }
+                  },
+                  "x-kubernetes-list-type": "atomic"
+                },
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "If the anti-affinity requirements specified by this field are not met at...",
+                  "type": "array",
+                  "items": {
+                    "description": "Defines a set of pods (namely those matching the labelSelector\nrelative to the...",
+                    "type": "object",
+                    "required": [
+                      "topologyKey"
+                    ],
+                    "properties": {
+                      "labelSelector": {
+                        "description": "A label query over a set of resources, in this case pods.",
+                        "type": "object",
+                        "properties": {
+                          "matchExpressions": {
+                            "description": "matchExpressions is a list of label selector requirements.",
+                            "type": "array",
+                            "items": {
+                              "description": "A label selector requirement is a selector that contains values, a key, and an...",
+                              "type": "object",
+                              "required": [
+                                "key",
+                                "operator"
+                              ],
+                              "properties": {
+                                "key": {
+                                  "description": "key is the label key that the selector applies to.",
+                                  "type": "string"
+                                },
+                                "operator": {
+                                  "description": "operator represents a key's relationship to a set of values.",
+                                  "type": "string"
+                                },
+                                "values": {
+                                  "description": "values is an array of string values.",
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "x-kubernetes-list-type": "atomic"
+                                }
+                              }
+                            },
+                            "x-kubernetes-list-type": "atomic"
+                          },
+                          "matchLabels": {
+                            "description": "matchLabels is a map of {key,value} pairs.",
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "x-kubernetes-map-type": "atomic"
+                      },
+                      "matchLabelKeys": {
+                        "description": "MatchLabelKeys is a set of pod label keys to select which pods will\nbe taken...",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "x-kubernetes-list-type": "atomic"
+                      },
+                      "mismatchLabelKeys": {
+                        "description": "MismatchLabelKeys is a set of pod label keys to select which pods will\nbe taken...",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "x-kubernetes-list-type": "atomic"
+                      },
+                      "namespaceSelector": {
+                        "description": "A label query over the set of namespaces that the term applies to.",
+                        "type": "object",
+                        "properties": {
+                          "matchExpressions": {
+                            "description": "matchExpressions is a list of label selector requirements.",
+                            "type": "array",
+                            "items": {
+                              "description": "A label selector requirement is a selector that contains values, a key, and an...",
+                              "type": "object",
+                              "required": [
+                                "key",
+                                "operator"
+                              ],
+                              "properties": {
+                                "key": {
+                                  "description": "key is the label key that the selector applies to.",
+                                  "type": "string"
+                                },
+                                "operator": {
+                                  "description": "operator represents a key's relationship to a set of values.",
+                                  "type": "string"
+                                },
+                                "values": {
+                                  "description": "values is an array of string values.",
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "x-kubernetes-list-type": "atomic"
+                                }
+                              }
+                            },
+                            "x-kubernetes-list-type": "atomic"
+                          },
+                          "matchLabels": {
+                            "description": "matchLabels is a map of {key,value} pairs.",
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "x-kubernetes-map-type": "atomic"
+                      },
+                      "namespaces": {
+                        "description": "namespaces specifies a static list of namespace names that the term applies to.",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "x-kubernetes-list-type": "atomic"
+                      },
+                      "topologyKey": {
+                        "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with...",
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "x-kubernetes-list-type": "atomic"
+                }
+              }
+            }
+          }
+        },
+        "caBundle": {
+          "description": "Reference to trusted native transport certificates.",
+          "type": "object",
+          "properties": {
+            "items": {
+              "description": "Items defines entries in ConfigMap or Secret, default: if Key is defined map to...",
+              "type": "array",
+              "items": {
+                "description": "Maps a string key to a path within a volume.",
+                "type": "object",
+                "required": [
+                  "key",
+                  "path"
+                ],
+                "properties": {
+                  "key": {
+                    "description": "key is the key to project.",
+                    "type": "string"
+                  },
+                  "mode": {
+                    "description": "mode is Optional: mode bits used to set permissions on this file.",
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "path": {
+                    "description": "path is the relative path of the file to map the key to.",
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "key": {
+              "description": "Key is the name of entry in ConfigMap or Secret.",
+              "type": "string"
+            },
+            "kind": {
+              "description": "Kind is the type of resource: ConfigMap or Secret.",
+              "type": "string",
+              "enum": [
+                "ConfigMap",
+                "Secret"
+              ]
+            },
+            "name": {
+              "description": "Name is the name of resource being referenced",
+              "type": "string"
+            }
+          }
+        },
+        "caRootBundle": {
+          "description": "Reference to trusted root certificates.",
+          "type": "object",
+          "properties": {
+            "items": {
+              "description": "Items defines entries in ConfigMap or Secret, default: if Key is defined map to...",
+              "type": "array",
+              "items": {
+                "description": "Maps a string key to a path within a volume.",
+                "type": "object",
+                "required": [
+                  "key",
+                  "path"
+                ],
+                "properties": {
+                  "key": {
+                    "description": "key is the key to project.",
+                    "type": "string"
+                  },
+                  "mode": {
+                    "description": "mode is Optional: mode bits used to set permissions on this file.",
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "path": {
+                    "description": "path is the relative path of the file to map the key to.",
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "key": {
+              "description": "Key is the name of entry in ConfigMap or Secret.",
+              "type": "string"
+            },
+            "kind": {
+              "description": "Kind is the type of resource: ConfigMap or Secret.",
+              "type": "string",
+              "enum": [
+                "ConfigMap",
+                "Secret"
+              ]
+            },
+            "name": {
+              "description": "Name is the name of resource being referenced",
+              "type": "string"
+            }
+          }
+        },
+        "clusterFeatures": {
+          "type": "object",
+          "properties": {
+            "httpProxyHaveChytAddress": {
+              "description": "HTTP proxies have \"chyt_http_server\" and \"chyt_https_server\".",
+              "type": "boolean"
+            },
+            "httpProxyHaveHttpsAddress": {
+              "description": "HTTP proxies have \"https\" address. Use HTTPS for all communications.",
+              "type": "boolean"
+            },
+            "rpcProxyHavePublicAddress": {
+              "description": "RPC proxies have \"public_rpc\" address.",
+              "type": "boolean"
+            }
+          }
+        },
+        "configOverrides": {
+          "description": "LocalObjectReference contains enough information to let you locate the...",
+          "type": "object",
+          "properties": {
+            "name": {
+              "description": "Name of the referent.",
+              "type": "string",
+              "default": ""
+            }
+          },
+          "x-kubernetes-map-type": "atomic"
+        },
+        "coreImage": {
+          "type": "string"
+        },
+        "dnsConfig": {
+          "description": "DNSConfig allows customizing the DNS settings for the pods.",
+          "type": "object",
+          "properties": {
+            "nameservers": {
+              "description": "A list of DNS name server IP addresses.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "x-kubernetes-list-type": "atomic"
+            },
+            "options": {
+              "description": "A list of DNS resolver options.",
+              "type": "array",
+              "items": {
+                "description": "PodDNSConfigOption defines DNS resolver options of a pod.",
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "description": "Name is this DNS resolver option's name.\nRequired.",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Value is this DNS resolver option's value.",
+                    "type": "string"
+                  }
+                }
+              },
+              "x-kubernetes-list-type": "atomic"
+            },
+            "searches": {
+              "description": "A list of DNS search domains for host-name lookup.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "x-kubernetes-list-type": "atomic"
+            }
+          }
+        },
+        "dnsPolicy": {
+          "description": "DNSPolicy defines how a pod's DNS will be configured.",
+          "type": "string"
+        },
+        "enableAntiAffinity": {
+          "description": "Deprecated: use Affinity.PodAntiAffinity instead.",
+          "type": "boolean"
+        },
+        "entrypointWrapper": {
+          "description": "Specifies wrapper for component container command.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ephemeralCluster": {
+          "description": "Allow prioritizing performance over data safety.",
+          "type": "boolean",
+          "default": false
+        },
+        "extraPodAnnotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "forceTcp": {
+          "type": "boolean"
+        },
+        "hostNetwork": {
+          "description": "Use the host's network namespace for all components.",
+          "type": "boolean",
+          "default": false
+        },
+        "image": {
+          "description": "Overrides coreImage for component.",
+          "type": "string"
+        },
+        "imagePullSecrets": {
+          "type": "array",
+          "items": {
+            "description": "LocalObjectReference contains enough information to let you locate the...",
+            "type": "object",
+            "properties": {
+              "name": {
+                "description": "Name of the referent.",
+                "type": "string",
+                "default": ""
+              }
+            },
+            "x-kubernetes-map-type": "atomic"
+          }
+        },
+        "instanceCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "jobImage": {
+          "description": "Default docker image for user jobs.",
+          "type": "string"
+        },
+        "keepSocket": {
+          "type": "boolean"
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "locationType": {
+                "description": "LocationType string describes types of disk locations for YT components.",
+                "type": "string"
+              },
+              "lowWatermark": {
+                "description": "Limit above which the volume is considered to be non-full.",
+                "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "x-kubernetes-int-or-string": true
+              },
+              "maxTrashMilliseconds": {
+                "description": "Max TTL of trash in milliseconds.",
+                "type": "integer",
+                "format": "int64",
+                "minimum": 60000
+              },
+              "medium": {
+                "type": "string",
+                "default": "default"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "quota": {
+                "description": "Disk space quota, default is size of related volume.",
+                "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "x-kubernetes-int-or-string": true
+              }
+            }
+          }
+        },
+        "loggers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "categoriesFilter": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                    "type": "string",
+                    "enum": [
+                      "exclude",
+                      "include"
+                    ]
+                  },
+                  "values": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "compression": {
+                "type": "string",
+                "default": "none",
+                "enum": [
+                  "none",
+                  "gzip",
+                  "zstd"
+                ]
+              },
+              "format": {
+                "type": "string",
+                "default": "plain_text",
+                "enum": [
+                  "plain_text",
+                  "json",
+                  "yson"
+                ]
+              },
+              "minLogLevel": {
+                "description": "LogLevel string describes possible Ytsaurus logging level.",
+                "type": "string",
+                "default": "info",
+                "enum": [
+                  "trace",
+                  "debug",
+                  "info",
+                  "warning",
+                  "error"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "rotationPolicy": {
+                "type": "object",
+                "properties": {
+                  "maxSegmentCountToKeep": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "maxSegmentSize": {
+                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "x-kubernetes-int-or-string": true
+                  },
+                  "maxTotalSizeToKeep": {
+                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "x-kubernetes-int-or-string": true
+                  },
+                  "rotationPeriodMilliseconds": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                }
+              },
+              "useTimestampSuffix": {
+                "type": "boolean",
+                "default": false
+              },
+              "writerType": {
+                "description": "LogWriterType string describes types of possible log writers.",
+                "type": "string",
+                "enum": [
+                  "file",
+                  "stderr"
+                ]
+              }
+            }
+          }
+        },
+        "metricExporter": {
+          "type": "object",
+          "properties": {
+            "gridStep": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "host": {
+              "type": "string"
+            },
+            "instanceTags": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "shards": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "filter": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "gridStep": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "minReadyInstanceCount": {
+          "type": "integer"
+        },
+        "monitoringPort": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "name": {
+          "type": "string",
+          "default": "default",
+          "minLength": 1
+        },
+        "nativeTransport": {
+          "description": "Common config for native RPC bus transport.",
+          "type": "object",
+          "properties": {
+            "tlsClientSecret": {
+              "description": "Client certificate. Reference to kubernetes.io/tls secret.",
+              "type": "object",
+              "properties": {
+                "name": {
+                  "description": "Name of the referent.",
+                  "type": "string",
+                  "default": ""
+                }
+              },
+              "x-kubernetes-map-type": "atomic"
+            },
+            "tlsInsecure": {
+              "description": "Disable client certificate verification when TLS is required, if not required -...",
+              "type": "boolean"
+            },
+            "tlsPeerAlternativeHostName": {
+              "description": "Define alternative host name for certificate verification.",
+              "type": "string"
+            },
+            "tlsRequired": {
+              "description": "Require secure TLS connections by server, otherwise only by client.",
+              "type": "boolean"
+            },
+            "tlsSecret": {
+              "description": "Server certificate. Reference to kubernetes.io/tls secret.",
+              "type": "object",
+              "properties": {
+                "name": {
+                  "description": "Name of the referent.",
+                  "type": "string",
+                  "default": ""
+                }
+              },
+              "x-kubernetes-map-type": "atomic"
+            }
+          }
+        },
+        "nodeSelector": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podAnnotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podLabels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "rack": {
+          "description": "Name of the node rack.",
+          "type": "string"
+        },
+        "readinessProbeParams": {
+          "type": "object",
+          "properties": {
+            "failureThreshold": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "initialDelaySeconds": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "periodSeconds": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "successThreshold": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "timeoutSeconds": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "remoteClusterSpec": {
+          "description": "LocalObjectReference contains enough information to let you locate the...",
+          "type": "object",
+          "properties": {
+            "name": {
+              "description": "Name of the referent.",
+              "type": "string",
+              "default": ""
+            }
+          },
+          "x-kubernetes-map-type": "atomic"
+        },
+        "resources": {
+          "description": "Resources dedicated for component.",
+          "type": "object",
+          "properties": {
+            "claims": {
+              "description": "Claims lists the names of resources, defined in spec.",
+              "type": "array",
+              "items": {
+                "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "description": "Name must match the name of one entry in pod.spec.",
+                    "type": "string"
+                  },
+                  "request": {
+                    "description": "Request is the name chosen for a request in the referenced claim.",
+                    "type": "string"
+                  }
+                }
+              },
+              "x-kubernetes-list-map-keys": [
+                "name"
+              ],
+              "x-kubernetes-list-type": "map"
+            },
+            "limits": {
+              "description": "Limits describes the maximum amount of compute resources allowed.",
+              "type": "object",
+              "additionalProperties": {
+                "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "x-kubernetes-int-or-string": true
+              }
+            },
+            "requests": {
+              "description": "Requests describes the minimum amount of compute resources required.",
+              "type": "object",
+              "additionalProperties": {
+                "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "x-kubernetes-int-or-string": true
+              }
+            }
+          }
+        },
+        "runtimeClassName": {
+          "type": "string"
+        },
+        "setHostnameAsFqdn": {
+          "description": "SetHostnameAsFQDN indicates whether to set the hostname as FQDN.",
+          "type": "boolean",
+          "default": true
+        },
+        "structuredLoggers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "type": "string"
+              },
+              "compression": {
+                "type": "string",
+                "default": "none",
+                "enum": [
+                  "none",
+                  "gzip",
+                  "zstd"
+                ]
+              },
+              "format": {
+                "type": "string",
+                "default": "plain_text",
+                "enum": [
+                  "plain_text",
+                  "json",
+                  "yson"
+                ]
+              },
+              "minLogLevel": {
+                "description": "LogLevel string describes possible Ytsaurus logging level.",
+                "type": "string",
+                "default": "info",
+                "enum": [
+                  "trace",
+                  "debug",
+                  "info",
+                  "warning",
+                  "error"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "rotationPolicy": {
+                "type": "object",
+                "properties": {
+                  "maxSegmentCountToKeep": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "maxSegmentSize": {
+                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "x-kubernetes-int-or-string": true
+                  },
+                  "maxTotalSizeToKeep": {
+                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "x-kubernetes-int-or-string": true
+                  },
+                  "rotationPeriodMilliseconds": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                }
+              },
+              "useTimestampSuffix": {
+                "type": "boolean",
+                "default": false
+              }
+            }
+          }
+        },
+        "tags": {
+          "description": "List of the node tags.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "terminationGracePeriodSeconds": {
+          "description": "Optional duration in seconds the pod needs to terminate gracefully.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "tolerations": {
+          "type": "array",
+          "items": {
+            "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
+            "type": "object",
+            "properties": {
+              "effect": {
+                "description": "Effect indicates the taint effect to match. Empty means match all taint effects.",
+                "type": "string"
+              },
+              "key": {
+                "description": "Key is the taint key that the toleration applies to.",
+                "type": "string"
+              },
+              "operator": {
+                "description": "Operator represents a key's relationship to the value.",
+                "type": "string"
+              },
+              "tolerationSeconds": {
+                "description": "TolerationSeconds represents the period of time the toleration (which must be...",
+                "type": "integer",
+                "format": "int64"
+              },
+              "value": {
+                "description": "Value is the taint value the toleration matches to.",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "useIpv4": {
+          "type": "boolean",
+          "default": false
+        },
+        "useIpv6": {
+          "type": "boolean",
+          "default": false
+        },
+        "usePorto": {
+          "type": "boolean",
+          "default": false
+        },
+        "useShortNames": {
+          "description": "Do not add resource name into names of resources under control.",
+          "type": "boolean",
+          "default": true
+        },
+        "volumeClaimTemplates": {
+          "type": "array",
+          "items": {
+            "description": "EmbeddedPersistentVolumeClaim is an embedded version of k8s.io/api/core/v1.",
+            "type": "object",
+            "properties": {
+              "apiVersion": {
+                "description": "APIVersion defines the versioned schema of this representation of an object.",
+                "type": "string"
+              },
+              "kind": {
+                "description": "Kind is a string value representing the REST resource this object represents.",
+                "type": "string"
+              },
+              "metadata": {
+                "description": "EmbeddedMetadata contains metadata relevant to an EmbeddedResource.",
+                "type": "object",
+                "properties": {
+                  "annotations": {
+                    "description": "Annotations is an unstructured key value map stored with a resource that may be...",
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "labels": {
+                    "description": "Map of string keys and values that can be used to organize and categorize...",
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "name": {
+                    "description": "Name must be unique within a namespace.",
+                    "type": "string"
+                  }
+                }
+              },
+              "spec": {
+                "description": "Spec defines the desired characteristics of a volume requested by a pod author.",
+                "type": "object",
+                "properties": {
+                  "accessModes": {
+                    "description": "accessModes contains the desired access modes the volume should have.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "x-kubernetes-list-type": "atomic"
+                  },
+                  "dataSource": {
+                    "description": "dataSource field can be used to specify either:\n* An existing VolumeSnapshot...",
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "name"
+                    ],
+                    "properties": {
+                      "apiGroup": {
+                        "description": "APIGroup is the group for the resource being referenced.",
+                        "type": "string"
+                      },
+                      "kind": {
+                        "description": "Kind is the type of resource being referenced",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "Name is the name of resource being referenced",
+                        "type": "string"
+                      }
+                    },
+                    "x-kubernetes-map-type": "atomic"
+                  },
+                  "dataSourceRef": {
+                    "description": "dataSourceRef specifies the object from which to populate the volume with data,...",
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "name"
+                    ],
+                    "properties": {
+                      "apiGroup": {
+                        "description": "APIGroup is the group for the resource being referenced.",
+                        "type": "string"
+                      },
+                      "kind": {
+                        "description": "Kind is the type of resource being referenced",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "Name is the name of resource being referenced",
+                        "type": "string"
+                      },
+                      "namespace": {
+                        "description": "Namespace is the namespace of resource being referenced\nNote that when a...",
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "resources": {
+                    "description": "resources represents the minimum resources the volume should have.",
+                    "type": "object",
+                    "properties": {
+                      "limits": {
+                        "description": "Limits describes the maximum amount of compute resources allowed.",
+                        "type": "object",
+                        "additionalProperties": {
+                          "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+                          "anyOf": [
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ],
+                          "x-kubernetes-int-or-string": true
+                        }
+                      },
+                      "requests": {
+                        "description": "Requests describes the minimum amount of compute resources required.",
+                        "type": "object",
+                        "additionalProperties": {
+                          "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+                          "anyOf": [
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ],
+                          "x-kubernetes-int-or-string": true
+                        }
+                      }
+                    }
+                  },
+                  "selector": {
+                    "description": "selector is a label query over volumes to consider for binding.",
+                    "type": "object",
+                    "properties": {
+                      "matchExpressions": {
+                        "description": "matchExpressions is a list of label selector requirements.",
+                        "type": "array",
+                        "items": {
+                          "description": "A label selector requirement is a selector that contains values, a key, and an...",
+                          "type": "object",
+                          "required": [
+                            "key",
+                            "operator"
+                          ],
+                          "properties": {
+                            "key": {
+                              "description": "key is the label key that the selector applies to.",
+                              "type": "string"
+                            },
+                            "operator": {
+                              "description": "operator represents a key's relationship to a set of values.",
+                              "type": "string"
+                            },
+                            "values": {
+                              "description": "values is an array of string values.",
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "x-kubernetes-list-type": "atomic"
+                            }
+                          }
+                        },
+                        "x-kubernetes-list-type": "atomic"
+                      },
+                      "matchLabels": {
+                        "description": "matchLabels is a map of {key,value} pairs.",
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "x-kubernetes-map-type": "atomic"
+                  },
+                  "storageClassName": {
+                    "description": "storageClassName is the name of the StorageClass required by the claim.",
+                    "type": "string"
+                  },
+                  "volumeAttributesClassName": {
+                    "description": "volumeAttributesClassName may be used to set the VolumeAttributesClass used by...",
+                    "type": "string"
+                  },
+                  "volumeMode": {
+                    "description": "volumeMode defines what type of volume is required by the claim.",
+                    "type": "string"
+                  },
+                  "volumeName": {
+                    "description": "volumeName is the binding reference to the PersistentVolume backing this claim.",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "volumeMounts": {
+          "type": "array",
+          "items": {
+            "description": "VolumeMount describes a mounting of a Volume within a container.",
+            "type": "object",
+            "required": [
+              "mountPath",
+              "name"
+            ],
+            "properties": {
+              "mountPath": {
+                "description": "Path within the container at which the volume should be mounted.",
+                "type": "string"
+              },
+              "mountPropagation": {
+                "description": "mountPropagation determines how mounts are propagated from the host\nto...",
+                "type": "string"
+              },
+              "name": {
+                "description": "This must match the Name of a Volume.",
+                "type": "string"
+              },
+              "readOnly": {
+                "description": "Mounted read-only if true, read-write otherwise (false or unspecified).",
+                "type": "boolean"
+              },
+              "recursiveReadOnly": {
+                "description": "RecursiveReadOnly specifies whether read-only mounts should be handled...",
+                "type": "string"
+              },
+              "subPath": {
+                "description": "Path within the volume from which the container's volume should be mounted.",
+                "type": "string"
+              },
+              "subPathExpr": {
+                "description": "Expanded path within the volume from which the container's volume should be...",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "volumes": {
+          "type": "array",
+          "items": {
+            "description": "Volume is a reduced version of core/v1 Volume.",
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "configMap": {
+                "description": "configMap represents a configMap that should populate this volume",
+                "type": "object",
+                "properties": {
+                  "defaultMode": {
+                    "description": "defaultMode is optional: mode bits used to set permissions on created files by...",
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "items": {
+                    "description": "items if unspecified, each key-value pair in the Data field of the referenced...",
+                    "type": "array",
+                    "items": {
+                      "description": "Maps a string key to a path within a volume.",
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "path"
+                      ],
+                      "properties": {
+                        "key": {
+                          "description": "key is the key to project.",
+                          "type": "string"
+                        },
+                        "mode": {
+                          "description": "mode is Optional: mode bits used to set permissions on this file.",
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "path": {
+                          "description": "path is the relative path of the file to map the key to.",
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "x-kubernetes-list-type": "atomic"
+                  },
+                  "name": {
+                    "description": "Name of the referent.",
+                    "type": "string",
+                    "default": ""
+                  },
+                  "optional": {
+                    "description": "optional specify whether the ConfigMap or its keys must be defined",
+                    "type": "boolean"
+                  }
+                },
+                "x-kubernetes-map-type": "atomic"
+              },
+              "csi": {
+                "description": "csi (Container Storage Interface) represents ephemeral storage that is handled...",
+                "type": "object",
+                "required": [
+                  "driver"
+                ],
+                "properties": {
+                  "driver": {
+                    "description": "driver is the name of the CSI driver that handles this volume.",
+                    "type": "string"
+                  },
+                  "fsType": {
+                    "description": "fsType to mount. Ex. \"ext4\", \"xfs\", \"ntfs\".",
+                    "type": "string"
+                  },
+                  "nodePublishSecretRef": {
+                    "description": "nodePublishSecretRef is a reference to the secret object containing\nsensitive...",
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "description": "Name of the referent.",
+                        "type": "string",
+                        "default": ""
+                      }
+                    },
+                    "x-kubernetes-map-type": "atomic"
+                  },
+                  "readOnly": {
+                    "description": "readOnly specifies a read-only configuration for the volume.",
+                    "type": "boolean"
+                  },
+                  "volumeAttributes": {
+                    "description": "volumeAttributes stores driver-specific properties that are passed to the CSI...",
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "downwardAPI": {
+                "description": "downwardAPI represents downward API about the pod that should populate this...",
+                "type": "object",
+                "properties": {
+                  "defaultMode": {
+                    "description": "Optional: mode bits to use on created files by default.",
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "items": {
+                    "description": "Items is a list of downward API volume file",
+                    "type": "array",
+                    "items": {
+                      "description": "DownwardAPIVolumeFile represents information to create the file containing the...",
+                      "type": "object",
+                      "required": [
+                        "path"
+                      ],
+                      "properties": {
+                        "fieldRef": {
+                          "description": "Required: Selects a field of the pod: only annotations, labels, name, namespace...",
+                          "type": "object",
+                          "required": [
+                            "fieldPath"
+                          ],
+                          "properties": {
+                            "apiVersion": {
+                              "description": "Version of the schema the FieldPath is written in terms of, defaults to \"v1\".",
+                              "type": "string"
+                            },
+                            "fieldPath": {
+                              "description": "Path of the field to select in the specified API version.",
+                              "type": "string"
+                            }
+                          },
+                          "x-kubernetes-map-type": "atomic"
+                        },
+                        "mode": {
+                          "description": "Optional: mode bits used to set permissions on this file, must be an octal...",
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "path": {
+                          "description": "Required: Path is  the relative path name of the file to be created.",
+                          "type": "string"
+                        },
+                        "resourceFieldRef": {
+                          "description": "Selects a resource of the container: only resources limits and requests\n(limits.",
+                          "type": "object",
+                          "required": [
+                            "resource"
+                          ],
+                          "properties": {
+                            "containerName": {
+                              "description": "Container name: required for volumes, optional for env vars",
+                              "type": "string"
+                            },
+                            "divisor": {
+                              "description": "Specifies the output format of the exposed resources, defaults to \"1\"",
+                              "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+                              "anyOf": [
+                                {
+                                  "type": "integer"
+                                },
+                                {
+                                  "type": "string"
+                                }
+                              ],
+                              "x-kubernetes-int-or-string": true
+                            },
+                            "resource": {
+                              "description": "Required: resource to select",
+                              "type": "string"
+                            }
+                          },
+                          "x-kubernetes-map-type": "atomic"
+                        }
+                      }
+                    },
+                    "x-kubernetes-list-type": "atomic"
+                  }
+                }
+              },
+              "emptyDir": {
+                "description": "emptyDir represents a temporary directory that shares a pod's lifetime.",
+                "type": "object",
+                "properties": {
+                  "medium": {
+                    "description": "medium represents what type of storage medium should back this directory.",
+                    "type": "string"
+                  },
+                  "sizeLimit": {
+                    "description": "sizeLimit is the total amount of local storage required for this EmptyDir...",
+                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "x-kubernetes-int-or-string": true
+                  }
+                }
+              },
+              "ephemeral": {
+                "description": "ephemeral represents a volume that is handled by a cluster storage driver.",
+                "type": "object",
+                "properties": {
+                  "volumeClaimTemplate": {
+                    "description": "Will be used to create a stand-alone PVC to provision the volume.",
+                    "type": "object",
+                    "required": [
+                      "spec"
+                    ],
+                    "properties": {
+                      "metadata": {
+                        "description": "May contain labels and annotations that will be copied into the PVC\nwhen...",
+                        "type": "object"
+                      },
+                      "spec": {
+                        "description": "The specification for the PersistentVolumeClaim.",
+                        "type": "object",
+                        "properties": {
+                          "accessModes": {
+                            "description": "accessModes contains the desired access modes the volume should have.",
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "x-kubernetes-list-type": "atomic"
+                          },
+                          "dataSource": {
+                            "description": "dataSource field can be used to specify either:\n* An existing VolumeSnapshot...",
+                            "type": "object",
+                            "required": [
+                              "kind",
+                              "name"
+                            ],
+                            "properties": {
+                              "apiGroup": {
+                                "description": "APIGroup is the group for the resource being referenced.",
+                                "type": "string"
+                              },
+                              "kind": {
+                                "description": "Kind is the type of resource being referenced",
+                                "type": "string"
+                              },
+                              "name": {
+                                "description": "Name is the name of resource being referenced",
+                                "type": "string"
+                              }
+                            },
+                            "x-kubernetes-map-type": "atomic"
+                          },
+                          "dataSourceRef": {
+                            "description": "dataSourceRef specifies the object from which to populate the volume with data,...",
+                            "type": "object",
+                            "required": [
+                              "kind",
+                              "name"
+                            ],
+                            "properties": {
+                              "apiGroup": {
+                                "description": "APIGroup is the group for the resource being referenced.",
+                                "type": "string"
+                              },
+                              "kind": {
+                                "description": "Kind is the type of resource being referenced",
+                                "type": "string"
+                              },
+                              "name": {
+                                "description": "Name is the name of resource being referenced",
+                                "type": "string"
+                              },
+                              "namespace": {
+                                "description": "Namespace is the namespace of resource being referenced\nNote that when a...",
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "resources": {
+                            "description": "resources represents the minimum resources the volume should have.",
+                            "type": "object",
+                            "properties": {
+                              "limits": {
+                                "description": "Limits describes the maximum amount of compute resources allowed.",
+                                "type": "object",
+                                "additionalProperties": {
+                                  "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+                                  "anyOf": [
+                                    {
+                                      "type": "integer"
+                                    },
+                                    {
+                                      "type": "string"
+                                    }
+                                  ],
+                                  "x-kubernetes-int-or-string": true
+                                }
+                              },
+                              "requests": {
+                                "description": "Requests describes the minimum amount of compute resources required.",
+                                "type": "object",
+                                "additionalProperties": {
+                                  "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+                                  "anyOf": [
+                                    {
+                                      "type": "integer"
+                                    },
+                                    {
+                                      "type": "string"
+                                    }
+                                  ],
+                                  "x-kubernetes-int-or-string": true
+                                }
+                              }
+                            }
+                          },
+                          "selector": {
+                            "description": "selector is a label query over volumes to consider for binding.",
+                            "type": "object",
+                            "properties": {
+                              "matchExpressions": {
+                                "description": "matchExpressions is a list of label selector requirements.",
+                                "type": "array",
+                                "items": {
+                                  "description": "A label selector requirement is a selector that contains values, a key, and an...",
+                                  "type": "object",
+                                  "required": [
+                                    "key",
+                                    "operator"
+                                  ],
+                                  "properties": {
+                                    "key": {
+                                      "description": "key is the label key that the selector applies to.",
+                                      "type": "string"
+                                    },
+                                    "operator": {
+                                      "description": "operator represents a key's relationship to a set of values.",
+                                      "type": "string"
+                                    },
+                                    "values": {
+                                      "description": "values is an array of string values.",
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      },
+                                      "x-kubernetes-list-type": "atomic"
+                                    }
+                                  }
+                                },
+                                "x-kubernetes-list-type": "atomic"
+                              },
+                              "matchLabels": {
+                                "description": "matchLabels is a map of {key,value} pairs.",
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "x-kubernetes-map-type": "atomic"
+                          },
+                          "storageClassName": {
+                            "description": "storageClassName is the name of the StorageClass required by the claim.",
+                            "type": "string"
+                          },
+                          "volumeAttributesClassName": {
+                            "description": "volumeAttributesClassName may be used to set the VolumeAttributesClass used by...",
+                            "type": "string"
+                          },
+                          "volumeMode": {
+                            "description": "volumeMode defines what type of volume is required by the claim.",
+                            "type": "string"
+                          },
+                          "volumeName": {
+                            "description": "volumeName is the binding reference to the PersistentVolume backing this claim.",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "fc": {
+                "description": "fc represents a Fibre Channel resource that is attached to a kubelet's host...",
+                "type": "object",
+                "properties": {
+                  "fsType": {
+                    "description": "fsType is the filesystem type to mount.",
+                    "type": "string"
+                  },
+                  "lun": {
+                    "description": "lun is Optional: FC target lun number",
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "readOnly": {
+                    "description": "readOnly is Optional: Defaults to false (read/write).",
+                    "type": "boolean"
+                  },
+                  "targetWWNs": {
+                    "description": "targetWWNs is Optional: FC target worldwide names (WWNs)",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "x-kubernetes-list-type": "atomic"
+                  },
+                  "wwids": {
+                    "description": "wwids Optional: FC volume world wide identifiers (wwids)\nEither wwids or...",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "x-kubernetes-list-type": "atomic"
+                  }
+                }
+              },
+              "hostPath": {
+                "description": "hostPath represents a pre-existing file or directory on the host\nmachine that...",
+                "type": "object",
+                "required": [
+                  "path"
+                ],
+                "properties": {
+                  "path": {
+                    "description": "path of the directory on the host.",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "type for HostPath Volume\nDefaults to \"\"\nMore info: https://kubernetes.",
+                    "type": "string"
+                  }
+                }
+              },
+              "image": {
+                "description": "image represents an OCI object (a container image or artifact) pulled and...",
+                "type": "object",
+                "properties": {
+                  "pullPolicy": {
+                    "description": "Policy for pulling OCI objects.",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "description": "Required: Image or artifact reference to be used.",
+                    "type": "string"
+                  }
+                }
+              },
+              "iscsi": {
+                "description": "iscsi represents an ISCSI Disk resource that is attached to a\nkubelet's host...",
+                "type": "object",
+                "required": [
+                  "iqn",
+                  "lun",
+                  "targetPortal"
+                ],
+                "properties": {
+                  "chapAuthDiscovery": {
+                    "description": "chapAuthDiscovery defines whether support iSCSI Discovery CHAP authentication",
+                    "type": "boolean"
+                  },
+                  "chapAuthSession": {
+                    "description": "chapAuthSession defines whether support iSCSI Session CHAP authentication",
+                    "type": "boolean"
+                  },
+                  "fsType": {
+                    "description": "fsType is the filesystem type of the volume that you want to mount.",
+                    "type": "string"
+                  },
+                  "initiatorName": {
+                    "description": "initiatorName is the custom iSCSI Initiator Name.",
+                    "type": "string"
+                  },
+                  "iqn": {
+                    "description": "iqn is the target iSCSI Qualified Name.",
+                    "type": "string"
+                  },
+                  "iscsiInterface": {
+                    "description": "iscsiInterface is the interface Name that uses an iSCSI transport.",
+                    "type": "string",
+                    "default": "default"
+                  },
+                  "lun": {
+                    "description": "lun represents iSCSI Target Lun number.",
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "portals": {
+                    "description": "portals is the iSCSI Target Portal List.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "x-kubernetes-list-type": "atomic"
+                  },
+                  "readOnly": {
+                    "description": "readOnly here will force the ReadOnly setting in VolumeMounts.",
+                    "type": "boolean"
+                  },
+                  "secretRef": {
+                    "description": "secretRef is the CHAP Secret for iSCSI target and initiator authentication",
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "description": "Name of the referent.",
+                        "type": "string",
+                        "default": ""
+                      }
+                    },
+                    "x-kubernetes-map-type": "atomic"
+                  },
+                  "targetPortal": {
+                    "description": "targetPortal is iSCSI Target Portal.",
+                    "type": "string"
+                  }
+                }
+              },
+              "name": {
+                "description": "name of the volume.\nMust be a DNS_LABEL and unique within the pod.",
+                "type": "string"
+              },
+              "nfs": {
+                "description": "nfs represents an NFS mount on the host that shares a pod's lifetime\nMore info:...",
+                "type": "object",
+                "required": [
+                  "path",
+                  "server"
+                ],
+                "properties": {
+                  "path": {
+                    "description": "path that is exported by the NFS server.\nMore info: https://kubernetes.",
+                    "type": "string"
+                  },
+                  "readOnly": {
+                    "description": "readOnly here will force the NFS export to be mounted with read-only...",
+                    "type": "boolean"
+                  },
+                  "server": {
+                    "description": "server is the hostname or IP address of the NFS server.",
+                    "type": "string"
+                  }
+                }
+              },
+              "persistentVolumeClaim": {
+                "description": "persistentVolumeClaimVolumeSource represents a reference to a...",
+                "type": "object",
+                "required": [
+                  "claimName"
+                ],
+                "properties": {
+                  "claimName": {
+                    "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the...",
+                    "type": "string"
+                  },
+                  "readOnly": {
+                    "description": "readOnly Will force the ReadOnly setting in VolumeMounts.\nDefault false.",
+                    "type": "boolean"
+                  }
+                }
+              },
+              "secret": {
+                "description": "secret represents a secret that should populate this volume.",
+                "type": "object",
+                "properties": {
+                  "defaultMode": {
+                    "description": "defaultMode is Optional: mode bits used to set permissions on created files by...",
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "items": {
+                    "description": "items If unspecified, each key-value pair in the Data field of the referenced...",
+                    "type": "array",
+                    "items": {
+                      "description": "Maps a string key to a path within a volume.",
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "path"
+                      ],
+                      "properties": {
+                        "key": {
+                          "description": "key is the key to project.",
+                          "type": "string"
+                        },
+                        "mode": {
+                          "description": "mode is Optional: mode bits used to set permissions on this file.",
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "path": {
+                          "description": "path is the relative path of the file to map the key to.",
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "x-kubernetes-list-type": "atomic"
+                  },
+                  "optional": {
+                    "description": "optional field specify whether the Secret or its keys must be defined",
+                    "type": "boolean"
+                  },
+                  "secretName": {
+                    "description": "secretName is the name of the secret in the pod's namespace to use.",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "status": {
+      "description": "RemoteDataNodesStatus defines the observed state of RemoteDataNodes",
+      "type": "object",
+      "properties": {
+        "conditions": {
+          "type": "array",
+          "items": {
+            "description": "Condition contains details for one aspect of the current state of this API...",
+            "type": "object",
+            "required": [
+              "lastTransitionTime",
+              "message",
+              "reason",
+              "status",
+              "type"
+            ],
+            "properties": {
+              "lastTransitionTime": {
+                "description": "lastTransitionTime is the last time the condition transitioned from one status...",
+                "type": "string",
+                "format": "date-time"
+              },
+              "message": {
+                "description": "message is a human readable message indicating details about the transition.",
+                "type": "string",
+                "maxLength": 32768
+              },
+              "observedGeneration": {
+                "description": "observedGeneration represents the .metadata.",
+                "type": "integer",
+                "format": "int64",
+                "minimum": 0
+              },
+              "reason": {
+                "description": "reason contains a programmatic identifier indicating the reason for the...",
+                "type": "string",
+                "maxLength": 1024,
+                "minLength": 1,
+                "pattern": "^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$"
+              },
+              "status": {
+                "description": "status of the condition, one of True, False, Unknown.",
+                "type": "string",
+                "enum": [
+                  "True",
+                  "False",
+                  "Unknown"
+                ]
+              },
+              "type": {
+                "description": "type of condition in CamelCase or in foo.example.com/CamelCase.",
+                "type": "string",
+                "maxLength": 316,
+                "pattern": "^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$"
+              }
+            }
+          }
+        },
+        "observedGeneration": {
+          "description": "Reflects resource generation which was used for updating status.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "releaseStatus": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

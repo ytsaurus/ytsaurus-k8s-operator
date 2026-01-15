@@ -1,0 +1,128 @@
+{
+  "description": "Chyt is the Schema for the chyts API",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "description": "APIVersion defines the versioned schema of this representation of an object.",
+      "type": "string"
+    },
+    "kind": {
+      "description": "Kind is a string value representing the REST resource this object represents.",
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "spec": {
+      "description": "ChytSpec defines the desired state of Chyt",
+      "type": "object",
+      "required": [
+        "makeDefault"
+      ],
+      "properties": {
+        "createPublicClique": {
+          "description": "Create ch_public clique, which is used by default when running CHYT queries.",
+          "type": "boolean"
+        },
+        "image": {
+          "type": "string"
+        },
+        "imagePullSecrets": {
+          "type": "array",
+          "items": {
+            "description": "LocalObjectReference contains enough information to let you locate the...",
+            "type": "object",
+            "properties": {
+              "name": {
+                "description": "Name of the referent.",
+                "type": "string",
+                "default": ""
+              }
+            },
+            "x-kubernetes-map-type": "atomic"
+          }
+        },
+        "makeDefault": {
+          "description": "Mark specified image as default for cliques.",
+          "type": "boolean",
+          "default": false
+        },
+        "ytsaurus": {
+          "description": "LocalObjectReference contains enough information to let you locate the...",
+          "type": "object",
+          "properties": {
+            "name": {
+              "description": "Name of the referent.",
+              "type": "string",
+              "default": ""
+            }
+          },
+          "x-kubernetes-map-type": "atomic"
+        }
+      }
+    },
+    "status": {
+      "description": "ChytStatus defines the observed state of Chyt",
+      "type": "object",
+      "properties": {
+        "conditions": {
+          "type": "array",
+          "items": {
+            "description": "Condition contains details for one aspect of the current state of this API...",
+            "type": "object",
+            "required": [
+              "lastTransitionTime",
+              "message",
+              "reason",
+              "status",
+              "type"
+            ],
+            "properties": {
+              "lastTransitionTime": {
+                "description": "lastTransitionTime is the last time the condition transitioned from one status...",
+                "type": "string",
+                "format": "date-time"
+              },
+              "message": {
+                "description": "message is a human readable message indicating details about the transition.",
+                "type": "string",
+                "maxLength": 32768
+              },
+              "observedGeneration": {
+                "description": "observedGeneration represents the .metadata.",
+                "type": "integer",
+                "format": "int64",
+                "minimum": 0
+              },
+              "reason": {
+                "description": "reason contains a programmatic identifier indicating the reason for the...",
+                "type": "string",
+                "maxLength": 1024,
+                "minLength": 1,
+                "pattern": "^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$"
+              },
+              "status": {
+                "description": "status of the condition, one of True, False, Unknown.",
+                "type": "string",
+                "enum": [
+                  "True",
+                  "False",
+                  "Unknown"
+                ]
+              },
+              "type": {
+                "description": "type of condition in CamelCase or in foo.example.com/CamelCase.",
+                "type": "string",
+                "maxLength": 316,
+                "pattern": "^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$"
+              }
+            }
+          }
+        },
+        "releaseStatus": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
