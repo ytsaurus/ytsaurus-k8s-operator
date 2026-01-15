@@ -88,26 +88,6 @@
     namespace: ytsaurus-components
     resourceVersion: "2"
   lastTimestamp: null
-  message: Config ytserver-discovery.yson needs creation
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "2"
-  lastTimestamp: null
   message: Created YT object ds (*v1.StatefulSet)
   metadata:
     creationTimestamp: null
@@ -229,26 +209,6 @@
     resourceVersion: "2"
   lastTimestamp: null
   message: Created YT object robot-timbertruck-secret (*v1.Secret)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "3"
-  lastTimestamp: null
-  message: Config ytserver-master.yson needs creation
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -708,26 +668,6 @@
     namespace: ytsaurus-components
     resourceVersion: "5"
   lastTimestamp: null
-  message: Config ytserver-http-proxy.yson needs creation
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "5"
-  lastTimestamp: null
   message: Created YT object hp (*v1.StatefulSet)
   metadata:
     creationTimestamp: null
@@ -809,26 +749,6 @@
     resourceVersion: "5"
   lastTimestamp: null
   message: Created YT object yt-http-proxy-monitoring (*v1.Service)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "5"
-  lastTimestamp: null
-  message: Config ytserver-exec-node.yson needs creation
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components

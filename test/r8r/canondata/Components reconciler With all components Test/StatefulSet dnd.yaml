@@ -29,8 +29,6 @@ spec:
   serviceName: data-nodes
   template:
     metadata:
-      annotations:
-        ytsaurus.tech/config-checksum: ab958ae3482113a2cc58c7e2ce13b5249aa70ca6c00ae005657209cb2c31c25d
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-data-node

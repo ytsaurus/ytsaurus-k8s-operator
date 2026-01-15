@@ -29,8 +29,6 @@ spec:
   serviceName: master-caches
   template:
     metadata:
-      annotations:
-        ytsaurus.tech/config-checksum: a5222d43560fa08b2a44061c821e7f0e5fb81059ab8c5c1e04577bff6649096a
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-master-cache

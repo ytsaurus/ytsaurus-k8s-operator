@@ -429,11 +429,12 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, key, value)
 	}
 
-	existingConfigChecksum := s.statefulSet.OldObject().Spec.Template.Annotations[consts.ConfigChecksumAnnotationName]
-	if existingConfigChecksum != "" || s.configNeedsReload() {
-		if checksum := s.configs.ConfigChecksum(); checksum != "" {
-			metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, consts.ConfigChecksumAnnotationName, checksum)
-		}
+	currentChecksum, _ := s.configs.CurrentConfigChecksum()
+	existingChecksum := s.statefulSet.OldObject().Spec.Template.Annotations[consts.ConfigChecksumAnnotationName]
+	if currentChecksum != "" && existingChecksum != currentChecksum {
+		metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, consts.ConfigChecksumAnnotationName, currentChecksum)
+	} else if existingChecksum != "" {
+		metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, consts.ConfigChecksumAnnotationName, existingChecksum)
 	}
 
 	statefulSet.Spec.Replicas = &s.instanceSpec.InstanceCount
