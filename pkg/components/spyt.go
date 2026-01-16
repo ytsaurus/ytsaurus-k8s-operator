@@ -126,7 +126,7 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		job := s.initEnvironment.Build()
 		container := &job.Spec.Template.Spec.Containers[0]
 		token, _ := s.secret.GetValue(consts.TokenSecretKey)
-		container.Env = []corev1.EnvVar{
+		env := []corev1.EnvVar{
 			{
 				Name:  "YT_PROXY",
 				Value: s.cfgen.GetHTTPProxiesAddress(&s.ytsaurus.Spec, consts.DefaultHTTPProxyRole),
@@ -140,6 +140,15 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 				Value: "--ignore-existing",
 			},
 		}
+
+        if len(s.spyt.GetResource().Spec.SparkVersions) > 0 {
+            env = append(env, corev1.EnvVar{
+                Name:  "EXTRA_SPARK_VERSIONS",
+                Value: strings.Join(s.spyt.GetResource().Spec.SparkVersions, " "),
+            })
+        }
+
+        container.Env = env
 	}
 
 	status, err = s.initEnvironment.Sync(ctx, dry)

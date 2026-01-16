@@ -56,6 +56,13 @@ spec:
                   type: object
                   x-kubernetes-map-type: atomic
                 type: array
+              sparkVersions:
+                description: The versions of the spark distributions that must be installed on the cluster
+                items:
+                  type: string
+                minItems: 1
+                type: array
+                x-kubernetes-list-type: atomic
               ytsaurus:
                 description: LocalObjectReference contains enough information to let
                   you locate the...
