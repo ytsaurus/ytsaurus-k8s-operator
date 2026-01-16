@@ -141,14 +141,14 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 			},
 		}
 
-        if len(s.spyt.GetResource().Spec.SparkVersions) > 0 {
-            env = append(env, corev1.EnvVar{
-                Name:  "EXTRA_SPARK_VERSIONS",
-                Value: strings.Join(s.spyt.GetResource().Spec.SparkVersions, " "),
-            })
-        }
+		if len(s.spyt.GetResource().Spec.SparkVersions) > 0 {
+			env = append(env, corev1.EnvVar{
+				Name:  "EXTRA_SPARK_VERSIONS",
+				Value: strings.Join(s.spyt.GetResource().Spec.SparkVersions, " "),
+			})
+		}
 
-        container.Env = env
+		container.Env = env
 	}
 
 	status, err = s.initEnvironment.Sync(ctx, dry)
