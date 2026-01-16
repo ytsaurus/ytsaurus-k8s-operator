@@ -30,6 +30,8 @@ data:
         [plugins."io.containerd.grpc.v1.cri".registry]
 kind: ConfigMap
 metadata:
+  annotations:
+    ytsaurus.tech/config-checksum: c57e84a54702d032e59c461f749b88f229c9825c9bb773e678770ceb1df18e70
   creationTimestamp: null
   generation: 1
   labels:

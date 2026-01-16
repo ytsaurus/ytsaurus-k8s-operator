@@ -68,6 +68,8 @@ data:
     /usr/bin/yt set //sys/@cluster_connection/yql_agent/stages/production/channel/disable_balancing_on_single_address '%false'
 kind: ConfigMap
 metadata:
+  annotations:
+    ytsaurus.tech/config-checksum: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
   creationTimestamp: null
   generation: 1
   labels:
