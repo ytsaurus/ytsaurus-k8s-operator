@@ -341,13 +341,14 @@ func (s *Scheduler) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	}
 
 	// Check for scheduler alerts
-	var schedulerAlerts []string
+	var schedulerAlerts []any
 	if err := ytClient.GetNode(ctx, ypath.Path(schedulerAlertsPath), &schedulerAlerts, nil); err != nil {
 		return ComponentStatusBlocked(fmt.Sprintf("Could not check scheduler alerts: %v", err))
 	}
 
-	if len(schedulerAlerts) > 0 {
-		return ComponentStatusBlocked(fmt.Sprintf("Scheduler has %d alerts: %v", len(schedulerAlerts), schedulerAlerts))
+	alertCount := len(schedulerAlerts)
+	if alertCount > 0 {
+		return ComponentStatusBlocked(fmt.Sprintf("Scheduler has %d alerts: %v", alertCount, schedulerAlerts))
 	}
 
 	// Try to get orchid data
