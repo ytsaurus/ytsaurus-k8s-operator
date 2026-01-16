@@ -33,6 +33,8 @@ data:
   seccomp-privileged.json: '{"defaultAction":"SCMP_ACT_ALLOW"}'
 kind: ConfigMap
 metadata:
+  annotations:
+    ytsaurus.tech/config-checksum: 0991132c5536ac2c650a68b62e8fce6c8573478a3dc359bea4d32e261fca9dd3
   creationTimestamp: null
   generation: 1
   labels:
