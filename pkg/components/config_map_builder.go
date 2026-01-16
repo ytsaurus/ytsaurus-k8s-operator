@@ -209,6 +209,14 @@ func (h *ConfigMapBuilder) getCurrentConfigValue(fileName string) []byte {
 	return []byte(data)
 }
 
+func (h *ConfigMapBuilder) getCurrentConfigChecksumFromAnnotation(annotationName string) string {
+	data, exists := h.configMap.OldObject().Annotations[annotationName]
+	if !exists {
+		return ""
+	}
+	return data
+}
+
 func (h *ConfigMapBuilder) NeedReload() (bool, error) {
 	for _, descriptor := range h.generators {
 		newConfig, err := h.getConfig(descriptor)
@@ -252,6 +260,14 @@ func (h *ConfigMapBuilder) Build() (*corev1.ConfigMap, error) {
 		if data != nil {
 			cm.Data[descriptor.FileName] = string(data)
 		}
+	}
+
+	currentChecksum, err := configChecksumFromData(cm.Data)
+	if err != nil {
+		return nil, err
+	}
+	if currentChecksum != "" {
+		metav1.SetMetaDataAnnotation(&cm.ObjectMeta, consts.ConfigChecksumAnnotationName, currentChecksum)
 	}
 
 	return cm, nil
@@ -306,16 +322,4 @@ func configChecksumFromData(data map[string]string) (string, error) {
 	}
 	sum := sha256.Sum256(jsonData)
 	return fmt.Sprintf("%x", sum[:]), nil
-}
-
-func (h *ConfigMapBuilder) CurrentConfigChecksum() (string, bool) {
-	if !resources.Exists(h.configMap) {
-		return "", false
-	}
-	checksum, err := configChecksumFromData(h.configMap.OldObject().Data)
-	if err != nil {
-		h.apiProxy.RecordWarning("Failure", fmt.Sprintf("Cannot marshal current config data for checksum: %v", err))
-		return "", true
-	}
-	return checksum, true
 }
