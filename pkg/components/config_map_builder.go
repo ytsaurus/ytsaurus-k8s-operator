@@ -209,12 +209,8 @@ func (h *ConfigMapBuilder) getCurrentConfigValue(fileName string) []byte {
 	return []byte(data)
 }
 
-func (h *ConfigMapBuilder) getCurrentConfigChecksumFromAnnotation(annotationName string) string {
-	data, exists := h.configMap.OldObject().Annotations[annotationName]
-	if !exists {
-		return ""
-	}
-	return data
+func (h *ConfigMapBuilder) getChecksumFromAnnotation() string {
+	return h.configMap.OldObject().Annotations[consts.ConfigChecksumAnnotationName]
 }
 
 func (h *ConfigMapBuilder) NeedReload() (bool, error) {

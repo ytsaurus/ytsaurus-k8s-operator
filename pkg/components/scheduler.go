@@ -341,7 +341,7 @@ func (s *Scheduler) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	}
 
 	// Check for scheduler alerts
-	var schedulerAlerts []any
+	var schedulerAlerts []string
 	if err := ytClient.GetNode(ctx, ypath.Path(schedulerAlertsPath), &schedulerAlerts, nil); err != nil {
 		return ComponentStatusBlocked(fmt.Sprintf("Could not check scheduler alerts: %v", err))
 	}
