@@ -389,7 +389,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, key, value)
 	}
 
-	newChecksum := s.configs.getCurrentConfigChecksumFromAnnotation()
+	newChecksum := s.configs.getChecksumFromAnnotation()
 	existingChecksum := s.statefulSet.OldObject().Spec.Template.Annotations[consts.ConfigChecksumAnnotationName]
 	if newChecksum != "" && existingChecksum != newChecksum {
 		metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, consts.ConfigChecksumAnnotationName, newChecksum)
