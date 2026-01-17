@@ -21,6 +21,8 @@ var (
 	testClusterDomain = "fake.zone"
 	testNamespace     = "fake"
 	testYtsaurusName  = "test"
+	odinURL           = "http://odin-webservice.odin.svc.cluster.local"
+	externalProxyURL  = "https://my-external-proxy.example.com"
 	testObjectMeta    = metav1.ObjectMeta{
 		Namespace: testNamespace,
 		Name:      testYtsaurusName,
@@ -940,31 +942,26 @@ func withKafkaProxies(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 
 func withUI(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	image := "dummy-ui-image"
-	odinUrl := "http://odin-webservice.odin.svc.cluster.local"
-
 	ytsaurus.Spec.UI = &ytv1.UISpec{
 		Image:       &image,
 		ServiceType: corev1.ServiceTypeNodePort,
-		OdinBaseUrl: &odinUrl,
+		OdinBaseUrl: ptr.To(odinURL),
 	}
 	return ytsaurus
 }
 
 func withUICustom(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
-	odinUrl := "http://odin-webservice.odin.svc.cluster.local"
-	externalProxy := "https://my-external-proxy.example.com"
 	ytsaurus.Spec.UI = &ytv1.UISpec{
-		ExternalProxy: &externalProxy,
-		OdinBaseUrl:   &odinUrl,
+		ExternalProxy: ptr.To(externalProxyURL),
+		OdinBaseUrl:   ptr.To(odinURL),
 		Secure:        true,
 	}
 	return ytsaurus
 }
 
 func withUICustomSettings(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
-	odinUrl := "http://odin-webservice.odin.svc.cluster.local"
 	ytsaurus.Spec.UI = &ytv1.UISpec{
-		OdinBaseUrl:    &odinUrl,
+		OdinBaseUrl:    ptr.To(odinURL),
 		DirectDownload: nil,
 	}
 	return ytsaurus

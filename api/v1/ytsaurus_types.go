@@ -911,6 +911,7 @@ type YtsaurusSpec struct {
 	EnableFullUpdate bool `json:"enableFullUpdate"`
 	//+optional
 	//+kubebuilder:validation:Enum={"","Nothing","MasterOnly","DataNodesOnly","TabletNodesOnly","ExecNodesOnly","StatelessOnly","Everything"}
+	//
 	// Deprecated: UpdateSelector is going to be removed soon. Please use UpdateSelectors instead.
 	UpdateSelector UpdateSelector `json:"updateSelector,omitempty"`
 
@@ -1096,6 +1097,7 @@ type UpdateStatus struct {
 	// Flow is an internal field that is needed to persist the chosen flow until the end of an update.
 	// Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage
 	// executes steps corresponding to that update flow.
+	//
 	// Deprecated: Use updatingComponents instead.
 	Flow              UpdateFlow             `json:"flow,omitempty"`
 	Conditions        []metav1.Condition     `json:"conditions,omitempty"`
