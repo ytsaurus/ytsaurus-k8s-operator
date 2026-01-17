@@ -23058,6 +23058,8 @@ spec:
                       type: object
                     type: array
                 type: object
+              requiresOperatorVersion:
+                type: string
               rpcProxies:
                 items:
                   properties:

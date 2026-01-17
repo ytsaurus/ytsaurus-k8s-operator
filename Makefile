@@ -114,6 +114,7 @@ GINKGO_FLAGS += --timeout=1h
 GINKGO_FLAGS += --poll-progress-after=2m
 GINKGO_FLAGS += --poll-progress-interval=1m
 GINKGO_FLAGS += --junit-report=report.xml
+GINKGO_FLAGS += --ldflags="-X github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version.version=2.3.4"
 
 ifneq ($(GITHUB_ACTION),)
 	GINKGO_FLAGS += --github-output
