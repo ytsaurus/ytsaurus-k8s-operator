@@ -71,6 +71,8 @@ data:
     /usr/bin/yt add-member robot-ytsaurus-k8s-operator superusers || true
 kind: ConfigMap
 metadata:
+  annotations:
+    ytsaurus.tech/config-checksum: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
   creationTimestamp: null
   generation: 1
   labels:

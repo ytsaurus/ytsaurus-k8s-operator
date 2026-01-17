@@ -256,6 +256,7 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
 	hasPending := false
+	var syncErr error
 	for _, c := range cm.allComponents {
 		status, err := c.Status(ctx)
 		if err != nil {
@@ -268,7 +269,8 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 			logger.Info("component sync", "component", c.GetFullName())
 			if err := c.Sync(ctx); err != nil {
 				logger.Error(err, "component sync failed", "component", c.GetFullName())
-				return ctrl.Result{Requeue: true}, err
+				syncErr = err
+				break
 			}
 		}
 	}
@@ -276,6 +278,10 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	if err := cm.ytsaurus.APIProxy().UpdateStatus(ctx); err != nil {
 		logger.Error(err, "update Ytsaurus status failed")
 		return ctrl.Result{Requeue: true}, err
+	}
+
+	if syncErr != nil {
+		return ctrl.Result{Requeue: true}, syncErr
 	}
 
 	if !hasPending {
