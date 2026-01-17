@@ -59,6 +59,14 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 	return s.newObject
 }
 
+func (s *StatefulSet) ListPods(ctx context.Context) ([]corev1.Pod, error) {
+	podList := &corev1.PodList{}
+	if err := s.proxy.ListObjects(ctx, podList, s.labeller.GetListOptions()...); err != nil {
+		return nil, err
+	}
+	return podList.Items, nil
+}
+
 func (s *StatefulSet) getPods(ctx context.Context) *corev1.PodList {
 	logger := log.FromContext(ctx)
 	podList := &corev1.PodList{}

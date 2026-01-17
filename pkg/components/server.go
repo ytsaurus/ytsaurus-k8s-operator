@@ -330,6 +330,7 @@ func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 
 	// In OnDelete mode, currentRevision doesn't automatically update to match updateRevision.
 	// see https://github.com/kubernetes/kubernetes/issues/106055
+	// to be 100% sure, will compare pods StatefulSetRevisionLabel with sts.Status.UpdateRevision
 	isOnDelete := sts.Spec.UpdateStrategy.Type == appsv1.OnDeleteStatefulSetStrategyType
 	// for race condition case when new revision is created but status not updated yet
 	if sts.Generation != sts.Status.ObservedGeneration {
@@ -340,26 +341,65 @@ func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 		return false
 	}
 	if isOnDelete {
-		if sts.Status.UpdateRevision != "" &&
-			sts.Status.UpdateRevision != sts.Status.CurrentRevision &&
-			sts.Spec.Replicas != nil &&
-			sts.Status.UpdatedReplicas == *sts.Spec.Replicas &&
-			sts.Status.ReadyReplicas == *sts.Spec.Replicas {
-			logger.Info("OnDelete update complete: all pods updated and ready",
+		if sts.Status.UpdateRevision == sts.Status.CurrentRevision {
+			logger.Info("StatefulSet update revision has not advanced yet",
 				"component", s.labeller.GetFullComponentName(),
-				"updatedReplicas", sts.Status.UpdatedReplicas,
-				"readyReplicas", sts.Status.ReadyReplicas,
-				"totalReplicas", *sts.Spec.Replicas)
-			return true
+				"currentRevision", sts.Status.CurrentRevision,
+				"updateRevision", sts.Status.UpdateRevision)
+			return false
 		}
-	} else {
+
+		pods, err := s.statefulSet.ListPods(ctx)
+		if err != nil {
+			logger.Error(err, "Failed to list pods for StatefulSet", "component", s.labeller.GetFullComponentName())
+			return false
+		}
+
+		if len(pods) != int(*sts.Spec.Replicas) {
+			logger.Info("OnDelete update in progress: pod count mismatch",
+				"component", s.labeller.GetFullComponentName(),
+				"expectedReplicas", *sts.Spec.Replicas,
+				"actualPods", len(pods))
+			return false
+		}
+
+		for _, pod := range pods {
+			if pod.DeletionTimestamp != nil {
+				logger.Info("OnDelete update in progress: pod is terminating",
+					"component", s.labeller.GetFullComponentName(),
+					"pod", pod.Name)
+				return false
+			}
+
+			podRevision := pod.Labels[appsv1.StatefulSetRevisionLabel]
+			if podRevision != sts.Status.UpdateRevision {
+				logger.Info("OnDelete update in progress: pod not updated",
+					"component", s.labeller.GetFullComponentName(),
+					"pod", pod.Name,
+					"podRevision", podRevision,
+					"updateRevision", sts.Status.UpdateRevision)
+				return false
+			}
+
+			if pod.Status.Phase != corev1.PodRunning {
+				logger.Info("OnDelete update in progress: pod not ready",
+					"component", s.labeller.GetFullComponentName(),
+					"pod", pod.Name)
+				return false
+			}
+		}
+
+		logger.Info("OnDelete update complete: all pods updated and ready",
+			"component", s.labeller.GetFullComponentName(),
+			"updateRevision", sts.Status.UpdateRevision,
+			"totalReplicas", *sts.Spec.Replicas)
+		return true
+	} else if sts.Status.CurrentRevision == sts.Status.UpdateRevision {
 		// For RollingUpdate mode, currentRevision will eventually match updateRevision
-		if sts.Status.CurrentRevision == sts.Status.UpdateRevision {
-			logger.Info("Update complete: currentRevision matches updateRevision",
-				"component", s.labeller.GetFullComponentName(),
-				"revision", sts.Status.CurrentRevision)
-			return true
-		}
+		logger.Info("Update complete: currentRevision matches updateRevision",
+			"component", s.labeller.GetFullComponentName(),
+			"revision", sts.Status.CurrentRevision)
+		return true
 	}
 
 	return false
