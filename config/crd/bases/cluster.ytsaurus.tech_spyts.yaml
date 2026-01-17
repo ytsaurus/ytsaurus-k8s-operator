@@ -56,6 +56,10 @@ spec:
                   type: object
                   x-kubernetes-map-type: atomic
                 type: array
+              sparkVersions:
+                items:
+                  type: string
+                type: array
               ytsaurus:
                 description: LocalObjectReference contains enough information to let
                   you locate the...
