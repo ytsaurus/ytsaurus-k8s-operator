@@ -9,6 +9,8 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
+	"github.com/distribution/reference"
+
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
@@ -104,16 +106,14 @@ func (s *Spyt) buildQueryTrackerDynamicConfigCommand() string {
 }
 
 func extractImageTag(image string) string {
-	if image == "" {
+	ref, err := reference.ParseNormalizedNamed(image)
+	if err != nil {
 		return ""
 	}
-	withoutDigest := strings.SplitN(image, "@", 2)[0]
-	lastSlash := strings.LastIndex(withoutDigest, "/")
-	lastColon := strings.LastIndex(withoutDigest, ":")
-	if lastColon == -1 || lastColon < lastSlash {
-		return ""
+	if tagged, ok := ref.(reference.Tagged); ok {
+		return tagged.Tag()
 	}
-	return withoutDigest[lastColon+1:]
+	return ""
 }
 
 func (s *Spyt) createInitScript() string {
