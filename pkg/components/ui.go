@@ -286,7 +286,7 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 				return ComponentStatusReady(), err
 			}
 		} else {
-			return ComponentStatusReadyAfter("Not updating component"), err
+			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
 	}
 

@@ -155,7 +155,7 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 				return ComponentStatusReady(), err
 			}
 		} else {
-			return ComponentStatusReadyAfter("Not updating component"), err
+			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
 	}
 
