@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -72,12 +73,47 @@ func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.
 func (s *Spyt) createInitUserScript() string {
 	token, _ := s.secret.GetValue(consts.TokenSecretKey)
 	commands := createUserCommand("spyt_releaser", "", token, true)
+	qtConfigCommand := s.buildQueryTrackerDynamicConfigCommand()
+	if qtConfigCommand != "" {
+		commands = append(commands, qtConfigCommand)
+	}
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 	}
 	script = append(script, commands...)
 
 	return strings.Join(script, "\n")
+}
+
+func (s *Spyt) buildQueryTrackerDynamicConfigCommand() string {
+	sparkVersions := s.spyt.GetResource().Spec.SparkVersions
+	if len(sparkVersions) == 0 {
+		return ""
+	}
+	spytVersion := extractImageTag(s.spyt.GetResource().Spec.Image)
+	if spytVersion == "" {
+		return ""
+	}
+
+	return fmt.Sprintf(
+		"/usr/bin/yt create document //sys/query_tracker/config --attributes '{value={}}' --recursive --ignore-existing\n"+
+			"/usr/bin/yt set //sys/query_tracker/config '{query_tracker={spyt_connect_engine={spark_version=\"%s\";spyt_version=\"%s\";};}}'",
+		sparkVersions[0],
+		spytVersion,
+	)
+}
+
+func extractImageTag(image string) string {
+	if image == "" {
+		return ""
+	}
+	withoutDigest := strings.SplitN(image, "@", 2)[0]
+	lastSlash := strings.LastIndex(withoutDigest, "/")
+	lastColon := strings.LastIndex(withoutDigest, ":")
+	if lastColon == -1 || lastColon < lastSlash {
+		return ""
+	}
+	return withoutDigest[lastColon+1:]
 }
 
 func (s *Spyt) createInitScript() string {
