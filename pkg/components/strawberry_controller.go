@@ -283,7 +283,7 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 				return ComponentStatusReady(), err
 			}
 		} else {
-			return ComponentStatusReadyAfter("Not updating component"), err
+			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
 	}
 
