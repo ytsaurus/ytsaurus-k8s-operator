@@ -1934,6 +1934,8 @@ exec "$@"`
 						ytsaurus.Spec.ControllerAgents.InstanceCount = 3
 					case consts.DiscoveryType:
 						ytsaurus.Spec.Discovery.InstanceCount = 3
+					case consts.HttpProxyType:
+						ytsaurus.Spec.HTTPProxies[0].InstanceCount = 3
 					}
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 						{
@@ -1991,6 +1993,7 @@ exec "$@"`
 			Entry("update master", Label(consts.GetStatefulSetPrefix(consts.MasterType)), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
 			Entry("update controller-agent", Label(consts.GetStatefulSetPrefix(consts.ControllerAgentType)), consts.ControllerAgentType, consts.GetStatefulSetPrefix(consts.ControllerAgentType)),
 			Entry("update discovery", Label(consts.GetStatefulSetPrefix(consts.DiscoveryType)), consts.DiscoveryType, consts.GetStatefulSetPrefix(consts.DiscoveryType)),
+			Entry("update http-proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType)),
 		)
 
 		DescribeTableSubtree("on-delete strategy", Label("ondelete"),
@@ -2008,6 +2011,9 @@ exec "$@"`
 						ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
 					case consts.MasterCacheType:
 						ytsaurus.Spec.MasterCaches.InstanceCount = 3
+					case consts.RpcProxyType:
+						ytBuilder.WithRPCProxies()
+						ytsaurus.Spec.RPCProxies[0].InstanceCount = 3
 					}
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 						{
@@ -2107,6 +2113,7 @@ exec "$@"`
 			Entry("update scheduler", Label(consts.GetStatefulSetPrefix(consts.SchedulerType)), consts.SchedulerType, consts.GetStatefulSetPrefix(consts.SchedulerType)),
 			Entry("update master", Label(consts.GetStatefulSetPrefix(consts.MasterType)), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
 			Entry("update master-caches", Label(consts.GetStatefulSetPrefix(consts.MasterCacheType)), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
+			Entry("update rpc-proxy", Label(consts.GetStatefulSetPrefix(consts.RpcProxyType)), consts.RpcProxyType, consts.GetStatefulSetPrefix(consts.RpcProxyType)),
 		)
 	})
 })
