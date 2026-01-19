@@ -1929,8 +1929,11 @@ exec "$@"`
 							},
 						}
 					case consts.MasterType:
-						ytsaurus.Spec.CoreImage = testutil.YtsaurusImagePrevious
 						ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
+					case consts.ControllerAgentType:
+						ytsaurus.Spec.ControllerAgents.InstanceCount = 3
+					case consts.DiscoveryType:
+						ytsaurus.Spec.Discovery.InstanceCount = 3
 					}
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 						{
@@ -1947,8 +1950,8 @@ exec "$@"`
 					switch componentType {
 					case consts.QueryTrackerType:
 						ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.QueryTrackerImageCurrent)
-					case consts.MasterType:
-						ytsaurus.Spec.CoreImage = testutil.YtsaurusImageCurrent
+					default:
+						updateSpecToTriggerAllComponentUpdate(ytsaurus)
 					}
 
 					UpdateObject(ctx, ytsaurus)
@@ -1957,18 +1960,28 @@ exec "$@"`
 					By("Waiting cluster update completes")
 					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 
-					podsAfter := getComponentPods(ctx, namespace)
+					By("Fetching updated StatefulSet revision")
+					sts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: stsName}}
+					EventuallyObject(ctx, &sts, reactionTimeout).Should(WithTransform(
+						func(current *appsv1.StatefulSet) string {
+							return current.Status.UpdateRevision
+						},
+						Not(BeEmpty()),
+					))
+					updateRevision := sts.Status.UpdateRevision
 
-					for name, pod := range podsAfter {
-						if strings.HasPrefix(name, stsName+"-") {
-							switch componentType {
-							case consts.QueryTrackerType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(*ytsaurus.Spec.QueryTrackers.Image))
-							case consts.MasterType:
-								Expect(pod.Spec.Containers[0].Image).To(Equal(ytsaurus.Spec.CoreImage))
+					By("Waiting for pods to move to the new revision")
+					Eventually(func() bool {
+						podsNow := getComponentPods(ctx, namespace)
+						for name, pod := range podsNow {
+							if strings.HasPrefix(name, stsName+"-") {
+								if pod.Labels[appsv1.StatefulSetRevisionLabel] != updateRevision {
+									return false
+								}
 							}
 						}
-					}
+						return true
+					}, upgradeTimeout, pollInterval).Should(BeTrue())
 
 					checkClusterHealth(ctx, ytClient)
 					checkChunkLocations(ytClient)
@@ -1976,6 +1989,8 @@ exec "$@"`
 			},
 			Entry("update query tracker", Label(consts.GetStatefulSetPrefix(consts.QueryTrackerType)), consts.QueryTrackerType, consts.GetStatefulSetPrefix(consts.QueryTrackerType)),
 			Entry("update master", Label(consts.GetStatefulSetPrefix(consts.MasterType)), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
+			Entry("update controller-agent", Label(consts.GetStatefulSetPrefix(consts.ControllerAgentType)), consts.ControllerAgentType, consts.GetStatefulSetPrefix(consts.ControllerAgentType)),
+			Entry("update discovery", Label(consts.GetStatefulSetPrefix(consts.DiscoveryType)), consts.DiscoveryType, consts.GetStatefulSetPrefix(consts.DiscoveryType)),
 		)
 
 		DescribeTableSubtree("on-delete strategy", Label("ondelete"),
@@ -1991,6 +2006,8 @@ exec "$@"`
 						}
 					case consts.MasterType:
 						ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
+					case consts.MasterCacheType:
+						ytsaurus.Spec.MasterCaches.InstanceCount = 3
 					}
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 						{
@@ -2089,6 +2106,7 @@ exec "$@"`
 			},
 			Entry("update scheduler", Label(consts.GetStatefulSetPrefix(consts.SchedulerType)), consts.SchedulerType, consts.GetStatefulSetPrefix(consts.SchedulerType)),
 			Entry("update master", Label(consts.GetStatefulSetPrefix(consts.MasterType)), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
+			Entry("update master-caches", Label(consts.GetStatefulSetPrefix(consts.MasterCacheType)), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
 		)
 	})
 })

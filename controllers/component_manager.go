@@ -49,13 +49,13 @@ func NewComponentManager(
 		return allComponents
 	}
 
-	d := components.NewDiscovery(cfgen, ytsaurus)
 	m := components.NewMaster(cfgen, ytsaurus)
 	var hps []components.Component
 	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {
 		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
 	}
 	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0], getAllComponents)
+	d := components.NewDiscovery(cfgen, ytsaurus, yc)
 
 	var dnds []components.Component
 	if len(resource.Spec.DataNodes) > 0 {
@@ -120,7 +120,7 @@ func NewComponentManager(
 	}
 
 	if resource.Spec.ControllerAgents != nil {
-		ca := components.NewControllerAgent(cfgen, ytsaurus, m)
+		ca := components.NewControllerAgent(cfgen, ytsaurus, m, yc)
 		allComponents = append(allComponents, ca)
 	}
 
@@ -147,7 +147,7 @@ func NewComponentManager(
 	}
 
 	if resource.Spec.MasterCaches != nil {
-		mc := components.NewMasterCache(cfgen, ytsaurus)
+		mc := components.NewMasterCache(cfgen, ytsaurus, yc)
 		allComponents = append(allComponents, mc)
 	}
 
