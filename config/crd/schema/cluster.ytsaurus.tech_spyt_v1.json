@@ -35,6 +35,12 @@
             "x-kubernetes-map-type": "atomic"
           }
         },
+        "sparkVersions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "ytsaurus": {
           "description": "LocalObjectReference contains enough information to let you locate the...",
           "type": "object",
