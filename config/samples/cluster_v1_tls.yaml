@@ -47,6 +47,19 @@ spec:
   # To run all components in host network you need at least max(instanceCount) worker nodes due to port clash.
   # hostNetwork: true
 
+  # Mount trusted CA certificates into `/etc/ssl/certs`.
+  # See config/certmanager/ytsaurus-dev-ca.yaml and trust-manager documentation.
+  # NOTE: `$JAVA_HOME/lib/security/cacerts` symlink to `/etc/ssl/certs/java/cacerts`
+  # caRootBundle:
+  #   kind: ConfigMap
+  #   name: ytsaurus-ca-root-bundle
+  #   key: ca-certificates.crt
+  #   items:
+  #     - key: ca-certificates.crt
+  #       path: ca-certificates.crt
+  #     - key: ca-certificates.jks
+  #       path: java/cacerts
+
   # Install certificate for internal CA.
   caBundle:
     # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#fileobjectreference
