@@ -341,12 +341,8 @@ func (b *YtsaurusBuilder) WithHTTPSProxies(httpsCert string, httpsOnly bool) {
 				Path: "ca-certificates.crt",
 			},
 			{
-				Key:  "ca-certificates.p12",
-				Path: "ca-certificates.p12",
-			},
-			{
 				Key:  "ca-certificates.jks",
-				Path: "ca-certificates.jks",
+				Path: "java/cacerts",
 			},
 		},
 	}
