@@ -141,7 +141,6 @@ else
 	REMOVE_CANONIZED = : dry-run rm -fr
 endif
 
-GO_TEST_FLAGS += -timeout 1800s
 GO_TEST_FLAGS += -coverprofile cover.out
 
 ##@ General
