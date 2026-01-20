@@ -107,10 +107,13 @@ GINKGO_LABEL_FILTER ?=
 ## Tests parallelism.
 GINKGO_PROCS ?= 2
 
+## Tests timeout.
+GINKGO_TIMEOUT ?= 1h
+
 GINKGO_FLAGS += --vv
 GINKGO_FLAGS += --silence-skips
 GINKGO_FLAGS += --trace
-GINKGO_FLAGS += --timeout=1h
+GINKGO_FLAGS += --timeout=${GINKGO_TIMEOUT}
 GINKGO_FLAGS += --poll-progress-after=2m
 GINKGO_FLAGS += --poll-progress-interval=1m
 GINKGO_FLAGS += --junit-report=report.xml
