@@ -77,8 +77,12 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.localComponent, tn.server, dry); status != nil {
-			return *status, err
+		if IsUpdatingComponent(tn.ytsaurus, tn) {
+			if status, err := handleBulkUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.localComponent, tn.server, dry); status != nil {
+				return *status, err
+			}
+		} else {
+			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
 	}
 

@@ -68,11 +68,14 @@ func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 				return *status, err
 			}
 		}
-		if status, err := handleUpdatingClusterState(ctx, n.ytsaurus, n, &n.localComponent, n.server, dry); status != nil {
-			return *status, err
+		if IsUpdatingComponent(n.ytsaurus, n) {
+			if status, err := handleBulkUpdatingClusterState(ctx, n.ytsaurus, n, &n.localComponent, n.server, dry); status != nil {
+				return *status, err
+			}
+		} else {
+			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
 	}
-
 	masterStatus, err := n.master.Status(ctx)
 	if err != nil {
 		return masterStatus, err

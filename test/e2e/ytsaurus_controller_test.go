@@ -1936,6 +1936,8 @@ exec "$@"`
 						ytsaurus.Spec.Discovery.InstanceCount = 3
 					case consts.HttpProxyType:
 						ytsaurus.Spec.HTTPProxies[0].InstanceCount = 3
+					case consts.ExecNodeType:
+						ytsaurus.Spec.ExecNodes[0].InstanceCount = 3
 					}
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 						{
@@ -1994,6 +1996,9 @@ exec "$@"`
 			Entry("update controller-agent", Label(consts.GetStatefulSetPrefix(consts.ControllerAgentType)), consts.ControllerAgentType, consts.GetStatefulSetPrefix(consts.ControllerAgentType)),
 			Entry("update discovery", Label(consts.GetStatefulSetPrefix(consts.DiscoveryType)), consts.DiscoveryType, consts.GetStatefulSetPrefix(consts.DiscoveryType)),
 			Entry("update http-proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType)),
+			Entry("update end-node", Label(consts.GetStatefulSetPrefix(consts.ExecNodeType)), consts.ExecNodeType, consts.GetStatefulSetPrefix(consts.ExecNodeType)),
+			Entry("update tnd-node", Label(consts.GetStatefulSetPrefix(consts.TabletNodeType)), consts.TabletNodeType, consts.GetStatefulSetPrefix(consts.TabletNodeType)),
+			Entry("update dnd-node", Label(consts.GetStatefulSetPrefix(consts.DataNodeType)), consts.DataNodeType, consts.GetStatefulSetPrefix(consts.DataNodeType)),
 		)
 
 		DescribeTableSubtree("on-delete strategy", Label("ondelete"),
