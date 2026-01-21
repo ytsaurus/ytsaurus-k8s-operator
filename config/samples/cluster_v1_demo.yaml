@@ -5,7 +5,7 @@ kind: Ytsaurus
 metadata:
   name: ytdemo
 spec:
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.1-relwithdebinfo
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2-relwithdebinfo
   uiImage: ghcr.io/ytsaurus/ui:stable
 
   adminCredentials:
