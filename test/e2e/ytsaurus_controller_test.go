@@ -679,7 +679,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		By("Creating table")
 		Expect(makeQuery(ctx, ytClient, yt.QueryEngineCHYT,
-			"CREATE TABLE `//tmp/chqt_test` ENGINE = YtTable() AS SELECT 1",
+			"DROP TABLE IF EXISTS `//tmp/test-chyt`; CREATE TABLE `//tmp/test-chyt` ENGINE = YtTable() AS SELECT 1",
 		)).To(BeNil())
 	})
 
@@ -695,7 +695,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		if !ytBuilder.WithHTTPSProxy {
 			By("Creating table")
 			Expect(makeQuery(ctx, ytClient, yt.QueryEngineYQL,
-				"INSERT INTO `//tmp/yql_test` SELECT 1",
+				"INSERT INTO `//tmp/test-yql` SELECT 1",
 			)).To(BeNil())
 		}
 	})
@@ -1738,8 +1738,9 @@ exec "$@"`
 
 			It("Checks ClickHouse", func(ctx context.Context) {
 				By("Creating table")
+				Expect(ytClient.RemoveNode(ctx, ypath.Path("//tmp/test-chyt"), &yt.RemoveNodeOptions{Force: true})).To(Succeed())
 				Expect(queryClickHouse(ctx, httpClient, ytProxyAddress,
-					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT 1",
+					"CREATE TABLE `//tmp/test-chyt` ENGINE = YtTable() AS SELECT 1",
 				)).To(Equal(""))
 			})
 
@@ -1836,9 +1837,10 @@ exec "$@"`
 				clickHouseID, err := queryClickHouseID(ctx, httpClient, ytProxyAddress)
 				Expect(err).To(Succeed())
 
-				By("Creating table //tmp/chyt_test")
+				By("Creating table //tmp/test-chyt")
+				Expect(ytClient.RemoveNode(ctx, ypath.Path("//tmp/test-chyt"), &yt.RemoveNodeOptions{Force: true})).To(Succeed())
 				Expect(queryClickHouse(ctx, httpClient, ytProxyAddress,
-					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT 1",
+					"CREATE TABLE `//tmp/test-chyt` ENGINE = YtTable() AS SELECT 1",
 				)).To(Equal(""))
 
 				By("Reissuing RPC TLS certificates", func() {
@@ -1876,9 +1878,9 @@ exec "$@"`
 					httpClient, ytProxyAddress, "SELECT 1",
 				).MustPassRepeatedly(3).Should(Equal("1\n"))
 
-				By("Checking table //tmp/chyt_test")
+				By("Checking table //tmp/test-chyt")
 				Expect(queryClickHouse(ctx, httpClient, ytProxyAddress,
-					"SELECT * FROM `//tmp/chyt_test`;",
+					"SELECT * FROM `//tmp/test-chyt`;",
 				)).To(Equal("1\n"))
 			})
 		},
