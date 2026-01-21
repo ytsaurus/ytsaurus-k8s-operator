@@ -6,6 +6,8 @@ import (
 	"path"
 	"strings"
 
+	"k8s.io/utils/ptr"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -50,12 +52,6 @@ func NewStrawberryController(
 
 	resource := ytsaurus.GetResource()
 
-	// TODO: strawberry has a different image and can't be nil/fallback on CoreImage.
-	image := resource.Spec.CoreImage
-	if resource.Spec.StrawberryController.Image != nil {
-		image = *resource.Spec.StrawberryController.Image
-	}
-
 	var busClientSecret *resources.TLSSecret
 	var busServerSecret *resources.TLSSecret
 
@@ -73,6 +69,9 @@ func NewStrawberryController(
 				consts.BusClientSecretMountPoint)
 		}
 	}
+
+	// TODO: strawberry has a different image and can't be nil/fallback on CoreImage.
+	image := ptr.Deref(resource.Spec.StrawberryController.Image, resource.Spec.CoreImage)
 
 	microservice := newMicroservice(
 		l,
@@ -95,33 +94,26 @@ func NewStrawberryController(
 		localComponent: newLocalComponent(l, ytsaurus),
 		cfgen:          cfgen,
 		microservice:   microservice,
-		initUserAndUrlJob: NewInitJob(
+		initUserAndUrlJob: NewInitJobForYtsaurus(
 			l,
-			ytsaurus.APIProxy(),
 			ytsaurus,
-			ytsaurus.GetResource().Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,
-			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig,
-			getTolerationsWithDefault(resource.Spec.StrawberryController.Tolerations, resource.Spec.Tolerations),
-			getNodeSelectorWithDefault(resource.Spec.StrawberryController.NodeSelector, resource.Spec.NodeSelector),
-			getDNSConfigWithDefault(resource.Spec.StrawberryController.DNSConfig, resource.Spec.DNSConfig),
-			&resource.Spec.CommonSpec,
+			&ytv1.InstanceSpec{
+				PodSpec: resource.Spec.StrawberryController.PodSpec,
+			},
 		),
-		initChytClusterJob: NewInitJob(
+		initChytClusterJob: NewInitJobForYtsaurus(
 			l,
-			ytsaurus.APIProxy(),
 			ytsaurus,
-			resource.Spec.ImagePullSecrets,
 			"cluster",
 			ChytInitClusterJobConfigFileName,
-			image,
 			cfgen.GetStrawberryInitClusterConfig,
-			getTolerationsWithDefault(resource.Spec.StrawberryController.Tolerations, resource.Spec.Tolerations),
-			getNodeSelectorWithDefault(resource.Spec.StrawberryController.NodeSelector, resource.Spec.NodeSelector),
-			getDNSConfigWithDefault(resource.Spec.StrawberryController.DNSConfig, resource.Spec.DNSConfig),
-			&resource.Spec.CommonSpec,
+			&ytv1.InstanceSpec{
+				PodSpec: resource.Spec.StrawberryController.PodSpec,
+				Image:   ptr.To(image),
+			},
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

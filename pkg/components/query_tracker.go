@@ -61,19 +61,13 @@ func NewQueryTracker(
 		tabletNodes:          tabletNodes,
 		initCondition:        "queryTrackerInitCompleted",
 		ytsaurusClient:       yc,
-		initQTState: NewInitJob(
+		initQTState: NewInitJobForYtsaurus(
 			l,
-			ytsaurus.APIProxy(),
 			ytsaurus,
-			resource.Spec.ImagePullSecrets,
 			"qt-state",
 			consts.ClientConfigFileName,
-			getImageWithDefault(resource.Spec.QueryTrackers.InstanceSpec.Image, resource.Spec.CoreImage),
 			cfgen.GetNativeClientConfig,
-			getTolerationsWithDefault(resource.Spec.QueryTrackers.Tolerations, resource.Spec.Tolerations),
-			getNodeSelectorWithDefault(resource.Spec.QueryTrackers.NodeSelector, resource.Spec.NodeSelector),
-			getDNSConfigWithDefault(resource.Spec.QueryTrackers.DNSConfig, resource.Spec.DNSConfig),
-			&resource.Spec.CommonSpec,
+			&resource.Spec.QueryTrackers.InstanceSpec,
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

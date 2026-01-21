@@ -64,19 +64,13 @@ func NewQueueAgent(
 		tabletNodes:          tabletNodes,
 		initCondition:        "queueAgentInitCompleted",
 		ytsaurusClient:       yc,
-		initQAStateJob: NewInitJob(
+		initQAStateJob: NewInitJobForYtsaurus(
 			l,
-			ytsaurus.APIProxy(),
 			ytsaurus,
-			resource.Spec.ImagePullSecrets,
 			"qa-state",
 			consts.ClientConfigFileName,
-			getImageWithDefault(resource.Spec.QueueAgents.InstanceSpec.Image, resource.Spec.CoreImage),
 			cfgen.GetNativeClientConfig,
-			getTolerationsWithDefault(resource.Spec.QueueAgents.Tolerations, resource.Spec.Tolerations),
-			getNodeSelectorWithDefault(resource.Spec.QueueAgents.NodeSelector, resource.Spec.NodeSelector),
-			getDNSConfigWithDefault(resource.Spec.QueueAgents.DNSConfig, resource.Spec.DNSConfig),
-			&resource.Spec.CommonSpec,
+			&resource.Spec.QueueAgents.InstanceSpec,
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

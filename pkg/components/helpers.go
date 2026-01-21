@@ -499,13 +499,6 @@ func ptrDefault[T any](ptr, def *T) *T {
 	return def
 }
 
-func getImageWithDefault(componentImage *string, defaultImage string) string {
-	if componentImage != nil {
-		return *componentImage
-	}
-	return defaultImage
-}
-
 func getTolerationsWithDefault(componentTolerations, defaultTolerations []corev1.Toleration) []corev1.Toleration {
 	if len(componentTolerations) != 0 {
 		return componentTolerations
@@ -518,14 +511,6 @@ func getNodeSelectorWithDefault(componentNodeSelector, defaultNodeSelector map[s
 		return componentNodeSelector
 	}
 	return defaultNodeSelector
-}
-
-func getDNSConfigWithDefault(componentDNSConfig, defaultDNSConfig *corev1.PodDNSConfig) *corev1.PodDNSConfig {
-	if componentDNSConfig != nil {
-		return componentDNSConfig
-	}
-	// Otherwise, fall back to the default DNSConfig.
-	return defaultDNSConfig
 }
 
 func buildUserCredentialsSecretname(username string) string {

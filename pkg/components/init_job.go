@@ -6,6 +6,8 @@ import (
 	"path"
 	"strings"
 
+	"k8s.io/utils/ptr"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -39,7 +41,10 @@ type InitJob struct {
 	baseComponent
 	apiProxy          apiproxy.APIProxy
 	conditionsManager apiproxy.ConditionManager
-	imagePullSecrets  []corev1.LocalObjectReference
+
+	commonSpec    *ytv1.CommonSpec
+	commonPodSpec *ytv1.PodSpec
+	instanceSpec  *ytv1.InstanceSpec
 
 	initJob *resources.Job
 	configs *ConfigMapBuilder
@@ -50,25 +55,18 @@ type InitJob struct {
 
 	initCompletedCondition string
 
-	image        string
-	tolerations  []corev1.Toleration
-	nodeSelector map[string]string
-
-	builtJob  *batchv1.Job
-	dnsConfig *corev1.PodDNSConfig
+	builtJob *batchv1.Job
 }
 
 func NewInitJob(
 	labeller *labeller.Labeller,
 	apiProxy apiproxy.APIProxy,
 	conditionsManager apiproxy.ConditionManager,
-	imagePullSecrets []corev1.LocalObjectReference,
-	name, configFileName, image string,
+	name, configFileName string,
 	generator ConfigGeneratorFunc,
-	tolerations []corev1.Toleration,
-	nodeSelector map[string]string,
-	dnsConfig *corev1.PodDNSConfig,
 	commonSpec *ytv1.CommonSpec,
+	commonPodSpec *ytv1.PodSpec,
+	instanceSpec *ytv1.InstanceSpec,
 ) *InitJob {
 	var busClientSecret *resources.TLSSecret
 
@@ -90,12 +88,10 @@ func NewInitJob(
 		},
 		apiProxy:               apiProxy,
 		conditionsManager:      conditionsManager,
-		imagePullSecrets:       imagePullSecrets,
+		commonSpec:             commonSpec,
+		commonPodSpec:          commonPodSpec,
+		instanceSpec:           instanceSpec,
 		initCompletedCondition: labeller.GetInitJobCompletedCondition(name),
-		image:                  image,
-		tolerations:            tolerations,
-		nodeSelector:           nodeSelector,
-		dnsConfig:              dnsConfig,
 		initJob: resources.NewJob(
 			labeller.GetInitJobName(name),
 			labeller,
@@ -106,6 +102,26 @@ func NewInitJob(
 		busClientSecret: busClientSecret,
 		configs:         configs,
 	}
+}
+
+func NewInitJobForYtsaurus(
+	labeller *labeller.Labeller,
+	ytsaurus *apiproxy.Ytsaurus,
+	name, configFileName string,
+	generator ConfigGeneratorFunc,
+	instanceSpec *ytv1.InstanceSpec,
+) *InitJob {
+	return NewInitJob(
+		labeller,
+		ytsaurus.APIProxy(),
+		ytsaurus,
+		name,
+		configFileName,
+		generator,
+		ytsaurus.GetCommonSpec(),
+		ytsaurus.GetCommonPodSpec(),
+		instanceSpec,
+	)
 }
 
 func (j *InitJob) IsCompleted() bool {
@@ -127,10 +143,10 @@ func (j *InitJob) Build() *batchv1.Job {
 	job.Spec.Template = corev1.PodTemplateSpec{
 		ObjectMeta: j.baseComponent.labeller.GetInitJobObjectMeta(),
 		Spec: corev1.PodSpec{
-			ImagePullSecrets: j.imagePullSecrets,
+			ImagePullSecrets: j.commonSpec.ImagePullSecrets,
 			Containers: []corev1.Container{
 				{
-					Image:   j.image,
+					Image:   ptr.Deref(j.instanceSpec.Image, j.commonSpec.CoreImage),
 					Name:    "ytsaurus-init",
 					Command: []string{"bash", "-c", path.Join(consts.ConfigMountPoint, consts.InitClusterScriptFileName)},
 					Env:     getDefaultEnv(),
@@ -144,9 +160,9 @@ func (j *InitJob) Build() *batchv1.Job {
 				createConfigVolume(consts.ConfigVolumeName, j.configs.GetConfigMapName(), &defaultMode),
 			},
 			RestartPolicy: corev1.RestartPolicyOnFailure,
-			Tolerations:   j.tolerations,
-			NodeSelector:  j.nodeSelector,
-			DNSConfig:     j.dnsConfig,
+			Tolerations:   getTolerationsWithDefault(j.instanceSpec.Tolerations, j.commonPodSpec.Tolerations),
+			NodeSelector:  getNodeSelectorWithDefault(j.instanceSpec.NodeSelector, j.commonPodSpec.NodeSelector),
+			DNSConfig:     ptrDefault(j.instanceSpec.DNSConfig, j.commonPodSpec.DNSConfig),
 		},
 	}
 

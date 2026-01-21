@@ -77,19 +77,13 @@ func NewYtsaurusClient(
 			l,
 			ytsaurus.APIProxy(),
 		),
-		initUserJob: NewInitJob(
+		initUserJob: NewInitJobForYtsaurus(
 			l,
-			ytsaurus.APIProxy(),
 			ytsaurus,
-			ytsaurus.GetResource().Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,
-			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig,
-			resource.Spec.Tolerations,
-			resource.Spec.NodeSelector,
-			resource.Spec.DNSConfig,
-			&resource.Spec.CommonSpec,
+			&ytv1.InstanceSpec{},
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

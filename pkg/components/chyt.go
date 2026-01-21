@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"k8s.io/utils/ptr"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -40,43 +42,38 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 			l,
 			chyt.APIProxy(),
 			chyt,
-			ytsaurus.Spec.ImagePullSecrets,
 			"user",
 			consts.ClientConfigFileName,
-			ytsaurus.Spec.CoreImage,
 			cfgen.GetNativeClientConfig,
-			ytsaurus.Spec.Tolerations,
-			ytsaurus.Spec.NodeSelector,
-			ytsaurus.Spec.DNSConfig,
 			&ytsaurus.Spec.CommonSpec,
+			&ytsaurus.Spec.PodSpec,
+			&ytv1.InstanceSpec{},
 		),
 		initEnvironment: NewInitJob(
 			l,
 			chyt.APIProxy(),
 			chyt,
-			ytsaurus.Spec.ImagePullSecrets,
 			"release",
 			consts.ClientConfigFileName,
-			chyt.GetResource().Spec.Image,
 			cfgen.GetNativeClientConfig,
-			ytsaurus.Spec.Tolerations,
-			ytsaurus.Spec.NodeSelector,
-			ytsaurus.Spec.DNSConfig,
 			&ytsaurus.Spec.CommonSpec,
+			&ytsaurus.Spec.PodSpec,
+			&ytv1.InstanceSpec{
+				Image: ptr.To(chyt.GetResource().Spec.Image),
+			},
 		),
 		initChPublicJob: NewInitJob(
 			l,
 			chyt.APIProxy(),
 			chyt,
-			ytsaurus.Spec.ImagePullSecrets,
 			"ch-public",
 			consts.ClientConfigFileName,
-			chyt.GetResource().Spec.Image,
 			cfgen.GetNativeClientConfig,
-			ytsaurus.Spec.Tolerations,
-			ytsaurus.Spec.NodeSelector,
-			ytsaurus.Spec.DNSConfig,
 			&ytsaurus.Spec.CommonSpec,
+			&ytsaurus.Spec.PodSpec,
+			&ytv1.InstanceSpec{
+				Image: ptr.To(chyt.GetResource().Spec.Image),
+			},
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

@@ -7,11 +7,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -81,13 +81,14 @@ func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
 		},
 		ytsaurus.APIProxy(),
 		ytsaurus,
-		[]corev1.LocalObjectReference{},
 		"dummy",
 		consts.ClientConfigFileName,
-		"dummy-image",
 		func() ([]byte, error) { return []byte("dummy-cfg"), nil },
-		nil, nil, nil,
 		&resource.Spec.CommonSpec,
+		&resource.Spec.PodSpec,
+		&ytv1.InstanceSpec{
+			Image: ptr.To("dummy-image"),
+		},
 	)
 }
 
