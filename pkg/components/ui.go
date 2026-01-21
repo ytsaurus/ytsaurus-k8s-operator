@@ -67,19 +67,15 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		localComponent: newLocalComponent(l, ytsaurus),
 		cfgen:          cfgen,
 		microservice:   microservice,
-		initJob: NewInitJob(
+		initJob: NewInitJobForYtsaurus(
 			l,
-			ytsaurus.APIProxy(),
 			ytsaurus,
-			resource.Spec.ImagePullSecrets,
 			"default",
 			consts.ClientConfigFileName,
-			resource.Spec.CoreImage,
 			cfgen.GetNativeClientConfig,
-			getTolerationsWithDefault(resource.Spec.UI.Tolerations, resource.Spec.Tolerations),
-			getNodeSelectorWithDefault(resource.Spec.UI.NodeSelector, resource.Spec.NodeSelector),
-			getDNSConfigWithDefault(resource.Spec.UI.DNSConfig, resource.Spec.DNSConfig),
-			&resource.Spec.CommonSpec,
+			&ytv1.InstanceSpec{
+				PodSpec: resource.Spec.UI.PodSpec,
+			},
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),

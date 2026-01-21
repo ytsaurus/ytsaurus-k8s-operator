@@ -80,38 +80,22 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		buildMasterOptions(resource)...,
 	)
 
-	jobImage := getImageWithDefault(resource.Spec.PrimaryMasters.InstanceSpec.Image, resource.Spec.CoreImage)
-	jobTolerations := getTolerationsWithDefault(resource.Spec.PrimaryMasters.Tolerations, resource.Spec.Tolerations)
-	jobNodeSelector := getNodeSelectorWithDefault(resource.Spec.PrimaryMasters.NodeSelector, resource.Spec.NodeSelector)
-	dnsConfig := getDNSConfigWithDefault(resource.Spec.PrimaryMasters.DNSConfig, resource.Spec.DNSConfig)
-	initJob := NewInitJob(
+	initJob := NewInitJobForYtsaurus(
 		l,
-		ytsaurus.APIProxy(),
 		ytsaurus,
-		resource.Spec.ImagePullSecrets,
 		"default",
 		consts.ClientConfigFileName,
-		jobImage,
 		cfgen.GetNativeClientConfig,
-		jobTolerations,
-		jobNodeSelector,
-		dnsConfig,
-		&resource.Spec.CommonSpec,
+		&resource.Spec.PrimaryMasters.InstanceSpec,
 	)
 
-	exitReadOnlyJob := NewInitJob(
+	exitReadOnlyJob := NewInitJobForYtsaurus(
 		l,
-		ytsaurus.APIProxy(),
 		ytsaurus,
-		resource.Spec.ImagePullSecrets,
 		"exit-read-only",
 		consts.ClientConfigFileName,
-		jobImage,
 		cfgen.GetNativeClientConfig,
-		jobTolerations,
-		jobNodeSelector,
-		dnsConfig,
-		&resource.Spec.CommonSpec,
+		&resource.Spec.PrimaryMasters.InstanceSpec,
 	)
 
 	return &Master{
