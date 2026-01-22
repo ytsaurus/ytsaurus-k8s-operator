@@ -2432,20 +2432,20 @@ func NewVanillaOperation(ytClient yt.Client) *TestOperation {
 }
 
 func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
-	testTablePathIn := ypath.Path("//tmp/testexec")
-	testTablePathOut := ypath.Path("//tmp/testexec-out")
+	testTablePathIn := ypath.Path("//tmp/test-sort-in")
+	testTablePathOut := ypath.Path("//tmp/test-sort-out")
 	_, err := ytClient.CreateNode(
 		specCtx,
 		testTablePathIn,
 		yt.NodeTable,
-		nil,
+		&yt.CreateNodeOptions{Force: true},
 	)
 	Expect(err).Should(Succeed())
 	_, err = ytClient.CreateNode(
 		specCtx,
 		testTablePathOut,
 		yt.NodeTable,
-		nil,
+		&yt.CreateNodeOptions{Force: true},
 	)
 	Expect(err).Should(Succeed())
 
@@ -2495,20 +2495,20 @@ func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
 }
 
 func NewMapTestOperation(ytClient yt.Client) *TestOperation {
-	testTablePathIn := ypath.Path("//tmp/testmap-in")
-	testTablePathOut := ypath.Path("//tmp/testmap-out")
+	testTablePathIn := ypath.Path("//tmp/test-map-in")
+	testTablePathOut := ypath.Path("//tmp/test-map-out")
 	_, err := ytClient.CreateNode(
 		specCtx,
 		testTablePathIn,
 		yt.NodeTable,
-		nil,
+		&yt.CreateNodeOptions{Force: true},
 	)
 	Expect(err).Should(Succeed())
 	_, err = ytClient.CreateNode(
 		specCtx,
 		testTablePathOut,
 		yt.NodeTable,
-		nil,
+		&yt.CreateNodeOptions{Force: true},
 	)
 	Expect(err).Should(Succeed())
 
