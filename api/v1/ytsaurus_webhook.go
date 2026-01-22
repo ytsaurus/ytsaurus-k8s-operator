@@ -22,7 +22,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/hashicorp/go-version"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -40,7 +39,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	opver "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 )
 
 // log is for logging in this package.
@@ -752,45 +750,10 @@ func validateUpdateModeForSelector(selector ComponentUpdateSelector, path *field
 	return errs
 }
 
-func (r *ytsaurusValidator) validateVersionConstraint(constraintStr string) *field.Error {
-	// If no constraint is provided, any version is good
-	if constraintStr == "" {
-		return nil
-	}
-
-	constraint, err := version.NewConstraint(constraintStr)
-	if err != nil {
-		return field.Invalid(
-			field.NewPath("spec").Child("requiresOperatorVersion"),
-			constraintStr, err.Error(),
-		)
-	}
-
-	// TODO: This requires some consideration.
-	// Ideally we shouldn't fail if the operator is build with some random version string
-	// that cannot be parsed, but if the spec contains a version lock then we also need to
-	// provide the guarantee about that.
-	// This check will force all operator builds to contain a valid version if it is expected
-	// to handle spec.requiresOperatorVersion field properly.
-	currentVersion, err := version.NewVersion(opver.GetVersion())
-	if err != nil {
-		return field.InternalError(field.NewPath("spec").Child("requiresOperatorVersion"), err)
-	}
-
-	if constraint.Check(currentVersion) {
-		return nil
-	}
-
-	return field.Forbidden(
-		field.NewPath("spec").Child("requiresOperatorVersion"),
-		fmt.Sprintf("current operator build %q does not satisfy the spec version constraint %q", currentVersion.String(), constraintStr),
-	)
-}
-
 func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, oldYtsaurus *Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
-	if err := r.validateVersionConstraint(newYtsaurus.Spec.RequiresOperatorVersion); err != nil {
+	if err := ValidateVersionConstraint(newYtsaurus.Spec.RequiresOperatorVersion); err != nil {
 		allErrors = append(allErrors, err)
 	}
 

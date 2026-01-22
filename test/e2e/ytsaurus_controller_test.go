@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 	"k8s.io/utils/ptr"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -2114,6 +2115,107 @@ exec "$@"`
 			Entry("update master-caches", Label(consts.GetStatefulSetPrefix(consts.MasterCacheType)), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
 			Entry("update rpc-proxy", Label(consts.GetStatefulSetPrefix(consts.RpcProxyType)), consts.RpcProxyType, consts.GetStatefulSetPrefix(consts.RpcProxyType)),
 		)
+	})
+
+})
+
+var _ = Describe("Spec version lock test", Label("version_lock"), Ordered, func() {
+	var testNamespace string
+
+	BeforeAll(func(ctx context.Context) {
+		currentSpec := CurrentSpecReport()
+
+		namespaceObject := corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				GenerateName: "test-e2e-",
+				Labels: map[string]string{
+					"app.kubernetes.io/component": "test",
+					"app.kubernetes.io/name":      "test-" + strings.Join(currentSpec.Labels(), "-"),
+					"app.kubernetes.io/part-of":   "ytsaurus-dev",
+				},
+				Annotations: map[string]string{
+					"kubernetes.io/description": currentSpec.LeafNodeText,
+				},
+			},
+		}
+
+		Expect(k8sClient.Create(ctx, &namespaceObject)).Should(Succeed())
+
+		testNamespace = namespaceObject.Name // Fetch unique namespace name
+	})
+
+	Context("Spec Version Constraint Lock", func() {
+		const (
+			operatorVersion string = "2.3.4"
+		)
+
+		var (
+			builder  *testutil.YtsaurusBuilder
+			ytsaurus *ytv1.Ytsaurus
+		)
+
+		newYtsaurus := func() *ytv1.Ytsaurus {
+			builder = &testutil.YtsaurusBuilder{
+				Images:    testutil.CurrentImages,
+				Namespace: testNamespace,
+			}
+
+			builder.CreateMinimal()
+			builder.WithBaseComponents()
+			return builder.Ytsaurus
+		}
+
+		BeforeEach(func() {
+			ytsaurus = newYtsaurus()
+		})
+
+		// A known string is required for tests to work reliably, other there is no way to
+		// write proper assertions, at least not easily.
+		It("Expect the tests to use a sentinel version string", func() {
+			Expect(version.GetVersion()).To(Equal(operatorVersion))
+		})
+
+		DescribeTable("YT Spec version requirement works for all available operators",
+			func(constraint string, errMsg string) {
+				ytsaurus.Spec.RequiresOperatorVersion = constraint
+
+				err := k8sClient.Create(context.Background(), ytsaurus)
+				if errMsg != "" {
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).Should(MatchRegexp(errMsg))
+				} else {
+					Expect(err).To(Not(HaveOccurred()))
+
+					DeferCleanup(func() {
+						err := k8sClient.Delete(context.Background(), ytsaurus)
+						Expect(err).NotTo(HaveOccurred())
+					})
+				}
+			},
+
+			Entry("Handles empty version in spec", "", ""),
+			Entry("Rejects invalid version constraint", "abcd", `spec.requiresOperatorVersion: Invalid value: "abcd": malformed constraint: abcd`),
+			Entry("Handles success case for exact version match", operatorVersion, ""),
+			Entry("Handles failure case for exact version match", "= 2.2.4", "current operator build .* does not satisfy the spec version constraint .*"),
+			Entry("Handles success case for not equal", "!= 1.2.0", ""),
+			Entry("Handles failure case for not equal", "!= "+operatorVersion, "current operator build .* does not satisfy the spec version constraint .*"),
+			Entry("Handles success case for greater version", "> 2.3.3", ""),
+			Entry("Handles failure case for greater version", "> 2.3.4", "current operator build .* does not satisfy the spec version constraint .*"),
+			Entry("Handles success case for lower version", "< 2.3.5", ""),
+			Entry("Handles failure case for lower version", "< "+operatorVersion, "current operator build .* does not satisfy the spec version constraint .*"),
+			Entry("Handles success case for any patch version", "~> 2.3", ""),
+			Entry("Handles failure case for any patch version", "~> 2.4", "current operator build .* does not satisfy the spec version constraint .*"),
+		)
+	})
+
+	AfterAll(func(ctx context.Context) {
+		namespaceObject := corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: testNamespace,
+			},
+		}
+
+		Expect(k8sClient.Delete(ctx, &namespaceObject)).Should(Succeed())
 	})
 })
 

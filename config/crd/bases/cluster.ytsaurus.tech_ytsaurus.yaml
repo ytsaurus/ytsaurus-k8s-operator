@@ -23063,6 +23063,8 @@ spec:
                     type: array
                 type: object
               requiresOperatorVersion:
+                description: requiresOperatorVersion is used to lock the YT spec to
+                  an Operator version or...
                 type: string
               rpcProxies:
                 items:
