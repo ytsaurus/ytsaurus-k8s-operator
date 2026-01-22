@@ -1,6 +1,8 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
+  annotations:
+    extra-pod-annotation: "true"
   creationTimestamp: null
   generation: 1
   labels:
@@ -30,6 +32,7 @@ spec:
   template:
     metadata:
       annotations:
+        extra-pod-annotation: "true"
         ytsaurus.tech/config-checksum: 85a0c252433a5c659280adbedba6180f3840e46a016cafdf5a3bf6d503b2615c
       creationTimestamp: null
       labels:
@@ -102,7 +105,11 @@ spec:
         - mountPath: /tls/bus_client_secret
           name: bus-client-secret
           readOnly: true
+      dnsPolicy: ClusterFirstWithHostNet
       enableServiceLinks: false
+      hostNetwork: true
+      imagePullSecrets:
+      - name: global-image-pull-secrets
       initContainers:
       - command:
         - bash

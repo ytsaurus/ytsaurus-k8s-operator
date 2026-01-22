@@ -402,6 +402,46 @@ func (b *YtsaurusBuilder) WithAllClusterFeatures() {
 	}
 }
 
+func (b *YtsaurusBuilder) WithAllGlobalPodOptions() {
+	b.Ytsaurus.Spec.ImagePullSecrets = []corev1.LocalObjectReference{{Name: "global-image-pull-secrets"}}
+	// FIXME: set on everything not just pods
+	b.Ytsaurus.Spec.ExtraPodAnnotations = map[string]string{"extra-pod-annotation": "true"}
+	// FIXME: add DNSPolicy
+	// FIXME: broken for pods
+	b.Ytsaurus.Spec.DNSConfig = &corev1.PodDNSConfig{Options: []corev1.PodDNSConfigOption{{Name: "global-dns-option"}}}
+	// FIXME: broken for jobs
+	b.Ytsaurus.Spec.HostNetwork = true
+	// FIXME: broken for pods
+	b.Ytsaurus.Spec.NodeSelector = map[string]string{"global-node-selector": "true"}
+	// FIXME: broken for pods
+	b.Ytsaurus.Spec.Tolerations = []corev1.Toleration{{Key: "global-toleration"}}
+}
+
+func (b *YtsaurusBuilder) WithAllInstancePodOptions(spec *ytv1.InstanceSpec) {
+	spec.Affinity = &corev1.Affinity{
+		NodeAffinity: &corev1.NodeAffinity{
+			RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+				NodeSelectorTerms: []corev1.NodeSelectorTerm{{
+					MatchExpressions: []corev1.NodeSelectorRequirement{{
+						Key:      "instance-affinity",
+						Operator: corev1.NodeSelectorOpExists,
+					}},
+				}},
+			},
+		},
+	}
+	spec.DNSConfig = &corev1.PodDNSConfig{Options: []corev1.PodDNSConfigOption{{Name: "instance-dns-option"}}}
+	spec.DNSPolicy = corev1.DNSNone
+	// FIXME: broken for jobs
+	spec.HostNetwork = ptr.To(false)
+	spec.NodeSelector = map[string]string{"instance-node-selector": "true"}
+	spec.PodAnnotations = map[string]string{"instance-pod-annotation": "true"}
+	spec.PodLabels = map[string]string{"instance-pod-label": "true"}
+	spec.RuntimeClassName = ptr.To("instance-runtime-class")
+	spec.SetHostnameAsFQDN = ptr.To(false)
+	spec.Tolerations = []corev1.Toleration{{Key: "instance-toleration"}}
+}
+
 // TODO (l0kix2): merge with ytconfig build spec helpers.
 func (b *YtsaurusBuilder) WithDataNodes() {
 	b.WithDataNodesCount(3, nil)

@@ -404,10 +404,33 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithQueueAgent()
 			ytBuilder.WithYqlAgent()
 			ytBuilder.WithAllClusterFeatures()
+			ytBuilder.WithAllGlobalPodOptions()
+			ytBuilder.WithAllInstancePodOptions(&ytsaurus.Spec.PrimaryMasters.InstanceSpec)
 			ytBuilder.WithNativeTransportTLS("native-server-cert", "native-client-cert")
 			ytBuilder.WithHTTPSProxies("https-server-cert", false)
 		})
-		It("Test", func(ctx context.Context) {})
+		It("Test", func(ctx context.Context) {
+			for _, sts := range statefulSets {
+				log.Info("sts", "name", sts.Name)
+				podSpec := sts.Spec.Template.Spec
+				Expect(podSpec.ImagePullSecrets).To(Equal(ytsaurus.Spec.ImagePullSecrets))
+				if sts.Name == "ms" {
+					options := &ytsaurus.Spec.PrimaryMasters.InstanceSpec
+					Expect(podSpec.Tolerations).To(Equal(options.Tolerations))
+					Expect(podSpec.NodeSelector).To(Equal(options.NodeSelector))
+					// Expect(podSpec.HostNetwork).To(BeEquivalentTo(options.HostNetwork))
+					Expect(podSpec.SetHostnameAsFQDN).To(BeEquivalentTo(options.SetHostnameAsFQDN))
+					Expect(podSpec.DNSPolicy).To(Equal(options.DNSPolicy))
+					Expect(podSpec.DNSConfig).To(Equal(options.DNSConfig))
+				} else {
+					options := &ytsaurus.Spec
+					// Expect(podSpec.Tolerations).To(Equal(options.Tolerations))
+					// Expect(podSpec.NodeSelector).To(Equal(options.NodeSelector))
+					Expect(podSpec.HostNetwork).To(Equal(options.HostNetwork))
+					// Expect(podSpec.DNSConfig).To(BeEquivalentTo(options.DNSConfig))
+				}
+			}
+		})
 	})
 
 	Context("With CRI job environment", func() {
