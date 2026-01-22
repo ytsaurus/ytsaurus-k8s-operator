@@ -1086,7 +1086,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(err).Should(Succeed())
 
 				By("Run cluster update")
-				ytsaurus.Spec.HostNetwork = true
+				ytsaurus.Spec.HostNetwork = ptr.To(true)
 				ytsaurus.Spec.PrimaryMasters.HostAddresses = []string{
 					getKindControlPlaneNode(ctx).Name,
 				}
@@ -1684,7 +1684,7 @@ exec "$@"`
 		Context("With host network", Label("host-network"), func() {
 
 			BeforeEach(func() {
-				ytsaurus.Spec.HostNetwork = true
+				ytsaurus.Spec.HostNetwork = ptr.To(true)
 			})
 
 			It("Sensors should be annotated with host", func(ctx context.Context) {

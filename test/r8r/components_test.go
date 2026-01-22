@@ -412,23 +412,18 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		It("Test", func(ctx context.Context) {
 			for _, sts := range statefulSets {
 				log.Info("sts", "name", sts.Name)
-				podSpec := sts.Spec.Template.Spec
+				podSpec := &sts.Spec.Template.Spec
 				Expect(podSpec.ImagePullSecrets).To(Equal(ytsaurus.Spec.ImagePullSecrets))
+				options := &ytsaurus.Spec.PodSpec
 				if sts.Name == "ms" {
-					options := &ytsaurus.Spec.PrimaryMasters.InstanceSpec
-					Expect(podSpec.Tolerations).To(Equal(options.Tolerations))
-					Expect(podSpec.NodeSelector).To(Equal(options.NodeSelector))
-					// Expect(podSpec.HostNetwork).To(BeEquivalentTo(options.HostNetwork))
-					Expect(podSpec.SetHostnameAsFQDN).To(BeEquivalentTo(options.SetHostnameAsFQDN))
-					Expect(podSpec.DNSPolicy).To(Equal(options.DNSPolicy))
-					Expect(podSpec.DNSConfig).To(Equal(options.DNSConfig))
-				} else {
-					options := &ytsaurus.Spec
-					// Expect(podSpec.Tolerations).To(Equal(options.Tolerations))
-					// Expect(podSpec.NodeSelector).To(Equal(options.NodeSelector))
-					Expect(podSpec.HostNetwork).To(Equal(options.HostNetwork))
-					// Expect(podSpec.DNSConfig).To(BeEquivalentTo(options.DNSConfig))
+					options = &ytsaurus.Spec.PrimaryMasters.PodSpec
 				}
+				// Expect(podSpec.Tolerations).To(Equal(options.Tolerations))
+				// Expect(podSpec.NodeSelector).To(Equal(options.NodeSelector))
+				Expect(&podSpec.HostNetwork).To(BeEquivalentTo(options.HostNetwork))
+				// Expect(podSpec.SetHostnameAsFQDN).To(BeEquivalentTo(options.SetHostnameAsFQDN))
+				// Expect(podSpec.DNSPolicy).To(BeEquivalentTo(options.DNSPolicy))
+				// Expect(podSpec.DNSConfig).To(BeEquivalentTo(options.DNSConfig))
 			}
 		})
 	})

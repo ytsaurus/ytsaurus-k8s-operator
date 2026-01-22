@@ -834,7 +834,7 @@
               }
             },
             "dnsConfig": {
-              "description": "DNSConfig allows customizing the DNS settings for the pods.",
+              "description": "DNSConfig allows customizing the DNS settings.",
               "type": "object",
               "properties": {
                 "nameservers": {
@@ -875,7 +875,7 @@
               }
             },
             "dnsPolicy": {
-              "description": "DNSPolicy defines how a pod's DNS will be configured.",
+              "description": "DNSPolicy defines how DNS will be configured.",
               "type": "string"
             },
             "enableAntiAffinity": {
@@ -890,7 +890,7 @@
               }
             },
             "hostNetwork": {
-              "description": "Use the host's network namespace, this overrides global option.",
+              "description": "Use the host's network namespace.",
               "type": "boolean"
             },
             "image": {
@@ -1150,18 +1150,21 @@
               }
             },
             "nodeSelector": {
+              "description": "Node selector for instance and init job pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podAnnotations": {
+              "description": "Annotations for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podLabels": {
+              "description": "Labels for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
@@ -1256,6 +1259,7 @@
               }
             },
             "runtimeClassName": {
+              "description": "Runtime class for instance pods.",
               "type": "string"
             },
             "setHostnameAsFqdn": {
@@ -1355,6 +1359,7 @@
               "format": "int64"
             },
             "tolerations": {
+              "description": "Tolerations for instance and init job pods.",
               "type": "array",
               "items": {
                 "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -3133,7 +3138,7 @@
               }
             },
             "dnsConfig": {
-              "description": "DNSConfig allows customizing the DNS settings for the pods.",
+              "description": "DNSConfig allows customizing the DNS settings.",
               "type": "object",
               "properties": {
                 "nameservers": {
@@ -3174,7 +3179,7 @@
               }
             },
             "dnsPolicy": {
-              "description": "DNSPolicy defines how a pod's DNS will be configured.",
+              "description": "DNSPolicy defines how DNS will be configured.",
               "type": "string"
             },
             "enableAntiAffinity": {
@@ -3189,7 +3194,7 @@
               }
             },
             "hostNetwork": {
-              "description": "Use the host's network namespace, this overrides global option.",
+              "description": "Use the host's network namespace.",
               "type": "boolean"
             },
             "image": {
@@ -3449,18 +3454,21 @@
               }
             },
             "nodeSelector": {
+              "description": "Node selector for instance and init job pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podAnnotations": {
+              "description": "Annotations for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podLabels": {
+              "description": "Labels for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
@@ -3555,6 +3563,7 @@
               }
             },
             "runtimeClassName": {
+              "description": "Runtime class for instance pods.",
               "type": "string"
             },
             "setHostnameAsFqdn": {
@@ -3654,6 +3663,7 @@
               "format": "int64"
             },
             "tolerations": {
+              "description": "Tolerations for instance and init job pods.",
               "type": "array",
               "items": {
                 "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -5307,7 +5317,7 @@
               "type": "boolean"
             },
             "dnsConfig": {
-              "description": "DNSConfig allows customizing the DNS settings for the pods.",
+              "description": "DNSConfig allows customizing the DNS settings.",
               "type": "object",
               "properties": {
                 "nameservers": {
@@ -5348,7 +5358,7 @@
               }
             },
             "dnsPolicy": {
-              "description": "DNSPolicy defines how a pod's DNS will be configured.",
+              "description": "DNSPolicy defines how DNS will be configured.",
               "type": "string"
             },
             "enableAntiAffinity": {
@@ -5363,7 +5373,7 @@
               }
             },
             "hostNetwork": {
-              "description": "Use the host's network namespace, this overrides global option.",
+              "description": "Use the host's network namespace.",
               "type": "boolean"
             },
             "image": {
@@ -5623,18 +5633,21 @@
               }
             },
             "nodeSelector": {
+              "description": "Node selector for instance and init job pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podAnnotations": {
+              "description": "Annotations for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podLabels": {
+              "description": "Labels for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
@@ -5729,6 +5742,7 @@
               }
             },
             "runtimeClassName": {
+              "description": "Runtime class for instance pods.",
               "type": "string"
             },
             "setHostnameAsFqdn": {
@@ -5828,6 +5842,7 @@
               "format": "int64"
             },
             "tolerations": {
+              "description": "Tolerations for instance and init job pods.",
               "type": "array",
               "items": {
                 "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -7478,7 +7493,7 @@
                 }
               },
               "dnsConfig": {
-                "description": "DNSConfig allows customizing the DNS settings for the pods.",
+                "description": "DNSConfig allows customizing the DNS settings.",
                 "type": "object",
                 "properties": {
                   "nameservers": {
@@ -7519,7 +7534,7 @@
                 }
               },
               "dnsPolicy": {
-                "description": "DNSPolicy defines how a pod's DNS will be configured.",
+                "description": "DNSPolicy defines how DNS will be configured.",
                 "type": "string"
               },
               "enableAntiAffinity": {
@@ -7534,7 +7549,7 @@
                 }
               },
               "hostNetwork": {
-                "description": "Use the host's network namespace, this overrides global option.",
+                "description": "Use the host's network namespace.",
                 "type": "boolean"
               },
               "image": {
@@ -7799,18 +7814,21 @@
                 }
               },
               "nodeSelector": {
+                "description": "Node selector for instance and init job pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podAnnotations": {
+                "description": "Annotations for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podLabels": {
+                "description": "Labels for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
@@ -7909,6 +7927,7 @@
                 }
               },
               "runtimeClassName": {
+                "description": "Runtime class for instance pods.",
                 "type": "string"
               },
               "setHostnameAsFqdn": {
@@ -8015,6 +8034,7 @@
                 "format": "int64"
               },
               "tolerations": {
+                "description": "Tolerations for instance and init job pods.",
                 "type": "array",
                 "items": {
                   "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -9663,7 +9683,7 @@
               }
             },
             "dnsConfig": {
-              "description": "DNSConfig allows customizing the DNS settings for the pods.",
+              "description": "DNSConfig allows customizing the DNS settings.",
               "type": "object",
               "properties": {
                 "nameservers": {
@@ -9704,7 +9724,7 @@
               }
             },
             "dnsPolicy": {
-              "description": "DNSPolicy defines how a pod's DNS will be configured.",
+              "description": "DNSPolicy defines how DNS will be configured.",
               "type": "string"
             },
             "enableAntiAffinity": {
@@ -9719,7 +9739,7 @@
               }
             },
             "hostNetwork": {
-              "description": "Use the host's network namespace, this overrides global option.",
+              "description": "Use the host's network namespace.",
               "type": "boolean"
             },
             "image": {
@@ -9979,18 +9999,21 @@
               }
             },
             "nodeSelector": {
+              "description": "Node selector for instance and init job pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podAnnotations": {
+              "description": "Annotations for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podLabels": {
+              "description": "Labels for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
@@ -10085,6 +10108,7 @@
               }
             },
             "runtimeClassName": {
+              "description": "Runtime class for instance pods.",
               "type": "string"
             },
             "setHostnameAsFqdn": {
@@ -10184,6 +10208,7 @@
               "format": "int64"
             },
             "tolerations": {
+              "description": "Tolerations for instance and init job pods.",
               "type": "array",
               "items": {
                 "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -11073,7 +11098,7 @@
           }
         },
         "dnsConfig": {
-          "description": "DNSConfig allows customizing the DNS settings for the pods.",
+          "description": "DNSConfig allows customizing the DNS settings.",
           "type": "object",
           "properties": {
             "nameservers": {
@@ -11112,6 +11137,10 @@
               "x-kubernetes-list-type": "atomic"
             }
           }
+        },
+        "dnsPolicy": {
+          "description": "DNSPolicy defines how DNS will be configured.",
+          "type": "string"
         },
         "enableFullUpdate": {
           "type": "boolean",
@@ -11883,7 +11912,7 @@
                 }
               },
               "dnsConfig": {
-                "description": "DNSConfig allows customizing the DNS settings for the pods.",
+                "description": "DNSConfig allows customizing the DNS settings.",
                 "type": "object",
                 "properties": {
                   "nameservers": {
@@ -11924,7 +11953,7 @@
                 }
               },
               "dnsPolicy": {
-                "description": "DNSPolicy defines how a pod's DNS will be configured.",
+                "description": "DNSPolicy defines how DNS will be configured.",
                 "type": "string"
               },
               "enableAntiAffinity": {
@@ -11948,7 +11977,7 @@
                 }
               },
               "hostNetwork": {
-                "description": "Use the host's network namespace, this overrides global option.",
+                "description": "Use the host's network namespace.",
                 "type": "boolean"
               },
               "image": {
@@ -12492,18 +12521,21 @@
                 }
               },
               "nodeSelector": {
+                "description": "Node selector for instance and init job pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podAnnotations": {
+                "description": "Annotations for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podLabels": {
+                "description": "Labels for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
@@ -12606,6 +12638,7 @@
                 }
               },
               "runtimeClassName": {
+                "description": "Runtime class for instance pods.",
                 "type": "string"
               },
               "setHostnameAsFqdn": {
@@ -12719,6 +12752,7 @@
                 "format": "int64"
               },
               "tolerations": {
+                "description": "Tolerations for instance and init job pods.",
                 "type": "array",
                 "items": {
                   "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -13609,6 +13643,7 @@
           }
         },
         "extraPodAnnotations": {
+          "description": "Deprecated: Despite its name, it adds annotations to all resources.",
           "type": "object",
           "additionalProperties": {
             "type": "string"
@@ -13618,9 +13653,8 @@
           "type": "boolean"
         },
         "hostNetwork": {
-          "description": "Use the host's network namespace for all components.",
-          "type": "boolean",
-          "default": false
+          "description": "Use the host's network namespace.",
+          "type": "boolean"
         },
         "httpProxies": {
           "type": "array",
@@ -14407,7 +14441,7 @@
                 }
               },
               "dnsConfig": {
-                "description": "DNSConfig allows customizing the DNS settings for the pods.",
+                "description": "DNSConfig allows customizing the DNS settings.",
                 "type": "object",
                 "properties": {
                   "nameservers": {
@@ -14448,7 +14482,7 @@
                 }
               },
               "dnsPolicy": {
-                "description": "DNSPolicy defines how a pod's DNS will be configured.",
+                "description": "DNSPolicy defines how DNS will be configured.",
                 "type": "string"
               },
               "enableAntiAffinity": {
@@ -14463,7 +14497,7 @@
                 }
               },
               "hostNetwork": {
-                "description": "Use the host's network namespace, this overrides global option.",
+                "description": "Use the host's network namespace.",
                 "type": "boolean"
               },
               "httpNodePort": {
@@ -14741,18 +14775,21 @@
                 }
               },
               "nodeSelector": {
+                "description": "Node selector for instance and init job pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podAnnotations": {
+                "description": "Annotations for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podLabels": {
+                "description": "Labels for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
@@ -14852,6 +14889,7 @@
                 "minLength": 1
               },
               "runtimeClassName": {
+                "description": "Runtime class for instance pods.",
                 "type": "string"
               },
               "serviceType": {
@@ -14956,6 +14994,7 @@
                 "format": "int64"
               },
               "tolerations": {
+                "description": "Tolerations for instance and init job pods.",
                 "type": "array",
                 "items": {
                   "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -16649,7 +16688,7 @@
                 }
               },
               "dnsConfig": {
-                "description": "DNSConfig allows customizing the DNS settings for the pods.",
+                "description": "DNSConfig allows customizing the DNS settings.",
                 "type": "object",
                 "properties": {
                   "nameservers": {
@@ -16690,7 +16729,7 @@
                 }
               },
               "dnsPolicy": {
-                "description": "DNSPolicy defines how a pod's DNS will be configured.",
+                "description": "DNSPolicy defines how DNS will be configured.",
                 "type": "string"
               },
               "enableAntiAffinity": {
@@ -16705,7 +16744,7 @@
                 }
               },
               "hostNetwork": {
-                "description": "Use the host's network namespace, this overrides global option.",
+                "description": "Use the host's network namespace.",
                 "type": "boolean"
               },
               "image": {
@@ -16965,18 +17004,21 @@
                 }
               },
               "nodeSelector": {
+                "description": "Node selector for instance and init job pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podAnnotations": {
+                "description": "Annotations for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podLabels": {
+                "description": "Labels for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
@@ -17076,6 +17118,7 @@
                 "minLength": 1
               },
               "runtimeClassName": {
+                "description": "Runtime class for instance pods.",
                 "type": "string"
               },
               "serviceType": {
@@ -17179,6 +17222,7 @@
                 "format": "int64"
               },
               "tolerations": {
+                "description": "Tolerations for instance and init job pods.",
                 "type": "array",
                 "items": {
                   "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -18836,7 +18880,7 @@
               "type": "integer"
             },
             "dnsConfig": {
-              "description": "DNSConfig allows customizing the DNS settings for the pods.",
+              "description": "DNSConfig allows customizing the DNS settings.",
               "type": "object",
               "properties": {
                 "nameservers": {
@@ -18877,7 +18921,7 @@
               }
             },
             "dnsPolicy": {
-              "description": "DNSPolicy defines how a pod's DNS will be configured.",
+              "description": "DNSPolicy defines how DNS will be configured.",
               "type": "string"
             },
             "enableAntiAffinity": {
@@ -18901,7 +18945,7 @@
               }
             },
             "hostNetwork": {
-              "description": "Use the host's network namespace, this overrides global option.",
+              "description": "Use the host's network namespace.",
               "type": "boolean"
             },
             "image": {
@@ -19161,18 +19205,21 @@
               }
             },
             "nodeSelector": {
+              "description": "Node selector for instance and init job pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podAnnotations": {
+              "description": "Annotations for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podLabels": {
+              "description": "Labels for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
@@ -19267,6 +19314,7 @@
               }
             },
             "runtimeClassName": {
+              "description": "Runtime class for instance pods.",
               "type": "string"
             },
             "setHostnameAsFqdn": {
@@ -19366,6 +19414,7 @@
               "format": "int64"
             },
             "tolerations": {
+              "description": "Tolerations for instance and init job pods.",
               "type": "array",
               "items": {
                 "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -20297,6 +20346,7 @@
           }
         },
         "nodeSelector": {
+          "description": "Node selector for instance and init job pods.",
           "type": "object",
           "additionalProperties": {
             "type": "string"
@@ -20353,6 +20403,20 @@
                 }
               }
             }
+          }
+        },
+        "podAnnotations": {
+          "description": "Annotations for instance pods.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podLabels": {
+          "description": "Labels for instance pods.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
           }
         },
         "primaryMasters": {
@@ -21120,7 +21184,7 @@
               "type": "integer"
             },
             "dnsConfig": {
-              "description": "DNSConfig allows customizing the DNS settings for the pods.",
+              "description": "DNSConfig allows customizing the DNS settings.",
               "type": "object",
               "properties": {
                 "nameservers": {
@@ -21161,7 +21225,7 @@
               }
             },
             "dnsPolicy": {
-              "description": "DNSPolicy defines how a pod's DNS will be configured.",
+              "description": "DNSPolicy defines how DNS will be configured.",
               "type": "string"
             },
             "enableAntiAffinity": {
@@ -21185,7 +21249,7 @@
               }
             },
             "hostNetwork": {
-              "description": "Use the host's network namespace, this overrides global option.",
+              "description": "Use the host's network namespace.",
               "type": "boolean"
             },
             "hydraPersistenceUploader": {
@@ -21459,18 +21523,21 @@
               }
             },
             "nodeSelector": {
+              "description": "Node selector for instance and init job pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podAnnotations": {
+              "description": "Annotations for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podLabels": {
+              "description": "Labels for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
@@ -21565,6 +21632,7 @@
               }
             },
             "runtimeClassName": {
+              "description": "Runtime class for instance pods.",
               "type": "string"
             },
             "setHostnameAsFqdn": {
@@ -21682,6 +21750,7 @@
               }
             },
             "tolerations": {
+              "description": "Tolerations for instance and init job pods.",
               "type": "array",
               "items": {
                 "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -23329,7 +23398,7 @@
               }
             },
             "dnsConfig": {
-              "description": "DNSConfig allows customizing the DNS settings for the pods.",
+              "description": "DNSConfig allows customizing the DNS settings.",
               "type": "object",
               "properties": {
                 "nameservers": {
@@ -23370,7 +23439,7 @@
               }
             },
             "dnsPolicy": {
-              "description": "DNSPolicy defines how a pod's DNS will be configured.",
+              "description": "DNSPolicy defines how DNS will be configured.",
               "type": "string"
             },
             "enableAntiAffinity": {
@@ -23385,7 +23454,7 @@
               }
             },
             "hostNetwork": {
-              "description": "Use the host's network namespace, this overrides global option.",
+              "description": "Use the host's network namespace.",
               "type": "boolean"
             },
             "image": {
@@ -23645,18 +23714,21 @@
               }
             },
             "nodeSelector": {
+              "description": "Node selector for instance and init job pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podAnnotations": {
+              "description": "Annotations for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podLabels": {
+              "description": "Labels for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
@@ -23751,6 +23823,7 @@
               }
             },
             "runtimeClassName": {
+              "description": "Runtime class for instance pods.",
               "type": "string"
             },
             "setHostnameAsFqdn": {
@@ -23850,6 +23923,7 @@
               "format": "int64"
             },
             "tolerations": {
+              "description": "Tolerations for instance and init job pods.",
               "type": "array",
               "items": {
                 "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -25497,7 +25571,7 @@
               }
             },
             "dnsConfig": {
-              "description": "DNSConfig allows customizing the DNS settings for the pods.",
+              "description": "DNSConfig allows customizing the DNS settings.",
               "type": "object",
               "properties": {
                 "nameservers": {
@@ -25538,7 +25612,7 @@
               }
             },
             "dnsPolicy": {
-              "description": "DNSPolicy defines how a pod's DNS will be configured.",
+              "description": "DNSPolicy defines how DNS will be configured.",
               "type": "string"
             },
             "enableAntiAffinity": {
@@ -25553,7 +25627,7 @@
               }
             },
             "hostNetwork": {
-              "description": "Use the host's network namespace, this overrides global option.",
+              "description": "Use the host's network namespace.",
               "type": "boolean"
             },
             "image": {
@@ -25813,18 +25887,21 @@
               }
             },
             "nodeSelector": {
+              "description": "Node selector for instance and init job pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podAnnotations": {
+              "description": "Annotations for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podLabels": {
+              "description": "Labels for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
@@ -25919,6 +25996,7 @@
               }
             },
             "runtimeClassName": {
+              "description": "Runtime class for instance pods.",
               "type": "string"
             },
             "setHostnameAsFqdn": {
@@ -26018,6 +26096,7 @@
               "format": "int64"
             },
             "tolerations": {
+              "description": "Tolerations for instance and init job pods.",
               "type": "array",
               "items": {
                 "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -27667,7 +27746,7 @@
                 }
               },
               "dnsConfig": {
-                "description": "DNSConfig allows customizing the DNS settings for the pods.",
+                "description": "DNSConfig allows customizing the DNS settings.",
                 "type": "object",
                 "properties": {
                   "nameservers": {
@@ -27708,7 +27787,7 @@
                 }
               },
               "dnsPolicy": {
-                "description": "DNSPolicy defines how a pod's DNS will be configured.",
+                "description": "DNSPolicy defines how DNS will be configured.",
                 "type": "string"
               },
               "enableAntiAffinity": {
@@ -27723,7 +27802,7 @@
                 }
               },
               "hostNetwork": {
-                "description": "Use the host's network namespace, this overrides global option.",
+                "description": "Use the host's network namespace.",
                 "type": "boolean"
               },
               "image": {
@@ -27987,18 +28066,21 @@
                 "format": "int32"
               },
               "nodeSelector": {
+                "description": "Node selector for instance and init job pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podAnnotations": {
+                "description": "Annotations for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podLabels": {
+                "description": "Labels for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
@@ -28098,6 +28180,7 @@
                 "minLength": 1
               },
               "runtimeClassName": {
+                "description": "Runtime class for instance pods.",
                 "type": "string"
               },
               "serviceType": {
@@ -28201,6 +28284,7 @@
                 "format": "int64"
               },
               "tolerations": {
+                "description": "Tolerations for instance and init job pods.",
                 "type": "array",
                 "items": {
                   "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -29131,6 +29215,10 @@
             }
           }
         },
+        "runtimeClassName": {
+          "description": "Runtime class for instance pods.",
+          "type": "string"
+        },
         "schedulers": {
           "type": "object",
           "properties": {
@@ -29890,7 +29978,7 @@
               }
             },
             "dnsConfig": {
-              "description": "DNSConfig allows customizing the DNS settings for the pods.",
+              "description": "DNSConfig allows customizing the DNS settings.",
               "type": "object",
               "properties": {
                 "nameservers": {
@@ -29931,7 +30019,7 @@
               }
             },
             "dnsPolicy": {
-              "description": "DNSPolicy defines how a pod's DNS will be configured.",
+              "description": "DNSPolicy defines how DNS will be configured.",
               "type": "string"
             },
             "enableAntiAffinity": {
@@ -29946,7 +30034,7 @@
               }
             },
             "hostNetwork": {
-              "description": "Use the host's network namespace, this overrides global option.",
+              "description": "Use the host's network namespace.",
               "type": "boolean"
             },
             "image": {
@@ -30206,18 +30294,21 @@
               }
             },
             "nodeSelector": {
+              "description": "Node selector for instance and init job pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podAnnotations": {
+              "description": "Annotations for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podLabels": {
+              "description": "Labels for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
@@ -30312,6 +30403,7 @@
               }
             },
             "runtimeClassName": {
+              "description": "Runtime class for instance pods.",
               "type": "string"
             },
             "setHostnameAsFqdn": {
@@ -30411,6 +30503,7 @@
               "format": "int64"
             },
             "tolerations": {
+              "description": "Tolerations for instance and init job pods.",
               "type": "array",
               "items": {
                 "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -32066,7 +32159,7 @@
                 "type": "integer"
               },
               "dnsConfig": {
-                "description": "DNSConfig allows customizing the DNS settings for the pods.",
+                "description": "DNSConfig allows customizing the DNS settings.",
                 "type": "object",
                 "properties": {
                   "nameservers": {
@@ -32107,7 +32200,7 @@
                 }
               },
               "dnsPolicy": {
-                "description": "DNSPolicy defines how a pod's DNS will be configured.",
+                "description": "DNSPolicy defines how DNS will be configured.",
                 "type": "string"
               },
               "enableAntiAffinity": {
@@ -32131,7 +32224,7 @@
                 }
               },
               "hostNetwork": {
-                "description": "Use the host's network namespace, this overrides global option.",
+                "description": "Use the host's network namespace.",
                 "type": "boolean"
               },
               "hydraPersistenceUploader": {
@@ -32405,18 +32498,21 @@
                 }
               },
               "nodeSelector": {
+                "description": "Node selector for instance and init job pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podAnnotations": {
+                "description": "Annotations for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podLabels": {
+                "description": "Labels for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
@@ -32511,6 +32607,7 @@
                 }
               },
               "runtimeClassName": {
+                "description": "Runtime class for instance pods.",
                 "type": "string"
               },
               "setHostnameAsFqdn": {
@@ -32628,6 +32725,7 @@
                 }
               },
               "tolerations": {
+                "description": "Tolerations for instance and init job pods.",
                 "type": "array",
                 "items": {
                   "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -33517,6 +33615,11 @@
             }
           }
         },
+        "setHostnameAsFqdn": {
+          "description": "SetHostnameAsFQDN indicates whether to set the hostname as FQDN.",
+          "type": "boolean",
+          "default": true
+        },
         "spyt": {
           "type": "object",
           "properties": {
@@ -33543,7 +33646,7 @@
               "type": "string"
             },
             "dnsConfig": {
-              "description": "DNSConfig allows customizing the DNS settings for the pods.",
+              "description": "DNSConfig allows customizing the DNS settings.",
               "type": "object",
               "properties": {
                 "nameservers": {
@@ -33583,8 +33686,16 @@
                 }
               }
             },
+            "dnsPolicy": {
+              "description": "DNSPolicy defines how DNS will be configured.",
+              "type": "string"
+            },
             "externalProxy": {
               "type": "string"
+            },
+            "hostNetwork": {
+              "description": "Use the host's network namespace.",
+              "type": "boolean"
             },
             "image": {
               "type": "string"
@@ -33594,6 +33705,21 @@
               "type": "boolean"
             },
             "nodeSelector": {
+              "description": "Node selector for instance and init job pods.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "podAnnotations": {
+              "description": "Annotations for instance pods.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "podLabels": {
+              "description": "Labels for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
@@ -33662,7 +33788,17 @@
                 }
               }
             },
+            "runtimeClassName": {
+              "description": "Runtime class for instance pods.",
+              "type": "string"
+            },
+            "setHostnameAsFqdn": {
+              "description": "SetHostnameAsFQDN indicates whether to set the hostname as FQDN.",
+              "type": "boolean",
+              "default": true
+            },
             "tolerations": {
+              "description": "Tolerations for instance and init job pods.",
               "type": "array",
               "items": {
                 "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -34453,7 +34589,7 @@
               }
             },
             "dnsConfig": {
-              "description": "DNSConfig allows customizing the DNS settings for the pods.",
+              "description": "DNSConfig allows customizing the DNS settings.",
               "type": "object",
               "properties": {
                 "nameservers": {
@@ -34494,7 +34630,7 @@
               }
             },
             "dnsPolicy": {
-              "description": "DNSPolicy defines how a pod's DNS will be configured.",
+              "description": "DNSPolicy defines how DNS will be configured.",
               "type": "string"
             },
             "enableAntiAffinity": {
@@ -34509,7 +34645,7 @@
               }
             },
             "hostNetwork": {
-              "description": "Use the host's network namespace, this overrides global option.",
+              "description": "Use the host's network namespace.",
               "type": "boolean"
             },
             "image": {
@@ -34769,18 +34905,21 @@
               }
             },
             "nodeSelector": {
+              "description": "Node selector for instance and init job pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podAnnotations": {
+              "description": "Annotations for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podLabels": {
+              "description": "Labels for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
@@ -34875,6 +35014,7 @@
               }
             },
             "runtimeClassName": {
+              "description": "Runtime class for instance pods.",
               "type": "string"
             },
             "setHostnameAsFqdn": {
@@ -34974,6 +35114,7 @@
               "format": "int64"
             },
             "tolerations": {
+              "description": "Tolerations for instance and init job pods.",
               "type": "array",
               "items": {
                 "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -36623,7 +36764,7 @@
                 }
               },
               "dnsConfig": {
-                "description": "DNSConfig allows customizing the DNS settings for the pods.",
+                "description": "DNSConfig allows customizing the DNS settings.",
                 "type": "object",
                 "properties": {
                   "nameservers": {
@@ -36664,7 +36805,7 @@
                 }
               },
               "dnsPolicy": {
-                "description": "DNSPolicy defines how a pod's DNS will be configured.",
+                "description": "DNSPolicy defines how DNS will be configured.",
                 "type": "string"
               },
               "enableAntiAffinity": {
@@ -36679,7 +36820,7 @@
                 }
               },
               "hostNetwork": {
-                "description": "Use the host's network namespace, this overrides global option.",
+                "description": "Use the host's network namespace.",
                 "type": "boolean"
               },
               "image": {
@@ -36944,18 +37085,21 @@
                 }
               },
               "nodeSelector": {
+                "description": "Node selector for instance and init job pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podAnnotations": {
+                "description": "Annotations for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podLabels": {
+                "description": "Labels for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
@@ -37054,6 +37198,7 @@
                 }
               },
               "runtimeClassName": {
+                "description": "Runtime class for instance pods.",
                 "type": "string"
               },
               "setHostnameAsFqdn": {
@@ -37160,6 +37305,7 @@
                 "format": "int64"
               },
               "tolerations": {
+                "description": "Tolerations for instance and init job pods.",
                 "type": "array",
                 "items": {
                   "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -38814,7 +38960,7 @@
                 }
               },
               "dnsConfig": {
-                "description": "DNSConfig allows customizing the DNS settings for the pods.",
+                "description": "DNSConfig allows customizing the DNS settings.",
                 "type": "object",
                 "properties": {
                   "nameservers": {
@@ -38855,7 +39001,7 @@
                 }
               },
               "dnsPolicy": {
-                "description": "DNSPolicy defines how a pod's DNS will be configured.",
+                "description": "DNSPolicy defines how DNS will be configured.",
                 "type": "string"
               },
               "enableAntiAffinity": {
@@ -38870,7 +39016,7 @@
                 }
               },
               "hostNetwork": {
-                "description": "Use the host's network namespace, this overrides global option.",
+                "description": "Use the host's network namespace.",
                 "type": "boolean"
               },
               "image": {
@@ -39135,18 +39281,21 @@
                 }
               },
               "nodeSelector": {
+                "description": "Node selector for instance and init job pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podAnnotations": {
+                "description": "Annotations for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
                 }
               },
               "podLabels": {
+                "description": "Labels for instance pods.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
@@ -39252,6 +39401,7 @@
                 "minLength": 1
               },
               "runtimeClassName": {
+                "description": "Runtime class for instance pods.",
                 "type": "string"
               },
               "serviceType": {
@@ -39355,6 +39505,7 @@
                 "format": "int64"
               },
               "tolerations": {
+                "description": "Tolerations for instance and init job pods.",
                 "type": "array",
                 "items": {
                   "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -40245,6 +40396,7 @@
           }
         },
         "tolerations": {
+          "description": "Tolerations for instance and init job pods.",
           "type": "array",
           "items": {
             "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -40285,7 +40437,7 @@
               "type": "boolean"
             },
             "dnsConfig": {
-              "description": "DNSConfig allows customizing the DNS settings for the pods.",
+              "description": "DNSConfig allows customizing the DNS settings.",
               "type": "object",
               "properties": {
                 "nameservers": {
@@ -40324,6 +40476,10 @@
                   "x-kubernetes-list-type": "atomic"
                 }
               }
+            },
+            "dnsPolicy": {
+              "description": "DNSPolicy defines how DNS will be configured.",
+              "type": "string"
             },
             "environment": {
               "type": "string",
@@ -40457,6 +40613,10 @@
             "group": {
               "type": "string"
             },
+            "hostNetwork": {
+              "description": "Use the host's network namespace.",
+              "type": "boolean"
+            },
             "httpNodePort": {
               "type": "integer",
               "format": "int32"
@@ -40469,6 +40629,7 @@
               "format": "int32"
             },
             "nodeSelector": {
+              "description": "Node selector for instance and init job pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
@@ -40477,6 +40638,20 @@
             "odinBaseUrl": {
               "description": "Odin is a service for monitoring the availability of YTsaurus clusters.",
               "type": "string"
+            },
+            "podAnnotations": {
+              "description": "Annotations for instance pods.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "podLabels": {
+              "description": "Labels for instance pods.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
             },
             "resources": {
               "description": "ResourceRequirements describes the compute resource requirements.",
@@ -40541,6 +40716,10 @@
                 }
               }
             },
+            "runtimeClassName": {
+              "description": "Runtime class for instance pods.",
+              "type": "string"
+            },
             "secure": {
               "description": "Use secure connection to the cluster's http-proxies.",
               "type": "boolean",
@@ -40551,11 +40730,17 @@
               "type": "string",
               "default": "NodePort"
             },
+            "setHostnameAsFqdn": {
+              "description": "SetHostnameAsFQDN indicates whether to set the hostname as FQDN.",
+              "type": "boolean",
+              "default": true
+            },
             "theme": {
               "type": "string",
               "default": "lavander"
             },
             "tolerations": {
+              "description": "Tolerations for instance and init job pods.",
               "type": "array",
               "items": {
                 "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",
@@ -41435,7 +41620,7 @@
               }
             },
             "dnsConfig": {
-              "description": "DNSConfig allows customizing the DNS settings for the pods.",
+              "description": "DNSConfig allows customizing the DNS settings.",
               "type": "object",
               "properties": {
                 "nameservers": {
@@ -41476,7 +41661,7 @@
               }
             },
             "dnsPolicy": {
-              "description": "DNSPolicy defines how a pod's DNS will be configured.",
+              "description": "DNSPolicy defines how DNS will be configured.",
               "type": "string"
             },
             "enableAntiAffinity": {
@@ -41491,7 +41676,7 @@
               }
             },
             "hostNetwork": {
-              "description": "Use the host's network namespace, this overrides global option.",
+              "description": "Use the host's network namespace.",
               "type": "boolean"
             },
             "image": {
@@ -41751,18 +41936,21 @@
               }
             },
             "nodeSelector": {
+              "description": "Node selector for instance and init job pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podAnnotations": {
+              "description": "Annotations for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
               }
             },
             "podLabels": {
+              "description": "Labels for instance pods.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
@@ -41857,6 +42045,7 @@
               }
             },
             "runtimeClassName": {
+              "description": "Runtime class for instance pods.",
               "type": "string"
             },
             "setHostnameAsFqdn": {
@@ -41956,6 +42145,7 @@
               "format": "int64"
             },
             "tolerations": {
+              "description": "Tolerations for instance and init job pods.",
               "type": "array",
               "items": {
                 "description": "The pod this Toleration is attached to tolerates any taint that matches\nthe...",

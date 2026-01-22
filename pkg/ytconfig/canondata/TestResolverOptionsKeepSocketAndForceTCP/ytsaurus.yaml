@@ -17,7 +17,6 @@ spec:
     resources: {}
   enableFullUpdate: false
   forceTcp: true
-  hostNetwork: false
   isManaged: false
   kafkaProxies:
   - instanceCount: 3

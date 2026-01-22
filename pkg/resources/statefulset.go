@@ -16,7 +16,7 @@ import (
 type StatefulSet struct {
 	BaseManagedResource[*appsv1.StatefulSet]
 
-	commonSpec ytv1.CommonSpec
+	commonSpec *ytv1.CommonSpec
 	built      bool
 }
 
@@ -24,7 +24,7 @@ func NewStatefulSet(
 	name string,
 	labeller *labeller2.Labeller,
 	proxy apiproxy.APIProxy,
-	commonSpec ytv1.CommonSpec,
+	commonSpec *ytv1.CommonSpec,
 ) *StatefulSet {
 	return &StatefulSet{
 		BaseManagedResource: BaseManagedResource[*appsv1.StatefulSet]{

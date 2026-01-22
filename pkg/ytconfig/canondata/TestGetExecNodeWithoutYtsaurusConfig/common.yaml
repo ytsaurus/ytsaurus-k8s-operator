@@ -1,4 +1,3 @@
-hostNetwork: false
 useIpv4: false
 useIpv6: true
 usePorto: false

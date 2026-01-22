@@ -71,7 +71,6 @@ spec:
     volumeMounts:
     - mountPath: /yt/node-data
       name: node-data
-  hostNetwork: false
   httpProxies:
   - instanceCount: 1
     loggers:

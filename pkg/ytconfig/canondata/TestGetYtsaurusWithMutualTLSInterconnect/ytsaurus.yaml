@@ -92,7 +92,6 @@ spec:
     volumeMounts:
     - mountPath: /yt/hdd1
       name: hdd1
-  hostNetwork: false
   httpProxies:
   - httpNodePort: 10000
     httpsNodePort: 10001

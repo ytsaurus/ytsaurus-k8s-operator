@@ -191,7 +191,7 @@ func (r *ytsaurusValidator) validateHostAddresses(newYtsaurus *Ytsaurus, masters
 	var allErrors field.ErrorList
 
 	hostAddressesFieldPath := fieldPath.Child("hostAddresses")
-	if !ptr.Deref(mastersSpec.HostNetwork, newYtsaurus.Spec.HostNetwork) && len(mastersSpec.HostAddresses) != 0 {
+	if !ptr.Deref(mastersSpec.HostNetwork, ptr.Deref(newYtsaurus.Spec.HostNetwork, false)) && len(mastersSpec.HostAddresses) != 0 {
 		allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("hostNetwork"),
 			fmt.Sprintf("%s doesn't make sense without hostNetwork=true", hostAddressesFieldPath.String())))
 	}
@@ -562,11 +562,19 @@ func (r *ytsaurusValidator) validateUi(newYtsaurus *Ytsaurus) field.ErrorList {
 	return allErrors
 }
 
+func (r *baseValidator) validatePodSpec(podSpec *PodSpec, path *field.Path) field.ErrorList {
+	var allErrors field.ErrorList
+
+	allErrors = append(allErrors, v1validation.ValidateLabels(podSpec.PodLabels, path.Child("podLabels"))...)
+	allErrors = append(allErrors, validation.ValidateAnnotations(podSpec.PodAnnotations, path.Child("podAnnotations"))...)
+
+	return allErrors
+}
+
 func (r *baseValidator) validateInstanceSpec(instanceSpec InstanceSpec, commonSpec *CommonSpec, path *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
-	allErrors = append(allErrors, v1validation.ValidateLabels(instanceSpec.PodLabels, path.Child("podLabels"))...)
-	allErrors = append(allErrors, validation.ValidateAnnotations(instanceSpec.PodAnnotations, path.Child("podAnnotations"))...)
+	allErrors = append(allErrors, r.validatePodSpec(&instanceSpec.PodSpec, path)...)
 
 	if instanceSpec.EnableAntiAffinity != nil {
 		allErrors = append(allErrors, field.Invalid(path.Child("EnableAntiAffinity"), instanceSpec.EnableAntiAffinity,
@@ -754,6 +762,7 @@ func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, o
 	var allErrors field.ErrorList
 
 	allErrors = append(allErrors, r.validateCommonSpec(&newYtsaurus.Spec.CommonSpec)...)
+	allErrors = append(allErrors, r.validatePodSpec(&newYtsaurus.Spec.PodSpec, field.NewPath("spec"))...)
 	allErrors = append(allErrors, r.validateDiscovery(newYtsaurus)...)
 	allErrors = append(allErrors, r.validatePrimaryMasters(newYtsaurus, oldYtsaurus)...)
 	allErrors = append(allErrors, r.validateSecondaryMasters(newYtsaurus, oldYtsaurus)...)

@@ -796,8 +796,7 @@ spec:
                         type: object
                     type: object
                   dnsConfig:
-                    description: DNSConfig allows customizing the DNS settings for
-                      the pods.
+                    description: DNSConfig allows customizing the DNS settings.
                     properties:
                       nameservers:
                         description: A list of DNS name server IP addresses.
@@ -830,7 +829,7 @@ spec:
                         x-kubernetes-list-type: atomic
                     type: object
                   dnsPolicy:
-                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    description: DNSPolicy defines how DNS will be configured.
                     type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -841,8 +840,7 @@ spec:
                       type: string
                     type: array
                   hostNetwork:
-                    description: Use the host's network namespace, this overrides
-                      global option.
+                    description: Use the host's network namespace.
                     type: boolean
                   image:
                     description: Overrides coreImage for component.
@@ -1033,14 +1031,17 @@ spec:
                   nodeSelector:
                     additionalProperties:
                       type: string
+                    description: Node selector for instance and init job pods.
                     type: object
                   podAnnotations:
                     additionalProperties:
                       type: string
+                    description: Annotations for instance pods.
                     type: object
                   podLabels:
                     additionalProperties:
                       type: string
+                    description: Labels for instance pods.
                     type: object
                   readinessProbeParams:
                     properties:
@@ -1106,6 +1107,7 @@ spec:
                         type: object
                     type: object
                   runtimeClassName:
+                    description: Runtime class for instance pods.
                     type: string
                   setHostnameAsFqdn:
                     default: true
@@ -1177,6 +1179,7 @@ spec:
                     format: int64
                     type: integer
                   tolerations:
+                    description: Tolerations for instance and init job pods.
                     items:
                       description: |-
                         The pod this Toleration is attached to tolerates any taint that matches
@@ -2759,8 +2762,7 @@ spec:
                         type: object
                     type: object
                   dnsConfig:
-                    description: DNSConfig allows customizing the DNS settings for
-                      the pods.
+                    description: DNSConfig allows customizing the DNS settings.
                     properties:
                       nameservers:
                         description: A list of DNS name server IP addresses.
@@ -2793,7 +2795,7 @@ spec:
                         x-kubernetes-list-type: atomic
                     type: object
                   dnsPolicy:
-                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    description: DNSPolicy defines how DNS will be configured.
                     type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -2804,8 +2806,7 @@ spec:
                       type: string
                     type: array
                   hostNetwork:
-                    description: Use the host's network namespace, this overrides
-                      global option.
+                    description: Use the host's network namespace.
                     type: boolean
                   image:
                     description: Overrides coreImage for component.
@@ -2996,14 +2997,17 @@ spec:
                   nodeSelector:
                     additionalProperties:
                       type: string
+                    description: Node selector for instance and init job pods.
                     type: object
                   podAnnotations:
                     additionalProperties:
                       type: string
+                    description: Annotations for instance pods.
                     type: object
                   podLabels:
                     additionalProperties:
                       type: string
+                    description: Labels for instance pods.
                     type: object
                   readinessProbeParams:
                     properties:
@@ -3069,6 +3073,7 @@ spec:
                         type: object
                     type: object
                   runtimeClassName:
+                    description: Runtime class for instance pods.
                     type: string
                   setHostnameAsFqdn:
                     default: true
@@ -3140,6 +3145,7 @@ spec:
                     format: int64
                     type: integer
                   tolerations:
+                    description: Tolerations for instance and init job pods.
                     items:
                       description: |-
                         The pod this Toleration is attached to tolerates any taint that matches
@@ -4621,8 +4627,7 @@ spec:
                   disable:
                     type: boolean
                   dnsConfig:
-                    description: DNSConfig allows customizing the DNS settings for
-                      the pods.
+                    description: DNSConfig allows customizing the DNS settings.
                     properties:
                       nameservers:
                         description: A list of DNS name server IP addresses.
@@ -4655,7 +4660,7 @@ spec:
                         x-kubernetes-list-type: atomic
                     type: object
                   dnsPolicy:
-                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    description: DNSPolicy defines how DNS will be configured.
                     type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -4666,8 +4671,7 @@ spec:
                       type: string
                     type: array
                   hostNetwork:
-                    description: Use the host's network namespace, this overrides
-                      global option.
+                    description: Use the host's network namespace.
                     type: boolean
                   image:
                     description: Overrides coreImage for component.
@@ -4858,14 +4862,17 @@ spec:
                   nodeSelector:
                     additionalProperties:
                       type: string
+                    description: Node selector for instance and init job pods.
                     type: object
                   podAnnotations:
                     additionalProperties:
                       type: string
+                    description: Annotations for instance pods.
                     type: object
                   podLabels:
                     additionalProperties:
                       type: string
+                    description: Labels for instance pods.
                     type: object
                   readinessProbeParams:
                     properties:
@@ -4931,6 +4938,7 @@ spec:
                         type: object
                     type: object
                   runtimeClassName:
+                    description: Runtime class for instance pods.
                     type: string
                   setHostnameAsFqdn:
                     default: true
@@ -5002,6 +5010,7 @@ spec:
                     format: int64
                     type: integer
                   tolerations:
+                    description: Tolerations for instance and init job pods.
                     items:
                       description: |-
                         The pod this Toleration is attached to tolerates any taint that matches
@@ -6488,8 +6497,7 @@ spec:
                           type: object
                       type: object
                     dnsConfig:
-                      description: DNSConfig allows customizing the DNS settings for
-                        the pods.
+                      description: DNSConfig allows customizing the DNS settings.
                       properties:
                         nameservers:
                           description: A list of DNS name server IP addresses.
@@ -6523,7 +6531,7 @@ spec:
                           x-kubernetes-list-type: atomic
                       type: object
                     dnsPolicy:
-                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      description: DNSPolicy defines how DNS will be configured.
                       type: string
                     enableAntiAffinity:
                       description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -6534,8 +6542,7 @@ spec:
                         type: string
                       type: array
                     hostNetwork:
-                      description: Use the host's network namespace, this overrides
-                        global option.
+                      description: Use the host's network namespace.
                       type: boolean
                     image:
                       description: Overrides coreImage for component.
@@ -6730,14 +6737,17 @@ spec:
                     nodeSelector:
                       additionalProperties:
                         type: string
+                      description: Node selector for instance and init job pods.
                       type: object
                     podAnnotations:
                       additionalProperties:
                         type: string
+                      description: Annotations for instance pods.
                       type: object
                     podLabels:
                       additionalProperties:
                         type: string
+                      description: Labels for instance pods.
                       type: object
                     rack:
                       description: Name of the node rack.
@@ -6806,6 +6816,7 @@ spec:
                           type: object
                       type: object
                     runtimeClassName:
+                      description: Runtime class for instance pods.
                       type: string
                     setHostnameAsFqdn:
                       default: true
@@ -6882,6 +6893,7 @@ spec:
                       format: int64
                       type: integer
                     tolerations:
+                      description: Tolerations for instance and init job pods.
                       items:
                         description: |-
                           The pod this Toleration is attached to tolerates any taint that matches
@@ -8364,8 +8376,7 @@ spec:
                         type: object
                     type: object
                   dnsConfig:
-                    description: DNSConfig allows customizing the DNS settings for
-                      the pods.
+                    description: DNSConfig allows customizing the DNS settings.
                     properties:
                       nameservers:
                         description: A list of DNS name server IP addresses.
@@ -8398,7 +8409,7 @@ spec:
                         x-kubernetes-list-type: atomic
                     type: object
                   dnsPolicy:
-                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    description: DNSPolicy defines how DNS will be configured.
                     type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -8409,8 +8420,7 @@ spec:
                       type: string
                     type: array
                   hostNetwork:
-                    description: Use the host's network namespace, this overrides
-                      global option.
+                    description: Use the host's network namespace.
                     type: boolean
                   image:
                     description: Overrides coreImage for component.
@@ -8601,14 +8611,17 @@ spec:
                   nodeSelector:
                     additionalProperties:
                       type: string
+                    description: Node selector for instance and init job pods.
                     type: object
                   podAnnotations:
                     additionalProperties:
                       type: string
+                    description: Annotations for instance pods.
                     type: object
                   podLabels:
                     additionalProperties:
                       type: string
+                    description: Labels for instance pods.
                     type: object
                   readinessProbeParams:
                     properties:
@@ -8674,6 +8687,7 @@ spec:
                         type: object
                     type: object
                   runtimeClassName:
+                    description: Runtime class for instance pods.
                     type: string
                   setHostnameAsFqdn:
                     default: true
@@ -8745,6 +8759,7 @@ spec:
                     format: int64
                     type: integer
                   tolerations:
+                    description: Tolerations for instance and init job pods.
                     items:
                       description: |-
                         The pod this Toleration is attached to tolerates any taint that matches
@@ -9528,8 +9543,7 @@ spec:
                     type: array
                 type: object
               dnsConfig:
-                description: DNSConfig allows customizing the DNS settings for the
-                  pods.
+                description: DNSConfig allows customizing the DNS settings.
                 properties:
                   nameservers:
                     description: A list of DNS name server IP addresses.
@@ -9561,6 +9575,9 @@ spec:
                     type: array
                     x-kubernetes-list-type: atomic
                 type: object
+              dnsPolicy:
+                description: DNSPolicy defines how DNS will be configured.
+                type: string
               enableFullUpdate:
                 default: true
                 type: boolean
@@ -10272,8 +10289,7 @@ spec:
                           type: object
                       type: object
                     dnsConfig:
-                      description: DNSConfig allows customizing the DNS settings for
-                        the pods.
+                      description: DNSConfig allows customizing the DNS settings.
                       properties:
                         nameservers:
                           description: A list of DNS name server IP addresses.
@@ -10307,7 +10323,7 @@ spec:
                           x-kubernetes-list-type: atomic
                       type: object
                     dnsPolicy:
-                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      description: DNSPolicy defines how DNS will be configured.
                       type: string
                     enableAntiAffinity:
                       description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -10324,8 +10340,7 @@ spec:
                           type: string
                       type: object
                     hostNetwork:
-                      description: Use the host's network namespace, this overrides
-                        global option.
+                      description: Use the host's network namespace.
                       type: boolean
                     image:
                       description: Overrides coreImage for component.
@@ -10732,14 +10747,17 @@ spec:
                     nodeSelector:
                       additionalProperties:
                         type: string
+                      description: Node selector for instance and init job pods.
                       type: object
                     podAnnotations:
                       additionalProperties:
                         type: string
+                      description: Annotations for instance pods.
                       type: object
                     podLabels:
                       additionalProperties:
                         type: string
+                      description: Labels for instance pods.
                       type: object
                     privileged:
                       default: true
@@ -10811,6 +10829,7 @@ spec:
                           type: object
                       type: object
                     runtimeClassName:
+                      description: Runtime class for instance pods.
                       type: string
                     setHostnameAsFqdn:
                       default: true
@@ -10892,6 +10911,7 @@ spec:
                       format: int64
                       type: integer
                     tolerations:
+                      description: Tolerations for instance and init job pods.
                       items:
                         description: |-
                           The pod this Toleration is attached to tolerates any taint that matches
@@ -11681,12 +11701,13 @@ spec:
               extraPodAnnotations:
                 additionalProperties:
                   type: string
+                description: 'Deprecated: Despite its name, it adds annotations to
+                  all resources.'
                 type: object
               forceTcp:
                 type: boolean
               hostNetwork:
-                default: false
-                description: Use the host's network namespace for all components.
+                description: Use the host's network namespace.
                 type: boolean
               httpProxies:
                 items:
@@ -12409,8 +12430,7 @@ spec:
                           type: integer
                       type: object
                     dnsConfig:
-                      description: DNSConfig allows customizing the DNS settings for
-                        the pods.
+                      description: DNSConfig allows customizing the DNS settings.
                       properties:
                         nameservers:
                           description: A list of DNS name server IP addresses.
@@ -12444,7 +12464,7 @@ spec:
                           x-kubernetes-list-type: atomic
                       type: object
                     dnsPolicy:
-                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      description: DNSPolicy defines how DNS will be configured.
                       type: string
                     enableAntiAffinity:
                       description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -12455,8 +12475,7 @@ spec:
                         type: string
                       type: array
                     hostNetwork:
-                      description: Use the host's network namespace, this overrides
-                        global option.
+                      description: Use the host's network namespace.
                       type: boolean
                     httpNodePort:
                       format: int32
@@ -12661,14 +12680,17 @@ spec:
                     nodeSelector:
                       additionalProperties:
                         type: string
+                      description: Node selector for instance and init job pods.
                       type: object
                     podAnnotations:
                       additionalProperties:
                         type: string
+                      description: Annotations for instance pods.
                       type: object
                     podLabels:
                       additionalProperties:
                         type: string
+                      description: Labels for instance pods.
                       type: object
                     readinessProbeParams:
                       properties:
@@ -12738,6 +12760,7 @@ spec:
                       minLength: 1
                       type: string
                     runtimeClassName:
+                      description: Runtime class for instance pods.
                       type: string
                     serviceType:
                       default: NodePort
@@ -12814,6 +12837,7 @@ spec:
                       format: int64
                       type: integer
                     tolerations:
+                      description: Tolerations for instance and init job pods.
                       items:
                         description: |-
                           The pod this Toleration is attached to tolerates any taint that matches
@@ -14337,8 +14361,7 @@ spec:
                           type: object
                       type: object
                     dnsConfig:
-                      description: DNSConfig allows customizing the DNS settings for
-                        the pods.
+                      description: DNSConfig allows customizing the DNS settings.
                       properties:
                         nameservers:
                           description: A list of DNS name server IP addresses.
@@ -14372,7 +14395,7 @@ spec:
                           x-kubernetes-list-type: atomic
                       type: object
                     dnsPolicy:
-                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      description: DNSPolicy defines how DNS will be configured.
                       type: string
                     enableAntiAffinity:
                       description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -14383,8 +14406,7 @@ spec:
                         type: string
                       type: array
                     hostNetwork:
-                      description: Use the host's network namespace, this overrides
-                        global option.
+                      description: Use the host's network namespace.
                       type: boolean
                     image:
                       description: Overrides coreImage for component.
@@ -14575,14 +14597,17 @@ spec:
                     nodeSelector:
                       additionalProperties:
                         type: string
+                      description: Node selector for instance and init job pods.
                       type: object
                     podAnnotations:
                       additionalProperties:
                         type: string
+                      description: Annotations for instance pods.
                       type: object
                     podLabels:
                       additionalProperties:
                         type: string
+                      description: Labels for instance pods.
                       type: object
                     readinessProbeParams:
                       properties:
@@ -14652,6 +14677,7 @@ spec:
                       minLength: 1
                       type: string
                     runtimeClassName:
+                      description: Runtime class for instance pods.
                       type: string
                     serviceType:
                       description: Service Type string describes ingress methods for
@@ -14727,6 +14753,7 @@ spec:
                       format: int64
                       type: integer
                     tolerations:
+                      description: Tolerations for instance and init job pods.
                       items:
                         description: |-
                           The pod this Toleration is attached to tolerates any taint that matches
@@ -16212,8 +16239,7 @@ spec:
                   cellTagMasterCaches:
                     type: integer
                   dnsConfig:
-                    description: DNSConfig allows customizing the DNS settings for
-                      the pods.
+                    description: DNSConfig allows customizing the DNS settings.
                     properties:
                       nameservers:
                         description: A list of DNS name server IP addresses.
@@ -16246,7 +16272,7 @@ spec:
                         x-kubernetes-list-type: atomic
                     type: object
                   dnsPolicy:
-                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    description: DNSPolicy defines how DNS will be configured.
                     type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -16263,8 +16289,7 @@ spec:
                       type: string
                     type: array
                   hostNetwork:
-                    description: Use the host's network namespace, this overrides
-                      global option.
+                    description: Use the host's network namespace.
                     type: boolean
                   image:
                     description: Overrides coreImage for component.
@@ -16455,14 +16480,17 @@ spec:
                   nodeSelector:
                     additionalProperties:
                       type: string
+                    description: Node selector for instance and init job pods.
                     type: object
                   podAnnotations:
                     additionalProperties:
                       type: string
+                    description: Annotations for instance pods.
                     type: object
                   podLabels:
                     additionalProperties:
                       type: string
+                    description: Labels for instance pods.
                     type: object
                   readinessProbeParams:
                     properties:
@@ -16528,6 +16556,7 @@ spec:
                         type: object
                     type: object
                   runtimeClassName:
+                    description: Runtime class for instance pods.
                     type: string
                   setHostnameAsFqdn:
                     default: true
@@ -16599,6 +16628,7 @@ spec:
                     format: int64
                     type: integer
                   tolerations:
+                    description: Tolerations for instance and init job pods.
                     items:
                       description: |-
                         The pod this Toleration is attached to tolerates any taint that matches
@@ -17421,6 +17451,7 @@ spec:
               nodeSelector:
                 additionalProperties:
                   type: string
+                description: Node selector for instance and init job pods.
                 type: object
               oauthService:
                 properties:
@@ -17461,6 +17492,16 @@ spec:
                           type: object
                         type: array
                     type: object
+                type: object
+              podAnnotations:
+                additionalProperties:
+                  type: string
+                description: Annotations for instance pods.
+                type: object
+              podLabels:
+                additionalProperties:
+                  type: string
+                description: Labels for instance pods.
                 type: object
               primaryMasters:
                 properties:
@@ -18159,8 +18200,7 @@ spec:
                   cellTag:
                     type: integer
                   dnsConfig:
-                    description: DNSConfig allows customizing the DNS settings for
-                      the pods.
+                    description: DNSConfig allows customizing the DNS settings.
                     properties:
                       nameservers:
                         description: A list of DNS name server IP addresses.
@@ -18193,7 +18233,7 @@ spec:
                         x-kubernetes-list-type: atomic
                     type: object
                   dnsPolicy:
-                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    description: DNSPolicy defines how DNS will be configured.
                     type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -18210,8 +18250,7 @@ spec:
                       type: string
                     type: array
                   hostNetwork:
-                    description: Use the host's network namespace, this overrides
-                      global option.
+                    description: Use the host's network namespace.
                     type: boolean
                   hydraPersistenceUploader:
                     properties:
@@ -18411,14 +18450,17 @@ spec:
                   nodeSelector:
                     additionalProperties:
                       type: string
+                    description: Node selector for instance and init job pods.
                     type: object
                   podAnnotations:
                     additionalProperties:
                       type: string
+                    description: Annotations for instance pods.
                     type: object
                   podLabels:
                     additionalProperties:
                       type: string
+                    description: Labels for instance pods.
                     type: object
                   readinessProbeParams:
                     properties:
@@ -18484,6 +18526,7 @@ spec:
                         type: object
                     type: object
                   runtimeClassName:
+                    description: Runtime class for instance pods.
                     type: string
                   setHostnameAsFqdn:
                     default: true
@@ -18567,6 +18610,7 @@ spec:
                         type: string
                     type: object
                   tolerations:
+                    description: Tolerations for instance and init job pods.
                     items:
                       description: |-
                         The pod this Toleration is attached to tolerates any taint that matches
@@ -20046,8 +20090,7 @@ spec:
                         type: object
                     type: object
                   dnsConfig:
-                    description: DNSConfig allows customizing the DNS settings for
-                      the pods.
+                    description: DNSConfig allows customizing the DNS settings.
                     properties:
                       nameservers:
                         description: A list of DNS name server IP addresses.
@@ -20080,7 +20123,7 @@ spec:
                         x-kubernetes-list-type: atomic
                     type: object
                   dnsPolicy:
-                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    description: DNSPolicy defines how DNS will be configured.
                     type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -20091,8 +20134,7 @@ spec:
                       type: string
                     type: array
                   hostNetwork:
-                    description: Use the host's network namespace, this overrides
-                      global option.
+                    description: Use the host's network namespace.
                     type: boolean
                   image:
                     description: Overrides coreImage for component.
@@ -20283,14 +20325,17 @@ spec:
                   nodeSelector:
                     additionalProperties:
                       type: string
+                    description: Node selector for instance and init job pods.
                     type: object
                   podAnnotations:
                     additionalProperties:
                       type: string
+                    description: Annotations for instance pods.
                     type: object
                   podLabels:
                     additionalProperties:
                       type: string
+                    description: Labels for instance pods.
                     type: object
                   readinessProbeParams:
                     properties:
@@ -20356,6 +20401,7 @@ spec:
                         type: object
                     type: object
                   runtimeClassName:
+                    description: Runtime class for instance pods.
                     type: string
                   setHostnameAsFqdn:
                     default: true
@@ -20427,6 +20473,7 @@ spec:
                     format: int64
                     type: integer
                   tolerations:
+                    description: Tolerations for instance and init job pods.
                     items:
                       description: |-
                         The pod this Toleration is attached to tolerates any taint that matches
@@ -21904,8 +21951,7 @@ spec:
                         type: object
                     type: object
                   dnsConfig:
-                    description: DNSConfig allows customizing the DNS settings for
-                      the pods.
+                    description: DNSConfig allows customizing the DNS settings.
                     properties:
                       nameservers:
                         description: A list of DNS name server IP addresses.
@@ -21938,7 +21984,7 @@ spec:
                         x-kubernetes-list-type: atomic
                     type: object
                   dnsPolicy:
-                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    description: DNSPolicy defines how DNS will be configured.
                     type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -21949,8 +21995,7 @@ spec:
                       type: string
                     type: array
                   hostNetwork:
-                    description: Use the host's network namespace, this overrides
-                      global option.
+                    description: Use the host's network namespace.
                     type: boolean
                   image:
                     description: Overrides coreImage for component.
@@ -22141,14 +22186,17 @@ spec:
                   nodeSelector:
                     additionalProperties:
                       type: string
+                    description: Node selector for instance and init job pods.
                     type: object
                   podAnnotations:
                     additionalProperties:
                       type: string
+                    description: Annotations for instance pods.
                     type: object
                   podLabels:
                     additionalProperties:
                       type: string
+                    description: Labels for instance pods.
                     type: object
                   readinessProbeParams:
                     properties:
@@ -22214,6 +22262,7 @@ spec:
                         type: object
                     type: object
                   runtimeClassName:
+                    description: Runtime class for instance pods.
                     type: string
                   setHostnameAsFqdn:
                     default: true
@@ -22285,6 +22334,7 @@ spec:
                     format: int64
                     type: integer
                   tolerations:
+                    description: Tolerations for instance and init job pods.
                     items:
                       description: |-
                         The pod this Toleration is attached to tolerates any taint that matches
@@ -23771,8 +23821,7 @@ spec:
                           type: object
                       type: object
                     dnsConfig:
-                      description: DNSConfig allows customizing the DNS settings for
-                        the pods.
+                      description: DNSConfig allows customizing the DNS settings.
                       properties:
                         nameservers:
                           description: A list of DNS name server IP addresses.
@@ -23806,7 +23855,7 @@ spec:
                           x-kubernetes-list-type: atomic
                       type: object
                     dnsPolicy:
-                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      description: DNSPolicy defines how DNS will be configured.
                       type: string
                     enableAntiAffinity:
                       description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -23817,8 +23866,7 @@ spec:
                         type: string
                       type: array
                     hostNetwork:
-                      description: Use the host's network namespace, this overrides
-                        global option.
+                      description: Use the host's network namespace.
                       type: boolean
                     image:
                       description: Overrides coreImage for component.
@@ -24012,14 +24060,17 @@ spec:
                     nodeSelector:
                       additionalProperties:
                         type: string
+                      description: Node selector for instance and init job pods.
                       type: object
                     podAnnotations:
                       additionalProperties:
                         type: string
+                      description: Annotations for instance pods.
                       type: object
                     podLabels:
                       additionalProperties:
                         type: string
+                      description: Labels for instance pods.
                       type: object
                     readinessProbeParams:
                       properties:
@@ -24089,6 +24140,7 @@ spec:
                       minLength: 1
                       type: string
                     runtimeClassName:
+                      description: Runtime class for instance pods.
                       type: string
                     serviceType:
                       description: Service Type string describes ingress methods for
@@ -24164,6 +24216,7 @@ spec:
                       format: int64
                       type: integer
                     tolerations:
+                      description: Tolerations for instance and init job pods.
                       items:
                         description: |-
                           The pod this Toleration is attached to tolerates any taint that matches
@@ -24985,6 +25038,9 @@ spec:
                       type: array
                   type: object
                 type: array
+              runtimeClassName:
+                description: Runtime class for instance pods.
+                type: string
               schedulers:
                 properties:
                   affinity:
@@ -25680,8 +25736,7 @@ spec:
                         type: object
                     type: object
                   dnsConfig:
-                    description: DNSConfig allows customizing the DNS settings for
-                      the pods.
+                    description: DNSConfig allows customizing the DNS settings.
                     properties:
                       nameservers:
                         description: A list of DNS name server IP addresses.
@@ -25714,7 +25769,7 @@ spec:
                         x-kubernetes-list-type: atomic
                     type: object
                   dnsPolicy:
-                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    description: DNSPolicy defines how DNS will be configured.
                     type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -25725,8 +25780,7 @@ spec:
                       type: string
                     type: array
                   hostNetwork:
-                    description: Use the host's network namespace, this overrides
-                      global option.
+                    description: Use the host's network namespace.
                     type: boolean
                   image:
                     description: Overrides coreImage for component.
@@ -25917,14 +25971,17 @@ spec:
                   nodeSelector:
                     additionalProperties:
                       type: string
+                    description: Node selector for instance and init job pods.
                     type: object
                   podAnnotations:
                     additionalProperties:
                       type: string
+                    description: Annotations for instance pods.
                     type: object
                   podLabels:
                     additionalProperties:
                       type: string
+                    description: Labels for instance pods.
                     type: object
                   readinessProbeParams:
                     properties:
@@ -25990,6 +26047,7 @@ spec:
                         type: object
                     type: object
                   runtimeClassName:
+                    description: Runtime class for instance pods.
                     type: string
                   setHostnameAsFqdn:
                     default: true
@@ -26061,6 +26119,7 @@ spec:
                     format: int64
                     type: integer
                   tolerations:
+                    description: Tolerations for instance and init job pods.
                     items:
                       description: |-
                         The pod this Toleration is attached to tolerates any taint that matches
@@ -27549,8 +27608,7 @@ spec:
                     cellTag:
                       type: integer
                     dnsConfig:
-                      description: DNSConfig allows customizing the DNS settings for
-                        the pods.
+                      description: DNSConfig allows customizing the DNS settings.
                       properties:
                         nameservers:
                           description: A list of DNS name server IP addresses.
@@ -27584,7 +27642,7 @@ spec:
                           x-kubernetes-list-type: atomic
                       type: object
                     dnsPolicy:
-                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      description: DNSPolicy defines how DNS will be configured.
                       type: string
                     enableAntiAffinity:
                       description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -27601,8 +27659,7 @@ spec:
                         type: string
                       type: array
                     hostNetwork:
-                      description: Use the host's network namespace, this overrides
-                        global option.
+                      description: Use the host's network namespace.
                       type: boolean
                     hydraPersistenceUploader:
                       properties:
@@ -27802,14 +27859,17 @@ spec:
                     nodeSelector:
                       additionalProperties:
                         type: string
+                      description: Node selector for instance and init job pods.
                       type: object
                     podAnnotations:
                       additionalProperties:
                         type: string
+                      description: Annotations for instance pods.
                       type: object
                     podLabels:
                       additionalProperties:
                         type: string
+                      description: Labels for instance pods.
                       type: object
                     readinessProbeParams:
                       properties:
@@ -27875,6 +27935,7 @@ spec:
                           type: object
                       type: object
                     runtimeClassName:
+                      description: Runtime class for instance pods.
                       type: string
                     setHostnameAsFqdn:
                       default: true
@@ -27958,6 +28019,7 @@ spec:
                           type: string
                       type: object
                     tolerations:
+                      description: Tolerations for instance and init job pods.
                       items:
                         description: |-
                           The pod this Toleration is attached to tolerates any taint that matches
@@ -28746,6 +28808,11 @@ spec:
                   - cellTag
                   type: object
                 type: array
+              setHostnameAsFqdn:
+                default: true
+                description: SetHostnameAsFQDN indicates whether to set the hostname
+                  as FQDN.
+                type: boolean
               spyt:
                 properties:
                   sparkVersion:
@@ -28766,8 +28833,7 @@ spec:
                       that are not explicitly...
                     type: string
                   dnsConfig:
-                    description: DNSConfig allows customizing the DNS settings for
-                      the pods.
+                    description: DNSConfig allows customizing the DNS settings.
                     properties:
                       nameservers:
                         description: A list of DNS name server IP addresses.
@@ -28799,8 +28865,14 @@ spec:
                         type: array
                         x-kubernetes-list-type: atomic
                     type: object
+                  dnsPolicy:
+                    description: DNSPolicy defines how DNS will be configured.
+                    type: string
                   externalProxy:
                     type: string
+                  hostNetwork:
+                    description: Use the host's network namespace.
+                    type: boolean
                   image:
                     type: string
                   logToStderr:
@@ -28809,6 +28881,17 @@ spec:
                   nodeSelector:
                     additionalProperties:
                       type: string
+                    description: Node selector for instance and init job pods.
+                    type: object
+                  podAnnotations:
+                    additionalProperties:
+                      type: string
+                    description: Annotations for instance pods.
+                    type: object
+                  podLabels:
+                    additionalProperties:
+                      type: string
+                    description: Labels for instance pods.
                     type: object
                   resources:
                     description: ResourceRequirements describes the compute resource
@@ -28856,7 +28939,16 @@ spec:
                           resources required.
                         type: object
                     type: object
+                  runtimeClassName:
+                    description: Runtime class for instance pods.
+                    type: string
+                  setHostnameAsFqdn:
+                    default: true
+                    description: SetHostnameAsFQDN indicates whether to set the hostname
+                      as FQDN.
+                    type: boolean
                   tolerations:
+                    description: Tolerations for instance and init job pods.
                     items:
                       description: |-
                         The pod this Toleration is attached to tolerates any taint that matches
@@ -29581,8 +29673,7 @@ spec:
                         type: object
                     type: object
                   dnsConfig:
-                    description: DNSConfig allows customizing the DNS settings for
-                      the pods.
+                    description: DNSConfig allows customizing the DNS settings.
                     properties:
                       nameservers:
                         description: A list of DNS name server IP addresses.
@@ -29615,7 +29706,7 @@ spec:
                         x-kubernetes-list-type: atomic
                     type: object
                   dnsPolicy:
-                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    description: DNSPolicy defines how DNS will be configured.
                     type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -29626,8 +29717,7 @@ spec:
                       type: string
                     type: array
                   hostNetwork:
-                    description: Use the host's network namespace, this overrides
-                      global option.
+                    description: Use the host's network namespace.
                     type: boolean
                   image:
                     description: Overrides coreImage for component.
@@ -29818,14 +29908,17 @@ spec:
                   nodeSelector:
                     additionalProperties:
                       type: string
+                    description: Node selector for instance and init job pods.
                     type: object
                   podAnnotations:
                     additionalProperties:
                       type: string
+                    description: Annotations for instance pods.
                     type: object
                   podLabels:
                     additionalProperties:
                       type: string
+                    description: Labels for instance pods.
                     type: object
                   readinessProbeParams:
                     properties:
@@ -29891,6 +29984,7 @@ spec:
                         type: object
                     type: object
                   runtimeClassName:
+                    description: Runtime class for instance pods.
                     type: string
                   setHostnameAsFqdn:
                     default: true
@@ -29962,6 +30056,7 @@ spec:
                     format: int64
                     type: integer
                   tolerations:
+                    description: Tolerations for instance and init job pods.
                     items:
                       description: |-
                         The pod this Toleration is attached to tolerates any taint that matches
@@ -31448,8 +31543,7 @@ spec:
                           type: object
                       type: object
                     dnsConfig:
-                      description: DNSConfig allows customizing the DNS settings for
-                        the pods.
+                      description: DNSConfig allows customizing the DNS settings.
                       properties:
                         nameservers:
                           description: A list of DNS name server IP addresses.
@@ -31483,7 +31577,7 @@ spec:
                           x-kubernetes-list-type: atomic
                       type: object
                     dnsPolicy:
-                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      description: DNSPolicy defines how DNS will be configured.
                       type: string
                     enableAntiAffinity:
                       description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -31494,8 +31588,7 @@ spec:
                         type: string
                       type: array
                     hostNetwork:
-                      description: Use the host's network namespace, this overrides
-                        global option.
+                      description: Use the host's network namespace.
                       type: boolean
                     image:
                       description: Overrides coreImage for component.
@@ -31690,14 +31783,17 @@ spec:
                     nodeSelector:
                       additionalProperties:
                         type: string
+                      description: Node selector for instance and init job pods.
                       type: object
                     podAnnotations:
                       additionalProperties:
                         type: string
+                      description: Annotations for instance pods.
                       type: object
                     podLabels:
                       additionalProperties:
                         type: string
+                      description: Labels for instance pods.
                       type: object
                     rack:
                       description: Name of the node rack.
@@ -31766,6 +31862,7 @@ spec:
                           type: object
                       type: object
                     runtimeClassName:
+                      description: Runtime class for instance pods.
                       type: string
                     setHostnameAsFqdn:
                       default: true
@@ -31842,6 +31939,7 @@ spec:
                       format: int64
                       type: integer
                     tolerations:
+                      description: Tolerations for instance and init job pods.
                       items:
                         description: |-
                           The pod this Toleration is attached to tolerates any taint that matches
@@ -33332,8 +33430,7 @@ spec:
                           type: object
                       type: object
                     dnsConfig:
-                      description: DNSConfig allows customizing the DNS settings for
-                        the pods.
+                      description: DNSConfig allows customizing the DNS settings.
                       properties:
                         nameservers:
                           description: A list of DNS name server IP addresses.
@@ -33367,7 +33464,7 @@ spec:
                           x-kubernetes-list-type: atomic
                       type: object
                     dnsPolicy:
-                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      description: DNSPolicy defines how DNS will be configured.
                       type: string
                     enableAntiAffinity:
                       description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -33378,8 +33475,7 @@ spec:
                         type: string
                       type: array
                     hostNetwork:
-                      description: Use the host's network namespace, this overrides
-                        global option.
+                      description: Use the host's network namespace.
                       type: boolean
                     image:
                       description: Overrides coreImage for component.
@@ -33574,14 +33670,17 @@ spec:
                     nodeSelector:
                       additionalProperties:
                         type: string
+                      description: Node selector for instance and init job pods.
                       type: object
                     podAnnotations:
                       additionalProperties:
                         type: string
+                      description: Annotations for instance pods.
                       type: object
                     podLabels:
                       additionalProperties:
                         type: string
+                      description: Labels for instance pods.
                       type: object
                     portCount:
                       default: 20
@@ -33656,6 +33755,7 @@ spec:
                       minLength: 1
                       type: string
                     runtimeClassName:
+                      description: Runtime class for instance pods.
                       type: string
                     serviceType:
                       description: Service Type string describes ingress methods for
@@ -33731,6 +33831,7 @@ spec:
                       format: int64
                       type: integer
                     tolerations:
+                      description: Tolerations for instance and init job pods.
                       items:
                         description: |-
                           The pod this Toleration is attached to tolerates any taint that matches
@@ -34521,6 +34622,7 @@ spec:
                   type: object
                 type: array
               tolerations:
+                description: Tolerations for instance and init job pods.
                 items:
                   description: |-
                     The pod this Toleration is attached to tolerates any taint that matches
@@ -34558,8 +34660,7 @@ spec:
                       downloading instead of proxy.
                     type: boolean
                   dnsConfig:
-                    description: DNSConfig allows customizing the DNS settings for
-                      the pods.
+                    description: DNSConfig allows customizing the DNS settings.
                     properties:
                       nameservers:
                         description: A list of DNS name server IP addresses.
@@ -34591,6 +34692,9 @@ spec:
                         type: array
                         x-kubernetes-list-type: atomic
                     type: object
+                  dnsPolicy:
+                    description: DNSPolicy defines how DNS will be configured.
+                    type: string
                   environment:
                     default: testing
                     type: string
@@ -34700,6 +34804,9 @@ spec:
                     type: array
                   group:
                     type: string
+                  hostNetwork:
+                    description: Use the host's network namespace.
+                    type: boolean
                   httpNodePort:
                     format: int32
                     type: integer
@@ -34711,11 +34818,22 @@ spec:
                   nodeSelector:
                     additionalProperties:
                       type: string
+                    description: Node selector for instance and init job pods.
                     type: object
                   odinBaseUrl:
                     description: Odin is a service for monitoring the availability
                       of YTsaurus clusters.
                     type: string
+                  podAnnotations:
+                    additionalProperties:
+                      type: string
+                    description: Annotations for instance pods.
+                    type: object
+                  podLabels:
+                    additionalProperties:
+                      type: string
+                    description: Labels for instance pods.
+                    type: object
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -34762,6 +34880,9 @@ spec:
                           resources required.
                         type: object
                     type: object
+                  runtimeClassName:
+                    description: Runtime class for instance pods.
+                    type: string
                   secure:
                     default: false
                     description: Use secure connection to the cluster's http-proxies.
@@ -34771,10 +34892,16 @@ spec:
                     description: Service Type string describes ingress methods for
                       a service
                     type: string
+                  setHostnameAsFqdn:
+                    default: true
+                    description: SetHostnameAsFQDN indicates whether to set the hostname
+                      as FQDN.
+                    type: boolean
                   theme:
                     default: lavander
                     type: string
                   tolerations:
+                    description: Tolerations for instance and init job pods.
                     items:
                       description: |-
                         The pod this Toleration is attached to tolerates any taint that matches
@@ -35566,8 +35693,7 @@ spec:
                         type: object
                     type: object
                   dnsConfig:
-                    description: DNSConfig allows customizing the DNS settings for
-                      the pods.
+                    description: DNSConfig allows customizing the DNS settings.
                     properties:
                       nameservers:
                         description: A list of DNS name server IP addresses.
@@ -35600,7 +35726,7 @@ spec:
                         x-kubernetes-list-type: atomic
                     type: object
                   dnsPolicy:
-                    description: DNSPolicy defines how a pod's DNS will be configured.
+                    description: DNSPolicy defines how DNS will be configured.
                     type: string
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -35611,8 +35737,7 @@ spec:
                       type: string
                     type: array
                   hostNetwork:
-                    description: Use the host's network namespace, this overrides
-                      global option.
+                    description: Use the host's network namespace.
                     type: boolean
                   image:
                     description: Overrides coreImage for component.
@@ -35803,14 +35928,17 @@ spec:
                   nodeSelector:
                     additionalProperties:
                       type: string
+                    description: Node selector for instance and init job pods.
                     type: object
                   podAnnotations:
                     additionalProperties:
                       type: string
+                    description: Annotations for instance pods.
                     type: object
                   podLabels:
                     additionalProperties:
                       type: string
+                    description: Labels for instance pods.
                     type: object
                   readinessProbeParams:
                     properties:
@@ -35876,6 +36004,7 @@ spec:
                         type: object
                     type: object
                   runtimeClassName:
+                    description: Runtime class for instance pods.
                     type: string
                   setHostnameAsFqdn:
                     default: true
@@ -35947,6 +36076,7 @@ spec:
                     format: int64
                     type: integer
                   tolerations:
+                    description: Tolerations for instance and init job pods.
                     items:
                       description: |-
                         The pod this Toleration is attached to tolerates any taint that matches

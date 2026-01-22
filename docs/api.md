@@ -93,6 +93,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -103,23 +112,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 
 
 #### BundlesBootstrapSpec
@@ -433,9 +433,8 @@ _Appears in:_
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
 | `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
-| `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
+| `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
 
@@ -538,6 +537,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -548,23 +556,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 
 
 #### CypressProxiesSpec
@@ -580,6 +579,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -590,23 +598,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `disable` _boolean_ |  |  |  |
 
 
@@ -624,6 +623,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -634,23 +642,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
 | `name` _string_ |  | default | MinLength: 1 <br /> |
@@ -686,6 +685,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -696,23 +704,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 
 
 #### EmbeddedObjectMetadata
@@ -790,6 +789,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -800,23 +808,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
 | `name` _string_ |  | default | MinLength: 1 <br /> |
@@ -901,6 +900,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -911,23 +919,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  | NodePort |  |
 | `httpPort` _integer_ |  | 80 |  |
 | `httpsPort` _integer_ |  | 443 |  |
@@ -1051,6 +1050,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -1061,23 +1069,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 
 
 #### JobEnvironmentSpec
@@ -1131,6 +1130,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -1141,23 +1149,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  |  |  |
 | `role` _string_ |  | default | MinLength: 1 <br /> |
 
@@ -1361,6 +1360,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -1371,23 +1379,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `cellTagMasterCaches` _integer_ |  |  |  |
 | `hostAddressesMasterCaches` _string array_ |  |  |  |
 | `hostAddressesLabel` _string_ |  |  |  |
@@ -1424,6 +1423,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -1434,23 +1442,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `cellTag` _integer_ |  |  |  |
 | `hostAddresses` _string array_ |  |  |  |
 | `hostAddressLabel` _string_ |  |  |  |
@@ -1603,6 +1602,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -1613,23 +1621,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 
 
 #### OffshoreDataGateways
@@ -1698,11 +1697,19 @@ _Appears in:_
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
 | `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
-| `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
+| `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -1713,23 +1720,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 
 
 #### OffshoreDataGatewaysStatus
@@ -1750,6 +1748,57 @@ _Appears in:_
 | `releaseStatus` _[RemoteNodeReleaseStatus](#remotenodereleasestatus)_ |  |  |  |
 
 
+#### PodSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
+- [ControllerAgentsSpec](#controlleragentsspec)
+- [CypressProxiesSpec](#cypressproxiesspec)
+- [DataNodesSpec](#datanodesspec)
+- [DiscoverySpec](#discoveryspec)
+- [ExecNodesSpec](#execnodesspec)
+- [HTTPProxiesSpec](#httpproxiesspec)
+- [InstanceSpec](#instancespec)
+- [KafkaProxiesSpec](#kafkaproxiesspec)
+- [MasterCachesSpec](#mastercachesspec)
+- [MastersSpec](#mastersspec)
+- [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [QueryTrackerSpec](#querytrackerspec)
+- [QueueAgentSpec](#queueagentspec)
+- [RPCProxiesSpec](#rpcproxiesspec)
+- [RemoteDataNodesSpec](#remotedatanodesspec)
+- [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
+- [RemoteYtsaurusSpec](#remoteytsaurusspec)
+- [SchedulersSpec](#schedulersspec)
+- [StrawberryControllerSpec](#strawberrycontrollerspec)
+- [TCPProxiesSpec](#tcpproxiesspec)
+- [TabletBalancerSpec](#tabletbalancerspec)
+- [TabletNodesSpec](#tabletnodesspec)
+- [UISpec](#uispec)
+- [YQLAgentSpec](#yqlagentspec)
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
+
+
 #### QueryTrackerSpec
 
 
@@ -1763,6 +1812,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -1773,23 +1831,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 
 
 #### QueueAgentSpec
@@ -1805,6 +1854,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -1815,23 +1873,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 
 
 #### RPCProxiesSpec
@@ -1847,6 +1896,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -1857,23 +1915,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  |  |  |
 | `nodePort` _integer_ |  |  |  |
 | `role` _string_ |  | default | MinLength: 1 <br /> |
@@ -1990,11 +2039,19 @@ _Appears in:_
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
 | `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
-| `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
+| `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -2005,23 +2062,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
 | `name` _string_ |  | default | MinLength: 1 <br /> |
@@ -2090,11 +2138,19 @@ _Appears in:_
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
 | `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
-| `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
+| `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -2105,23 +2161,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
 | `name` _string_ |  | default | MinLength: 1 <br /> |
@@ -2237,11 +2284,19 @@ _Appears in:_
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
 | `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
-| `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
+| `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -2252,23 +2307,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
 | `name` _string_ |  | default | MinLength: 1 <br /> |
@@ -2326,6 +2372,15 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `cellTag` _integer_ |  |  |  |
 | `hostAddresses` _string array_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -2336,23 +2391,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `cellTagMasterCaches` _integer_ |  |  |  |
 | `hostAddressesMasterCaches` _string array_ |  |  |  |
 | `hostAddressesLabel` _string_ |  |  |  |
@@ -2384,6 +2430,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -2394,23 +2449,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 
 
 #### Spyt
@@ -2500,14 +2546,20 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
 | `image` _string_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
 | `externalProxy` _string_ |  |  |  |
 | `controllerFamilies` _string array_ | Supported controller families, for example: "chyt", "jupyt", "livy". |  |  |
 | `defaultRouteFamily` _string_ | The family that will receive requests for domains that are not explicitly specified in http_controller_mappings.<br />For example, "chyt" (with `ControllerFamilies` set to \{"chyt", "jupyt"\} would mean<br />that requests to "foo.<domain>" will be processed by chyt controller. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
 | `logToStderr` _boolean_ | Write logs to stderr. |  |  |
 
 
@@ -2570,6 +2622,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -2580,23 +2641,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  |  |  |
 | `minPort` _integer_ |  | 32000 |  |
 | `portCount` _integer_ | Number of ports to allocate for balancing service. | 20 |  |
@@ -2616,6 +2668,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -2626,23 +2687,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 
 
 #### TabletCellBundleInfo
@@ -2676,6 +2728,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -2686,23 +2747,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
 | `name` _string_ |  | default | MinLength: 1 <br /> |
@@ -2785,6 +2837,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ |  |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  | NodePort |  |
 | `httpNodePort` _integer_ |  |  |  |
@@ -2800,9 +2861,6 @@ _Appears in:_
 | `description` _string_ |  |  |  |
 | `group` _string_ |  |  |  |
 | `directDownload` _boolean_ | When this is set to false, UI will use backend for downloading instead of proxy.<br />If this is set to true or omitted, UI use proxies, which is a default behaviour. |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
 
 
 #### UpdateFlow
@@ -3000,6 +3058,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `image` _string_ | Overrides coreImage for component. |  |  |
 | `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
 | `volumes` _[Volume](#volume) array_ |  |  |  |
@@ -3010,23 +3077,14 @@ _Appears in:_
 | `minReadyInstanceCount` _integer_ |  |  |  |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `runtimeClassName` _string_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
 | `monitoringPort` _integer_ |  |  |  |
 | `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `podLabels` _object (keys:string, values:string)_ |  |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
 
 
 #### Ytsaurus
@@ -3073,11 +3131,19 @@ _Appears in:_
 | `keepSocket` _boolean_ |  |  |  |
 | `forceTcp` _boolean_ |  |  |  |
 | `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace for all components. | false |  |
 | `usePorto` _boolean_ |  | false |  |
-| `extraPodAnnotations` _object (keys:string, values:string)_ |  |  |  |
+| `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
 | `uiImage` _string_ |  |  |  |
 | `adminCredentials` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `oauthService` _[OauthServiceSpec](#oauthservicespec)_ |  |  |  |
@@ -3085,9 +3151,6 @@ _Appears in:_
 | `enableFullUpdate` _boolean_ |  | true |  |
 | `updateSelector` _[UpdateSelector](#updateselector)_ | Deprecated: UpdateSelector is going to be removed soon. Please use UpdateSelectors instead. |  | Enum: [ Nothing MasterOnly DataNodesOnly TabletNodesOnly ExecNodesOnly StatelessOnly Everything] <br /> |
 | `updatePlan` _[ComponentUpdateSelector](#componentupdateselector) array_ | Experimental: api may change.<br />Controls the components that should be updated during the update process. |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
 | `bootstrap` _[BootstrapSpec](#bootstrapspec)_ |  |  |  |
 | `discovery` _[DiscoverySpec](#discoveryspec)_ |  |  |  |
 | `primaryMasters` _[MastersSpec](#mastersspec)_ |  |  |  |

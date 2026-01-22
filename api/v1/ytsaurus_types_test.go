@@ -22,9 +22,11 @@ var testSpec = ytv1.YtsaurusSpec{
 	},
 	PrimaryMasters: ytv1.MastersSpec{
 		InstanceSpec: ytv1.InstanceSpec{
-			Tolerations: []corev1.Toleration{
-				{
-					Key: "base-toleration",
+			PodSpec: ytv1.PodSpec{
+				Tolerations: []corev1.Toleration{
+					{
+						Key: "base-toleration",
+					},
 				},
 			},
 			VolumeClaimTemplates: []ytv1.EmbeddedPersistentVolumeClaim{

@@ -302,6 +302,12 @@ linters:
       - path: controllers/sync.go
         text: "SA1019: spec.UpdateSelector is deprecated"
 
+      - path: pkg/ytconfig/generator.go
+        text: "SA1019: .*\\.ExtraPodAnnotations is deprecated"
+
+      - path: pkg/testutil/spec_builders.go
+        text: "SA1019: .*\\.ExtraPodAnnotations is deprecated"
+
       - path: 'pkg/testutil'
         linters:
           - gochecknoglobals
