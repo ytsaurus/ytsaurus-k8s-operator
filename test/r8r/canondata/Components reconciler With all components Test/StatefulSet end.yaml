@@ -33,6 +33,7 @@ spec:
     metadata:
       annotations:
         extra-pod-annotation: "true"
+        global-pod-annotation: "true"
         ytsaurus.tech/config-checksum: e5a6e8e9a1e108e1220a02b5c0fb1272c445de86855fd723822b0fbe8c6be978
       creationTimestamp: null
       labels:
@@ -40,6 +41,7 @@ spec:
         app.kubernetes.io/managed-by: ytsaurus-k8s-operator
         app.kubernetes.io/name: yt-exec-node
         app.kubernetes.io/part-of: yt-test-ytsaurus
+        global-pod-label: "true"
         yt_component: test-ytsaurus-yt-exec-node
         ytsaurus.tech/cluster-name: test-ytsaurus
     spec:
@@ -176,7 +178,10 @@ spec:
         - mountPath: /etc/ssl/certs
           name: ca-root-bundle
           readOnly: true
-      dnsPolicy: ClusterFirstWithHostNet
+      dnsConfig:
+        options:
+        - name: global-dns-option
+      dnsPolicy: ClusterFirst
       enableServiceLinks: false
       hostNetwork: true
       imagePullSecrets:
@@ -269,6 +274,12 @@ spec:
         - mountPath: /etc/ssl/certs
           name: ca-root-bundle
           readOnly: true
+      nodeSelector:
+        global-node-selector: "true"
+      runtimeClassName: global-runtime-class
+      setHostnameAsFQDN: false
+      tolerations:
+      - key: global-toleration
       volumes:
       - configMap:
           name: yt-exec-node-config

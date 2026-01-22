@@ -492,6 +492,13 @@ func AddInitContainersToPodSpec(initContainers []string, podSpec *corev1.PodSpec
 	return nil
 }
 
+func ptrDefault[T any](ptr, def *T) *T {
+	if ptr != nil {
+		return ptr
+	}
+	return def
+}
+
 func getImageWithDefault(componentImage *string, defaultImage string) string {
 	if componentImage != nil {
 		return *componentImage

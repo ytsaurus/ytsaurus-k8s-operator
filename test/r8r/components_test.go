@@ -415,15 +415,28 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				podSpec := &sts.Spec.Template.Spec
 				Expect(podSpec.ImagePullSecrets).To(Equal(ytsaurus.Spec.ImagePullSecrets))
 				options := &ytsaurus.Spec.PodSpec
+				for k, v := range options.PodAnnotations {
+					Expect(sts.Spec.Template.Annotations).To(HaveKeyWithValue(k, v))
+				}
+				for k, v := range options.PodLabels {
+					Expect(sts.Spec.Template.Labels).To(HaveKeyWithValue(k, v))
+				}
 				if sts.Name == "ms" {
 					options = &ytsaurus.Spec.PrimaryMasters.PodSpec
+					for k, v := range options.PodAnnotations {
+						Expect(sts.Spec.Template.Annotations).To(HaveKeyWithValue(k, v))
+					}
+					for k, v := range options.PodLabels {
+						Expect(sts.Spec.Template.Labels).To(HaveKeyWithValue(k, v))
+					}
 				}
-				// Expect(podSpec.Tolerations).To(Equal(options.Tolerations))
-				// Expect(podSpec.NodeSelector).To(Equal(options.NodeSelector))
+				Expect(podSpec.Tolerations).To(Equal(options.Tolerations))
+				Expect(podSpec.NodeSelector).To(Equal(options.NodeSelector))
+				Expect(podSpec.RuntimeClassName).To(BeEquivalentTo(options.RuntimeClassName))
 				Expect(&podSpec.HostNetwork).To(BeEquivalentTo(options.HostNetwork))
-				// Expect(podSpec.SetHostnameAsFQDN).To(BeEquivalentTo(options.SetHostnameAsFQDN))
-				// Expect(podSpec.DNSPolicy).To(BeEquivalentTo(options.DNSPolicy))
-				// Expect(podSpec.DNSConfig).To(BeEquivalentTo(options.DNSConfig))
+				Expect(podSpec.SetHostnameAsFQDN).To(BeEquivalentTo(options.SetHostnameAsFQDN))
+				Expect(&podSpec.DNSPolicy).To(BeEquivalentTo(options.DNSPolicy))
+				Expect(podSpec.DNSConfig).To(BeEquivalentTo(options.DNSConfig))
 			}
 		})
 	})

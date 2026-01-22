@@ -229,7 +229,7 @@ spec:
         cpu: "0"
         memory: "0"
     runtimeClassName: instance-runtime-class
-    setHostnameAsFqdn: false
+    setHostnameAsFqdn: true
     tolerations:
     - key: instance-toleration
     volumeClaimTemplates:
