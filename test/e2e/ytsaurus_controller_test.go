@@ -2001,6 +2001,50 @@ exec "$@"`
 			Entry("update dnd-node", Label(consts.GetStatefulSetPrefix(consts.DataNodeType)), consts.DataNodeType, consts.GetStatefulSetPrefix(consts.DataNodeType)),
 		)
 
+		DescribeTableSubtree("bulk strategy with Class", Label("bulk"),
+			func(updateClass consts.ComponentClass, stsName string) {
+				BeforeEach(func() {
+					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+						{
+							Class: updateClass,
+							Strategy: &ytv1.ComponentUpdateStrategy{
+								RunPreChecks: ptr.To(true),
+							},
+						},
+					}
+				})
+				It("Should update cluster in bulkUpdate mode and have Running state in "+string(updateClass), func(ctx context.Context) {
+
+					By("Trigger update")
+					updateSpecToTriggerAllComponentUpdate(ytsaurus)
+
+					UpdateObject(ctx, ytsaurus)
+					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+
+					Expect(ytsaurus).Should(HaveClusterUpdatingComponents(
+						consts.ControllerAgentType,
+						consts.DiscoveryType,
+						consts.ExecNodeType,
+						consts.HttpProxyType,
+						consts.MasterCacheType,
+						consts.SchedulerType,
+					))
+					Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
+					Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
+
+					By("Waiting cluster update completes")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+					Expect(ytsaurus).Should(HaveObservedGeneration())
+					Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
+					Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
+					Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
+
+					checkClusterHealth(ctx, ytClient)
+				})
+			},
+			Entry("stateless", Label("stateless"), consts.ComponentClassStateless, "stateless"),
+		)
+
 		DescribeTableSubtree("on-delete strategy", Label("ondelete"),
 			func(componentType consts.ComponentType, stsName string) {
 				BeforeEach(func() {

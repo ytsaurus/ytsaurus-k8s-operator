@@ -1058,7 +1058,7 @@ type ComponentUpdateStrategy struct {
 
 type ComponentUpdateSelector struct {
 	//+optional
-	//+kubebuilder:validation:Enum={"","Nothing","Stateless","Everything"}
+	//+kubebuilder:validation:Enum={"","Nothing","Stateless","StatefulAgents","Everything"}
 	Class consts.ComponentClass `json:"class,omitempty"`
 	//+optional
 	Component Component `json:"component,omitempty"`
@@ -1082,6 +1082,62 @@ func (selector *ComponentUpdateSelector) GetUpdateStrategyType() ComponentUpdate
 		return ""
 	}
 	return selector.Strategy.Type()
+}
+
+func ComponentBelongsToClass(componentType consts.ComponentType, class consts.ComponentClass) bool {
+	switch class {
+	case consts.ComponentClassEverything:
+		return true
+	case consts.ComponentClassNothing, consts.ComponentClassUnspecified:
+		return false
+	case consts.ComponentClassStatefulAgents:
+		return componentType == consts.QueueAgentType ||
+			componentType == consts.QueryTrackerType ||
+			componentType == consts.YqlAgentType
+	case consts.ComponentClassStateless:
+		return componentType != consts.DataNodeType &&
+			componentType != consts.TabletNodeType &&
+			componentType != consts.MasterType &&
+			componentType != consts.QueueAgentType &&
+			componentType != consts.QueryTrackerType &&
+			componentType != consts.YqlAgentType
+	default:
+		return false
+	}
+}
+
+func ResolveComponentUpdateStrategy(updatePlan []ComponentUpdateSelector, component Component) *ComponentUpdateStrategy {
+	if len(updatePlan) == 0 {
+		return nil
+	}
+
+	// Update plan is validated to be either class-based or component-based.
+	hasClassSelector := false
+	for _, selector := range updatePlan {
+		if selector.Class != consts.ComponentClassUnspecified {
+			hasClassSelector = true
+			break
+		}
+	}
+
+	if hasClassSelector {
+		for _, selector := range updatePlan {
+			if selector.Class != consts.ComponentClassUnspecified &&
+				ComponentBelongsToClass(component.Type, selector.Class) {
+				return selector.Strategy
+			}
+		}
+		return nil
+	}
+
+	for _, selector := range updatePlan {
+		if selector.Component.Type == component.Type &&
+			(selector.Component.Name == "" || selector.Component.Name == component.Name) {
+			return selector.Strategy
+		}
+	}
+
+	return nil
 }
 
 type UpdateFlow string

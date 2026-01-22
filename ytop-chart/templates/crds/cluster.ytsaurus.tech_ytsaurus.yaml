@@ -34819,6 +34819,7 @@ spec:
                       - ""
                       - Nothing
                       - Stateless
+                      - StatefulAgents
                       - Everything
                       type: string
                     component:

@@ -18,17 +18,11 @@ import (
 func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
 	for _, selector := range selectors {
 		if selector.Class != consts.ComponentClassUnspecified {
-			switch selector.Class {
-			case consts.ComponentClassEverything:
+			if selector.Class == consts.ComponentClassNothing {
+				return false
+			}
+			if ytv1.ComponentBelongsToClass(component.Type, selector.Class) {
 				return true
-			case consts.ComponentClassNothing:
-				return false
-			case consts.ComponentClassStateless:
-				if component.Type != consts.DataNodeType && component.Type != consts.TabletNodeType && component.Type != consts.MasterType {
-					return true
-				}
-			default:
-				return false
 			}
 		}
 		if selector.Component.Type == component.Type && (selector.Component.Name == "" || selector.Component.Name == component.Name) {

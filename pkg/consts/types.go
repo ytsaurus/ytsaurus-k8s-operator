@@ -36,10 +36,11 @@ type ComponentClass string
 
 const (
 	// ComponentClassStateless group contains only stateless components (not master, data nodes, tablet nodes)
-	ComponentClassUnspecified ComponentClass = ""
-	ComponentClassStateless   ComponentClass = "Stateless"
-	ComponentClassEverything  ComponentClass = "Everything"
-	ComponentClassNothing     ComponentClass = "Nothing"
+	ComponentClassUnspecified    ComponentClass = ""
+	ComponentClassStateless      ComponentClass = "Stateless"
+	ComponentClassStatefulAgents ComponentClass = "StatefulAgents"
+	ComponentClassEverything     ComponentClass = "Everything"
+	ComponentClassNothing        ComponentClass = "Nothing"
 )
 
 var (

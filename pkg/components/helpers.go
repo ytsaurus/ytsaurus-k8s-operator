@@ -22,6 +22,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 )
 
 const (
@@ -201,6 +202,9 @@ func handleBulkUpdatingClusterState(
 
 	switch ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStateWaitingForPodsRemoval:
+		// we must ensure all prechecks are finished before proceeding when using Class updates
+		preChecksCompleted := arePreChecksCompletedForUpdatingComponents(ytsaurus)
+
 		// Check if this component is using the new update mode
 		if !doesComponentUseNewUpdateMode(ytsaurus, cmp.GetType(), cmp.GetFullName()) {
 			if !dry {
@@ -215,11 +219,14 @@ func handleBulkUpdatingClusterState(
 			Message: "bulk update mode started",
 		})
 
-		// Run pre-checks if needed
-		if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
-			if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
-				return status, err
+		if !preChecksCompleted {
+			// Run pre-checks if needed
+			if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
+				if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
+					return status, err
+				}
 			}
+			return ptr.To(ComponentStatusUpdateStep("pre-checks")), err
 		}
 
 		// Remove pods
@@ -248,6 +255,30 @@ func handleBulkUpdatingClusterState(
 		// Not in the pod removal phase, let the component handle other update states
 		return nil, err
 	}
+}
+
+func arePreChecksCompletedForUpdatingComponents(ytsaurus *apiproxy.Ytsaurus) bool {
+	updatePlan := ytsaurus.GetResource().Spec.UpdatePlan
+	if len(updatePlan) == 0 {
+		return true
+	}
+
+	for _, component := range ytsaurus.GetUpdatingComponents() {
+		strategy := ytv1.ResolveComponentUpdateStrategy(updatePlan, component)
+		if strategy == nil {
+			continue
+		}
+		if !ptr.Deref(strategy.RunPreChecks, true) {
+			continue
+		}
+
+		l := (&labeller.Labeller{}).ForComponent(component.Type, component.Name)
+		if !ytsaurus.IsUpdateStatusConditionTrue(l.GetReadyCondition()) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // handleOnDeleteUpdatingClusterState handles the OnDelete mode where pods must be manually deleted by the user.
@@ -409,24 +440,22 @@ func SetWithIgnoreExisting(path string, value string) string {
 }
 
 func doesComponentUseNewUpdateMode(ytsaurus *apiproxy.Ytsaurus, componentType consts.ComponentType, componentName string) bool {
-	for _, selector := range ytsaurus.GetResource().Spec.UpdatePlan {
-		if selector.Component.Type == componentType &&
-			(selector.Component.Name == "" || selector.Component.Name == componentName) {
-			return selector.Strategy != nil
-		}
-	}
-	return false
+	strategy := ytv1.ResolveComponentUpdateStrategy(
+		ytsaurus.GetResource().Spec.UpdatePlan,
+		ytv1.Component{Type: componentType, Name: componentName},
+	)
+	return strategy != nil
 }
 
 func getComponentUpdateStrategy(ytsaurus *apiproxy.Ytsaurus, componentType consts.ComponentType, componentName string) ytv1.ComponentUpdateModeType {
-	for _, selector := range ytsaurus.GetResource().Spec.UpdatePlan {
-		if selector.Component.Type == componentType &&
-			(selector.Component.Name == "" || selector.Component.Name == componentName) &&
-			selector.Strategy != nil {
-			return selector.Strategy.Type()
-		}
+	strategy := ytv1.ResolveComponentUpdateStrategy(
+		ytsaurus.GetResource().Spec.UpdatePlan,
+		ytv1.Component{Type: componentType, Name: componentName},
+	)
+	if strategy == nil {
+		return ""
 	}
-	return ""
+	return strategy.Type()
 }
 
 func AddAffinity(statefulSet *appsv1.StatefulSet,

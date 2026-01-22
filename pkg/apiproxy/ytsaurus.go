@@ -106,15 +106,14 @@ func (c *Ytsaurus) ShouldRunPreChecks(componentType consts.ComponentType, compon
 }
 
 func (c *Ytsaurus) shouldEnablePreChecksFromSpec(componentType consts.ComponentType, componentName string) bool {
-	for _, selector := range c.ytsaurus.Spec.UpdatePlan {
-		if selector.Component.Type == componentType &&
-			(selector.Component.Name == "" || selector.Component.Name == componentName) {
-			if selector.Strategy != nil {
-				return ptr.Deref(selector.Strategy.RunPreChecks, true)
-			}
-		}
+	strategy := ytv1.ResolveComponentUpdateStrategy(
+		c.ytsaurus.Spec.UpdatePlan,
+		ytv1.Component{Type: componentType, Name: componentName},
+	)
+	if strategy == nil {
+		return true
 	}
-	return true
+	return ptr.Deref(strategy.RunPreChecks, true)
 }
 
 func (c *Ytsaurus) SetBlockedComponents(components []ytv1.Component) bool {

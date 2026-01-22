@@ -679,12 +679,12 @@ func (r *baseValidator) validateUpdateSelectors(newYtsaurus *Ytsaurus) field.Err
 				if i > 0 {
 					allErrors = append(allErrors, field.Invalid(entryPath.Child("class"), entry.Class, "Should be first and only entry"))
 				}
-			case consts.ComponentClassStateless, consts.ComponentClassUnspecified:
+			case consts.ComponentClassStateless, consts.ComponentClassUnspecified, consts.ComponentClassStatefulAgents:
 			default:
 				allErrors = append(allErrors, field.Invalid(entryPath.Child("class"), entry.Class, "Unknown class"))
 			}
 
-			allErrors = append(allErrors, validateUpdateModeForSelector(entry, entryPath.Child("updateMode"))...)
+			allErrors = append(allErrors, validateUpdateModeForSelector(entry, entryPath.Child("strategy"))...)
 		}
 	}
 
@@ -701,49 +701,51 @@ func validateUpdateModeForSelector(selector ComponentUpdateSelector, path *field
 		consts.YqlAgentType:     {},
 	}
 
-	// strategy currently supported only for concrete components
-	if selector.Class != consts.ComponentClassUnspecified && modeType != "" {
-		errs = append(errs, field.Invalid(path.Child("strategy"), modeType, "strategy is supported only for specific components, not for component classes"))
-		return errs
-	}
-
-	if selector.Class == consts.ComponentClassUnspecified {
+	switch selector.Class {
+	case consts.ComponentClassStatefulAgents:
+		// validate bulk-only restriction
+		if modeType != "" && modeType != ComponentUpdateModeTypeBulkUpdate {
+			errs = append(errs, field.Invalid(path, modeType, "StatefulAgents supports only BulkUpdate mode"))
+			return errs
+		}
+	case consts.ComponentClassUnspecified:
 		if selector.Component.Type == "" && selector.Strategy != nil {
-			errs = append(errs, field.Invalid(path, selector.Strategy, "component.type must be set to use strategy"))
+			errs = append(errs, field.Invalid(path, selector.Strategy, "component.type must be set to use update strategy"))
 			return errs
 		}
 		// validate bulk-only restriction
 		if _, bulkOnly := bulkOnlyComponentTypes[selector.Component.Type]; bulkOnly && modeType != "" && modeType != ComponentUpdateModeTypeBulkUpdate {
-			errs = append(errs, field.Invalid(path.Child("strategy"), modeType, fmt.Sprintf("%s supports only BulkUpdate mode", selector.Component.Type)))
+			errs = append(errs, field.Invalid(path, modeType, fmt.Sprintf("%s supports only BulkUpdate mode", selector.Component.Type)))
+			return errs
+		}
+		// validate that scheduler and master don't have RollingUpdate mode. Probably it will be changed in future
+		if selector.Component.Type == consts.SchedulerType || selector.Component.Type == consts.MasterType {
+			if modeType == ComponentUpdateModeTypeRollingUpdate {
+				errs = append(errs, field.Invalid(path.Child("rollingUpdate"), selector.Strategy.RollingUpdate, fmt.Sprintf("%s doesn't support RollingUpdate mode", selector.Component.Type)))
+			}
+		}
+	case consts.ComponentClassEverything:
+		if modeType != "" && modeType != ComponentUpdateModeTypeBulkUpdate {
+			errs = append(errs, field.Invalid(path, modeType, "Everything class supports only BulkUpdate mode"))
 			return errs
 		}
 	}
 
-	switch modeType {
-	case ComponentUpdateModeTypeBulkUpdate:
-		if selector.Strategy != nil {
-			if selector.Strategy.RollingUpdate != nil {
-				errs = append(errs, field.Invalid(path.Child("rollingUpdate"), selector.Strategy.RollingUpdate, "rolling configuration is not valid for BulkUpdate"))
-			}
-		}
-	case ComponentUpdateModeTypeRollingUpdate:
-		switch selector.Component.Type {
-		case "":
-			errs = append(errs, field.Invalid(path.Child("type"), modeType, "rolling update requires a concrete component selector"))
-		case consts.SchedulerType, consts.MasterType:
-			errs = append(errs, field.Invalid(path.Child("type"), modeType, fmt.Sprintf("%s doesn't support RollingUpdate mode", selector.Component.Type)))
-		}
-		if selector.Strategy.RollingUpdate.BatchSize == nil || *selector.Strategy.RollingUpdate.BatchSize <= 0 {
-			if selector.Strategy.RollingUpdate.BatchSize == nil {
-				errs = append(errs, field.Required(path.Child("rollingUpdate").Child("batchSize"), "batchSize must be provided when type=RollingUpdate"))
-			} else {
-				errs = append(errs, field.Invalid(path.Child("rollingUpdate").Child("batchSize"), *selector.Strategy.RollingUpdate.BatchSize, "batchSize must be positive"))
-			}
-		}
+	// validate rollingUpdate for any selector
+	if modeType == ComponentUpdateModeTypeRollingUpdate {
+		errs = append(errs, validateRollingUpdateMode(selector, path)...)
+	}
 
-	case ComponentUpdateModeTypeOnDelete:
-		if selector.Component.Type == "" {
-			errs = append(errs, field.Invalid(path.Child("type"), modeType, "onDelete update requires a concrete component selector"))
+	return errs
+}
+
+func validateRollingUpdateMode(selector ComponentUpdateSelector, path *field.Path) field.ErrorList {
+	var errs field.ErrorList
+	if selector.Strategy.RollingUpdate.BatchSize == nil || *selector.Strategy.RollingUpdate.BatchSize <= 0 {
+		if selector.Strategy.RollingUpdate.BatchSize == nil {
+			errs = append(errs, field.Required(path.Child("rollingUpdate").Child("batchSize"), "batchSize must be provided when type=RollingUpdate"))
+		} else {
+			errs = append(errs, field.Invalid(path.Child("rollingUpdate").Child("batchSize"), *selector.Strategy.RollingUpdate.BatchSize, "batchSize must be positive"))
 		}
 	}
 

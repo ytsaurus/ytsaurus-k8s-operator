@@ -502,7 +502,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `class` _[ComponentClass](#componentclass)_ |  |  | Enum: [ Nothing Stateless Everything] <br /> |
+| `class` _[ComponentClass](#componentclass)_ |  |  | Enum: [ Nothing Stateless StatefulAgents Everything] <br /> |
 | `component` _[Component](#component)_ |  |  |  |
 | `strategy` _[ComponentUpdateStrategy](#componentupdatestrategy)_ |  |  |  |
 

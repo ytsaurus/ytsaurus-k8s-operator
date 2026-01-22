@@ -12,6 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 )
 
 var _ = Describe("Test for Ytsaurus webhooks", func() {
@@ -488,7 +489,39 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 				{Component: ytv1.Component{Type: consts.MasterType}},
 				{Class: consts.ComponentClassEverything},
 			}, "Should be first and only entry"),
+			Entry("everything, rollingUpdate", []ytv1.ComponentUpdateSelector{
+				{Class: consts.ComponentClassEverything,
+					Strategy: &ytv1.ComponentUpdateStrategy{
+						RollingUpdate: &ytv1.ComponentRollingUpdateMode{
+							BatchSize: ptr.To(int32(1)),
+						},
+					},
+				},
+			}, "Everything class supports only BulkUpdate mode"),
+			Entry("statefulAgents, onDelete", []ytv1.ComponentUpdateSelector{
+				{
+					Class: consts.ComponentClassStatefulAgents,
+					Strategy: &ytv1.ComponentUpdateStrategy{
+						OnDelete: &ytv1.ComponentOnDeleteUpdateMode{},
+					},
+				},
+			}, "StatefulAgents supports only BulkUpdate mode"),
 		)
+
+		It("Should accept class Stateless update plan with strategy", func() {
+			ytsaurus := newYtsaurus()
+			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+				{
+					Class: consts.ComponentClassStateless,
+					Strategy: &ytv1.ComponentUpdateStrategy{
+						RunPreChecks: ptr.To(true),
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
+		})
 
 		It("Should accept component update without updateMode (backward compatibility)", func() {
 			ytsaurus := newYtsaurus()
