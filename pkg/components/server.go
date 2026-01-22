@@ -429,8 +429,16 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 
 	statefulSet := s.statefulSet.Build()
 
+	for key, value := range s.commonPodSpec.PodLabels {
+		metav1.SetMetaDataLabel(&statefulSet.Spec.Template.ObjectMeta, key, value)
+	}
+
 	for key, value := range s.instanceSpec.PodLabels {
 		metav1.SetMetaDataLabel(&statefulSet.Spec.Template.ObjectMeta, key, value)
+	}
+
+	for key, value := range s.commonPodSpec.PodAnnotations {
+		metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, key, value)
 	}
 
 	for key, value := range s.instanceSpec.PodAnnotations {
@@ -466,9 +474,9 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 
 	podSpec := &statefulSet.Spec.Template.Spec
 	*podSpec = corev1.PodSpec{
-		RuntimeClassName:   s.instanceSpec.RuntimeClassName,
+		RuntimeClassName:   ptrDefault(s.instanceSpec.RuntimeClassName, s.commonPodSpec.RuntimeClassName),
 		ImagePullSecrets:   s.commonSpec.ImagePullSecrets,
-		SetHostnameAsFQDN:  s.instanceSpec.SetHostnameAsFQDN,
+		SetHostnameAsFQDN:  ptr.To(ptr.Deref(s.instanceSpec.SetHostnameAsFQDN, ptr.Deref(s.commonPodSpec.SetHostnameAsFQDN, true))),
 		EnableServiceLinks: ptr.To(false),
 
 		TerminationGracePeriodSeconds: s.instanceSpec.TerminationGracePeriodSeconds,
@@ -515,9 +523,9 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		},
 		Volumes:      volumes,
 		Affinity:     s.instanceSpec.Affinity,
-		NodeSelector: s.instanceSpec.NodeSelector,
-		Tolerations:  s.instanceSpec.Tolerations,
-		DNSConfig:    s.instanceSpec.DNSConfig,
+		NodeSelector: getNodeSelectorWithDefault(s.instanceSpec.NodeSelector, s.commonPodSpec.NodeSelector),
+		Tolerations:  getTolerationsWithDefault(s.instanceSpec.Tolerations, s.commonPodSpec.Tolerations),
+		DNSConfig:    ptrDefault(s.instanceSpec.DNSConfig, s.commonPodSpec.DNSConfig),
 	}
 
 	if ptr.Deref(s.instanceSpec.HostNetwork, ptr.Deref(s.commonPodSpec.HostNetwork, false)) {
@@ -525,7 +533,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		// https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy
 		podSpec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
 	}
-	podSpec.DNSPolicy = ptr.Deref(s.instanceSpec.DNSPolicy, podSpec.DNSPolicy)
+	podSpec.DNSPolicy = ptr.Deref(s.instanceSpec.DNSPolicy, ptr.Deref(s.commonPodSpec.DNSPolicy, podSpec.DNSPolicy))
 
 	s.caRootBundle.AddVolume(podSpec)
 	s.caBundle.AddVolume(podSpec)

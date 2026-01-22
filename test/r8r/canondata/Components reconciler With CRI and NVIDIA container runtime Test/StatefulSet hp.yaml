@@ -152,6 +152,7 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+      setHostnameAsFQDN: true
       volumes:
       - configMap:
           name: yt-http-proxy-config

@@ -33,6 +33,7 @@ spec:
     metadata:
       annotations:
         extra-pod-annotation: "true"
+        global-pod-annotation: "true"
         ytsaurus.tech/config-checksum: 6535f5d75ffdfda62700088f98344982814ec6f81d2595c6d643e2a92b381dbe
       creationTimestamp: null
       labels:
@@ -40,6 +41,7 @@ spec:
         app.kubernetes.io/managed-by: ytsaurus-k8s-operator
         app.kubernetes.io/name: yt-rpc-proxy
         app.kubernetes.io/part-of: yt-test-ytsaurus
+        global-pod-label: "true"
         yt_component: test-ytsaurus-yt-rpc-proxy
         ytsaurus.tech/cluster-name: test-ytsaurus
     spec:
@@ -108,7 +110,10 @@ spec:
         - mountPath: /tls/bus_client_secret
           name: bus-client-secret
           readOnly: true
-      dnsPolicy: ClusterFirstWithHostNet
+      dnsConfig:
+        options:
+        - name: global-dns-option
+      dnsPolicy: ClusterFirst
       enableServiceLinks: false
       hostNetwork: true
       imagePullSecrets:
@@ -192,6 +197,12 @@ spec:
         - mountPath: /etc/ssl/certs
           name: ca-root-bundle
           readOnly: true
+      nodeSelector:
+        global-node-selector: "true"
+      runtimeClassName: global-runtime-class
+      setHostnameAsFQDN: false
+      tolerations:
+      - key: global-toleration
       volumes:
       - configMap:
           name: yt-rpc-proxy-config

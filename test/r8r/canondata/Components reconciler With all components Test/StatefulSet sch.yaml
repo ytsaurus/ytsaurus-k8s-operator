@@ -33,6 +33,7 @@ spec:
     metadata:
       annotations:
         extra-pod-annotation: "true"
+        global-pod-annotation: "true"
         ytsaurus.tech/config-checksum: bcd354814d51bfc5f8399b1fcc5593213812b44088d93bcb3b2a2a2aa0bc667c
       creationTimestamp: null
       labels:
@@ -40,6 +41,7 @@ spec:
         app.kubernetes.io/managed-by: ytsaurus-k8s-operator
         app.kubernetes.io/name: yt-scheduler
         app.kubernetes.io/part-of: yt-test-ytsaurus
+        global-pod-label: "true"
         yt_component: test-ytsaurus-yt-scheduler
         ytsaurus.tech/cluster-name: test-ytsaurus
     spec:
@@ -105,7 +107,10 @@ spec:
         - mountPath: /tls/bus_client_secret
           name: bus-client-secret
           readOnly: true
-      dnsPolicy: ClusterFirstWithHostNet
+      dnsConfig:
+        options:
+        - name: global-dns-option
+      dnsPolicy: ClusterFirst
       enableServiceLinks: false
       hostNetwork: true
       imagePullSecrets:
@@ -189,6 +194,12 @@ spec:
         - mountPath: /etc/ssl/certs
           name: ca-root-bundle
           readOnly: true
+      nodeSelector:
+        global-node-selector: "true"
+      runtimeClassName: global-runtime-class
+      setHostnameAsFQDN: false
+      tolerations:
+      - key: global-toleration
       volumes:
       - configMap:
           name: yt-scheduler-config
