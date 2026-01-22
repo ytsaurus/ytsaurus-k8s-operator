@@ -115,6 +115,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	var k8sClient client.WithWatch
 	var statefulSets map[string]*appsv1.StatefulSet
 	var configMaps map[string]*corev1.ConfigMap
+	var jobs map[string]*batchv1.Job
 
 	// NOTE: execution order for each test spec:
 	// - BeforeEach               (configuration)
@@ -364,12 +365,14 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		})
 
 		By("Checking Jobs", func() {
+			jobs = make(map[string]*batchv1.Job)
 			var objList batchv1.JobList
 			Expect(k8sClient.List(ctx, &objList)).To(Succeed())
 			for i := range objList.Items {
 				obj := &objList.Items[i]
 				log.Info("Found Job", "name", obj.Name)
 				objectList = append(objectList, obj.ObjectMeta)
+				jobs[obj.Name] = obj
 
 				canonize.AssertStruct(GinkgoT(), "Job "+obj.Name, obj)
 			}
@@ -433,6 +436,22 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				Expect(podSpec.Tolerations).To(Equal(options.Tolerations))
 				Expect(podSpec.NodeSelector).To(Equal(options.NodeSelector))
 				Expect(podSpec.RuntimeClassName).To(BeEquivalentTo(options.RuntimeClassName))
+				Expect(&podSpec.HostNetwork).To(BeEquivalentTo(options.HostNetwork))
+				Expect(podSpec.SetHostnameAsFQDN).To(BeEquivalentTo(options.SetHostnameAsFQDN))
+				Expect(&podSpec.DNSPolicy).To(BeEquivalentTo(options.DNSPolicy))
+				Expect(podSpec.DNSConfig).To(BeEquivalentTo(options.DNSConfig))
+			}
+			for _, job := range jobs {
+				log.Info("job", "name", job.Name)
+				podSpec := &job.Spec.Template.Spec
+				Expect(podSpec.ImagePullSecrets).To(Equal(ytsaurus.Spec.ImagePullSecrets))
+				options := &ytsaurus.Spec.PodSpec
+				if strings.HasPrefix(job.Name, "yt-master-") {
+					options = &ytsaurus.Spec.PrimaryMasters.PodSpec
+				}
+				Expect(podSpec.Tolerations).To(Equal(options.Tolerations))
+				Expect(podSpec.NodeSelector).To(Equal(options.NodeSelector))
+				Expect(podSpec.RuntimeClassName).To(BeNil())
 				Expect(&podSpec.HostNetwork).To(BeEquivalentTo(options.HostNetwork))
 				Expect(podSpec.SetHostnameAsFQDN).To(BeEquivalentTo(options.SetHostnameAsFQDN))
 				Expect(&podSpec.DNSPolicy).To(BeEquivalentTo(options.DNSPolicy))

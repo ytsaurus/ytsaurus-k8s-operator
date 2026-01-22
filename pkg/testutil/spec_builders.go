@@ -408,14 +408,11 @@ func (b *YtsaurusBuilder) WithAllGlobalPodOptions() {
 	b.Ytsaurus.Spec.ExtraPodAnnotations = map[string]string{"extra-pod-annotation": "true"}
 	b.Ytsaurus.Spec.PodAnnotations = map[string]string{"global-pod-annotation": "true"}
 	b.Ytsaurus.Spec.PodLabels = map[string]string{"global-pod-label": "true"}
-	// FIXME: broken for jobs
 	b.Ytsaurus.Spec.DNSPolicy = ptr.To(corev1.DNSClusterFirst)
 	b.Ytsaurus.Spec.DNSConfig = &corev1.PodDNSConfig{Options: []corev1.PodDNSConfigOption{{Name: "global-dns-option"}}}
-	// FIXME: broken for jobs
 	b.Ytsaurus.Spec.HostNetwork = ptr.To(true)
 	b.Ytsaurus.Spec.NodeSelector = map[string]string{"global-node-selector": "true"}
 	b.Ytsaurus.Spec.RuntimeClassName = ptr.To("global-runtime-class")
-	// FIXME: broken for jobs
 	b.Ytsaurus.Spec.SetHostnameAsFQDN = ptr.To(false)
 	b.Ytsaurus.Spec.Tolerations = []corev1.Toleration{{Key: "global-toleration"}}
 }
@@ -435,13 +432,11 @@ func (b *YtsaurusBuilder) WithAllInstancePodOptions(spec *ytv1.InstanceSpec) {
 	}
 	spec.DNSConfig = &corev1.PodDNSConfig{Options: []corev1.PodDNSConfigOption{{Name: "instance-dns-option"}}}
 	spec.DNSPolicy = ptr.To(corev1.DNSNone)
-	// FIXME: broken for jobs
 	spec.HostNetwork = ptr.To(false)
 	spec.NodeSelector = map[string]string{"instance-node-selector": "true"}
 	spec.PodAnnotations = map[string]string{"instance-pod-annotation": "true"}
 	spec.PodLabels = map[string]string{"instance-pod-label": "true"}
 	spec.RuntimeClassName = ptr.To("instance-runtime-class")
-	// FIXME: broken for jobs
 	spec.SetHostnameAsFQDN = ptr.To(true)
 	spec.Tolerations = []corev1.Toleration{{Key: "instance-toleration"}}
 }
