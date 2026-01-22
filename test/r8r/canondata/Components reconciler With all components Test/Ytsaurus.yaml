@@ -83,6 +83,9 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
+  dnsConfig:
+    options:
+    - name: global-dns-option
   enableFullUpdate: true
   ephemeralCluster: true
   execNodes:
@@ -130,7 +133,9 @@ spec:
     volumeMounts:
     - mountPath: /yt/node-data
       name: node-data
-  hostNetwork: false
+  extraPodAnnotations:
+    extra-pod-annotation: "true"
+  hostNetwork: true
   httpProxies:
   - instanceCount: 1
     loggers:
@@ -150,6 +155,8 @@ spec:
     transport:
       httpsSecret:
         name: https-server-cert
+  imagePullSecrets:
+  - name: global-image-pull-secrets
   isManaged: true
   jobImage: docker.io/library/python:3.8-slim
   masterCaches:
@@ -175,8 +182,22 @@ spec:
     tlsRequired: true
     tlsSecret:
       name: native-server-cert
+  nodeSelector:
+    global-node-selector: "true"
   primaryMasters:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: instance-affinity
+              operator: Exists
     cellTag: 1
+    dnsConfig:
+      options:
+      - name: instance-dns-option
+    dnsPolicy: None
+    hostNetwork: false
     instanceCount: 1
     locations:
     - locationType: MasterChangelogs
@@ -189,6 +210,12 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
+    nodeSelector:
+      instance-node-selector: "true"
+    podAnnotations:
+      instance-pod-annotation: "true"
+    podLabels:
+      instance-pod-label: "true"
     resources:
       limits:
         cpu: "1"
@@ -196,6 +223,10 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
+    runtimeClassName: instance-runtime-class
+    setHostnameAsFqdn: false
+    tolerations:
+    - key: instance-toleration
     volumeClaimTemplates:
     - metadata:
         name: master-data
@@ -275,6 +306,8 @@ spec:
   strawberry:
     image: ghcr.io/ytsaurus/strawberry:0.0.14
     resources: {}
+  tolerations:
+  - key: global-toleration
   useIpv4: false
   useIpv6: false
   usePorto: false

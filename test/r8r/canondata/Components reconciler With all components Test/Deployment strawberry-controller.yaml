@@ -1,6 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    extra-pod-annotation: "true"
   creationTimestamp: null
   generation: 1
   labels:
@@ -28,6 +30,8 @@ spec:
   strategy: {}
   template:
     metadata:
+      annotations:
+        extra-pod-annotation: "true"
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-strawberry-controller
@@ -90,6 +94,8 @@ spec:
         - mountPath: /tls/bus_secret
           name: bus-secret
           readOnly: true
+      imagePullSecrets:
+      - name: global-image-pull-secrets
       volumes:
       - configMap:
           name: yt-strawberry-controller-config
