@@ -25,7 +25,6 @@ spec:
         memory: "0"
   enableFullUpdate: true
   ephemeralCluster: true
-  hostNetwork: false
   httpProxies:
   - instanceCount: 1
     loggers:

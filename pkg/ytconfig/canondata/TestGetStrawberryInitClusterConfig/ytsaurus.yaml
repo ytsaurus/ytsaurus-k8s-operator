@@ -16,7 +16,6 @@ spec:
     instanceCount: 3
     resources: {}
   enableFullUpdate: false
-  hostNetwork: false
   isManaged: false
   kafkaProxies:
   - instanceCount: 3

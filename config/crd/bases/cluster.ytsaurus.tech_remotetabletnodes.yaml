@@ -833,8 +833,7 @@ spec:
               coreImage:
                 type: string
               dnsConfig:
-                description: DNSConfig allows customizing the DNS settings for the
-                  pods.
+                description: DNSConfig allows customizing the DNS settings.
                 properties:
                   nameservers:
                     description: A list of DNS name server IP addresses.
@@ -867,7 +866,7 @@ spec:
                     x-kubernetes-list-type: atomic
                 type: object
               dnsPolicy:
-                description: DNSPolicy defines how a pod's DNS will be configured.
+                description: DNSPolicy defines how DNS will be configured.
                 type: string
               enableAntiAffinity:
                 description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
@@ -884,12 +883,13 @@ spec:
               extraPodAnnotations:
                 additionalProperties:
                   type: string
+                description: 'Deprecated: Despite its name, it adds annotations to
+                  all resources.'
                 type: object
               forceTcp:
                 type: boolean
               hostNetwork:
-                default: false
-                description: Use the host's network namespace for all components.
+                description: Use the host's network namespace.
                 type: boolean
               image:
                 description: Overrides coreImage for component.
@@ -1099,14 +1099,17 @@ spec:
               nodeSelector:
                 additionalProperties:
                   type: string
+                description: Node selector for instance and init job pods.
                 type: object
               podAnnotations:
                 additionalProperties:
                   type: string
+                description: Annotations for instance pods.
                 type: object
               podLabels:
                 additionalProperties:
                   type: string
+                description: Labels for instance pods.
                 type: object
               rack:
                 description: Name of the node rack.
@@ -1183,6 +1186,7 @@ spec:
                     type: object
                 type: object
               runtimeClassName:
+                description: Runtime class for instance pods.
                 type: string
               setHostnameAsFqdn:
                 default: true
@@ -1259,6 +1263,7 @@ spec:
                 format: int64
                 type: integer
               tolerations:
+                description: Tolerations for instance and init job pods.
                 items:
                   description: |-
                     The pod this Toleration is attached to tolerates any taint that matches

@@ -47,11 +47,12 @@ type serverImpl struct {
 	sidecarImages map[string]string
 	labeller      *labeller.Labeller
 	proxy         apiproxy.APIProxy
-	commonSpec    ytv1.CommonSpec
+
+	commonSpec    *ytv1.CommonSpec
+	commonPodSpec *ytv1.PodSpec
+	instanceSpec  *ytv1.InstanceSpec
 
 	binaryPath string
-
-	instanceSpec *ytv1.InstanceSpec
 
 	statefulSet       *resources.StatefulSet
 	headlessService   *resources.HeadlessService
@@ -82,12 +83,11 @@ func newServer(
 	defaultMonitoringPort int32,
 	options ...Option,
 ) server {
-	proxy := ytsaurus.APIProxy()
-	commonSpec := ytsaurus.GetCommonSpec()
 	return newServerConfigured(
 		l,
-		proxy,
-		commonSpec,
+		ytsaurus.APIProxy(),
+		ytsaurus.GetCommonSpec(),
+		ytsaurus.GetCommonPodSpec(),
 		instanceSpec,
 		binaryPath, configFileName,
 		generator,
@@ -99,7 +99,8 @@ func newServer(
 func newServerConfigured(
 	l *labeller.Labeller,
 	proxy apiproxy.APIProxy,
-	commonSpec ytv1.CommonSpec,
+	commonSpec *ytv1.CommonSpec,
+	commonPodSpec *ytv1.PodSpec,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath, configFileName string,
 	generator ConfigGeneratorFunc,
@@ -167,6 +168,7 @@ func newServerConfigured(
 		sidecarImages: opts.sidecarImages,
 		proxy:         proxy,
 		commonSpec:    commonSpec,
+		commonPodSpec: commonPodSpec,
 		instanceSpec:  instanceSpec,
 		binaryPath:    binaryPath,
 		statefulSet: resources.NewStatefulSet(
@@ -518,14 +520,12 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		DNSConfig:    s.instanceSpec.DNSConfig,
 	}
 
-	if ptr.Deref(s.instanceSpec.HostNetwork, s.commonSpec.HostNetwork) {
+	if ptr.Deref(s.instanceSpec.HostNetwork, ptr.Deref(s.commonPodSpec.HostNetwork, false)) {
 		podSpec.HostNetwork = true
 		// https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy
 		podSpec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
 	}
-	if s.instanceSpec.DNSPolicy != "" {
-		podSpec.DNSPolicy = s.instanceSpec.DNSPolicy
-	}
+	podSpec.DNSPolicy = ptr.Deref(s.instanceSpec.DNSPolicy, podSpec.DNSPolicy)
 
 	s.caRootBundle.AddVolume(podSpec)
 	s.caBundle.AddVolume(podSpec)

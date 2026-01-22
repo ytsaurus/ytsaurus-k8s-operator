@@ -3,6 +3,8 @@ package webhooks
 import (
 	"errors"
 
+	"k8s.io/utils/ptr"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -412,14 +414,14 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("Should not accept non-empty primaryMaster/hostAddresses with HostNetwork=false", func() {
-			ytsaurus.Spec.HostNetwork = false
+			ytsaurus.Spec.HostNetwork = ptr.To(false)
 			ytsaurus.Spec.PrimaryMasters.HostAddresses = []string{"test.yt.address"}
 
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.hostNetwork: Required")))
 		})
 
 		It("primaryMaster/hostAddresses length should be equal to instanceCount", func() {
-			ytsaurus.Spec.HostNetwork = true
+			ytsaurus.Spec.HostNetwork = ptr.To(true)
 			ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
 			ytsaurus.Spec.PrimaryMasters.HostAddresses = []string{"test.yt.address"}
 

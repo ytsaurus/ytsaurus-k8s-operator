@@ -378,7 +378,34 @@ type MetricExporter struct {
 	GridStep     int32                  `json:"gridStep,omitempty"`
 }
 
+type PodSpec struct {
+	// Labels for instance pods.
+	PodLabels map[string]string `json:"podLabels,omitempty"`
+	// Annotations for instance pods.
+	PodAnnotations map[string]string `json:"podAnnotations,omitempty"`
+
+	// Node selector for instance and init job pods.
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	// Tolerations for instance and init job pods.
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
+
+	// Runtime class for instance pods.
+	RuntimeClassName *string `json:"runtimeClassName,omitempty"`
+
+	// Use the host's network namespace.
+	HostNetwork *bool `json:"hostNetwork,omitempty"`
+	// SetHostnameAsFQDN indicates whether to set the hostname as FQDN.
+	//+kubebuilder:default:=true
+	SetHostnameAsFQDN *bool `json:"setHostnameAsFqdn,omitempty"`
+	// DNSPolicy defines how DNS will be configured.
+	DNSPolicy *corev1.DNSPolicy `json:"dnsPolicy,omitempty"`
+	// DNSConfig allows customizing the DNS settings.
+	DNSConfig *corev1.PodDNSConfig `json:"dnsConfig,omitempty"`
+}
+
 type InstanceSpec struct {
+	PodSpec `json:",inline"`
+
 	// Overrides coreImage for component.
 	//+optional
 	Image *string `json:"image,omitempty"`
@@ -395,36 +422,20 @@ type InstanceSpec struct {
 	MinReadyInstanceCount *int                            `json:"minReadyInstanceCount,omitempty"`
 	Locations             []LocationSpec                  `json:"locations,omitempty"`
 	VolumeClaimTemplates  []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
-	//+optional
-	RuntimeClassName *string `json:"runtimeClassName,omitempty"`
 	// Deprecated: use Affinity.PodAntiAffinity instead.
 	EnableAntiAffinity *bool `json:"enableAntiAffinity,omitempty"`
-	// Use the host's network namespace, this overrides global option.
-	//+optional
-	HostNetwork *bool `json:"hostNetwork,omitempty"`
 	//+optional
 	MonitoringPort    *int32                 `json:"monitoringPort,omitempty"`
 	MetricExporter    *MetricExporter        `json:"metricExporter,omitempty"`
 	Loggers           []TextLoggerSpec       `json:"loggers,omitempty"`
 	StructuredLoggers []StructuredLoggerSpec `json:"structuredLoggers,omitempty"`
 	Affinity          *corev1.Affinity       `json:"affinity,omitempty"`
-	NodeSelector      map[string]string      `json:"nodeSelector,omitempty"`
-	Tolerations       []corev1.Toleration    `json:"tolerations,omitempty"`
-	PodLabels         map[string]string      `json:"podLabels,omitempty"`
-	PodAnnotations    map[string]string      `json:"podAnnotations,omitempty"`
-	// SetHostnameAsFQDN indicates whether to set the hostname as FQDN.
-	//+kubebuilder:default:=true
-	SetHostnameAsFQDN *bool `json:"setHostnameAsFqdn,omitempty"`
 	// Optional duration in seconds the pod needs to terminate gracefully.
 	//+optional
 	TerminationGracePeriodSeconds *int64 `json:"terminationGracePeriodSeconds,omitempty"`
 	// Component config for native RPC bus transport.
 	//+optional
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
-	// DNSConfig allows customizing the DNS settings for the pods.
-	//+optional
-	DNSConfig *corev1.PodDNSConfig `json:"dnsConfig,omitempty"`
-	DNSPolicy corev1.DNSPolicy     `json:"dnsPolicy,omitempty"`
 }
 
 type MasterConnectionSpec struct {
@@ -706,6 +717,8 @@ type DiscoverySpec struct {
 }
 
 type UISpec struct {
+	PodSpec `json:",inline"`
+
 	Image *string `json:"image,omitempty"`
 	//+kubebuilder:default:=NodePort
 	ServiceType  corev1.ServiceType `json:"serviceType,omitempty"`
@@ -739,12 +752,7 @@ type UISpec struct {
 	// When this is set to false, UI will use backend for downloading instead of proxy.
 	// If this is set to true or omitted, UI use proxies, which is a default behaviour.
 	//+optional
-	DirectDownload *bool               `json:"directDownload,omitempty"`
-	Tolerations    []corev1.Toleration `json:"tolerations,omitempty"`
-	NodeSelector   map[string]string   `json:"nodeSelector,omitempty"`
-	// DNSConfig allows customizing the DNS settings for the pods.
-	//+optional
-	DNSConfig *corev1.PodDNSConfig `json:"dnsConfig,omitempty"`
+	DirectDownload *bool `json:"directDownload,omitempty"`
 }
 
 type QueryTrackerSpec struct {
@@ -752,10 +760,10 @@ type QueryTrackerSpec struct {
 }
 
 type StrawberryControllerSpec struct {
+	PodSpec `json:",inline"`
+
 	Resources     corev1.ResourceRequirements `json:"resources,omitempty"`
 	Image         *string                     `json:"image,omitempty"`
-	Tolerations   []corev1.Toleration         `json:"tolerations,omitempty"`
-	NodeSelector  map[string]string           `json:"nodeSelector,omitempty"`
 	ExternalProxy *string                     `json:"externalProxy,omitempty"`
 	// Supported controller families, for example: "chyt", "jupyt", "livy".
 	ControllerFamilies []string `json:"controllerFamilies,omitempty"`
@@ -763,9 +771,6 @@ type StrawberryControllerSpec struct {
 	// For example, "chyt" (with `ControllerFamilies` set to {"chyt", "jupyt"} would mean
 	// that requests to "foo.<domain>" will be processed by chyt controller.
 	DefaultRouteFamily *string `json:"defaultRouteFamily,omitempty"`
-	// DNSConfig allows customizing the DNS settings for the pods.
-	//+optional
-	DNSConfig *corev1.PodDNSConfig `json:"dnsConfig,omitempty"`
 	// Write logs to stderr.
 	LogToStderr bool `json:"logToStderr,omitempty"`
 }
@@ -865,15 +870,11 @@ type CommonSpec struct {
 	//+optional
 	UseShortNames bool `json:"useShortNames"`
 
-	// Use the host's network namespace for all components.
-	//+kubebuilder:default:=false
-	//+optional
-	HostNetwork bool `json:"hostNetwork"`
-
 	//+kubebuilder:default:=false
 	//+optional
 	UsePorto bool `json:"usePorto"`
 
+	// Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead.
 	ExtraPodAnnotations map[string]string `json:"extraPodAnnotations,omitempty"`
 
 	ConfigOverrides  *corev1.LocalObjectReference  `json:"configOverrides,omitempty"`
@@ -899,7 +900,11 @@ type CommonRemoteNodeStatus struct {
 // YtsaurusSpec defines the desired state of Ytsaurus
 type YtsaurusSpec struct {
 	CommonSpec `json:",inline"`
-	UIImage    string `json:"uiImage,omitempty"`
+
+	// Default settings for instance and init job pods.
+	PodSpec `json:",inline"`
+
+	UIImage string `json:"uiImage,omitempty"`
 
 	// requiresOperatorVersion is used to lock the YT spec to an Operator version or range.
 	// When this attribute is set, its value must be a valid version constraint. A valid version
@@ -953,12 +958,7 @@ type YtsaurusSpec struct {
 	// Controls the components that should be updated during the update process.
 	UpdatePlan []ComponentUpdateSelector `json:"updatePlan,omitempty"`
 
-	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
-	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
-	// DNSConfig allows customizing the DNS settings for the pods.
-	//+optional
-	DNSConfig *corev1.PodDNSConfig `json:"dnsConfig,omitempty"`
-	Bootstrap *BootstrapSpec       `json:"bootstrap,omitempty"`
+	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
 	Discovery        DiscoverySpec `json:"discovery,omitempty"`
 	PrimaryMasters   MastersSpec   `json:"primaryMasters,omitempty"`

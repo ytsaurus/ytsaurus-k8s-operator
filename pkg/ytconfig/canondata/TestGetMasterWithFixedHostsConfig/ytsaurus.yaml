@@ -6,7 +6,6 @@ spec:
   discovery:
     resources: {}
   enableFullUpdate: false
-  hostNetwork: false
   isManaged: false
   primaryMasters:
     cellTag: 0

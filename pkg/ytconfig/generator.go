@@ -549,7 +549,7 @@ func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, e
 	}
 
 	// COMPAT(l0kix2): remove that after we drop support for specifying host network without master host addresses.
-	if ptr.Deref(spec.HostNetwork, g.ytsaurus.Spec.HostNetwork) && len(spec.HostAddresses) == 0 {
+	if ptr.Deref(spec.HostNetwork, ptr.Deref(g.ytsaurus.Spec.HostNetwork, false)) && len(spec.HostAddresses) == 0 {
 		// Each master deduces its index within cell by looking up his FQDN in the
 		// list of all master peers. Master peers are specified using their pod addresses,
 		// therefore we must also switch masters from identifying themselves by FQDN addresses

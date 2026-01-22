@@ -30,7 +30,8 @@ func NewOffshoreDataGateways(
 	srv := newServerConfigured(
 		l,
 		proxy,
-		commonSpec,
+		&commonSpec,
+		&ytv1.PodSpec{},
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-offshore-data-gateway",
 		"ytserver-offshore-data-gateway.yson",

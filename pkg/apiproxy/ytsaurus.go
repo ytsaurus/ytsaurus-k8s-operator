@@ -46,8 +46,12 @@ func (c *Ytsaurus) GetResource() *ytv1.Ytsaurus {
 	return c.ytsaurus
 }
 
-func (c *Ytsaurus) GetCommonSpec() ytv1.CommonSpec {
-	return c.GetResource().Spec.CommonSpec
+func (c *Ytsaurus) GetCommonSpec() *ytv1.CommonSpec {
+	return &c.GetResource().Spec.CommonSpec
+}
+
+func (c *Ytsaurus) GetCommonPodSpec() *ytv1.PodSpec {
+	return &c.GetResource().Spec.PodSpec
 }
 
 func (c *Ytsaurus) GetClusterFeatures() ytv1.ClusterFeatures {

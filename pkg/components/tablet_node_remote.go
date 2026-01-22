@@ -31,7 +31,8 @@ func NewRemoteTabletNodes(
 	srv := newServerConfigured(
 		l,
 		proxy,
-		commonSpec,
+		&commonSpec,
+		&ytv1.PodSpec{},
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
 		"ytserver-tablet-node.yson",
