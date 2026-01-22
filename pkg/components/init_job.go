@@ -159,12 +159,21 @@ func (j *InitJob) Build() *batchv1.Job {
 			Volumes: []corev1.Volume{
 				createConfigVolume(consts.ConfigVolumeName, j.configs.GetConfigMapName(), &defaultMode),
 			},
-			RestartPolicy: corev1.RestartPolicyOnFailure,
-			Tolerations:   getTolerationsWithDefault(j.instanceSpec.Tolerations, j.commonPodSpec.Tolerations),
-			NodeSelector:  getNodeSelectorWithDefault(j.instanceSpec.NodeSelector, j.commonPodSpec.NodeSelector),
-			DNSConfig:     ptrDefault(j.instanceSpec.DNSConfig, j.commonPodSpec.DNSConfig),
+			RestartPolicy:     corev1.RestartPolicyOnFailure,
+			Tolerations:       getTolerationsWithDefault(j.instanceSpec.Tolerations, j.commonPodSpec.Tolerations),
+			NodeSelector:      getNodeSelectorWithDefault(j.instanceSpec.NodeSelector, j.commonPodSpec.NodeSelector),
+			DNSConfig:         ptrDefault(j.instanceSpec.DNSConfig, j.commonPodSpec.DNSConfig),
+			SetHostnameAsFQDN: ptr.To(ptr.Deref(j.instanceSpec.SetHostnameAsFQDN, ptr.Deref(j.commonPodSpec.SetHostnameAsFQDN, true))),
 		},
 	}
+	podSpec := &job.Spec.Template.Spec
+
+	if ptr.Deref(j.instanceSpec.HostNetwork, ptr.Deref(j.commonPodSpec.HostNetwork, false)) {
+		podSpec.HostNetwork = true
+		// https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy
+		podSpec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
+	}
+	podSpec.DNSPolicy = ptr.Deref(j.instanceSpec.DNSPolicy, ptr.Deref(j.commonPodSpec.DNSPolicy, podSpec.DNSPolicy))
 
 	j.caRootBundle.AddVolume(&job.Spec.Template.Spec)
 	j.caRootBundle.AddVolumeMount(&job.Spec.Template.Spec.Containers[0])

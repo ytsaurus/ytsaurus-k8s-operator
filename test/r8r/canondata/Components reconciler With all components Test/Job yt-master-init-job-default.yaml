@@ -82,11 +82,13 @@ spec:
       dnsConfig:
         options:
         - name: instance-dns-option
+      dnsPolicy: None
       imagePullSecrets:
       - name: global-image-pull-secrets
       nodeSelector:
         instance-node-selector: "true"
       restartPolicy: OnFailure
+      setHostnameAsFQDN: true
       tolerations:
       - key: instance-toleration
       volumes:

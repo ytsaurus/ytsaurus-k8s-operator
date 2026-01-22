@@ -85,11 +85,14 @@ spec:
       dnsConfig:
         options:
         - name: global-dns-option
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
       imagePullSecrets:
       - name: global-image-pull-secrets
       nodeSelector:
         global-node-selector: "true"
       restartPolicy: OnFailure
+      setHostnameAsFQDN: false
       tolerations:
       - key: global-toleration
       volumes:
