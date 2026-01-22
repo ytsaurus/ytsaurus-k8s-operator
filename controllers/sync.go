@@ -146,6 +146,11 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 
+	if err := ytv1.ValidateVersionConstraint(resource.Spec.RequiresOperatorVersion); err != nil {
+		logger.Error(err, "Operator version does not satisfy spec version constraint")
+		return ctrl.Result{}, err
+	}
+
 	ytsaurus := apiProxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
 	componentManager, err := NewComponentManager(ctx, ytsaurus, r.ClusterDomain)
 	if err != nil {
