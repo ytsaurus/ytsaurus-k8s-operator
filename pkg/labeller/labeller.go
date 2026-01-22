@@ -2,6 +2,7 @@ package labeller
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -222,7 +223,7 @@ func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
 		Name:        name,
 		Namespace:   l.GetNamespace(),
 		Labels:      l.GetMetaLabelMap(false),
-		Annotations: l.Annotations,
+		Annotations: l.GetAnnotations(),
 	}
 }
 
@@ -231,7 +232,7 @@ func (l *Labeller) GetInitJobObjectMeta() metav1.ObjectMeta {
 		Name:        "ytsaurus-init",
 		Namespace:   l.GetNamespace(),
 		Labels:      l.GetMetaLabelMap(true),
-		Annotations: l.Annotations,
+		Annotations: l.GetAnnotations(),
 	}
 }
 
@@ -302,4 +303,8 @@ func (l *Labeller) GetMonitoringMetaLabelMap() map[string]string {
 	labels[consts.YTMetricsLabelName] = "true"
 
 	return labels
+}
+
+func (l *Labeller) GetAnnotations() map[string]string {
+	return maps.Clone(l.Annotations)
 }

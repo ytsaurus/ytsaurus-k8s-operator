@@ -49,7 +49,7 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      s.labeller.GetMetaLabelMap(false),
-					Annotations: s.commonSpec.ExtraPodAnnotations,
+					Annotations: s.labeller.GetAnnotations(),
 				},
 			},
 		}
