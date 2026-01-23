@@ -299,6 +299,12 @@ linters:
         linters:
           - gochecknoglobals
 
+      - path: validators
+        text: "SA1019: instanceSpec.EnableAntiAffinity is deprecated"
+
+      - path: validators
+        text: "SA1019: .*\\.ExtraPodAnnotations is deprecated"
+
       - path: controllers/sync.go
         text: "SA1019: spec.UpdateSelector is deprecated"
 

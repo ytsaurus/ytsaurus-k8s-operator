@@ -41,6 +41,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/validators"
 )
 
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
@@ -115,13 +117,13 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	err = (&ytv1.Ytsaurus{}).SetupWebhookWithManager(mgr)
+	err = validators.NewYtsaurusValidator().SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = (&ytv1.Spyt{}).SetupWebhookWithManager(mgr)
+	err = validators.NewSpytValidator().SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = (&ytv1.Chyt{}).SetupWebhookWithManager(mgr)
+	err = validators.NewChytValidator().SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:webhook
