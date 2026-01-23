@@ -54,10 +54,6 @@ type RemoteYtsaurusList struct {
 	Items           []RemoteYtsaurus `json:"items"`
 }
 
-func init() {
-	SchemeBuilder.Register(&RemoteYtsaurus{}, &RemoteYtsaurusList{})
-}
-
 // RemoteYtsaurus doesn't have a reconciller, so we put rbac markers here.
 //+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=remoteytsaurus,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=remoteytsaurus/status,verbs=get;update;patch
