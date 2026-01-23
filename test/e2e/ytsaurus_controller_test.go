@@ -1071,19 +1071,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				msPod := getMasterPod(testutil.MasterPodName, namespace)
 				msPodCreationFirstTimestamp := msPod.CreationTimestamp
 
-				By("Setting artificial conditions for deploy to stuck in PossibilityCheck")
-				var masters []string
-				err := ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &masters, nil)
-				Expect(err).Should(Succeed())
-				Expect(masters).Should(HaveLen(1))
-				onlyMaster := masters[0]
-				_, err = ytClient.CopyNode(
-					ctx,
-					ypath.Path("//sys/primary_masters/"+onlyMaster),
-					ypath.Path("//sys/primary_masters/"+onlyMaster+"-fake-leader"),
-					nil,
-				)
-				Expect(err).Should(Succeed())
+				By("Setting maintenance to stop in PossibilityCheck", func() {
+					var masters []string
+					Expect(ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &masters, nil)).Should(Succeed())
+					Expect(masters).Should(HaveLen(1))
+					Expect(ytClient.SetNode(ctx, ypath.Path("//sys/primary_masters").Child(masters[0]).Attr("maintenance"), true, nil)).To(Succeed())
+				})
 
 				By("Run cluster update")
 				ytsaurus.Spec.HostNetwork = true
@@ -1096,6 +1089,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck))
 
 				By("Check that master pod was NOT recreated at the PossibilityCheck stage")
+				// FIXME: rewrite this.
 				time.Sleep(1 * time.Second)
 				msPod = getMasterPod(testutil.MasterPodName, namespace)
 				msPodCreationSecondTimestamp := msPod.CreationTimestamp
