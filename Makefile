@@ -174,6 +174,7 @@ generate: generate-code manifests helm-chart generate-docs generate-schema ## Ge
 
 .PHONY: manifests
 manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+	rm -f config/crd/bases/*.yaml
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd:maxDescLen=80 webhook paths="{\"./api/...\" , \"./controllers/...\", \"./pkg/...\"}" output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate-code
@@ -183,6 +184,7 @@ generate-code: ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyO
 
 .PHONY: generate-docs
 generate-docs: ## Generate documentation.
+	rm -f docs/api.md
 	$(CRD_REF_DOCS) --config config/crd-ref-docs/config.yaml --renderer=markdown --source-path=api/v1 --output-path=docs/api.md
 
 .PHONY: generate-schema
