@@ -7,6 +7,7 @@ import (
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/validators"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -157,7 +158,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 
-	if err := ytv1.ValidateVersionConstraint(resource.Spec.RequiresOperatorVersion); err != nil {
+	if err := validators.ValidateVersionConstraint(resource.Spec.RequiresOperatorVersion); err != nil {
 		logger.Error(err, "Operator version does not satisfy spec version constraint")
 		return ctrl.Result{}, err
 	}

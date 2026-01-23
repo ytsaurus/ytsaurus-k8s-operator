@@ -25,6 +25,8 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/validators"
+
 	controllerconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -204,7 +206,7 @@ func main() {
 	}
 
 	if enableWebhooks {
-		if err = (&ytv1.Ytsaurus{}).SetupWebhookWithManager(mgr); err != nil {
+		if err = validators.NewYtsaurusValidator().SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Ytsaurus")
 			os.Exit(1)
 		}
@@ -216,13 +218,13 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Spyt")
 		os.Exit(1)
 	}
-
 	if enableWebhooks {
-		if err = (&ytv1.Spyt{}).SetupWebhookWithManager(mgr); err != nil {
+		if err = validators.NewSpytValidator().SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Spyt")
 			os.Exit(1)
 		}
 	}
+
 	if err = (&controllers.ChytReconciler{
 		BaseReconciler: baseReconciler("chyt-controller"),
 	}).SetupWithManager(mgr); err != nil {
@@ -230,11 +232,12 @@ func main() {
 		os.Exit(1)
 	}
 	if enableWebhooks {
-		if err = (&ytv1.Chyt{}).SetupWebhookWithManager(mgr); err != nil {
+		if err = validators.NewChytValidator().SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Chyt")
 			os.Exit(1)
 		}
 	}
+
 	if err = (&controllers.RemoteExecNodesReconciler{
 		BaseReconciler: baseReconciler("remoteexecnodes-controller"),
 	}).SetupWithManager(mgr); err != nil {

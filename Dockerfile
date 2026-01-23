@@ -23,6 +23,7 @@ COPY main.go main.go
 COPY api/ api/
 COPY pkg/ pkg/
 COPY controllers/ controllers/
+COPY validators/ validators/
 
 ARG GO_LDFLAGS="-X github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version.version=${VERSION}"
 
