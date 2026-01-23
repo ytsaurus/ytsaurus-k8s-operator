@@ -57,7 +57,3 @@ type RemoteExecNodesList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []RemoteExecNodes `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&RemoteExecNodes{}, &RemoteExecNodesList{})
-}

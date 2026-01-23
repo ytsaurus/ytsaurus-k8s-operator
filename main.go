@@ -169,14 +169,14 @@ func main() {
 		labelSelector := labels.NewSelector().Add(*matchOperatorInstance)
 
 		managerOptions.Cache.ByObject = map[client.Object]cache.ByObject{}
-		for _, object := range ytv1.SchemeBuilder.Objects {
+		for _, object := range ytv1.KnownObjectTypes() {
 			gvk, err := apiutil.GVKForObject(object, scheme)
 			if err != nil {
 				setupLog.Error(err, "unable to construct operator instance selector")
 				os.Exit(1)
 			}
 			setupLog.Info("Cache label selector", "GVK", gvk, "selector", labelSelector)
-			managerOptions.Cache.ByObject[object] = cache.ByObject{
+			managerOptions.Cache.ByObject[object.(client.Object)] = cache.ByObject{
 				Label: labelSelector,
 			}
 		}

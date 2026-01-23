@@ -1169,7 +1169,3 @@ type YtsaurusList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Ytsaurus `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&Ytsaurus{}, &YtsaurusList{})
-}
