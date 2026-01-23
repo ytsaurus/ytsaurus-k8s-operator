@@ -60,7 +60,3 @@ type OffshoreDataGatewaysList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []OffshoreDataGateways `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&OffshoreDataGateways{}, &OffshoreDataGatewaysList{})
-}

@@ -75,7 +75,3 @@ type SpytList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Spyt `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&Spyt{}, &SpytList{})
-}

@@ -57,7 +57,3 @@ type RemoteTabletNodesList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []RemoteTabletNodes `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&RemoteTabletNodes{}, &RemoteTabletNodesList{})
-}

@@ -74,7 +74,3 @@ type ChytList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Chyt `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&Chyt{}, &ChytList{})
-}
