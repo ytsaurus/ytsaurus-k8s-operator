@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"slices"
+	"strings"
 	"testing"
 
 	cryptorand "crypto/rand"
@@ -41,6 +42,7 @@ import (
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/canonize"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 )
 
@@ -326,6 +328,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				statefulSets[obj.Name] = obj
 
 				canonize.AssertStruct(GinkgoT(), "StatefulSet "+obj.Name, obj)
+
+				Expect(obj.Spec.Template.Annotations).To(HaveKey(consts.ConfigChecksumAnnotationName))
 			}
 		})
 
@@ -352,6 +356,10 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				configMaps[obj.Name] = obj
 
 				canonize.AssertStruct(GinkgoT(), "ConfigMap "+obj.Name, obj)
+
+				if strings.HasSuffix(obj.Name, "-config") {
+					Expect(obj.Annotations).To(HaveKey(consts.ConfigChecksumAnnotationName))
+				}
 			}
 		})
 

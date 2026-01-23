@@ -23,7 +23,9 @@ func NewConfigMap(name string, labeller *labeller2.Labeller, apiProxy apiproxy.A
 }
 
 func (s *ConfigMap) Build() *corev1.ConfigMap {
-	s.newObject.ObjectMeta = s.labeller.GetObjectMeta(s.name)
-	s.newObject.Data = make(map[string]string)
+	s.newObject = &corev1.ConfigMap{
+		ObjectMeta: s.labeller.GetObjectMeta(s.name),
+		Data:       map[string]string{},
+	}
 	return s.newObject
 }

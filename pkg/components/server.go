@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"path"
 
@@ -231,12 +232,17 @@ func (s *serverImpl) needSync() bool {
 }
 
 func (s *serverImpl) Sync(ctx context.Context) error {
-	if _, err := s.configs.Build(); err != nil {
+	cm, err := s.configs.Build()
+	if err != nil {
 		return err
 	}
 	_ = s.headlessService.Build()
 	_ = s.monitoringService.Build()
 	_ = s.buildStatefulSet()
+
+	if err := s.setConfigChecksum(cm); err != nil {
+		return err
+	}
 
 	return resources.Sync(ctx,
 		s.statefulSet,
@@ -429,14 +435,6 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, key, value)
 	}
 
-	newChecksum := s.configs.getChecksumFromAnnotation()
-	existingChecksum := s.statefulSet.OldObject().Spec.Template.Annotations[consts.ConfigChecksumAnnotationName]
-	if newChecksum != "" && existingChecksum != newChecksum {
-		metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, consts.ConfigChecksumAnnotationName, newChecksum)
-	} else if existingChecksum != "" {
-		metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, consts.ConfigChecksumAnnotationName, existingChecksum)
-	}
-
 	statefulSet.Spec.Replicas = &s.instanceSpec.InstanceCount
 	statefulSet.Spec.ServiceName = s.headlessService.Name()
 	statefulSet.Spec.VolumeClaimTemplates = createVolumeClaims(s.instanceSpec.VolumeClaimTemplates)
@@ -549,6 +547,16 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 
 	s.builtStatefulSet = statefulSet
 	return statefulSet
+}
+
+func (s *serverImpl) setConfigChecksum(cm *corev1.ConfigMap) error {
+	configChecksum := cm.Annotations[consts.ConfigChecksumAnnotationName]
+	if configChecksum == "" {
+		return fmt.Errorf("config checksum is not found for %v", cm.Name)
+	}
+	// Propagate config checksum from configmap to pod template to trigger restart when needed.
+	metav1.SetMetaDataAnnotation(&s.builtStatefulSet.Spec.Template.ObjectMeta, consts.ConfigChecksumAnnotationName, configChecksum)
+	return nil
 }
 
 func (s *serverImpl) removePods(ctx context.Context) error {

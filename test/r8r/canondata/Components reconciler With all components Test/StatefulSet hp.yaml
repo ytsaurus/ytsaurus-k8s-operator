@@ -29,6 +29,8 @@ spec:
   serviceName: http-proxies
   template:
     metadata:
+      annotations:
+        ytsaurus.tech/config-checksum: 2b96be601ec679481e93ca1c5517c99019e0b0c217091f4e5dc15c61e6ba9226
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-http-proxy

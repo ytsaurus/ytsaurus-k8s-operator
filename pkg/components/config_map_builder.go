@@ -209,10 +209,6 @@ func (h *ConfigMapBuilder) getCurrentConfigValue(fileName string) []byte {
 	return []byte(data)
 }
 
-func (h *ConfigMapBuilder) getChecksumFromAnnotation() string {
-	return h.configMap.OldObject().Annotations[consts.ConfigChecksumAnnotationName]
-}
-
 func (h *ConfigMapBuilder) NeedReload() (bool, error) {
 	for _, descriptor := range h.generators {
 		newConfig, err := h.getConfig(descriptor)
@@ -262,9 +258,7 @@ func (h *ConfigMapBuilder) Build() (*corev1.ConfigMap, error) {
 	if err != nil {
 		return nil, err
 	}
-	if currentChecksum != "" {
-		metav1.SetMetaDataAnnotation(&cm.ObjectMeta, consts.ConfigChecksumAnnotationName, currentChecksum)
-	}
+	metav1.SetMetaDataAnnotation(&cm.ObjectMeta, consts.ConfigChecksumAnnotationName, currentChecksum)
 
 	return cm, nil
 }
@@ -308,10 +302,6 @@ func (h *ConfigMapBuilder) Exists() bool {
 }
 
 func configChecksumFromData(data map[string]string) (string, error) {
-	if len(data) == 0 {
-		return "", nil
-	}
-
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return "", err
