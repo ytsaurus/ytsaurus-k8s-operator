@@ -1,46 +1,49 @@
 package consts
 
-type ComponentType string
-
-const (
-	BundleControllerType     ComponentType = "BundleController"
-	TabletBalancerType       ComponentType = "TabletBalancer"
-	ControllerAgentType      ComponentType = "ControllerAgent"
-	CypressProxyType         ComponentType = "CypressProxy"
-	DataNodeType             ComponentType = "DataNode"
-	DiscoveryType            ComponentType = "Discovery"
-	ExecNodeType             ComponentType = "ExecNode"
-	HttpProxyType            ComponentType = "HttpProxy"
-	MasterCacheType          ComponentType = "MasterCache"
-	MasterType               ComponentType = "Master"
-	QueryTrackerType         ComponentType = "QueryTracker"
-	QueueAgentType           ComponentType = "QueueAgent"
-	RpcProxyType             ComponentType = "RpcProxy"
-	SchedulerType            ComponentType = "Scheduler"
-	StrawberryControllerType ComponentType = "StrawberryController"
-	TabletNodeType           ComponentType = "TabletNode"
-	OffshoreDataGatewayType  ComponentType = "OffshoreDataGateway"
-	TcpProxyType             ComponentType = "TcpProxy"
-	KafkaProxyType           ComponentType = "KafkaProxy"
-	UIType                   ComponentType = "UI"
-	YqlAgentType             ComponentType = "YqlAgent"
-	YtsaurusClientType       ComponentType = "YtsaurusClient"
-	ChytType                 ComponentType = "CHYT"
-	SpytType                 ComponentType = "SPYT"
-	ClusterConnectionType    ComponentType = "ClusterConnection"
-	NativeClientConfigType   ComponentType = "NativeClientConfig"
-	TimbertruckType          ComponentType = "Timbertruck"
-	ImageHeaterType          ComponentType = "ImageHeater"
+import (
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
 
-type ComponentClass string
+type ComponentType = ytv1.ComponentType
 
 const (
-	// ComponentClassStateless group contains only stateless components (not master, data nodes, tablet nodes)
-	ComponentClassUnspecified ComponentClass = ""
-	ComponentClassStateless   ComponentClass = "Stateless"
-	ComponentClassEverything  ComponentClass = "Everything"
-	ComponentClassNothing     ComponentClass = "Nothing"
+	BundleControllerType     = ytv1.BundleControllerType
+	TabletBalancerType       = ytv1.TabletBalancerType
+	ControllerAgentType      = ytv1.ControllerAgentType
+	CypressProxyType         = ytv1.CypressProxyType
+	DataNodeType             = ytv1.DataNodeType
+	DiscoveryType            = ytv1.DiscoveryType
+	ExecNodeType             = ytv1.ExecNodeType
+	HttpProxyType            = ytv1.HttpProxyType
+	MasterCacheType          = ytv1.MasterCacheType
+	MasterType               = ytv1.MasterType
+	QueryTrackerType         = ytv1.QueryTrackerType
+	QueueAgentType           = ytv1.QueueAgentType
+	RpcProxyType             = ytv1.RpcProxyType
+	SchedulerType            = ytv1.SchedulerType
+	StrawberryControllerType = ytv1.StrawberryControllerType
+	TabletNodeType           = ytv1.TabletNodeType
+	OffshoreDataGatewayType  = ytv1.OffshoreDataGatewayType
+	TcpProxyType             = ytv1.TcpProxyType
+	KafkaProxyType           = ytv1.KafkaProxyType
+	UIType                   = ytv1.UIType
+	YqlAgentType             = ytv1.YqlAgentType
+	YtsaurusClientType       = ytv1.YtsaurusClientType
+	ChytType                 = ytv1.ChytType
+	SpytType                 = ytv1.SpytType
+	ClusterConnectionType    = ytv1.ClusterConnectionType
+	NativeClientConfigType   = ytv1.NativeClientConfigType
+	TimbertruckType          = ytv1.TimbertruckType
+	ImageHeaterType          = ytv1.ImageHeaterType
+)
+
+type ComponentClass = ytv1.ComponentClass
+
+const (
+	ComponentClassUnspecified = ytv1.ComponentClassUnspecified
+	ComponentClassStateless   = ytv1.ComponentClassStateless
+	ComponentClassEverything  = ytv1.ComponentClassEverything
+	ComponentClassNothing     = ytv1.ComponentClassNothing
 )
 
 var (
