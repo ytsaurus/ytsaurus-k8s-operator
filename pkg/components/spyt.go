@@ -99,7 +99,7 @@ func (s *Spyt) buildQueryTrackerDynamicConfigCommand() string {
 
 	return fmt.Sprintf(
 		"/usr/bin/yt create document //sys/query_tracker/config --attributes '{value={}}' --recursive --ignore-existing\n"+
-			"/usr/bin/yt set //sys/query_tracker/config '{query_tracker={spyt_connect_engine={spark_version=\"%s\";spyt_version=\"%s\";};}}'",
+			"/usr/bin/yt set -r //sys/query_tracker/config/query_tracker/spyt_connect_engine '{spark_version=\"%s\";spyt_version=\"%s\";}'",
 		sparkVersions[0],
 		spytVersion,
 	)

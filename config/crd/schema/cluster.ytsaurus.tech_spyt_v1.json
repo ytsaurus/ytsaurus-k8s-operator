@@ -36,6 +36,7 @@
           }
         },
         "sparkVersions": {
+          "description": "If multiple versions are provided, only the first one is used for query tracker...",
           "type": "array",
           "items": {
             "type": "string"
