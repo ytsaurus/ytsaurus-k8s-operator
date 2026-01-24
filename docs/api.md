@@ -458,6 +458,25 @@ _Appears in:_
 | `type` _[ComponentType](#componenttype)_ |  |  |  |
 
 
+#### ComponentClass
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [ComponentUpdateSelector](#componentupdateselector)
+
+| Field | Description |
+| --- | --- |
+| `` |  |
+| `Nothing` | ComponentClassNothing includes no components.<br /> |
+| `Everything` | ComponentClassEverything includes all components.<br /> |
+| `Stateless` | ComponentClassStateless includes all except master, data and tablet nodes.<br /> |
+
+
 #### ComponentOnDeleteUpdateMode
 
 
@@ -485,6 +504,49 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `batchSize` _integer_ | BatchSize controls how many replicas can be rolled at once. |  |  |
+
+
+#### ComponentType
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [Component](#component)
+
+| Field | Description |
+| --- | --- |
+| `BundleController` |  |
+| `ControllerAgent` |  |
+| `CHYT` |  |
+| `ClusterConnection` |  |
+| `CypressProxy` |  |
+| `DataNode` |  |
+| `Discovery` |  |
+| `ExecNode` |  |
+| `HttpProxy` |  |
+| `ImageHeater` |  |
+| `KafkaProxy` |  |
+| `MasterCache` |  |
+| `Master` |  |
+| `NativeClientConfig` |  |
+| `OffshoreDataGateway` |  |
+| `QueryTracker` |  |
+| `QueueAgent` |  |
+| `RpcProxy` |  |
+| `Scheduler` |  |
+| `SPYT` |  |
+| `StrawberryController` |  |
+| `TabletBalancer` |  |
+| `TabletNode` |  |
+| `TcpProxy` |  |
+| `Timbertruck` |  |
+| `UI` |  |
+| `YqlAgent` |  |
+| `YtsaurusClient` |  |
 
 
 
