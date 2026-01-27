@@ -240,7 +240,7 @@ func (h *ConfigMapBuilder) Build() (*corev1.ConfigMap, error) {
 	cm := h.configMap.Build()
 
 	if version := h.overridesMap.ResourceVersion; version != "" {
-		metav1.SetMetaDataLabel(&cm.ObjectMeta, consts.ConfigOverridesVersionLabelName, version)
+		metav1.SetMetaDataAnnotation(&cm.ObjectMeta, consts.ConfigOverridesVersionAnnotationName, version)
 	}
 
 	for _, descriptor := range h.generators {
