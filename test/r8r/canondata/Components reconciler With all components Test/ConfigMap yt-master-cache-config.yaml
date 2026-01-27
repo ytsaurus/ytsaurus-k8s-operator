@@ -120,6 +120,7 @@ kind: ConfigMap
 metadata:
   annotations:
     ytsaurus.tech/config-hash: a5222d43560fa08b2a44061c821e7f0e5fb81059ab8c5c1e04577bff6649096a
+    ytsaurus.tech/config-overrides-version: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -129,7 +130,6 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-master-cache
     ytsaurus.tech/cluster-name: test-ytsaurus
-    ytsaurus.tech/config-overrides-version: "1"
   name: yt-master-cache-config
   namespace: ytsaurus-components
   ownerReferences:
