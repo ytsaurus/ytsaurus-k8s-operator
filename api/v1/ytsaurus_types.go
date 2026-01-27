@@ -22,8 +22,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 // EmbeddedPersistentVolumeClaim is an embedded version of k8s.io/api/core/v1.PersistentVolumeClaim.
@@ -1059,7 +1057,7 @@ type ComponentUpdateStrategy struct {
 type ComponentUpdateSelector struct {
 	//+optional
 	//+kubebuilder:validation:Enum={"","Nothing","Stateless","Everything"}
-	Class consts.ComponentClass `json:"class,omitempty"`
+	Class ComponentClass `json:"class,omitempty"`
 	//+optional
 	Component Component `json:"component,omitempty"`
 	//+optional
@@ -1107,8 +1105,8 @@ type UpdateStatus struct {
 }
 
 type Component struct {
-	Name string               `json:"name,omitempty"`
-	Type consts.ComponentType `json:"type,omitempty"`
+	Name string        `json:"name,omitempty"`
+	Type ComponentType `json:"type,omitempty"`
 }
 
 func (c *Component) String() string {
@@ -1166,8 +1164,4 @@ type YtsaurusList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Ytsaurus `json:"items"`
-}
-
-func init() {
-	SchemeBuilder.Register(&Ytsaurus{}, &YtsaurusList{})
 }

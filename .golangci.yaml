@@ -216,6 +216,10 @@ linters:
         rangeValCopy:
           sizeThreshold: 4096
 
+    gomoddirectives:
+      # Allow local `replace` directives.
+      replace-local: true
+
     importas:
       # Do not allow unaliased imports of aliased packages.
       # Default: false
@@ -298,6 +302,9 @@ linters:
       - path: 'controllers'
         linters:
           - gochecknoglobals
+
+      - path: validators
+        text: "SA1019: instanceSpec.EnableAntiAffinity is deprecated"
 
       - path: controllers/sync.go
         text: "SA1019: spec.UpdateSelector is deprecated"
