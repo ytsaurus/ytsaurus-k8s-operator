@@ -18,6 +18,9 @@ const (
 	// Config hash is computed from configmap data.
 	ConfigHashAnnotationName = "ytsaurus.tech/config-hash"
 
+	// Instance hash is computed from template of pod spec.
+	InstanceHashAnnotationName = "ytsaurus.tech/instance-hash"
+
 	YTOperatorInstanceLabelName = "ytsaurus.tech/operator-instance"
 )
 

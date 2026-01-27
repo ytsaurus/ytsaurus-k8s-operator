@@ -1,6 +1,8 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
+  annotations:
+    ytsaurus.tech/instance-hash: 4c31ef9b96fbfe2a1b05ffa944893aae21c5b47904338cef7d6d14b614a05b25
   creationTimestamp: null
   generation: 1
   labels:

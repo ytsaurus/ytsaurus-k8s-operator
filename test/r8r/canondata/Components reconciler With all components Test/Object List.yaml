@@ -1,4 +1,6 @@
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/instance-hash: bff145fe21e0e392976683ceb91784c624a045b5f19a30329b689e63be6b78ad
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-controller-agent
@@ -116,7 +118,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/instance-hash: 9c044e2b8b06ab3a146f92be61e559be745c6fc166b50426ffd86c219ef929aa
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-data-node
@@ -135,7 +139,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/instance-hash: 7447a1bf2badd27b9b88d7afab39d1b8c606f8698c86be4760714a74ed54d8b3
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-discovery
@@ -154,7 +160,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/instance-hash: 6bdbbe0d084ef055635dc1c7000bc9cd963180e2ad08c241cab4736cb8a5d12d
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-exec-node
@@ -192,7 +200,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/instance-hash: 60db4f24c0a8653b19fbe92827b932db90b9ea53b568deae317a54d6018e91af
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
@@ -287,7 +297,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/instance-hash: 3eef9b7012f38703836071cc857126dd501661a4cf38cc647d26572732bcccd2
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master
@@ -306,7 +318,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/instance-hash: c8b5849c53e35eb1cb3d1e1c3835f2483875c1dfb5366f9afa63012c2f9e723b
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master-cache
@@ -325,7 +339,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/instance-hash: 4c31ef9b96fbfe2a1b05ffa944893aae21c5b47904338cef7d6d14b614a05b25
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-rpc-proxy
@@ -382,7 +398,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/instance-hash: 86e0bd456a2b69fa1ea94570e8e61b080e671932e9ec6f0cb121ffaec92b478a
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-scheduler
@@ -566,7 +584,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/instance-hash: 43083c71910c53fa4e7e5dab5f8c7f052ce6ea334b69cc66206c32008abef679
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-yql-agent
