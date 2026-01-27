@@ -329,7 +329,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 				canonize.AssertStruct(GinkgoT(), "StatefulSet "+obj.Name, obj)
 
-				Expect(obj.Spec.Template.Annotations).To(HaveKey(consts.ConfigChecksumAnnotationName))
+				Expect(obj.Spec.Template.Annotations).To(HaveKey(consts.ConfigHashAnnotationName))
 			}
 		})
 
@@ -358,7 +358,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				canonize.AssertStruct(GinkgoT(), "ConfigMap "+obj.Name, obj)
 
 				if strings.HasSuffix(obj.Name, "-config") {
-					Expect(obj.Annotations).To(HaveKey(consts.ConfigChecksumAnnotationName))
+					Expect(obj.Annotations).To(HaveKey(consts.ConfigHashAnnotationName))
 				}
 			}
 		})

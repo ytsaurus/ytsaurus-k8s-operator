@@ -12,7 +12,9 @@ const (
 
 	DescriptionAnnotation           = "kubernetes.io/description"
 	ConfigOverridesVersionLabelName = "ytsaurus.tech/config-overrides-version"
-	ConfigChecksumAnnotationName    = "ytsaurus.tech/config-checksum"
+
+	// Config hash is computed from configmap data.
+	ConfigHashAnnotationName = "ytsaurus.tech/config-hash"
 
 	YTOperatorInstanceLabelName = "ytsaurus.tech/operator-instance"
 )

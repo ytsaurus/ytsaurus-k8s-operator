@@ -40,7 +40,7 @@ data:
 kind: ConfigMap
 metadata:
   annotations:
-    ytsaurus.tech/config-checksum: ab4c7d02206725fc285fbedecf0e15334b8a4d39a81317cec51abe23ffc8660f
+    ytsaurus.tech/config-hash: ab4c7d02206725fc285fbedecf0e15334b8a4d39a81317cec51abe23ffc8660f
   creationTimestamp: null
   generation: 1
   labels:

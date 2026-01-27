@@ -3,7 +3,6 @@ package components
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -254,11 +253,11 @@ func (h *ConfigMapBuilder) Build() (*corev1.ConfigMap, error) {
 		}
 	}
 
-	currentChecksum, err := configChecksumFromData(cm.Data)
+	currentHash, err := resources.Hash(cm.Data)
 	if err != nil {
 		return nil, err
 	}
-	metav1.SetMetaDataAnnotation(&cm.ObjectMeta, consts.ConfigChecksumAnnotationName, currentChecksum)
+	metav1.SetMetaDataAnnotation(&cm.ObjectMeta, consts.ConfigHashAnnotationName, currentHash)
 
 	return cm, nil
 }
@@ -299,13 +298,4 @@ func (h *ConfigMapBuilder) RemoveIfExists(ctx context.Context) error {
 
 func (h *ConfigMapBuilder) Exists() bool {
 	return resources.Exists(h.configMap)
-}
-
-func configChecksumFromData(data map[string]string) (string, error) {
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return "", err
-	}
-	sum := sha256.Sum256(jsonData)
-	return fmt.Sprintf("%x", sum[:]), nil
 }
