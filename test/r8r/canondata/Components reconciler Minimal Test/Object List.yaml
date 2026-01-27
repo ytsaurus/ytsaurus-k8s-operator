@@ -1,5 +1,5 @@
 - annotations:
-    ytsaurus.tech/config-checksum: 3030056a0a5008f39287424b1095be879d140fdb6378d7f8c89f0d0f6a609c62
+    ytsaurus.tech/config-hash: 3030056a0a5008f39287424b1095be879d140fdb6378d7f8c89f0d0f6a609c62
   creationTimestamp: null
   generation: 1
   labels:
@@ -153,7 +153,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-checksum: 3030056a0a5008f39287424b1095be879d140fdb6378d7f8c89f0d0f6a609c62
+    ytsaurus.tech/config-hash: 3030056a0a5008f39287424b1095be879d140fdb6378d7f8c89f0d0f6a609c62
   creationTimestamp: null
   generation: 1
   labels:
@@ -214,7 +214,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-checksum: f4f67ce05fb582d8c542688088bd232a3be2ffe80e94369ba04fe3c065c14c46
+    ytsaurus.tech/config-hash: f4f67ce05fb582d8c542688088bd232a3be2ffe80e94369ba04fe3c065c14c46
   creationTimestamp: null
   generation: 1
   labels:
@@ -255,7 +255,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-checksum: b86c26c9e7756c3a567f561ee90d519b0bcf0fb1a634195bc1c2436fcc8d6f93
+    ytsaurus.tech/config-hash: b86c26c9e7756c3a567f561ee90d519b0bcf0fb1a634195bc1c2436fcc8d6f93
   creationTimestamp: null
   generation: 1
   labels:
@@ -296,7 +296,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-checksum: 19f80676962914dafbb72dd1e45169dfa621d5a8c8063904d7d902c9830d68cf
+    ytsaurus.tech/config-hash: 19f80676962914dafbb72dd1e45169dfa621d5a8c8063904d7d902c9830d68cf
   creationTimestamp: null
   generation: 1
   labels:
