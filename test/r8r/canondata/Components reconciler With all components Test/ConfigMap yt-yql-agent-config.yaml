@@ -137,6 +137,7 @@ metadata:
   annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: b5c3657ed765892f2c5ea2e32e878078d8f1c205316ed714cc95ce2fbfeb2ff3
+    ytsaurus.tech/config-overrides-version: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -146,7 +147,6 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-yql-agent
     ytsaurus.tech/cluster-name: test-ytsaurus
-    ytsaurus.tech/config-overrides-version: "1"
   name: yt-yql-agent-config
   namespace: ytsaurus-components
   ownerReferences:

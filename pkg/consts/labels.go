@@ -10,8 +10,10 @@ const (
 	YTComponentLabelName = "yt_component"
 	YTMetricsLabelName   = "yt_metrics"
 
-	DescriptionAnnotation           = "kubernetes.io/description"
-	ConfigOverridesVersionLabelName = "ytsaurus.tech/config-overrides-version"
+	DescriptionAnnotationName = "kubernetes.io/description"
+
+	// Version of overrides observed at the time of generation.
+	ConfigOverridesVersionAnnotationName = "ytsaurus.tech/config-overrides-version"
 
 	// Config hash is computed from configmap data.
 	ConfigHashAnnotationName = "ytsaurus.tech/config-hash"

@@ -238,6 +238,7 @@
 - annotations:
     kubernetes.io/description: |
       overrides-version: 1
+    ytsaurus.tech/config-overrides-version: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -247,7 +248,6 @@
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-client
     ytsaurus.tech/cluster-name: test-ytsaurus
-    ytsaurus.tech/config-overrides-version: "1"
   name: yt-cypress-patch
   namespace: ytsaurus-components
   ownerReferences:
@@ -260,6 +260,7 @@
   resourceVersion: "1"
 - annotations:
     ytsaurus.tech/config-hash: f4f67ce05fb582d8c542688088bd232a3be2ffe80e94369ba04fe3c065c14c46
+    ytsaurus.tech/config-overrides-version: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -269,7 +270,6 @@
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-discovery
     ytsaurus.tech/cluster-name: test-ytsaurus
-    ytsaurus.tech/config-overrides-version: "1"
   name: yt-discovery-config
   namespace: ytsaurus-components
   ownerReferences:
@@ -302,6 +302,7 @@
   resourceVersion: "1"
 - annotations:
     ytsaurus.tech/config-hash: 232ae3a827ca6649699f0aedbd2a525a96c042fb02c338c791d510bae9b88ede
+    ytsaurus.tech/config-overrides-version: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -311,7 +312,6 @@
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-exec-node
     ytsaurus.tech/cluster-name: test-ytsaurus
-    ytsaurus.tech/config-overrides-version: "1"
   name: yt-exec-node-config
   namespace: ytsaurus-components
   ownerReferences:
@@ -324,6 +324,7 @@
   resourceVersion: "1"
 - annotations:
     ytsaurus.tech/config-hash: 8577715aa2fbb0d28a6c322af89d1310a94d03f2e6f464fe5ade83e16bea9827
+    ytsaurus.tech/config-overrides-version: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -333,7 +334,6 @@
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-exec-node
     ytsaurus.tech/cluster-name: test-ytsaurus
-    ytsaurus.tech/config-overrides-version: "1"
   name: yt-exec-node-jobs-config
   namespace: ytsaurus-components
   ownerReferences:
@@ -366,6 +366,7 @@
   resourceVersion: "1"
 - annotations:
     ytsaurus.tech/config-hash: b86c26c9e7756c3a567f561ee90d519b0bcf0fb1a634195bc1c2436fcc8d6f93
+    ytsaurus.tech/config-overrides-version: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -375,7 +376,6 @@
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-http-proxy
     ytsaurus.tech/cluster-name: test-ytsaurus
-    ytsaurus.tech/config-overrides-version: "1"
   name: yt-http-proxy-config
   namespace: ytsaurus-components
   ownerReferences:
@@ -408,6 +408,7 @@
   resourceVersion: "1"
 - annotations:
     ytsaurus.tech/config-hash: 19f80676962914dafbb72dd1e45169dfa621d5a8c8063904d7d902c9830d68cf
+    ytsaurus.tech/config-overrides-version: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -417,7 +418,6 @@
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-master
     ytsaurus.tech/cluster-name: test-ytsaurus
-    ytsaurus.tech/config-overrides-version: "1"
   name: yt-master-config
   namespace: ytsaurus-components
   ownerReferences:

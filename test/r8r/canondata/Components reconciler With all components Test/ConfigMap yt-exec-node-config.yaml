@@ -446,6 +446,7 @@ metadata:
   annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: e5a6e8e9a1e108e1220a02b5c0fb1272c445de86855fd723822b0fbe8c6be978
+    ytsaurus.tech/config-overrides-version: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -455,7 +456,6 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-exec-node
     ytsaurus.tech/cluster-name: test-ytsaurus
-    ytsaurus.tech/config-overrides-version: "1"
   name: yt-exec-node-config
   namespace: ytsaurus-components
   ownerReferences:
