@@ -3,6 +3,7 @@ kind: StatefulSet
 metadata:
   annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/instance-hash: 583309ae61181a0f0eb1974010beba643a163dc054d01bbc7c6878062b24478d
   creationTimestamp: null
   generation: 1
   labels:

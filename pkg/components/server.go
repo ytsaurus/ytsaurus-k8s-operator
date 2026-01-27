@@ -246,6 +246,10 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 		return err
 	}
 
+	if err := s.setInstanceHash(); err != nil {
+		return err
+	}
+
 	return resources.Sync(ctx,
 		s.statefulSet,
 		s.configs,
@@ -564,6 +568,18 @@ func (s *serverImpl) setConfigHash(cm *corev1.ConfigMap) error {
 	}
 	// Propagate config hash from configmap to pod template to trigger restart when needed.
 	metav1.SetMetaDataAnnotation(&s.builtStatefulSet.Spec.Template.ObjectMeta, consts.ConfigHashAnnotationName, configHash)
+	return nil
+}
+
+func (s *serverImpl) setInstanceHash() error {
+	instanceHash, err := resources.Hash(
+		&s.builtStatefulSet.Spec.Template,
+		s.builtStatefulSet.Spec.VolumeClaimTemplates,
+	)
+	if err != nil {
+		return err
+	}
+	metav1.SetMetaDataAnnotation(&s.builtStatefulSet.ObjectMeta, consts.InstanceHashAnnotationName, instanceHash)
 	return nil
 }
 

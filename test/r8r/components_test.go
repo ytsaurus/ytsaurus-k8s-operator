@@ -331,6 +331,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				canonize.AssertStruct(GinkgoT(), "StatefulSet "+obj.Name, obj)
 
 				Expect(obj.Spec.Template.Annotations).To(HaveKey(consts.ConfigHashAnnotationName))
+				Expect(obj.Annotations).To(HaveKey(consts.InstanceHashAnnotationName))
 			}
 		})
 
