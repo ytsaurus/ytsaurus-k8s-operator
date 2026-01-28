@@ -34,9 +34,10 @@ const (
 type SpytSpec struct {
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 
-	Ytsaurus      *corev1.LocalObjectReference `json:"ytsaurus,omitempty"`
-	Image         string                       `json:"image,omitempty"`
-	SparkVersions []string                     `json:"sparkVersions,omitempty"`
+	Ytsaurus *corev1.LocalObjectReference `json:"ytsaurus,omitempty"`
+	Image    string                       `json:"image,omitempty"`
+	// If multiple versions are provided, only the first one is used for query tracker dynamic config.
+	SparkVersions []string `json:"sparkVersions,omitempty"`
 }
 
 // SpytStatus defines the observed state of Spyt

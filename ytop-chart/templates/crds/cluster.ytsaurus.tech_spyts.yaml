@@ -62,6 +62,8 @@ spec:
                   x-kubernetes-map-type: atomic
                 type: array
               sparkVersions:
+                description: If multiple versions are provided, only the first one
+                  is used for query tracker...
                 items:
                   type: string
                 type: array

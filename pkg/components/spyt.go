@@ -2,11 +2,14 @@ package components
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
+	"github.com/distribution/reference"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
@@ -72,12 +75,45 @@ func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.
 func (s *Spyt) createInitUserScript() string {
 	token, _ := s.secret.GetValue(consts.TokenSecretKey)
 	commands := createUserCommand("spyt_releaser", "", token, true)
+	qtConfigCommand := s.buildQueryTrackerDynamicConfigCommand()
+	if qtConfigCommand != "" {
+		commands = append(commands, qtConfigCommand)
+	}
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 	}
 	script = append(script, commands...)
 
 	return strings.Join(script, "\n")
+}
+
+func (s *Spyt) buildQueryTrackerDynamicConfigCommand() string {
+	sparkVersions := s.spyt.GetResource().Spec.SparkVersions
+	if len(sparkVersions) == 0 {
+		return ""
+	}
+	spytVersion := extractImageTag(s.spyt.GetResource().Spec.Image)
+	if spytVersion == "" {
+		return ""
+	}
+
+	return fmt.Sprintf(
+		"/usr/bin/yt create document //sys/query_tracker/config --attributes '{value={}}' --recursive --ignore-existing\n"+
+			"/usr/bin/yt set -r //sys/query_tracker/config/query_tracker/spyt_connect_engine '{spark_version=\"%s\";spyt_version=\"%s\";}'",
+		sparkVersions[0],
+		spytVersion,
+	)
+}
+
+func extractImageTag(image string) string {
+	ref, err := reference.ParseNormalizedNamed(image)
+	if err != nil {
+		return ""
+	}
+	if tagged, ok := ref.(reference.Tagged); ok {
+		return tagged.Tag()
+	}
+	return ""
 }
 
 func (s *Spyt) createInitScript() string {
