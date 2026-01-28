@@ -1,6 +1,8 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
+  annotations:
+    extra-pod-annotation: "true"
   creationTimestamp: null
   generation: 1
   labels:
@@ -24,6 +26,8 @@ spec:
   backoffLimit: 15
   template:
     metadata:
+      annotations:
+        extra-pod-annotation: "true"
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-strawberry-controller
@@ -75,7 +79,19 @@ spec:
         - mountPath: /tls/bus_client_secret
           name: bus-client-secret
           readOnly: true
+      dnsConfig:
+        options:
+        - name: global-dns-option
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      imagePullSecrets:
+      - name: global-image-pull-secrets
+      nodeSelector:
+        global-node-selector: "true"
       restartPolicy: OnFailure
+      setHostnameAsFQDN: false
+      tolerations:
+      - key: global-toleration
       volumes:
       - configMap:
           defaultMode: 320
@@ -85,10 +101,8 @@ spec:
           items:
           - key: ca-certificates.crt
             path: ca-certificates.crt
-          - key: ca-certificates.p12
-            path: ca-certificates.p12
           - key: ca-certificates.jks
-            path: ca-certificates.jks
+            path: java/cacerts
           name: ytsaurus-dev-ca-root-bundle
         name: ca-root-bundle
       - configMap:

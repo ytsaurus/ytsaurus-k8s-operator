@@ -29,6 +29,8 @@ spec:
   serviceName: exec-nodes
   template:
     metadata:
+      annotations:
+        ytsaurus.tech/config-checksum: 8b1c7ffba1dcfe33812ec80450c2b039f094a5253713f1445573001812626037
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-exec-node
@@ -209,6 +211,7 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+      setHostnameAsFQDN: true
       volumes:
       - configMap:
           name: yt-exec-node-config

@@ -72,7 +72,6 @@ spec:
     volumeMounts:
     - mountPath: /yt/node-data
       name: node-data
-  hostNetwork: false
   httpProxies:
   - instanceCount: 1
     loggers:
@@ -186,7 +185,7 @@ status:
     status: "True"
     type: TimbertruckReady
   - lastTransitionTime: null
-    message: (devel)
+    message: 2.3.4
     observedGeneration: 1
     reason: Observed
     status: "True"
