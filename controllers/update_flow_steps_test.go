@@ -15,6 +15,7 @@ func TestBuildFlowTree(t *testing.T) {
 		name               string
 		updatingComponents []ytv1.Component
 		expectedStates     []ytv1.UpdateState
+		stopAfterHeated    bool
 		unhappyPath        bool
 	}{
 		{
@@ -22,7 +23,6 @@ func TestBuildFlowTree(t *testing.T) {
 			updatingComponents: []ytv1.Component{},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImagesHeated,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForCypressPatch,
@@ -33,6 +33,7 @@ func TestBuildFlowTree(t *testing.T) {
 			name: "master update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.MasterType},
+				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
@@ -55,6 +56,7 @@ func TestBuildFlowTree(t *testing.T) {
 			name: "tablet update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.TabletNodeType},
+				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
@@ -74,6 +76,7 @@ func TestBuildFlowTree(t *testing.T) {
 			name: "scheduler update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.SchedulerType},
+				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
@@ -90,6 +93,7 @@ func TestBuildFlowTree(t *testing.T) {
 			name: "query tracker update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.QueryTrackerType},
+				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
@@ -106,6 +110,7 @@ func TestBuildFlowTree(t *testing.T) {
 			name: "yql agent update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.YqlAgentType},
+				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
@@ -122,6 +127,7 @@ func TestBuildFlowTree(t *testing.T) {
 			name: "queue agent update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.QueueAgentType},
+				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
@@ -138,6 +144,7 @@ func TestBuildFlowTree(t *testing.T) {
 			name: "random stateless component update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.DiscoveryType},
+				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
@@ -153,6 +160,7 @@ func TestBuildFlowTree(t *testing.T) {
 			updatingComponents: []ytv1.Component{
 				{Type: consts.MasterType},
 				{Type: consts.TabletNodeType},
+				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
@@ -175,6 +183,30 @@ func TestBuildFlowTree(t *testing.T) {
 				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
 		},
+		{
+			name: "stateless update without image heater",
+			updatingComponents: []ytv1.Component{
+				{Type: consts.DiscoveryType},
+			},
+			expectedStates: []ytv1.UpdateState{
+				ytv1.UpdateStateNone,
+				ytv1.UpdateStateWaitingForPodsRemoval,
+				ytv1.UpdateStateWaitingForPodsCreation,
+				ytv1.UpdateStateWaitingForCypressPatch,
+				ytv1.UpdateStateWaitingForTimbertruckPrepared,
+			},
+		},
+		{
+			name: "image heater only update",
+			updatingComponents: []ytv1.Component{
+				{Type: consts.ImageHeaterType},
+			},
+			stopAfterHeated: true,
+			expectedStates: []ytv1.UpdateState{
+				ytv1.UpdateStateNone,
+				ytv1.UpdateStateWaitingForImagesHeated,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -187,6 +219,8 @@ func TestBuildFlowTree(t *testing.T) {
 			for currentStep != nil {
 				states = append(states, currentStep.updateState)
 				if tt.unhappyPath && currentStep.updateState == ytv1.UpdateStatePossibilityCheck {
+					currentStep = currentStep.nextSteps[stepResultMarkUnhappy]
+				} else if tt.stopAfterHeated && currentStep.updateState == ytv1.UpdateStateWaitingForImagesHeated {
 					currentStep = currentStep.nextSteps[stepResultMarkUnhappy]
 				} else {
 					currentStep = currentStep.nextSteps[stepResultMarkHappy]

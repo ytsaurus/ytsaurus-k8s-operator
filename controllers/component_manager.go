@@ -309,8 +309,7 @@ func (cm *ComponentManager) allUpdatableComponents() []components.Component {
 	var result []components.Component
 	for _, cmp := range cm.allComponents {
 		if cmp.GetType() != consts.YtsaurusClientType &&
-			cmp.GetType() != consts.TimbertruckType &&
-			cmp.GetType() != consts.ImageHeaterType {
+			cmp.GetType() != consts.TimbertruckType {
 			result = append(result, cmp)
 		}
 	}
