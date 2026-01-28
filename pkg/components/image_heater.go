@@ -296,7 +296,7 @@ func (ih *ImageHeater) buildTargets(ctx context.Context) ([]imageHeaterTarget, e
 			continue
 		}
 
-		// PreheatSpec() of that interface delegates to the server, which resolved image and scheduling constraints.
+		// PreheatSpec() of that interface delegates to the server, which resolves image and scheduling constraints.
 		provider, ok := component.(PreheatSpecProvider)
 		if !ok {
 			continue
@@ -380,11 +380,9 @@ func (ih *ImageHeater) componentImageNeedsUpdate(ctx context.Context, component 
 // syncTargets applies daemonsets per target and reports when all are ready.
 // it might be several containers per daemonset if there are several images to preheat
 func (ih *ImageHeater) syncTargets(ctx context.Context, targets []imageHeaterTarget, dry bool) (bool, error) {
-	expected := make(map[string]struct{}, len(targets))
 	allReady := true
 
 	for _, target := range targets {
-		expected[target.name] = struct{}{}
 
 		ds := resources.NewDaemonSet(
 			target.name,
