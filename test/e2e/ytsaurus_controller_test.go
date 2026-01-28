@@ -2115,6 +2115,78 @@ exec "$@"`
 			Entry("update master-caches", Label(consts.GetStatefulSetPrefix(consts.MasterCacheType)), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
 			Entry("update rpc-proxy", Label(consts.GetStatefulSetPrefix(consts.RpcProxyType)), consts.RpcProxyType, consts.GetStatefulSetPrefix(consts.RpcProxyType)),
 		)
+		Context("ImageHeater + ControllerAgent update", Label("update", "imageHeater"), func() {
+			BeforeEach(func() {
+				ytBuilder.WithBaseComponents()
+				ytsaurus.Spec.CoreImage = testutil.YtsaurusImagePrevious
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+					{
+						Component: ytv1.Component{Type: consts.ImageHeaterType},
+						Strategy: &ytv1.ComponentUpdateStrategy{
+							RunPreChecks: ptr.To(true),
+						},
+					},
+					{
+						Component: ytv1.Component{Type: consts.ControllerAgentType},
+						Strategy: &ytv1.ComponentUpdateStrategy{
+							RunPreChecks: ptr.To(true),
+						},
+					},
+				}
+				requiredImages = append(requiredImages, testutil.YtsaurusImageCurrent)
+			})
+
+			It("should update cluster with ImageHeater component have cluster Running state", func(ctx context.Context) {
+				imageHeaterLabeller := generator.GetComponentLabeller(consts.ImageHeaterType, "")
+				imageHeaterRemovingStarted := imageHeaterLabeller.GetPodsRemovingStartedCondition()
+				imageHeaterRemoved := imageHeaterLabeller.GetPodsRemovedCondition()
+
+				By("Wait for cluster to be Running on previous image")
+				EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
+
+				By("Trigger an update")
+				ytsaurus.Spec.CoreImage = testutil.YtsaurusImageCurrent
+				UpdateObject(ctx, ytsaurus)
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+
+				By("Wait for image heating to start")
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
+					HaveClusterUpdateState(ytv1.UpdateStateWaitingForImagesHeated),
+				)
+
+				By("Verify updating components are limited to ImageHeater and ControllerAgent")
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
+					HaveClusterUpdatingComponents(consts.ImageHeaterType, consts.ControllerAgentType),
+				)
+
+				By("Wait for image heater to finish preheating")
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(
+					HaveUpdateStatusConditionTrue(consts.ConditionImagesHeated),
+				)
+
+				By("Verify pods removal mode is activated")
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
+					HaveClusterUpdateState(ytv1.UpdateStateWaitingForPodsRemoval),
+				)
+
+				By("Verify image heater cleanup conditions are set")
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(SatisfyAll(
+					HaveUpdateStatusConditionTrue(imageHeaterRemovingStarted),
+					HaveUpdateStatusConditionTrue(imageHeaterRemoved),
+				))
+
+				By("Waiting cluster update completes")
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+
+				podsAfter := getComponentPods(ctx, namespace)
+
+				for name, pod := range podsAfter {
+					if strings.HasPrefix(name, "ca-0") {
+						Expect(pod.Spec.Containers[0].Image).To(Equal(ytsaurus.Spec.CoreImage))
+					}
+				}
+			})
+		})
 	})
 
 })

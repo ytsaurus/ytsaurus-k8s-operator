@@ -131,10 +131,18 @@ func (c *Ytsaurus) SetBlockedComponents(components []ytv1.Component) bool {
 }
 
 func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
-	c.ytsaurus.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
+	c.ytsaurus.Status.UpdateStatus.Conditions = keepImagesHeatedCondition(c.ytsaurus.Status.UpdateStatus.Conditions)
 	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
 	c.SetUpdatingComponents(nil)
 	return c.apiProxy.UpdateStatus(ctx)
+}
+
+func keepImagesHeatedCondition(conditions []metav1.Condition) []metav1.Condition {
+	condition := meta.FindStatusCondition(conditions, consts.ConditionImagesHeated)
+	if condition == nil || condition.Status != metav1.ConditionTrue {
+		return make([]metav1.Condition, 0)
+	}
+	return []metav1.Condition{*condition}
 }
 
 func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {

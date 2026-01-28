@@ -172,7 +172,17 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateNone: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 		return stepResultMarkHappy
 	},
-	ytv1.UpdateStateWaitingForImagesHeated: flowCheckStatusCondition(consts.ConditionImagesHeated),
+	ytv1.UpdateStateWaitingForImagesHeated: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
+		if !ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionImagesHeated) {
+			return stepResultMarkUnsatisfied
+		}
+		if hasNonImageHeaterComponent(ytsaurus.GetUpdatingComponents()) {
+			return stepResultMarkHappy
+		}
+		// if ConditionImagesHeated is true and there are no non-image-heater components,
+		// we should mark this step as unhappy to terminate the flow
+		return stepResultMarkUnhappy
+	},
 	ytv1.UpdateStatePossibilityCheck: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionHasPossibility) {
 			return stepResultMarkHappy
@@ -227,6 +237,7 @@ func buildFlowTree(updatingComponents []ytv1.Component) *flowTree {
 	head := st(ytv1.UpdateStateNone)
 	tree := newFlowTree(head)
 
+	updImageHeater := hasComponent(updatingComponents, consts.ImageHeaterType)
 	updMaster := hasComponent(updatingComponents, consts.MasterType)
 	updTablet := hasComponent(updatingComponents, consts.TabletNodeType)
 	updMasterOrTablet := updMaster || updTablet
@@ -236,11 +247,10 @@ func buildFlowTree(updatingComponents []ytv1.Component) *flowTree {
 	updYqlAgent := hasComponent(updatingComponents, consts.YqlAgentType)
 	updQueueAgent := hasComponent(updatingComponents, consts.QueueAgentType)
 
-	tree.chain(
-		st(ytv1.UpdateStateWaitingForImagesHeated),
-	)
-	// TODO: if validation conditions can be not mentioned here or needed
 	tree.chainIf(
+		updImageHeater,
+		st(ytv1.UpdateStateWaitingForImagesHeated),
+	).chainIf(
 		updMasterOrTablet,
 		newConditionalForkStep(
 			ytv1.UpdateStatePossibilityCheck,
@@ -310,5 +320,14 @@ func hasComponent(updatingComponents []ytv1.Component, componentType consts.Comp
 		}
 	}
 
+	return false
+}
+
+func hasNonImageHeaterComponent(updatingComponents []ytv1.Component) bool {
+	for _, component := range updatingComponents {
+		if component.Type != consts.ImageHeaterType {
+			return true
+		}
+	}
 	return false
 }

@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
 	"github.com/stretchr/testify/require"
@@ -17,7 +15,6 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 )
 
@@ -67,36 +64,6 @@ func waitClusterState(h *testutil.TestHelper, expectedState ytv1.ClusterState, m
 			return true
 		},
 	)
-}
-
-func waitUpdateState(h *testutil.TestHelper, expectedState ytv1.UpdateState) {
-	testutil.FetchAndCheckEventually(
-		h,
-		ytsaurusName,
-		&ytv1.Ytsaurus{},
-		fmt.Sprintf("update state is %s", expectedState),
-		func(obj client.Object) bool {
-			state := obj.(*ytv1.Ytsaurus).Status.UpdateStatus.State
-			if state != expectedState {
-				h.Logf("update state condition is NOT yet satisfied: %s == %s", state, expectedState)
-				return false
-			}
-			h.Logf("update state condition is satisfied: %s == %s", state, expectedState)
-			return true
-		},
-	)
-}
-
-func markImagesHeated(h *testutil.TestHelper) {
-	ytsaurus := &ytv1.Ytsaurus{}
-	testutil.GetObject(h, ytsaurusName, ytsaurus)
-	meta.SetStatusCondition(&ytsaurus.Status.UpdateStatus.Conditions, metav1.Condition{
-		Type:    consts.ConditionImagesHeated,
-		Status:  metav1.ConditionTrue,
-		Reason:  "Test",
-		Message: "Skip image heater in envtest",
-	})
-	testutil.UpdateObjectStatus(h, ytsaurus)
 }
 
 func TestYtsaurusFromScratch(t *testing.T) {
@@ -179,9 +146,6 @@ func TestYtsaurusUpdateStatelessComponent(t *testing.T) {
 	t.Log("[ Updating discovery with disabled full update ]")
 	ytsaurusResource.Spec.EnableFullUpdate = false
 	testutil.UpdateObject(h, &ytv1.Ytsaurus{}, &ytsaurusResource)
-
-	waitUpdateState(h, ytv1.UpdateStateWaitingForImagesHeated)
-	markImagesHeated(h)
 
 	waitClusterState(h, ytv1.ClusterStateRunning, ytsaurusResource.Generation)
 
