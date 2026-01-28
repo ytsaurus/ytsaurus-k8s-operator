@@ -183,16 +183,21 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var remoteComponentNames map[consts.ComponentType][]string
 
 	// NOTE: execution order for each test spec:
-	// - BeforeEach               (init, configuration)
-	// - JustBeforeEach           (creation, validation)
-	// - It                       (test itself)
-	// - JustAfterEach            (diagnosis, validation)
-	// - AfterEach, DeferCleanup  (cleanup)
+	// - BeforeEach OncePerOrdered      (init, configuration)
+	// - JustBeforeEach OncePerOrdered  (creation)
+	// - JustBeforeEach                 (validation)
+	// - It                             (test itself)
+	// - JustAfterEach                  (diagnosis, validation)
+	// - DeferCleanup                   (cleanup)
+	// - AfterEach OncePerOrdered       (destruction)
+	//
+	// Ordered group of test-cases share one cluster.
 	//
 	// See:
 	// https://onsi.github.io/ginkgo/#separating-creation-and-configuration-justbeforeeach
 	// https://onsi.github.io/ginkgo/#spec-cleanup-aftereach-and-defercleanup
 	// https://onsi.github.io/ginkgo/#separating-diagnostics-collection-and-teardown-justaftereach
+	// https://onsi.github.io/ginkgo/#ordered-containers
 	// NOTE: cross-node operations must use specCtx, in-node operations should use node ctx.
 
 	withHTTPSProxy := func(httpsOnly bool) {
@@ -227,7 +232,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 	}
 
-	BeforeEach(func(ctx context.Context) {
+	BeforeEach(OncePerOrdered, func(ctx context.Context) {
 		By("Logging nodes state", func() {
 			logNodesState(ctx)
 		})
@@ -289,7 +294,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 	})
 
-	JustBeforeEach(func(ctx context.Context) {
+	JustBeforeEach(OncePerOrdered, func(ctx context.Context) {
 		By("Creating HTTP(s) client")
 		httpTransport := &http.Transport{
 			TLSHandshakeTimeout: 15 * time.Second,
@@ -323,7 +328,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 	})
 
-	JustBeforeEach(func(ctx context.Context) {
+	JustBeforeEach(OncePerOrdered, func(ctx context.Context) {
 		// NOTE: Testcase should skip optional cases at "BeforeEach" stage.
 		Expect(ytsaurus.Spec.CoreImage).ToNot(BeEmpty(), "ytsaurus core image is not specified")
 
@@ -397,7 +402,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		})
 	})
 
-	JustBeforeEach(func(ctx context.Context) {
+	JustBeforeEach(OncePerOrdered, func(ctx context.Context) {
 		By("Logging nodes state", func() {
 			logNodesState(ctx)
 		})
@@ -628,7 +633,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		By("Creating table")
 		Expect(makeQuery(ctx, ytClient, yt.QueryEngineCHYT,
-			"CREATE TABLE `//tmp/chqt_test` ENGINE = YtTable() AS SELECT 1",
+			"DROP TABLE IF EXISTS `//tmp/test-chyt`; CREATE TABLE `//tmp/test-chyt` ENGINE = YtTable() AS SELECT 1",
 		)).To(BeNil())
 	})
 
@@ -644,7 +649,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		if !ytBuilder.WithHTTPSProxy {
 			By("Creating table")
 			Expect(makeQuery(ctx, ytClient, yt.QueryEngineYQL,
-				"INSERT INTO `//tmp/yql_test` SELECT 1",
+				"INSERT INTO `//tmp/test-yql` SELECT 1",
 			)).To(BeNil())
 		}
 	})
@@ -667,7 +672,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 	})
 
-	AfterEach(func(ctx context.Context) {
+	AfterEach(OncePerOrdered, func(ctx context.Context) {
 		if ShouldPreserveArtifacts() {
 			log.Info("Preserving artifacts", "namespace", namespace)
 			return
@@ -1744,8 +1749,9 @@ exec "$@"`
 
 			It("Checks ClickHouse", func(ctx context.Context) {
 				By("Creating table")
+				Expect(ytClient.RemoveNode(ctx, ypath.Path("//tmp/test-chyt"), &yt.RemoveNodeOptions{Force: true})).To(Succeed())
 				Expect(queryClickHouse(ctx, httpClient, ytProxyAddress,
-					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT 1",
+					"CREATE TABLE `//tmp/test-chyt` ENGINE = YtTable() AS SELECT 1",
 				)).To(Equal(""))
 			})
 
@@ -1837,9 +1843,10 @@ exec "$@"`
 				clickHouseID, err := queryClickHouseID(ctx, httpClient, ytProxyAddress)
 				Expect(err).To(Succeed())
 
-				By("Creating table //tmp/chyt_test")
+				By("Creating table //tmp/test-chyt")
+				Expect(ytClient.RemoveNode(ctx, ypath.Path("//tmp/test-chyt"), &yt.RemoveNodeOptions{Force: true})).To(Succeed())
 				Expect(queryClickHouse(ctx, httpClient, ytProxyAddress,
-					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT 1",
+					"CREATE TABLE `//tmp/test-chyt` ENGINE = YtTable() AS SELECT 1",
 				)).To(Equal(""))
 
 				By("Reissuing RPC TLS certificates", func() {
@@ -1882,9 +1889,9 @@ exec "$@"`
 					httpClient, ytProxyAddress, "SELECT 1",
 				).MustPassRepeatedly(3).Should(Equal("1\n"))
 
-				By("Checking table //tmp/chyt_test")
+				By("Checking table //tmp/test-chyt")
 				Expect(queryClickHouse(ctx, httpClient, ytProxyAddress,
-					"SELECT * FROM `//tmp/chyt_test`;",
+					"SELECT * FROM `//tmp/test-chyt`;",
 				)).To(Equal("1\n"))
 			})
 		},
@@ -1900,7 +1907,7 @@ exec "$@"`
 	Context("update plan strategy testing", Label("update", "plan", "strategy"), func() {
 		var podsBeforeUpdate map[string]corev1.Pod
 
-		BeforeEach(func() {
+		BeforeEach(OncePerOrdered, func() {
 			By("Adding base components")
 			ytBuilder.WithBaseComponents()
 		})
@@ -1910,49 +1917,59 @@ exec "$@"`
 			podsBeforeUpdate = getComponentPods(ctx, namespace)
 		})
 
-		DescribeTableSubtree("bulk strategy", Label("bulk"),
-			func(componentType consts.ComponentType, stsName string) {
-				BeforeEach(func() {
+		JustAfterEach(func(ctx context.Context) {
+			By("Waiting cluster update completes")
+			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 
-					switch componentType {
-					case consts.QueryTrackerType:
-						ytBuilder.WithQueryTracker()
-						ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
-							InstanceSpec: ytv1.InstanceSpec{
-								Image:         ptr.To(testutil.QueryTrackerImagePrevious),
-								InstanceCount: 3,
-							},
-						}
-					case consts.MasterType:
-						ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
-					case consts.ControllerAgentType:
-						ytsaurus.Spec.ControllerAgents.InstanceCount = 3
-					case consts.DiscoveryType:
-						ytsaurus.Spec.Discovery.InstanceCount = 3
-					case consts.HttpProxyType:
-						ytsaurus.Spec.HTTPProxies[0].InstanceCount = 3
-					case consts.ExecNodeType:
-						ytsaurus.Spec.ExecNodes[0].InstanceCount = 3
-					}
+			By("Getting pods after actions")
+			podsAfterUpdate := getComponentPods(ctx, namespace)
+			pods := getChangedPods(podsBeforeUpdate, podsAfterUpdate)
+			Expect(pods.Created).To(BeEmpty(), "created")
+			Expect(pods.Deleted).To(BeEmpty(), "deleted")
+			log.Info("Updated", "pods", pods.Updated)
+
+			checkClusterHealth(ctx, ytClient)
+			checkChunkLocations(ytClient)
+		})
+
+		DescribeTableSubtree("bulk strategy", Ordered, Label("bulk"),
+			func(componentType consts.ComponentType) {
+				stsName := consts.GetStatefulSetPrefix(componentType)
+
+				BeforeEach(OncePerOrdered, func() {
+					By("Adding components")
+					ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
+					ytsaurus.Spec.ControllerAgents.InstanceCount = 3
+					ytsaurus.Spec.Discovery.InstanceCount = 3
+					ytsaurus.Spec.HTTPProxies[0].InstanceCount = 3
+					ytsaurus.Spec.ExecNodes[0].InstanceCount = 3
+					ytBuilder.WithQueryTracker()
+					ytsaurus.Spec.QueryTrackers.InstanceCount = 3
+				})
+
+				JustBeforeEach(func() {
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 						{
-							Component: ytv1.Component{Type: componentType},
+							Component: ytv1.Component{
+								Type: componentType,
+							},
 							Strategy: &ytv1.ComponentUpdateStrategy{
 								RunPreChecks: ptr.To(true),
 							},
 						},
 					}
+					updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				})
-				It("Should update "+stsName+" in bulkUpdate mode and have Running state", func(ctx context.Context) {
+
+				JustAfterEach(func() {
+					// Revert trigger back.
+					updateSpecToTriggerAllComponentUpdate(ytsaurus)
+				})
+
+				It("Should update "+stsName+" in bulkUpdate mode and have Running state", Label(stsName), func(ctx context.Context) {
 
 					By("Trigger " + stsName + " update")
-					switch componentType {
-					case consts.QueryTrackerType:
-						ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.QueryTrackerImageCurrent)
-					default:
-						updateSpecToTriggerAllComponentUpdate(ytsaurus)
-					}
-
 					UpdateObject(ctx, ytsaurus)
 					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 
@@ -1981,60 +1998,54 @@ exec "$@"`
 						}
 						return true
 					}, upgradeTimeout, pollInterval).Should(BeTrue())
-
-					checkClusterHealth(ctx, ytClient)
-					checkChunkLocations(ytClient)
 				})
 			},
-			Entry("update query tracker", Label(consts.GetStatefulSetPrefix(consts.QueryTrackerType)), consts.QueryTrackerType, consts.GetStatefulSetPrefix(consts.QueryTrackerType)),
-			Entry("update master", Label(consts.GetStatefulSetPrefix(consts.MasterType)), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
-			Entry("update controller-agent", Label(consts.GetStatefulSetPrefix(consts.ControllerAgentType)), consts.ControllerAgentType, consts.GetStatefulSetPrefix(consts.ControllerAgentType)),
-			Entry("update discovery", Label(consts.GetStatefulSetPrefix(consts.DiscoveryType)), consts.DiscoveryType, consts.GetStatefulSetPrefix(consts.DiscoveryType)),
-			Entry("update http-proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType)),
-			Entry("update end-node", Label(consts.GetStatefulSetPrefix(consts.ExecNodeType)), consts.ExecNodeType, consts.GetStatefulSetPrefix(consts.ExecNodeType)),
-			Entry("update tnd-node", Label(consts.GetStatefulSetPrefix(consts.TabletNodeType)), consts.TabletNodeType, consts.GetStatefulSetPrefix(consts.TabletNodeType)),
-			Entry("update dnd-node", Label(consts.GetStatefulSetPrefix(consts.DataNodeType)), consts.DataNodeType, consts.GetStatefulSetPrefix(consts.DataNodeType)),
+			Entry("update query tracker", consts.QueryTrackerType),
+			Entry("update master", consts.MasterType),
+			Entry("update controller-agent", consts.ControllerAgentType),
+			Entry("update discovery", consts.DiscoveryType),
+			Entry("update http-proxy", consts.HttpProxyType),
+			Entry("update end-node", consts.ExecNodeType),
+			Entry("update tnd-node", consts.TabletNodeType),
+			Entry("update dnd-node", consts.DataNodeType),
 		)
 
-		DescribeTableSubtree("on-delete strategy", Label("ondelete"),
-			func(componentType consts.ComponentType, stsName string) {
-				BeforeEach(func() {
-					switch componentType {
-					case consts.SchedulerType:
-						ytsaurus.Spec.Schedulers = &ytv1.SchedulersSpec{
-							InstanceSpec: ytv1.InstanceSpec{
-								Image:         ptr.To(testutil.YtsaurusImagePrevious),
-								InstanceCount: 3,
-							},
-						}
-					case consts.MasterType:
-						ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
-					case consts.MasterCacheType:
-						ytsaurus.Spec.MasterCaches.InstanceCount = 3
-					case consts.RpcProxyType:
-						ytBuilder.WithRPCProxies()
-						ytsaurus.Spec.RPCProxies[0].InstanceCount = 3
-					}
+		DescribeTableSubtree("on-delete strategy", Ordered, Label("ondelete"),
+			func(componentType consts.ComponentType) {
+				stsName := consts.GetStatefulSetPrefix(componentType)
+
+				BeforeEach(OncePerOrdered, func() {
+					By("Adding components")
+					ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
+					ytsaurus.Spec.Schedulers.InstanceCount = 3
+					ytsaurus.Spec.MasterCaches.InstanceCount = 3
+					ytBuilder.WithRPCProxies()
+					ytsaurus.Spec.RPCProxies[0].InstanceCount = 3
+				})
+
+				JustBeforeEach(func() {
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 						{
-							Component: ytv1.Component{Type: componentType},
+							Component: ytv1.Component{
+								Type: componentType,
+							},
 							Strategy: &ytv1.ComponentUpdateStrategy{
 								OnDelete:     &ytv1.ComponentOnDeleteUpdateMode{},
 								RunPreChecks: ptr.To(true),
 							},
 						},
 					}
+					updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				})
-				It("should update "+stsName+" with OnDelete strategy and have cluster Running state", func(ctx context.Context) {
+
+				JustAfterEach(func() {
+					// Revert trigger back.
+					updateSpecToTriggerAllComponentUpdate(ytsaurus)
+				})
+
+				It("should update "+stsName+" with OnDelete strategy and have cluster Running state", Label(stsName), func(ctx context.Context) {
 
 					By("Trigger " + stsName + " update")
-					switch componentType {
-					case consts.SchedulerType:
-						ytsaurus.Spec.Schedulers.Image = ptr.To(testutil.YtsaurusImageCurrent)
-					default:
-						updateSpecToTriggerAllComponentUpdate(ytsaurus)
-					}
-
 					UpdateObject(ctx, ytsaurus)
 					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 
@@ -2110,10 +2121,10 @@ exec "$@"`
 					}, upgradeTimeout, pollInterval).Should(BeTrue())
 				})
 			},
-			Entry("update scheduler", Label(consts.GetStatefulSetPrefix(consts.SchedulerType)), consts.SchedulerType, consts.GetStatefulSetPrefix(consts.SchedulerType)),
-			Entry("update master", Label(consts.GetStatefulSetPrefix(consts.MasterType)), consts.MasterType, consts.GetStatefulSetPrefix(consts.MasterType)),
-			Entry("update master-caches", Label(consts.GetStatefulSetPrefix(consts.MasterCacheType)), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
-			Entry("update rpc-proxy", Label(consts.GetStatefulSetPrefix(consts.RpcProxyType)), consts.RpcProxyType, consts.GetStatefulSetPrefix(consts.RpcProxyType)),
+			Entry("update scheduler", consts.SchedulerType),
+			Entry("update master", consts.MasterType),
+			Entry("update master-caches", consts.MasterCacheType),
+			Entry("update rpc-proxy", consts.RpcProxyType),
 		)
 	})
 
@@ -2439,20 +2450,20 @@ func NewVanillaOperation(ytClient yt.Client) *TestOperation {
 }
 
 func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
-	testTablePathIn := ypath.Path("//tmp/testexec")
-	testTablePathOut := ypath.Path("//tmp/testexec-out")
+	testTablePathIn := ypath.Path("//tmp/test-sort-in")
+	testTablePathOut := ypath.Path("//tmp/test-sort-out")
 	_, err := ytClient.CreateNode(
 		specCtx,
 		testTablePathIn,
 		yt.NodeTable,
-		nil,
+		&yt.CreateNodeOptions{Force: true},
 	)
 	Expect(err).Should(Succeed())
 	_, err = ytClient.CreateNode(
 		specCtx,
 		testTablePathOut,
 		yt.NodeTable,
-		nil,
+		&yt.CreateNodeOptions{Force: true},
 	)
 	Expect(err).Should(Succeed())
 
@@ -2502,20 +2513,20 @@ func runAndCheckSortOperation(ytClient yt.Client) mapreduce.Operation {
 }
 
 func NewMapTestOperation(ytClient yt.Client) *TestOperation {
-	testTablePathIn := ypath.Path("//tmp/testmap-in")
-	testTablePathOut := ypath.Path("//tmp/testmap-out")
+	testTablePathIn := ypath.Path("//tmp/test-map-in")
+	testTablePathOut := ypath.Path("//tmp/test-map-out")
 	_, err := ytClient.CreateNode(
 		specCtx,
 		testTablePathIn,
 		yt.NodeTable,
-		nil,
+		&yt.CreateNodeOptions{Force: true},
 	)
 	Expect(err).Should(Succeed())
 	_, err = ytClient.CreateNode(
 		specCtx,
 		testTablePathOut,
 		yt.NodeTable,
-		nil,
+		&yt.CreateNodeOptions{Force: true},
 	)
 	Expect(err).Should(Succeed())
 
