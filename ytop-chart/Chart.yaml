@@ -2,7 +2,7 @@ apiVersion: v2
 name: "ytop-chart"
 description: A Helm chart for Kubernetes
 type: application
-version: "0.0.0-alpha"
-appVersion: "0.0.0-alpha"
+version: "0.0.0-devel"
+appVersion: "0.0.0-devel"
 sources:
   - https://github.com/ytsaurus/ytsaurus-k8s-operator
