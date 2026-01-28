@@ -1,6 +1,8 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
+  annotations:
+    extra-pod-annotation: "true"
   creationTimestamp: null
   generation: 1
   labels:
@@ -29,12 +31,17 @@ spec:
   serviceName: controller-agents
   template:
     metadata:
+      annotations:
+        extra-pod-annotation: "true"
+        global-pod-annotation: "true"
+        ytsaurus.tech/config-checksum: 85a0c252433a5c659280adbedba6180f3840e46a016cafdf5a3bf6d503b2615c
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-controller-agent
         app.kubernetes.io/managed-by: ytsaurus-k8s-operator
         app.kubernetes.io/name: yt-controller-agent
         app.kubernetes.io/part-of: yt-test-ytsaurus
+        global-pod-label: "true"
         yt_component: test-ytsaurus-yt-controller-agent
         ytsaurus.tech/cluster-name: test-ytsaurus
     spec:
@@ -100,7 +107,14 @@ spec:
         - mountPath: /tls/bus_client_secret
           name: bus-client-secret
           readOnly: true
+      dnsConfig:
+        options:
+        - name: global-dns-option
+      dnsPolicy: ClusterFirst
       enableServiceLinks: false
+      hostNetwork: true
+      imagePullSecrets:
+      - name: global-image-pull-secrets
       initContainers:
       - command:
         - bash
@@ -180,6 +194,12 @@ spec:
         - mountPath: /etc/ssl/certs
           name: ca-root-bundle
           readOnly: true
+      nodeSelector:
+        global-node-selector: "true"
+      runtimeClassName: global-runtime-class
+      setHostnameAsFQDN: false
+      tolerations:
+      - key: global-toleration
       volumes:
       - configMap:
           name: yt-controller-agent-config
@@ -190,10 +210,8 @@ spec:
           items:
           - key: ca-certificates.crt
             path: ca-certificates.crt
-          - key: ca-certificates.p12
-            path: ca-certificates.p12
           - key: ca-certificates.jks
-            path: ca-certificates.jks
+            path: java/cacerts
           name: ytsaurus-dev-ca-root-bundle
         name: ca-root-bundle
       - configMap:

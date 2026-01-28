@@ -17,6 +17,9 @@ data:
     /usr/bin/chyt-controller init-cluster --config-path /config/chyt-init-cluster.yson
 kind: ConfigMap
 metadata:
+  annotations:
+    extra-pod-annotation: "true"
+    ytsaurus.tech/config-checksum: 59694d7d739f49c896f65a99686237f661c571fb0e622147a61d7de824987a16
   creationTimestamp: null
   generation: 1
   labels:

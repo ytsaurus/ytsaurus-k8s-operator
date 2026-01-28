@@ -29,6 +29,8 @@ spec:
   serviceName: masters
   template:
     metadata:
+      annotations:
+        ytsaurus.tech/config-checksum: 19f80676962914dafbb72dd1e45169dfa621d5a8c8063904d7d902c9830d68cf
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-master
@@ -151,6 +153,7 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+      setHostnameAsFQDN: true
       volumes:
       - configMap:
           name: yt-master-config
