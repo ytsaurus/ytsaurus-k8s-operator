@@ -2117,7 +2117,6 @@ exec "$@"`
 		)
 		Context("ImageHeater + ControllerAgent update", Label("update", "imageHeater"), func() {
 			BeforeEach(func() {
-				ytBuilder.WithBaseComponents()
 				ytsaurus.Spec.CoreImage = testutil.YtsaurusImagePrevious
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 					{
