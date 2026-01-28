@@ -3,9 +3,9 @@ package v1
 import (
 	"fmt"
 
-	"github.com/hashicorp/go-version"
-	opver "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 )
 
 func FindFirstLocation(locations []LocationSpec, locationType LocationType) *LocationSpec {
@@ -33,7 +33,7 @@ func ValidateVersionConstraint(constraintStr string) *field.Error {
 		return nil
 	}
 
-	constraint, err := version.NewConstraint(constraintStr)
+	constraints, err := version.ParseConstraints(constraintStr)
 	if err != nil {
 		return field.Invalid(
 			field.NewPath("spec").Child("requiresOperatorVersion"),
@@ -41,23 +41,16 @@ func ValidateVersionConstraint(constraintStr string) *field.Error {
 		)
 	}
 
-	// TODO: This requires some consideration.
-	// Ideally we shouldn't fail if the operator is build with some random version string
-	// that cannot be parsed, but if the spec contains a version lock then we also need to
-	// provide the guarantee about that.
 	// This check will force all operator builds to contain a valid version if it is expected
 	// to handle spec.requiresOperatorVersion field properly.
-	currentVersion, err := version.NewVersion(opver.GetVersion())
-	if err != nil {
-		return field.InternalError(field.NewPath("spec").Child("requiresOperatorVersion"), err)
-	}
-
-	if constraint.Check(currentVersion) {
+	currentVersion := version.GetParsedVersion()
+	ok, errors := constraints.Validate(currentVersion)
+	if ok {
 		return nil
 	}
 
 	return field.Forbidden(
 		field.NewPath("spec").Child("requiresOperatorVersion"),
-		fmt.Sprintf("current operator build %q does not satisfy the spec version constraint %q", currentVersion.String(), constraintStr),
+		fmt.Sprintf("current operator version %q does not satisfy the spec version constraint: %v", currentVersion.Original(), errors),
 	)
 }
