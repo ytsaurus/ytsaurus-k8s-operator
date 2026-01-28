@@ -383,7 +383,6 @@ func (ih *ImageHeater) syncTargets(ctx context.Context, targets []imageHeaterTar
 	allReady := true
 
 	for _, target := range targets {
-
 		ds := resources.NewDaemonSet(
 			target.name,
 			target.labeller,

@@ -176,12 +176,16 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 		if !ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionImagesHeated) {
 			return stepResultMarkUnsatisfied
 		}
-		if hasNonImageHeaterComponent(ytsaurus.GetUpdatingComponents()) {
-			return stepResultMarkHappy
+		updatingComponents := ytsaurus.GetUpdatingComponents()
+		if len(updatingComponents) == 0 {
+			return stepResultMarkUnhappy
 		}
-		// if ConditionImagesHeated is true and there are no non-image-heater components,
-		// we should mark this step as unhappy to terminate the flow
-		return stepResultMarkUnhappy
+		if len(updatingComponents) == 1 && hasComponent(updatingComponents, consts.ImageHeaterType) {
+			// if ConditionImagesHeated is true and ImageHeater is the only updating component,
+			// we should mark this step as unhappy to terminate the flow
+			return stepResultMarkUnhappy
+		}
+		return stepResultMarkHappy
 	},
 	ytv1.UpdateStatePossibilityCheck: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionHasPossibility) {
@@ -321,14 +325,5 @@ func hasComponent(updatingComponents []ytv1.Component, componentType consts.Comp
 		}
 	}
 
-	return false
-}
-
-func hasNonImageHeaterComponent(updatingComponents []ytv1.Component) bool {
-	for _, component := range updatingComponents {
-		if component.Type != consts.ImageHeaterType {
-			return true
-		}
-	}
 	return false
 }
