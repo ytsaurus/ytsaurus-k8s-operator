@@ -63,7 +63,7 @@ var (
 		TcpProxyType,
 		KafkaProxyType,
 		YqlAgentType,
-		// ImageHeaterType,
+		ImageHeaterType,
 		ClusterConnectionType,
 		NativeClientConfigType,
 	}
