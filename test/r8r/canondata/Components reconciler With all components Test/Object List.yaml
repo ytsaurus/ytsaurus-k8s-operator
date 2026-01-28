@@ -1,6 +1,4 @@
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-controller-agent
@@ -19,10 +17,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: 59694d7d739f49c896f65a99686237f661c571fb0e622147a61d7de824987a16
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-strawberry-controller
@@ -41,9 +36,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-controller-agent
@@ -62,9 +55,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-data-node
@@ -83,10 +74,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master
@@ -105,9 +93,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-discovery
@@ -126,9 +112,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-data-node
@@ -147,9 +131,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-discovery
@@ -168,9 +150,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-exec-node
@@ -189,9 +169,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-exec-node
@@ -210,9 +188,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
@@ -231,9 +207,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
@@ -252,9 +226,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
@@ -273,9 +245,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master-cache
@@ -294,9 +264,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master
@@ -315,9 +283,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master
@@ -336,9 +302,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master-cache
@@ -357,9 +321,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-rpc-proxy
@@ -378,9 +340,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-rpc-proxy
@@ -399,9 +359,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-rpc-proxy
@@ -420,9 +378,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-scheduler
@@ -441,9 +397,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-scheduler
@@ -462,9 +416,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-strawberry-controller
@@ -483,9 +435,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-strawberry-controller
@@ -509,10 +459,7 @@
   name: test-overrides
   namespace: ytsaurus-components
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-client
@@ -531,10 +478,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-strawberry-controller
@@ -553,10 +497,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-yql-agent
@@ -575,10 +516,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-yql-agent
@@ -597,9 +535,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-yql-agent
@@ -618,9 +554,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-yql-agent
@@ -639,9 +573,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-client
@@ -660,10 +592,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "2"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: 85a0c252433a5c659280adbedba6180f3840e46a016cafdf5a3bf6d503b2615c
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-controller-agent
@@ -704,7 +633,6 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    extra-pod-annotation: "true"
     kubernetes.io/description: |
       overrides-version: 1
   creationTimestamp: null
@@ -727,10 +655,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: ab958ae3482113a2cc58c7e2ce13b5249aa70ca6c00ae005657209cb2c31c25d
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-data-node
@@ -770,10 +695,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: e0f0e72f1c971a7c6243b9688d481a8ca832ee1a1e57b47e1e26542200ad51a2
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-discovery
@@ -813,10 +735,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: e5a6e8e9a1e108e1220a02b5c0fb1272c445de86855fd723822b0fbe8c6be978
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-exec-node
@@ -836,10 +755,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: c57e84a54702d032e59c461f749b88f229c9825c9bb773e678770ceb1df18e70
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-exec-node
@@ -879,10 +795,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: 2b96be601ec679481e93ca1c5517c99019e0b0c217091f4e5dc15c61e6ba9226
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
@@ -922,10 +835,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: a5222d43560fa08b2a44061c821e7f0e5fb81059ab8c5c1e04577bff6649096a
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master-cache
@@ -965,10 +875,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: 0b38b4319bbfebbceaa9325e3f34cae51d56a4076b65af9619ced7d90161d14e
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master
@@ -988,9 +895,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master
@@ -1029,10 +934,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: 6535f5d75ffdfda62700088f98344982814ec6f81d2595c6d643e2a92b381dbe
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-rpc-proxy
@@ -1072,10 +974,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: bcd354814d51bfc5f8399b1fcc5593213812b44088d93bcb3b2a2a2aa0bc667c
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-scheduler
@@ -1115,10 +1014,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: 2c9afde2f3803b0e9f5e5467e7fab1e5a624f3c9fb8ead34dec9e4295b0c5f0b
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-strawberry-controller
@@ -1138,9 +1034,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-strawberry-controller
@@ -1159,9 +1053,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "2"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-strawberry-controller
@@ -1180,10 +1072,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "2"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: b5c3657ed765892f2c5ea2e32e878078d8f1c205316ed714cc95ce2fbfeb2ff3
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-yql-agent
@@ -1203,9 +1092,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-yql-agent
@@ -1224,9 +1111,7 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "2"
-- annotations:
-    extra-pod-annotation: "true"
-  creationTimestamp: null
+- creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-yql-agent

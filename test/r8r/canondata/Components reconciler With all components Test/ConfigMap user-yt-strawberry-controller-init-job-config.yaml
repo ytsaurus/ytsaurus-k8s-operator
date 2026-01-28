@@ -75,9 +75,6 @@ data:
     yt set //sys/@ui_config/chyt_controller_base_url '"http://strawberry:80"'
 kind: ConfigMap
 metadata:
-  annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
   creationTimestamp: null
   generation: 1
   labels:

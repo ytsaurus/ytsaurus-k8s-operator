@@ -134,9 +134,6 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: b5c3657ed765892f2c5ea2e32e878078d8f1c205316ed714cc95ce2fbfeb2ff3
   creationTimestamp: null
   generation: 1
   labels:

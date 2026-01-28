@@ -142,7 +142,6 @@ data:
 kind: ConfigMap
 metadata:
   annotations:
-    extra-pod-annotation: "true"
     kubernetes.io/description: |
       overrides-version: 1
   creationTimestamp: null

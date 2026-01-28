@@ -13,8 +13,10 @@ spec:
     items:
     - key: ca-certificates.crt
       path: ca-certificates.crt
+    - key: ca-certificates.p12
+      path: ca-certificates.p12
     - key: ca-certificates.jks
-      path: java/cacerts
+      path: ca-certificates.jks
     name: ytsaurus-dev-ca-root-bundle
   clusterFeatures:
     httpProxyHaveChytAddress: true
@@ -83,10 +85,6 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
-  dnsConfig:
-    options:
-    - name: global-dns-option
-  dnsPolicy: ClusterFirst
   enableFullUpdate: true
   ephemeralCluster: true
   execNodes:
@@ -134,9 +132,7 @@ spec:
     volumeMounts:
     - mountPath: /yt/node-data
       name: node-data
-  extraPodAnnotations:
-    extra-pod-annotation: "true"
-  hostNetwork: true
+  hostNetwork: false
   httpProxies:
   - instanceCount: 1
     loggers:
@@ -156,8 +152,6 @@ spec:
     transport:
       httpsSecret:
         name: https-server-cert
-  imagePullSecrets:
-  - name: global-image-pull-secrets
   isManaged: true
   jobImage: docker.io/library/python:3.8-slim
   masterCaches:
@@ -183,26 +177,8 @@ spec:
     tlsRequired: true
     tlsSecret:
       name: native-server-cert
-  nodeSelector:
-    global-node-selector: "true"
-  podAnnotations:
-    global-pod-annotation: "true"
-  podLabels:
-    global-pod-label: "true"
   primaryMasters:
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: instance-affinity
-              operator: Exists
     cellTag: 1
-    dnsConfig:
-      options:
-      - name: instance-dns-option
-    dnsPolicy: None
-    hostNetwork: false
     instanceCount: 1
     locations:
     - locationType: MasterChangelogs
@@ -215,12 +191,6 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
-    nodeSelector:
-      instance-node-selector: "true"
-    podAnnotations:
-      instance-pod-annotation: "true"
-    podLabels:
-      instance-pod-label: "true"
     resources:
       limits:
         cpu: "1"
@@ -228,10 +198,6 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
-    runtimeClassName: instance-runtime-class
-    setHostnameAsFqdn: true
-    tolerations:
-    - key: instance-toleration
     volumeClaimTemplates:
     - metadata:
         name: master-data
@@ -293,7 +259,6 @@ spec:
         memory: "0"
     serviceType: NodePort
     transport: {}
-  runtimeClassName: global-runtime-class
   schedulers:
     instanceCount: 1
     loggers:
@@ -309,12 +274,9 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
-  setHostnameAsFqdn: false
   strawberry:
     image: ghcr.io/ytsaurus/strawberry:0.0.14
     resources: {}
-  tolerations:
-  - key: global-toleration
   useIpv4: false
   useIpv6: false
   usePorto: false
@@ -458,7 +420,7 @@ status:
     status: "True"
     type: StrawberryControllerReady
   - lastTransitionTime: null
-    message: 2.3.4
+    message: (devel)
     observedGeneration: 1
     reason: Observed
     status: "True"

@@ -1,8 +1,6 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  annotations:
-    extra-pod-annotation: "true"
   creationTimestamp: null
   generation: 1
   labels:
@@ -31,17 +29,12 @@ spec:
   serviceName: exec-nodes
   template:
     metadata:
-      annotations:
-        extra-pod-annotation: "true"
-        global-pod-annotation: "true"
-        ytsaurus.tech/config-checksum: e5a6e8e9a1e108e1220a02b5c0fb1272c445de86855fd723822b0fbe8c6be978
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-exec-node
         app.kubernetes.io/managed-by: ytsaurus-k8s-operator
         app.kubernetes.io/name: yt-exec-node
         app.kubernetes.io/part-of: yt-test-ytsaurus
-        global-pod-label: "true"
         yt_component: test-ytsaurus-yt-exec-node
         ytsaurus.tech/cluster-name: test-ytsaurus
     spec:
@@ -178,14 +171,7 @@ spec:
         - mountPath: /etc/ssl/certs
           name: ca-root-bundle
           readOnly: true
-      dnsConfig:
-        options:
-        - name: global-dns-option
-      dnsPolicy: ClusterFirst
       enableServiceLinks: false
-      hostNetwork: true
-      imagePullSecrets:
-      - name: global-image-pull-secrets
       initContainers:
       - command:
         - bash
@@ -274,12 +260,6 @@ spec:
         - mountPath: /etc/ssl/certs
           name: ca-root-bundle
           readOnly: true
-      nodeSelector:
-        global-node-selector: "true"
-      runtimeClassName: global-runtime-class
-      setHostnameAsFQDN: false
-      tolerations:
-      - key: global-toleration
       volumes:
       - configMap:
           name: yt-exec-node-config
@@ -290,8 +270,10 @@ spec:
           items:
           - key: ca-certificates.crt
             path: ca-certificates.crt
+          - key: ca-certificates.p12
+            path: ca-certificates.p12
           - key: ca-certificates.jks
-            path: java/cacerts
+            path: ca-certificates.jks
           name: ytsaurus-dev-ca-root-bundle
         name: ca-root-bundle
       - configMap:

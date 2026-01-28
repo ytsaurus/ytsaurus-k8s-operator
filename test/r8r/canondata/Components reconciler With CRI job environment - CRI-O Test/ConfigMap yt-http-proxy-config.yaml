@@ -94,8 +94,6 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    ytsaurus.tech/config-checksum: b86c26c9e7756c3a567f561ee90d519b0bcf0fb1a634195bc1c2436fcc8d6f93
   creationTimestamp: null
   generation: 1
   labels:
