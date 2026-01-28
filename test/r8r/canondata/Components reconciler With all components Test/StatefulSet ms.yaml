@@ -1,10 +1,6 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: 68650833db0098068ebe81af70fc8403e12e7e7ef2629d5a4b14d109c06f1d5b
-    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -33,29 +29,15 @@ spec:
   serviceName: masters
   template:
     metadata:
-      annotations:
-        extra-pod-annotation: "true"
-        global-pod-annotation: "true"
-        instance-pod-annotation: "true"
-        ytsaurus.tech/config-hash: 0b38b4319bbfebbceaa9325e3f34cae51d56a4076b65af9619ced7d90161d14e
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-master
         app.kubernetes.io/managed-by: ytsaurus-k8s-operator
         app.kubernetes.io/name: yt-master
         app.kubernetes.io/part-of: yt-test-ytsaurus
-        global-pod-label: "true"
-        instance-pod-label: "true"
         yt_component: test-ytsaurus-yt-master
         ytsaurus.tech/cluster-name: test-ytsaurus
     spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: instance-affinity
-                operator: Exists
       containers:
       - command:
         - /usr/bin/ytserver-master
@@ -120,13 +102,7 @@ spec:
         - mountPath: /tls/bus_client_secret
           name: bus-client-secret
           readOnly: true
-      dnsConfig:
-        options:
-        - name: instance-dns-option
-      dnsPolicy: None
       enableServiceLinks: false
-      imagePullSecrets:
-      - name: global-image-pull-secrets
       initContainers:
       - command:
         - bash
@@ -211,12 +187,6 @@ spec:
         - mountPath: /etc/ssl/certs
           name: ca-root-bundle
           readOnly: true
-      nodeSelector:
-        instance-node-selector: "true"
-      runtimeClassName: instance-runtime-class
-      setHostnameAsFQDN: true
-      tolerations:
-      - key: instance-toleration
       volumes:
       - configMap:
           name: yt-master-config
@@ -227,8 +197,10 @@ spec:
           items:
           - key: ca-certificates.crt
             path: ca-certificates.crt
+          - key: ca-certificates.p12
+            path: ca-certificates.p12
           - key: ca-certificates.jks
-            path: java/cacerts
+            path: ca-certificates.jks
           name: ytsaurus-dev-ca-root-bundle
         name: ca-root-bundle
       - configMap:

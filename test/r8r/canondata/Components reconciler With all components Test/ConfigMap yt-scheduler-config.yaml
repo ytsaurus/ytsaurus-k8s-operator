@@ -109,11 +109,6 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-hash: bcd354814d51bfc5f8399b1fcc5593213812b44088d93bcb3b2a2a2aa0bc667c
-    ytsaurus.tech/config-overrides-version: "1"
-    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -123,6 +118,7 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-scheduler
     ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/config-overrides-version: "1"
   name: yt-scheduler-config
   namespace: ytsaurus-components
   ownerReferences:

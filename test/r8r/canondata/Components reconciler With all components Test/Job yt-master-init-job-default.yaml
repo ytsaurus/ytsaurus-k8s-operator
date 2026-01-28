@@ -1,9 +1,6 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -27,8 +24,6 @@ spec:
   backoffLimit: 15
   template:
     metadata:
-      annotations:
-        extra-pod-annotation: "true"
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-master
@@ -80,18 +75,7 @@ spec:
         - mountPath: /tls/bus_client_secret
           name: bus-client-secret
           readOnly: true
-      dnsConfig:
-        options:
-        - name: instance-dns-option
-      dnsPolicy: None
-      imagePullSecrets:
-      - name: global-image-pull-secrets
-      nodeSelector:
-        instance-node-selector: "true"
       restartPolicy: OnFailure
-      setHostnameAsFQDN: true
-      tolerations:
-      - key: instance-toleration
       volumes:
       - configMap:
           defaultMode: 320
@@ -101,8 +85,10 @@ spec:
           items:
           - key: ca-certificates.crt
             path: ca-certificates.crt
+          - key: ca-certificates.p12
+            path: ca-certificates.p12
           - key: ca-certificates.jks
-            path: java/cacerts
+            path: ca-certificates.jks
           name: ytsaurus-dev-ca-root-bundle
         name: ca-root-bundle
       - configMap:

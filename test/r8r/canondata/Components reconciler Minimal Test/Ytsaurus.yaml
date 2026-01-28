@@ -25,6 +25,7 @@ spec:
         memory: "0"
   enableFullUpdate: true
   ephemeralCluster: true
+  hostNetwork: false
   httpProxies:
   - instanceCount: 1
     loggers:
@@ -132,7 +133,7 @@ status:
     status: "True"
     type: TimbertruckReady
   - lastTransitionTime: null
-    message: 0.0.0-devel
+    message: (devel)
     observedGeneration: 1
     reason: Observed
     status: "True"

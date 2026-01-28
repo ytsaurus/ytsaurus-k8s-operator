@@ -314,10 +314,6 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    ytsaurus.tech/config-hash: 9efc29fd3ba384f6f4421d89d44f3865df0ae0bf51e8559c852915f59a48612f
-    ytsaurus.tech/config-overrides-version: "1"
-    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -327,6 +323,7 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-exec-node
     ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/config-overrides-version: "1"
   name: yt-exec-node-config
   namespace: ytsaurus-components
   ownerReferences:

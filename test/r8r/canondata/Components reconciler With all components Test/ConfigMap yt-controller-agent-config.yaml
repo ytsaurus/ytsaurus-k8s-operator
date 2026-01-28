@@ -114,11 +114,6 @@ data:
     }
 kind: ConfigMap
 metadata:
-  annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-hash: 85a0c252433a5c659280adbedba6180f3840e46a016cafdf5a3bf6d503b2615c
-    ytsaurus.tech/config-overrides-version: "1"
-    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -128,6 +123,7 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-controller-agent
     ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/config-overrides-version: "1"
   name: yt-controller-agent-config
   namespace: ytsaurus-components
   ownerReferences:

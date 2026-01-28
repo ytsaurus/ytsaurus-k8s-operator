@@ -63,7 +63,6 @@ spec:
         - mountPath: /config
           name: config
       restartPolicy: OnFailure
-      setHostnameAsFQDN: true
       volumes:
       - configMap:
           defaultMode: 320

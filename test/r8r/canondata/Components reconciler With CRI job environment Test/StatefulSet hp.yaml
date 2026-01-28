@@ -1,9 +1,6 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  annotations:
-    ytsaurus.tech/instance-hash: 97049f8e98e9a87611a6b3b425838de872ac95d07f009674602d841395b04961
-    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -32,8 +29,6 @@ spec:
   serviceName: http-proxies
   template:
     metadata:
-      annotations:
-        ytsaurus.tech/config-hash: b86c26c9e7756c3a567f561ee90d519b0bcf0fb1a634195bc1c2436fcc8d6f93
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-http-proxy
@@ -155,7 +150,6 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
-      setHostnameAsFQDN: true
       volumes:
       - configMap:
           name: yt-http-proxy-config

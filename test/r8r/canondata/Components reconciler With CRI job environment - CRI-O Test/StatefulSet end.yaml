@@ -1,9 +1,6 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  annotations:
-    ytsaurus.tech/instance-hash: d1affa18c2963e9a50be89794c098d66bfafcc1559170c225d95f06529e44da9
-    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -32,8 +29,6 @@ spec:
   serviceName: exec-nodes
   template:
     metadata:
-      annotations:
-        ytsaurus.tech/config-hash: 8b1c7ffba1dcfe33812ec80450c2b039f094a5253713f1445573001812626037
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-exec-node
@@ -214,7 +209,6 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
-      setHostnameAsFQDN: true
       volumes:
       - configMap:
           name: yt-exec-node-config

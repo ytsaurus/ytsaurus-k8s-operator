@@ -1,10 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: ed0c384b2935f39e1495b042b4edc0a24005836b938ad9cc2d3166257b59dd1b
-    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -32,9 +28,6 @@ spec:
   strategy: {}
   template:
     metadata:
-      annotations:
-        extra-pod-annotation: "true"
-        ytsaurus.tech/config-hash: 2c9afde2f3803b0e9f5e5467e7fab1e5a624f3c9fb8ead34dec9e4295b0c5f0b
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-strawberry-controller
@@ -97,8 +90,6 @@ spec:
         - mountPath: /tls/bus_secret
           name: bus-secret
           readOnly: true
-      imagePullSecrets:
-      - name: global-image-pull-secrets
       volumes:
       - configMap:
           name: yt-strawberry-controller-config
@@ -107,8 +98,10 @@ spec:
           items:
           - key: ca-certificates.crt
             path: ca-certificates.crt
+          - key: ca-certificates.p12
+            path: ca-certificates.p12
           - key: ca-certificates.jks
-            path: java/cacerts
+            path: ca-certificates.jks
           name: ytsaurus-dev-ca-root-bundle
         name: ca-root-bundle
       - configMap:

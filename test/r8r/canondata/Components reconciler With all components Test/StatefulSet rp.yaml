@@ -1,10 +1,6 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: 5b05d3d42b2a6890dc242877ddeb4f88650f4e87e020e4890155837d1a2d6283
-    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -33,17 +29,12 @@ spec:
   serviceName: rpc-proxies
   template:
     metadata:
-      annotations:
-        extra-pod-annotation: "true"
-        global-pod-annotation: "true"
-        ytsaurus.tech/config-hash: 6535f5d75ffdfda62700088f98344982814ec6f81d2595c6d643e2a92b381dbe
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-rpc-proxy
         app.kubernetes.io/managed-by: ytsaurus-k8s-operator
         app.kubernetes.io/name: yt-rpc-proxy
         app.kubernetes.io/part-of: yt-test-ytsaurus
-        global-pod-label: "true"
         yt_component: test-ytsaurus-yt-rpc-proxy
         ytsaurus.tech/cluster-name: test-ytsaurus
     spec:
@@ -112,14 +103,7 @@ spec:
         - mountPath: /tls/bus_client_secret
           name: bus-client-secret
           readOnly: true
-      dnsConfig:
-        options:
-        - name: global-dns-option
-      dnsPolicy: ClusterFirst
       enableServiceLinks: false
-      hostNetwork: true
-      imagePullSecrets:
-      - name: global-image-pull-secrets
       initContainers:
       - command:
         - bash
@@ -199,12 +183,6 @@ spec:
         - mountPath: /etc/ssl/certs
           name: ca-root-bundle
           readOnly: true
-      nodeSelector:
-        global-node-selector: "true"
-      runtimeClassName: global-runtime-class
-      setHostnameAsFQDN: false
-      tolerations:
-      - key: global-toleration
       volumes:
       - configMap:
           name: yt-rpc-proxy-config
@@ -215,8 +193,10 @@ spec:
           items:
           - key: ca-certificates.crt
             path: ca-certificates.crt
+          - key: ca-certificates.p12
+            path: ca-certificates.p12
           - key: ca-certificates.jks
-            path: java/cacerts
+            path: ca-certificates.jks
           name: ytsaurus-dev-ca-root-bundle
         name: ca-root-bundle
       - configMap:

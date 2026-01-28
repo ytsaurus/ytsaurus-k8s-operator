@@ -35,10 +35,6 @@ data:
         [plugins."io.containerd.grpc.v1.cri".registry]
 kind: ConfigMap
 metadata:
-  annotations:
-    ytsaurus.tech/config-hash: 8577715aa2fbb0d28a6c322af89d1310a94d03f2e6f464fe5ade83e16bea9827
-    ytsaurus.tech/config-overrides-version: "1"
-    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -48,6 +44,7 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-exec-node
     ytsaurus.tech/cluster-name: test-ytsaurus
+    ytsaurus.tech/config-overrides-version: "1"
   name: yt-exec-node-jobs-config
   namespace: ytsaurus-components
   ownerReferences:
