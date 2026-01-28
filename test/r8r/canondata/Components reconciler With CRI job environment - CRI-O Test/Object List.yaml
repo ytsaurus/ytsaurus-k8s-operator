@@ -1,5 +1,6 @@
 - annotations:
-    ytsaurus.tech/config-checksum: 3030056a0a5008f39287424b1095be879d140fdb6378d7f8c89f0d0f6a609c62
+    ytsaurus.tech/config-hash: 3030056a0a5008f39287424b1095be879d140fdb6378d7f8c89f0d0f6a609c62
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -19,7 +20,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-discovery
@@ -38,7 +41,10 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/instance-hash: 692a84b788d83a2a724d4e09c365f463c2aa8978bab059b03e34fdb88f905112
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-discovery
@@ -57,7 +63,10 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/instance-hash: 02d9e61ed0173f9fb3d68933662a139c283e53f6696ed8bf03ca084d75a6c013
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-exec-node
@@ -76,7 +85,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-exec-node
@@ -95,7 +106,10 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/instance-hash: 139a27a471c90e538f9c9507027fae8e16bd3e8a5ecc8f590637c5915a5c1a1b
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
@@ -114,7 +128,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
@@ -133,7 +149,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
@@ -152,7 +170,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master
@@ -171,7 +191,10 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/instance-hash: 04838d88c575064255e04732d52d4539b1373209edb679f42c6f0957de6b67ef
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master
@@ -191,7 +214,8 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-checksum: 3030056a0a5008f39287424b1095be879d140fdb6378d7f8c89f0d0f6a609c62
+    ytsaurus.tech/config-hash: 3030056a0a5008f39287424b1095be879d140fdb6378d7f8c89f0d0f6a609c62
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -211,7 +235,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-client
@@ -232,6 +258,7 @@
   resourceVersion: "2"
 - annotations:
     kubernetes.io/description: ""
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -252,7 +279,8 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-checksum: f4f67ce05fb582d8c542688088bd232a3be2ffe80e94369ba04fe3c065c14c46
+    ytsaurus.tech/config-hash: f4f67ce05fb582d8c542688088bd232a3be2ffe80e94369ba04fe3c065c14c46
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -272,7 +300,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-discovery
@@ -293,7 +323,8 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-checksum: 8b1c7ffba1dcfe33812ec80450c2b039f094a5253713f1445573001812626037
+    ytsaurus.tech/config-hash: 8b1c7ffba1dcfe33812ec80450c2b039f094a5253713f1445573001812626037
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -314,7 +345,8 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-checksum: 0991132c5536ac2c650a68b62e8fce6c8573478a3dc359bea4d32e261fca9dd3
+    ytsaurus.tech/config-hash: 0991132c5536ac2c650a68b62e8fce6c8573478a3dc359bea4d32e261fca9dd3
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -334,7 +366,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-exec-node
@@ -355,7 +389,8 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-checksum: b86c26c9e7756c3a567f561ee90d519b0bcf0fb1a634195bc1c2436fcc8d6f93
+    ytsaurus.tech/config-hash: b86c26c9e7756c3a567f561ee90d519b0bcf0fb1a634195bc1c2436fcc8d6f93
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -375,7 +410,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
@@ -396,7 +433,8 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-checksum: 19f80676962914dafbb72dd1e45169dfa621d5a8c8063904d7d902c9830d68cf
+    ytsaurus.tech/config-hash: 19f80676962914dafbb72dd1e45169dfa621d5a8c8063904d7d902c9830d68cf
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -416,7 +454,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master
@@ -435,7 +475,9 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "2"
-- creationTimestamp: null
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master

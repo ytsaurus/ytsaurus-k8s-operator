@@ -1,6 +1,9 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
+  annotations:
+    ytsaurus.tech/instance-hash: 86e0bd456a2b69fa1ea94570e8e61b080e671932e9ec6f0cb121ffaec92b478a
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -30,7 +33,7 @@ spec:
   template:
     metadata:
       annotations:
-        ytsaurus.tech/config-checksum: bcd354814d51bfc5f8399b1fcc5593213812b44088d93bcb3b2a2a2aa0bc667c
+        ytsaurus.tech/config-hash: bcd354814d51bfc5f8399b1fcc5593213812b44088d93bcb3b2a2a2aa0bc667c
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-scheduler

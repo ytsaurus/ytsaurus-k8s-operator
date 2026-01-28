@@ -1,6 +1,9 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
+  annotations:
+    ytsaurus.tech/instance-hash: 04838d88c575064255e04732d52d4539b1373209edb679f42c6f0957de6b67ef
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -30,7 +33,7 @@ spec:
   template:
     metadata:
       annotations:
-        ytsaurus.tech/config-checksum: 19f80676962914dafbb72dd1e45169dfa621d5a8c8063904d7d902c9830d68cf
+        ytsaurus.tech/config-hash: 19f80676962914dafbb72dd1e45169dfa621d5a8c8063904d7d902c9830d68cf
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-master

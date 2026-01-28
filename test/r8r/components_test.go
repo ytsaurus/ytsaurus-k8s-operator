@@ -314,6 +314,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				objectList = append(objectList, obj.ObjectMeta)
 
 				canonize.AssertStruct(GinkgoT(), "Service "+obj.Name, obj)
+
+				Expect(obj.Annotations).To(HaveKey(consts.ObservedGenerationAnnotationName))
 			}
 		})
 
@@ -329,7 +331,9 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 				canonize.AssertStruct(GinkgoT(), "StatefulSet "+obj.Name, obj)
 
-				Expect(obj.Spec.Template.Annotations).To(HaveKey(consts.ConfigChecksumAnnotationName))
+				Expect(obj.Spec.Template.Annotations).To(HaveKey(consts.ConfigHashAnnotationName))
+				Expect(obj.Annotations).To(HaveKey(consts.InstanceHashAnnotationName))
+				Expect(obj.Annotations).To(HaveKey(consts.ObservedGenerationAnnotationName))
 			}
 		})
 
@@ -342,6 +346,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				objectList = append(objectList, obj.ObjectMeta)
 
 				canonize.AssertStruct(GinkgoT(), "Deployment "+obj.Name, obj)
+
+				Expect(obj.Annotations).To(HaveKey(consts.ObservedGenerationAnnotationName))
 			}
 		})
 
@@ -358,7 +364,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				canonize.AssertStruct(GinkgoT(), "ConfigMap "+obj.Name, obj)
 
 				if strings.HasSuffix(obj.Name, "-config") {
-					Expect(obj.Annotations).To(HaveKey(consts.ConfigChecksumAnnotationName))
+					Expect(obj.Annotations).To(HaveKey(consts.ConfigHashAnnotationName))
+					Expect(obj.Annotations).To(HaveKey(consts.ObservedGenerationAnnotationName))
 				}
 			}
 		})
@@ -372,6 +379,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				objectList = append(objectList, obj.ObjectMeta)
 
 				canonize.AssertStruct(GinkgoT(), "Job "+obj.Name, obj)
+
+				Expect(obj.Annotations).To(HaveKey(consts.ObservedGenerationAnnotationName))
 			}
 		})
 
