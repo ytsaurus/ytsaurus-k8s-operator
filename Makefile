@@ -48,7 +48,7 @@ TRUST_MANAGER_VERSION ?= v0.17.1
 OPERATOR_IMAGE ?= ytsaurus/k8s-operator
 
 ## YTsaurus operator image tag.
-OPERATOR_TAG ?= 0.0.0-alpha
+OPERATOR_TAG ?= 0.0.0-devel
 
 OPERATOR_CHART ?= ytop-chart
 export OPERATOR_CHART
@@ -117,7 +117,6 @@ GINKGO_FLAGS += --timeout=${GINKGO_TIMEOUT}
 GINKGO_FLAGS += --poll-progress-after=2m
 GINKGO_FLAGS += --poll-progress-interval=1m
 GINKGO_FLAGS += --junit-report=report.xml
-GINKGO_FLAGS += --ldflags="-X github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version.version=2.3.4"
 
 ifneq ($(GITHUB_ACTION),)
 	GINKGO_FLAGS += --github-output

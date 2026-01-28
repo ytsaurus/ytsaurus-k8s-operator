@@ -907,33 +907,8 @@ type YtsaurusSpec struct {
 	UIImage string `json:"uiImage,omitempty"`
 
 	// requiresOperatorVersion is used to lock the YT spec to an Operator version or range.
-	// When this attribute is set, its value must be a valid version constraint. A valid version
-	// constraint is a string containing one or more conditions separated by commas.
-	//
-	// Each condition consists of an operator and a version number.
-	//
-	// Following operators are supported:
-	//
-	//  - `=` or no operator: Describes one exact version number, it cannot be combined with other operators.
-	//  - `!=`: Excludes an exact version number
-	//  - `>`, `>=`, `<`, `<=`': Compares to a specific version, the `>` and `>=` require the YT Operator
-	//     version to be newer than the version specified in constraint; `<` and `<=` require the YT Operator version
-	//     to be older than the constraint.
-	//  - `~>`: Allows only the right-most version component to be incremented.
-	//
-	// Examples:
-	//
-	// `1.0.4` - Locks the YT spec to Operator version `1.0.4`. A spec with this constraint cannot be deployed to other Operator versions
-	// `> 1.0.4` - Spec with this constraint can only be deployed to version newer than `1.0.4`
-	// `>= 1.0.4` - Spec with this constraint can be deployed to operator version `1.0.4` or newer, not older
-	// `< 1.0.4` - Spec with this constraint can only be deployed to version older than `1.0.4`
-	// `<= 1.0.4` - Spec with this constraint can only be deployed to version `1.0.4` or older, not newer
-	// `~> 1.0.4` - Spec with this constraint can be deployed to any patch version newer than `1.0.4` e.g. `1.0.5`, `1.0.6` but not `1.1.0`
-	// `~> 1.0` - Allows versions newer than `1.0` e.g. `1.1.*` `1.2`, `1.3` and so on, but not `2.0`
-	// `>= 1.0.2, <=2.1.3, != 2.0.1` - This constraint allows any version between `1.0.2` and `2.1.3` inclusive, but forbids version `2.0.1`
-	//
-	// When this attribute is not set, the spec can be deployed to any Operator version.
-	//
+	// Syntax: https://github.com/Masterminds/semver
+	// Example: "~0.1.2" is equivalent to ">= 0.1.2, < 0.2.0".
 	//+optional
 	RequiresOperatorVersion string `json:"requiresOperatorVersion,omitempty"`
 

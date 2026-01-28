@@ -591,7 +591,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 var _ = Describe("Tests for required operator version webhook validation", Label("webhook"), func() {
 	const (
 		namespace       string = "default"
-		operatorVersion string = "2.3.4"
+		operatorVersion string = version.DevelVersion
 	)
 
 	var (
@@ -640,16 +640,16 @@ var _ = Describe("Tests for required operator version webhook validation", Label
 		},
 
 		Entry("Handles empty version in spec", "", ""),
-		Entry("Rejects invalid version constraint", "abcd", `spec.requiresOperatorVersion: Invalid value: "abcd": malformed constraint: abcd`),
+		Entry("Rejects invalid version constraint", "abcd", `spec.requiresOperatorVersion: Invalid value: "abcd": improper constraint: abcd`),
 		Entry("Handles success case for exact version match", operatorVersion, ""),
-		Entry("Handles failure case for exact version match", "= 2.2.4", "current operator build .* does not satisfy the spec version constraint .*"),
-		Entry("Handles success case for not equal", "!= 1.2.0", ""),
-		Entry("Handles failure case for not equal", "!= "+operatorVersion, "current operator build .* does not satisfy the spec version constraint .*"),
-		Entry("Handles success case for greater version", "> 2.3.3", ""),
-		Entry("Handles failure case for greater version", "> 2.3.4", "current operator build .* does not satisfy the spec version constraint .*"),
-		Entry("Handles success case for lower version", "< 2.3.5", ""),
-		Entry("Handles failure case for lower version", "< "+operatorVersion, "current operator build .* does not satisfy the spec version constraint .*"),
-		Entry("Handles success case for any patch version", "~> 2.3", ""),
-		Entry("Handles failure case for any patch version", "~> 2.4", "current operator build .* does not satisfy the spec version constraint .*"),
+		Entry("Handles failure case for exact version match", "= 2.0.0", "current operator version .* does not satisfy the spec version constraint: .*"),
+		Entry("Handles success case for not equal", "!= 2.0.0", ""),
+		Entry("Handles failure case for not equal", "!= "+operatorVersion, "current operator version .* does not satisfy the spec version constraint: .*"),
+		Entry("Handles success case for greater version", "> 0.0.0-beta", ""),
+		Entry("Handles failure case for greater version", "> 2.0.0", "current operator version .* does not satisfy the spec version constraint: .*"),
+		Entry("Handles success case for lower version", "< 2.0.0", ""),
+		Entry("Handles failure case for lower version", "< "+operatorVersion, "current operator version .* does not satisfy the spec version constraint: .*"),
+		Entry("Handles success case for any patch version", "~"+operatorVersion, ""),
+		Entry("Handles failure case for any patch version", "~2.0", "current operator version .* does not satisfy the spec version constraint: .*"),
 	)
 })
