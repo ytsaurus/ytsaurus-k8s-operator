@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: ytsaurus/k8s-operator
-  newTag: 0.0.0-alpha
+  newTag: 0.0.0-devel

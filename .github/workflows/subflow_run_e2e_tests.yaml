@@ -79,7 +79,7 @@ jobs:
       - name: Install YTsaurus operator
         shell: bash
         run: |
-          make helm-kind-install OPERATOR_TAG=2.3.4
+          make helm-kind-install
           kubectl get pod -A
 
       - name: Run ${{ matrix.e2e.name }} e2e tests
