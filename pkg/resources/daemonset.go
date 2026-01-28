@@ -60,7 +60,7 @@ func (d *DaemonSet) Build() *appsv1.DaemonSet {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      d.labeller.GetMetaLabelMap(false),
-					Annotations: d.ytsaurus.GetResource().Spec.ExtraPodAnnotations,
+					Annotations: d.ytsaurus.GetResource().Spec.PodAnnotations,
 				},
 				Spec: corev1.PodSpec{
 					ImagePullSecrets: d.ytsaurus.GetResource().Spec.ImagePullSecrets,

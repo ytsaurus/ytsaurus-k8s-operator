@@ -137,6 +137,8 @@ func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
 	return c.apiProxy.UpdateStatus(ctx)
 }
 
+// keepImagesHeatedCondition needed to keep image-heater hash for the next reconcile
+// otherwise the controller would immediately think images need reheating
 func keepImagesHeatedCondition(conditions []metav1.Condition) []metav1.Condition {
 	condition := meta.FindStatusCondition(conditions, consts.ConditionImagesHeated)
 	if condition == nil || condition.Status != metav1.ConditionTrue {
