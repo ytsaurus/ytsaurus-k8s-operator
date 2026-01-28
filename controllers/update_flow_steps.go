@@ -247,6 +247,7 @@ func buildFlowTree(updatingComponents []ytv1.Component) *flowTree {
 	updYqlAgent := hasComponent(updatingComponents, consts.YqlAgentType)
 	updQueueAgent := hasComponent(updatingComponents, consts.QueueAgentType)
 
+	// TODO: if validation conditions can be not mentioned here or needed
 	tree.chainIf(
 		updImageHeater,
 		st(ytv1.UpdateStateWaitingForImagesHeated),
