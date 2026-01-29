@@ -344,6 +344,9 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				objectList = append(objectList, obj.ObjectMeta)
 
 				canonize.AssertStruct(GinkgoT(), "Deployment "+obj.Name, obj)
+
+				Expect(obj.Spec.Template.Annotations).To(HaveKey(consts.ConfigHashAnnotationName))
+				Expect(obj.Annotations).To(HaveKey(consts.InstanceHashAnnotationName))
 			}
 		})
 

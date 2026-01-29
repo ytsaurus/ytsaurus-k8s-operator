@@ -494,6 +494,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/instance-hash: ed0c384b2935f39e1495b042b4edc0a24005836b938ad9cc2d3166257b59dd1b
   creationTimestamp: null
   generation: 1
   labels:

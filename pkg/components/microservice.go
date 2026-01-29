@@ -2,8 +2,11 @@ package components
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/utils/ptr"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
@@ -11,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 )
@@ -88,11 +92,20 @@ func newMicroservice(
 }
 
 func (m *microserviceImpl) Sync(ctx context.Context) error {
-	if _, err := m.configs.Build(); err != nil {
+	cm, err := m.configs.Build()
+	if err != nil {
 		return err
 	}
 	_ = m.buildDeployment()
 	_ = m.buildService()
+
+	if err := m.setConfigHash(cm); err != nil {
+		return err
+	}
+
+	if err := m.setInstanceHash(); err != nil {
+		return err
+	}
 
 	return resources.Sync(ctx,
 		m.deployment,
@@ -141,6 +154,25 @@ func (m *microserviceImpl) rebuildDeployment() *appsv1.Deployment {
 		},
 	}
 	return m.builtDeployment
+}
+
+func (m *microserviceImpl) setConfigHash(cm *corev1.ConfigMap) error {
+	configHash := cm.Annotations[consts.ConfigHashAnnotationName]
+	if configHash == "" {
+		return fmt.Errorf("config hash is not found for %v", cm.Name)
+	}
+	// Propagate config hash from configmap to pod template to trigger restart when needed.
+	metav1.SetMetaDataAnnotation(&m.builtDeployment.Spec.Template.ObjectMeta, consts.ConfigHashAnnotationName, configHash)
+	return nil
+}
+
+func (m *microserviceImpl) setInstanceHash() error {
+	instanceHash, err := resources.Hash(&m.builtDeployment.Spec.Template)
+	if err != nil {
+		return err
+	}
+	metav1.SetMetaDataAnnotation(&m.builtDeployment.ObjectMeta, consts.InstanceHashAnnotationName, instanceHash)
+	return nil
 }
 
 func (m *microserviceImpl) buildService() *corev1.Service {
