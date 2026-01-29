@@ -39,7 +39,6 @@ import (
 	otypes "github.com/onsi/gomega/types"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 
 	"k8s.io/client-go/kubernetes"
@@ -350,15 +349,15 @@ func EventuallyYtsaurus(ctx context.Context, ytsaurus *ytv1.Ytsaurus, timeout ti
 	}, timeout, pollInterval)
 }
 
-func ConsistentlyYtsaurus(ctx context.Context, name types.NamespacedName, timeout time.Duration) AsyncAssertion {
-	var ytsaurus ytv1.Ytsaurus
+func ConsistentlyYtsaurus(ctx context.Context, ytsaurus *ytv1.Ytsaurus, timeout time.Duration) AsyncAssertion {
 	trackStatus := NewYtsaurusStatusTracker()
+	name := client.ObjectKeyFromObject(ytsaurus)
 	return Consistently(ctx, func(ctx context.Context) (*ytv1.Ytsaurus, error) {
-		err := k8sClient.Get(ctx, name, &ytsaurus)
+		err := k8sClient.Get(ctx, name, ytsaurus)
 		if err == nil {
-			trackStatus(&ytsaurus)
+			trackStatus(ytsaurus)
 		}
-		return &ytsaurus, err
+		return ytsaurus, err
 	}, timeout, pollInterval)
 }
 
@@ -393,6 +392,16 @@ func HaveClusterUpdateState(updateState ytv1.UpdateState) otypes.GomegaMatcher {
 	return And(
 		HaveClusterStateUpdating(),
 		HaveField("Status.UpdateStatus.State", updateState),
+	)
+}
+
+func HaveClusterUpdateCondition(conditionType string) otypes.GomegaMatcher {
+	return And(
+		HaveClusterStateUpdating(),
+		HaveField("Status.UpdateStatus.Conditions", ContainElements(And(
+			HaveField("Type", conditionType),
+			HaveField("Status", corev1.ConditionTrue),
+		))),
 	)
 }
 
