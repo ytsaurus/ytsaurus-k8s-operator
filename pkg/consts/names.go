@@ -155,10 +155,22 @@ func GetMicroservicePrefix(component ComponentType) string {
 	return ""
 }
 
+func GetDaemonSetPrefix(component ComponentType) string {
+	switch component {
+	case ImageHeaterType:
+		return "ih"
+	}
+	return ""
+}
+
 func GetShortName(component ComponentType) string {
 	stsPrefix := GetStatefulSetPrefix(component)
 	if stsPrefix != "" {
 		return stsPrefix
+	}
+	dsPrefix := GetDaemonSetPrefix(component)
+	if dsPrefix != "" {
+		return dsPrefix
 	}
 	return GetMicroservicePrefix(component)
 }
