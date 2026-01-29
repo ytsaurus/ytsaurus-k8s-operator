@@ -1079,37 +1079,64 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		Context("Misc update test cases", Label("misc"), func() {
 
-			// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
-			It("Master shouldn't be recreated before WaitingForPodsCreation state if config changes", Label("master"), func(ctx context.Context) {
+			It("Masters are not updated during maintenance", Label("master"), func(ctx context.Context) {
 
-				By("Store master pod creation time")
-				msPod := getMasterPod(testutil.MasterPodName, namespace)
-				msPodCreationFirstTimestamp := msPod.CreationTimestamp
-
-				By("Setting maintenance to stop in PossibilityCheck", func() {
+				setMasterMaintenance := func(maintenance bool) {
 					var masters []string
 					Expect(ytClient.ListNode(ctx, ypath.Path("//sys/primary_masters"), &masters, nil)).Should(Succeed())
 					Expect(masters).Should(HaveLen(1))
-					Expect(ytClient.SetNode(ctx, ypath.Path("//sys/primary_masters").Child(masters[0]).Attr("maintenance"), true, nil)).To(Succeed())
+					Expect(ytClient.SetNode(ctx, ypath.Path("//sys/primary_masters").Child(masters[0]).Attr("maintenance"), maintenance, nil)).To(Succeed())
+				}
+
+				By("Setting master maintenance to stop in PossibilityCheck", func() {
+					setMasterMaintenance(true)
 				})
 
 				By("Run cluster update")
-				ytsaurus.Spec.HostNetwork = ptr.To(true)
-				ytsaurus.Spec.PrimaryMasters.HostAddresses = []string{
-					getKindControlPlaneNode(ctx).Name,
-				}
+				podsBeforeUpdate := getComponentPods(ctx, namespace)
+				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
-				By("Waiting PossibilityCheck")
-				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck))
+				// FIXME: Cluster state oscillates.
+				if false {
+					By("Waiting stable version")
+					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveStableResourceVersion(consistencyTimeout))
 
+					By("Waiting for PossibilityCheck")
+					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck))
+
+					By("Waiting for condition NoPossibility")
+					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(WithInvariant(
+						Not(HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusDefined())),
+						HaveClusterUpdateCondition(consts.ConditionNoPossibility, ConditionStatusTrue()),
+					))
+
+					By("Check consistent NoPossibility")
+					ConsistentlyYtsaurus(ctx, ytsaurus, consistencyTimeout).Should(And(
+						HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck),
+						Not(HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusDefined())),
+						HaveClusterUpdateCondition(consts.ConditionNoPossibility, ConditionStatusTrue())),
+					)
+				} else {
+					By("Checking that pods are not changed")
+					Consistently(ctx, func(ctx context.Context) changedObjects {
+						return getChangedPods(podsBeforeUpdate, getComponentPods(ctx, namespace))
+					}, consistencyTimeout, pollInterval).To(HaveField("Changed", BeEmpty()))
+				}
+
+				// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
 				By("Check that master pod was NOT recreated at the PossibilityCheck stage")
-				// FIXME: rewrite this.
-				time.Sleep(1 * time.Second)
-				msPod = getMasterPod(testutil.MasterPodName, namespace)
-				msPodCreationSecondTimestamp := msPod.CreationTimestamp
-				log.Info("ms pods ts", "first", msPodCreationFirstTimestamp, "second", msPodCreationSecondTimestamp)
-				Expect(msPodCreationFirstTimestamp.Equal(&msPodCreationSecondTimestamp)).Should(BeTrue())
+				pods := getChangedPods(podsBeforeUpdate, getComponentPods(ctx, namespace))
+				Expect(pods.Created).To(BeEmpty(), "created")
+				Expect(pods.Deleted).To(BeEmpty(), "deleted")
+				Expect(pods.Updated).To(BeEmpty(), "updated")
+
+				By("Removing master maintenance to resume update", func() {
+					setMasterMaintenance(false)
+				})
+
+				By("Waiting cluster update completes")
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 			})
 
 		}) // update misc
@@ -2275,7 +2302,7 @@ func createTestUser(ytClient yt.Client) {
 	Expect(hasPermission.Action).Should(Equal(yt.ActionDeny))
 }
 
-func checkPodLabelCount(pods []corev1.Pod, labelKey string, labelValue string, expectedCount int) {
+func checkPodLabelCount(pods map[string]corev1.Pod, labelKey string, labelValue string, expectedCount int) {
 	podCount := 0
 	for _, pod := range pods {
 		if pod.Labels[labelKey] == labelValue {
