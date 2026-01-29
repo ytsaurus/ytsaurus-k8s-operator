@@ -85,7 +85,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
+    ytsaurus.tech/config-checksum: 61404cf9cecbe1d63d278ea3e86babb7e226579cf1a4a57ab3bda537f4c02dc1
   creationTimestamp: null
   generation: 1
   labels:
@@ -511,7 +511,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
+    ytsaurus.tech/config-checksum: 61404cf9cecbe1d63d278ea3e86babb7e226579cf1a4a57ab3bda537f4c02dc1
   creationTimestamp: null
   generation: 1
   labels:
@@ -533,7 +533,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
+    ytsaurus.tech/config-checksum: 61404cf9cecbe1d63d278ea3e86babb7e226579cf1a4a57ab3bda537f4c02dc1
   creationTimestamp: null
   generation: 1
   labels:
@@ -555,7 +555,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
+    ytsaurus.tech/config-checksum: 61404cf9cecbe1d63d278ea3e86babb7e226579cf1a4a57ab3bda537f4c02dc1
   creationTimestamp: null
   generation: 1
   labels:
@@ -577,7 +577,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
+    ytsaurus.tech/config-checksum: 61404cf9cecbe1d63d278ea3e86babb7e226579cf1a4a57ab3bda537f4c02dc1
   creationTimestamp: null
   generation: 1
   labels:
@@ -662,7 +662,7 @@
   resourceVersion: "2"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: 85a0c252433a5c659280adbedba6180f3840e46a016cafdf5a3bf6d503b2615c
+    ytsaurus.tech/config-checksum: 2c4cd826a84da2da71bd5dff7f4aa404061be2080fd7b815127197bfeebb7cfb
   creationTimestamp: null
   generation: 1
   labels:
@@ -729,7 +729,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: ab958ae3482113a2cc58c7e2ce13b5249aa70ca6c00ae005657209cb2c31c25d
+    ytsaurus.tech/config-checksum: e72be1714faca27e8de092bbd43341cc30e27b89ed02308d4292ec6b1ee06600
   creationTimestamp: null
   generation: 1
   labels:
@@ -772,7 +772,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: e0f0e72f1c971a7c6243b9688d481a8ca832ee1a1e57b47e1e26542200ad51a2
+    ytsaurus.tech/config-checksum: 3258f282dfcee415563e512ec79596ffb04f8529ff5f177b95756506659df716
   creationTimestamp: null
   generation: 1
   labels:
@@ -815,7 +815,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: e5a6e8e9a1e108e1220a02b5c0fb1272c445de86855fd723822b0fbe8c6be978
+    ytsaurus.tech/config-checksum: b142c8eadd61765542b271dab4b39f8a7eec5e100ebb0f526ace4bd9eb89e176
   creationTimestamp: null
   generation: 1
   labels:
@@ -881,7 +881,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: 2b96be601ec679481e93ca1c5517c99019e0b0c217091f4e5dc15c61e6ba9226
+    ytsaurus.tech/config-checksum: 682c78427202e375182c6ea4626ef57c0bbc9ac0eba6328ca400e54d3db09b5c
   creationTimestamp: null
   generation: 1
   labels:
@@ -924,7 +924,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: a5222d43560fa08b2a44061c821e7f0e5fb81059ab8c5c1e04577bff6649096a
+    ytsaurus.tech/config-checksum: bcf659265eedc94fd1d7d55435b987b922cfa9f2e90728a023c350aa33a69810
   creationTimestamp: null
   generation: 1
   labels:
@@ -967,7 +967,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: 0b38b4319bbfebbceaa9325e3f34cae51d56a4076b65af9619ced7d90161d14e
+    ytsaurus.tech/config-checksum: 60d4260b5c6f8ea43703b177afbb35635bdc6412a68856dc6aaaa2b2bbb5e401
   creationTimestamp: null
   generation: 1
   labels:
@@ -1031,7 +1031,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: 6535f5d75ffdfda62700088f98344982814ec6f81d2595c6d643e2a92b381dbe
+    ytsaurus.tech/config-checksum: 678c993c7062118326ef6900fef6543529a01dfd7a9e78b0d3435ddbf11c90f0
   creationTimestamp: null
   generation: 1
   labels:
@@ -1074,7 +1074,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: bcd354814d51bfc5f8399b1fcc5593213812b44088d93bcb3b2a2a2aa0bc667c
+    ytsaurus.tech/config-checksum: d16f4420c75a42caf2190de0a7f70983ddc556b1f1e110b373ee72e966a0a8de
   creationTimestamp: null
   generation: 1
   labels:
@@ -1182,7 +1182,7 @@
   resourceVersion: "2"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: b5c3657ed765892f2c5ea2e32e878078d8f1c205316ed714cc95ce2fbfeb2ff3
+    ytsaurus.tech/config-checksum: 8e954143ea17e7db07b64f69c2ff0bab4b6a600b876757dc042a2fed9291bcfa
   creationTimestamp: null
   generation: 1
   labels:
