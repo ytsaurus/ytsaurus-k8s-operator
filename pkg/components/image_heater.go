@@ -8,13 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -87,28 +84,12 @@ func (ih *ImageHeater) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 
 	if ih.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForImagesHeated {
 		if IsUpdatingComponent(ih.ytsaurus, ih) && ih.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			hasDS, err := ih.cleanupDaemonSetsIfNeeded(ctx, dry)
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-			if hasDS {
-				return ComponentStatusUpdating("Image heater daemonsets are still running"), nil
-			}
-
 			if !ih.ytsaurus.IsUpdateStatusConditionTrue(ih.labeller.GetPodsRemovingStartedCondition()) {
 				setPodsRemovingStartedCondition(ctx, &ih.localComponent)
 			}
 			if !ih.ytsaurus.IsUpdateStatusConditionTrue(ih.labeller.GetPodsRemovedCondition()) {
 				setPodsRemovedCondition(ctx, &ih.localComponent)
 			}
-			return SimpleStatus(SyncStatusUpdating), nil
-		}
-
-		hasDS, err := ih.cleanupDaemonSetsIfNeeded(ctx, dry)
-		if err != nil {
-			return SimpleStatus(SyncStatusUpdating), err
-		}
-		if dry && hasDS {
 			return SimpleStatus(SyncStatusUpdating), nil
 		}
 		return ComponentStatusReadyAfter("Image heater idle"), nil
@@ -203,24 +184,9 @@ func (ih *ImageHeater) markImagesHeated(ctx context.Context, targetsHash string,
 			Reason:  "Update",
 			Message: imagesHeatedHashMessage(targetsHash),
 		})
-		if !hasNonImageHeaterComponent(ih.ytsaurus.GetUpdatingComponents()) {
-			if err := ih.cleanupDaemonSets(ctx); err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-		}
 	}
 
 	return SimpleStatus(SyncStatusUpdating), nil
-}
-
-func (ih *ImageHeater) cleanupDaemonSetsIfNeeded(ctx context.Context, dry bool) (bool, error) {
-	if dry {
-		return ih.hasDaemonSets(ctx)
-	}
-	if err := ih.cleanupDaemonSets(ctx); err != nil {
-		return false, err
-	}
-	return ih.hasDaemonSets(ctx)
 }
 
 func imagesHeatedHashFromCondition(condition *metav1.Condition) string {
@@ -419,48 +385,6 @@ func (ih *ImageHeater) syncTargets(ctx context.Context, targets []imageHeaterTar
 	}
 
 	return allReady, nil
-}
-
-// cleanupDaemonSets removes image-heater daemonsets.
-func (ih *ImageHeater) cleanupDaemonSets(ctx context.Context) error {
-	dsList, err := ih.listImageHeaterDaemonSets(ctx)
-	if err != nil {
-		return err
-	}
-
-	for i := range dsList.Items {
-		ds := &dsList.Items[i]
-		if err := ih.ytsaurus.APIProxy().DeleteObject(ctx, ds); err != nil && !apierrors.IsNotFound(err) {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// hasDaemonSets returns true if any image-heater daemonsets exist.
-func (ih *ImageHeater) hasDaemonSets(ctx context.Context) (bool, error) {
-	dsList, err := ih.listImageHeaterDaemonSets(ctx)
-	if err != nil {
-		return false, err
-	}
-	return len(dsList.Items) > 0, nil
-}
-
-// listImageHeaterDaemonSets returns all image-heater daemonsets in the namespace.
-func (ih *ImageHeater) listImageHeaterDaemonSets(ctx context.Context) (*appsv1.DaemonSetList, error) {
-	dsList := &appsv1.DaemonSetList{}
-	listOptions := []client.ListOption{
-		client.InNamespace(ih.ytsaurus.GetResource().GetNamespace()),
-		client.MatchingLabels(map[string]string{
-			consts.ImageHeaterLabelName: imageHeaterLabelValue,
-			consts.YTClusterLabelName:   ih.ytsaurus.GetResource().GetName(),
-		}),
-	}
-	if err := ih.ytsaurus.APIProxy().ListObjects(ctx, dsList, listOptions...); err != nil {
-		return nil, err
-	}
-	return dsList, nil
 }
 
 // imageHeaterInstanceGroup returns a stable instance group derived from the group key.
