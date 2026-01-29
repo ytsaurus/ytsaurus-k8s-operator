@@ -2159,7 +2159,7 @@ exec "$@"`
 				)
 
 				By("Wait for image heater to finish preheating")
-				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
 					HaveUpdateStatusConditionTrue(consts.ConditionImagesHeated),
 				)
 
