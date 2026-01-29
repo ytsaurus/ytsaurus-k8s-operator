@@ -15,6 +15,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ypatch"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -93,6 +94,18 @@ func (yqla *YqlAgent) Fetch(ctx context.Context) error {
 		yqla.updateEnvironment,
 		yqla.secret,
 	)
+}
+
+func (yqla *YqlAgent) GetCypressPatch() ypatch.PatchSet {
+	return ypatch.PatchSet{
+		// NOTE: Patch for YtsaurusClient will copy "@cluster_connection" into "//sys/clusters".
+		"//sys/@cluster_connection": {
+			ypatch.Replace(
+				"/yql_agent/stages/production/channel/addresses",
+				yqla.cfgen.GetYQLAgentAddresses(),
+			),
+		},
+	}
 }
 
 func (yqla *YqlAgent) initUsers() string {
