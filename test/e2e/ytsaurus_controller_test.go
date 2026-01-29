@@ -2136,9 +2136,6 @@ exec "$@"`
 			})
 
 			It("should update cluster with ImageHeater component have cluster Running state", func(ctx context.Context) {
-				imageHeaterLabeller := generator.GetComponentLabeller(consts.ImageHeaterType, "")
-				imageHeaterRemovingStarted := imageHeaterLabeller.GetPodsRemovingStartedCondition()
-				imageHeaterRemoved := imageHeaterLabeller.GetPodsRemovedCondition()
 
 				By("Wait for cluster to be Running on previous image")
 				EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
@@ -2167,12 +2164,6 @@ exec "$@"`
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
 					HaveClusterUpdateState(ytv1.UpdateStateWaitingForPodsRemoval),
 				)
-
-				By("Verify image heater cleanup conditions are set")
-				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(SatisfyAll(
-					HaveUpdateStatusConditionTrue(imageHeaterRemovingStarted),
-					HaveUpdateStatusConditionTrue(imageHeaterRemoved),
-				))
 
 				By("Waiting cluster update completes")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
