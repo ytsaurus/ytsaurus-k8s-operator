@@ -32,6 +32,7 @@ data:
                 };
             ];
             "flush_period"=3000;
+            "enable_anchor_profiling"=%false;
         };
         "monitoring_port"=10016;
         "rpc_port"=9016;
@@ -95,7 +96,7 @@ data:
 kind: ConfigMap
 metadata:
   annotations:
-    ytsaurus.tech/config-checksum: b86c26c9e7756c3a567f561ee90d519b0bcf0fb1a634195bc1c2436fcc8d6f93
+    ytsaurus.tech/config-checksum: b931f633444bec411392a87c348ec136749128868fcc115ce4d8553a86f65a10
   creationTimestamp: null
   generation: 1
   labels:

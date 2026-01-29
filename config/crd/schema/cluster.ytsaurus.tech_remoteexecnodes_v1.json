@@ -876,6 +876,10 @@
         "clusterFeatures": {
           "type": "object",
           "properties": {
+            "enableAnchorProfilingByDefault": {
+              "description": "Enable logging anchor profiling by default for loggers that don't explicitly...",
+              "type": "boolean"
+            },
             "httpProxyHaveChytAddress": {
               "description": "HTTP proxies have \"chyt_http_server\" and \"chyt_https_server\".",
               "type": "boolean"
@@ -1159,6 +1163,9 @@
                   "zstd"
                 ]
               },
+              "enableAnchorProfiling": {
+                "type": "boolean"
+              },
               "format": {
                 "type": "string",
                 "default": "plain_text",
@@ -1387,6 +1394,9 @@
                   "gzip",
                   "zstd"
                 ]
+              },
+              "enableAnchorProfiling": {
+                "type": "boolean"
               },
               "format": {
                 "type": "string",
@@ -1716,6 +1726,9 @@
                   "gzip",
                   "zstd"
                 ]
+              },
+              "enableAnchorProfiling": {
+                "type": "boolean"
               },
               "format": {
                 "type": "string",

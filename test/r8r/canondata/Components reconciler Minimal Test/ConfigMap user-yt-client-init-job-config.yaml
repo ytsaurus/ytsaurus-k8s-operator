@@ -13,6 +13,7 @@ data:
             rules=[
             ];
             "flush_period"=0;
+            "enable_anchor_profiling"=%false;
         };
         driver={
             "api_version"=4;
@@ -57,7 +58,7 @@ data:
 kind: ConfigMap
 metadata:
   annotations:
-    ytsaurus.tech/config-checksum: 3030056a0a5008f39287424b1095be879d140fdb6378d7f8c89f0d0f6a609c62
+    ytsaurus.tech/config-checksum: 8cecfc71d8eebac718e044f54003f16cb9d0799b804947f0d2937ec93607942a
   creationTimestamp: null
   generation: 1
   labels:

@@ -30,7 +30,7 @@ spec:
   template:
     metadata:
       annotations:
-        ytsaurus.tech/config-checksum: f4f67ce05fb582d8c542688088bd232a3be2ffe80e94369ba04fe3c065c14c46
+        ytsaurus.tech/config-checksum: 201bc372f1b1c9080e947c5c81baf84ca43dfe6e6ef7f50b34d852bd6382cb30
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-discovery

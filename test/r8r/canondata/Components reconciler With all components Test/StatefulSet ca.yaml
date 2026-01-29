@@ -34,7 +34,7 @@ spec:
       annotations:
         extra-pod-annotation: "true"
         global-pod-annotation: "true"
-        ytsaurus.tech/config-checksum: 85a0c252433a5c659280adbedba6180f3840e46a016cafdf5a3bf6d503b2615c
+        ytsaurus.tech/config-checksum: 2c4cd826a84da2da71bd5dff7f4aa404061be2080fd7b815127197bfeebb7cfb
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-controller-agent

@@ -951,6 +951,9 @@
                   "zstd"
                 ]
               },
+              "enableAnchorProfiling": {
+                "type": "boolean"
+              },
               "format": {
                 "type": "string",
                 "default": "plain_text",
@@ -1247,6 +1250,9 @@
                   "gzip",
                   "zstd"
                 ]
+              },
+              "enableAnchorProfiling": {
+                "type": "boolean"
               },
               "format": {
                 "type": "string",

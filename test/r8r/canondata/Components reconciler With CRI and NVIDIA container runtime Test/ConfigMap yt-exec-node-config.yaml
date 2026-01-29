@@ -32,6 +32,7 @@ data:
                 };
             ];
             "flush_period"=3000;
+            "enable_anchor_profiling"=%false;
         };
         "monitoring_port"=10029;
         "rpc_port"=9029;
@@ -185,6 +186,7 @@ data:
                         };
                     ];
                     "flush_period"=3000;
+                    "enable_anchor_profiling"=%false;
                     "log_manager_template"={
                         writers={
                             info={
@@ -216,6 +218,7 @@ data:
                             };
                         ];
                         "flush_period"=3000;
+                        "enable_anchor_profiling"=%false;
                     };
                     mode=simple;
                 };
@@ -262,6 +265,7 @@ data:
                     };
                 ];
                 "flush_period"=3000;
+                "enable_anchor_profiling"=%false;
             };
             "do_not_set_user_id"=%true;
             "forward_all_environment_variables"=%true;
@@ -319,7 +323,7 @@ data:
 kind: ConfigMap
 metadata:
   annotations:
-    ytsaurus.tech/config-checksum: 232ae3a827ca6649699f0aedbd2a525a96c042fb02c338c791d510bae9b88ede
+    ytsaurus.tech/config-checksum: c6549f050e00bc3f5c0b6ff9b63778c45db10c4afa13a4234e46c47572a6e03a
   creationTimestamp: null
   generation: 1
   labels:
