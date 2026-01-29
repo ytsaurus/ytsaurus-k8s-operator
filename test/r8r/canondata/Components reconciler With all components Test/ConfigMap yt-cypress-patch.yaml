@@ -41,6 +41,13 @@ data:
                     "peer_alternative_host_name"="test-ytsaurus";
                 };
             };
+            {
+                op=replace;
+                path="/yql_agent/stages/production/channel/addresses";
+                value=[
+                    "yqla-0.yql-agents.ytsaurus-components.svc.cluster.local:9019";
+                ];
+            };
         ];
         "<>//sys/clusters"=[
             {
@@ -135,6 +142,15 @@ data:
     }
   yt-yql-agent-cypress-patch.yson: |-
     {
+        "//sys/@cluster_connection"=[
+            {
+                op=replace;
+                path="/yql_agent/stages/production/channel/addresses";
+                value=[
+                    "yqla-0.yql-agents.ytsaurus-components.svc.cluster.local:9019";
+                ];
+            };
+        ];
     }
 kind: ConfigMap
 metadata:
