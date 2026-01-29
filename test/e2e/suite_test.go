@@ -19,12 +19,15 @@ package controllers_test
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
 	"time"
 
 	"k8s.io/utils/ptr"
+
+	"github.com/mohae/deepcopy"
 
 	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
@@ -52,6 +55,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -391,6 +395,39 @@ func ConsistentlyYtsaurus(ctx context.Context, ytsaurus *ytv1.Ytsaurus, timeout 
 	}, timeout, pollInterval)
 }
 
+func WithInvariant(invariant, matcher otypes.GomegaMatcher) otypes.GomegaMatcher {
+	return WithTransform(func(actual any) (any, error) {
+		if ok, err := invariant.Match(actual); err != nil {
+			return actual, fmt.Errorf("invariant error: %w", err)
+		} else if !ok {
+			return actual, fmt.Errorf("invariant failed: %s", invariant.FailureMessage(actual))
+		}
+		return actual, nil
+	}, matcher)
+}
+
+func HaveStableValue(window time.Duration) otypes.GomegaMatcher {
+	var previous any
+	finish := time.Now().Add(window)
+	return And(
+		Or(
+			BeEquivalentTo(&previous),
+			Satisfy(func(value any) bool {
+				previous = deepcopy.Copy(value)
+				finish = time.Now().Add(window)
+				return false
+			}),
+		),
+		Satisfy(func(_ any) bool {
+			return time.Now().After(finish)
+		}),
+	)
+}
+
+func HaveStableResourceVersion(window time.Duration) otypes.GomegaMatcher {
+	return HaveField("ObjectMeta.ResourceVersion", HaveStableValue(window))
+}
+
 func HaveObservedGeneration() otypes.GomegaMatcher {
 	var generation int64
 	return SatisfyAll(
@@ -423,6 +460,28 @@ func HaveClusterUpdateState(updateState ytv1.UpdateState) otypes.GomegaMatcher {
 		HaveClusterStateUpdating(),
 		HaveField("Status.UpdateStatus.State", updateState),
 	)
+}
+
+func HaveClusterUpdateCondition(conditionType string, expected otypes.GomegaMatcher) otypes.GomegaMatcher {
+	return And(
+		HaveClusterStateUpdating(),
+		WithTransform(
+			func(yt *ytv1.Ytsaurus) any {
+				return meta.FindStatusCondition(yt.Status.UpdateStatus.Conditions, conditionType)
+			},
+			expected,
+		),
+	)
+}
+
+func ConditionStatusTrue() otypes.GomegaMatcher {
+	return HaveField("Status", corev1.ConditionTrue)
+}
+func ConditionStatusFalse() otypes.GomegaMatcher {
+	return HaveField("Status", corev1.ConditionFalse)
+}
+func ConditionStatusDefined() otypes.GomegaMatcher {
+	return Or(ConditionStatusTrue(), ConditionStatusFalse())
 }
 
 func HaveClusterUpdatingComponents(components ...consts.ComponentType) otypes.GomegaMatcher {

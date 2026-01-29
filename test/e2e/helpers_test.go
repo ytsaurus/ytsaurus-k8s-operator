@@ -182,22 +182,27 @@ func getComponentPods(ctx context.Context, namespace string) map[string]corev1.P
 	)
 	Expect(err).Should(Succeed())
 
-	result := make(map[string]corev1.Pod)
+	result := make(map[string]corev1.Pod, len(podlist.Items))
 	for _, pod := range podlist.Items {
 		result[pod.Name] = pod
 	}
 	return result
 }
 
-func getAllPods(ctx context.Context, namespace string) []corev1.Pod {
+func getAllPods(ctx context.Context, namespace string) map[string]corev1.Pod {
 	podList := corev1.PodList{}
 	err := k8sClient.List(ctx, &podList, ctrlcli.InNamespace(namespace))
 	Expect(err).Should(Succeed())
-	return podList.Items
+
+	result := make(map[string]corev1.Pod, len(podList.Items))
+	for _, pod := range podList.Items {
+		result[pod.Name] = pod
+	}
+	return result
 }
 
 type changedObjects struct {
-	Deleted, Updated, Created []string
+	Changed, Deleted, Updated, Created []string
 }
 
 func getChangedPods(before, after map[string]corev1.Pod) changedObjects {
@@ -216,6 +221,9 @@ func getChangedPods(before, after map[string]corev1.Pod) changedObjects {
 			ret.Updated = append(ret.Updated, name)
 		}
 	}
+	ret.Changed = append(ret.Changed, ret.Deleted...)
+	ret.Changed = append(ret.Changed, ret.Created...)
+	ret.Changed = append(ret.Changed, ret.Updated...)
 	return ret
 }
 
