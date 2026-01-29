@@ -156,8 +156,7 @@ func GetMicroservicePrefix(component ComponentType) string {
 }
 
 func GetDaemonSetPrefix(component ComponentType) string {
-	switch component {
-	case ImageHeaterType:
+	if component == ImageHeaterType {
 		return "ih"
 	}
 	return ""
