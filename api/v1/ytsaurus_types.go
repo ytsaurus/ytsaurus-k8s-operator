@@ -291,9 +291,7 @@ type BaseLoggerSpec struct {
 	Compression LogCompression `json:"compression,omitempty"`
 	//+kubebuilder:default:=false
 	//+optional
-	UseTimestampSuffix bool `json:"useTimestampSuffix"`
-	//+kubebuilder:default:=true
-	//+optional
+	UseTimestampSuffix    bool               `json:"useTimestampSuffix"`
 	EnableAnchorProfiling *bool              `json:"enableAnchorProfiling,omitempty"`
 	RotationPolicy        *LogRotationPolicy `json:"rotationPolicy,omitempty"`
 }
@@ -824,6 +822,8 @@ type ClusterFeatures struct {
 	HTTPProxyHaveHTTPSAddress bool `json:"httpProxyHaveHttpsAddress,omitempty"`
 	// Validate that only secure transports are allowed for cluster connections.
 	SecureClusterTransports bool `json:"secureClusterTransports,omitempty"`
+	// Enable logging anchor profiling by default for loggers that don't explicitly disable it.
+	EnableAnchorProfilingByDefault bool `json:"enableAnchorProfilingByDefault,omitempty"`
 }
 
 // CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.

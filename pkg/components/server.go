@@ -119,6 +119,12 @@ func newServerConfigured(
 		// FIXME(khlebnikov): do not mount common bus secret into all servers
 		transportSpec = commonSpec.NativeTransport
 	}
+
+	clusterFeatures := ptr.Deref(commonSpec.ClusterFeatures, ytv1.ClusterFeatures{})
+	for _, logger := range instanceSpec.Loggers {
+		logger.EnableAnchorProfiling = ptr.To(ptr.Deref(logger.EnableAnchorProfiling, clusterFeatures.EnableAnchorProfilingByDefault))
+	}
+
 	if transportSpec != nil {
 		if transportSpec.TLSSecret != nil {
 			busServerSecret = resources.NewTLSSecret(

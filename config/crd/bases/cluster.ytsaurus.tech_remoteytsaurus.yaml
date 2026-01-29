@@ -848,7 +848,6 @@ spec:
                       - zstd
                       type: string
                     enableAnchorProfiling:
-                      default: true
                       type: boolean
                     format:
                       default: plain_text
@@ -1065,7 +1064,6 @@ spec:
                       - zstd
                       type: string
                     enableAnchorProfiling:
-                      default: true
                       type: boolean
                     format:
                       default: plain_text
