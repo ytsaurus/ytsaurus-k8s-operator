@@ -258,6 +258,9 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 				CoreImage:        b.Images.Core,
 				JobImage:         ptr.To(b.Images.Job),
 			},
+			PodSpec: ytv1.PodSpec{
+				TerminationGracePeriodSeconds: ptr.To(int64(5)),
+			},
 			Discovery: ytv1.DiscoverySpec{
 				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount:         1,
@@ -413,6 +416,7 @@ func (b *YtsaurusBuilder) WithAllGlobalPodOptions() {
 	b.Ytsaurus.Spec.HostNetwork = ptr.To(true)
 	b.Ytsaurus.Spec.NodeSelector = map[string]string{"global-node-selector": "true"}
 	b.Ytsaurus.Spec.RuntimeClassName = ptr.To("global-runtime-class")
+	b.Ytsaurus.Spec.TerminationGracePeriodSeconds = ptr.To(int64(10))
 	b.Ytsaurus.Spec.SetHostnameAsFQDN = ptr.To(false)
 	b.Ytsaurus.Spec.Tolerations = []corev1.Toleration{{Key: "global-toleration"}}
 }
@@ -437,6 +441,7 @@ func (b *YtsaurusBuilder) WithAllInstancePodOptions(spec *ytv1.InstanceSpec) {
 	spec.PodAnnotations = map[string]string{"instance-pod-annotation": "true"}
 	spec.PodLabels = map[string]string{"instance-pod-label": "true"}
 	spec.RuntimeClassName = ptr.To("instance-runtime-class")
+	spec.TerminationGracePeriodSeconds = ptr.To(int64(20))
 	spec.SetHostnameAsFQDN = ptr.To(true)
 	spec.Tolerations = []corev1.Toleration{{Key: "instance-toleration"}}
 }
