@@ -63,7 +63,7 @@ spec:
           value: /etc/ssl/certs
         - name: REQUESTS_CA_BUNDLE
           value: /etc/ssl/certs/ca-certificates.crt
-        image: ghcr.io/ytsaurus/query-tracker:0.0.11
+        image: ghcr.io/ytsaurus/query-tracker:0.1.1
         name: ytsaurus-init
         resources: {}
         terminationMessagePolicy: FallbackToLogsOnError

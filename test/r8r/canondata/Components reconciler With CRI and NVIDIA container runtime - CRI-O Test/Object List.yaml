@@ -293,7 +293,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-checksum: 8f3a44fc903370162f97e916201d1b64ae4e14dbacaa10b3eaf492e7c597d7f7
+    ytsaurus.tech/config-checksum: 045c53c116914afd42fae1305a5c83e307e3fbe789addfc654be8ba1495dca70
   creationTimestamp: null
   generation: 1
   labels:
