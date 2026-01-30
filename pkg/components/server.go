@@ -467,7 +467,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		SetHostnameAsFQDN:  ptr.To(ptr.Deref(s.instanceSpec.SetHostnameAsFQDN, ptr.Deref(s.commonPodSpec.SetHostnameAsFQDN, true))),
 		EnableServiceLinks: ptr.To(false),
 
-		TerminationGracePeriodSeconds: s.instanceSpec.TerminationGracePeriodSeconds,
+		TerminationGracePeriodSeconds: ptrDefault(s.instanceSpec.TerminationGracePeriodSeconds, s.commonPodSpec.TerminationGracePeriodSeconds),
 
 		Containers: []corev1.Container{
 			{
