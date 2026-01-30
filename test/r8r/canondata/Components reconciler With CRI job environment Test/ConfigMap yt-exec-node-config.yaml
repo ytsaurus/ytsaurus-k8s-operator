@@ -118,7 +118,7 @@ data:
                     "cri_image_cache"={
                         capacity=5368709120;
                     };
-                    "job_proxy_image"="docker.io/library/python:3.8-slim";
+                    "job_proxy_image"="mirror.gcr.io/library/python:3.12-slim";
                     "use_job_proxy_from_image"=%false;
                 };
                 "do_not_set_user_id"=%true;

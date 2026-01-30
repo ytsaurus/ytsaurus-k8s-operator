@@ -440,6 +440,9 @@ helm-chart: manifests ## Generate helm chart.
 	go run ./hack/helm-crds.go $(OPERATOR_CHART_CRDS)/ config/crd/bases/*.yaml
 	$(YQ) '.name="$(OPERATOR_CHART_NAME_RELEASE)" | .version="$(OPERATOR_VERSION)" | .appVersion="$(OPERATOR_VERSION)"' <config/helm/Chart.yaml >$(OPERATOR_CHART)/Chart.yaml
 
+update-samples-image:
+	sed "s#$(firstword $(subst :, ,$(YTSAURUS_SAMPLE_IMAGE_CURRENT))):.*#${YTSAURUS_SAMPLE_IMAGE_CURRENT}#" -i config/samples/*.yaml
+
 ##@ Deployment
 
 ifndef ignore-not-found

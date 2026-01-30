@@ -9,7 +9,7 @@ spec:
     name: remote-ytsaurus
 
   # FIXME: Move cluster options into RemoteYtsaurus.
-  coreImage: ghcr.io/ytsaurus/ytsaurus:dev-23.2-relwithdebinfo
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2-relwithdebinfo
 
   jobImage: mirror.gcr.io/library/python:3.12-slim
 

@@ -7,7 +7,13 @@ on:
 
   pull_request: {}
 
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      TEST_YTSAURUS_VERSION:
+        description: "YTsaurus version or epoch"
+        type: string
+        required: false
+        default: ""
 
 jobs:
   check-unit:
@@ -17,6 +23,8 @@ jobs:
   check-e2e:
     name: Run e2e tests
     uses: ./.github/workflows/subflow_run_e2e_tests.yaml
+    with:
+      TEST_YTSAURUS_VERSION: "${{ inputs.TEST_YTSAURUS_VERSION }}"
 
   check-compat:
     name: Run compat tests

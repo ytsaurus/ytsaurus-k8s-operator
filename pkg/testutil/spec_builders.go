@@ -3,13 +3,17 @@ package testutil
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/utils/ptr"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
@@ -28,144 +32,129 @@ const (
 )
 
 type YtsaurusImages struct {
+	YtsaurusVersion version.Version
+
 	Job          string
 	Core         string
 	Strawberry   string
 	Chyt         string
 	QueryTracker string
-
-	MutualTLSReady bool
-
-	StrawberryHandlesRestarts bool
 }
 
 // Images are should be set by TEST_ENV include in Makefile
 var (
-	// NOTE: The same image is used for YTsaurus integration tests.
-	YtsaurusJobImage = GetenvOr("YTSAURUS_JOB_IMAGE", "docker.io/library/python:3.8-slim")
+	YtsaurusJobImage    = GetenvOr("YTSAURUS_JOB_IMAGE", "mirror.gcr.io/library/python:3.12-slim")
+	YtsaurusRegistry    = GetenvOr("YTSAURUS_REGISTRY", "ghcr.io/ytsaurus")
+	YtsaurusPrevVersion = os.Getenv("TEST_YTSAURUS_PREV_VERSION")
+	YtsaurusCurrVersion = os.Getenv("TEST_YTSAURUS_VERSION")
+	YtsaurusNextVersion = os.Getenv("TEST_YTSAURUS_NEXT_VERSION")
+	YtsaurusLateVersion = os.Getenv("TEST_YTSAURUS_LATE_VERSION")
 
-	YtsaurusImage23_2 = GetenvOr("YTSAURUS_IMAGE_23_2", "ghcr.io/ytsaurus/ytsaurus:stable-23.2.0")
-	YtsaurusImage24_1 = GetenvOr("YTSAURUS_IMAGE_24_1", "ghcr.io/ytsaurus/ytsaurus:stable-24.1.0")
-	YtsaurusImage24_2 = GetenvOr("YTSAURUS_IMAGE_24_2", "ghcr.io/ytsaurus/ytsaurus:stable-24.2.1")
-	YtsaurusImage25_1 = GetenvOr("YTSAURUS_IMAGE_25_1", "ghcr.io/ytsaurus/ytsaurus:stable-25.1.0")
-	YtsaurusImage25_2 = GetenvOr("YTSAURUS_IMAGE_25_2", "ghcr.io/ytsaurus/ytsaurus:stable-25.2.0")
+	Images map[string]YtsaurusImages = map[string]YtsaurusImages{}
 
-	YtsaurusImagePrevious = GetenvOr("YTSAURUS_IMAGE_PREVIOUS", YtsaurusImage24_1)
-	YtsaurusImageCurrent  = GetenvOr("YTSAURUS_IMAGE_CURRENT", YtsaurusImage24_2)
-	YtsaurusImageFuture   = GetenvOr("YTSAURUS_IMAGE_FUTURE", YtsaurusImage25_2)
-	YtsaurusImageNightly  = GetenvOr("YTSAURUS_IMAGE_NIGHTLY", "")
-
-	YtsaurusMutualTLSReady = os.Getenv("YTSAURUS_TLS_READY") != ""
-
-	QueryTrackerImagePrevious = GetenvOr("QUERY_TRACKER_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/query-tracker:0.0.10")
-	QueryTrackerImageCurrent  = GetenvOr("QUERY_TRACKER_IMAGE_CURRENT", "ghcr.io/ytsaurus/query-tracker:0.0.11")
-	QueryTrackerImageFuture   = GetenvOr("QUERY_TRACKER_IMAGE_FUTURE", "ghcr.io/ytsaurus/query-tracker:0.0.11")
-	QueryTrackerImageNightly  = GetenvOr("QUERY_TRACKER_IMAGE_NIGHTLY", "")
-
-	StrawberryImagePrevious = GetenvOr("STRAWBERRY_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/strawberry:0.0.13")
-	StrawberryImageCurrent  = GetenvOr("STRAWBERRY_IMAGE_CURRENT", "ghcr.io/ytsaurus/strawberry:0.0.14")
-	StrawberryImageFuture   = GetenvOr("STRAWBERRY_IMAGE_FUTURE", "ghcr.io/ytsaurus/strawberry:0.0.15")
-	StrawberryImageNightly  = GetenvOr("STRAWBERRY_IMAGE_NIGHTLY", "")
-
-	ChytImagePrevious = GetenvOr("CHYT_IMAGE_PREVIOUS", "ghcr.io/ytsaurus/chyt:2.16.0")
-	ChytImageCurrent  = GetenvOr("CHYT_IMAGE_CURRENT", "ghcr.io/ytsaurus/chyt:2.16.0")
-	ChytImageFuture   = GetenvOr("CHYT_IMAGE_FUTURE", "ghcr.io/ytsaurus/chyt:2.17.4")
-	ChytImageNightly  = GetenvOr("CHYT_IMAGE_NIGHTLY", "")
-
-	PreviousImages = YtsaurusImages{
-		Job:          YtsaurusJobImage,
-		Core:         YtsaurusImagePrevious,
-		Strawberry:   StrawberryImageCurrent,
-		Chyt:         ChytImageCurrent,
-		QueryTracker: QueryTrackerImageCurrent,
-
-		MutualTLSReady: YtsaurusMutualTLSReady,
-	}
-
-	CurrentImages = YtsaurusImages{
-		Job:          YtsaurusJobImage,
-		Core:         YtsaurusImageCurrent,
-		Strawberry:   StrawberryImageCurrent,
-		Chyt:         ChytImageCurrent,
-		QueryTracker: QueryTrackerImageCurrent,
-
-		MutualTLSReady: YtsaurusMutualTLSReady,
-	}
-
-	FutureImages = YtsaurusImages{
-		Job:            YtsaurusJobImage,
-		Core:           YtsaurusImageFuture,
-		Strawberry:     StrawberryImageFuture,
-		Chyt:           ChytImageFuture,
-		QueryTracker:   QueryTrackerImageFuture,
-		MutualTLSReady: YtsaurusMutualTLSReady,
-
-		StrawberryHandlesRestarts: true,
-	}
-
-	TwilightImages = YtsaurusImages{
-		Job:            YtsaurusJobImage,
-		Core:           YtsaurusImageNightly,
-		Strawberry:     StrawberryImageFuture,
-		Chyt:           ChytImageFuture,
-		QueryTracker:   QueryTrackerImageFuture,
-		MutualTLSReady: YtsaurusMutualTLSReady,
-
-		StrawberryHandlesRestarts: true,
-	}
-
-	NightlyImages = YtsaurusImages{
-		Job:          YtsaurusJobImage,
-		Core:         YtsaurusImageNightly,
-		Strawberry:   StrawberryImageNightly,
-		Chyt:         ChytImageNightly,
-		QueryTracker: QueryTrackerImageNightly,
-
-		MutualTLSReady:            true,
-		StrawberryHandlesRestarts: true,
-	}
-
-	YtsaurusImages24_1 = YtsaurusImages{
-		Job:          YtsaurusJobImage,
-		Core:         YtsaurusImage24_1,
-		Strawberry:   StrawberryImagePrevious,
-		Chyt:         ChytImagePrevious,
-		QueryTracker: QueryTrackerImagePrevious,
-
-		MutualTLSReady: false,
-	}
-
-	YtsaurusImages24_2 = YtsaurusImages{
-		Job:          YtsaurusJobImage,
-		Core:         YtsaurusImage24_2,
-		Strawberry:   StrawberryImageCurrent,
-		Chyt:         ChytImageCurrent,
-		QueryTracker: QueryTrackerImageCurrent,
-
-		MutualTLSReady: YtsaurusMutualTLSReady,
-	}
-
-	YtsaurusImages25_1 = YtsaurusImages{
-		Job:          YtsaurusJobImage,
-		Core:         YtsaurusImage25_1,
-		Strawberry:   StrawberryImageCurrent,
-		Chyt:         ChytImageCurrent,
-		QueryTracker: QueryTrackerImageCurrent,
-
-		MutualTLSReady: YtsaurusMutualTLSReady,
-	}
-
-	YtsaurusImages25_2 = YtsaurusImages{
-		Job:          YtsaurusJobImage,
-		Core:         YtsaurusImage25_2,
-		Strawberry:   StrawberryImageFuture,
-		Chyt:         ChytImageFuture,
-		QueryTracker: QueryTrackerImageFuture,
-
-		MutualTLSReady:            YtsaurusMutualTLSReady,
-		StrawberryHandlesRestarts: true,
-	}
+	PrevImages, TestImages, NextImages YtsaurusImages
 )
+
+type ImageEntry struct {
+	Epoch, Version, Image string
+}
+
+func init() {
+	images := map[string]map[string]ImageEntry{}
+	names := []string{"YTSAURUS", "STRAWBERRY", "CHYT", "QUERY_TRACKER"}
+	epochs := []string{"PAST", "PREVIOUS", "CURRENT", "COMING", "FUTURE", "NIGHTLY"}
+
+	if YtsaurusCurrVersion == "" {
+		YtsaurusCurrVersion = "CURRENT"
+	}
+
+	// Seed some default versions if nothing is set in environment.
+	defaultVersions := map[string]string{
+		"YTSAURUS_VERSION_CURRENT":      "25.2.2",
+		"STRAWBERRY_VERSION_CURRENT":    "0.0.15",
+		"CHYT_VERSION_CURRENT":          "2.17.4",
+		"QUERY_TRACKER_VERSION_CURRENT": "0.1.2",
+	}
+
+	for _, name := range names {
+		images[name] = map[string]ImageEntry{}
+		for _, epoch := range epochs {
+			ver := GetenvOr(name+"_VERSION_"+epoch, defaultVersions[name+"_VERSION_"+epoch])
+			if ver == "" {
+				continue
+			}
+
+			tag := ver
+			if name == "YTSAURUS" {
+				// Ytsaurus does not follow tag version notation ¯\_(ツ)_/¯.
+				tag = "stable-" + ver
+			}
+			image := YtsaurusRegistry + "/" + strings.ToLower(strings.ReplaceAll(name, "_", "-"))
+			image = GetenvOr(name+"_IMAGE", image) + ":" + tag
+			image = GetenvOr(name+"_IMAGE_"+strings.ReplaceAll(ver, ".", "_"), image)
+
+			entry := ImageEntry{
+				Epoch:   epoch,
+				Version: ver,
+				Image:   image,
+			}
+			images[name][epoch] = entry
+			images[name][ver] = entry
+			if v, err := version.ParseVersion(ver); err == nil {
+				majmin := fmt.Sprintf("%v.%v", v.Major(), v.Minor())
+				images[name][majmin] = entry
+			}
+		}
+	}
+
+	// Add directly set ytsaurus version.
+	for _, ver := range []string{YtsaurusPrevVersion, YtsaurusCurrVersion, YtsaurusNextVersion, YtsaurusLateVersion} {
+		if _, ok := images["YTSAURUS"][ver]; !ok && ver != "" {
+			images["YTSAURUS"][ver] = ImageEntry{
+				Epoch:   "CURRENT",
+				Version: ver,
+				Image:   GetenvOr("YTSAURUS_IMAGE", YtsaurusRegistry+"/ytsaurus") + ":stable-" + ver,
+			}
+		}
+	}
+
+	for key, yt := range images["YTSAURUS"] {
+		choose := func(name string) string {
+			if e, ok := images[name][yt.Epoch]; ok {
+				return e.Image
+			}
+			return images[name][YtsaurusCurrVersion].Image
+		}
+		ytsaurusVersion, err := version.ParseYtsaurusVersion(yt.Version)
+		if err != nil {
+			panic(fmt.Sprintf("key %q version %q - %v", key, yt.Version, err))
+		}
+		Images[key] = YtsaurusImages{
+			YtsaurusVersion: *ytsaurusVersion,
+
+			Job:          YtsaurusJobImage,
+			Core:         yt.Image,
+			Strawberry:   choose("STRAWBERRY"),
+			Chyt:         choose("CHYT"),
+			QueryTracker: choose("QUERY_TRACKER"),
+		}
+	}
+
+	if index := slices.Index(epochs, images["YTSAURUS"][YtsaurusCurrVersion].Epoch); index != -1 {
+		if YtsaurusPrevVersion == "" && index > 0 {
+			YtsaurusPrevVersion = epochs[index-1]
+		}
+		if YtsaurusNextVersion == "" && index < len(epochs)-1 {
+			YtsaurusNextVersion = epochs[index+1]
+		}
+		if YtsaurusLateVersion == "" && index < len(epochs)-2 {
+			YtsaurusLateVersion = epochs[index+2]
+		}
+	}
+	PrevImages = Images[YtsaurusPrevVersion]
+	TestImages = Images[YtsaurusCurrVersion]
+	NextImages = Images[YtsaurusNextVersion]
+}
 
 var (
 	masterVolumeSize   = resource.MustParse("5Gi")
@@ -542,18 +531,12 @@ func (b *YtsaurusBuilder) WithYqlAgent() {
 }
 
 func (b *YtsaurusBuilder) WithQueueAgent() {
-	image := b.Images.Core
-	// Older version doesn't have /usr/bin/ytserver-queue-agent
-	if image == YtsaurusImage23_2 {
-		image = YtsaurusImage24_1
-	}
 	b.Ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
 			Resources:             *defaultNodeResources.DeepCopy(),
 			Loggers:               b.CreateLoggersSpec(),
-			Image:                 ptr.To(image),
 		},
 	}
 }

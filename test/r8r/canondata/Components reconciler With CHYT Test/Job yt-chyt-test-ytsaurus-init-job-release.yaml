@@ -59,7 +59,7 @@ spec:
           value: http-proxies-lb.ytsaurus-components.svc.cluster.local
         - name: YT_TOKEN
           value: S71v40zcuoQ-6NY-jE_-HOvqVG2PrBPdGqwEzi6i
-        image: ghcr.io/ytsaurus/chyt:2.16.0
+        image: ghcr.io/ytsaurus/chyt:2.17.4
         name: ytsaurus-init
         resources: {}
         terminationMessagePolicy: FallbackToLogsOnError

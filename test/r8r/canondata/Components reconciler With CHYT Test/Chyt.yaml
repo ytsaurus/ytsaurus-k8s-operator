@@ -8,7 +8,7 @@ metadata:
   resourceVersion: "7"
 spec:
   createPublicClique: true
-  image: ghcr.io/ytsaurus/chyt:2.16.0
+  image: ghcr.io/ytsaurus/chyt:2.17.4
   makeDefault: true
   ytsaurus:
     name: test-ytsaurus
