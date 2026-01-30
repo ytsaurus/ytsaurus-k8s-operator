@@ -88,7 +88,7 @@ spec:
         memory: "0"
     serviceType: NodePort
     transport: {}
-  jobImage: docker.io/library/python:3.8-slim
+  jobImage: mirror.gcr.io/library/python:3.12-slim
   primaryMasters:
     cellTag: 1
     instanceCount: 1
