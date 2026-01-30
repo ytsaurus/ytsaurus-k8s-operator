@@ -73,6 +73,7 @@ spec:
     volumeMounts:
     - mountPath: /yt/master-data
       name: master-data
+  terminationGracePeriodSeconds: 5
   updatePlan:
   - component:
       name: ms

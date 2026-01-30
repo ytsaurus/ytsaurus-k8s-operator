@@ -437,6 +437,7 @@ spec:
       format: json
       name: access
       useTimestampSuffix: false
+    terminationGracePeriodSeconds: 20
     timbertruck:
       image: ghcr.io/ytsaurus/sidecars:0.0.1
     tolerations:
@@ -721,6 +722,7 @@ spec:
   strawberry:
     image: ghcr.io/ytsaurus/strawberry:0.0.17
     resources: {}
+  terminationGracePeriodSeconds: 10
   tolerations:
   - key: global-toleration
   ui:
