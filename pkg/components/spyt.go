@@ -174,9 +174,14 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		}
 
 		if len(s.spyt.GetResource().Spec.SparkVersions) > 0 {
+			sparkArgs := make([]string, 0, len(s.spyt.GetResource().Spec.SparkVersions)+1)
+			if s.spyt.GetResource().Spec.SparkDistribOffline {
+				sparkArgs = append(sparkArgs, "--offline")
+			}
+			sparkArgs = append(sparkArgs, s.spyt.GetResource().Spec.SparkVersions...)
 			env = append(env, corev1.EnvVar{
 				Name:  "EXTRA_SPARK_VERSIONS",
-				Value: strings.Join(s.spyt.GetResource().Spec.SparkVersions, " "),
+				Value: strings.Join(sparkArgs, " "),
 			})
 		}
 
