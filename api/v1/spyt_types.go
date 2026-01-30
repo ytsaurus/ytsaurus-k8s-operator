@@ -38,6 +38,8 @@ type SpytSpec struct {
 	Image    string                       `json:"image,omitempty"`
 	// If multiple versions are provided, only the first one is used for query tracker dynamic config.
 	SparkVersions []string `json:"sparkVersions,omitempty"`
+	// Pass --offline to spark_distrib.py to use only local artifacts.
+	SparkDistribOffline bool `json:"sparkDistribOffline,omitempty"`
 }
 
 // SpytStatus defines the observed state of Spyt
