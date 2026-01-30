@@ -42,7 +42,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/instance-hash: 6c849c2514a92e8cc8580b3818cc954ac6edc4cabf91dd2f8c9fcf3ea66938bf
+    ytsaurus.tech/instance-hash: 13671c7b615171975f7e3b71d6e33d8206aa27ff759b0db64bb303e419775985
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -64,7 +64,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/instance-hash: 9cc063e480960b09d7ae7bd8f38db274497ae35769d1b47c3816e6a395b34fa7
+    ytsaurus.tech/instance-hash: f95bb7c920a9de12fa821da93898028be991d3b5c2b0c265605da3908044bfe6
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -107,7 +107,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/instance-hash: 97049f8e98e9a87611a6b3b425838de872ac95d07f009674602d841395b04961
+    ytsaurus.tech/instance-hash: 92f8f5465d7343abef0941c435924e7bf965c49713329045873eb2bfd17d6a5d
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -192,7 +192,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/instance-hash: cd005b618bbe74ee3992569806494dfca49466175bfef015e183067d0f9373ce
+    ytsaurus.tech/instance-hash: 44f0c252ca2bfbd3c87fd7e8a742d17d03e7920a0ad94f509acc9e7394fd66ee
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1

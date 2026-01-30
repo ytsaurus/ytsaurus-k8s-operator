@@ -3,7 +3,7 @@ kind: StatefulSet
 metadata:
   annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: dc82429d9bc6347fdb23e4f8b95f4e46aea435d8fdebab29b07645b27fa8dad8
+    ytsaurus.tech/instance-hash: f7bd3caa275a62ae0cd5b8623a025721aaa1ec2d7da28963d9bdae11265b1254
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -208,6 +208,7 @@ spec:
         global-node-selector: "true"
       runtimeClassName: global-runtime-class
       setHostnameAsFQDN: false
+      terminationGracePeriodSeconds: 10
       tolerations:
       - key: global-toleration
       volumes:

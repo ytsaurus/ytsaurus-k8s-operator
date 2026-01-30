@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   annotations:
-    ytsaurus.tech/instance-hash: 97049f8e98e9a87611a6b3b425838de872ac95d07f009674602d841395b04961
+    ytsaurus.tech/instance-hash: 92f8f5465d7343abef0941c435924e7bf965c49713329045873eb2bfd17d6a5d
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -156,6 +156,7 @@ spec:
         - mountPath: /config
           name: config
       setHostnameAsFQDN: true
+      terminationGracePeriodSeconds: 5
       volumes:
       - configMap:
           name: yt-http-proxy-config
