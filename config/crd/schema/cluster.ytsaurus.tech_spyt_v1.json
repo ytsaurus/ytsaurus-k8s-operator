@@ -35,6 +35,10 @@
             "x-kubernetes-map-type": "atomic"
           }
         },
+        "sparkDistribOffline": {
+          "description": "Pass --offline to spark_distrib.py to use only local artifacts.",
+          "type": "boolean"
+        },
         "sparkVersions": {
           "description": "If multiple versions are provided, only the first one is used for query tracker...",
           "type": "array",
