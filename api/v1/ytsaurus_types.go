@@ -449,6 +449,9 @@ type PodSpec struct {
 
 	// Runtime class for instance pods.
 	RuntimeClassName *string `json:"runtimeClassName,omitempty"`
+	// Optional duration in seconds the pod needs to terminate gracefully. Defaults to 30 seconds.
+	//+optional
+	TerminationGracePeriodSeconds *int64 `json:"terminationGracePeriodSeconds,omitempty"`
 
 	// Use the host's network namespace.
 	HostNetwork *bool `json:"hostNetwork,omitempty"`
@@ -493,9 +496,6 @@ type InstanceSpec struct {
 	Loggers           []TextLoggerSpec       `json:"loggers,omitempty"`
 	StructuredLoggers []StructuredLoggerSpec `json:"structuredLoggers,omitempty"`
 	Affinity          *corev1.Affinity       `json:"affinity,omitempty"`
-	// Optional duration in seconds the pod needs to terminate gracefully.
-	//+optional
-	TerminationGracePeriodSeconds *int64 `json:"terminationGracePeriodSeconds,omitempty"`
 	// Component config for native RPC bus transport.
 	//+optional
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
