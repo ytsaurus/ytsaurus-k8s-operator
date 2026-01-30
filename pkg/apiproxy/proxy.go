@@ -25,6 +25,9 @@ type APIProxy interface {
 	ListObjects(ctx context.Context, objList client.ObjectList, opts ...client.ListOption) error
 	RecordWarning(reason, message string)
 	RecordNormal(reason, message string)
+
+	// IsObjectUpdated returns true if annotation of managed object is equal to generation of owner object.
+	IsObjectUpdated(obj client.Object) bool
 	SyncObject(ctx context.Context, oldObj, newObj client.Object) error
 	DeleteObject(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error
 
@@ -99,9 +102,22 @@ func (c *apiProxy) RecordNormal(reason, message string) {
 		message)
 }
 
+func (c *apiProxy) IsObjectUpdated(obj client.Object) bool {
+	return obj.GetAnnotations()[consts.ObservedGenerationAnnotationName] == fmt.Sprintf("%d", c.object.GetGeneration())
+}
+
 func (c *apiProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object) error {
 	if newObj.GetName() == "" {
 		return fmt.Errorf("cannot sync uninitialized object, object type %T", oldObj)
+	}
+
+	{
+		annotations := newObj.GetAnnotations()
+		if annotations == nil {
+			annotations = make(map[string]string, 1)
+		}
+		annotations[consts.ObservedGenerationAnnotationName] = fmt.Sprintf("%d", c.object.GetGeneration())
+		newObj.SetAnnotations(annotations)
 	}
 
 	if oldObj.GetResourceVersion() == "" {

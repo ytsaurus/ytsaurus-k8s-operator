@@ -158,6 +158,8 @@ metadata:
     extra-pod-annotation: "true"
     kubernetes.io/description: |
       overrides-version: 1
+    ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
   labels:
@@ -167,7 +169,6 @@ metadata:
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-client
     ytsaurus.tech/cluster-name: test-ytsaurus
-    ytsaurus.tech/config-overrides-version: "1"
   name: yt-cypress-patch
   namespace: ytsaurus-components
   ownerReferences:

@@ -242,7 +242,11 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 	_ = s.monitoringService.Build()
 	_ = s.buildStatefulSet()
 
-	if err := s.setConfigChecksum(cm); err != nil {
+	if err := s.setConfigHash(cm); err != nil {
+		return err
+	}
+
+	if err := s.setInstanceHash(); err != nil {
 		return err
 	}
 
@@ -557,13 +561,25 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	return statefulSet
 }
 
-func (s *serverImpl) setConfigChecksum(cm *corev1.ConfigMap) error {
-	configChecksum := cm.Annotations[consts.ConfigChecksumAnnotationName]
-	if configChecksum == "" {
-		return fmt.Errorf("config checksum is not found for %v", cm.Name)
+func (s *serverImpl) setConfigHash(cm *corev1.ConfigMap) error {
+	configHash := cm.Annotations[consts.ConfigHashAnnotationName]
+	if configHash == "" {
+		return fmt.Errorf("config hash is not found for %v", cm.Name)
 	}
-	// Propagate config checksum from configmap to pod template to trigger restart when needed.
-	metav1.SetMetaDataAnnotation(&s.builtStatefulSet.Spec.Template.ObjectMeta, consts.ConfigChecksumAnnotationName, configChecksum)
+	// Propagate config hash from configmap to pod template to trigger restart when needed.
+	metav1.SetMetaDataAnnotation(&s.builtStatefulSet.Spec.Template.ObjectMeta, consts.ConfigHashAnnotationName, configHash)
+	return nil
+}
+
+func (s *serverImpl) setInstanceHash() error {
+	instanceHash, err := resources.Hash(
+		&s.builtStatefulSet.Spec.Template,
+		s.builtStatefulSet.Spec.VolumeClaimTemplates,
+	)
+	if err != nil {
+		return err
+	}
+	metav1.SetMetaDataAnnotation(&s.builtStatefulSet.ObjectMeta, consts.InstanceHashAnnotationName, instanceHash)
 	return nil
 }
 

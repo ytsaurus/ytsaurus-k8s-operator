@@ -10,9 +10,19 @@ const (
 	YTComponentLabelName = "yt_component"
 	YTMetricsLabelName   = "yt_metrics"
 
-	DescriptionAnnotation           = "kubernetes.io/description"
-	ConfigOverridesVersionLabelName = "ytsaurus.tech/config-overrides-version"
-	ConfigChecksumAnnotationName    = "ytsaurus.tech/config-checksum"
+	DescriptionAnnotationName = "kubernetes.io/description"
+
+	// Version of overrides observed at the time of generation.
+	ConfigOverridesVersionAnnotationName = "ytsaurus.tech/config-overrides-version"
+
+	// Config hash is computed from configmap data.
+	ConfigHashAnnotationName = "ytsaurus.tech/config-hash"
+
+	// Instance hash is computed from template of pod spec.
+	InstanceHashAnnotationName = "ytsaurus.tech/instance-hash"
+
+	// Observed generation of owner resource at the time of last update.
+	ObservedGenerationAnnotationName = "ytsaurus.tech/observed-generation"
 
 	YTOperatorInstanceLabelName = "ytsaurus.tech/operator-instance"
 )

@@ -457,7 +457,7 @@ func (yc *YtsaurusClient) NeedSyncCypressPatch() ComponentStatus {
 	}
 
 	if yc.configOverrides != nil && yc.configOverrides.Exists() {
-		patchOverridesVersion := yc.cypressPatch.OldObject().Labels[consts.ConfigOverridesVersionLabelName]
+		patchOverridesVersion := yc.cypressPatch.OldObject().Annotations[consts.ConfigOverridesVersionAnnotationName]
 		overridesVersion := yc.configOverrides.OldObject().ResourceVersion
 		if overridesVersion != patchOverridesVersion {
 			return ComponentStatusPending(fmt.Sprintf("Need to update overrides in %s", yc.cypressPatch.Name()))
@@ -571,9 +571,9 @@ func (yc *YtsaurusClient) BuildCypressPatch(ctx context.Context) (*corev1.Config
 
 	if yc.configOverrides != nil && yc.configOverrides.Exists() {
 		overridesVersion := yc.configOverrides.OldObject().ResourceVersion
-		metav1.SetMetaDataLabel(
+		metav1.SetMetaDataAnnotation(
 			&cp.ObjectMeta,
-			consts.ConfigOverridesVersionLabelName,
+			consts.ConfigOverridesVersionAnnotationName,
 			overridesVersion,
 		)
 		fmt.Fprintf(description, "overrides-version: %v\n", overridesVersion)
@@ -686,7 +686,7 @@ func (yc *YtsaurusClient) BuildCypressPatch(ctx context.Context) (*corev1.Config
 		}
 	}
 
-	metav1.SetMetaDataAnnotation(&cp.ObjectMeta, consts.DescriptionAnnotation, description.String())
+	metav1.SetMetaDataAnnotation(&cp.ObjectMeta, consts.DescriptionAnnotationName, description.String())
 
 	return cp, currentPatch, nil
 }
@@ -727,7 +727,7 @@ func (yc *YtsaurusClient) SyncCypressPatch(ctx context.Context) error {
 			Type:               consts.ConditionCypressPatchApplied,
 			Status:             metav1.ConditionTrue,
 			Reason:             "PatchApplied",
-			Message:            fmt.Sprintf("Description: %v", cp.Annotations[consts.DescriptionAnnotation]),
+			Message:            fmt.Sprintf("Description: %v", cp.Annotations[consts.DescriptionAnnotationName]),
 		})
 	} else {
 		logger.Error(err, "Failed to apply cypress patch")
