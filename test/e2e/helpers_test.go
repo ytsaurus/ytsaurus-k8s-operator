@@ -55,10 +55,20 @@ func getKindControlPlaneNode(ctx context.Context) corev1.Node {
 }
 
 func logNodesState(ctx context.Context) {
+	var namespaces corev1.NamespaceList
 	var nodes corev1.NodeList
 	var pods corev1.PodList
+	Expect(k8sClient.List(ctx, &namespaces)).Should(Succeed())
 	Expect(k8sClient.List(ctx, &nodes)).Should(Succeed())
 	Expect(k8sClient.List(ctx, &pods)).Should(Succeed())
+	for _, ns := range namespaces.Items {
+		log.Info("Namespace",
+			"name", ns.Name,
+			"phase", ns.Status.Phase,
+			"app", ns.Labels["app.kubernetes.io/name"],
+			"description", ns.Annotations["kubernetes.io/description"],
+		)
+	}
 	for _, node := range nodes.Items {
 		available := node.Status.Allocatable.DeepCopy()
 		for _, pod := range pods.Items {
