@@ -10,8 +10,8 @@ ARG VERSION
 WORKDIR /workspace
 
 # Copy the Go Modules manifests
-COPY go.mod go.mod
-COPY go.sum go.sum
+COPY go.mod go.sum ./
+COPY api/go.mod api/go.sum ./api/
 
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
@@ -23,6 +23,7 @@ COPY main.go main.go
 COPY api/ api/
 COPY pkg/ pkg/
 COPY controllers/ controllers/
+COPY validators/ validators/
 
 ARG GO_LDFLAGS="-X github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version.version=${VERSION}"
 

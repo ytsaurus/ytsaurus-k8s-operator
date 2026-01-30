@@ -1,15 +1,23 @@
-package v1_test
+package api_test
 
 import (
 	"encoding/json"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
 	"github.com/stretchr/testify/require"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
+
 	"k8s.io/utils/ptr"
+
 	k8syaml "sigs.k8s.io/yaml"
+
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/runtime"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
@@ -87,4 +95,20 @@ func testMarshallUnmarshall(t *testing.T, marshall marshalFunc, unmarshall unmar
 	reSerialized, err := marshall(deserializedSpec)
 	require.NoError(t, err)
 	require.Empty(t, cmp.Diff(serialized, reSerialized))
+}
+
+func TestScheme(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, ytv1.AddToScheme(scheme))
+	for _, obj := range ytv1.KnownObjectTypes() {
+		gvks, isUnversioned, err := scheme.ObjectKinds(obj)
+		require.NoError(t, err)
+		require.Len(t, gvks, 1)
+		require.False(t, isUnversioned)
+		t.Log("GVK", gvks[0])
+		_, err = scheme.New(gvks[0])
+		require.NoError(t, err)
+		_, ok := obj.(client.Object)
+		require.True(t, ok, "kind %v", gvks[0])
+	}
 }
