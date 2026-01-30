@@ -146,7 +146,7 @@ data:
                     "cri_image_cache"={
                         capacity=5368709120;
                     };
-                    "job_proxy_image"="docker.io/library/python:3.8-slim";
+                    "job_proxy_image"="mirror.gcr.io/library/python:3.12-slim";
                     "job_proxy_bind_mounts"=[
                         {
                             "external_path"="/etc/ssl/certs";
@@ -445,7 +445,7 @@ kind: ConfigMap
 metadata:
   annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: e5a6e8e9a1e108e1220a02b5c0fb1272c445de86855fd723822b0fbe8c6be978
+    ytsaurus.tech/config-checksum: 78d6429dc12c16a3b44b72d1274f58fe205dbe4b45950ef10806cdcac5e517f1
   creationTimestamp: null
   generation: 1
   labels:

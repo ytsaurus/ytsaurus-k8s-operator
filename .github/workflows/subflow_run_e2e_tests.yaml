@@ -7,6 +7,10 @@ on:
         type: string
         required: false
         default: ""
+      YTSAURUS_TEST_EPOCH:
+        type: string
+        required: false
+        default: ""
 
   workflow_dispatch:
     inputs:
@@ -15,6 +19,14 @@ on:
         type: string
         required: false
         default: ""
+      YTSAURUS_TEST_EPOCH:
+        description: "YTsaurus version or epoch"
+        type: string
+        required: false
+        default: ""
+
+env:
+  YTSAURUS_TEST_EPOCH: "${{ inputs.YTSAURUS_TEST_EPOCH }}"
 
 jobs:
   check:
