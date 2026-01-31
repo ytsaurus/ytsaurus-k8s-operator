@@ -35,6 +35,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -163,6 +164,7 @@ type testRow struct {
 var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() {
 	// NOTE: All context variables must be initialized BeforeEach, to prevent crosstalk.
 	var namespace string
+	var stopEventsLogger func()
 	var requiredImages []string
 	var objects []client.Object
 	var namespaceWatcher *NamespaceWatcher
@@ -256,7 +258,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}))
 
 		By("Logging all events in namespace")
-		DeferCleanup(LogObjectEvents(specCtx, namespace))
+		stopEventsLogger = LogObjectEvents(specCtx, namespace)
 
 		By("Logging some other objects in namespace")
 		namespaceWatcher = NewNamespaceWatcher(specCtx, namespace)
@@ -287,6 +289,42 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			Namespace:   namespace,
 			IPAddresses: getNodesAddresses(ctx),
 		}
+	})
+
+	// NOTE: AfterEach are executed in reverse order.
+	AfterEach(func(ctx context.Context) {
+		if stopEventsLogger != nil {
+			By("Stopping namespace events logger")
+			stopEventsLogger()
+		}
+	})
+
+	AfterEach(func(ctx context.Context) {
+		if ShouldPreserveArtifacts() {
+			log.Info("Preserving artifacts", "namespace", namespace)
+			return
+		}
+
+		By("Deleting resource objects")
+		for _, object := range objects {
+			By(fmt.Sprintf("Deleting %v %v", GetObjectGVK(object), object.GetName()))
+			if err := k8sClient.Delete(ctx, object); err != nil {
+				log.Error(err, "Cannot delete", "object", object.GetName())
+			}
+		}
+
+		By("Deleting namespace", func() {
+			var ns corev1.Namespace
+			ns.SetName(namespace)
+			Expect(k8sClient.Delete(ctx, &ns)).Should(Succeed())
+			stop := AttachProgressReporter(func() string {
+				return fmt.Sprintf("namespace: %+v", &ns)
+			})
+			defer stop()
+			Eventually(ctx, func(ctx context.Context) error {
+				return k8sClient.Get(ctx, client.ObjectKeyFromObject(&ns), &ns)
+			}, reactionTimeout, pollInterval).To(MatchError(apierrors.IsNotFound, "IsNotFound"))
+		})
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
@@ -665,29 +703,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			By("Aborting operation")
 			Expect(op.Abort()).To(Succeed())
 		}
-	})
-
-	AfterEach(func(ctx context.Context) {
-		if ShouldPreserveArtifacts() {
-			log.Info("Preserving artifacts", "namespace", namespace)
-			return
-		}
-
-		By("Deleting resource objects")
-		for _, object := range objects {
-			By(fmt.Sprintf("Deleting %v %v", GetObjectGVK(object), object.GetName()))
-			if err := k8sClient.Delete(ctx, object); err != nil {
-				log.Error(err, "Cannot delete", "object", object.GetName())
-			}
-		}
-
-		By("Deleting namespace")
-		namespaceObject := corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: namespace,
-			},
-		}
-		Expect(k8sClient.Delete(ctx, &namespaceObject)).Should(Succeed())
 	})
 
 	Context("Update scenarios", Label("update"), func() {
@@ -2115,7 +2130,7 @@ exec "$@"`
 			Entry("update master-caches", Label(consts.GetStatefulSetPrefix(consts.MasterCacheType)), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
 			Entry("update rpc-proxy", Label(consts.GetStatefulSetPrefix(consts.RpcProxyType)), consts.RpcProxyType, consts.GetStatefulSetPrefix(consts.RpcProxyType)),
 		)
-	})
+	}) // update plan strategy
 
 })
 
