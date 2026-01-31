@@ -118,7 +118,7 @@ data:
                     "cri_image_cache"={
                         capacity=5368709120;
                     };
-                    "job_proxy_image"="docker.io/library/python:3.8-slim";
+                    "job_proxy_image"="mirror.gcr.io/library/python:3.12-slim";
                     "use_job_proxy_from_image"=%false;
                 };
                 "do_not_set_user_id"=%true;
@@ -319,7 +319,7 @@ data:
 kind: ConfigMap
 metadata:
   annotations:
-    ytsaurus.tech/config-checksum: 8f3a44fc903370162f97e916201d1b64ae4e14dbacaa10b3eaf492e7c597d7f7
+    ytsaurus.tech/config-checksum: 045c53c116914afd42fae1305a5c83e307e3fbe789addfc654be8ba1495dca70
   creationTimestamp: null
   generation: 1
   labels:

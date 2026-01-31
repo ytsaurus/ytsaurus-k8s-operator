@@ -35,6 +35,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -138,14 +139,14 @@ func getMasterPod(name, namespace string) corev1.Pod {
 
 func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client) {
 	By("Run cluster impossible update")
-	Expect(ytsaurus.Spec.CoreImage).To(Equal(testutil.CurrentImages.Core))
-	ytsaurus.Spec.CoreImage = testutil.FutureImages.Core
+	Expect(ytsaurus.Spec.CoreImage).To(Equal(testutil.TestImages.Core))
+	ytsaurus.Spec.CoreImage = testutil.NextImages.Core
 	UpdateObject(specCtx, ytsaurus)
 
 	EventuallyYtsaurus(specCtx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStateImpossibleToStart))
 
 	By("Set previous core image")
-	ytsaurus.Spec.CoreImage = testutil.CurrentImages.Core
+	ytsaurus.Spec.CoreImage = testutil.TestImages.Core
 	UpdateObject(specCtx, ytsaurus)
 
 	By("Wait for running")
@@ -163,6 +164,7 @@ type testRow struct {
 var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() {
 	// NOTE: All context variables must be initialized BeforeEach, to prevent crosstalk.
 	var namespace string
+	var stopEventsLogger func()
 	var requiredImages []string
 	var objects []client.Object
 	var namespaceWatcher *NamespaceWatcher
@@ -256,7 +258,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}))
 
 		By("Logging all events in namespace")
-		DeferCleanup(LogObjectEvents(specCtx, namespace))
+		stopEventsLogger = LogObjectEvents(specCtx, namespace)
 
 		By("Logging some other objects in namespace")
 		namespaceWatcher = NewNamespaceWatcher(specCtx, namespace)
@@ -265,7 +267,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		By("Creating minimal Ytsaurus spec")
 		ytBuilder = &testutil.YtsaurusBuilder{
-			Images:    testutil.CurrentImages,
+			Images:    testutil.TestImages,
 			Namespace: namespace,
 		}
 		ytBuilder.CreateMinimal()
@@ -287,6 +289,42 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			Namespace:   namespace,
 			IPAddresses: getNodesAddresses(ctx),
 		}
+	})
+
+	// NOTE: AfterEach are executed in reverse order.
+	AfterEach(func(ctx context.Context) {
+		if stopEventsLogger != nil {
+			By("Stopping namespace events logger")
+			stopEventsLogger()
+		}
+	})
+
+	AfterEach(func(ctx context.Context) {
+		if ShouldPreserveArtifacts() {
+			log.Info("Preserving artifacts", "namespace", namespace)
+			return
+		}
+
+		By("Deleting resource objects")
+		for _, object := range objects {
+			By(fmt.Sprintf("Deleting %v %v", GetObjectGVK(object), object.GetName()))
+			if err := k8sClient.Delete(ctx, object); err != nil {
+				log.Error(err, "Cannot delete", "object", object.GetName())
+			}
+		}
+
+		By("Deleting namespace", func() {
+			var ns corev1.Namespace
+			ns.SetName(namespace)
+			Expect(k8sClient.Delete(ctx, &ns)).Should(Succeed())
+			stop := AttachProgressReporter(func() string {
+				return fmt.Sprintf("namespace: %+v", &ns)
+			})
+			defer stop()
+			Eventually(ctx, func(ctx context.Context) error {
+				return k8sClient.Get(ctx, client.ObjectKeyFromObject(&ns), &ns)
+			}, reactionTimeout, pollInterval).To(MatchError(apierrors.IsNotFound, "IsNotFound"))
+		})
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
@@ -667,29 +705,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 	})
 
-	AfterEach(func(ctx context.Context) {
-		if ShouldPreserveArtifacts() {
-			log.Info("Preserving artifacts", "namespace", namespace)
-			return
-		}
-
-		By("Deleting resource objects")
-		for _, object := range objects {
-			By(fmt.Sprintf("Deleting %v %v", GetObjectGVK(object), object.GetName()))
-			if err := k8sClient.Delete(ctx, object); err != nil {
-				log.Error(err, "Cannot delete", "object", object.GetName())
-			}
-		}
-
-		By("Deleting namespace")
-		namespaceObject := corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: namespace,
-			},
-		}
-		Expect(k8sClient.Delete(ctx, &namespaceObject)).Should(Succeed())
-	})
-
 	Context("Update scenarios", Label("update"), func() {
 		var podsBeforeUpdate map[string]corev1.Pod
 
@@ -704,7 +719,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		})
 
 		DescribeTableSubtree("Updating Ytsaurus image", Label("basic"),
-			func(oldImage, newImage string) {
+			func(oldEpoch, newEpoch string) {
+				newVersion := testutil.Images[newEpoch].YtsaurusVersion.String()
+				oldImage := testutil.Images[oldEpoch].Core
+				newImage := testutil.Images[newEpoch].Core
+
 				BeforeEach(func() {
 					if oldImage == "" || newImage == "" {
 						Skip("Ytsaurus old or new image is not specified")
@@ -716,14 +735,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 					By("Setting old core image for testing upgrade")
 					ytsaurus.Spec.CoreImage = oldImage
-
-					if oldImage == testutil.YtsaurusImage23_2 {
-						By("Disabling master caches in 23.2")
-						ytsaurus.Spec.MasterCaches = nil
-					}
 				})
 
-				It("Triggers cluster update", func(ctx context.Context) {
+				It("Triggers cluster update", Label(newEpoch), Label(newVersion), func(ctx context.Context) {
 					By("Checking jobs order")
 					completedJobs := namespaceWatcher.GetCompletedJobNames()
 					Expect(completedJobs).Should(Equal(getInitializingStageJobNames()))
@@ -750,22 +764,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					CurrentlyObject(ctx, ytsaurus).Should(HaveObservedGeneration())
 				})
 			},
-			Entry("When update Ytsaurus 23.2 -> 24.1", Label("24.1"), testutil.YtsaurusImage23_2, testutil.YtsaurusImage24_1),
-			Entry("When update Ytsaurus 24.1 -> 24.2", Label("24.2"), testutil.YtsaurusImage24_1, testutil.YtsaurusImage24_2),
-			Entry("When update Ytsaurus 24.2 -> 25.1", Label("25.1"), testutil.YtsaurusImage24_2, testutil.YtsaurusImage25_1),
-			Entry("When update Ytsaurus 25.1 -> 25.2", Label("25.2"), testutil.YtsaurusImage25_1, testutil.YtsaurusImage25_2),
+			Entry("When update Ytsaurus prev -> curr", testutil.YtsaurusPrevVersion, testutil.YtsaurusCurrVersion),
+			Entry("When update Ytsaurus curr -> next", testutil.YtsaurusCurrVersion, testutil.YtsaurusNextVersion),
 		)
 
 		Context("Test update plan selector", Label("plan", "selector"), func() {
-
-			BeforeEach(func() {
-				By("Setting 24.2+ image for update selector tests")
-				// This image is used for update selector tests because for earlier images
-				// there will be migration of imaginary chunks locations which restarts datanodes
-				// and makes it hard to test updateSelector.
-				// For 24.2+ image no migration is needed.
-				ytsaurus.Spec.CoreImage = testutil.YtsaurusImage24_2
-			})
 
 			It("Should be updated according to UpdateSelector=Everything", func(ctx context.Context) {
 
@@ -1342,8 +1345,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 							Name: testutil.RemoteResourceName,
 						},
 						CommonSpec: ytv1.CommonSpec{
-							CoreImage: testutil.CurrentImages.Core,
-							JobImage:  ptr.To(testutil.CurrentImages.Job),
+							CoreImage: testutil.TestImages.Core,
+							JobImage:  ptr.To(testutil.TestImages.Job),
 						},
 						ExecNodesSpec: ytBuilder.CreateExecNodeSpec(),
 					},
@@ -1398,7 +1401,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 							Name: testutil.RemoteResourceName,
 						},
 						CommonSpec: ytv1.CommonSpec{
-							CoreImage: testutil.CurrentImages.Core,
+							CoreImage: testutil.TestImages.Core,
 						},
 						DataNodesSpec: ytv1.DataNodesSpec{
 							InstanceSpec: ytBuilder.CreateDataNodeInstanceSpec(3),
@@ -1441,7 +1444,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 							Name: testutil.RemoteResourceName,
 						},
 						CommonSpec: ytv1.CommonSpec{
-							CoreImage: testutil.CurrentImages.Core,
+							CoreImage: testutil.TestImages.Core,
 						},
 						TabletNodesSpec: ytv1.TabletNodesSpec{
 							InstanceSpec: ytBuilder.CreateTabletNodeSpec(3),
@@ -1550,8 +1553,15 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Context("With CRI-O", Label("cri", "crio"), func() {
 
 			BeforeEach(func() {
-				ytsaurus.Spec.CoreImage = testutil.YtsaurusImage25_2
-				requiredImages = append(requiredImages, ytsaurus.Spec.CoreImage)
+				if ytBuilder.Images.YtsaurusVersion.LessThan(version.MustParse("25.2")) {
+					images := testutil.Images["25.2"]
+					if images.Core == "" {
+						Skip("Ytsaurus version does not support CRI-O")
+					}
+					By("Switching ytsaurus image to 25.2")
+					ytsaurus.Spec.CoreImage = images.Core
+					requiredImages = append(requiredImages, ytsaurus.Spec.CoreImage)
+				}
 
 				By("Adding exec nodes")
 				ytBuilder.WithScheduler()
@@ -1751,8 +1761,9 @@ exec "$@"`
 
 		}) // integration chyt
 
-		DescribeTableSubtree("With Bus RPC TLS", Label("tls"), func(images testutil.YtsaurusImages) {
+		DescribeTableSubtree("With Bus RPC TLS", Label("tls"), func(epoch string) {
 			var nativeServerCert, nativeClientCert *certv1.Certificate
+			images := testutil.Images[epoch]
 
 			BeforeEach(func() {
 				log.Info("YTsaurus images",
@@ -1779,7 +1790,7 @@ exec "$@"`
 					nativeClientCert,
 				)
 
-				if images.MutualTLSReady {
+				if images.YtsaurusVersion.GreaterThanEqual(version.MustParse("25.3")) {
 					By("Enabling RPC proxy public address")
 					ytsaurus.Spec.ClusterFeatures.RPCProxyHavePublicAddress = true
 
@@ -1832,7 +1843,7 @@ exec "$@"`
 				}
 			})
 
-			It("Verify that mTLS is active", func(ctx context.Context) {
+			It("Verify that mTLS is active", Label(epoch), Label(images.YtsaurusVersion.String()), func(ctx context.Context) {
 				By("Getting CHYT operation id")
 				clickHouseID, err := queryClickHouseID(ctx, httpClient, ytProxyAddress)
 				Expect(err).To(Succeed())
@@ -1869,13 +1880,8 @@ exec "$@"`
 					}
 				})
 
-				if images.StrawberryHandlesRestarts {
-					By("Waiting for chyt operation restart by strawberry")
-					Eventually(ctx, queryClickHouseID, chytBootstrapTimeout).WithArguments(httpClient, ytProxyAddress).ToNot(Equal(clickHouseID))
-				} else {
-					By("Aborting chyt operation")
-					Expect(ytClient.AbortOperation(ctx, yt.OperationID(clickHouseID), nil)).To(Succeed())
-				}
+				By("Waiting for chyt operation restart by strawberry")
+				Eventually(ctx, queryClickHouseID, chytBootstrapTimeout).WithArguments(httpClient, ytProxyAddress).ToNot(Equal(clickHouseID))
 
 				By("Waiting CHYT readiness")
 				Eventually(ctx, queryClickHouse, chytBootstrapTimeout, pollInterval).WithArguments(
@@ -1888,11 +1894,9 @@ exec "$@"`
 				)).To(Equal("1\n"))
 			})
 		},
-			Entry("YTsaurus 24.2", Label("24.2"), testutil.YtsaurusImages24_2),
-			Entry("YTsaurus 25.1", Label("25.1"), testutil.YtsaurusImages25_1),
-			Entry("YTsaurus 25.2", Label("25.2"), testutil.YtsaurusImages25_2),
-			Entry("YTsaurus twilight", Label("twilight"), testutil.TwilightImages),
-			Entry("YTsaurus nightly", Label("nightly"), testutil.NightlyImages),
+			Entry("YTsaurus curr", testutil.YtsaurusCurrVersion),
+			Entry("YTsaurus next", testutil.YtsaurusNextVersion),
+			Entry("YTsaurus future", "FUTURE"),
 		) // integration tls
 
 	}) // integration
@@ -1919,7 +1923,7 @@ exec "$@"`
 						ytBuilder.WithQueryTracker()
 						ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{
 							InstanceSpec: ytv1.InstanceSpec{
-								Image:         ptr.To(testutil.QueryTrackerImagePrevious),
+								Image:         ptr.To(testutil.PrevImages.QueryTracker),
 								InstanceCount: 3,
 							},
 						}
@@ -1948,7 +1952,7 @@ exec "$@"`
 					By("Trigger " + stsName + " update")
 					switch componentType {
 					case consts.QueryTrackerType:
-						ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.QueryTrackerImageCurrent)
+						ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.TestImages.QueryTracker)
 					default:
 						updateSpecToTriggerAllComponentUpdate(ytsaurus)
 					}
@@ -2003,7 +2007,7 @@ exec "$@"`
 					case consts.SchedulerType:
 						ytsaurus.Spec.Schedulers = &ytv1.SchedulersSpec{
 							InstanceSpec: ytv1.InstanceSpec{
-								Image:         ptr.To(testutil.YtsaurusImagePrevious),
+								Image:         ptr.To(testutil.PrevImages.Core),
 								InstanceCount: 3,
 							},
 						}
@@ -2030,7 +2034,7 @@ exec "$@"`
 					By("Trigger " + stsName + " update")
 					switch componentType {
 					case consts.SchedulerType:
-						ytsaurus.Spec.Schedulers.Image = ptr.To(testutil.YtsaurusImageCurrent)
+						ytsaurus.Spec.Schedulers.Image = ptr.To(testutil.TestImages.Core)
 					default:
 						updateSpecToTriggerAllComponentUpdate(ytsaurus)
 					}
@@ -2115,7 +2119,7 @@ exec "$@"`
 			Entry("update master-caches", Label(consts.GetStatefulSetPrefix(consts.MasterCacheType)), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
 			Entry("update rpc-proxy", Label(consts.GetStatefulSetPrefix(consts.RpcProxyType)), consts.RpcProxyType, consts.GetStatefulSetPrefix(consts.RpcProxyType)),
 		)
-	})
+	}) // update plan strategy
 
 })
 
@@ -2156,7 +2160,7 @@ var _ = Describe("Spec version lock test", Label("version_lock"), Ordered, func(
 
 		newYtsaurus := func() *ytv1.Ytsaurus {
 			builder = &testutil.YtsaurusBuilder{
-				Images:    testutil.CurrentImages,
+				Images:    testutil.TestImages,
 				Namespace: testNamespace,
 			}
 
