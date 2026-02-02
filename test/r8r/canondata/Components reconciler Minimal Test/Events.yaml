@@ -2,17 +2,37 @@
   eventTime: null
   firstTimestamp: null
   involvedObject:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: ds
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
     apiVersion: cluster.ytsaurus.tech/v1
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
     resourceVersion: "2"
   lastTimestamp: null
-  message: Created YT object ds (*v1.StatefulSet)
+  message: Create object StatefulSet ds
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -42,17 +62,17 @@
   eventTime: null
   firstTimestamp: null
   involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
+    apiVersion: v1
+    kind: ConfigMap
+    name: yt-discovery-config
     namespace: ytsaurus-components
-    resourceVersion: "2"
+    resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object yt-discovery-config (*v1.ConfigMap)
+  message: Create by Ytsaurus test-ytsaurus
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -68,11 +88,31 @@
     namespace: ytsaurus-components
     resourceVersion: "2"
   lastTimestamp: null
-  message: Created YT object discovery (*v1.Service)
+  message: Create object ConfigMap yt-discovery-config
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: discovery
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -88,11 +128,31 @@
     namespace: ytsaurus-components
     resourceVersion: "2"
   lastTimestamp: null
-  message: Created YT object yt-discovery-monitoring (*v1.Service)
+  message: Create object Service discovery
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: yt-discovery-monitoring
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -108,11 +168,31 @@
     namespace: ytsaurus-components
     resourceVersion: "2"
   lastTimestamp: null
-  message: Created YT object robot-hydra-persistence-uploader-secret (*v1.Secret)
+  message: Create object Service yt-discovery-monitoring
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Secret
+    name: robot-hydra-persistence-uploader-secret
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -128,11 +208,71 @@
     namespace: ytsaurus-components
     resourceVersion: "2"
   lastTimestamp: null
-  message: Created YT object robot-timbertruck-secret (*v1.Secret)
+  message: Create object Secret robot-hydra-persistence-uploader-secret
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Secret
+    name: robot-timbertruck-secret
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "2"
+  lastTimestamp: null
+  message: Create object Secret robot-timbertruck-secret
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: ms
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -148,11 +288,11 @@
     namespace: ytsaurus-components
     resourceVersion: "3"
   lastTimestamp: null
-  message: Created YT object ms (*v1.StatefulSet)
+  message: Create object StatefulSet ms
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -182,17 +322,17 @@
   eventTime: null
   firstTimestamp: null
   involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
+    apiVersion: v1
+    kind: ConfigMap
+    name: yt-master-config
     namespace: ytsaurus-components
-    resourceVersion: "3"
+    resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object yt-master-config (*v1.ConfigMap)
+  message: Create by Ytsaurus test-ytsaurus
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -208,11 +348,31 @@
     namespace: ytsaurus-components
     resourceVersion: "3"
   lastTimestamp: null
-  message: Created YT object masters (*v1.Service)
+  message: Create object ConfigMap yt-master-config
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: masters
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -228,11 +388,51 @@
     namespace: ytsaurus-components
     resourceVersion: "3"
   lastTimestamp: null
-  message: Created YT object yt-master-monitoring (*v1.Service)
+  message: Create object Service masters
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: yt-master-monitoring
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "3"
+  lastTimestamp: null
+  message: Create object Service yt-master-monitoring
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -262,17 +462,17 @@
   eventTime: null
   firstTimestamp: null
   involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
+    apiVersion: v1
+    kind: ConfigMap
+    name: default-yt-master-init-job-config
     namespace: ytsaurus-components
-    resourceVersion: "4"
+    resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object default-yt-master-init-job-config (*v1.ConfigMap)
+  message: Create by Ytsaurus test-ytsaurus
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -288,11 +488,71 @@
     namespace: ytsaurus-components
     resourceVersion: "4"
   lastTimestamp: null
-  message: Created YT object yt-master-init-job-default (*v1.Job)
+  message: Create object ConfigMap default-yt-master-init-job-config
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: batch/v1
+    kind: Job
+    name: yt-master-init-job-default
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "4"
+  lastTimestamp: null
+  message: Create object Job yt-master-init-job-default
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: hp
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -308,11 +568,11 @@
     namespace: ytsaurus-components
     resourceVersion: "5"
   lastTimestamp: null
-  message: Created YT object hp (*v1.StatefulSet)
+  message: Create object StatefulSet hp
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -342,17 +602,17 @@
   eventTime: null
   firstTimestamp: null
   involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
+    apiVersion: v1
+    kind: ConfigMap
+    name: yt-http-proxy-config
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object yt-http-proxy-config (*v1.ConfigMap)
+  message: Create by Ytsaurus test-ytsaurus
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -368,11 +628,31 @@
     namespace: ytsaurus-components
     resourceVersion: "5"
   lastTimestamp: null
-  message: Created YT object http-proxies (*v1.Service)
+  message: Create object ConfigMap yt-http-proxy-config
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: http-proxies
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -388,11 +668,71 @@
     namespace: ytsaurus-components
     resourceVersion: "5"
   lastTimestamp: null
-  message: Created YT object yt-http-proxy-monitoring (*v1.Service)
+  message: Create object Service http-proxies
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: yt-http-proxy-monitoring
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "5"
+  lastTimestamp: null
+  message: Create object Service yt-http-proxy-monitoring
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: http-proxies-lb
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -408,11 +748,31 @@
     namespace: ytsaurus-components
     resourceVersion: "6"
   lastTimestamp: null
-  message: Created YT object http-proxies-lb (*v1.Service)
+  message: Create object Service http-proxies-lb
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Secret
+    name: yt-client-secret
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -428,11 +788,11 @@
     namespace: ytsaurus-components
     resourceVersion: "7"
   lastTimestamp: null
-  message: Created YT object yt-client-secret (*v1.Secret)
+  message: Create object Secret yt-client-secret
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -462,17 +822,17 @@
   eventTime: null
   firstTimestamp: null
   involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
+    apiVersion: v1
+    kind: ConfigMap
+    name: user-yt-client-init-job-config
     namespace: ytsaurus-components
-    resourceVersion: "8"
+    resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object user-yt-client-init-job-config (*v1.ConfigMap)
+  message: Create by Ytsaurus test-ytsaurus
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -488,11 +848,71 @@
     namespace: ytsaurus-components
     resourceVersion: "8"
   lastTimestamp: null
-  message: Created YT object yt-client-init-job-user (*v1.Job)
+  message: Create object ConfigMap user-yt-client-init-job-config
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: batch/v1
+    kind: Job
+    name: yt-client-init-job-user
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "8"
+  lastTimestamp: null
+  message: Create object Job yt-client-init-job-user
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: ConfigMap
+    name: yt-cypress-patch
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by Ytsaurus test-ytsaurus
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -508,11 +928,11 @@
     namespace: ytsaurus-components
     resourceVersion: "10"
   lastTimestamp: null
-  message: Created YT object yt-cypress-patch (*v1.ConfigMap)
+  message: Create object ConfigMap yt-cypress-patch
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:

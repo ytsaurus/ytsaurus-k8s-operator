@@ -2,17 +2,37 @@
   eventTime: null
   firstTimestamp: null
   involvedObject:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: odg-rmt
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by OffshoreDataGateways rmt
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
     apiVersion: cluster.ytsaurus.tech/v1
     kind: OffshoreDataGateways
     name: rmt
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object odg-rmt (*v1.StatefulSet)
+  message: Create object StatefulSet odg-rmt
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -42,17 +62,17 @@
   eventTime: null
   firstTimestamp: null
   involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: OffshoreDataGateways
-    name: rmt
+    apiVersion: v1
+    kind: ConfigMap
+    name: yt-offshore-data-gateway-config
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object yt-offshore-data-gateway-config (*v1.ConfigMap)
+  message: Create by OffshoreDataGateways rmt
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -68,11 +88,31 @@
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object offshore-data-gateways-rmt (*v1.Service)
+  message: Create object ConfigMap yt-offshore-data-gateway-config
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: offshore-data-gateways-rmt
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by OffshoreDataGateways rmt
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -88,11 +128,51 @@
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object yt-offshore-data-gateway-monitoring (*v1.Service)
+  message: Create object Service offshore-data-gateways-rmt
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: yt-offshore-data-gateway-monitoring
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by OffshoreDataGateways rmt
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: OffshoreDataGateways
+    name: rmt
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create object Service yt-offshore-data-gateway-monitoring
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:

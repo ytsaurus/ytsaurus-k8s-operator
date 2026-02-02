@@ -279,7 +279,7 @@ linters:
 
     interfacebloat:
       # Default: 10
-      max: 16
+      max: 20
 
   exclusions:
     rules:
