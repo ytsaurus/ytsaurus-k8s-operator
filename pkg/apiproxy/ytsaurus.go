@@ -62,6 +62,10 @@ func (c *Ytsaurus) GetClusterState() ytv1.ClusterState {
 	return c.ytsaurus.Status.State
 }
 
+func (c *Ytsaurus) IsReadyToUpdate() bool {
+	return c.GetClusterState() == ytv1.ClusterStateRunning
+}
+
 func (c *Ytsaurus) IsUpdating() bool {
 	return c.GetClusterState() == ytv1.ClusterStateUpdating
 }

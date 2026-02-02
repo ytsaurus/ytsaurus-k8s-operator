@@ -31,9 +31,7 @@ type server interface {
 	resources.Syncable
 	podsManager
 	needUpdate() bool
-	configNeedsReload() bool
-	needBuild() bool
-	needSync() bool
+	needSync(updating bool) bool
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
 	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType)
@@ -208,21 +206,10 @@ func (s *serverImpl) Exists() bool {
 	return resources.Exists(s.statefulSet, s.configs, s.headlessService, s.monitoringService)
 }
 
-func (s *serverImpl) configNeedsReload() bool {
-	needReload, err := s.configs.NeedReload()
-	if err != nil {
-		needReload = false
-	}
-	return needReload
-}
-
-func (s *serverImpl) needBuild() bool {
+func (s *serverImpl) needSync(updating bool) bool {
 	return !s.Exists() ||
+		(updating && s.needUpdate()) ||
 		s.statefulSet.GetReplicas() != s.instanceSpec.InstanceCount
-}
-
-func (s *serverImpl) needSync() bool {
-	return s.configNeedsReload() || s.needBuild()
 }
 
 func (s *serverImpl) Sync(ctx context.Context) error {

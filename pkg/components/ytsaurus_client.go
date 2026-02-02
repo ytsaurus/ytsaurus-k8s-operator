@@ -38,6 +38,7 @@ type internalYtsaurusClient interface {
 
 type YtsaurusClient struct {
 	localComponent
+
 	cfgen     *ytconfig.Generator
 	httpProxy Component
 
@@ -481,6 +482,14 @@ func (yc *YtsaurusClient) NeedSyncCypressPatch() ComponentStatus {
 
 func (yc *YtsaurusClient) Status(ctx context.Context) (ComponentStatus, error) {
 	return yc.doSync(ctx, true)
+}
+
+func (yc *YtsaurusClient) NeedSync() bool {
+	return false
+}
+
+func (yc *YtsaurusClient) NeedUpdate() bool {
+	return false
 }
 
 func (yc *YtsaurusClient) Sync(ctx context.Context) error {

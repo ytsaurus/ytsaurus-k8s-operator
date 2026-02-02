@@ -65,6 +65,14 @@ func (fc *FakeComponent) Status(ctx context.Context) (ComponentStatus, error) {
 	return fc.status, nil
 }
 
+func (fc *FakeComponent) NeedSync() bool {
+	return false
+}
+
+func (fc *FakeComponent) NeedUpdate() bool {
+	return false
+}
+
 func (fc *FakeComponent) IsUpdating() bool {
 	return false
 }
@@ -113,19 +121,11 @@ func (fs *FakeServer) podsImageCorrespondsToSpec() bool {
 	return true
 }
 
-func (fs *FakeServer) configNeedsReload() bool {
-	return false
-}
-
-func (fs *FakeServer) needBuild() bool {
-	return false
-}
-
 func (fs *FakeServer) Exists() bool {
 	return true
 }
 
-func (fs *FakeServer) needSync() bool {
+func (fs *FakeServer) needSync(updating bool) bool {
 	return false
 }
 

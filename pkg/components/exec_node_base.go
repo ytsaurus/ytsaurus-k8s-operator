@@ -20,7 +20,8 @@ import (
 )
 
 type baseExecNode struct {
-	server    server
+	localServerComponent
+
 	cfgen     *ytconfig.NodeGenerator
 	criConfig *ytconfig.CRIConfigGenerator
 	spec      *ytv1.ExecNodesSpec
@@ -34,6 +35,15 @@ func (n *baseExecNode) Fetch(ctx context.Context) error {
 
 func (n *baseExecNode) Exists() bool {
 	return resources.Exists(n.server, n.sidecarConfig)
+}
+
+func (n *baseExecNode) NeedSync() bool {
+	updating := n.ytsaurus == nil || n.ytsaurus.IsUpdating()
+	return n.server.needSync(updating) || (updating && n.sidecarConfigNeedsReload())
+}
+
+func (n *baseExecNode) NeedUpdate() bool {
+	return n.server.needUpdate() || n.sidecarConfigNeedsReload()
 }
 
 func (n *baseExecNode) doBuildBase() error {

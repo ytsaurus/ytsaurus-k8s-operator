@@ -13,10 +13,10 @@ import (
 )
 
 type OffshoreDataGateway struct {
-	server server
-	cfgen  *ytconfig.NodeGenerator
-	spec   *ytv1.OffshoreDataGatewaySpec
-	baseComponent
+	localServerComponent
+
+	cfgen *ytconfig.NodeGenerator
+	spec  *ytv1.OffshoreDataGatewaySpec
 }
 
 func NewOffshoreDataGateways(
@@ -46,17 +46,17 @@ func NewOffshoreDataGateways(
 		}),
 	)
 	return &OffshoreDataGateway{
-		baseComponent: baseComponent{labeller: l},
-		server:        srv,
-		cfgen:         cfgen,
-		spec:          &spec,
+		localServerComponent: newLocalServerComponent(l, nil, srv),
+
+		cfgen: cfgen,
+		spec:  &spec,
 	}
 }
 
 func (p *OffshoreDataGateway) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if p.server.needSync() || p.server.needUpdate() {
+	if p.NeedSync() {
 		if !dry {
 			err = p.server.Sync(ctx)
 		}
@@ -68,10 +68,6 @@ func (p *OffshoreDataGateway) doSync(ctx context.Context, dry bool) (ComponentSt
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (p *OffshoreDataGateway) GetType() consts.ComponentType {
-	return consts.OffshoreDataGatewayType
 }
 
 func (p *OffshoreDataGateway) Sync(ctx context.Context) (ComponentStatus, error) {

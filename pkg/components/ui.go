@@ -18,9 +18,9 @@ import (
 )
 
 type UI struct {
-	localComponent
+	localMicroserviceComponent
+
 	cfgen        *ytconfig.Generator
-	microservice microservice
 	initJob      *InitJob
 	master       Component
 	secret       *resources.StringSecret
@@ -64,9 +64,12 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 	microservice.getHttpService().SetHttpNodePort(resource.Spec.UI.HttpNodePort)
 
 	return &UI{
-		localComponent: newLocalComponent(l, ytsaurus),
-		cfgen:          cfgen,
-		microservice:   microservice,
+		localMicroserviceComponent: localMicroserviceComponent{
+			localComponent: newLocalComponent(l, ytsaurus),
+			microservice:   microservice,
+		},
+
+		cfgen: cfgen,
 		initJob: NewInitJobForYtsaurus(
 			l,
 			ytsaurus,
@@ -269,7 +272,7 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning && u.microservice.needUpdate() {
+	if u.ytsaurus.IsReadyToUpdate() && u.NeedUpdate() {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
@@ -319,7 +322,7 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return status, err
 	}
 
-	if u.microservice.needSync() {
+	if u.NeedSync() {
 		if !dry {
 			err = u.syncComponents(ctx)
 		}
