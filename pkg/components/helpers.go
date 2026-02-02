@@ -121,8 +121,9 @@ func CreateUser(ctx context.Context, ytClient yt.Client, userName, token string,
 
 	// Use issue-token API to generate a proper YTsaurus token instead of manually creating cypress_tokens nodes.
 	// This follows the standard YTsaurus token pattern (ytct-abcd-...).
-	issuedToken := token
+	var issuedToken string
 	if token != "" {
+		var err error
 		issuedToken, err = ytClient.IssueToken(ctx, userName, "", nil)
 		if err != nil {
 			return "", err
