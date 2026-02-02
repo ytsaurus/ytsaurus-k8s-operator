@@ -86,7 +86,7 @@ func (kp *KafkaProxy) Fetch(ctx context.Context) error {
 func (kp *KafkaProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(kp.ytsaurus.GetClusterState()) && kp.server.needUpdate() {
+	if kp.ytsaurus.IsReadyToUpdate() && kp.NeedUpdate() {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 

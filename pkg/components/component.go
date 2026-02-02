@@ -77,6 +77,12 @@ type Component interface {
 	resources.Fetchable
 	resources.Syncable
 
+	// NeedSync returns true when component is need, able and permitted to sync resources.
+	NeedSync() bool
+
+	// NeedUpdate returns true when component needs instance update.
+	NeedUpdate() bool
+
 	Status(ctx context.Context) (ComponentStatus, error)
 	GetFullName() string
 	GetShortName() string
@@ -138,6 +144,11 @@ type localServerComponent struct {
 	server server
 }
 
+type localMicroserviceComponent struct {
+	localComponent
+	microservice microservice
+}
+
 func newLocalComponent(
 	labeller *labeller.Labeller,
 	ytsaurus *apiproxy.Ytsaurus,
@@ -182,10 +193,18 @@ func (c *localServerComponent) Exists() bool {
 }
 
 func (c *localServerComponent) NeedSync() bool {
-	return LocalServerNeedSync(c.server, c.ytsaurus)
+	updating := c.ytsaurus == nil || c.ytsaurus.IsUpdating()
+	return c.server.needSync(updating)
 }
 
-func LocalServerNeedSync(srv server, ytsaurus *apiproxy.Ytsaurus) bool {
-	return (srv.configNeedsReload() && ytsaurus.IsUpdating()) ||
-		srv.needBuild()
+func (c *localServerComponent) NeedUpdate() bool {
+	return c.server.needUpdate()
+}
+
+func (c *localMicroserviceComponent) NeedSync() bool {
+	return c.microservice.needSync()
+}
+
+func (c *localMicroserviceComponent) NeedUpdate() bool {
+	return c.microservice.needUpdate()
 }

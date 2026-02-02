@@ -55,7 +55,7 @@ func (d *Discovery) Fetch(ctx context.Context) error {
 func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(d.ytsaurus.GetClusterState()) && d.server.needUpdate() {
+	if d.ytsaurus.IsReadyToUpdate() && d.NeedUpdate() {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 

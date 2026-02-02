@@ -149,7 +149,7 @@ func (yqla *YqlAgent) createUpdateScript() string {
 func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(yqla.ytsaurus.GetClusterState()) && yqla.server.needUpdate() {
+	if yqla.ytsaurus.IsReadyToUpdate() && yqla.NeedUpdate() {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 

@@ -13,10 +13,10 @@ import (
 )
 
 type RemoteDataNode struct {
-	server server
-	cfgen  *ytconfig.NodeGenerator
-	spec   *ytv1.DataNodesSpec
-	baseComponent
+	localServerComponent
+
+	cfgen *ytconfig.NodeGenerator
+	spec  *ytv1.DataNodesSpec
 }
 
 func NewRemoteDataNodes(
@@ -47,17 +47,17 @@ func NewRemoteDataNodes(
 		}),
 	)
 	return &RemoteDataNode{
-		baseComponent: baseComponent{labeller: l},
-		server:        srv,
-		cfgen:         cfgen,
-		spec:          &spec,
+		localServerComponent: newLocalServerComponent(l, nil, srv),
+
+		cfgen: cfgen,
+		spec:  &spec,
 	}
 }
 
 func (n *RemoteDataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if n.server.needSync() || n.server.needUpdate() {
+	if n.NeedSync() {
 		if !dry {
 			err = n.server.Sync(ctx)
 		}
@@ -70,8 +70,6 @@ func (n *RemoteDataNode) doSync(ctx context.Context, dry bool) (ComponentStatus,
 
 	return ComponentStatusReady(), err
 }
-
-func (n *RemoteDataNode) GetType() consts.ComponentType { return consts.DataNodeType }
 
 func (n *RemoteDataNode) Sync(ctx context.Context) (ComponentStatus, error) {
 	return n.doSync(ctx, false)

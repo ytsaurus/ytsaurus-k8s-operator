@@ -395,7 +395,7 @@ func (m *Master) createExitReadOnlyScript() string {
 func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(m.ytsaurus.GetClusterState()) && m.server.needUpdate() {
+	if m.ytsaurus.IsReadyToUpdate() && m.NeedUpdate() {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 

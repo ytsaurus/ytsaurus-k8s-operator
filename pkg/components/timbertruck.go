@@ -237,6 +237,14 @@ func (tt *Timbertruck) Status(ctx context.Context) (ComponentStatus, error) {
 	return tt.doSync(ctx, true)
 }
 
+func (tt *Timbertruck) NeedSync() bool {
+	return false
+}
+
+func (tt *Timbertruck) NeedUpdate() bool {
+	return false
+}
+
 func (tt *Timbertruck) Sync(ctx context.Context) error {
 	_, err := tt.doSync(ctx, false)
 	return err

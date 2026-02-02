@@ -14,7 +14,6 @@ import (
 
 type RemoteExecNode struct {
 	baseExecNode
-	baseComponent
 }
 
 func NewRemoteExecNodes(
@@ -63,9 +62,9 @@ func NewRemoteExecNodes(
 	}
 
 	return &RemoteExecNode{
-		baseComponent: baseComponent{labeller: l},
 		baseExecNode: baseExecNode{
-			server:        srv,
+			localServerComponent: newLocalServerComponent(l, nil, srv),
+
 			cfgen:         cfgen,
 			criConfig:     criConfig,
 			spec:          &spec,
@@ -77,7 +76,7 @@ func NewRemoteExecNodes(
 func (n *RemoteExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if n.server.needSync() || n.server.needUpdate() || n.sidecarConfigNeedsReload() {
+	if n.NeedSync() {
 		return n.doSyncBase(ctx, dry)
 	}
 
@@ -87,8 +86,6 @@ func (n *RemoteExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus,
 
 	return ComponentStatusReady(), err
 }
-
-func (n *RemoteExecNode) GetType() consts.ComponentType { return consts.ExecNodeType }
 
 func (n *RemoteExecNode) Sync(ctx context.Context) (ComponentStatus, error) {
 	return n.doSync(ctx, false)
