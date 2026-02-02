@@ -2,13 +2,33 @@
   eventTime: null
   firstTimestamp: null
   involvedObject:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: tnd-rmt
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Created by RemoteTabletNodes rmt
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
     apiVersion: cluster.ytsaurus.tech/v1
     kind: RemoteTabletNodes
     name: rmt
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object tnd-rmt (*v1.StatefulSet)
+  message: Created object StatefulSet tnd-rmt
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -42,13 +62,13 @@
   eventTime: null
   firstTimestamp: null
   involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: RemoteTabletNodes
-    name: rmt
+    apiVersion: v1
+    kind: ConfigMap
+    name: yt-tablet-node-config
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object yt-tablet-node-config (*v1.ConfigMap)
+  message: Created by RemoteTabletNodes rmt
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -68,7 +88,27 @@
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object tablet-nodes-rmt (*v1.Service)
+  message: Created object ConfigMap yt-tablet-node-config
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: tablet-nodes-rmt
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Created by RemoteTabletNodes rmt
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -88,7 +128,47 @@
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object yt-tablet-node-monitoring (*v1.Service)
+  message: Created object Service tablet-nodes-rmt
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: yt-tablet-node-monitoring
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Created by RemoteTabletNodes rmt
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: RemoteTabletNodes
+    name: rmt
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Created object Service yt-tablet-node-monitoring
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components

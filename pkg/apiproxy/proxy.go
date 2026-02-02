@@ -15,10 +15,15 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
+)
+
+const (
+	reason = "Reconciliation"
 )
 
 type ControllerObject interface {
@@ -36,6 +41,7 @@ type APIProxy interface {
 	FetchObject(ctx context.Context, name string, obj client.Object) error
 	ListObjects(ctx context.Context, objList client.ObjectList, opts ...client.ListOption) error
 
+	RecordAction(action string, subject client.Object)
 	RecordWarning(reason, message string)
 	RecordNormal(reason, message string)
 
@@ -64,6 +70,7 @@ func NewAPIProxy(
 ) APIProxy {
 	return &apiProxy{
 		object:   object,
+		kind:     object.GetObjectKind().GroupVersionKind().Kind,
 		client:   client,
 		recorder: recorder,
 		scheme:   scheme,
@@ -72,6 +79,7 @@ func NewAPIProxy(
 
 type apiProxy struct {
 	object   ControllerObject
+	kind     string
 	client   client.Client
 	recorder record.EventRecorder
 	scheme   *runtime.Scheme
@@ -100,6 +108,15 @@ func (c *apiProxy) FetchObject(ctx context.Context, name string, obj client.Obje
 func (c *apiProxy) ListObjects(ctx context.Context, objList client.ObjectList, opts ...client.ListOption) error {
 	err := c.client.List(ctx, objList, opts...)
 	return err
+}
+
+func (c *apiProxy) RecordAction(action string, subject client.Object) {
+	gvk, err := apiutil.GVKForObject(subject, c.scheme)
+	if err != nil {
+		gvk.Kind = "???"
+	}
+	c.recorder.Eventf(subject, corev1.EventTypeNormal, reason, "%s by %s %s", action, c.kind, c.object.GetName())
+	c.recorder.Eventf(c.object, corev1.EventTypeNormal, reason, "%s object %s %s", action, gvk.Kind, subject.GetName())
 }
 
 func (c *apiProxy) RecordWarning(reason, message string) {
@@ -154,15 +171,13 @@ func (c *apiProxy) DeleteObject(ctx context.Context, obj client.Object, opts ...
 	if err := c.client.Delete(ctx, obj, opts...); err != nil {
 		// ToDo(psushin): take to the status.
 		c.RecordWarning(
-			"Reconciliation",
+			reason,
 			fmt.Sprintf("Failed to delete YT object %s: %s", obj.GetName(), err))
 		logger.Error(err, "unable to delete YT object", "object_name", obj.GetName())
 		return err
 	}
 
-	c.RecordNormal(
-		"Reconciliation",
-		fmt.Sprintf("Deleted YT object %s", obj.GetName()))
+	c.RecordAction("Deleted", obj)
 	logger.V(2).Info("deleted YT object", "object_name", obj.GetName())
 	return nil
 }
@@ -178,15 +193,13 @@ func (c *apiProxy) updateObject(ctx context.Context, obj client.Object) error {
 	if err := c.client.Update(ctx, obj); err != nil {
 		// ToDo(psushin): take to the status.
 		c.RecordWarning(
-			"Reconciliation",
+			reason,
 			fmt.Sprintf("Failed to update YT object %s: %s", obj.GetName(), err))
 		logger.Error(err, "unable to update YT object", "object_name", obj.GetName())
 		return err
 	}
 
-	c.RecordNormal(
-		"Reconciliation",
-		fmt.Sprintf("Updated YT object %s", obj.GetName()))
+	c.RecordAction("Updated", obj)
 	logger.V(2).Info("updated existing YT object", "object_name", obj.GetName())
 	return nil
 }
@@ -202,14 +215,13 @@ func (c *apiProxy) createAndReferenceObject(ctx context.Context, obj client.Obje
 	if err := c.client.Create(ctx, obj); err != nil {
 		// ToDo(psushin): take to the status.
 		c.RecordWarning(
-			"Reconciliation",
+			reason,
 			fmt.Sprintf("Failed to create YT object %s: %s", obj.GetName(), err))
 		logger.Error(err, "unable to create YT obj", "object_name", obj.GetName())
 		return err
 	}
-	c.RecordNormal(
-		"Reconciliation",
-		fmt.Sprintf("Created YT object %s (%T)", obj.GetName(), obj))
+
+	c.RecordAction("Created", obj)
 	logger.V(2).Info("created and registered new YT object", "object_name", obj.GetName())
 	return nil
 }
