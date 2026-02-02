@@ -208,10 +208,22 @@ func (qa *QueueAgent) createUser(ctx context.Context, ytClient yt.Client) (err e
 	logger := log.FromContext(ctx)
 
 	token, _ := qa.secret.GetValue(consts.TokenSecretKey)
-	err = CreateUser(ctx, ytClient, "queue_agent", token, true)
+	issuedToken, err := CreateUser(ctx, ytClient, "queue_agent", token, true)
 	if err != nil {
 		logger.Error(err, "Creating user 'queue_agent' failed")
 		return err
+	}
+
+	// Update secret with the issued token if it's different from the existing one.
+	if token != issuedToken && issuedToken != "" {
+		secretSpec := qa.secret.Build()
+		secretSpec.StringData = map[string]string{
+			consts.TokenSecretKey: issuedToken,
+		}
+		if err := qa.secret.Sync(ctx); err != nil {
+			logger.Error(err, "Failed to update secret with issued token")
+			return err
+		}
 	}
 
 	return nil
