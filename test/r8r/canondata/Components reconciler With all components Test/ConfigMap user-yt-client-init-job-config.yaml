@@ -13,6 +13,7 @@ data:
             rules=[
             ];
             "flush_period"=0;
+            "enable_anchor_profiling"=%false;
         };
         driver={
             "api_version"=4;
@@ -73,7 +74,7 @@ kind: ConfigMap
 metadata:
   annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-checksum: af1c9495536671a6539e2fdb35286698862d19c941ad82d8807944abcec04bde
+    ytsaurus.tech/config-checksum: 61404cf9cecbe1d63d278ea3e86babb7e226579cf1a4a57ab3bda537f4c02dc1
   creationTimestamp: null
   generation: 1
   labels:

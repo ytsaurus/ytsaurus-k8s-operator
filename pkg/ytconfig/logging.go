@@ -87,7 +87,8 @@ type Logging struct {
 	Writers map[string]LoggingWriter `yson:"writers"`
 	Rules   []LoggingRule            `yson:"rules"`
 
-	FlushPeriod int `yson:"flush_period"`
+	FlushPeriod           int  `yson:"flush_period"`
+	EnableAnchorProfiling bool `yson:"enable_anchor_profiling"`
 }
 
 type JobProxyLogging struct {

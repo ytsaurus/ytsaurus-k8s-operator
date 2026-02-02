@@ -41,6 +41,7 @@
             };
         ];
         "flush_period"=3000;
+        "enable_anchor_profiling"=%false;
     };
     "monitoring_port"=10029;
     "rpc_port"=9029;
@@ -200,6 +201,7 @@
                     };
                 ];
                 "flush_period"=3000;
+                "enable_anchor_profiling"=%false;
                 "log_manager_template"={
                     writers={
                         debug={
@@ -229,6 +231,7 @@
                         };
                     ];
                     "flush_period"=3000;
+                    "enable_anchor_profiling"=%false;
                 };
                 mode=simple;
             };
@@ -336,6 +339,7 @@
                 };
             ];
             "flush_period"=3000;
+            "enable_anchor_profiling"=%false;
         };
         "job_proxy_log_manager"={
             directory="/var/log/job-proxy";

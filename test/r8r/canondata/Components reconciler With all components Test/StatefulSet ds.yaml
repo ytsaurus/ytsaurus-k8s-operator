@@ -34,7 +34,7 @@ spec:
       annotations:
         extra-pod-annotation: "true"
         global-pod-annotation: "true"
-        ytsaurus.tech/config-checksum: e0f0e72f1c971a7c6243b9688d481a8ca832ee1a1e57b47e1e26542200ad51a2
+        ytsaurus.tech/config-checksum: 3258f282dfcee415563e512ec79596ffb04f8529ff5f177b95756506659df716
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-discovery

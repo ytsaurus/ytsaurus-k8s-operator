@@ -30,7 +30,7 @@ spec:
   template:
     metadata:
       annotations:
-        ytsaurus.tech/config-checksum: 9efc29fd3ba384f6f4421d89d44f3865df0ae0bf51e8559c852915f59a48612f
+        ytsaurus.tech/config-checksum: 9021b5921e86da1db5c2644631e29e853ac406066707a4c66583e97655a68d09
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-exec-node
