@@ -180,7 +180,7 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 			})
 		}
 
-		container.Env = env
+		container.Env = append(container.Env, env...)
 	}
 
 	status, err = s.initEnvironment.Sync(ctx, dry)
