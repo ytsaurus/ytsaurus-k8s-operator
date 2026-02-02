@@ -56,6 +56,8 @@ const (
 	upgradeTimeout   = time.Minute * 10
 	imagePullTimeout = time.Minute * 10
 
+	consistencyTimeout = time.Second * 10
+
 	chytBootstrapTimeout = time.Minute * 5
 
 	operationCPULimit    = 1
@@ -168,7 +170,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var requiredImages []string
 	var objects []client.Object
 	var namespaceWatcher *NamespaceWatcher
-	var name client.ObjectKey
 	var ytBuilder *testutil.YtsaurusBuilder
 	var ytsaurus *ytv1.Ytsaurus
 	var generator *ytconfig.Generator
@@ -277,10 +278,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		requiredImages = nil
 		objects = []client.Object{ytsaurus}
 
-		name = client.ObjectKey{
-			Name:      ytsaurus.Name,
-			Namespace: namespace,
-		}
+		By("Tracking Ytsaurus updates")
+		DeferCleanup(TrackObjectUpdates(specCtx, ytsaurus, &ytv1.YtsaurusList{}, NewYtsaurusStatusTracker()))
 
 		generator = ytconfig.NewGenerator(ytsaurus, "cluster.local")
 		remoteComponentNames = make(map[consts.ComponentType][]string)
@@ -789,8 +788,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
-				By("Ensure cluster doesn't start updating for 5 seconds")
-				ConsistentlyYtsaurus(ctx, name, 5*time.Second).Should(HaveClusterStateRunning())
+				By("Ensure cluster doesn't start updating")
+				ConsistentlyYtsaurus(ctx, ytsaurus, consistencyTimeout).Should(HaveClusterStateRunning())
 
 				By("Ensure cluster generation is observed")
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())

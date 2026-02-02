@@ -38,8 +38,8 @@ import (
 	oformat "github.com/onsi/gomega/format"
 	otypes "github.com/onsi/gomega/types"
 
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 
 	"k8s.io/client-go/kubernetes"
@@ -226,6 +226,27 @@ func LogObjectEvents(ctx context.Context, namespace string) func() {
 	return watcher.Stop
 }
 
+func TrackObjectUpdates[T client.Object, L client.ObjectList](ctx context.Context, obj T, objList L, track func(T) bool) func() {
+	watcher, err := k8sClient.Watch(ctx, objList, &client.ListOptions{
+		Namespace:     obj.GetNamespace(),
+		FieldSelector: fields.ParseSelectorOrDie("metadata.name=" + obj.GetName()),
+	})
+	Expect(err).ToNot(HaveOccurred())
+
+	go func() {
+		for ev := range watcher.ResultChan() {
+			switch ev.Type {
+			case watch.Added, watch.Modified:
+				if obj, ok := ev.Object.(T); ok {
+					track(obj)
+				}
+			}
+		}
+	}()
+
+	return watcher.Stop
+}
+
 func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 	prevStatus := ytv1.YtsaurusStatus{}
 	conditions := map[string]metav1.Condition{}
@@ -259,13 +280,21 @@ func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 			changed = true
 		}
 
+		newConditions := map[string]metav1.Condition{}
 		for _, cond := range newStatus.Conditions {
 			if prevCond, found := conditions[cond.Type]; !found || !reflect.DeepEqual(cond, prevCond) {
 				log.Info("ClusterCondition", "type", cond.Type, "status", cond.Status, "reason", cond.Reason, "message", cond.Message)
 				changed = true
-				conditions[cond.Type] = cond
+			}
+			newConditions[cond.Type] = cond
+		}
+		for key := range conditions {
+			if _, found := newConditions[key]; !found {
+				log.Info("ClusterCondition", "type", key, "status", "deleted")
+				changed = true
 			}
 		}
+		conditions = newConditions
 
 		if prevStatus.UpdateStatus.State != newStatus.UpdateStatus.State {
 			log.Info("UpdateStatus", "state", newStatus.UpdateStatus.State)
@@ -282,23 +311,31 @@ func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 			changed = true
 		}
 
-		if len(prevStatus.UpdateStatus.UpdatingComponentsSummary) != len(newStatus.UpdateStatus.UpdatingComponentsSummary) {
+		if prevStatus.UpdateStatus.UpdatingComponentsSummary != newStatus.UpdateStatus.UpdatingComponentsSummary {
 			log.Info("UpdateStatus", "updatingComponentsSummary", newStatus.UpdateStatus.UpdatingComponentsSummary)
 			changed = true
 		}
 
-		if len(prevStatus.UpdateStatus.BlockedComponentsSummary) != len(newStatus.UpdateStatus.BlockedComponentsSummary) {
+		if prevStatus.UpdateStatus.BlockedComponentsSummary != newStatus.UpdateStatus.BlockedComponentsSummary {
 			log.Info("UpdateStatus", "blockedComponentsSummary", newStatus.UpdateStatus.BlockedComponentsSummary)
 			changed = true
 		}
 
+		newConditions = map[string]metav1.Condition{}
 		for _, cond := range newStatus.UpdateStatus.Conditions {
 			if prevCond, found := updateConditions[cond.Type]; !found || !reflect.DeepEqual(cond, prevCond) {
 				log.Info("UpdateCondition", "type", cond.Type, "status", cond.Status, "reason", cond.Reason, "message", cond.Message)
 				changed = true
-				updateConditions[cond.Type] = cond
+			}
+			newConditions[cond.Type] = cond
+		}
+		for key := range updateConditions {
+			if _, found := newConditions[key]; !found {
+				log.Info("UpdateCondition", "type", key, "status", "deleted")
+				changed = true
 			}
 		}
+		updateConditions = newConditions
 
 		prevStatus = newStatus
 		return changed
@@ -339,26 +376,18 @@ func UpdateObject(ctx context.Context, object client.Object) {
 }
 
 func EventuallyYtsaurus(ctx context.Context, ytsaurus *ytv1.Ytsaurus, timeout time.Duration) AsyncAssertion {
-	trackStatus := NewYtsaurusStatusTracker()
 	name := client.ObjectKeyFromObject(ytsaurus)
 	return Eventually(ctx, func(ctx context.Context) (*ytv1.Ytsaurus, error) {
 		err := k8sClient.Get(ctx, name, ytsaurus)
-		if err == nil {
-			trackStatus(ytsaurus)
-		}
 		return ytsaurus, err
 	}, timeout, pollInterval)
 }
 
-func ConsistentlyYtsaurus(ctx context.Context, name types.NamespacedName, timeout time.Duration) AsyncAssertion {
-	var ytsaurus ytv1.Ytsaurus
-	trackStatus := NewYtsaurusStatusTracker()
+func ConsistentlyYtsaurus(ctx context.Context, ytsaurus *ytv1.Ytsaurus, timeout time.Duration) AsyncAssertion {
+	name := client.ObjectKeyFromObject(ytsaurus)
 	return Consistently(ctx, func(ctx context.Context) (*ytv1.Ytsaurus, error) {
-		err := k8sClient.Get(ctx, name, &ytsaurus)
-		if err == nil {
-			trackStatus(&ytsaurus)
-		}
-		return &ytsaurus, err
+		err := k8sClient.Get(ctx, name, ytsaurus)
+		return ytsaurus, err
 	}, timeout, pollInterval)
 }
 
