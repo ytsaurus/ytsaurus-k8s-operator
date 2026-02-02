@@ -13,10 +13,10 @@ import (
 )
 
 type RemoteTabletNode struct {
-	server server
-	cfgen  *ytconfig.NodeGenerator
-	spec   *ytv1.TabletNodesSpec
-	baseComponent
+	localServerComponent
+
+	cfgen *ytconfig.NodeGenerator
+	spec  *ytv1.TabletNodesSpec
 }
 
 func NewRemoteTabletNodes(
@@ -47,17 +47,17 @@ func NewRemoteTabletNodes(
 		}),
 	)
 	return &RemoteTabletNode{
-		baseComponent: baseComponent{labeller: l},
-		server:        srv,
-		cfgen:         cfgen,
-		spec:          &spec,
+		localServerComponent: newLocalServerComponent(l, nil, srv),
+
+		cfgen: cfgen,
+		spec:  &spec,
 	}
 }
 
 func (n *RemoteTabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if n.server.needSync() || n.server.needUpdate() {
+	if n.NeedSync() {
 		if !dry {
 			err = n.server.Sync(ctx)
 		}
@@ -70,8 +70,6 @@ func (n *RemoteTabletNode) doSync(ctx context.Context, dry bool) (ComponentStatu
 
 	return ComponentStatusReady(), err
 }
-
-func (n *RemoteTabletNode) GetType() consts.ComponentType { return consts.TabletNodeType }
 
 func (n *RemoteTabletNode) Sync(ctx context.Context) (ComponentStatus, error) {
 	return n.doSync(ctx, false)

@@ -19,9 +19,9 @@ import (
 )
 
 type StrawberryController struct {
-	localComponent
+	localMicroserviceComponent
+
 	cfgen              *ytconfig.Generator
-	microservice       microservice
 	initUserAndUrlJob  *InitJob
 	initChytClusterJob *InitJob
 	secret             *resources.StringSecret
@@ -91,9 +91,12 @@ func NewStrawberryController(
 	)
 
 	return &StrawberryController{
-		localComponent: newLocalComponent(l, ytsaurus),
-		cfgen:          cfgen,
-		microservice:   microservice,
+		localMicroserviceComponent: localMicroserviceComponent{
+			localComponent: newLocalComponent(l, ytsaurus),
+			microservice:   microservice,
+		},
+
+		cfgen: cfgen,
 		initUserAndUrlJob: NewInitJobForYtsaurus(
 			l,
 			ytsaurus,
@@ -257,7 +260,7 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(c.ytsaurus.GetClusterState()) && c.microservice.needUpdate() {
+	if c.ytsaurus.IsReadyToUpdate() && c.NeedUpdate() {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
@@ -331,7 +334,7 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		return status, err
 	}
 
-	if c.microservice.needSync() {
+	if c.NeedSync() {
 		if !dry {
 			err = c.syncComponents(ctx)
 		}

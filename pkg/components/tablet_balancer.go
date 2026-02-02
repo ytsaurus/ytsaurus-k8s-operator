@@ -53,7 +53,7 @@ func (tb *TabletBalancer) Fetch(ctx context.Context) error {
 func (tb *TabletBalancer) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(tb.ytsaurus.GetClusterState()) && tb.server.needUpdate() {
+	if tb.ytsaurus.IsReadyToUpdate() && tb.NeedUpdate() {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 

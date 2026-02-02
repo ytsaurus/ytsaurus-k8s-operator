@@ -16,7 +16,7 @@ import (
 
 type ExecNode struct {
 	baseExecNode
-	localComponent
+
 	master Component
 }
 
@@ -63,9 +63,9 @@ func NewExecNode(
 	}
 
 	return &ExecNode{
-		localComponent: newLocalComponent(l, ytsaurus),
 		baseExecNode: baseExecNode{
-			server:        srv,
+			localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
+
 			cfgen:         cfgen,
 			criConfig:     criConfig,
 			spec:          &spec,
@@ -78,7 +78,7 @@ func NewExecNode(
 func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if ytv1.IsReadyToUpdateClusterState(n.ytsaurus.GetClusterState()) && (n.server.needUpdate() || n.sidecarConfigNeedsReload()) {
+	if n.ytsaurus.IsReadyToUpdate() && n.NeedUpdate() {
 		return SimpleStatus(SyncStatusNeedUpdate), err
 	}
 
@@ -100,7 +100,7 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		return ComponentStatusBlockedBy(n.master.GetFullName()), err
 	}
 
-	if LocalServerNeedSync(n.server, n.ytsaurus) {
+	if n.NeedSync() {
 		return n.doSyncBase(ctx, dry)
 	}
 
