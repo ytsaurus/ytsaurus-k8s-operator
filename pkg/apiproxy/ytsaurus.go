@@ -1,10 +1,8 @@
 package apiproxy
 
 import (
-	"cmp"
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 	"time"
 
@@ -32,7 +30,8 @@ func NewYtsaurus(
 	ytsaurus *ytv1.Ytsaurus,
 	client client.Client,
 	recorder record.EventRecorder,
-	scheme *runtime.Scheme) *Ytsaurus {
+	scheme *runtime.Scheme,
+) *Ytsaurus {
 	return &Ytsaurus{
 		APIProxy: NewAPIProxy(ytsaurus, client, recorder, scheme),
 		ytsaurus: ytsaurus,
@@ -174,20 +173,6 @@ func (c *Ytsaurus) SaveClusterState(ctx context.Context, clusterState ytv1.Clust
 	return nil
 }
 
-// SyncObservedGeneration confirms that current generation was observed.
-// Returns true if generation actually has been changed and status must be saved.
-func (c *Ytsaurus) SyncObservedGeneration() bool {
-	updated := false
-	if c.ytsaurus.Status.ObservedGeneration != c.ytsaurus.Generation {
-		c.ytsaurus.Status.ObservedGeneration = c.ytsaurus.Generation
-		updated = true
-	}
-	if c.UpdateOperatorVersion(&c.ytsaurus.Status.Conditions) {
-		updated = true
-	}
-	return updated
-}
-
 func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateState) error {
 	logger := log.FromContext(ctx)
 	c.ytsaurus.Status.UpdateStatus.State = updateState
@@ -198,28 +183,12 @@ func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateS
 	return nil
 }
 
-func (c *Ytsaurus) SetStatusCondition(condition metav1.Condition) {
-	condition.ObservedGeneration = c.ytsaurus.Generation
-	meta.SetStatusCondition(&c.ytsaurus.Status.Conditions, condition)
-	sortConditions(c.ytsaurus.Status.Conditions)
-}
-
 func (c *Ytsaurus) IsStatusConditionTrue(conditionType string) bool {
 	return meta.IsStatusConditionTrue(c.ytsaurus.Status.Conditions, conditionType)
 }
 
 func (c *Ytsaurus) IsStatusConditionFalse(conditionType string) bool {
 	return meta.IsStatusConditionFalse(c.ytsaurus.Status.Conditions, conditionType)
-}
-
-func sortConditions(conditions []metav1.Condition) {
-	slices.SortStableFunc(conditions, func(a, b metav1.Condition) int {
-		statusOrder := []metav1.ConditionStatus{metav1.ConditionTrue, metav1.ConditionFalse, metav1.ConditionUnknown}
-		if diff := cmp.Compare(slices.Index(statusOrder, a.Status), slices.Index(statusOrder, b.Status)); diff != 0 {
-			return diff
-		}
-		return a.LastTransitionTime.Compare(b.LastTransitionTime.Time)
-	})
 }
 
 func buildComponentsSummary(components []ytv1.Component) string {
