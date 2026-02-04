@@ -201,18 +201,11 @@ func newServerConfigured(
 }
 
 func (s *serverImpl) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx,
-		s.statefulSet,
-		s.configs,
-		s.headlessService,
-		s.monitoringService,
-	)
+	return resources.Fetch(ctx, s.statefulSet, s.configs, s.headlessService, s.monitoringService)
 }
 
-func (s *serverImpl) exists() bool {
-	return resources.Exists(s.statefulSet) &&
-		resources.Exists(s.headlessService) &&
-		resources.Exists(s.monitoringService)
+func (s *serverImpl) Exists() bool {
+	return resources.Exists(s.statefulSet, s.configs, s.headlessService, s.monitoringService)
 }
 
 func (s *serverImpl) configNeedsReload() bool {
@@ -224,8 +217,7 @@ func (s *serverImpl) configNeedsReload() bool {
 }
 
 func (s *serverImpl) needBuild() bool {
-	return s.configs.NeedInit() ||
-		!s.exists() ||
+	return !s.Exists() ||
 		s.statefulSet.GetReplicas() != s.instanceSpec.InstanceCount
 }
 
@@ -292,7 +284,7 @@ func (s *serverImpl) podsImageCorrespondsToSpec() bool {
 }
 
 func (s *serverImpl) needUpdate() bool {
-	if !s.exists() {
+	if !s.Exists() {
 		return false
 	}
 

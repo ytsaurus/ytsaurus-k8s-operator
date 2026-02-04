@@ -16,6 +16,7 @@ type ResourceObject interface {
 
 type Fetchable interface {
 	Fetch(ctx context.Context) error
+	Exists() bool
 }
 
 type Syncable interface {
@@ -29,7 +30,6 @@ type ManagedResource[T ResourceObject] interface {
 	Name() string
 	OldObject() T
 	NewObject() T
-	Exists() bool
 	Build() T
 }
 
@@ -70,10 +70,6 @@ func (r *BaseManagedResource[T]) Sync(ctx context.Context) error {
 	return r.proxy.SyncObject(ctx, r.oldObject, r.newObject)
 }
 
-func Exists[T ResourceObject](r ManagedResource[T]) bool {
-	return r.Exists()
-}
-
 func Fetch(ctx context.Context, objects ...Fetchable) error {
 	for _, obj := range objects {
 		if obj == nil || reflect.ValueOf(obj).IsNil() {
@@ -85,6 +81,18 @@ func Fetch(ctx context.Context, objects ...Fetchable) error {
 		}
 	}
 	return nil
+}
+
+func Exists(objects ...Fetchable) bool {
+	for _, obj := range objects {
+		if obj == nil || reflect.ValueOf(obj).IsNil() {
+			continue
+		}
+		if !obj.Exists() {
+			return false
+		}
+	}
+	return true
 }
 
 func Sync(ctx context.Context, objects ...Syncable) error {

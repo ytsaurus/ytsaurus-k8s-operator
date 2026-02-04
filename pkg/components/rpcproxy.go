@@ -163,7 +163,7 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if rp.balancingService != nil && !resources.Exists(rp.balancingService) {
+	if rp.balancingService != nil && !rp.balancingService.Exists() {
 		if !dry {
 			s := rp.balancingService.Build()
 			s.Spec.Type = *rp.serviceType

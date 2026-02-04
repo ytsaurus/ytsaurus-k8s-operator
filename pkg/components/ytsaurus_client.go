@@ -102,6 +102,10 @@ func (yc *YtsaurusClient) Fetch(ctx context.Context) error {
 	)
 }
 
+func (yc *YtsaurusClient) Exists() bool {
+	return resources.Exists(yc.secret, yc.initUserJob, yc.httpProxy, yc.cypressPatch)
+}
+
 func (yc *YtsaurusClient) createInitUserScript() string {
 	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
 	initJob := initJobWithNativeDriverPrologue()
