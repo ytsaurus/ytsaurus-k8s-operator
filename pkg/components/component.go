@@ -9,6 +9,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ypatch"
 )
 
@@ -73,8 +74,9 @@ func SimpleStatus(status SyncStatus) ComponentStatus {
 }
 
 type Component interface {
-	Fetch(ctx context.Context) error
-	Sync(ctx context.Context) error
+	resources.Fetchable
+	resources.Syncable
+
 	Status(ctx context.Context) (ComponentStatus, error)
 	GetFullName() string
 	GetShortName() string
@@ -173,6 +175,10 @@ func newLocalServerComponent(
 		},
 		server: server,
 	}
+}
+
+func (c *localServerComponent) Exists() bool {
+	return c.server.Exists()
 }
 
 func (c *localServerComponent) NeedSync() bool {

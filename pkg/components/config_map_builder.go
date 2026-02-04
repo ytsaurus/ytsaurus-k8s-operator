@@ -197,7 +197,7 @@ func (h *ConfigMapBuilder) getConfig(descriptor ConfigGenerator) ([]byte, error)
 }
 
 func (h *ConfigMapBuilder) getCurrentConfigValue(fileName string) []byte {
-	if !resources.Exists(h.configMap) {
+	if !h.configMap.Exists() {
 		return nil
 	}
 
@@ -232,10 +232,6 @@ func (h *ConfigMapBuilder) NeedReload() (bool, error) {
 	return false, nil
 }
 
-func (h *ConfigMapBuilder) NeedInit() bool {
-	return !resources.Exists(h.configMap)
-}
-
 func (h *ConfigMapBuilder) Build() (*corev1.ConfigMap, error) {
 	cm := h.configMap.Build()
 
@@ -267,7 +263,7 @@ func (h *ConfigMapBuilder) Sync(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if !h.NeedInit() && !needReload {
+	if h.Exists() && !needReload {
 		return nil
 	}
 
@@ -285,8 +281,12 @@ func (h *ConfigMapBuilder) Fetch(ctx context.Context) error {
 	return h.configMap.Fetch(ctx)
 }
 
+func (h *ConfigMapBuilder) Exists() bool {
+	return h.configMap.Exists()
+}
+
 func (h *ConfigMapBuilder) RemoveIfExists(ctx context.Context) error {
-	if !resources.Exists(h.configMap) {
+	if !h.configMap.Exists() {
 		return nil
 	}
 
@@ -294,8 +294,4 @@ func (h *ConfigMapBuilder) RemoveIfExists(ctx context.Context) error {
 		ctx,
 		h.configMap.OldObject(),
 	)
-}
-
-func (h *ConfigMapBuilder) Exists() bool {
-	return resources.Exists(h.configMap)
 }

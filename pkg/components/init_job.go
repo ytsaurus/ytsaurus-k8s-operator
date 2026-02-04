@@ -190,10 +190,11 @@ func (j *InitJob) Build() *batchv1.Job {
 }
 
 func (j *InitJob) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx,
-		j.initJob,
-		j.configs,
-	)
+	return resources.Fetch(ctx, j.initJob, j.configs)
+}
+
+func (j *InitJob) Exists() bool {
+	return resources.Exists(j.initJob, j.configs)
 }
 
 func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
@@ -208,13 +209,10 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	// Deal with init job.
-	if !resources.Exists(j.initJob) {
+	if !j.initJob.Exists() {
 		if !dry {
 			_ = j.Build()
-			err = resources.Sync(ctx,
-				j.configs,
-				j.initJob,
-			)
+			err = resources.Sync(ctx, j.configs, j.initJob)
 		}
 
 		return ComponentStatusWaitingFor(fmt.Sprintf("%s creation", j.initJob.Name())), err
@@ -270,7 +268,7 @@ func (j *InitJob) isRestartCompleted() bool {
 }
 
 func (j *InitJob) removeIfExists(ctx context.Context) error {
-	if !resources.Exists(j.initJob) {
+	if !j.initJob.Exists() {
 		return nil
 	}
 	propagation := metav1.DeletePropagationForeground

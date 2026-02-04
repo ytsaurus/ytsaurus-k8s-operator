@@ -173,7 +173,7 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !resources.Exists(hp.balancingService) {
+	if !hp.balancingService.Exists() {
 		if !dry {
 			s := hp.balancingService.Build()
 			s.Spec.Type = hp.serviceType
