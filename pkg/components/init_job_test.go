@@ -80,7 +80,6 @@ func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
 			ComponentType: consts.MasterType,
 		},
 		ytsaurus,
-		ytsaurus,
 		"dummy",
 		consts.ClientConfigFileName,
 		func() ([]byte, error) { return []byte("dummy-cfg"), nil },

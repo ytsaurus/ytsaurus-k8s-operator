@@ -55,8 +55,7 @@ func (r *RemoteExecNodesReconciler) Sync(
 		resource.Status.ReleaseStatus = ytv1.RemoteNodeReleaseStatusRunning
 		requeue = false
 	}
-	resource.Status.ObservedGeneration = resource.Generation
-	apiProxy.UpdateOperatorVersion(&resource.Status.Conditions)
+	apiProxy.SyncObservedGeneration()
 
 	logger.Info("Setting status for remote exec nodes", "status", resource.Status.ReleaseStatus)
 	err = r.Client.Status().Update(ctx, resource)

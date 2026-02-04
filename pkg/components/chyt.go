@@ -41,7 +41,6 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 		initUser: NewInitJob(
 			l,
 			chyt,
-			chyt,
 			"user",
 			consts.ClientConfigFileName,
 			cfgen.GetNativeClientConfig,
@@ -51,7 +50,6 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 		),
 		initEnvironment: NewInitJob(
 			l,
-			chyt,
 			chyt,
 			"release",
 			consts.ClientConfigFileName,
@@ -64,7 +62,6 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 		),
 		initChPublicJob: NewInitJob(
 			l,
-			chyt,
 			chyt,
 			"ch-public",
 			consts.ClientConfigFileName,

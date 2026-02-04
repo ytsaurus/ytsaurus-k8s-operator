@@ -51,6 +51,22 @@ type OffshoreDataGateways struct {
 	Status OffshoreDataGatewaysStatus `json:"status,omitempty"`
 }
 
+func (r *OffshoreDataGateways) GetStatusObservedGeneration() int64 {
+	return r.Status.ObservedGeneration
+}
+
+func (r *OffshoreDataGateways) SetStatusObservedGeneration(generation int64) {
+	r.Status.ObservedGeneration = generation
+}
+
+func (r *OffshoreDataGateways) GetStatusConditions() []metav1.Condition {
+	return r.Status.Conditions
+}
+
+func (r *OffshoreDataGateways) SetStatusConditions(conditions []metav1.Condition) {
+	r.Status.Conditions = conditions
+}
+
 //+kubebuilder:object:root=true
 //+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 

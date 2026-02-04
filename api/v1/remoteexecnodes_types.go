@@ -48,6 +48,22 @@ type RemoteExecNodes struct {
 	Status RemoteExecNodesStatus `json:"status,omitempty"`
 }
 
+func (r *RemoteExecNodes) GetStatusObservedGeneration() int64 {
+	return r.Status.ObservedGeneration
+}
+
+func (r *RemoteExecNodes) SetStatusObservedGeneration(generation int64) {
+	r.Status.ObservedGeneration = generation
+}
+
+func (r *RemoteExecNodes) GetStatusConditions() []metav1.Condition {
+	return r.Status.Conditions
+}
+
+func (r *RemoteExecNodes) SetStatusConditions(conditions []metav1.Condition) {
+	r.Status.Conditions = conditions
+}
+
 //+kubebuilder:object:root=true
 //+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 

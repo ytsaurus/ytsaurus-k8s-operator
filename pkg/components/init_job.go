@@ -39,8 +39,7 @@ func initJobWithNativeDriverPrologue() string {
 
 type InitJob struct {
 	baseComponent
-	apiProxy          apiproxy.APIProxy
-	conditionsManager apiproxy.ConditionManager
+	apiProxy apiproxy.APIProxy
 
 	commonSpec    *ytv1.CommonSpec
 	commonPodSpec *ytv1.PodSpec
@@ -61,7 +60,6 @@ type InitJob struct {
 func NewInitJob(
 	labeller *labeller.Labeller,
 	apiProxy apiproxy.APIProxy,
-	conditionsManager apiproxy.ConditionManager,
 	name, configFileName string,
 	generator ConfigGeneratorFunc,
 	commonSpec *ytv1.CommonSpec,
@@ -87,7 +85,6 @@ func NewInitJob(
 			labeller: labeller,
 		},
 		apiProxy:               apiProxy,
-		conditionsManager:      conditionsManager,
 		commonSpec:             commonSpec,
 		commonPodSpec:          commonPodSpec,
 		instanceSpec:           instanceSpec,
@@ -114,7 +111,6 @@ func NewInitJobForYtsaurus(
 	return NewInitJob(
 		labeller,
 		ytsaurus,
-		ytsaurus,
 		name,
 		configFileName,
 		generator,
@@ -125,7 +121,7 @@ func NewInitJobForYtsaurus(
 }
 
 func (j *InitJob) IsCompleted() bool {
-	return j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition)
+	return j.apiProxy.IsStatusConditionTrue(j.initCompletedCondition)
 }
 
 func (j *InitJob) SetInitScript(script string) {
@@ -201,7 +197,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	logger := log.FromContext(ctx)
 	var err error
 
-	if j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition) {
+	if j.apiProxy.IsStatusConditionTrue(j.initCompletedCondition) {
 		return ComponentStatus{
 			SyncStatusReady,
 			fmt.Sprintf("%s completed", j.initJob.Name()),
@@ -224,7 +220,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	if !dry {
-		j.conditionsManager.SetStatusCondition(metav1.Condition{
+		j.apiProxy.SetStatusCondition(metav1.Condition{
 			Type:    j.initCompletedCondition,
 			Status:  metav1.ConditionTrue,
 			Reason:  "InitJobCompleted",
@@ -247,7 +243,7 @@ func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
 	if err := j.removeIfExists(ctx); err != nil {
 		return err
 	}
-	j.conditionsManager.SetStatusCondition(metav1.Condition{
+	j.apiProxy.SetStatusCondition(metav1.Condition{
 		Type:    j.initCompletedCondition,
 		Status:  metav1.ConditionFalse,
 		Reason:  "InitJobNeedRestart",
@@ -259,12 +255,12 @@ func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
 func (j *InitJob) isRestartPrepared() bool {
 	jobExists := resources.Exists(j.initJob)
 	configExists := j.configs.Exists()
-	conditionIsFalse := j.conditionsManager.IsStatusConditionFalse(j.initCompletedCondition)
+	conditionIsFalse := j.apiProxy.IsStatusConditionFalse(j.initCompletedCondition)
 	return !jobExists && !configExists && conditionIsFalse
 }
 
 func (j *InitJob) isRestartCompleted() bool {
-	return j.conditionsManager.IsStatusConditionTrue(j.initCompletedCondition)
+	return j.apiProxy.IsStatusConditionTrue(j.initCompletedCondition)
 }
 
 func (j *InitJob) removeIfExists(ctx context.Context) error {
