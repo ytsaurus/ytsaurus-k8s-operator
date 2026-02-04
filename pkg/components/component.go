@@ -6,6 +6,8 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
@@ -172,6 +174,15 @@ func (c *localComponent) SetReadyCondition(status ComponentStatus) {
 	})
 }
 
+func (c *localComponent) IsUpdatingResources() bool {
+	if c.ytsaurus == nil {
+		return true
+	}
+	return c.ytsaurus.IsUpdating() &&
+		c.ytsaurus.IsUpdatingComponent(c.GetType(), c.GetShortName()) &&
+		c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation
+}
+
 func newLocalServerComponent(
 	labeller *labeller.Labeller,
 	ytsaurus *apiproxy.Ytsaurus,
@@ -193,8 +204,7 @@ func (c *localServerComponent) Exists() bool {
 }
 
 func (c *localServerComponent) NeedSync() bool {
-	updating := c.ytsaurus == nil || c.ytsaurus.IsUpdating()
-	return c.server.needSync(updating)
+	return c.server.needSync(c.IsUpdatingResources())
 }
 
 func (c *localServerComponent) NeedUpdate() bool {
