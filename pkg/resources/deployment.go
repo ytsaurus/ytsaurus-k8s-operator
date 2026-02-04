@@ -3,6 +3,8 @@ package resources
 import (
 	"context"
 
+	"k8s.io/utils/ptr"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -67,10 +69,8 @@ func (d *Deployment) Build() *appsv1.Deployment {
 	return d.newObject
 }
 
-func (d *Deployment) NeedSync(replicas int32) bool {
-	return d.oldObject.Spec.Replicas == nil ||
-		*d.oldObject.Spec.Replicas != replicas ||
-		len(d.oldObject.Spec.Template.Spec.Containers) != 1
+func (d *Deployment) GetReplicas() int32 {
+	return ptr.Deref(d.oldObject.Spec.Replicas, 1)
 }
 
 func (d *Deployment) ArePodsRemoved(ctx context.Context) bool {
