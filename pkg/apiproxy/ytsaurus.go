@@ -78,6 +78,15 @@ func (c *Ytsaurus) GetUpdatingComponents() []ytv1.Component {
 	return c.ytsaurus.Status.UpdateStatus.UpdatingComponents
 }
 
+func (c *Ytsaurus) IsUpdatingComponent(componentType consts.ComponentType, componentName string) bool {
+	for _, component := range c.GetUpdatingComponents() {
+		if component.Type == componentType && component.Name == componentName {
+			return true
+		}
+	}
+	return false
+}
+
 func (c *Ytsaurus) IsUpdateStatusConditionTrue(condition string) bool {
 	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
 }
