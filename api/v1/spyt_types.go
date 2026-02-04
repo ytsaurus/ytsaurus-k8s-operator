@@ -66,6 +66,22 @@ type Spyt struct {
 	Status            SpytStatus `json:"status,omitempty"`
 }
 
+// FIXME: Add ObservedGeneration.
+func (r *Spyt) GetStatusObservedGeneration() int64 {
+	return r.Generation
+}
+
+func (r *Spyt) SetStatusObservedGeneration(generation int64) {
+}
+
+func (r *Spyt) GetStatusConditions() []metav1.Condition {
+	return r.Status.Conditions
+}
+
+func (r *Spyt) SetStatusConditions(conditions []metav1.Condition) {
+	r.Status.Conditions = conditions
+}
+
 //+kubebuilder:object:root=true
 //+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 

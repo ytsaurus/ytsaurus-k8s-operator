@@ -1162,6 +1162,22 @@ type Ytsaurus struct {
 	Status            YtsaurusStatus `json:"status,omitempty"`
 }
 
+func (r *Ytsaurus) GetStatusObservedGeneration() int64 {
+	return r.Status.ObservedGeneration
+}
+
+func (r *Ytsaurus) SetStatusObservedGeneration(generation int64) {
+	r.Status.ObservedGeneration = generation
+}
+
+func (r *Ytsaurus) GetStatusConditions() []metav1.Condition {
+	return r.Status.Conditions
+}
+
+func (r *Ytsaurus) SetStatusConditions(conditions []metav1.Condition) {
+	r.Status.Conditions = conditions
+}
+
 //+kubebuilder:object:root=true
 //+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 

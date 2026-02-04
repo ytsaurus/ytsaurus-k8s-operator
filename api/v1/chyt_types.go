@@ -65,6 +65,22 @@ type Chyt struct {
 	Status ChytStatus `json:"status,omitempty"`
 }
 
+// FIXME: Add ObservedGeneration.
+func (r *Chyt) GetStatusObservedGeneration() int64 {
+	return r.Generation
+}
+
+func (r *Chyt) SetStatusObservedGeneration(generation int64) {
+}
+
+func (r *Chyt) GetStatusConditions() []metav1.Condition {
+	return r.Status.Conditions
+}
+
+func (r *Chyt) SetStatusConditions(conditions []metav1.Condition) {
+	r.Status.Conditions = conditions
+}
+
 //+kubebuilder:object:root=true
 //+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 

@@ -40,7 +40,6 @@ func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.
 		initUser: NewInitJob(
 			l,
 			spyt,
-			spyt,
 			"user",
 			consts.ClientConfigFileName,
 			cfgen.GetNativeClientConfig,
@@ -50,7 +49,6 @@ func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.
 		),
 		initEnvironment: NewInitJob(
 			l,
-			spyt,
 			spyt,
 			"spyt-environment",
 			consts.ClientConfigFileName,

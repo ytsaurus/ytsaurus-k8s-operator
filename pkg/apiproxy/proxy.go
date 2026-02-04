@@ -1,8 +1,10 @@
 package apiproxy
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"slices"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -19,33 +21,47 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 )
 
+type ControllerObject interface {
+	client.Object
+
+	GetStatusObservedGeneration() int64
+	SetStatusObservedGeneration(generation int64)
+	GetStatusConditions() []metav1.Condition
+	SetStatusConditions(conditions []metav1.Condition)
+}
+
 type APIProxy interface {
 	Client() client.Client
+
 	FetchObject(ctx context.Context, name string, obj client.Object) error
 	ListObjects(ctx context.Context, objList client.ObjectList, opts ...client.ListOption) error
+
 	RecordWarning(reason, message string)
 	RecordNormal(reason, message string)
 
 	// IsObjectUpdated returns true if annotation of managed object is equal to generation of owner object.
 	IsObjectUpdated(obj client.Object) bool
+
 	SyncObject(ctx context.Context, oldObj, newObj client.Object) error
 	DeleteObject(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error
 
-	UpdateStatus(ctx context.Context) error
-	UpdateOperatorVersion(conditions *[]metav1.Condition) bool
-}
+	// SyncObservedGeneration confirms that current generation was observed.
+	// Returns true if generation actually has been changed and status must be saved.
+	SyncObservedGeneration() bool
 
-type ConditionManager interface {
 	SetStatusCondition(condition metav1.Condition)
 	IsStatusConditionTrue(conditionType string) bool
 	IsStatusConditionFalse(conditionType string) bool
+
+	UpdateStatus(ctx context.Context) error
 }
 
 func NewAPIProxy(
-	object client.Object,
+	object ControllerObject,
 	client client.Client,
 	recorder record.EventRecorder,
-	scheme *runtime.Scheme) APIProxy {
+	scheme *runtime.Scheme,
+) APIProxy {
 	return &apiProxy{
 		object:   object,
 		client:   client,
@@ -55,7 +71,7 @@ func NewAPIProxy(
 }
 
 type apiProxy struct {
-	object   client.Object
+	object   ControllerObject
 	client   client.Client
 	recorder record.EventRecorder
 	scheme   *runtime.Scheme
@@ -202,18 +218,59 @@ func (c *apiProxy) UpdateStatus(ctx context.Context) error {
 	return c.client.Status().Update(ctx, c.object)
 }
 
-func (c *apiProxy) UpdateOperatorVersion(conditions *[]metav1.Condition) bool {
+func sortConditions(conditions []metav1.Condition) {
+	slices.SortStableFunc(conditions, func(a, b metav1.Condition) int {
+		statusOrder := []metav1.ConditionStatus{metav1.ConditionTrue, metav1.ConditionFalse, metav1.ConditionUnknown}
+		if diff := cmp.Compare(slices.Index(statusOrder, a.Status), slices.Index(statusOrder, b.Status)); diff != 0 {
+			return diff
+		}
+		return a.LastTransitionTime.Compare(b.LastTransitionTime.Time)
+	})
+}
+
+func (c *apiProxy) SetStatusCondition(condition metav1.Condition) {
+	condition.ObservedGeneration = c.object.GetGeneration()
+	conditions := c.object.GetStatusConditions()
+	meta.SetStatusCondition(&conditions, condition)
+	sortConditions(conditions)
+	c.object.SetStatusConditions(conditions)
+}
+
+func (c *apiProxy) IsStatusConditionTrue(conditionType string) bool {
+	return meta.IsStatusConditionTrue(c.object.GetStatusConditions(), conditionType)
+}
+
+func (c *apiProxy) IsStatusConditionFalse(conditionType string) bool {
+	return meta.IsStatusConditionFalse(c.object.GetStatusConditions(), conditionType)
+}
+
+func (c *apiProxy) updateOperatorVersion() bool {
 	operatorVersion := version.GetVersion()
-	condition := meta.FindStatusCondition(*conditions, consts.ConditionOperatorVersion)
+	conditions := c.object.GetStatusConditions()
+	condition := meta.FindStatusCondition(conditions, consts.ConditionOperatorVersion)
 	if condition != nil && condition.Message != operatorVersion {
 		// Remove condition to update transition time.
-		meta.RemoveStatusCondition(conditions, consts.ConditionOperatorVersion)
+		meta.RemoveStatusCondition(&conditions, consts.ConditionOperatorVersion)
 	}
-	return meta.SetStatusCondition(conditions, metav1.Condition{
+	changed := meta.SetStatusCondition(&conditions, metav1.Condition{
 		Type:               consts.ConditionOperatorVersion,
 		Status:             metav1.ConditionTrue,
 		ObservedGeneration: c.object.GetGeneration(),
 		Reason:             "Observed",
 		Message:            operatorVersion,
 	})
+	c.object.SetStatusConditions(conditions)
+	return changed
+}
+
+func (c *apiProxy) SyncObservedGeneration() bool {
+	updated := false
+	if generation := c.object.GetGeneration(); c.object.GetStatusObservedGeneration() != generation {
+		c.object.SetStatusObservedGeneration(generation)
+		updated = true
+	}
+	if c.updateOperatorVersion() {
+		updated = true
+	}
+	return updated
 }
