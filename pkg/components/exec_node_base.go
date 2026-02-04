@@ -38,7 +38,7 @@ func (n *baseExecNode) Exists() bool {
 }
 
 func (n *baseExecNode) NeedSync() bool {
-	updating := n.ytsaurus == nil || n.ytsaurus.IsUpdating()
+	updating := n.IsUpdatingResources()
 	return n.server.needSync(updating) || (updating && n.sidecarConfigNeedsReload())
 }
 
