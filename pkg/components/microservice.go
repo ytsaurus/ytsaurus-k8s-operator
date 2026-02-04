@@ -8,8 +8,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
-
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
@@ -107,19 +105,15 @@ func (m *microserviceImpl) Sync(ctx context.Context) error {
 		return err
 	}
 
-	return resources.Sync(ctx,
-		m.deployment,
-		m.configs,
-		m.service,
-	)
+	return resources.Sync(ctx, m.deployment, m.configs, m.service)
 }
 
 func (m *microserviceImpl) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx,
-		m.configs,
-		m.deployment,
-		m.service,
-	)
+	return resources.Fetch(ctx, m.deployment, m.configs, m.service)
+}
+
+func (m *microserviceImpl) Exists() bool {
+	return resources.Exists(m.deployment, m.configs, m.service)
 }
 
 func (m *microserviceImpl) needSync() bool {
@@ -127,9 +121,8 @@ func (m *microserviceImpl) needSync() bool {
 	if err != nil {
 		needReload = false
 	}
-	return m.configs.NeedInit() ||
-		(m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && needReload) ||
-		!resources.Exists(m.service) ||
+	return !m.Exists() ||
+		(m.ytsaurus.IsUpdating() && needReload) ||
 		m.deployment.GetReplicas() != m.instanceCount
 }
 
@@ -187,7 +180,7 @@ func (m *microserviceImpl) arePodsReady(ctx context.Context) bool {
 }
 
 func (m *microserviceImpl) arePodsRemoved(ctx context.Context) bool {
-	if !resources.Exists(m.deployment) {
+	if !m.deployment.Exists() {
 		return true
 	}
 	return m.deployment.ArePodsRemoved(ctx)
@@ -199,7 +192,7 @@ func (m *microserviceImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool
 }
 
 func (m *microserviceImpl) needUpdate() bool {
-	if !m.exists() {
+	if !m.Exists() {
 		return false
 	}
 
@@ -212,11 +205,6 @@ func (m *microserviceImpl) needUpdate() bool {
 		return false
 	}
 	return needReload
-}
-
-func (m *microserviceImpl) exists() bool {
-	return resources.Exists(m.deployment) &&
-		resources.Exists(m.service)
 }
 
 func (m *microserviceImpl) podsImageCorrespondsToSpec() bool {

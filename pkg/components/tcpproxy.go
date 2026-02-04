@@ -95,7 +95,7 @@ func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if tp.balancingService != nil && !resources.Exists(tp.balancingService) {
+	if tp.balancingService != nil && !tp.balancingService.Exists() {
 		if !dry {
 			tp.balancingService.Build()
 			err = tp.balancingService.Sync(ctx)

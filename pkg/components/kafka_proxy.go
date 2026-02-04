@@ -111,7 +111,7 @@ func (kp *KafkaProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if kp.balancingService != nil && !resources.Exists(kp.balancingService) {
+	if kp.balancingService != nil && !kp.balancingService.Exists() {
 		if !dry {
 			kp.balancingService.Build()
 			err = kp.balancingService.Sync(ctx)

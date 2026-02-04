@@ -32,6 +32,10 @@ func (n *baseExecNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, n.server, n.sidecarConfig)
 }
 
+func (n *baseExecNode) Exists() bool {
+	return resources.Exists(n.server, n.sidecarConfig)
+}
+
 func (n *baseExecNode) doBuildBase() error {
 	statefulSet := n.server.buildStatefulSet()
 	podSpec := &statefulSet.Spec.Template.Spec

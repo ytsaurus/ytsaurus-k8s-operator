@@ -226,10 +226,11 @@ func (tt *Timbertruck) handleTabletNodes(ctx context.Context, dry bool) (Compone
 }
 
 func (tt *Timbertruck) Fetch(ctx context.Context) error {
-	return resources.Fetch(
-		ctx,
-		tt.timbertruckSecret,
-	)
+	return tt.timbertruckSecret.Fetch(ctx)
+}
+
+func (tt *Timbertruck) Exists() bool {
+	return tt.timbertruckSecret.Exists()
 }
 
 func (tt *Timbertruck) Status(ctx context.Context) (ComponentStatus, error) {

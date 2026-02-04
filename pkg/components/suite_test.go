@@ -53,6 +53,10 @@ func (fc *FakeComponent) Fetch(ctx context.Context) error {
 	return nil
 }
 
+func (fc *FakeComponent) Exists() bool {
+	return true
+}
+
 func (fc *FakeComponent) Sync(ctx context.Context) error {
 	return nil
 }
@@ -115,6 +119,10 @@ func (fs *FakeServer) configNeedsReload() bool {
 
 func (fs *FakeServer) needBuild() bool {
 	return false
+}
+
+func (fs *FakeServer) Exists() bool {
+	return true
 }
 
 func (fs *FakeServer) needSync() bool {

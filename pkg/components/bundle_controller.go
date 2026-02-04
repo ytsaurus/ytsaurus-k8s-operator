@@ -8,7 +8,6 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -47,7 +46,11 @@ func NewBundleController(
 }
 
 func (bc *BundleController) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, bc.server)
+	return bc.server.Fetch(ctx)
+}
+
+func (bc *BundleController) Exists() bool {
+	return bc.server.Exists()
 }
 
 func (bc *BundleController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {

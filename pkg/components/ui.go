@@ -95,6 +95,10 @@ func (u *UI) Fetch(ctx context.Context) error {
 	)
 }
 
+func (u *UI) Exists() bool {
+	return resources.Exists(u.microservice, u.initJob, u.secret)
+}
+
 func (u *UI) initUser() string {
 	token, _ := u.secret.GetValue(consts.TokenSecretKey)
 	commands := createUserCommand(consts.UIUserName, "", token, false)

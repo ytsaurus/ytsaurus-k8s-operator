@@ -132,12 +132,11 @@ func NewStrawberryController(
 }
 
 func (c *StrawberryController) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx,
-		c.microservice,
-		c.initUserAndUrlJob,
-		c.initChytClusterJob,
-		c.secret,
-	)
+	return resources.Fetch(ctx, c.microservice, c.initUserAndUrlJob, c.initChytClusterJob, c.secret)
+}
+
+func (c *StrawberryController) Exists() bool {
+	return resources.Exists(c.microservice, c.initUserAndUrlJob, c.initChytClusterJob, c.secret)
 }
 
 func (c *StrawberryController) initUsers() string {
