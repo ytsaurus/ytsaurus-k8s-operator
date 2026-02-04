@@ -226,7 +226,7 @@ func (s *serverImpl) configNeedsReload() bool {
 func (s *serverImpl) needBuild() bool {
 	return s.configs.NeedInit() ||
 		!s.exists() ||
-		s.statefulSet.NeedSync(s.instanceSpec.InstanceCount)
+		s.statefulSet.GetReplicas() != s.instanceSpec.InstanceCount
 }
 
 func (s *serverImpl) needSync() bool {
