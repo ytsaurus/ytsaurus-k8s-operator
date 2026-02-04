@@ -130,7 +130,7 @@ func (m *microserviceImpl) needSync() bool {
 	return m.configs.NeedInit() ||
 		(m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && needReload) ||
 		!resources.Exists(m.service) ||
-		m.deployment.NeedSync(m.instanceCount)
+		m.deployment.GetReplicas() != m.instanceCount
 }
 
 func (m *microserviceImpl) buildDeployment() *appsv1.Deployment {

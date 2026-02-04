@@ -3,6 +3,8 @@ package resources
 import (
 	"context"
 
+	"k8s.io/utils/ptr"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -57,6 +59,10 @@ func (s *StatefulSet) Build() *appsv1.StatefulSet {
 
 	s.built = true
 	return s.newObject
+}
+
+func (s *StatefulSet) GetReplicas() int32 {
+	return ptr.Deref(s.oldObject.Spec.Replicas, 1)
 }
 
 func (s *StatefulSet) ListPods(ctx context.Context) ([]corev1.Pod, error) {
@@ -153,9 +159,4 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minRe
 		"minReadyInstanceCount", effectiveMinReadyInstanceCount,
 		"totalInstanceCount", len(podList.Items))
 	return true
-}
-
-func (s *StatefulSet) NeedSync(replicas int32) bool {
-	return s.oldObject.Spec.Replicas == nil ||
-		*s.oldObject.Spec.Replicas != replicas
 }
