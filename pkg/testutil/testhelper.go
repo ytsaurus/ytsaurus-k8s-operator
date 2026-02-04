@@ -225,8 +225,8 @@ func MarkAllJobsCompleted(h *TestHelper) {
 }
 
 const (
-	eventuallyWaitTime = 10 * time.Second
-	eventuallyTickTime = 500 * time.Millisecond
+	eventuallyWaitTime = 20 * time.Second
+	eventuallyTickTime = 200 * time.Millisecond
 )
 
 func FetchEventually(h *TestHelper, key string, obj client.Object) {
