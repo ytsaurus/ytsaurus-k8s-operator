@@ -63,9 +63,20 @@ func (tt *Timbertruck) initTimbertruckUser(ctx context.Context, deliveryLoggers 
 		return nil
 	}
 
-	err := CreateUser(ctx, ytClient, login, token, false)
+	issuedToken, err := CreateUser(ctx, ytClient, login, token, false)
 	if err != nil {
 		return fmt.Errorf("failed to create timbertruck user: %w", err)
+	}
+
+	// Update secret with the issued token if it's different from the existing one.
+	if token != issuedToken && issuedToken != "" {
+		secretSpec := tt.timbertruckSecret.Build()
+		secretSpec.StringData = map[string]string{
+			consts.TokenSecretKey: issuedToken,
+		}
+		if err := tt.timbertruckSecret.Sync(ctx); err != nil {
+			return fmt.Errorf("failed to update secret with issued token: %w", err)
+		}
 	}
 
 	logsDeliveryPaths := make(map[string]struct{})

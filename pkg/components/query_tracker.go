@@ -197,10 +197,22 @@ func (qt *QueryTracker) createUser(ctx context.Context, ytClient yt.Client) (err
 	logger := log.FromContext(ctx)
 
 	token, _ := qt.secret.GetValue(consts.TokenSecretKey)
-	err = CreateUser(ctx, ytClient, "query_tracker", token, true)
+	issuedToken, err := CreateUser(ctx, ytClient, "query_tracker", token, true)
 	if err != nil {
 		logger.Error(err, "Creating user 'query_tracker' failed")
 		return err
+	}
+
+	// Update secret with the issued token if it's different from the existing one.
+	if token != issuedToken && issuedToken != "" {
+		secretSpec := qt.secret.Build()
+		secretSpec.StringData = map[string]string{
+			consts.TokenSecretKey: issuedToken,
+		}
+		if err := qt.secret.Sync(ctx); err != nil {
+			logger.Error(err, "Failed to update secret with issued token")
+			return err
+		}
 	}
 
 	return nil
