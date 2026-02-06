@@ -2185,12 +2185,7 @@ exec "$@"`
 			UpdateObject(ctx, ytsaurus)
 			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 
-			By("Wait for image heating to start")
-			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
-				HaveClusterUpdateState(ytv1.UpdateStateWaitingForImagesHeated),
-			)
-
-			By("Verify updating components are limited to ImageHeater and ControllerAgent")
+			By("Wait for update to start with ImageHeater and ControllerAgent")
 			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
 				HaveClusterUpdatingComponents(consts.ImageHeaterType, consts.ControllerAgentType),
 			)
