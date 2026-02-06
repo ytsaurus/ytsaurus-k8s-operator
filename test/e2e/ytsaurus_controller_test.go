@@ -1337,20 +1337,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		var remoteNodes client.Object
 
 		BeforeEach(func() {
-			remoteYtsaurus = &ytv1.RemoteYtsaurus{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      testutil.RemoteResourceName,
-					Namespace: namespace,
-				},
-				Spec: ytv1.RemoteYtsaurusSpec{
-					MasterConnectionSpec: ytv1.MasterConnectionSpec{
-						CellTag: ytsaurus.Spec.PrimaryMasters.CellTag,
-						HostAddresses: []string{
-							fmt.Sprintf("ms-0.masters.%s.svc.cluster.local", namespace),
-						},
-					},
-				},
-			}
+			remoteYtsaurus = ytBuilder.CreateRemoteYtsaurus()
 			objects = append(objects, remoteYtsaurus)
 			remoteNodes = nil
 		})
@@ -1372,23 +1359,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				// Ensure that no local exec nodes exist, only remote ones (which will be created later).
 				ytsaurus.Spec.ExecNodes = nil
 
-				remoteComponentNames[consts.ExecNodeType] = []string{testutil.RemoteResourceName}
-				remoteNodes = &ytv1.RemoteExecNodes{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      testutil.RemoteResourceName,
-						Namespace: namespace,
-					},
-					Spec: ytv1.RemoteExecNodesSpec{
-						RemoteClusterSpec: &corev1.LocalObjectReference{
-							Name: testutil.RemoteResourceName,
-						},
-						CommonSpec: ytv1.CommonSpec{
-							CoreImage: testutil.CurrentImages.Core,
-							JobImage:  ptr.To(testutil.CurrentImages.Job),
-						},
-						ExecNodesSpec: ytBuilder.CreateExecNodeSpec(),
-					},
-				}
+				remoteNodes = ytBuilder.CreateRemoteExecNodes()
+				remoteComponentNames[consts.ExecNodeType] = []string{remoteNodes.GetName()}
 				objects = append(objects, remoteNodes)
 			})
 
@@ -1417,7 +1389,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				// Expect(statuses).Should(Not(BeEmpty()))
 				for _, status := range statuses {
 					Expect(status.Address).Should(
-						ContainSubstring("end-"+testutil.RemoteResourceName),
+						ContainSubstring("end-"+remoteNodes.GetName()),
 						"actual status: %s", status,
 					)
 				}
@@ -1428,24 +1400,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Context("With remote data nodes", Label("data"), func() {
 			BeforeEach(func() {
 				By("Adding remote data nodes")
-				remoteComponentNames[consts.DataNodeType] = []string{testutil.RemoteResourceName}
-				remoteNodes = &ytv1.RemoteDataNodes{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      testutil.RemoteResourceName,
-						Namespace: namespace,
-					},
-					Spec: ytv1.RemoteDataNodesSpec{
-						RemoteClusterSpec: &corev1.LocalObjectReference{
-							Name: testutil.RemoteResourceName,
-						},
-						CommonSpec: ytv1.CommonSpec{
-							CoreImage: testutil.CurrentImages.Core,
-						},
-						DataNodesSpec: ytv1.DataNodesSpec{
-							InstanceSpec: ytBuilder.CreateDataNodeInstanceSpec(3),
-						},
-					},
-				}
+				remoteNodes = ytBuilder.CreateRemoteDataNodes()
+				remoteComponentNames[consts.DataNodeType] = []string{remoteNodes.GetName()}
 				objects = append(objects, remoteNodes)
 			})
 
@@ -1471,24 +1427,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytBuilder.WithDataNodes()
 
 				By("Adding remote tablet nodes")
-				remoteComponentNames[consts.TabletNodeType] = []string{testutil.RemoteResourceName}
-				remoteNodes = &ytv1.RemoteTabletNodes{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      testutil.RemoteResourceName,
-						Namespace: namespace,
-					},
-					Spec: ytv1.RemoteTabletNodesSpec{
-						RemoteClusterSpec: &corev1.LocalObjectReference{
-							Name: testutil.RemoteResourceName,
-						},
-						CommonSpec: ytv1.CommonSpec{
-							CoreImage: testutil.CurrentImages.Core,
-						},
-						TabletNodesSpec: ytv1.TabletNodesSpec{
-							InstanceSpec: ytBuilder.CreateTabletNodeSpec(3),
-						},
-					},
-				}
+				remoteNodes = ytBuilder.CreateRemoteTabletNodes()
+				remoteComponentNames[consts.TabletNodeType] = []string{remoteNodes.GetName()}
 				objects = append(objects, remoteNodes)
 			})
 

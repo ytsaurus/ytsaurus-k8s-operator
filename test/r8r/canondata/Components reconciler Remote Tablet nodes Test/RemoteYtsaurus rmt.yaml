@@ -1,0 +1,15 @@
+apiVersion: cluster.ytsaurus.tech/v1
+kind: RemoteYtsaurus
+metadata:
+  creationTimestamp: null
+  generation: 1
+  name: rmt
+  namespace: ytsaurus-components
+  resourceVersion: "1"
+spec:
+  cellTag: 1
+  cellTagMasterCaches: 0
+  hostAddresses:
+  - ms-0.masters.ytsaurus-components.svc.cluster.local
+  resources: {}
+status: {}

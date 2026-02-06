@@ -1,0 +1,26 @@
+apiVersion: cluster.ytsaurus.tech/v1
+kind: Spyt
+metadata:
+  creationTimestamp: null
+  generation: 1
+  name: test-ytsaurus
+  namespace: ytsaurus-components
+  resourceVersion: "7"
+spec:
+  ytsaurus:
+    name: test-ytsaurus
+status:
+  conditions:
+  - lastTransitionTime: null
+    message: Init job successfully completed
+    observedGeneration: 1
+    reason: InitJobCompleted
+    status: "True"
+    type: userSPYT-test-ytsaurusInitJobCompleted
+  - lastTransitionTime: null
+    message: Init job successfully completed
+    observedGeneration: 1
+    reason: InitJobCompleted
+    status: "True"
+    type: spyt-environmentSPYT-test-ytsaurusInitJobCompleted
+  releaseStatus: Finished

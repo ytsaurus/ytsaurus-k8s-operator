@@ -1,0 +1,29 @@
+apiVersion: cluster.ytsaurus.tech/v1
+kind: Chyt
+metadata:
+  creationTimestamp: null
+  generation: 1
+  name: test-ytsaurus
+  namespace: ytsaurus-components
+  resourceVersion: "7"
+spec:
+  createPublicClique: true
+  image: ghcr.io/ytsaurus/chyt:2.16.0
+  makeDefault: true
+  ytsaurus:
+    name: test-ytsaurus
+status:
+  conditions:
+  - lastTransitionTime: null
+    message: Init job successfully completed
+    observedGeneration: 1
+    reason: InitJobCompleted
+    status: "True"
+    type: userCHYT-test-ytsaurusInitJobCompleted
+  - lastTransitionTime: null
+    message: Init job successfully completed
+    observedGeneration: 1
+    reason: InitJobCompleted
+    status: "True"
+    type: releaseCHYT-test-ytsaurusInitJobCompleted
+  releaseStatus: Finished
