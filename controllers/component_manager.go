@@ -284,7 +284,7 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 		}
 	}
 
-	if err := cm.ytsaurus.APIProxy().UpdateStatus(ctx); err != nil {
+	if err := cm.ytsaurus.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "update Ytsaurus status failed")
 		return ctrl.Result{Requeue: true}, err
 	}
@@ -362,7 +362,7 @@ func (cm *ComponentManager) runImageHeaterIfEnabled(ctx context.Context) (handle
 		}
 	}
 
-	if err := cm.ytsaurus.APIProxy().UpdateStatus(ctx); err != nil {
+	if err := cm.ytsaurus.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "update Ytsaurus status failed")
 		return true, ctrl.Result{Requeue: true}, err
 	}

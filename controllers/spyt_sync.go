@@ -53,7 +53,7 @@ func (r *SpytReconciler) Sync(ctx context.Context, resource *ytv1.Spyt, ytsaurus
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if err := spyt.APIProxy().UpdateStatus(ctx); err != nil {
+	if err := spyt.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "update spyt status failed")
 		return ctrl.Result{Requeue: true}, err
 	}

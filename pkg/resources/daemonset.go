@@ -31,7 +31,7 @@ func NewDaemonSet(
 ) *DaemonSet {
 	return &DaemonSet{
 		BaseManagedResource: BaseManagedResource[*appsv1.DaemonSet]{
-			proxy:     ytsaurus.APIProxy(),
+			proxy:     ytsaurus,
 			labeller:  labeller,
 			name:      name,
 			oldObject: &appsv1.DaemonSet{},

@@ -84,7 +84,7 @@ func NewRPCProxy(
 				},
 			},
 			l,
-			ytsaurus.APIProxy())
+			ytsaurus)
 	}
 
 	var tlsSecret *resources.TLSSecret

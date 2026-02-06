@@ -79,7 +79,7 @@ func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
 			ClusterName:   resource.GetName(),
 			ComponentType: consts.MasterType,
 		},
-		ytsaurus.APIProxy(),
+		ytsaurus,
 		ytsaurus,
 		"dummy",
 		consts.ClientConfigFileName,
@@ -111,7 +111,7 @@ func TestJobRestart(t *testing.T) {
 	require.Eventually(t,
 		func() bool {
 			batchJob := batchv1.Job{}
-			err = ytsaurus.APIProxy().Client().Get(ctx, client.ObjectKey{
+			err = ytsaurus.Client().Get(ctx, client.ObjectKey{
 				Name:      "ms-init-job-dummy",
 				Namespace: namespace,
 			}, &batchJob)

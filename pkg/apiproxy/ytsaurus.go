@@ -23,7 +23,8 @@ import (
 )
 
 type Ytsaurus struct {
-	apiProxy APIProxy
+	APIProxy
+
 	ytsaurus *ytv1.Ytsaurus
 }
 
@@ -33,13 +34,9 @@ func NewYtsaurus(
 	recorder record.EventRecorder,
 	scheme *runtime.Scheme) *Ytsaurus {
 	return &Ytsaurus{
+		APIProxy: NewAPIProxy(ytsaurus, client, recorder, scheme),
 		ytsaurus: ytsaurus,
-		apiProxy: NewAPIProxy(ytsaurus, client, recorder, scheme),
 	}
-}
-
-func (c *Ytsaurus) APIProxy() APIProxy {
-	return c.apiProxy
 }
 
 func (c *Ytsaurus) GetResource() *ytv1.Ytsaurus {
@@ -147,7 +144,7 @@ func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
 	c.ytsaurus.Status.UpdateStatus.Conditions = keepImagesHeatedCondition(c.ytsaurus.Status.UpdateStatus.Conditions)
 	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
 	c.SetUpdatingComponents(nil)
-	return c.apiProxy.UpdateStatus(ctx)
+	return c.UpdateStatus(ctx)
 }
 
 // keepImagesHeatedCondition needed to keep image-heater hash for the next reconcile
@@ -162,14 +159,14 @@ func keepImagesHeatedCondition(conditions []metav1.Condition) []metav1.Condition
 
 func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {
 	logger := log.FromContext(ctx)
-	c.apiProxy.RecordNormal("Update", message)
+	c.RecordNormal("Update", message)
 	logger.Info(fmt.Sprintf("Ytsaurus update: %s", message))
 }
 
 func (c *Ytsaurus) SaveClusterState(ctx context.Context, clusterState ytv1.ClusterState) error {
 	logger := log.FromContext(ctx)
 	c.ytsaurus.Status.State = clusterState
-	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
+	if err := c.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "unable to update Ytsaurus cluster status")
 		return err
 	}
@@ -185,7 +182,7 @@ func (c *Ytsaurus) SyncObservedGeneration() bool {
 		c.ytsaurus.Status.ObservedGeneration = c.ytsaurus.Generation
 		updated = true
 	}
-	if c.apiProxy.UpdateOperatorVersion(&c.ytsaurus.Status.Conditions) {
+	if c.UpdateOperatorVersion(&c.ytsaurus.Status.Conditions) {
 		updated = true
 	}
 	return updated
@@ -194,7 +191,7 @@ func (c *Ytsaurus) SyncObservedGeneration() bool {
 func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateState) error {
 	logger := log.FromContext(ctx)
 	c.ytsaurus.Status.UpdateStatus.State = updateState
-	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
+	if err := c.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "unable to update Ytsaurus update state")
 		return err
 	}
