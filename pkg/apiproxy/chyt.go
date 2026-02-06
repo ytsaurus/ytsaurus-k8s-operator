@@ -13,8 +13,9 @@ import (
 )
 
 type Chyt struct {
-	apiProxy APIProxy
-	chyt     *ytv1.Chyt
+	APIProxy
+
+	chyt *ytv1.Chyt
 }
 
 func NewChyt(
@@ -23,17 +24,13 @@ func NewChyt(
 	recorder record.EventRecorder,
 	scheme *runtime.Scheme) *Chyt {
 	return &Chyt{
+		APIProxy: NewAPIProxy(chyt, client, recorder, scheme),
 		chyt:     chyt,
-		apiProxy: NewAPIProxy(chyt, client, recorder, scheme),
 	}
 }
 
 func (c *Chyt) GetResource() *ytv1.Chyt {
 	return c.chyt
-}
-
-func (c *Chyt) APIProxy() APIProxy {
-	return c.apiProxy
 }
 
 func (c *Chyt) SetStatusCondition(condition metav1.Condition) {
@@ -52,7 +49,7 @@ func (c *Chyt) IsStatusConditionFalse(conditionType string) bool {
 func (c *Chyt) SaveReleaseStatus(ctx context.Context, releaseStatus ytv1.ChytReleaseStatus) error {
 	logger := log.FromContext(ctx)
 	c.GetResource().Status.ReleaseStatus = releaseStatus
-	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
+	if err := c.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "unable to update Chyt release status")
 		return err
 	}

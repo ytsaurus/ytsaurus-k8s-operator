@@ -64,7 +64,7 @@ func NewYtsaurusClient(
 
 	var configOverrides *resources.ConfigMap
 	if overrides := resource.Spec.ConfigOverrides; overrides != nil {
-		configOverrides = resources.NewConfigMap(overrides.Name, l, ytsaurus.APIProxy())
+		configOverrides = resources.NewConfigMap(overrides.Name, l, ytsaurus)
 	}
 
 	return &YtsaurusClient{
@@ -76,7 +76,7 @@ func NewYtsaurusClient(
 		cypressPatch: resources.NewConfigMap(
 			l.GetCypressPatchConfigMapName(),
 			l,
-			ytsaurus.APIProxy(),
+			ytsaurus,
 		),
 		initUserJob: NewInitJobForYtsaurus(
 			l,
@@ -89,7 +89,7 @@ func NewYtsaurusClient(
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
-			ytsaurus.APIProxy()),
+			ytsaurus),
 	}
 }
 
@@ -707,11 +707,10 @@ func (yc *YtsaurusClient) BuildCypressPatch(ctx context.Context) (*corev1.Config
 
 func (yc *YtsaurusClient) SyncCypressPatch(ctx context.Context) error {
 	logger := log.FromContext(ctx)
-	apiproxy := yc.ytsaurus.APIProxy()
 	cp, patch, err := yc.BuildCypressPatch(ctx)
 	if err != nil {
 		logger.Error(err, "Failed to build cypress patch")
-		apiproxy.RecordWarning("CypressPatch", fmt.Sprintf("Failed to build cypress patch: %v", err))
+		yc.ytsaurus.RecordWarning("CypressPatch", fmt.Sprintf("Failed to build cypress patch: %v", err))
 		yc.ytsaurus.SetStatusCondition(metav1.Condition{
 			LastTransitionTime: metav1.Now(),
 			Type:               consts.ConditionCypressPatchApplied,
@@ -726,7 +725,7 @@ func (yc *YtsaurusClient) SyncCypressPatch(ctx context.Context) error {
 	}
 	if yc.shouldSkipCypressOperations() {
 		logger.Info("Skipping cypress patch apply in test")
-		apiproxy.RecordNormal("CypressPatch", "Skip patch apply in test")
+		yc.ytsaurus.RecordNormal("CypressPatch", "Skip patch apply in test")
 		return nil
 	}
 	cypressPatchTarget := ypatch.CypressPatchTarget{
@@ -735,7 +734,7 @@ func (yc *YtsaurusClient) SyncCypressPatch(ctx context.Context) error {
 	err = cypressPatchTarget.ApplyPatchSet(ctx, "", patch)
 	if err == nil {
 		logger.Info("Cypress patch applied")
-		apiproxy.RecordNormal("CypressPatch", "patch applied")
+		yc.ytsaurus.RecordNormal("CypressPatch", "patch applied")
 		yc.ytsaurus.SetStatusCondition(metav1.Condition{
 			LastTransitionTime: metav1.Now(),
 			Type:               consts.ConditionCypressPatchApplied,
@@ -745,7 +744,7 @@ func (yc *YtsaurusClient) SyncCypressPatch(ctx context.Context) error {
 		})
 	} else {
 		logger.Error(err, "Failed to apply cypress patch")
-		apiproxy.RecordWarning("CypressPatch", fmt.Sprintf("Failed to apply cypress patch: %v", err))
+		yc.ytsaurus.RecordWarning("CypressPatch", fmt.Sprintf("Failed to apply cypress patch: %v", err))
 		yc.ytsaurus.SetStatusCondition(metav1.Condition{
 			LastTransitionTime: metav1.Now(),
 			Type:               consts.ConditionCypressPatchApplied,

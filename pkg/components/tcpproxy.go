@@ -45,7 +45,7 @@ func NewTCPProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, masterR
 			spec.PortCount,
 			spec.MinPort,
 			l,
-			ytsaurus.APIProxy())
+			ytsaurus)
 	}
 
 	return &TcpProxy{

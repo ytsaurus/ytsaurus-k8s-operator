@@ -94,7 +94,7 @@ func NewHTTPProxy(
 		cfgen.GetHTTPProxiesServiceName(spec.Role),
 		&spec.Transport,
 		l,
-		ytsaurus.APIProxy())
+		ytsaurus)
 
 	balancingService.SetHttpPort(spec.HttpPort)
 	balancingService.SetHttpsPort(spec.HttpsPort)

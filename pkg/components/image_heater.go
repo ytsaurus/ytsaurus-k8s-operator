@@ -382,7 +382,7 @@ func (ih *ImageHeater) componentImageNeedsUpdate(ctx context.Context, component 
 	sts := resources.NewStatefulSet(
 		l.GetServerStatefulSetName(),
 		l,
-		ih.ytsaurus.APIProxy(),
+		ih.ytsaurus,
 		&ih.ytsaurus.GetResource().Spec.CommonSpec,
 	)
 	if err := sts.Fetch(ctx); err != nil {

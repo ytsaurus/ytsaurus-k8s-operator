@@ -32,7 +32,7 @@ func NewDeployment(
 ) *Deployment {
 	return &Deployment{
 		BaseManagedResource: BaseManagedResource[*appsv1.Deployment]{
-			proxy:     ytsaurus.APIProxy(),
+			proxy:     ytsaurus,
 			labeller:  labeller,
 			name:      name,
 			oldObject: &appsv1.Deployment{},

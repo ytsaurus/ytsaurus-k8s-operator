@@ -84,7 +84,7 @@ func newServer(
 ) server {
 	return newServerConfigured(
 		l,
-		ytsaurus.APIProxy(),
+		ytsaurus,
 		ytsaurus.GetCommonSpec(),
 		ytsaurus.GetCommonPodSpec(),
 		instanceSpec,

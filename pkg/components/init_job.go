@@ -113,7 +113,7 @@ func NewInitJobForYtsaurus(
 ) *InitJob {
 	return NewInitJob(
 		labeller,
-		ytsaurus.APIProxy(),
+		ytsaurus,
 		ytsaurus,
 		name,
 		configFileName,
