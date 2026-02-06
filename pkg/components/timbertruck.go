@@ -47,7 +47,7 @@ func NewTimbertruck(
 		timbertruckSecret: resources.NewStringSecret(
 			buildUserCredentialsSecretname(consts.TimbertruckUserName),
 			l,
-			ytsaurus.APIProxy()),
+			ytsaurus),
 	}
 }
 

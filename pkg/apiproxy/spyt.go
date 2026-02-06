@@ -13,8 +13,9 @@ import (
 )
 
 type Spyt struct {
-	apiProxy APIProxy
-	spyt     *ytv1.Spyt
+	APIProxy
+
+	spyt *ytv1.Spyt
 }
 
 func NewSpyt(
@@ -23,17 +24,13 @@ func NewSpyt(
 	recorder record.EventRecorder,
 	scheme *runtime.Scheme) *Spyt {
 	return &Spyt{
+		APIProxy: NewAPIProxy(spyt, client, recorder, scheme),
 		spyt:     spyt,
-		apiProxy: NewAPIProxy(spyt, client, recorder, scheme),
 	}
 }
 
 func (c *Spyt) GetResource() *ytv1.Spyt {
 	return c.spyt
-}
-
-func (c *Spyt) APIProxy() APIProxy {
-	return c.apiProxy
 }
 
 func (c *Spyt) SetStatusCondition(condition metav1.Condition) {
@@ -52,7 +49,7 @@ func (c *Spyt) IsStatusConditionFalse(conditionType string) bool {
 func (c *Spyt) SaveReleaseStatus(ctx context.Context, releaseStatus ytv1.SpytReleaseStatus) error {
 	logger := log.FromContext(ctx)
 	c.GetResource().Status.ReleaseStatus = releaseStatus
-	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
+	if err := c.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "unable to update Spyt release status")
 		return err
 	}

@@ -72,7 +72,7 @@ func NewQueryTracker(
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
-			ytsaurus.APIProxy()),
+			ytsaurus),
 	}
 }
 

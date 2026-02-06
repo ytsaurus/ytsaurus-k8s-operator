@@ -121,7 +121,7 @@ func NewStrawberryController(
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
-			ytsaurus.APIProxy()),
+			ytsaurus),
 		caRootBundle:    resources.NewCARootBundle(resource.Spec.CARootBundle),
 		caBundle:        resources.NewCABundle(resource.Spec.CABundle),
 		busClientSecret: busClientSecret,

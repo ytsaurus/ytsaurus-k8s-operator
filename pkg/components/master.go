@@ -107,14 +107,14 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 			hydraPersistenceUploaderSecret: resources.NewStringSecret(
 				buildUserCredentialsSecretname(consts.HydraPersistenceUploaderUserName),
 				l,
-				ytsaurus.APIProxy()),
+				ytsaurus),
 		},
 	}
 }
 
 func (m *Master) Fetch(ctx context.Context) error {
 	if m.ytsaurus.GetResource().Spec.AdminCredentials != nil {
-		err := m.ytsaurus.APIProxy().FetchObject(
+		err := m.ytsaurus.FetchObject(
 			ctx,
 			m.ytsaurus.GetResource().Spec.AdminCredentials.Name,
 			&m.adminCredentials)

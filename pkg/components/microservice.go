@@ -59,7 +59,7 @@ func newMicroservice(
 ) microservice {
 	configs := NewConfigMapBuilder(
 		labeller,
-		ytsaurus.APIProxy(),
+		ytsaurus,
 		labeller.GetMainConfigMapName(),
 		ytsaurus.GetResource().Spec.ConfigOverrides,
 	)
@@ -77,7 +77,7 @@ func newMicroservice(
 			serviceName,
 			nil,
 			labeller,
-			ytsaurus.APIProxy()),
+			ytsaurus),
 		deployment: resources.NewDeployment(
 			deploymentName,
 			labeller,

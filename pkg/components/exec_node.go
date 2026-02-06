@@ -48,7 +48,7 @@ func NewExecNode(
 	criConfig := ytconfig.NewCRIConfigGenerator(&spec)
 	sidecarConfig := NewJobsSidecarConfig(
 		l,
-		ytsaurus.APIProxy(),
+		ytsaurus,
 		criConfig,
 		ytsaurus.GetCommonSpec().ConfigOverrides,
 	)

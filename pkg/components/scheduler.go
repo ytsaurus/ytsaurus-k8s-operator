@@ -92,7 +92,7 @@ func NewScheduler(
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
-			ytsaurus.APIProxy()),
+			ytsaurus),
 	}
 }
 

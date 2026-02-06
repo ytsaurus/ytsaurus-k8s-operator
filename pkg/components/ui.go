@@ -83,7 +83,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
-			ytsaurus.APIProxy()),
+			ytsaurus),
 		caRootBundle: resources.NewCARootBundle(resource.Spec.CARootBundle),
 		caBundle:     resources.NewCABundle(resource.Spec.CABundle),
 		master:       master,

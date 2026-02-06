@@ -75,7 +75,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc inte
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
-			ytsaurus.APIProxy()),
+			ytsaurus),
 	}
 }
 

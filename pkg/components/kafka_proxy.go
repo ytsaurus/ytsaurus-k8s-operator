@@ -61,7 +61,7 @@ func NewKafkaProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, maste
 				},
 			},
 			l,
-			ytsaurus.APIProxy())
+			ytsaurus)
 	}
 
 	return &KafkaProxy{
