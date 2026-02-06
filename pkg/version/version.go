@@ -2,6 +2,7 @@ package version
 
 import (
 	"fmt"
+	"regexp"
 
 	"runtime/debug"
 
@@ -13,6 +14,10 @@ var version string
 
 const (
 	DevelVersion = "0.0.0-devel"
+)
+
+var (
+	ytsaurusVersionPrefix = regexp.MustCompile(`^[a-z]+-`)
 )
 
 func GetVersion() string {
@@ -41,6 +46,10 @@ func ParseVersion(version string) (*Version, error) {
 	return semver.NewVersion(version)
 }
 
+func MustParse(version string) *Version {
+	return semver.MustParse(version)
+}
+
 type Constraints = semver.Constraints
 
 func ParseConstraints(constraints string) (*Constraints, error) {
@@ -59,4 +68,9 @@ func GetParsedVersion() *Version {
 		ver = semver.New(0, 0, 0, "malformed", version)
 	}
 	return ver
+}
+
+func ParseYtsaurusVersion(version string) (*Version, error) {
+	version = ytsaurusVersionPrefix.ReplaceAllString(version, "")
+	return ParseVersion(version)
 }

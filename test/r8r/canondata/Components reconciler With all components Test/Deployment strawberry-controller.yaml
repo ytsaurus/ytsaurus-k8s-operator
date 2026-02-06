@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: ed0c384b2935f39e1495b042b4edc0a24005836b938ad9cc2d3166257b59dd1b
+    ytsaurus.tech/instance-hash: 5754f82c431b0fabac4ae82f3db02569c18eb5d11137e19bd105b4bb03492b64
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -72,7 +72,7 @@ spec:
         envFrom:
         - secretRef:
             name: yt-strawberry-controller-secret
-        image: ghcr.io/ytsaurus/strawberry:0.0.14
+        image: ghcr.io/ytsaurus/strawberry:0.0.15
         name: strawberry
         ports:
         - containerPort: 80
