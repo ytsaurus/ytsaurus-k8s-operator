@@ -70,6 +70,15 @@ func chooseUpdatingComponents(selectors []ytv1.ComponentUpdateSelector, needUpda
 	return canUpdate, cannotUpdate
 }
 
+func hasComponentType(components []ytv1.Component, componentType consts.ComponentType) bool {
+	for _, component := range components {
+		if component.Type == componentType {
+			return true
+		}
+	}
+	return false
+}
+
 func hasEverythingSelector(selectors []ytv1.ComponentUpdateSelector) bool {
 	for _, selector := range selectors {
 		if selector.Class == consts.ComponentClassEverything {
