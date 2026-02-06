@@ -2156,8 +2156,12 @@ exec "$@"`
 			Entry("update master-caches", Label(consts.GetStatefulSetPrefix(consts.MasterCacheType)), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
 			Entry("update rpc-proxy", Label(consts.GetStatefulSetPrefix(consts.RpcProxyType)), consts.RpcProxyType, consts.GetStatefulSetPrefix(consts.RpcProxyType)),
 		)
+	}) // update plan strategy
 
-		It("should update cluster with ImageHeater component have cluster Running state", Label("imageheater"), func(ctx context.Context) {
+	Context("ImageHeater + ControllerAgent update", Label("update", "plan", "strategy", "imageHeater"), func() {
+		BeforeEach(func() {
+			ytBuilder.WithBaseComponents()
+			ytsaurus.Spec.CoreImage = testutil.YtsaurusImagePrevious
 			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 				{
 					Component: ytv1.Component{Type: consts.ImageHeaterType},
@@ -2172,7 +2176,9 @@ exec "$@"`
 					},
 				},
 			}
+		})
 
+		It("should update cluster with ImageHeater component have cluster Running state", func(ctx context.Context) {
 			imageHeaterLabeller := generator.GetComponentLabeller(consts.ImageHeaterType, "")
 			imageHeaterRemovingStarted := imageHeaterLabeller.GetPodsRemovingStartedCondition()
 			imageHeaterRemoved := imageHeaterLabeller.GetPodsRemovedCondition()
@@ -2181,7 +2187,7 @@ exec "$@"`
 			EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
 
 			By("Trigger an update")
-			ytsaurus.Spec.CoreImage = testutil.YtsaurusImageFuture
+			ytsaurus.Spec.CoreImage = testutil.YtsaurusImageCurrent
 			UpdateObject(ctx, ytsaurus)
 			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 
@@ -2217,8 +2223,7 @@ exec "$@"`
 				}
 			}
 		})
-	}) // update plan strategy
-
+	})
 })
 
 var _ = Describe("Spec version lock test", Label("version_lock"), Ordered, func() {
