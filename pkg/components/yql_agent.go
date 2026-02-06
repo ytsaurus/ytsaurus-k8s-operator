@@ -20,7 +20,8 @@ import (
 )
 
 type YqlAgent struct {
-	localServerComponent
+	serverComponent
+
 	cfgen             *ytconfig.Generator
 	master            Component
 	ytsaurusClient    internalYtsaurusClient
@@ -52,10 +53,10 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc inte
 	)
 
 	return &YqlAgent{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
-		master:               master,
-		ytsaurusClient:       yc,
+		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:           cfgen,
+		master:          master,
+		ytsaurusClient:  yc,
 		initEnvironment: NewInitJobForYtsaurus(
 			l,
 			ytsaurus,
@@ -156,7 +157,7 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(yqla.ytsaurus, yqla) {
 			// Handle bulk update with pre-checks
-			if status, err := handleBulkUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.localComponent, yqla.server, dry); status != nil {
+			if status, err := handleBulkUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.component, yqla.server, dry); status != nil {
 				return *status, err
 			}
 

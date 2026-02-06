@@ -63,7 +63,7 @@ func NewRemoteExecNodes(
 
 	return &RemoteExecNode{
 		baseExecNode: baseExecNode{
-			localServerComponent: newLocalServerComponent(l, nil, srv),
+			serverComponent: newServerComponent(l, proxy, srv),
 
 			cfgen:         cfgen,
 			criConfig:     criConfig,

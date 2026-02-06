@@ -14,7 +14,8 @@ import (
 )
 
 type DataNode struct {
-	localServerComponent
+	serverComponent
+
 	cfgen  *ytconfig.NodeGenerator
 	master Component
 }
@@ -45,9 +46,9 @@ func NewDataNode(
 	)
 
 	return &DataNode{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
-		master:               master,
+		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:           cfgen,
+		master:          master,
 	}
 }
 
@@ -69,7 +70,7 @@ func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 			}
 		}
 		if IsUpdatingComponent(n.ytsaurus, n) {
-			if status, err := handleBulkUpdatingClusterState(ctx, n.ytsaurus, n, &n.localComponent, n.server, dry); status != nil {
+			if status, err := handleBulkUpdatingClusterState(ctx, n.ytsaurus, n, &n.component, n.server, dry); status != nil {
 				return *status, err
 			}
 		} else {
@@ -122,7 +123,7 @@ func (n *DataNode) handleImaginaryChunksMigration(ctx context.Context, dry bool)
 		err = removePods(
 			ctx,
 			n.server,
-			&n.localComponent,
+			&n.component,
 		)
 	}
 	return ptr.To(ComponentStatusUpdateStep("pods removal for imaginary chunks migration")), err

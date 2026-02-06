@@ -37,7 +37,7 @@ type internalYtsaurusClient interface {
 }
 
 type YtsaurusClient struct {
-	localComponent
+	component
 
 	cfgen     *ytconfig.Generator
 	httpProxy Component
@@ -68,7 +68,7 @@ func NewYtsaurusClient(
 	}
 
 	return &YtsaurusClient{
-		localComponent:   newLocalComponent(l, ytsaurus),
+		component:        newComponent(l, ytsaurus),
 		cfgen:            cfgen,
 		httpProxy:        httpProxy,
 		getAllComponents: getAllComponents,

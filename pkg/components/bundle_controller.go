@@ -12,7 +12,7 @@ import (
 )
 
 type BundleController struct {
-	localServerComponent
+	serverComponent
 
 	cfgen *ytconfig.Generator
 }
@@ -40,8 +40,8 @@ func NewBundleController(
 	)
 
 	return &BundleController{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
+		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:           cfgen,
 	}
 }
 
@@ -61,7 +61,7 @@ func (bc *BundleController) doSync(ctx context.Context, dry bool) (ComponentStat
 	}
 
 	if bc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, bc.ytsaurus, bc, &bc.localComponent, bc.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, bc.ytsaurus, bc, &bc.component, bc.server, dry); status != nil {
 			return *status, err
 		}
 	}

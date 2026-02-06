@@ -16,7 +16,8 @@ import (
 )
 
 type RpcProxy struct {
-	localServerComponent
+	serverComponent
+
 	cfgen *ytconfig.Generator
 
 	master Component
@@ -96,12 +97,12 @@ func NewRPCProxy(
 	}
 
 	return &RpcProxy{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
-		master:               masterReconciler,
-		serviceType:          spec.ServiceType,
-		balancingService:     balancingService,
-		tlsSecret:            tlsSecret,
+		serverComponent:  newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:            cfgen,
+		master:           masterReconciler,
+		serviceType:      spec.ServiceType,
+		balancingService: balancingService,
+		tlsSecret:        tlsSecret,
 	}
 }
 
@@ -126,11 +127,11 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		if IsUpdatingComponent(rp.ytsaurus, rp) {
 			switch getComponentUpdateStrategy(rp.ytsaurus, consts.RpcProxyType, rp.GetShortName()) {
 			case ytv1.ComponentUpdateModeTypeOnDelete:
-				if status, err := handleOnDeleteUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.localComponent, rp.server, dry); status != nil {
+				if status, err := handleOnDeleteUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.component, rp.server, dry); status != nil {
 					return *status, err
 				}
 			default:
-				if status, err := handleBulkUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.localComponent, rp.server, dry); status != nil {
+				if status, err := handleBulkUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.component, rp.server, dry); status != nil {
 					return *status, err
 				}
 			}

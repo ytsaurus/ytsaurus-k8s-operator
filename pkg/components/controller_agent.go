@@ -16,7 +16,8 @@ import (
 )
 
 type ControllerAgent struct {
-	localServerComponent
+	serverComponent
+
 	cfgen          *ytconfig.Generator
 	master         Component
 	ytsaurusClient internalYtsaurusClient
@@ -42,10 +43,10 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 	)
 
 	return &ControllerAgent{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
-		master:               master,
-		ytsaurusClient:       yc,
+		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:           cfgen,
+		master:          master,
+		ytsaurusClient:  yc,
 	}
 }
 
@@ -64,11 +65,11 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 		if IsUpdatingComponent(ca.ytsaurus, ca) {
 			switch getComponentUpdateStrategy(ca.ytsaurus, consts.ControllerAgentType, ca.GetShortName()) {
 			case ytv1.ComponentUpdateModeTypeOnDelete:
-				if status, err := handleOnDeleteUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.localComponent, ca.server, dry); status != nil {
+				if status, err := handleOnDeleteUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.component, ca.server, dry); status != nil {
 					return *status, err
 				}
 			default:
-				if status, err := handleBulkUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.localComponent, ca.server, dry); status != nil {
+				if status, err := handleBulkUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.component, ca.server, dry); status != nil {
 					return *status, err
 				}
 			}

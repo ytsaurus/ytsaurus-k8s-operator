@@ -38,8 +38,7 @@ func initJobWithNativeDriverPrologue() string {
 }
 
 type InitJob struct {
-	baseComponent
-	apiProxy apiproxy.APIProxy
+	component
 
 	commonSpec    *ytv1.CommonSpec
 	commonPodSpec *ytv1.PodSpec
@@ -81,10 +80,10 @@ func NewInitJob(
 	configs.AddGenerator(configFileName, ConfigFormatYson, generator)
 
 	return &InitJob{
-		baseComponent: baseComponent{
+		component: component{
 			labeller: labeller,
+			owner:    apiProxy,
 		},
-		apiProxy:               apiProxy,
 		commonSpec:             commonSpec,
 		commonPodSpec:          commonPodSpec,
 		instanceSpec:           instanceSpec,
@@ -121,7 +120,7 @@ func NewInitJobForYtsaurus(
 }
 
 func (j *InitJob) IsCompleted() bool {
-	return j.apiProxy.IsStatusConditionTrue(j.initCompletedCondition)
+	return j.owner.IsStatusConditionTrue(j.initCompletedCondition)
 }
 
 func (j *InitJob) SetInitScript(script string) {
@@ -137,7 +136,7 @@ func (j *InitJob) Build() *batchv1.Job {
 	var defaultMode int32 = 0o500
 	job := j.initJob.Build()
 	job.Spec.Template = corev1.PodTemplateSpec{
-		ObjectMeta: j.baseComponent.labeller.GetInitJobObjectMeta(),
+		ObjectMeta: j.component.labeller.GetInitJobObjectMeta(),
 		Spec: corev1.PodSpec{
 			ImagePullSecrets: j.commonSpec.ImagePullSecrets,
 			Containers: []corev1.Container{
@@ -197,7 +196,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	logger := log.FromContext(ctx)
 	var err error
 
-	if j.apiProxy.IsStatusConditionTrue(j.initCompletedCondition) {
+	if j.owner.IsStatusConditionTrue(j.initCompletedCondition) {
 		return ComponentStatus{
 			SyncStatusReady,
 			fmt.Sprintf("%s completed", j.initJob.Name()),
@@ -220,7 +219,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	if !dry {
-		j.apiProxy.SetStatusCondition(metav1.Condition{
+		j.owner.SetStatusCondition(metav1.Condition{
 			Type:    j.initCompletedCondition,
 			Status:  metav1.ConditionTrue,
 			Reason:  "InitJobCompleted",
@@ -243,7 +242,7 @@ func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
 	if err := j.removeIfExists(ctx); err != nil {
 		return err
 	}
-	j.apiProxy.SetStatusCondition(metav1.Condition{
+	j.owner.SetStatusCondition(metav1.Condition{
 		Type:    j.initCompletedCondition,
 		Status:  metav1.ConditionFalse,
 		Reason:  "InitJobNeedRestart",
@@ -255,12 +254,12 @@ func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
 func (j *InitJob) isRestartPrepared() bool {
 	jobExists := resources.Exists(j.initJob)
 	configExists := j.configs.Exists()
-	conditionIsFalse := j.apiProxy.IsStatusConditionFalse(j.initCompletedCondition)
+	conditionIsFalse := j.owner.IsStatusConditionFalse(j.initCompletedCondition)
 	return !jobExists && !configExists && conditionIsFalse
 }
 
 func (j *InitJob) isRestartCompleted() bool {
-	return j.apiProxy.IsStatusConditionTrue(j.initCompletedCondition)
+	return j.owner.IsStatusConditionTrue(j.initCompletedCondition)
 }
 
 func (j *InitJob) removeIfExists(ctx context.Context) error {
@@ -268,7 +267,7 @@ func (j *InitJob) removeIfExists(ctx context.Context) error {
 		return nil
 	}
 	propagation := metav1.DeletePropagationForeground
-	return j.apiProxy.DeleteObject(
+	return j.owner.DeleteObject(
 		ctx,
 		j.initJob.OldObject(),
 		&client.DeleteOptions{PropagationPolicy: &propagation},

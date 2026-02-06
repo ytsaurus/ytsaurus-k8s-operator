@@ -15,7 +15,8 @@ import (
 )
 
 type KafkaProxy struct {
-	localServerComponent
+	serverComponent
+
 	cfgen *ytconfig.Generator
 
 	master Component
@@ -65,11 +66,11 @@ func NewKafkaProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, maste
 	}
 
 	return &KafkaProxy{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
-		master:               masterReconciler,
-		serviceType:          spec.ServiceType,
-		balancingService:     balancingService,
+		serverComponent:  newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:            cfgen,
+		master:           masterReconciler,
+		serviceType:      spec.ServiceType,
+		balancingService: balancingService,
 	}
 }
 
@@ -91,7 +92,7 @@ func (kp *KafkaProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	if kp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, kp.ytsaurus, kp, &kp.localComponent, kp.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, kp.ytsaurus, kp, &kp.component, kp.server, dry); status != nil {
 			return *status, err
 		}
 	}

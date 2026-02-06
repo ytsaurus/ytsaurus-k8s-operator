@@ -20,7 +20,8 @@ import (
 )
 
 type QueueAgent struct {
-	localServerComponent
+	serverComponent
+
 	cfgen *ytconfig.Generator
 
 	ytsaurusClient internalYtsaurusClient
@@ -58,12 +59,12 @@ func NewQueueAgent(
 	)
 
 	return &QueueAgent{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
-		master:               master,
-		tabletNodes:          tabletNodes,
-		initCondition:        "queueAgentInitCompleted",
-		ytsaurusClient:       yc,
+		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:           cfgen,
+		master:          master,
+		tabletNodes:     tabletNodes,
+		initCondition:   "queueAgentInitCompleted",
+		ytsaurusClient:  yc,
 		initQAStateJob: NewInitJobForYtsaurus(
 			l,
 			ytsaurus,
@@ -97,7 +98,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(qa.ytsaurus, qa) {
 			// Handle bulk update with pre-checks
-			if status, err := handleBulkUpdatingClusterState(ctx, qa.ytsaurus, qa, &qa.localComponent, qa.server, dry); status != nil {
+			if status, err := handleBulkUpdatingClusterState(ctx, qa.ytsaurus, qa, &qa.component, qa.server, dry); status != nil {
 				return *status, err
 			}
 

@@ -13,7 +13,8 @@ import (
 )
 
 type TcpProxy struct {
-	localServerComponent
+	serverComponent
+
 	cfgen *ytconfig.Generator
 
 	master Component
@@ -49,11 +50,11 @@ func NewTCPProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, masterR
 	}
 
 	return &TcpProxy{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
-		master:               masterReconciler,
-		serviceType:          spec.ServiceType,
-		balancingService:     balancingService,
+		serverComponent:  newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:            cfgen,
+		master:           masterReconciler,
+		serviceType:      spec.ServiceType,
+		balancingService: balancingService,
 	}
 }
 
@@ -75,7 +76,7 @@ func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if tp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, tp.ytsaurus, tp, &tp.localComponent, tp.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, tp.ytsaurus, tp, &tp.component, tp.server, dry); status != nil {
 			return *status, err
 		}
 	}

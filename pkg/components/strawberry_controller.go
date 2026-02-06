@@ -19,7 +19,7 @@ import (
 )
 
 type StrawberryController struct {
-	localMicroserviceComponent
+	microserviceComponent
 
 	cfgen              *ytconfig.Generator
 	initUserAndUrlJob  *InitJob
@@ -91,9 +91,9 @@ func NewStrawberryController(
 	)
 
 	return &StrawberryController{
-		localMicroserviceComponent: localMicroserviceComponent{
-			localComponent: newLocalComponent(l, ytsaurus),
-			microservice:   microservice,
+		microserviceComponent: microserviceComponent{
+			component:    newComponent(l, ytsaurus),
+			microservice: microservice,
 		},
 
 		cfgen: cfgen,
@@ -268,7 +268,7 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		if IsUpdatingComponent(c.ytsaurus, c) {
 			if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, c.microservice, &c.localComponent)
+					err = removePods(ctx, c.microservice, &c.component)
 				}
 				return ComponentStatusUpdateStep("pods removal"), err
 			}

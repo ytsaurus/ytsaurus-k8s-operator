@@ -15,7 +15,8 @@ import (
 )
 
 type Discovery struct {
-	localServerComponent
+	serverComponent
+
 	cfgen          *ytconfig.Generator
 	ytsaurusClient internalYtsaurusClient
 }
@@ -42,9 +43,9 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc int
 	)
 
 	return &Discovery{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
-		ytsaurusClient:       yc,
+		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:           cfgen,
+		ytsaurusClient:  yc,
 	}
 }
 
@@ -63,11 +64,11 @@ func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		if IsUpdatingComponent(d.ytsaurus, d) {
 			switch getComponentUpdateStrategy(d.ytsaurus, consts.DiscoveryType, d.GetShortName()) {
 			case ytv1.ComponentUpdateModeTypeOnDelete:
-				if status, err := handleOnDeleteUpdatingClusterState(ctx, d.ytsaurus, d, &d.localComponent, d.server, dry); status != nil {
+				if status, err := handleOnDeleteUpdatingClusterState(ctx, d.ytsaurus, d, &d.component, d.server, dry); status != nil {
 					return *status, err
 				}
 			default:
-				if status, err := handleBulkUpdatingClusterState(ctx, d.ytsaurus, d, &d.localComponent, d.server, dry); status != nil {
+				if status, err := handleBulkUpdatingClusterState(ctx, d.ytsaurus, d, &d.component, d.server, dry); status != nil {
 					return *status, err
 				}
 			}
