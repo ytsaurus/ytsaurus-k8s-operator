@@ -457,6 +457,7 @@ func HaveClusterStateUpdating() otypes.GomegaMatcher {
 
 func HaveClusterUpdateState(updateState ytv1.UpdateState) otypes.GomegaMatcher {
 	return And(
+		HaveObservedGeneration(),
 		HaveClusterStateUpdating(),
 		HaveField("Status.UpdateStatus.State", updateState),
 	)
@@ -486,6 +487,7 @@ func ConditionStatusDefined() otypes.GomegaMatcher {
 
 func HaveClusterUpdatingComponents(components ...consts.ComponentType) otypes.GomegaMatcher {
 	return And(
+		HaveObservedGeneration(),
 		HaveClusterStateUpdating(),
 		WithTransform(func(yts *ytv1.Ytsaurus) []consts.ComponentType {
 			var result []consts.ComponentType
@@ -499,6 +501,7 @@ func HaveClusterUpdatingComponents(components ...consts.ComponentType) otypes.Go
 
 func HaveClusterUpdatingComponentsNames(components ...string) otypes.GomegaMatcher {
 	return And(
+		HaveObservedGeneration(),
 		HaveClusterStateUpdating(),
 		WithTransform(func(yts *ytv1.Ytsaurus) []string {
 			var result []string

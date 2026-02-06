@@ -64,7 +64,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/instance-hash: d1affa18c2963e9a50be89794c098d66bfafcc1559170c225d95f06529e44da9
+    ytsaurus.tech/instance-hash: 25aa5c1851fa9f8cb1fb982da1b5440a41b9a2f06ec3098748622068b2a50145
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -323,7 +323,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-hash: 8b1c7ffba1dcfe33812ec80450c2b039f094a5253713f1445573001812626037
+    ytsaurus.tech/config-hash: 60a23f1f007199c990bdd38d40f086f28931920612ac151e14ded97520a84ecd
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
