@@ -3,6 +3,7 @@ package components
 import (
 	"cmp"
 	"context"
+	"fmt"
 	"maps"
 	"slices"
 	"strings"
@@ -24,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 
 	"k8s.io/client-go/tools/record"
@@ -34,6 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -43,6 +46,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/canonize"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
@@ -121,7 +125,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	var namespace string
 	var ytBuilder *testutil.YtsaurusBuilder
 	var ytsaurus *ytv1.Ytsaurus
-	var ytsaurusKey client.ObjectKey
+	var controllerObjects []apiproxy.ControllerObject
 	var k8sScheme *runtime.Scheme
 	var k8sEventBroadcaster record.EventBroadcaster
 	var k8sEvents []corev1.Event
@@ -129,6 +133,13 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	var statefulSets map[string]*appsv1.StatefulSet
 	var configMaps map[string]*corev1.ConfigMap
 	var jobs map[string]*batchv1.Job
+
+	objectKind := func(obj client.Object) string {
+		gvks, _, err := k8sScheme.ObjectKinds(obj)
+		Expect(err).To(Succeed())
+		Expect(gvks).To(HaveLen(1))
+		return gvks[0].Kind
+	}
 
 	// NOTE: execution order for each test spec:
 	// - BeforeEach               (configuration)
@@ -178,7 +189,9 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			clientBuilder := fake.NewClientBuilder()
 			clientBuilder.WithScheme(k8sScheme)
 			clientBuilder.WithObjectTracker(k8sObjectTraker)
-			clientBuilder.WithStatusSubresource(&ytv1.Ytsaurus{})
+			for _, object := range ytv1.KnownObjectTypes() {
+				clientBuilder.WithStatusSubresource(object.(client.Object))
+			}
 			clientBuilder.WithInterceptorFuncs(interceptor.Funcs{
 				Get: func(ctx context.Context, client client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 					err := client.Get(ctx, key, obj, opts...)
@@ -238,6 +251,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 		DeferCleanup(LogObjectEvents(specCtx, k8sClient, namespace))
 
+		controllerObjects = nil
+
 		By("Creating minimal Ytsaurus spec", func() {
 			ytBuilder = &testutil.YtsaurusBuilder{
 				MinReadyInstanceCount: ptr.To(0), // Do not wait any pods.
@@ -246,7 +261,6 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			}
 			ytBuilder.CreateMinimal()
 			ytsaurus = ytBuilder.Ytsaurus
-			ytsaurusKey = client.ObjectKey{Name: ytsaurus.Name, Namespace: namespace}
 			ytsaurus.Status.State = ytv1.ClusterStateCreated
 		})
 
@@ -263,22 +277,39 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			}
 			Expect(k8sClient.Create(ctx, &namespaceObject)).Should(Succeed())
 		})
+	})
+
+	JustBeforeEach(func(ctx context.Context) {
+		if ytsaurus == nil {
+			return
+		}
 
 		By("Creating ytsaurus resource", func() {
 			if ytBuilder.Overrides != nil {
 				Expect(k8sClient.Create(ctx, ytBuilder.Overrides)).To(Succeed())
 			}
 			Expect(k8sClient.Create(ctx, ytsaurus)).To(Succeed())
+			controllerObjects = append(controllerObjects, ytsaurus)
 		})
+	})
 
+	JustBeforeEach(func(ctx context.Context) {
 		By("Running ytsaurus reconciler", func() {
-			ytsaurusReconciler := controllers.YtsaurusReconciler{
-				BaseReconciler: controllers.BaseReconciler{
-					ClusterDomain: "cluster.local",
-					Client:        k8sClient,
-					Scheme:        k8sScheme,
-					Recorder:      k8sEventBroadcaster.NewRecorder(k8sScheme, corev1.EventSource{Component: "ytsaurus"}),
-				},
+			baseReconciler := controllers.BaseReconciler{
+				ClusterDomain: "cluster.local",
+				Client:        k8sClient,
+				Scheme:        k8sScheme,
+				Recorder:      k8sEventBroadcaster.NewRecorder(k8sScheme, corev1.EventSource{Component: "ytsaurus"}),
+			}
+
+			reconcilers := map[string]reconcile.Reconciler{
+				"Ytsaurus":             &controllers.YtsaurusReconciler{BaseReconciler: baseReconciler},
+				"RemoteDataNodes":      &controllers.RemoteDataNodesReconciler{BaseReconciler: baseReconciler},
+				"RemoteExecNodes":      &controllers.RemoteExecNodesReconciler{BaseReconciler: baseReconciler},
+				"RemoteTabletNodes":    &controllers.RemoteTabletNodesReconciler{BaseReconciler: baseReconciler},
+				"OffshoreDataGateways": &controllers.OffshoreDataGatewaysReconciler{BaseReconciler: baseReconciler},
+				"Chyt":                 &controllers.ChytReconciler{BaseReconciler: baseReconciler},
+				"Spyt":                 &controllers.SpytReconciler{BaseReconciler: baseReconciler},
 			}
 
 			// Override crypto/rand reader to generate deterministic tokens.
@@ -292,30 +323,84 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 			k8sEvents = nil
 
+			Expect(controllerObjects).ToNot(BeEmpty())
+
+			type ReconcilerRequest struct {
+				Kind, Name string
+			}
+			var requestQueue []ReconcilerRequest
+			for _, obj := range controllerObjects {
+				kind := objectKind(obj)
+				Expect(reconcilers).To(HaveKey(kind))
+				requestQueue = append(requestQueue, ReconcilerRequest{
+					Kind: kind,
+					Name: obj.GetName(),
+				})
+			}
+
+			var index int
 			Eventually(ctx, func(ctx context.Context) (bool, error) {
-				result, err := ytsaurusReconciler.Sync(ctx, ytsaurus)
+				if len(requestQueue) == 0 {
+					return false, nil
+				}
 
 				CompleteOneJob(ctx, k8sClient, namespace)
 
-				return result.Requeue || result.RequeueAfter > 0, err
+				if index++; index >= len(requestQueue) {
+					index = 0
+				}
+				req := requestQueue[index]
+
+				reconcilerRequest := reconcile.Request{
+					NamespacedName: types.NamespacedName{
+						Namespace: namespace,
+						Name:      req.Name,
+					},
+				}
+
+				log.Info("Reconcile", "kind", req.Kind, "name", req.Name)
+				result, err := reconcilers[req.Kind].Reconcile(ctx, reconcilerRequest)
+				if result.Requeue || result.RequeueAfter > 0 {
+					log.Info("Requeue", "kind", req.Kind, "name", req.Name, "delay", result.RequeueAfter, "error", err)
+				} else {
+					log.Info("Complete", "kind", req.Kind, "name", req.Name)
+					requestQueue = slices.Delete(requestQueue, index, index+1)
+				}
+				return true, err
 			}, "60s", "0ms").Should(BeFalse())
 		})
-
-		By("Getting ytsaurus resource", func() {
-			Expect(k8sClient.Get(ctx, ytsaurusKey, ytsaurus)).To(Succeed())
-			Expect(ytsaurus.Status.State).To(Equal(ytv1.ClusterStateRunning))
-		})
-
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
-		By("Checking Ytsaurus spec", func() {
-			for i := range ytsaurus.Status.Conditions {
-				ytsaurus.Status.Conditions[i].LastTransitionTime.Reset()
-			}
-			canonize.AssertStruct(GinkgoT(), "Ytsaurus", ytsaurus)
-		})
+		for _, obj := range controllerObjects {
+			kind := objectKind(obj)
+			By(fmt.Sprintf("Checking %s %s", kind, obj.GetName()))
+			Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(obj), obj)).To(Succeed())
 
+			Expect(obj.GetStatusObservedGeneration()).To(Equal(obj.GetGeneration()), "ObservedGeneration")
+
+			switch kind {
+			case "Ytsaurus":
+				Expect(obj).To(HaveField("Status.State", Equal(ytv1.ClusterStateRunning)))
+			case "Chyt":
+				Expect(obj).To(HaveField("Status.ReleaseStatus", Equal(ytv1.ChytReleaseStatusFinished)))
+			case "Spyt":
+				Expect(obj).To(HaveField("Status.ReleaseStatus", Equal(ytv1.SpytReleaseStatusFinished)))
+			default:
+				Expect(obj).To(HaveField("Status.ReleaseStatus", Equal(ytv1.RemoteNodeReleaseStatusRunning)))
+			}
+
+			conditions := obj.GetStatusConditions()
+			for i := range conditions {
+				conditions[i].LastTransitionTime.Reset()
+			}
+			obj.SetStatusConditions(conditions)
+
+			canonize.AssertStruct(GinkgoT(), kind, obj)
+		}
+	})
+
+	JustBeforeEach(func(ctx context.Context) {
 		var objectList []metav1.ObjectMeta
 
 		By("Checking Events", func() {
@@ -416,6 +501,18 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				canonize.AssertStruct(GinkgoT(), "Job "+obj.Name, obj)
 
 				Expect(obj.Annotations).To(HaveKey(consts.ObservedGenerationAnnotationName))
+			}
+		})
+
+		By("Checking RemoteYtsaurus", func() {
+			var objList ytv1.RemoteYtsaurusList
+			Expect(k8sClient.List(ctx, &objList)).To(Succeed())
+			for i := range objList.Items {
+				obj := &objList.Items[i]
+				log.Info("Found RemoteYtsaurus", "name", obj.Name)
+				objectList = append(objectList, obj.ObjectMeta)
+
+				canonize.AssertStruct(GinkgoT(), "RemoteYtsaurus "+obj.Name, obj)
 			}
 		})
 
@@ -543,5 +640,68 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithNvidiaContainerRuntime()
 		})
 		It("Test", func(ctx context.Context) {})
+	})
+
+	Context("With CHYT", Label("chyt"), func() {
+		BeforeEach(func(ctx context.Context) {
+			chyt := ytBuilder.CreateChyt()
+			Expect(k8sClient.Create(ctx, chyt)).To(Succeed())
+			controllerObjects = append(controllerObjects, chyt)
+		})
+		It("Test", func(ctx context.Context) {})
+	})
+
+	Context("With SPYT", Label("spyt"), func() {
+		BeforeEach(func(ctx context.Context) {
+			spyt := ytBuilder.CreateSpyt()
+			Expect(k8sClient.Create(ctx, spyt)).To(Succeed())
+			controllerObjects = append(controllerObjects, spyt)
+		})
+		It("Test", func(ctx context.Context) {})
+	})
+
+	Context("Remote", func() {
+		BeforeEach(func(ctx context.Context) {
+			ytsaurus = nil
+
+			remoteYtsaurus := ytBuilder.CreateRemoteYtsaurus()
+			Expect(k8sClient.Create(ctx, remoteYtsaurus)).To(Succeed())
+		})
+
+		Context("Exec nodes", func() {
+			BeforeEach(func(ctx context.Context) {
+				execNodes := ytBuilder.CreateRemoteExecNodes()
+				Expect(k8sClient.Create(ctx, execNodes)).To(Succeed())
+				controllerObjects = append(controllerObjects, execNodes)
+			})
+			It("Test", func(ctx context.Context) {})
+		})
+
+		Context("Data nodes", func() {
+			BeforeEach(func(ctx context.Context) {
+				dataNodes := ytBuilder.CreateRemoteDataNodes()
+				Expect(k8sClient.Create(ctx, dataNodes)).To(Succeed())
+				controllerObjects = append(controllerObjects, dataNodes)
+			})
+			It("Test", func(ctx context.Context) {})
+		})
+
+		Context("Tablet nodes", func() {
+			BeforeEach(func(ctx context.Context) {
+				tabletNodes := ytBuilder.CreateRemoteTabletNodes()
+				Expect(k8sClient.Create(ctx, tabletNodes)).To(Succeed())
+				controllerObjects = append(controllerObjects, tabletNodes)
+			})
+			It("Test", func(ctx context.Context) {})
+		})
+
+		Context("Offshore data nodes", func() {
+			BeforeEach(func(ctx context.Context) {
+				offshoreNodes := ytBuilder.CreateOffshoreDataGateways()
+				Expect(k8sClient.Create(ctx, offshoreNodes)).To(Succeed())
+				controllerObjects = append(controllerObjects, offshoreNodes)
+			})
+			It("Test", func(ctx context.Context) {})
+		})
 	})
 })
