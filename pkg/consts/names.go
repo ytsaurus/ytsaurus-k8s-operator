@@ -160,6 +160,10 @@ func GetShortName(component ComponentType) string {
 	if stsPrefix != "" {
 		return stsPrefix
 	}
+	dsPrefix := GetDaemonSetPrefix(component)
+	if dsPrefix != "" {
+		return dsPrefix
+	}
 	return GetMicroservicePrefix(component)
 }
 
@@ -169,4 +173,11 @@ func ComponentStatefulSetPrefix(component ComponentType) string {
 		return shortTypeName
 	}
 	panic(fmt.Sprintf("No stateful set is defined for component type: %s", component))
+}
+
+func GetDaemonSetPrefix(component ComponentType) string {
+	if component == ImageHeaterType {
+		return "ih"
+	}
+	return ""
 }

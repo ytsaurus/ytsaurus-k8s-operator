@@ -455,6 +455,28 @@ func HaveClusterStateUpdating() otypes.GomegaMatcher {
 	return HaveClusterState(ytv1.ClusterStateUpdating)
 }
 
+func findUpdateStatusCondition(yts *ytv1.Ytsaurus, conditionType string) *metav1.Condition {
+	for i := range yts.Status.UpdateStatus.Conditions {
+		if yts.Status.UpdateStatus.Conditions[i].Type == conditionType {
+			return &yts.Status.UpdateStatus.Conditions[i]
+		}
+	}
+	return nil
+}
+
+func HaveUpdateStatusCondition(conditionType string, status metav1.ConditionStatus) otypes.GomegaMatcher {
+	return WithTransform(func(yts *ytv1.Ytsaurus) *metav1.Condition {
+		return findUpdateStatusCondition(yts, conditionType)
+	}, SatisfyAll(
+		Not(BeNil()),
+		HaveField("Status", status),
+	))
+}
+
+func HaveUpdateStatusConditionTrue(conditionType string) otypes.GomegaMatcher {
+	return HaveUpdateStatusCondition(conditionType, metav1.ConditionTrue)
+}
+
 func HaveClusterUpdateState(updateState ytv1.UpdateState) otypes.GomegaMatcher {
 	return And(
 		HaveClusterStateUpdating(),

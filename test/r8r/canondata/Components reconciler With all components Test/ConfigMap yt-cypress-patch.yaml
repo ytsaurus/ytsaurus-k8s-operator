@@ -82,6 +82,9 @@ data:
   yt-http-proxy-cypress-patch.yson: |-
     {
     }
+  yt-image-heater-cypress-patch.yson: |-
+    {
+    }
   yt-master-cache-cypress-patch.yson: |-
     {
     }

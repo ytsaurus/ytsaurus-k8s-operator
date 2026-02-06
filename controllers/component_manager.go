@@ -56,6 +56,7 @@ func NewComponentManager(
 	}
 	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0], getAllComponents)
 	d := components.NewDiscovery(cfgen, ytsaurus, yc)
+	ih := components.NewImageHeater(cfgen, ytsaurus, getAllComponents)
 
 	var dnds []components.Component
 	if len(resource.Spec.DataNodes) > 0 {
@@ -64,7 +65,7 @@ func NewComponentManager(
 		}
 	}
 
-	allComponents = append(allComponents, d, m, yc)
+	allComponents = append(allComponents, d, m, yc, ih)
 	allComponents = append(allComponents, dnds...)
 	allComponents = append(allComponents, hps...)
 

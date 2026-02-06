@@ -980,6 +980,7 @@ type UpdateState string
 
 const (
 	UpdateStateNone                                  UpdateState = "None"
+	UpdateStateWaitingForImageHeater                 UpdateState = "WaitingForImageHeater"
 	UpdateStatePossibilityCheck                      UpdateState = "PossibilityCheck"
 	UpdateStateImpossibleToStart                     UpdateState = "ImpossibleToStart"
 	UpdateStateWaitingForSafeModeEnabled             UpdateState = "WaitingForSafeModeEnabled"

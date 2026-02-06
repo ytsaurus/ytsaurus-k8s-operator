@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -95,6 +96,10 @@ type Component interface {
 
 	GetCypressPatch() ypatch.PatchSet
 	UpdatePreCheck(ctx context.Context) ComponentStatus
+}
+
+type PreheatSpecProvider interface {
+	PreheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration)
 }
 
 // Following structs are used as a base for implementing YTsaurus components objects.
@@ -209,6 +214,13 @@ func (c *localServerComponent) NeedSync() bool {
 
 func (c *localServerComponent) NeedUpdate() bool {
 	return c.server.needUpdate()
+}
+
+func (c *localServerComponent) PreheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration) {
+	if c.server == nil {
+		return nil, nil, nil
+	}
+	return c.server.preheatSpec()
 }
 
 func (c *localMicroserviceComponent) NeedSync() bool {
