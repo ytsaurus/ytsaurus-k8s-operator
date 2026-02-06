@@ -1,0 +1,40 @@
+apiVersion: cluster.ytsaurus.tech/v1
+kind: RemoteTabletNodes
+metadata:
+  creationTimestamp: null
+  generation: 1
+  name: rmt
+  namespace: ytsaurus-components
+  resourceVersion: "3"
+spec:
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
+  instanceCount: 3
+  loggers:
+  - minLogLevel: info
+    name: info-stderr
+    useTimestampSuffix: false
+    writerType: stderr
+  minReadyInstanceCount: 0
+  remoteClusterSpec:
+    name: rmt
+  resources:
+    limits:
+      cpu: "1"
+      memory: 2Gi
+    requests:
+      cpu: "0"
+      memory: "0"
+  useIpv4: false
+  useIpv6: false
+  usePorto: false
+  useShortNames: false
+status:
+  conditions:
+  - lastTransitionTime: null
+    message: 0.0.0-devel
+    observedGeneration: 1
+    reason: Observed
+    status: "True"
+    type: OperatorVersion
+  observedGeneration: 1
+  releaseStatus: Running

@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	CellTag       = 1
 	YtsaurusName  = "test-ytsaurus"
 	OverridesName = "test-overrides"
 	MasterPodName = "ms-0"
@@ -205,6 +206,7 @@ type YtsaurusBuilder struct {
 	Ytsaurus     *ytv1.Ytsaurus
 	Overrides    *corev1.ConfigMap
 	Chyt         *ytv1.Chyt
+	Spyt         *ytv1.Spyt
 
 	// Set MinReadyInstanceCount for all components
 	MinReadyInstanceCount *int
@@ -268,7 +270,7 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 			},
 			PrimaryMasters: ytv1.MastersSpec{
 				MasterConnectionSpec: ytv1.MasterConnectionSpec{
-					CellTag: 1,
+					CellTag: CellTag,
 				},
 				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount:         1,
@@ -697,6 +699,15 @@ func (b *YtsaurusBuilder) CreateTabletNodeSpec(instanceCount int32) ytv1.Instanc
 	}
 }
 
+func (b *YtsaurusBuilder) CreateOffshoreInstanceSpec(instanceCount int32) ytv1.InstanceSpec {
+	return ytv1.InstanceSpec{
+		InstanceCount:         instanceCount,
+		MinReadyInstanceCount: b.MinReadyInstanceCount,
+		Resources:             *defaultNodeResources.DeepCopy(),
+		Loggers:               b.CreateLoggersSpec(),
+	}
+}
+
 func (b *YtsaurusBuilder) WithStrawberryController() {
 	b.Ytsaurus.Spec.StrawberryController = &ytv1.StrawberryControllerSpec{
 		Image: ptr.To(b.Images.Strawberry),
@@ -719,4 +730,115 @@ func (b *YtsaurusBuilder) CreateChyt() *ytv1.Chyt {
 		},
 	}
 	return b.Chyt
+}
+
+func (b *YtsaurusBuilder) CreateSpyt() *ytv1.Spyt {
+	b.Spyt = &ytv1.Spyt{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      YtsaurusName,
+			Namespace: b.Namespace,
+		},
+		Spec: ytv1.SpytSpec{
+			Ytsaurus: &corev1.LocalObjectReference{
+				Name: YtsaurusName,
+			},
+		},
+	}
+	return b.Spyt
+}
+
+func (b *YtsaurusBuilder) CreateRemoteYtsaurus() *ytv1.RemoteYtsaurus {
+	return &ytv1.RemoteYtsaurus{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      RemoteResourceName,
+			Namespace: b.Namespace,
+		},
+		Spec: ytv1.RemoteYtsaurusSpec{
+			MasterConnectionSpec: ytv1.MasterConnectionSpec{
+				CellTag: CellTag,
+				HostAddresses: []string{
+					fmt.Sprintf("ms-0.masters.%s.svc.cluster.local", b.Namespace),
+				},
+			},
+		},
+	}
+}
+
+func (b *YtsaurusBuilder) CreateRemoteDataNodes() *ytv1.RemoteDataNodes {
+	return &ytv1.RemoteDataNodes{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      RemoteResourceName,
+			Namespace: b.Namespace,
+		},
+		Spec: ytv1.RemoteDataNodesSpec{
+			RemoteClusterSpec: &corev1.LocalObjectReference{
+				Name: RemoteResourceName,
+			},
+			CommonSpec: ytv1.CommonSpec{
+				CoreImage: b.Images.Core,
+			},
+			DataNodesSpec: ytv1.DataNodesSpec{
+				InstanceSpec: b.CreateDataNodeInstanceSpec(3),
+			},
+		},
+	}
+}
+
+func (b *YtsaurusBuilder) CreateRemoteExecNodes() *ytv1.RemoteExecNodes {
+	return &ytv1.RemoteExecNodes{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      RemoteResourceName,
+			Namespace: b.Namespace,
+		},
+		Spec: ytv1.RemoteExecNodesSpec{
+			RemoteClusterSpec: &corev1.LocalObjectReference{
+				Name: RemoteResourceName,
+			},
+			CommonSpec: ytv1.CommonSpec{
+				CoreImage: b.Images.Core,
+				JobImage:  ptr.To(b.Images.Job),
+			},
+			ExecNodesSpec: b.CreateExecNodeSpec(),
+		},
+	}
+}
+
+func (b *YtsaurusBuilder) CreateRemoteTabletNodes() *ytv1.RemoteTabletNodes {
+	return &ytv1.RemoteTabletNodes{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      RemoteResourceName,
+			Namespace: b.Namespace,
+		},
+		Spec: ytv1.RemoteTabletNodesSpec{
+			RemoteClusterSpec: &corev1.LocalObjectReference{
+				Name: RemoteResourceName,
+			},
+			CommonSpec: ytv1.CommonSpec{
+				CoreImage: b.Images.Core,
+			},
+			TabletNodesSpec: ytv1.TabletNodesSpec{
+				InstanceSpec: b.CreateTabletNodeSpec(3),
+			},
+		},
+	}
+}
+
+func (b *YtsaurusBuilder) CreateOffshoreDataGateways() *ytv1.OffshoreDataGateways {
+	return &ytv1.OffshoreDataGateways{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      RemoteResourceName,
+			Namespace: b.Namespace,
+		},
+		Spec: ytv1.OffshoreDataGatewaysSpec{
+			RemoteClusterSpec: &corev1.LocalObjectReference{
+				Name: RemoteResourceName,
+			},
+			CommonSpec: ytv1.CommonSpec{
+				CoreImage: b.Images.Core,
+			},
+			OffshoreDataGatewaySpec: ytv1.OffshoreDataGatewaySpec{
+				InstanceSpec: b.CreateOffshoreInstanceSpec(3),
+			},
+		},
+	}
 }
