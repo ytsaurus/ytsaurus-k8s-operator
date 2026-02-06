@@ -2158,8 +2158,6 @@ exec "$@"`
 		)
 
 		It("should update cluster with ImageHeater component have cluster Running state", Label("imageheater"), func(ctx context.Context) {
-
-			ytsaurus.Spec.CoreImage = testutil.YtsaurusImagePrevious
 			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 				{
 					Component: ytv1.Component{Type: consts.ImageHeaterType},
@@ -2183,7 +2181,7 @@ exec "$@"`
 			EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
 
 			By("Trigger an update")
-			ytsaurus.Spec.CoreImage = testutil.YtsaurusImageCurrent
+			ytsaurus.Spec.CoreImage = testutil.YtsaurusImageFuture
 			UpdateObject(ctx, ytsaurus)
 			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 
