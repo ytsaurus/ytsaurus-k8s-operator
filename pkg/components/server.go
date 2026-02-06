@@ -32,6 +32,7 @@ type server interface {
 	podsManager
 	needUpdate() bool
 	needSync(updating bool) bool
+	preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration)
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
 	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType)
@@ -288,6 +289,10 @@ func (s *serverImpl) needUpdate() bool {
 
 func (s *serverImpl) arePodsReady(ctx context.Context) bool {
 	return s.statefulSet.ArePodsReady(ctx, int(s.instanceSpec.InstanceCount), s.instanceSpec.MinReadyInstanceCount, s.readinessByContainers)
+}
+
+func (s *serverImpl) preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration) {
+	return []string{s.image}, s.instanceSpec.NodeSelector, s.instanceSpec.Tolerations
 }
 
 func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {

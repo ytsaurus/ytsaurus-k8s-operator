@@ -170,3 +170,10 @@ func ComponentStatefulSetPrefix(component ComponentType) string {
 	}
 	panic(fmt.Sprintf("No stateful set is defined for component type: %s", component))
 }
+
+func GetDaemonSetPrefix(component ComponentType) string {
+	if component == ImageHeaterType {
+		return "ih"
+	}
+	return ""
+}
