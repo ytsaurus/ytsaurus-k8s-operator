@@ -64,7 +64,7 @@ func NewExecNode(
 
 	return &ExecNode{
 		baseExecNode: baseExecNode{
-			localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
+			serverComponent: newLocalServerComponent(l, ytsaurus, srv),
 
 			cfgen:         cfgen,
 			criConfig:     criConfig,
@@ -84,7 +84,7 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(n.ytsaurus, n) {
-			if status, err := handleBulkUpdatingClusterState(ctx, n.ytsaurus, n, &n.localComponent, n.server, dry); status != nil {
+			if status, err := handleBulkUpdatingClusterState(ctx, n.ytsaurus, n, &n.component, n.server, dry); status != nil {
 				return *status, err
 			}
 		} else {

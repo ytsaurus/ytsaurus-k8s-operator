@@ -23,7 +23,8 @@ const (
 )
 
 type TabletNode struct {
-	localServerComponent
+	serverComponent
+
 	cfgen *ytconfig.NodeGenerator
 
 	ytsaurusClient internalYtsaurusClient
@@ -60,7 +61,7 @@ func NewTabletNode(
 	)
 
 	return &TabletNode{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
+		serverComponent:      newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:                cfgen,
 		initBundlesCondition: "bundlesTabletNodeInitCompleted",
 		ytsaurusClient:       ytsaurusClient,
@@ -78,7 +79,7 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 
 	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(tn.ytsaurus, tn) {
-			if status, err := handleBulkUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.localComponent, tn.server, dry); status != nil {
+			if status, err := handleBulkUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.component, tn.server, dry); status != nil {
 				return *status, err
 			}
 		} else {

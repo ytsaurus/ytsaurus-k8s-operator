@@ -24,7 +24,8 @@ const (
 )
 
 type Master struct {
-	localServerComponent
+	serverComponent
+
 	cfgen *ytconfig.Generator
 
 	initJob          *InitJob
@@ -99,10 +100,10 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 	)
 
 	return &Master{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
-		initJob:              initJob,
-		exitReadOnlyJob:      exitReadOnlyJob,
+		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:           cfgen,
+		initJob:         initJob,
+		exitReadOnlyJob: exitReadOnlyJob,
 		sidecarSecrets: &sidecarSecretsStruct{
 			hydraPersistenceUploaderSecret: resources.NewStringSecret(
 				buildUserCredentialsSecretname(consts.HydraPersistenceUploaderUserName),
@@ -409,11 +410,11 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 		if IsUpdatingComponent(m.ytsaurus, m) {
 			switch getComponentUpdateStrategy(m.ytsaurus, consts.MasterType, m.GetShortName()) {
 			case ytv1.ComponentUpdateModeTypeOnDelete:
-				if status, err := handleOnDeleteUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
+				if status, err := handleOnDeleteUpdatingClusterState(ctx, m.ytsaurus, m, &m.component, m.server, dry); status != nil {
 					return *status, err
 				}
 			default:
-				if status, err := handleBulkUpdatingClusterState(ctx, m.ytsaurus, m, &m.localComponent, m.server, dry); status != nil {
+				if status, err := handleBulkUpdatingClusterState(ctx, m.ytsaurus, m, &m.component, m.server, dry); status != nil {
 					return *status, err
 				}
 			}

@@ -101,77 +101,100 @@ type Component interface {
 type PreheatSpecProvider interface {
 	PreheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration)
 }
-
-// Following structs are used as a base for implementing YTsaurus components objects.
-// baseComponent is a base struct intended for use in the simplest components and remote components
-// (the ones that don't have access to the ytsaurus resource).
-type baseComponent struct {
+type component struct {
 	labeller *labeller.Labeller
+	owner    apiproxy.APIProxy
+
+	// TODO: Remove, owner must provide all required interfaces.
+	ytsaurus *apiproxy.Ytsaurus
+}
+
+type serverComponent struct {
+	component
+
+	server server
+}
+
+type microserviceComponent struct {
+	component
+
+	microservice microservice
+}
+
+func newComponent(
+	labeller *labeller.Labeller,
+	ytsaurus *apiproxy.Ytsaurus,
+) component {
+	return component{
+		labeller: labeller,
+		owner:    ytsaurus,
+		ytsaurus: ytsaurus,
+	}
+}
+
+func newServerComponent(
+	labeller *labeller.Labeller,
+	owner apiproxy.APIProxy,
+	server server,
+) serverComponent {
+	return serverComponent{
+		component: component{
+			labeller: labeller,
+			owner:    owner,
+		},
+		server: server,
+	}
+}
+
+func newLocalServerComponent(
+	labeller *labeller.Labeller,
+	ytsaurus *apiproxy.Ytsaurus,
+	server server,
+) serverComponent {
+	return serverComponent{
+		component: component{
+			labeller: labeller,
+			owner:    ytsaurus,
+			ytsaurus: ytsaurus,
+		},
+		server: server,
+	}
 }
 
 // GetFullName returns component's name, which is used as an identifier in component management
 // and for mentioning in logs.
 // For example for master component name is "Master",
 // For data node name looks like "DataNode<NameFromSpec>".
-func (c *baseComponent) GetFullName() string {
+func (c *component) GetFullName() string {
 	return c.labeller.GetFullComponentName()
 }
 
-func (c *baseComponent) GetShortName() string {
+func (c *component) GetShortName() string {
 	return c.labeller.GetInstanceGroup()
 }
 
-func (c *baseComponent) GetType() consts.ComponentType {
+func (c *component) GetType() consts.ComponentType {
 	return c.labeller.ComponentType
 }
 
-func (c *baseComponent) GetLabeller() *labeller.Labeller {
+func (c *component) GetLabeller() *labeller.Labeller {
 	return c.labeller
 }
 
-func (c *baseComponent) GetCypressPatch() ypatch.PatchSet {
+func (c *component) GetCypressPatch() ypatch.PatchSet {
 	return nil
 }
 
-func (c *baseComponent) UpdatePreCheck(ctx context.Context) ComponentStatus {
+func (c *component) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	return ComponentStatusReady()
 }
 
-// localComponent is a base structs for components which have access to ytsaurus resource,
-// but don't depend on server. Example: UI, Strawberry.
-type localComponent struct {
-	baseComponent
-	ytsaurus *apiproxy.Ytsaurus
-}
-
-// localServerComponent is a base structs for components which have access to ytsaurus resource,
-// and use server. Almost all components are based on this struct.
-type localServerComponent struct {
-	localComponent
-	server server
-}
-
-type localMicroserviceComponent struct {
-	localComponent
-	microservice microservice
-}
-
-func newLocalComponent(
-	labeller *labeller.Labeller,
-	ytsaurus *apiproxy.Ytsaurus,
-) localComponent {
-	return localComponent{
-		baseComponent: baseComponent{labeller: labeller},
-		ytsaurus:      ytsaurus,
-	}
-}
-
-func (c *localComponent) SetReadyCondition(status ComponentStatus) {
+func (c *component) SetReadyCondition(status ComponentStatus) {
 	ready := metav1.ConditionFalse
 	if status.SyncStatus == SyncStatusReady {
 		ready = metav1.ConditionTrue
 	}
-	c.ytsaurus.SetStatusCondition(metav1.Condition{
+	c.owner.SetStatusCondition(metav1.Condition{
 		Type:    c.labeller.GetReadyCondition(),
 		Status:  ready,
 		Reason:  string(status.SyncStatus),
@@ -179,7 +202,7 @@ func (c *localComponent) SetReadyCondition(status ComponentStatus) {
 	})
 }
 
-func (c *localComponent) IsUpdatingResources() bool {
+func (c *component) IsUpdatingResources() bool {
 	if c.ytsaurus == nil {
 		return true
 	}
@@ -188,45 +211,29 @@ func (c *localComponent) IsUpdatingResources() bool {
 		c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation
 }
 
-func newLocalServerComponent(
-	labeller *labeller.Labeller,
-	ytsaurus *apiproxy.Ytsaurus,
-	server server,
-) localServerComponent {
-	return localServerComponent{
-		localComponent: localComponent{
-			baseComponent: baseComponent{
-				labeller: labeller,
-			},
-			ytsaurus: ytsaurus,
-		},
-		server: server,
-	}
-}
-
-func (c *localServerComponent) Exists() bool {
+func (c *serverComponent) Exists() bool {
 	return c.server.Exists()
 }
 
-func (c *localServerComponent) NeedSync() bool {
+func (c *serverComponent) NeedSync() bool {
 	return c.server.needSync(c.IsUpdatingResources())
 }
 
-func (c *localServerComponent) NeedUpdate() bool {
+func (c *serverComponent) NeedUpdate() bool {
 	return c.server.needUpdate()
 }
 
-func (c *localServerComponent) PreheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration) {
+func (c *serverComponent) PreheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration) {
 	if c.server == nil {
 		return nil, nil, nil
 	}
 	return c.server.preheatSpec()
 }
 
-func (c *localMicroserviceComponent) NeedSync() bool {
+func (c *microserviceComponent) NeedSync() bool {
 	return c.microservice.needSync()
 }
 
-func (c *localMicroserviceComponent) NeedUpdate() bool {
+func (c *microserviceComponent) NeedUpdate() bool {
 	return c.microservice.needUpdate()
 }

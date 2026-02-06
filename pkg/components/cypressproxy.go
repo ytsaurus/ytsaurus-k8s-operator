@@ -13,7 +13,8 @@ import (
 )
 
 type CypressProxy struct {
-	localServerComponent
+	serverComponent
+
 	cfgen *ytconfig.Generator
 }
 
@@ -37,8 +38,8 @@ func NewCypressProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Cy
 	)
 
 	return &CypressProxy{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
+		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:           cfgen,
 	}
 }
 
@@ -54,7 +55,7 @@ func (cyp *CypressProxy) doSync(ctx context.Context, dry bool) (ComponentStatus,
 	}
 
 	if cyp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, cyp.ytsaurus, cyp, &cyp.localComponent, cyp.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, cyp.ytsaurus, cyp, &cyp.component, cyp.server, dry); status != nil {
 			return *status, err
 		}
 	}

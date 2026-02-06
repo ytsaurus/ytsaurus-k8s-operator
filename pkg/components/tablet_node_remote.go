@@ -13,7 +13,7 @@ import (
 )
 
 type RemoteTabletNode struct {
-	localServerComponent
+	serverComponent
 
 	cfgen *ytconfig.NodeGenerator
 	spec  *ytv1.TabletNodesSpec
@@ -47,7 +47,7 @@ func NewRemoteTabletNodes(
 		}),
 	)
 	return &RemoteTabletNode{
-		localServerComponent: newLocalServerComponent(l, nil, srv),
+		serverComponent: newServerComponent(l, proxy, srv),
 
 		cfgen: cfgen,
 		spec:  &spec,

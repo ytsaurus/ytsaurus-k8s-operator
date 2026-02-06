@@ -13,7 +13,7 @@ import (
 )
 
 type TabletBalancer struct {
-	localServerComponent
+	serverComponent
 
 	cfgen *ytconfig.Generator
 }
@@ -41,8 +41,8 @@ func NewTabletBalancer(
 	)
 
 	return &TabletBalancer{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
+		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:           cfgen,
 	}
 }
 
@@ -58,7 +58,7 @@ func (tb *TabletBalancer) doSync(ctx context.Context, dry bool) (ComponentStatus
 	}
 
 	if tb.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, tb.ytsaurus, tb, &tb.localComponent, tb.server, dry); status != nil {
+		if status, err := handleUpdatingClusterState(ctx, tb.ytsaurus, tb, &tb.component, tb.server, dry); status != nil {
 			return *status, err
 		}
 	}
