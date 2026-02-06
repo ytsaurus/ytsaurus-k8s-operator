@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   annotations:
-    ytsaurus.tech/instance-hash: 4174a7527b904825c6a52fa695d1e8d64a1c09acbe95f96f9bc541f8af0d0cb8
+    ytsaurus.tech/instance-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -33,7 +33,7 @@ spec:
   template:
     metadata:
       annotations:
-        ytsaurus.tech/config-hash: 9efc29fd3ba384f6f4421d89d44f3865df0ae0bf51e8559c852915f59a48612f
+        ytsaurus.tech/config-hash: <censored>
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-exec-node
