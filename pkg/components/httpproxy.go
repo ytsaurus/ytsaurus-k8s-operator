@@ -14,7 +14,8 @@ import (
 )
 
 type HttpProxy struct {
-	localServerComponent
+	serverComponent
+
 	cfgen *ytconfig.Generator
 
 	serviceType      corev1.ServiceType
@@ -108,13 +109,13 @@ func NewHTTPProxy(
 	}
 
 	return &HttpProxy{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
-		master:               masterReconciler,
-		serviceType:          spec.ServiceType,
-		role:                 spec.Role,
-		httpsSecret:          httpsSecret,
-		balancingService:     balancingService,
+		serverComponent:  newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:            cfgen,
+		master:           masterReconciler,
+		serviceType:      spec.ServiceType,
+		role:             spec.Role,
+		httpsSecret:      httpsSecret,
+		balancingService: balancingService,
 	}
 }
 
@@ -136,11 +137,11 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 		if IsUpdatingComponent(hp.ytsaurus, hp) {
 			switch getComponentUpdateStrategy(hp.ytsaurus, consts.HttpProxyType, hp.GetShortName()) {
 			case ytv1.ComponentUpdateModeTypeOnDelete:
-				if status, err := handleOnDeleteUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.localComponent, hp.server, dry); status != nil {
+				if status, err := handleOnDeleteUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.component, hp.server, dry); status != nil {
 					return *status, err
 				}
 			default:
-				if status, err := handleBulkUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.localComponent, hp.server, dry); status != nil {
+				if status, err := handleBulkUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.component, hp.server, dry); status != nil {
 					return *status, err
 				}
 			}

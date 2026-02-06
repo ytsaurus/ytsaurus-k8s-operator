@@ -19,7 +19,7 @@ import (
 )
 
 type Timbertruck struct {
-	localComponent
+	component
 
 	cfgen          *ytconfig.Generator
 	tabletNodes    []Component
@@ -39,7 +39,7 @@ func NewTimbertruck(
 	l := cfgen.GetComponentLabeller(consts.TimbertruckType, "")
 
 	return &Timbertruck{
-		localComponent: newLocalComponent(l, ytsaurus),
+		component:      newComponent(l, ytsaurus),
 		cfgen:          cfgen,
 		tabletNodes:    tnds,
 		ytsaurusClient: yc,

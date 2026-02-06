@@ -13,7 +13,7 @@ import (
 )
 
 type OffshoreDataGateway struct {
-	localServerComponent
+	serverComponent
 
 	cfgen *ytconfig.NodeGenerator
 	spec  *ytv1.OffshoreDataGatewaySpec
@@ -46,7 +46,7 @@ func NewOffshoreDataGateways(
 		}),
 	)
 	return &OffshoreDataGateway{
-		localServerComponent: newLocalServerComponent(l, nil, srv),
+		serverComponent: newServerComponent(l, proxy, srv),
 
 		cfgen: cfgen,
 		spec:  &spec,

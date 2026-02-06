@@ -21,7 +21,8 @@ import (
 )
 
 type QueryTracker struct {
-	localServerComponent
+	serverComponent
+
 	cfgen *ytconfig.Generator
 
 	ytsaurusClient internalYtsaurusClient
@@ -56,11 +57,11 @@ func NewQueryTracker(
 	)
 
 	return &QueryTracker{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
-		tabletNodes:          tabletNodes,
-		initCondition:        "queryTrackerInitCompleted",
-		ytsaurusClient:       yc,
+		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:           cfgen,
+		tabletNodes:     tabletNodes,
+		initCondition:   "queryTrackerInitCompleted",
+		ytsaurusClient:  yc,
 		initQTState: NewInitJobForYtsaurus(
 			l,
 			ytsaurus,
@@ -94,7 +95,7 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(qt.ytsaurus, qt) {
 			// Handle bulk update with pre-checks
-			if status, err := handleBulkUpdatingClusterState(ctx, qt.ytsaurus, qt, &qt.localComponent, qt.server, dry); status != nil {
+			if status, err := handleBulkUpdatingClusterState(ctx, qt.ytsaurus, qt, &qt.component, qt.server, dry); status != nil {
 				return *status, err
 			}
 

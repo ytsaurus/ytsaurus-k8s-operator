@@ -27,7 +27,8 @@ const (
 )
 
 type Scheduler struct {
-	localServerComponent
+	serverComponent
+
 	cfgen            *ytconfig.Generator
 	master           Component
 	execNodes        []Component
@@ -67,12 +68,12 @@ func NewScheduler(
 	)
 
 	return &Scheduler{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
-		master:               master,
-		execNodes:            execNodes,
-		tabletNodes:          tabletNodes,
-		ytsaurusClient:       yc,
+		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:           cfgen,
+		master:          master,
+		execNodes:       execNodes,
+		tabletNodes:     tabletNodes,
+		ytsaurusClient:  yc,
 		initUserJob: NewInitJobForYtsaurus(
 			l,
 			ytsaurus,
@@ -125,11 +126,11 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		if IsUpdatingComponent(s.ytsaurus, s) {
 			switch getComponentUpdateStrategy(s.ytsaurus, consts.SchedulerType, s.GetShortName()) {
 			case ytv1.ComponentUpdateModeTypeOnDelete:
-				if status, err := handleOnDeleteUpdatingClusterState(ctx, s.ytsaurus, s, &s.localComponent, s.server, dry); status != nil {
+				if status, err := handleOnDeleteUpdatingClusterState(ctx, s.ytsaurus, s, &s.component, s.server, dry); status != nil {
 					return *status, err
 				}
 			default:
-				if status, err := handleBulkUpdatingClusterState(ctx, s.ytsaurus, s, &s.localComponent, s.server, dry); status != nil {
+				if status, err := handleBulkUpdatingClusterState(ctx, s.ytsaurus, s, &s.component, s.server, dry); status != nil {
 					return *status, err
 				}
 			}
