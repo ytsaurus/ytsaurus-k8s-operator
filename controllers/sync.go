@@ -54,7 +54,7 @@ func chooseUpdatingComponents(selectors []ytv1.ComponentUpdateSelector, needUpda
 	}
 	if hasEverythingSelector(selectors) && needFullUpdate(needUpdate) {
 		// if image wasn't changed, we don't need to run ImageHeater
-		if !hasComponentType(needUpdate, consts.ImageHeaterType) {
+		if !hasComponent(needUpdate, consts.ImageHeaterType) {
 			filtered := make([]ytv1.Component, 0, len(allComponents))
 			for _, component := range allComponents {
 				if component.Type == consts.ImageHeaterType {
@@ -68,15 +68,6 @@ func chooseUpdatingComponents(selectors []ytv1.ComponentUpdateSelector, needUpda
 		return allComponents, nil
 	}
 	return canUpdate, cannotUpdate
-}
-
-func hasComponentType(components []ytv1.Component, componentType consts.ComponentType) bool {
-	for _, component := range components {
-		if component.Type == componentType {
-			return true
-		}
-	}
-	return false
 }
 
 func hasEverythingSelector(selectors []ytv1.ComponentUpdateSelector) bool {

@@ -60,7 +60,7 @@ func (d *DaemonSet) Build() *appsv1.DaemonSet {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      d.labeller.GetMetaLabelMap(false),
-					Annotations: d.ytsaurus.GetResource().Spec.PodAnnotations,
+					Annotations: d.labeller.GetAnnotations(),
 				},
 				Spec: corev1.PodSpec{
 					ImagePullSecrets: d.ytsaurus.GetResource().Spec.ImagePullSecrets,
@@ -91,7 +91,7 @@ func (d *DaemonSet) ArePodsReady(ctx context.Context) bool {
 
 	for _, pod := range podList.Items {
 		if pod.Status.Phase != corev1.PodRunning {
-			logger.Info("Image heaterpod is not yet running", "podName", pod.Name, "phase", pod.Status.Phase)
+			logger.Info("Image heater pod is not yet running", "podName", pod.Name, "phase", pod.Status.Phase)
 			return false
 		}
 	}
