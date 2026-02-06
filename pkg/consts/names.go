@@ -160,6 +160,10 @@ func GetShortName(component ComponentType) string {
 	if stsPrefix != "" {
 		return stsPrefix
 	}
+	dsPrefix := GetDaemonSetPrefix(component)
+	if dsPrefix != "" {
+		return dsPrefix
+	}
 	return GetMicroservicePrefix(component)
 }
 
