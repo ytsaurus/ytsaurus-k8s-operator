@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   annotations:
-    ytsaurus.tech/instance-hash: cd005b618bbe74ee3992569806494dfca49466175bfef015e183067d0f9373ce
+    ytsaurus.tech/instance-hash: 44f0c252ca2bfbd3c87fd7e8a742d17d03e7920a0ad94f509acc9e7394fd66ee
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -157,6 +157,7 @@ spec:
         - mountPath: /config
           name: config
       setHostnameAsFQDN: true
+      terminationGracePeriodSeconds: 5
       volumes:
       - configMap:
           name: yt-master-config

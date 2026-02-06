@@ -28951,6 +28951,11 @@ spec:
                     description: SetHostnameAsFQDN indicates whether to set the hostname
                       as FQDN.
                     type: boolean
+                  terminationGracePeriodSeconds:
+                    description: Optional duration in seconds the pod needs to terminate
+                      gracefully.
+                    format: int64
+                    type: integer
                   tolerations:
                     description: Tolerations for instance and init job pods.
                     items:
@@ -34625,6 +34630,11 @@ spec:
                   - portCount
                   type: object
                 type: array
+              terminationGracePeriodSeconds:
+                description: Optional duration in seconds the pod needs to terminate
+                  gracefully.
+                format: int64
+                type: integer
               tolerations:
                 description: Tolerations for instance and init job pods.
                 items:
@@ -34901,6 +34911,11 @@ spec:
                     description: SetHostnameAsFQDN indicates whether to set the hostname
                       as FQDN.
                     type: boolean
+                  terminationGracePeriodSeconds:
+                    description: Optional duration in seconds the pod needs to terminate
+                      gracefully.
+                    format: int64
+                    type: integer
                   theme:
                     default: lavander
                     type: string

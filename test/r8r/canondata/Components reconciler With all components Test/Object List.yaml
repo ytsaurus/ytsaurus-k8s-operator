@@ -1,6 +1,6 @@
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: 182fde72f767765db951d96fc9498b9596f8da2e68e17e990cc23b751bd05060
+    ytsaurus.tech/instance-hash: 49e1e227666f90f29495de3d060c8cfdc5d103b75e11098d6a1017ad83ad7a03
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -135,7 +135,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: 99101637f07c253effd59c0e82b7940fad2d2f3a47333fdf278426f6a57809c9
+    ytsaurus.tech/instance-hash: 8541c8b5163a62869b015bbe064730a8a3bdc7995a29a24d83d68ed274ddd9ca
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -158,7 +158,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: 0b901e7a7a34339d76349194b4d925f3f803c554ce64495b991c8136e9ee742e
+    ytsaurus.tech/instance-hash: f17d113801e51b6250f60229d61483222f92c37c67fbcbd1f23395632ccad30b
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -181,7 +181,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: 6d265deab0d7c11525a5c732f37f094ce8d76dd32c14bd636dcefe63d5b4a101
+    ytsaurus.tech/instance-hash: 0c0a9b93f15ecac04169b3e30173ba474add54d2917e12c4ba5acb39243044eb
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -226,7 +226,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: 5d6cd547bc29127a20b3487a548584afc8104607410feef2a6248698a4bdd70e
+    ytsaurus.tech/instance-hash: 407159920de24830354875fcd83c61df65e01388684e2e675b6c44c78d08dc7f
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -337,7 +337,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: 68650833db0098068ebe81af70fc8403e12e7e7ef2629d5a4b14d109c06f1d5b
+    ytsaurus.tech/instance-hash: 7134e719e0f8284d360b17a66da965a10285523a02ab6b5a23e2e58ba7056403
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -360,7 +360,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: 583309ae61181a0f0eb1974010beba643a163dc054d01bbc7c6878062b24478d
+    ytsaurus.tech/instance-hash: ae52dc915ef08a4c0dce9ca0244a121eea52aa3b09b837dbc21299faf3702ff8
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -383,7 +383,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: 5b05d3d42b2a6890dc242877ddeb4f88650f4e87e020e4890155837d1a2d6283
+    ytsaurus.tech/instance-hash: 68750aa162f1306ca67f2ae0065453f38e28a557eebb5565151b8bc391da88d8
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -450,7 +450,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: c593847c6d3f2258b70238d3a5930d9865a86b422e02bd527ce79f40fedf4d8d
+    ytsaurus.tech/instance-hash: e20f3678e7f370dc561d3f0dbec2e8a674b7a17d5e562c49b98711fb1a383e02
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -659,7 +659,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: dc82429d9bc6347fdb23e4f8b95f4e46aea435d8fdebab29b07645b27fa8dad8
+    ytsaurus.tech/instance-hash: f7bd3caa275a62ae0cd5b8623a025721aaa1ec2d7da28963d9bdae11265b1254
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
