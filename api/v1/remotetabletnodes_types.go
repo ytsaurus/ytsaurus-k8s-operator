@@ -48,6 +48,22 @@ type RemoteTabletNodes struct {
 	Status RemoteTabletNodesStatus `json:"status,omitempty"`
 }
 
+func (r *RemoteTabletNodes) GetStatusObservedGeneration() int64 {
+	return r.Status.ObservedGeneration
+}
+
+func (r *RemoteTabletNodes) SetStatusObservedGeneration(generation int64) {
+	r.Status.ObservedGeneration = generation
+}
+
+func (r *RemoteTabletNodes) GetStatusConditions() []metav1.Condition {
+	return r.Status.Conditions
+}
+
+func (r *RemoteTabletNodes) SetStatusConditions(conditions []metav1.Condition) {
+	r.Status.Conditions = conditions
+}
+
 //+kubebuilder:object:root=true
 //+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 

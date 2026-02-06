@@ -52,7 +52,7 @@ func (r *ChytReconciler) Sync(ctx context.Context, resource *ytv1.Chyt, ytsaurus
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if err := chyt.APIProxy().UpdateStatus(ctx); err != nil {
+	if err := chyt.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "update chyt status failed")
 		return ctrl.Result{Requeue: true}, err
 	}

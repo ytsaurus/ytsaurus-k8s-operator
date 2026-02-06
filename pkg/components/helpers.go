@@ -159,7 +159,7 @@ func handleUpdatingClusterState(
 	ctx context.Context,
 	ytsaurus *apiproxy.Ytsaurus,
 	cmp Component,
-	cmpBase *localComponent,
+	cmpBase *component,
 	server server,
 	dry bool,
 ) (*ComponentStatus, error) {
@@ -187,7 +187,7 @@ func handleBulkUpdatingClusterState(
 	ctx context.Context,
 	ytsaurus *apiproxy.Ytsaurus,
 	cmp Component,
-	cmpBase *localComponent,
+	cmpBase *component,
 	server server,
 	dry bool,
 ) (*ComponentStatus, error) {
@@ -249,7 +249,7 @@ func handleOnDeleteUpdatingClusterState(
 	ctx context.Context,
 	ytsaurus *apiproxy.Ytsaurus,
 	cmp Component,
-	cmpBase *localComponent,
+	cmpBase *component,
 	server server,
 	dry bool,
 ) (*ComponentStatus, error) {

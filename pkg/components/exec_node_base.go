@@ -20,7 +20,7 @@ import (
 )
 
 type baseExecNode struct {
-	localServerComponent
+	serverComponent
 
 	cfgen     *ytconfig.NodeGenerator
 	criConfig *ytconfig.CRIConfigGenerator

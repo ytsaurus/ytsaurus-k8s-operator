@@ -39,7 +39,6 @@ func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.
 		ytsaurus: ytsaurus,
 		initUser: NewInitJob(
 			l,
-			spyt.APIProxy(),
 			spyt,
 			"user",
 			consts.ClientConfigFileName,
@@ -50,7 +49,6 @@ func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.
 		),
 		initEnvironment: NewInitJob(
 			l,
-			spyt.APIProxy(),
 			spyt,
 			"spyt-environment",
 			consts.ClientConfigFileName,
@@ -64,7 +62,7 @@ func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
-			spyt.APIProxy()),
+			spyt),
 	}
 }
 

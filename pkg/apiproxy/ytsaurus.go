@@ -1,10 +1,8 @@
 package apiproxy
 
 import (
-	"cmp"
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 	"time"
 
@@ -23,7 +21,8 @@ import (
 )
 
 type Ytsaurus struct {
-	apiProxy APIProxy
+	APIProxy
+
 	ytsaurus *ytv1.Ytsaurus
 }
 
@@ -31,15 +30,12 @@ func NewYtsaurus(
 	ytsaurus *ytv1.Ytsaurus,
 	client client.Client,
 	recorder record.EventRecorder,
-	scheme *runtime.Scheme) *Ytsaurus {
+	scheme *runtime.Scheme,
+) *Ytsaurus {
 	return &Ytsaurus{
+		APIProxy: NewAPIProxy(ytsaurus, client, recorder, scheme),
 		ytsaurus: ytsaurus,
-		apiProxy: NewAPIProxy(ytsaurus, client, recorder, scheme),
 	}
-}
-
-func (c *Ytsaurus) APIProxy() APIProxy {
-	return c.apiProxy
 }
 
 func (c *Ytsaurus) GetResource() *ytv1.Ytsaurus {
@@ -147,19 +143,19 @@ func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
 	c.ytsaurus.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
 	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
 	c.SetUpdatingComponents(nil)
-	return c.apiProxy.UpdateStatus(ctx)
+	return c.UpdateStatus(ctx)
 }
 
 func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {
 	logger := log.FromContext(ctx)
-	c.apiProxy.RecordNormal("Update", message)
+	c.RecordNormal("Update", message)
 	logger.Info(fmt.Sprintf("Ytsaurus update: %s", message))
 }
 
 func (c *Ytsaurus) SaveClusterState(ctx context.Context, clusterState ytv1.ClusterState) error {
 	logger := log.FromContext(ctx)
 	c.ytsaurus.Status.State = clusterState
-	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
+	if err := c.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "unable to update Ytsaurus cluster status")
 		return err
 	}
@@ -167,34 +163,14 @@ func (c *Ytsaurus) SaveClusterState(ctx context.Context, clusterState ytv1.Clust
 	return nil
 }
 
-// SyncObservedGeneration confirms that current generation was observed.
-// Returns true if generation actually has been changed and status must be saved.
-func (c *Ytsaurus) SyncObservedGeneration() bool {
-	updated := false
-	if c.ytsaurus.Status.ObservedGeneration != c.ytsaurus.Generation {
-		c.ytsaurus.Status.ObservedGeneration = c.ytsaurus.Generation
-		updated = true
-	}
-	if c.apiProxy.UpdateOperatorVersion(&c.ytsaurus.Status.Conditions) {
-		updated = true
-	}
-	return updated
-}
-
 func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateState) error {
 	logger := log.FromContext(ctx)
 	c.ytsaurus.Status.UpdateStatus.State = updateState
-	if err := c.apiProxy.UpdateStatus(ctx); err != nil {
+	if err := c.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "unable to update Ytsaurus update state")
 		return err
 	}
 	return nil
-}
-
-func (c *Ytsaurus) SetStatusCondition(condition metav1.Condition) {
-	condition.ObservedGeneration = c.ytsaurus.Generation
-	meta.SetStatusCondition(&c.ytsaurus.Status.Conditions, condition)
-	sortConditions(c.ytsaurus.Status.Conditions)
 }
 
 func (c *Ytsaurus) IsStatusConditionTrue(conditionType string) bool {
@@ -203,16 +179,6 @@ func (c *Ytsaurus) IsStatusConditionTrue(conditionType string) bool {
 
 func (c *Ytsaurus) IsStatusConditionFalse(conditionType string) bool {
 	return meta.IsStatusConditionFalse(c.ytsaurus.Status.Conditions, conditionType)
-}
-
-func sortConditions(conditions []metav1.Condition) {
-	slices.SortStableFunc(conditions, func(a, b metav1.Condition) int {
-		statusOrder := []metav1.ConditionStatus{metav1.ConditionTrue, metav1.ConditionFalse, metav1.ConditionUnknown}
-		if diff := cmp.Compare(slices.Index(statusOrder, a.Status), slices.Index(statusOrder, b.Status)); diff != 0 {
-			return diff
-		}
-		return a.LastTransitionTime.Compare(b.LastTransitionTime.Time)
-	})
 }
 
 func buildComponentsSummary(components []ytv1.Component) string {

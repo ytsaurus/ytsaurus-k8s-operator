@@ -40,7 +40,6 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 		ytsaurus: ytsaurus,
 		initUser: NewInitJob(
 			l,
-			chyt.APIProxy(),
 			chyt,
 			"user",
 			consts.ClientConfigFileName,
@@ -51,7 +50,6 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 		),
 		initEnvironment: NewInitJob(
 			l,
-			chyt.APIProxy(),
 			chyt,
 			"release",
 			consts.ClientConfigFileName,
@@ -64,7 +62,6 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 		),
 		initChPublicJob: NewInitJob(
 			l,
-			chyt.APIProxy(),
 			chyt,
 			"ch-public",
 			consts.ClientConfigFileName,
@@ -78,7 +75,7 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
-			chyt.APIProxy()),
+			chyt),
 	}
 }
 

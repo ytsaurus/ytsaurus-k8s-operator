@@ -13,7 +13,7 @@ import (
 )
 
 type RemoteDataNode struct {
-	localServerComponent
+	serverComponent
 
 	cfgen *ytconfig.NodeGenerator
 	spec  *ytv1.DataNodesSpec
@@ -47,7 +47,7 @@ func NewRemoteDataNodes(
 		}),
 	)
 	return &RemoteDataNode{
-		localServerComponent: newLocalServerComponent(l, nil, srv),
+		serverComponent: newServerComponent(l, proxy, srv),
 
 		cfgen: cfgen,
 		spec:  &spec,

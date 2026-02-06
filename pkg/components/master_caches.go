@@ -13,7 +13,8 @@ import (
 )
 
 type MasterCache struct {
-	localServerComponent
+	serverComponent
+
 	cfgen          *ytconfig.Generator
 	ytsaurusClient internalYtsaurusClient
 }
@@ -38,9 +39,9 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc i
 	)
 
 	return &MasterCache{
-		localServerComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:                cfgen,
-		ytsaurusClient:       yc,
+		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
+		cfgen:           cfgen,
+		ytsaurusClient:  yc,
 	}
 }
 
@@ -59,11 +60,11 @@ func (mc *MasterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 		if IsUpdatingComponent(mc.ytsaurus, mc) {
 			switch getComponentUpdateStrategy(mc.ytsaurus, consts.MasterCacheType, mc.GetShortName()) {
 			case ytv1.ComponentUpdateModeTypeOnDelete:
-				if status, err := handleOnDeleteUpdatingClusterState(ctx, mc.ytsaurus, mc, &mc.localComponent, mc.server, dry); status != nil {
+				if status, err := handleOnDeleteUpdatingClusterState(ctx, mc.ytsaurus, mc, &mc.component, mc.server, dry); status != nil {
 					return *status, err
 				}
 			default:
-				if status, err := handleBulkUpdatingClusterState(ctx, mc.ytsaurus, mc, &mc.localComponent, mc.server, dry); status != nil {
+				if status, err := handleBulkUpdatingClusterState(ctx, mc.ytsaurus, mc, &mc.component, mc.server, dry); status != nil {
 					return *status, err
 				}
 			}
