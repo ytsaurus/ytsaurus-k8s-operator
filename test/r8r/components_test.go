@@ -3,6 +3,7 @@ package components
 import (
 	"cmp"
 	"context"
+	"maps"
 	"slices"
 	"strings"
 	"testing"
@@ -101,6 +102,17 @@ func CompleteOneJob(ctx context.Context, k8sClient client.WithWatch, namespace s
 		return &job
 	}
 	return nil
+}
+
+// Censor values which are volatile or break patch commutativeness.
+func CensorMapValues(m map[string]string, keys ...string) map[string]string {
+	m = maps.Clone(m)
+	for _, key := range keys {
+		if _, found := m[key]; found {
+			m[key] = "<censored>"
+		}
+	}
+	return m
 }
 
 var _ = Describe("Components reconciler", Label("reconciler"), func() {
@@ -330,11 +342,15 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				objectList = append(objectList, obj.ObjectMeta)
 				statefulSets[obj.Name] = obj
 
-				canonize.AssertStruct(GinkgoT(), "StatefulSet "+obj.Name, obj)
-
 				Expect(obj.Spec.Template.Annotations).To(HaveKey(consts.ConfigHashAnnotationName))
 				Expect(obj.Annotations).To(HaveKey(consts.InstanceHashAnnotationName))
 				Expect(obj.Annotations).To(HaveKey(consts.ObservedGenerationAnnotationName))
+
+				censoredObj := obj.DeepCopy()
+				censoredObj.Annotations = CensorMapValues(obj.Annotations, consts.InstanceHashAnnotationName)
+				censoredObj.Spec.Template.Annotations = CensorMapValues(obj.Spec.Template.Annotations, consts.ConfigHashAnnotationName)
+
+				canonize.AssertStruct(GinkgoT(), "StatefulSet "+obj.Name, censoredObj)
 			}
 		})
 
@@ -346,11 +362,18 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				log.Info("Found Deployment", "name", obj.Name)
 				objectList = append(objectList, obj.ObjectMeta)
 
-				canonize.AssertStruct(GinkgoT(), "Deployment "+obj.Name, obj)
+				obj.Annotations = CensorMapValues(obj.Annotations, consts.InstanceHashAnnotationName)
+				obj.Spec.Template.Annotations = CensorMapValues(obj.Spec.Template.Annotations, consts.ConfigHashAnnotationName)
 
 				Expect(obj.Spec.Template.Annotations).To(HaveKey(consts.ConfigHashAnnotationName))
 				Expect(obj.Annotations).To(HaveKey(consts.InstanceHashAnnotationName))
 				Expect(obj.Annotations).To(HaveKey(consts.ObservedGenerationAnnotationName))
+
+				censoredObj := obj.DeepCopy()
+				censoredObj.Annotations = CensorMapValues(obj.Annotations, consts.InstanceHashAnnotationName)
+				censoredObj.Spec.Template.Annotations = CensorMapValues(obj.Spec.Template.Annotations, consts.ConfigHashAnnotationName)
+
+				canonize.AssertStruct(GinkgoT(), "Deployment "+obj.Name, censoredObj)
 			}
 		})
 
@@ -364,12 +387,15 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				objectList = append(objectList, obj.ObjectMeta)
 				configMaps[obj.Name] = obj
 
-				canonize.AssertStruct(GinkgoT(), "ConfigMap "+obj.Name, obj)
-
 				if strings.HasSuffix(obj.Name, "-config") {
 					Expect(obj.Annotations).To(HaveKey(consts.ConfigHashAnnotationName))
 					Expect(obj.Annotations).To(HaveKey(consts.ObservedGenerationAnnotationName))
 				}
+
+				censoredObj := obj.DeepCopy()
+				censoredObj.Annotations = CensorMapValues(obj.Annotations, consts.ConfigHashAnnotationName)
+
+				canonize.AssertStruct(GinkgoT(), "ConfigMap "+obj.Name, censoredObj)
 			}
 		})
 
@@ -393,6 +419,11 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			slices.SortStableFunc(objectList, func(a, b metav1.ObjectMeta) int {
 				return cmp.Compare(a.Name, b.Name)
 			})
+
+			for _, obj := range objectList {
+				obj.Annotations = CensorMapValues(obj.Annotations, consts.ConfigHashAnnotationName, consts.InstanceHashAnnotationName)
+			}
+
 			canonize.AssertStruct(GinkgoT(), "Object List", objectList)
 		})
 	})

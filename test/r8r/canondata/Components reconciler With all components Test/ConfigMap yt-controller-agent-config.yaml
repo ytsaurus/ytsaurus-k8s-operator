@@ -116,7 +116,7 @@ kind: ConfigMap
 metadata:
   annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-hash: 85a0c252433a5c659280adbedba6180f3840e46a016cafdf5a3bf6d503b2615c
+    ytsaurus.tech/config-hash: <censored>
     ytsaurus.tech/config-overrides-version: "1"
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null

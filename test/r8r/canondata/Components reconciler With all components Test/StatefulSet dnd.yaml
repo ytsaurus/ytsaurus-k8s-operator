@@ -3,7 +3,7 @@ kind: StatefulSet
 metadata:
   annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/instance-hash: 99101637f07c253effd59c0e82b7940fad2d2f3a47333fdf278426f6a57809c9
+    ytsaurus.tech/instance-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -36,7 +36,7 @@ spec:
       annotations:
         extra-pod-annotation: "true"
         global-pod-annotation: "true"
-        ytsaurus.tech/config-hash: ab958ae3482113a2cc58c7e2ce13b5249aa70ca6c00ae005657209cb2c31c25d
+        ytsaurus.tech/config-hash: <censored>
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-data-node
