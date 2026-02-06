@@ -2913,7 +2913,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `None` |  |
-| `WaitingForImagesHeated` |  |
+| `WaitingForImageHeater` |  |
 | `PossibilityCheck` |  |
 | `ImpossibleToStart` |  |
 | `WaitingForSafeModeEnabled` |  |

@@ -37,7 +37,7 @@ func TestBuildFlowTree(t *testing.T) {
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImagesHeated,
+				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStatePossibilityCheck,
 				ytv1.UpdateStateWaitingForSafeModeEnabled,
 				ytv1.UpdateStateWaitingForImaginaryChunksAbsence,
@@ -60,7 +60,7 @@ func TestBuildFlowTree(t *testing.T) {
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImagesHeated,
+				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStatePossibilityCheck,
 				ytv1.UpdateStateWaitingForTabletCellsSaving,
 				ytv1.UpdateStateWaitingForTabletCellsRemovingStart,
@@ -80,7 +80,7 @@ func TestBuildFlowTree(t *testing.T) {
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImagesHeated,
+				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForCypressPatch,
@@ -97,7 +97,7 @@ func TestBuildFlowTree(t *testing.T) {
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImagesHeated,
+				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForCypressPatch,
@@ -114,7 +114,7 @@ func TestBuildFlowTree(t *testing.T) {
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImagesHeated,
+				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForCypressPatch,
@@ -131,7 +131,7 @@ func TestBuildFlowTree(t *testing.T) {
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImagesHeated,
+				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForCypressPatch,
@@ -148,7 +148,7 @@ func TestBuildFlowTree(t *testing.T) {
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImagesHeated,
+				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForCypressPatch,
@@ -164,7 +164,7 @@ func TestBuildFlowTree(t *testing.T) {
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImagesHeated,
+				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStatePossibilityCheck,
 				ytv1.UpdateStateWaitingForSafeModeEnabled,
 				ytv1.UpdateStateWaitingForTabletCellsSaving,
@@ -204,7 +204,7 @@ func TestBuildFlowTree(t *testing.T) {
 			stopAfterHeated: true,
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImagesHeated,
+				ytv1.UpdateStateWaitingForImageHeater,
 			},
 		},
 	}
@@ -220,7 +220,7 @@ func TestBuildFlowTree(t *testing.T) {
 				states = append(states, currentStep.updateState)
 				if tt.unhappyPath && currentStep.updateState == ytv1.UpdateStatePossibilityCheck {
 					currentStep = currentStep.nextSteps[stepResultMarkUnhappy]
-				} else if tt.stopAfterHeated && currentStep.updateState == ytv1.UpdateStateWaitingForImagesHeated {
+				} else if tt.stopAfterHeated && currentStep.updateState == ytv1.UpdateStateWaitingForImageHeater {
 					currentStep = currentStep.nextSteps[stepResultMarkUnhappy]
 				} else {
 					currentStep = currentStep.nextSteps[stepResultMarkHappy]

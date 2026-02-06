@@ -172,8 +172,8 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateNone: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 		return stepResultMarkHappy
 	},
-	ytv1.UpdateStateWaitingForImagesHeated: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
-		if !ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionImagesHeated) {
+	ytv1.UpdateStateWaitingForImageHeater: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
+		if !ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionImageHeaterReady) {
 			return stepResultMarkUnsatisfied
 		}
 		updatingComponents := ytsaurus.GetUpdatingComponents()
@@ -181,7 +181,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 			return stepResultMarkUnhappy
 		}
 		if len(updatingComponents) == 1 && hasComponent(updatingComponents, consts.ImageHeaterType) {
-			// if ConditionImagesHeated is true and ImageHeater is the only updating component,
+			// if ConditionImageHeaterReady is true and ImageHeater is the only updating component,
 			// we should mark this step as unhappy to terminate the flow
 			return stepResultMarkUnhappy
 		}
@@ -254,7 +254,7 @@ func buildFlowTree(updatingComponents []ytv1.Component) *flowTree {
 	// TODO: if validation conditions can be not mentioned here or needed
 	tree.chainIf(
 		updImageHeater,
-		st(ytv1.UpdateStateWaitingForImagesHeated),
+		st(ytv1.UpdateStateWaitingForImageHeater),
 	).chainIf(
 		updMasterOrTablet,
 		newConditionalForkStep(

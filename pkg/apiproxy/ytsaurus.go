@@ -153,7 +153,7 @@ func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
 // keepImagesHeatedCondition needed to keep image-heater hash for the next reconcile
 // otherwise the controller would immediately think images need reheating
 func keepImagesHeatedCondition(conditions []metav1.Condition) []metav1.Condition {
-	condition := meta.FindStatusCondition(conditions, consts.ConditionImagesHeated)
+	condition := meta.FindStatusCondition(conditions, consts.ConditionImageHeaterReady)
 	if condition == nil || condition.Status != metav1.ConditionTrue {
 		return make([]metav1.Condition, 0)
 	}

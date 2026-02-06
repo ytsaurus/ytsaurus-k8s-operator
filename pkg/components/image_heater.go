@@ -94,7 +94,7 @@ func (ih *ImageHeater) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 		return ComponentStatusReadyAfter("Image heater idle"), nil
 	}
 
-	if ih.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForImagesHeated {
+	if ih.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForImageHeater {
 		if IsUpdatingComponent(ih.ytsaurus, ih) && ih.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !ih.ytsaurus.IsUpdateStatusConditionTrue(ih.labeller.GetPodsRemovingStartedCondition()) {
 				setPodsRemovingStartedCondition(ctx, &ih.localComponent)
@@ -107,7 +107,7 @@ func (ih *ImageHeater) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 		return ComponentStatusReadyAfter("Image heater idle"), nil
 	}
 
-	if ih.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionImagesHeated) {
+	if ih.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionImageHeaterReady) {
 		return ComponentStatusReadyAfter("Images already heated"), nil
 	}
 
@@ -149,18 +149,18 @@ func (ih *ImageHeater) needsPreheat(ctx context.Context) (bool, error) {
 	}
 
 	targetsHash := imageHeaterTargetsHash(targets)
-	conditionImagesHeated := meta.FindStatusCondition(
-		ih.ytsaurus.GetResource().Status.UpdateStatus.Conditions, consts.ConditionImagesHeated,
+	ConditionImageHeaterReady := meta.FindStatusCondition(
+		ih.ytsaurus.GetResource().Status.UpdateStatus.Conditions, consts.ConditionImageHeaterReady,
 	)
 
-	heatedHash := imagesHeatedHashFromCondition(conditionImagesHeated)
+	heatedHash := imagesHeatedHashFromCondition(ConditionImageHeaterReady)
 	if targetsHash != "" && heatedHash == targetsHash {
 		return false, nil
 	}
 
-	if conditionImagesHeated != nil && conditionImagesHeated.Status == metav1.ConditionTrue {
+	if ConditionImageHeaterReady != nil && ConditionImageHeaterReady.Status == metav1.ConditionTrue {
 		ih.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    consts.ConditionImagesHeated,
+			Type:    consts.ConditionImageHeaterReady,
 			Status:  metav1.ConditionFalse,
 			Reason:  "Update",
 			Message: imagesHeatedHashMessage(targetsHash),
@@ -191,7 +191,7 @@ func (ih *ImageHeater) shouldConsiderComponentForPreheat(component Component) bo
 func (ih *ImageHeater) markImagesHeated(ctx context.Context, targetsHash string, dry bool) (ComponentStatus, error) {
 	if !dry {
 		ih.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    consts.ConditionImagesHeated,
+			Type:    consts.ConditionImageHeaterReady,
 			Status:  metav1.ConditionTrue,
 			Reason:  "Update",
 			Message: imagesHeatedHashMessage(targetsHash),
