@@ -19,7 +19,7 @@ kind: ConfigMap
 metadata:
   annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/config-hash: 59694d7d739f49c896f65a99686237f661c571fb0e622147a61d7de824987a16
+    ytsaurus.tech/config-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1

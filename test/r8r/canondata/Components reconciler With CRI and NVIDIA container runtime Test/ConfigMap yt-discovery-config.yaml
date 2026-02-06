@@ -82,7 +82,7 @@ data:
 kind: ConfigMap
 metadata:
   annotations:
-    ytsaurus.tech/config-hash: f4f67ce05fb582d8c542688088bd232a3be2ffe80e94369ba04fe3c065c14c46
+    ytsaurus.tech/config-hash: <censored>
     ytsaurus.tech/config-overrides-version: "1"
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
