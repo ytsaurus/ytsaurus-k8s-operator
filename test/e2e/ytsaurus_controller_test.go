@@ -2179,6 +2179,63 @@ exec "$@"`
 		})
 
 		It("should update cluster with ImageHeater component have cluster Running state", func(ctx context.Context) {
+			By("Wait for cluster to be Running on previous image")
+			EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
+
+			By("Trigger an update")
+			ytsaurus.Spec.CoreImage = testutil.YtsaurusImageCurrent
+			UpdateObject(ctx, ytsaurus)
+			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+
+			By("Wait for update to start with ImageHeater and ControllerAgent")
+			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
+				HaveClusterUpdatingComponents(consts.ImageHeaterType, consts.ControllerAgentType),
+			)
+
+			By("Wait for image heater to finish preheating")
+			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(
+				HaveUpdateStatusConditionTrue(consts.ConditionImageHeaterReady),
+			)
+
+			By("Verify pods removal mode is activated")
+			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
+				HaveClusterUpdateState(ytv1.UpdateStateWaitingForPodsRemoval),
+			)
+
+			By("Waiting cluster update completes")
+			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+
+			podsAfter := getComponentPods(ctx, namespace)
+
+			for name, pod := range podsAfter {
+				if strings.HasPrefix(name, "ca-0") {
+					Expect(pod.Spec.Containers[0].Image).To(Equal(ytsaurus.Spec.CoreImage))
+				}
+			}
+		})
+	}) // update plan strategy
+
+	Context("ImageHeater + ControllerAgent update", Label("update", "plan", "strategy", "imageHeater"), func() {
+		BeforeEach(func() {
+			ytBuilder.WithBaseComponents()
+			ytsaurus.Spec.CoreImage = testutil.YtsaurusImagePrevious
+			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+				{
+					Component: ytv1.Component{Type: consts.ImageHeaterType},
+					Strategy: &ytv1.ComponentUpdateStrategy{
+						RunPreChecks: ptr.To(true),
+					},
+				},
+				{
+					Component: ytv1.Component{Type: consts.ControllerAgentType},
+					Strategy: &ytv1.ComponentUpdateStrategy{
+						RunPreChecks: ptr.To(true),
+					},
+				},
+			}
+		})
+
+		It("should update cluster with ImageHeater component have cluster Running state", func(ctx context.Context) {
 			imageHeaterLabeller := generator.GetComponentLabeller(consts.ImageHeaterType, "")
 			imageHeaterRemovingStarted := imageHeaterLabeller.GetPodsRemovingStartedCondition()
 			imageHeaterRemoved := imageHeaterLabeller.GetPodsRemovedCondition()
