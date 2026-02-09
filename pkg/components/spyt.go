@@ -180,7 +180,7 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 			}
 			sparkArgs = append(sparkArgs, s.spyt.GetResource().Spec.SparkVersions...)
 			env = append(env, corev1.EnvVar{
-				Name:  "EXTRA_SPARK_VERSIONS",
+				Name:  "EXTRA_SPARK_DISTRIB_PARAMS",
 				Value: strings.Join(sparkArgs, " "),
 			})
 		}
