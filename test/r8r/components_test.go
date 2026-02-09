@@ -420,7 +420,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				return cmp.Compare(a.Name, b.Name)
 			})
 
-			for _, obj := range objectList {
+			for i := range objectList {
+				obj := &objectList[i]
 				obj.Annotations = CensorMapValues(obj.Annotations, consts.ConfigHashAnnotationName, consts.InstanceHashAnnotationName)
 			}
 

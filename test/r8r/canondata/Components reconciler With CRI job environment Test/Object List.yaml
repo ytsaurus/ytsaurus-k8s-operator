@@ -1,5 +1,5 @@
 - annotations:
-    ytsaurus.tech/config-hash: 3030056a0a5008f39287424b1095be879d140fdb6378d7f8c89f0d0f6a609c62
+    ytsaurus.tech/config-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -42,7 +42,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/instance-hash: 6c849c2514a92e8cc8580b3818cc954ac6edc4cabf91dd2f8c9fcf3ea66938bf
+    ytsaurus.tech/instance-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -64,7 +64,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/instance-hash: 4174a7527b904825c6a52fa695d1e8d64a1c09acbe95f96f9bc541f8af0d0cb8
+    ytsaurus.tech/instance-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -107,7 +107,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/instance-hash: 97049f8e98e9a87611a6b3b425838de872ac95d07f009674602d841395b04961
+    ytsaurus.tech/instance-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -192,7 +192,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/instance-hash: cd005b618bbe74ee3992569806494dfca49466175bfef015e183067d0f9373ce
+    ytsaurus.tech/instance-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -219,7 +219,7 @@
   namespace: ytsaurus-components
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-hash: 3030056a0a5008f39287424b1095be879d140fdb6378d7f8c89f0d0f6a609c62
+    ytsaurus.tech/config-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -286,7 +286,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-hash: f4f67ce05fb582d8c542688088bd232a3be2ffe80e94369ba04fe3c065c14c46
+    ytsaurus.tech/config-hash: <censored>
     ytsaurus.tech/config-overrides-version: "1"
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
@@ -331,7 +331,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-hash: 9efc29fd3ba384f6f4421d89d44f3865df0ae0bf51e8559c852915f59a48612f
+    ytsaurus.tech/config-hash: <censored>
     ytsaurus.tech/config-overrides-version: "1"
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
@@ -354,7 +354,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-hash: c57e84a54702d032e59c461f749b88f229c9825c9bb773e678770ceb1df18e70
+    ytsaurus.tech/config-hash: <censored>
     ytsaurus.tech/config-overrides-version: "1"
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
@@ -399,7 +399,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-hash: b86c26c9e7756c3a567f561ee90d519b0bcf0fb1a634195bc1c2436fcc8d6f93
+    ytsaurus.tech/config-hash: <censored>
     ytsaurus.tech/config-overrides-version: "1"
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
@@ -444,7 +444,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    ytsaurus.tech/config-hash: 19f80676962914dafbb72dd1e45169dfa621d5a8c8063904d7d902c9830d68cf
+    ytsaurus.tech/config-hash: <censored>
     ytsaurus.tech/config-overrides-version: "1"
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
