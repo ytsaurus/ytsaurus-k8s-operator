@@ -36,7 +36,7 @@
           }
         },
         "sparkDistribOffline": {
-          "description": "Pass --offline to spark_distrib.py to use only local artifacts.",
+          "description": "Use only local artifacts for spark distribution setup.",
           "type": "boolean"
         },
         "sparkVersions": {

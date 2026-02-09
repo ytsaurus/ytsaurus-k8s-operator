@@ -173,15 +173,17 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 			},
 		}
 
-		if len(s.spyt.GetResource().Spec.SparkVersions) > 0 {
-			sparkArgs := make([]string, 0, len(s.spyt.GetResource().Spec.SparkVersions)+2)
-			if s.spyt.GetResource().Spec.SparkDistribOffline {
-				sparkArgs = append(sparkArgs, "--use-cache", "--offline")
-			}
-			sparkArgs = append(sparkArgs, s.spyt.GetResource().Spec.SparkVersions...)
+		if s.spyt.GetResource().Spec.SparkDistribOffline {
 			env = append(env, corev1.EnvVar{
-				Name:  "EXTRA_SPARK_DISTRIB_PARAMS",
-				Value: strings.Join(sparkArgs, " "),
+				Name:  "SPARK_DISTRIB_OFFLINE",
+				Value: "true",
+			})
+		}
+
+		if len(s.spyt.GetResource().Spec.SparkVersions) > 0 {
+			env = append(env, corev1.EnvVar{
+				Name:  "SPARK_DISTRIB_VERSIONS",
+				Value: strings.Join(s.spyt.GetResource().Spec.SparkVersions, " "),
 			})
 		}
 

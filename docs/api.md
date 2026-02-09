@@ -2514,7 +2514,7 @@ _Appears in:_
 | `ytsaurus` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `image` _string_ |  |  |  |
 | `sparkVersions` _string array_ | If multiple versions are provided, only the first one is used for query tracker dynamic config. |  |  |
-| `sparkDistribOffline` _boolean_ | Pass --offline to spark_distrib.py to use only local artifacts. |  |  |
+| `sparkDistribOffline` _boolean_ | Use only local artifacts for spark distribution setup. |  |  |
 
 
 #### SpytStatus
