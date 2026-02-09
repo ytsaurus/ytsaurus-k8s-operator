@@ -280,3 +280,7 @@ func (c *Ytsaurus) UpdateOnDeleteComponentsSummary(ctx context.Context, waitingO
 		c.GetResource().Status.UpdateStatus.UpdatingComponentsSummary = strings.Join(summaryParts, ", ")
 	}
 }
+
+func (c *Ytsaurus) IsImageHeaterEnabled() bool {
+	return ptr.Deref(c.GetClusterFeatures().EnableImageHeater, true)
+}

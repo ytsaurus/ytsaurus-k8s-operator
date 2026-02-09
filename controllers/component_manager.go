@@ -256,6 +256,14 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
+	handled, res, err := cm.runImageHeaterIfEnabled(ctx)
+	if err != nil {
+		return res, err
+	}
+	if handled {
+		return res, nil
+	}
+
 	hasPending := false
 	var syncErr error
 	for _, c := range cm.allComponents {
@@ -320,4 +328,56 @@ func (cm *ComponentManager) areComponentPodsRemoved(component components.Compone
 	// Check for either PodsRemoved (bulk update) or PodsUpdated (OnDelete mode)
 	return cm.ytsaurus.IsUpdateStatusConditionTrue(component.GetLabeller().GetPodsRemovedCondition()) ||
 		cm.ytsaurus.IsUpdateStatusConditionTrue(component.GetLabeller().GetPodsUpdatedCondition())
+}
+
+func (cm *ComponentManager) runImageHeaterIfEnabled(ctx context.Context) (handled bool, result ctrl.Result, err error) {
+	logger := log.FromContext(ctx)
+	state := cm.ytsaurus.GetClusterState()
+	if (state != ytv1.ClusterStateInitializing &&
+		state != ytv1.ClusterStateCreated &&
+		state != ytv1.ClusterState("")) || !cm.ytsaurus.IsImageHeaterEnabled() {
+		return false, ctrl.Result{}, nil
+	}
+
+	ih := cm.findImageHeater()
+	if ih == nil {
+		return false, ctrl.Result{}, nil
+	}
+
+	status, err := ih.Status(ctx)
+	if err != nil {
+		return true, ctrl.Result{Requeue: true}, fmt.Errorf("failed to get status for %s: %w", ih.GetFullName(), err)
+	}
+	if status.SyncStatus == components.SyncStatusReady {
+		return false, ctrl.Result{}, nil
+	}
+
+	if status.SyncStatus == components.SyncStatusPending ||
+		status.SyncStatus == components.SyncStatusUpdating ||
+		status.SyncStatus == components.SyncStatusNeedUpdate {
+		logger.Info("component sync", "component", ih.GetFullName())
+		if err := ih.Sync(ctx); err != nil {
+			logger.Error(err, "component sync failed", "component", ih.GetFullName())
+			return true, ctrl.Result{Requeue: true}, err
+		}
+	}
+
+	if err := cm.ytsaurus.APIProxy().UpdateStatus(ctx); err != nil {
+		logger.Error(err, "update Ytsaurus status failed")
+		return true, ctrl.Result{Requeue: true}, err
+	}
+
+	if status.SyncStatus == components.SyncStatusBlocked {
+		return true, ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+	return true, ctrl.Result{RequeueAfter: time.Second}, nil
+}
+
+func (cm *ComponentManager) findImageHeater() components.Component {
+	for _, cmp := range cm.allComponents {
+		if cmp.GetType() == consts.ImageHeaterType {
+			return cmp
+		}
+	}
+	return nil
 }

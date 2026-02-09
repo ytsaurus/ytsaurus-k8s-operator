@@ -129,7 +129,14 @@ func (c *apiProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object)
 	// Preserve finalizers, for example "foregroundDeletion".
 	newObj.SetFinalizers(oldObj.GetFinalizers())
 
-	return c.updateObject(ctx, newObj)
+	if err := c.updateObject(ctx, newObj); err != nil {
+		if apierrors.IsNotFound(err) {
+			newObj.SetResourceVersion("")
+			return c.createAndReferenceObject(ctx, newObj)
+		}
+		return err
+	}
+	return nil
 }
 
 func (c *apiProxy) DeleteObject(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {

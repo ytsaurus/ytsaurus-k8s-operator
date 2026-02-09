@@ -876,6 +876,11 @@
         "clusterFeatures": {
           "type": "object",
           "properties": {
+            "enableImageHeater": {
+              "description": "EnableImageHeater enables image heater for the cluster initialization.",
+              "type": "boolean",
+              "default": false
+            },
             "httpProxyHaveChytAddress": {
               "description": "HTTP proxies have \"chyt_http_server\" and \"chyt_https_server\".",
               "type": "boolean"

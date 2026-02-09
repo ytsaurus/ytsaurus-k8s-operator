@@ -126,6 +126,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	var k8sEvents []corev1.Event
 	var k8sClient client.WithWatch
 	var statefulSets map[string]*appsv1.StatefulSet
+	// var daemonSets map[string]*appsv1.DaemonSet
 	var configMaps map[string]*corev1.ConfigMap
 	var jobs map[string]*batchv1.Job
 
@@ -353,6 +354,26 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				canonize.AssertStruct(GinkgoT(), "StatefulSet "+obj.Name, censoredObj)
 			}
 		})
+
+		// By("Checking DaemonSets", func() {
+		// 	daemonSets = make(map[string]*appsv1.DaemonSet)
+		// 	var objList appsv1.DaemonSetList
+		// 	Expect(k8sClient.List(ctx, &objList)).To(Succeed())
+		// 	for i := range objList.Items {
+		// 		obj := &objList.Items[i]
+		// 		log.Info("Found DaemonSet", "name", obj.Name)
+		// 		daemonSets[obj.Name] = obj
+
+		// 		Expect(obj.Annotations).To(HaveKey(consts.ObservedGenerationAnnotationName))
+		// 		Expect(obj.Labels).To(HaveKey(consts.ImageHeaterLabelName))
+		// 		Expect(obj.Spec.Template.Labels).To(HaveKey(consts.ImageHeaterLabelName))
+		// 	}
+
+		// 	features := ptr.Deref(ytsaurus.Spec.ClusterFeatures, ytv1.ClusterFeatures{})
+		// 	if ptr.Deref(features.EnableImageHeater, true) {
+		// 		Expect(objList.Items).ToNot(BeEmpty())
+		// 	}
+		// })
 
 		By("Checking Deployments", func() {
 			var objList appsv1.DeploymentList

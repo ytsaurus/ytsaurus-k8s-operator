@@ -335,6 +335,7 @@ _Appears in:_
 | `httpProxyHaveChytAddress` _boolean_ | HTTP proxies have "chyt_http_server" and "chyt_https_server". Opens ports for access to chyt via HTTP proxy. |  |  |
 | `httpProxyHaveHttpsAddress` _boolean_ | HTTP proxies have "https" address. Use HTTPS for all communications. |  |  |
 | `secureClusterTransports` _boolean_ | Validate that only secure transports are allowed for cluster connections. |  |  |
+| `enableImageHeater` _boolean_ | EnableImageHeater enables image heater for the cluster initialization. Independent from the updatePlan logic. | false |  |
 
 
 #### ClusterNodesSpec
