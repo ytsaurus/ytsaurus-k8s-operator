@@ -129,6 +129,10 @@ func (fs *FakeServer) needSync(updating bool) bool {
 	return false
 }
 
+func (fs *FakeServer) preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration) {
+	return nil, nil, nil
+}
+
 func (fs *FakeServer) arePodsRemoved(ctx context.Context) bool {
 	return true
 }

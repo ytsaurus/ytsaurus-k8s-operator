@@ -39,6 +39,7 @@ const ConditionSafeModeDisabled = "SafeModeDisabled"
 const ConditionCypressPatchApplied = "CypressPatchApplied"
 const ConditionTimbertruckPrepared = "TimbertruckPrepared"
 const ConditionTimbertruckUserInitialized = "TimbertruckUserInitialized"
+const ConditionImageHeaterReady = "ImageHeaterReady"
 
 // Conditions below are for migration from imaginary chunks to real chunks for 24.2
 // https://github.com/ytsaurus/ytsaurus-k8s-operator/issues/396
