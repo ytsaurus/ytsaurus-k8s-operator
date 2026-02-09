@@ -8,10 +8,12 @@ import (
 	"strconv"
 	"strings"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -24,7 +26,7 @@ import (
 const (
 	imageHeaterLabelValue          = "true"
 	imageHeaterContainerNamePrefix = "image-heater"
-	imagesHeatedHashPrefix         = "hash="
+	imageHeaterHashPrefix          = "hash="
 )
 
 type imageHeaterTarget struct {
@@ -75,7 +77,10 @@ func (ih *ImageHeater) Sync(ctx context.Context) error {
 	return err
 }
 
-// doSync handles preheat creation and cleanup depending on update state.
+// doSync drives ImageHeater lifecycle:
+// - returns NeedUpdate when a new preheat is required.
+// - runs preheat only during UpdateStateWaitingForImageHeater.
+// - marks readiness via ImageHeaterReady condition when targets are heated.
 func (ih *ImageHeater) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
@@ -95,15 +100,6 @@ func (ih *ImageHeater) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 	}
 
 	if ih.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForImageHeater {
-		if IsUpdatingComponent(ih.ytsaurus, ih) && ih.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
-			if !ih.ytsaurus.IsUpdateStatusConditionTrue(ih.labeller.GetPodsRemovingStartedCondition()) {
-				setPodsRemovingStartedCondition(ctx, &ih.localComponent)
-			}
-			if !ih.ytsaurus.IsUpdateStatusConditionTrue(ih.labeller.GetPodsRemovedCondition()) {
-				setPodsRemovedCondition(ctx, &ih.localComponent)
-			}
-			return SimpleStatus(SyncStatusUpdating), nil
-		}
 		return ComponentStatusReadyAfter("Image heater idle"), nil
 	}
 
@@ -118,7 +114,7 @@ func (ih *ImageHeater) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 	targetsHash := imageHeaterTargetsHash(targets)
 
 	if len(targets) == 0 {
-		return ih.markImagesHeated(ctx, targetsHash, dry)
+		return ih.markImageHeaterReady(ctx, targetsHash, dry)
 	}
 
 	allReady, err := ih.syncTargets(ctx, targets, dry)
@@ -130,7 +126,7 @@ func (ih *ImageHeater) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 		return ComponentStatusUpdating("Image heater daemonsets are not ready"), nil
 	}
 
-	return ih.markImagesHeated(ctx, targetsHash, dry)
+	return ih.markImageHeaterReady(ctx, targetsHash, dry)
 }
 
 // needsPreheat checks if image preheating is needed based on update plan and current state
@@ -153,8 +149,8 @@ func (ih *ImageHeater) needsPreheat(ctx context.Context) (bool, error) {
 		ih.ytsaurus.GetResource().Status.UpdateStatus.Conditions, consts.ConditionImageHeaterReady,
 	)
 
-	heatedHash := imagesHeatedHashFromCondition(ConditionImageHeaterReady)
-	if targetsHash != "" && heatedHash == targetsHash {
+	imageHeaterHash := imageHeaterHashFromCondition(ConditionImageHeaterReady)
+	if targetsHash != "" && imageHeaterHash == targetsHash {
 		return false, nil
 	}
 
@@ -163,7 +159,7 @@ func (ih *ImageHeater) needsPreheat(ctx context.Context) (bool, error) {
 			Type:    consts.ConditionImageHeaterReady,
 			Status:  metav1.ConditionFalse,
 			Reason:  "Update",
-			Message: imagesHeatedHashMessage(targetsHash),
+			Message: imageHeaterConditionMessage(targetsHash),
 		})
 	}
 	return true, nil
@@ -182,44 +178,44 @@ func (ih *ImageHeater) shouldConsiderComponentForPreheat(component Component) bo
 	if component.GetType() == consts.ImageHeaterType {
 		return false
 	}
-	if !hasNonImageHeaterComponent(ih.ytsaurus.GetUpdatingComponents()) {
+	if !hasNonImageHeaterUpdatingComponent(ih.ytsaurus.GetUpdatingComponents()) {
 		return true
 	}
 	return IsUpdatingComponent(ih.ytsaurus, component)
 }
 
-func (ih *ImageHeater) markImagesHeated(ctx context.Context, targetsHash string, dry bool) (ComponentStatus, error) {
+func (ih *ImageHeater) markImageHeaterReady(ctx context.Context, targetsHash string, dry bool) (ComponentStatus, error) {
 	if !dry {
 		ih.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 			Type:    consts.ConditionImageHeaterReady,
 			Status:  metav1.ConditionTrue,
 			Reason:  "Update",
-			Message: imagesHeatedHashMessage(targetsHash),
+			Message: imageHeaterConditionMessage(targetsHash),
 		})
 	}
 
 	return SimpleStatus(SyncStatusUpdating), nil
 }
 
-func imagesHeatedHashFromCondition(condition *metav1.Condition) string {
+func imageHeaterHashFromCondition(condition *metav1.Condition) string {
 	if condition == nil || condition.Status != metav1.ConditionTrue {
 		return ""
 	}
-	return imagesHeatedHashFromMessage(condition.Message)
+	return imageHeaterHashFromMessage(condition.Message)
 }
 
-func imagesHeatedHashMessage(hash string) string {
+func imageHeaterConditionMessage(hash string) string {
 	if hash == "" {
 		return ""
 	}
-	return imagesHeatedHashPrefix + hash
+	return imageHeaterHashPrefix + hash
 }
 
-func imagesHeatedHashFromMessage(message string) string {
-	if !strings.HasPrefix(message, imagesHeatedHashPrefix) {
+func imageHeaterHashFromMessage(message string) string {
+	if !strings.HasPrefix(message, imageHeaterHashPrefix) {
 		return ""
 	}
-	return strings.TrimPrefix(message, imagesHeatedHashPrefix)
+	return strings.TrimPrefix(message, imageHeaterHashPrefix)
 }
 
 func imageHeaterTargetsHash(targets []imageHeaterTarget) string {
@@ -257,7 +253,7 @@ func imageHeaterTargetsHash(targets []imageHeaterTarget) string {
 	return fmt.Sprintf("%x", sum[:])
 }
 
-func hasNonImageHeaterComponent(components []ytv1.Component) bool {
+func hasNonImageHeaterUpdatingComponent(components []ytv1.Component) bool {
 	for _, component := range components {
 		if component.Type != consts.ImageHeaterType {
 			return true
@@ -355,9 +351,14 @@ func (ih *ImageHeater) componentImageNeedsUpdate(ctx context.Context, component 
 	return true, nil
 }
 
-// syncTargets applies daemonsets per target and reports when all are ready.
-// it might be several containers per daemonset if there are several images to preheat
+// syncTargets reconciles image-heater DaemonSets for each target and reports readiness.
+// A target is considered ready only when:
+// - the DaemonSet exists and its template matches the desired images,
+// - no heater pod is terminating,
+// - heater pods contain exactly the desired images,
+// - and DaemonSet status reports all pods updated/available.
 func (ih *ImageHeater) syncTargets(ctx context.Context, targets []imageHeaterTarget, dry bool) (bool, error) {
+	logger := log.FromContext(ctx)
 	allReady := true
 
 	for _, target := range targets {
@@ -372,31 +373,187 @@ func (ih *ImageHeater) syncTargets(ctx context.Context, targets []imageHeaterTar
 			return false, err
 		}
 
-		dsSpec := ds.Build()
-		dsSpec.Labels = ensureImageHeaterLabel(dsSpec.Labels)
-		dsSpec.Spec.Template.Labels = ensureImageHeaterLabel(dsSpec.Spec.Template.Labels)
-		images := imageHeaterSortedImages(target.images)
-		containers := make([]corev1.Container, 0, len(images))
-		for _, image := range images {
-			containers = append(containers, imageHeaterContainer(image))
-		}
-		dsSpec.Spec.Template.Spec.Containers = containers
+		desiredImages, desiredImagesSet := imageHeaterDesiredImages(target.images)
+		imageHeaterApplyDaemonSetSpec(ds, desiredImages)
 
-		if !dry {
-			if err := ds.Sync(ctx); err != nil {
-				return false, err
-			}
-			if err := ds.Fetch(ctx); err != nil {
-				return false, err
-			}
+		if err := imageHeaterSyncAndFetch(ctx, ds, dry); err != nil {
+			return false, err
 		}
 
-		if !ds.Exists() || !ds.ArePodsReady(ctx) {
+		imageHeaterLogDaemonSetStatus(ctx, ds, target.name)
+
+		if !ds.Exists() {
+			logger.Info("Image heater daemonset not ready", "daemonset", target.name)
+			allReady = false
+			continue
+		}
+
+		currentImages := imageHeaterDaemonSetImages(ds.OldObject())
+		if !imageHeaterImagesEqual(currentImages, desiredImages) {
+			logger.Info("Image heater daemonset spec not yet applied",
+				"daemonset", target.name,
+				"currentImages", currentImages,
+				"desiredImages", desiredImages,
+			)
+			allReady = false
+			continue
+		}
+
+		podCheck, err := imageHeaterCheckPods(ctx, ds, desiredImagesSet)
+		if err != nil {
+			return false, err
+		}
+		if !podCheck.ok {
+			logFields := []any{"daemonset", target.name}
+			if podCheck.podName != "" {
+				logFields = append(logFields, "pod", podCheck.podName)
+			}
+			if podCheck.image != "" {
+				logFields = append(logFields, "image", podCheck.image)
+			}
+			logger.Info(podCheck.reason, logFields...)
+			allReady = false
+			continue
+		}
+
+		if !ds.ArePodsReady(ctx) {
+			logger.Info("Image heater daemonset not ready", "daemonset", target.name)
 			allReady = false
 		}
 	}
 
 	return allReady, nil
+}
+
+type imageHeaterPodCheckResult struct {
+	ok      bool
+	reason  string
+	podName string
+	image   string
+}
+
+func imageHeaterDesiredImages(images []string) (desiredImages []string, imageSet map[string]struct{}) {
+	desired := imageHeaterSortedImages(images)
+	set := make(map[string]struct{}, len(desired))
+	for _, image := range desired {
+		set[image] = struct{}{}
+	}
+	return desired, set
+}
+
+func imageHeaterApplyDaemonSetSpec(ds *resources.DaemonSet, desiredImages []string) {
+	dsSpec := ds.Build()
+	dsSpec.Labels = ensureImageHeaterLabel(dsSpec.Labels)
+	dsSpec.Spec.Template.Labels = ensureImageHeaterLabel(dsSpec.Spec.Template.Labels)
+	containers := make([]corev1.Container, 0, len(desiredImages))
+	for _, image := range desiredImages {
+		containers = append(containers, imageHeaterContainer(image))
+	}
+	dsSpec.Spec.Template.Spec.Containers = containers
+}
+
+func imageHeaterSyncAndFetch(ctx context.Context, ds *resources.DaemonSet, dry bool) error {
+	if dry {
+		return nil
+	}
+	if err := ds.Sync(ctx); err != nil {
+		return err
+	}
+	return ds.Fetch(ctx)
+}
+
+func imageHeaterLogDaemonSetStatus(ctx context.Context, ds *resources.DaemonSet, name string) {
+	logger := log.FromContext(ctx)
+	dsObj := ds.OldObject()
+	if dsObj == nil {
+		logger.Info("Image heater daemonset status unavailable", "daemonset", name)
+		return
+	}
+
+	logger.Info("Image heater daemonset status",
+		"daemonset", name,
+		"exists", ds.Exists(),
+		"generation", dsObj.Generation,
+		"observedGeneration", dsObj.Status.ObservedGeneration,
+		"desiredNumberScheduled", dsObj.Status.DesiredNumberScheduled,
+		"updatedNumberScheduled", dsObj.Status.UpdatedNumberScheduled,
+		"readyNumberScheduled", dsObj.Status.NumberReady,
+		"numberAvailable", dsObj.Status.NumberAvailable,
+		"numberUnavailable", dsObj.Status.NumberUnavailable,
+	)
+}
+
+// imageHeaterCheckPods checks if the daemonset pods are ready and have the correct images.
+func imageHeaterCheckPods(ctx context.Context, ds *resources.DaemonSet, desiredImagesSet map[string]struct{}) (imageHeaterPodCheckResult, error) {
+	dsObj := ds.OldObject()
+	if dsObj == nil || dsObj.Status.DesiredNumberScheduled == 0 {
+		return imageHeaterPodCheckResult{ok: true}, nil
+	}
+
+	pods, err := ds.ListPods(ctx)
+	if err != nil {
+		return imageHeaterPodCheckResult{}, err
+	}
+	return imageHeaterValidatePods(pods, desiredImagesSet), nil
+}
+
+// imageHeaterValidatePods checks if ImageHeater's pods are not terminating and have the desired images.
+func imageHeaterValidatePods(pods []corev1.Pod, desiredImagesSet map[string]struct{}) imageHeaterPodCheckResult {
+	if len(pods) == 0 {
+		return imageHeaterPodCheckResult{
+			ok:     false,
+			reason: "Image heater daemonset has no pods yet",
+		}
+	}
+
+	for _, pod := range pods {
+		if pod.DeletionTimestamp != nil {
+			return imageHeaterPodCheckResult{
+				ok:      false,
+				reason:  "Image heater daemonset has terminating pod",
+				podName: pod.Name,
+			}
+		}
+
+		podImages := make(map[string]struct{})
+		for _, container := range pod.Spec.Containers {
+			if strings.HasPrefix(container.Name, imageHeaterContainerNamePrefix) {
+				podImages[container.Image] = struct{}{}
+			}
+		}
+
+		if len(podImages) == 0 {
+			return imageHeaterPodCheckResult{
+				ok:      false,
+				reason:  "Image heater daemonset pod has no heater containers",
+				podName: pod.Name,
+			}
+		}
+
+		for image := range desiredImagesSet {
+			if _, ok := podImages[image]; !ok {
+				return imageHeaterPodCheckResult{
+					ok:      false,
+					reason:  "Image heater daemonset pod missing desired image",
+					podName: pod.Name,
+					image:   image,
+				}
+			}
+		}
+
+		for image := range podImages {
+			if _, ok := desiredImagesSet[image]; !ok {
+				return imageHeaterPodCheckResult{
+					ok:      false,
+					reason:  "Image heater daemonset pod has unexpected image",
+					podName: pod.Name,
+					image:   image,
+				}
+			}
+		}
+	}
+
+	return imageHeaterPodCheckResult{ok: true}
 }
 
 // imageHeaterInstanceGroup returns a stable instance group derived from the group key.
@@ -460,6 +617,31 @@ func imageHeaterSortedImages(images []string) []string {
 	copy(unique, images)
 	sort.Strings(unique)
 	return unique
+}
+
+func imageHeaterDaemonSetImages(ds *appsv1.DaemonSet) []string {
+	if ds == nil {
+		return nil
+	}
+	images := make([]string, 0, len(ds.Spec.Template.Spec.Containers))
+	for _, container := range ds.Spec.Template.Spec.Containers {
+		if strings.HasPrefix(container.Name, imageHeaterContainerNamePrefix) {
+			images = append(images, container.Image)
+		}
+	}
+	return imageHeaterSortedImages(images)
+}
+
+func imageHeaterImagesEqual(current, desired []string) bool {
+	if len(current) != len(desired) {
+		return false
+	}
+	for i := range current {
+		if current[i] != desired[i] {
+			return false
+		}
+	}
+	return true
 }
 
 // imageHeaterContainerName creates a stable container name derived from the image.

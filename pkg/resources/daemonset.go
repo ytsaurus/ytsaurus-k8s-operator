@@ -75,25 +75,58 @@ func (d *DaemonSet) Build() *appsv1.DaemonSet {
 	return d.newObject
 }
 
+func (d *DaemonSet) ListPods(ctx context.Context) ([]corev1.Pod, error) {
+	podList := &corev1.PodList{}
+	if err := d.proxy.ListObjects(ctx, podList, d.labeller.GetListOptions()...); err != nil {
+		return nil, err
+	}
+	return podList.Items, nil
+}
+
 func (d *DaemonSet) ArePodsReady(ctx context.Context) bool {
 	logger := log.FromContext(ctx)
-	logger.Info("Image heater checking daemonset pods", "daemonset", d.name)
-	podList := d.listPods(ctx)
-	if podList == nil {
-		logger.Info("Image heater podList is nil", "daemonset", d.name)
+	ds := d.OldObject()
+	if ds == nil {
+		logger.Info("Image heater daemonset is nil", "daemonset", d.name)
 		return false
 	}
 
-	if len(podList.Items) == 0 {
-		logger.Info("Image heater daemonset has no pods", "daemonset", d.name)
+	if ds.Generation != ds.Status.ObservedGeneration {
+		logger.Info("Image heater daemonset status not observed yet",
+			"daemonset", d.name,
+			"generation", ds.Generation,
+			"observedGeneration", ds.Status.ObservedGeneration,
+		)
 		return false
 	}
 
-	for _, pod := range podList.Items {
-		if pod.Status.Phase != corev1.PodRunning {
-			logger.Info("Image heater pod is not yet running", "podName", pod.Name, "phase", pod.Status.Phase)
-			return false
-		}
+	desired := ds.Status.DesiredNumberScheduled
+	updated := ds.Status.UpdatedNumberScheduled
+	available := ds.Status.NumberAvailable
+	ready := ds.Status.NumberReady
+
+	if desired == 0 {
+		logger.Info("Image heater daemonset has no desired pods", "daemonset", d.name)
+		return true
+	}
+
+	if updated != desired {
+		logger.Info("Image heater daemonset pods not updated to latest spec",
+			"daemonset", d.name,
+			"desiredNumberScheduled", desired,
+			"updatedNumberScheduled", updated,
+		)
+		return false
+	}
+
+	if available != desired || ready != desired {
+		logger.Info("Image heater daemonset pods not yet available",
+			"daemonset", d.name,
+			"desiredNumberScheduled", desired,
+			"numberAvailable", available,
+			"numberReady", ready,
+		)
+		return false
 	}
 
 	return true

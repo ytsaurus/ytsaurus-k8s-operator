@@ -295,7 +295,7 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 
 func (cm *ComponentManager) arePodsRemoved() bool {
 	for _, cmp := range cm.allComponents {
-		if cmp.GetType() == consts.YtsaurusClientType {
+		if cmp.GetType() == consts.YtsaurusClientType || cmp.GetType() == consts.ImageHeaterType {
 			continue
 		}
 		if components.IsUpdatingComponent(cm.ytsaurus, cmp) && !cm.areComponentPodsRemoved(cmp) {
