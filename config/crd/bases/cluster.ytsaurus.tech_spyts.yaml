@@ -56,6 +56,9 @@ spec:
                   type: object
                   x-kubernetes-map-type: atomic
                 type: array
+              sparkDistribOffline:
+                description: Use only local artifacts for spark distribution setup.
+                type: boolean
               sparkVersions:
                 description: If multiple versions are provided, only the first one
                   is used for query tracker...

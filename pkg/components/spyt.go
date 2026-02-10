@@ -173,9 +173,16 @@ func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 			},
 		}
 
+		if s.spyt.GetResource().Spec.SparkDistribOffline {
+			env = append(env, corev1.EnvVar{
+				Name:  "SPARK_DISTRIB_OFFLINE",
+				Value: "true",
+			})
+		}
+
 		if len(s.spyt.GetResource().Spec.SparkVersions) > 0 {
 			env = append(env, corev1.EnvVar{
-				Name:  "EXTRA_SPARK_VERSIONS",
+				Name:  "SPARK_DISTRIB_VERSIONS",
 				Value: strings.Join(s.spyt.GetResource().Spec.SparkVersions, " "),
 			})
 		}
