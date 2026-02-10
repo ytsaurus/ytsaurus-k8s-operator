@@ -109,6 +109,30 @@ func CompleteOneJob(ctx context.Context, k8sClient client.WithWatch, namespace s
 	return nil
 }
 
+func HandleDaemonSet(ctx context.Context, k8sClient client.WithWatch, namespace string) {
+	var objList appsv1.DaemonSetList
+	Expect(k8sClient.List(ctx, &objList, &client.ListOptions{Namespace: namespace})).To(Succeed())
+	for _, ds := range objList.Items {
+		if ds.Status.ObservedGeneration == ds.Generation {
+			continue
+		}
+
+		desired := int32(1)
+		ds.Status = appsv1.DaemonSetStatus{
+			ObservedGeneration:     ds.Generation,
+			CurrentNumberScheduled: desired,
+			NumberMisscheduled:     0,
+			DesiredNumberScheduled: desired,
+			UpdatedNumberScheduled: desired,
+			NumberReady:            desired,
+			NumberAvailable:        desired,
+		}
+
+		log.Info("Handling DaemonSet", "name", ds.Name)
+		Expect(k8sClient.Status().Update(ctx, &ds)).To(Succeed())
+	}
+}
+
 // Censor values which are volatile or break patch commutativeness.
 func CensorMapValues(m map[string]string, keys ...string) map[string]string {
 	m = maps.Clone(m)
@@ -131,6 +155,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	var k8sEvents []corev1.Event
 	var k8sClient client.WithWatch
 	var statefulSets map[string]*appsv1.StatefulSet
+	var daemonSets map[string]*appsv1.DaemonSet
 	var configMaps map[string]*corev1.ConfigMap
 	var jobs map[string]*batchv1.Job
 
@@ -344,6 +369,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				}
 
 				CompleteOneJob(ctx, k8sClient, namespace)
+				HandleDaemonSet(ctx, k8sClient, namespace)
 
 				if index++; index >= len(requestQueue) {
 					index = 0
@@ -439,6 +465,26 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				censoredObj.Spec.Template.Annotations = CensorMapValues(obj.Spec.Template.Annotations, consts.ConfigHashAnnotationName)
 
 				canonize.AssertStruct(GinkgoT(), "StatefulSet "+obj.Name, censoredObj)
+			}
+		})
+
+		By("Checking DaemonSets", func() {
+			daemonSets = make(map[string]*appsv1.DaemonSet)
+			var objList appsv1.DaemonSetList
+			Expect(k8sClient.List(ctx, &objList)).To(Succeed())
+			for i := range objList.Items {
+				obj := &objList.Items[i]
+				log.Info("Found DaemonSet", "name", obj.Name)
+				objectList = append(objectList, obj.ObjectMeta)
+				daemonSets[obj.Name] = obj
+
+				Expect(obj.Annotations).To(HaveKey(consts.InstanceHashAnnotationName))
+				Expect(obj.Annotations).To(HaveKey(consts.ObservedGenerationAnnotationName))
+
+				censoredObj := obj.DeepCopy()
+				censoredObj.Annotations = CensorMapValues(obj.Annotations, consts.InstanceHashAnnotationName)
+
+				canonize.AssertStruct(GinkgoT(), "DaemonSets "+obj.Name, censoredObj)
 			}
 		})
 
