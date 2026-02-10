@@ -79,10 +79,14 @@ func (ih *ImageHeater) Sync(ctx context.Context) error {
 
 // doSync drives ImageHeater lifecycle:
 // - returns NeedUpdate when a new preheat is required.
-// - runs preheat only during UpdateStateWaitingForImageHeater.
+// - runs preheat only during UpdateStateWaitingForImageHeater or during cluster creation as step 0.
 // - marks readiness via ImageHeaterReady condition when targets are heated.
 func (ih *ImageHeater) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
+
+	if status, handled, err := ih.runAtClusterCreationStage(ctx, dry); handled || err != nil {
+		return status, err
+	}
 
 	// we need to ImageHeater appear in needUpdate list before we start updating
 	if ih.ytsaurus.IsReadyToUpdate() {
@@ -127,6 +131,45 @@ func (ih *ImageHeater) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 	}
 
 	return ih.markImageHeaterReady(ctx, targetsHash, dry)
+}
+
+func (ih *ImageHeater) isInitState() bool {
+	switch ih.ytsaurus.GetClusterState() {
+	case ytv1.ClusterStateInitializing, ytv1.ClusterStateCreated, ytv1.ClusterState(""):
+		return true
+	default:
+		return false
+	}
+}
+
+func (ih *ImageHeater) runAtClusterCreationStage(ctx context.Context, dry bool) (ComponentStatus, bool, error) {
+	// If image heater is enabled and cluster is initializing/created, we need to deploy it first.
+	if !ih.ytsaurus.IsImageHeaterEnabled() || !ih.isInitState() {
+		return ComponentStatus{}, false, nil
+	}
+
+	targets, err := ih.buildTargets(ctx)
+	if err != nil {
+		return SimpleStatus(SyncStatusUpdating), true, err
+	}
+	targetsHash := imageHeaterTargetsHash(targets)
+
+	if len(targets) == 0 {
+		status, err := ih.markImageHeaterReadyInit(ctx, targetsHash, dry)
+		return status, true, err
+	}
+
+	allReady, err := ih.syncTargets(ctx, targets, dry)
+	if err != nil {
+		return SimpleStatus(SyncStatusUpdating), true, err
+	}
+
+	if !allReady {
+		return ComponentStatusUpdating("Image heater daemonsets are not ready"), true, nil
+	}
+
+	status, err := ih.markImageHeaterReadyInit(ctx, targetsHash, dry)
+	return status, true, err
 }
 
 // needsPreheat checks if image preheating is needed based on update plan and current state
@@ -185,6 +228,16 @@ func (ih *ImageHeater) shouldConsiderComponentForPreheat(component Component) bo
 }
 
 func (ih *ImageHeater) markImageHeaterReady(ctx context.Context, targetsHash string, dry bool) (ComponentStatus, error) {
+	ih.setImageHeaterReadyCondition(ctx, targetsHash, dry)
+	return SimpleStatus(SyncStatusUpdating), nil
+}
+
+func (ih *ImageHeater) markImageHeaterReadyInit(ctx context.Context, targetsHash string, dry bool) (ComponentStatus, error) {
+	ih.setImageHeaterReadyCondition(ctx, targetsHash, dry)
+	return ComponentStatusReadyAfter("Image heater preheated"), nil
+}
+
+func (ih *ImageHeater) setImageHeaterReadyCondition(ctx context.Context, targetsHash string, dry bool) {
 	if !dry {
 		ih.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 			Type:    consts.ConditionImageHeaterReady,
@@ -193,10 +246,7 @@ func (ih *ImageHeater) markImageHeaterReady(ctx context.Context, targetsHash str
 			Message: imageHeaterConditionMessage(targetsHash),
 		})
 	}
-
-	return SimpleStatus(SyncStatusUpdating), nil
 }
-
 func imageHeaterHashFromCondition(condition *metav1.Condition) string {
 	if condition == nil || condition.Status != metav1.ConditionTrue {
 		return ""
