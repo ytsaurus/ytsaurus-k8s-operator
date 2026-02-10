@@ -2636,6 +2636,16 @@ func (in *YtsaurusSpec) DeepCopyInto(out *YtsaurusSpec) {
 		*out = new(OauthServiceSpec)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.IsManaged != nil {
+		in, out := &in.IsManaged, &out.IsManaged
+		*out = new(bool)
+		**out = **in
+	}
+	if in.EnableFullUpdate != nil {
+		in, out := &in.EnableFullUpdate, &out.EnableFullUpdate
+		*out = new(bool)
+		**out = **in
+	}
 	if in.UpdatePlan != nil {
 		in, out := &in.UpdatePlan, &out.UpdatePlan
 		*out = make([]ComponentUpdateSelector, len(*in))

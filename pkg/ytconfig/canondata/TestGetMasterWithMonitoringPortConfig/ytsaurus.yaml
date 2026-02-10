@@ -5,8 +5,6 @@ metadata:
 spec:
   discovery:
     resources: {}
-  enableFullUpdate: false
-  isManaged: false
   primaryMasters:
     cellTag: 0
     instanceCount: 1

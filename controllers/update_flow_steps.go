@@ -196,7 +196,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 		return stepResultMarkUnsatisfied
 	},
 	ytv1.UpdateStateImpossibleToStart: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
-		if componentManager.status.allReady || !ytsaurus.GetResource().Spec.EnableFullUpdate {
+		if componentManager.status.allReady {
 			return stepResultMarkHappy
 		}
 		return stepResultMarkUnsatisfied

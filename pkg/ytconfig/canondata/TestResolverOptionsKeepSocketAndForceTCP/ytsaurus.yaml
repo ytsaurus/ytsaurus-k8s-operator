@@ -15,9 +15,7 @@ spec:
   discovery:
     instanceCount: 3
     resources: {}
-  enableFullUpdate: false
   forceTcp: true
-  isManaged: false
   kafkaProxies:
   - instanceCount: 3
     resources: {}

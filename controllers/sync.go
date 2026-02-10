@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/utils/ptr"
+
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/validators"
@@ -93,50 +95,67 @@ func needFullUpdate(needUpdate []ytv1.Component) bool {
 }
 
 func getEffectiveSelectors(spec ytv1.YtsaurusSpec) []ytv1.ComponentUpdateSelector {
-	if spec.UpdatePlan != nil {
+	// Update plan is defined in spec.
+	if len(spec.UpdatePlan) != 0 {
 		return spec.UpdatePlan
 	}
 
-	if spec.UpdateSelector != ytv1.UpdateSelectorUnspecified {
-		switch spec.UpdateSelector {
-		case ytv1.UpdateSelectorNothing:
-			return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassNothing}}
-		case ytv1.UpdateSelectorMasterOnly:
+	// Generate effective plan from legacy options.
+	switch spec.UpdateSelector {
+	case ytv1.UpdateSelectorNothing:
+		return []ytv1.ComponentUpdateSelector{{
+			Class: consts.ComponentClassNothing,
+		}}
+	case ytv1.UpdateSelectorMasterOnly:
+		return []ytv1.ComponentUpdateSelector{{
+			Component: ytv1.Component{
+				Type: consts.MasterType,
+			},
+		}}
+	case ytv1.UpdateSelectorDataNodesOnly:
+		return []ytv1.ComponentUpdateSelector{{
+			Component: ytv1.Component{
+				Type: consts.DataNodeType,
+			},
+		}}
+	case ytv1.UpdateSelectorTabletNodesOnly:
+		return []ytv1.ComponentUpdateSelector{{
+			Component: ytv1.Component{
+				Type: consts.TabletNodeType,
+			},
+		}}
+	case ytv1.UpdateSelectorExecNodesOnly:
+		return []ytv1.ComponentUpdateSelector{{
+			Component: ytv1.Component{
+				Type: consts.ExecNodeType,
+			},
+		}}
+	case ytv1.UpdateSelectorStatelessOnly:
+		return []ytv1.ComponentUpdateSelector{{
+			Class: consts.ComponentClassStateless,
+		}}
+	case ytv1.UpdateSelectorEverything:
+		return []ytv1.ComponentUpdateSelector{{
+			Class: consts.ComponentClassEverything,
+		}}
+	case ytv1.UpdateSelectorUnspecified:
+		if !ptr.Deref(spec.EnableFullUpdate, true) {
 			return []ytv1.ComponentUpdateSelector{{
-				Component: ytv1.Component{
-					Type: consts.MasterType,
-				},
+				Class: consts.ComponentClassStateless,
 			}}
-		case ytv1.UpdateSelectorDataNodesOnly:
-			return []ytv1.ComponentUpdateSelector{{
-				Component: ytv1.Component{
-					Type: consts.DataNodeType,
-				},
-			}}
-		case ytv1.UpdateSelectorTabletNodesOnly:
-			return []ytv1.ComponentUpdateSelector{{
-				Component: ytv1.Component{
-					Type: consts.TabletNodeType,
-				},
-			}}
-		case ytv1.UpdateSelectorExecNodesOnly:
-			return []ytv1.ComponentUpdateSelector{{
-				Component: ytv1.Component{
-					Type: consts.ExecNodeType,
-				},
-			}}
-		case ytv1.UpdateSelectorStatelessOnly:
-			return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassStateless}}
-		case ytv1.UpdateSelectorEverything:
-			return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
 		}
+		// Else: fail back to default plan below.
+	default:
+		// Safe default when seeing something unknown.
+		return []ytv1.ComponentUpdateSelector{{
+			Class: consts.ComponentClassNothing,
+		}}
 	}
 
-	if spec.EnableFullUpdate {
-		return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
-	}
-
-	return []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassStateless}}
+	// This is default update plan.
+	return []ytv1.ComponentUpdateSelector{{
+		Class: consts.ComponentClassEverything,
+	}}
 }
 
 func convertToComponent(components []components.Component) []ytv1.Component {
@@ -153,7 +172,7 @@ func convertToComponent(components []components.Component) []ytv1.Component {
 func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	if !resource.Spec.IsManaged || r.ShouldIgnoreResource(ctx, resource) {
+	if !ptr.Deref(resource.Spec.IsManaged, true) || r.ShouldIgnoreResource(ctx, resource) {
 		logger.Info("Ytsaurus cluster is not managed by controller, do nothing")
 		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}

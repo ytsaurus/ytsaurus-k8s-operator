@@ -917,21 +917,21 @@ type YtsaurusSpec struct {
 
 	OauthService *OauthServiceSpec `json:"oauthService,omitempty"`
 
+	// Setting to false disables all operator actions. Default: true.
 	//+kubebuilder:default:=true
-	//+optional
-	IsManaged bool `json:"isManaged"`
+	IsManaged *bool `json:"isManaged,omitempty"`
+
+	// Deprecated: use updatePlan instead.
 	//+kubebuilder:default:=true
-	//+optional
-	EnableFullUpdate bool `json:"enableFullUpdate"`
-	//+optional
+	EnableFullUpdate *bool `json:"enableFullUpdate,omitempty"`
+
+	// Deprecated: use updatePlan instead.
 	//+kubebuilder:validation:Enum={"","Nothing","MasterOnly","DataNodesOnly","TabletNodesOnly","ExecNodesOnly","StatelessOnly","Everything"}
-	//
-	// Deprecated: UpdateSelector is going to be removed soon. Please use UpdateSelectors instead.
 	UpdateSelector UpdateSelector `json:"updateSelector,omitempty"`
 
-	//+optional
-	// Experimental: api may change.
-	// Controls the components that should be updated during the update process.
+	// Defines components which are allowed to update.
+	// Must contain either single "class" item or several "component" items.
+	// Default: update everything (unless defined deprecated updateSelector or enableFullUpdate).
 	UpdatePlan []ComponentUpdateSelector `json:"updatePlan,omitempty"`
 
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
@@ -1061,9 +1061,10 @@ type ComponentUpdateStrategy struct {
 }
 
 type ComponentUpdateSelector struct {
-	//+optional
+	// Selects components by class: Nothing, Everything, Stateless (except Master, DataNode, TabletNode).
 	//+kubebuilder:validation:Enum={"","Nothing","Stateless","Everything"}
 	Class ComponentClass `json:"class,omitempty"`
+	// Selects components by type and/or instance group name.
 	//+optional
 	Component Component `json:"component,omitempty"`
 	//+optional

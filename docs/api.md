@@ -564,8 +564,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `class` _[ComponentClass](#componentclass)_ |  |  | Enum: [ Nothing Stateless Everything] <br /> |
-| `component` _[Component](#component)_ |  |  |  |
+| `class` _[ComponentClass](#componentclass)_ | Selects components by class: Nothing, Everything, Stateless (except Master, DataNode, TabletNode). |  | Enum: [ Nothing Stateless Everything] <br /> |
+| `component` _[Component](#component)_ | Selects components by type and/or instance group name. |  |  |
 | `strategy` _[ComponentUpdateStrategy](#componentupdatestrategy)_ |  |  |  |
 
 
@@ -3213,10 +3213,10 @@ _Appears in:_
 | `requiresOperatorVersion` _string_ | requiresOperatorVersion is used to lock the YT spec to an Operator version or range.<br />Syntax: https://github.com/Masterminds/semver<br />Example: "~0.1.2" is equivalent to ">= 0.1.2, < 0.2.0". |  |  |
 | `adminCredentials` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `oauthService` _[OauthServiceSpec](#oauthservicespec)_ |  |  |  |
-| `isManaged` _boolean_ |  | true |  |
-| `enableFullUpdate` _boolean_ |  | true |  |
-| `updateSelector` _[UpdateSelector](#updateselector)_ | Deprecated: UpdateSelector is going to be removed soon. Please use UpdateSelectors instead. |  | Enum: [ Nothing MasterOnly DataNodesOnly TabletNodesOnly ExecNodesOnly StatelessOnly Everything] <br /> |
-| `updatePlan` _[ComponentUpdateSelector](#componentupdateselector) array_ | Experimental: api may change.<br />Controls the components that should be updated during the update process. |  |  |
+| `isManaged` _boolean_ | Setting to false disables all operator actions. Default: true. | true |  |
+| `enableFullUpdate` _boolean_ | Deprecated: use updatePlan instead. | true |  |
+| `updateSelector` _[UpdateSelector](#updateselector)_ | Deprecated: use updatePlan instead. |  | Enum: [ Nothing MasterOnly DataNodesOnly TabletNodesOnly ExecNodesOnly StatelessOnly Everything] <br /> |
+| `updatePlan` _[ComponentUpdateSelector](#componentupdateselector) array_ | Defines components which are allowed to update.<br />Must contain either single "class" item or several "component" items.<br />Default: update everything (unless defined deprecated updateSelector or enableFullUpdate). |  |  |
 | `bootstrap` _[BootstrapSpec](#bootstrapspec)_ |  |  |  |
 | `discovery` _[DiscoverySpec](#discoveryspec)_ |  |  |  |
 | `primaryMasters` _[MastersSpec](#mastersspec)_ |  |  |  |
