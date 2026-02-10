@@ -144,7 +144,7 @@ func TestYtsaurusUpdateStatelessComponent(t *testing.T) {
 	imageUpdated := testYtsaurusImage + "-updated"
 	ytsaurusResource.Spec.Discovery.Image = &imageUpdated
 	t.Log("[ Updating discovery with disabled full update ]")
-	ytsaurusResource.Spec.EnableFullUpdate = false
+	ytsaurusResource.Spec.EnableFullUpdate = ptr.To(false)
 	testutil.UpdateObject(h, &ytv1.Ytsaurus{}, &ytsaurusResource)
 
 	waitClusterState(h, ytv1.ClusterStateRunning, ytsaurusResource.Generation)
@@ -173,7 +173,7 @@ func TestYtsaurusUpdateMasterBlocked(t *testing.T) {
 	imageUpdated := testYtsaurusImage + "-updated"
 	ytsaurusResource.Spec.PrimaryMasters.Image = &imageUpdated
 	t.Log("[ Updating master with disabled full update (should block) ]")
-	ytsaurusResource.Spec.EnableFullUpdate = false
+	ytsaurusResource.Spec.EnableFullUpdate = ptr.To(false)
 	testutil.UpdateObject(h, &ytv1.Ytsaurus{}, &ytsaurusResource)
 
 	// It is a bit hard to test if something NOT happened, so we just wait a little and check if update happened.

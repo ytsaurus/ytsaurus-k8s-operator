@@ -44,7 +44,6 @@ spec:
   discovery:
     instanceCount: 3
     resources: {}
-  enableFullUpdate: false
   execNodes:
   - instanceCount: 50
     jobProxyLoggers:
@@ -100,7 +99,6 @@ spec:
     transport:
       httpsSecret:
         name: yt-test-infra-wildcard
-  isManaged: false
   kafkaProxies:
   - instanceCount: 3
     resources: {}

@@ -20,8 +20,6 @@ func BuildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
 				CoreImage:     testYtsaurusImage,
 				UseShortNames: true,
 			},
-			IsManaged:        true,
-			EnableFullUpdate: false,
 
 			Discovery: ytv1.DiscoverySpec{
 				InstanceSpec: ytv1.InstanceSpec{

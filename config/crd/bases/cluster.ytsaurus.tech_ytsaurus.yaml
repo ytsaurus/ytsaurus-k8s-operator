@@ -9580,6 +9580,7 @@ spec:
                 type: string
               enableFullUpdate:
                 default: true
+                description: 'Deprecated: use updatePlan instead.'
                 type: boolean
               ephemeralCluster:
                 default: false
@@ -13653,6 +13654,8 @@ spec:
                 type: array
               isManaged:
                 default: true
+                description: 'Setting to false disables all operator actions. Default:
+                  true.'
                 type: boolean
               jobImage:
                 description: Default docker image for user jobs.
@@ -34942,10 +34945,12 @@ spec:
               uiImage:
                 type: string
               updatePlan:
-                description: 'Experimental: api may change.'
+                description: Defines components which are allowed to update.
                 items:
                   properties:
                     class:
+                      description: 'Selects components by class: Nothing, Everything,
+                        Stateless (except Master,...'
                       enum:
                       - ""
                       - Nothing
@@ -34953,6 +34958,8 @@ spec:
                       - Everything
                       type: string
                     component:
+                      description: Selects components by type and/or instance group
+                        name.
                       properties:
                         name:
                           type: string
@@ -34977,7 +34984,7 @@ spec:
                   type: object
                 type: array
               updateSelector:
-                description: 'Deprecated: UpdateSelector is going to be removed soon.'
+                description: 'Deprecated: use updatePlan instead.'
                 enum:
                 - ""
                 - Nothing

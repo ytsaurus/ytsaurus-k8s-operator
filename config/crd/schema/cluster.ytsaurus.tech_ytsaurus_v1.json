@@ -11148,6 +11148,7 @@
           "type": "string"
         },
         "enableFullUpdate": {
+          "description": "Deprecated: use updatePlan instead.",
           "type": "boolean",
           "default": true
         },
@@ -15925,6 +15926,7 @@
           }
         },
         "isManaged": {
+          "description": "Setting to false disables all operator actions. Default: true.",
           "type": "boolean",
           "default": true
         },
@@ -40790,12 +40792,13 @@
           "type": "string"
         },
         "updatePlan": {
-          "description": "Experimental: api may change.",
+          "description": "Defines components which are allowed to update.",
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
               "class": {
+                "description": "Selects components by class: Nothing, Everything, Stateless (except Master,...",
                 "type": "string",
                 "enum": [
                   "",
@@ -40805,6 +40808,7 @@
                 ]
               },
               "component": {
+                "description": "Selects components by type and/or instance group name.",
                 "type": "object",
                 "properties": {
                   "name": {
@@ -40840,7 +40844,7 @@
           }
         },
         "updateSelector": {
-          "description": "Deprecated: UpdateSelector is going to be removed soon.",
+          "description": "Deprecated: use updatePlan instead.",
           "type": "string",
           "enum": [
             "",

@@ -258,8 +258,6 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 				CoreImage:        b.Images.Core,
 				JobImage:         ptr.To(b.Images.Job),
 			},
-			EnableFullUpdate: true,
-			IsManaged:        true,
 			Discovery: ytv1.DiscoverySpec{
 				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount:         1,
