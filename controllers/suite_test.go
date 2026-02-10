@@ -3,21 +3,32 @@ package controllers_test
 import (
 	"testing"
 
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
-	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 const (
+	testYtsaurusImage = "test-ytsaurus-image"
+
 	remoteYtsaurusHostname = "test-hostname"
 	remoteYtsaurusName     = "test-remote-ytsaurus"
 )
 
-func startHelperWithController(t *testing.T, namespace string, reconcilerSetupFunc func(mgr ctrl.Manager) error) *testutil.TestHelper {
-	h := testutil.NewTestHelper(t, namespace, "..")
-	h.Start(reconcilerSetupFunc)
-	return h
+func TestControllers(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Controllers Suite")
 }
+
+var _ = BeforeSuite(func() {
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+})
 
 func buildRemoteYtsaurus(h *testutil.TestHelper, remoteYtsaurusName, remoteYtsaurusHostname string) ytv1.RemoteYtsaurus {
 	remoteYtsaurus := ytv1.RemoteYtsaurus{
