@@ -20,6 +20,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -165,6 +166,9 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			getGeneration := func(obj client.Object) int64 {
 				gvr, _ := meta.UnsafeGuessKindToResource(obj.GetObjectKind().GroupVersionKind())
 				currentObj, err := k8sObjectTraker.Get(gvr, obj.GetNamespace(), obj.GetName())
+				if apierrors.IsNotFound(err) {
+					return 0
+				}
 				Expect(err).To(Succeed())
 				accessor, err := meta.Accessor(currentObj)
 				Expect(err).To(Succeed())
