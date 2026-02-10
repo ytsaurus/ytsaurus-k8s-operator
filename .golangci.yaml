@@ -320,6 +320,9 @@ linters:
       - path: pkg/testutil/spec_builders.go
         text: "SA1019: .*\\.ExtraPodAnnotations is deprecated"
 
+      - path: pkg/testutil
+        text: "ST1001: should not use dot imports"
+
       - path: 'pkg/testutil'
         linters:
           - gochecknoglobals
