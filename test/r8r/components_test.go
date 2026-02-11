@@ -594,6 +594,28 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		It("Test", func(ctx context.Context) {})
 	})
 
+	Context("Image heater only for masters", func() {
+		BeforeEach(func() {
+			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+				{
+					Component: ytv1.Component{
+						Type: ytv1.ImageHeaterType,
+						Name: consts.GetStatefulSetPrefix(ytv1.MasterType),
+					},
+					Concurrency: ptr.To(int32(2)),
+				},
+			}
+		})
+		It("Test", func(ctx context.Context) {
+			Expect(daemonSets).To(ConsistOf(
+				HaveField("ObjectMeta.Annotations", HaveKeyWithValue(
+					consts.ImageHeaterTargetsAnnotationName,
+					consts.GetStatefulSetPrefix(ytv1.MasterType),
+				))),
+			)
+		})
+	})
+
 	Context("With all components", func() {
 		BeforeEach(func() {
 			ytBuilder.WithOverrides()

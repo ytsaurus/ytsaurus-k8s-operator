@@ -62,6 +62,12 @@ func (r *BaseManagedResource[T]) Exists() bool {
 	return r.oldObject.GetResourceVersion() != ""
 }
 
+func (r *BaseManagedResource[T]) IsAnnotationChanged(ann string) bool {
+	oldVal, oldSet := r.oldObject.GetAnnotations()[ann]
+	newVal, newSet := r.newObject.GetAnnotations()[ann]
+	return oldSet != newSet || oldVal != newVal
+}
+
 func (r *BaseManagedResource[T]) IsUpdated() bool {
 	return r.proxy.IsObjectUpdated(r.oldObject)
 }

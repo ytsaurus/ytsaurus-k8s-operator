@@ -8,8 +8,6 @@ metadata:
   resourceVersion: "13"
 spec:
   clusterFeatures: {}
-  configOverrides:
-    name: test-overrides
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
   discovery:
     instanceCount: 1
@@ -27,51 +25,6 @@ spec:
         cpu: "0"
         memory: "0"
   ephemeralCluster: true
-  execNodes:
-  - instanceCount: 1
-    jobEnvironment:
-      cri:
-        apiRetryTimeoutSeconds: 120
-    jobResources:
-      limits:
-        cpu: "4"
-        memory: 8Gi
-      requests:
-        cpu: "0"
-        memory: "0"
-    locations:
-    - locationType: ChunkCache
-      path: /yt/node-data/chunk-cache
-    - locationType: Slots
-      path: /yt/node-data/slots
-    - locationType: ImageCache
-      path: /yt/node-data/image-cache
-    loggers:
-    - minLogLevel: info
-      name: info-stderr
-      useTimestampSuffix: false
-      writerType: stderr
-    minReadyInstanceCount: 0
-    privileged: false
-    resources:
-      limits:
-        cpu: "1"
-        memory: 2Gi
-      requests:
-        cpu: "0"
-        memory: "0"
-    volumeClaimTemplates:
-    - metadata:
-        name: node-data
-      spec:
-        accessModes:
-        - ReadWriteOnce
-        resources:
-          requests:
-            storage: 5Gi
-    volumeMounts:
-    - mountPath: /yt/node-data
-      name: node-data
   httpProxies:
   - instanceCount: 1
     loggers:
@@ -123,6 +76,11 @@ spec:
     volumeMounts:
     - mountPath: /yt/master-data
       name: master-data
+  updatePlan:
+  - component:
+      name: ms
+      type: ImageHeater
+    concurrency: 2
   useIpv4: false
   useIpv6: false
   usePorto: false
@@ -135,6 +93,18 @@ status:
     reason: Observed
     status: "True"
     type: OperatorVersion
+  - lastTransitionTime: null
+    message: Ready 1 of 1; daemon set ih-ms is ready at 1 nodes
+    observedGeneration: 1
+    reason: Sync
+    status: "True"
+    type: ImageHeaterComplete
+  - lastTransitionTime: null
+    message: Image heating is complete
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: ImageHeaterReady
   - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
@@ -153,12 +123,6 @@ status:
     reason: Ready
     status: "True"
     type: MasterReady
-  - lastTransitionTime: null
-    message: Ready
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: ExecNodeReady
   - lastTransitionTime: null
     message: Ready
     observedGeneration: 1

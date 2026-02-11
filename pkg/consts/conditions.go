@@ -4,6 +4,8 @@ package consts
 const (
 	ConditionOperatorVersion            = "OperatorVersion"
 	ConditionReadyToWork                = "ReadyToWork"
+	ConditionImageHeaterReady           = "ImageHeaterReady"
+	ConditionImageHeaterComplete        = "ImageHeaterComplete"
 	ConditionTimbertruckUserInitialized = "TimbertruckUserInitialized"
 )
 
@@ -55,7 +57,6 @@ const (
 	ConditionMasterExitReadOnlyPrepared      = "MasterExitReadOnlyPrepared"
 	ConditionMasterExitedReadOnly            = "MasterExitedReadOnly"
 	ConditionSafeModeDisabled                = "SafeModeDisabled"
-	ConditionImageHeaterReady                = "ImageHeaterReady"
 )
 
 // Conditions below are for migration from imaginary chunks to real chunks for 24.2
