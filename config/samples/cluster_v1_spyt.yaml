@@ -12,6 +12,9 @@ metadata:
   name: myspyt
 spec:
   ytsaurus:
-    name:
-      minisaurus
-  image: ghcr.io/ytsaurus/spyt:1.78.0
+    name: minisaurus
+  image: ghcr.io/ytsaurus/spyt:2.8.2
+  sparkDistribOffline: true
+  sparkVersions:
+    - "3.2.2"
+    - "3.5.7"
