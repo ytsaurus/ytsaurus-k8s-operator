@@ -3,6 +3,7 @@ package consts
 // Status conditions
 const (
 	ConditionOperatorVersion            = "OperatorVersion"
+	ConditionImageHeaterReady           = "ImageHeaterReady"
 	ConditionTimbertruckUserInitialized = "TimbertruckUserInitialized"
 )
 
@@ -55,7 +56,6 @@ const (
 	ConditionMasterExitReadOnlyPrepared      = "MasterExitReadOnlyPrepared"
 	ConditionMasterExitedReadOnly            = "MasterExitedReadOnly"
 	ConditionSafeModeDisabled                = "SafeModeDisabled"
-	ConditionImageHeaterReady                = "ImageHeaterReady"
 )
 
 // Conditions below are for migration from imaginary chunks to real chunks for 24.2

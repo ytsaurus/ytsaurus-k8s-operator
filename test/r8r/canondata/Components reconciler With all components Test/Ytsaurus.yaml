@@ -5,7 +5,7 @@ metadata:
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "16"
+  resourceVersion: "17"
 spec:
   caBundle:
     name: ytsaurus-dev-ca.crt
@@ -17,6 +17,7 @@ spec:
       path: java/cacerts
     name: ytsaurus-dev-ca-root-bundle
   clusterFeatures:
+    enableImageHeater: true
     httpProxyHaveChytAddress: true
     httpProxyHaveHttpsAddress: true
     rpcProxyHavePublicAddress: true
@@ -335,17 +336,17 @@ spec:
 status:
   conditions:
   - lastTransitionTime: null
-    message: Image heater idle
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: ImageHeaterReady
-  - lastTransitionTime: null
     message: 0.0.0-devel
     observedGeneration: 1
     reason: Observed
     status: "True"
     type: OperatorVersion
+  - lastTransitionTime: null
+    message: Image heating is complete
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: ImageHeaterReady
   - lastTransitionTime: null
     message: Ready
     observedGeneration: 1

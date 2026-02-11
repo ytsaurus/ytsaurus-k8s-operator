@@ -32,7 +32,7 @@ type server interface {
 	podsManager
 	needUpdate() ComponentStatus
 	needSync(updating bool) bool
-	preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration)
+	getImageHeaterTarget() *ImageHeaterTarget
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
 	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType)
@@ -292,8 +292,14 @@ func (s *serverImpl) arePodsReady(ctx context.Context) bool {
 	return s.statefulSet.ArePodsReady(ctx, int(s.instanceSpec.InstanceCount), s.instanceSpec.MinReadyInstanceCount, s.readinessByContainers)
 }
 
-func (s *serverImpl) preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration) {
-	return []string{s.image}, s.instanceSpec.NodeSelector, s.instanceSpec.Tolerations
+func (s *serverImpl) getImageHeaterTarget() *ImageHeaterTarget {
+	return &ImageHeaterTarget{
+		Images:           map[string]string{"image": s.image},
+		ImagePullSecrets: s.commonSpec.ImagePullSecrets,
+		NodeSelector:     s.instanceSpec.NodeSelector,
+		Tolerations:      s.instanceSpec.Tolerations,
+		NodeAffinity:     ptr.Deref(s.instanceSpec.Affinity, corev1.Affinity{}).NodeAffinity,
+	}
 }
 
 func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
