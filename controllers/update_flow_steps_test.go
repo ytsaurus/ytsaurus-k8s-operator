@@ -50,6 +50,7 @@ var _ = Describe("BuildFlowTree", func() {
 			updatingComponents: []ytv1.Component{},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
+				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForCypressPatch,
@@ -217,6 +218,7 @@ var _ = Describe("BuildFlowTree", func() {
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
+				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForCypressPatch,

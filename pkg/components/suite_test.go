@@ -109,6 +109,10 @@ func (fc *FakeComponent) GetCypressPatch() ypatch.PatchSet {
 	return nil
 }
 
+func (fc *FakeComponent) GetImageHeaterTarget() *ImageHeaterTarget {
+	return nil
+}
+
 func (fc *FakeComponent) GetReadyCondition() ComponentStatus {
 	return fc.status
 }
@@ -145,8 +149,8 @@ func (fs *FakeServer) needSync(updating bool) bool {
 	return false
 }
 
-func (fs *FakeServer) preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration) {
-	return nil, nil, nil
+func (fs *FakeServer) getImageHeaterTarget() *ImageHeaterTarget {
+	return nil
 }
 
 func (fs *FakeServer) arePodsRemoved(ctx context.Context) bool {

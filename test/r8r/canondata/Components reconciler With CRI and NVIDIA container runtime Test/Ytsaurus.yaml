@@ -132,12 +132,6 @@ spec:
 status:
   conditions:
   - lastTransitionTime: null
-    message: Image heater idle
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: ImageHeaterReady
-  - lastTransitionTime: null
     message: 0.0.0-devel
     observedGeneration: 1
     reason: Observed

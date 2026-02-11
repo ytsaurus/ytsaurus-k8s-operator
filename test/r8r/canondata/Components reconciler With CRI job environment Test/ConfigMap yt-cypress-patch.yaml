@@ -52,9 +52,6 @@ data:
   yt-http-proxy-cypress-patch.yson: |-
     {
     }
-  yt-image-heater-cypress-patch.yson: |-
-    {
-    }
   yt-master-cypress-patch.yson: |-
     {
         "//sys/@cluster_connection"=[
