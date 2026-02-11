@@ -27,6 +27,8 @@ const (
 	YTOperatorInstanceLabelName = "ytsaurus.tech/operator-instance"
 
 	ImageHeaterLabelName = "ytsaurus.tech/image-heater"
+
+	ImageHeaterTargetsAnnotationName = "ytsaurus.tech/image-heater-targets"
 )
 
 func ComponentLabel(component ComponentType) string {

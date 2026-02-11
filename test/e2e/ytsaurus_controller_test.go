@@ -2134,7 +2134,7 @@ exec "$@"`
 
 			By("Wait for image heater to finish preheating")
 			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(
-				HaveUpdateStatusConditionTrue(consts.ConditionImageHeaterReady),
+				HaveStatusCondition(consts.ConditionImageHeaterReady, ConditionStatusTrue()),
 			)
 
 			By("Verify pods removal mode is activated")
@@ -2195,7 +2195,7 @@ exec "$@"`
 
 			By("Wait for image heater to finish preheating")
 			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(
-				HaveUpdateStatusConditionTrue(consts.ConditionImageHeaterReady),
+				HaveStatusCondition(consts.ConditionImageHeaterReady, ConditionStatusTrue()),
 			)
 
 			By("Verify pods removal mode is activated")

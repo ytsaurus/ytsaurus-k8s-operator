@@ -97,13 +97,21 @@ type Component interface {
 
 	GetLabeller() *labeller.Labeller
 
+	GetImageHeaterTarget() *ImageHeaterTarget
+
 	GetCypressPatch() ypatch.PatchSet
 	UpdatePreCheck(ctx context.Context) ComponentStatus
 }
 
-type PreheatSpecProvider interface {
-	PreheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration)
+type ImageHeaterTarget struct {
+	Name             string
+	Images           map[string]string
+	ImagePullSecrets []corev1.LocalObjectReference
+	NodeSelector     map[string]string
+	Tolerations      []corev1.Toleration
+	NodeAffinity     *corev1.NodeAffinity
 }
+
 type component struct {
 	labeller *labeller.Labeller
 	owner    apiproxy.APIProxy
@@ -184,6 +192,10 @@ func (c *component) GetLabeller() *labeller.Labeller {
 	return c.labeller
 }
 
+func (c *component) GetImageHeaterTarget() *ImageHeaterTarget {
+	return nil
+}
+
 func (c *component) GetCypressPatch() ypatch.PatchSet {
 	return nil
 }
@@ -238,11 +250,8 @@ func (c *serverComponent) NeedUpdate() bool {
 	return c.server.needUpdate()
 }
 
-func (c *serverComponent) PreheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration) {
-	if c.server == nil {
-		return nil, nil, nil
-	}
-	return c.server.preheatSpec()
+func (c *serverComponent) GetImageHeaterTarget() *ImageHeaterTarget {
+	return c.server.getImageHeaterTarget()
 }
 
 func (c *microserviceComponent) NeedSync() bool {

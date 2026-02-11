@@ -173,17 +173,8 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 		return stepResultMarkHappy
 	},
 	ytv1.UpdateStateWaitingForImageHeater: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
-		if !ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionImageHeaterReady) {
+		if ytsaurus.IsImageHeaterEnabled() && !ytsaurus.IsStatusConditionTrue(consts.ConditionImageHeaterReady) {
 			return stepResultMarkUnsatisfied
-		}
-		updatingComponents := ytsaurus.GetUpdatingComponents()
-		if len(updatingComponents) == 0 {
-			return stepResultMarkUnhappy
-		}
-		if len(updatingComponents) == 1 && hasComponent(updatingComponents, consts.ImageHeaterType) {
-			// if ConditionImageHeaterReady is true and ImageHeater is the only updating component,
-			// we should mark this step as unhappy to terminate the flow
-			return stepResultMarkUnhappy
 		}
 		return stepResultMarkHappy
 	},
@@ -241,7 +232,6 @@ func buildFlowTree(updatingComponents []ytv1.Component) *flowTree {
 	head := st(ytv1.UpdateStateNone)
 	tree := newFlowTree(head)
 
-	updImageHeater := hasComponent(updatingComponents, consts.ImageHeaterType)
 	updMaster := hasComponent(updatingComponents, consts.MasterType)
 	updTablet := hasComponent(updatingComponents, consts.TabletNodeType)
 	updMasterOrTablet := updMaster || updTablet
@@ -252,8 +242,7 @@ func buildFlowTree(updatingComponents []ytv1.Component) *flowTree {
 	updQueueAgent := hasComponent(updatingComponents, consts.QueueAgentType)
 
 	// TODO: if validation conditions can be not mentioned here or needed
-	tree.chainIf(
-		updImageHeater,
+	tree.chain(
 		st(ytv1.UpdateStateWaitingForImageHeater),
 	).chainIf(
 		updMasterOrTablet,
