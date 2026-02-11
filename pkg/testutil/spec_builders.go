@@ -406,6 +406,7 @@ func (b *YtsaurusBuilder) WithAllClusterFeatures() {
 		RPCProxyHavePublicAddress: true,
 		HTTPProxyHaveChytAddress:  true,
 		HTTPProxyHaveHTTPSAddress: true,
+		EnableImageHeater:         true,
 		SecureClusterTransports:   false, // Turned off to increase coverage.
 	}
 }

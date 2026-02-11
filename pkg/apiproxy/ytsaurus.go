@@ -181,18 +181,7 @@ func (c *Ytsaurus) ClearUpdateStatus() {
 	c.ytsaurus.Status.UpdateStatus = ytv1.UpdateStatus{
 		State:                    ytv1.UpdateStateUndefined,
 		BlockedComponentsSummary: c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary,
-		Conditions:               keepImagesHeatedCondition(c.ytsaurus.Status.UpdateStatus.Conditions),
 	}
-}
-
-// keepImagesHeatedCondition needed to keep image-heater hash for the next reconcile
-// otherwise the controller would immediately think images need reheating
-func keepImagesHeatedCondition(conditions []metav1.Condition) []metav1.Condition {
-	condition := meta.FindStatusCondition(conditions, consts.ConditionImageHeaterReady)
-	if condition == nil || condition.Status != metav1.ConditionTrue {
-		return make([]metav1.Condition, 0)
-	}
-	return []metav1.Condition{*condition}
 }
 
 func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {

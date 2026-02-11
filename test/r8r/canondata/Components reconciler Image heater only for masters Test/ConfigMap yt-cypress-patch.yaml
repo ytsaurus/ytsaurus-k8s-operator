@@ -46,10 +46,10 @@ data:
   yt-discovery-cypress-patch.yson: |-
     {
     }
-  yt-exec-node-cypress-patch.yson: |-
+  yt-http-proxy-cypress-patch.yson: |-
     {
     }
-  yt-http-proxy-cypress-patch.yson: |-
+  yt-image-heater-cypress-patch.yson: |-
     {
     }
   yt-master-cypress-patch.yson: |-
@@ -81,9 +81,7 @@ data:
 kind: ConfigMap
 metadata:
   annotations:
-    kubernetes.io/description: |
-      overrides-version: 1
-    ytsaurus.tech/config-overrides-version: "1"
+    kubernetes.io/description: ""
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1

@@ -17,7 +17,6 @@ var _ = Describe("BuildFlowTree", func() {
 		updatingComponents []ytv1.Component
 		expectedStates     []ytv1.UpdateState
 		unhappyPath        bool
-		stopAfterHeated    bool
 	}
 
 	DescribeTable("should build correct flow tree",
@@ -35,8 +34,6 @@ var _ = Describe("BuildFlowTree", func() {
 			for currentStep != nil {
 				states = append(states, currentStep.updateState)
 				if tc.unhappyPath && currentStep.updateState == ytv1.UpdateStatePossibilityCheck {
-					currentStep = currentStep.nextSteps[stepResultMarkUnhappy]
-				} else if tc.stopAfterHeated && currentStep.updateState == ytv1.UpdateStateWaitingForImageHeater {
 					currentStep = currentStep.nextSteps[stepResultMarkUnhappy]
 				} else {
 					currentStep = currentStep.nextSteps[stepResultMarkHappy]
@@ -60,11 +57,9 @@ var _ = Describe("BuildFlowTree", func() {
 			name: "master update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.MasterType},
-				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStatePossibilityCheck,
 				ytv1.UpdateStateWaitingForSafeModeEnabled,
 				ytv1.UpdateStateWaitingForImaginaryChunksAbsence,
@@ -83,11 +78,9 @@ var _ = Describe("BuildFlowTree", func() {
 			name: "tablet update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.TabletNodeType},
-				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStatePossibilityCheck,
 				ytv1.UpdateStateWaitingForTabletCellsSaving,
 				ytv1.UpdateStateWaitingForTabletCellsRemovingStart,
@@ -103,11 +96,9 @@ var _ = Describe("BuildFlowTree", func() {
 			name: "scheduler update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.SchedulerType},
-				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForCypressPatch,
@@ -120,11 +111,9 @@ var _ = Describe("BuildFlowTree", func() {
 			name: "query tracker update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.QueryTrackerType},
-				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForCypressPatch,
@@ -137,11 +126,9 @@ var _ = Describe("BuildFlowTree", func() {
 			name: "yql agent update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.YqlAgentType},
-				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForCypressPatch,
@@ -154,11 +141,9 @@ var _ = Describe("BuildFlowTree", func() {
 			name: "queue agent update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.QueueAgentType},
-				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForCypressPatch,
@@ -171,11 +156,9 @@ var _ = Describe("BuildFlowTree", func() {
 			name: "random stateless component update",
 			updatingComponents: []ytv1.Component{
 				{Type: consts.DiscoveryType},
-				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStateWaitingForPodsRemoval,
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForCypressPatch,
@@ -187,11 +170,9 @@ var _ = Describe("BuildFlowTree", func() {
 			updatingComponents: []ytv1.Component{
 				{Type: consts.MasterType},
 				{Type: consts.TabletNodeType},
-				{Type: consts.ImageHeaterType},
 			},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImageHeater,
 				ytv1.UpdateStatePossibilityCheck,
 				ytv1.UpdateStateWaitingForSafeModeEnabled,
 				ytv1.UpdateStateWaitingForTabletCellsSaving,
@@ -221,17 +202,6 @@ var _ = Describe("BuildFlowTree", func() {
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForCypressPatch,
 				ytv1.UpdateStateWaitingForTimbertruckPrepared,
-			},
-		}),
-		Entry("image heater only update", testCase{
-			name:            "image heater only update",
-			stopAfterHeated: true,
-			updatingComponents: []ytv1.Component{
-				{Type: consts.ImageHeaterType},
-			},
-			expectedStates: []ytv1.UpdateState{
-				ytv1.UpdateStateNone,
-				ytv1.UpdateStateWaitingForImageHeater,
 			},
 		}),
 	)

@@ -34,3 +34,5 @@ func GetDefaultStrawberryControllerFamilies() []string {
 }
 
 const DefaultTimbertruckDirectoryPath = "//sys/admin/logs"
+
+const DefaultImageHeaterConcurrency = 100

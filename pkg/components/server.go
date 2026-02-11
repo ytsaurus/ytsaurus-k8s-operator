@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"maps"
 	"path"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -32,7 +33,7 @@ type server interface {
 	podsManager
 	needUpdate() ComponentStatus
 	needSync(updating bool) bool
-	preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration)
+	getImageHeaterTarget() *ImageHeaterTarget
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
 	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition int32, maxUnavailable int)
@@ -300,8 +301,16 @@ func (s *serverImpl) arePodsReady(ctx context.Context) bool {
 	return s.statefulSet.ArePodsReady(ctx, int(s.instanceSpec.InstanceCount), s.instanceSpec.MinReadyInstanceCount, s.readinessByContainers)
 }
 
-func (s *serverImpl) preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration) {
-	return []string{s.image}, s.instanceSpec.NodeSelector, s.instanceSpec.Tolerations
+func (s *serverImpl) getImageHeaterTarget() *ImageHeaterTarget {
+	images := map[string]string{"image": s.image}
+	maps.Insert(images, maps.All(s.sidecarImages))
+	return &ImageHeaterTarget{
+		Images:           images,
+		ImagePullSecrets: s.commonSpec.ImagePullSecrets,
+		NodeSelector:     s.instanceSpec.NodeSelector,
+		Tolerations:      s.instanceSpec.Tolerations,
+		NodeAffinity:     ptr.Deref(s.instanceSpec.Affinity, corev1.Affinity{}).NodeAffinity,
+	}
 }
 
 func (s *serverImpl) getReplicaCount() int32 {
