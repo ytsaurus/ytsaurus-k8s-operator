@@ -19,6 +19,8 @@ type ComponentManager struct {
 	ytsaurus      *apiProxy.Ytsaurus
 	allComponents []components.Component
 	status        ComponentManagerStatus
+
+	getHeaterStatus func(ytv1.Component) components.ComponentStatus
 }
 
 type ComponentManagerStatus struct {
@@ -53,8 +55,13 @@ func NewComponentManager(
 		return allComponents
 	}
 
-	ih := components.NewImageHeater(cfgen, ytsaurus, getAllComponents)
-	allComponents = append(allComponents, ih)
+	// NOTE: Must be first component for blocking cluster initialization.
+	var getHeaterStatus func(ytv1.Component) components.ComponentStatus
+	if ytsaurus.GetImageHeater("") != nil {
+		ih := components.NewImageHeater(cfgen, ytsaurus, getAllComponents)
+		allComponents = append(allComponents, ih)
+		getHeaterStatus = ih.GetHeaterStatus
+	}
 
 	m := components.NewMaster(cfgen, ytsaurus)
 	allComponents = append(allComponents, m)
@@ -183,8 +190,9 @@ func NewComponentManager(
 	}
 
 	return &ComponentManager{
-		ytsaurus:      ytsaurus,
-		allComponents: allComponents,
+		ytsaurus:        ytsaurus,
+		allComponents:   allComponents,
+		getHeaterStatus: getHeaterStatus,
 	}, nil
 }
 
@@ -276,12 +284,9 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	handled, res, err := cm.runImageHeaterIfEnabled(ctx)
-	if err != nil {
-		return res, err
-	}
-	if handled {
-		return res, nil
+	if cm.ytsaurus.GetImageHeater("") == nil {
+		cm.ytsaurus.RemoveStatusCondition(consts.ConditionImageHeaterReady)
+		cm.ytsaurus.RemoveStatusCondition(consts.ConditionImageHeaterComplete)
 	}
 
 	hasPending := false
@@ -311,6 +316,11 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 				break
 			}
 		}
+
+		if cm.ytsaurus.IsInitializing() && c.GetType() == consts.ImageHeaterType && !cm.allImagesAreHeated() {
+			logger.Info("Cluster initialization is waiting for image heater")
+			break
+		}
 	}
 
 	if err := cm.ytsaurus.UpdateStatus(ctx); err != nil {
@@ -330,6 +340,28 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	return ctrl.Result{RequeueAfter: time.Second}, nil
 }
 
+func (cm *ComponentManager) allImagesAreHeated() bool {
+	if cm.getHeaterStatus != nil {
+		for _, component := range cm.allComponents {
+			if !cm.getHeaterStatus(component.GetComponent()).IsReady() {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (cm *ComponentManager) allUpdatingImagesAreHeated() bool {
+	if cm.getHeaterStatus != nil {
+		for _, component := range cm.status.nowUpdating {
+			if !cm.getHeaterStatus(component).IsReady() {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func (cm *ComponentManager) arePodsRemoved() bool {
 	for _, cmp := range cm.allComponents {
 		if cmp.GetType() == consts.YtsaurusClientType || cmp.GetType() == consts.ImageHeaterType {
@@ -341,6 +373,12 @@ func (cm *ComponentManager) arePodsRemoved() bool {
 	}
 
 	return true
+}
+
+func (cm *ComponentManager) areComponentPodsRemoved(component components.Component) bool {
+	// Check for either PodsRemoved (bulk update) or PodsUpdated (OnDelete mode)
+	return cm.ytsaurus.IsUpdateStatusConditionTrue(component.GetLabeller().GetPodsRemovedCondition()) ||
+		cm.ytsaurus.IsUpdateStatusConditionTrue(component.GetLabeller().GetPodsUpdatedCondition())
 }
 
 func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSelector) {
@@ -366,64 +404,6 @@ func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSel
 			cm.status.cannotUpdate = append(cm.status.cannotUpdate, component)
 		}
 	}
-}
-
-func (cm *ComponentManager) areComponentPodsRemoved(component components.Component) bool {
-	// Check for either PodsRemoved (bulk update) or PodsUpdated (OnDelete mode)
-	return cm.ytsaurus.IsUpdateStatusConditionTrue(component.GetLabeller().GetPodsRemovedCondition()) ||
-		cm.ytsaurus.IsUpdateStatusConditionTrue(component.GetLabeller().GetPodsUpdatedCondition())
-}
-
-func (cm *ComponentManager) runImageHeaterIfEnabled(ctx context.Context) (handled bool, result ctrl.Result, err error) {
-	logger := log.FromContext(ctx)
-	state := cm.ytsaurus.GetClusterState()
-	if (state != ytv1.ClusterStateInitializing &&
-		state != ytv1.ClusterStateCreated &&
-		state != ytv1.ClusterState("")) || cm.ytsaurus.GetImageHeater("") == nil {
-		return false, ctrl.Result{}, nil
-	}
-
-	ih := cm.findImageHeater()
-	if ih == nil {
-		return false, ctrl.Result{}, nil
-	}
-
-	status, err := ih.Sync(ctx, true)
-	if err != nil {
-		return true, ctrl.Result{Requeue: true}, fmt.Errorf("failed to get status for %s: %w", ih.GetFullName(), err)
-	}
-	if status.SyncStatus == components.SyncStatusReady {
-		return false, ctrl.Result{}, nil
-	}
-
-	if status.SyncStatus == components.SyncStatusPending ||
-		status.SyncStatus == components.SyncStatusUpdating ||
-		status.SyncStatus == components.SyncStatusNeedUpdate {
-		logger.Info("component sync", "component", ih.GetFullName())
-		if _, err := ih.Sync(ctx, false); err != nil {
-			logger.Error(err, "component sync failed", "component", ih.GetFullName())
-			return true, ctrl.Result{Requeue: true}, err
-		}
-	}
-
-	if err := cm.ytsaurus.UpdateStatus(ctx); err != nil {
-		logger.Error(err, "update Ytsaurus status failed")
-		return true, ctrl.Result{Requeue: true}, err
-	}
-
-	if status.SyncStatus == components.SyncStatusBlocked {
-		return true, ctrl.Result{RequeueAfter: 5 * time.Second}, nil
-	}
-	return true, ctrl.Result{RequeueAfter: time.Second}, nil
-}
-
-func (cm *ComponentManager) findImageHeater() components.Component {
-	for _, cmp := range cm.allComponents {
-		if cmp.GetType() == consts.ImageHeaterType {
-			return cmp
-		}
-	}
-	return nil
 }
 
 func canUpdateComponent(selector ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
