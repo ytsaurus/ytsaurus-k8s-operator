@@ -1235,6 +1235,7 @@ func (g *Generator) GetCypressProxiesConfig(spec *ytv1.CypressProxiesSpec) ([]by
 	return marshallYsonConfig(c)
 }
 
+//nolint:cyclop //shush
 func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string, error) {
 	var names []string
 	switch component {
@@ -1314,6 +1315,8 @@ func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string,
 		if g.ytsaurus.Spec.TabletBalancer != nil {
 			names = append(names, "")
 		}
+	case consts.ImageHeaterType:
+		names = append(names, "")
 	default:
 		return nil, fmt.Errorf("unknown component %v", component)
 	}
@@ -1321,6 +1324,7 @@ func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string,
 	return names, nil
 }
 
+//nolint:cyclop //shush
 func (g *Generator) GetComponentConfig(component consts.ComponentType, name string) ([]byte, error) {
 	switch component {
 	case consts.ClusterConnectionType:
@@ -1420,6 +1424,10 @@ func (g *Generator) GetComponentConfig(component consts.ComponentType, name stri
 	case consts.TabletBalancerType:
 		if name == "" {
 			return g.GetTabletBalancerConfig(g.ytsaurus.Spec.TabletBalancer)
+		}
+	case consts.ImageHeaterType:
+		if name == "" {
+			return nil, nil
 		}
 	}
 
