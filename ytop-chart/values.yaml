@@ -77,3 +77,7 @@ webhookService:
       protocol: TCP
       targetPort: 9443
   type: ClusterIP
+pprof:
+  enabled: false
+  address: localhost
+  port: 6060

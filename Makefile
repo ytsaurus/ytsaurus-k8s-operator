@@ -353,6 +353,7 @@ HELM_INSTALL_ARGS += --set crds.keep=${OPERATOR_CRDS_KEEP}
 HELM_INSTALL_ARGS += --set caRootBundle.kind=ConfigMap
 HELM_INSTALL_ARGS += --set caRootBundle.name=ytsaurus-dev-ca-root-bundle
 HELM_INSTALL_ARGS += --set caRootBundle.key=ca-certificates.crt
+HELM_INSTALL_ARGS += --set pprof.enabled=true
 
 .PHONY: helm-install
 helm-install: ## Install helm chart from sources.

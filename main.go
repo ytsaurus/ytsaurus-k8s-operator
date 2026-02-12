@@ -123,6 +123,7 @@ func main() {
 			BindAddress: metricsAddr,
 		},
 		HealthProbeBindAddress: probeAddr,
+		PprofBindAddress:       os.Getenv("PPROF_BIND_ADDRESS"),
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "6ab077f0.ytsaurus.tech",
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
