@@ -578,9 +578,6 @@ func TestGetYtsaurusComponents(t *testing.T) {
 
 	for _, component := range consts.LocalComponentTypes {
 		t.Run(string(component), func(t *testing.T) {
-			if component == consts.ImageHeaterType {
-				t.Skip("ImageHeater has no config")
-			}
 			names, err := g.GetComponentNames(component)
 			require.NoError(t, err)
 			require.Len(t, names, 1)
@@ -612,9 +609,6 @@ func TestGetYtsaurusWithTlsInterconnect(t *testing.T) {
 
 	for _, component := range consts.LocalComponentTypes {
 		t.Run(string(component), func(t *testing.T) {
-			if component == consts.ImageHeaterType {
-				t.Skip("ImageHeater has no config")
-			}
 			names, err := g.GetComponentNames(component)
 			require.NoError(t, err)
 			require.Len(t, names, 1)
@@ -658,9 +652,6 @@ func TestGetYtsaurusWithMutualTLSInterconnect(t *testing.T) {
 
 	for _, component := range consts.LocalComponentTypes {
 		t.Run(string(component), func(t *testing.T) {
-			if component == consts.ImageHeaterType {
-				t.Skip("ImageHeater has no config")
-			}
 			names, err := g.GetComponentNames(component)
 			require.NoError(t, err)
 			require.Len(t, names, 1)
