@@ -156,7 +156,7 @@ linters:
     cyclop:
       # The maximal code complexity to report.
       # Default: 10
-      max-complexity: 50
+      max-complexity: 40
       # The maximal average package complexity.
       # If it's higher than 0.0 (float) the check is enabled
       # Default: 0.0
@@ -311,6 +311,10 @@ linters:
 
       - path: controllers/ytsaurus_local_test.go
         text: "SA1019: ytsaurusResource.Spec.EnableFullUpdate is deprecated"
+
+      - path: pkg/ytconfig/generator.go
+        linters:
+          - cyclop
 
       - path: pkg/ytconfig/generator.go
         text: "SA1019: .*\\.ExtraPodAnnotations is deprecated"
