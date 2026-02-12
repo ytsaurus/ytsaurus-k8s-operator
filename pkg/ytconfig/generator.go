@@ -1314,6 +1314,8 @@ func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string,
 		if g.ytsaurus.Spec.TabletBalancer != nil {
 			names = append(names, "")
 		}
+	case consts.ImageHeaterType:
+		names = append(names, "")
 	default:
 		return nil, fmt.Errorf("unknown component %v", component)
 	}
@@ -1420,6 +1422,10 @@ func (g *Generator) GetComponentConfig(component consts.ComponentType, name stri
 	case consts.TabletBalancerType:
 		if name == "" {
 			return g.GetTabletBalancerConfig(g.ytsaurus.Spec.TabletBalancer)
+		}
+	case consts.ImageHeaterType:
+		if name == "" {
+			return nil, nil
 		}
 	}
 
