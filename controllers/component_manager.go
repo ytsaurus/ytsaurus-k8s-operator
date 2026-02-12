@@ -32,6 +32,7 @@ type ComponentManagerStatus struct {
 	nowUpdating  []ytv1.Component // Components updating right now
 }
 
+//nolint:cyclop //shush
 func NewComponentManager(
 	ctx context.Context,
 	ytsaurus *apiProxy.Ytsaurus,
