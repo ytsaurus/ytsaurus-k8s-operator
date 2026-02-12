@@ -157,7 +157,7 @@ spec:
         name: https-server-cert
   imagePullSecrets:
   - name: global-image-pull-secrets
-  jobImage: docker.io/library/python:3.8-slim
+  jobImage: mirror.gcr.io/library/python:3.12-slim
   masterCaches:
     cellTagMasterCaches: 0
     instanceCount: 1
@@ -259,7 +259,6 @@ spec:
         cpu: "0"
         memory: "0"
   queueAgents:
-    image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
     instanceCount: 1
     loggers:
     - minLogLevel: info
@@ -309,7 +308,7 @@ spec:
         memory: "0"
   setHostnameAsFqdn: false
   strawberry:
-    image: ghcr.io/ytsaurus/strawberry:0.0.14
+    image: ghcr.io/ytsaurus/strawberry:0.0.15
     resources: {}
   tolerations:
   - key: global-toleration

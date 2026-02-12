@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -239,6 +240,20 @@ func updateSpecToTriggerAllComponentUpdate(ytsaurus *ytv1.Ytsaurus) {
 	} else {
 		ytsaurus.Spec.ForceTCP = ptr.To(!*ytsaurus.Spec.ForceTCP)
 	}
+}
+
+func triggerComponentUpdate(spec *ytv1.InstanceSpec) {
+	if spec.MetricExporter == nil {
+		spec.MetricExporter = &ytv1.MetricExporter{}
+	}
+	if spec.MetricExporter.InstanceTags == nil {
+		spec.MetricExporter.InstanceTags = make(map[string]string)
+	}
+	upd, err := strconv.Atoi(spec.MetricExporter.InstanceTags["update"])
+	if err != nil {
+		upd = 0
+	}
+	spec.MetricExporter.InstanceTags["update"] = strconv.Itoa(upd + 1)
 }
 
 type ClusterHealthReport struct {
