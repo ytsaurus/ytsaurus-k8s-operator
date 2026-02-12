@@ -204,14 +204,6 @@ func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateS
 	return nil
 }
 
-func (c *Ytsaurus) IsStatusConditionTrue(conditionType string) bool {
-	return meta.IsStatusConditionTrue(c.ytsaurus.Status.Conditions, conditionType)
-}
-
-func (c *Ytsaurus) IsStatusConditionFalse(conditionType string) bool {
-	return meta.IsStatusConditionFalse(c.ytsaurus.Status.Conditions, conditionType)
-}
-
 func buildComponentsSummary(components []ytv1.Component) string {
 	if len(components) == 0 {
 		return ""
