@@ -182,40 +182,44 @@ func (l *Labeller) GetInitJobConfigMapName(name string) string {
 	return fmt.Sprintf("%s-%s-init-job-config", strings.ToLower(name), l.GetFullComponentLabel())
 }
 
-func (l *Labeller) GetInitJobCompletedCondition(name string) string {
-	return fmt.Sprintf("%s%sInitJobCompleted", name, l.GetFullComponentName())
-}
-
-func (l *Labeller) GetPodsRemovingStartedCondition() string {
-	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionPodsRemovingStarted)
-}
-
-func (l *Labeller) GetPodsRemovedCondition() string {
-	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionPodsRemoved)
-}
-
-func (l *Labeller) GetPodsUpdatedCondition() string {
-	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionPodsUpdated)
-}
-
-func (l *Labeller) GetPreChecksRunningCondition() string {
-	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionPreChecksRunning)
-}
-
-func (l *Labeller) GetScalingDownCondition() string {
-	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionScalingDown)
-}
-
-func (l *Labeller) GetScalingUpCondition() string {
-	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionScalingUp)
-}
-
-func (l *Labeller) GetWaitingOnDeleteUpdateCondition() string {
-	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionWaitingOnDeleteUpdate)
+func (l *Labeller) GetCondition(suffix string) string {
+	return l.GetFullComponentName() + suffix
 }
 
 func (l *Labeller) GetReadyCondition() string {
-	return fmt.Sprintf("%sReady", l.GetFullComponentName())
+	return l.GetCondition(consts.ConditionReady)
+}
+
+func (l *Labeller) GetInitJobCompletedCondition(name string) string {
+	return name + l.GetCondition(consts.ConditionInitJobCompleted)
+}
+
+func (l *Labeller) GetPodsRemovingStartedCondition() string {
+	return l.GetCondition(consts.ConditionPodsRemovingStarted)
+}
+
+func (l *Labeller) GetPodsRemovedCondition() string {
+	return l.GetCondition(consts.ConditionPodsRemoved)
+}
+
+func (l *Labeller) GetPodsUpdatedCondition() string {
+	return l.GetCondition(consts.ConditionPodsUpdated)
+}
+
+func (l *Labeller) GetPreChecksRunningCondition() string {
+	return l.GetCondition(consts.ConditionPreChecksRunning)
+}
+
+func (l *Labeller) GetScalingDownCondition() string {
+	return l.GetCondition(consts.ConditionScalingDown)
+}
+
+func (l *Labeller) GetScalingUpCondition() string {
+	return l.GetCondition(consts.ConditionScalingUp)
+}
+
+func (l *Labeller) GetWaitingOnDeleteUpdateCondition() string {
+	return l.GetCondition(consts.ConditionWaitingOnDeleteUpdate)
 }
 
 func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {

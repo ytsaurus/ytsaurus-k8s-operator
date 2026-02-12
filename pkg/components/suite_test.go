@@ -97,6 +97,10 @@ func (fc *FakeComponent) GetCypressPatch() ypatch.PatchSet {
 	return nil
 }
 
+func (fc *FakeComponent) GetReadyCondition() ComponentStatus {
+	return fc.status
+}
+
 func (fc *FakeComponent) SetReadyCondition(status ComponentStatus) {}
 
 type FakeServer struct {

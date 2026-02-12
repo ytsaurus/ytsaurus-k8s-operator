@@ -90,6 +90,9 @@ type Component interface {
 	GetFullName() string
 	GetShortName() string
 	GetType() consts.ComponentType
+
+	// Access component status saved as status condition in controller object.
+	GetReadyCondition() ComponentStatus
 	SetReadyCondition(status ComponentStatus)
 
 	GetLabeller() *labeller.Labeller
@@ -187,6 +190,18 @@ func (c *component) GetCypressPatch() ypatch.PatchSet {
 
 func (c *component) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	return ComponentStatusReady()
+}
+
+func (c *component) GetReadyCondition() ComponentStatus {
+	cond := c.owner.GetStatusCondition(c.labeller.GetReadyCondition())
+	switch {
+	case cond == nil || cond.Status == metav1.ConditionUnknown:
+		return ComponentStatus{SyncStatusPending, "Status unknown"}
+	case cond.Status == metav1.ConditionTrue:
+		return ComponentStatus{SyncStatusReady, cond.Message}
+	default:
+		return ComponentStatus{SyncStatus(cond.Reason), cond.Message}
+	}
 }
 
 func (c *component) SetReadyCondition(status ComponentStatus) {

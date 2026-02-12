@@ -49,9 +49,17 @@ type APIProxy interface {
 	// Returns true if generation actually has been changed and status must be saved.
 	SyncObservedGeneration() bool
 
+	// SetStatusCondition also updates its own observed generation.
 	SetStatusCondition(condition metav1.Condition)
+
+	RemoveStatusCondition(conditionType string)
+
+	GetStatusCondition(conditionType string) *metav1.Condition
 	IsStatusConditionTrue(conditionType string) bool
 	IsStatusConditionFalse(conditionType string) bool
+
+	// Returns true if condition has met and controller object is not changed since then.
+	IsStatusConditionTrueAndObservedGeneration(conditionType string) bool
 
 	UpdateStatus(ctx context.Context) error
 }
@@ -237,12 +245,27 @@ func (c *apiProxy) SetStatusCondition(condition metav1.Condition) {
 	c.object.SetStatusConditions(conditions)
 }
 
+func (c *apiProxy) RemoveStatusCondition(conditionType string) {
+	conditions := c.object.GetStatusConditions()
+	meta.RemoveStatusCondition(&conditions, conditionType)
+	c.object.SetStatusConditions(conditions)
+}
+
+func (c *apiProxy) GetStatusCondition(conditionType string) *metav1.Condition {
+	return meta.FindStatusCondition(c.object.GetStatusConditions(), conditionType)
+}
+
 func (c *apiProxy) IsStatusConditionTrue(conditionType string) bool {
 	return meta.IsStatusConditionTrue(c.object.GetStatusConditions(), conditionType)
 }
 
 func (c *apiProxy) IsStatusConditionFalse(conditionType string) bool {
 	return meta.IsStatusConditionFalse(c.object.GetStatusConditions(), conditionType)
+}
+
+func (c *apiProxy) IsStatusConditionTrueAndObservedGeneration(conditionType string) bool {
+	cond := c.GetStatusCondition(conditionType)
+	return cond != nil && cond.Status == metav1.ConditionTrue && cond.ObservedGeneration == c.object.GetGeneration()
 }
 
 func (c *apiProxy) updateOperatorVersion() bool {
