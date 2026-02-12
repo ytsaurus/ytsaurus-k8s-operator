@@ -203,7 +203,7 @@ func handleBulkUpdatingClusterState(
 			return ptr.To(ComponentStatusUpdateStep("pods removal")), err
 		}
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    fmt.Sprintf("%s%s", cmp.GetFullName(), consts.ConditionBulkUpdateModeStarted),
+			Type:    cmp.GetLabeller().GetCondition(consts.ConditionBulkUpdateModeStarted),
 			Status:  metav1.ConditionTrue,
 			Reason:  "BulkUpdateModeStarted",
 			Message: "bulk update mode started",

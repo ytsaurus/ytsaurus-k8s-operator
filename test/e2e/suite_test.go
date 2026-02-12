@@ -455,26 +455,26 @@ func HaveClusterStateUpdating() otypes.GomegaMatcher {
 	return HaveClusterState(ytv1.ClusterStateUpdating)
 }
 
-func findUpdateStatusCondition(yts *ytv1.Ytsaurus, conditionType string) *metav1.Condition {
-	for i := range yts.Status.UpdateStatus.Conditions {
-		if yts.Status.UpdateStatus.Conditions[i].Type == conditionType {
-			return &yts.Status.UpdateStatus.Conditions[i]
-		}
-	}
-	return nil
+func HaveStatusCondition(conditionType string, expected otypes.GomegaMatcher) otypes.GomegaMatcher {
+	return HaveField("Status.Conditions", ContainElement(And(
+		HaveField("Type", conditionType),
+		expected,
+	)))
 }
 
-func HaveUpdateStatusCondition(conditionType string, status metav1.ConditionStatus) otypes.GomegaMatcher {
-	return WithTransform(func(yts *ytv1.Ytsaurus) *metav1.Condition {
-		return findUpdateStatusCondition(yts, conditionType)
-	}, SatisfyAll(
-		Not(BeNil()),
-		HaveField("Status", status),
-	))
+func HaveStatusConditionTrue(conditionType string) otypes.GomegaMatcher {
+	return HaveStatusCondition(conditionType, ConditionStatusTrue())
+}
+
+func HaveUpdateStatusCondition(conditionType string, expected otypes.GomegaMatcher) otypes.GomegaMatcher {
+	return HaveField("Status.UpdateStatus.Conditions", ContainElement(And(
+		HaveField("Type", conditionType),
+		expected,
+	)))
 }
 
 func HaveUpdateStatusConditionTrue(conditionType string) otypes.GomegaMatcher {
-	return HaveUpdateStatusCondition(conditionType, metav1.ConditionTrue)
+	return HaveUpdateStatusCondition(conditionType, ConditionStatusTrue())
 }
 
 func HaveClusterUpdateState(updateState ytv1.UpdateState) otypes.GomegaMatcher {
@@ -497,10 +497,10 @@ func HaveClusterUpdateCondition(conditionType string, expected otypes.GomegaMatc
 }
 
 func ConditionStatusTrue() otypes.GomegaMatcher {
-	return HaveField("Status", corev1.ConditionTrue)
+	return HaveField("Status", metav1.ConditionTrue)
 }
 func ConditionStatusFalse() otypes.GomegaMatcher {
-	return HaveField("Status", corev1.ConditionFalse)
+	return HaveField("Status", metav1.ConditionFalse)
 }
 func ConditionStatusDefined() otypes.GomegaMatcher {
 	return Or(ConditionStatusTrue(), ConditionStatusFalse())
