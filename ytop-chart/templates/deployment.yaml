@@ -26,8 +26,10 @@ spec:
         command:
         - /manager
         env:
-        - name: YT_LOG_LEVEL
-          value: {{ quote .Values.controllerManager.manager.env.ytLogLevel }}
+        {{- range $key, $value := .Values.controllerManager.manager.env }}
+        - name: {{ $key | quote }}
+          value: {{ $value | quote }}
+        {{- end }}
         {{- if .Values.controllerManager.manager.instanceScope }}
         - name: WATCH_OPERATOR_INSTANCE
           value: '{{ .Release.Name }}'
