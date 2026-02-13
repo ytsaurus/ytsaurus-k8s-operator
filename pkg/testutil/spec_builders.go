@@ -242,6 +242,7 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 		},
 		Spec: ytv1.YtsaurusSpec{
 			CommonSpec: ytv1.CommonSpec{
+				ClusterFeatures:  &ytv1.ClusterFeatures{},
 				EphemeralCluster: true,
 				UseShortNames:    true,
 				CoreImage:        b.Images.Core,

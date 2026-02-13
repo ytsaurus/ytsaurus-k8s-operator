@@ -238,23 +238,34 @@ func getAllPods(ctx context.Context, namespace string) map[string]corev1.Pod {
 }
 
 type changedObjects struct {
-	Changed, Deleted, Updated, Created []string
+	Unchanged, Changed, Deleted, Updated, Created, Heated []string
 }
 
 func getChangedPods(before, after map[string]corev1.Pod) changedObjects {
 	var ret changedObjects
-	for name := range before {
+	for name, podBefore := range before {
+		if _, ok := podBefore.Labels[consts.ImageHeaterLabelName]; ok {
+			continue
+		}
 		if _, found := after[name]; !found {
 			ret.Deleted = append(ret.Deleted, name)
 		}
 	}
 	for name, podAfter := range after {
+		if heater, ok := podAfter.Labels[consts.ImageHeaterLabelName]; ok {
+			if _, found := before[name]; !found && podAfter.DeletionTimestamp.IsZero() {
+				ret.Heated = append(ret.Heated, heater)
+			}
+			continue
+		}
 		if !podAfter.DeletionTimestamp.IsZero() {
 			ret.Deleted = append(ret.Deleted, name)
 		} else if podBefore, found := before[name]; !found {
 			ret.Created = append(ret.Created, name)
 		} else if !podAfter.CreationTimestamp.Equal(&podBefore.CreationTimestamp) {
 			ret.Updated = append(ret.Updated, name)
+		} else {
+			ret.Unchanged = append(ret.Unchanged, name)
 		}
 	}
 	ret.Changed = append(ret.Changed, ret.Deleted...)
@@ -698,34 +709,6 @@ func fetchStuckPods(ctx context.Context, namespace string) (pending, failed []st
 	}
 
 	return pending, failed
-}
-
-func pullImages(ctx context.Context, namaspace string, images []string, timeout time.Duration) {
-	pod := corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:    namaspace,
-			GenerateName: "pull-images-",
-		},
-		Spec: corev1.PodSpec{
-			RestartPolicy: corev1.RestartPolicyNever,
-		},
-	}
-	for i, image := range images {
-		pod.Spec.Containers = append(pod.Spec.Containers,
-			corev1.Container{
-				Name:            fmt.Sprintf("image%d", i),
-				Image:           image,
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Command:         []string{"true"},
-			},
-		)
-	}
-	Expect(k8sClient.Create(ctx, &pod)).Should(Succeed())
-	EventuallyObject(ctx, &pod, timeout).Should(
-		HaveField("Status.Phase", Not(Or(Equal(corev1.PodPending), Equal(corev1.PodRunning)))),
-	)
-	Expect(pod).Should(HaveField("Status.Phase", Equal(corev1.PodSucceeded)))
-	Expect(k8sClient.Delete(ctx, &pod)).Should(Succeed())
 }
 
 func reissueCertificate(ctx context.Context, cert *certv1.Certificate) {
