@@ -170,7 +170,8 @@ func convertToComponent(components []components.Component) []ytv1.Component {
 }
 
 func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
+	logger := log.FromContext(ctx, "ytsaurusState", resource.Status.State)
+	ctx = log.IntoContext(ctx, logger)
 
 	if !ptr.Deref(resource.Spec.IsManaged, true) || r.ShouldIgnoreResource(ctx, resource) {
 		logger.Info("Ytsaurus cluster is not managed by controller, do nothing")
