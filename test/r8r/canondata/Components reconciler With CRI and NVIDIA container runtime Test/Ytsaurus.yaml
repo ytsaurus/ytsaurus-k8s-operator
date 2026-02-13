@@ -137,6 +137,12 @@ status:
     status: "True"
     type: ImageHeaterReady
   - lastTransitionTime: null
+    message: 0.0.0-devel
+    observedGeneration: 1
+    reason: Observed
+    status: "True"
+    type: OperatorVersion
+  - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
     reason: Ready
@@ -184,12 +190,6 @@ status:
     reason: Ready
     status: "True"
     type: TimbertruckReady
-  - lastTransitionTime: null
-    message: 0.0.0-devel
-    observedGeneration: 1
-    reason: Observed
-    status: "True"
-    type: OperatorVersion
   observedGeneration: 1
   state: Running
   updateStatus: {}

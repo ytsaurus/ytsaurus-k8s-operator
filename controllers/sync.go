@@ -196,8 +196,8 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	switch resource.Status.State {
-	case ytv1.ClusterStateCreated:
+	switch ytsaurus.GetClusterState() {
+	case ytv1.ClusterStateCreated, "":
 		logger.Info("Ytsaurus is just created and needs initialization")
 		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateInitializing)
 		return ctrl.Result{Requeue: true}, err
@@ -309,6 +309,8 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			// Requeue once again to do final check and maybe update observed generation.
 			return ctrl.Result{Requeue: true}, err
 		}
+	default:
+		return ctrl.Result{}, fmt.Errorf("unknown cluster state: %q", ytsaurus.GetClusterState())
 	}
 
 	return componentManager.Sync(ctx)

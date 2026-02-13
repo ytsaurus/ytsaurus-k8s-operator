@@ -261,7 +261,6 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			}
 			ytBuilder.CreateMinimal()
 			ytsaurus = ytBuilder.Ytsaurus
-			ytsaurus.Status.State = ytv1.ClusterStateCreated
 		})
 
 		// generator = ytconfig.NewGenerator(ytsaurus, "cluster.local")
