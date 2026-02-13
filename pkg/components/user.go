@@ -26,11 +26,9 @@ func createUserCommand(userName, password, token string, isSuperuser bool) []str
 		result = append(result, fmt.Sprintf("/usr/bin/yt execute set_user_password '{user=%s;new_password_sha256=\"%s\"}'", userName, passwordHash))
 	}
 
-	if token != "" {
-		tokenHash := sha256String(token)
-		result = append(result, fmt.Sprintf("/usr/bin/yt create map_node '//sys/cypress_tokens/%s' --ignore-existing", tokenHash))
-		result = append(result, fmt.Sprintf("/usr/bin/yt set '//sys/cypress_tokens/%s/@user' '%s'", tokenHash, userName))
-	}
+	// Note: Token issuance is now handled via the issue-token API in the Go code,
+	// not through shell commands. The cypress_tokens manual registration has been removed
+	// in favor of using YTsaurus's standard token issuance mechanism.
 
 	if isSuperuser {
 		result = append(result, fmt.Sprintf("/usr/bin/yt add-member %s superusers || true", userName))
