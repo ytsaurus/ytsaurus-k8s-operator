@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"maps"
 	"net/http"
 	"os"
 	"reflect"
@@ -167,7 +166,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	// NOTE: All context variables must be initialized BeforeEach, to prevent crosstalk.
 	var namespace string
 	var stopEventsLogger func()
-	var requiredImages []string
 	var objects []client.Object
 	var namespaceWatcher *NamespaceWatcher
 	var ytBuilder *testutil.YtsaurusBuilder
@@ -273,9 +271,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 		ytBuilder.CreateMinimal()
 		ytsaurus = ytBuilder.Ytsaurus
-		ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{}
 
-		requiredImages = nil
+		By("Enabling image heater")
+		ytsaurus.Spec.ClusterFeatures.EnableImageHeater = true
+
 		objects = []client.Object{ytsaurus}
 
 		By("Tracking Ytsaurus updates")
@@ -364,16 +363,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		// NOTE: Testcase should skip optional cases at "BeforeEach" stage.
 		Expect(ytsaurus.Spec.CoreImage).ToNot(BeEmpty(), "ytsaurus core image is not specified")
 
-		By("Pulling required images")
-		requiredImages = append(requiredImages, ytsaurus.Spec.CoreImage)
-		if spec := ytsaurus.Spec.QueryTrackers; spec != nil && spec.Image != nil {
-			requiredImages = append(requiredImages, *spec.Image)
-		}
-		if spec := ytsaurus.Spec.YQLAgents; spec != nil && spec.Image != nil {
-			requiredImages = append(requiredImages, *spec.Image)
-		}
-		pullImages(ctx, namespace, requiredImages, imagePullTimeout)
-
 		By("Creating resource objects")
 		for _, object := range objects {
 			By(fmt.Sprintf("Creating %v %v", GetObjectGVK(object), object.GetName()))
@@ -432,6 +421,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		By("Checking that Ytsaurus state is equal to `Running`", func() {
 			EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
 		})
+
+		By("Checking Ytsaurus status conditions")
+		Expect(ytsaurus).To(HaveStatusConditionTrue(consts.ConditionOperatorVersion))
+		Expect(ytsaurus).To(HaveStatusConditionTrue(consts.ConditionImageHeaterReady))
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
@@ -724,8 +717,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Skip("Ytsaurus old or new image is not specified")
 					}
 
-					requiredImages = append(requiredImages, newImage)
-
 					ytBuilder.WithNamedDataNodes(ptr.To("dn-t"))
 
 					By("Setting old core image for testing upgrade")
@@ -757,9 +748,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 					podsAfterFullUpdate := getComponentPods(ctx, namespace)
 					pods := getChangedPods(podsBeforeUpdate, podsAfterFullUpdate)
+					Expect(pods.Heated).ToNot(BeEmpty(), "heated")
 					Expect(pods.Created).To(BeEmpty(), "created")
 					Expect(pods.Deleted).To(BeEmpty(), "deleted")
-					Expect(pods.Updated).To(ConsistOf(maps.Keys(podsBeforeUpdate)), "updated")
+					Expect(pods.Updated).ToNot(BeEmpty(), "updated")
+					Expect(pods.Unchanged).To(BeEmpty(), "unchanged")
 
 					CurrentlyObject(ctx, ytsaurus).Should(HaveObservedGeneration())
 				})
@@ -833,9 +826,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				podsAfterFullUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterFullUpdate)
+				Expect(pods.Heated).To(BeEmpty(), "heated")
 				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
-				Expect(pods.Updated).To(ConsistOf(maps.Keys(podsBeforeUpdate)), "updated")
+				Expect(pods.Updated).ToNot(BeEmpty(), "updated")
+				Expect(pods.Unchanged).To(BeEmpty(), "unchanged")
 			})
 
 			It("Should be updated according to UpdateSelector=TabletNodesOnly,ExecNodesOnly", func(ctx context.Context) {
@@ -865,6 +860,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				podsAfterEndUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterEndUpdate)
+				Expect(pods.Heated).To(BeEmpty(), "heated")
 				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Updated).To(ConsistOf("end-0"), "updated")
@@ -893,6 +889,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				podsAfterTndUpdate := getComponentPods(ctx, namespace)
 				pods = getChangedPods(podsAfterEndUpdate, podsAfterTndUpdate)
+				Expect(pods.Heated).To(BeEmpty(), "heated")
 				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Updated).To(ConsistOf("tnd-0", "tnd-1", "tnd-2"), "updated")
@@ -925,6 +922,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				podsAfterMasterUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterMasterUpdate)
+				Expect(pods.Heated).To(BeEmpty(), "heated")
 				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Updated).To(ConsistOf("ms-0"), "updated")
@@ -957,6 +955,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				checkClusterHealth(ctx, ytClient)
 				podsAfterStatelessUpdate := getComponentPods(ctx, namespace)
 				pods = getChangedPods(podsAfterMasterUpdate, podsAfterStatelessUpdate)
+				Expect(pods.Heated).To(BeEmpty(), "heated")
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Updated).To(ConsistOf("ca-0", "ds-0", "end-0", "hp-0", "msc-0", "sch-0"), "updated")
@@ -1005,6 +1004,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				podsAfterUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterUpdate)
+				Expect(pods.Heated).To(BeEmpty(), "heated")
 				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				// Only the second data node group should be updated
@@ -1052,6 +1052,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				podsAfterUpdate := getComponentPods(ctx, namespace)
 				pods := getChangedPods(podsBeforeUpdate, podsAfterUpdate)
+				Expect(pods.Heated).To(BeEmpty(), "heated")
 				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Updated).To(ConsistOf("ds-0", "end-0"), "updated")
@@ -1127,6 +1128,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
 				By("Check that master pod was NOT recreated at the PossibilityCheck stage")
 				pods := getChangedPods(podsBeforeUpdate, getComponentPods(ctx, namespace))
+				Expect(pods.Heated).To(BeEmpty(), "heated")
 				Expect(pods.Created).To(BeEmpty(), "created")
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Updated).To(BeEmpty(), "updated")
@@ -1532,7 +1534,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			BeforeEach(func() {
 				ytsaurus.Spec.CoreImage = testutil.YtsaurusImage25_2
-				requiredImages = append(requiredImages, ytsaurus.Spec.CoreImage)
 
 				By("Adding exec nodes")
 				ytBuilder.WithScheduler()
@@ -1745,8 +1746,6 @@ exec "$@"`
 				if images.Core == "" || images.Chyt == "" || images.Strawberry == "" || images.QueryTracker == "" {
 					Skip("One of required images is not specified")
 				}
-
-				requiredImages = append(requiredImages, images.Core, images.Chyt, images.Strawberry, images.QueryTracker)
 
 				By("Adding native transport TLS certificates")
 				nativeServerCert = certBuilder.BuildCertificate(ytsaurus.Name+"-server", []string{
@@ -2154,73 +2153,6 @@ exec "$@"`
 			}
 		})
 	}) // update plan strategy
-
-	Context("ImageHeater + ControllerAgent update", Label("update", "plan", "strategy", "imageHeater"), func() {
-		BeforeEach(func() {
-			ytBuilder.WithBaseComponents()
-			ytsaurus.Spec.CoreImage = testutil.YtsaurusImagePrevious
-			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
-				{
-					Component: ytv1.Component{Type: consts.ImageHeaterType},
-					Strategy: &ytv1.ComponentUpdateStrategy{
-						RunPreChecks: ptr.To(true),
-					},
-				},
-				{
-					Component: ytv1.Component{Type: consts.ControllerAgentType},
-					Strategy: &ytv1.ComponentUpdateStrategy{
-						RunPreChecks: ptr.To(true),
-					},
-				},
-			}
-		})
-
-		It("should update cluster with ImageHeater component have cluster Running state", func(ctx context.Context) {
-			imageHeaterLabeller := generator.GetComponentLabeller(consts.ImageHeaterType, "")
-			imageHeaterRemovingStarted := imageHeaterLabeller.GetPodsRemovingStartedCondition()
-			imageHeaterRemoved := imageHeaterLabeller.GetPodsRemovedCondition()
-
-			By("Wait for cluster to be Running on previous image")
-			EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
-
-			By("Trigger an update")
-			ytsaurus.Spec.CoreImage = testutil.YtsaurusImageCurrent
-			UpdateObject(ctx, ytsaurus)
-			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-
-			By("Wait for update to start with ImageHeater and ControllerAgent")
-			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
-				HaveClusterUpdatingComponents(consts.ImageHeaterType, consts.ControllerAgentType),
-			)
-
-			By("Wait for image heater to finish preheating")
-			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(
-				HaveStatusCondition(consts.ConditionImageHeaterReady, ConditionStatusTrue()),
-			)
-
-			By("Verify pods removal mode is activated")
-			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
-				HaveClusterUpdateState(ytv1.UpdateStateWaitingForPodsRemoval),
-			)
-
-			By("Verify image heater cleanup conditions are set")
-			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(SatisfyAll(
-				HaveUpdateStatusConditionTrue(imageHeaterRemovingStarted),
-				HaveUpdateStatusConditionTrue(imageHeaterRemoved),
-			))
-
-			By("Waiting cluster update completes")
-			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
-
-			podsAfter := getComponentPods(ctx, namespace)
-
-			for name, pod := range podsAfter {
-				if strings.HasPrefix(name, "ca-0") {
-					Expect(pod.Spec.Containers[0].Image).To(Equal(ytsaurus.Spec.CoreImage))
-				}
-			}
-		})
-	})
 })
 
 var _ = Describe("Spec version lock test", Label("version_lock"), Ordered, func() {
