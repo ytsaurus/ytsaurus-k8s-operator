@@ -215,6 +215,7 @@ func (c *apiProxy) createAndReferenceObject(ctx context.Context, obj client.Obje
 }
 
 func (c *apiProxy) UpdateStatus(ctx context.Context) error {
+	c.updateOperatorVersion()
 	return c.client.Status().Update(ctx, c.object)
 }
 
