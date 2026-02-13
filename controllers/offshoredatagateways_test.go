@@ -3,21 +3,24 @@ package controllers_test
 import (
 	"context"
 	"strings"
-	"testing"
 
-	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
 	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
-	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 const (
@@ -27,221 +30,234 @@ const (
 	offshoreDataGatewayConfigMapYsonKey = "ytserver-offshore-data-gateway.yson"
 )
 
-func setupOffshoreDataGatewaysReconciler() func(mgr ctrl.Manager) error {
-	return func(mgr ctrl.Manager) error {
-		return (&controllers.OffshoreDataGatewaysReconciler{
-			BaseReconciler: controllers.BaseReconciler{
-				ClusterDomain: "cluster.local",
-				Client:        mgr.GetClient(),
-				Scheme:        mgr.GetScheme(),
-				Recorder:      mgr.GetEventRecorderFor("offshoredatagateways-controller"),
-			},
-		}).SetupWithManager(mgr)
-	}
-}
+var _ = Describe("OffshoreDataGateways Controller", func() {
+	var h *testutil.TestHelper
+	var namespace string
+	var reconcilerSetupFunc func(mgr ctrl.Manager) error
 
-// TestOffshoreDataGatewaysFromScratch ensures that offshore data gateways resources are
-// created with correct connection to the specified remote Ytsaurus.
-func TestOffshoreDataGatewaysFromScratch(t *testing.T) {
-	h := startHelperWithController(t, "offshore-data-gateways-test-from-scratch",
-		setupOffshoreDataGatewaysReconciler(),
-	)
-	defer h.Stop()
+	JustBeforeEach(func() {
+		h = testutil.NewTestHelper(GinkgoTB(), namespace, "..")
+		h.Start(reconcilerSetupFunc)
+	})
 
-	remoteYtsaurusSpec := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
-	testutil.DeployObject(h, &remoteYtsaurusSpec)
-	waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
-	offshoreDataGateways := buildOffshoreDataGateways(h, remoteYtsaurusName, offshoreDataGatewaysName)
-	testutil.DeployObject(h, &offshoreDataGateways)
-	waitOffshoreDataGatewaysDeployed(h, offshoreDataGatewaysName)
+	BeforeEach(func() {
+		reconcilerSetupFunc = func(mgr ctrl.Manager) error {
+			return (&controllers.OffshoreDataGatewaysReconciler{
+				BaseReconciler: controllers.BaseReconciler{
+					ClusterDomain: "cluster.local",
+					Client:        mgr.GetClient(),
+					Scheme:        mgr.GetScheme(),
+					Recorder:      mgr.GetEventRecorderFor("offshoredatagateways-controller"),
+				},
+			}).SetupWithManager(mgr)
+		}
+	})
 
-	testutil.FetchEventually(h, statefulSetNameOffshoreDataGateways, &appsv1.StatefulSet{})
+	Describe("OffshoreDataGateways operations", func() {
+		Context("When creating offshore data gateways from scratch", func() {
+			BeforeEach(func() {
+				namespace = "offshore-data-gateways-test-from-scratch"
+			})
 
-	ysonNodeConfig := testutil.FetchConfigMapData(h, offshoreDataGatewayConfigMapName, offshoreDataGatewayConfigMapYsonKey)
-	require.NotEmpty(t, ysonNodeConfig)
-	require.Contains(t, ysonNodeConfig, remoteYtsaurusHostname)
-}
+			It("should create resources with correct connection to remote Ytsaurus", func(ctx context.Context) {
 
-// TestOffshoreDataGatewaysYtsaurusChanges ensures that if remote Ytsaurus CRD changes its hostnames
-// remote nodes changes its configs accordingly.
-func TestOffshoreDataGatewaysYtsaurusChanges(t *testing.T) {
-	h := startHelperWithController(t, "offshore-data-gateways-test-host-change",
-		setupOffshoreDataGatewaysReconciler(),
-	)
-	defer h.Stop()
+				remoteYtsaurusSpec := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
+				testutil.DeployObject(h, &remoteYtsaurusSpec)
+				waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
+				offshoreDataGateways := buildOffshoreDataGateways(h, remoteYtsaurusName, offshoreDataGatewaysName)
+				testutil.DeployObject(h, &offshoreDataGateways)
+				waitOffshoreDataGatewaysDeployed(h, offshoreDataGatewaysName)
 
-	remoteYtsaurus := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
-	testutil.DeployObject(h, &remoteYtsaurus)
-	waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
-	offshoreDataGateways := buildOffshoreDataGateways(h, remoteYtsaurusName, offshoreDataGatewaysName)
-	testutil.DeployObject(h, &offshoreDataGateways)
-	waitOffshoreDataGatewaysDeployed(h, offshoreDataGatewaysName)
+				testutil.FetchEventually(h, statefulSetNameOffshoreDataGateways, &appsv1.StatefulSet{})
 
-	ysonNodeConfig := testutil.FetchConfigMapData(h, offshoreDataGatewayConfigMapName, offshoreDataGatewayConfigMapYsonKey)
-	require.NotEmpty(t, ysonNodeConfig)
-	require.Contains(t, ysonNodeConfig, remoteYtsaurusHostname)
+				ysonNodeConfig := testutil.FetchConfigMapData(h, offshoreDataGatewayConfigMapName, offshoreDataGatewayConfigMapYsonKey)
+				Expect(ysonNodeConfig).NotTo(BeEmpty())
+				Expect(ysonNodeConfig).To(ContainSubstring(remoteYtsaurusHostname))
+			})
+		})
 
-	hostnameChanged := remoteYtsaurusHostname + "-changed"
-	remoteYtsaurus.Spec.MasterConnectionSpec.HostAddresses = []string{hostnameChanged}
-	testutil.UpdateObject(h, &ytv1.RemoteYtsaurus{}, &remoteYtsaurus)
-	waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
+		Context("When remote Ytsaurus changes hostnames", func() {
+			BeforeEach(func() {
+				namespace = "offshore-data-gateways-test-host-change"
+			})
 
-	testutil.FetchAndCheckEventually(
-		h,
-		offshoreDataGatewayConfigMapName,
-		&corev1.ConfigMap{},
-		"config map exists and contains changed hostname",
-		func(obj client.Object) bool {
-			data := obj.(*corev1.ConfigMap).Data
-			ysonNodeConfig = data[offshoreDataGatewayConfigMapYsonKey]
-			return strings.Contains(ysonNodeConfig, hostnameChanged)
-		},
-	)
-}
+			It("should update remote nodes configs accordingly", func(ctx context.Context) {
 
-// TestOffshoreDataGatewaysImageUpdate ensures that if offshore data gateways images changes, controller
-// sets new image for nodes' stateful set.
-func TestOffshoreDataGatewaysImageUpdate(t *testing.T) {
-	h := startHelperWithController(t, "offshore-data-gateways-test-image-update",
-		setupOffshoreDataGatewaysReconciler(),
-	)
-	defer h.Stop()
+				remoteYtsaurus := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
+				testutil.DeployObject(h, &remoteYtsaurus)
+				waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
+				offshoreDataGateways := buildOffshoreDataGateways(h, remoteYtsaurusName, offshoreDataGatewaysName)
+				testutil.DeployObject(h, &offshoreDataGateways)
+				waitOffshoreDataGatewaysDeployed(h, offshoreDataGatewaysName)
 
-	remoteYtsaurusSpec := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
-	testutil.DeployObject(h, &remoteYtsaurusSpec)
-	waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
-	offshoreDataGateways := buildOffshoreDataGateways(h, remoteYtsaurusName, offshoreDataGatewaysName)
-	testutil.DeployObject(h, &offshoreDataGateways)
-	waitOffshoreDataGatewaysDeployed(h, offshoreDataGatewaysName)
+				ysonNodeConfig := testutil.FetchConfigMapData(h, offshoreDataGatewayConfigMapName, offshoreDataGatewayConfigMapYsonKey)
+				Expect(ysonNodeConfig).NotTo(BeEmpty())
+				Expect(ysonNodeConfig).To(ContainSubstring(remoteYtsaurusHostname))
 
-	testutil.FetchEventually(h, statefulSetNameOffshoreDataGateways, &appsv1.StatefulSet{})
+				hostnameChanged := remoteYtsaurusHostname + "-changed"
+				remoteYtsaurus.Spec.MasterConnectionSpec.HostAddresses = []string{hostnameChanged}
+				testutil.UpdateObject(h, &ytv1.RemoteYtsaurus{}, &remoteYtsaurus)
+				waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
 
-	updatedImage := testYtsaurusImage + "-changed"
-	offshoreDataGateways.Spec.Image = &updatedImage
-	testutil.UpdateObject(h, &ytv1.OffshoreDataGateways{}, &offshoreDataGateways)
+				testutil.FetchAndCheckEventually(
+					h,
+					offshoreDataGatewayConfigMapName,
+					&corev1.ConfigMap{},
+					"config map exists and contains changed hostname",
+					func(obj client.Object) bool {
+						data := obj.(*corev1.ConfigMap).Data
+						ysonNodeConfig = data[offshoreDataGatewayConfigMapYsonKey]
+						return strings.Contains(ysonNodeConfig, hostnameChanged)
+					},
+				)
+			})
+		})
 
-	testutil.FetchAndCheckEventually(
-		h,
-		statefulSetNameOffshoreDataGateways,
-		&appsv1.StatefulSet{},
-		"image updated in sts spec",
-		func(obj client.Object) bool {
-			sts := obj.(*appsv1.StatefulSet)
-			return sts.Spec.Template.Spec.Containers[0].Image == updatedImage
-		},
-	)
-}
+		Context("When updating image", func() {
+			BeforeEach(func() {
+				namespace = "offshore-data-gateways-test-image-update"
+			})
 
-// TestOffshoreDataGatewaysChangeInstanceCount ensures that if remote nodes instance count changed in spec,
-// it is reflected in stateful set spec.
-func TestOffshoreDataGatewaysChangeInstanceCount(t *testing.T) {
-	h := startHelperWithController(t, "offshore-data-gateways-test-change-instance-count",
-		setupOffshoreDataGatewaysReconciler(),
-	)
-	defer h.Stop()
+			It("should set new image for nodes' stateful set", func(ctx context.Context) {
 
-	remoteYtsaurusSpec := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
-	testutil.DeployObject(h, &remoteYtsaurusSpec)
-	waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
-	offshoreDataGateways := buildOffshoreDataGateways(h, remoteYtsaurusName, offshoreDataGatewaysName)
-	testutil.DeployObject(h, &offshoreDataGateways)
-	waitOffshoreDataGatewaysDeployed(h, offshoreDataGatewaysName)
+				remoteYtsaurusSpec := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
+				testutil.DeployObject(h, &remoteYtsaurusSpec)
+				waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
+				offshoreDataGateways := buildOffshoreDataGateways(h, remoteYtsaurusName, offshoreDataGatewaysName)
+				testutil.DeployObject(h, &offshoreDataGateways)
+				waitOffshoreDataGatewaysDeployed(h, offshoreDataGatewaysName)
 
-	testutil.FetchEventually(h, statefulSetNameOffshoreDataGateways, &appsv1.StatefulSet{})
+				testutil.FetchEventually(h, statefulSetNameOffshoreDataGateways, &appsv1.StatefulSet{})
 
-	newInstanceCount := int32(3)
-	offshoreDataGateways.Spec.InstanceCount = newInstanceCount
-	testutil.UpdateObject(h, &ytv1.OffshoreDataGateways{}, &offshoreDataGateways)
+				updatedImage := testYtsaurusImage + "-changed"
+				offshoreDataGateways.Spec.Image = &updatedImage
+				testutil.UpdateObject(h, &ytv1.OffshoreDataGateways{}, &offshoreDataGateways)
 
-	testutil.FetchAndCheckEventually(
-		h,
-		statefulSetNameOffshoreDataGateways,
-		&appsv1.StatefulSet{},
-		"expected replicas count",
-		func(obj client.Object) bool {
-			sts := obj.(*appsv1.StatefulSet)
-			return *sts.Spec.Replicas == newInstanceCount
-		},
-	)
-}
+				testutil.FetchAndCheckEventually(
+					h,
+					statefulSetNameOffshoreDataGateways,
+					&appsv1.StatefulSet{},
+					"image updated in sts spec",
+					func(obj client.Object) bool {
+						sts := obj.(*appsv1.StatefulSet)
+						return sts.Spec.Template.Spec.Containers[0].Image == updatedImage
+					},
+				)
+			})
+		})
 
-// TestOffshoreDataGatewaysStatusRunningZeroPods ensures that offshore data gateways CRD reaches correct release status
-// in zero pods case.
-func TestOffshoreDataGatewaysStatusRunningZeroPods(t *testing.T) {
-	h := startHelperWithController(t, "offshore-data-gateways-test-status-running-zero-pods",
-		setupOffshoreDataGatewaysReconciler(),
-	)
-	defer h.Stop()
+		Context("When changing instance count", func() {
+			BeforeEach(func() {
+				namespace = "offshore-data-gateways-test-change-instance-count"
+			})
 
-	remoteYtsaurusSpec := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
-	testutil.DeployObject(h, &remoteYtsaurusSpec)
-	waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
-	offshoreDataGateways := buildOffshoreDataGateways(h, remoteYtsaurusName, offshoreDataGatewaysName)
-	testutil.DeployObject(h, &offshoreDataGateways)
-	waitOffshoreDataGatewaysDeployed(h, offshoreDataGatewaysName)
+			It("should reflect change in stateful set spec", func(ctx context.Context) {
 
-	testutil.FetchAndCheckEventually(
-		h,
-		offshoreDataGatewaysName,
-		&ytv1.OffshoreDataGateways{},
-		"remote gateways status running",
-		func(obj client.Object) bool {
-			offshoreDataGateways := obj.(*ytv1.OffshoreDataGateways)
-			return offshoreDataGateways.Status.ReleaseStatus == ytv1.RemoteNodeReleaseStatusRunning
-		},
-	)
-}
+				remoteYtsaurusSpec := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
+				testutil.DeployObject(h, &remoteYtsaurusSpec)
+				waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
+				offshoreDataGateways := buildOffshoreDataGateways(h, remoteYtsaurusName, offshoreDataGatewaysName)
+				testutil.DeployObject(h, &offshoreDataGateways)
+				waitOffshoreDataGatewaysDeployed(h, offshoreDataGatewaysName)
 
-// TestOffshoreDataGatewaysStatusRunningZeroPods ensures that offshore data gateways CRD reaches correct release status
-// in non-zero pods case.
-func TestOffshoreDataGatewaysStatusRunningWithPods(t *testing.T) {
-	h := startHelperWithController(t, "offshore-data-gateways-test-status-running-with-pods",
-		setupOffshoreDataGatewaysReconciler(),
-	)
-	defer h.Stop()
+				testutil.FetchEventually(h, statefulSetNameOffshoreDataGateways, &appsv1.StatefulSet{})
 
-	remoteYtsaurusSpec := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
-	testutil.DeployObject(h, &remoteYtsaurusSpec)
-	waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
+				newInstanceCount := int32(3)
+				offshoreDataGateways.Spec.InstanceCount = newInstanceCount
+				testutil.UpdateObject(h, &ytv1.OffshoreDataGateways{}, &offshoreDataGateways)
 
-	// For some reason ArePodsReady check is ok with having zero pods while MinReadyInstanceCount = 1,
-	// so here we are creating pending pods before offshore data gateways deploy to obtain Pending status for test purposes.
-	// Will investigate and possibly fix ArePodsReady behaviour later.
-	pod := buildOffshoreDataGatewayPod(h)
-	testutil.DeployObject(h, &pod)
+				testutil.FetchAndCheckEventually(
+					h,
+					statefulSetNameOffshoreDataGateways,
+					&appsv1.StatefulSet{},
+					"expected replicas count",
+					func(obj client.Object) bool {
+						sts := obj.(*appsv1.StatefulSet)
+						return *sts.Spec.Replicas == newInstanceCount
+					},
+				)
+			})
+		})
 
-	offshoreDataGateways := buildOffshoreDataGateways(h, remoteYtsaurusName, offshoreDataGatewaysName)
-	offshoreDataGateways.Spec.InstanceSpec.InstanceCount = 1
-	offshoreDataGateways.Spec.InstanceSpec.MinReadyInstanceCount = ptr.To(1)
-	testutil.DeployObject(h, &offshoreDataGateways)
-	waitOffshoreDataGatewaysDeployed(h, offshoreDataGatewaysName)
+		Context("When checking status with zero pods", func() {
+			BeforeEach(func() {
+				namespace = "offshore-data-gateways-test-status-running-zero-pods"
+			})
 
-	testutil.FetchAndCheckEventually(
-		h,
-		offshoreDataGatewaysName,
-		&ytv1.OffshoreDataGateways{},
-		"offshore data gateways status pending",
-		func(obj client.Object) bool {
-			offshoreDataGateways := obj.(*ytv1.OffshoreDataGateways)
-			return offshoreDataGateways.Status.ReleaseStatus == ytv1.RemoteNodeReleaseStatusPending
-		},
-	)
+			It("should reach correct running status", func(ctx context.Context) {
 
-	pod.Status.Phase = corev1.PodRunning
-	err := h.GetK8sClient().Status().Update(context.Background(), &pod)
-	require.NoError(t, err)
+				remoteYtsaurusSpec := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
+				testutil.DeployObject(h, &remoteYtsaurusSpec)
+				waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
+				offshoreDataGateways := buildOffshoreDataGateways(h, remoteYtsaurusName, offshoreDataGatewaysName)
+				testutil.DeployObject(h, &offshoreDataGateways)
+				waitOffshoreDataGatewaysDeployed(h, offshoreDataGatewaysName)
 
-	testutil.FetchAndCheckEventually(
-		h,
-		offshoreDataGatewaysName,
-		&ytv1.OffshoreDataGateways{},
-		"remote nodes status running",
-		func(obj client.Object) bool {
-			offshoreDataGateways := obj.(*ytv1.OffshoreDataGateways)
-			return offshoreDataGateways.Status.ReleaseStatus == ytv1.RemoteNodeReleaseStatusRunning
-		},
-	)
-}
+				testutil.FetchAndCheckEventually(
+					h,
+					offshoreDataGatewaysName,
+					&ytv1.OffshoreDataGateways{},
+					"remote gateways status running",
+					func(obj client.Object) bool {
+						offshoreDataGateways := obj.(*ytv1.OffshoreDataGateways)
+						return offshoreDataGateways.Status.ReleaseStatus == ytv1.RemoteNodeReleaseStatusRunning
+					},
+				)
+			})
+		})
+
+		Context("When checking status with pods", func() {
+			BeforeEach(func() {
+				namespace = "offshore-data-gateways-test-status-running-with-pods"
+			})
+
+			It("should reach correct running status after pods are ready", func(ctx context.Context) {
+
+				remoteYtsaurusSpec := buildRemoteYtsaurus(h, remoteYtsaurusName, remoteYtsaurusHostname)
+				testutil.DeployObject(h, &remoteYtsaurusSpec)
+				waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
+
+				// For some reason ArePodsReady check is ok with having zero pods while MinReadyInstanceCount = 1,
+				// so here we are creating pending pods before offshore data gateways deploy to obtain Pending status for test purposes.
+				// Will investigate and possibly fix ArePodsReady behaviour later.
+				pod := buildOffshoreDataGatewayPod(h)
+				testutil.DeployObject(h, &pod)
+
+				offshoreDataGateways := buildOffshoreDataGateways(h, remoteYtsaurusName, offshoreDataGatewaysName)
+				offshoreDataGateways.Spec.InstanceSpec.InstanceCount = 1
+				offshoreDataGateways.Spec.InstanceSpec.MinReadyInstanceCount = ptr.To(1)
+				testutil.DeployObject(h, &offshoreDataGateways)
+				waitOffshoreDataGatewaysDeployed(h, offshoreDataGatewaysName)
+
+				testutil.FetchAndCheckEventually(
+					h,
+					offshoreDataGatewaysName,
+					&ytv1.OffshoreDataGateways{},
+					"offshore data gateways status pending",
+					func(obj client.Object) bool {
+						offshoreDataGateways := obj.(*ytv1.OffshoreDataGateways)
+						return offshoreDataGateways.Status.ReleaseStatus == ytv1.RemoteNodeReleaseStatusPending
+					},
+				)
+
+				pod.Status.Phase = corev1.PodRunning
+				err := h.GetK8sClient().Status().Update(ctx, &pod)
+				Expect(err).NotTo(HaveOccurred())
+
+				testutil.FetchAndCheckEventually(
+					h,
+					offshoreDataGatewaysName,
+					&ytv1.OffshoreDataGateways{},
+					"remote nodes status running",
+					func(obj client.Object) bool {
+						offshoreDataGateways := obj.(*ytv1.OffshoreDataGateways)
+						return offshoreDataGateways.Status.ReleaseStatus == ytv1.RemoteNodeReleaseStatusRunning
+					},
+				)
+			})
+		})
+	})
+})
 
 func buildOffshoreDataGateways(h *testutil.TestHelper, remoteYtsaurusName, offshoreDataGatewaysName string) ytv1.OffshoreDataGateways {
 	return ytv1.OffshoreDataGateways{

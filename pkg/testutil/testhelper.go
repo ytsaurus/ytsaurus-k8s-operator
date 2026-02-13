@@ -2,7 +2,6 @@ package testutil
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,12 +11,15 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/go-logr/logr/testr"
-	"github.com/stretchr/testify/require"
+
+	. "github.com/onsi/gomega"
+
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/scheme"
+	runtime "k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/retry"
 	"k8s.io/utils/ptr"
@@ -29,11 +31,18 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
 
-// FIXME(khlebnikov): Remove all this and rewrite with ginkgo.
+const (
+	eventuallyWaitTime = 20 * time.Second
+	eventuallyTickTime = 200 * time.Millisecond
+)
+
+// TODO: Remove all this and use helpers written for e2e tests.
+
 type TestHelper struct {
-	t          *testing.T
+	t          testing.TB
 	k8sTestEnv *envtest.Environment
-	k8sClient  client.Client
+	scheme     *runtime.Scheme
+	client     client.Client
 	cfg        *rest.Config
 	ticker     *time.Ticker
 	Namespace  string
@@ -46,7 +55,7 @@ func GetenvOr(key, value string) string {
 	return value
 }
 
-func NewTestHelper(t *testing.T, namespace, topDirectoryPath string) *TestHelper {
+func NewTestHelper(t testing.TB, namespace, topDirectoryPath string) *TestHelper {
 	k8sTestEnv := &envtest.Environment{
 		BinaryAssetsDirectory: filepath.Join(topDirectoryPath, "bin", "envtest-assets"),
 		CRDDirectoryPaths:     []string{filepath.Join(topDirectoryPath, "config", "crd", "bases")},
@@ -54,7 +63,9 @@ func NewTestHelper(t *testing.T, namespace, topDirectoryPath string) *TestHelper
 		CRDInstallOptions: envtest.CRDInstallOptions{
 			MaxTime: 60 * time.Second,
 		},
-		ControlPlane: envtest.ControlPlane{},
+		ControlPlane:             envtest.ControlPlane{},
+		ControlPlaneStartTimeout: 60 * time.Second,
+		ControlPlaneStopTimeout:  60 * time.Second,
 	}
 
 	return &TestHelper{
@@ -68,20 +79,33 @@ func NewTestHelper(t *testing.T, namespace, topDirectoryPath string) *TestHelper
 func (h *TestHelper) Start(reconcilerSetup func(mgr ctrl.Manager) error) {
 	t := h.t
 
-	logger := testr.New(t)
+	logger := testr.NewWithInterface(t, testr.Options{})
 	logf.SetLogger(logger)
 
 	conf, err := h.k8sTestEnv.Start()
-	require.NoError(t, err)
-	require.NotNil(t, conf)
+	Expect(err).NotTo(HaveOccurred())
+	t.Cleanup(func() {
+		Expect(h.k8sTestEnv.Stop()).NotTo(HaveOccurred())
+	})
+
+	Expect(conf).NotTo(BeNil())
 	h.cfg = conf
 
-	err = ytv1.AddToScheme(scheme.Scheme)
-	require.NoError(t, err)
+	h.scheme = runtime.NewScheme()
+
+	err = clientgoscheme.AddToScheme(h.scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = ytv1.AddToScheme(h.scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	k8sCli, err := client.New(h.cfg, client.Options{Scheme: h.scheme})
+	Expect(err).NotTo(HaveOccurred())
+	h.client = k8sCli
 
 	mgr, err := ctrl.NewManager(conf, ctrl.Options{
 		Logger: logger,
-		Scheme: scheme.Scheme,
+		Scheme: h.scheme,
 		// To get rid of macOS' accept incoming network connections popup
 		Metrics: metricsserver.Options{
 			BindAddress: "0",
@@ -92,42 +116,32 @@ func (h *TestHelper) Start(reconcilerSetup func(mgr ctrl.Manager) error) {
 			SkipNameValidation: ptr.To(true),
 		},
 	})
-	require.NoError(t, err)
+	Expect(err).NotTo(HaveOccurred())
 
 	h.createNamespace()
 
 	err = reconcilerSetup(mgr)
-	require.NoError(t, err)
-
-	go func() {
-		// t.Context() is canceled before t.Cleanup().
-		// https://github.com/kubernetes-sigs/controller-runtime/issues/1571#issuecomment-945535598
-		err = mgr.Start(t.Context())
-		require.NoError(t, err)
-	}()
+	Expect(err).NotTo(HaveOccurred())
 
 	go func() {
 		for range h.ticker.C {
 			MarkAllJobsCompleted(h)
 		}
 	}()
+	t.Cleanup(h.ticker.Stop)
 
-	t.Cleanup(func() {
-		h.ticker.Stop()
-		err := h.k8sTestEnv.Stop()
-		require.NoError(h.t, err)
-	})
+	// Stop controller before stopping environment.
+	// https://github.com/kubernetes-sigs/controller-runtime/issues/1571#issuecomment-945535598
+	mgrCtx, mgrStop := context.WithCancel(context.Background())
+	t.Cleanup(mgrStop)
+
+	go func() {
+		Expect(mgr.Start(mgrCtx)).NotTo(HaveOccurred())
+	}()
 }
 
-func (h *TestHelper) Stop() {}
-
 func (h *TestHelper) GetK8sClient() client.Client {
-	if h.k8sClient == nil {
-		k8sCli, err := client.New(h.cfg, client.Options{Scheme: scheme.Scheme})
-		require.NoError(h.t, err)
-		h.k8sClient = k8sCli
-	}
-	return h.k8sClient
+	return h.client
 }
 
 func (h *TestHelper) GetObjectKey(name string) client.ObjectKey {
@@ -146,7 +160,7 @@ func (h *TestHelper) createNamespace() {
 		},
 	}
 	err := c.Create(context.Background(), &ns)
-	require.NoError(h.t, err)
+	Expect(err).NotTo(HaveOccurred())
 }
 
 func (h *TestHelper) Log(args ...any) {
@@ -161,17 +175,17 @@ func (h *TestHelper) Logf(format string, args ...any) {
 func GetObject(h *TestHelper, key string, emptyObject client.Object) {
 	k8sCli := h.GetK8sClient()
 	err := k8sCli.Get(context.Background(), h.GetObjectKey(key), emptyObject)
-	require.NoError(h.t, err)
+	Expect(err).NotTo(HaveOccurred())
 }
 func ListObjects(h *TestHelper, emptyList client.ObjectList) {
 	k8sCli := h.GetK8sClient()
 	err := k8sCli.List(context.Background(), emptyList)
-	require.NoError(h.t, err)
+	Expect(err).NotTo(HaveOccurred())
 }
 func DeployObject(h *TestHelper, object client.Object) {
 	k8sCli := h.GetK8sClient()
 	err := k8sCli.Create(context.Background(), object)
-	require.NoError(h.t, err)
+	Expect(err).NotTo(HaveOccurred())
 }
 func UpdateObject(h *TestHelper, emptyObject, newObject client.Object) {
 	k8sCli := h.GetK8sClient()
@@ -181,12 +195,12 @@ func UpdateObject(h *TestHelper, emptyObject, newObject client.Object) {
 		newObject.SetResourceVersion(emptyObject.GetResourceVersion())
 		return k8sCli.Update(context.Background(), newObject)
 	})
-	require.NoError(h.t, err)
+	Expect(err).NotTo(HaveOccurred())
 }
 func UpdateObjectStatus(h *TestHelper, newObject client.Object) {
 	k8sCli := h.GetK8sClient()
 	err := k8sCli.Status().Update(context.Background(), newObject)
-	require.NoError(h.t, err)
+	Expect(err).NotTo(HaveOccurred())
 }
 
 func MarkJobSucceeded(h *TestHelper, key string) {
@@ -199,7 +213,7 @@ func MarkJobSucceeded(h *TestHelper, key string) {
 func MarkAllJobsCompleted(h *TestHelper) {
 	jobs := &batchv1.JobList{}
 	err := h.GetK8sClient().List(context.Background(), jobs)
-	require.NoError(h.t, err)
+	Expect(err).NotTo(HaveOccurred())
 	for i := range jobs.Items {
 		job := &jobs.Items[i]
 		if job.Status.Succeeded == 0 {
@@ -216,18 +230,13 @@ func MarkAllJobsCompleted(h *TestHelper) {
 			)
 			job.Finalizers = []string{}
 			UpdateObject(h, &batchv1.Job{}, job)
-			err = h.k8sClient.Delete(context.Background(), job)
+			err = h.client.Delete(context.Background(), job)
 			if err != nil && !apierrors.IsNotFound(err) {
-				panic(fmt.Sprintf("failed to delete job %s", job))
+				Expect(err).NotTo(HaveOccurred())
 			}
 		}
 	}
 }
-
-const (
-	eventuallyWaitTime = 20 * time.Second
-	eventuallyTickTime = 200 * time.Millisecond
-)
 
 func FetchEventually(h *TestHelper, key string, obj client.Object) {
 	FetchAndCheckEventually(
@@ -239,42 +248,19 @@ func FetchEventually(h *TestHelper, key string, obj client.Object) {
 			return true
 		})
 }
-func FetchAndCheckEventually(h *TestHelper, key string, obj client.Object, condDescription string, condition func(obj client.Object) bool) {
-	k8sCli := h.GetK8sClient()
-	Eventually(
-		h,
-		fmt.Sprintf("condition '%s' for resource: `%s`", condDescription, key),
-		func() bool {
-			err := k8sCli.Get(context.Background(), h.GetObjectKey(key), obj)
-			if err != nil {
-				if apierrors.IsNotFound(err) {
-					h.t.Logf("object %v not found.", key)
-					return false
-				}
-				require.NoError(h.t, err)
-			}
-			return condition(obj)
-		},
-	)
-}
-func Eventually(h *TestHelper, description string, condition func() bool) {
-	h.t.Log("start waiting " + description)
-	waitTime := eventuallyWaitTime
-	// Useful when debugging test.
-	waitTimeFromEnv := os.Getenv("TEST_EVENTUALLY_WAIT_TIME")
-	if waitTimeFromEnv != "" {
-		var err error
-		waitTime, err = time.ParseDuration(waitTimeFromEnv)
-		if err != nil {
-			h.t.Fatalf("failed to parse TEST_EVENTUALLY_WAIT_TIME=%s", waitTimeFromEnv)
-		}
-	}
-	require.Eventually(
-		h.t,
-		condition,
-		waitTime,
-		eventuallyTickTime,
-	)
+
+func FetchAndCheckEventually(
+	h *TestHelper,
+	key string,
+	obj client.Object,
+	condDescription string,
+	condition func(obj client.Object) bool,
+) {
+	h.t.Log("Waiting condition", condDescription, "for resource", key)
+	Eventually(func() (client.Object, error) {
+		err := h.GetK8sClient().Get(h.t.Context(), h.GetObjectKey(key), obj)
+		return obj, err
+	}, eventuallyWaitTime, eventuallyTickTime).Should(Satisfy(condition), condDescription)
 }
 
 func FetchAndCheckConfigMapContainsEventually(h *TestHelper, objectKey, cmKey, expectSubstr string) {
@@ -289,9 +275,9 @@ func FetchAndCheckConfigMapContainsEventually(h *TestHelper, objectKey, cmKey, e
 			return true
 		},
 	)
-	require.Contains(h.t, cmData, cmKey)
+	Expect(cmData).To(HaveKey(cmKey))
 	ysonContent := cmData[cmKey]
-	require.Contains(h.t, ysonContent, expectSubstr)
+	Expect(ysonContent).To(ContainSubstring(expectSubstr))
 }
 
 func FetchConfigMapData(h *TestHelper, objectKey, mapKey string) string {
