@@ -275,9 +275,15 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 		if status.SyncStatus == components.SyncStatusPending ||
 			status.SyncStatus == components.SyncStatusUpdating {
 			hasPending = true
-			logger.Info("component sync", "component", c.GetFullName())
+			logger.Info("Sync component",
+				"component", c.GetFullName(),
+				"status", status.SyncStatus,
+				"message", status.Message,
+			)
 			if err := c.Sync(ctx); err != nil {
-				logger.Error(err, "component sync failed", "component", c.GetFullName())
+				logger.Error(err, "Cannot sync component",
+					"component", c.GetFullName(),
+				)
 				syncErr = err
 				break
 			}
@@ -285,7 +291,7 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	}
 
 	if err := cm.ytsaurus.UpdateStatus(ctx); err != nil {
-		logger.Error(err, "update Ytsaurus status failed")
+		logger.Error(err, "Cannot update ytsaurus status")
 		return ctrl.Result{Requeue: true}, err
 	}
 
