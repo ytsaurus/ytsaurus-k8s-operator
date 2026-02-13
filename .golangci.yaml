@@ -216,6 +216,10 @@ linters:
         rangeValCopy:
           sizeThreshold: 4096
 
+    gomoddirectives:
+      # Allow local `replace` directives.
+      replace-local: true
+
     importas:
       # Do not allow unaliased imports of aliased packages.
       # Default: false
