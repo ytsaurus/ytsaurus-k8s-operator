@@ -58,8 +58,24 @@ func (c *Ytsaurus) GetClusterState() ytv1.ClusterState {
 	return c.ytsaurus.Status.State
 }
 
-func (c *Ytsaurus) IsReadyToUpdate() bool {
+func (c *Ytsaurus) SetClusterState(clusterState ytv1.ClusterState) bool {
+	if c.ytsaurus.Status.State == clusterState {
+		return false
+	}
+	c.ytsaurus.Status.State = clusterState
+	return true
+}
+
+func (c *Ytsaurus) IsInitializing() bool {
+	return c.GetClusterState() == ytv1.ClusterStateInitializing
+}
+
+func (c *Ytsaurus) IsRunning() bool {
 	return c.GetClusterState() == ytv1.ClusterStateRunning
+}
+
+func (c *Ytsaurus) IsReadyToUpdate() bool {
+	return c.IsRunning()
 }
 
 func (c *Ytsaurus) IsUpdating() bool {
@@ -169,7 +185,7 @@ func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {
 
 func (c *Ytsaurus) SaveClusterState(ctx context.Context, clusterState ytv1.ClusterState) error {
 	logger := log.FromContext(ctx)
-	c.ytsaurus.Status.State = clusterState
+	c.SetClusterState(clusterState)
 	if err := c.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "unable to update Ytsaurus cluster status")
 		return err
