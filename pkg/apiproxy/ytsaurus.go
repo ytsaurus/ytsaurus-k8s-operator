@@ -58,8 +58,24 @@ func (c *Ytsaurus) GetClusterState() ytv1.ClusterState {
 	return c.ytsaurus.Status.State
 }
 
-func (c *Ytsaurus) IsReadyToUpdate() bool {
+func (c *Ytsaurus) SetClusterState(clusterState ytv1.ClusterState) bool {
+	if c.ytsaurus.Status.State == clusterState {
+		return false
+	}
+	c.ytsaurus.Status.State = clusterState
+	return true
+}
+
+func (c *Ytsaurus) IsInitializing() bool {
+	return c.GetClusterState() == ytv1.ClusterStateInitializing
+}
+
+func (c *Ytsaurus) IsRunning() bool {
 	return c.GetClusterState() == ytv1.ClusterStateRunning
+}
+
+func (c *Ytsaurus) IsReadyToUpdate() bool {
+	return c.IsRunning()
 }
 
 func (c *Ytsaurus) IsUpdating() bool {
@@ -140,20 +156,10 @@ func (c *Ytsaurus) SetBlockedComponents(components []ytv1.Component) bool {
 }
 
 func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
-	c.ytsaurus.Status.UpdateStatus.Conditions = keepImagesHeatedCondition(c.ytsaurus.Status.UpdateStatus.Conditions)
+	c.ytsaurus.Status.UpdateStatus.Conditions = nil
 	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
 	c.SetUpdatingComponents(nil)
 	return c.UpdateStatus(ctx)
-}
-
-// keepImagesHeatedCondition needed to keep image-heater hash for the next reconcile
-// otherwise the controller would immediately think images need reheating
-func keepImagesHeatedCondition(conditions []metav1.Condition) []metav1.Condition {
-	condition := meta.FindStatusCondition(conditions, consts.ConditionImageHeaterReady)
-	if condition == nil || condition.Status != metav1.ConditionTrue {
-		return make([]metav1.Condition, 0)
-	}
-	return []metav1.Condition{*condition}
 }
 
 func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {
@@ -164,7 +170,7 @@ func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {
 
 func (c *Ytsaurus) SaveClusterState(ctx context.Context, clusterState ytv1.ClusterState) error {
 	logger := log.FromContext(ctx)
-	c.ytsaurus.Status.State = clusterState
+	c.SetClusterState(clusterState)
 	if err := c.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "unable to update Ytsaurus cluster status")
 		return err
@@ -181,14 +187,6 @@ func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateS
 		return err
 	}
 	return nil
-}
-
-func (c *Ytsaurus) IsStatusConditionTrue(conditionType string) bool {
-	return meta.IsStatusConditionTrue(c.ytsaurus.Status.Conditions, conditionType)
-}
-
-func (c *Ytsaurus) IsStatusConditionFalse(conditionType string) bool {
-	return meta.IsStatusConditionFalse(c.ytsaurus.Status.Conditions, conditionType)
 }
 
 func buildComponentsSummary(components []ytv1.Component) string {
@@ -248,5 +246,13 @@ func (c *Ytsaurus) UpdateOnDeleteComponentsSummary(ctx context.Context, waitingO
 }
 
 func (c *Ytsaurus) IsImageHeaterEnabled() bool {
-	return ptr.Deref(c.GetClusterFeatures().EnableImageHeater, false)
+	if c.GetClusterFeatures().EnableImageHeater {
+		return true
+	}
+	for _, selector := range c.ytsaurus.Spec.UpdatePlan {
+		if selector.Component.Type == consts.ImageHeaterType {
+			return true
+		}
+	}
+	return false
 }

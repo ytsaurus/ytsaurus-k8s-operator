@@ -15,6 +15,12 @@ spec:
 status:
   conditions:
   - lastTransitionTime: null
+    message: 0.0.0-devel
+    observedGeneration: 1
+    reason: Observed
+    status: "True"
+    type: OperatorVersion
+  - lastTransitionTime: null
     message: Init job successfully completed
     observedGeneration: 1
     reason: InitJobCompleted

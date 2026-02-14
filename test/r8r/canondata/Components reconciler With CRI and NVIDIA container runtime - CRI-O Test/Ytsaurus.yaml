@@ -7,6 +7,7 @@ metadata:
   namespace: ytsaurus-components
   resourceVersion: "13"
 spec:
+  clusterFeatures: {}
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
   discovery:
     instanceCount: 1
@@ -130,11 +131,11 @@ spec:
 status:
   conditions:
   - lastTransitionTime: null
-    message: Image heater idle
+    message: 0.0.0-devel
     observedGeneration: 1
-    reason: Ready
+    reason: Observed
     status: "True"
-    type: ImageHeaterReady
+    type: OperatorVersion
   - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
@@ -183,12 +184,6 @@ status:
     reason: Ready
     status: "True"
     type: TimbertruckReady
-  - lastTransitionTime: null
-    message: 0.0.0-devel
-    observedGeneration: 1
-    reason: Observed
-    status: "True"
-    type: OperatorVersion
   observedGeneration: 1
   state: Running
   updateStatus: {}

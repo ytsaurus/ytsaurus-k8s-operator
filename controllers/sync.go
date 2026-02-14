@@ -56,17 +56,6 @@ func chooseUpdatingComponents(selectors []ytv1.ComponentUpdateSelector, needUpda
 		return nil, cannotUpdate
 	}
 	if hasEverythingSelector(selectors) && needFullUpdate(needUpdate) {
-		// if image wasn't changed, we don't need to run ImageHeater
-		if !hasComponent(needUpdate, consts.ImageHeaterType) {
-			filtered := make([]ytv1.Component, 0, len(allComponents))
-			for _, component := range allComponents {
-				if component.Type == consts.ImageHeaterType {
-					continue
-				}
-				filtered = append(filtered, component)
-			}
-			return filtered, nil
-		}
 		// Here we update not only components that are not up-to-date, but all cluster.
 		return allComponents, nil
 	}
@@ -170,7 +159,8 @@ func convertToComponent(components []components.Component) []ytv1.Component {
 }
 
 func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
+	logger := log.FromContext(ctx, "ytsaurusState", resource.Status.State)
+	ctx = log.IntoContext(ctx, logger)
 
 	if !ptr.Deref(resource.Spec.IsManaged, true) || r.ShouldIgnoreResource(ctx, resource) {
 		logger.Info("Ytsaurus cluster is not managed by controller, do nothing")
@@ -195,8 +185,8 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	switch resource.Status.State {
-	case ytv1.ClusterStateCreated:
+	switch ytsaurus.GetClusterState() {
+	case ytv1.ClusterStateCreated, "":
 		logger.Info("Ytsaurus is just created and needs initialization")
 		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateInitializing)
 		return ctrl.Result{Requeue: true}, err
@@ -209,7 +199,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			return ctrl.Result{Requeue: true}, err
 		}
 
-	case ytv1.ClusterStateRunning:
+	case ytv1.ClusterStateRunning, ytv1.ClusterStateReconfiguration:
 		spec := ytsaurus.GetResource().Spec
 		needUpdate := componentManager.status.needUpdate
 		selectors := getEffectiveSelectors(spec)
@@ -231,34 +221,46 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		switch {
 		case componentManager.status.allReady:
 			logger.Info("Ytsaurus is running and happy")
+			if ytsaurus.SetClusterState(ytv1.ClusterStateRunning) {
+				needStatusUpdate = true
+			}
 
 		case !componentManager.status.allRunning:
 			logger.Info("Ytsaurus needs initialization of some components")
-			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateReconfiguration)
-			return ctrl.Result{Requeue: true}, err
+			if ytsaurus.SetClusterState(ytv1.ClusterStateReconfiguration) {
+				needStatusUpdate = true
+			}
 
 		case len(needUpdate) == 0:
 			logger.Info("All components are up-to-date")
+			if ytsaurus.SetClusterState(ytv1.ClusterStateRunning) {
+				needStatusUpdate = true
+			}
 
 		case len(canUpdate) != 0:
 			logger.Info("Ytsaurus components needs update", "canUpdate", canUpdate, "cannotUpdate", cannotUpdate)
 			// We do not update BlockedComponentsSummary here, it should be updated first thing in Running state.
 			ytsaurus.SetUpdatingComponents(canUpdate)
-			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdating)
-			return ctrl.Result{Requeue: true}, err
+			ytsaurus.SetClusterState(ytv1.ClusterStateUpdating)
+			needStatusUpdate = true
 
 		case len(cannotUpdate) != 0:
 			logger.Info("Ytsaurus components update is blocked", "cannotUpdate", cannotUpdate)
+			if ytsaurus.SetClusterState(ytv1.ClusterStateRunning) {
+				needStatusUpdate = true
+			}
 		}
 
 		// Have passed final check - save status update if needed.
 		if needStatusUpdate {
-			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
+			err := ytsaurus.UpdateStatus(ctx)
 			return ctrl.Result{Requeue: true}, err
 		}
 
-		// All done, nothing change - do not requeue reconcile.
-		return ctrl.Result{}, nil
+		if ytsaurus.IsRunning() {
+			// All done, nothing change - do not requeue reconcile.
+			return ctrl.Result{}, nil
+		}
 
 	case ytv1.ClusterStateUpdating:
 		updatingComponents := ytsaurus.GetUpdatingComponents()
@@ -301,13 +303,8 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		// Requeue once again to do final check and maybe update observed generation.
 		return ctrl.Result{Requeue: true}, err
 
-	case ytv1.ClusterStateReconfiguration:
-		if componentManager.status.allRunning {
-			logger.Info("Ytsaurus has reconfigured and is running now")
-			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
-			// Requeue once again to do final check and maybe update observed generation.
-			return ctrl.Result{Requeue: true}, err
-		}
+	default:
+		return ctrl.Result{}, fmt.Errorf("unknown cluster state: %q", ytsaurus.GetClusterState())
 	}
 
 	return componentManager.Sync(ctx)
