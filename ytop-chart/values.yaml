@@ -13,14 +13,16 @@ controllerManager:
       - --health-probe-bind-address=:8081
       - --metrics-bind-address=:8080
       - --leader-elect
+    env:
+      GOMAXPROCS: 1
+      # GOGC: 100
+      # GOMEMLIMIT: 100MiB
+      YT_LOG_LEVEL: DEBUG
     containerSecurityContext:
       allowPrivilegeEscalation: false
       capabilities:
         drop:
           - ALL
-    env:
-      watchNamespace: ""
-      ytLogLevel: DEBUG
     image:
       repository: ytsaurus/k8s-operator
       tag: ""
