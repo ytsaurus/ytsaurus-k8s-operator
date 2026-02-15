@@ -309,12 +309,6 @@ linters:
       - path: validators
         text: "SA1019: .*\\.ExtraPodAnnotations is deprecated"
 
-      - path: controllers/sync.go
-        text: "SA1019: spec.EnableFullUpdate is deprecated"
-
-      - path: controllers/sync.go
-        text: "SA1019: spec.UpdateSelector is deprecated"
-
       - path: controllers/ytsaurus_local_test.go
         text: "SA1019: ytsaurusResource.Spec.EnableFullUpdate is deprecated"
 

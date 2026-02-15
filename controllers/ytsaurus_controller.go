@@ -18,6 +18,10 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"time"
+
+	"k8s.io/utils/ptr"
 
 	"github.com/go-logr/logr"
 
@@ -36,6 +40,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/validators"
 )
 
 // YtsaurusReconciler reconciles a Ytsaurus object
@@ -63,6 +70,16 @@ func (r *YtsaurusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		// requeue (we'll need to wait for a new notification), and we can get them
 		// on deleted requests.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	if !ptr.Deref(ytsaurus.Spec.IsManaged, true) || r.ShouldIgnoreResource(ctx, &ytsaurus) {
+		logger.Info("Ytsaurus cluster is not managed by controller, do nothing")
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	}
+
+	if err := validators.ValidateVersionConstraint(ytsaurus.Spec.RequiresOperatorVersion); err != nil {
+		logger.Error(err, "Operator version does not satisfy spec version constraint")
+		return ctrl.Result{}, err
 	}
 
 	return r.Sync(ctx, &ytsaurus)
@@ -125,4 +142,154 @@ func (r *YtsaurusReconciler) findObjectsForConfigMap(ctx context.Context, config
 		}
 	}
 	return requests
+}
+
+func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
+	logger := log.FromContext(ctx, "ytsaurusState", resource.Status.State)
+	ctx = log.IntoContext(ctx, logger)
+
+	ytsaurus := apiproxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
+	cm, err := NewComponentManager(ctx, ytsaurus, r.ClusterDomain)
+	if err != nil {
+		logger.Error(err, "Cannot build component manager")
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	err = cm.FetchStatus(ctx)
+	if err != nil {
+		logger.Error(err, "Cannot fetch component manager status")
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	switch ytsaurus.GetClusterState() {
+	case ytv1.ClusterStateCreated, "":
+		logger.Info("Ytsaurus is just created and needs initialization")
+		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateInitializing)
+		return ctrl.Result{Requeue: true}, err
+
+	case ytv1.ClusterStateInitializing:
+		// Ytsaurus has finished initializing, and is running now.
+		if cm.status.allRunning {
+			logger.Info("Ytsaurus has synced and is running now")
+			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
+			return ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.ClusterStateRunning, ytv1.ClusterStateReconfiguration:
+		// Apply current update plan and choose components to update.
+		cm.applyUpdatePlan(resource.GetUpdatePlan())
+
+		// All status updates _must_ be in one transaction with observed generation and new cluster state.
+		needStatusUpdate := ytsaurus.SyncObservedGeneration()
+
+		// There may be the case when some components needed update, but spec was reverted
+		// and Updating never happen — so blocked components column need to be always actualized.
+		if ytsaurus.SetBlockedComponents(cm.status.cannotUpdate) {
+			needStatusUpdate = true
+		}
+
+		switch {
+		case cm.status.allReady:
+			logger.Info("Ytsaurus is running and happy")
+			if ytsaurus.SetClusterState(ytv1.ClusterStateRunning) {
+				needStatusUpdate = true
+			}
+
+		case !cm.status.allRunning:
+			logger.Info("Ytsaurus needs initialization of some components")
+			if ytsaurus.SetClusterState(ytv1.ClusterStateReconfiguration) {
+				needStatusUpdate = true
+			}
+
+		case len(cm.status.needUpdate) == 0:
+			logger.Info("All components are up-to-date")
+			if ytsaurus.SetClusterState(ytv1.ClusterStateRunning) {
+				needStatusUpdate = true
+			}
+
+		case len(cm.status.canUpdate) != 0:
+			logger.Info("Ytsaurus components needs update",
+				"canUpdate", cm.status.canUpdate,
+				"cannotUpdate", cm.status.cannotUpdate,
+			)
+			// We do not update BlockedComponentsSummary here, it should be updated first thing in Running state.
+			ytsaurus.SetUpdatingComponents(cm.status.canUpdate)
+			ytsaurus.SetUpdateState(ytv1.UpdateStateNone)
+			ytsaurus.SetClusterState(ytv1.ClusterStateUpdating)
+			needStatusUpdate = true
+
+		case len(cm.status.cannotUpdate) != 0:
+			logger.Info("Ytsaurus components update is blocked",
+				"cannotUpdate", cm.status.cannotUpdate,
+			)
+			// TODO: Add cluster state "UpdateBlocked".
+			if ytsaurus.SetClusterState(ytv1.ClusterStateRunning) {
+				needStatusUpdate = true
+			}
+		}
+
+		// Have passed final check - save status update if needed.
+		if needStatusUpdate {
+			err := ytsaurus.UpdateStatus(ctx)
+			return ctrl.Result{Requeue: true}, err
+		}
+
+		if ytsaurus.IsRunning() {
+			// All done, nothing change - do not requeue reconcile.
+			return ctrl.Result{}, nil
+		}
+
+	case ytv1.ClusterStateUpdating:
+		cm.status.nowUpdating = ytsaurus.GetUpdatingComponents()
+
+		logger.Info("Ytsaurus update",
+			"updateState", ytsaurus.GetUpdateState(),
+			"updatingComponents", cm.status.nowUpdating,
+		)
+		ytsaurus.RecordNormal("Update", fmt.Sprintf("Update flow starting with %s, updating components: %v", ytsaurus.GetUpdateState(), cm.status.nowUpdating))
+
+		updateFlow := buildFlowTree(cm)
+		progressed, err := updateFlow.execute(ctx, ytsaurus, cm)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		if progressed {
+			return ctrl.Result{Requeue: true}, err
+		}
+
+	case ytv1.ClusterStateCancelUpdate:
+		if err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateNone); err != nil {
+			return ctrl.Result{Requeue: true}, err
+		}
+
+		if err := ytsaurus.ClearUpdateStatus(ctx); err != nil {
+			return ctrl.Result{Requeue: true}, err
+		}
+
+		logger.Info("Ytsaurus update was canceled, ytsaurus is running now")
+		// We don't update observed generation because the update was not really finished,
+		// and it's still the old version running.
+		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
+		return ctrl.Result{}, err
+
+	case ytv1.ClusterStateUpdateFinishing:
+		if err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateNone); err != nil {
+			return ctrl.Result{Requeue: true}, err
+		}
+
+		if err := ytsaurus.ClearUpdateStatus(ctx); err != nil {
+			return ctrl.Result{Requeue: true}, err
+		}
+
+		logger.Info("Ytsaurus update was finished and Ytsaurus is running now")
+		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
+		// Requeue once again to do final check and maybe update observed generation.
+		return ctrl.Result{Requeue: true}, err
+
+	default:
+		return ctrl.Result{}, fmt.Errorf("unknown cluster state: %q", ytsaurus.GetClusterState())
+	}
+
+	return cm.Sync(ctx)
 }

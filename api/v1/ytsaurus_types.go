@@ -1172,6 +1172,70 @@ func (r *Ytsaurus) SetStatusConditions(conditions []metav1.Condition) {
 	r.Status.Conditions = conditions
 }
 
+func (r *Ytsaurus) GetUpdatePlan() []ComponentUpdateSelector {
+	// Update plan is defined in spec.
+	if len(r.Spec.UpdatePlan) != 0 {
+		return r.Spec.UpdatePlan
+	}
+
+	// Generate effective plan from legacy options.
+	switch r.Spec.UpdateSelector {
+	case UpdateSelectorNothing:
+		return []ComponentUpdateSelector{{
+			Class: ComponentClassNothing,
+		}}
+	case UpdateSelectorMasterOnly:
+		return []ComponentUpdateSelector{{
+			Component: Component{
+				Type: MasterType,
+			},
+		}}
+	case UpdateSelectorDataNodesOnly:
+		return []ComponentUpdateSelector{{
+			Component: Component{
+				Type: DataNodeType,
+			},
+		}}
+	case UpdateSelectorTabletNodesOnly:
+		return []ComponentUpdateSelector{{
+			Component: Component{
+				Type: TabletNodeType,
+			},
+		}}
+	case UpdateSelectorExecNodesOnly:
+		return []ComponentUpdateSelector{{
+			Component: Component{
+				Type: ExecNodeType,
+			},
+		}}
+	case UpdateSelectorStatelessOnly:
+		return []ComponentUpdateSelector{{
+			Class: ComponentClassStateless,
+		}}
+	case UpdateSelectorEverything:
+		return []ComponentUpdateSelector{{
+			Class: ComponentClassEverything,
+		}}
+	case UpdateSelectorUnspecified:
+		if r.Spec.EnableFullUpdate != nil && !*r.Spec.EnableFullUpdate {
+			return []ComponentUpdateSelector{{
+				Class: ComponentClassStateless,
+			}}
+		}
+		// Else: fail back to default plan below.
+	default:
+		// Do nothing when seeing unknown update selector.
+		return []ComponentUpdateSelector{{
+			Class: ComponentClassNothing,
+		}}
+	}
+
+	// This is default update plan when no options are set.
+	return []ComponentUpdateSelector{{
+		Class: ComponentClassEverything,
+	}}
+}
+
 //+kubebuilder:object:root=true
 //+kubebuilder:metadata:labels="app.kubernetes.io/part-of=ytsaurus-k8s-operator"
 
