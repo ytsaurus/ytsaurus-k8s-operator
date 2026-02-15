@@ -454,8 +454,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `name` _string_ |  |  |  |
 | `type` _[ComponentType](#componenttype)_ |  |  |  |
+| `name` _string_ |  |  |  |
 
 
 #### ComponentClass
@@ -2927,19 +2927,6 @@ _Appears in:_
 | `directDownload` _boolean_ | When this is set to false, UI will use backend for downloading instead of proxy.<br />If this is set to true or omitted, UI use proxies, which is a default behaviour. |  |  |
 
 
-#### UpdateFlow
-
-_Underlying type:_ _string_
-
-
-
-
-
-_Appears in:_
-- [UpdateStatus](#updatestatus)
-
-
-
 #### UpdateSelector
 
 _Underlying type:_ _string_
@@ -3020,13 +3007,11 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `state` _[UpdateState](#updatestate)_ |  |  |  |
-| `components` _string array_ | Deprecated: Use updatingComponents instead. |  |  |
-| `updatingComponents` _[Component](#component) array_ |  |  |  |
-| `updatingComponentsSummary` _string_ | UpdatingComponentsSummary is used only for representation in kubectl, since it only supports<br />"simple" JSONPath, and it is unclear how to force to print required data based on UpdatingComponents field. |  |  |
-| `blockedComponentsSummary` _string_ |  |  |  |
-| `flow` _[UpdateFlow](#updateflow)_ | Flow is an internal field that is needed to persist the chosen flow until the end of an update.<br />Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage<br />executes steps corresponding to that update flow.<br />Deprecated: Use updatingComponents instead. |  |  |
-| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
-| `tabletCellBundles` _[TabletCellBundleInfo](#tabletcellbundleinfo) array_ |  |  |  |
+| `updatingComponents` _[Component](#component) array_ | Subset of cluster components currently updating. |  |  |
+| `updatingComponentsSummary` _string_ | Summary for kubectl column. |  |  |
+| `blockedComponentsSummary` _string_ | Summary for kubectl column. |  |  |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ | Update progress. |  |  |
+| `tabletCellBundles` _[TabletCellBundleInfo](#tabletcellbundleinfo) array_ | Snapshot of tablet cell bundles. |  |  |
 
 
 #### Volume

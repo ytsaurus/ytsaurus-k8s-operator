@@ -43120,16 +43120,11 @@
           "type": "object",
           "properties": {
             "blockedComponentsSummary": {
+              "description": "Summary for kubectl column.",
               "type": "string"
             },
-            "components": {
-              "description": "Deprecated: Use updatingComponents instead.",
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
             "conditions": {
+              "description": "Update progress.",
               "type": "array",
               "items": {
                 "description": "Condition contains details for one aspect of the current state of this API...",
@@ -43183,14 +43178,11 @@
                 }
               }
             },
-            "flow": {
-              "description": "Flow is an internal field that is needed to persist the chosen flow until the...",
-              "type": "string"
-            },
             "state": {
               "type": "string"
             },
             "tabletCellBundles": {
+              "description": "Snapshot of tablet cell bundles.",
               "type": "array",
               "items": {
                 "type": "object",
@@ -43209,6 +43201,7 @@
               }
             },
             "updatingComponents": {
+              "description": "Subset of cluster components currently updating.",
               "type": "array",
               "items": {
                 "type": "object",
@@ -43223,7 +43216,7 @@
               }
             },
             "updatingComponentsSummary": {
-              "description": "UpdatingComponentsSummary is used only for representation in kubectl, since it...",
+              "description": "Summary for kubectl column.",
               "type": "string"
             }
           }

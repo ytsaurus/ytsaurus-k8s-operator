@@ -1090,37 +1090,30 @@ func (selector *ComponentUpdateSelector) GetUpdateStrategyType() ComponentUpdate
 	return selector.Strategy.Type()
 }
 
-type UpdateFlow string
-
 type UpdateStatus struct {
 	State UpdateState `json:"state,omitempty"`
-	// Deprecated: Use updatingComponents instead.
-	Components         []string    `json:"components,omitempty"`
+	// Subset of cluster components currently updating.
 	UpdatingComponents []Component `json:"updatingComponents,omitempty"`
-	// UpdatingComponentsSummary is used only for representation in kubectl, since it only supports
-	// "simple" JSONPath, and it is unclear how to force to print required data based on UpdatingComponents field.
+	// Summary for kubectl column.
 	UpdatingComponentsSummary string `json:"updatingComponentsSummary,omitempty"`
-	BlockedComponentsSummary  string `json:"blockedComponentsSummary,omitempty"`
-	// Flow is an internal field that is needed to persist the chosen flow until the end of an update.
-	// Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage
-	// executes steps corresponding to that update flow.
-	//
-	// Deprecated: Use updatingComponents instead.
-	Flow              UpdateFlow             `json:"flow,omitempty"`
-	Conditions        []metav1.Condition     `json:"conditions,omitempty"`
+	// Summary for kubectl column.
+	BlockedComponentsSummary string `json:"blockedComponentsSummary,omitempty"`
+	// Update progress.
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	// Snapshot of tablet cell bundles.
 	TabletCellBundles []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
 }
 
 type Component struct {
-	Name string        `json:"name,omitempty"`
 	Type ComponentType `json:"type,omitempty"`
+	Name string        `json:"name,omitempty"`
 }
 
 func (c *Component) String() string {
 	if c.Name == "" {
 		return string(c.Type)
 	}
-	return fmt.Sprintf("%s(%s)", c.Type, c.Name)
+	return fmt.Sprintf("%s-%s", c.Type, c.Name)
 }
 
 // YtsaurusStatus defines the observed state of Ytsaurus

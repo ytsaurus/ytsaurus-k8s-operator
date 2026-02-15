@@ -36932,13 +36932,10 @@ spec:
               updateStatus:
                 properties:
                   blockedComponentsSummary:
+                    description: Summary for kubectl column.
                     type: string
-                  components:
-                    description: 'Deprecated: Use updatingComponents instead.'
-                    items:
-                      type: string
-                    type: array
                   conditions:
+                    description: Update progress.
                     items:
                       description: Condition contains details for one aspect of the
                         current state of this API...
@@ -36986,13 +36983,10 @@ spec:
                       - type
                       type: object
                     type: array
-                  flow:
-                    description: Flow is an internal field that is needed to persist
-                      the chosen flow until the...
-                    type: string
                   state:
                     type: string
                   tabletCellBundles:
+                    description: Snapshot of tablet cell bundles.
                     items:
                       properties:
                         name:
@@ -37005,6 +36999,7 @@ spec:
                       type: object
                     type: array
                   updatingComponents:
+                    description: Subset of cluster components currently updating.
                     items:
                       properties:
                         name:
@@ -37014,8 +37009,7 @@ spec:
                       type: object
                     type: array
                   updatingComponentsSummary:
-                    description: UpdatingComponentsSummary is used only for representation
-                      in kubectl, since it...
+                    description: Summary for kubectl column.
                     type: string
                 type: object
             type: object

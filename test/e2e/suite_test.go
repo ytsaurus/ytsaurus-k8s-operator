@@ -305,11 +305,6 @@ func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 			changed = true
 		}
 
-		if prevStatus.UpdateStatus.Flow != newStatus.UpdateStatus.Flow {
-			log.Info("UpdateStatus", "flow", newStatus.UpdateStatus.Flow)
-			changed = true
-		}
-
 		if len(prevStatus.UpdateStatus.UpdatingComponents) != len(newStatus.UpdateStatus.UpdatingComponents) {
 			log.Info("UpdateStatus", "updatingComponents", newStatus.UpdateStatus.UpdatingComponents)
 			changed = true
