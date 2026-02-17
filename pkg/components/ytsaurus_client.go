@@ -436,7 +436,7 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 	}
 
 	if yc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if yc.ytsaurus.GetResource().Status.UpdateStatus.State == ytv1.UpdateStateImpossibleToStart {
+		if yc.ytsaurus.GetUpdateState() == ytv1.UpdateStateImpossibleToStart {
 			return ComponentStatusReady(), err
 		}
 		if dry {

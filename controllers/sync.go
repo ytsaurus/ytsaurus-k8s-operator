@@ -245,6 +245,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			logger.Info("Ytsaurus components needs update", "canUpdate", canUpdate, "cannotUpdate", cannotUpdate)
 			// We do not update BlockedComponentsSummary here, it should be updated first thing in Running state.
 			ytsaurus.SetUpdatingComponents(canUpdate)
+			ytsaurus.SetUpdateState(ytv1.UpdateStateNone)
 			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateUpdating)
 			return ctrl.Result{Requeue: true}, err
 

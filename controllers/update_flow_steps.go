@@ -110,6 +110,9 @@ func (f *flowTree) execute(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, com
 	var err error
 	currentState := ytsaurus.GetUpdateState()
 	currentStep := f.index[currentState]
+	if currentStep == nil {
+		return false, fmt.Errorf("unexpected update state: %q", currentState)
+	}
 
 	// will execute one step at a time
 	mark := currentStep.checkCondition(ctx, ytsaurus, componentManager)
