@@ -165,6 +165,18 @@ func (fs *FakeServer) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrateg
 	// No-op for fake server
 }
 
+func (fs *FakeServer) setRollingUpdateStrategy(partition, maxUnavailable int32) {
+	// No-op for fake server
+}
+
+func (fs *FakeServer) getReplicaCount() int32 {
+	return 0
+}
+
+func (fs *FakeServer) arePodOrdinalsUpdatedAndReady(ctx context.Context, ordinals []int32) bool {
+	return true
+}
+
 func (fs *FakeServer) Sync(ctx context.Context) error {
 	return nil
 }

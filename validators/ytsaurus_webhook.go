@@ -729,7 +729,8 @@ func validateUpdateModeForSelector(selector ytv1.ComponentUpdateSelector, path *
 		switch selector.Component.Type {
 		case "":
 			errs = append(errs, field.Invalid(path.Child("type"), modeType, "rolling update requires a concrete component selector"))
-		case consts.SchedulerType, consts.MasterType:
+		case consts.HttpProxyType:
+		default:
 			errs = append(errs, field.Invalid(path.Child("type"), modeType, fmt.Sprintf("%s doesn't support RollingUpdate mode", selector.Component.Type)))
 		}
 		if selector.Strategy.RollingUpdate.BatchSize == nil || *selector.Strategy.RollingUpdate.BatchSize <= 0 {
