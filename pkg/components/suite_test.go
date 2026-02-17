@@ -9,11 +9,16 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
 	"go.ytsaurus.tech/yt/go/yt"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
+
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
@@ -87,6 +92,13 @@ func (fc *FakeComponent) GetFullName() string {
 
 func (fc *FakeComponent) GetType() consts.ComponentType {
 	return fc.compType
+}
+
+func (fc *FakeComponent) GetComponent() ytv1.Component {
+	return ytv1.Component{
+		Type: fc.compType,
+		Name: fc.name,
+	}
 }
 
 func (fc *FakeComponent) GetLabeller() *labeller.Labeller {

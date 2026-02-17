@@ -90,6 +90,7 @@ type Component interface {
 	GetFullName() string
 	GetShortName() string
 	GetType() consts.ComponentType
+	GetComponent() ytv1.Component
 
 	// Access component status saved as status condition in controller object.
 	GetReadyCondition() ComponentStatus
@@ -178,6 +179,13 @@ func (c *component) GetShortName() string {
 
 func (c *component) GetType() consts.ComponentType {
 	return c.labeller.ComponentType
+}
+
+func (c *component) GetComponent() ytv1.Component {
+	return ytv1.Component{
+		Type: c.GetType(),
+		Name: c.GetShortName(),
+	}
 }
 
 func (c *component) GetLabeller() *labeller.Labeller {
