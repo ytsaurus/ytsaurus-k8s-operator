@@ -58,11 +58,6 @@ func NewComponentManager(
 		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
 	}
 	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0], getAllComponents)
-	for _, hp := range hps {
-		if httpProxy, ok := hp.(*components.HttpProxy); ok {
-			httpProxy.SetYtsaurusClient(yc)
-		}
-	}
 	d := components.NewDiscovery(cfgen, ytsaurus, yc)
 	ih := components.NewImageHeater(cfgen, ytsaurus, getAllComponents)
 

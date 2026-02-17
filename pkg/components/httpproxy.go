@@ -22,11 +22,8 @@ type HttpProxy struct {
 	master           Component
 	balancingService *resources.HTTPService
 
-	role           string
-	httpsSecret    *resources.TLSSecret
-	httpPort       int32
-	httpsPort      int32
-	ytsaurusClient internalYtsaurusClient
+	role        string
+	httpsSecret *resources.TLSSecret
 }
 
 func NewHTTPProxy(
@@ -119,13 +116,7 @@ func NewHTTPProxy(
 		role:             spec.Role,
 		httpsSecret:      httpsSecret,
 		balancingService: balancingService,
-		httpPort:         ptr.Deref(spec.HttpPort, int32(consts.HTTPProxyHTTPPort)),
-		httpsPort:        ptr.Deref(spec.HttpsPort, int32(consts.HTTPProxyHTTPSPort)),
 	}
-}
-
-func (hp *HttpProxy) SetYtsaurusClient(yc internalYtsaurusClient) {
-	hp.ytsaurusClient = yc
 }
 
 func (hp *HttpProxy) Fetch(ctx context.Context) error {
