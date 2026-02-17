@@ -1,6 +1,6 @@
 module github.com/ytsaurus/ytsaurus-k8s-operator
 
-go 1.24.6
+go 1.24.13
 
 require (
 	github.com/BurntSushi/toml v1.4.0
@@ -17,14 +17,15 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 	github.com/prometheus/client_golang v1.19.1
 	github.com/stretchr/testify v1.10.0
+	github.com/ytsaurus/ytsaurus-k8s-operator/api v0.0.0-00010101000000-000000000000
 	go.uber.org/mock v0.5.0
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.27.1
 	go.ytsaurus.tech/library/go/core/log v0.0.4
 	go.ytsaurus.tech/yt/go v0.0.29
-	k8s.io/api v0.32.10
-	k8s.io/apimachinery v0.32.10
-	k8s.io/client-go v0.32.10
-	k8s.io/component-helpers v0.32.10
+	k8s.io/api v0.32.12
+	k8s.io/apimachinery v0.32.12
+	k8s.io/client-go v0.32.12
+	k8s.io/component-helpers v0.32.12
 	k8s.io/utils v0.0.0-20241210054802-24370beab758
 	sigs.k8s.io/controller-runtime v0.19.7
 	sigs.k8s.io/yaml v1.4.0
@@ -69,7 +70,7 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/spf13/pflag v1.0.6-0.20201009195203-85dd5c8bc61c // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
@@ -103,3 +104,5 @@ require (
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.2 // indirect
 )
+
+replace github.com/ytsaurus/ytsaurus-k8s-operator/api => ./api
