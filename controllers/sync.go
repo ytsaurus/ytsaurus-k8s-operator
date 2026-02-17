@@ -7,7 +7,6 @@ import (
 
 	"k8s.io/utils/ptr"
 
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/validators"
 
@@ -18,6 +17,7 @@ import (
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 )
 
+// TODO: Move to component manager.
 func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
 	for _, selector := range selectors {
 		if selector.Class != consts.ComponentClassUnspecified {
@@ -42,6 +42,7 @@ func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1
 }
 
 // Considers splits all the components in two groups: ones that can be updated and ones which update is blocked.
+// TODO: Move to component manager.
 func chooseUpdatingComponents(selectors []ytv1.ComponentUpdateSelector, needUpdate []ytv1.Component, allComponents []ytv1.Component) (canUpdate []ytv1.Component, cannotUpdate []ytv1.Component) {
 	for _, component := range needUpdate {
 		upd := canUpdateComponent(selectors, component)
@@ -68,6 +69,7 @@ func chooseUpdatingComponents(selectors []ytv1.ComponentUpdateSelector, needUpda
 			return filtered, nil
 		}
 		// Here we update not only components that are not up-to-date, but all cluster.
+		// FIXME: Why?
 		return allComponents, nil
 	}
 	return canUpdate, cannotUpdate
@@ -94,6 +96,7 @@ func needFullUpdate(needUpdate []ytv1.Component) bool {
 	return false
 }
 
+// TODO: should be part of api or apiproxy
 func getEffectiveSelectors(spec ytv1.YtsaurusSpec) []ytv1.ComponentUpdateSelector {
 	// Update plan is defined in spec.
 	if len(spec.UpdatePlan) != 0 {
@@ -158,17 +161,7 @@ func getEffectiveSelectors(spec ytv1.YtsaurusSpec) []ytv1.ComponentUpdateSelecto
 	}}
 }
 
-func convertToComponent(components []components.Component) []ytv1.Component {
-	var result []ytv1.Component
-	for _, c := range components {
-		result = append(result, ytv1.Component{
-			Name: c.GetShortName(),
-			Type: c.GetType(),
-		})
-	}
-	return result
-}
-
+// TODO: Move into controllers/ytsaurus_controller.go
 func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx, "ytsaurusState", resource.Status.State)
 	ctx = log.IntoContext(ctx, logger)
@@ -211,21 +204,14 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		}
 
 	case ytv1.ClusterStateRunning, ytv1.ClusterStateReconfiguration:
-		spec := ytsaurus.GetResource().Spec
-		needUpdate := componentManager.status.needUpdate
-		selectors := getEffectiveSelectors(spec)
-		canUpdate, cannotUpdate := chooseUpdatingComponents(
-			selectors,
-			convertToComponent(needUpdate),
-			convertToComponent(componentManager.allUpdatableComponents()),
-		)
+		componentManager.applyUpdatePlan(getEffectiveSelectors(resource.Spec))
 
 		// All status updates _must_ be in one transaction with observed generation and new cluster state.
 		needStatusUpdate := ytsaurus.SyncObservedGeneration()
 
 		// There may be the case when some components needed update, but spec was reverted
 		// and Updating never happen — so blocked components column need to be always actualized.
-		if ytsaurus.SetBlockedComponents(cannotUpdate) {
+		if ytsaurus.SetBlockedComponents(componentManager.status.cannotUpdate) {
 			needStatusUpdate = true
 		}
 
@@ -242,22 +228,22 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 				needStatusUpdate = true
 			}
 
-		case len(needUpdate) == 0:
+		case len(componentManager.status.needUpdate) == 0:
 			logger.Info("All components are up-to-date")
 			if ytsaurus.SetClusterState(ytv1.ClusterStateRunning) {
 				needStatusUpdate = true
 			}
 
-		case len(canUpdate) != 0:
-			logger.Info("Ytsaurus components needs update", "canUpdate", canUpdate, "cannotUpdate", cannotUpdate)
+		case len(componentManager.status.canUpdate) != 0:
+			logger.Info("Ytsaurus components needs update", "canUpdate", componentManager.status.canUpdate, "cannotUpdate", componentManager.status.cannotUpdate)
 			// We do not update BlockedComponentsSummary here, it should be updated first thing in Running state.
-			ytsaurus.SetUpdatingComponents(canUpdate)
+			ytsaurus.SetUpdatingComponents(componentManager.status.canUpdate)
 			ytsaurus.SetUpdateState(ytv1.UpdateStateNone)
 			ytsaurus.SetClusterState(ytv1.ClusterStateUpdating)
 			needStatusUpdate = true
 
-		case len(cannotUpdate) != 0:
-			logger.Info("Ytsaurus components update is blocked", "cannotUpdate", cannotUpdate)
+		case len(componentManager.status.cannotUpdate) != 0:
+			logger.Info("Ytsaurus components update is blocked", "cannotUpdate", componentManager.status.cannotUpdate)
 			if ytsaurus.SetClusterState(ytv1.ClusterStateRunning) {
 				needStatusUpdate = true
 			}
@@ -275,8 +261,16 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		}
 
 	case ytv1.ClusterStateUpdating:
-		updatingComponents := ytsaurus.GetUpdatingComponents()
-		progressed, err := buildAndExecuteFlow(ctx, ytsaurus, componentManager, updatingComponents)
+		componentManager.status.nowUpdating = ytsaurus.GetUpdatingComponents()
+
+		logger.Info("Ytsaurus update",
+			"updateState", ytsaurus.GetUpdateState(),
+			"updatingComponents", componentManager.status.nowUpdating,
+		)
+		ytsaurus.RecordNormal("Update", fmt.Sprintf("Update flow starting with %s, updating components: %v", ytsaurus.GetUpdateState(), componentManager.status.nowUpdating))
+
+		updateFlow := buildFlowTree(componentManager)
+		progressed, err := updateFlow.execute(ctx, ytsaurus, componentManager)
 
 		if err != nil {
 			return ctrl.Result{}, err
@@ -320,10 +314,4 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 	}
 
 	return componentManager.Sync(ctx)
-}
-
-func buildAndExecuteFlow(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager, updatingComponents []ytv1.Component) (bool, error) {
-	tree := buildFlowTree(updatingComponents)
-	ytsaurus.LogUpdate(ctx, fmt.Sprintf("Update flow starting with %s, updating components: %v", ytsaurus.GetUpdateState(), updatingComponents))
-	return tree.execute(ctx, ytsaurus, componentManager)
 }

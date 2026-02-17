@@ -26,7 +26,10 @@ type ComponentManagerStatus struct {
 	allRunning         bool // All components are Ready or NeedUpdate - can start updates
 	allReadyOrUpdating bool // All components are Ready or Updating - no new updates
 
-	needUpdate []components.Component // Components in state NeedUpdate
+	needUpdate   []ytv1.Component // Components in state NeedUpdate
+	canUpdate    []ytv1.Component // Components with update allowed
+	cannotUpdate []ytv1.Component // Components with update blocked
+	nowUpdating  []ytv1.Component // Components updating right now
 }
 
 func NewComponentManager(
@@ -216,7 +219,7 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 			readyComponents = append(readyComponents, component.GetFullName())
 		case components.SyncStatusNeedUpdate:
 			needUpdateComponents = append(needUpdateComponents, component.GetFullName())
-			cm.status.needUpdate = append(cm.status.needUpdate, component)
+			cm.status.needUpdate = append(cm.status.needUpdate, component.GetComponent())
 			cm.status.allReady = false
 			cm.status.allReadyOrUpdating = false
 		case components.SyncStatusUpdating:
@@ -320,14 +323,23 @@ func (cm *ComponentManager) arePodsRemoved() bool {
 	return true
 }
 
-func (cm *ComponentManager) allUpdatableComponents() []components.Component {
-	var result []components.Component
+func (cm *ComponentManager) allUpdatableComponents() []ytv1.Component {
+	var result []ytv1.Component
 	for _, cmp := range cm.allComponents {
 		if cmp.GetType() != consts.YtsaurusClientType && cmp.GetType() != consts.TimbertruckType {
-			result = append(result, cmp)
+			result = append(result, cmp.GetComponent())
 		}
 	}
 	return result
+}
+
+func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSelector) {
+	// TODO: Inline code.
+	cm.status.canUpdate, cm.status.cannotUpdate = chooseUpdatingComponents(
+		updatePlan,
+		cm.status.needUpdate,
+		cm.allUpdatableComponents(),
+	)
 }
 
 func (cm *ComponentManager) areComponentPodsRemoved(component components.Component) bool {

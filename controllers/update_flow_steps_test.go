@@ -22,7 +22,12 @@ var _ = Describe("BuildFlowTree", func() {
 
 	DescribeTable("should build correct flow tree",
 		func(tc testCase) {
-			tree := buildFlowTree(tc.updatingComponents)
+			componentManager := ComponentManager{
+				status: ComponentManagerStatus{
+					nowUpdating: tc.updatingComponents,
+				},
+			}
+			tree := buildFlowTree(&componentManager)
 
 			// Collect all states from the tree
 			var states []ytv1.UpdateState

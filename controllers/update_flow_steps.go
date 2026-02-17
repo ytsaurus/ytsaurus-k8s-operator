@@ -179,7 +179,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 		if !ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionImageHeaterReady) {
 			return stepResultMarkUnsatisfied
 		}
-		updatingComponents := ytsaurus.GetUpdatingComponents()
+		updatingComponents := componentManager.status.nowUpdating
 		if len(updatingComponents) == 0 {
 			return stepResultMarkUnhappy
 		}
@@ -239,7 +239,9 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	},
 }
 
-func buildFlowTree(updatingComponents []ytv1.Component) *flowTree {
+// TODO: Must be part of ComponentManager.
+func buildFlowTree(componentManager *ComponentManager) *flowTree {
+	updatingComponents := componentManager.status.nowUpdating
 	st := newSimpleStep
 	head := st(ytv1.UpdateStateNone)
 	tree := newFlowTree(head)
