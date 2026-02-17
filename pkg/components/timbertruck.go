@@ -136,7 +136,7 @@ func (tt *Timbertruck) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 	var err error
 
 	if tt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if tt.ytsaurus.GetResource().Status.UpdateStatus.State == ytv1.UpdateStateImpossibleToStart {
+		if tt.ytsaurus.GetUpdateState() == ytv1.UpdateStateImpossibleToStart {
 			return ComponentStatusReady(), err
 		}
 		if dry {

@@ -70,6 +70,10 @@ func (c *Ytsaurus) GetUpdateState() ytv1.UpdateState {
 	return c.ytsaurus.Status.UpdateStatus.State
 }
 
+func (c *Ytsaurus) SetUpdateState(updateState ytv1.UpdateState) {
+	c.ytsaurus.Status.UpdateStatus.State = updateState
+}
+
 func (c *Ytsaurus) GetUpdatingComponents() []ytv1.Component {
 	return c.ytsaurus.Status.UpdateStatus.UpdatingComponents
 }
@@ -140,6 +144,7 @@ func (c *Ytsaurus) SetBlockedComponents(components []ytv1.Component) bool {
 }
 
 func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
+	c.SetUpdateState(ytv1.UpdateStateUndefined)
 	c.ytsaurus.Status.UpdateStatus.Conditions = keepImagesHeatedCondition(c.ytsaurus.Status.UpdateStatus.Conditions)
 	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
 	c.SetUpdatingComponents(nil)
@@ -175,7 +180,7 @@ func (c *Ytsaurus) SaveClusterState(ctx context.Context, clusterState ytv1.Clust
 
 func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateState) error {
 	logger := log.FromContext(ctx)
-	c.ytsaurus.Status.UpdateStatus.State = updateState
+	c.SetUpdateState(updateState)
 	if err := c.UpdateStatus(ctx); err != nil {
 		logger.Error(err, "unable to update Ytsaurus update state")
 		return err
@@ -217,7 +222,7 @@ func getLabelerComponentName(component ytv1.Component) string {
 // UpdateOnDeleteComponentsSummary updates the UpdatingComponentsSummary with waiting time information
 // for components in OnDelete mode
 func (c *Ytsaurus) UpdateOnDeleteComponentsSummary(ctx context.Context, waitingOnDeleteConditionType string, includeWaitinDuration bool) {
-	if c.GetResource().Status.UpdateStatus.State != ytv1.UpdateStateWaitingForPodsRemoval {
+	if c.GetUpdateState() != ytv1.UpdateStateWaitingForPodsRemoval {
 		return
 	}
 

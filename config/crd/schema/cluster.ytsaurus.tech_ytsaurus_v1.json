@@ -43188,8 +43188,7 @@
               "type": "string"
             },
             "state": {
-              "type": "string",
-              "default": "None"
+              "type": "string"
             },
             "tabletCellBundles": {
               "type": "array",

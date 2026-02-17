@@ -2976,6 +2976,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
+| `` |  |
 | `None` |  |
 | `WaitingForImageHeater` |  |
 | `PossibilityCheck` |  |
@@ -3018,7 +3019,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `state` _[UpdateState](#updatestate)_ |  | None |  |
+| `state` _[UpdateState](#updatestate)_ |  |  |  |
 | `components` _string array_ | Deprecated: Use updatingComponents instead. |  |  |
 | `updatingComponents` _[Component](#component) array_ |  |  |  |
 | `updatingComponentsSummary` _string_ | UpdatingComponentsSummary is used only for representation in kubectl, since it only supports<br />"simple" JSONPath, and it is unclear how to force to print required data based on UpdatingComponents field. |  |  |

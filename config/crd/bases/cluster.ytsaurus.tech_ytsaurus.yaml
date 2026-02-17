@@ -36991,7 +36991,6 @@ spec:
                       the chosen flow until the...
                     type: string
                   state:
-                    default: None
                     type: string
                   tabletCellBundles:
                     items:

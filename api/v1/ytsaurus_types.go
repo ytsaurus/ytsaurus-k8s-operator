@@ -980,6 +980,7 @@ const (
 type UpdateState string
 
 const (
+	UpdateStateUndefined                             UpdateState = ""
 	UpdateStateNone                                  UpdateState = "None"
 	UpdateStateWaitingForImageHeater                 UpdateState = "WaitingForImageHeater"
 	UpdateStatePossibilityCheck                      UpdateState = "PossibilityCheck"
@@ -1092,7 +1093,6 @@ func (selector *ComponentUpdateSelector) GetUpdateStrategyType() ComponentUpdate
 type UpdateFlow string
 
 type UpdateStatus struct {
-	//+kubebuilder:default:=None
 	State UpdateState `json:"state,omitempty"`
 	// Deprecated: Use updatingComponents instead.
 	Components         []string    `json:"components,omitempty"`
