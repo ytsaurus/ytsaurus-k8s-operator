@@ -56,7 +56,7 @@ func GetenvOr(key, value string) string {
 }
 
 func NewTestHelper(t testing.TB, namespace, topDirectoryPath string) *TestHelper {
-	k8sTestEnv := &envtest.Environment{
+	testEnv := &envtest.Environment{
 		BinaryAssetsDirectory: filepath.Join(topDirectoryPath, "bin", "envtest-assets"),
 		CRDDirectoryPaths:     []string{filepath.Join(topDirectoryPath, "config", "crd", "bases")},
 		ErrorIfCRDPathMissing: true,
@@ -64,13 +64,17 @@ func NewTestHelper(t testing.TB, namespace, topDirectoryPath string) *TestHelper
 			MaxTime: 60 * time.Second,
 		},
 		ControlPlane:             envtest.ControlPlane{},
+		AttachControlPlaneOutput: true,
 		ControlPlaneStartTimeout: 60 * time.Second,
 		ControlPlaneStopTimeout:  60 * time.Second,
 	}
 
+	apiServer := testEnv.ControlPlane.GetAPIServer()
+	apiServer.Configure().Set("advertise-address", "127.0.0.1")
+
 	return &TestHelper{
 		t:          t,
-		k8sTestEnv: k8sTestEnv,
+		k8sTestEnv: testEnv,
 		Namespace:  namespace,
 		ticker:     time.NewTicker(200 * time.Millisecond),
 	}
