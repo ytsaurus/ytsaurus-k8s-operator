@@ -122,6 +122,7 @@ spec:
     volumeMounts:
     - mountPath: /yt/master-data
       name: master-data
+  terminationGracePeriodSeconds: 5
   useIpv4: false
   useIpv6: false
   usePorto: false

@@ -228,6 +228,7 @@ spec:
         memory: "0"
     runtimeClassName: instance-runtime-class
     setHostnameAsFqdn: true
+    terminationGracePeriodSeconds: 20
     tolerations:
     - key: instance-toleration
     volumeClaimTemplates:
@@ -311,6 +312,7 @@ spec:
   strawberry:
     image: ghcr.io/ytsaurus/strawberry:0.0.14
     resources: {}
+  terminationGracePeriodSeconds: 10
   tolerations:
   - key: global-toleration
   useIpv4: false

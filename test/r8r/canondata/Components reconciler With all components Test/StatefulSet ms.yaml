@@ -215,6 +215,7 @@ spec:
         instance-node-selector: "true"
       runtimeClassName: instance-runtime-class
       setHostnameAsFQDN: true
+      terminationGracePeriodSeconds: 20
       tolerations:
       - key: instance-toleration
       volumes:
