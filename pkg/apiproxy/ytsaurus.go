@@ -278,6 +278,18 @@ func (c *Ytsaurus) UpdateOnDeleteComponentsSummary(ctx context.Context, waitingO
 	}
 }
 
-func (c *Ytsaurus) IsImageHeaterEnabled() bool {
-	return ptr.Deref(c.GetClusterFeatures().EnableImageHeater, false)
+func (c *Ytsaurus) GetImageHeater(target string) *ytv1.ComponentUpdateSelector {
+	planned := false
+	for _, selector := range c.ytsaurus.Spec.UpdatePlan {
+		if selector.Component.Type == ytv1.ImageHeaterType {
+			planned = true
+			if name := selector.Component.Name; name == "" || target == "" || name == target {
+				return ptr.To(selector)
+			}
+		}
+	}
+	if !planned && c.GetClusterFeatures().EnableImageHeater {
+		return ptr.To(ytv1.ComponentUpdateSelector{})
+	}
+	return nil
 }

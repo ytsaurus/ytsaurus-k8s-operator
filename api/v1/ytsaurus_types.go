@@ -828,9 +828,9 @@ type ClusterFeatures struct {
 	HTTPProxyHaveHTTPSAddress bool `json:"httpProxyHaveHttpsAddress,omitempty"`
 	// Validate that only secure transports are allowed for cluster connections.
 	SecureClusterTransports bool `json:"secureClusterTransports,omitempty"`
-	// EnableImageHeater enables image heater for the cluster initialization. Independent from the updatePlan logic.
-	//+kubebuilder:default:=false
-	EnableImageHeater *bool `json:"enableImageHeater,omitempty"`
+	// Pull required images to all selected nodes before cluster initialization and update.
+	// Alternatively ImageHeater could be enlisted in update plan for all or selected components.
+	EnableImageHeater bool `json:"enableImageHeater,omitempty"`
 	// Enable logging anchor profiling by default for loggers that don't explicitly disable it.
 	EnableAnchorProfilingByDefault bool `json:"enableAnchorProfilingByDefault,omitempty"`
 }

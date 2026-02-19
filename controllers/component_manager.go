@@ -378,7 +378,7 @@ func (cm *ComponentManager) runImageHeaterIfEnabled(ctx context.Context) (handle
 	state := cm.ytsaurus.GetClusterState()
 	if (state != ytv1.ClusterStateInitializing &&
 		state != ytv1.ClusterStateCreated &&
-		state != ytv1.ClusterState("")) || !cm.ytsaurus.IsImageHeaterEnabled() {
+		state != ytv1.ClusterState("")) || cm.ytsaurus.GetImageHeater("") == nil {
 		return false, ctrl.Result{}, nil
 	}
 
