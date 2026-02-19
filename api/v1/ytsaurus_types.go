@@ -819,9 +819,9 @@ type ClusterFeatures struct {
 	HTTPProxyHaveHTTPSAddress bool `json:"httpProxyHaveHttpsAddress,omitempty"`
 	// Validate that only secure transports are allowed for cluster connections.
 	SecureClusterTransports bool `json:"secureClusterTransports,omitempty"`
-	// EnableImageHeater enables image heater for the cluster initialization. Independent from the updatePlan logic.
-	//+kubebuilder:default:=false
-	EnableImageHeater *bool `json:"enableImageHeater,omitempty"`
+	// Download required images to all selected nodes before cluster initialization and update.
+	// Alternatively component ImageHeater could be enlisted in updatePlan.
+	EnableImageHeater bool `json:"enableImageHeater,omitempty"`
 }
 
 // CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.
