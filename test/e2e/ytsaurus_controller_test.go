@@ -231,10 +231,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	}
 
 	withRPCTLSProxy := func() {
+		hostNames := []string{generator.GetComponentLabeller(consts.RpcProxyType, "").GetInstanceAddressWildcard()}
+		if !ytsaurus.Spec.ClusterFeatures.RPCProxyHavePublicAddress {
+			By("Adding interconnect FQDN into RPC proxy TLS certificates")
+			hostNames = append(hostNames, ytsaurus.Name)
+		}
+
 		By("Adding RPC proxy TLS certificates")
-		rpcProxyCert := certBuilder.BuildCertificate(ytsaurus.Name+"-rpc-proxy", []string{
-			generator.GetComponentLabeller(consts.RpcProxyType, "").GetInstanceAddressWildcard(),
-		})
+		rpcProxyCert := certBuilder.BuildCertificate(ytsaurus.Name+"-rpc-proxy", hostNames)
 		objects = append(objects, rpcProxyCert)
 
 		ytBuilder.WithRPCProxyTLS = true
@@ -1797,7 +1801,9 @@ exec "$@"`
 				if images.YtsaurusVersion.GreaterThanEqual(version.MustParse("25.3.0")) {
 					By("Enabling RPC proxy public address")
 					ytsaurus.Spec.ClusterFeatures.RPCProxyHavePublicAddress = true
+				}
 
+				if images.YtsaurusVersion.GreaterThanEqual(version.MustParse("25.2.0")) {
 					By("Activating mutual TLS interconnect")
 					ytBuilder.WithNativeTransportTLS(nativeServerCert.Name, nativeClientCert.Name)
 				} else {
