@@ -261,5 +261,13 @@ func (c *Ytsaurus) UpdateOnDeleteComponentsSummary(ctx context.Context, waitingO
 }
 
 func (c *Ytsaurus) IsImageHeaterEnabled() bool {
-	return ptr.Deref(c.GetClusterFeatures().EnableImageHeater, false)
+	if c.GetClusterFeatures().EnableImageHeater {
+		return true
+	}
+	for _, selector := range c.ytsaurus.Spec.UpdatePlan {
+		if selector.Component.Type == consts.ImageHeaterType {
+			return true
+		}
+	}
+	return false
 }
