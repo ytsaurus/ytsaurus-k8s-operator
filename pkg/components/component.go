@@ -35,6 +35,10 @@ func (cs ComponentStatus) IsRunning() bool {
 	return cs.SyncStatus == SyncStatusReady || cs.SyncStatus == SyncStatusNeedUpdate
 }
 
+func (cs ComponentStatus) IsNeedUpdate() bool {
+	return cs.SyncStatus == SyncStatusNeedUpdate
+}
+
 func ComponentStatusReady() ComponentStatus {
 	return ComponentStatus{SyncStatusReady, "Ready"}
 }
@@ -83,8 +87,8 @@ type Component interface {
 	// NeedSync returns true when component is need, able and permitted to sync resources.
 	NeedSync() bool
 
-	// NeedUpdate returns true when component needs instance update.
-	NeedUpdate() bool
+	// NeedUpdate returns SyncStatusNeedUpdate when component needs instance update.
+	NeedUpdate() ComponentStatus
 
 	Status(ctx context.Context) (ComponentStatus, error)
 	GetFullName() string
@@ -242,7 +246,7 @@ func (c *serverComponent) NeedSync() bool {
 	return c.server.needSync(c.IsUpdatingResources())
 }
 
-func (c *serverComponent) NeedUpdate() bool {
+func (c *serverComponent) NeedUpdate() ComponentStatus {
 	return c.server.needUpdate()
 }
 
@@ -257,6 +261,6 @@ func (c *microserviceComponent) NeedSync() bool {
 	return c.microservice.needSync()
 }
 
-func (c *microserviceComponent) NeedUpdate() bool {
+func (c *microserviceComponent) NeedUpdate() ComponentStatus {
 	return c.microservice.needUpdate()
 }

@@ -30,7 +30,7 @@ type server interface {
 	resources.Fetchable
 	resources.Syncable
 	podsManager
-	needUpdate() bool
+	needUpdate() ComponentStatus
 	needSync(updating bool) bool
 	preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration)
 	buildStatefulSet() *appsv1.StatefulSet
@@ -208,8 +208,12 @@ func (s *serverImpl) Exists() bool {
 }
 
 func (s *serverImpl) needSync(updating bool) bool {
+	if updating {
+		if update := s.needUpdate(); update.IsNeedUpdate() {
+			return true
+		}
+	}
 	return !s.Exists() ||
-		(updating && s.needUpdate()) ||
 		s.statefulSet.GetReplicas() != s.instanceSpec.InstanceCount
 }
 
@@ -271,20 +275,17 @@ func (s *serverImpl) podsImageCorrespondsToSpec() bool {
 	return found == len(s.sidecarImages)
 }
 
-func (s *serverImpl) needUpdate() bool {
+func (s *serverImpl) needUpdate() ComponentStatus {
 	if !s.Exists() {
-		return false
+		return ComponentStatus{}
 	}
-
 	if !s.podsImageCorrespondsToSpec() {
-		return true
+		return ComponentStatusNeedUpdate("image update")
 	}
-
-	needReload, err := s.configs.NeedReload()
-	if err != nil {
-		return false
+	if needReload, err := s.configs.NeedReload(); err == nil && needReload {
+		return ComponentStatusNeedUpdate("config update")
 	}
-	return needReload
+	return ComponentStatus{}
 }
 
 func (s *serverImpl) arePodsReady(ctx context.Context) bool {

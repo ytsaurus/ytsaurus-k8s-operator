@@ -202,9 +202,16 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 			return fmt.Errorf("failed to fetch component %s: %w", component.GetFullName(), err)
 		}
 
-		status, err := component.Status(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to get component %s status: %w", component.GetFullName(), err)
+		// TODO: Reorder logic onto less weird sequence.
+		var status components.ComponentStatus
+		if cm.ytsaurus.IsReadyToUpdate() {
+			status = component.NeedUpdate()
+		}
+		if !status.IsNeedUpdate() {
+			status, err = component.Status(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to get component %s status: %w", component.GetFullName(), err)
+			}
 		}
 
 		component.SetReadyCondition(status)
