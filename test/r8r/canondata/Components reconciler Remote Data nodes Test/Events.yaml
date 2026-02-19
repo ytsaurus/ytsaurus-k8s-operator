@@ -2,17 +2,37 @@
   eventTime: null
   firstTimestamp: null
   involvedObject:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: dnd-rmt
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by RemoteDataNodes rmt
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
     apiVersion: cluster.ytsaurus.tech/v1
     kind: RemoteDataNodes
     name: rmt
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object dnd-rmt (*v1.StatefulSet)
+  message: Create object StatefulSet dnd-rmt
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -42,17 +62,17 @@
   eventTime: null
   firstTimestamp: null
   involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: RemoteDataNodes
-    name: rmt
+    apiVersion: v1
+    kind: ConfigMap
+    name: yt-data-node-config
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object yt-data-node-config (*v1.ConfigMap)
+  message: Create by RemoteDataNodes rmt
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -68,11 +88,31 @@
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object data-nodes-rmt (*v1.Service)
+  message: Create object ConfigMap yt-data-node-config
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: data-nodes-rmt
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by RemoteDataNodes rmt
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -88,11 +128,51 @@
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object yt-data-node-monitoring (*v1.Service)
+  message: Create object Service data-nodes-rmt
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: yt-data-node-monitoring
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by RemoteDataNodes rmt
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: RemoteDataNodes
+    name: rmt
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create object Service yt-data-node-monitoring
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:

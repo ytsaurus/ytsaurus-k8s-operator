@@ -2,17 +2,37 @@
   eventTime: null
   firstTimestamp: null
   involvedObject:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: end-rmt
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by RemoteExecNodes rmt
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
     apiVersion: cluster.ytsaurus.tech/v1
     kind: RemoteExecNodes
     name: rmt
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object end-rmt (*v1.StatefulSet)
+  message: Create object StatefulSet end-rmt
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -42,17 +62,17 @@
   eventTime: null
   firstTimestamp: null
   involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: RemoteExecNodes
-    name: rmt
+    apiVersion: v1
+    kind: ConfigMap
+    name: yt-exec-node-config
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object yt-exec-node-config (*v1.ConfigMap)
+  message: Create by RemoteExecNodes rmt
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -68,11 +88,31 @@
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object exec-nodes-rmt (*v1.Service)
+  message: Create object ConfigMap yt-exec-node-config
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: exec-nodes-rmt
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by RemoteExecNodes rmt
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -88,11 +128,51 @@
     namespace: ytsaurus-components
     resourceVersion: "1"
   lastTimestamp: null
-  message: Created YT object yt-exec-node-monitoring (*v1.Service)
+  message: Create object Service exec-nodes-rmt
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: yt-exec-node-monitoring
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create by RemoteExecNodes rmt
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: RemoteExecNodes
+    name: rmt
+    namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Create object Service yt-exec-node-monitoring
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Create
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
