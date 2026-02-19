@@ -91,10 +91,6 @@ func (qa *QueueAgent) Fetch(ctx context.Context) error {
 func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if qa.ytsaurus.IsReadyToUpdate() && qa.NeedUpdate() {
-		return SimpleStatus(SyncStatusNeedUpdate), err
-	}
-
 	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(qa.ytsaurus, qa) {
 			// Handle bulk update with pre-checks

@@ -26,8 +26,9 @@ type microservice interface {
 	resources.Syncable
 	podsManager
 	needSync() bool
-	needUpdate() bool
+	needUpdate() ComponentStatus
 	getImage() string
+	getImageHeaterTarget() *ImageHeaterTarget
 	getHttpService() *resources.HTTPService
 	buildDeployment() *appsv1.Deployment
 	buildService() *corev1.Service
@@ -42,6 +43,9 @@ type microserviceImpl struct {
 	deployment *resources.Deployment
 	service    *resources.HTTPService
 	configs    *ConfigMapBuilder
+
+	tolerations  []corev1.Toleration
+	nodeSelector map[string]string
 
 	builtDeployment *appsv1.Deployment
 	builtService    *corev1.Service
@@ -85,7 +89,9 @@ func newMicroservice(
 			tolerations,
 			nodeSelector,
 		),
-		configs: configs,
+		configs:      configs,
+		tolerations:  tolerations,
+		nodeSelector: nodeSelector,
 	}
 }
 
@@ -191,20 +197,17 @@ func (m *microserviceImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool
 	return true
 }
 
-func (m *microserviceImpl) needUpdate() bool {
+func (m *microserviceImpl) needUpdate() ComponentStatus {
 	if !m.Exists() {
-		return false
+		return ComponentStatus{}
 	}
-
 	if !m.podsImageCorrespondsToSpec() {
-		return true
+		return ComponentStatusNeedUpdate("image update")
 	}
-
-	needReload, err := m.configs.NeedReload()
-	if err != nil {
-		return false
+	if needReload, err := m.configs.NeedReload(); err == nil && needReload {
+		return ComponentStatusNeedUpdate("config update")
 	}
-	return needReload
+	return ComponentStatus{}
 }
 
 func (m *microserviceImpl) podsImageCorrespondsToSpec() bool {
@@ -220,4 +223,14 @@ func (m *microserviceImpl) removePods(ctx context.Context) error {
 
 func (m *microserviceImpl) getImage() string {
 	return m.image
+}
+
+func (m *microserviceImpl) getImageHeaterTarget() *ImageHeaterTarget {
+	return &ImageHeaterTarget{
+		Images:           map[string]string{"image": m.image},
+		ImagePullSecrets: m.ytsaurus.GetCommonSpec().ImagePullSecrets,
+		NodeSelector:     m.nodeSelector,
+		Tolerations:      m.tolerations,
+		NodeAffinity:     nil,
+	}
 }

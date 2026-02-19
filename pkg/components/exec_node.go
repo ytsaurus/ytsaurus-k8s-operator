@@ -78,10 +78,6 @@ func NewExecNode(
 func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if n.ytsaurus.IsReadyToUpdate() && n.NeedUpdate() {
-		return SimpleStatus(SyncStatusNeedUpdate), err
-	}
-
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(n.ytsaurus, n) {
 			if status, err := handleBulkUpdatingClusterState(ctx, n.ytsaurus, n, &n.component, n.server, dry); status != nil {

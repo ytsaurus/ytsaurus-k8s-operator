@@ -396,10 +396,6 @@ func (m *Master) createExitReadOnlyScript() string {
 func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if m.ytsaurus.IsReadyToUpdate() && m.NeedUpdate() {
-		return SimpleStatus(SyncStatusNeedUpdate), err
-	}
-
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForMasterExitReadOnly {
 			return m.exitReadOnly(ctx, dry)

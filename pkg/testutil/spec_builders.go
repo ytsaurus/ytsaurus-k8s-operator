@@ -242,6 +242,7 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 		},
 		Spec: ytv1.YtsaurusSpec{
 			CommonSpec: ytv1.CommonSpec{
+				ClusterFeatures:  &ytv1.ClusterFeatures{},
 				EphemeralCluster: true,
 				UseShortNames:    true,
 				CoreImage:        b.Images.Core,
@@ -387,6 +388,7 @@ func (b *YtsaurusBuilder) WithAllClusterFeatures() {
 		RPCProxyHavePublicAddress: true,
 		HTTPProxyHaveChytAddress:  true,
 		HTTPProxyHaveHTTPSAddress: true,
+		EnableImageHeater:         true,
 		SecureClusterTransports:   false, // Turned off to increase coverage.
 	}
 }

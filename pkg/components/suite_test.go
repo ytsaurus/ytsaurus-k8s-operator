@@ -74,8 +74,8 @@ func (fc *FakeComponent) NeedSync() bool {
 	return false
 }
 
-func (fc *FakeComponent) NeedUpdate() bool {
-	return false
+func (fc *FakeComponent) NeedUpdate() ComponentStatus {
+	return ComponentStatus{}
 }
 
 func (fc *FakeComponent) IsUpdating() bool {
@@ -109,6 +109,10 @@ func (fc *FakeComponent) GetCypressPatch() ypatch.PatchSet {
 	return nil
 }
 
+func (fc *FakeComponent) GetImageHeaterTarget() *ImageHeaterTarget {
+	return nil
+}
+
 func (fc *FakeComponent) GetReadyCondition() ComponentStatus {
 	return fc.status
 }
@@ -129,8 +133,8 @@ func (fs *FakeServer) Fetch(ctx context.Context) error {
 	return nil
 }
 
-func (fs *FakeServer) needUpdate() bool {
-	return false
+func (fs *FakeServer) needUpdate() ComponentStatus {
+	return ComponentStatus{}
 }
 
 func (fs *FakeServer) podsImageCorrespondsToSpec() bool {
@@ -145,8 +149,8 @@ func (fs *FakeServer) needSync(updating bool) bool {
 	return false
 }
 
-func (fs *FakeServer) preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration) {
-	return nil, nil, nil
+func (fs *FakeServer) getImageHeaterTarget() *ImageHeaterTarget {
+	return nil
 }
 
 func (fs *FakeServer) arePodsRemoved(ctx context.Context) bool {

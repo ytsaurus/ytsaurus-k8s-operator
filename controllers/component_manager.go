@@ -17,6 +17,7 @@ import (
 
 type ComponentManager struct {
 	ytsaurus      *apiProxy.Ytsaurus
+	imageHeater   *components.ImageHeater
 	allComponents []components.Component
 	status        ComponentManagerStatus
 }
@@ -52,6 +53,13 @@ func NewComponentManager(
 		return allComponents
 	}
 
+	// NOTE: Must be first component for blocking cluster initialization.
+	var ih *components.ImageHeater
+	if ytsaurus.IsImageHeaterEnabled() {
+		ih = components.NewImageHeater(cfgen, ytsaurus, getAllComponents)
+		allComponents = append(allComponents, ih)
+	}
+
 	m := components.NewMaster(cfgen, ytsaurus)
 	var hps []components.Component
 	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {
@@ -59,7 +67,6 @@ func NewComponentManager(
 	}
 	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0], getAllComponents)
 	d := components.NewDiscovery(cfgen, ytsaurus, yc)
-	ih := components.NewImageHeater(cfgen, ytsaurus, getAllComponents)
 
 	var dnds []components.Component
 	if len(resource.Spec.DataNodes) > 0 {
@@ -68,7 +75,7 @@ func NewComponentManager(
 		}
 	}
 
-	allComponents = append(allComponents, d, m, yc, ih)
+	allComponents = append(allComponents, d, m, yc)
 	allComponents = append(allComponents, dnds...)
 	allComponents = append(allComponents, hps...)
 
@@ -175,6 +182,7 @@ func NewComponentManager(
 
 	return &ComponentManager{
 		ytsaurus:      ytsaurus,
+		imageHeater:   ih,
 		allComponents: allComponents,
 	}, nil
 }
@@ -202,9 +210,16 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 			return fmt.Errorf("failed to fetch component %s: %w", component.GetFullName(), err)
 		}
 
-		status, err := component.Status(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to get component %s status: %w", component.GetFullName(), err)
+		// TODO: Reorder logic onto less weird sequence.
+		var status components.ComponentStatus
+		if cm.ytsaurus.IsReadyToUpdate() {
+			status = component.NeedUpdate()
+		}
+		if !status.IsNeedUpdate() {
+			status, err = component.Status(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to get component %s status: %w", component.GetFullName(), err)
+			}
 		}
 
 		component.SetReadyCondition(status)
@@ -259,12 +274,8 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	handled, res, err := cm.runImageHeaterIfEnabled(ctx)
-	if err != nil {
-		return res, err
-	}
-	if handled {
-		return res, nil
+	if !cm.ytsaurus.IsImageHeaterEnabled() {
+		cm.ytsaurus.RemoveStatusCondition(consts.ConditionImageHeaterReady)
 	}
 
 	hasPending := false
@@ -290,6 +301,10 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 				syncErr = err
 				break
 			}
+			if cm.ytsaurus.IsInitializing() && c.GetType() == consts.ImageHeaterType {
+				logger.Info("Cluster initialization is waiting for image heater")
+				break
+			}
 		}
 	}
 
@@ -310,6 +325,17 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	return ctrl.Result{RequeueAfter: time.Second}, nil
 }
 
+func (cm *ComponentManager) allUpdatingImagesAreHeated() bool {
+	if cm.imageHeater != nil {
+		for _, component := range cm.status.nowUpdating {
+			if ready, _ := cm.imageHeater.GetHeaterStatus(component); !ready {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func (cm *ComponentManager) arePodsRemoved() bool {
 	for _, cmp := range cm.allComponents {
 		if cmp.GetType() == consts.YtsaurusClientType || cmp.GetType() == consts.ImageHeaterType {
@@ -323,81 +349,22 @@ func (cm *ComponentManager) arePodsRemoved() bool {
 	return true
 }
 
-func (cm *ComponentManager) allUpdatableComponents() []ytv1.Component {
-	var result []ytv1.Component
-	for _, cmp := range cm.allComponents {
-		if cmp.GetType() != consts.YtsaurusClientType && cmp.GetType() != consts.TimbertruckType {
-			result = append(result, cmp.GetComponent())
+func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSelector) {
+	cm.status.canUpdate = nil
+	cm.status.cannotUpdate = nil
+	for _, component := range cm.status.needUpdate {
+		if canUpdateComponent(updatePlan, component) {
+			cm.status.canUpdate = append(cm.status.canUpdate, component)
+		} else {
+			cm.status.cannotUpdate = append(cm.status.cannotUpdate, component)
 		}
 	}
-	return result
-}
-
-func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSelector) {
-	// TODO: Inline code.
-	cm.status.canUpdate, cm.status.cannotUpdate = chooseUpdatingComponents(
-		updatePlan,
-		cm.status.needUpdate,
-		cm.allUpdatableComponents(),
-	)
 }
 
 func (cm *ComponentManager) areComponentPodsRemoved(component components.Component) bool {
 	// Check for either PodsRemoved (bulk update) or PodsUpdated (OnDelete mode)
 	return cm.ytsaurus.IsUpdateStatusConditionTrue(component.GetLabeller().GetPodsRemovedCondition()) ||
 		cm.ytsaurus.IsUpdateStatusConditionTrue(component.GetLabeller().GetPodsUpdatedCondition())
-}
-
-func (cm *ComponentManager) runImageHeaterIfEnabled(ctx context.Context) (handled bool, result ctrl.Result, err error) {
-	logger := log.FromContext(ctx)
-	state := cm.ytsaurus.GetClusterState()
-	if (state != ytv1.ClusterStateInitializing &&
-		state != ytv1.ClusterStateCreated &&
-		state != ytv1.ClusterState("")) || !cm.ytsaurus.IsImageHeaterEnabled() {
-		return false, ctrl.Result{}, nil
-	}
-
-	ih := cm.findImageHeater()
-	if ih == nil {
-		return false, ctrl.Result{}, nil
-	}
-
-	status, err := ih.Status(ctx)
-	if err != nil {
-		return true, ctrl.Result{Requeue: true}, fmt.Errorf("failed to get status for %s: %w", ih.GetFullName(), err)
-	}
-	if status.SyncStatus == components.SyncStatusReady {
-		return false, ctrl.Result{}, nil
-	}
-
-	if status.SyncStatus == components.SyncStatusPending ||
-		status.SyncStatus == components.SyncStatusUpdating ||
-		status.SyncStatus == components.SyncStatusNeedUpdate {
-		logger.Info("component sync", "component", ih.GetFullName())
-		if err := ih.Sync(ctx); err != nil {
-			logger.Error(err, "component sync failed", "component", ih.GetFullName())
-			return true, ctrl.Result{Requeue: true}, err
-		}
-	}
-
-	if err := cm.ytsaurus.UpdateStatus(ctx); err != nil {
-		logger.Error(err, "update Ytsaurus status failed")
-		return true, ctrl.Result{Requeue: true}, err
-	}
-
-	if status.SyncStatus == components.SyncStatusBlocked {
-		return true, ctrl.Result{RequeueAfter: 5 * time.Second}, nil
-	}
-	return true, ctrl.Result{RequeueAfter: time.Second}, nil
-}
-
-func (cm *ComponentManager) findImageHeater() components.Component {
-	for _, cmp := range cm.allComponents {
-		if cmp.GetType() == consts.ImageHeaterType {
-			return cmp
-		}
-	}
-	return nil
 }
 
 func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
@@ -417,60 +384,6 @@ func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1
 			}
 		}
 		if selector.Component.Type == component.Type && (selector.Component.Name == "" || selector.Component.Name == component.Name) {
-			return true
-		}
-	}
-	return false
-}
-
-// Considers splits all the components in two groups: ones that can be updated and ones which update is blocked.
-func chooseUpdatingComponents(selectors []ytv1.ComponentUpdateSelector, needUpdate []ytv1.Component, allComponents []ytv1.Component) (canUpdate []ytv1.Component, cannotUpdate []ytv1.Component) {
-	for _, component := range needUpdate {
-		upd := canUpdateComponent(selectors, component)
-		if upd {
-			canUpdate = append(canUpdate, component)
-		} else {
-			cannotUpdate = append(cannotUpdate, component)
-		}
-	}
-
-	if len(canUpdate) == 0 {
-		return nil, cannotUpdate
-	}
-	if hasEverythingSelector(selectors) && needFullUpdate(needUpdate) {
-		// if image wasn't changed, we don't need to run ImageHeater
-		if !hasComponent(needUpdate, consts.ImageHeaterType) {
-			filtered := make([]ytv1.Component, 0, len(allComponents))
-			for _, component := range allComponents {
-				if component.Type == consts.ImageHeaterType {
-					continue
-				}
-				filtered = append(filtered, component)
-			}
-			return filtered, nil
-		}
-		// Here we update not only components that are not up-to-date, but all cluster.
-		// FIXME: Why?
-		return allComponents, nil
-	}
-	return canUpdate, cannotUpdate
-}
-
-func hasEverythingSelector(selectors []ytv1.ComponentUpdateSelector) bool {
-	for _, selector := range selectors {
-		if selector.Class == consts.ComponentClassEverything {
-			return true
-		}
-	}
-
-	return false
-}
-
-func needFullUpdate(needUpdate []ytv1.Component) bool {
-	statelessSelector := []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassStateless}}
-	for _, component := range needUpdate {
-		isStateless := canUpdateComponent(statelessSelector, component)
-		if !isStateless {
 			return true
 		}
 	}
