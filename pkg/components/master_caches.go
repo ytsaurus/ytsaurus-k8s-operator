@@ -52,10 +52,6 @@ func (mc *MasterCache) Fetch(ctx context.Context) error {
 func (mc *MasterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if mc.ytsaurus.IsReadyToUpdate() && mc.NeedUpdate() {
-		return SimpleStatus(SyncStatusNeedUpdate), err
-	}
-
 	if mc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(mc.ytsaurus, mc) {
 			switch getComponentUpdateStrategy(mc.ytsaurus, consts.MasterCacheType, mc.GetShortName()) {

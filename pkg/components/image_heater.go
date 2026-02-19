@@ -72,8 +72,8 @@ func (ih *ImageHeater) NeedSync() bool {
 	return !ih.owner.IsStatusConditionTrueAndObservedGeneration(consts.ConditionImageHeaterReady)
 }
 
-func (ih *ImageHeater) NeedUpdate() bool {
-	return false
+func (ih *ImageHeater) NeedUpdate() ComponentStatus {
+	return ComponentStatus{}
 }
 
 func (ih *ImageHeater) Status(ctx context.Context) (ComponentStatus, error) {

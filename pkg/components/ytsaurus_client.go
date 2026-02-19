@@ -488,8 +488,8 @@ func (yc *YtsaurusClient) NeedSync() bool {
 	return false
 }
 
-func (yc *YtsaurusClient) NeedUpdate() bool {
-	return false
+func (yc *YtsaurusClient) NeedUpdate() ComponentStatus {
+	return ComponentStatus{}
 }
 
 func (yc *YtsaurusClient) Sync(ctx context.Context) error {

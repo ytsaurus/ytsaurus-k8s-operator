@@ -74,8 +74,8 @@ func (fc *FakeComponent) NeedSync() bool {
 	return false
 }
 
-func (fc *FakeComponent) NeedUpdate() bool {
-	return false
+func (fc *FakeComponent) NeedUpdate() ComponentStatus {
+	return ComponentStatus{}
 }
 
 func (fc *FakeComponent) IsUpdating() bool {
@@ -133,8 +133,8 @@ func (fs *FakeServer) Fetch(ctx context.Context) error {
 	return nil
 }
 
-func (fs *FakeServer) needUpdate() bool {
-	return false
+func (fs *FakeServer) needUpdate() ComponentStatus {
+	return ComponentStatus{}
 }
 
 func (fs *FakeServer) podsImageCorrespondsToSpec() bool {

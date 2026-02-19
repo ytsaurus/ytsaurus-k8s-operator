@@ -26,7 +26,7 @@ type microservice interface {
 	resources.Syncable
 	podsManager
 	needSync() bool
-	needUpdate() bool
+	needUpdate() ComponentStatus
 	getImage() string
 	getImageHeaterTarget() *ImageHeaterTarget
 	getHttpService() *resources.HTTPService
@@ -197,20 +197,17 @@ func (m *microserviceImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool
 	return true
 }
 
-func (m *microserviceImpl) needUpdate() bool {
+func (m *microserviceImpl) needUpdate() ComponentStatus {
 	if !m.Exists() {
-		return false
+		return ComponentStatus{}
 	}
-
 	if !m.podsImageCorrespondsToSpec() {
-		return true
+		return ComponentStatusNeedUpdate("image update")
 	}
-
-	needReload, err := m.configs.NeedReload()
-	if err != nil {
-		return false
+	if needReload, err := m.configs.NeedReload(); err == nil && needReload {
+		return ComponentStatusNeedUpdate("config update")
 	}
-	return needReload
+	return ComponentStatus{}
 }
 
 func (m *microserviceImpl) podsImageCorrespondsToSpec() bool {
