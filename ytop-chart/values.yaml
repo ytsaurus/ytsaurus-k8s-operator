@@ -18,6 +18,8 @@ controllerManager:
       # GOGC: 100
       # GOMEMLIMIT: 100MiB
       YT_LOG_LEVEL: DEBUG
+      # ENABLE_WEBHOOKS: false
+      # RECOVER_PANIC: false
     containerSecurityContext:
       allowPrivilegeEscalation: false
       capabilities:
