@@ -349,23 +349,16 @@ func (cm *ComponentManager) arePodsRemoved() bool {
 	return true
 }
 
-func (cm *ComponentManager) allUpdatableComponents() []ytv1.Component {
-	var result []ytv1.Component
-	for _, cmp := range cm.allComponents {
-		if cmp.GetType() != consts.YtsaurusClientType && cmp.GetType() != consts.TimbertruckType {
-			result = append(result, cmp.GetComponent())
+func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSelector) {
+	cm.status.canUpdate = nil
+	cm.status.cannotUpdate = nil
+	for _, component := range cm.status.needUpdate {
+		if canUpdateComponent(updatePlan, component) {
+			cm.status.canUpdate = append(cm.status.canUpdate, component)
+		} else {
+			cm.status.cannotUpdate = append(cm.status.cannotUpdate, component)
 		}
 	}
-	return result
-}
-
-func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSelector) {
-	// TODO: Inline code.
-	cm.status.canUpdate, cm.status.cannotUpdate = chooseUpdatingComponents(
-		updatePlan,
-		cm.status.needUpdate,
-		cm.allUpdatableComponents(),
-	)
 }
 
 func (cm *ComponentManager) areComponentPodsRemoved(component components.Component) bool {
@@ -391,49 +384,6 @@ func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1
 			}
 		}
 		if selector.Component.Type == component.Type && (selector.Component.Name == "" || selector.Component.Name == component.Name) {
-			return true
-		}
-	}
-	return false
-}
-
-// Considers splits all the components in two groups: ones that can be updated and ones which update is blocked.
-func chooseUpdatingComponents(selectors []ytv1.ComponentUpdateSelector, needUpdate []ytv1.Component, allComponents []ytv1.Component) (canUpdate []ytv1.Component, cannotUpdate []ytv1.Component) {
-	for _, component := range needUpdate {
-		upd := canUpdateComponent(selectors, component)
-		if upd {
-			canUpdate = append(canUpdate, component)
-		} else {
-			cannotUpdate = append(cannotUpdate, component)
-		}
-	}
-
-	if len(canUpdate) == 0 {
-		return nil, cannotUpdate
-	}
-	if hasEverythingSelector(selectors) && needFullUpdate(needUpdate) {
-		// Here we update not only components that are not up-to-date, but all cluster.
-		// FIXME: Why?
-		return allComponents, nil
-	}
-	return canUpdate, cannotUpdate
-}
-
-func hasEverythingSelector(selectors []ytv1.ComponentUpdateSelector) bool {
-	for _, selector := range selectors {
-		if selector.Class == consts.ComponentClassEverything {
-			return true
-		}
-	}
-
-	return false
-}
-
-func needFullUpdate(needUpdate []ytv1.Component) bool {
-	statelessSelector := []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassStateless}}
-	for _, component := range needUpdate {
-		isStateless := canUpdateComponent(statelessSelector, component)
-		if !isStateless {
 			return true
 		}
 	}
