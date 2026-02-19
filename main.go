@@ -22,6 +22,8 @@ import (
 	"os"
 	"strings"
 
+	"k8s.io/utils/ptr"
+
 	"go.uber.org/zap/zapcore"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
@@ -139,6 +141,7 @@ func main() {
 		// LeaderElectionReleaseOnCancel: true,
 		Controller: controllerconfig.Controller{
 			MaxConcurrentReconciles: maxConcurrentReconciles,
+			RecoverPanic:            ptr.To(os.Getenv("RECOVER_PANIC") != "false"),
 		},
 	}
 

@@ -118,6 +118,8 @@ func (h *TestHelper) Start(reconcilerSetup func(mgr ctrl.Manager) error) {
 		Controller: config.Controller{
 			// Tests register controllers more than once.
 			SkipNameValidation: ptr.To(true),
+			// Tests must crash instantly.
+			RecoverPanic: ptr.To(false),
 		},
 	})
 	Expect(err).NotTo(HaveOccurred())
