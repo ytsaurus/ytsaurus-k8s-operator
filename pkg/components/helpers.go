@@ -3,10 +3,12 @@ package components
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"sigs.k8s.io/yaml"
@@ -31,6 +33,18 @@ const (
 	// if the component is still waiting for manual pod deletion in OnDelete mode
 	OnDeleteUpdateModeWarningTimeout = 15 * 60 // 15 minutes in seconds
 )
+
+const (
+	rollingBatchReasonPreparing = "RollingBatchPreparing"
+	rollingBatchReasonUpdating  = "RollingBatchUpdating"
+	rollingBatchReasonPostCheck = "RollingBatchPostCheck"
+	rollingBatchReasonCompleted = "RollingBatchCompleted"
+)
+
+type rollingBatchHooks interface {
+	PrepareRollingBatch(ctx context.Context, ordinals []int32) (bool, error)
+	CompleteRollingBatch(ctx context.Context, ordinals []int32) (bool, error)
+}
 
 func CreateTabletCells(ctx context.Context, ytClient yt.Client, bundle string, tabletCellCount int) error {
 	logger := log.FromContext(ctx)
@@ -317,7 +331,7 @@ func handleOnDeleteUpdatingClusterState(
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 			Type:    cmp.GetLabeller().GetPodsUpdatedCondition(),
 			Status:  metav1.ConditionTrue,
-			Reason:  "PodsUpdated",
+			Reason:  consts.ConditionPodsUpdated,
 			Message: "All pods have been updated to new revision",
 		})
 		ytsaurus.UpdateOnDeleteComponentsSummary(ctx, onDeleteWaitingCondition, false)
@@ -333,6 +347,228 @@ func handleOnDeleteUpdatingClusterState(
 	ytsaurus.UpdateOnDeleteComponentsSummary(ctx, onDeleteWaitingCondition, true)
 
 	return ptr.To(ComponentStatusUpdateStep("pods removal")), err
+}
+
+func handleRollingUpdatingClusterState(
+	ctx context.Context,
+	ytsaurus *apiproxy.Ytsaurus,
+	cmp Component,
+	server server,
+	dry bool,
+) (*ComponentStatus, error) {
+	logger := log.FromContext(ctx)
+
+	if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsRemoval {
+		// Not in the pod removal phase, let the component handle other update states.
+		return nil, nil
+	}
+
+	batchSize, ok := getRollingBatchSize(ytsaurus, cmp.GetType(), cmp.GetShortName())
+	if !ok {
+		msg := "rolling update batchSize is not configured"
+		return ptr.To(ComponentStatusBlocked(msg)), yterrors.Err(msg)
+	}
+
+	if dry {
+		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
+	}
+
+	upperBoundCondition := cmp.GetLabeller().GetRollingUpperBoundCondition()
+	currentBatchUpperBound, err := getOrInitRollingUpperBoundOrdinal(ctx, ytsaurus, upperBoundCondition, server.getReplicaCount())
+	if err != nil {
+		msg := fmt.Sprintf("failed to parse rolling progress for %s: %v", cmp.GetFullName(), err)
+		return ptr.To(ComponentStatusBlocked(msg)), err
+	}
+
+	if currentBatchUpperBound < 0 {
+		setPodsUpdatedCondition(ctx, ytsaurus, cmp)
+		return nil, nil
+	}
+
+	currentBatchLowerBound := currentBatchUpperBound - batchSize + 1
+	if currentBatchLowerBound < 0 {
+		currentBatchLowerBound = 0
+	}
+
+	// we need to get all ordinals in the batch in order to do something with the corresponding pods in the yt api
+	batchOrdinals := makeRollingBatchOrdinals(currentBatchLowerBound, currentBatchUpperBound)
+	batchKey := fmt.Sprintf("%d:%d", currentBatchLowerBound, currentBatchUpperBound)
+	batchStateCondition := cmp.GetLabeller().GetRollingBatchStateCondition()
+
+	batchCondition := meta.FindStatusCondition(ytsaurus.GetResource().Status.UpdateStatus.Conditions, batchStateCondition)
+	if batchCondition == nil || batchCondition.Status != metav1.ConditionTrue || batchCondition.Message != batchKey {
+		// Start a new rolling batch.
+		if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
+			if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
+				return status, err
+			}
+		}
+
+		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    batchStateCondition,
+			Status:  metav1.ConditionTrue,
+			Reason:  rollingBatchReasonPreparing,
+			Message: batchKey,
+		})
+		return ptr.To(ComponentStatusUpdateStep("rolling batch preparing")), nil
+	}
+
+	switch batchCondition.Reason {
+	case rollingBatchReasonPreparing:
+		if hooks, ok := cmp.(rollingBatchHooks); ok {
+			// ban pods or something else that should be done before the update happening.
+			ready, err := hooks.PrepareRollingBatch(ctx, batchOrdinals)
+			if err != nil {
+				msg := fmt.Sprintf("rolling batch prepare failed for %s", cmp.GetFullName())
+				logger.Error(err, msg, "batch", batchKey)
+				return ptr.To(ComponentStatusBlocked(msg)), err
+			}
+			if !ready {
+				return ptr.To(ComponentStatusUpdateStep("rolling batch preparing")), nil
+			}
+		}
+
+		server.setRollingUpdateStrategy(currentBatchLowerBound, batchSize)
+		if err := server.Sync(ctx); err != nil {
+			msg := fmt.Sprintf("failed to sync StatefulSet rolling strategy for %s", cmp.GetFullName())
+			logger.Error(err, msg, "partition", currentBatchLowerBound, "maxUnavailable", batchSize)
+			return ptr.To(ComponentStatusBlocked(msg)), err
+		}
+		if err := server.Fetch(ctx); err != nil {
+			msg := fmt.Sprintf("failed to fetch StatefulSet after rolling sync for %s", cmp.GetFullName())
+			logger.Error(err, msg)
+			return ptr.To(ComponentStatusBlocked(msg)), err
+		}
+
+		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    batchStateCondition,
+			Status:  metav1.ConditionTrue,
+			Reason:  rollingBatchReasonUpdating,
+			Message: batchKey,
+		})
+		return ptr.To(ComponentStatusUpdateStep("rolling batch started")), nil
+
+	case rollingBatchReasonUpdating:
+		if !server.arePodOrdinalsUpdatedAndReady(ctx, batchOrdinals) {
+			return ptr.To(ComponentStatusUpdateStep("rolling batch updating")), nil
+		}
+
+		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    batchStateCondition,
+			Status:  metav1.ConditionTrue,
+			Reason:  rollingBatchReasonPostCheck,
+			Message: batchKey,
+		})
+		return ptr.To(ComponentStatusUpdateStep("rolling batch post-check")), nil
+
+	case rollingBatchReasonPostCheck:
+		if hooks, ok := cmp.(rollingBatchHooks); ok {
+			ready, err := hooks.CompleteRollingBatch(ctx, batchOrdinals)
+			if err != nil {
+				msg := fmt.Sprintf("rolling batch completion failed for %s", cmp.GetFullName())
+				logger.Error(err, msg, "batch", batchKey)
+				return ptr.To(ComponentStatusBlocked(msg)), err
+			}
+			if !ready {
+				return ptr.To(ComponentStatusUpdateStep("rolling batch post-check")), nil
+			}
+		}
+
+		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    batchStateCondition,
+			Status:  metav1.ConditionFalse,
+			Reason:  rollingBatchReasonCompleted,
+			Message: batchKey,
+		})
+
+		if currentBatchLowerBound == 0 {
+			updateRollingUpperBoundOrdinal(ctx, ytsaurus, upperBoundCondition, -1)
+			setPodsUpdatedCondition(ctx, ytsaurus, cmp)
+			return nil, nil
+		}
+
+		updateRollingUpperBoundOrdinal(ctx, ytsaurus, upperBoundCondition, currentBatchLowerBound-1)
+		return ptr.To(ComponentStatusUpdateStep("rolling batch completed")), nil
+	}
+
+	// Recover unexpected condition reason by restarting the current batch phase.
+	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    batchStateCondition,
+		Status:  metav1.ConditionTrue,
+		Reason:  rollingBatchReasonPreparing,
+		Message: batchKey,
+	})
+	return ptr.To(ComponentStatusUpdateStep("rolling batch preparing")), nil
+}
+
+func makeRollingBatchOrdinals(lower, upper int32) []int32 {
+	if upper < lower {
+		return nil
+	}
+
+	size := upper - lower + 1
+	ordinals := make([]int32, size)
+	for i := range size {
+		ordinals[i] = lower + i
+	}
+	return ordinals
+}
+
+// getOrInitRollingUpperBoundOrdinal returns the upper bound ordinal for rolling updates.
+// If the condition is not found or not in progress, it initializes it with the last ordinal.
+func getOrInitRollingUpperBoundOrdinal(
+	ctx context.Context,
+	ytsaurus *apiproxy.Ytsaurus,
+	conditionType string,
+	replicas int32,
+) (int32, error) {
+	condition := meta.FindStatusCondition(ytsaurus.GetResource().Status.UpdateStatus.Conditions, conditionType)
+	if condition == nil || condition.Status != metav1.ConditionTrue {
+		// latest pod's ordinal
+		currentBatchUpperBound := replicas - 1
+		updateRollingUpperBoundOrdinal(ctx, ytsaurus, conditionType, currentBatchUpperBound)
+		return currentBatchUpperBound, nil
+	}
+
+	value, err := strconv.ParseInt(condition.Message, 10, 32)
+	if err != nil {
+		return 0, err
+	}
+	return int32(value), nil
+}
+
+func updateRollingUpperBoundOrdinal(ctx context.Context, ytsaurus *apiproxy.Ytsaurus, conditionType string, currentBatchUpperBound int32) {
+	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    conditionType,
+		Status:  metav1.ConditionTrue,
+		Reason:  "RollingProgress",
+		Message: strconv.Itoa(int(currentBatchUpperBound)),
+	})
+}
+
+func setPodsUpdatedCondition(ctx context.Context, ytsaurus *apiproxy.Ytsaurus, cmp Component) {
+	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    cmp.GetLabeller().GetPodsUpdatedCondition(),
+		Status:  metav1.ConditionTrue,
+		Reason:  consts.ConditionPodsUpdated,
+		Message: "All rolling batches were updated",
+	})
+}
+
+func getRollingBatchSize(ytsaurus *apiproxy.Ytsaurus, componentType consts.ComponentType, componentName string) (int32, bool) {
+	for _, selector := range ytsaurus.GetResource().Spec.UpdatePlan {
+		if selector.Component.Type != componentType {
+			continue
+		}
+		if selector.Component.Name != "" && selector.Component.Name != componentName {
+			continue
+		}
+		if selector.Strategy == nil || selector.Strategy.RollingUpdate == nil || selector.Strategy.RollingUpdate.BatchSize == nil {
+			continue
+		}
+		return *selector.Strategy.RollingUpdate.BatchSize, true
+	}
+	return 1, false
 }
 
 func runPrechecks(ctx context.Context, ytsaurus *apiproxy.Ytsaurus, cmp Component) (*ComponentStatus, error) {

@@ -186,6 +186,14 @@ func (l *Labeller) GetCondition(suffix string) string {
 	return l.GetFullComponentName() + suffix
 }
 
+func (l *Labeller) GetRollingBatchStateCondition() string {
+	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionRollingBatchState)
+}
+
+func (l *Labeller) GetRollingUpperBoundCondition() string {
+	return fmt.Sprintf("%s%s", l.GetFullComponentName(), consts.ConditionRollingtUpperBound)
+}
+
 func (l *Labeller) GetReadyCondition() string {
 	return l.GetCondition(consts.ConditionReady)
 }

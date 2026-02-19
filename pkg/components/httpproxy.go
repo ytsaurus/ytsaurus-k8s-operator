@@ -136,6 +136,10 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(hp.ytsaurus, hp) {
 			switch getComponentUpdateStrategy(hp.ytsaurus, consts.HttpProxyType, hp.GetShortName()) {
+			case ytv1.ComponentUpdateModeTypeRollingUpdate:
+				if status, err := handleRollingUpdatingClusterState(ctx, hp.ytsaurus, hp, hp.server, dry); status != nil {
+					return *status, err
+				}
 			case ytv1.ComponentUpdateModeTypeOnDelete:
 				if status, err := handleOnDeleteUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.component, hp.server, dry); status != nil {
 					return *status, err
@@ -197,4 +201,14 @@ func (hp *HttpProxy) Status(ctx context.Context) (ComponentStatus, error) {
 func (hp *HttpProxy) Sync(ctx context.Context) error {
 	_, err := hp.doSync(ctx, false)
 	return err
+}
+
+// PrepareRollingBatch actually does nothing for http-proxies.
+// TODO: server should implement graceful shutdown
+func (hp *HttpProxy) PrepareRollingBatch(ctx context.Context, ordinals []int32) (bool, error) {
+	return true, nil
+}
+
+func (hp *HttpProxy) CompleteRollingBatch(ctx context.Context, ordinals []int32) (bool, error) {
+	return true, nil
 }

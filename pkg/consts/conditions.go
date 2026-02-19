@@ -30,6 +30,8 @@ const (
 	ConditionPodsUpdated           = "PodsUpdated"
 	ConditionPodsRemoved           = "PodsRemoved"
 	ConditionPodsRemovingStarted   = "PodsRemovingStarted"
+	ConditionRollingBatchState     = "RollingBatchState"
+	ConditionRollingtUpperBound    = "RollingUpperBound"
 )
 
 // Update conditions
