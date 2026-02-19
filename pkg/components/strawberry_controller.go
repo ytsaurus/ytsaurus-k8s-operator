@@ -260,10 +260,6 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if c.ytsaurus.IsReadyToUpdate() && c.NeedUpdate() {
-		return SimpleStatus(SyncStatusNeedUpdate), err
-	}
-
 	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(c.ytsaurus, c) {
 			if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {

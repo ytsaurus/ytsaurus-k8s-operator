@@ -374,7 +374,7 @@ func handleRollingUpdatingClusterState(
 	// Init guard: the StatefulSet still differs from desired spec (needUpdate=true),
 	// so this is the start of a new rolling cycle and we must initialize
 	// RollingUpdate strategy with a fresh partition/maxUnavailable.
-	if server.needUpdate() {
+	if status := server.needUpdate(); status.IsNeedUpdate() {
 		server.setUpdateStrategy(appsv1.RollingUpdateStatefulSetStrategyType, totalCount-1, maxUnavailable)
 		if err := server.Sync(ctx); err != nil {
 			msg := fmt.Sprintf("failed to initialize rolling update for %s", cmp.GetFullName())

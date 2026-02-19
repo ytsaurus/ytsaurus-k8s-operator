@@ -26,7 +26,7 @@ type microservice interface {
 	resources.Syncable
 	podsManager
 	needSync() bool
-	needUpdate() bool
+	needUpdate() ComponentStatus
 	getImage() string
 	getHttpService() *resources.HTTPService
 	buildDeployment() *appsv1.Deployment
@@ -188,17 +188,17 @@ func (m *microserviceImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool
 	return true
 }
 
-func (m *microserviceImpl) needUpdate() bool {
+func (m *microserviceImpl) needUpdate() ComponentStatus {
 	if !m.Exists() {
-		return false
+		return ComponentStatusPending("init")
 	}
-
 	if !m.podsImageCorrespondsToSpec() {
-		return true
+		return ComponentStatusNeedUpdate("image update")
 	}
-
-	status, err := m.configs.needReload()
-	return err == nil && status.IsNeedUpdate()
+	if status, err := m.configs.needReload(); err == nil && status.IsNeedUpdate() {
+		return status
+	}
+	return ComponentStatusReady()
 }
 
 func (m *microserviceImpl) podsImageCorrespondsToSpec() bool {
