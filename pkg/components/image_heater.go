@@ -135,7 +135,7 @@ func (ih *ImageHeater) isInitState() bool {
 
 func (ih *ImageHeater) runAtClusterCreationStage(ctx context.Context, dry bool) (ComponentStatus, bool, error) {
 	// If image heater is enabled and cluster is initializing/created, we need to deploy it first.
-	if !ih.ytsaurus.IsImageHeaterEnabled() || !ih.isInitState() {
+	if ih.ytsaurus.GetImageHeater("") == nil || !ih.isInitState() {
 		return ComponentStatus{}, false, nil
 	}
 
