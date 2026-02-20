@@ -44,6 +44,11 @@ spec:
   useIpv4: true
   useIpv6: true
 
+  # clusterFeatures:
+  #   rpcProxyHavePublicAddress: true   # available since 25.3
+  #   httpProxyHaveHttpsAddress: true   # use only HTTPS
+  #   secureClusterTransports: true     # use only secure transports
+
   # To run all components in host network you need at least max(instanceCount) worker nodes due to port clash.
   # hostNetwork: true
 
@@ -75,7 +80,7 @@ spec:
     tlsClientSecret:
       name: ytsaurus-native-cert
     tlsRequired: true # require TLS both by client and server sides
-    tlsInsecure: true # mTLS is not working in release images yet
+    tlsInsecure: false # use mTLS, both sides validates TLS certificates
     tlsPeerAlternativeHostName: "interconnect.ytsaurus-dev.svc.cluster.local"
 
 
@@ -581,6 +586,7 @@ spec:
   dnsNames:
   - "*.rpc-proxies.ytsaurus-dev.svc"
   - "*.rpc-proxies.ytsaurus-dev.svc.cluster.local"
+  - "interconnect.ytsaurus-dev.svc.cluster.local"  # workaround for missing feature "rpcProxyHavePublicAddress"
   issuerRef:
     kind: Issuer
     name: ytsaurus-ca-issuer
