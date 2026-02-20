@@ -1,10 +1,12 @@
 package controllers_test
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -37,6 +39,9 @@ import (
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
 	"go.ytsaurus.tech/yt/go/yterrors"
+
+	metricsdto "github.com/prometheus/client_model/go"
+	metricsfmt "github.com/prometheus/common/expfmt"
 )
 
 func YsonPretty(value any) string {
@@ -166,6 +171,37 @@ func getOperatorMetricsURL(ctx context.Context) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("http://%s/metrics", address), nil
+}
+
+type Metrics map[string]*metricsdto.MetricFamily
+
+func (m Metrics) GetGauge(name string) float64 {
+	for _, metric := range m[name].GetMetric() {
+		return metric.GetGauge().GetValue()
+	}
+	return math.NaN()
+}
+
+func collectMetrics(ctx context.Context, metricsURL string) (Metrics, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, metricsURL, http.NoBody)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	//nolint:errcheck //linter is stupid
+	defer rsp.Body.Close()
+	if rsp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("response: %v", rsp.Status)
+	}
+	var parser metricsfmt.TextParser
+	metrics, err := parser.TextToMetricFamilies(bufio.NewReader(rsp.Body))
+	if err != nil {
+		return nil, err
+	}
+	return metrics, nil
 }
 
 func getComponentPods(ctx context.Context, namespace string) map[string]corev1.Pod {

@@ -189,6 +189,21 @@ var _ = BeforeEach(func() {
 	})
 })
 
+var _ = BeforeEach(func(ctx context.Context) {
+	metricsURL, err := getOperatorMetricsURL(ctx)
+	Expect(err).NotTo(HaveOccurred())
+
+	before, err := collectMetrics(ctx, metricsURL)
+	Expect(err).NotTo(HaveOccurred())
+	startTime := before.GetGauge("process_start_time_seconds")
+
+	DeferCleanup(func(ctx context.Context) {
+		after, err := collectMetrics(ctx, metricsURL)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(after.GetGauge("process_start_time_seconds")).To(Equal(startTime), "process start time")
+	})
+})
+
 func AttachProgressReporterWithContext(parent context.Context, reporter func(context.Context) string) func() {
 	ctx, cancel := context.WithCancel(parent)
 	detach := AttachProgressReporter(func() string {
