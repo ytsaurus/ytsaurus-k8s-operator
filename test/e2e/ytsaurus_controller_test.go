@@ -181,6 +181,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	// NOTE: All context variables must be initialized BeforeEach, to prevent crosstalk.
 	var namespace string
 	var stopEventsLogger func()
+	var imagePullSecrets []corev1.LocalObjectReference
 	var requiredImages []string
 	var objects []client.Object
 	var namespaceWatcher *NamespaceWatcher
@@ -289,6 +290,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		ytsaurus = ytBuilder.Ytsaurus
 		ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{}
 
+		imagePullSecrets = nil
 		requiredImages = nil
 		objects = []client.Object{ytsaurus}
 
@@ -378,6 +380,20 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		// NOTE: Testcase should skip optional cases at "BeforeEach" stage.
 		Expect(ytsaurus.Spec.CoreImage).ToNot(BeEmpty(), "ytsaurus core image is not specified")
 
+		if imagePullSecret := os.Getenv("E2E_IMAGE_PULL_SECRET"); imagePullSecret != "" {
+			By("Creating image pull secret")
+			data, err := os.ReadFile(imagePullSecret)
+			Expect(err).To(Succeed())
+			secret := corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "image-pull-secret"},
+				Type:       corev1.SecretTypeDockerConfigJson,
+				Data:       map[string][]byte{corev1.DockerConfigJsonKey: data},
+			}
+			Expect(k8sClient.Create(ctx, &secret)).Should(Succeed())
+			imagePullSecrets = []corev1.LocalObjectReference{{Name: secret.Name}}
+			ytsaurus.Spec.ImagePullSecrets = imagePullSecrets
+		}
+
 		By("Pulling required images")
 		requiredImages = append(requiredImages, ytsaurus.Spec.CoreImage)
 		if spec := ytsaurus.Spec.QueryTrackers; spec != nil && spec.Image != nil {
@@ -386,7 +402,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		if spec := ytsaurus.Spec.YQLAgents; spec != nil && spec.Image != nil {
 			requiredImages = append(requiredImages, *spec.Image)
 		}
-		pullImages(ctx, namespace, requiredImages, imagePullTimeout)
+		pullImages(ctx, namespace, requiredImages, imagePullTimeout, imagePullSecrets)
 
 		By("Creating resource objects")
 		for _, object := range objects {
