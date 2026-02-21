@@ -150,10 +150,6 @@ func (yqla *YqlAgent) createUpdateScript() string {
 func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if yqla.ytsaurus.IsReadyToUpdate() && yqla.NeedUpdate() {
-		return SimpleStatus(SyncStatusNeedUpdate), err
-	}
-
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(yqla.ytsaurus, yqla) {
 			// Handle bulk update with pre-checks

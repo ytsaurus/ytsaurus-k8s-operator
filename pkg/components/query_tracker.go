@@ -88,10 +88,6 @@ func (qt *QueryTracker) Fetch(ctx context.Context) error {
 func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if qt.ytsaurus.IsReadyToUpdate() && qt.NeedUpdate() {
-		return SimpleStatus(SyncStatusNeedUpdate), err
-	}
-
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(qt.ytsaurus, qt) {
 			// Handle bulk update with pre-checks

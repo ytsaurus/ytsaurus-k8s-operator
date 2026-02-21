@@ -241,8 +241,8 @@ func (tt *Timbertruck) NeedSync() bool {
 	return false
 }
 
-func (tt *Timbertruck) NeedUpdate() bool {
-	return false
+func (tt *Timbertruck) NeedUpdate() ComponentStatus {
+	return ComponentStatus{}
 }
 
 func (tt *Timbertruck) Sync(ctx context.Context) error {
