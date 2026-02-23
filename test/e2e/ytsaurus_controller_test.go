@@ -1816,8 +1816,16 @@ exec "$@"`
 				ytBuilder.Images = images
 				ytBuilder.WithBaseComponents()
 				ytBuilder.WithRPCProxies()
-				ytBuilder.WithQueryTracker()
-				ytBuilder.WithYqlAgent()
+
+				// FIXME(khlebnikov): Bus mTLS in query-tracker is still broken somewhere.
+				if images.QueryTrackerVersion.GreaterThan(version.MustParse("0.1.2")) {
+					By("Adding query-tracker and yql-agent")
+					ytBuilder.WithQueryTracker()
+					ytBuilder.WithYqlAgent()
+				} else {
+					By("Skipping query-tracker and yql-agent")
+				}
+
 				ytBuilder.WithStrawberryController()
 
 				// FIXME(khlebnikov): Workaround for bug in strawberry controller logging.
