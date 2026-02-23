@@ -129,10 +129,6 @@ func (hp *HttpProxy) Fetch(ctx context.Context) error {
 func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if hp.ytsaurus.IsReadyToUpdate() && hp.NeedUpdate() {
-		return SimpleStatus(SyncStatusNeedUpdate), err
-	}
-
 	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(hp.ytsaurus, hp) {
 			switch getComponentUpdateStrategy(hp.ytsaurus, consts.HttpProxyType, hp.GetShortName()) {

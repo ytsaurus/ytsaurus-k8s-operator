@@ -56,10 +56,6 @@ func (bc *BundleController) Exists() bool {
 func (bc *BundleController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if bc.ytsaurus.IsReadyToUpdate() && bc.NeedUpdate() {
-		return SimpleStatus(SyncStatusNeedUpdate), err
-	}
-
 	if bc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if status, err := handleUpdatingClusterState(ctx, bc.ytsaurus, bc, &bc.component, bc.server, dry); status != nil {
 			return *status, err

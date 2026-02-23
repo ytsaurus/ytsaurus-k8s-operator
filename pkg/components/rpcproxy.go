@@ -119,10 +119,6 @@ func (rp *RpcProxy) Fetch(ctx context.Context) error {
 func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if rp.ytsaurus.IsReadyToUpdate() && rp.NeedUpdate() {
-		return SimpleStatus(SyncStatusNeedUpdate), err
-	}
-
 	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(rp.ytsaurus, rp) {
 			switch getComponentUpdateStrategy(rp.ytsaurus, consts.RpcProxyType, rp.GetShortName()) {

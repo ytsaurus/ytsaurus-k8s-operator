@@ -56,10 +56,6 @@ func (d *Discovery) Fetch(ctx context.Context) error {
 func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if d.ytsaurus.IsReadyToUpdate() && d.NeedUpdate() {
-		return SimpleStatus(SyncStatusNeedUpdate), err
-	}
-
 	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(d.ytsaurus, d) {
 			switch getComponentUpdateStrategy(d.ytsaurus, consts.DiscoveryType, d.GetShortName()) {
