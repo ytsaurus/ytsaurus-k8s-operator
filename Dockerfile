@@ -3,7 +3,7 @@ ARG REVISION
 ARG BUILD_DATE
 
 # Build the manager binary
-FROM golang:1.24 AS builder
+FROM mirror.gcr.io/library/golang:1.24 AS builder
 
 ARG VERSION
 
