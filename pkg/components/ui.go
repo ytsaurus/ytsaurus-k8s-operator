@@ -272,10 +272,6 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if u.ytsaurus.IsReadyToUpdate() && u.NeedUpdate() {
-		return SimpleStatus(SyncStatusNeedUpdate), err
-	}
-
 	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(u.ytsaurus, u) {
 			if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {

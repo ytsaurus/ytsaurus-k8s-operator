@@ -7,6 +7,7 @@ metadata:
   namespace: ytsaurus-components
   resourceVersion: "13"
 spec:
+  clusterFeatures: {}
   configOverrides:
     name: test-overrides
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
@@ -130,12 +131,6 @@ spec:
   useShortNames: true
 status:
   conditions:
-  - lastTransitionTime: null
-    message: Image heater idle
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: ImageHeaterReady
   - lastTransitionTime: null
     message: 0.0.0-devel
     observedGeneration: 1

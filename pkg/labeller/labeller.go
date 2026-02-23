@@ -94,6 +94,10 @@ func (l *Labeller) GetComponentShortName() string {
 	return l.getName(consts.GetShortName(l.ComponentType), "")
 }
 
+func (l *Labeller) GetImageHeaterName() string {
+	return l.GetComponentShortName()
+}
+
 func (l *Labeller) GetServerStatefulSetName() string {
 	return l.getName(consts.ComponentStatefulSetPrefix(l.ComponentType), "")
 }

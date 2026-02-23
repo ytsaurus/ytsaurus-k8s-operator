@@ -42,8 +42,14 @@ func (n *baseExecNode) NeedSync() bool {
 	return n.server.needSync(updating) || (updating && n.sidecarConfigNeedsReload())
 }
 
-func (n *baseExecNode) NeedUpdate() bool {
-	return n.server.needUpdate() || n.sidecarConfigNeedsReload()
+func (n *baseExecNode) NeedUpdate() ComponentStatus {
+	if update := n.server.needUpdate(); update.IsNeedUpdate() {
+		return update
+	}
+	if n.sidecarConfigNeedsReload() {
+		return ComponentStatusNeedUpdate("sidecar config update")
+	}
+	return ComponentStatus{}
 }
 
 func (n *baseExecNode) doBuildBase() error {

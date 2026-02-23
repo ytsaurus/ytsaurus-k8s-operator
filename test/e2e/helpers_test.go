@@ -1,10 +1,12 @@
 package controllers_test
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -37,6 +39,9 @@ import (
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
 	"go.ytsaurus.tech/yt/go/yterrors"
+
+	metricsdto "github.com/prometheus/client_model/go"
+	metricsfmt "github.com/prometheus/common/expfmt"
 )
 
 func YsonPretty(value any) string {
@@ -168,6 +173,37 @@ func getOperatorMetricsURL(ctx context.Context) (string, error) {
 	return fmt.Sprintf("http://%s/metrics", address), nil
 }
 
+type Metrics map[string]*metricsdto.MetricFamily
+
+func (m Metrics) GetGauge(name string) float64 {
+	for _, metric := range m[name].GetMetric() {
+		return metric.GetGauge().GetValue()
+	}
+	return math.NaN()
+}
+
+func collectMetrics(ctx context.Context, metricsURL string) (Metrics, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, metricsURL, http.NoBody)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	//nolint:errcheck //linter is stupid
+	defer rsp.Body.Close()
+	if rsp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("response: %v", rsp.Status)
+	}
+	var parser metricsfmt.TextParser
+	metrics, err := parser.TextToMetricFamilies(bufio.NewReader(rsp.Body))
+	if err != nil {
+		return nil, err
+	}
+	return metrics, nil
+}
+
 func getComponentPods(ctx context.Context, namespace string) map[string]corev1.Pod {
 	podlist := corev1.PodList{}
 	noJobPodsReq, err := labels.NewRequirement("job-name", selection.DoesNotExist, []string{})
@@ -202,23 +238,34 @@ func getAllPods(ctx context.Context, namespace string) map[string]corev1.Pod {
 }
 
 type changedObjects struct {
-	Changed, Deleted, Updated, Created []string
+	Unchanged, Changed, Deleted, Updated, Created, Heated []string
 }
 
 func getChangedPods(before, after map[string]corev1.Pod) changedObjects {
 	var ret changedObjects
-	for name := range before {
+	for name, podBefore := range before {
+		if _, ok := podBefore.Labels[consts.ImageHeaterLabelName]; ok {
+			continue
+		}
 		if _, found := after[name]; !found {
 			ret.Deleted = append(ret.Deleted, name)
 		}
 	}
 	for name, podAfter := range after {
+		if heater, ok := podAfter.Labels[consts.ImageHeaterLabelName]; ok {
+			if _, found := before[name]; !found && podAfter.DeletionTimestamp.IsZero() {
+				ret.Heated = append(ret.Heated, heater)
+			}
+			continue
+		}
 		if !podAfter.DeletionTimestamp.IsZero() {
 			ret.Deleted = append(ret.Deleted, name)
 		} else if podBefore, found := before[name]; !found {
 			ret.Created = append(ret.Created, name)
 		} else if !podAfter.CreationTimestamp.Equal(&podBefore.CreationTimestamp) {
 			ret.Updated = append(ret.Updated, name)
+		} else {
+			ret.Unchanged = append(ret.Unchanged, name)
 		}
 	}
 	ret.Changed = append(ret.Changed, ret.Deleted...)
@@ -662,34 +709,6 @@ func fetchStuckPods(ctx context.Context, namespace string) (pending, failed []st
 	}
 
 	return pending, failed
-}
-
-func pullImages(ctx context.Context, namaspace string, images []string, timeout time.Duration) {
-	pod := corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:    namaspace,
-			GenerateName: "pull-images-",
-		},
-		Spec: corev1.PodSpec{
-			RestartPolicy: corev1.RestartPolicyNever,
-		},
-	}
-	for i, image := range images {
-		pod.Spec.Containers = append(pod.Spec.Containers,
-			corev1.Container{
-				Name:            fmt.Sprintf("image%d", i),
-				Image:           image,
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Command:         []string{"true"},
-			},
-		)
-	}
-	Expect(k8sClient.Create(ctx, &pod)).Should(Succeed())
-	EventuallyObject(ctx, &pod, timeout).Should(
-		HaveField("Status.Phase", Not(Or(Equal(corev1.PodPending), Equal(corev1.PodRunning)))),
-	)
-	Expect(pod).Should(HaveField("Status.Phase", Equal(corev1.PodSucceeded)))
-	Expect(k8sClient.Delete(ctx, &pod)).Should(Succeed())
 }
 
 func reissueCertificate(ctx context.Context, cert *certv1.Certificate) {

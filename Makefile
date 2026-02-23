@@ -356,6 +356,7 @@ HELM_INSTALL_ARGS += --set caRootBundle.kind=ConfigMap
 HELM_INSTALL_ARGS += --set caRootBundle.name=ytsaurus-dev-ca-root-bundle
 HELM_INSTALL_ARGS += --set caRootBundle.key=ca-certificates.crt
 HELM_INSTALL_ARGS += --set pprof.enabled=true
+HELM_INSTALL_ARGS += --set controllerManager.manager.env.RECOVER_PANIC=false
 
 .PHONY: helm-install
 helm-install: ## Install helm chart from sources.

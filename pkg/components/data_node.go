@@ -59,10 +59,6 @@ func (n *DataNode) Fetch(ctx context.Context) error {
 func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if n.ytsaurus.IsReadyToUpdate() && n.NeedUpdate() {
-		return SimpleStatus(SyncStatusNeedUpdate), err
-	}
-
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if n.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForImaginaryChunksAbsence {
 			if status, err := n.handleImaginaryChunksMigration(ctx, dry); status != nil {

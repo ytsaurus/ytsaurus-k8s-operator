@@ -73,10 +73,6 @@ func NewTabletNode(
 func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if tn.ytsaurus.IsReadyToUpdate() && tn.NeedUpdate() {
-		return SimpleStatus(SyncStatusNeedUpdate), err
-	}
-
 	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(tn.ytsaurus, tn) {
 			if status, err := handleBulkUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.component, tn.server, dry); status != nil {
