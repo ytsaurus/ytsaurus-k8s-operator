@@ -126,9 +126,7 @@ data:
             };
             "gpu_manager"={
                 "gpu_info_source"={
-                    type="gpu_agent";
-                    address="localhost:23105";
-                    "service_name"="NYT.NGpuAgent.NProto.GpuAgent";
+                    type="nvidia_smi";
                 };
             };
             "job_controller"={
@@ -137,9 +135,7 @@ data:
                 };
                 "gpu_manager"={
                     "gpu_info_source"={
-                        type="gpu_agent";
-                        address="localhost:23105";
-                        "service_name"="NYT.NGpuAgent.NProto.GpuAgent";
+                        type="nvidia_smi";
                     };
                 };
             };

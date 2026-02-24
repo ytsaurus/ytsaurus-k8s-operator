@@ -1544,6 +1544,24 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				// TODO(khlebnikov): Check docker image and resource limits.
 			})
 
+			Context("With nvidia runtime", Label("nvidia"), func() {
+				BeforeEach(func() {
+					if ytBuilder.Images.YtsaurusVersion.LessThan(version.MustParse("25.2.0")) {
+						images := testutil.Images["25.2"]
+						if images.Core == "" {
+							Skip("Ytsaurus version does not support CRI-O")
+						}
+						By("Switching ytsaurus image to 25.2")
+						ytsaurus.Spec.CoreImage = images.Core
+						requiredImages = append(requiredImages, ytsaurus.Spec.CoreImage)
+					}
+
+					ytBuilder.WithNvidiaContainerRuntime()
+				})
+				It("Verify CRI job environment", func(ctx context.Context) {
+				})
+			})
+
 		}) // integration cri
 
 		Context("With CRI-O", Label("cri", "crio"), func() {
