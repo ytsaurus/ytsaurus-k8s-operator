@@ -644,6 +644,9 @@ func (b *YtsaurusBuilder) WithCRIJobEnvironment() {
 
 func (b *YtsaurusBuilder) WithNvidiaContainerRuntime() {
 	for i := range b.Ytsaurus.Spec.ExecNodes {
+		b.Ytsaurus.Spec.ExecNodes[i].GPUManager = &ytv1.GPUManagerSpec{
+			GPUInfoProvider: ptr.To(ytv1.GPUInfoProviderNvidiaSMI),
+		}
 		b.Ytsaurus.Spec.ExecNodes[i].JobEnvironment.Runtime = &ytv1.JobRuntimeSpec{
 			Nvidia: &ytv1.NvidiaRuntimeSpec{},
 		}
