@@ -1043,21 +1043,13 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			var overrides *corev1.ConfigMap
 
 			BeforeEach(func() {
+				By("Adding config overrides")
 				ytBuilder.WithOverrides()
 				overrides = ytBuilder.Overrides
 				objects = append(objects, overrides)
 
-				// configure exec nodes to use CRI environment
-				ytsaurus.Spec.ExecNodes[0].JobEnvironment = &ytv1.JobEnvironmentSpec{
-					CRI: &ytv1.CRIJobEnvironmentSpec{
-						SandboxImage: ptr.To("registry.k8s.io/pause:3.8"),
-					},
-				}
-				ytsaurus.Spec.ExecNodes[0].Locations = append(ytsaurus.Spec.ExecNodes[0].Locations, ytv1.LocationSpec{
-					LocationType: ytv1.LocationTypeImageCache,
-					Path:         "/yt/node-data/image-cache",
-				})
-				ytsaurus.Spec.JobImage = &ytsaurus.Spec.CoreImage
+				By("Adding CRI job environment")
+				ytBuilder.WithCRIJobEnvironment()
 			})
 
 			It("ConfigOverrides update should trigger reconciliation", func(ctx context.Context) {
