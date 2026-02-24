@@ -25,7 +25,9 @@ spec:
         memory: "0"
   ephemeralCluster: true
   execNodes:
-  - instanceCount: 1
+  - gpuManager:
+      gpuInfoProvider: nvidia_smi
+    instanceCount: 1
     jobEnvironment:
       cri:
         apiRetryTimeoutSeconds: 120

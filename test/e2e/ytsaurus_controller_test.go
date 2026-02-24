@@ -181,6 +181,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	// NOTE: All context variables must be initialized BeforeEach, to prevent crosstalk.
 	var namespace string
 	var stopEventsLogger func()
+	var imagePullSecrets []corev1.LocalObjectReference
 	var requiredImages []string
 	var objects []client.Object
 	var namespaceWatcher *NamespaceWatcher
@@ -230,10 +231,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	}
 
 	withRPCTLSProxy := func() {
+		hostNames := []string{generator.GetComponentLabeller(consts.RpcProxyType, "").GetInstanceAddressWildcard()}
+		if !ytsaurus.Spec.ClusterFeatures.RPCProxyHavePublicAddress {
+			By("Adding interconnect FQDN into RPC proxy TLS certificates")
+			hostNames = append(hostNames, ytsaurus.Name)
+		}
+
 		By("Adding RPC proxy TLS certificates")
-		rpcProxyCert := certBuilder.BuildCertificate(ytsaurus.Name+"-rpc-proxy", []string{
-			generator.GetComponentLabeller(consts.RpcProxyType, "").GetInstanceAddressWildcard(),
-		})
+		rpcProxyCert := certBuilder.BuildCertificate(ytsaurus.Name+"-rpc-proxy", hostNames)
 		objects = append(objects, rpcProxyCert)
 
 		ytBuilder.WithRPCProxyTLS = true
@@ -289,6 +294,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		ytsaurus = ytBuilder.Ytsaurus
 		ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{}
 
+		imagePullSecrets = nil
 		requiredImages = nil
 		objects = []client.Object{ytsaurus}
 
@@ -378,6 +384,20 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		// NOTE: Testcase should skip optional cases at "BeforeEach" stage.
 		Expect(ytsaurus.Spec.CoreImage).ToNot(BeEmpty(), "ytsaurus core image is not specified")
 
+		if imagePullSecret := os.Getenv("E2E_IMAGE_PULL_SECRET"); imagePullSecret != "" {
+			By("Creating image pull secret")
+			data, err := os.ReadFile(imagePullSecret)
+			Expect(err).To(Succeed())
+			secret := corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "image-pull-secret"},
+				Type:       corev1.SecretTypeDockerConfigJson,
+				Data:       map[string][]byte{corev1.DockerConfigJsonKey: data},
+			}
+			Expect(k8sClient.Create(ctx, &secret)).Should(Succeed())
+			imagePullSecrets = []corev1.LocalObjectReference{{Name: secret.Name}}
+			ytsaurus.Spec.ImagePullSecrets = imagePullSecrets
+		}
+
 		By("Pulling required images")
 		requiredImages = append(requiredImages, ytsaurus.Spec.CoreImage)
 		if spec := ytsaurus.Spec.QueryTrackers; spec != nil && spec.Image != nil {
@@ -386,7 +406,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		if spec := ytsaurus.Spec.YQLAgents; spec != nil && spec.Image != nil {
 			requiredImages = append(requiredImages, *spec.Image)
 		}
-		pullImages(ctx, namespace, requiredImages, imagePullTimeout)
+		pullImages(ctx, namespace, requiredImages, imagePullTimeout, imagePullSecrets)
 
 		By("Creating resource objects")
 		for _, object := range objects {
@@ -1023,21 +1043,13 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			var overrides *corev1.ConfigMap
 
 			BeforeEach(func() {
+				By("Adding config overrides")
 				ytBuilder.WithOverrides()
 				overrides = ytBuilder.Overrides
 				objects = append(objects, overrides)
 
-				// configure exec nodes to use CRI environment
-				ytsaurus.Spec.ExecNodes[0].JobEnvironment = &ytv1.JobEnvironmentSpec{
-					CRI: &ytv1.CRIJobEnvironmentSpec{
-						SandboxImage: ptr.To("registry.k8s.io/pause:3.8"),
-					},
-				}
-				ytsaurus.Spec.ExecNodes[0].Locations = append(ytsaurus.Spec.ExecNodes[0].Locations, ytv1.LocationSpec{
-					LocationType: ytv1.LocationTypeImageCache,
-					Path:         "/yt/node-data/image-cache",
-				})
-				ytsaurus.Spec.JobImage = &ytsaurus.Spec.CoreImage
+				By("Adding CRI job environment")
+				ytBuilder.WithCRIJobEnvironment()
 			})
 
 			It("ConfigOverrides update should trigger reconciliation", func(ctx context.Context) {
@@ -1532,6 +1544,24 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				// TODO(khlebnikov): Check docker image and resource limits.
 			})
 
+			Context("With nvidia runtime", Label("nvidia"), func() {
+				BeforeEach(func() {
+					if ytBuilder.Images.YtsaurusVersion.LessThan(version.MustParse("25.2.0")) {
+						images := testutil.Images["25.2"]
+						if images.Core == "" {
+							Skip("Ytsaurus version does not support CRI-O")
+						}
+						By("Switching ytsaurus image to 25.2")
+						ytsaurus.Spec.CoreImage = images.Core
+						requiredImages = append(requiredImages, ytsaurus.Spec.CoreImage)
+					}
+
+					ytBuilder.WithNvidiaContainerRuntime()
+				})
+				It("Verify CRI job environment", func(ctx context.Context) {
+				})
+			})
+
 		}) // integration cri
 
 		Context("With CRI-O", Label("cri", "crio"), func() {
@@ -1781,7 +1811,9 @@ exec "$@"`
 				if images.YtsaurusVersion.GreaterThanEqual(version.MustParse("25.3.0")) {
 					By("Enabling RPC proxy public address")
 					ytsaurus.Spec.ClusterFeatures.RPCProxyHavePublicAddress = true
+				}
 
+				if images.YtsaurusVersion.GreaterThanEqual(version.MustParse("25.2.0")) {
 					By("Activating mutual TLS interconnect")
 					ytBuilder.WithNativeTransportTLS(nativeServerCert.Name, nativeClientCert.Name)
 				} else {
@@ -1794,8 +1826,16 @@ exec "$@"`
 				ytBuilder.Images = images
 				ytBuilder.WithBaseComponents()
 				ytBuilder.WithRPCProxies()
-				ytBuilder.WithQueryTracker()
-				ytBuilder.WithYqlAgent()
+
+				// FIXME(khlebnikov): Bus mTLS in query-tracker is still broken somewhere.
+				if images.QueryTrackerVersion.GreaterThan(version.MustParse("0.1.2")) {
+					By("Adding query-tracker and yql-agent")
+					ytBuilder.WithQueryTracker()
+					ytBuilder.WithYqlAgent()
+				} else {
+					By("Skipping query-tracker and yql-agent")
+				}
+
 				ytBuilder.WithStrawberryController()
 
 				// FIXME(khlebnikov): Workaround for bug in strawberry controller logging.

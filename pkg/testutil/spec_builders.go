@@ -32,7 +32,8 @@ const (
 )
 
 type YtsaurusImages struct {
-	YtsaurusVersion version.Version
+	YtsaurusVersion     version.Version
+	QueryTrackerVersion version.Version
 
 	Job          string
 	Core         string
@@ -119,24 +120,26 @@ func init() {
 	}
 
 	for key, yt := range images["YTSAURUS"] {
-		choose := func(name string) string {
+		choose := func(name string) ImageEntry {
 			if e, ok := images[name][yt.Epoch]; ok {
-				return e.Image
+				return e
 			}
-			return images[name][YtsaurusCurrVersion].Image
+			return images[name][YtsaurusCurrVersion]
 		}
 		ytsaurusVersion, err := version.ParseYtsaurusVersion(yt.Version)
 		if err != nil {
 			panic(fmt.Sprintf("key %q version %q - %v", key, yt.Version, err))
 		}
+		queryTracker := choose("QUERY_TRACKER")
 		Images[key] = YtsaurusImages{
-			YtsaurusVersion: *ytsaurusVersion,
+			YtsaurusVersion:     *ytsaurusVersion,
+			QueryTrackerVersion: *version.MustParse(queryTracker.Version),
 
 			Job:          YtsaurusJobImage,
 			Core:         yt.Image,
-			Strawberry:   choose("STRAWBERRY"),
-			Chyt:         choose("CHYT"),
-			QueryTracker: choose("QUERY_TRACKER"),
+			Strawberry:   choose("STRAWBERRY").Image,
+			Chyt:         choose("CHYT").Image,
+			QueryTracker: queryTracker.Image,
 		}
 	}
 
@@ -641,6 +644,9 @@ func (b *YtsaurusBuilder) WithCRIJobEnvironment() {
 
 func (b *YtsaurusBuilder) WithNvidiaContainerRuntime() {
 	for i := range b.Ytsaurus.Spec.ExecNodes {
+		b.Ytsaurus.Spec.ExecNodes[i].GPUManager = &ytv1.GPUManagerSpec{
+			GPUInfoProvider: ptr.To(ytv1.GPUInfoProviderNvidiaSMI),
+		}
 		b.Ytsaurus.Spec.ExecNodes[i].JobEnvironment.Runtime = &ytv1.JobRuntimeSpec{
 			Nvidia: &ytv1.NvidiaRuntimeSpec{},
 		}

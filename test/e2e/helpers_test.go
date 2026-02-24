@@ -664,14 +664,15 @@ func fetchStuckPods(ctx context.Context, namespace string) (pending, failed []st
 	return pending, failed
 }
 
-func pullImages(ctx context.Context, namaspace string, images []string, timeout time.Duration) {
+func pullImages(ctx context.Context, namaspace string, images []string, timeout time.Duration, imagePullSecrets []corev1.LocalObjectReference) {
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:    namaspace,
 			GenerateName: "pull-images-",
 		},
 		Spec: corev1.PodSpec{
-			RestartPolicy: corev1.RestartPolicyNever,
+			RestartPolicy:    corev1.RestartPolicyNever,
+			ImagePullSecrets: imagePullSecrets,
 		},
 	}
 	for i, image := range images {
