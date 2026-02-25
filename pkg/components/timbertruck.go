@@ -53,20 +53,8 @@ func NewTimbertruck(
 
 func (tt *Timbertruck) initTimbertruckUser(ctx context.Context, deliveryLoggers []ComponentLoggers) error {
 	login := consts.TimbertruckUserName
-	token, _ := tt.timbertruckSecret.GetValue(consts.TokenSecretKey)
 
 	ytClient := tt.ytsaurusClient.GetYtClient()
-
-	if ok, err := ytClient.NodeExists(ctx, ypath.Path("//sys/users/"+login), &yt.NodeExistsOptions{}); err != nil {
-		return fmt.Errorf("failed to check if timbertruck user exists: %w", err)
-	} else if ok {
-		return nil
-	}
-
-	_, err := CreateUser(ctx, ytClient, login, "", token)
-	if err != nil {
-		return fmt.Errorf("failed to create timbertruck user: %w", err)
-	}
 
 	logsDeliveryPaths := make(map[string]struct{})
 	for _, logger := range deliveryLoggers {
@@ -95,7 +83,7 @@ func (tt *Timbertruck) initTimbertruckUser(ctx context.Context, deliveryLoggers 
 			return fmt.Errorf("failed to set ACL for logs delivery path %s: %w", logsDeliveryPath, err)
 		}
 	}
-	err = ytClient.SetNode(ctx, ypath.Path("//sys/accounts/sys/@acl/end"), yt.ACE{
+	err := ytClient.SetNode(ctx, ypath.Path("//sys/accounts/sys/@acl/end"), yt.ACE{
 		Action:      "allow",
 		Subjects:    []string{login},
 		Permissions: []yt.Permission{"use"},
@@ -145,20 +133,8 @@ func (tt *Timbertruck) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 		return tt.handleUpdatingState(ctx)
 	}
 
-	if tt.timbertruckSecret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			token := ytconfig.RandString(30)
-			sec := tt.timbertruckSecret.Build()
-			sec.StringData = map[string]string{
-				consts.TokenSecretKey: token,
-			}
-			err = tt.timbertruckSecret.Sync(ctx)
-		}
-		return ComponentStatusWaitingFor(tt.timbertruckSecret.Name()), err
-	}
-
-	if status, err := tt.ytsaurusClient.Status(ctx); !status.IsRunning() {
-		return ComponentStatusBlockedBy(tt.ytsaurusClient.GetFullName()), err
+	if status, err := syncUserToken(ctx, tt.ytsaurusClient, tt.timbertruckSecret, consts.TimbertruckUserName, "", dry); !status.IsRunning() {
+		return status, err
 	}
 
 	if len(tt.tabletNodes) > 0 {

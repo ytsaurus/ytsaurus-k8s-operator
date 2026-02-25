@@ -291,6 +291,11 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			Expect(k8sClient.Create(ctx, ytsaurus)).To(Succeed())
 			controllerObjects = append(controllerObjects, ytsaurus)
 		})
+		By("Creating token secrets to bypass bootstrap", func() {
+			for _, secret := range ytBuilder.BuildTokenSecrets() {
+				Expect(k8sClient.Create(ctx, &secret)).To(Succeed())
+			}
+		})
 	})
 
 	JustBeforeEach(func(ctx context.Context) {

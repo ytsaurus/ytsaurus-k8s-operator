@@ -18,7 +18,10 @@ const (
 	HydraPersistenceUploaderUserName = "robot-hydra-persistence-uploader"
 	UIUserName                       = "robot-ui"
 	StrawberryControllerUserName     = "robot-strawberry-controller"
-	YqlUserName                      = "yql_agent"
+	OperationArchivariusUserName     = "operation_archivarius"
+	QueueAgentUserName               = "queue_agent"
+	QueryTrackerUserName             = "query_tracker"
+	YqlAgentUserName                 = "yql_agent"
 )
 
 const (

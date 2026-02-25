@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"slices"
 	"strings"
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -13,6 +14,7 @@ import (
 	"go.ytsaurus.tech/yt/go/yterrors"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 )
 
 func sha256String(value string) string {
@@ -51,6 +53,7 @@ func createUserCommand(userName, password, token string, isSuperuser bool) []str
 
 func CreateUser(ctx context.Context, yc yt.Client, userName, groupName, initToken string) (token string, err error) {
 	logger := log.FromContext(ctx)
+	logger.Info("Creating user", "userName", userName)
 	userID, err := yc.CreateObject(ctx, yt.NodeUser, &yt.CreateObjectOptions{
 		IgnoreExisting: true,
 		Attributes: map[string]any{
@@ -112,4 +115,48 @@ func CreateUser(ctx context.Context, yc yt.Client, userName, groupName, initToke
 	}
 	logger.Info("User created", "userName", userName, "userID", userID, "groupName", groupName, "tokenPrefix", tokenPrefix)
 	return token, nil
+}
+
+func buildUserCredentialsSecretname(username string) string {
+	return fmt.Sprintf("%s-secret", username)
+}
+
+func syncUserToken(
+	ctx context.Context,
+	client internalYtsaurusClient,
+	secret *resources.StringSecret,
+	userName string,
+	groupName string,
+	dry bool,
+) (ComponentStatus, error) {
+	logger := log.FromContext(ctx)
+	if status, err := client.Status(ctx); err != nil || !status.IsRunning() {
+		return ComponentStatusBlockedBy(client.GetFullName()), err
+	}
+	if token, ok := secret.GetValue(consts.TokenSecretKey); ok && secret.GetUserName() == userName {
+		if client.shouldSkipCypressOperations() {
+			logger.Info("Skipping token validation", "userName", userName)
+			return ComponentStatusReady(), nil
+		}
+		hashedTokens, err := client.GetYtClient().ListUserTokens(ctx, userName, "", nil)
+		if err == nil && slices.Contains(hashedTokens, sha256String(token)) {
+			return ComponentStatusReady(), err
+		}
+		logger.Info("User token need sync", "userName", userName, "tokensCount", len(hashedTokens))
+	}
+	var err error
+	if !dry {
+		var token string
+		token, err = CreateUser(ctx, client.GetYtClient(), userName, groupName, "")
+		if err == nil {
+			secret.Build()
+			secret.SetUserName(userName)
+			secret.SetValue(consts.TokenSecretKey, token)
+			if userName == consts.UIUserName {
+				secret.SetValue(consts.UISecretFileName, fmt.Sprintf("{\"oauthToken\" : \"%s\"}", token))
+			}
+			err = secret.Sync(ctx)
+		}
+	}
+	return ComponentStatusPending(fmt.Sprintf("Updating user %s token in %s", userName, secret.Name())), err
 }

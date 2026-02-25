@@ -208,11 +208,11 @@
     namespace: ytsaurus-components
     resourceVersion: "2"
   lastTimestamp: null
-  message: Issuing bootstrap token for robot-ytsaurus-k8s-operator
+  message: Created YT object yt-cypress-patch (*v1.ConfigMap)
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Bootstrap
+  reason: Reconciliation
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -228,11 +228,11 @@
     namespace: ytsaurus-components
     resourceVersion: "2"
   lastTimestamp: null
-  message: Created YT object yt-client-secret (*v1.Secret)
+  message: Skip patch apply in test
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: CypressPatch
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -289,66 +289,6 @@
     resourceVersion: "3"
   lastTimestamp: null
   message: Created YT object yt-master-init-job-default (*v1.Job)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "3"
-  lastTimestamp: null
-  message: Config client.yson needs creation
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "3"
-  lastTimestamp: null
-  message: Created YT object user-yt-client-init-job-config (*v1.ConfigMap)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "3"
-  lastTimestamp: null
-  message: Created YT object yt-client-init-job-user (*v1.Job)
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -453,46 +393,6 @@
     creationTimestamp: null
     namespace: ytsaurus-components
   reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "5"
-  lastTimestamp: null
-  message: Created YT object yt-cypress-patch (*v1.ConfigMap)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "5"
-  lastTimestamp: null
-  message: Skip patch apply in test
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: CypressPatch
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:

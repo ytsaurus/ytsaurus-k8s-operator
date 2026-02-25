@@ -100,29 +100,23 @@ status:
     status: "True"
     type: DiscoveryReady
   - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: YtsaurusClientReady
+  - lastTransitionTime: null
     message: Init job successfully completed
     observedGeneration: 1
     reason: InitJobCompleted
     status: "True"
     type: defaultMasterInitJobCompleted
   - lastTransitionTime: null
-    message: Init job successfully completed
-    observedGeneration: 1
-    reason: InitJobCompleted
-    status: "True"
-    type: userYtsaurusClientInitJobCompleted
-  - lastTransitionTime: null
     message: yt-master-init-job-default completed
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: MasterReady
-  - lastTransitionTime: null
-    message: Ready
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: YtsaurusClientReady
   - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
