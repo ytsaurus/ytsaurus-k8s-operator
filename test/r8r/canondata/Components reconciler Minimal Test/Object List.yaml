@@ -215,6 +215,7 @@
   resourceVersion: "2"
 - annotations:
     ytsaurus.tech/observed-generation: "1"
+    ytsaurus.tech/user-name: robot-ytsaurus-k8s-operator
   creationTimestamp: null
   generation: 1
   labels:

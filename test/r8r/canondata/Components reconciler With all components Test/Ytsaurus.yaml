@@ -5,7 +5,7 @@ metadata:
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "15"
+  resourceVersion: "16"
 spec:
   caBundle:
     name: ytsaurus-dev-ca.crt
@@ -363,6 +363,12 @@ status:
     observedGeneration: 1
     reason: InitJobCompleted
     status: "True"
+    type: userYtsaurusClientInitJobCompleted
+  - lastTransitionTime: null
+    message: Init job successfully completed
+    observedGeneration: 1
+    reason: InitJobCompleted
+    status: "True"
     type: defaultMasterInitJobCompleted
   - lastTransitionTime: null
     message: yt-master-init-job-default completed
@@ -370,6 +376,12 @@ status:
     reason: Ready
     status: "True"
     type: MasterReady
+  - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: YtsaurusClientReady
   - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
@@ -417,19 +429,7 @@ status:
     observedGeneration: 1
     reason: InitJobCompleted
     status: "True"
-    type: userYtsaurusClientInitJobCompleted
-  - lastTransitionTime: null
-    message: Init job successfully completed
-    observedGeneration: 1
-    reason: InitJobCompleted
-    status: "True"
     type: userStrawberryControllerInitJobCompleted
-  - lastTransitionTime: null
-    message: Ready
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: YtsaurusClientReady
   - lastTransitionTime: null
     message: Init job successfully completed
     observedGeneration: 1

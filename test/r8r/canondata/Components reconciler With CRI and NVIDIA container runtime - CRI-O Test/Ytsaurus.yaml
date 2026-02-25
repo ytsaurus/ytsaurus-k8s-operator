@@ -5,7 +5,7 @@ metadata:
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "12"
+  resourceVersion: "9"
 spec:
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
   discovery:
@@ -152,6 +152,12 @@ status:
     observedGeneration: 1
     reason: InitJobCompleted
     status: "True"
+    type: userYtsaurusClientInitJobCompleted
+  - lastTransitionTime: null
+    message: Init job successfully completed
+    observedGeneration: 1
+    reason: InitJobCompleted
+    status: "True"
     type: defaultMasterInitJobCompleted
   - lastTransitionTime: null
     message: yt-master-init-job-default completed
@@ -164,6 +170,12 @@ status:
     observedGeneration: 1
     reason: Ready
     status: "True"
+    type: YtsaurusClientReady
+  - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
     type: ExecNodeReady
   - lastTransitionTime: null
     message: Ready
@@ -171,18 +183,6 @@ status:
     reason: Ready
     status: "True"
     type: HttpProxyReady
-  - lastTransitionTime: null
-    message: Init job successfully completed
-    observedGeneration: 1
-    reason: InitJobCompleted
-    status: "True"
-    type: userYtsaurusClientInitJobCompleted
-  - lastTransitionTime: null
-    message: Ready
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: YtsaurusClientReady
   observedGeneration: 1
   state: Running
   updateStatus: {}

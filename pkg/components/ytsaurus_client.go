@@ -31,16 +31,17 @@ const (
 	hydraPath = "orchid/monitoring/hydra"
 )
 
+// FIXME(khlebnikov): Bury this.
 type internalYtsaurusClient interface {
 	Component
 	GetYtClient() yt.Client
+	shouldSkipCypressOperations() bool
 }
 
 type YtsaurusClient struct {
 	component
 
-	cfgen     *ytconfig.Generator
-	httpProxy Component
+	cfgen *ytconfig.Generator
 
 	getAllComponents func() []Component
 	configOverrides  *resources.ConfigMap
@@ -55,7 +56,6 @@ type YtsaurusClient struct {
 func NewYtsaurusClient(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
-	httpProxy Component,
 	getAllComponents func() []Component,
 
 ) *YtsaurusClient {
@@ -70,7 +70,6 @@ func NewYtsaurusClient(
 	return &YtsaurusClient{
 		component:        newComponent(l, ytsaurus),
 		cfgen:            cfgen,
-		httpProxy:        httpProxy,
 		getAllComponents: getAllComponents,
 		configOverrides:  configOverrides,
 		cypressPatch: resources.NewConfigMap(
@@ -97,20 +96,25 @@ func (yc *YtsaurusClient) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		yc.secret,
 		yc.initUserJob,
-		yc.httpProxy,
 		yc.configOverrides,
 		yc.cypressPatch,
 	)
 }
 
 func (yc *YtsaurusClient) Exists() bool {
-	return resources.Exists(yc.secret, yc.initUserJob, yc.httpProxy, yc.cypressPatch)
+	return resources.Exists(yc.secret, yc.initUserJob, yc.cypressPatch)
 }
 
 func (yc *YtsaurusClient) createInitUserScript() string {
-	token, _ := yc.secret.GetValue(consts.TokenSecretKey)
+	bootstrapToken, _ := yc.secret.GetValue(consts.BootstrapTokenSecretKey)
+	bootstrapPassword, _ := yc.secret.GetValue(consts.BootstrapPasswordSecretKey)
 	initJob := initJobWithNativeDriverPrologue()
-	return initJob + "\n" + strings.Join(createUserCommand(consts.YtsaurusOperatorUserName, "", token, true), "\n")
+	return initJob + "\n" + strings.Join(createUserCommand(
+		consts.YtsaurusOperatorUserName,
+		bootstrapPassword,
+		bootstrapToken,
+		consts.YtsaurusOperatorUserIsSuperuser,
+	), "\n")
 }
 
 type TabletCellBundleHealth struct {
@@ -385,62 +389,51 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 	return SimpleStatus(SyncStatusUpdating), err
 }
 
+// Token bootstrap sequence:
+// - generate and save bootstrap token and password into secret
+// - create user with bootstrap token and password
+// - connect client using bootstrap token
+// - issue permanent token and save into secret
+// - connect client using permanent token
+// - revoke bootstrap token
+// - revoke bootstrap password
+// - delete bootstrap token and password from secret
 func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-	hpStatus, err := yc.httpProxy.Status(ctx)
-	if err != nil {
-		return hpStatus, err
-	}
-	if !hpStatus.IsRunning() {
-		return ComponentStatusBlockedBy(yc.httpProxy.GetFullName()), err
-	}
-
 	if yc.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			s := yc.secret.Build()
-			s.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
+		if yc.secret.NeedSync(consts.BootstrapTokenSecretKey, "") {
+			var err error
+			if !dry {
+				err = yc.generateBootstrapToken(ctx)
 			}
-			err = yc.secret.Sync(ctx)
+			return ComponentStatusWaitingFor(yc.secret.Name()), err
 		}
-		return ComponentStatusWaitingFor(yc.secret.Name()), err
-	}
-
-	if !dry {
-		yc.initUserJob.SetInitScript(yc.createInitUserScript())
-	}
-	status, err := yc.initUserJob.Sync(ctx, dry)
-	if err != nil || status.SyncStatus != SyncStatusReady {
-		return status, err
+		if !dry {
+			yc.initUserJob.SetInitScript(yc.createInitUserScript())
+		}
+		status, err := yc.initUserJob.Sync(ctx, dry)
+		if err != nil || status.SyncStatus != SyncStatusReady {
+			return status, err
+		}
 	}
 
 	if yc.ytClient == nil {
-		token, _ := yc.secret.GetValue(consts.TokenSecretKey)
-		timeout := time.Second * 10
-		proxy, ok := os.LookupEnv("YTOP_PROXY")
-		disableProxyDiscovery := true
-		if !ok {
-			proxy = yc.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
-			disableProxyDiscovery = false
+		if status, err := yc.initClient(ctx); !status.IsRunning() {
+			return status, err
 		}
-		yc.ytClient, err = ythttp.NewClient(&yt.Config{
-			Proxy:                 proxy,
-			Token:                 token,
-			LightRequestTimeout:   &timeout,
-			DisableProxyDiscovery: disableProxyDiscovery,
-		})
+	}
 
-		if err != nil {
-			return ComponentStatusWaitingFor("ytClient init"), err
+	if !dry && yc.NeedUpdate() {
+		if status, err := yc.updateClientToken(ctx); !status.IsRunning() {
+			return status, err
 		}
 	}
 
 	if yc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if yc.ytsaurus.GetUpdateState() == ytv1.UpdateStateImpossibleToStart {
-			return ComponentStatusReady(), err
+			return ComponentStatusReady(), nil
 		}
 		if dry {
-			return SimpleStatus(SyncStatusUpdating), err
+			return SimpleStatus(SyncStatusUpdating), nil
 		}
 		return yc.handleUpdatingState(ctx)
 	}
@@ -454,7 +447,101 @@ func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus
 		return status, nil
 	}
 
-	return ComponentStatusReady(), err
+	return ComponentStatusReady(), nil
+}
+
+func (yc *YtsaurusClient) generateBootstrapToken(ctx context.Context) error {
+	yc.owner.RecordNormal("Bootstrap", "Issuing bootstrap token for "+consts.YtsaurusOperatorUserName)
+	yc.secret.Build()
+	yc.secret.SetUserName(consts.YtsaurusOperatorUserName)
+	bootstrapToken := consts.BootstrapTokenPrefix + ytconfig.RandString(consts.BootstrapTokenLength)
+	yc.secret.SetValue(consts.BootstrapTokenSecretKey, bootstrapToken)
+	if !consts.YtsaurusOperatorUserIsSuperuser {
+		bootstrapPassword := consts.BootstrapPasswordPrefix + ytconfig.RandString(consts.BootstrapTokenLength)
+		yc.secret.SetValue(consts.BootstrapPasswordSecretKey, bootstrapPassword)
+	}
+	return yc.secret.Sync(ctx)
+}
+
+func (yc *YtsaurusClient) updateClientToken(ctx context.Context) (ComponentStatus, error) {
+	token, haveToken := yc.secret.GetValue(consts.TokenSecretKey)
+	bootstrapToken, haveBootstrap := yc.secret.GetValue(consts.BootstrapTokenSecretKey)
+	if (haveToken && !haveBootstrap && yc.secret.GetUserName() == consts.YtsaurusOperatorUserName) || yc.shouldSkipCypressOperations() {
+		return ComponentStatusReady(), nil
+	}
+
+	yc.owner.RecordNormal("Bootstrap", "Issuing token for "+consts.YtsaurusOperatorUserName)
+
+	var err error
+	bootstrapPassword, _ := yc.secret.GetValue(consts.BootstrapPasswordSecretKey)
+	if !haveToken {
+		token, err = yc.ytClient.IssueToken(ctx, consts.YtsaurusOperatorUserName, bootstrapPassword, nil)
+	} else {
+		err = yc.ytClient.RevokeToken(ctx, consts.YtsaurusOperatorUserName, bootstrapPassword, bootstrapToken, nil)
+		if err == nil {
+			passwordPath := ypath.Path("//sys/users").Child(consts.YtsaurusOperatorUserName).Attr("hashed_password")
+			err = yc.ytClient.RemoveNode(ctx, passwordPath, &yt.RemoveNodeOptions{Force: true})
+		}
+	}
+	yc.ytClient = nil
+	if err == nil {
+		// Save fresh token and at next pass remove bootstrap token/password.
+		yc.secret.Build()
+		yc.secret.SetUserName(consts.YtsaurusOperatorUserName)
+		yc.secret.SetValue(consts.TokenSecretKey, token)
+		if !haveToken && haveBootstrap {
+			yc.secret.SetValue(consts.BootstrapTokenSecretKey, bootstrapToken)
+			if !consts.YtsaurusOperatorUserIsSuperuser {
+				yc.secret.SetValue(consts.BootstrapPasswordSecretKey, bootstrapPassword)
+			}
+		}
+		err = yc.secret.Sync(ctx)
+	}
+
+	if err != nil {
+		return ComponentStatusNeedUpdate(fmt.Sprintf("Cannot update client token: %v", err)), nil
+	}
+	return ComponentStatusPending("Client token has been updated"), nil
+}
+
+func (yc *YtsaurusClient) initClient(ctx context.Context) (ComponentStatus, error) {
+	logger := log.FromContext(ctx)
+
+	token, haveToken := yc.secret.GetValue(consts.TokenSecretKey)
+	if !haveToken {
+		token, _ = yc.secret.GetValue(consts.BootstrapTokenSecretKey)
+	}
+
+	timeout := time.Second * 10
+	proxy, ok := os.LookupEnv("YTOP_PROXY")
+	disableProxyDiscovery := true
+	if !ok {
+		proxy = yc.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
+		disableProxyDiscovery = false
+	}
+	var err error
+	yc.ytClient, err = ythttp.NewClient(&yt.Config{
+		Proxy:                 proxy,
+		Token:                 token,
+		LightRequestTimeout:   &timeout,
+		DisableProxyDiscovery: disableProxyDiscovery,
+	})
+
+	if err == nil && !yc.shouldSkipCypressOperations() {
+		who, whoErr := yc.ytClient.WhoAmI(ctx, nil)
+		err = whoErr
+		if (err != nil && yterrors.ContainsErrorCode(err, yterrors.CodeAuthenticationError)) ||
+			(err == nil && who.Login != consts.YtsaurusOperatorUserName) {
+			yc.ytClient = nil
+			logger.Error(err, "Deleting secret to bootstrap new token for operator", "login", who.Login)
+			err = yc.secret.Delete(ctx)
+		}
+	}
+
+	if err != nil || yc.ytClient == nil {
+		return ComponentStatusPending("ytsaurus client init"), err
+	}
+	return ComponentStatusReady(), nil
 }
 
 func (yc *YtsaurusClient) NeedSyncCypressPatch() ComponentStatus {
@@ -489,7 +576,7 @@ func (yc *YtsaurusClient) NeedSync() bool {
 }
 
 func (yc *YtsaurusClient) NeedUpdate() bool {
-	return false
+	return !yc.secret.NeedSync(consts.BootstrapTokenSecretKey, "")
 }
 
 func (yc *YtsaurusClient) Sync(ctx context.Context) error {

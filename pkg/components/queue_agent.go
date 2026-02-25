@@ -165,11 +165,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 
 	var ytClient yt.Client
 	if qa.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
-		ytClientStatus, err := qa.ytsaurusClient.Status(ctx)
-		if err != nil {
-			return ytClientStatus, err
-		}
-		if ytClientStatus.SyncStatus != SyncStatusReady {
+		if status, err := qa.ytsaurusClient.Status(ctx); !status.IsRunning() {
 			return ComponentStatusBlockedBy(qa.ytsaurusClient.GetFullName()), err
 		}
 
@@ -212,7 +208,7 @@ func (qa *QueueAgent) createUser(ctx context.Context, ytClient yt.Client) (err e
 	logger := log.FromContext(ctx)
 
 	token, _ := qa.secret.GetValue(consts.TokenSecretKey)
-	err = CreateUser(ctx, ytClient, "queue_agent", token, true)
+	_, err = CreateUser(ctx, ytClient, "queue_agent", consts.SuperusersGroupName, token)
 	if err != nil {
 		logger.Error(err, "Creating user 'queue_agent' failed")
 		return err

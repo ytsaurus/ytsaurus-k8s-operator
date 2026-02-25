@@ -7,16 +7,35 @@ const AdminLoginSecret = "login"
 const AdminPasswordSecret = "password"
 const AdminTokenSecret = "token"
 
+const (
+	SuperusersGroupName = "superusers"
+
+	// Superuser does not need password to issue tokens.
+	YtsaurusOperatorUserIsSuperuser = true
+
+	YtsaurusOperatorUserName         = "robot-ytsaurus-k8s-operator"
+	TimbertruckUserName              = "robot-timbertruck"
+	HydraPersistenceUploaderUserName = "robot-hydra-persistence-uploader"
+	UIUserName                       = "robot-ui"
+	StrawberryControllerUserName     = "robot-strawberry-controller"
+	YqlUserName                      = "yql_agent"
+)
+
+const (
+	YtsaurusTokenPrefix        = "ytct-"
+	YtsaurusTokenPrefixLength  = 10
+	YtsaurusTokenMinimalLength = 40
+
+	// Bootstrap password and token for issuing YTsaurus token via API.
+	BootstrapTokenLength    = 30
+	BootstrapPasswordPrefix = "yt-bootstrap-password-"
+	BootstrapTokenPrefix    = "yt-bootstrap-token-"
+
+	BootstrapPasswordSecretKey = "YT_BOOTSTRAP_PASSWORD"
+	BootstrapTokenSecretKey    = "YT_BOOTSTRAP_TOKEN"
+)
+
 const DefaultCABundlePath = "/etc/ssl/certs/ca-certificates.crt"
-
-const HydraPersistenceUploaderUserName = "robot-hydra-persistence-uploader"
-const TimbertruckUserName = "robot-timbertruck"
-
-const UIUserName = "robot-ui"
-const StrawberryControllerUserName = "robot-strawberry-controller"
-const YtsaurusOperatorUserName = "robot-ytsaurus-k8s-operator"
-
-const YqlUserName = "yql_agent"
 const DefaultYqlTokenPath = "/usr/yql_agent_token"
 
 const StartUID = 19500

@@ -52,12 +52,13 @@ func NewComponentManager(
 		return allComponents
 	}
 
+	yc := components.NewYtsaurusClient(cfgen, ytsaurus, getAllComponents)
+
 	m := components.NewMaster(cfgen, ytsaurus)
 	var hps []components.Component
 	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {
 		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
 	}
-	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0], getAllComponents)
 	d := components.NewDiscovery(cfgen, ytsaurus, yc)
 	ih := components.NewImageHeater(cfgen, ytsaurus, getAllComponents)
 

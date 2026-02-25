@@ -63,7 +63,7 @@ func (tt *Timbertruck) initTimbertruckUser(ctx context.Context, deliveryLoggers 
 		return nil
 	}
 
-	err := CreateUser(ctx, ytClient, login, token, false)
+	_, err := CreateUser(ctx, ytClient, login, "", token)
 	if err != nil {
 		return fmt.Errorf("failed to create timbertruck user: %w", err)
 	}
@@ -157,13 +157,8 @@ func (tt *Timbertruck) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 		return ComponentStatusWaitingFor(tt.timbertruckSecret.Name()), err
 	}
 
-	ytClientStatus, err := tt.ytsaurusClient.Status(ctx)
-	if err != nil {
-		return ytClientStatus, err
-	}
-
-	if !ytClientStatus.IsRunning() {
-		return ComponentStatusBlockedBy(tt.ytsaurusClient.GetFullName()), nil
+	if status, err := tt.ytsaurusClient.Status(ctx); !status.IsRunning() {
+		return ComponentStatusBlockedBy(tt.ytsaurusClient.GetFullName()), err
 	}
 
 	if len(tt.tabletNodes) > 0 {
