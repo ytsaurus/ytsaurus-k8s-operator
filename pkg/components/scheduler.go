@@ -260,7 +260,7 @@ func (s *Scheduler) setConditionOpArchiveUpdated(ctx context.Context) {
 
 func (s *Scheduler) createInitUserScript() string {
 	token, _ := s.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand("operation_archivarius", "", token, true)
+	commands := createUserCommand(consts.OperationArchivariusUserName, "", token, true)
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 	}

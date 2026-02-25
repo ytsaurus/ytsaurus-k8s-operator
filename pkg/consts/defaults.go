@@ -7,16 +7,26 @@ const AdminLoginSecret = "login"
 const AdminPasswordSecret = "password"
 const AdminTokenSecret = "token"
 
+const (
+	SuperusersGroupName = "superusers"
+
+	// Superuser does not need password to issue tokens.
+	YtsaurusOperatorUserIsSuperuser = true
+
+	YtsaurusOperatorUserName         = "robot-ytsaurus-k8s-operator"
+	TimbertruckUserName              = "robot-timbertruck"
+	HydraPersistenceUploaderUserName = "robot-hydra-persistence-uploader"
+	UIUserName                       = "robot-ui"
+	StrawberryControllerUserName     = "robot-strawberry-controller"
+	OperationArchivariusUserName     = "operation_archivarius"
+	QueueAgentUserName               = "queue_agent"
+	QueryTrackerUserName             = "query_tracker"
+	YqlAgentUserName                 = "yql_agent"
+	ChytReleaserUserName             = "chyt_releaser"
+	SpytReleaserUserName             = "spyt_releaser"
+)
+
 const DefaultCABundlePath = "/etc/ssl/certs/ca-certificates.crt"
-
-const HydraPersistenceUploaderUserName = "robot-hydra-persistence-uploader"
-const TimbertruckUserName = "robot-timbertruck"
-
-const UIUserName = "robot-ui"
-const StrawberryControllerUserName = "robot-strawberry-controller"
-const YtsaurusOperatorUserName = "robot-ytsaurus-k8s-operator"
-
-const YqlUserName = "yql_agent"
 const DefaultYqlTokenPath = "/usr/yql_agent_token"
 
 const StartUID = 19500

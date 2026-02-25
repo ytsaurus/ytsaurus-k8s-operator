@@ -466,6 +466,16 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		By("Checking that Ytsaurus state is equal to `Running`", func() {
 			EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
 		})
+
+		By("Checking operator token secret", func() {
+			secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "yt-client-secret"}}
+			CurrentlyObject(ctx, secret).Should(And(
+				HaveField("ObjectMeta.Annotations", HaveKeyWithValue(consts.UserNameAnnotationName, consts.YtsaurusOperatorUserName)),
+				HaveField("Data", HaveKeyWithValue(consts.TokenSecretKey, HavePrefix("ytct-"))),
+				HaveField("Data", Not(HaveKey(consts.BootstrapTokenSecretKey))),
+				HaveField("Data", Not(HaveKey(consts.BootstrapPasswordSecretKey))),
+			))
+		})
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
