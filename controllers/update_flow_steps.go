@@ -205,12 +205,15 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 		return stepResultMarkUnsatisfied
 	},
 	ytv1.UpdateStateWaitingForSafeModeEnabled:             flowCheckStatusCondition(consts.ConditionSafeModeEnabled),
+	ytv1.UpdateStateWaitingForBundleControllerSaved:       flowCheckStatusCondition(consts.ConditionBundleControllerSaved),
+	ytv1.UpdateStateWaitingForBundleControllerDisabled:    flowCheckStatusCondition(consts.ConditionBundleControllerDisabled),
 	ytv1.UpdateStateWaitingForTabletCellsSaving:           flowCheckStatusCondition(consts.ConditionTabletCellsSaved),
 	ytv1.UpdateStateWaitingForTabletCellsRemovingStart:    flowCheckStatusCondition(consts.ConditionTabletCellsRemovingStarted),
 	ytv1.UpdateStateWaitingForTabletCellsRemoved:          flowCheckStatusCondition(consts.ConditionTabletCellsRemoved),
 	ytv1.UpdateStateWaitingForImaginaryChunksAbsence:      flowCheckStatusCondition(consts.ConditionDataNodesWithImaginaryChunksAbsent),
 	ytv1.UpdateStateWaitingForSnapshots:                   flowCheckStatusCondition(consts.ConditionSnaphotsSaved),
 	ytv1.UpdateStateWaitingForTabletCellsRecovery:         flowCheckStatusCondition(consts.ConditionTabletCellsRecovered),
+	ytv1.UpdateStateWaitingForBundleControllerRecovery:    flowCheckStatusCondition(consts.ConditionBundleControllerRecovered),
 	ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:    flowCheckStatusCondition(consts.ConditionOpArchivePreparedForUpdating),
 	ytv1.UpdateStateWaitingForOpArchiveUpdate:             flowCheckStatusCondition(consts.ConditionOpArchiveUpdated),
 	ytv1.UpdateStateWaitingForSidecarsInitializingPrepare: flowCheckStatusCondition(consts.ConditionSidecarsPreparedForInitializing),
@@ -273,6 +276,8 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		st(ytv1.UpdateStateWaitingForSafeModeEnabled),
 	).chainIf(
 		updTablet,
+		st(ytv1.UpdateStateWaitingForBundleControllerSaved),
+		st(ytv1.UpdateStateWaitingForBundleControllerDisabled),
 		st(ytv1.UpdateStateWaitingForTabletCellsSaving),
 		st(ytv1.UpdateStateWaitingForTabletCellsRemovingStart),
 		st(ytv1.UpdateStateWaitingForTabletCellsRemoved),
@@ -297,6 +302,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 	).chainIf(
 		updTablet,
 		st(ytv1.UpdateStateWaitingForTabletCellsRecovery),
+		st(ytv1.UpdateStateWaitingForBundleControllerRecovery),
 	).chainIf(
 		updScheduler,
 		st(ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare),

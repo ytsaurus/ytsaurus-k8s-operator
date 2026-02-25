@@ -986,6 +986,8 @@ const (
 	UpdateStatePossibilityCheck                      UpdateState = "PossibilityCheck"
 	UpdateStateImpossibleToStart                     UpdateState = "ImpossibleToStart"
 	UpdateStateWaitingForSafeModeEnabled             UpdateState = "WaitingForSafeModeEnabled"
+	UpdateStateWaitingForBundleControllerSaved       UpdateState = "WaitingForBundleControllerSaved"
+	UpdateStateWaitingForBundleControllerDisabled    UpdateState = "WaitingForBundleControllerDisabled"
 	UpdateStateWaitingForTabletCellsSaving           UpdateState = "WaitingForTabletCellsSaving"
 	UpdateStateWaitingForTabletCellsRemovingStart    UpdateState = "WaitingForTabletCellsRemovingStart"
 	UpdateStateWaitingForTabletCellsRemoved          UpdateState = "WaitingForTabletCellsRemoved"
@@ -996,6 +998,7 @@ const (
 	UpdateStateWaitingForMasterExitReadOnly          UpdateState = "WaitingForMasterExitReadOnly"
 	UpdateStateWaitingForCypressPatch                UpdateState = "WaitingForCypressPatch"
 	UpdateStateWaitingForTabletCellsRecovery         UpdateState = "WaitingForTabletCellsRecovery"
+	UpdateStateWaitingForBundleControllerRecovery    UpdateState = "WaitingForBundleControllerRecovery"
 	UpdateStateWaitingForOpArchiveUpdatingPrepare    UpdateState = "WaitingForOpArchiveUpdatingPrepare"
 	UpdateStateWaitingForOpArchiveUpdate             UpdateState = "WaitingForOpArchiveUpdate"
 	UpdateStateWaitingForSidecarsInitializingPrepare UpdateState = "WaitingForSidecarsInitializingPrepare"
@@ -1013,6 +1016,10 @@ const (
 type TabletCellBundleInfo struct {
 	Name            string `yson:",value" json:"name"`
 	TabletCellCount int    `yson:"tablet_cell_count,attr" json:"tabletCellCount"`
+}
+
+type BundleControllerInfo struct {
+	Disabled *bool `json:"disabled,omitempty"`
 }
 
 type UpdateSelector string
@@ -1102,6 +1109,8 @@ type UpdateStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 	// Snapshot of tablet cell bundles.
 	TabletCellBundles []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
+	// Snapshot of bundle controller info.
+	BundleController *BundleControllerInfo `json:"bundleController,omitempty"`
 }
 
 type Component struct {

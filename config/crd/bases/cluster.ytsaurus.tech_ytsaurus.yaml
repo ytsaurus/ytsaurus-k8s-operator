@@ -36934,6 +36934,12 @@ spec:
                   blockedComponentsSummary:
                     description: Summary for kubectl column.
                     type: string
+                  bundleController:
+                    description: Snapshot of bundle controller info.
+                    properties:
+                      disabled:
+                        type: boolean
+                    type: object
                   conditions:
                     description: Update progress.
                     items:
