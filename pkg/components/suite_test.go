@@ -223,6 +223,10 @@ func (fyc *FakeYtsaurusClient) GetYtClient() yt.Client {
 	return fyc.client
 }
 
+func (fyc *FakeYtsaurusClient) shouldSkipCypressOperations() bool {
+	return false
+}
+
 func (fyc *FakeYtsaurusClient) SetStatus(status ComponentStatus) {
 	fyc.status = status
 }

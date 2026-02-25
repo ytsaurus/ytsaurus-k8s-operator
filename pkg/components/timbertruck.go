@@ -45,7 +45,7 @@ func NewTimbertruck(
 		ytsaurusClient: yc,
 		ytsaurus:       ytsaurus,
 		timbertruckSecret: resources.NewStringSecret(
-			buildUserCredentialsSecretname(consts.TimbertruckUserName),
+			l.GetSecretNameForUser(consts.TimbertruckUserName),
 			l,
 			ytsaurus),
 	}
@@ -63,7 +63,7 @@ func (tt *Timbertruck) initTimbertruckUser(ctx context.Context, deliveryLoggers 
 		return nil
 	}
 
-	err := CreateUser(ctx, ytClient, login, token, false)
+	_, err := createUser(ctx, ytClient, login, "", token)
 	if err != nil {
 		return fmt.Errorf("failed to create timbertruck user: %w", err)
 	}
@@ -453,7 +453,7 @@ func checkAndAddTimbertruckToPodSpec(timbertruck *ytv1.TimbertruckSpec, podSpec 
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: buildUserCredentialsSecretname(consts.TimbertruckUserName),
+							Name: labeler.GetSecretNameForUser(consts.TimbertruckUserName),
 						},
 						Key: consts.TokenSecretKey,
 					},

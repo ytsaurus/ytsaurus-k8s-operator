@@ -112,8 +112,8 @@ func (yqla *YqlAgent) GetCypressPatch() ypatch.PatchSet {
 
 func (yqla *YqlAgent) initUsers() string {
 	token, _ := yqla.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand(consts.YqlUserName, "", token, true)
-	commands = append(commands, createUserCommand("yql_agent", "", "", true)...)
+	commands := createUserCommand(consts.YqlAgentUserName, "", token, true)
+	commands = append(commands, createUserCommand(consts.YqlAgentUserName, "", "", true)...)
 	return strings.Join(commands, "\n")
 }
 

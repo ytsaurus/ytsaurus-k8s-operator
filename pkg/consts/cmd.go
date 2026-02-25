@@ -49,7 +49,10 @@ const (
 	SSLCertFileKey      = "SSL_CERT_FILE"
 	SSLCertDirKey       = "SSL_CERT_DIR"
 	RequestsCABundleKey = "REQUESTS_CA_BUNDLE"
-	TokenSecretKey      = "YT_TOKEN"
+
+	TokenSecretKey             = "YT_TOKEN"
+	BootstrapTokenSecretKey    = "YT_BOOTSTRAP_TOKEN"
+	BootstrapPasswordSecretKey = "YT_BOOTSTRAP_PASSWORD"
 )
 
 const (

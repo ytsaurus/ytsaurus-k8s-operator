@@ -170,6 +170,11 @@ func (l *Labeller) GetSecretName() string {
 	return fmt.Sprintf("%s-secret", l.GetFullComponentLabel())
 }
 
+// FIXME(khlebnikov): This is broken without UseShortNames.
+func (l *Labeller) GetSecretNameForUser(userName string) string {
+	return fmt.Sprintf("%s-secret", userName)
+}
+
 func (l *Labeller) GetMainConfigMapName() string {
 	return fmt.Sprintf("%s-config", l.GetFullComponentLabel())
 }

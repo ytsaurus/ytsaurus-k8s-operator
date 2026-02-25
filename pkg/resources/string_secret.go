@@ -1,9 +1,14 @@
 package resources
 
 import (
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
+	"context"
+
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 )
 
 type StringSecret struct {
@@ -22,6 +27,14 @@ func NewStringSecret(name string, reconciler *labeller.Labeller, apiProxy apipro
 	}
 }
 
+func (s *StringSecret) GetUserName() string {
+	return s.oldObject.Annotations[consts.UserNameAnnotationName]
+}
+
+func (s *StringSecret) SetUserName(user string) {
+	metav1.SetMetaDataAnnotation(&s.newObject.ObjectMeta, consts.UserNameAnnotationName, user)
+}
+
 func (s *StringSecret) GetValue(key string) (string, bool) {
 	if value, ok := s.oldObject.Data[key]; ok {
 		return string(value), true
@@ -31,6 +44,10 @@ func (s *StringSecret) GetValue(key string) (string, bool) {
 		return value, true
 	}
 	return "", false
+}
+
+func (s *StringSecret) SetValue(key, value string) {
+	s.newObject.Data[key] = []byte(value)
 }
 
 func (s *StringSecret) GetEnvSource() corev1.EnvFromSource {
@@ -44,8 +61,11 @@ func (s *StringSecret) GetEnvSource() corev1.EnvFromSource {
 }
 
 func (s *StringSecret) Build() *corev1.Secret {
-	s.newObject.ObjectMeta = s.labeller.GetObjectMeta(s.name)
-	s.newObject.Type = corev1.SecretTypeOpaque
+	s.newObject = &corev1.Secret{
+		ObjectMeta: s.labeller.GetObjectMeta(s.name),
+		Data:       map[string][]byte{},
+		Type:       corev1.SecretTypeOpaque,
+	}
 	return s.newObject
 }
 
@@ -64,4 +84,8 @@ func (s *StringSecret) NeedSync(key, value string) bool {
 	}
 
 	return value != v
+}
+
+func (s *StringSecret) Delete(ctx context.Context) error {
+	return s.proxy.DeleteObject(ctx, s.oldObject)
 }
