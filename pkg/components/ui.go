@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -20,18 +19,21 @@ import (
 type UI struct {
 	microserviceComponent
 
-	cfgen        *ytconfig.Generator
-	initJob      *InitJob
-	master       Component
-	secret       *resources.StringSecret
-	caRootBundle *resources.CABundle
-	caBundle     *resources.CABundle
+	cfgen          *ytconfig.Generator
+	ytsaurusClient *YtsaurusClient
+	secret         *resources.StringSecret
+	caRootBundle   *resources.CABundle
+	caBundle       *resources.CABundle
 }
 
 const UIClustersConfigFileName = "clusters-config.json"
 const UICustomConfigFileName = "common.js"
 
-func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Component) *UI {
+func NewUI(
+	cfgen *ytconfig.Generator,
+	ytsaurus *apiproxy.Ytsaurus,
+	client *YtsaurusClient,
+) *UI {
 	l := cfgen.GetComponentLabeller(consts.UIType, "")
 
 	resource := ytsaurus.GetResource()
@@ -70,51 +72,25 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		},
 
 		cfgen: cfgen,
-		initJob: NewInitJobForYtsaurus(
-			l,
-			ytsaurus,
-			"default",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig,
-			&ytv1.InstanceSpec{
-				PodSpec: resource.Spec.UI.PodSpec,
-			},
-		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
 			ytsaurus),
-		caRootBundle: resources.NewCARootBundle(resource.Spec.CARootBundle),
-		caBundle:     resources.NewCABundle(resource.Spec.CABundle),
-		master:       master,
+		caRootBundle:   resources.NewCARootBundle(resource.Spec.CARootBundle),
+		caBundle:       resources.NewCABundle(resource.Spec.CABundle),
+		ytsaurusClient: client,
 	}
 }
 
 func (u *UI) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		u.microservice,
-		u.initJob,
 		u.secret,
 	)
 }
 
 func (u *UI) Exists() bool {
-	return resources.Exists(u.microservice, u.initJob, u.secret)
-}
-
-func (u *UI) initUser() string {
-	token, _ := u.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand(consts.UIUserName, "", token, false)
-	return strings.Join(commands, "\n")
-}
-
-func (u *UI) createInitScript() string {
-	script := []string{
-		initJobWithNativeDriverPrologue(),
-		u.initUser(),
-	}
-
-	return strings.Join(script, "\n")
+	return resources.Exists(u.microservice, u.secret)
 }
 
 func (u *UI) syncComponents(ctx context.Context) (err error) {
@@ -289,28 +265,7 @@ func (u *UI) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		}
 	}
 
-	if masterStatus := u.master.GetStatus(); !masterStatus.IsRunning() {
-		return masterStatus.Blocker(), nil
-	}
-
-	if u.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			token := ytconfig.RandString(30)
-			s := u.secret.Build()
-			s.StringData = map[string]string{
-				consts.UISecretFileName: fmt.Sprintf("{\"oauthToken\" : \"%s\"}", token),
-				consts.TokenSecretKey:   token,
-			}
-			err = u.secret.Sync(ctx)
-		}
-		return ComponentStatusWaitingFor(u.secret.Name()), err
-	}
-
-	if !dry {
-		u.initJob.SetInitScript(u.createInitScript())
-	}
-	status, err := u.initJob.Sync(ctx, dry)
-	if err != nil || status.SyncStatus != SyncStatusReady {
+	if status, err := syncUserToken(ctx, u.ytsaurusClient, u.secret, consts.UIUserName, "", dry); err != nil || !status.IsRunning() {
 		return status, err
 	}
 
