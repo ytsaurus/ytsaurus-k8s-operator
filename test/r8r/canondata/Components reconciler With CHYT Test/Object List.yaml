@@ -193,6 +193,48 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
+  generation: 1
+  labels:
+    app.kubernetes.io/component: yt-master
+    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
+    app.kubernetes.io/name: yt-master
+    app.kubernetes.io/part-of: yt-test-ytsaurus
+    yt_component: test-ytsaurus-yt-master
+    ytsaurus.tech/cluster-name: test-ytsaurus
+  name: robot-hydra-persistence-uploader-secret
+  namespace: ytsaurus-components
+  ownerReferences:
+  - apiVersion: cluster.ytsaurus.tech/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Ytsaurus
+    name: test-ytsaurus
+    uid: ""
+  resourceVersion: "1"
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
+  generation: 1
+  labels:
+    app.kubernetes.io/component: yt-timbertruck
+    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
+    app.kubernetes.io/name: yt-timbertruck
+    app.kubernetes.io/part-of: yt-test-ytsaurus
+    yt_component: test-ytsaurus-yt-timbertruck
+    ytsaurus.tech/cluster-name: test-ytsaurus
+  name: robot-timbertruck-secret
+  namespace: ytsaurus-components
+  ownerReferences:
+  - apiVersion: cluster.ytsaurus.tech/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Ytsaurus
+    name: test-ytsaurus
+    uid: ""
+  resourceVersion: "1"
+- annotations:
     ytsaurus.tech/config-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
@@ -283,6 +325,27 @@
   creationTimestamp: null
   generation: 1
   labels:
+    app.kubernetes.io/component: yt-chyt-test-ytsaurus
+    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
+    app.kubernetes.io/name: yt-chyt
+    app.kubernetes.io/part-of: yt-test-ytsaurus
+    yt_component: test-ytsaurus-yt-chyt-test-ytsaurus
+    ytsaurus.tech/cluster-name: test-ytsaurus
+  name: yt-chyt-test-ytsaurus-secret
+  namespace: ytsaurus-components
+  ownerReferences:
+  - apiVersion: cluster.ytsaurus.tech/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Chyt
+    name: test-ytsaurus
+    uid: ""
+  resourceVersion: "1"
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
+  generation: 1
+  labels:
     app.kubernetes.io/component: yt-client
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
     app.kubernetes.io/name: yt-client
@@ -299,6 +362,27 @@
     name: test-ytsaurus
     uid: ""
   resourceVersion: "2"
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
+  generation: 1
+  labels:
+    app.kubernetes.io/component: yt-client
+    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
+    app.kubernetes.io/name: yt-client
+    app.kubernetes.io/part-of: yt-test-ytsaurus
+    yt_component: test-ytsaurus-yt-client
+    ytsaurus.tech/cluster-name: test-ytsaurus
+  name: yt-client-secret
+  namespace: ytsaurus-components
+  ownerReferences:
+  - apiVersion: cluster.ytsaurus.tech/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Ytsaurus
+    name: test-ytsaurus
+    uid: ""
+  resourceVersion: "1"
 - annotations:
     kubernetes.io/description: ""
     ytsaurus.tech/observed-generation: "1"
