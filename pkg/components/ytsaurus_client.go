@@ -57,6 +57,7 @@ func NewYtsaurusClient(
 	ytsaurus *apiproxy.Ytsaurus,
 	httpProxy Component,
 	getAllComponents func() []Component,
+
 ) *YtsaurusClient {
 	l := cfgen.GetComponentLabeller(consts.YtsaurusClientType, "")
 	resource := ytsaurus.GetResource()
@@ -482,6 +483,7 @@ func (yc *YtsaurusClient) Sync(ctx context.Context, dry bool) (ComponentStatus, 
 			LightRequestTimeout:   &timeout,
 			DisableProxyDiscovery: disableProxyDiscovery,
 		})
+
 		if err != nil {
 			return ComponentStatusWaitingFor("ytClient init"), err
 		}
@@ -597,7 +599,6 @@ func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 func (yc *YtsaurusClient) EnableSafeMode(ctx context.Context) error {
 	return yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), true, nil)
 }
-
 func (yc *YtsaurusClient) DisableSafeMode(ctx context.Context) error {
 	return yc.ytClient.SetNode(ctx, ypath.Path("//sys/@enable_safe_mode"), false, nil)
 }
@@ -810,12 +811,12 @@ func (yc *YtsaurusClient) GetTabletCells(ctx context.Context) ([]ytv1.TabletCell
 		&tabletCellBundles,
 		&yt.ListNodeOptions{Attributes: []string{"tablet_cell_count"}},
 	)
+
 	if err != nil {
 		return nil, err
 	}
 	return tabletCellBundles, nil
 }
-
 func (yc *YtsaurusClient) RemoveTabletCells(ctx context.Context) error {
 	var tabletCells []string
 	err := yc.ytClient.ListNode(
@@ -823,6 +824,7 @@ func (yc *YtsaurusClient) RemoveTabletCells(ctx context.Context) error {
 		ypath.Path("//sys/tablet_cells"),
 		&tabletCells,
 		nil)
+
 	if err != nil {
 		return err
 	}
@@ -838,7 +840,6 @@ func (yc *YtsaurusClient) RemoveTabletCells(ctx context.Context) error {
 	}
 	return nil
 }
-
 func (yc *YtsaurusClient) AreTabletCellsRemoved(ctx context.Context) (bool, error) {
 	var tabletCells []string
 	err := yc.ytClient.ListNode(
@@ -846,6 +847,7 @@ func (yc *YtsaurusClient) AreTabletCellsRemoved(ctx context.Context) (bool, erro
 		ypath.Path("//sys/tablet_cells"),
 		&tabletCells,
 		nil)
+
 	if err != nil {
 		return false, err
 	}
@@ -855,7 +857,6 @@ func (yc *YtsaurusClient) AreTabletCellsRemoved(ctx context.Context) (bool, erro
 	}
 	return true, nil
 }
-
 func (yc *YtsaurusClient) RecoverTableCells(ctx context.Context, bundles []ytv1.TabletCellBundleInfo) error {
 	for _, bundle := range bundles {
 		err := CreateTabletCells(ctx, yc.ytClient, bundle.Name, bundle.TabletCellCount)
@@ -923,8 +924,7 @@ func (yc *YtsaurusClient) checkMastersQuorumHealth(ctx context.Context) (string,
 	cypressPath := consts.ComponentCypressPath(consts.MasterType)
 
 	err := yc.ytClient.ListNode(ctx, ypath.Path(cypressPath), &primaryMastersWithMaintenance, &yt.ListNodeOptions{
-		Attributes: []string{"maintenance"},
-	})
+		Attributes: []string{"maintenance"}})
 	if err != nil {
 		return "", err
 	}
@@ -984,7 +984,6 @@ func (yc *YtsaurusClient) GetMasterMonitoringPaths(ctx context.Context) ([]strin
 	}
 	return monitoringPaths, nil
 }
-
 func (yc *YtsaurusClient) BuildMasterSnapshots(ctx context.Context) error {
 	_, err := yc.ytClient.BuildMasterSnapshots(ctx, &yt.BuildMasterSnapshotsOptions{
 		WaitForSnapshotCompletion: ptr.To(true),
@@ -993,7 +992,6 @@ func (yc *YtsaurusClient) BuildMasterSnapshots(ctx context.Context) error {
 
 	return err
 }
-
 func (yc *YtsaurusClient) AreMasterSnapshotsBuilt(ctx context.Context, monitoringPaths []string) (bool, error) {
 	for _, monitoringPath := range monitoringPaths {
 		var masterHydra MasterHydra
