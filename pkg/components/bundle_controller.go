@@ -29,8 +29,11 @@ func NewBundleController(
 		ytsaurus,
 		&resource.Spec.BundleController.InstanceSpec,
 		"/usr/bin/ytserver-bundle-controller",
-		"ytserver-bundle-controller.yson",
-		func() ([]byte, error) { return cfgen.GetBundleControllerConfig(resource.Spec.BundleController) },
+		[]ConfigGenerator{{
+			"ytserver-bundle-controller.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetBundleControllerConfig(resource.Spec.BundleController) },
+		}},
 		consts.BundleControllerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

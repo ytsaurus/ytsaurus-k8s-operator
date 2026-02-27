@@ -75,8 +75,18 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		ytsaurus,
 		&resource.Spec.PrimaryMasters.InstanceSpec,
 		"/usr/bin/ytserver-master",
-		"ytserver-master.yson",
-		func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
+		[]ConfigGenerator{
+			{
+				"ytserver-master.yson",
+				ConfigFormatYson,
+				func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
+			},
+			{
+				consts.ClientConfigFileName,
+				ConfigFormatYson,
+				cfgen.GetNativeClientConfig,
+			},
+		},
 		consts.MasterMonitoringPort,
 		buildMasterOptions(resource)...,
 	)
@@ -465,6 +475,8 @@ func (m *Master) Sync(ctx context.Context) error {
 func (m *Master) doServerSync(ctx context.Context) error {
 	statefulSet := m.server.buildStatefulSet()
 	podSpec := &statefulSet.Spec.Template.Spec
+	podSpec.Containers[0].Env = append(podSpec.Containers[0].Env, getNativeClientConfigEnv()...)
+
 	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
 
 	if primaryMastersSpec.HydraPersistenceUploader != nil && primaryMastersSpec.HydraPersistenceUploader.Image != nil {

@@ -77,8 +77,8 @@ func newServer(
 	l *labeller.Labeller,
 	ytsaurus *apiproxy.Ytsaurus,
 	instanceSpec *ytv1.InstanceSpec,
-	binaryPath, configFileName string,
-	generator ConfigGeneratorFunc,
+	binaryPath string,
+	generators []ConfigGenerator,
 	defaultMonitoringPort int32,
 	options ...Option,
 ) server {
@@ -88,8 +88,8 @@ func newServer(
 		ytsaurus.GetCommonSpec(),
 		ytsaurus.GetCommonPodSpec(),
 		instanceSpec,
-		binaryPath, configFileName,
-		generator,
+		binaryPath,
+		generators,
 		defaultMonitoringPort,
 		options...,
 	)
@@ -101,8 +101,8 @@ func newServerConfigured(
 	commonSpec *ytv1.CommonSpec,
 	commonPodSpec *ytv1.PodSpec,
 	instanceSpec *ytv1.InstanceSpec,
-	binaryPath, configFileName string,
-	generator ConfigGeneratorFunc,
+	binaryPath string,
+	generators []ConfigGenerator,
 	defaultMonitoringPort int32,
 	optFuncs ...Option,
 ) server {
@@ -156,9 +156,8 @@ func newServerConfigured(
 		proxy,
 		l.GetMainConfigMapName(),
 		commonSpec.ConfigOverrides,
+		generators...,
 	)
-
-	configs.AddGenerator(configFileName, ConfigFormatYson, generator)
 
 	return &serverImpl{
 		labeller:      l,
@@ -443,13 +442,12 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		}
 	}
 
-	fileNames := s.configs.GetFileNames()
-	if len(fileNames) != 1 {
-		log.Panicf("expected exactly one config filename, found %v", len(fileNames))
+	if len(s.configs.generators) < 1 {
+		log.Panicf("expected at least one config file")
 	}
+	filename := s.configs.generators[0].FileName
 
-	configPostprocessingCommand := getConfigPostprocessingCommand(fileNames[0])
-	defaultEnvVars := getDefaultEnv()
+	configPostprocessingCommand := getConfigPostprocessingCommand(filename)
 
 	var readinessProbeParams ytv1.HealthcheckProbeParams
 	if s.instanceSpec.ReadinessProbeParams != nil {
@@ -458,7 +456,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 
 	command := make([]string, 0, 3+len(s.instanceSpec.EntrypointWrapper))
 	command = append(command, s.instanceSpec.EntrypointWrapper...)
-	command = append(command, s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, fileNames[0]))
+	command = append(command, s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, filename))
 
 	podSpec := &statefulSet.Spec.Template.Spec
 	*podSpec = corev1.PodSpec{
@@ -474,7 +472,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Image:        s.image,
 				Name:         consts.YTServerContainerName,
 				Command:      command,
-				Env:          defaultEnvVars,
+				Env:          getDefaultEnv(),
 				VolumeMounts: volumeMounts,
 				Ports:        s.componentContainerPorts,
 				Resources:    *s.instanceSpec.Resources.DeepCopy(),
@@ -498,14 +496,14 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Image:        s.image,
 				Name:         consts.PrepareLocationsContainerName,
 				Command:      []string{"bash", "-xc", locationCreationCommand},
-				Env:          defaultEnvVars,
+				Env:          getDefaultEnv(),
 				VolumeMounts: volumeMounts,
 			},
 			{
 				Image:        s.image,
 				Name:         consts.PostprocessConfigContainerName,
 				Command:      []string{"bash", "-xc", configPostprocessingCommand},
-				Env:          defaultEnvVars,
+				Env:          getDefaultEnv(),
 				VolumeMounts: volumeMounts,
 			},
 		},

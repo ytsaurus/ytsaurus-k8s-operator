@@ -48,8 +48,11 @@ func NewQueueAgent(
 		ytsaurus,
 		&resource.Spec.QueueAgents.InstanceSpec,
 		"/usr/bin/ytserver-queue-agent",
-		"ytserver-queue-agent.yson",
-		func() ([]byte, error) { return cfgen.GetQueueAgentConfig(resource.Spec.QueueAgents) },
+		[]ConfigGenerator{{
+			"ytserver-queue-agent.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetQueueAgentConfig(resource.Spec.QueueAgents) },
+		}},
 		consts.QueueAgentMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

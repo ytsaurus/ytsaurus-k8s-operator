@@ -62,12 +62,14 @@ func NewConfigMapBuilder(
 	apiProxy apiproxy.APIProxy,
 	name string,
 	configOverrides *corev1.LocalObjectReference,
+	generators ...ConfigGenerator,
 ) *ConfigMapBuilder {
 	return &ConfigMapBuilder{
 		labeller:        labeller,
 		apiProxy:        apiProxy,
 		configOverrides: configOverrides,
 		configMap:       resources.NewConfigMap(name, labeller, apiProxy),
+		generators:      generators,
 	}
 }
 
@@ -120,14 +122,6 @@ func overrideYsonConfigs(base []byte, overrides []byte) ([]byte, error) {
 
 	merged := mergeMapsRecursively(b, o)
 	return yson.MarshalFormat(merged, yson.FormatPretty)
-}
-
-func (h *ConfigMapBuilder) GetFileNames() []string {
-	fileNames := []string{}
-	for _, gen := range h.generators {
-		fileNames = append(fileNames, gen.FileName)
-	}
-	return fileNames
 }
 
 func (h *ConfigMapBuilder) GetConfigMapName() string {

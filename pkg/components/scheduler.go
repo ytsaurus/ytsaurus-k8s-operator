@@ -55,10 +55,11 @@ func NewScheduler(
 		ytsaurus,
 		&resource.Spec.Schedulers.InstanceSpec,
 		"/usr/bin/ytserver-scheduler",
-		"ytserver-scheduler.yson",
-		func() ([]byte, error) {
-			return cfgen.GetSchedulerConfig(resource.Spec.Schedulers)
-		},
+		[]ConfigGenerator{{
+			"ytserver-scheduler.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetSchedulerConfig(resource.Spec.Schedulers) },
+		}},
 		consts.SchedulerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

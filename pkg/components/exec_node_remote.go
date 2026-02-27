@@ -32,10 +32,11 @@ func NewRemoteExecNodes(
 		&ytv1.PodSpec{},
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
-		"ytserver-exec-node.yson",
-		func() ([]byte, error) {
-			return cfgen.GetExecNodeConfig(spec)
-		},
+		[]ConfigGenerator{{
+			"ytserver-exec-node.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetExecNodeConfig(spec) },
+		}},
 		consts.ExecNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

@@ -35,10 +35,11 @@ func NewRemoteTabletNodes(
 		&ytv1.PodSpec{},
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
-		"ytserver-tablet-node.yson",
-		func() ([]byte, error) {
-			return cfgen.GetTabletNodeConfig(spec)
-		},
+		[]ConfigGenerator{{
+			"ytserver-tablet-node.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetTabletNodeConfig(spec) },
+		}},
 		consts.TabletNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
