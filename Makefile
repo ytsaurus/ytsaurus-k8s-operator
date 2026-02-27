@@ -92,7 +92,7 @@ SHELL = /usr/bin/env bash -o pipefail
 TEST_ENV ?= test-env.inc
 include ${TEST_ENV}
 
-## Enable test debug options: fail fast, keep artifacts.
+## Enable test debug options: no parallelism, fail fast, keep artifacts.
 DEBUG ?=
 
 ## Dry run tests.
@@ -104,8 +104,10 @@ FOCUS ?=
 ## Filter tests by labels: 'a && !(b || c)'
 GINKGO_LABEL_FILTER ?=
 
+ifeq ($(DEBUG),)
 ## Tests parallelism.
 GINKGO_PROCS ?= 2
+endif
 
 ## Tests timeout.
 GINKGO_TIMEOUT ?= 1h
