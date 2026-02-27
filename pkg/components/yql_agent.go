@@ -40,10 +40,11 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc inte
 		ytsaurus,
 		&resource.Spec.YQLAgents.InstanceSpec,
 		"/usr/bin/ytserver-yql-agent",
-		"ytserver-yql-agent.yson",
-		func() ([]byte, error) {
-			return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents)
-		},
+		[]ConfigGenerator{{
+			"ytserver-yql-agent.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents) },
+		}},
 		consts.YQLAgentMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

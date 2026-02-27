@@ -32,8 +32,11 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 		ytsaurus,
 		&resource.Spec.ControllerAgents.InstanceSpec,
 		"/usr/bin/ytserver-controller-agent",
-		"ytserver-controller-agent.yson",
-		func() ([]byte, error) { return cfgen.GetControllerAgentConfig(resource.Spec.ControllerAgents) },
+		[]ConfigGenerator{{
+			"ytserver-controller-agent.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetControllerAgentConfig(resource.Spec.ControllerAgents) },
+		}},
 		consts.ControllerAgentMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

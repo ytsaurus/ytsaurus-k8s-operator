@@ -30,8 +30,11 @@ func NewTabletBalancer(
 		ytsaurus,
 		&resource.Spec.TabletBalancer.InstanceSpec,
 		"/usr/bin/ytserver-tablet-balancer",
-		"ytserver-tablet-balancer.yson",
-		func() ([]byte, error) { return cfgen.GetTabletBalancerConfig(resource.Spec.TabletBalancer) },
+		[]ConfigGenerator{{
+			"ytserver-tablet-balancer.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetTabletBalancerConfig(resource.Spec.TabletBalancer) },
+		}},
 		consts.TabletBalancerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

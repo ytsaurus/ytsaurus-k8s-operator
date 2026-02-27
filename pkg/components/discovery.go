@@ -30,10 +30,11 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc int
 		ytsaurus,
 		&resource.Spec.Discovery.InstanceSpec,
 		"/usr/bin/ytserver-discovery",
-		"ytserver-discovery.yson",
-		func() ([]byte, error) {
-			return cfgen.GetDiscoveryConfig(&resource.Spec.Discovery)
-		},
+		[]ConfigGenerator{{
+			"ytserver-discovery.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetDiscoveryConfig(&resource.Spec.Discovery) },
+		}},
 		consts.DiscoveryMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

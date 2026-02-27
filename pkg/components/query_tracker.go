@@ -46,8 +46,11 @@ func NewQueryTracker(
 		ytsaurus,
 		&resource.Spec.QueryTrackers.InstanceSpec,
 		"/usr/bin/ytserver-query-tracker",
-		"ytserver-query-tracker.yson",
-		func() ([]byte, error) { return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers) },
+		[]ConfigGenerator{{
+			"ytserver-query-tracker.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers) },
+		}},
 		consts.QueryTrackerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
