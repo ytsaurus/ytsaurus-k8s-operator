@@ -219,46 +219,17 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			return SimpleStatus(SyncStatusUpdating), nil
 		}
 
-	case ytv1.UpdateStateWaitingForBundleControllerSaved:
-		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionBundleControllerSaved) {
-			disabled, err := yc.IsBundleControllerDisabled(ctx)
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-
-			info := &ytv1.BundleControllerInfo{
-				Disabled: disabled,
-			}
-
-			yc.ytsaurus.GetResource().Status.UpdateStatus.BundleController = info
-
-			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionBundleControllerSaved,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Update",
-				Message: "Bundle controller configuration is saved",
-			})
-			return SimpleStatus(SyncStatusUpdating), nil
-		}
-
-	case ytv1.UpdateStateWaitingForBundleControllerDisabled:
-		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionBundleControllerDisabled) {
-			err := yc.SetBundleControllerDisabled(ctx, ptr.To(true))
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-
-			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionBundleControllerDisabled,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Update",
-				Message: "Bundle controller disabled",
-			})
-			return SimpleStatus(SyncStatusUpdating), nil
-		}
-
 	case ytv1.UpdateStateWaitingForTabletCellsSaving:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsSaved) {
+			bundleControllerDisabled, err := yc.IsBundleControllerDisabled(ctx)
+			if err != nil {
+				return SimpleStatus(SyncStatusUpdating), err
+			}
+
+			yc.ytsaurus.GetResource().Status.UpdateStatus.BundleController = &ytv1.BundleControllerInfo{
+				Disabled: bundleControllerDisabled,
+			}
+
 			tabletCellBundles, err := yc.GetTabletCells(ctx)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
@@ -277,6 +248,11 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 	case ytv1.UpdateStateWaitingForTabletCellsRemovingStart:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemovingStarted) {
+			err := yc.SetBundleControllerDisabled(ctx, ptr.To(true))
+			if err != nil {
+				return SimpleStatus(SyncStatusUpdating), err
+			}
+
 			err = yc.RemoveTabletCells(ctx)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
@@ -380,17 +356,6 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 				return SimpleStatus(SyncStatusUpdating), err
 			}
 
-			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionTabletCellsRecovered,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Update",
-				Message: "Tablet cells recovered",
-			})
-			return SimpleStatus(SyncStatusUpdating), nil
-		}
-
-	case ytv1.UpdateStateWaitingForBundleControllerRecovery:
-		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionBundleControllerRecovered) {
 			bundleController := yc.ytsaurus.GetResource().Status.UpdateStatus.BundleController
 
 			if bundleController != nil {
@@ -401,10 +366,10 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			}
 
 			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionBundleControllerRecovered,
+				Type:    consts.ConditionTabletCellsRecovered,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Update",
-				Message: "Bundle controller recovered",
+				Message: "Tablet cells recovered",
 			})
 			return SimpleStatus(SyncStatusUpdating), nil
 		}
@@ -891,16 +856,13 @@ func (yc *YtsaurusClient) IsBundleControllerDisabled(ctx context.Context) (*bool
 	err := yc.ytClient.GetNode(ctx, disableBundleControllerPath, &disabled, nil)
 	if err != nil {
 		if yterrors.ContainsResolveError(err) {
-			logger.Info(fmt.Sprintf("%s doesn't exists", disableBundleControllerPath))
+			logger.Info(fmt.Sprintf("%s doesn't exist", disableBundleControllerPath))
 			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to get %s: %w", disableBundleControllerPath, err)
 	}
 
-	if disabled {
-		return ptr.To(true), nil
-	}
-	return ptr.To(false), nil
+	return &disabled, nil
 }
 
 func (yc *YtsaurusClient) SetBundleControllerDisabled(ctx context.Context, disabled *bool) error {

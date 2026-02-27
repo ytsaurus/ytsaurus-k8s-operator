@@ -36940,7 +36940,7 @@ spec:
                     description: Summary for kubectl column.
                     type: string
                   bundleController:
-                    description: Snapshot of bundle controller info.
+                    description: Snapshot of bundle controller.
                     properties:
                       disabled:
                         type: boolean
