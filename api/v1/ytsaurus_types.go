@@ -1015,6 +1015,10 @@ type TabletCellBundleInfo struct {
 	TabletCellCount int    `yson:"tablet_cell_count,attr" json:"tabletCellCount"`
 }
 
+type BundleControllerInfo struct {
+	Disabled *bool `json:"disabled,omitempty"`
+}
+
 type UpdateSelector string
 
 const (
@@ -1102,6 +1106,8 @@ type UpdateStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 	// Snapshot of tablet cell bundles.
 	TabletCellBundles []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
+	// Snapshot of bundle controller.
+	BundleController *BundleControllerInfo `json:"bundleController,omitempty"`
 }
 
 type Component struct {
