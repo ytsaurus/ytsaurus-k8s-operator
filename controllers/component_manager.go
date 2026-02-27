@@ -170,8 +170,10 @@ func NewComponentManager(
 		allComponents = append(allComponents, tb)
 	}
 
-	tt := components.NewTimbertruck(cfgen, ytsaurus, tnds, yc)
-	allComponents = append(allComponents, tt)
+	if resource.Spec.PrimaryMasters.Timbertruck != nil {
+		tt := components.NewTimbertruck(cfgen, ytsaurus, tnds, yc)
+		allComponents = append(allComponents, tt)
+	}
 
 	return &ComponentManager{
 		ytsaurus:      ytsaurus,

@@ -81,9 +81,6 @@ data:
             };
         ];
     }
-  yt-timbertruck-cypress-patch.yson: |-
-    {
-    }
 kind: ConfigMap
 metadata:
   annotations:
