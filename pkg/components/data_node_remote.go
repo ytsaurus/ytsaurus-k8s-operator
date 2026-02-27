@@ -35,10 +35,11 @@ func NewRemoteDataNodes(
 		&ytv1.PodSpec{},
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
-		"ytserver-data-node.yson",
-		func() ([]byte, error) {
-			return cfgen.GetDataNodeConfig(spec)
-		},
+		[]ConfigGenerator{{
+			"ytserver-data-node.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetDataNodeConfig(spec) },
+		}},
 		consts.DataNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

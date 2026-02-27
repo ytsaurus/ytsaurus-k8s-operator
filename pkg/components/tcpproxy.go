@@ -31,10 +31,11 @@ func NewTCPProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, masterR
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-tcp-proxy",
-		"ytserver-tcp-proxy.yson",
-		func() ([]byte, error) {
-			return cfgen.GetTCPProxyConfig(spec)
-		},
+		[]ConfigGenerator{{
+			"ytserver-tcp-proxy.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetTCPProxyConfig(spec) },
+		}},
 		consts.TCPProxyMonitoringPort,
 	)
 

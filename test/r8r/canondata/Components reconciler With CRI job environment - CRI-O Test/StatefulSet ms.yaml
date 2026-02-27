@@ -61,6 +61,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: YT_DRIVER_CONFIG_PATH
+          value: /config_template/client.yson
         image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
         name: ytserver
         ports:

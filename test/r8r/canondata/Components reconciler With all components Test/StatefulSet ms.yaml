@@ -80,6 +80,8 @@ spec:
           value: /etc/ssl/certs
         - name: REQUESTS_CA_BUNDLE
           value: /etc/ssl/certs/ca-certificates.crt
+        - name: YT_DRIVER_CONFIG_PATH
+          value: /config_template/client.yson
         image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
         name: ytserver
         ports:
