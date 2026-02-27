@@ -5,7 +5,7 @@ metadata:
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "13"
+  resourceVersion: "8"
 spec:
   configOverrides:
     name: test-overrides
@@ -147,6 +147,12 @@ status:
     status: "True"
     type: DiscoveryReady
   - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: YtsaurusClientReady
+  - lastTransitionTime: null
     message: Init job successfully completed
     observedGeneration: 1
     reason: InitJobCompleted
@@ -170,24 +176,6 @@ status:
     reason: Ready
     status: "True"
     type: HttpProxyReady
-  - lastTransitionTime: null
-    message: Init job successfully completed
-    observedGeneration: 1
-    reason: InitJobCompleted
-    status: "True"
-    type: userYtsaurusClientInitJobCompleted
-  - lastTransitionTime: null
-    message: Ready
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: YtsaurusClientReady
-  - lastTransitionTime: null
-    message: Ready
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: TimbertruckReady
   observedGeneration: 1
   state: Running
   updateStatus: {}

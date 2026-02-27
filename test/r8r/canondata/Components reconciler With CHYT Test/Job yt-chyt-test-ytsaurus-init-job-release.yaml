@@ -58,7 +58,7 @@ spec:
         - name: YT_PROXY
           value: http-proxies-lb.ytsaurus-components.svc.cluster.local
         - name: YT_TOKEN
-          value: S71v40zcuoQ-6NY-jE_-HOvqVG2PrBPdGqwEzi6i
+          value: U4x_lrFkvxuXu59LtHLon1sUhPJSCcnZND6Sugnd
         image: ghcr.io/ytsaurus/chyt:2.17.4
         name: ytsaurus-init
         resources: {}

@@ -23,14 +23,13 @@ type YqlAgent struct {
 	serverComponent
 
 	cfgen             *ytconfig.Generator
-	master            Component
 	ytsaurusClient    internalYtsaurusClient
 	initEnvironment   *InitJob
 	updateEnvironment *InitJob
 	secret            *resources.StringSecret
 }
 
-func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc internalYtsaurusClient, master Component) *YqlAgent {
+func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc internalYtsaurusClient) *YqlAgent {
 	l := cfgen.GetComponentLabeller(consts.YqlAgentType, "")
 
 	resource := ytsaurus.GetResource()
@@ -40,10 +39,11 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc inte
 		ytsaurus,
 		&resource.Spec.YQLAgents.InstanceSpec,
 		"/usr/bin/ytserver-yql-agent",
-		"ytserver-yql-agent.yson",
-		func() ([]byte, error) {
-			return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents)
-		},
+		[]ConfigGenerator{{
+			"ytserver-yql-agent.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents) },
+		}},
 		consts.YQLAgentMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
@@ -55,7 +55,6 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc inte
 	return &YqlAgent{
 		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:           cfgen,
-		master:          master,
 		ytsaurusClient:  yc,
 		initEnvironment: NewInitJobForYtsaurus(
 			l,
@@ -109,13 +108,6 @@ func (yqla *YqlAgent) GetCypressPatch() ypatch.PatchSet {
 	}
 }
 
-func (yqla *YqlAgent) initUsers() string {
-	token, _ := yqla.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand(consts.YqlUserName, "", token, true)
-	commands = append(commands, createUserCommand("yql_agent", "", "", true)...)
-	return strings.Join(commands, "\n")
-}
-
 func (yqla *YqlAgent) createInitScript() string {
 	var sb strings.Builder
 	sb.WriteString("[")
@@ -128,8 +120,6 @@ func (yqla *YqlAgent) createInitScript() string {
 	yqlAgentAddrs := sb.String()
 	script := []string{
 		initJobWithNativeDriverPrologue(),
-		yqla.initUsers(),
-		"/usr/bin/yt add-member --member yql_agent --group superusers || true",
 		"/usr/bin/yt create document //sys/yql_agent/config --attributes '{value={}}' --recursive --ignore-existing",
 		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent '{stages={production={channel={disable_balancing_on_single_address=%%false;addresses=%v}}}}'", yqlAgentAddrs),
 		fmt.Sprintf("/usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/%s", yqla.labeller.GetClusterName()),
@@ -173,25 +163,6 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		}
 	}
 
-	masterStatus, err := yqla.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(yqla.master.GetFullName()), err
-	}
-
-	if yqla.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			s := yqla.secret.Build()
-			s.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
-			}
-			err = yqla.secret.Sync(ctx)
-		}
-		return ComponentStatusWaitingFor(yqla.secret.Name()), err
-	}
-
 	if yqla.NeedSync() {
 		if !dry {
 			ss := yqla.server.buildStatefulSet()
@@ -218,6 +189,10 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 
 	if !yqla.server.arePodsReady(ctx) {
 		return ComponentStatusBlockedBy("pods"), err
+	}
+
+	if status, err := syncUserToken(ctx, yqla.ytsaurusClient, yqla.secret, consts.YqlAgentUserName, consts.SuperusersGroupName, dry); !status.IsRunning() {
+		return status, err
 	}
 
 	if !dry {

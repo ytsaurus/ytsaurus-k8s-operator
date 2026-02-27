@@ -155,17 +155,7 @@ data:
     /usr/bin/yt get //sys/media//@name || /usr/bin/yt create domestic_medium --attr '{name="";}' || /usr/bin/yt create medium --attr '{name="";}'
     /usr/bin/yt get //sys/accounts/sys/@resource_limits/disk_space_per_medium/ || /usr/bin/yt set //sys/accounts/sys/@resource_limits/disk_space_per_medium/ 1073741824
     fi
-    if [ 'false' = 'true' ]; then
-    if [ $(/usr/bin/yt exists //sys/users/robot-hydra-persistence-uploader) = 'false' ]; then
-    /usr/bin/yt create user --attributes '{name="robot-hydra-persistence-uploader"}' --ignore-existing
-    /usr/bin/yt execute set_user_password '{user=robot-hydra-persistence-uploader;new_password_sha256="d9fb903c32fe851f5d5543f2f9da27330ead9bd0d85ce8f51afba5d503f027a5"}'
-    /usr/bin/yt create map_node '//sys/cypress_tokens/d9fb903c32fe851f5d5543f2f9da27330ead9bd0d85ce8f51afba5d503f027a5' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/d9fb903c32fe851f5d5543f2f9da27330ead9bd0d85ce8f51afba5d503f027a5/@user' 'robot-hydra-persistence-uploader'
-    /usr/bin/yt create map_node //sys/admin/snapshots -r -i
-    /usr/bin/yt set //sys/admin/snapshots/@acl '[{action=allow;subjects=["robot-hydra-persistence-uploader";];permissions=[read;write;remove;create;];"inheritance_mode"="object_and_descendants";};]'
-    /usr/bin/yt set //sys/accounts/sys/@acl/end '{action=allow;subjects=["robot-hydra-persistence-uploader";];permissions=[use;];}'
-    fi
-    fi
+
     /usr/bin/yt remove //sys/@provision_lock -f
 kind: ConfigMap
 metadata:

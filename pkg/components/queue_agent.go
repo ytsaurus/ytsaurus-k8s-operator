@@ -48,8 +48,11 @@ func NewQueueAgent(
 		ytsaurus,
 		&resource.Spec.QueueAgents.InstanceSpec,
 		"/usr/bin/ytserver-queue-agent",
-		"ytserver-queue-agent.yson",
-		func() ([]byte, error) { return cfgen.GetQueueAgentConfig(resource.Spec.QueueAgents) },
+		[]ConfigGenerator{{
+			"ytserver-queue-agent.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetQueueAgentConfig(resource.Spec.QueueAgents) },
+		}},
 		consts.QueueAgentMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
@@ -137,15 +140,8 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		}
 	}
 
-	if qa.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			secretSpec := qa.secret.Build()
-			secretSpec.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
-			}
-			err = qa.secret.Sync(ctx)
-		}
-		return ComponentStatusWaitingFor(qa.secret.Name()), err
+	if status, err := syncUserToken(ctx, qa.ytsaurusClient, qa.secret, consts.QueueAgentUserName, consts.SuperusersGroupName, dry); !status.IsRunning() {
+		return status, err
 	}
 
 	if qa.NeedSync() {
@@ -160,26 +156,6 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	var ytClient yt.Client
-	if qa.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
-		ytClientStatus, err := qa.ytsaurusClient.Status(ctx)
-		if err != nil {
-			return ytClientStatus, err
-		}
-		if ytClientStatus.SyncStatus != SyncStatusReady {
-			return ComponentStatusBlockedBy(qa.ytsaurusClient.GetFullName()), err
-		}
-
-		if !dry {
-			ytClient = qa.ytsaurusClient.GetYtClient()
-
-			err = qa.createUser(ctx, ytClient)
-			if err != nil {
-				return ComponentStatusWaitingFor("create qa user"), err
-			}
-		}
-	}
-
 	status, err := qa.initQAState(ctx, dry)
 	if err != nil || status.SyncStatus != SyncStatusReady {
 		return status, err
@@ -189,7 +165,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return ComponentStatusReady(), err
 	}
 	if !dry {
-		err = qa.init(ctx, ytClient)
+		err = qa.init(ctx, qa.ytsaurusClient.GetYtClient())
 		if err != nil {
 			return ComponentStatusWaitingFor(fmt.Sprintf("%s initialization", qa.GetFullName())), err
 		}
@@ -203,19 +179,6 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	return ComponentStatusWaitingFor(fmt.Sprintf("setting %s condition", qa.initCondition)), err
-}
-
-func (qa *QueueAgent) createUser(ctx context.Context, ytClient yt.Client) (err error) {
-	logger := log.FromContext(ctx)
-
-	token, _ := qa.secret.GetValue(consts.TokenSecretKey)
-	err = CreateUser(ctx, ytClient, "queue_agent", token, true)
-	if err != nil {
-		logger.Error(err, "Creating user 'queue_agent' failed")
-		return err
-	}
-
-	return nil
 }
 
 func (qa *QueueAgent) init(ctx context.Context, ytClient yt.Client) (err error) {

@@ -46,8 +46,11 @@ func NewQueryTracker(
 		ytsaurus,
 		&resource.Spec.QueryTrackers.InstanceSpec,
 		"/usr/bin/ytserver-query-tracker",
-		"ytserver-query-tracker.yson",
-		func() ([]byte, error) { return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers) },
+		[]ConfigGenerator{{
+			"ytserver-query-tracker.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers) },
+		}},
 		consts.QueryTrackerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
@@ -111,15 +114,8 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		}
 	}
 
-	if qt.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			secretSpec := qt.secret.Build()
-			secretSpec.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
-			}
-			err = qt.secret.Sync(ctx)
-		}
-		return ComponentStatusWaitingFor(qt.secret.Name()), err
+	if status, err := syncUserToken(ctx, qt.ytsaurusClient, qt.secret, consts.QueryTrackerUserName, consts.SuperusersGroupName, dry); !status.IsRunning() {
+		return status, err
 	}
 
 	if qt.NeedSync() {
@@ -157,15 +153,6 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		}
 	}
 
-	if qt.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
-		if !dry {
-			err = qt.createUser(ctx, ytClient)
-			if err != nil {
-				return ComponentStatusWaitingFor("create qt user"), err
-			}
-		}
-	}
-
 	if !dry {
 		err = qt.init(ctx, ytClient)
 		if err != nil {
@@ -192,19 +179,6 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 		return ComponentStatusReady(), err
 	}
 	return ComponentStatusWaitingFor(fmt.Sprintf("setting %s condition", qt.initCondition)), err
-}
-
-func (qt *QueryTracker) createUser(ctx context.Context, ytClient yt.Client) (err error) {
-	logger := log.FromContext(ctx)
-
-	token, _ := qt.secret.GetValue(consts.TokenSecretKey)
-	err = CreateUser(ctx, ytClient, "query_tracker", token, true)
-	if err != nil {
-		logger.Error(err, "Creating user 'query_tracker' failed")
-		return err
-	}
-
-	return nil
 }
 
 func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error) {

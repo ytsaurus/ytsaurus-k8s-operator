@@ -52,12 +52,13 @@ func NewComponentManager(
 		return allComponents
 	}
 
+	yc := components.NewYtsaurusClient(cfgen, ytsaurus, getAllComponents)
+
 	m := components.NewMaster(cfgen, ytsaurus)
 	var hps []components.Component
 	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {
 		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
 	}
-	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0], getAllComponents)
 	d := components.NewDiscovery(cfgen, ytsaurus, yc)
 	ih := components.NewImageHeater(cfgen, ytsaurus, getAllComponents)
 
@@ -73,7 +74,7 @@ func NewComponentManager(
 	allComponents = append(allComponents, hps...)
 
 	if resource.Spec.UI != nil {
-		ui := components.NewUI(cfgen, ytsaurus, m)
+		ui := components.NewUI(cfgen, ytsaurus, yc)
 		allComponents = append(allComponents, ui)
 	}
 
@@ -119,7 +120,7 @@ func NewComponentManager(
 
 	var sch components.Component
 	if resource.Spec.Schedulers != nil {
-		sch = components.NewScheduler(cfgen, ytsaurus, m, yc, ends, tnds)
+		sch = components.NewScheduler(cfgen, ytsaurus, yc, ends, tnds)
 		allComponents = append(allComponents, sch)
 	}
 
@@ -141,12 +142,12 @@ func NewComponentManager(
 
 	var yqla components.Component
 	if resource.Spec.YQLAgents != nil {
-		yqla = components.NewYQLAgent(cfgen, ytsaurus, yc, m)
+		yqla = components.NewYQLAgent(cfgen, ytsaurus, yc)
 		allComponents = append(allComponents, yqla)
 	}
 
 	if resource.Spec.StrawberryController != nil && resource.Spec.Schedulers != nil {
-		strawberry := components.NewStrawberryController(cfgen, ytsaurus, m, sch, dnds)
+		strawberry := components.NewStrawberryController(cfgen, ytsaurus, yc, sch, dnds)
 		allComponents = append(allComponents, strawberry)
 	}
 
@@ -169,9 +170,10 @@ func NewComponentManager(
 		tb := components.NewTabletBalancer(cfgen, ytsaurus)
 		allComponents = append(allComponents, tb)
 	}
-
-	tt := components.NewTimbertruck(cfgen, ytsaurus, tnds, yc)
-	allComponents = append(allComponents, tt)
+	if resource.Spec.PrimaryMasters.Timbertruck != nil {
+		tt := components.NewTimbertruck(cfgen, ytsaurus, tnds, yc)
+		allComponents = append(allComponents, tt)
+	}
 
 	return &ComponentManager{
 		ytsaurus:      ytsaurus,

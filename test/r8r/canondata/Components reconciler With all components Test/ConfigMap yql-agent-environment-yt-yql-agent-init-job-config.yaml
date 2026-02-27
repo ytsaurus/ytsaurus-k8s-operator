@@ -65,13 +65,6 @@ data:
 
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
     export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"
-    /usr/bin/yt create user --attributes '{name="yql_agent"}' --ignore-existing
-    /usr/bin/yt create map_node '//sys/cypress_tokens/dcd89cc6efae0df4e42a9941000a5d1f4704e17162e02fbbae2e176989421ea4' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/dcd89cc6efae0df4e42a9941000a5d1f4704e17162e02fbbae2e176989421ea4/@user' 'yql_agent'
-    /usr/bin/yt add-member yql_agent superusers || true
-    /usr/bin/yt create user --attributes '{name="yql_agent"}' --ignore-existing
-    /usr/bin/yt add-member yql_agent superusers || true
-    /usr/bin/yt add-member --member yql_agent --group superusers || true
     /usr/bin/yt create document //sys/yql_agent/config --attributes '{value={}}' --recursive --ignore-existing
     /usr/bin/yt set //sys/@cluster_connection/yql_agent '{stages={production={channel={disable_balancing_on_single_address=%false;addresses=["yqla-0.yql-agents.ytsaurus-components.svc.cluster.local:9019";]}}}}'
     /usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/test-ytsaurus

@@ -13,6 +13,7 @@ import (
 
 	"k8s.io/utils/ptr"
 
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -204,6 +205,53 @@ type YtsaurusBuilder struct {
 	WithHTTPSOnlyProxy bool
 	WithRPCProxy       bool
 	WithRPCProxyTLS    bool
+}
+
+type tokenSecret struct {
+	name, user string
+}
+
+func (b *YtsaurusBuilder) BuildTokenSecrets() []corev1.Secret {
+	tokens := []tokenSecret{
+		{"yt-client-secret", consts.YtsaurusOperatorUserName},
+	}
+	if b.Ytsaurus.Spec.PrimaryMasters.Timbertruck != nil {
+		tokens = append(tokens, tokenSecret{"robot-timbertruck-secret", consts.TimbertruckUserName})
+	}
+	if b.Ytsaurus.Spec.Schedulers != nil {
+		tokens = append(tokens, tokenSecret{"yt-scheduler-secret", consts.OperationArchivariusUserName})
+	}
+	if b.Ytsaurus.Spec.QueueAgents != nil {
+		tokens = append(tokens, tokenSecret{"yt-queue-agent-secret", consts.QueueAgentUserName})
+	}
+	if b.Ytsaurus.Spec.QueryTrackers != nil {
+		tokens = append(tokens, tokenSecret{"yt-query-tracker-secret", consts.QueryTrackerUserName})
+	}
+	if b.Ytsaurus.Spec.YQLAgents != nil {
+		tokens = append(tokens, tokenSecret{"yt-yql-agent-secret", consts.YqlAgentUserName})
+	}
+	if b.Ytsaurus.Spec.StrawberryController != nil {
+		tokens = append(tokens, tokenSecret{"yt-strawberry-controller-secret", consts.StrawberryControllerUserName})
+	}
+	if b.Ytsaurus.Spec.UI != nil {
+		tokens = append(tokens, tokenSecret{"yt-ui-secret", consts.UIUserName})
+	}
+	var secrets []corev1.Secret
+	for _, token := range tokens {
+		secrets = append(secrets, corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      token.name,
+				Namespace: b.Namespace,
+				Annotations: map[string]string{
+					consts.UserNameAnnotationName: token.user,
+				},
+			},
+			Data: map[string][]byte{
+				consts.TokenSecretKey: []byte("token-for-" + token.user),
+			},
+		})
+	}
+	return secrets
 }
 
 func (b *YtsaurusBuilder) CreateVolumeClaim(name string, size resource.Quantity) ytv1.EmbeddedPersistentVolumeClaim {

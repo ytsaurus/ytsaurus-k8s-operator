@@ -49,6 +49,13 @@ data:
                 ];
             };
         ];
+        "//sys/@ui_config"=[
+            {
+                op=replace;
+                path="/chyt_controller_base_url";
+                value="http://strawberry:80";
+            };
+        ];
         "<>//sys/clusters"=[
             {
                 op=copy;
@@ -139,9 +146,13 @@ data:
     }
   yt-strawberry-controller-cypress-patch.yson: |-
     {
-    }
-  yt-timbertruck-cypress-patch.yson: |-
-    {
+        "//sys/@ui_config"=[
+            {
+                op=replace;
+                path="/chyt_controller_base_url";
+                value="http://strawberry:80";
+            };
+        ];
     }
   yt-yql-agent-cypress-patch.yson: |-
     {

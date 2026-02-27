@@ -32,11 +32,7 @@ type Master struct {
 	exitReadOnlyJob  *InitJob
 	adminCredentials corev1.Secret
 
-	sidecarSecrets *sidecarSecretsStruct
-}
-
-type sidecarSecretsStruct struct {
-	hydraPersistenceUploaderSecret *resources.StringSecret
+	uploaderSecret *resources.StringSecret
 }
 
 func buildMasterOptions(resource *ytv1.Ytsaurus) []Option {
@@ -75,8 +71,18 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		ytsaurus,
 		&resource.Spec.PrimaryMasters.InstanceSpec,
 		"/usr/bin/ytserver-master",
-		"ytserver-master.yson",
-		func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
+		[]ConfigGenerator{
+			{
+				"ytserver-master.yson",
+				ConfigFormatYson,
+				func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
+			},
+			{
+				consts.ClientConfigFileName,
+				ConfigFormatYson,
+				cfgen.GetNativeClientConfig,
+			},
+		},
 		consts.MasterMonitoringPort,
 		buildMasterOptions(resource)...,
 	)
@@ -99,17 +105,17 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		&resource.Spec.PrimaryMasters.InstanceSpec,
 	)
 
+	var uploaderSecret *resources.StringSecret
+	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil {
+		uploaderSecret = resources.NewStringSecret(buildUserCredentialsSecretname(consts.HydraPersistenceUploaderUserName), l, ytsaurus)
+	}
+
 	return &Master{
 		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:           cfgen,
 		initJob:         initJob,
 		exitReadOnlyJob: exitReadOnlyJob,
-		sidecarSecrets: &sidecarSecretsStruct{
-			hydraPersistenceUploaderSecret: resources.NewStringSecret(
-				buildUserCredentialsSecretname(consts.HydraPersistenceUploaderUserName),
-				l,
-				ytsaurus),
-		},
+		uploaderSecret:  uploaderSecret,
 	}
 }
 
@@ -128,7 +134,7 @@ func (m *Master) Fetch(ctx context.Context) error {
 		m.server,
 		m.initJob,
 		m.exitReadOnlyJob,
-		m.sidecarSecrets.hydraPersistenceUploaderSecret,
+		m.uploaderSecret,
 	)
 }
 
@@ -161,9 +167,13 @@ func (m *Master) initAdminUser() string {
 	return RunIfNonexistent(fmt.Sprintf("//sys/users/%s", adminLogin), commands...)
 }
 
-func (m *Master) initHydraPersistenceUploaderUser() (string, error) {
+func (m *Master) initUploaderUser() (string, error) {
+	if m.uploaderSecret == nil {
+		return "", nil
+	}
+
 	login := consts.HydraPersistenceUploaderUserName
-	token, _ := m.sidecarSecrets.hydraPersistenceUploaderSecret.GetValue(consts.TokenSecretKey)
+	token, _ := m.uploaderSecret.GetValue(consts.TokenSecretKey)
 	commands := []string{
 		strings.Join(createUserCommand(login, token, token, false), "\n"),
 	}
@@ -347,7 +357,7 @@ func (m *Master) createInitScript() (string, error) {
 		return "", fmt.Errorf("failed to create init schema ACLs commands: %w", err)
 	}
 
-	initHydraPersistenceUploaderUserCommands, err := m.initHydraPersistenceUploaderUser()
+	initHydraPersistenceUploaderUserCommands, err := m.initUploaderUser()
 	if err != nil {
 		return "", fmt.Errorf("failed to create init hydra persistence uploader user commands: %w", err)
 	}
@@ -427,16 +437,16 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 		}
 	}
 
-	if m.sidecarSecrets.hydraPersistenceUploaderSecret.NeedSync(consts.TokenSecretKey, "") {
+	if m.uploaderSecret != nil && m.uploaderSecret.NeedSync(consts.TokenSecretKey, "") {
 		if !dry {
 			token := ytconfig.RandString(30)
-			s := m.sidecarSecrets.hydraPersistenceUploaderSecret.Build()
+			s := m.uploaderSecret.Build()
 			s.StringData = map[string]string{
 				consts.TokenSecretKey: token,
 			}
-			err = m.sidecarSecrets.hydraPersistenceUploaderSecret.Sync(ctx)
+			err = m.uploaderSecret.Sync(ctx)
 		}
-		return ComponentStatusWaitingFor(m.sidecarSecrets.hydraPersistenceUploaderSecret.Name()), err
+		return ComponentStatusWaitingFor(m.uploaderSecret.Name()), err
 	}
 
 	if m.NeedSync() {
@@ -465,6 +475,8 @@ func (m *Master) Sync(ctx context.Context) error {
 func (m *Master) doServerSync(ctx context.Context) error {
 	statefulSet := m.server.buildStatefulSet()
 	podSpec := &statefulSet.Spec.Template.Spec
+	podSpec.Containers[0].Env = append(podSpec.Containers[0].Env, getNativeClientConfigEnv()...)
+
 	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
 
 	if primaryMastersSpec.HydraPersistenceUploader != nil && primaryMastersSpec.HydraPersistenceUploader.Image != nil {
@@ -472,7 +484,7 @@ func (m *Master) doServerSync(ctx context.Context) error {
 			*primaryMastersSpec.HydraPersistenceUploader.Image,
 			podSpec,
 			m.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
-			buildUserCredentialsSecretname(consts.HydraPersistenceUploaderUserName),
+			m.uploaderSecret.Name(),
 		)
 	}
 	if err := checkAndAddTimbertruckToPodSpec(primaryMastersSpec.Timbertruck, podSpec, &primaryMastersSpec.InstanceSpec, m.labeller, m.cfgen); err != nil {

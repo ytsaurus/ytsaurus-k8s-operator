@@ -34,10 +34,11 @@ func NewOffshoreDataGateways(
 		&ytv1.PodSpec{},
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-offshore-data-gateway",
-		"ytserver-offshore-data-gateway.yson",
-		func() ([]byte, error) {
-			return cfgen.GetOffshoreDataGatewaysConfig(spec)
-		},
+		[]ConfigGenerator{{
+			"ytserver-offshore-data-gateway.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetOffshoreDataGatewaysConfig(spec) },
+		}},
 		consts.OffshoreDataGatewayMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

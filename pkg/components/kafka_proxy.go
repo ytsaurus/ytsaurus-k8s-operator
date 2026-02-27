@@ -33,10 +33,11 @@ func NewKafkaProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, maste
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-kafka-proxy",
-		"ytserver-kafka-proxy.yson",
-		func() ([]byte, error) {
-			return cfgen.GetKafkaProxyConfig(spec)
-		},
+		[]ConfigGenerator{{
+			"ytserver-kafka-proxy.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetKafkaProxyConfig(spec) },
+		}},
 		consts.KafkaProxyMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

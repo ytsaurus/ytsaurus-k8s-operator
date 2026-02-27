@@ -48,10 +48,11 @@ func NewTabletNode(
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
-		"ytserver-tablet-node.yson",
-		func() ([]byte, error) {
-			return cfgen.GetTabletNodeConfig(spec)
-		},
+		[]ConfigGenerator{{
+			"ytserver-tablet-node.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetTabletNodeConfig(spec) },
+		}},
 		consts.TabletNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
@@ -103,11 +104,7 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return ComponentStatusReady(), err
 	}
 
-	ytClientStatus, err := tn.ytsaurusClient.Status(ctx)
-	if err != nil {
-		return ytClientStatus, err
-	}
-	if ytClientStatus.SyncStatus != SyncStatusReady {
+	if status, err := tn.ytsaurusClient.Status(ctx); !status.IsRunning() {
 		return ComponentStatusBlockedBy(tn.ytsaurusClient.GetFullName()), err
 	}
 

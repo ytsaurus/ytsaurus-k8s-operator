@@ -5,7 +5,7 @@ metadata:
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "16"
+  resourceVersion: "11"
 spec:
   caBundle:
     name: ytsaurus-dev-ca.crt
@@ -357,6 +357,12 @@ status:
     observedGeneration: 1
     reason: Ready
     status: "True"
+    type: YtsaurusClientReady
+  - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
     type: MasterCacheReady
   - lastTransitionTime: null
     message: Init job successfully completed
@@ -389,6 +395,12 @@ status:
     status: "True"
     type: ControllerAgentReady
   - lastTransitionTime: null
+    message: Init job successfully completed
+    observedGeneration: 1
+    reason: InitJobCompleted
+    status: "True"
+    type: yql-agent-environmentYqlAgentInitJobCompleted
+  - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
     reason: Ready
@@ -411,31 +423,7 @@ status:
     observedGeneration: 1
     reason: InitJobCompleted
     status: "True"
-    type: yql-agent-environmentYqlAgentInitJobCompleted
-  - lastTransitionTime: null
-    message: Init job successfully completed
-    observedGeneration: 1
-    reason: InitJobCompleted
-    status: "True"
-    type: userYtsaurusClientInitJobCompleted
-  - lastTransitionTime: null
-    message: Init job successfully completed
-    observedGeneration: 1
-    reason: InitJobCompleted
-    status: "True"
-    type: userStrawberryControllerInitJobCompleted
-  - lastTransitionTime: null
-    message: Ready
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: YtsaurusClientReady
-  - lastTransitionTime: null
-    message: Ready
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: TimbertruckReady
+    type: clusterStrawberryControllerInitJobCompleted
   - lastTransitionTime: null
     message: Init job successfully completed
     observedGeneration: 1
@@ -448,12 +436,6 @@ status:
     reason: Ready
     status: "True"
     type: YqlAgentReady
-  - lastTransitionTime: null
-    message: Init job successfully completed
-    observedGeneration: 1
-    reason: InitJobCompleted
-    status: "True"
-    type: clusterStrawberryControllerInitJobCompleted
   - lastTransitionTime: null
     message: Ready
     observedGeneration: 1

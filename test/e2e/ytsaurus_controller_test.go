@@ -446,6 +446,24 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		By("Checking that Ytsaurus state is equal to `Running`", func() {
 			EventuallyYtsaurus(ctx, ytsaurus, bootstrapTimeout).Should(HaveClusterStateRunning())
 		})
+
+		By("Checking operator token secret", func() {
+			opSecret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "yt-client-secret"}}
+			CurrentlyObject(ctx, opSecret).Should(And(
+				HaveField("ObjectMeta.Annotations", HaveKeyWithValue(consts.UserNameAnnotationName, consts.YtsaurusOperatorUserName)),
+				HaveField("Data", HaveKey(consts.TokenSecretKey)),
+				HaveField("Data", Not(HaveKey(consts.BootstrapTokenSecretKey))),
+			))
+
+			for _, secret := range ytBuilder.BuildTokenSecrets() {
+				userName := secret.Annotations[consts.UserNameAnnotationName]
+				CurrentlyObject(ctx, &secret).Should(And(
+					HaveField("ObjectMeta.Annotations", HaveKeyWithValue(consts.UserNameAnnotationName, userName)),
+					HaveField("Data", HaveKey(consts.TokenSecretKey)),
+					HaveField("Data", Not(HaveKey(consts.BootstrapTokenSecretKey))),
+				))
+			}
+		})
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
@@ -756,7 +774,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				It("Triggers cluster update", Label(newEpoch), Label(newVersion), func(ctx context.Context) {
 					By("Checking jobs order")
 					completedJobs := namespaceWatcher.GetCompletedJobNames()
-					Expect(completedJobs).Should(Equal(getInitializingStageJobNames()))
+					Expect(completedJobs).Should(ConsistOf(
+						"yt-master-init-job-default",
+						"yt-client-init-job-user",
+						"yt-scheduler-init-job-op-archive",
+					))
 
 					checkPodLabels(ctx, namespace)
 

@@ -179,3 +179,10 @@ func getDefaultEnv() []corev1.EnvVar {
 		},
 	}
 }
+
+func getNativeClientConfigEnv() []corev1.EnvVar {
+	return []corev1.EnvVar{{
+		Name:  consts.ClientConfigPathEnv,
+		Value: path.Join(consts.ConfigTemplateMountPoint, consts.ClientConfigFileName),
+	}}
+}

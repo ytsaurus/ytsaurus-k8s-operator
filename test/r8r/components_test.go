@@ -132,6 +132,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	var k8sClient client.WithWatch
 	var statefulSets map[string]*appsv1.StatefulSet
 	var configMaps map[string]*corev1.ConfigMap
+	var secrets map[string]*corev1.Secret
 	var jobs map[string]*batchv1.Job
 
 	objectKind := func(obj client.Object) string {
@@ -289,6 +290,11 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			}
 			Expect(k8sClient.Create(ctx, ytsaurus)).To(Succeed())
 			controllerObjects = append(controllerObjects, ytsaurus)
+		})
+		By("Creating token secrets to bypass bootstrap", func() {
+			for _, secret := range ytBuilder.BuildTokenSecrets() {
+				Expect(k8sClient.Create(ctx, &secret)).To(Succeed())
+			}
 		})
 	})
 
@@ -484,6 +490,20 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				censoredObj.Annotations = CensorMapValues(obj.Annotations, consts.ConfigHashAnnotationName)
 
 				canonize.AssertStruct(GinkgoT(), "ConfigMap "+obj.Name, censoredObj)
+			}
+		})
+
+		By("Checking Secrets", func() {
+			secrets = make(map[string]*corev1.Secret)
+			var objList corev1.SecretList
+			Expect(k8sClient.List(ctx, &objList)).To(Succeed())
+			for i := range objList.Items {
+				obj := &objList.Items[i]
+				log.Info("Found Secret", "name", obj.Name)
+				objectList = append(objectList, obj.ObjectMeta)
+				secrets[obj.Name] = obj
+				censoredObj := obj.DeepCopy()
+				canonize.AssertStruct(GinkgoT(), "Secret "+obj.Name, censoredObj)
 			}
 		})
 

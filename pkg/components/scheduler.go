@@ -30,11 +30,9 @@ type Scheduler struct {
 	serverComponent
 
 	cfgen            *ytconfig.Generator
-	master           Component
 	execNodes        []Component
 	tabletNodes      []Component
 	ytsaurusClient   internalYtsaurusClient
-	initUserJob      *InitJob
 	initOpArchiveJob *InitJob
 	secret           *resources.StringSecret
 }
@@ -42,7 +40,6 @@ type Scheduler struct {
 func NewScheduler(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
-	master Component,
 	yc internalYtsaurusClient,
 	execNodes, tabletNodes []Component,
 ) *Scheduler {
@@ -55,10 +52,11 @@ func NewScheduler(
 		ytsaurus,
 		&resource.Spec.Schedulers.InstanceSpec,
 		"/usr/bin/ytserver-scheduler",
-		"ytserver-scheduler.yson",
-		func() ([]byte, error) {
-			return cfgen.GetSchedulerConfig(resource.Spec.Schedulers)
-		},
+		[]ConfigGenerator{{
+			"ytserver-scheduler.yson",
+			ConfigFormatYson,
+			func() ([]byte, error) { return cfgen.GetSchedulerConfig(resource.Spec.Schedulers) },
+		}},
 		consts.SchedulerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
@@ -70,18 +68,9 @@ func NewScheduler(
 	return &Scheduler{
 		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:           cfgen,
-		master:          master,
 		execNodes:       execNodes,
 		tabletNodes:     tabletNodes,
 		ytsaurusClient:  yc,
-		initUserJob: NewInitJobForYtsaurus(
-			l,
-			ytsaurus,
-			"user",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig,
-			&resource.Spec.Schedulers.InstanceSpec,
-		),
 		initOpArchiveJob: NewInitJobForYtsaurus(
 			l,
 			ytsaurus,
@@ -101,7 +90,6 @@ func (s *Scheduler) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		s.server,
 		s.initOpArchiveJob,
-		s.initUserJob,
 		s.secret,
 	)
 }
@@ -148,14 +136,6 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	masterStatus, err := s.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(s.master.GetFullName()), err
-	}
-
 	for _, end := range s.execNodes {
 		endStatus, err := end.Status(ctx)
 		if err != nil {
@@ -167,15 +147,8 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	if s.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			secretSpec := s.secret.Build()
-			secretSpec.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
-			}
-			err = s.secret.Sync(ctx)
-		}
-		return ComponentStatusWaitingFor(s.secret.Name()), err
+	if status, err := syncUserToken(ctx, s.ytsaurusClient, s.secret, consts.OperationArchivariusUserName, consts.SuperusersGroupName, dry); !status.IsRunning() {
+		return status, err
 	}
 
 	if s.NeedSync() {
@@ -198,15 +171,6 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 }
 
 func (s *Scheduler) initOpArchive(ctx context.Context, dry bool) (ComponentStatus, error) {
-	if !dry {
-		s.initUserJob.SetInitScript(s.createInitUserScript())
-	}
-
-	status, err := s.initUserJob.Sync(ctx, dry)
-	if status.SyncStatus != SyncStatusReady {
-		return status, err
-	}
-
 	for _, tnd := range s.tabletNodes {
 		tndStatus, err := tnd.Status(ctx)
 		if err != nil {
@@ -280,17 +244,6 @@ func (s *Scheduler) setConditionOpArchiveUpdated(ctx context.Context) {
 		Reason:  "OpArchiveUpdated",
 		Message: "Operations archive updated",
 	})
-}
-
-func (s *Scheduler) createInitUserScript() string {
-	token, _ := s.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand("operation_archivarius", "", token, true)
-	script := []string{
-		initJobWithNativeDriverPrologue(),
-	}
-	script = append(script, commands...)
-
-	return strings.Join(script, "\n")
 }
 
 // omgronny: The file was renamed in ytsaurus image. Refer to
