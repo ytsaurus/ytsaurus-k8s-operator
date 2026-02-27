@@ -431,12 +431,6 @@ status:
     status: "True"
     type: YtsaurusClientReady
   - lastTransitionTime: null
-    message: Ready
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: TimbertruckReady
-  - lastTransitionTime: null
     message: Init job successfully completed
     observedGeneration: 1
     reason: InitJobCompleted

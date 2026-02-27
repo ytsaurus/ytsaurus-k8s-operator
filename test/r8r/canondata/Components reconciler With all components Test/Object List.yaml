@@ -383,28 +383,6 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/observed-generation: "1"
-  creationTimestamp: null
-  generation: 1
-  labels:
-    app.kubernetes.io/component: yt-timbertruck
-    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-timbertruck
-    app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-timbertruck
-    ytsaurus.tech/cluster-name: test-ytsaurus
-  name: robot-timbertruck-secret
-  namespace: ytsaurus-components
-  ownerReferences:
-  - apiVersion: cluster.ytsaurus.tech/v1
-    blockOwnerDeletion: true
-    controller: true
-    kind: Ytsaurus
-    name: test-ytsaurus
-    uid: ""
-  resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
     ytsaurus.tech/instance-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null

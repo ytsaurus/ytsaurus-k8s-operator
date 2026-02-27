@@ -183,12 +183,6 @@ status:
     reason: Ready
     status: "True"
     type: YtsaurusClientReady
-  - lastTransitionTime: null
-    message: Ready
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: TimbertruckReady
   observedGeneration: 1
   state: Running
   updateStatus: {}

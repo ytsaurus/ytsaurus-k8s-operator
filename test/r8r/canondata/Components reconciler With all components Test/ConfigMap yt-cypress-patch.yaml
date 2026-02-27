@@ -140,9 +140,6 @@ data:
   yt-strawberry-controller-cypress-patch.yson: |-
     {
     }
-  yt-timbertruck-cypress-patch.yson: |-
-    {
-    }
   yt-yql-agent-cypress-patch.yson: |-
     {
         "//sys/@cluster_connection"=[
