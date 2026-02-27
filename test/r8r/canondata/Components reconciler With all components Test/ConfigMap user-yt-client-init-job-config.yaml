@@ -66,8 +66,8 @@ data:
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
     export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"
     /usr/bin/yt create user --attributes '{name="robot-ytsaurus-k8s-operator"}' --ignore-existing
-    /usr/bin/yt create map_node '//sys/cypress_tokens/19d30cd963cd0abccecdb687eb8831e1e681d703edf9f885f86e0cc8b9752f67' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/19d30cd963cd0abccecdb687eb8831e1e681d703edf9f885f86e0cc8b9752f67/@user' 'robot-ytsaurus-k8s-operator'
+    /usr/bin/yt create map_node '//sys/cypress_tokens/1bff0aa3ae5025183731a82a44154b8dd41f4c178ee5c60991a3ccb284273d87' --ignore-existing
+    /usr/bin/yt set '//sys/cypress_tokens/1bff0aa3ae5025183731a82a44154b8dd41f4c178ee5c60991a3ccb284273d87/@user' 'robot-ytsaurus-k8s-operator'
     /usr/bin/yt add-member robot-ytsaurus-k8s-operator superusers || true
 kind: ConfigMap
 metadata:

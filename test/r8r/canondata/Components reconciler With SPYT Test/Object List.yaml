@@ -175,27 +175,6 @@
   creationTimestamp: null
   generation: 1
   labels:
-    app.kubernetes.io/component: yt-master
-    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-master
-    app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-master
-    ytsaurus.tech/cluster-name: test-ytsaurus
-  name: robot-hydra-persistence-uploader-secret
-  namespace: ytsaurus-components
-  ownerReferences:
-  - apiVersion: cluster.ytsaurus.tech/v1
-    blockOwnerDeletion: true
-    controller: true
-    kind: Ytsaurus
-    name: test-ytsaurus
-    uid: ""
-  resourceVersion: "1"
-- annotations:
-    ytsaurus.tech/observed-generation: "1"
-  creationTimestamp: null
-  generation: 1
-  labels:
     app.kubernetes.io/component: yt-timbertruck
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
     app.kubernetes.io/name: yt-timbertruck

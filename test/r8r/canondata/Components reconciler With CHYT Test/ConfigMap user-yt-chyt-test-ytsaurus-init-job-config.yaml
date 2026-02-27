@@ -51,8 +51,8 @@ data:
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
     export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"
     /usr/bin/yt create user --attributes '{name="chyt_releaser"}' --ignore-existing
-    /usr/bin/yt create map_node '//sys/cypress_tokens/1bff0aa3ae5025183731a82a44154b8dd41f4c178ee5c60991a3ccb284273d87' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/1bff0aa3ae5025183731a82a44154b8dd41f4c178ee5c60991a3ccb284273d87/@user' 'chyt_releaser'
+    /usr/bin/yt create map_node '//sys/cypress_tokens/dcd89cc6efae0df4e42a9941000a5d1f4704e17162e02fbbae2e176989421ea4' --ignore-existing
+    /usr/bin/yt set '//sys/cypress_tokens/dcd89cc6efae0df4e42a9941000a5d1f4704e17162e02fbbae2e176989421ea4/@user' 'chyt_releaser'
     /usr/bin/yt add-member chyt_releaser superusers || true
 kind: ConfigMap
 metadata:

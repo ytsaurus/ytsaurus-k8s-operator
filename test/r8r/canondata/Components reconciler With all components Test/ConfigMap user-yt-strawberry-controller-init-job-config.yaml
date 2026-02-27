@@ -66,8 +66,8 @@ data:
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
     export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"
     /usr/bin/yt create user --attributes '{name="robot-strawberry-controller"}' --ignore-existing
-    /usr/bin/yt create map_node '//sys/cypress_tokens/14b533659078502056731585e8e419e7d02f6a0b5b730733f2aad5bf15126c84' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/14b533659078502056731585e8e419e7d02f6a0b5b730733f2aad5bf15126c84/@user' 'robot-strawberry-controller'
+    /usr/bin/yt create map_node '//sys/cypress_tokens/19d30cd963cd0abccecdb687eb8831e1e681d703edf9f885f86e0cc8b9752f67' --ignore-existing
+    /usr/bin/yt set '//sys/cypress_tokens/19d30cd963cd0abccecdb687eb8831e1e681d703edf9f885f86e0cc8b9752f67/@user' 'robot-strawberry-controller'
     /usr/bin/yt add-member robot-strawberry-controller superusers || true
     if [ $(/usr/bin/yt exists //sys/@ui_config) = 'false' ]; then
     yt set //sys/@ui_config '{}'
