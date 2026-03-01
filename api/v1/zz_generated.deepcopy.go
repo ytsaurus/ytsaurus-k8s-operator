@@ -1015,11 +1015,6 @@ func (in *InstanceSpec) DeepCopyInto(out *InstanceSpec) {
 		*out = new(corev1.Affinity)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.TerminationGracePeriodSeconds != nil {
-		in, out := &in.TerminationGracePeriodSeconds, &out.TerminationGracePeriodSeconds
-		*out = new(int64)
-		**out = **in
-	}
 	if in.NativeTransport != nil {
 		in, out := &in.NativeTransport, &out.NativeTransport
 		*out = new(RPCTransportSpec)
@@ -1564,6 +1559,11 @@ func (in *PodSpec) DeepCopyInto(out *PodSpec) {
 	if in.RuntimeClassName != nil {
 		in, out := &in.RuntimeClassName, &out.RuntimeClassName
 		*out = new(string)
+		**out = **in
+	}
+	if in.TerminationGracePeriodSeconds != nil {
+		in, out := &in.TerminationGracePeriodSeconds, &out.TerminationGracePeriodSeconds
+		*out = new(int64)
 		**out = **in
 	}
 	if in.HostNetwork != nil {

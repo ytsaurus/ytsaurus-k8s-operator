@@ -98,6 +98,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -118,7 +119,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 
 
@@ -605,6 +605,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -625,7 +626,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 
 
@@ -647,6 +647,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -667,7 +668,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `disable` _boolean_ |  |  |  |
 
@@ -691,6 +691,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -711,7 +712,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
@@ -753,6 +753,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -773,7 +774,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 
 
@@ -857,6 +857,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -877,7 +878,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
@@ -968,6 +968,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -988,7 +989,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  | NodePort |  |
 | `httpPort` _integer_ |  | 80 |  |
@@ -1118,6 +1118,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -1138,7 +1139,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 
 
@@ -1198,6 +1198,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -1218,7 +1219,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  |  |  |
 | `role` _string_ |  | default | MinLength: 1 <br /> |
@@ -1428,6 +1428,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -1448,7 +1449,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `cellTagMasterCaches` _integer_ |  |  |  |
 | `hostAddressesMasterCaches` _string array_ |  |  |  |
@@ -1491,6 +1491,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -1511,7 +1512,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `cellTag` _integer_ |  |  |  |
 | `hostAddresses` _string array_ |  |  |  |
@@ -1670,6 +1670,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -1690,7 +1691,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 
 
@@ -1769,6 +1769,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -1789,7 +1790,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 
 
@@ -1856,6 +1856,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -1880,6 +1881,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -1900,7 +1902,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 
 
@@ -1922,6 +1923,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -1942,7 +1944,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 
 
@@ -1964,6 +1965,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -1984,7 +1986,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  |  |  |
 | `nodePort` _integer_ |  |  |  |
@@ -2111,6 +2112,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -2131,7 +2133,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
@@ -2210,6 +2211,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -2230,7 +2232,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
@@ -2356,6 +2357,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -2376,7 +2378,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
@@ -2440,6 +2441,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -2460,7 +2462,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `cellTagMasterCaches` _integer_ |  |  |  |
 | `hostAddressesMasterCaches` _string array_ |  |  |  |
@@ -2498,6 +2499,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -2518,7 +2520,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 
 
@@ -2615,6 +2616,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -2691,6 +2693,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -2711,7 +2714,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  |  |  |
 | `minPort` _integer_ |  | 32000 |  |
@@ -2737,6 +2739,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -2757,7 +2760,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 
 
@@ -2797,6 +2799,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -2817,7 +2820,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
@@ -2906,6 +2908,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -3114,6 +3117,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
@@ -3134,7 +3138,6 @@ _Appears in:_
 | `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 
 
@@ -3191,6 +3194,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
 | `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |

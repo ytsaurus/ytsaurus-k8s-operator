@@ -150,6 +150,7 @@ spec:
         - mountPath: /config
           name: config
       setHostnameAsFQDN: true
+      terminationGracePeriodSeconds: 5
       volumes:
       - configMap:
           name: yt-discovery-config

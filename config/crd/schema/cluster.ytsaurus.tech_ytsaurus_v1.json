@@ -33808,6 +33808,11 @@
               "type": "boolean",
               "default": true
             },
+            "terminationGracePeriodSeconds": {
+              "description": "Optional duration in seconds the pod needs to terminate gracefully.",
+              "type": "integer",
+              "format": "int64"
+            },
             "tolerations": {
               "description": "Tolerations for instance and init job pods.",
               "type": "array",
@@ -40406,6 +40411,11 @@
             }
           }
         },
+        "terminationGracePeriodSeconds": {
+          "description": "Optional duration in seconds the pod needs to terminate gracefully.",
+          "type": "integer",
+          "format": "int64"
+        },
         "tolerations": {
           "description": "Tolerations for instance and init job pods.",
           "type": "array",
@@ -40745,6 +40755,11 @@
               "description": "SetHostnameAsFQDN indicates whether to set the hostname as FQDN.",
               "type": "boolean",
               "default": true
+            },
+            "terminationGracePeriodSeconds": {
+              "description": "Optional duration in seconds the pod needs to terminate gracefully.",
+              "type": "integer",
+              "format": "int64"
             },
             "theme": {
               "type": "string",
