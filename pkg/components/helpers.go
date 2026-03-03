@@ -365,12 +365,17 @@ func handleRollingUpdatingClusterState(
 		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
 	}
 
-	// If the STS still needs to be synced with the new spec (new image not applied yet),
-	// this is the beginning of a new rolling update cycle. Checking needSync(true) first
-	// avoids the ambiguity between "not started" and "completed" states: both look like
-	// {currentRevision == updateRevision} in STS status before the first sync.
-	if server.needUpdate() {
-		totalCount := server.getReplicaCount()
+	sts, ok := server.getRollingUpdateStatus(ctx)
+	if !ok {
+		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
+	}
+
+	totalCount := sts.totalCount
+
+	// Init guard: either no rolling partition has been set yet OR the STS
+	// still has the old image (needUpdate=true), which means this is a new update cycle
+	// where a previous rolling update left partition=0 in the STS.
+	if sts.partition == nil || server.needUpdate() {
 		server.setUpdateStrategy(appsv1.RollingUpdateStatefulSetStrategyType, totalCount-1, maxUnavailable)
 		if err := server.Sync(ctx); err != nil {
 			msg := fmt.Sprintf("failed to initialize rolling update for %s", cmp.GetFullName())
@@ -379,16 +384,6 @@ func handleRollingUpdatingClusterState(
 		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
 	}
 
-	sts, ok := server.getRollingUpdateStatus(ctx)
-	if !ok {
-		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
-	}
-
-	totalCount := sts.totalCount
-
-	if sts.partition == nil {
-		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
-	}
 	partition := *sts.partition
 
 	// Completion: all pods are exposed and on the new revision.
