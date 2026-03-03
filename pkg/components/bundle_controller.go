@@ -8,6 +8,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ypatch"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -76,9 +77,17 @@ func (bc *BundleController) Sync(ctx context.Context, dry bool) (ComponentStatus
 		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	return SimpleStatus(SyncStatusReady), err
+	return ComponentStatusReady(), err
 }
 
 func (bc *BundleController) doServerSync(ctx context.Context) error {
 	return bc.server.Sync(ctx)
+}
+
+func (bc *BundleController) GetCypressPatch() ypatch.PatchSet {
+	patchSet := ypatch.PatchSet{}
+	if disable := bc.ytsaurus.GetResource().Spec.BundleController.Disable; disable != nil {
+		patchSet.AddPatch("//sys", ypatch.Patch{ypatch.Replace("/@disable_bundle_controller", *disable)})
+	}
+	return patchSet
 }
