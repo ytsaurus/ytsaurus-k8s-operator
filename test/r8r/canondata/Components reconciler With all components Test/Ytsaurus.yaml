@@ -201,6 +201,8 @@ spec:
       - name: instance-dns-option
     dnsPolicy: None
     hostNetwork: false
+    hydraPersistenceUploader:
+      image: ghcr.io/ytsaurus/sidecars:0.0.1
     instanceCount: 1
     locations:
     - locationType: MasterChangelogs
@@ -228,6 +230,8 @@ spec:
         memory: "0"
     runtimeClassName: instance-runtime-class
     setHostnameAsFqdn: true
+    timbertruck:
+      image: ghcr.io/ytsaurus/sidecars:0.0.1
     tolerations:
     - key: instance-toleration
     volumeClaimTemplates:
