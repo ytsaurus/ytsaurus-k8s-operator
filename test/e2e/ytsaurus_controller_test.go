@@ -2141,19 +2141,8 @@ exec "$@"`
 
 					By("Verify StatefulSet has RollingUpdate strategy with maxUnavailable configured")
 					sts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: stsName}}
-					EventuallyObject(ctx, &sts, reactionTimeout).Should(WithTransform(
-						func(current *appsv1.StatefulSet) bool {
-							if current.Spec.UpdateStrategy.Type != appsv1.RollingUpdateStatefulSetStrategyType {
-								return false
-							}
-							expectedMaxUnavailable := *current.Spec.Replicas - int32(minReady)
-
-							return current.Spec.UpdateStrategy.RollingUpdate != nil &&
-								current.Spec.UpdateStrategy.RollingUpdate.MaxUnavailable != nil &&
-								current.Spec.UpdateStrategy.RollingUpdate.MaxUnavailable.IntVal == expectedMaxUnavailable
-						},
-						BeTrue(),
-					))
+					expectedMaxUnavailable := *sts.Spec.Replicas - int32(minReady)
+					Expect(sts.Spec.UpdateStrategy.RollingUpdate.MaxUnavailable.IntVal).To(Equal(expectedMaxUnavailable))
 
 					By("Waiting cluster update completes")
 					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())

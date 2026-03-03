@@ -126,6 +126,10 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(rp.ytsaurus, rp) {
 			switch getComponentUpdateStrategy(rp.ytsaurus, consts.RpcProxyType, rp.GetShortName()) {
+			case ytv1.ComponentUpdateModeTypeRollingUpdate:
+				if status, err := handleRollingUpdatingClusterState(ctx, rp.ytsaurus, rp, rp.server, dry); status != nil {
+					return *status, err
+				}
 			case ytv1.ComponentUpdateModeTypeOnDelete:
 				if status, err := handleOnDeleteUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.component, rp.server, dry); status != nil {
 					return *status, err
