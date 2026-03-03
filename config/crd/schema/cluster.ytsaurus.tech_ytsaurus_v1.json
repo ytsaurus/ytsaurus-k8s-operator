@@ -40826,14 +40826,8 @@
                     "type": "object"
                   },
                   "rollingUpdate": {
-                    "type": "object",
-                    "properties": {
-                      "maxUnavailable": {
-                        "description": "MaxUnavailable controls how many replicas can be unavailable at any point...",
-                        "type": "integer",
-                        "format": "int32"
-                      }
-                    }
+                    "description": "ComponentRollingUpdateMode configures the rolling update strategy.",
+                    "type": "object"
                   },
                   "runPreChecks": {
                     "type": "boolean"

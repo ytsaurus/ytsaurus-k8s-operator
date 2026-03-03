@@ -2109,20 +2109,19 @@ exec "$@"`
 		)
 
 		DescribeTableSubtree("rolling-update strategy", Label("rollingupdate"),
-			func(componentType consts.ComponentType, stsName string, maxUnavailable int32) {
+			func(componentType consts.ComponentType, stsName string, minReady int) {
 				BeforeEach(func() {
 					switch componentType {
 					case consts.HttpProxyType:
-						ytsaurus.Spec.HTTPProxies[0].InstanceCount = 6
+						ytsaurus.Spec.HTTPProxies[0].InstanceCount = int32(6)
+						ytsaurus.Spec.HTTPProxies[0].MinReadyInstanceCount = ptr.To(minReady)
 					}
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 						{
 							Component: ytv1.Component{Type: componentType},
 							Strategy: &ytv1.ComponentUpdateStrategy{
-								RollingUpdate: &ytv1.ComponentRollingUpdateMode{
-									MaxUnavailable: ptr.To(maxUnavailable),
-								},
-								RunPreChecks: ptr.To(true),
+								RollingUpdate: &ytv1.ComponentRollingUpdateMode{},
+								RunPreChecks:  ptr.To(true),
 							},
 						},
 					}
@@ -2147,10 +2146,11 @@ exec "$@"`
 							if current.Spec.UpdateStrategy.Type != appsv1.RollingUpdateStatefulSetStrategyType {
 								return false
 							}
-							rolling := current.Spec.UpdateStrategy.RollingUpdate
-							return rolling != nil &&
-								rolling.MaxUnavailable != nil &&
-								rolling.MaxUnavailable.IntVal == maxUnavailable
+							expectedMaxUnavailable := *current.Spec.Replicas - int32(minReady)
+
+							return current.Spec.UpdateStrategy.RollingUpdate != nil &&
+								current.Spec.UpdateStrategy.RollingUpdate.MaxUnavailable != nil &&
+								current.Spec.UpdateStrategy.RollingUpdate.MaxUnavailable.IntVal == expectedMaxUnavailable
 						},
 						BeTrue(),
 					))
@@ -2202,7 +2202,7 @@ exec "$@"`
 					Expect(pods.Updated).To(ConsistOf(expectedUpdated), "updated")
 				})
 			},
-			Entry("update http-proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType), int32(3)),
+			Entry("update http-proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType), 2),
 		)
 	}) // update plan strategy
 })

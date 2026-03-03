@@ -729,13 +729,6 @@ func validateUpdateModeForSelector(selector ytv1.ComponentUpdateSelector, path *
 		if selector.Component.Type == "" {
 			errs = append(errs, field.Invalid(path.Child("type"), modeType, "rolling update requires a concrete component selector"))
 		}
-		if selector.Strategy.RollingUpdate.MaxUnavailable == nil || *selector.Strategy.RollingUpdate.MaxUnavailable <= 0 {
-			if selector.Strategy.RollingUpdate.MaxUnavailable == nil {
-				errs = append(errs, field.Required(path.Child("rollingUpdate").Child("maxUnavailable"), "maxUnavailable must be provided when type=RollingUpdate"))
-			} else {
-				errs = append(errs, field.Invalid(path.Child("rollingUpdate").Child("maxUnavailable"), *selector.Strategy.RollingUpdate.MaxUnavailable, "maxUnavailable must be positive"))
-			}
-		}
 
 	case ytv1.ComponentUpdateModeTypeOnDelete:
 		if selector.Component.Type == "" {

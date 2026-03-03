@@ -35,8 +35,9 @@ type server interface {
 	preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration)
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
-	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition, maxUnavailable int32)
+	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition int32, maxUnavailable int)
 	getReplicaCount() int32
+	getMinReadyInstanceCount() *int
 	getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, bool)
 	addCARootBundle(c *corev1.Container)
 	addTlsSecretMount(c *corev1.Container)
@@ -299,6 +300,10 @@ func (s *serverImpl) preheatSpec() (images []string, nodeSelector map[string]str
 
 func (s *serverImpl) getReplicaCount() int32 {
 	return s.instanceSpec.InstanceCount
+}
+
+func (s *serverImpl) getMinReadyInstanceCount() *int {
+	return s.instanceSpec.MinReadyInstanceCount
 }
 
 func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
@@ -570,12 +575,12 @@ func (s *serverImpl) addTlsSecretMount(c *corev1.Container) {
 }
 
 // setUpdateStrategy sets the desired StatefulSet update strategy
-func (s *serverImpl) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition, maxUnavailable int32) {
+func (s *serverImpl) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition int32, maxUnavailable int) {
 	s.updateStrategy = &appsv1.StatefulSetUpdateStrategy{
 		Type: strategy,
 	}
 	if strategy == appsv1.RollingUpdateStatefulSetStrategyType {
-		maxUnavailableValue := intstr.FromInt32(maxUnavailable)
+		maxUnavailableValue := intstr.FromInt(maxUnavailable)
 		s.updateStrategy.RollingUpdate = &appsv1.RollingUpdateStatefulSetStrategy{
 			Partition:      ptr.To(partition),
 			MaxUnavailable: &maxUnavailableValue,

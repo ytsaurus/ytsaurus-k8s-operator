@@ -34971,12 +34971,8 @@ spec:
                         onDelete:
                           type: object
                         rollingUpdate:
-                          properties:
-                            maxUnavailable:
-                              description: MaxUnavailable controls how many replicas
-                                can be unavailable at any point...
-                              format: int32
-                              type: integer
+                          description: ComponentRollingUpdateMode configures the rolling
+                            update strategy.
                           type: object
                         runPreChecks:
                           type: boolean

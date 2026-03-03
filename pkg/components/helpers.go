@@ -351,9 +351,13 @@ func handleRollingUpdatingClusterState(
 		return nil, nil
 	}
 
-	maxUnavailable, ok := getRollingMaxUnavailable(ytsaurus, cmp.GetType(), cmp.GetShortName())
-	if !ok {
-		msg := "rolling update maxUnavailable is not configured"
+	minReady := server.getMinReadyInstanceCount()
+	if minReady == nil {
+		minReady = ptr.To(1)
+	}
+	maxUnavailable := int(server.getReplicaCount()) - *minReady
+	if maxUnavailable <= 0 {
+		msg := fmt.Sprintf("instanceCount - minReadyInstanceCount must be positive for rolling update on %s", cmp.GetFullName())
 		return ptr.To(ComponentStatusBlocked(msg)), yterrors.Err(msg)
 	}
 
@@ -365,7 +369,7 @@ func handleRollingUpdatingClusterState(
 	// this is the beginning of a new rolling update cycle. Checking needSync(true) first
 	// avoids the ambiguity between "not started" and "completed" states: both look like
 	// {currentRevision == updateRevision} in STS status before the first sync.
-	if server.needSync(true) {
+	if server.needUpdate() {
 		totalCount := server.getReplicaCount()
 		server.setUpdateStrategy(appsv1.RollingUpdateStatefulSetStrategyType, totalCount-1, maxUnavailable)
 		if err := server.Sync(ctx); err != nil {
@@ -400,7 +404,7 @@ func handleRollingUpdatingClusterState(
 	// effective: take the larger of actual unavailability and in-progress count to avoid
 	// double-counting pods that are both in-progress and already unavailable.
 	effective := max(totalCount-sts.availableReplicas, inProgress)
-	budget := maxUnavailable - effective
+	budget := maxUnavailable - int(effective)
 
 	if budget <= 0 || partition == 0 {
 		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
@@ -427,22 +431,6 @@ func setPodsUpdatedCondition(ctx context.Context, ytsaurus *apiproxy.Ytsaurus, c
 		Reason:  consts.ConditionPodsUpdated,
 		Message: "All pods updated",
 	})
-}
-
-func getRollingMaxUnavailable(ytsaurus *apiproxy.Ytsaurus, componentType consts.ComponentType, componentName string) (int32, bool) {
-	for _, selector := range ytsaurus.GetResource().Spec.UpdatePlan {
-		if selector.Component.Type != componentType {
-			continue
-		}
-		if selector.Component.Name != "" && selector.Component.Name != componentName {
-			continue
-		}
-		if selector.Strategy == nil || selector.Strategy.RollingUpdate == nil || selector.Strategy.RollingUpdate.MaxUnavailable == nil {
-			continue
-		}
-		return *selector.Strategy.RollingUpdate.MaxUnavailable, true
-	}
-	return 0, false
 }
 
 func runPrechecks(ctx context.Context, ytsaurus *apiproxy.Ytsaurus, cmp Component) (*ComponentStatus, error) {
