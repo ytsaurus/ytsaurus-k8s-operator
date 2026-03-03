@@ -83,6 +83,15 @@ spec:
         - name: YT_DRIVER_CONFIG_PATH
           value: /config_template/client.yson
         image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - nohup bash -c 'rm /shared-binaries/*; cp /usr/bin/ytserver-all /shared-binaries/ytserver-all;
+                ln /shared-binaries/ytserver-all /shared-binaries/ytserver-master'
+                > /dev/null 2>&1 &
         name: ytserver
         ports:
         - containerPort: 10010
@@ -122,6 +131,46 @@ spec:
         - mountPath: /tls/bus_client_secret
           name: bus-client-secret
           readOnly: true
+        - mountPath: /shared-binaries
+          name: shared-binaries
+      - command:
+        - /usr/bin/hydra_persistence_uploader
+        env:
+        - name: YT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: YT_TOKEN
+              name: robot-hydra-persistence-uploader-secret
+        - name: YT_PROXY
+          value: https://http-proxies-lb.ytsaurus-components.svc.cluster.local
+        - name: K8S_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: K8S_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: K8S_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: ghcr.io/ytsaurus/sidecars:0.0.1
+        imagePullPolicy: IfNotPresent
+        name: hydra-persistence-uploader
+        resources: {}
+        volumeMounts:
+        - mountPath: /config
+          name: config-template
+          readOnly: true
+        - mountPath: /yt/master-data
+          name: master-data
+          readOnly: true
+        - mountPath: /yt/master-logs
+          name: master-logs
+          readOnly: true
+        - mountPath: /shared-binaries
+          name: shared-binaries
       dnsConfig:
         options:
         - name: instance-dns-option
@@ -242,6 +291,8 @@ spec:
       - name: bus-client-secret
         secret:
           secretName: native-client-cert
+      - emptyDir: {}
+        name: shared-binaries
   updateStrategy: {}
   volumeClaimTemplates:
   - metadata:

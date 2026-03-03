@@ -56,6 +56,17 @@ export YTSAURUS_IMAGE_25_3_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.3-2026-01-29-e
 export YTSAURUS_IMAGE_25_4_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.4-2026-01-30-337b71eda802fd46fb01780fbfe2d7a1ba757b25
 export YTSAURUS_IMAGE_26_1_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-2026-01-30-20d7d021364a7e544a8ea59c22f058e0f13f0d94
 
+# https://github.com/orgs/ytsaurus/packages/container/package/sidecars
+# https://ytsaurus.tech/docs/en/admin-guide/install-ytmsvc
+
+export SIDECARS_IMAGE ?= ${YTSAURUS_REGISTRY}/sidecars
+
+export SIDECARS_VERSION_PAST ?= 0.0.1
+export SIDECARS_VERSION_PREVIOUS ?= 0.0.1
+export SIDECARS_VERSION_CURRENT ?= 0.0.1
+export SIDECARS_VERSION_COMING ?= 0.0.1
+export SIDECARS_VERSION_FUTURE ?= 0.0.1
+
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/query-tracker
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/query-tracker-nightly
 # skopeo inspect --format '{{range .RepoTags}}{{.}}\n{{end -}}' docker://ghcr.io/ytsaurus/query-tracker-nightly:dev-2025-07-23-be855609d82ae5c6952a6b5c8c4e1706d1b18232

@@ -37,6 +37,7 @@ type YtsaurusImages struct {
 
 	Job          string
 	Core         string
+	Sidecars     string
 	Strawberry   string
 	Chyt         string
 	QueryTracker string
@@ -62,7 +63,7 @@ type ImageEntry struct {
 
 func init() {
 	images := map[string]map[string]ImageEntry{}
-	names := []string{"YTSAURUS", "STRAWBERRY", "CHYT", "QUERY_TRACKER"}
+	names := []string{"YTSAURUS", "SIDECARS", "STRAWBERRY", "CHYT", "QUERY_TRACKER"}
 	epochs := []string{"PAST", "PREVIOUS", "CURRENT", "COMING", "FUTURE", "NIGHTLY"}
 
 	if YtsaurusCurrVersion == "" {
@@ -72,6 +73,7 @@ func init() {
 	// Seed some default versions if nothing is set in environment.
 	defaultVersions := map[string]string{
 		"YTSAURUS_VERSION_CURRENT":      "25.2.2",
+		"SIDECARS_VERSION_CURRENT":      "0.0.1",
 		"STRAWBERRY_VERSION_CURRENT":    "0.0.15",
 		"CHYT_VERSION_CURRENT":          "2.17.4",
 		"QUERY_TRACKER_VERSION_CURRENT": "0.1.2",
@@ -137,6 +139,7 @@ func init() {
 
 			Job:          YtsaurusJobImage,
 			Core:         yt.Image,
+			Sidecars:     choose("SIDECARS").Image,
 			Strawberry:   choose("STRAWBERRY").Image,
 			Chyt:         choose("CHYT").Image,
 			QueryTracker: queryTracker.Image,
@@ -292,6 +295,18 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 				b.CreateHTTPProxiesSpec(),
 			},
 		},
+	}
+}
+
+func (b *YtsaurusBuilder) WithHydraPersistenceUploader() {
+	b.Ytsaurus.Spec.PrimaryMasters.HydraPersistenceUploader = &ytv1.HydraPersistenceUploaderSpec{
+		Image: ptr.To(b.Images.Sidecars),
+	}
+}
+
+func (b *YtsaurusBuilder) WithTimbertruck() {
+	b.Ytsaurus.Spec.PrimaryMasters.Timbertruck = &ytv1.TimbertruckSpec{
+		Image: ptr.To(b.Images.Sidecars),
 	}
 }
 
