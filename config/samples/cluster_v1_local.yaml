@@ -64,10 +64,12 @@ spec:
       role: control
 
   rpcProxies:
-    - instanceCount: 1
+    - serviceType: NodePort
+      instanceCount: 1
       loggers: *loggers
       role: default
-    - instanceCount: 1
+    - serviceType: NodePort
+      instanceCount: 1
       loggers: *loggers
       role: heavy
 
