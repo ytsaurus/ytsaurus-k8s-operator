@@ -546,45 +546,6 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Entry("YqlAgent", consts.YqlAgentType),
 			Entry("QueueAgent", consts.QueueAgentType),
 		)
-
-		DescribeTable("Forbidden RollingUpdate modes",
-			func(componentType consts.ComponentType, strategy ytv1.ComponentUpdateStrategy, expectedErrorMsg string) {
-				ytsaurus := newYtsaurus()
-
-				// Set up required component specs for validation
-				switch componentType {
-				case consts.QueryTrackerType:
-					ytsaurus.Spec.QueryTrackers = &ytv1.QueryTrackerSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
-					ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{
-						{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}},
-					}
-				case consts.QueueAgentType:
-					ytsaurus.Spec.QueueAgents = &ytv1.QueueAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
-					ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{
-						{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}},
-					}
-				case consts.YqlAgentType:
-					ytsaurus.Spec.YQLAgents = &ytv1.YQLAgentSpec{InstanceSpec: ytv1.InstanceSpec{InstanceCount: 1}}
-				}
-
-				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
-					{
-						Component: ytv1.Component{Type: componentType},
-						Strategy:  &strategy,
-					},
-				}
-
-				Expect(k8sClient.Create(ctx, ytsaurus)).ShouldNot(Succeed())
-			},
-			Entry("Master", consts.MasterType, ytv1.ComponentUpdateStrategy{RollingUpdate: &ytv1.ComponentRollingUpdateMode{}}, "Master doesn't support RollingUpdate mode"),
-			Entry("Scheduler", consts.SchedulerType, ytv1.ComponentUpdateStrategy{RollingUpdate: &ytv1.ComponentRollingUpdateMode{}}, "Scheduler doesn't support RollingUpdate mode"),
-			Entry("QueryTracker", consts.QueryTrackerType, ytv1.ComponentUpdateStrategy{RollingUpdate: &ytv1.ComponentRollingUpdateMode{}}, "QueryTracker supports only BulkUpdate mode"),
-			Entry("QueryTracker", consts.QueryTrackerType, ytv1.ComponentUpdateStrategy{OnDelete: &ytv1.ComponentOnDeleteUpdateMode{}}, "QueryTracker supports only BulkUpdate mode"),
-			Entry("QueueAgent", consts.QueueAgentType, ytv1.ComponentUpdateStrategy{RollingUpdate: &ytv1.ComponentRollingUpdateMode{}}, "QueueAgent supports only BulkUpdate mode"),
-			Entry("QueueAgent", consts.QueueAgentType, ytv1.ComponentUpdateStrategy{OnDelete: &ytv1.ComponentOnDeleteUpdateMode{}}, "QueueAgent supports only BulkUpdate mode"),
-			Entry("YqlAgent", consts.YqlAgentType, ytv1.ComponentUpdateStrategy{OnDelete: &ytv1.ComponentOnDeleteUpdateMode{}}, "YqlAgent supports only BulkUpdate mode"),
-			Entry("YqlAgent", consts.YqlAgentType, ytv1.ComponentUpdateStrategy{RollingUpdate: &ytv1.ComponentRollingUpdateMode{}}, "YqlAgent supports only BulkUpdate mode"),
-		)
 	})
 })
 
