@@ -358,9 +358,13 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 			bundleController := yc.ytsaurus.GetResource().Status.UpdateStatus.BundleController
 
+			// Revert bundle controller into target or previous state.
 			if bundleController != nil {
-				err := yc.SetBundleControllerDisabled(ctx, bundleController.Disabled)
-				if err != nil {
+				disable := bundleController.Disabled
+				if spec := yc.ytsaurus.GetResource().Spec.BundleController; spec != nil && spec.Disable != nil {
+					disable = spec.Disable
+				}
+				if err := yc.SetBundleControllerDisabled(ctx, disable); err != nil {
 					return SimpleStatus(SyncStatusUpdating), err
 				}
 			}
