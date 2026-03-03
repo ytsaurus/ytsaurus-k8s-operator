@@ -1047,8 +1047,8 @@ const (
 )
 
 type ComponentRollingUpdateMode struct {
-	// BatchSize controls how many replicas can be rolled at once.
-	BatchSize *int32 `json:"batchSize,omitempty"`
+	// MaxUnavailable controls how many replicas can be unavailable at any point during a rolling update.
+	MaxUnavailable *int32 `json:"maxUnavailable,omitempty"`
 }
 
 type ComponentOnDeleteUpdateMode struct {

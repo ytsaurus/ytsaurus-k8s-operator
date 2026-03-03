@@ -34977,9 +34977,9 @@ spec:
                           type: object
                         rollingUpdate:
                           properties:
-                            batchSize:
-                              description: BatchSize controls how many replicas can
-                                be rolled at once.
+                            maxUnavailable:
+                              description: MaxUnavailable controls how many replicas
+                                can be unavailable at any point...
                               format: int32
                               type: integer
                           type: object

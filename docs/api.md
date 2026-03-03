@@ -503,7 +503,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `batchSize` _integer_ | BatchSize controls how many replicas can be rolled at once. |  |  |
+| `maxUnavailable` _integer_ | MaxUnavailable controls how many replicas can be unavailable at any point during a rolling update. |  |  |
 
 
 #### ComponentType

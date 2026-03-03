@@ -726,18 +726,14 @@ func validateUpdateModeForSelector(selector ytv1.ComponentUpdateSelector, path *
 			}
 		}
 	case ytv1.ComponentUpdateModeTypeRollingUpdate:
-		switch selector.Component.Type {
-		case "":
+		if selector.Component.Type == "" {
 			errs = append(errs, field.Invalid(path.Child("type"), modeType, "rolling update requires a concrete component selector"))
-		case consts.HttpProxyType:
-		default:
-			errs = append(errs, field.Invalid(path.Child("type"), modeType, fmt.Sprintf("%s doesn't support RollingUpdate mode", selector.Component.Type)))
 		}
-		if selector.Strategy.RollingUpdate.BatchSize == nil || *selector.Strategy.RollingUpdate.BatchSize <= 0 {
-			if selector.Strategy.RollingUpdate.BatchSize == nil {
-				errs = append(errs, field.Required(path.Child("rollingUpdate").Child("batchSize"), "batchSize must be provided when type=RollingUpdate"))
+		if selector.Strategy.RollingUpdate.MaxUnavailable == nil || *selector.Strategy.RollingUpdate.MaxUnavailable <= 0 {
+			if selector.Strategy.RollingUpdate.MaxUnavailable == nil {
+				errs = append(errs, field.Required(path.Child("rollingUpdate").Child("maxUnavailable"), "maxUnavailable must be provided when type=RollingUpdate"))
 			} else {
-				errs = append(errs, field.Invalid(path.Child("rollingUpdate").Child("batchSize"), *selector.Strategy.RollingUpdate.BatchSize, "batchSize must be positive"))
+				errs = append(errs, field.Invalid(path.Child("rollingUpdate").Child("maxUnavailable"), *selector.Strategy.RollingUpdate.MaxUnavailable, "maxUnavailable must be positive"))
 			}
 		}
 

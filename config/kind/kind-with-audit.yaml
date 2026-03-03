@@ -21,6 +21,7 @@ runtimeConfig:
 
 # https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/
 featureGates:
+"MaxUnavailableStatefulSet": true
 # "KubeletCgroupDriverFromCRI": true
 # "NewVolumeManagerReconstruction": true
 # "InPlacePodVerticalScaling": true

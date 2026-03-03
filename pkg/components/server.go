@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 	"path"
-	"strconv"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
@@ -37,10 +35,9 @@ type server interface {
 	preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration)
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
-	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType)
-	setRollingUpdateStrategy(partition, maxUnavailable int32)
+	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition, maxUnavailable int32)
 	getReplicaCount() int32
-	arePodOrdinalsUpdatedAndReady(ctx context.Context, ordinals []int32) bool
+	getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, bool)
 	addCARootBundle(c *corev1.Container)
 	addTlsSecretMount(c *corev1.Container)
 	addMonitoringPort(port corev1.ServicePort)
@@ -573,101 +570,54 @@ func (s *serverImpl) addTlsSecretMount(c *corev1.Container) {
 }
 
 // setUpdateStrategy sets the desired StatefulSet update strategy
-func (s *serverImpl) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType) {
+func (s *serverImpl) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition, maxUnavailable int32) {
 	s.updateStrategy = &appsv1.StatefulSetUpdateStrategy{
 		Type: strategy,
 	}
-	// Clear the built StatefulSet so it will be rebuilt with the new strategy
-	s.builtStatefulSet = nil
-}
-
-func (s *serverImpl) setRollingUpdateStrategy(partition, maxUnavailable int32) {
-	maxUnavailableValue := intstr.FromInt(int(maxUnavailable))
-	s.updateStrategy = &appsv1.StatefulSetUpdateStrategy{
-		Type: appsv1.RollingUpdateStatefulSetStrategyType,
-		RollingUpdate: &appsv1.RollingUpdateStatefulSetStrategy{
+	if strategy == appsv1.RollingUpdateStatefulSetStrategyType {
+		maxUnavailableValue := intstr.FromInt32(maxUnavailable)
+		s.updateStrategy.RollingUpdate = &appsv1.RollingUpdateStatefulSetStrategy{
 			Partition:      ptr.To(partition),
 			MaxUnavailable: &maxUnavailableValue,
-		},
+		}
 	}
 	// Clear the built StatefulSet so it will be rebuilt with the new strategy
 	s.builtStatefulSet = nil
 }
 
-func (s *serverImpl) arePodOrdinalsUpdatedAndReady(ctx context.Context, ordinals []int32) bool {
-	logger := ctrllog.FromContext(ctx)
-
-	sts, ok := s.fetchAndValidateStatefulSet(ctx)
-	if !ok {
-		return false
-	}
-
-	pods, err := s.statefulSet.ListPods(ctx)
-	if err != nil {
-		logger.Error(err, "Failed to list pods for StatefulSet", "component", s.labeller.GetFullComponentName())
-		return false
-	}
-
-	podsByOrdinal := make(map[int32]corev1.Pod, len(pods))
-	for _, pod := range pods {
-		ordinal, ok := getStatefulSetPodOrdinal(sts.Name, pod.Name)
-		if !ok {
-			continue
-		}
-		podsByOrdinal[ordinal] = pod
-	}
-
-	for _, ordinal := range ordinals {
-		pod, ok := podsByOrdinal[ordinal]
-		if !ok {
-			logger.Info("Rolling update in progress: pod for ordinal not found",
-				"component", s.labeller.GetFullComponentName(),
-				"ordinal", ordinal)
-			return false
-		}
-
-		if pod.DeletionTimestamp != nil {
-			logger.Info("Rolling update in progress: pod is terminating",
-				"component", s.labeller.GetFullComponentName(),
-				"pod", pod.Name)
-			return false
-		}
-
-		podRevision := pod.Labels[appsv1.StatefulSetRevisionLabel]
-		if podRevision != sts.Status.UpdateRevision {
-			logger.Info("Rolling update in progress: pod not updated",
-				"component", s.labeller.GetFullComponentName(),
-				"pod", pod.Name,
-				"podRevision", podRevision,
-				"updateRevision", sts.Status.UpdateRevision)
-			return false
-		}
-
-		if pod.Status.Phase != corev1.PodRunning {
-			logger.Info("Rolling update in progress: pod is not running",
-				"component", s.labeller.GetFullComponentName(),
-				"pod", pod.Name,
-				"phase", pod.Status.Phase)
-			return false
-		}
-	}
-
-	return true
+type stsRollingStatus struct {
+	partition         *int32
+	availableReplicas int32
+	updatedReplicas   int32
+	totalCount        int32
+	updateRevision    string
+	currentRevision   string
 }
 
-func getStatefulSetPodOrdinal(statefulSetName, podName string) (int32, bool) {
-	prefix := statefulSetName + "-"
-	if !strings.HasPrefix(podName, prefix) {
-		return 0, false
+func (s *serverImpl) getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, bool) {
+	sts, ok := s.fetchAndValidateStatefulSet(ctx)
+	if !ok {
+		return nil, false
 	}
 
-	ordinalPart := strings.TrimPrefix(podName, prefix)
-	value, err := strconv.ParseInt(ordinalPart, 10, 32)
-	if err != nil {
-		return 0, false
+	var partition *int32
+	if sts.Spec.UpdateStrategy.RollingUpdate != nil {
+		partition = sts.Spec.UpdateStrategy.RollingUpdate.Partition
 	}
 
-	return int32(value), true
+	totalCount := int32(0)
+	if sts.Spec.Replicas != nil {
+		totalCount = *sts.Spec.Replicas
+	}
+
+	return &stsRollingStatus{
+		partition:         partition,
+		availableReplicas: sts.Status.AvailableReplicas,
+		updatedReplicas:   sts.Status.UpdatedReplicas,
+		totalCount:        totalCount,
+		updateRevision:    sts.Status.UpdateRevision,
+		currentRevision:   sts.Status.CurrentRevision,
+	}, true
 }
 
 func (s *serverImpl) addMonitoringPort(port corev1.ServicePort) {
