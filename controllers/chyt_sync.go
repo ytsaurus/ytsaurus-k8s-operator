@@ -35,9 +35,9 @@ func (r *ChytReconciler) Sync(ctx context.Context, resource *ytv1.Chyt, ytsaurus
 		return ctrl.Result{}, nil
 	}
 
-	status := component.Status(ctx)
-	if status.SyncStatus == components.SyncStatusBlocked {
-		return ctrl.Result{RequeueAfter: time.Second * 10}, nil
+	status, err := component.Sync(ctx, true)
+	if err != nil || status.SyncStatus == components.SyncStatusBlocked {
+		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
 
 	if status.SyncStatus == components.SyncStatusReady {
@@ -47,7 +47,7 @@ func (r *ChytReconciler) Sync(ctx context.Context, resource *ytv1.Chyt, ytsaurus
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if err := component.Sync(ctx); err != nil {
+	if _, err := component.Sync(ctx, false); err != nil {
 		logger.Error(err, "component sync failed", "component", "chyt")
 		return ctrl.Result{Requeue: true}, err
 	}

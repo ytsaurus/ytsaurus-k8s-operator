@@ -56,7 +56,7 @@ func (bc *BundleController) Exists() bool {
 	return bc.server.Exists()
 }
 
-func (bc *BundleController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (bc *BundleController) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if bc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -77,15 +77,6 @@ func (bc *BundleController) doSync(ctx context.Context, dry bool) (ComponentStat
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (bc *BundleController) Status(ctx context.Context) (ComponentStatus, error) {
-	return bc.doSync(ctx, true)
-}
-
-func (bc *BundleController) Sync(ctx context.Context) error {
-	_, err := bc.doSync(ctx, false)
-	return err
 }
 
 func (bc *BundleController) doServerSync(ctx context.Context) error {

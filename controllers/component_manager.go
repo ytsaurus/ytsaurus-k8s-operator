@@ -52,14 +52,23 @@ func NewComponentManager(
 		return allComponents
 	}
 
+	ih := components.NewImageHeater(cfgen, ytsaurus, getAllComponents)
+	allComponents = append(allComponents, ih)
+
 	m := components.NewMaster(cfgen, ytsaurus)
+	allComponents = append(allComponents, m)
+
 	var hps []components.Component
 	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {
 		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
 	}
+	allComponents = append(allComponents, hps...)
+
 	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0], getAllComponents)
+	allComponents = append(allComponents, yc)
+
 	d := components.NewDiscovery(cfgen, ytsaurus, yc)
-	ih := components.NewImageHeater(cfgen, ytsaurus, getAllComponents)
+	allComponents = append(allComponents, d)
 
 	var dnds []components.Component
 	if len(resource.Spec.DataNodes) > 0 {
@@ -67,10 +76,7 @@ func NewComponentManager(
 			dnds = append(dnds, components.NewDataNode(nodeCfgGen, ytsaurus, m, dndSpec))
 		}
 	}
-
-	allComponents = append(allComponents, d, m, yc, ih)
 	allComponents = append(allComponents, dnds...)
-	allComponents = append(allComponents, hps...)
 
 	if resource.Spec.UI != nil {
 		ui := components.NewUI(cfgen, ytsaurus, m)
@@ -210,12 +216,13 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 			status = component.NeedUpdate()
 		}
 		if !status.IsNeedUpdate() {
-			status, err = component.Status(ctx)
+			status, err = component.Sync(ctx, true)
 			if err != nil {
 				return fmt.Errorf("failed to get component %s status: %w", component.GetFullName(), err)
 			}
 		}
 
+		component.SetStatus(status)
 		component.SetReadyCondition(status)
 		logger.Info("Component status",
 			"component", component.GetFullName(),
@@ -279,10 +286,11 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	hasPending := false
 	var syncErr error
 	for _, c := range cm.allComponents {
-		status, err := c.Status(ctx)
+		status, err := c.Sync(ctx, true)
 		if err != nil {
 			return ctrl.Result{Requeue: true}, fmt.Errorf("failed to get status for %s: %w", c.GetFullName(), err)
 		}
+		c.SetStatus(status)
 
 		if status.SyncStatus == components.SyncStatusPending ||
 			status.SyncStatus == components.SyncStatusUpdating {
@@ -292,9 +300,11 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 				"status", status.SyncStatus,
 				"message", status.Message,
 			)
-			if err := c.Sync(ctx); err != nil {
+			if status, err := c.Sync(ctx, false); err != nil {
 				logger.Error(err, "Cannot sync component",
 					"component", c.GetFullName(),
+					"status", status.SyncStatus,
+					"message", status.Message,
 				)
 				syncErr = err
 				break
@@ -364,7 +374,7 @@ func (cm *ComponentManager) runImageHeaterIfEnabled(ctx context.Context) (handle
 		return false, ctrl.Result{}, nil
 	}
 
-	status, err := ih.Status(ctx)
+	status, err := ih.Sync(ctx, true)
 	if err != nil {
 		return true, ctrl.Result{Requeue: true}, fmt.Errorf("failed to get status for %s: %w", ih.GetFullName(), err)
 	}
@@ -376,7 +386,7 @@ func (cm *ComponentManager) runImageHeaterIfEnabled(ctx context.Context) (handle
 		status.SyncStatus == components.SyncStatusUpdating ||
 		status.SyncStatus == components.SyncStatusNeedUpdate {
 		logger.Info("component sync", "component", ih.GetFullName())
-		if err := ih.Sync(ctx); err != nil {
+		if _, err := ih.Sync(ctx, false); err != nil {
 			logger.Error(err, "component sync failed", "component", ih.GetFullName())
 			return true, ctrl.Result{Requeue: true}, err
 		}

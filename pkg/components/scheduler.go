@@ -107,16 +107,7 @@ func (s *Scheduler) Fetch(ctx context.Context) error {
 	)
 }
 
-func (s *Scheduler) Status(ctx context.Context) (ComponentStatus, error) {
-	return s.doSync(ctx, true)
-}
-
-func (s *Scheduler) Sync(ctx context.Context) error {
-	_, err := s.doSync(ctx, false)
-	return err
-}
-
-func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (s *Scheduler) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -145,20 +136,12 @@ func (s *Scheduler) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	masterStatus, err := s.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(s.master.GetFullName()), err
+	if masterStatus := s.master.GetStatus(); !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(s.master.GetFullName()), nil
 	}
 
 	for _, end := range s.execNodes {
-		endStatus, err := end.Status(ctx)
-		if err != nil {
-			return endStatus, err
-		}
-		if !endStatus.IsRunning() {
+		if endStatus := end.GetStatus(); !endStatus.IsRunning() {
 			// It makes no sense to start scheduler without exec nodes.
 			return ComponentStatusBlockedBy(end.GetFullName()), err
 		}
@@ -205,13 +188,9 @@ func (s *Scheduler) initOpArchive(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	for _, tnd := range s.tabletNodes {
-		tndStatus, err := tnd.Status(ctx)
-		if err != nil {
-			return tndStatus, err
-		}
-		if !tndStatus.IsRunning() {
+		if tndStatus := tnd.GetStatus(); !tndStatus.IsRunning() {
 			// Wait for tablet nodes to proceed with operations archive init.
-			return ComponentStatusBlockedBy(tnd.GetFullName()), err
+			return ComponentStatusBlockedBy(tnd.GetFullName()), nil
 		}
 	}
 

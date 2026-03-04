@@ -117,7 +117,7 @@ func (rp *RpcProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, fetchable...)
 }
 
-func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (rp *RpcProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -145,12 +145,8 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	masterStatus, err := rp.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(rp.master.GetFullName()), err
+	if masterStatus := rp.master.GetStatus(); !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(rp.master.GetFullName()), nil
 	}
 
 	if rp.NeedSync() {
@@ -179,13 +175,4 @@ func (rp *RpcProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	return ComponentStatusReady(), err
-}
-
-func (rp *RpcProxy) Status(ctx context.Context) (ComponentStatus, error) {
-	return rp.doSync(ctx, true)
-}
-
-func (rp *RpcProxy) Sync(ctx context.Context) error {
-	_, err := rp.doSync(ctx, false)
-	return err
 }

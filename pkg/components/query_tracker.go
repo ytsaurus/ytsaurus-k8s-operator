@@ -88,7 +88,7 @@ func (qt *QueryTracker) Fetch(ctx context.Context) error {
 	)
 }
 
-func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (qt *QueryTracker) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -139,12 +139,8 @@ func (qt *QueryTracker) doSync(ctx context.Context, dry bool) (ComponentStatus, 
 	}
 
 	for _, tnd := range qt.tabletNodes {
-		tndStatus, err := tnd.Status(ctx)
-		if err != nil {
-			return tndStatus, err
-		}
-		if !tndStatus.IsRunning() {
-			return ComponentStatusBlockedBy("tablet nodes"), err
+		if tndStatus := tnd.GetStatus(); !tndStatus.IsRunning() {
+			return ComponentStatusBlockedBy("tablet nodes"), nil
 		}
 	}
 
@@ -383,15 +379,6 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 		return err
 	}
 	return nil
-}
-
-func (qt *QueryTracker) Status(ctx context.Context) (ComponentStatus, error) {
-	return qt.doSync(ctx, true)
-}
-
-func (qt *QueryTracker) Sync(ctx context.Context) error {
-	_, err := qt.doSync(ctx, false)
-	return err
 }
 
 func (qt *QueryTracker) prepareInitQueryTrackerState() {

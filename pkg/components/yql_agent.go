@@ -148,7 +148,7 @@ func (yqla *YqlAgent) createUpdateScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -170,12 +170,8 @@ func (yqla *YqlAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		}
 	}
 
-	masterStatus, err := yqla.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(yqla.master.GetFullName()), err
+	if masterStatus := yqla.master.GetStatus(); !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(yqla.master.GetFullName()), nil
 	}
 
 	if yqla.secret.NeedSync(consts.TokenSecretKey, "") {
@@ -272,15 +268,6 @@ func (yqla *YqlAgent) setConditionYqlaUpdated(ctx context.Context) {
 		Reason:  "YqlaUpdated",
 		Message: "Yql Agent state updated",
 	})
-}
-
-func (yqla *YqlAgent) Status(ctx context.Context) (ComponentStatus, error) {
-	return yqla.doSync(ctx, true)
-}
-
-func (yqla *YqlAgent) Sync(ctx context.Context) error {
-	_, err := yqla.doSync(ctx, false)
-	return err
 }
 
 func (yqla *YqlAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {

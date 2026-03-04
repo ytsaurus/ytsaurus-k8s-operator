@@ -54,7 +54,7 @@ func NewOffshoreDataGateways(
 	}
 }
 
-func (p *OffshoreDataGateway) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (p *OffshoreDataGateway) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if p.NeedSync() {
@@ -69,10 +69,6 @@ func (p *OffshoreDataGateway) doSync(ctx context.Context, dry bool) (ComponentSt
 	}
 
 	return SimpleStatus(SyncStatusReady), err
-}
-
-func (p *OffshoreDataGateway) Sync(ctx context.Context) (ComponentStatus, error) {
-	return p.doSync(ctx, false)
 }
 
 func (p *OffshoreDataGateway) Fetch(ctx context.Context) error {

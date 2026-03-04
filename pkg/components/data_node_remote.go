@@ -55,7 +55,7 @@ func NewRemoteDataNodes(
 	}
 }
 
-func (n *RemoteDataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (n *RemoteDataNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if n.NeedSync() {
@@ -70,10 +70,6 @@ func (n *RemoteDataNode) doSync(ctx context.Context, dry bool) (ComponentStatus,
 	}
 
 	return ComponentStatusReady(), err
-}
-
-func (n *RemoteDataNode) Sync(ctx context.Context) (ComponentStatus, error) {
-	return n.doSync(ctx, false)
 }
 
 func (n *RemoteDataNode) Fetch(ctx context.Context) error {

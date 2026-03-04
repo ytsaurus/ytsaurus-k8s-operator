@@ -5,7 +5,7 @@ metadata:
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "12"
+  resourceVersion: "13"
 spec:
   configOverrides:
     name: test-overrides

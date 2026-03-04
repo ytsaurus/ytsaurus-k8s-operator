@@ -68,20 +68,11 @@ func (ih *ImageHeater) NeedUpdate() ComponentStatus {
 	return ComponentStatusReady()
 }
 
-func (ih *ImageHeater) Status(ctx context.Context) (ComponentStatus, error) {
-	return ih.doSync(ctx, true)
-}
-
-func (ih *ImageHeater) Sync(ctx context.Context) error {
-	_, err := ih.doSync(ctx, false)
-	return err
-}
-
-// doSync drives ImageHeater lifecycle:
+// Sync drives ImageHeater lifecycle:
 // - returns NeedUpdate when a new preheat is required.
 // - runs preheat only during UpdateStateWaitingForImageHeater or during cluster creation as step 0.
 // - marks readiness via ImageHeaterReady condition when targets are heated.
-func (ih *ImageHeater) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (ih *ImageHeater) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if status, handled, err := ih.runAtClusterCreationStage(ctx, dry); handled || err != nil {

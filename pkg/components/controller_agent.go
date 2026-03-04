@@ -57,7 +57,7 @@ func (ca *ControllerAgent) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, ca.server)
 }
 
-func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (ca *ControllerAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -81,12 +81,8 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 		}
 	}
 
-	masterStatus, err := ca.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(ca.master.GetFullName()), err
+	if masterStatus := ca.master.GetStatus(); !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(ca.master.GetFullName()), nil
 	}
 
 	if ca.NeedSync() {
@@ -101,15 +97,6 @@ func (ca *ControllerAgent) doSync(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	return ComponentStatusReady(), err
-}
-
-func (ca *ControllerAgent) Status(ctx context.Context) (ComponentStatus, error) {
-	return ca.doSync(ctx, true)
-}
-
-func (ca *ControllerAgent) Sync(ctx context.Context) error {
-	_, err := ca.doSync(ctx, false)
-	return err
 }
 
 type ControllerAgentsWithMaintenance struct {

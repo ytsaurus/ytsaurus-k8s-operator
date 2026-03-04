@@ -57,7 +57,7 @@ func (n *DataNode) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, n.server)
 }
 
-func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (n *DataNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -74,12 +74,9 @@ func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
 	}
-	masterStatus, err := n.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(n.master.GetFullName()), err
+
+	if masterStatus := n.master.GetStatus(); !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(n.master.GetFullName()), nil
 	}
 
 	if n.NeedSync() {
@@ -94,15 +91,6 @@ func (n *DataNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	}
 
 	return ComponentStatusReady(), err
-}
-
-func (n *DataNode) Status(ctx context.Context) (ComponentStatus, error) {
-	return n.doSync(ctx, true)
-}
-
-func (n *DataNode) Sync(ctx context.Context) error {
-	_, err := n.doSync(ctx, false)
-	return err
 }
 
 // handleImaginaryChunksMigration will remove dnd pods if client component detects active dnds with imaginary chunks

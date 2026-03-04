@@ -127,7 +127,7 @@ func (hp *HttpProxy) Fetch(ctx context.Context) error {
 	)
 }
 
-func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (hp *HttpProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -155,11 +155,7 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 		}
 	}
 
-	masterStatus, err := hp.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !masterStatus.IsRunning() {
+	if masterStatus := hp.master.GetStatus(); !masterStatus.IsRunning() {
 		return ComponentStatusBlockedBy(hp.master.GetFullName()), err
 	}
 
@@ -189,15 +185,6 @@ func (hp *HttpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, err
 	}
 
 	return ComponentStatusReady(), err
-}
-
-func (hp *HttpProxy) Status(ctx context.Context) (ComponentStatus, error) {
-	return hp.doSync(ctx, true)
-}
-
-func (hp *HttpProxy) Sync(ctx context.Context) error {
-	_, err := hp.doSync(ctx, false)
-	return err
 }
 
 // PrepareRollingBatch actually does nothing for http-proxies.

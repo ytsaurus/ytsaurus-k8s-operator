@@ -54,7 +54,7 @@ func (d *Discovery) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, d.server)
 }
 
-func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (d *Discovery) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -90,15 +90,6 @@ func (d *Discovery) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	return ComponentStatusReady(), err
-}
-
-func (d *Discovery) Status(ctx context.Context) (ComponentStatus, error) {
-	return d.doSync(ctx, true)
-}
-
-func (d *Discovery) Sync(ctx context.Context) error {
-	_, err := d.doSync(ctx, false)
-	return err
 }
 
 func (d *Discovery) UpdatePreCheck(ctx context.Context) ComponentStatus {
