@@ -117,12 +117,9 @@ func (m *microserviceImpl) Exists() bool {
 }
 
 func (m *microserviceImpl) needSync() bool {
-	needReload, err := m.configs.NeedReload()
-	if err != nil {
-		needReload = false
-	}
+	configStatus, err := m.configs.needReload()
 	return !m.Exists() ||
-		(m.ytsaurus.IsUpdating() && needReload) ||
+		(m.ytsaurus.IsUpdating() && err == nil && configStatus.IsNeedUpdate()) ||
 		m.deployment.GetReplicas() != m.instanceCount
 }
 
@@ -200,11 +197,8 @@ func (m *microserviceImpl) needUpdate() bool {
 		return true
 	}
 
-	needReload, err := m.configs.NeedReload()
-	if err != nil {
-		return false
-	}
-	return needReload
+	status, err := m.configs.needReload()
+	return err == nil && status.IsNeedUpdate()
 }
 
 func (m *microserviceImpl) podsImageCorrespondsToSpec() bool {

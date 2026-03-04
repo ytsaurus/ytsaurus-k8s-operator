@@ -35,6 +35,10 @@ func (cs ComponentStatus) IsRunning() bool {
 	return cs.SyncStatus == SyncStatusReady || cs.SyncStatus == SyncStatusNeedUpdate
 }
 
+func (cs ComponentStatus) IsNeedUpdate() bool {
+	return cs.SyncStatus == SyncStatusNeedUpdate
+}
+
 func ComponentStatusReady() ComponentStatus {
 	return ComponentStatus{SyncStatusReady, "Ready"}
 }
