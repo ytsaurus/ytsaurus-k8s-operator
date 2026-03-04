@@ -282,11 +282,8 @@ func (s *serverImpl) needUpdate() bool {
 		return true
 	}
 
-	needReload, err := s.configs.NeedReload()
-	if err != nil {
-		return false
-	}
-	return needReload
+	status, err := s.configs.needReload()
+	return err == nil && status.IsNeedUpdate()
 }
 
 func (s *serverImpl) arePodsReady(ctx context.Context) bool {

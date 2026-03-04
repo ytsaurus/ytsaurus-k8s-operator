@@ -239,12 +239,8 @@ func (n *baseExecNode) sidecarConfigNeedsReload() bool {
 	if n.sidecarConfig == nil {
 		return false
 	}
-
-	needsReload, err := n.sidecarConfig.NeedReload()
-	if err != nil {
-		return false
-	}
-	return needsReload
+	configStatus, err := n.sidecarConfig.needReload()
+	return err == nil && configStatus.IsNeedUpdate()
 }
 
 func NewJobsSidecarConfig(
