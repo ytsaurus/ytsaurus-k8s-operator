@@ -2139,7 +2139,7 @@ exec "$@"`
 						HaveClusterUpdateState(ytv1.UpdateStateWaitingForPodsRemoval),
 					)
 
-					By("Verify StatefulSet has RollingUpdate strategy and expected partitioning settings")
+					By("Verify StatefulSet has RollingUpdate strategy and expected maxUnavailable settings")
 					sts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: stsName}}
 					EventuallyObject(ctx, &sts, reactionTimeout).Should(WithTransform(
 						func(current *appsv1.StatefulSet) bool {

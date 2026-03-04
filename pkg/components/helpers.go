@@ -22,6 +22,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/metrics"
 )
 
 const (
@@ -326,8 +327,6 @@ func handleOnDeleteUpdatingClusterState(
 	}
 
 	// Pods are not yet updated, continue waiting
-	// TODO: add prometheus metric in order to build alert for long-running OnDelete waits
-	// This metric should track the duration since OnDeleteModeStarted condition was set
 
 	// Update the summary with waiting time information
 	ytsaurus.UpdateOnDeleteComponentsSummary(ctx, onDeleteWaitingCondition, true)
@@ -372,9 +371,9 @@ func handleRollingUpdatingClusterState(
 
 	totalCount := sts.totalCount
 
-	// Init guard: either no rolling partition has been set yet OR the STS
-	// still has the old image (needUpdate=true), which means this is a new update cycle
-	// where a previous rolling update left partition=0 in the STS.
+	// Init guard: the StatefulSet still differs from desired spec (needUpdate=true),
+	// so this is the start of a new rolling cycle and we must initialize
+	// RollingUpdate strategy with a fresh partition/maxUnavailable.
 	if server.needUpdate() {
 		server.setUpdateStrategy(appsv1.RollingUpdateStatefulSetStrategyType, totalCount-1, maxUnavailable)
 		if err := server.Sync(ctx); err != nil {
@@ -401,7 +400,12 @@ func handleRollingUpdatingClusterState(
 	effective := max(totalCount-sts.availableReplicas, inProgress)
 	budget := maxUnavailable - int(effective)
 
-	if budget <= 0 || partition == 0 {
+	if partition == 0 {
+		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
+	}
+
+	if budget <= 0 {
+		setRollingBudgetExhaustedCondition(ctx, ytsaurus, cmp, maxUnavailable, int(effective), partition)
 		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
 	}
 
@@ -417,6 +421,37 @@ func handleRollingUpdatingClusterState(
 		return ptr.To(ComponentStatusBlocked(msg)), err
 	}
 	return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
+}
+
+func setRollingBudgetExhaustedCondition(
+	ctx context.Context,
+	ytsaurus *apiproxy.Ytsaurus,
+	cmp Component,
+	maxUnavailable int,
+	effectiveUnavailable int,
+	partition int32,
+) {
+	message := fmt.Sprintf(
+		"rolling update is paused: budget exhausted (effectiveUnavailable=%d, maxUnavailable=%d, partition=%d)",
+		effectiveUnavailable,
+		maxUnavailable,
+		partition,
+	)
+
+	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    cmp.GetLabeller().GetRollingBudgetExhaustedCondition(),
+		Status:  metav1.ConditionTrue,
+		Reason:  "BudgetExhausted",
+		Message: message,
+	})
+
+	resource := ytsaurus.GetResource()
+	metrics.ObserveRollingBudgetExhausted(
+		resource.Name,
+		resource.Namespace,
+		cmp.GetLabeller().GetComponentShortName(),
+		true,
+	)
 }
 
 func setPodsUpdatedCondition(ctx context.Context, ytsaurus *apiproxy.Ytsaurus, cmp Component) {
