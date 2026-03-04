@@ -375,7 +375,7 @@ func handleRollingUpdatingClusterState(
 	// Init guard: either no rolling partition has been set yet OR the STS
 	// still has the old image (needUpdate=true), which means this is a new update cycle
 	// where a previous rolling update left partition=0 in the STS.
-	if sts.partition == nil || server.needUpdate() {
+	if server.needUpdate() {
 		server.setUpdateStrategy(appsv1.RollingUpdateStatefulSetStrategyType, totalCount-1, maxUnavailable)
 		if err := server.Sync(ctx); err != nil {
 			msg := fmt.Sprintf("failed to initialize rolling update for %s", cmp.GetFullName())

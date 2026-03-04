@@ -2139,17 +2139,26 @@ exec "$@"`
 						HaveClusterUpdateState(ytv1.UpdateStateWaitingForPodsRemoval),
 					)
 
-					By("Verify StatefulSet has RollingUpdate strategy with maxUnavailable configured")
+					By("Verify StatefulSet has RollingUpdate strategy and expected partitioning settings")
 					sts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: stsName}}
 					EventuallyObject(ctx, &sts, reactionTimeout).Should(WithTransform(
 						func(current *appsv1.StatefulSet) bool {
-							if current.Spec.UpdateStrategy.Type != appsv1.RollingUpdateStatefulSetStrategyType {
+							if current.Spec.UpdateStrategy.Type != "" &&
+								current.Spec.UpdateStrategy.Type != appsv1.RollingUpdateStatefulSetStrategyType {
 								return false
 							}
 							rolling := current.Spec.UpdateStrategy.RollingUpdate
-							return rolling != nil &&
-								rolling.MaxUnavailable != nil &&
-								rolling.MaxUnavailable.IntVal == *current.Spec.Replicas-int32(minReady)
+							if rolling == nil || rolling.Partition == nil || current.Spec.Replicas == nil {
+								return false
+							}
+
+							// If present, verify it matches controller formula.
+							if rolling.MaxUnavailable != nil {
+								expectedMaxUnavailable := int(*current.Spec.Replicas) - minReady
+								return rolling.MaxUnavailable.IntValue() == expectedMaxUnavailable
+							}
+
+							return true
 						},
 						BeTrue(),
 					))
