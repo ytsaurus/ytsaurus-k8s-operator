@@ -40826,14 +40826,8 @@
                     "type": "object"
                   },
                   "rollingUpdate": {
-                    "type": "object",
-                    "properties": {
-                      "batchSize": {
-                        "description": "BatchSize controls how many replicas can be rolled at once.",
-                        "type": "integer",
-                        "format": "int32"
-                      }
-                    }
+                    "description": "ComponentRollingUpdateMode configures the rolling update strategy.",
+                    "type": "object"
                   },
                   "runPreChecks": {
                     "type": "boolean"

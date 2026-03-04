@@ -726,18 +726,8 @@ func validateUpdateModeForSelector(selector ytv1.ComponentUpdateSelector, path *
 			}
 		}
 	case ytv1.ComponentUpdateModeTypeRollingUpdate:
-		switch selector.Component.Type {
-		case "":
+		if selector.Component.Type == "" {
 			errs = append(errs, field.Invalid(path.Child("type"), modeType, "rolling update requires a concrete component selector"))
-		case consts.SchedulerType, consts.MasterType:
-			errs = append(errs, field.Invalid(path.Child("type"), modeType, fmt.Sprintf("%s doesn't support RollingUpdate mode", selector.Component.Type)))
-		}
-		if selector.Strategy.RollingUpdate.BatchSize == nil || *selector.Strategy.RollingUpdate.BatchSize <= 0 {
-			if selector.Strategy.RollingUpdate.BatchSize == nil {
-				errs = append(errs, field.Required(path.Child("rollingUpdate").Child("batchSize"), "batchSize must be provided when type=RollingUpdate"))
-			} else {
-				errs = append(errs, field.Invalid(path.Child("rollingUpdate").Child("batchSize"), *selector.Strategy.RollingUpdate.BatchSize, "batchSize must be positive"))
-			}
 		}
 
 	case ytv1.ComponentUpdateModeTypeOnDelete:

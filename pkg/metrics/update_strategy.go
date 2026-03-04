@@ -19,8 +19,20 @@ var strategyOnDeleteWatingTimeSeconds = prometheus.NewGaugeVec(
 	[]string{"cluster", "cluster_namespace", "component_name"},
 )
 
+//nolint:gochecknoglobals // Prometheus metrics are package-level for registration and reuse.
+var strategyRollingBudgetExhausted = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Namespace: "ytop",
+		Subsystem: "strategy_rolling",
+		Name:      "budget_exhausted",
+		Help:      "1 when rolling update cannot proceed because availability budget is exhausted, otherwise 0.",
+	},
+	[]string{"cluster", "cluster_namespace", "component_name"},
+)
+
 func init() {
 	ctrlmetrics.Registry.MustRegister(strategyOnDeleteWatingTimeSeconds)
+	ctrlmetrics.Registry.MustRegister(strategyRollingBudgetExhausted)
 }
 
 func ObserveOnDeleteWait(cluster, cluster_namespace, component_name string, startedAt *metav1.Time) {
@@ -30,4 +42,12 @@ func ObserveOnDeleteWait(cluster, cluster_namespace, component_name string, star
 		return
 	}
 	strategyOnDeleteWatingTimeSeconds.WithLabelValues(lbl...).Set(time.Since(startedAt.Time).Seconds())
+}
+
+func ObserveRollingBudgetExhausted(cluster, clusterNamespace, componentName string, exhausted bool) {
+	value := 0.0
+	if exhausted {
+		value = 1
+	}
+	strategyRollingBudgetExhausted.WithLabelValues(cluster, clusterNamespace, componentName).Set(value)
 }

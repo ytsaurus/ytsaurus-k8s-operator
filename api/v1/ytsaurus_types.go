@@ -1046,9 +1046,10 @@ const (
 	ComponentUpdateModeTypeOnDelete      ComponentUpdateModeType = "OnDelete"
 )
 
+// ComponentRollingUpdateMode configures the rolling update strategy.
+// The maxUnavailable budget is derived from the component's minReadyInstanceCount:
+// maxUnavailable = instanceCount - minReadyInstanceCount.
 type ComponentRollingUpdateMode struct {
-	// BatchSize controls how many replicas can be rolled at once.
-	BatchSize *int32 `json:"batchSize,omitempty"`
 }
 
 type ComponentOnDeleteUpdateMode struct {

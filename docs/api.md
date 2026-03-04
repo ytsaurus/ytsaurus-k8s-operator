@@ -494,16 +494,15 @@ _Appears in:_
 
 
 
-
+ComponentRollingUpdateMode configures the rolling update strategy.
+The maxUnavailable budget is derived from the component's minReadyInstanceCount:
+maxUnavailable = instanceCount - minReadyInstanceCount.
 
 
 
 _Appears in:_
 - [ComponentUpdateStrategy](#componentupdatestrategy)
 
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `batchSize` _integer_ | BatchSize controls how many replicas can be rolled at once. |  |  |
 
 
 #### ComponentType

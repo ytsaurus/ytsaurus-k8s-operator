@@ -20,16 +20,15 @@ const (
 
 // Component update phase condition suffixes
 const (
-	ConditionBulkUpdateModeStarted = "BulkUpdateModeStarted"
-	ConditionWaitingOnDeleteUpdate = "WaitingOnDeleteUpdate"
-	ConditionOnDeleteModeTimeout   = "OnDeleteModeTimeout"
-	ConditionPreChecksRunning      = "PreChecksRunning"
-	ConditionPreChecksCompleted    = "PreChecksCompleted"
-	ConditionScalingDown           = "ScalingDown"
-	ConditionScalingUp             = "ScalingUp"
-	ConditionPodsUpdated           = "PodsUpdated"
-	ConditionPodsRemoved           = "PodsRemoved"
-	ConditionPodsRemovingStarted   = "PodsRemovingStarted"
+	ConditionBulkUpdateModeStarted  = "BulkUpdateModeStarted"
+	ConditionWaitingOnDeleteUpdate  = "WaitingOnDeleteUpdate"
+	ConditionRollingBudgetExhausted = "RollingBudgetExhausted"
+	ConditionPreChecksRunning       = "PreChecksRunning"
+	ConditionScalingDown            = "ScalingDown"
+	ConditionScalingUp              = "ScalingUp"
+	ConditionPodsUpdated            = "PodsUpdated"
+	ConditionPodsRemoved            = "PodsRemoved"
+	ConditionPodsRemovingStarted    = "PodsRemovingStarted"
 )
 
 // Update conditions

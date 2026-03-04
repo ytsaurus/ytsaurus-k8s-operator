@@ -222,6 +222,10 @@ func (l *Labeller) GetWaitingOnDeleteUpdateCondition() string {
 	return l.GetCondition(consts.ConditionWaitingOnDeleteUpdate)
 }
 
+func (l *Labeller) GetRollingBudgetExhaustedCondition() string {
+	return l.GetCondition(consts.ConditionRollingBudgetExhausted)
+}
+
 func (l *Labeller) GetObjectMeta(name string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Name:        name,

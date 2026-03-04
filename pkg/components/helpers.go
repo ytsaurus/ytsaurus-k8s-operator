@@ -22,6 +22,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/metrics"
 )
 
 const (
@@ -281,7 +282,7 @@ func handleOnDeleteUpdatingClusterState(
 	}
 
 	// Set the update strategy to OnDelete
-	server.setUpdateStrategy(appsv1.OnDeleteStatefulSetStrategyType)
+	server.setUpdateStrategy(appsv1.OnDeleteStatefulSetStrategyType, 0, 0)
 	logger.Info("Setting StatefulSet update strategy to OnDelete",
 		"component", cmp.GetFullName())
 
@@ -317,7 +318,7 @@ func handleOnDeleteUpdatingClusterState(
 		ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 			Type:    cmp.GetLabeller().GetPodsUpdatedCondition(),
 			Status:  metav1.ConditionTrue,
-			Reason:  "PodsUpdated",
+			Reason:  consts.ConditionPodsUpdated,
 			Message: "All pods have been updated to new revision",
 		})
 		ytsaurus.UpdateOnDeleteComponentsSummary(ctx, onDeleteWaitingCondition, false)
@@ -326,13 +327,140 @@ func handleOnDeleteUpdatingClusterState(
 	}
 
 	// Pods are not yet updated, continue waiting
-	// TODO: add prometheus metric in order to build alert for long-running OnDelete waits
-	// This metric should track the duration since OnDeleteModeStarted condition was set
 
 	// Update the summary with waiting time information
 	ytsaurus.UpdateOnDeleteComponentsSummary(ctx, onDeleteWaitingCondition, true)
 
 	return ptr.To(ComponentStatusUpdateStep("pods removal")), err
+}
+
+func handleRollingUpdatingClusterState(
+	ctx context.Context,
+	ytsaurus *apiproxy.Ytsaurus,
+	cmp Component,
+	server server,
+	dry bool,
+) (*ComponentStatus, error) {
+	logger := log.FromContext(ctx)
+	logger.Info("Started Rolling update for component", "component", cmp.GetFullName())
+	if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsRemoval {
+		// Not in the pod removal phase, let the component handle other update states.
+		logger.Info("Not in the pod removal phase, let the component handle other update states",
+			"component", cmp.GetFullName())
+		return nil, nil
+	}
+
+	minReady := server.getMinReadyInstanceCount()
+	if minReady == nil {
+		minReady = ptr.To(1)
+	}
+	maxUnavailable := int(server.getReplicaCount()) - *minReady
+	if maxUnavailable <= 0 {
+		msg := fmt.Sprintf("instanceCount - minReadyInstanceCount must be positive for rolling update on %s", cmp.GetFullName())
+		return ptr.To(ComponentStatusBlocked(msg)), yterrors.Err(msg)
+	}
+
+	if dry {
+		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
+	}
+
+	sts, ok := server.getRollingUpdateStatus(ctx)
+	if !ok {
+		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
+	}
+
+	totalCount := sts.totalCount
+
+	// Init guard: the StatefulSet still differs from desired spec (needUpdate=true),
+	// so this is the start of a new rolling cycle and we must initialize
+	// RollingUpdate strategy with a fresh partition/maxUnavailable.
+	if server.needUpdate() {
+		server.setUpdateStrategy(appsv1.RollingUpdateStatefulSetStrategyType, totalCount-1, maxUnavailable)
+		if err := server.Sync(ctx); err != nil {
+			msg := fmt.Sprintf("failed to initialize rolling update for %s", cmp.GetFullName())
+			return ptr.To(ComponentStatusBlocked(msg)), err
+		}
+		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
+	}
+
+	partition := *sts.partition
+
+	// Completion: all pods are exposed and on the new revision.
+	if partition == 0 && sts.updatedReplicas == totalCount {
+		setPodsUpdatedCondition(ctx, ytsaurus, cmp)
+		return nil, nil
+	}
+
+	// Budget calculation.
+	// inProgress: pods committed to update (below partition) but not yet on the new revision.
+	// This covers the timing window where partition was lowered but pods haven't restarted yet.
+	inProgress := max(int32(0), (totalCount-partition)-sts.updatedReplicas)
+	// effective: take the larger of actual unavailability and in-progress count to avoid
+	// double-counting pods that are both in-progress and already unavailable.
+	effective := max(totalCount-sts.availableReplicas, inProgress)
+	budget := maxUnavailable - int(effective)
+
+	if partition == 0 {
+		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
+	}
+
+	if budget <= 0 {
+		setRollingBudgetExhaustedCondition(ctx, ytsaurus, cmp, maxUnavailable, int(effective), partition)
+		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
+	}
+
+	if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
+		if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
+			return status, err
+		}
+	}
+
+	server.setUpdateStrategy(appsv1.RollingUpdateStatefulSetStrategyType, partition-1, maxUnavailable)
+	if err := server.Sync(ctx); err != nil {
+		msg := fmt.Sprintf("failed to advance rolling update partition for %s", cmp.GetFullName())
+		return ptr.To(ComponentStatusBlocked(msg)), err
+	}
+	return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
+}
+
+func setRollingBudgetExhaustedCondition(
+	ctx context.Context,
+	ytsaurus *apiproxy.Ytsaurus,
+	cmp Component,
+	maxUnavailable int,
+	effectiveUnavailable int,
+	partition int32,
+) {
+	message := fmt.Sprintf(
+		"rolling update is paused: budget exhausted (effectiveUnavailable=%d, maxUnavailable=%d, partition=%d)",
+		effectiveUnavailable,
+		maxUnavailable,
+		partition,
+	)
+
+	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    cmp.GetLabeller().GetRollingBudgetExhaustedCondition(),
+		Status:  metav1.ConditionTrue,
+		Reason:  "BudgetExhausted",
+		Message: message,
+	})
+
+	resource := ytsaurus.GetResource()
+	metrics.ObserveRollingBudgetExhausted(
+		resource.Name,
+		resource.Namespace,
+		cmp.GetLabeller().GetComponentShortName(),
+		true,
+	)
+}
+
+func setPodsUpdatedCondition(ctx context.Context, ytsaurus *apiproxy.Ytsaurus, cmp Component) {
+	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    cmp.GetLabeller().GetPodsUpdatedCondition(),
+		Status:  metav1.ConditionTrue,
+		Reason:  consts.ConditionPodsUpdated,
+		Message: "All pods updated",
+	})
 }
 
 func runPrechecks(ctx context.Context, ytsaurus *apiproxy.Ytsaurus, cmp Component) (*ComponentStatus, error) {

@@ -34971,12 +34971,8 @@ spec:
                         onDelete:
                           type: object
                         rollingUpdate:
-                          properties:
-                            batchSize:
-                              description: BatchSize controls how many replicas can
-                                be rolled at once.
-                              format: int32
-                              type: integer
+                          description: ComponentRollingUpdateMode configures the rolling
+                            update strategy.
                           type: object
                         runPreChecks:
                           type: boolean

@@ -35,7 +35,10 @@ type server interface {
 	preheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration)
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
-	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType)
+	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition int32, maxUnavailable int)
+	getReplicaCount() int32
+	getMinReadyInstanceCount() *int
+	getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, bool)
 	addCARootBundle(c *corev1.Container)
 	addTlsSecretMount(c *corev1.Container)
 	addMonitoringPort(port corev1.ServicePort)
@@ -64,7 +67,7 @@ type serverImpl struct {
 
 	builtStatefulSet *appsv1.StatefulSet
 
-	updateStrategy *appsv1.StatefulSetUpdateStrategyType
+	updateStrategy *appsv1.StatefulSetUpdateStrategy
 
 	componentContainerPorts []corev1.ContainerPort
 
@@ -294,23 +297,19 @@ func (s *serverImpl) preheatSpec() (images []string, nodeSelector map[string]str
 	return []string{s.image}, s.instanceSpec.NodeSelector, s.instanceSpec.Tolerations
 }
 
+func (s *serverImpl) getReplicaCount() int32 {
+	return s.instanceSpec.InstanceCount
+}
+
+func (s *serverImpl) getMinReadyInstanceCount() *int {
+	return s.instanceSpec.MinReadyInstanceCount
+}
+
 func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 	logger := ctrllog.FromContext(ctx)
 
-	if !resources.Exists(s.statefulSet) {
-		return false
-	}
-
-	// Fetch the latest StatefulSet status from Kubernetes to ensure we have up-to-date revision info
-	if err := s.statefulSet.Fetch(ctx); err != nil {
-		logger.Error(err, "Failed to fetch StatefulSet status", "component", s.labeller.GetFullComponentName())
-		return false
-	}
-
-	sts := s.statefulSet.OldObject()
-
-	if sts.Status.UpdateRevision == "" {
-		logger.Info("StatefulSet has no update revision yet", "component", s.labeller.GetFullComponentName())
+	sts, ok := s.fetchAndValidateStatefulSet(ctx)
+	if !ok {
 		return false
 	}
 
@@ -327,14 +326,7 @@ func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 	// see https://github.com/kubernetes/kubernetes/issues/106055
 	// to be 100% sure, will compare pods StatefulSetRevisionLabel with sts.Status.UpdateRevision
 	isOnDelete := sts.Spec.UpdateStrategy.Type == appsv1.OnDeleteStatefulSetStrategyType
-	// for race condition case when new revision is created but status not updated yet
-	if sts.Generation != sts.Status.ObservedGeneration {
-		logger.Info("StatefulSet status not observed yet",
-			"component", s.labeller.GetFullComponentName(),
-			"generation", sts.Generation,
-			"observedGeneration", sts.Status.ObservedGeneration)
-		return false
-	}
+
 	if isOnDelete {
 		if sts.Status.UpdateRevision == sts.Status.CurrentRevision {
 			logger.Info("StatefulSet update revision has not advanced yet",
@@ -437,9 +429,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	statefulSet.Spec.VolumeClaimTemplates = createVolumeClaims(s.instanceSpec.VolumeClaimTemplates)
 
 	if s.updateStrategy != nil {
-		statefulSet.Spec.UpdateStrategy = appsv1.StatefulSetUpdateStrategy{
-			Type: *s.updateStrategy,
-		}
+		statefulSet.Spec.UpdateStrategy = *s.updateStrategy
 	}
 
 	if len(s.configs.generators) < 1 {
@@ -583,12 +573,83 @@ func (s *serverImpl) addTlsSecretMount(c *corev1.Container) {
 }
 
 // setUpdateStrategy sets the desired StatefulSet update strategy
-func (s *serverImpl) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType) {
-	s.updateStrategy = &strategy
+func (s *serverImpl) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition int32, maxUnavailable int) {
+	s.updateStrategy = &appsv1.StatefulSetUpdateStrategy{
+		Type: strategy,
+	}
+	if strategy == appsv1.RollingUpdateStatefulSetStrategyType {
+		maxUnavailableValue := intstr.FromInt(maxUnavailable)
+		s.updateStrategy.RollingUpdate = &appsv1.RollingUpdateStatefulSetStrategy{
+			Partition:      ptr.To(partition),
+			MaxUnavailable: &maxUnavailableValue,
+		}
+	}
 	// Clear the built StatefulSet so it will be rebuilt with the new strategy
 	s.builtStatefulSet = nil
 }
 
+type stsRollingStatus struct {
+	partition         *int32
+	availableReplicas int32
+	updatedReplicas   int32
+	totalCount        int32
+	updateRevision    string
+	currentRevision   string
+}
+
+func (s *serverImpl) getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, bool) {
+	sts, ok := s.fetchAndValidateStatefulSet(ctx)
+	if !ok {
+		return nil, false
+	}
+
+	var partition *int32
+	if sts.Spec.UpdateStrategy.RollingUpdate != nil {
+		partition = sts.Spec.UpdateStrategy.RollingUpdate.Partition
+	}
+
+	totalCount := int32(0)
+	if sts.Spec.Replicas != nil {
+		totalCount = *sts.Spec.Replicas
+	}
+
+	return &stsRollingStatus{
+		partition:         partition,
+		availableReplicas: sts.Status.AvailableReplicas,
+		updatedReplicas:   sts.Status.UpdatedReplicas,
+		totalCount:        totalCount,
+		updateRevision:    sts.Status.UpdateRevision,
+		currentRevision:   sts.Status.CurrentRevision,
+	}, true
+}
+
 func (s *serverImpl) addMonitoringPort(port corev1.ServicePort) {
 	s.monitoringService.AddPort(port)
+}
+
+func (s *serverImpl) fetchAndValidateStatefulSet(ctx context.Context) (*appsv1.StatefulSet, bool) {
+	logger := ctrllog.FromContext(ctx)
+	if !resources.Exists(s.statefulSet) {
+		return nil, false
+	}
+
+	if err := s.statefulSet.Fetch(ctx); err != nil {
+		logger.Error(err, "Failed to fetch StatefulSet status", "component", s.labeller.GetFullComponentName())
+		return nil, false
+	}
+
+	sts := s.statefulSet.OldObject()
+	if sts.Status.UpdateRevision == "" {
+		return nil, false
+	}
+
+	// for race condition case when new revision is created but status not updated yet
+	if sts.Generation != sts.Status.ObservedGeneration {
+		logger.Info("StatefulSet status not observed yet",
+			"component", s.labeller.GetFullComponentName(),
+			"generation", sts.Generation,
+			"observedGeneration", sts.Status.ObservedGeneration)
+		return nil, false
+	}
+	return sts, true
 }

@@ -2147,6 +2147,111 @@ exec "$@"`
 			Entry("update master-caches", Label(consts.GetStatefulSetPrefix(consts.MasterCacheType)), consts.MasterCacheType, consts.GetStatefulSetPrefix(consts.MasterCacheType)),
 			Entry("update rpc-proxy", Label(consts.GetStatefulSetPrefix(consts.RpcProxyType)), consts.RpcProxyType, consts.GetStatefulSetPrefix(consts.RpcProxyType)),
 		)
+
+		DescribeTableSubtree("rolling-update strategy", Label("rollingupdate"),
+			func(componentType consts.ComponentType, stsName string, minReady int) {
+				BeforeEach(func() {
+					switch componentType {
+					case consts.HttpProxyType:
+						ytsaurus.Spec.HTTPProxies[0].InstanceCount = int32(6)
+						ytsaurus.Spec.HTTPProxies[0].MinReadyInstanceCount = ptr.To(minReady)
+					}
+					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+						{
+							Component: ytv1.Component{Type: componentType},
+							Strategy: &ytv1.ComponentUpdateStrategy{
+								RollingUpdate: &ytv1.ComponentRollingUpdateMode{},
+								RunPreChecks:  ptr.To(true),
+							},
+						},
+					}
+				})
+
+				It("should update "+stsName+" with RollingUpdate strategy and have cluster Running state", func(ctx context.Context) {
+					By("Trigger " + stsName + " update")
+					updateSpecToTriggerAllComponentUpdate(ytsaurus)
+
+					UpdateObject(ctx, ytsaurus)
+					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+
+					By("Verify rolling update mode is activated")
+					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
+						HaveClusterUpdateState(ytv1.UpdateStateWaitingForPodsRemoval),
+					)
+
+					By("Verify StatefulSet has RollingUpdate strategy and expected maxUnavailable settings")
+					sts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: stsName}}
+					EventuallyObject(ctx, &sts, reactionTimeout).Should(WithTransform(
+						func(current *appsv1.StatefulSet) bool {
+							if current.Spec.UpdateStrategy.Type != "" &&
+								current.Spec.UpdateStrategy.Type != appsv1.RollingUpdateStatefulSetStrategyType {
+								return false
+							}
+							rolling := current.Spec.UpdateStrategy.RollingUpdate
+							if rolling == nil || rolling.Partition == nil || current.Spec.Replicas == nil {
+								return false
+							}
+
+							// If present, verify it matches controller formula.
+							if rolling.MaxUnavailable != nil {
+								expectedMaxUnavailable := int(*current.Spec.Replicas) - minReady
+								return rolling.MaxUnavailable.IntValue() == expectedMaxUnavailable
+							}
+
+							return true
+						},
+						BeTrue(),
+					))
+
+					By("Waiting cluster update completes")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+
+					By("Fetching updated StatefulSet revision")
+					EventuallyObject(ctx, &sts, reactionTimeout).Should(WithTransform(
+						func(current *appsv1.StatefulSet) string {
+							return current.Status.UpdateRevision
+						},
+						Not(BeEmpty()),
+					))
+					updateRevision := sts.Status.UpdateRevision
+
+					By("Verify final RollingUpdate partition is zero")
+					Expect(sts.Spec.UpdateStrategy.RollingUpdate).ShouldNot(BeNil())
+					Expect(sts.Spec.UpdateStrategy.RollingUpdate.Partition).ShouldNot(BeNil())
+					Expect(*sts.Spec.UpdateStrategy.RollingUpdate.Partition).To(Equal(int32(0)))
+
+					By("Waiting for pods to move to the new revision")
+					Eventually(func() bool {
+						podsNow := getComponentPods(ctx, namespace)
+						for name, pod := range podsNow {
+							if strings.HasPrefix(name, stsName+"-") {
+								if pod.Labels[appsv1.StatefulSetRevisionLabel] != updateRevision {
+									return false
+								}
+							}
+						}
+						return true
+					}, upgradeTimeout, pollInterval).Should(BeTrue())
+
+					By("Verifying only target component pods were recreated")
+					podsAfterUpdate := getComponentPods(ctx, namespace)
+					pods := getChangedPods(podsBeforeUpdate, podsAfterUpdate)
+
+					var expectedUpdated []string
+					for name := range podsBeforeUpdate {
+						if strings.HasPrefix(name, stsName+"-") {
+							expectedUpdated = append(expectedUpdated, name)
+						}
+					}
+					sort.Strings(expectedUpdated)
+
+					Expect(pods.Created).To(BeEmpty(), "created")
+					Expect(pods.Deleted).To(BeEmpty(), "deleted")
+					Expect(pods.Updated).To(ConsistOf(expectedUpdated), "updated")
+				})
+			},
+			Entry("update http-proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType), 2),
+		)
 	}) // update plan strategy
 })
 
