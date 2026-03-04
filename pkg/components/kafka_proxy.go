@@ -85,7 +85,7 @@ func (kp *KafkaProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, fetchable...)
 }
 
-func (kp *KafkaProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (kp *KafkaProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if kp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -94,12 +94,8 @@ func (kp *KafkaProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		}
 	}
 
-	kpStatus, err := kp.master.Status(ctx)
-	if err != nil {
-		return kpStatus, err
-	}
-	if !kpStatus.IsRunning() {
-		return ComponentStatusBlockedBy(kp.master.GetFullName()), err
+	if masterStatus := kp.master.GetStatus(); masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(kp.master.GetFullName()), nil
 	}
 
 	if kp.NeedSync() {
@@ -122,13 +118,4 @@ func (kp *KafkaProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 	}
 
 	return ComponentStatusReady(), err
-}
-
-func (kp *KafkaProxy) Status(ctx context.Context) (ComponentStatus, error) {
-	return kp.doSync(ctx, true)
-}
-
-func (kp *KafkaProxy) Sync(ctx context.Context) error {
-	_, err := kp.doSync(ctx, false)
-	return err
 }

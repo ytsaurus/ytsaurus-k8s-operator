@@ -403,7 +403,7 @@ func (m *Master) createExitReadOnlyScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -457,15 +457,6 @@ func (m *Master) doSync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	}
 
 	return m.runInitPhaseJobs(ctx, dry)
-}
-
-func (m *Master) Status(ctx context.Context) (ComponentStatus, error) {
-	return m.doSync(ctx, true)
-}
-
-func (m *Master) Sync(ctx context.Context) error {
-	_, err := m.doSync(ctx, false)
-	return err
 }
 
 func (m *Master) doServerSync(ctx context.Context) error {

@@ -69,7 +69,7 @@ func (tp *TcpProxy) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, fetchable...)
 }
 
-func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (tp *TcpProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if tp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -78,12 +78,8 @@ func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	tpStatus, err := tp.master.Status(ctx)
-	if err != nil {
-		return tpStatus, err
-	}
-	if !tpStatus.IsRunning() {
-		return ComponentStatusBlockedBy(tp.master.GetFullName()), err
+	if masterStatus := tp.master.GetStatus(); !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(tp.master.GetFullName()), nil
 	}
 
 	if tp.NeedSync() {
@@ -106,13 +102,4 @@ func (tp *TcpProxy) doSync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	return ComponentStatusReady(), err
-}
-
-func (tp *TcpProxy) Status(ctx context.Context) (ComponentStatus, error) {
-	return tp.doSync(ctx, true)
-}
-
-func (tp *TcpProxy) Sync(ctx context.Context) error {
-	_, err := tp.doSync(ctx, false)
-	return err
 }

@@ -71,7 +71,7 @@ func NewTabletNode(
 	}
 }
 
-func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (tn *TabletNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -100,12 +100,8 @@ func (tn *TabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return ComponentStatusReady(), err
 	}
 
-	ytClientStatus, err := tn.ytsaurusClient.Status(ctx)
-	if err != nil {
-		return ytClientStatus, err
-	}
-	if ytClientStatus.SyncStatus != SyncStatusReady {
-		return ComponentStatusBlockedBy(tn.ytsaurusClient.GetFullName()), err
+	if ytClientStatus := tn.ytsaurusClient.GetStatus(); !ytClientStatus.IsRunning() {
+		return ComponentStatusBlockedBy(tn.ytsaurusClient.GetFullName()), nil
 	}
 
 	if !dry && tn.doInitialization {
@@ -246,15 +242,6 @@ func (tn *TabletNode) initBundles(ctx context.Context) (ComponentStatus, error) 
 	})
 
 	return ComponentStatusReady(), nil
-}
-
-func (tn *TabletNode) Status(ctx context.Context) (ComponentStatus, error) {
-	return tn.doSync(ctx, true)
-}
-
-func (tn *TabletNode) Sync(ctx context.Context) error {
-	_, err := tn.doSync(ctx, false)
-	return err
 }
 
 func (tn *TabletNode) Fetch(ctx context.Context) error {

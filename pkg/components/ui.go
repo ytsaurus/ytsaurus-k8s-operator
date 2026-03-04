@@ -269,7 +269,7 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 	return u.microservice.Sync(ctx)
 }
 
-func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (u *UI) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -289,12 +289,8 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		}
 	}
 
-	masterStatus, err := u.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(u.master.GetFullName()), err
+	if masterStatus := u.master.GetStatus(); !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(u.master.GetFullName()), nil
 	}
 
 	if u.secret.NeedSync(consts.TokenSecretKey, "") {
@@ -330,13 +326,4 @@ func (u *UI) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	return ComponentStatusReady(), err
-}
-
-func (u *UI) Status(ctx context.Context) (ComponentStatus, error) {
-	return u.doSync(ctx, true)
-}
-
-func (u *UI) Sync(ctx context.Context) error {
-	_, err := u.doSync(ctx, false)
-	return err
 }

@@ -5,8 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"go.uber.org/mock/gomock"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -26,13 +24,8 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ypatch"
 )
 
-var mockCtrl *gomock.Controller
-
 func TestComponents(t *testing.T) {
 	RegisterFailHandler(Fail)
-
-	mockCtrl = gomock.NewController(t)
-
 	RunSpecs(t, "Components fake suite")
 }
 
@@ -62,12 +55,16 @@ func (fc *FakeComponent) Exists() bool {
 	return true
 }
 
-func (fc *FakeComponent) Sync(ctx context.Context) error {
-	return nil
+func (fc *FakeComponent) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
+	return fc.status, nil
 }
 
-func (fc *FakeComponent) Status(ctx context.Context) (ComponentStatus, error) {
-	return fc.status, nil
+func (fc *FakeComponent) GetStatus() ComponentStatus {
+	return fc.status
+}
+
+func (fc *FakeComponent) SetStatus(status ComponentStatus) {
+	fc.status = status
 }
 
 func (fc *FakeComponent) NeedSync() bool {

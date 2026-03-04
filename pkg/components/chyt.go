@@ -128,7 +128,7 @@ func (c *Chyt) prepareChPublicJob() {
 	container.EnvFrom = []corev1.EnvFromSource{c.secret.GetEnvSource()}
 }
 
-func (c *Chyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (c *Chyt) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if c.ytsaurus.Status.State != ytv1.ClusterStateRunning {
@@ -205,18 +205,4 @@ func (c *Chyt) Fetch(ctx context.Context) error {
 		c.initChPublicJob,
 		c.secret,
 	)
-}
-
-func (c *Chyt) Status(ctx context.Context) ComponentStatus {
-	status, err := c.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
-}
-
-func (c *Chyt) Sync(ctx context.Context) error {
-	_, err := c.doSync(ctx, false)
-	return err
 }

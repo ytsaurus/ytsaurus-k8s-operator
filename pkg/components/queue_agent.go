@@ -91,7 +91,7 @@ func (qa *QueueAgent) Fetch(ctx context.Context) error {
 	)
 }
 
-func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -114,11 +114,7 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		}
 	}
 
-	masterStatus, err := qa.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !masterStatus.IsRunning() {
+	if masterStatus := qa.master.GetStatus(); !masterStatus.IsRunning() {
 		return ComponentStatusBlockedBy(qa.master.GetFullName()), err
 	}
 
@@ -127,12 +123,8 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 		return ComponentStatusBlockedBy("tablet nodes"), fmt.Errorf("cannot initialize queue agent without tablet nodes")
 	}
 	for _, tnd := range qa.tabletNodes {
-		tndStatus, err := tnd.Status(ctx)
-		if err != nil {
-			return tndStatus, err
-		}
-		if !tndStatus.IsRunning() {
-			return ComponentStatusBlockedBy(tnd.GetFullName()), err
+		if tndStatus := tnd.GetStatus(); !tndStatus.IsRunning() {
+			return ComponentStatusBlockedBy(tnd.GetFullName()), nil
 		}
 	}
 
@@ -161,12 +153,8 @@ func (qa *QueueAgent) doSync(ctx context.Context, dry bool) (ComponentStatus, er
 
 	var ytClient yt.Client
 	if qa.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
-		ytClientStatus, err := qa.ytsaurusClient.Status(ctx)
-		if err != nil {
-			return ytClientStatus, err
-		}
-		if ytClientStatus.SyncStatus != SyncStatusReady {
-			return ComponentStatusBlockedBy(qa.ytsaurusClient.GetFullName()), err
+		if ytClientStatus := qa.ytsaurusClient.GetStatus(); !ytClientStatus.IsRunning() {
+			return ComponentStatusBlockedBy(qa.ytsaurusClient.GetFullName()), nil
 		}
 
 		if !dry {
@@ -353,13 +341,9 @@ func (qa *QueueAgent) setConditionQAStateUpdated(ctx context.Context) {
 
 func (qa *QueueAgent) initQAState(ctx context.Context, dry bool) (ComponentStatus, error) {
 	for _, tnd := range qa.tabletNodes {
-		tndStatus, err := tnd.Status(ctx)
-		if err != nil {
-			return tndStatus, err
-		}
-		if !tndStatus.IsRunning() {
+		if tndStatus := tnd.GetStatus(); !tndStatus.IsRunning() {
 			// Wait for tablet nodes to proceed with queue agent state init.
-			return ComponentStatusBlockedBy(tnd.GetFullName()), err
+			return ComponentStatusBlockedBy(tnd.GetFullName()), nil
 		}
 	}
 
@@ -403,15 +387,6 @@ func (qa *QueueAgent) updateQAState(ctx context.Context, dry bool) (*ComponentSt
 	default:
 		return nil, nil
 	}
-}
-
-func (qa *QueueAgent) Status(ctx context.Context) (ComponentStatus, error) {
-	return qa.doSync(ctx, true)
-}
-
-func (qa *QueueAgent) Sync(ctx context.Context) error {
-	_, err := qa.doSync(ctx, false)
-	return err
 }
 
 func (qa *QueueAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {

@@ -55,7 +55,7 @@ func NewRemoteTabletNodes(
 	}
 }
 
-func (n *RemoteTabletNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (n *RemoteTabletNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if n.NeedSync() {
@@ -70,10 +70,6 @@ func (n *RemoteTabletNode) doSync(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	return ComponentStatusReady(), err
-}
-
-func (n *RemoteTabletNode) Sync(ctx context.Context) (ComponentStatus, error) {
-	return n.doSync(ctx, false)
 }
 
 func (n *RemoteTabletNode) Fetch(ctx context.Context) error {

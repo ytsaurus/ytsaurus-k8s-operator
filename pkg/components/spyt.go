@@ -118,7 +118,7 @@ func (s *Spyt) createInitScript() string {
 	return strings.Join(script, "\n")
 }
 
-func (s *Spyt) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (s *Spyt) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if s.ytsaurus.Status.State != ytv1.ClusterStateRunning {
@@ -205,18 +205,4 @@ func (s *Spyt) Fetch(ctx context.Context) error {
 		s.initEnvironment,
 		s.secret,
 	)
-}
-
-func (s *Spyt) Status(ctx context.Context) ComponentStatus {
-	status, err := s.doSync(ctx, true)
-	if err != nil {
-		panic(err)
-	}
-
-	return status
-}
-
-func (s *Spyt) Sync(ctx context.Context) error {
-	_, err := s.doSync(ctx, false)
-	return err
 }

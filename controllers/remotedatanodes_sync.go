@@ -41,7 +41,7 @@ func (r *RemoteDataNodesReconciler) Sync(
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	status, err := component.Sync(ctx)
+	status, err := component.Sync(ctx, false)
 	if err != nil {
 		logger.Error(err, "failed to sync remote nodes")
 		return ctrl.Result{Requeue: true}, err

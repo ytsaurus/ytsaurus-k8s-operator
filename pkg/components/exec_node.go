@@ -76,7 +76,7 @@ func NewExecNode(
 	}
 }
 
-func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (n *ExecNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -89,12 +89,8 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 		}
 	}
 
-	masterStatus, err := n.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(n.master.GetFullName()), err
+	if masterStatus := n.master.GetStatus(); !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(n.master.GetFullName()), nil
 	}
 
 	if n.NeedSync() {
@@ -106,13 +102,4 @@ func (n *ExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error
 	}
 
 	return ComponentStatusReady(), err
-}
-
-func (n *ExecNode) Status(ctx context.Context) (ComponentStatus, error) {
-	return n.doSync(ctx, true)
-}
-
-func (n *ExecNode) Sync(ctx context.Context) error {
-	_, err := n.doSync(ctx, false)
-	return err
 }

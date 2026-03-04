@@ -385,14 +385,10 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 	return SimpleStatus(SyncStatusUpdating), err
 }
 
-func (yc *YtsaurusClient) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (yc *YtsaurusClient) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
-	hpStatus, err := yc.httpProxy.Status(ctx)
-	if err != nil {
-		return hpStatus, err
-	}
-	if !hpStatus.IsRunning() {
-		return ComponentStatusBlockedBy(yc.httpProxy.GetFullName()), err
+	if hpStatus := yc.httpProxy.GetStatus(); !hpStatus.IsRunning() {
+		return ComponentStatusBlockedBy(yc.httpProxy.GetFullName()), nil
 	}
 
 	if yc.secret.NeedSync(consts.TokenSecretKey, "") {
@@ -480,21 +476,12 @@ func (yc *YtsaurusClient) NeedSyncCypressPatch() ComponentStatus {
 	return ComponentStatusReadyAfter("Cypress patch is up to date and applied")
 }
 
-func (yc *YtsaurusClient) Status(ctx context.Context) (ComponentStatus, error) {
-	return yc.doSync(ctx, true)
-}
-
 func (yc *YtsaurusClient) NeedSync() bool {
 	return false
 }
 
 func (yc *YtsaurusClient) NeedUpdate() ComponentStatus {
 	return ComponentStatusReady()
-}
-
-func (yc *YtsaurusClient) Sync(ctx context.Context) error {
-	_, err := yc.doSync(ctx, false)
-	return err
 }
 
 func (yc *YtsaurusClient) GetYtClient() yt.Client {

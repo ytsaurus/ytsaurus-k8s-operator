@@ -132,7 +132,7 @@ func (tt *Timbertruck) handleUpdatingState(ctx context.Context) (ComponentStatus
 	return SimpleStatus(SyncStatusUpdating), err
 }
 
-func (tt *Timbertruck) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (tt *Timbertruck) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if tt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -157,12 +157,7 @@ func (tt *Timbertruck) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 		return ComponentStatusWaitingFor(tt.timbertruckSecret.Name()), err
 	}
 
-	ytClientStatus, err := tt.ytsaurusClient.Status(ctx)
-	if err != nil {
-		return ytClientStatus, err
-	}
-
-	if !ytClientStatus.IsRunning() {
+	if ytClientStatus := tt.ytsaurusClient.GetStatus(); !ytClientStatus.IsRunning() {
 		return ComponentStatusBlockedBy(tt.ytsaurusClient.GetFullName()), nil
 	}
 
@@ -178,11 +173,7 @@ func (tt *Timbertruck) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 
 func (tt *Timbertruck) handleTabletNodes(ctx context.Context, dry bool) (ComponentStatus, error) {
 	for _, tnd := range tt.tabletNodes {
-		tndStatus, err := tnd.Status(ctx)
-		if err != nil {
-			return tndStatus, err
-		}
-		if !tndStatus.IsRunning() {
+		if tndStatus := tnd.GetStatus(); !tndStatus.IsRunning() {
 			return ComponentStatusBlockedBy(tnd.GetFullName()), nil
 		}
 	}
@@ -233,21 +224,12 @@ func (tt *Timbertruck) Exists() bool {
 	return tt.timbertruckSecret.Exists()
 }
 
-func (tt *Timbertruck) Status(ctx context.Context) (ComponentStatus, error) {
-	return tt.doSync(ctx, true)
-}
-
 func (tt *Timbertruck) NeedSync() bool {
 	return false
 }
 
 func (tt *Timbertruck) NeedUpdate() ComponentStatus {
 	return ComponentStatusReady()
-}
-
-func (tt *Timbertruck) Sync(ctx context.Context) error {
-	_, err := tt.doSync(ctx, false)
-	return err
 }
 
 type ComponentLoggers struct {

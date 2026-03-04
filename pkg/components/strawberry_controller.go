@@ -257,7 +257,7 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 	return c.microservice.Sync(ctx)
 }
 
-func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (c *StrawberryController) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -277,28 +277,16 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 		}
 	}
 
-	masterStatus, err := c.master.Status(ctx)
-	if err != nil {
-		return masterStatus, err
-	}
-	if !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(c.master.GetFullName()), err
+	if masterStatus := c.master.GetStatus(); !masterStatus.IsRunning() {
+		return ComponentStatusBlockedBy(c.master.GetFullName()), nil
 	}
 
-	schStatus, err := c.scheduler.Status(ctx)
-	if err != nil {
-		return schStatus, err
-	}
-	if !schStatus.IsRunning() {
+	if schStatus := c.scheduler.GetStatus(); !schStatus.IsRunning() {
 		return ComponentStatusBlockedBy(c.scheduler.GetFullName()), err
 	}
 
 	for _, dataNode := range c.dataNodes {
-		dndStatus, err := dataNode.Status(ctx)
-		if err != nil {
-			return dndStatus, err
-		}
-		if !dndStatus.IsRunning() {
+		if dndStatus := dataNode.GetStatus(); !dndStatus.IsRunning() {
 			return ComponentStatusBlockedBy(dataNode.GetFullName()), err
 		}
 	}
@@ -338,13 +326,4 @@ func (c *StrawberryController) doSync(ctx context.Context, dry bool) (ComponentS
 	}
 
 	return ComponentStatusReady(), err
-}
-
-func (c *StrawberryController) Status(ctx context.Context) (ComponentStatus, error) {
-	return c.doSync(ctx, true)
-}
-
-func (c *StrawberryController) Sync(ctx context.Context) error {
-	_, err := c.doSync(ctx, false)
-	return err
 }

@@ -35,10 +35,10 @@ func (r *SpytReconciler) Sync(ctx context.Context, resource *ytv1.Spyt, ytsaurus
 		return ctrl.Result{}, nil
 	}
 
-	componentStatus := component.Status(ctx)
+	componentStatus, err := component.Sync(ctx, true)
 
-	if componentStatus.SyncStatus == components.SyncStatusBlocked {
-		return ctrl.Result{RequeueAfter: time.Second * 10}, nil
+	if err != nil || componentStatus.SyncStatus == components.SyncStatusBlocked {
+		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
 
 	if componentStatus.SyncStatus == components.SyncStatusReady {
@@ -48,7 +48,7 @@ func (r *SpytReconciler) Sync(ctx context.Context, resource *ytv1.Spyt, ytsaurus
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if err := component.Sync(ctx); err != nil {
+	if _, err := component.Sync(ctx, false); err != nil {
 		logger.Error(err, "component sync failed", "component", "spyt")
 		return ctrl.Result{Requeue: true}, err
 	}

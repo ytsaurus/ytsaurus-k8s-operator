@@ -74,7 +74,7 @@ func NewRemoteExecNodes(
 	}
 }
 
-func (n *RemoteExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (n *RemoteExecNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if n.NeedSync() {
@@ -86,8 +86,4 @@ func (n *RemoteExecNode) doSync(ctx context.Context, dry bool) (ComponentStatus,
 	}
 
 	return ComponentStatusReady(), err
-}
-
-func (n *RemoteExecNode) Sync(ctx context.Context) (ComponentStatus, error) {
-	return n.doSync(ctx, false)
 }

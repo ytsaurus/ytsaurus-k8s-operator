@@ -52,7 +52,7 @@ func (mc *MasterCache) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx, mc.server)
 }
 
-func (mc *MasterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+func (mc *MasterCache) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if mc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
@@ -88,15 +88,6 @@ func (mc *MasterCache) doSync(ctx context.Context, dry bool) (ComponentStatus, e
 	}
 
 	return ComponentStatusReady(), err
-}
-
-func (mc *MasterCache) Status(ctx context.Context) (ComponentStatus, error) {
-	return mc.doSync(ctx, true)
-}
-
-func (mc *MasterCache) Sync(ctx context.Context) error {
-	_, err := mc.doSync(ctx, false)
-	return err
 }
 
 func (mc *MasterCache) doServerSync(ctx context.Context) error {

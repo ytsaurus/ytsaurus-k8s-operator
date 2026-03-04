@@ -19,6 +19,7 @@ import (
 type SyncStatus string
 
 const (
+	SyncStatusUndefined  SyncStatus = ""
 	SyncStatusReady      SyncStatus = "Ready"      // Running, reconciliation is not required
 	SyncStatusBlocked    SyncStatus = "Blocked"    // Reconciliation is impossible
 	SyncStatusPending    SyncStatus = "Pending"    // Reconciliation is possible
@@ -82,7 +83,9 @@ func SimpleStatus(status SyncStatus) ComponentStatus {
 
 type Component interface {
 	resources.Fetchable
-	resources.Syncable
+
+	GetStatus() ComponentStatus
+	SetStatus(status ComponentStatus)
 
 	// NeedSync returns true when component is need, able and permitted to sync resources.
 	NeedSync() bool
@@ -90,7 +93,8 @@ type Component interface {
 	// NeedUpdate returns SyncStatusNeedUpdate when component needs instance update.
 	NeedUpdate() ComponentStatus
 
-	Status(ctx context.Context) (ComponentStatus, error)
+	Sync(ctx context.Context, dry bool) (ComponentStatus, error)
+
 	GetFullName() string
 	GetShortName() string
 	GetType() consts.ComponentType
@@ -110,6 +114,7 @@ type PreheatSpecProvider interface {
 	PreheatSpec() (images []string, nodeSelector map[string]string, tolerations []corev1.Toleration)
 }
 type component struct {
+	status   ComponentStatus
 	labeller *labeller.Labeller
 	owner    apiproxy.APIProxy
 
@@ -167,6 +172,17 @@ func newLocalServerComponent(
 		},
 		server: server,
 	}
+}
+
+func (c *component) GetStatus() ComponentStatus {
+	if c.status.SyncStatus == SyncStatusUndefined {
+		panic(fmt.Sprintf("Component %s status undefined", c.GetFullName()))
+	}
+	return c.status
+}
+
+func (c *component) SetStatus(status ComponentStatus) {
+	c.status = status
 }
 
 // GetFullName returns component's name, which is used as an identifier in component management
