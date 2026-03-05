@@ -175,12 +175,17 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			return ctrl.Result{Requeue: true}, err
 		}
 
-	case ytv1.ClusterStateRunning, ytv1.ClusterStateReconfiguration:
+	case ytv1.ClusterStateRunning, ytv1.ClusterStateReconfiguration, ytv1.ClusterStateUpdateFinishing:
 		// Apply current update plan and choose components to update.
 		cm.applyUpdatePlan(resource.GetUpdatePlan())
 
 		// All status updates _must_ be in one transaction with observed generation and new cluster state.
 		needStatusUpdate := ytsaurus.SyncObservedGeneration()
+
+		if ytsaurus.GetUpdateState() != ytv1.UpdateStateUndefined {
+			ytsaurus.ClearUpdateStatus()
+			needStatusUpdate = true
+		}
 
 		// There may be the case when some components needed update, but spec was reverted
 		// and Updating never happen — so blocked components column need to be always actualized.
@@ -259,33 +264,12 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		}
 
 	case ytv1.ClusterStateCancelUpdate:
-		if err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateNone); err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
-
-		if err := ytsaurus.ClearUpdateStatus(ctx); err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
-
+		ytsaurus.ClearUpdateStatus()
 		logger.Info("Ytsaurus update was canceled, ytsaurus is running now")
 		// We don't update observed generation because the update was not really finished,
 		// and it's still the old version running.
 		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
 		return ctrl.Result{}, err
-
-	case ytv1.ClusterStateUpdateFinishing:
-		if err := ytsaurus.SaveUpdateState(ctx, ytv1.UpdateStateNone); err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
-
-		if err := ytsaurus.ClearUpdateStatus(ctx); err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
-
-		logger.Info("Ytsaurus update was finished and Ytsaurus is running now")
-		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
-		// Requeue once again to do final check and maybe update observed generation.
-		return ctrl.Result{Requeue: true}, err
 
 	default:
 		return ctrl.Result{}, fmt.Errorf("unknown cluster state: %q", ytsaurus.GetClusterState())

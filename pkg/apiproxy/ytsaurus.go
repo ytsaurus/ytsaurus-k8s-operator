@@ -75,7 +75,11 @@ func (c *Ytsaurus) IsRunning() bool {
 }
 
 func (c *Ytsaurus) IsReadyToUpdate() bool {
-	return c.IsRunning()
+	switch c.GetClusterState() {
+	case ytv1.ClusterStateRunning, ytv1.ClusterStateUpdateFinishing:
+		return true
+	}
+	return false
 }
 
 func (c *Ytsaurus) IsUpdating() bool {
@@ -159,12 +163,12 @@ func (c *Ytsaurus) SetBlockedComponents(components []ytv1.Component) bool {
 	return true
 }
 
-func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
-	c.SetUpdateState(ytv1.UpdateStateUndefined)
-	c.ytsaurus.Status.UpdateStatus.Conditions = keepImagesHeatedCondition(c.ytsaurus.Status.UpdateStatus.Conditions)
-	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
-	c.SetUpdatingComponents(nil)
-	return c.UpdateStatus(ctx)
+func (c *Ytsaurus) ClearUpdateStatus() {
+	c.ytsaurus.Status.UpdateStatus = ytv1.UpdateStatus{
+		State:                    ytv1.UpdateStateUndefined,
+		BlockedComponentsSummary: c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary,
+		Conditions:               keepImagesHeatedCondition(c.ytsaurus.Status.UpdateStatus.Conditions),
+	}
 }
 
 // keepImagesHeatedCondition needed to keep image-heater hash for the next reconcile
