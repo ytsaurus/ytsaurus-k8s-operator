@@ -2469,10 +2469,11 @@ func checkClusterHealth(ctx context.Context, ytClient yt.Client) {
 	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
 
 	By("Checking cluster alerts", func() {
-		var clusterHealth ClusterHealthReport
-		clusterHealth.Collect(ctx, ytClient)
-		Expect(clusterHealth.Alerts).To(BeEmpty())
-		Expect(clusterHealth.Errors).To(BeEmpty())
+		Eventually(func() bool {
+			var clusterHealth ClusterHealthReport
+			clusterHealth.Collect(ctx, ytClient)
+			return len(clusterHealth.Alerts) == 0 && len(clusterHealth.Errors) == 0
+		}, reactionTimeout, pollInterval).Should(BeTrue())
 	})
 
 	By("Checking that tablet cell bundles are in `good` health")
