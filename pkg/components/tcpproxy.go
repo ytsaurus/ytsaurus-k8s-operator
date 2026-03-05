@@ -79,7 +79,7 @@ func (tp *TcpProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 	}
 
 	if masterStatus := tp.master.GetStatus(); !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(tp.master.GetFullName()), nil
+		return masterStatus.Blocker(), nil
 	}
 
 	if tp.NeedSync() {

@@ -290,7 +290,7 @@ func (u *UI) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	if masterStatus := u.master.GetStatus(); !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(u.master.GetFullName()), nil
+		return masterStatus.Blocker(), nil
 	}
 
 	if u.secret.NeedSync(consts.TokenSecretKey, "") {

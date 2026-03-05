@@ -140,7 +140,7 @@ func (qt *QueryTracker) Sync(ctx context.Context, dry bool) (ComponentStatus, er
 
 	for _, tnd := range qt.tabletNodes {
 		if tndStatus := tnd.GetStatus(); !tndStatus.IsRunning() {
-			return ComponentStatusBlockedBy("tablet nodes"), nil
+			return tndStatus.Blocker(), nil
 		}
 	}
 
@@ -164,7 +164,7 @@ func (qt *QueryTracker) Sync(ctx context.Context, dry bool) (ComponentStatus, er
 	if !dry {
 		err = qt.init(ctx, ytClient)
 		if err != nil {
-			return ComponentStatusWaitingFor(fmt.Sprintf("%s initialization", qt.GetFullName())), err
+			return ComponentStatusWaitingFor("%s initialization", qt.GetFullName()), err
 		}
 
 		qt.ytsaurus.SetStatusCondition(metav1.Condition{
@@ -186,7 +186,7 @@ func (qt *QueryTracker) Sync(ctx context.Context, dry bool) (ComponentStatus, er
 	if qt.ytsaurus.IsStatusConditionTrue(qt.initCondition) {
 		return ComponentStatusReady(), err
 	}
-	return ComponentStatusWaitingFor(fmt.Sprintf("setting %s condition", qt.initCondition)), err
+	return ComponentStatusWaitingFor("setting %s condition", qt.initCondition), err
 }
 
 func (qt *QueryTracker) createUser(ctx context.Context, ytClient yt.Client) (err error) {
@@ -448,7 +448,7 @@ func (qt *QueryTracker) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	// Check that the number of instances in YT matches the expected instanceCount
 	expectedCount := int(qt.ytsaurus.GetResource().Spec.QueryTrackers.InstanceCount)
 	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.QueryTrackerType, expectedCount); err != nil {
-		return ComponentStatusBlocked(err.Error())
+		return ComponentStatusBlocked("Error: %v", err)
 	}
 
 	return ComponentStatusReady()

@@ -411,7 +411,7 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 func (yc *YtsaurusClient) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 	if hpStatus := yc.httpProxy.GetStatus(); !hpStatus.IsRunning() {
-		return ComponentStatusBlockedBy(yc.httpProxy.GetFullName()), nil
+		return hpStatus.Blocker(), nil
 	}
 
 	if yc.secret.NeedSync(consts.TokenSecretKey, "") {
@@ -478,14 +478,14 @@ func (yc *YtsaurusClient) Sync(ctx context.Context, dry bool) (ComponentStatus, 
 
 func (yc *YtsaurusClient) NeedSyncCypressPatch() ComponentStatus {
 	if !yc.cypressPatch.Exists() {
-		return ComponentStatusPending(fmt.Sprintf("Need to create %s", yc.cypressPatch.Name()))
+		return ComponentStatusPending("Need to create %s", yc.cypressPatch.Name())
 	}
 
 	if yc.configOverrides != nil && yc.configOverrides.Exists() {
 		patchOverridesVersion := yc.cypressPatch.OldObject().Annotations[consts.ConfigOverridesVersionAnnotationName]
 		overridesVersion := yc.configOverrides.OldObject().ResourceVersion
 		if overridesVersion != patchOverridesVersion {
-			return ComponentStatusPending(fmt.Sprintf("Need to update overrides in %s", yc.cypressPatch.Name()))
+			return ComponentStatusPending("Need to update overrides in %s", yc.cypressPatch.Name())
 		}
 	}
 

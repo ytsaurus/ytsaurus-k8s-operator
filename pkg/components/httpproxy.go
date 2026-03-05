@@ -156,7 +156,7 @@ func (hp *HttpProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error
 	}
 
 	if masterStatus := hp.master.GetStatus(); !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(hp.master.GetFullName()), err
+		return masterStatus.Blocker(), err
 	}
 
 	if hp.NeedSync() {

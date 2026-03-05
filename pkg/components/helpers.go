@@ -356,8 +356,7 @@ func handleRollingUpdatingClusterState(
 	}
 	maxUnavailable := int(server.getReplicaCount()) - *minReady
 	if maxUnavailable <= 0 {
-		msg := fmt.Sprintf("instanceCount - minReadyInstanceCount must be positive for rolling update on %s", cmp.GetFullName())
-		return ptr.To(ComponentStatusBlocked(msg)), yterrors.Err(msg)
+		return ptr.To(ComponentStatusBlocked("instanceCount - minReadyInstanceCount must be positive for rolling update on %s", cmp.GetFullName())), nil
 	}
 
 	if dry {
@@ -377,8 +376,7 @@ func handleRollingUpdatingClusterState(
 	if status := server.needUpdate(); status.IsNeedUpdate() {
 		server.setUpdateStrategy(appsv1.RollingUpdateStatefulSetStrategyType, totalCount-1, maxUnavailable)
 		if err := server.Sync(ctx); err != nil {
-			msg := fmt.Sprintf("failed to initialize rolling update for %s", cmp.GetFullName())
-			return ptr.To(ComponentStatusBlocked(msg)), err
+			return ptr.To(ComponentStatusBlocked("failed to initialize rolling update for %s", cmp.GetFullName())), err
 		}
 		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
 	}
@@ -417,8 +415,7 @@ func handleRollingUpdatingClusterState(
 
 	server.setUpdateStrategy(appsv1.RollingUpdateStatefulSetStrategyType, partition-1, maxUnavailable)
 	if err := server.Sync(ctx); err != nil {
-		msg := fmt.Sprintf("failed to advance rolling update partition for %s", cmp.GetFullName())
-		return ptr.To(ComponentStatusBlocked(msg)), err
+		return ptr.To(ComponentStatusBlocked("failed to advance rolling update partition for %s", cmp.GetFullName())), err
 	}
 	return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
 }
@@ -482,7 +479,7 @@ func runPrechecks(ctx context.Context, ytsaurus *apiproxy.Ytsaurus, cmp Componen
 			Reason:  "PreChecksFailed",
 			Message: msg,
 		})
-		return ptr.To(ComponentStatusBlocked(msg)), yterrors.Err(msg)
+		return ptr.To(ComponentStatusBlocked("%v", msg)), yterrors.Err(msg)
 	}
 	// Set PreChecksCompleted condition for this component
 	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{

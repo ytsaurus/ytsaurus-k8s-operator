@@ -158,7 +158,7 @@ func (tt *Timbertruck) Sync(ctx context.Context, dry bool) (ComponentStatus, err
 	}
 
 	if ytClientStatus := tt.ytsaurusClient.GetStatus(); !ytClientStatus.IsRunning() {
-		return ComponentStatusBlockedBy(tt.ytsaurusClient.GetFullName()), nil
+		return ytClientStatus.Blocker(), nil
 	}
 
 	if len(tt.tabletNodes) > 0 {
@@ -174,7 +174,7 @@ func (tt *Timbertruck) Sync(ctx context.Context, dry bool) (ComponentStatus, err
 func (tt *Timbertruck) handleTabletNodes(ctx context.Context, dry bool) (ComponentStatus, error) {
 	for _, tnd := range tt.tabletNodes {
 		if tndStatus := tnd.GetStatus(); !tndStatus.IsRunning() {
-			return ComponentStatusBlockedBy(tnd.GetFullName()), nil
+			return tndStatus.Blocker(), nil
 		}
 	}
 

@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"fmt"
+	"runtime"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +20,7 @@ import (
 type SyncStatus string
 
 const (
-	SyncStatusUndefined  SyncStatus = ""
+	SyncStatusUndefined  SyncStatus = ""           // Status is unknown
 	SyncStatusReady      SyncStatus = "Ready"      // Running, reconciliation is not required
 	SyncStatusBlocked    SyncStatus = "Blocked"    // Reconciliation is impossible
 	SyncStatusPending    SyncStatus = "Pending"    // Reconciliation is possible
@@ -28,57 +29,75 @@ const (
 )
 
 type ComponentStatus struct {
+	Component  string // Set by SetStatus
 	SyncStatus SyncStatus
 	Message    string
 }
 
-func (cs ComponentStatus) IsRunning() bool {
-	return cs.SyncStatus == SyncStatusReady || cs.SyncStatus == SyncStatusNeedUpdate
+func (cs ComponentStatus) IsUndefined() bool {
+	return cs.SyncStatus == SyncStatusUndefined
+}
+
+func (cs ComponentStatus) IsReady() bool {
+	return cs.SyncStatus == SyncStatusReady
 }
 
 func (cs ComponentStatus) IsNeedUpdate() bool {
 	return cs.SyncStatus == SyncStatusNeedUpdate
 }
 
+func (cs ComponentStatus) IsRunning() bool {
+	return cs.SyncStatus == SyncStatusReady || cs.SyncStatus == SyncStatusNeedUpdate
+}
+
+func (cs ComponentStatus) Blocker() ComponentStatus {
+	return ComponentStatusSprintf(SyncStatusBlocked, "Blocked by %v: %v, %v", cs.Component, cs.SyncStatus, cs.Message)
+}
+
+func ComponentStatusSprintf(status SyncStatus, format string, a ...any) ComponentStatus {
+	return ComponentStatus{"", status, fmt.Sprintf(format, a...)}
+}
+
 func ComponentStatusReady() ComponentStatus {
-	return ComponentStatus{SyncStatusReady, "Ready"}
+	return ComponentStatus{"", SyncStatusReady, "Ready"}
 }
 
-func ComponentStatusReadyAfter(message string) ComponentStatus {
-	return ComponentStatus{SyncStatusReady, message}
+func ComponentStatusReadyAfter(format string, a ...any) ComponentStatus {
+	return ComponentStatusSprintf(SyncStatusReady, format, a...)
 }
 
-func ComponentStatusBlocked(message string) ComponentStatus {
-	return ComponentStatus{SyncStatusBlocked, message}
+func ComponentStatusBlocked(format string, a ...any) ComponentStatus {
+	return ComponentStatusSprintf(SyncStatusBlocked, format, a...)
 }
 
-func ComponentStatusPending(message string) ComponentStatus {
-	return ComponentStatus{SyncStatusPending, message}
+func ComponentStatusBlockedBy(format string, a ...any) ComponentStatus {
+	return ComponentStatusBlocked("Blocked by "+format, a...)
 }
 
-func ComponentStatusNeedUpdate(message string) ComponentStatus {
-	return ComponentStatus{SyncStatusNeedUpdate, message}
+func ComponentStatusPending(format string, a ...any) ComponentStatus {
+	return ComponentStatusSprintf(SyncStatusPending, format, a...)
 }
 
-func ComponentStatusUpdating(message string) ComponentStatus {
-	return ComponentStatus{SyncStatusUpdating, message}
+func ComponentStatusNeedUpdate(format string, a ...any) ComponentStatus {
+	return ComponentStatusSprintf(SyncStatusNeedUpdate, format, a...)
 }
 
-func ComponentStatusBlockedBy(cause string) ComponentStatus {
-	return ComponentStatus{SyncStatusBlocked, fmt.Sprintf("Blocked by %s", cause)}
+func ComponentStatusUpdating(format string, a ...any) ComponentStatus {
+	return ComponentStatusSprintf(SyncStatusUpdating, format, a...)
 }
 
-func ComponentStatusWaitingFor(event string) ComponentStatus {
-	return ComponentStatus{SyncStatusPending, fmt.Sprintf("Waiting for %s", event)}
+func ComponentStatusWaitingFor(format string, a ...any) ComponentStatus {
+	return ComponentStatusSprintf(SyncStatusPending, "Waiting for "+format, a...)
 }
 
-func ComponentStatusUpdateStep(part string) ComponentStatus {
-	return ComponentStatus{SyncStatusUpdating, fmt.Sprintf("Updating %s", part)}
+func ComponentStatusUpdateStep(format string, a ...any) ComponentStatus {
+	return ComponentStatusSprintf(SyncStatusUpdating, "Updating "+format, a...)
 }
 
 // TODO(khlebnikov): Replace this stub with status with meaningful message.
 func SimpleStatus(status SyncStatus) ComponentStatus {
-	return ComponentStatus{status, string(status)}
+	_, file, line, _ := runtime.Caller(1)
+	return ComponentStatusSprintf(status, "%v at %v:%v", status, file, line)
 }
 
 type Component interface {
@@ -176,12 +195,13 @@ func newLocalServerComponent(
 
 func (c *component) GetStatus() ComponentStatus {
 	if c.status.SyncStatus == SyncStatusUndefined {
-		panic(fmt.Sprintf("Component %s status undefined", c.GetFullName()))
+		return ComponentStatus{c.GetFullName(), SyncStatusUndefined, "BUG: component status undefined"}
 	}
 	return c.status
 }
 
 func (c *component) SetStatus(status ComponentStatus) {
+	status.Component = c.GetFullName()
 	c.status = status
 }
 
@@ -223,12 +243,14 @@ func (c *component) UpdatePreCheck(ctx context.Context) ComponentStatus {
 func (c *component) GetReadyCondition() ComponentStatus {
 	cond := c.owner.GetStatusCondition(c.labeller.GetReadyCondition())
 	switch {
-	case cond == nil || cond.Status == metav1.ConditionUnknown:
-		return ComponentStatus{SyncStatusPending, "Status unknown"}
+	case cond == nil:
+		return ComponentStatus{c.GetFullName(), SyncStatusUndefined, "Status unknown"}
+	case cond.Status == metav1.ConditionUnknown:
+		return ComponentStatus{c.GetFullName(), SyncStatusUndefined, cond.Message}
 	case cond.Status == metav1.ConditionTrue:
-		return ComponentStatus{SyncStatusReady, cond.Message}
+		return ComponentStatus{c.GetFullName(), SyncStatusReady, cond.Message}
 	default:
-		return ComponentStatus{SyncStatus(cond.Reason), cond.Message}
+		return ComponentStatus{c.GetFullName(), SyncStatus(cond.Reason), cond.Message}
 	}
 }
 

@@ -82,7 +82,7 @@ func (ca *ControllerAgent) Sync(ctx context.Context, dry bool) (ComponentStatus,
 	}
 
 	if masterStatus := ca.master.GetStatus(); !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(ca.master.GetFullName()), nil
+		return masterStatus.Blocker(), nil
 	}
 
 	if ca.NeedSync() {
@@ -118,7 +118,7 @@ func (ca *ControllerAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	// Check that the number of instances in YT matches the expected instanceCount
 	expectedCount := int(ca.ytsaurus.GetResource().Spec.ControllerAgents.InstanceCount)
 	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.ControllerAgentType, expectedCount); err != nil {
-		return ComponentStatusBlocked(err.Error())
+		return ComponentStatusBlocked("Error: %v", err)
 	}
 
 	controllerAgentsWithMaintenance := make([]ControllerAgentsWithMaintenance, 0)
@@ -127,7 +127,7 @@ func (ca *ControllerAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	err := ca.ytsaurusClient.GetYtClient().ListNode(ctx, ypath.Path(cypressPath), &controllerAgentsWithMaintenance, &yt.ListNodeOptions{
 		Attributes: []string{"maintenance", "alerts"}})
 	if err != nil {
-		return ComponentStatusBlocked(err.Error())
+		return ComponentStatusBlocked("Error: %v", err)
 	}
 
 	for _, controllerAgent := range controllerAgentsWithMaintenance {
@@ -138,17 +138,15 @@ func (ca *ControllerAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {
 			&connected,
 			nil)
 		if err != nil {
-			return ComponentStatusBlocked(err.Error())
+			return ComponentStatusBlocked("Error: %v", err)
 		}
 
 		if !connected {
-			msg := fmt.Sprintf("Controller agent is not connected: %v", controllerAgent.Address)
-			return ComponentStatusBlocked(msg)
+			return ComponentStatusBlocked("Controller agent is not connected: %v", controllerAgent.Address)
 		}
 
 		if controllerAgent.Maintenance {
-			msg := fmt.Sprintf("There is a controller agent in maintenance: %v", controllerAgent.Address)
-			return ComponentStatusBlocked(msg)
+			return ComponentStatusBlocked("There is a controller agent in maintenance: %v", controllerAgent.Address)
 		}
 	}
 

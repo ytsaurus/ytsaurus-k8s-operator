@@ -121,7 +121,7 @@ func (mc *MasterCache) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	// Check that the number of instances in YT matches the expected instanceCount
 	expectedCount := int(mc.ytsaurus.GetResource().Spec.MasterCaches.InstanceCount)
 	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.MasterCacheType, expectedCount); err != nil {
-		return ComponentStatusBlocked(err.Error())
+		return ComponentStatusBlocked("Error: %v", err)
 	}
 
 	return ComponentStatusReady()

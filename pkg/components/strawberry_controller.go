@@ -278,16 +278,16 @@ func (c *StrawberryController) Sync(ctx context.Context, dry bool) (ComponentSta
 	}
 
 	if masterStatus := c.master.GetStatus(); !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(c.master.GetFullName()), nil
+		return masterStatus.Blocker(), nil
 	}
 
 	if schStatus := c.scheduler.GetStatus(); !schStatus.IsRunning() {
-		return ComponentStatusBlockedBy(c.scheduler.GetFullName()), err
+		return schStatus.Blocker(), err
 	}
 
 	for _, dataNode := range c.dataNodes {
 		if dndStatus := dataNode.GetStatus(); !dndStatus.IsRunning() {
-			return ComponentStatusBlockedBy(dataNode.GetFullName()), err
+			return dndStatus.Blocker(), err
 		}
 	}
 

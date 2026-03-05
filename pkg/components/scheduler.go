@@ -137,13 +137,13 @@ func (s *Scheduler) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 	}
 
 	if masterStatus := s.master.GetStatus(); !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(s.master.GetFullName()), nil
+		return masterStatus.Blocker(), nil
 	}
 
 	for _, end := range s.execNodes {
 		if endStatus := end.GetStatus(); !endStatus.IsRunning() {
 			// It makes no sense to start scheduler without exec nodes.
-			return ComponentStatusBlockedBy(end.GetFullName()), err
+			return endStatus.Blocker(), err
 		}
 	}
 
@@ -190,7 +190,7 @@ func (s *Scheduler) initOpArchive(ctx context.Context, dry bool) (ComponentStatu
 	for _, tnd := range s.tabletNodes {
 		if tndStatus := tnd.GetStatus(); !tndStatus.IsRunning() {
 			// Wait for tablet nodes to proceed with operations archive init.
-			return ComponentStatusBlockedBy(tnd.GetFullName()), nil
+			return tndStatus.Blocker(), nil
 		}
 	}
 
@@ -308,18 +308,18 @@ func (s *Scheduler) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	// Check for scheduler alerts
 	var schedulerAlerts []any
 	if err := ytClient.GetNode(ctx, ypath.Path(schedulerAlertsPath), &schedulerAlerts, nil); err != nil {
-		return ComponentStatusBlocked(fmt.Sprintf("Could not check scheduler alerts: %v", err))
+		return ComponentStatusBlocked("Could not check scheduler alerts: %v", err)
 	}
 
 	alertCount := len(schedulerAlerts)
 	if alertCount > 0 {
-		return ComponentStatusBlocked(fmt.Sprintf("Scheduler has %d alerts: %v", alertCount, schedulerAlerts))
+		return ComponentStatusBlocked("Scheduler has %d alerts: %v", alertCount, schedulerAlerts)
 	}
 
 	// Try to get orchid data
 	var orchidData map[string]interface{}
 	if err := ytClient.GetNode(ctx, ypath.Path(orchidPath), &orchidData, nil); err != nil {
-		return ComponentStatusBlocked(fmt.Sprintf("Failed to get scheduler orchid data: %v", err))
+		return ComponentStatusBlocked("Failed to get scheduler orchid data: %v", err)
 	}
 	logger.Info("Scheduler orchid data retrieved successfully")
 

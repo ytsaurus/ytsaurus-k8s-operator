@@ -171,7 +171,7 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if masterStatus := yqla.master.GetStatus(); !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(yqla.master.GetFullName()), nil
+		return masterStatus.Blocker(), nil
 	}
 
 	if yqla.secret.NeedSync(consts.TokenSecretKey, "") {
@@ -280,7 +280,7 @@ func (yqla *YqlAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	// Check that the number of instances in YT matches the expected instanceCount
 	expectedCount := int(yqla.ytsaurus.GetResource().Spec.YQLAgents.InstanceCount)
 	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.YqlAgentType, expectedCount); err != nil {
-		return ComponentStatusBlocked(err.Error())
+		return ComponentStatusBlocked("Error: %v", err)
 	}
 
 	return ComponentStatusReady()

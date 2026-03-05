@@ -146,7 +146,7 @@ func (rp *RpcProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 	}
 
 	if masterStatus := rp.master.GetStatus(); !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(rp.master.GetFullName()), nil
+		return masterStatus.Blocker(), nil
 	}
 
 	if rp.NeedSync() {

@@ -2,7 +2,6 @@ package components
 
 import (
 	"context"
-	"fmt"
 
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
@@ -101,7 +100,7 @@ func (tn *TabletNode) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if ytClientStatus := tn.ytsaurusClient.GetStatus(); !ytClientStatus.IsRunning() {
-		return ComponentStatusBlockedBy(tn.ytsaurusClient.GetFullName()), nil
+		return ytClientStatus.Blocker(), nil
 	}
 
 	if !dry && tn.doInitialization {
@@ -111,7 +110,7 @@ func (tn *TabletNode) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	return ComponentStatusWaitingFor(fmt.Sprintf("setting %s condition", tn.initBundlesCondition)), err
+	return ComponentStatusWaitingFor("setting %s condition", tn.initBundlesCondition), err
 }
 
 func (tn *TabletNode) getBundleBootstrap(bundle string) *ytv1.BundleBootstrapSpec {
@@ -217,7 +216,7 @@ func (tn *TabletNode) initBundles(ctx context.Context) (ComponentStatus, error) 
 					"bundle", bundle,
 					"nodeTagFilter", *bootstrap.NodeTagFilter,
 				)
-				return ComponentStatusWaitingFor(fmt.Sprintf("setting bundle %q node tag filter", bundle)), err
+				return ComponentStatusWaitingFor("setting bundle %q node tag filter", bundle), err
 			}
 		}
 	}

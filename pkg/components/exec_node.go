@@ -90,7 +90,7 @@ func (n *ExecNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	}
 
 	if masterStatus := n.master.GetStatus(); !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(n.master.GetFullName()), nil
+		return masterStatus.Blocker(), nil
 	}
 
 	if n.NeedSync() {
