@@ -9,7 +9,6 @@ import (
 	"k8s.io/utils/ptr"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -193,14 +192,10 @@ func (j *InitJob) Exists() bool {
 }
 
 func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	logger := log.FromContext(ctx)
 	var err error
 
 	if j.owner.IsStatusConditionTrue(j.initCompletedCondition) {
-		return ComponentStatus{
-			SyncStatusReady,
-			fmt.Sprintf("%s completed", j.initJob.Name()),
-		}, err
+		return ComponentStatusReadyAfter("%s completed", j.initJob.Name()), err
 	}
 
 	// Deal with init job.
@@ -210,12 +205,11 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 			err = resources.Sync(ctx, j.configs, j.initJob)
 		}
 
-		return ComponentStatusWaitingFor(fmt.Sprintf("%s creation", j.initJob.Name())), err
+		return ComponentStatusWaitingFor("job %s creation", j.initJob.Name()), err
 	}
 
-	if !j.initJob.Completed() {
-		logger.Info("Init job is not completed for " + j.labeller.GetFullComponentName())
-		return ComponentStatusBlockedBy(fmt.Sprintf("%s completion", j.initJob.Name())), err
+	if status := j.initJob.Status(); status.Succeeded <= 0 {
+		return ComponentStatusWaitingFor("job %s completion, active: %v, failed: %v", j.initJob.Name(), status.Active, status.Failed), err
 	}
 
 	if !dry {
@@ -227,7 +221,7 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		})
 	}
 
-	return ComponentStatusWaitingFor(fmt.Sprintf("setting %s condition", j.initCompletedCondition)), err
+	return ComponentStatusWaitingFor("setting %s condition", j.initCompletedCondition), err
 }
 
 func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {

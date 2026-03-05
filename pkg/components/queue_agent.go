@@ -115,7 +115,7 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	if masterStatus := qa.master.GetStatus(); !masterStatus.IsRunning() {
-		return ComponentStatusBlockedBy(qa.master.GetFullName()), err
+		return masterStatus.Blocker(), err
 	}
 
 	// It makes no sense to start queue agents without tablet nodes.
@@ -124,7 +124,7 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 	for _, tnd := range qa.tabletNodes {
 		if tndStatus := tnd.GetStatus(); !tndStatus.IsRunning() {
-			return ComponentStatusBlockedBy(tnd.GetFullName()), nil
+			return tndStatus.Blocker(), nil
 		}
 	}
 
@@ -154,7 +154,7 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 	var ytClient yt.Client
 	if qa.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
 		if ytClientStatus := qa.ytsaurusClient.GetStatus(); !ytClientStatus.IsRunning() {
-			return ComponentStatusBlockedBy(qa.ytsaurusClient.GetFullName()), nil
+			return ytClientStatus.Blocker(), nil
 		}
 
 		if !dry {
@@ -178,7 +178,7 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 	if !dry {
 		err = qa.init(ctx, ytClient)
 		if err != nil {
-			return ComponentStatusWaitingFor(fmt.Sprintf("%s initialization", qa.GetFullName())), err
+			return ComponentStatusWaitingFor("%s initialization", qa.GetFullName()), err
 		}
 
 		qa.ytsaurus.SetStatusCondition(metav1.Condition{
@@ -189,7 +189,7 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		})
 	}
 
-	return ComponentStatusWaitingFor(fmt.Sprintf("setting %s condition", qa.initCondition)), err
+	return ComponentStatusWaitingFor("setting %s condition", qa.initCondition), err
 }
 
 func (qa *QueueAgent) createUser(ctx context.Context, ytClient yt.Client) (err error) {
@@ -343,7 +343,7 @@ func (qa *QueueAgent) initQAState(ctx context.Context, dry bool) (ComponentStatu
 	for _, tnd := range qa.tabletNodes {
 		if tndStatus := tnd.GetStatus(); !tndStatus.IsRunning() {
 			// Wait for tablet nodes to proceed with queue agent state init.
-			return ComponentStatusBlockedBy(tnd.GetFullName()), nil
+			return tndStatus.Blocker(), nil
 		}
 	}
 
@@ -399,7 +399,7 @@ func (qa *QueueAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	// Check that the number of instances in YT matches the expected instanceCount
 	expectedCount := int(qa.ytsaurus.GetResource().Spec.QueueAgents.InstanceCount)
 	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.QueueAgentType, expectedCount); err != nil {
-		return ComponentStatusBlocked(err.Error())
+		return ComponentStatusBlocked("Error: %v", err)
 	}
 
 	return ComponentStatusReady()

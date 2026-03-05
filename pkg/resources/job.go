@@ -23,8 +23,8 @@ func NewJob(name string, l *labeller.Labeller, apiProxy apiproxy.APIProxy) *Job 
 	}
 }
 
-func (j *Job) Completed() bool {
-	return j.oldObject.Status.Succeeded > 0
+func (j *Job) Status() batchv1.JobStatus {
+	return j.oldObject.Status
 }
 
 func (j *Job) Build() *batchv1.Job {

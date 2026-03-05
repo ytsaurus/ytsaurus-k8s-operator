@@ -206,7 +206,7 @@ func (h *ConfigMapBuilder) needReload() (ComponentStatus, error) {
 	for _, descriptor := range h.generators {
 		newConfig, err := h.getConfig(descriptor)
 		if err != nil {
-			return ComponentStatusBlocked(fmt.Sprintf("Config %s generation error: %v", descriptor.FileName, err)), err
+			return ComponentStatusBlocked("Config %s generation error: %v", descriptor.FileName, err), err
 		}
 		curConfig := h.getCurrentConfigValue(descriptor.FileName)
 		if !cmp.Equal(curConfig, newConfig) {
@@ -214,13 +214,13 @@ func (h *ConfigMapBuilder) needReload() (ComponentStatus, error) {
 				h.apiProxy.RecordNormal(
 					"Reconciliation",
 					fmt.Sprintf("Config %s needs creation", descriptor.FileName))
-				return ComponentStatusNeedUpdate(fmt.Sprintf("Config %s needs creation", descriptor.FileName)), nil
+				return ComponentStatusNeedUpdate("Config %s needs creation", descriptor.FileName), nil
 			} else {
 				configsDiff := cmp.Diff(string(curConfig), string(newConfig))
 				h.apiProxy.RecordNormal(
 					"Reconciliation",
 					fmt.Sprintf("Config %s needs reload. Diff: %s", descriptor.FileName, configsDiff))
-				return ComponentStatusNeedUpdate(fmt.Sprintf("Config %s needs reload", descriptor.FileName)), nil
+				return ComponentStatusNeedUpdate("Config %s needs reload", descriptor.FileName), nil
 			}
 		}
 	}

@@ -105,7 +105,7 @@ func (d *Discovery) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	// Check that the number of instances in YT matches the expected instanceCount
 	expectedCount := int(d.ytsaurus.GetResource().Spec.Discovery.InstanceCount)
 	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.DiscoveryType, expectedCount); err != nil {
-		return ComponentStatusBlocked(err.Error())
+		return ComponentStatusBlocked("Error: %v", err)
 	}
 
 	var discoveryServers []string
@@ -113,7 +113,7 @@ func (d *Discovery) UpdatePreCheck(ctx context.Context) ComponentStatus {
 
 	err := d.ytsaurusClient.GetYtClient().ListNode(ctx, ypath.Path(cypressPath), &discoveryServers, nil)
 	if err != nil {
-		return ComponentStatusBlocked(err.Error())
+		return ComponentStatusBlocked("Error: %v", err)
 	}
 
 	// Check that all discovery_servers are alive
@@ -121,7 +121,7 @@ func (d *Discovery) UpdatePreCheck(ctx context.Context) ComponentStatus {
 		orchidPath := ypath.Path(fmt.Sprintf("%s/%s/orchid", cypressPath, server))
 		var orchidData map[string]interface{}
 		if err := ytClient.GetNode(ctx, orchidPath, &orchidData, nil); err != nil {
-			return ComponentStatusBlocked(fmt.Sprintf("Failed to get discovery orchid data for %s: %v", server, err))
+			return ComponentStatusBlocked("Failed to get discovery orchid data for %s: %v", server, err)
 		}
 	}
 
