@@ -443,7 +443,7 @@ func (c *ClusterHealthReport) Collect(ctx context.Context, ytClient yt.Client) {
 	c.CollectAlerts(ctx, ytClient, "//sys/@master_alerts")
 	c.CollectAlerts(ctx, ytClient, "//sys/scheduler/@alerts")
 	c.CollectLostChunks(ctx, ytClient, "//sys/lost_chunks/@count")
-	c.CollectLostChunks(ctx, ytClient, "//sys/lost_vital_chunks/@count")
+	c.CollectLostChunks(ctx, ytClient, consts.LostVitalChunksCountPath)
 	c.CollectNodes(ctx, ytClient, "//sys/data_nodes")
 	c.CollectNodes(ctx, ytClient, "//sys/tablet_nodes")
 	c.CollectNodes(ctx, ytClient, "//sys/exec_nodes")
