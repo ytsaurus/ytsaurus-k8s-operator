@@ -683,14 +683,14 @@ func (r *baseValidator) validateUpdateSelectors(newYtsaurus *ytv1.Ytsaurus) fiel
 				allErrors = append(allErrors, field.Invalid(entryPath.Child("class"), entry.Class, "Unknown class"))
 			}
 
-			allErrors = append(allErrors, validateUpdateModeForSelector(entry, entryPath.Child("updateMode"))...)
+			allErrors = append(allErrors, validateUpdateModeForSelector(newYtsaurus, entry, entryPath.Child("updateMode"))...)
 		}
 	}
 
 	return allErrors
 }
 
-func validateUpdateModeForSelector(selector ytv1.ComponentUpdateSelector, path *field.Path) field.ErrorList {
+func validateUpdateModeForSelector(newYtsaurus *ytv1.Ytsaurus, selector ytv1.ComponentUpdateSelector, path *field.Path) field.ErrorList {
 	var errs field.ErrorList
 
 	modeType := selector.GetUpdateStrategyType()
@@ -728,6 +728,10 @@ func validateUpdateModeForSelector(selector ytv1.ComponentUpdateSelector, path *
 	case ytv1.ComponentUpdateModeTypeRollingUpdate:
 		if selector.Component.Type == "" {
 			errs = append(errs, field.Invalid(path.Child("type"), modeType, "rolling update requires a concrete component selector"))
+		}
+
+		if selector.Component.Type == ytv1.DataNodeType && selector.Component.Name == "" && len(newYtsaurus.Spec.DataNodes) > 1 && selector.Concurrency == nil {
+			errs = append(errs, field.Invalid(path.Child("concurrency"), modeType, "rolling update for several data node groups requires concurrency limit"))
 		}
 
 	case ytv1.ComponentUpdateModeTypeOnDelete:

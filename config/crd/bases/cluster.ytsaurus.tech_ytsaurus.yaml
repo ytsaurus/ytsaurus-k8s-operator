@@ -34966,7 +34966,13 @@ spec:
                         type:
                           type: string
                       type: object
+                    concurrency:
+                      description: Limits count of instance groups updated concurrently.
+                      format: int32
+                      minimum: 0
+                      type: integer
                     strategy:
+                      description: Defines update strategy for selected instance groups.
                       properties:
                         onDelete:
                           type: object

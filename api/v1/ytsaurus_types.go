@@ -1071,9 +1071,11 @@ type ComponentUpdateSelector struct {
 	//+kubebuilder:validation:Enum={"","Nothing","Stateless","Everything"}
 	Class ComponentClass `json:"class,omitempty"`
 	// Selects components by type and/or instance group name.
-	//+optional
 	Component Component `json:"component,omitempty"`
-	//+optional
+	// Limits count of instance groups updated concurrently.
+	//+kubebuilder:validation:Minimum=0
+	Concurrency *int32 `json:"concurrency,omitempty"`
+	// Defines update strategy for selected instance groups.
 	Strategy *ComponentUpdateStrategy `json:"strategy,omitempty"`
 }
 

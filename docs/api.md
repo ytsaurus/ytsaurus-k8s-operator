@@ -80,6 +80,22 @@ _Appears in:_
 | `nodeTagFilter` _string_ |  |  |  |
 
 
+#### BundleControllerInfo
+
+
+
+
+
+
+
+_Appears in:_
+- [UpdateStatus](#updatestatus)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `disabled` _boolean_ |  |  |  |
+
+
 #### BundleControllerSpec
 
 
@@ -565,7 +581,8 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `class` _[ComponentClass](#componentclass)_ | Selects components by class: Nothing, Everything, Stateless (except Master, DataNode, TabletNode). |  | Enum: [ Nothing Stateless Everything] <br /> |
 | `component` _[Component](#component)_ | Selects components by type and/or instance group name. |  |  |
-| `strategy` _[ComponentUpdateStrategy](#componentupdatestrategy)_ |  |  |  |
+| `concurrency` _integer_ | Limits count of instance groups updated concurrently. |  | Minimum: 0 <br /> |
+| `strategy` _[ComponentUpdateStrategy](#componentupdatestrategy)_ | Defines update strategy for selected instance groups. |  |  |
 
 
 #### ComponentUpdateStrategy
@@ -3011,6 +3028,7 @@ _Appears in:_
 | `blockedComponentsSummary` _string_ | Summary for kubectl column. |  |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ | Update progress. |  |  |
 | `tabletCellBundles` _[TabletCellBundleInfo](#tabletcellbundleinfo) array_ | Snapshot of tablet cell bundles. |  |  |
+| `bundleController` _[BundleControllerInfo](#bundlecontrollerinfo)_ | Snapshot of bundle controller. |  |  |
 
 
 #### Volume

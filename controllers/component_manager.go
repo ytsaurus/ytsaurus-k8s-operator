@@ -345,8 +345,21 @@ func (cm *ComponentManager) arePodsRemoved() bool {
 func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSelector) {
 	cm.status.canUpdate = nil
 	cm.status.cannotUpdate = nil
+	count := make([]int32, len(updatePlan))
 	for _, component := range cm.status.needUpdate {
-		if canUpdateComponent(updatePlan, component) {
+		index := -1
+		for i, selector := range updatePlan {
+			if !canUpdateComponent(selector, component) {
+				continue
+			}
+			if selector.Concurrency != nil && *selector.Concurrency <= count[i] {
+				continue
+			}
+			index = i
+			break
+		}
+		if index >= 0 {
+			count[index] += 1
 			cm.status.canUpdate = append(cm.status.canUpdate, component)
 		} else {
 			cm.status.cannotUpdate = append(cm.status.cannotUpdate, component)
@@ -412,23 +425,21 @@ func (cm *ComponentManager) findImageHeater() components.Component {
 	return nil
 }
 
-func canUpdateComponent(selectors []ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
-	for _, selector := range selectors {
-		if selector.Class != consts.ComponentClassUnspecified {
-			switch selector.Class {
-			case consts.ComponentClassEverything:
-				return true
-			case consts.ComponentClassNothing:
-				return false
-			case consts.ComponentClassStateless:
-				if component.Type != consts.DataNodeType && component.Type != consts.TabletNodeType && component.Type != consts.MasterType {
-					return true
-				}
-			default:
-				return false
-			}
-		}
+func canUpdateComponent(selector ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
+	switch selector.Class {
+	case consts.ComponentClassUnspecified:
 		if selector.Component.Type == component.Type && (selector.Component.Name == "" || selector.Component.Name == component.Name) {
+			return true
+		}
+	case consts.ComponentClassEverything:
+		return true
+	case consts.ComponentClassNothing:
+		return false
+	case consts.ComponentClassStateless:
+		switch component.Type {
+		case consts.DataNodeType, consts.TabletNodeType, consts.MasterType:
+			return false
+		default:
 			return true
 		}
 	}
