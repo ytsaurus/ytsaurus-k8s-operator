@@ -2268,6 +2268,7 @@ exec "$@"`
 							RollingUpdate: &ytv1.ComponentRollingUpdateMode{},
 							RunPreChecks:  ptr.To(true),
 						},
+						Concurrency: ptr.To(int32(1)),
 					},
 				}
 			})
