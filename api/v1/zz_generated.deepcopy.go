@@ -576,6 +576,11 @@ func (in *ComponentRollingUpdateMode) DeepCopy() *ComponentRollingUpdateMode {
 func (in *ComponentUpdateSelector) DeepCopyInto(out *ComponentUpdateSelector) {
 	*out = *in
 	out.Component = in.Component
+	if in.Concurrency != nil {
+		in, out := &in.Concurrency, &out.Concurrency
+		*out = new(int32)
+		**out = **in
+	}
 	if in.Strategy != nil {
 		in, out := &in.Strategy, &out.Strategy
 		*out = new(ComponentUpdateStrategy)

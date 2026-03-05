@@ -40819,7 +40819,14 @@
                   }
                 }
               },
+              "concurrency": {
+                "description": "Limits count of instance groups updated concurrently.",
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
+              },
               "strategy": {
+                "description": "Defines update strategy for selected instance groups.",
                 "type": "object",
                 "properties": {
                   "onDelete": {
@@ -43116,6 +43123,15 @@
             "blockedComponentsSummary": {
               "description": "Summary for kubectl column.",
               "type": "string"
+            },
+            "bundleController": {
+              "description": "Snapshot of bundle controller.",
+              "type": "object",
+              "properties": {
+                "disabled": {
+                  "type": "boolean"
+                }
+              }
             },
             "conditions": {
               "description": "Update progress.",
