@@ -2,7 +2,6 @@ package components
 
 import (
 	"context"
-	"fmt"
 
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
@@ -140,10 +139,10 @@ func (n *DataNode) UpdatePreCheck(ctx context.Context) ComponentStatus {
 func checkDataNodeCounter(ctx context.Context, ytClient yt.Client, check dataNodeCounterCheck) ComponentStatus {
 	count := 0
 	if err := ytClient.GetNode(ctx, check.path, &count, nil); err != nil {
-		return ComponentStatusBlocked(fmt.Sprintf("failed to get %s count: %v", check.name, err))
+		return ComponentStatusBlocked("failed to get %s count: %v", check.name, err)
 	}
 	if count > 0 {
-		return ComponentStatusBlocked(fmt.Sprintf("there are %s: %v", check.name, count))
+		return ComponentStatusBlocked("there are %s: %v", check.name, count)
 	}
 	return ComponentStatusReady()
 }
