@@ -10,6 +10,7 @@
         rules=[
         ];
         "flush_period"=0;
+        "enable_anchor_profiling"=%false;
     };
     driver={
         "api_version"=4;

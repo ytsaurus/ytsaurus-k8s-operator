@@ -42,6 +42,7 @@ _Appears in:_
 | `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info warning error] <br /> |
 | `compression` _[LogCompression](#logcompression)_ |  | none | Enum: [none gzip zstd] <br /> |
 | `useTimestampSuffix` _boolean_ |  | false |  |
+| `enableAnchorProfiling` _boolean_ |  |  |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 
 
@@ -352,6 +353,7 @@ _Appears in:_
 | `httpProxyHaveHttpsAddress` _boolean_ | HTTP proxies have "https" address. Use HTTPS for all communications. |  |  |
 | `secureClusterTransports` _boolean_ | Validate that only secure transports are allowed for cluster connections. |  |  |
 | `enableImageHeater` _boolean_ | EnableImageHeater enables image heater for the cluster initialization. Independent from the updatePlan logic. | false |  |
+| `enableAnchorProfilingByDefault` _boolean_ | Enable logging anchor profiling by default for loggers that don't explicitly disable it. |  |  |
 
 
 #### ClusterNodesSpec
@@ -2685,6 +2687,7 @@ _Appears in:_
 | `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info warning error] <br /> |
 | `compression` _[LogCompression](#logcompression)_ |  | none | Enum: [none gzip zstd] <br /> |
 | `useTimestampSuffix` _boolean_ |  | false |  |
+| `enableAnchorProfiling` _boolean_ |  |  |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 | `category` _string_ |  |  |  |
 
@@ -2882,6 +2885,7 @@ _Appears in:_
 | `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info warning error] <br /> |
 | `compression` _[LogCompression](#logcompression)_ |  | none | Enum: [none gzip zstd] <br /> |
 | `useTimestampSuffix` _boolean_ |  | false |  |
+| `enableAnchorProfiling` _boolean_ |  |  |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 | `writerType` _[LogWriterType](#logwritertype)_ |  |  | Enum: [file stderr] <br /> |
 | `categoriesFilter` _[CategoriesFilter](#categoriesfilter)_ |  |  |  |

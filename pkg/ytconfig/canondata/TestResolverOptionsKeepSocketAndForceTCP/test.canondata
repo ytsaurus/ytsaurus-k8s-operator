@@ -66,6 +66,7 @@
             };
         ];
         "flush_period"=3000;
+        "enable_anchor_profiling"=%false;
     };
     "monitoring_port"=10010;
     "rpc_port"=9010;

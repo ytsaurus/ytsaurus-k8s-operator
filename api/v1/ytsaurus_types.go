@@ -289,8 +289,9 @@ type BaseLoggerSpec struct {
 	Compression LogCompression `json:"compression,omitempty"`
 	//+kubebuilder:default:=false
 	//+optional
-	UseTimestampSuffix bool               `json:"useTimestampSuffix"`
-	RotationPolicy     *LogRotationPolicy `json:"rotationPolicy,omitempty"`
+	UseTimestampSuffix    bool               `json:"useTimestampSuffix"`
+	EnableAnchorProfiling *bool              `json:"enableAnchorProfiling,omitempty"`
+	RotationPolicy        *LogRotationPolicy `json:"rotationPolicy,omitempty"`
 }
 
 type TextLoggerSpec struct {
@@ -822,6 +823,8 @@ type ClusterFeatures struct {
 	// EnableImageHeater enables image heater for the cluster initialization. Independent from the updatePlan logic.
 	//+kubebuilder:default:=false
 	EnableImageHeater *bool `json:"enableImageHeater,omitempty"`
+	// Enable logging anchor profiling by default for loggers that don't explicitly disable it.
+	EnableAnchorProfilingByDefault bool `json:"enableAnchorProfilingByDefault,omitempty"`
 }
 
 // CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.

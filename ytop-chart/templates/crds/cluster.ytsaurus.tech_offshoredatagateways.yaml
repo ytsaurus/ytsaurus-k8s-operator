@@ -812,6 +812,10 @@ spec:
                 type: object
               clusterFeatures:
                 properties:
+                  enableAnchorProfilingByDefault:
+                    description: Enable logging anchor profiling by default for loggers
+                      that don't explicitly...
+                    type: boolean
                   enableImageHeater:
                     default: false
                     description: EnableImageHeater enables image heater for the cluster
@@ -986,6 +990,8 @@ spec:
                       - gzip
                       - zstd
                       type: string
+                    enableAnchorProfiling:
+                      type: boolean
                     format:
                       default: plain_text
                       enum:
@@ -1210,6 +1216,8 @@ spec:
                       - gzip
                       - zstd
                       type: string
+                    enableAnchorProfiling:
+                      type: boolean
                     format:
                       default: plain_text
                       enum:
