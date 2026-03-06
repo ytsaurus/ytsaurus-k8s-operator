@@ -2,7 +2,10 @@ package components
 
 import (
 	"context"
+	"fmt"
 
+	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
 
@@ -16,14 +19,21 @@ import (
 type DataNode struct {
 	serverComponent
 
-	cfgen  *ytconfig.NodeGenerator
-	master Component
+	cfgen          *ytconfig.NodeGenerator
+	master         Component
+	ytsaurusClient internalYtsaurusClient
+}
+
+type dataNodeCounterCheck struct {
+	path ypath.Path
+	name string
 }
 
 func NewDataNode(
 	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
+	yc internalYtsaurusClient,
 	spec ytv1.DataNodesSpec,
 ) *DataNode {
 	l := cfgen.GetComponentLabeller(consts.DataNodeType, spec.Name)
@@ -50,6 +60,7 @@ func NewDataNode(
 		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:           cfgen,
 		master:          master,
+		ytsaurusClient:  yc,
 	}
 }
 
@@ -67,8 +78,15 @@ func (n *DataNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) 
 			}
 		}
 		if IsUpdatingComponent(n.ytsaurus, n) {
-			if status, err := handleBulkUpdatingClusterState(ctx, n.ytsaurus, n, &n.component, n.server, dry); status != nil {
-				return *status, err
+			switch getComponentUpdateStrategy(n.ytsaurus, consts.DataNodeType, n.GetShortName()) {
+			case ytv1.ComponentUpdateModeTypeRollingUpdate:
+				if status, err := handleRollingUpdatingClusterState(ctx, n.ytsaurus, n, n.server, dry); status != nil {
+					return *status, err
+				}
+			default:
+				if status, err := handleBulkUpdatingClusterState(ctx, n.ytsaurus, n, &n.component, n.server, dry); status != nil {
+					return *status, err
+				}
 			}
 		} else {
 			return ComponentStatusReadyAfter("Not updating component"), nil
@@ -91,6 +109,43 @@ func (n *DataNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	}
 
 	return ComponentStatusReady(), err
+}
+
+func (n *DataNode) UpdatePreCheck(ctx context.Context) ComponentStatus {
+	var dataNodeRollingCounterChecks = [...]dataNodeCounterCheck{
+		{path: ypath.Path(consts.LostVitalChunksCountPath), name: "lost vital chunks"},
+		{path: ypath.Path(consts.ParityMissingChunksCountPath), name: "parity missing chunks"},
+		{path: ypath.Path(consts.DataMissingChunksCountPath), name: "data missing chunks"},
+		{path: ypath.Path(consts.UnsafelyPlacedChunksCountPath), name: "unsafely placed chunks"},
+		{path: ypath.Path(consts.QuorumMissingChunksCountPath), name: "quorum missing chunks"},
+	}
+
+	if n.ytsaurusClient == nil {
+		return ComponentStatusBlocked("YtsaurusClient component is not available")
+	}
+	ytClient := n.ytsaurusClient.GetYtClient()
+	if ytClient == nil {
+		return ComponentStatusBlocked("YT client is not available")
+	}
+
+	for _, check := range dataNodeRollingCounterChecks {
+		if status := checkDataNodeCounter(ctx, ytClient, check); status.SyncStatus != SyncStatusReady {
+			return status
+		}
+	}
+
+	return ComponentStatusReady()
+}
+
+func checkDataNodeCounter(ctx context.Context, ytClient yt.Client, check dataNodeCounterCheck) ComponentStatus {
+	count := 0
+	if err := ytClient.GetNode(ctx, check.path, &count, nil); err != nil {
+		return ComponentStatusBlocked(fmt.Sprintf("failed to get %s count: %v", check.name, err))
+	}
+	if count > 0 {
+		return ComponentStatusBlocked(fmt.Sprintf("there are %s: %v", check.name, count))
+	}
+	return ComponentStatusReady()
 }
 
 // handleImaginaryChunksMigration will remove dnd pods if client component detects active dnds with imaginary chunks

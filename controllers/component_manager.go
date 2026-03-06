@@ -73,7 +73,7 @@ func NewComponentManager(
 	var dnds []components.Component
 	if len(resource.Spec.DataNodes) > 0 {
 		for _, dndSpec := range ytsaurus.GetResource().Spec.DataNodes {
-			dnds = append(dnds, components.NewDataNode(nodeCfgGen, ytsaurus, m, dndSpec))
+			dnds = append(dnds, components.NewDataNode(nodeCfgGen, ytsaurus, m, yc, dndSpec))
 		}
 	}
 	allComponents = append(allComponents, dnds...)

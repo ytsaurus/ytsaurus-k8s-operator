@@ -35,3 +35,11 @@ func ComponentCypressPath(component ComponentType) string {
 	}
 	return ""
 }
+
+const (
+	LostVitalChunksCountPath      = "//sys/lost_vital_chunks/@count"
+	ParityMissingChunksCountPath  = "//sys/parity_missing_chunks/@count"
+	DataMissingChunksCountPath    = "//sys/data_missing_chunks/@count"
+	UnsafelyPlacedChunksCountPath = "//sys/unsafely_placed_chunks/@count"
+	QuorumMissingChunksCountPath  = "//sys/quorum_missing_chunks/@count"
+)

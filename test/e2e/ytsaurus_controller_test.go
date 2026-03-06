@@ -1228,7 +1228,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Waiting for lvc > 0")
 				Eventually(func() bool {
 					lvcCount := 0
-					err := ytClient.GetNode(ctx, ypath.Path("//sys/lost_vital_chunks/@count"), &lvcCount, nil)
+					err := ytClient.GetNode(ctx, ypath.Path(consts.LostVitalChunksCountPath), &lvcCount, nil)
 					if err != nil {
 						return false
 					}
@@ -2252,6 +2252,94 @@ exec "$@"`
 			},
 			Entry("update http-proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType), 2),
 		)
+		Context("concurrent rolling update for multiple data-node groups", Label("rollingupdate-dnd"), func() {
+			const (
+				defaultDndStsName = "dnd"
+				namedDndStsName   = "dnd-3c25"
+			)
+
+			BeforeEach(func() {
+				ytBuilder.WithNamedDataNodes(ptr.To("3c25"))
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+					{
+						// Unnamed selector matches all DataNode groups.
+						Component: ytv1.Component{Type: consts.DataNodeType},
+						Strategy: &ytv1.ComponentUpdateStrategy{
+							RollingUpdate: &ytv1.ComponentRollingUpdateMode{},
+							RunPreChecks:  ptr.To(true),
+						},
+						Concurrency: ptr.To(int32(1)),
+					},
+				}
+			})
+
+			It("should update data-node groups sequentially (default first, then 3c25) and reach Running state", func(ctx context.Context) {
+				By("Triggering update")
+				updateSpecToTriggerAllComponentUpdate(ytsaurus)
+				UpdateObject(ctx, ytsaurus)
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+
+				By("Verifying only default dnd group is updating first (Concurrency=1)")
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdatingComponentsNames(""))
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(ContainSubstring(defaultDndStsName))
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).To(ContainSubstring(namedDndStsName))
+
+				By("Verifying named rack (3c25) pods are untouched while default is updating")
+				podsNow := getComponentPods(ctx, namespace)
+				for name := range podsBeforeUpdate {
+					if strings.HasPrefix(name, namedDndStsName+"-") {
+						pod, stillExists := podsNow[name]
+						Expect(stillExists).To(BeTrue(), "named rack pod %s should still exist before its turn", name)
+						Expect(pod.DeletionTimestamp.IsZero()).To(BeTrue(), "named rack pod %s should not be deleting before its turn", name)
+					}
+				}
+
+				By("Waiting for cluster update to complete")
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+
+				defaultSts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: defaultDndStsName}}
+				namedSts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: namedDndStsName}}
+
+				By("Verifying default rack pods are on the new revision")
+				EventuallyObject(ctx, &defaultSts, reactionTimeout).Should(WithTransform(
+					func(current *appsv1.StatefulSet) string { return current.Status.UpdateRevision },
+					Not(BeEmpty()),
+				))
+				defaultUpdateRevision := defaultSts.Status.UpdateRevision
+				Eventually(func() bool {
+					podsNow := getComponentPods(ctx, namespace)
+					for name, pod := range podsNow {
+						if strings.HasPrefix(name, defaultDndStsName+"-") && !strings.HasPrefix(name, namedDndStsName+"-") {
+							if pod.Labels[appsv1.StatefulSetRevisionLabel] != defaultUpdateRevision {
+								return false
+							}
+						}
+					}
+					return true
+				}, upgradeTimeout, pollInterval).Should(BeTrue())
+
+				By("Verifying named rack (3c25) pods are on the new revision")
+				EventuallyObject(ctx, &namedSts, reactionTimeout).Should(WithTransform(
+					func(current *appsv1.StatefulSet) string { return current.Status.UpdateRevision },
+					Not(BeEmpty()),
+				))
+				namedUpdateRevision := namedSts.Status.UpdateRevision
+				Eventually(func() bool {
+					podsNow := getComponentPods(ctx, namespace)
+					for name, pod := range podsNow {
+						if strings.HasPrefix(name, namedDndStsName+"-") {
+							if pod.Labels[appsv1.StatefulSetRevisionLabel] != namedUpdateRevision {
+								return false
+							}
+						}
+					}
+					return true
+				}, upgradeTimeout, pollInterval).Should(BeTrue())
+
+				checkClusterHealth(ctx, ytClient)
+				checkChunkLocations(ytClient)
+			})
+		})
 	}) // update plan strategy
 })
 
@@ -2361,10 +2449,11 @@ func checkClusterHealth(ctx context.Context, ytClient yt.Client) {
 	Expect(ytClient.ListNode(ctx, ypath.Path("/"), &res, nil)).Should(Succeed())
 
 	By("Checking cluster alerts", func() {
-		var clusterHealth ClusterHealthReport
-		clusterHealth.Collect(ctx, ytClient)
-		Expect(clusterHealth.Alerts).To(BeEmpty())
-		Expect(clusterHealth.Errors).To(BeEmpty())
+		Eventually(func() bool {
+			var clusterHealth ClusterHealthReport
+			clusterHealth.Collect(ctx, ytClient)
+			return len(clusterHealth.Alerts) == 0 && len(clusterHealth.Errors) == 0
+		}, reactionTimeout, pollInterval).Should(BeTrue())
 	})
 
 	By("Checking that tablet cell bundles are in `good` health")

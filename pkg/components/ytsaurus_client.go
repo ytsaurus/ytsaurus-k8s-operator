@@ -525,7 +525,7 @@ func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 
 	// Check LVC.
 	lvcCount := 0
-	err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/lost_vital_chunks/@count"), &lvcCount, nil)
+	err = yc.ytClient.GetNode(ctx, ypath.Path(consts.LostVitalChunksCountPath), &lvcCount, nil)
 	if err != nil {
 		return false, "", err
 	}
