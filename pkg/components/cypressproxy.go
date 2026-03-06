@@ -54,7 +54,7 @@ func (cyp *CypressProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, e
 	var err error
 
 	if cyp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, cyp.ytsaurus, cyp, &cyp.component, cyp.server, dry); status != nil {
+		if status, err := dispatchComponentUpdate(ctx, cyp.ytsaurus, cyp, &cyp.component, cyp.server, dry); status != nil {
 			return *status, err
 		}
 	}

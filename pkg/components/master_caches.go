@@ -56,23 +56,11 @@ func (mc *MasterCache) Sync(ctx context.Context, dry bool) (ComponentStatus, err
 	var err error
 
 	if mc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(mc.ytsaurus, mc) {
-			switch getComponentUpdateStrategy(mc.ytsaurus, consts.MasterCacheType, mc.GetShortName()) {
-			case ytv1.ComponentUpdateModeTypeOnDelete:
-				if status, err := handleOnDeleteUpdatingClusterState(ctx, mc.ytsaurus, mc, &mc.component, mc.server, dry); status != nil {
-					return *status, err
-				}
-			default:
-				if status, err := handleBulkUpdatingClusterState(ctx, mc.ytsaurus, mc, &mc.component, mc.server, dry); status != nil {
-					return *status, err
-				}
-			}
-
-			if mc.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
-				return ComponentStatusReady(), err
-			}
-		} else {
-			return ComponentStatusReadyAfter("Not updating component"), nil
+		if status, err := dispatchComponentUpdate(ctx, mc.ytsaurus, mc, &mc.component, mc.server, dry); status != nil {
+			return *status, err
+		}
+		if mc.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+			return ComponentStatusReady(), nil
 		}
 	}
 
