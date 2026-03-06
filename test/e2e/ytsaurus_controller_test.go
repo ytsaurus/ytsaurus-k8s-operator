@@ -2252,7 +2252,7 @@ exec "$@"`
 			},
 			Entry("update http-proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType), 2),
 		)
-		Context("rack-rolling update for multiple data-node groups", Label("rollingupdate-dnd"), func() {
+		Context("concurrent rolling update for multiple data-node groups", Label("rollingupdate-dnd"), func() {
 			const (
 				defaultDndStsName = "dnd"
 				namedDndStsName   = "dnd-3c25"
@@ -2279,47 +2279,26 @@ exec "$@"`
 				UpdateObject(ctx, ytsaurus)
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 
-				By("Verifying update enters WaitingForPodsRemoval state")
-				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
-					HaveClusterUpdateState(ytv1.UpdateStateWaitingForPodsRemoval),
-				)
+				By("Verifying only default dnd group is updating first (Concurrency=1)")
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdatingComponentsNames(""))
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(ContainSubstring(defaultDndStsName))
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).To(ContainSubstring(namedDndStsName))
 
-				defaultSts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: defaultDndStsName}}
-				namedSts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: namedDndStsName}}
-
-				By("Verifying default rack is scaled to zero first (rack-by-rack order)")
-				EventuallyObject(ctx, &defaultSts, upgradeTimeout).Should(WithTransform(
-					func(current *appsv1.StatefulSet) int32 {
-						if current.Spec.Replicas == nil {
-							return -1
-						}
-						return *current.Spec.Replicas
-					},
-					Equal(int32(0)),
-				))
-
-				By("Verifying named rack (3c25) has not started removal at the moment default rack is scaled down")
-				CurrentlyObject(ctx, &namedSts).Should(WithTransform(
-					func(current *appsv1.StatefulSet) int32 {
-						if current.Spec.Replicas == nil {
-							return -1
-						}
-						return *current.Spec.Replicas
-					},
-					Equal(int32(3)),
-				))
-
+				By("Verifying named rack (3c25) pods are untouched while default is updating")
 				podsNow := getComponentPods(ctx, namespace)
 				for name := range podsBeforeUpdate {
 					if strings.HasPrefix(name, namedDndStsName+"-") {
 						pod, stillExists := podsNow[name]
-						Expect(stillExists).To(BeTrue(), "named rack pod %s should still exist before its rack turn", name)
-						Expect(pod.DeletionTimestamp.IsZero()).To(BeTrue(), "named rack pod %s should not be deleting before its rack turn", name)
+						Expect(stillExists).To(BeTrue(), "named rack pod %s should still exist before its turn", name)
+						Expect(pod.DeletionTimestamp.IsZero()).To(BeTrue(), "named rack pod %s should not be deleting before its turn", name)
 					}
 				}
 
 				By("Waiting for cluster update to complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+
+				defaultSts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: defaultDndStsName}}
+				namedSts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: namedDndStsName}}
 
 				By("Verifying default rack pods are on the new revision")
 				EventuallyObject(ctx, &defaultSts, reactionTimeout).Should(WithTransform(
