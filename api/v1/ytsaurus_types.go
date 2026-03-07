@@ -715,6 +715,12 @@ type DiscoverySpec struct {
 	InstanceSpec `json:",inline"`
 }
 
+type UIClusterURLs struct {
+	Icon    string  `json:"icon"`
+	Icon2x  string  `json:"icon2x"`
+	IconBig *string `json:"iconbig,omitempty"`
+}
+
 type UISpec struct {
 	PodSpec `json:",inline"`
 
@@ -748,6 +754,8 @@ type UISpec struct {
 	Theme       string  `json:"theme,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Group       *string `json:"group,omitempty"`
+	//+optional
+	URLs *UIClusterURLs `json:"urls,omitempty"`
 	// When this is set to false, UI will use backend for downloading instead of proxy.
 	// If this is set to true or omitted, UI use proxies, which is a default behaviour.
 	//+optional

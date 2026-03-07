@@ -10,6 +10,12 @@ type UIPrimaryMaster struct {
 	CellTag int16 `yson:"cellTag"`
 }
 
+type UIClusterURLs struct {
+	Icon    string  `yson:"icon"`
+	Icon2x  string  `yson:"icon2x"`
+	IconBig *string `yson:"iconbig,omitempty"`
+}
+
 type UICluster struct {
 	ID             string               `yson:"id"`
 	Name           string               `yson:"name"`
@@ -22,6 +28,7 @@ type UICluster struct {
 	Environment    string               `yson:"environment"`
 	Description    string               `yson:"description"`
 	PrimaryMaster  UIPrimaryMaster      `yson:"primaryMaster"`
+	URLs           *UIClusterURLs       `yson:"urls,omitempty"`
 }
 
 type UIClusters struct {

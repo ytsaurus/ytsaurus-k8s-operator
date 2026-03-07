@@ -35015,6 +35015,18 @@ spec:
                           type: string
                       type: object
                     type: array
+                  urls:
+                    properties:
+                      icon:
+                        type: string
+                      icon2x:
+                        type: string
+                      iconbig:
+                        type: string
+                    required:
+                    - icon
+                    - icon2x
+                    type: object
                   useInsecureCookies:
                     default: true
                     description: If defined allows insecure (over http) authentication.

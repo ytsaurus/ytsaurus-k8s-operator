@@ -2908,6 +2908,24 @@ _Appears in:_
 | `directoryPath` _string_ |  |  |  |
 
 
+#### UIClusterURLs
+
+
+
+
+
+
+
+_Appears in:_
+- [UISpec](#uispec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `icon` _string_ |  |  |  |
+| `icon2x` _string_ |  |  |  |
+| `iconbig` _string_ |  |  |  |
+
+
 #### UISpec
 
 
@@ -2944,6 +2962,7 @@ _Appears in:_
 | `theme` _string_ |  | lavander |  |
 | `description` _string_ |  |  |  |
 | `group` _string_ |  |  |  |
+| `urls` _[UIClusterURLs](#uiclusterurls)_ |  |  |  |
 | `directDownload` _boolean_ | When this is set to false, UI will use backend for downloading instead of proxy.<br />If this is set to true or omitted, UI use proxies, which is a default behaviour. |  |  |
 
 
