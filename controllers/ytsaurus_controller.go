@@ -168,24 +168,20 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		return ctrl.Result{Requeue: true}, err
 
 	case ytv1.ClusterStateInitializing:
-		// Ytsaurus has finished initializing, and is running now.
 		if cm.status.allRunning {
-			logger.Info("Ytsaurus has synced and is running now")
-			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
+			logger.Info("Ytsaurus has initialized and is preparing now")
+			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStatePreparing)
 			return ctrl.Result{Requeue: true}, err
 		}
 
-	case ytv1.ClusterStateRunning, ytv1.ClusterStateReconfiguration, ytv1.ClusterStateUpdateFinishing:
+	case ytv1.ClusterStatePreparing, ytv1.ClusterStateRunning, ytv1.ClusterStateUpdateBlocked:
+		// All IsReadyToUpdate cluster states are handled here.
 		// Apply current update plan and choose components to update.
 		cm.applyUpdatePlan(resource.GetUpdatePlan())
 
-		// All status updates _must_ be in one transaction with observed generation and new cluster state.
+		// Switching into final states like Running or UpdateBlocked _must_ be in one
+		// transaction with all status updates and updating observed generation.
 		needStatusUpdate := ytsaurus.SyncObservedGeneration()
-
-		if ytsaurus.GetUpdateState() != ytv1.UpdateStateUndefined {
-			ytsaurus.ClearUpdateStatus()
-			needStatusUpdate = true
-		}
 
 		// There may be the case when some components needed update, but spec was reverted
 		// and Updating never happen — so blocked components column need to be always actualized.
@@ -201,7 +197,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			}
 
 		case !cm.status.allRunning:
-			logger.Info("Ytsaurus needs initialization of some components")
+			logger.Info("Ytsaurus needs reconfiguration for some components")
 			if ytsaurus.SetClusterState(ytv1.ClusterStateReconfiguration) {
 				needStatusUpdate = true
 			}
@@ -227,8 +223,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			logger.Info("Ytsaurus components update is blocked",
 				"cannotUpdate", cm.status.cannotUpdate,
 			)
-			// TODO: Add cluster state "UpdateBlocked".
-			if ytsaurus.SetClusterState(ytv1.ClusterStateRunning) {
+			if ytsaurus.SetClusterState(ytv1.ClusterStateUpdateBlocked) {
 				needStatusUpdate = true
 			}
 		}
@@ -239,37 +234,43 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			return ctrl.Result{Requeue: true}, err
 		}
 
-		if ytsaurus.IsRunning() {
-			// All done, nothing change - do not requeue reconcile.
-			return ctrl.Result{}, nil
+		// All done, nothing has changed - do not requeue reconcile.
+		return ctrl.Result{}, nil
+
+	case ytv1.ClusterStateReconfiguration:
+		if cm.status.allRunning {
+			logger.Info("Ytsaurus has reconfigured and is preparing now")
+			err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStatePreparing)
+			return ctrl.Result{Requeue: true}, err
 		}
 
 	case ytv1.ClusterStateUpdating:
 		cm.status.nowUpdating = ytsaurus.GetUpdatingComponents()
 
-		logger.Info("Ytsaurus update",
+		logger.Info("Ytsaurus updating",
 			"updateState", ytsaurus.GetUpdateState(),
 			"updatingComponents", cm.status.nowUpdating,
 		)
 		ytsaurus.RecordNormal("Update", fmt.Sprintf("Update flow starting with %s, updating components: %v", ytsaurus.GetUpdateState(), cm.status.nowUpdating))
 
 		updateFlow := buildFlowTree(cm)
-		progressed, err := updateFlow.execute(ctx, ytsaurus, cm)
-		if err != nil {
+		if progressed, err := updateFlow.execute(ctx, ytsaurus, cm); err != nil {
 			return ctrl.Result{}, err
+		} else if progressed {
+			return ctrl.Result{Requeue: true}, nil
 		}
 
-		if progressed {
-			return ctrl.Result{Requeue: true}, err
-		}
-
-	case ytv1.ClusterStateCancelUpdate:
+	case ytv1.ClusterStateUpdateFinished:
 		ytsaurus.ClearUpdateStatus()
-		logger.Info("Ytsaurus update was canceled, ytsaurus is running now")
-		// We don't update observed generation because the update was not really finished,
-		// and it's still the old version running.
-		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStateRunning)
-		return ctrl.Result{}, err
+		logger.Info("Ytsaurus update has finished and Ytsaurus is preparing now")
+		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStatePreparing)
+		return ctrl.Result{Requeue: true}, err
+
+	case ytv1.ClusterStateUpdateCanceled:
+		ytsaurus.ClearUpdateStatus()
+		logger.Info("Ytsaurus update has canceled, ytsaurus is preparing now")
+		err := ytsaurus.SaveClusterState(ctx, ytv1.ClusterStatePreparing)
+		return ctrl.Result{Requeue: true}, err
 
 	default:
 		return ctrl.Result{}, fmt.Errorf("unknown cluster state: %q", ytsaurus.GetClusterState())

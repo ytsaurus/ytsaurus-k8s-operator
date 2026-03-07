@@ -247,7 +247,7 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 			cm.status.allReady = false
 			cm.status.allRunning = false
 			cm.status.allReadyOrUpdating = false
-			if cm.ytsaurus.GetClusterState() == ytv1.ClusterStateRunning {
+			if cm.ytsaurus.IsReadyToUpdate() {
 				logger.Info("Cluster needs reconfiguration because component is not running",
 					"component", component.GetFullName(),
 					"status", status.SyncStatus,

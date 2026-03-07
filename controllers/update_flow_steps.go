@@ -20,7 +20,7 @@ const (
 )
 
 var terminateTransitions = map[ytv1.UpdateState]ytv1.ClusterState{
-	ytv1.UpdateStateImpossibleToStart: ytv1.ClusterStateCancelUpdate,
+	ytv1.UpdateStateImpossibleToStart: ytv1.ClusterStateUpdateCanceled,
 }
 
 type flowCondition func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark
@@ -127,7 +127,7 @@ func (f *flowTree) execute(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, com
 		// executed the last step in the flow — setting the cluster state
 		clusterState := terminateTransitions[currentState]
 		if clusterState == "" {
-			clusterState = ytv1.ClusterStateUpdateFinishing
+			clusterState = ytv1.ClusterStateUpdateFinished
 		}
 		ytsaurus.LogUpdate(
 			ctx,

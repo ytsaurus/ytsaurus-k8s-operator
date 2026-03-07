@@ -3,7 +3,6 @@ package controllers_test
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"k8s.io/utils/ptr"
 
@@ -191,17 +190,7 @@ var _ = Describe("Ytsaurus Controller", func() {
 				ytsaurusResource.Spec.EnableFullUpdate = ptr.To(false)
 				testutil.UpdateObject(h, &ytv1.Ytsaurus{}, &ytsaurusResource)
 
-				By("Checking that cluster is running but not updated")
-				Consistently(func() bool {
-					ytsaurus := ytv1.Ytsaurus{}
-					testutil.GetObject(h, ytsaurusName, &ytsaurus)
-					if ytsaurus.Status.State != ytv1.ClusterStateRunning {
-						return false
-					}
-					sts := appsv1.StatefulSet{}
-					testutil.GetObject(h, "ms", &sts)
-					return sts.Spec.Template.Spec.Containers[0].Image != imageUpdated
-				}, 5*time.Second, 500*time.Millisecond).Should(BeTrue())
+				waitClusterState(h, ytv1.ClusterStateUpdateBlocked, ytsaurusResource.Generation)
 			})
 		})
 	})

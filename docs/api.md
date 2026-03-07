@@ -393,11 +393,13 @@ _Appears in:_
 | --- | --- |
 | `Created` |  |
 | `Initializing` |  |
+| `Preparing` |  |
 | `Running` |  |
 | `Reconfiguration` |  |
 | `Updating` |  |
-| `UpdateFinishing` |  |
-| `CancelUpdate` |  |
+| `UpdateCanceled` |  |
+| `UpdateBlocked` |  |
+| `UpdateFinished` |  |
 
 
 #### CommonRemoteNodeStatus
