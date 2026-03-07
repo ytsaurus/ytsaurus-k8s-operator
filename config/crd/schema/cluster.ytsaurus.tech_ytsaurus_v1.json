@@ -40896,6 +40896,24 @@
                 }
               }
             },
+            "urls": {
+              "type": "object",
+              "required": [
+                "icon",
+                "icon2x"
+              ],
+              "properties": {
+                "icon": {
+                  "type": "string"
+                },
+                "icon2x": {
+                  "type": "string"
+                },
+                "iconbig": {
+                  "type": "string"
+                }
+              }
+            },
             "useInsecureCookies": {
               "description": "If defined allows insecure (over http) authentication.",
               "type": "boolean",

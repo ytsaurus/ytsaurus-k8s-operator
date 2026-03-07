@@ -1139,6 +1139,13 @@ func (g *Generator) GetUIClustersConfig() ([]byte, error) {
 	if g.ytsaurus.Spec.UI.Description != nil {
 		c.Description = *g.ytsaurus.Spec.UI.Description
 	}
+	if g.ytsaurus.Spec.UI.URLs != nil {
+		c.URLs = &UIClusterURLs{
+			Icon:    g.ytsaurus.Spec.UI.URLs.Icon,
+			Icon2x:  g.ytsaurus.Spec.UI.URLs.Icon2x,
+			IconBig: g.ytsaurus.Spec.UI.URLs.IconBig,
+		}
+	}
 
 	return marshallYsonConfig(UIClusters{
 		Clusters: []UICluster{c},
