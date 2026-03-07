@@ -182,6 +182,12 @@ status:
     reason: Ready
     status: "True"
     type: YtsaurusClientReady
+  - lastTransitionTime: null
+    message: Cluster state is Running
+    observedGeneration: 1
+    reason: Running
+    status: "True"
+    type: ReadyToWork
   observedGeneration: 1
   state: Running
   updateStatus: {}

@@ -973,11 +973,13 @@ type ClusterState string
 const (
 	ClusterStateCreated         ClusterState = "Created"
 	ClusterStateInitializing    ClusterState = "Initializing"
+	ClusterStatePreparing       ClusterState = "Preparing"
 	ClusterStateRunning         ClusterState = "Running"
 	ClusterStateReconfiguration ClusterState = "Reconfiguration"
 	ClusterStateUpdating        ClusterState = "Updating"
-	ClusterStateUpdateFinishing ClusterState = "UpdateFinishing"
-	ClusterStateCancelUpdate    ClusterState = "CancelUpdate"
+	ClusterStateUpdateCanceled  ClusterState = "UpdateCanceled"
+	ClusterStateUpdateBlocked   ClusterState = "UpdateBlocked"
+	ClusterStateUpdateFinished  ClusterState = "UpdateFinished"
 )
 
 type UpdateState string

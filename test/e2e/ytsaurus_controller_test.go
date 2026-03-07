@@ -815,11 +815,13 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				UpdateObject(ctx, ytsaurus)
 
 				By("Ensure cluster doesn't start updating")
-				ConsistentlyYtsaurus(ctx, ytsaurus, consistencyTimeout).Should(HaveClusterStateRunning())
+				ConsistentlyYtsaurus(ctx, ytsaurus, consistencyTimeout).Should(HaveClusterStates(
+					ytv1.ClusterStateRunning, ytv1.ClusterStatePreparing, ytv1.ClusterStateUpdateBlocked,
+				))
 
 				By("Ensure cluster generation is observed")
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-				Expect(ytsaurus).Should(HaveClusterStateRunning())
+				Expect(ytsaurus).Should(HaveClusterStateUpdateBlocked())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
@@ -881,7 +883,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				By("Wait cluster update with selector:ExecNodesOnly complete")
-				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
 				Expect(ytsaurus).Should(HaveObservedGeneration())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
@@ -909,7 +911,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				By("Wait cluster update with selector:TabletNodesOnly complete")
-				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
 				Expect(ytsaurus).Should(HaveObservedGeneration())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
@@ -941,7 +943,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				By("Wait cluster update with selector:MasterOnly complete")
-				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
 				Expect(ytsaurus).Should(HaveObservedGeneration())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
@@ -974,7 +976,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				By("Wait cluster update with selector:StatelessOnly complete")
-				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
 				Expect(ytsaurus).Should(HaveObservedGeneration())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
@@ -1021,7 +1023,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				By("Wait cluster update with selector:DataNodesOnly complete")
-				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
 				Expect(ytsaurus).Should(HaveObservedGeneration())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(BeEmpty())
@@ -1929,6 +1931,7 @@ exec "$@"`
 
 	}) // integration
 
+	// FIXME(khlebnikov): Refactor this - update just one component.
 	Context("update plan strategy testing", Label("update", "plan", "strategy"), func() {
 		var podsBeforeUpdate map[string]corev1.Pod
 
@@ -1981,6 +1984,7 @@ exec "$@"`
 					switch componentType {
 					case consts.QueryTrackerType:
 						ytsaurus.Spec.QueryTrackers.Image = ptr.To(testutil.TestImages.QueryTracker)
+						updateSpecToTriggerAllComponentUpdate(ytsaurus)
 					default:
 						updateSpecToTriggerAllComponentUpdate(ytsaurus)
 					}
@@ -1989,7 +1993,7 @@ exec "$@"`
 					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 
 					By("Waiting cluster update completes")
-					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
 
 					By("Fetching updated StatefulSet revision")
 					sts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: stsName}}
@@ -2063,6 +2067,7 @@ exec "$@"`
 					switch componentType {
 					case consts.SchedulerType:
 						ytsaurus.Spec.Schedulers.Image = ptr.To(testutil.TestImages.Core)
+						updateSpecToTriggerAllComponentUpdate(ytsaurus)
 					default:
 						updateSpecToTriggerAllComponentUpdate(ytsaurus)
 					}
@@ -2117,7 +2122,7 @@ exec "$@"`
 					}
 
 					By("Waiting cluster update completes")
-					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
 
 					By("Fetching updated StatefulSet revision")
 					EventuallyObject(ctx, &sts, reactionTimeout).Should(WithTransform(
@@ -2204,7 +2209,7 @@ exec "$@"`
 					))
 
 					By("Waiting cluster update completes")
-					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
 
 					By("Fetching updated StatefulSet revision")
 					EventuallyObject(ctx, &sts, reactionTimeout).Should(WithTransform(
@@ -2295,7 +2300,7 @@ exec "$@"`
 				}
 
 				By("Waiting for cluster update to complete")
-				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
 
 				defaultSts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: defaultDndStsName}}
 				namedSts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: namedDndStsName}}

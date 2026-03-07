@@ -457,12 +457,20 @@ func HaveClusterState(state ytv1.ClusterState) otypes.GomegaMatcher {
 	return HaveField("Status.State", state)
 }
 
+func HaveClusterStates(states ...ytv1.ClusterState) otypes.GomegaMatcher {
+	return HaveField("Status.State", BeElementOf(states))
+}
+
 func HaveClusterStateRunning() otypes.GomegaMatcher {
 	return HaveClusterState(ytv1.ClusterStateRunning)
 }
 
 func HaveClusterStateUpdating() otypes.GomegaMatcher {
 	return HaveClusterState(ytv1.ClusterStateUpdating)
+}
+
+func HaveClusterStateUpdateBlocked() otypes.GomegaMatcher {
+	return HaveClusterState(ytv1.ClusterStateUpdateBlocked)
 }
 
 func HaveStatusCondition(conditionType string, expected otypes.GomegaMatcher) otypes.GomegaMatcher {

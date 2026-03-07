@@ -63,6 +63,16 @@ func (c *Ytsaurus) SetClusterState(clusterState ytv1.ClusterState) bool {
 		return false
 	}
 	c.ytsaurus.Status.State = clusterState
+	readyToWork := metav1.ConditionFalse
+	if c.IsReadyToWork() {
+		readyToWork = metav1.ConditionTrue
+	}
+	c.SetStatusCondition(metav1.Condition{
+		Type:    consts.ConditionReadyToWork,
+		Status:  readyToWork,
+		Reason:  string(clusterState),
+		Message: fmt.Sprintf("Cluster state is %v", clusterState),
+	})
 	return true
 }
 
@@ -70,13 +80,17 @@ func (c *Ytsaurus) IsInitializing() bool {
 	return c.GetClusterState() == ytv1.ClusterStateInitializing
 }
 
-func (c *Ytsaurus) IsRunning() bool {
-	return c.GetClusterState() == ytv1.ClusterStateRunning
+func (c *Ytsaurus) IsReadyToWork() bool {
+	switch c.GetClusterState() {
+	case ytv1.ClusterStateRunning, ytv1.ClusterStateUpdateBlocked:
+		return true
+	}
+	return false
 }
 
 func (c *Ytsaurus) IsReadyToUpdate() bool {
 	switch c.GetClusterState() {
-	case ytv1.ClusterStateRunning, ytv1.ClusterStateUpdateFinishing:
+	case ytv1.ClusterStatePreparing, ytv1.ClusterStateRunning, ytv1.ClusterStateUpdateBlocked:
 		return true
 	}
 	return false

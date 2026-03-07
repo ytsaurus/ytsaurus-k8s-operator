@@ -3,6 +3,7 @@ package consts
 // Status conditions
 const (
 	ConditionOperatorVersion            = "OperatorVersion"
+	ConditionReadyToWork                = "ReadyToWork"
 	ConditionTimbertruckUserInitialized = "TimbertruckUserInitialized"
 )
 
