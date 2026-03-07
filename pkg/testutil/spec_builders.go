@@ -716,6 +716,18 @@ func (b *YtsaurusBuilder) WithStrawberryController() {
 	}
 }
 
+func (b *YtsaurusBuilder) WithBundleController() {
+	b.Ytsaurus.Spec.BundleController = &ytv1.BundleControllerSpec{
+		InstanceSpec: ytv1.InstanceSpec{
+			InstanceCount:         1,
+			MinReadyInstanceCount: b.MinReadyInstanceCount,
+			Resources:             *defaultNodeResources.DeepCopy(),
+			Loggers:               b.CreateLoggersSpec(),
+		},
+		Disable: ptr.To(false),
+	}
+}
+
 func (b *YtsaurusBuilder) CreateChyt() *ytv1.Chyt {
 	b.Chyt = &ytv1.Chyt{
 		ObjectMeta: metav1.ObjectMeta{
