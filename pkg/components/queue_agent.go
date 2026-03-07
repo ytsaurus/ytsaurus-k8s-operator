@@ -128,15 +128,8 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	if qa.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			secretSpec := qa.secret.Build()
-			secretSpec.StringData = map[string]string{
-				consts.TokenSecretKey: ytconfig.RandString(30),
-			}
-			err = qa.secret.Sync(ctx)
-		}
-		return ComponentStatusWaitingFor(qa.secret.Name()), err
+	if status, err := syncUserToken(ctx, qa.ytsaurusClient, qa.secret, consts.QueueAgentUserName, consts.SuperusersGroupName, dry); err != nil || !status.IsRunning() {
+		return status, err
 	}
 
 	if qa.NeedSync() {
@@ -151,22 +144,6 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	var ytClient yt.Client
-	if qa.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
-		if ytClientStatus := qa.ytsaurusClient.GetStatus(); !ytClientStatus.IsRunning() {
-			return ytClientStatus.Blocker(), nil
-		}
-
-		if !dry {
-			ytClient = qa.ytsaurusClient.GetYtClient()
-
-			err = qa.createUser(ctx, ytClient)
-			if err != nil {
-				return ComponentStatusWaitingFor("create qa user"), err
-			}
-		}
-	}
-
 	status, err := qa.initQAState(ctx, dry)
 	if err != nil || status.SyncStatus != SyncStatusReady {
 		return status, err
@@ -176,7 +153,7 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusReady(), err
 	}
 	if !dry {
-		err = qa.init(ctx, ytClient)
+		err = qa.init(ctx, qa.ytsaurusClient.GetYtClient())
 		if err != nil {
 			return ComponentStatusWaitingFor("%s initialization", qa.GetFullName()), err
 		}
@@ -190,19 +167,6 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	return ComponentStatusWaitingFor("setting %s condition", qa.initCondition), err
-}
-
-func (qa *QueueAgent) createUser(ctx context.Context, ytClient yt.Client) (err error) {
-	logger := log.FromContext(ctx)
-
-	token, _ := qa.secret.GetValue(consts.TokenSecretKey)
-	err = CreateUser(ctx, ytClient, "queue_agent", token, true)
-	if err != nil {
-		logger.Error(err, "Creating user 'queue_agent' failed")
-		return err
-	}
-
-	return nil
 }
 
 func (qa *QueueAgent) init(ctx context.Context, ytClient yt.Client) (err error) {

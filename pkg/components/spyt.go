@@ -68,7 +68,7 @@ func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.
 
 func (s *Spyt) createInitUserScript() string {
 	token, _ := s.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand("spyt_releaser", "", token, true)
+	commands := createUserCommand(consts.SpytReleaserUserName, "", token, true)
 	qtConfigCommand := s.buildQueryTrackerDynamicConfigCommand()
 	if qtConfigCommand != "" {
 		commands = append(commands, qtConfigCommand)

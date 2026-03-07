@@ -128,6 +128,106 @@
     namespace: ytsaurus-components
     resourceVersion: "2"
   lastTimestamp: null
+  message: Created YT object yqla (*v1.StatefulSet)
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "2"
+  lastTimestamp: null
+  message: Config ytserver-yql-agent.yson needs creation
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "2"
+  lastTimestamp: null
+  message: Created YT object yt-yql-agent-config (*v1.ConfigMap)
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "2"
+  lastTimestamp: null
+  message: Created YT object yql-agents (*v1.Service)
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "2"
+  lastTimestamp: null
+  message: Created YT object yt-yql-agent-monitoring (*v1.Service)
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "2"
+  lastTimestamp: null
   message: Created YT object msc (*v1.StatefulSet)
   metadata:
     creationTimestamp: null
@@ -209,26 +309,6 @@
     resourceVersion: "2"
   lastTimestamp: null
   message: Created YT object yt-master-cache-monitoring (*v1.Service)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "2"
-  lastTimestamp: null
-  message: Created YT object robot-timbertruck-secret (*v1.Secret)
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -946,26 +1026,6 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
-  lastTimestamp: null
-  message: Created YT object yt-yql-agent-secret (*v1.Secret)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
     resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object http-proxies-lb (*v1.Service)
@@ -1006,113 +1066,13 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "7"
+    resourceVersion: "8"
   lastTimestamp: null
-  message: Created YT object yt-scheduler-secret (*v1.Secret)
+  message: Issuing bootstrap token for robot-ytsaurus-k8s-operator
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "7"
-  lastTimestamp: null
-  message: Created YT object yqla (*v1.StatefulSet)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "7"
-  lastTimestamp: null
-  message: Config ytserver-yql-agent.yson needs creation
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "7"
-  lastTimestamp: null
-  message: Created YT object yt-yql-agent-config (*v1.ConfigMap)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "7"
-  lastTimestamp: null
-  message: Created YT object yql-agents (*v1.Service)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "7"
-  lastTimestamp: null
-  message: Created YT object yt-yql-agent-monitoring (*v1.Service)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
+  reason: Bootstrap
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -1129,166 +1089,6 @@
     resourceVersion: "8"
   lastTimestamp: null
   message: Created YT object yt-client-secret (*v1.Secret)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "8"
-  lastTimestamp: null
-  message: Created YT object sch (*v1.StatefulSet)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "8"
-  lastTimestamp: null
-  message: Config ytserver-scheduler.yson needs creation
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "8"
-  lastTimestamp: null
-  message: Created YT object yt-scheduler-config (*v1.ConfigMap)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "8"
-  lastTimestamp: null
-  message: Created YT object schedulers (*v1.Service)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "8"
-  lastTimestamp: null
-  message: Created YT object yt-scheduler-monitoring (*v1.Service)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "8"
-  lastTimestamp: null
-  message: Config client.yson needs creation
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "8"
-  lastTimestamp: null
-  message: Created YT object yql-agent-environment-yt-yql-agent-init-job-config (*v1.ConfigMap)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "8"
-  lastTimestamp: null
-  message: Created YT object yt-yql-agent-init-job-yql-agent-environment (*v1.Job)
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -1366,147 +1166,6 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "9"
-  lastTimestamp: null
-  message: Created YT object yt-strawberry-controller-secret (*v1.Secret)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "10"
-  lastTimestamp: null
-  message: Config client.yson needs creation
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "10"
-  lastTimestamp: null
-  message: Created YT object yql-agent-update-environment-yt-yql-agent-init-job-config
-    (*v1.ConfigMap)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "10"
-  lastTimestamp: null
-  message: Created YT object yt-yql-agent-init-job-yql-agent-update-environment (*v1.Job)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "10"
-  lastTimestamp: null
-  message: Config client.yson needs creation
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "10"
-  lastTimestamp: null
-  message: Created YT object user-yt-strawberry-controller-init-job-config (*v1.ConfigMap)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
-    resourceVersion: "10"
-  lastTimestamp: null
-  message: Created YT object yt-strawberry-controller-init-job-user (*v1.Job)
-  metadata:
-    creationTimestamp: null
-    namespace: ytsaurus-components
-  reason: Reconciliation
-  reportingComponent: ytsaurus
-  reportingInstance: ""
-  source:
-    component: ytsaurus
-  type: Normal
-- count: 1
-  eventTime: null
-  firstTimestamp: null
-  involvedObject:
-    apiVersion: cluster.ytsaurus.tech/v1
-    kind: Ytsaurus
-    name: test-ytsaurus
-    namespace: ytsaurus-components
     resourceVersion: "11"
   lastTimestamp: null
   message: Created YT object yt-cypress-patch (*v1.ConfigMap)
@@ -1549,7 +1208,7 @@
     namespace: ytsaurus-components
     resourceVersion: "12"
   lastTimestamp: null
-  message: Config chyt-init-cluster.yson needs creation
+  message: Created YT object sch (*v1.StatefulSet)
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -1569,7 +1228,7 @@
     namespace: ytsaurus-components
     resourceVersion: "12"
   lastTimestamp: null
-  message: Created YT object cluster-yt-strawberry-controller-init-job-config (*v1.ConfigMap)
+  message: Config ytserver-scheduler.yson needs creation
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -1588,6 +1247,166 @@
     name: test-ytsaurus
     namespace: ytsaurus-components
     resourceVersion: "12"
+  lastTimestamp: null
+  message: Created YT object yt-scheduler-config (*v1.ConfigMap)
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "12"
+  lastTimestamp: null
+  message: Created YT object schedulers (*v1.Service)
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "12"
+  lastTimestamp: null
+  message: Created YT object yt-scheduler-monitoring (*v1.Service)
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "12"
+  lastTimestamp: null
+  message: Config client.yson needs creation
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "12"
+  lastTimestamp: null
+  message: Created YT object yql-agent-environment-yt-yql-agent-init-job-config (*v1.ConfigMap)
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "12"
+  lastTimestamp: null
+  message: Created YT object yt-yql-agent-init-job-yql-agent-environment (*v1.Job)
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
+  message: Config chyt-init-cluster.yson needs creation
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
+  message: Created YT object cluster-yt-strawberry-controller-init-job-config (*v1.ConfigMap)
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
   lastTimestamp: null
   message: Created YT object yt-strawberry-controller-init-job-cluster (*v1.Job)
   metadata:
@@ -1609,7 +1428,7 @@
     namespace: ytsaurus-components
     resourceVersion: "14"
   lastTimestamp: null
-  message: Config strawberry-controller.yson needs creation
+  message: Config client.yson needs creation
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -1629,7 +1448,8 @@
     namespace: ytsaurus-components
     resourceVersion: "14"
   lastTimestamp: null
-  message: Config strawberry-controller.yson needs creation
+  message: Created YT object yql-agent-update-environment-yt-yql-agent-init-job-config
+    (*v1.ConfigMap)
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -1649,6 +1469,26 @@
     namespace: ytsaurus-components
     resourceVersion: "14"
   lastTimestamp: null
+  message: Created YT object yt-yql-agent-init-job-yql-agent-update-environment (*v1.Job)
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "15"
+  lastTimestamp: null
   message: Config strawberry-controller.yson needs creation
   metadata:
     creationTimestamp: null
@@ -1667,7 +1507,47 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "14"
+    resourceVersion: "15"
+  lastTimestamp: null
+  message: Config strawberry-controller.yson needs creation
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "15"
+  lastTimestamp: null
+  message: Config strawberry-controller.yson needs creation
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "15"
   lastTimestamp: null
   message: Created YT object strawberry-controller (*v1.Deployment)
   metadata:
@@ -1687,7 +1567,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "14"
+    resourceVersion: "15"
   lastTimestamp: null
   message: Config strawberry-controller.yson needs creation
   metadata:
@@ -1707,7 +1587,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "14"
+    resourceVersion: "15"
   lastTimestamp: null
   message: Created YT object yt-strawberry-controller-config (*v1.ConfigMap)
   metadata:
@@ -1727,7 +1607,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "14"
+    resourceVersion: "15"
   lastTimestamp: null
   message: Created YT object strawberry (*v1.Service)
   metadata:

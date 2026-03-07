@@ -79,7 +79,7 @@ func NewComponentManager(
 	allComponents = append(allComponents, dnds...)
 
 	if resource.Spec.UI != nil {
-		ui := components.NewUI(cfgen, ytsaurus, m)
+		ui := components.NewUI(cfgen, ytsaurus, yc)
 		allComponents = append(allComponents, ui)
 	}
 
@@ -125,7 +125,7 @@ func NewComponentManager(
 
 	var sch components.Component
 	if resource.Spec.Schedulers != nil {
-		sch = components.NewScheduler(cfgen, ytsaurus, m, yc, ends, tnds)
+		sch = components.NewScheduler(cfgen, ytsaurus, yc, ends, tnds)
 		allComponents = append(allComponents, sch)
 	}
 
@@ -147,12 +147,12 @@ func NewComponentManager(
 
 	var yqla components.Component
 	if resource.Spec.YQLAgents != nil {
-		yqla = components.NewYQLAgent(cfgen, ytsaurus, yc, m)
+		yqla = components.NewYQLAgent(cfgen, ytsaurus, yc)
 		allComponents = append(allComponents, yqla)
 	}
 
 	if resource.Spec.StrawberryController != nil && resource.Spec.Schedulers != nil {
-		strawberry := components.NewStrawberryController(cfgen, ytsaurus, m, sch, dnds)
+		strawberry := components.NewStrawberryController(cfgen, ytsaurus, yc, sch, dnds)
 		allComponents = append(allComponents, strawberry)
 	}
 

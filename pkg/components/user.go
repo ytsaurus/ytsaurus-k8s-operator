@@ -1,8 +1,33 @@
 package components
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
+	"strings"
+
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yt"
+	"go.ytsaurus.tech/yt/go/yterrors"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
+)
+
+const (
+	// YTsaurus tokens follows format "ytct-{4}-{32}".
+	tokenPrefixPrefix  = "ytct-"
+	tokenPrefixLength  = 10
+	tokenMinimalLength = 40
+
+	tokenHashPrefixLength = 8
+
+	// Bootstrap password and token for issuing YTsaurus token via API.
+	bootstrapTokenLength    = 30
+	bootstrapPasswordPrefix = "yt-bootstrap-password-" //nolint:gosec //not a secret
+	bootstrapTokenPrefix    = "yt-bootstrap-token-"    //nolint:gosec //not a secret
 )
 
 func sha256String(value string) string {
@@ -14,6 +39,10 @@ func sha256String(value string) string {
 	}
 	bs := hash.Sum(nil)
 	return fmt.Sprintf("%x", bs)
+}
+
+func hashedTokenPrefix(hash string) string {
+	return hash[0:min(len(hash)/2, tokenHashPrefixLength)] + "..."
 }
 
 func createUserCommand(userName, password, token string, isSuperuser bool) []string {
@@ -37,4 +66,120 @@ func createUserCommand(userName, password, token string, isSuperuser bool) []str
 	}
 
 	return result
+}
+
+func createUser(ctx context.Context, yc yt.Client, userName, groupName, initToken string) (token string, err error) {
+	logger := log.FromContext(ctx)
+	logger.Info("Creating user", "userName", userName, "groupName", groupName)
+
+	userID, err := yc.CreateObject(ctx, yt.NodeUser, &yt.CreateObjectOptions{
+		IgnoreExisting: true,
+		Attributes: map[string]any{
+			"name": userName,
+		}})
+	if err != nil {
+		return "", err
+	}
+
+	if groupName != "" {
+		err = yc.AddMember(ctx, groupName, userName, nil)
+		if err != nil && !yterrors.ContainsErrorCode(err, yterrors.CodeAlreadyPresentInGroup) {
+			return "", err
+		}
+	}
+
+	if tokens, err := yc.ListUserTokens(ctx, userName, "", nil); err != nil {
+		return "", err
+	} else {
+		// Revoke all excess tokens.
+		for _, hashedToken := range tokens {
+			if initToken != "" && sha256String(initToken) == hashedToken {
+				continue
+			}
+			logger.Info("Revoking user token", "userName", userName, "userID", userID, "hashedToken", hashedTokenPrefix(hashedToken))
+			// FIXME(khlebnikov): This API is broken - revoke should not hash token again.
+			// err := yc.RevokeToken(ctx, userName, "", hashedToken, nil)
+			if err = yc.RemoveNode(ctx, ypath.Path("//sys/cypress_tokens").Child(hashedToken), nil); err != nil {
+				logger.Error(err, "Cannot revoke user token", "userName", userName, "userID", userID, "hashedToken", hashedTokenPrefix(hashedToken))
+				return "", err
+			}
+		}
+	}
+
+	if initToken != "" {
+		// TODO(khlebnikov): Remove this and always issues tokens only via API.
+		if _, err := yc.CreateNode(
+			ctx,
+			ypath.Path("//sys/cypress_tokens").Child(sha256String(initToken)),
+			yt.NodeMap,
+			&yt.CreateNodeOptions{
+				IgnoreExisting: true,
+				Attributes: map[string]any{
+					"user": userName,
+				},
+			},
+		); err != nil {
+			return "", err
+		}
+		token = initToken
+	} else {
+		token, err = yc.IssueToken(ctx, userName, "", nil)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	tokenPrefix := ""
+	if len(token) >= tokenMinimalLength && strings.HasPrefix(token, tokenPrefixPrefix) {
+		tokenPrefix = token[:tokenPrefixLength]
+	}
+	logger.Info("User created", "userName", userName, "userID", userID, "groupName", groupName, "tokenPrefix", tokenPrefix)
+	return token, nil
+}
+
+func syncUserToken(
+	ctx context.Context,
+	client internalYtsaurusClient,
+	secret *resources.StringSecret,
+	userName string,
+	groupName string,
+	dry bool,
+) (ComponentStatus, error) {
+	logger := log.FromContext(ctx)
+
+	if status := client.GetStatus(); !status.IsRunning() {
+		return status.Blocker(), nil
+	}
+
+	if token, ok := secret.GetValue(consts.TokenSecretKey); ok && secret.GetUserName() == userName {
+		if client.shouldSkipCypressOperations() {
+			logger.Info("Skipping token validation", "userName", userName)
+			return ComponentStatusReadyAfter("Skipping token validation"), nil
+		}
+		hashedTokens, err := client.GetYtClient().ListUserTokens(ctx, userName, "", nil)
+		if err != nil && !yterrors.ContainsErrorCode(err, yterrors.CodeResolveError) {
+			return ComponentStatusPending("User token validation"), err
+		}
+		if err == nil && len(hashedTokens) == 1 && hashedTokens[0] == sha256String(token) {
+			return ComponentStatusReadyAfter("User token validated"), nil
+		}
+		logger.Info("User token need sync", "userName", userName, "tokensCount", len(hashedTokens))
+	}
+
+	var err error
+	if !dry {
+		var token string
+		token, err = createUser(ctx, client.GetYtClient(), userName, groupName, "")
+		if err == nil {
+			secret.Build()
+			secret.SetUserName(userName)
+			secret.SetValue(consts.TokenSecretKey, token)
+			if userName == consts.UIUserName {
+				secret.SetValue(consts.UISecretFileName, fmt.Sprintf("{\"oauthToken\" : \"%s\"}", token))
+			}
+			err = secret.Sync(ctx)
+		}
+	}
+
+	return ComponentStatusPending("Updating user %s token in %s", userName, secret.Name()), err
 }
