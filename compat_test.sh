@@ -3,7 +3,12 @@
 script_name=$0
 
 from_version="0.27.0"
+from_args=(
+    --set "controllerManager.kubeRbacProxy.image.repository=quay.io/brancz/kube-rbac-proxy"
+    --set "controllerManager.kubeRbacProxy.image.tag=v0.20.2"
+)
 to_version="trunk"
+to_args=()
 helm_chart="oci://ghcr.io/ytsaurus/ytop-chart"
 cluster_spec="config/samples/cluster_v1_local.yaml"
 cluster_name="minisaurus"
@@ -40,7 +45,7 @@ done
 
 set -eux -o pipefail
 
-helm install ytsaurus ${helm_chart} --version ${from_version} --wait
+helm install ytsaurus ${helm_chart} --version ${from_version} "${from_args[@]}" --wait
 
 kubectl get crd -l app.kubernetes.io/part-of=ytsaurus-k8s-operator -L app.kubernetes.io/version
 
@@ -58,7 +63,7 @@ if [[ "$to_version" == "trunk" ]]; then
         --set controllerManager.manager.image.tag=trunk
     kubectl wait ytsaurus/${cluster_name} --for=jsonpath="{.status.conditions[?(@.type=='OperatorVersion')].message}='${to_version}'" --timeout=1m
 else
-    helm upgrade ytsaurus --install ${helm_chart} --version ${to_version} --wait
+    helm upgrade ytsaurus --install ${helm_chart} --version ${to_version} "${to_args[@]}" --wait
 fi
 
 kubectl get crd -l app.kubernetes.io/part-of=ytsaurus-k8s-operator -L app.kubernetes.io/version
