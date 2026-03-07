@@ -167,18 +167,7 @@ func (c *Ytsaurus) ClearUpdateStatus() {
 	c.ytsaurus.Status.UpdateStatus = ytv1.UpdateStatus{
 		State:                    ytv1.UpdateStateUndefined,
 		BlockedComponentsSummary: c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary,
-		Conditions:               keepImagesHeatedCondition(c.ytsaurus.Status.UpdateStatus.Conditions),
 	}
-}
-
-// keepImagesHeatedCondition needed to keep image-heater hash for the next reconcile
-// otherwise the controller would immediately think images need reheating
-func keepImagesHeatedCondition(conditions []metav1.Condition) []metav1.Condition {
-	condition := meta.FindStatusCondition(conditions, consts.ConditionImageHeaterReady)
-	if condition == nil || condition.Status != metav1.ConditionTrue {
-		return make([]metav1.Condition, 0)
-	}
-	return []metav1.Condition{*condition}
 }
 
 func (c *Ytsaurus) LogUpdate(ctx context.Context, message string) {
@@ -264,6 +253,18 @@ func (c *Ytsaurus) UpdateOnDeleteComponentsSummary(ctx context.Context, waitingO
 	}
 }
 
-func (c *Ytsaurus) IsImageHeaterEnabled() bool {
-	return ptr.Deref(c.GetClusterFeatures().EnableImageHeater, false)
+func (c *Ytsaurus) GetImageHeater(target string) *ytv1.ComponentUpdateSelector {
+	planned := false
+	for _, selector := range c.ytsaurus.Spec.UpdatePlan {
+		if selector.Component.Type == ytv1.ImageHeaterType {
+			planned = true
+			if name := selector.Component.Name; name == "" || target == "" || name == target {
+				return ptr.To(selector)
+			}
+		}
+	}
+	if !planned && c.GetClusterFeatures().EnableImageHeater {
+		return ptr.To(ytv1.ComponentUpdateSelector{})
+	}
+	return nil
 }

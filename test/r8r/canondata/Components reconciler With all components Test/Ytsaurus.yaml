@@ -17,6 +17,7 @@ spec:
       path: java/cacerts
     name: ytsaurus-dev-ca-root-bundle
   clusterFeatures:
+    enableImageHeater: true
     httpProxyHaveChytAddress: true
     httpProxyHaveHttpsAddress: true
     rpcProxyHavePublicAddress: true
@@ -339,17 +340,25 @@ spec:
 status:
   conditions:
   - lastTransitionTime: null
-    message: Image heater idle
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: ImageHeaterReady
-  - lastTransitionTime: null
     message: 0.0.0-devel
     observedGeneration: 1
     reason: Observed
     status: "True"
     type: OperatorVersion
+  - lastTransitionTime: null
+    message: Ready 4 of 4; daemon set ih-ca is ready at 1 nodes; daemon set ih-ms
+      is ready at 1 nodes; daemon set ih-strawberry is ready at 1 nodes; daemon set
+      ih-yqla is ready at 1 nodes
+    observedGeneration: 1
+    reason: Sync
+    status: "True"
+    type: ImageHeaterComplete
+  - lastTransitionTime: null
+    message: Image heating is complete
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: ImageHeaterReady
   - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
