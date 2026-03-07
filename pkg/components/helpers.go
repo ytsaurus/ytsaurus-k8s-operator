@@ -334,6 +334,30 @@ func handleOnDeleteUpdatingClusterState(
 	return ptr.To(ComponentStatusUpdateStep("pods removal")), err
 }
 
+// dispatchComponentUpdate routes the update to the appropriate handler based on
+// the component's update strategy from the UpdatePlan (Rolling, OnDelete, or Bulk).
+func dispatchComponentUpdate(
+	ctx context.Context,
+	ytsaurus *apiproxy.Ytsaurus,
+	cmp Component,
+	cmpBase *component,
+	server server,
+	dry bool,
+) (*ComponentStatus, error) {
+	if !IsUpdatingComponent(ytsaurus, cmp) {
+		return ptr.To(ComponentStatusReadyAfter("Not updating component")), nil
+	}
+
+	switch getComponentUpdateStrategy(ytsaurus, cmp.GetType(), cmp.GetShortName()) {
+	case ytv1.ComponentUpdateModeTypeRollingUpdate:
+		return handleRollingUpdatingClusterState(ctx, ytsaurus, cmp, server, dry)
+	case ytv1.ComponentUpdateModeTypeOnDelete:
+		return handleOnDeleteUpdatingClusterState(ctx, ytsaurus, cmp, cmpBase, server, dry)
+	default:
+		return handleBulkUpdatingClusterState(ctx, ytsaurus, cmp, cmpBase, server, dry)
+	}
+}
+
 func handleRollingUpdatingClusterState(
 	ctx context.Context,
 	ytsaurus *apiproxy.Ytsaurus,

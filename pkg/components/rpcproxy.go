@@ -121,27 +121,11 @@ func (rp *RpcProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 	var err error
 
 	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(rp.ytsaurus, rp) {
-			switch getComponentUpdateStrategy(rp.ytsaurus, consts.RpcProxyType, rp.GetShortName()) {
-			case ytv1.ComponentUpdateModeTypeRollingUpdate:
-				if status, err := handleRollingUpdatingClusterState(ctx, rp.ytsaurus, rp, rp.server, dry); status != nil {
-					return *status, err
-				}
-			case ytv1.ComponentUpdateModeTypeOnDelete:
-				if status, err := handleOnDeleteUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.component, rp.server, dry); status != nil {
-					return *status, err
-				}
-			default:
-				if status, err := handleBulkUpdatingClusterState(ctx, rp.ytsaurus, rp, &rp.component, rp.server, dry); status != nil {
-					return *status, err
-				}
-			}
-
-			if rp.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
-				return ComponentStatusReady(), err
-			}
-		} else {
-			return ComponentStatusReadyAfter("Not updating component"), nil
+		if status, err := dispatchComponentUpdate(ctx, rp.ytsaurus, rp, &rp.component, rp.server, dry); status != nil {
+			return *status, err
+		}
+		if rp.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+			return ComponentStatusReady(), nil
 		}
 	}
 

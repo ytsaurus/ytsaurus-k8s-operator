@@ -111,28 +111,17 @@ func (s *Scheduler) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 	var err error
 
 	if s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(s.ytsaurus, s) {
-			switch getComponentUpdateStrategy(s.ytsaurus, consts.SchedulerType, s.GetShortName()) {
-			case ytv1.ComponentUpdateModeTypeOnDelete:
-				if status, err := handleOnDeleteUpdatingClusterState(ctx, s.ytsaurus, s, &s.component, s.server, dry); status != nil {
-					return *status, err
-				}
-			default:
-				if status, err := handleBulkUpdatingClusterState(ctx, s.ytsaurus, s, &s.component, s.server, dry); status != nil {
-					return *status, err
-				}
-			}
+		if status, err := dispatchComponentUpdate(ctx, s.ytsaurus, s, &s.component, s.server, dry); status != nil {
+			return *status, err
+		}
 
-			if status, err := s.updateOpArchive(ctx, dry); status != nil {
-				return *status, err
-			}
+		if status, err := s.updateOpArchive(ctx, dry); status != nil {
+			return *status, err
+		}
 
-			if s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
-				s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForOpArchiveUpdate {
-				return ComponentStatusReady(), err
-			}
-		} else {
-			return ComponentStatusReadyAfter("Not updating component"), nil
+		if s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+			s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForOpArchiveUpdate {
+			return ComponentStatusReady(), nil
 		}
 	}
 

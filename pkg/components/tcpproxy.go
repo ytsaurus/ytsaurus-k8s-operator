@@ -73,7 +73,7 @@ func (tp *TcpProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 	var err error
 
 	if tp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := handleUpdatingClusterState(ctx, tp.ytsaurus, tp, &tp.component, tp.server, dry); status != nil {
+		if status, err := dispatchComponentUpdate(ctx, tp.ytsaurus, tp, &tp.component, tp.server, dry); status != nil {
 			return *status, err
 		}
 	}
