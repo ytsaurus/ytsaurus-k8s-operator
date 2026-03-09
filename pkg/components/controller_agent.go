@@ -61,23 +61,11 @@ func (ca *ControllerAgent) Sync(ctx context.Context, dry bool) (ComponentStatus,
 	var err error
 
 	if ca.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(ca.ytsaurus, ca) {
-			switch getComponentUpdateStrategy(ca.ytsaurus, consts.ControllerAgentType, ca.GetShortName()) {
-			case ytv1.ComponentUpdateModeTypeOnDelete:
-				if status, err := handleOnDeleteUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.component, ca.server, dry); status != nil {
-					return *status, err
-				}
-			default:
-				if status, err := handleBulkUpdatingClusterState(ctx, ca.ytsaurus, ca, &ca.component, ca.server, dry); status != nil {
-					return *status, err
-				}
-			}
-
-			if ca.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
-				return ComponentStatusReady(), err
-			}
-		} else {
-			return ComponentStatusReadyAfter("Not updating component"), nil
+		if status, err := dispatchComponentUpdate(ctx, ca.ytsaurus, ca, &ca.component, ca.server, dry); status != nil {
+			return *status, err
+		}
+		if ca.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+			return ComponentStatusReady(), nil
 		}
 	}
 

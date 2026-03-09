@@ -58,23 +58,11 @@ func (d *Discovery) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 	var err error
 
 	if d.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(d.ytsaurus, d) {
-			switch getComponentUpdateStrategy(d.ytsaurus, consts.DiscoveryType, d.GetShortName()) {
-			case ytv1.ComponentUpdateModeTypeOnDelete:
-				if status, err := handleOnDeleteUpdatingClusterState(ctx, d.ytsaurus, d, &d.component, d.server, dry); status != nil {
-					return *status, err
-				}
-			default:
-				if status, err := handleBulkUpdatingClusterState(ctx, d.ytsaurus, d, &d.component, d.server, dry); status != nil {
-					return *status, err
-				}
-			}
-
-			if d.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
-				return ComponentStatusReady(), err
-			}
-		} else {
-			return ComponentStatusReadyAfter("Not updating component"), nil
+		if status, err := dispatchComponentUpdate(ctx, d.ytsaurus, d, &d.component, d.server, dry); status != nil {
+			return *status, err
+		}
+		if d.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+			return ComponentStatusReady(), nil
 		}
 	}
 

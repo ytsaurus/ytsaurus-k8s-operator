@@ -131,27 +131,11 @@ func (hp *HttpProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error
 	var err error
 
 	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(hp.ytsaurus, hp) {
-			switch getComponentUpdateStrategy(hp.ytsaurus, consts.HttpProxyType, hp.GetShortName()) {
-			case ytv1.ComponentUpdateModeTypeRollingUpdate:
-				if status, err := handleRollingUpdatingClusterState(ctx, hp.ytsaurus, hp, hp.server, dry); status != nil {
-					return *status, err
-				}
-			case ytv1.ComponentUpdateModeTypeOnDelete:
-				if status, err := handleOnDeleteUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.component, hp.server, dry); status != nil {
-					return *status, err
-				}
-			default:
-				if status, err := handleBulkUpdatingClusterState(ctx, hp.ytsaurus, hp, &hp.component, hp.server, dry); status != nil {
-					return *status, err
-				}
-			}
-
-			if hp.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
-				return ComponentStatusReady(), err
-			}
-		} else {
-			return ComponentStatusReadyAfter("Not updating component"), nil
+		if status, err := dispatchComponentUpdate(ctx, hp.ytsaurus, hp, &hp.component, hp.server, dry); status != nil {
+			return *status, err
+		}
+		if hp.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+			return ComponentStatusReady(), nil
 		}
 	}
 

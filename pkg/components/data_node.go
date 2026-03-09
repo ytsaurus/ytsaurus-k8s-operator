@@ -76,19 +76,8 @@ func (n *DataNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) 
 				return *status, err
 			}
 		}
-		if IsUpdatingComponent(n.ytsaurus, n) {
-			switch getComponentUpdateStrategy(n.ytsaurus, consts.DataNodeType, n.GetShortName()) {
-			case ytv1.ComponentUpdateModeTypeRollingUpdate:
-				if status, err := handleRollingUpdatingClusterState(ctx, n.ytsaurus, n, n.server, dry); status != nil {
-					return *status, err
-				}
-			default:
-				if status, err := handleBulkUpdatingClusterState(ctx, n.ytsaurus, n, &n.component, n.server, dry); status != nil {
-					return *status, err
-				}
-			}
-		} else {
-			return ComponentStatusReadyAfter("Not updating component"), nil
+		if status, err := dispatchComponentUpdate(ctx, n.ytsaurus, n, &n.component, n.server, dry); status != nil {
+			return *status, err
 		}
 	}
 
