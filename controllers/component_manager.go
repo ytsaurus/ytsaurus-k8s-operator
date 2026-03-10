@@ -110,7 +110,7 @@ func NewComponentManager(
 	var ends []components.Component
 	if len(resource.Spec.ExecNodes) > 0 {
 		for _, endSpec := range ytsaurus.GetResource().Spec.ExecNodes {
-			ends = append(ends, components.NewExecNode(nodeCfgGen, ytsaurus, m, endSpec))
+			ends = append(ends, components.NewExecNode(nodeCfgGen, ytsaurus, m, endSpec, yc))
 		}
 	}
 	allComponents = append(allComponents, ends...)

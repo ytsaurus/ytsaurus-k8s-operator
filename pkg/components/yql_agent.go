@@ -271,11 +271,10 @@ func (yqla *YqlAgent) setConditionYqlaUpdated(ctx context.Context) {
 }
 
 func (yqla *YqlAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {
-	// Get YT client from the ytsaurusClient component
-	if yqla.ytsaurusClient == nil {
-		return ComponentStatusBlocked("YtsaurusClient component is not available")
+	ytClient, status := getYtClient(yqla.ytsaurusClient)
+	if status != nil {
+		return *status
 	}
-	ytClient := yqla.ytsaurusClient.GetYtClient()
 
 	// Check that the number of instances in YT matches the expected instanceCount
 	expectedCount := int(yqla.ytsaurus.GetResource().Spec.YQLAgents.InstanceCount)

@@ -81,13 +81,9 @@ func (d *Discovery) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 }
 
 func (d *Discovery) UpdatePreCheck(ctx context.Context) ComponentStatus {
-	if d.ytsaurusClient == nil {
-		return ComponentStatusBlocked("YtsaurusClient component is not available")
-	}
-
-	ytClient := d.ytsaurusClient.GetYtClient()
-	if ytClient == nil {
-		return ComponentStatusBlocked("YT client is not available")
+	ytClient, status := getYtClient(d.ytsaurusClient)
+	if status != nil {
+		return *status
 	}
 
 	// Check that the number of instances in YT matches the expected instanceCount

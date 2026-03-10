@@ -42,4 +42,5 @@ const (
 	DataMissingChunksCountPath    = "//sys/data_missing_chunks/@count"
 	UnsafelyPlacedChunksCountPath = "//sys/unsafely_placed_chunks/@count"
 	QuorumMissingChunksCountPath  = "//sys/quorum_missing_chunks/@count"
+	DisableSchedulerJobsAttr      = "disable_scheduler_jobs"
 )

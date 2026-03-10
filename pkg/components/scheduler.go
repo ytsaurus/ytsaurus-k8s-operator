@@ -285,13 +285,9 @@ func (s *Scheduler) prepareInitOperationsArchive() {
 func (s *Scheduler) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	logger := log.FromContext(ctx)
 
-	if s.ytsaurusClient == nil {
-		return ComponentStatusBlocked("YtsaurusClient component is not available")
-	}
-
-	ytClient := s.ytsaurusClient.GetYtClient()
-	if ytClient == nil {
-		return ComponentStatusBlocked("YT client is not available")
+	ytClient, status := getYtClient(s.ytsaurusClient)
+	if status != nil {
+		return *status
 	}
 
 	// Check for scheduler alerts

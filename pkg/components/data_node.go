@@ -108,12 +108,9 @@ func (n *DataNode) UpdatePreCheck(ctx context.Context) ComponentStatus {
 		{path: ypath.Path(consts.QuorumMissingChunksCountPath), name: "quorum missing chunks"},
 	}
 
-	if n.ytsaurusClient == nil {
-		return ComponentStatusBlocked("YtsaurusClient component is not available")
-	}
-	ytClient := n.ytsaurusClient.GetYtClient()
-	if ytClient == nil {
-		return ComponentStatusBlocked("YT client is not available")
+	ytClient, status := getYtClient(n.ytsaurusClient)
+	if status != nil {
+		return *status
 	}
 
 	for _, check := range dataNodeRollingCounterChecks {
