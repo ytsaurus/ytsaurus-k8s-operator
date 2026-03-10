@@ -1,4 +1,6 @@
 # ytsaurus-dev-ca certificate issuer
+#
+# Link: https://cert-manager.io/docs/reference/api-docs/
 
 ---
 apiVersion: cert-manager.io/v1
