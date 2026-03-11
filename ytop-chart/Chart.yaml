@@ -1,6 +1,6 @@
 apiVersion: v2
 name: "ytop-chart"
-description: A Helm chart for Kubernetes
+description: Helm chart for the YTsaurus Kubernetes operator that deploys and manages YTsaurus clusters
 type: application
 version: "0.0.0-devel"
 appVersion: "0.0.0-devel"

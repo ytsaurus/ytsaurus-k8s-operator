@@ -1,33 +1,65 @@
+# caRootBundle configures a custom CA root certificate bundle to be mounted
+# into the controller manager container. This is useful in environments where
+# a custom or self-signed CA is used for TLS connections (e.g. to Kubernetes
+# API server or YTsaurus clusters).
+# Supported kinds: ConfigMap, Secret.
 # caRootBundle:
 #   kind: ConfigMap
 #   name: ca-root-bundle
 #   key: ca-certificates.crt
+
+# crds controls installation and lifecycle of Custom Resource Definitions.
 crds:
+  # enabled: if true, CRDs are installed together with the chart.
+  # Set to false when CRDs are managed separately (e.g. by a platform team) or
+  # when multiple operator instances share a single set of CRDs.
   enabled: true
+  # keep: if true, CRDs are NOT deleted when the chart is uninstalled.
+  # Keeping CRDs prevents accidental data loss of all managed YTsaurus clusters.
   keep: true
+
+# controllerManager configures the operator controller manager deployment.
 controllerManager:
   manager:
+    # instanceScope: if true, the operator watches only resources whose
+    # "ytsaurus.tech/operator-instance" label matches the Helm release name.
+    # This allows running multiple operator instances in the same cluster,
+    # each responsible for a distinct set of YTsaurus custom resources.
     instanceScope: false
+    # namespacedScope: if true, the operator watches resources only in the
+    # namespace where it is deployed. Useful for namespace-scoped installations
+    # where cluster-wide RBAC permissions are undesirable.
     namespacedScope: false
+    # args: extra command-line arguments passed to the operator binary.
     args:
       - --health-probe-bind-address=:8081
       - --metrics-bind-address=:8080
       - --leader-elect
+    # env: environment variables injected into the manager container.
     env:
+      # GOMAXPROCS: limits the number of OS threads used by the Go runtime.
       GOMAXPROCS: 1
       # GOGC: 100
       # GOMEMLIMIT: 100MiB
+      # YT_LOG_LEVEL: log level for the YTsaurus client library (DEBUG, INFO, WARN, ERROR).
       YT_LOG_LEVEL: DEBUG
+      # ENABLE_WEBHOOKS: set to "false" to disable validating webhooks (not recommended for production).
       # ENABLE_WEBHOOKS: false
+      # RECOVER_PANIC: set to "true" to recover from panics in the reconciliation loop instead of crashing.
       # RECOVER_PANIC: false
+    # containerSecurityContext: security context applied to the manager container.
     containerSecurityContext:
       allowPrivilegeEscalation: false
       capabilities:
         drop:
           - ALL
+    # image: container image for the operator manager.
     image:
+      # repository: image repository. Override to use a private registry mirror.
       repository: ytsaurus/k8s-operator
+      # tag: image tag. Defaults to the chart appVersion when left empty.
       tag: ""
+    # resources: CPU and memory resource requests/limits for the manager container.
     resources:
       limits:
         cpu: 500m
@@ -35,16 +67,31 @@ controllerManager:
       requests:
         cpu: 10m
         memory: 64Mi
+  # nodeSelector: node labels required for scheduling the manager pod.
   nodeSelector: {}
+  # affinity: affinity rules for the manager pod.
   affinity: {}
+  # tolerations: tolerations for the manager pod to schedule on tainted nodes.
   tolerations: []
+  # replicas: number of controller manager replicas. Only one replica is active
+  # at a time (leader election); additional replicas act as standby instances.
   replicas: 1
+  # revisionHistoryLimit: number of old ReplicaSets to retain for rollback.
   revisionHistoryLimit: 10
+  # serviceAccount: configuration for the controller manager ServiceAccount.
   serviceAccount:
+    # annotations: extra annotations to add to the ServiceAccount, e.g. for
+    # Workload Identity / IRSA on cloud providers.
     annotations: {}
+  # strategy: deployment update strategy for the controller manager.
   strategy:
     type: RollingUpdate
+
+# kubernetesClusterDomain: the DNS domain of the Kubernetes cluster.
+# Used to build fully qualified service DNS names inside the cluster.
 kubernetesClusterDomain: cluster.local
+
+# metricsService: configuration for the Service that exposes Prometheus metrics.
 metricsService:
   ports:
     - name: metrics
@@ -52,13 +99,21 @@ metricsService:
       protocol: TCP
       targetPort: metrics
   type: ClusterIP
+
+# webhookService: configuration for the Service that exposes the validating webhook server.
 webhookService:
   ports:
     - port: 443
       protocol: TCP
       targetPort: 9443
   type: ClusterIP
+
+# pprof: configuration for the Go pprof profiling endpoint.
+# Enable this only for debugging; do not expose the endpoint externally.
 pprof:
+  # enabled: if true, the pprof HTTP server is started inside the manager container.
   enabled: false
+  # address: the address the pprof server listens on.
   address: localhost
+  # port: the port the pprof server listens on.
   port: 6060
