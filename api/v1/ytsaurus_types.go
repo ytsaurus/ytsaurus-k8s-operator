@@ -813,6 +813,8 @@ type CypressProxiesSpec struct {
 
 type BundleControllerSpec struct {
 	InstanceSpec `json:",inline"`
+	// Disable the bundle controller actions, switch it into read-only mode.
+	Disable *bool `json:"disable,omitempty"`
 }
 
 type TabletBalancerSpec struct {
