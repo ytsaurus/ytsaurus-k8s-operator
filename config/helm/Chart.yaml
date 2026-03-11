@@ -4,5 +4,6 @@ description: Helm chart for the YTsaurus Kubernetes operator that deploys and ma
 type: application
 version: "<version>"
 appVersion: "<version>"
+kubeVersion: ">=1.29.0"
 sources:
   - https://github.com/ytsaurus/ytsaurus-k8s-operator
