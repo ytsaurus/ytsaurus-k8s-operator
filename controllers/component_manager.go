@@ -8,6 +8,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
@@ -317,9 +319,13 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 			}
 		}
 
-		if cm.ytsaurus.IsInitializing() && c.GetType() == consts.ImageHeaterType && !cm.allImagesAreHeated() {
-			logger.Info("Cluster initialization is waiting for image heater")
-			break
+		if cm.ytsaurus.IsInitializing() && c.GetType() == consts.ImageHeaterType {
+			complete := cm.ytsaurus.GetStatusCondition(consts.ConditionImageHeaterComplete)
+			if complete != nil && complete.Status != metav1.ConditionTrue {
+				logger.Info("Cluster initialization is waiting for image heater", "message", complete.Message)
+				cm.ytsaurus.RecordNormal("Initialization", "Waiting for image heater completion: "+complete.Message)
+				break
+			}
 		}
 	}
 
@@ -338,17 +344,6 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	}
 
 	return ctrl.Result{RequeueAfter: time.Second}, nil
-}
-
-func (cm *ComponentManager) allImagesAreHeated() bool {
-	if cm.getHeaterStatus != nil {
-		for _, component := range cm.allComponents {
-			if !cm.getHeaterStatus(component.GetComponent()).IsReady() {
-				return false
-			}
-		}
-	}
-	return true
 }
 
 func (cm *ComponentManager) allUpdatingImagesAreHeated() bool {

@@ -144,10 +144,15 @@ func (ih *ImageHeater) Sync(ctx context.Context, dry bool) (ComponentStatus, err
 
 	// Collect required changes.
 	for hash, heater := range hashToHeater {
-		slices.Sort(hashToNames[hash])
-		targets := strings.Join(hashToNames[hash], " ")
-		metav1.SetMetaDataAnnotation(&heater.NewObject().ObjectMeta, consts.ImageHeaterTargetsAnnotationName, targets)
+		names := hashToNames[hash]
+		slices.Sort(names)
+		metav1.SetMetaDataAnnotation(&heater.NewObject().ObjectMeta, consts.ImageHeaterTargetsAnnotationName, strings.Join(names, " "))
 		toApply[heater.Name()] = heater
+
+		// Update map of present heater targets.
+		for _, name := range names {
+			ih.nameToHeater[name] = heater.NewObject()
+		}
 	}
 
 	for i := range ih.daemonSetList.Items {
@@ -199,6 +204,8 @@ func (ih *ImageHeater) Sync(ctx context.Context, dry bool) (ComponentStatus, err
 	}
 
 	status := ComponentStatusSprintf(syncStatus, "Ready %v of %v%v", progress, len(toApply), report.String())
+
+	ih.owner.RecordNormal("ImageHeater", status.Message)
 
 	ih.owner.SetStatusCondition(metav1.Condition{
 		Type:    consts.ConditionImageHeaterComplete,

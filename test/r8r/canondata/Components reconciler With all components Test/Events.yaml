@@ -6,6 +6,69 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Ready 0 of 4; daemon set ih-ca need sync; daemon set ih-ms need sync; daemon
+    set ih-strawberry need sync; daemon set ih-yqla need sync
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: ImageHeater
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "2"
+  lastTimestamp: null
+  message: Ready 0 of 4; daemon set ih-ca need sync; daemon set ih-ms need sync; daemon
+    set ih-strawberry need sync; daemon set ih-yqla need sync
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: ImageHeater
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "2"
+  lastTimestamp: null
+  message: Ready 0 of 4; daemon set ih-ca need sync; daemon set ih-ms need sync; daemon
+    set ih-strawberry need sync; daemon set ih-yqla need sync
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: ImageHeater
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
     resourceVersion: "2"
   lastTimestamp: null
   message: Created YT object ih-ca (*v1.DaemonSet)
@@ -88,6 +151,71 @@
     namespace: ytsaurus-components
     resourceVersion: "2"
   lastTimestamp: null
+  message: Ready 0 of 4; daemon set ih-ca need sync; daemon set ih-ms need sync; daemon
+    set ih-strawberry need sync; daemon set ih-yqla need sync
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: ImageHeater
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "2"
+  lastTimestamp: null
+  message: 'Waiting for image heater completion: Ready 0 of 4; daemon set ih-ca need
+    sync; daemon set ih-ms need sync; daemon set ih-strawberry need sync; daemon set
+    ih-yqla need sync'
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: Initialization
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "3"
+  lastTimestamp: null
+  message: Ready 4 of 4; daemon set ih-ca is ready at 1 nodes; daemon set ih-ms is
+    ready at 1 nodes; daemon set ih-strawberry is ready at 1 nodes; daemon set ih-yqla
+    is ready at 1 nodes
+  metadata:
+    creationTimestamp: null
+    namespace: ytsaurus-components
+  reason: ImageHeater
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "3"
+  lastTimestamp: null
   message: Created YT object robot-hydra-persistence-uploader-secret (*v1.Secret)
   metadata:
     creationTimestamp: null
@@ -106,7 +234,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "2"
+    resourceVersion: "3"
   lastTimestamp: null
   message: Created YT object ds (*v1.StatefulSet)
   metadata:
@@ -126,7 +254,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "2"
+    resourceVersion: "3"
   lastTimestamp: null
   message: Config ytserver-discovery.yson needs creation
   metadata:
@@ -146,7 +274,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "2"
+    resourceVersion: "3"
   lastTimestamp: null
   message: Created YT object yt-discovery-config (*v1.ConfigMap)
   metadata:
@@ -166,7 +294,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "2"
+    resourceVersion: "3"
   lastTimestamp: null
   message: Created YT object discovery (*v1.Service)
   metadata:
@@ -186,7 +314,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "2"
+    resourceVersion: "3"
   lastTimestamp: null
   message: Created YT object yt-discovery-monitoring (*v1.Service)
   metadata:
@@ -206,7 +334,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "2"
+    resourceVersion: "3"
   lastTimestamp: null
   message: Created YT object msc (*v1.StatefulSet)
   metadata:
@@ -226,7 +354,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "2"
+    resourceVersion: "3"
   lastTimestamp: null
   message: Config ytserver-master-cache.yson needs creation
   metadata:
@@ -246,7 +374,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "2"
+    resourceVersion: "3"
   lastTimestamp: null
   message: Created YT object yt-master-cache-config (*v1.ConfigMap)
   metadata:
@@ -266,7 +394,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "2"
+    resourceVersion: "3"
   lastTimestamp: null
   message: Created YT object master-caches (*v1.Service)
   metadata:
@@ -286,7 +414,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "2"
+    resourceVersion: "3"
   lastTimestamp: null
   message: Created YT object yt-master-cache-monitoring (*v1.Service)
   metadata:
@@ -306,7 +434,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "2"
+    resourceVersion: "3"
   lastTimestamp: null
   message: Created YT object robot-timbertruck-secret (*v1.Secret)
   metadata:
@@ -326,7 +454,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "3"
+    resourceVersion: "4"
   lastTimestamp: null
   message: Created YT object ms (*v1.StatefulSet)
   metadata:
@@ -346,7 +474,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "3"
+    resourceVersion: "4"
   lastTimestamp: null
   message: Config ytserver-master.yson needs creation
   metadata:
@@ -366,7 +494,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "3"
+    resourceVersion: "4"
   lastTimestamp: null
   message: Created YT object yt-master-config (*v1.ConfigMap)
   metadata:
@@ -386,7 +514,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "3"
+    resourceVersion: "4"
   lastTimestamp: null
   message: Created YT object masters (*v1.Service)
   metadata:
@@ -406,7 +534,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "3"
+    resourceVersion: "4"
   lastTimestamp: null
   message: Created YT object yt-master-monitoring (*v1.Service)
   metadata:
@@ -426,7 +554,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "4"
+    resourceVersion: "5"
   lastTimestamp: null
   message: Config client.yson needs creation
   metadata:
@@ -446,7 +574,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "4"
+    resourceVersion: "5"
   lastTimestamp: null
   message: Created YT object default-yt-master-init-job-config (*v1.ConfigMap)
   metadata:
@@ -466,7 +594,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "4"
+    resourceVersion: "5"
   lastTimestamp: null
   message: Created YT object yt-master-init-job-default (*v1.Job)
   metadata:
@@ -486,7 +614,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object hp (*v1.StatefulSet)
   metadata:
@@ -506,7 +634,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Config ytserver-http-proxy.yson needs creation
   metadata:
@@ -526,7 +654,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object yt-http-proxy-config (*v1.ConfigMap)
   metadata:
@@ -546,7 +674,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object http-proxies (*v1.Service)
   metadata:
@@ -566,7 +694,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object yt-http-proxy-monitoring (*v1.Service)
   metadata:
@@ -586,7 +714,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object dnd (*v1.StatefulSet)
   metadata:
@@ -606,7 +734,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Config ytserver-data-node.yson needs creation
   metadata:
@@ -626,7 +754,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object yt-data-node-config (*v1.ConfigMap)
   metadata:
@@ -646,7 +774,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object data-nodes (*v1.Service)
   metadata:
@@ -666,7 +794,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object yt-data-node-monitoring (*v1.Service)
   metadata:
@@ -686,7 +814,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object rp (*v1.StatefulSet)
   metadata:
@@ -706,7 +834,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Config ytserver-rpc-proxy.yson needs creation
   metadata:
@@ -726,7 +854,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object yt-rpc-proxy-config (*v1.ConfigMap)
   metadata:
@@ -746,7 +874,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object rpc-proxies (*v1.Service)
   metadata:
@@ -766,7 +894,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object yt-rpc-proxy-monitoring (*v1.Service)
   metadata:
@@ -786,7 +914,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object end (*v1.StatefulSet)
   metadata:
@@ -806,7 +934,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Config ytserver-exec-node.yson needs creation
   metadata:
@@ -826,7 +954,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object yt-exec-node-config (*v1.ConfigMap)
   metadata:
@@ -846,7 +974,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object exec-nodes (*v1.Service)
   metadata:
@@ -866,7 +994,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object yt-exec-node-monitoring (*v1.Service)
   metadata:
@@ -886,7 +1014,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Config containerd.toml needs creation
   metadata:
@@ -906,7 +1034,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object yt-exec-node-jobs-config (*v1.ConfigMap)
   metadata:
@@ -926,7 +1054,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object ca (*v1.StatefulSet)
   metadata:
@@ -946,7 +1074,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Config ytserver-controller-agent.yson needs creation
   metadata:
@@ -966,7 +1094,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object yt-controller-agent-config (*v1.ConfigMap)
   metadata:
@@ -986,7 +1114,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object controller-agents (*v1.Service)
   metadata:
@@ -1006,7 +1134,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object yt-controller-agent-monitoring (*v1.Service)
   metadata:
@@ -1026,7 +1154,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object yt-yql-agent-secret (*v1.Secret)
   metadata:
@@ -1046,7 +1174,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "7"
+    resourceVersion: "8"
   lastTimestamp: null
   message: Created YT object http-proxies-lb (*v1.Service)
   metadata:
@@ -1066,7 +1194,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "7"
+    resourceVersion: "8"
   lastTimestamp: null
   message: Created YT object rpc-proxies-lb (*v1.Service)
   metadata:
@@ -1086,7 +1214,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "7"
+    resourceVersion: "8"
   lastTimestamp: null
   message: Created YT object yt-scheduler-secret (*v1.Secret)
   metadata:
@@ -1106,7 +1234,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "7"
+    resourceVersion: "8"
   lastTimestamp: null
   message: Created YT object yqla (*v1.StatefulSet)
   metadata:
@@ -1126,7 +1254,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "7"
+    resourceVersion: "8"
   lastTimestamp: null
   message: Config ytserver-yql-agent.yson needs creation
   metadata:
@@ -1146,7 +1274,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "7"
+    resourceVersion: "8"
   lastTimestamp: null
   message: Created YT object yt-yql-agent-config (*v1.ConfigMap)
   metadata:
@@ -1166,7 +1294,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "7"
+    resourceVersion: "8"
   lastTimestamp: null
   message: Created YT object yql-agents (*v1.Service)
   metadata:
@@ -1186,7 +1314,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "7"
+    resourceVersion: "8"
   lastTimestamp: null
   message: Created YT object yt-yql-agent-monitoring (*v1.Service)
   metadata:
@@ -1206,7 +1334,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "8"
+    resourceVersion: "9"
   lastTimestamp: null
   message: Created YT object yt-client-secret (*v1.Secret)
   metadata:
@@ -1226,7 +1354,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "8"
+    resourceVersion: "9"
   lastTimestamp: null
   message: Created YT object sch (*v1.StatefulSet)
   metadata:
@@ -1246,7 +1374,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "8"
+    resourceVersion: "9"
   lastTimestamp: null
   message: Config ytserver-scheduler.yson needs creation
   metadata:
@@ -1266,7 +1394,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "8"
+    resourceVersion: "9"
   lastTimestamp: null
   message: Created YT object yt-scheduler-config (*v1.ConfigMap)
   metadata:
@@ -1286,7 +1414,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "8"
+    resourceVersion: "9"
   lastTimestamp: null
   message: Created YT object schedulers (*v1.Service)
   metadata:
@@ -1306,7 +1434,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "8"
+    resourceVersion: "9"
   lastTimestamp: null
   message: Created YT object yt-scheduler-monitoring (*v1.Service)
   metadata:
@@ -1326,7 +1454,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "8"
+    resourceVersion: "9"
   lastTimestamp: null
   message: Config client.yson needs creation
   metadata:
@@ -1346,7 +1474,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "8"
+    resourceVersion: "9"
   lastTimestamp: null
   message: Created YT object yql-agent-environment-yt-yql-agent-init-job-config (*v1.ConfigMap)
   metadata:
@@ -1366,7 +1494,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "8"
+    resourceVersion: "9"
   lastTimestamp: null
   message: Created YT object yt-yql-agent-init-job-yql-agent-environment (*v1.Job)
   metadata:
@@ -1386,7 +1514,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "9"
+    resourceVersion: "10"
   lastTimestamp: null
   message: Config client.yson needs creation
   metadata:
@@ -1406,7 +1534,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "9"
+    resourceVersion: "10"
   lastTimestamp: null
   message: Created YT object user-yt-client-init-job-config (*v1.ConfigMap)
   metadata:
@@ -1426,7 +1554,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "9"
+    resourceVersion: "10"
   lastTimestamp: null
   message: Created YT object yt-client-init-job-user (*v1.Job)
   metadata:
@@ -1446,7 +1574,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "9"
+    resourceVersion: "10"
   lastTimestamp: null
   message: Created YT object yt-strawberry-controller-secret (*v1.Secret)
   metadata:
@@ -1466,7 +1594,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "10"
+    resourceVersion: "11"
   lastTimestamp: null
   message: Config client.yson needs creation
   metadata:
@@ -1486,7 +1614,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "10"
+    resourceVersion: "11"
   lastTimestamp: null
   message: Created YT object yql-agent-update-environment-yt-yql-agent-init-job-config
     (*v1.ConfigMap)
@@ -1507,7 +1635,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "10"
+    resourceVersion: "11"
   lastTimestamp: null
   message: Created YT object yt-yql-agent-init-job-yql-agent-update-environment (*v1.Job)
   metadata:
@@ -1527,7 +1655,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "10"
+    resourceVersion: "11"
   lastTimestamp: null
   message: Config client.yson needs creation
   metadata:
@@ -1547,7 +1675,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "10"
+    resourceVersion: "11"
   lastTimestamp: null
   message: Created YT object user-yt-strawberry-controller-init-job-config (*v1.ConfigMap)
   metadata:
@@ -1567,7 +1695,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "10"
+    resourceVersion: "11"
   lastTimestamp: null
   message: Created YT object yt-strawberry-controller-init-job-user (*v1.Job)
   metadata:
@@ -1587,7 +1715,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "11"
+    resourceVersion: "12"
   lastTimestamp: null
   message: Created YT object yt-cypress-patch (*v1.ConfigMap)
   metadata:
@@ -1607,7 +1735,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "11"
+    resourceVersion: "12"
   lastTimestamp: null
   message: Skip patch apply in test
   metadata:
@@ -1627,7 +1755,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "12"
+    resourceVersion: "13"
   lastTimestamp: null
   message: Config chyt-init-cluster.yson needs creation
   metadata:
@@ -1647,7 +1775,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "12"
+    resourceVersion: "13"
   lastTimestamp: null
   message: Created YT object cluster-yt-strawberry-controller-init-job-config (*v1.ConfigMap)
   metadata:
@@ -1667,7 +1795,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "12"
+    resourceVersion: "13"
   lastTimestamp: null
   message: Created YT object yt-strawberry-controller-init-job-cluster (*v1.Job)
   metadata:
@@ -1687,7 +1815,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "14"
+    resourceVersion: "15"
   lastTimestamp: null
   message: Config strawberry-controller.yson needs creation
   metadata:
@@ -1707,7 +1835,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "14"
+    resourceVersion: "15"
   lastTimestamp: null
   message: Config strawberry-controller.yson needs creation
   metadata:
@@ -1727,7 +1855,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "14"
+    resourceVersion: "15"
   lastTimestamp: null
   message: Config strawberry-controller.yson needs creation
   metadata:
@@ -1747,7 +1875,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "14"
+    resourceVersion: "15"
   lastTimestamp: null
   message: Created YT object strawberry-controller (*v1.Deployment)
   metadata:
@@ -1767,7 +1895,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "14"
+    resourceVersion: "15"
   lastTimestamp: null
   message: Config strawberry-controller.yson needs creation
   metadata:
@@ -1787,7 +1915,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "14"
+    resourceVersion: "15"
   lastTimestamp: null
   message: Created YT object yt-strawberry-controller-config (*v1.ConfigMap)
   metadata:
@@ -1807,7 +1935,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "14"
+    resourceVersion: "15"
   lastTimestamp: null
   message: Created YT object strawberry (*v1.Service)
   metadata:
