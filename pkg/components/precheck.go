@@ -26,10 +26,6 @@ func getYtClient(ytsaurusClient internalYtsaurusClient) (yt.Client, *ComponentSt
 // IsInstanceCountEqualYTSpec checks if the number of instances registered in YTsaurus
 // matches the expected instanceCount from the spec.
 func IsInstanceCountEqualYTSpec(ctx context.Context, ytClient yt.Client, componentType consts.ComponentType, expectedCount int) error {
-	if ytClient == nil {
-		return fmt.Errorf("YT client is not available")
-	}
-
 	cypressPath := consts.ComponentCypressPath(componentType)
 	var instances []string
 	err := ytClient.ListNode(ctx, ypath.Path(cypressPath), &instances, nil)

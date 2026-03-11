@@ -3,13 +3,13 @@ package components
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	corev1 "k8s.io/api/core/v1"
 
 	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yt"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
@@ -89,7 +89,7 @@ func (n *ExecNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) 
 		if status, err := dispatchComponentUpdate(ctx, n.ytsaurus, n, &n.component, n.server, dry); status != nil {
 			return *status, err
 		}
-		// Rolling update completed, re-enable scheduler jobs on all pods of this STS that were drained.
+		// Rolling update completed, re-enable scheduler jobs on all remaining pods of this STS.
 		if !dry {
 			n.enableSchedulerJobs(ctx)
 		}
@@ -123,65 +123,79 @@ func (n *ExecNode) UpdatePreCheck(ctx context.Context) ComponentStatus {
 }
 
 // drainExecNodeForRollingUpdate drains only the exec node pod that is about to be updated
+// and re-enables scheduler jobs on already-updated pods.
 func (n *ExecNode) drainExecNodeForRollingUpdate(ctx context.Context) ComponentStatus {
+	ytClient, status := getYtClient(n.ytsaurusClient)
+	if status != nil {
+		return *status
+	}
+
 	sts, ok := n.server.getRollingUpdateStatus(ctx)
 	if !ok || sts.partition == nil || *sts.partition == 0 {
 		return ComponentStatusReady()
 	}
 
-	podNameToDrain := fmt.Sprintf("%s-%d", n.GetLabeller().GetServerStatefulSetName(), *sts.partition-1)
+	partition := int(*sts.partition)
+	totalCount := int(sts.totalCount)
 
-	return n.setDisableSchedulerJobs(ctx, podNameToDrain)
-}
-
-func (n *ExecNode) enableSchedulerJobs(ctx context.Context) {
-	// Empty podNameToDrain means re-enable all instances without draining.
-	_ = n.setDisableSchedulerJobs(ctx, "")
-}
-
-// setDisableSchedulerJobs iterates over exec node instances in Cypress.
-// If podNameToDrain is non-empty, the matching instance is drained (disable_scheduler_jobs=true,
-// wait for user_slots=0)
-func (n *ExecNode) setDisableSchedulerJobs(ctx context.Context, podNameToDrain string) ComponentStatus {
-	ytClient, status := getYtClient(n.ytsaurusClient)
-	if status != nil {
-		return *status
-	}
-	stsName := n.GetLabeller().GetServerStatefulSetName()
-	cypressPath := consts.ComponentCypressPath(consts.ExecNodeType)
-
-	var instances []string
-	if err := ytClient.ListNode(ctx, ypath.Path(cypressPath), &instances, nil); err != nil {
-		return ComponentStatusBlocked("Failed to list exec node instances: %v", err)
+	// Drain the pod about to be updated (at partition-1).
+	if s := n.drainExecNode(ctx, ytClient, partition-1); s.SyncStatus != SyncStatusReady {
+		return s
 	}
 
-	for _, instance := range instances {
-		instancePath := fmt.Sprintf("%s/%s", cypressPath, instance)
-
-		if podNameToDrain != "" && strings.HasPrefix(instance, podNameToDrain+".") {
-			var userSlots int
-			if err := ytClient.GetNode(ctx, ypath.Path(fmt.Sprintf("%s/@resource_usage/user_slots", instancePath)), &userSlots, nil); err != nil {
-				return ComponentStatusBlocked("Failed to get user_slots for %s: %v", instance, err)
-			}
-
-			if userSlots == 0 {
-				continue
-			}
-
-			if err := ytClient.SetNode(ctx, ypath.Path(instancePath).Attr(consts.DisableSchedulerJobsAttr), true, nil); err != nil {
-				return ComponentStatusBlocked("Failed to set %s for %s: %v", consts.DisableSchedulerJobsAttr, instance, err)
-			}
-
-			return ComponentStatusBlocked("Exec node %s still has %d user slots in use", instance, userSlots)
-		}
-
-		// Re-enable scheduler jobs on other pods of this StatefulSet.
-		if strings.HasPrefix(instance, stsName+"-") {
-			if err := ytClient.SetNode(ctx, ypath.Path(instancePath).Attr(consts.DisableSchedulerJobsAttr), false, nil); err != nil {
-				return ComponentStatusBlocked("Failed to set %s for %s: %v", consts.DisableSchedulerJobsAttr, instance, err)
-			}
+	// Re-enable scheduler jobs on already-updated pods (ordinals >= partition).
+	for i := partition; i < totalCount; i++ {
+		if err := n.setExecNodeDisableSchedulerJobs(ctx, ytClient, i, false); err != nil {
+			return ComponentStatusBlocked("Failed to re-enable scheduler jobs for ordinal %d: %v", i, err)
 		}
 	}
 
 	return ComponentStatusReady()
+}
+
+// enableSchedulerJobs called after rolling update completion to clean up the last drained pod.
+func (n *ExecNode) enableSchedulerJobs(ctx context.Context) {
+	ytClient, status := getYtClient(n.ytsaurusClient)
+	if status != nil {
+		return
+	}
+
+	totalCount := int(n.server.getReplicaCount())
+	for i := range totalCount {
+		if err := n.setExecNodeDisableSchedulerJobs(ctx, ytClient, i, false); err != nil {
+			return
+		}
+	}
+}
+
+func (n *ExecNode) execNodeInstancePath(ordinal int) ypath.Path {
+	instanceAddress := n.GetLabeller().GetInstanceAddressPort(ordinal, consts.ExecNodeRPCPort)
+	return ypath.Path(fmt.Sprintf("%s/%s", consts.ComponentCypressPath(consts.ExecNodeType), instanceAddress))
+}
+
+// drainExecNode disables scheduler jobs on the exec node at the given ordinal
+// and checks whether its user_slots have reached 0.
+func (n *ExecNode) drainExecNode(ctx context.Context, ytClient yt.Client, ordinal int) ComponentStatus {
+	instancePath := n.execNodeInstancePath(ordinal)
+
+	var userSlots int
+	if err := ytClient.GetNode(ctx, ypath.Path(fmt.Sprintf("%s/@resource_usage/user_slots", instancePath)), &userSlots, nil); err != nil {
+		return ComponentStatusBlocked("Failed to get user_slots for %s: %v", instancePath, err)
+	}
+
+	if userSlots == 0 {
+		return ComponentStatusReady()
+	}
+
+	if err := n.setExecNodeDisableSchedulerJobs(ctx, ytClient, ordinal, true); err != nil {
+		return ComponentStatusBlocked("Failed to set %s for %s: %v", consts.DisableSchedulerJobsAttr, instancePath, err)
+	}
+
+	return ComponentStatusBlocked("Exec node %s still has %d user slots in use", instancePath, userSlots)
+}
+
+// setExecNodeDisableSchedulerJobs sets the disable_scheduler_jobs attribute on the exec node
+// at the given ordinal.
+func (n *ExecNode) setExecNodeDisableSchedulerJobs(ctx context.Context, ytClient yt.Client, ordinal int, value bool) error {
+	return ytClient.SetNode(ctx, n.execNodeInstancePath(ordinal).Attr(consts.DisableSchedulerJobsAttr), value, nil)
 }
