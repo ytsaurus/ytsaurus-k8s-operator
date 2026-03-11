@@ -36,7 +36,10 @@ helm uninstall ytsaurus-operator
 
 > **Note:** By default (`crds.keep: true`) CRDs are **not** removed when the chart is uninstalled.
 > This protects YTsaurus cluster data from accidental deletion.
-> To remove CRDs explicitly, run `kubectl delete crds -l app.kubernetes.io/managed-by=Helm`.
+> To remove CRDs explicitly, first list the CRDs created by this release, for example:
+> `kubectl get crds -l app.kubernetes.io/managed-by=Helm,app.kubernetes.io/instance=ytsaurus-operator`
+> and then delete the specific CRDs you want to remove by name, for example:
+> `kubectl delete crd <crd-name-1> <crd-name-2>`.
 
 ## Configuration
 
