@@ -5,7 +5,7 @@ Helm chart for the [YTsaurus Kubernetes operator](https://github.com/ytsaurus/yt
 ## Prerequisites
 
 - Kubernetes 1.29+
-- Helm 3.17+
+- Helm 3.18+
 - [cert-manager](https://cert-manager.io/) installed in the cluster (required for webhook TLS certificates)
 
 ## Installation
