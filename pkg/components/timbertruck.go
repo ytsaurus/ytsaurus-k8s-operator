@@ -45,7 +45,7 @@ func NewTimbertruck(
 		ytsaurusClient: yc,
 		ytsaurus:       ytsaurus,
 		timbertruckSecret: resources.NewStringSecret(
-			buildUserCredentialsSecretname(consts.TimbertruckUserName),
+			l.GetSecretNameForUser(consts.TimbertruckUserName),
 			l,
 			ytsaurus),
 	}
@@ -53,20 +53,8 @@ func NewTimbertruck(
 
 func (tt *Timbertruck) initTimbertruckUser(ctx context.Context, deliveryLoggers []ComponentLoggers) error {
 	login := consts.TimbertruckUserName
-	token, _ := tt.timbertruckSecret.GetValue(consts.TokenSecretKey)
 
 	ytClient := tt.ytsaurusClient.GetYtClient()
-
-	if ok, err := ytClient.NodeExists(ctx, ypath.Path("//sys/users/"+login), &yt.NodeExistsOptions{}); err != nil {
-		return fmt.Errorf("failed to check if timbertruck user exists: %w", err)
-	} else if ok {
-		return nil
-	}
-
-	err := CreateUser(ctx, ytClient, login, token, false)
-	if err != nil {
-		return fmt.Errorf("failed to create timbertruck user: %w", err)
-	}
 
 	logsDeliveryPaths := make(map[string]struct{})
 	for _, logger := range deliveryLoggers {
@@ -95,7 +83,7 @@ func (tt *Timbertruck) initTimbertruckUser(ctx context.Context, deliveryLoggers 
 			return fmt.Errorf("failed to set ACL for logs delivery path %s: %w", logsDeliveryPath, err)
 		}
 	}
-	err = ytClient.SetNode(ctx, ypath.Path("//sys/accounts/sys/@acl/end"), yt.ACE{
+	err := ytClient.SetNode(ctx, ypath.Path("//sys/accounts/sys/@acl/end"), yt.ACE{
 		Action:      "allow",
 		Subjects:    []string{login},
 		Permissions: []yt.Permission{"use"},
@@ -145,20 +133,8 @@ func (tt *Timbertruck) Sync(ctx context.Context, dry bool) (ComponentStatus, err
 		return tt.handleUpdatingState(ctx)
 	}
 
-	if tt.timbertruckSecret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			token := ytconfig.RandString(30)
-			sec := tt.timbertruckSecret.Build()
-			sec.StringData = map[string]string{
-				consts.TokenSecretKey: token,
-			}
-			err = tt.timbertruckSecret.Sync(ctx)
-		}
-		return ComponentStatusWaitingFor(tt.timbertruckSecret.Name()), err
-	}
-
-	if ytClientStatus := tt.ytsaurusClient.GetStatus(); !ytClientStatus.IsRunning() {
-		return ytClientStatus.Blocker(), nil
+	if status, err := syncUserToken(ctx, tt.ytsaurusClient, tt.timbertruckSecret, consts.TimbertruckUserName, "", dry); err != nil || !status.IsRunning() {
+		return status, err
 	}
 
 	if len(tt.tabletNodes) > 0 {
@@ -453,7 +429,7 @@ func checkAndAddTimbertruckToPodSpec(timbertruck *ytv1.TimbertruckSpec, podSpec 
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: buildUserCredentialsSecretname(consts.TimbertruckUserName),
+							Name: labeler.GetSecretNameForUser(consts.TimbertruckUserName),
 						},
 						Key: consts.TokenSecretKey,
 					},

@@ -107,7 +107,11 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 
 	var uploaderSecret *resources.StringSecret
 	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil {
-		uploaderSecret = resources.NewStringSecret(buildUserCredentialsSecretname(consts.HydraPersistenceUploaderUserName), l, ytsaurus)
+		uploaderSecret = resources.NewStringSecret(
+			l.GetSecretNameForUser(consts.HydraPersistenceUploaderUserName),
+			l,
+			ytsaurus,
+		)
 	}
 
 	return &Master{
