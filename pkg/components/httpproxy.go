@@ -170,13 +170,3 @@ func (hp *HttpProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error
 
 	return ComponentStatusReady(), err
 }
-
-// PrepareRollingBatch actually does nothing for http-proxies.
-// TODO: server should implement graceful shutdown
-func (hp *HttpProxy) PrepareRollingBatch(ctx context.Context, ordinals []int32) (bool, error) {
-	return true, nil
-}
-
-func (hp *HttpProxy) CompleteRollingBatch(ctx context.Context, ordinals []int32) (bool, error) {
-	return true, nil
-}

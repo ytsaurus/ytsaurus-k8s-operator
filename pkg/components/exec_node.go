@@ -7,6 +7,9 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
+	"go.ytsaurus.tech/yt/go/ypath"
+	"go.ytsaurus.tech/yt/go/yt"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -25,6 +28,7 @@ func NewExecNode(
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	spec ytv1.ExecNodesSpec,
+	yc internalYtsaurusClient,
 ) *ExecNode {
 	l := cfgen.GetComponentLabeller(consts.ExecNodeType, spec.Name)
 
@@ -67,10 +71,11 @@ func NewExecNode(
 		baseExecNode: baseExecNode{
 			serverComponent: newLocalServerComponent(l, ytsaurus, srv),
 
-			cfgen:         cfgen,
-			criConfig:     criConfig,
-			spec:          &spec,
-			sidecarConfig: sidecarConfig,
+			cfgen:          cfgen,
+			criConfig:      criConfig,
+			spec:           &spec,
+			sidecarConfig:  sidecarConfig,
+			ytsaurusClient: yc,
 		},
 		master: master,
 	}
@@ -80,12 +85,12 @@ func (n *ExecNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	var err error
 
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(n.ytsaurus, n) {
-			if status, err := handleBulkUpdatingClusterState(ctx, n.ytsaurus, n, &n.component, n.server, dry); status != nil {
-				return *status, err
-			}
-		} else {
-			return ComponentStatusReadyAfter("Not updating component"), nil
+		if status, err := dispatchComponentUpdate(ctx, n.ytsaurus, n, &n.component, n.server, dry); status != nil {
+			return *status, err
+		}
+		// Rolling update completed, re-enable scheduler jobs on all remaining pods of this STS.
+		if !dry {
+			n.enableSchedulerJobs(ctx)
 		}
 	}
 
@@ -102,4 +107,101 @@ func (n *ExecNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) 
 	}
 
 	return ComponentStatusReady(), err
+}
+
+func (n *ExecNode) UpdatePreCheck(ctx context.Context) ComponentStatus {
+	if n.ytsaurusClient == nil {
+		return ComponentStatusBlocked("YtsaurusClient component is not available")
+	}
+	if n.ytsaurusClient.GetYtClient() == nil {
+		return ComponentStatusBlocked("YT client is not available")
+	}
+
+	strategy := getComponentUpdateStrategy(n.ytsaurus, n.GetType(), n.GetShortName())
+	if strategy == ytv1.ComponentUpdateModeTypeRollingUpdate {
+		return n.drainExecNodeForRollingUpdate(ctx)
+	}
+	return ComponentStatusReady()
+}
+
+// drainExecNodeForRollingUpdate drains only the exec node pod that is about to be updated
+// and re-enables scheduler jobs on already-updated pods.
+func (n *ExecNode) drainExecNodeForRollingUpdate(ctx context.Context) ComponentStatus {
+	ytClient := n.ytsaurusClient.GetYtClient()
+	if ytClient == nil {
+		return ComponentStatusBlocked("YT client is not available")
+	}
+
+	sts, ok := n.server.getRollingUpdateStatus(ctx)
+	if !ok || sts.partition == nil || *sts.partition == 0 {
+		return ComponentStatusReady()
+	}
+
+	partition := int(*sts.partition)
+	totalCount := int(sts.totalCount)
+
+	// Drain the pod about to be updated (at partition-1).
+	if s := n.drainExecNode(ctx, ytClient, partition-1); s.SyncStatus != SyncStatusReady {
+		return s
+	}
+
+	// Re-enable scheduler jobs on already-updated pods (ordinals >= partition).
+	for i := partition; i < totalCount; i++ {
+		if err := n.setExecNodeDisableSchedulerJobs(ctx, ytClient, i, false); err != nil {
+			return ComponentStatusBlocked("Failed to re-enable scheduler jobs for ordinal %d: %v", i, err)
+		}
+	}
+
+	return ComponentStatusReady()
+}
+
+// enableSchedulerJobs called after rolling update completion to clean up the last drained pod.
+func (n *ExecNode) enableSchedulerJobs(ctx context.Context) {
+	if n.ytsaurusClient == nil {
+		return
+	}
+	ytClient := n.ytsaurusClient.GetYtClient()
+	if ytClient == nil {
+		return
+	}
+
+	totalCount := int(n.server.getReplicaCount())
+	for i := range totalCount {
+		if err := n.setExecNodeDisableSchedulerJobs(ctx, ytClient, i, false); err != nil {
+			return
+		}
+	}
+}
+
+func (n *ExecNode) execNodeInstancePath(ordinal int) ypath.Path {
+	instanceAddress := n.GetLabeller().GetInstanceAddressPort(ordinal, consts.ExecNodeRPCPort)
+	return ypath.Path(consts.ComponentCypressPath(consts.ExecNodeType)).Child(instanceAddress)
+}
+
+// drainExecNode disables scheduler jobs on the exec node at the given ordinal
+// and checks whether its user_slots have reached 0.
+func (n *ExecNode) drainExecNode(ctx context.Context, ytClient yt.Client, ordinal int) ComponentStatus {
+	instancePath := n.execNodeInstancePath(ordinal)
+
+	userSlotsPath := instancePath.Attr("resource_usage").Child("user_slots")
+	var userSlots int
+	if err := ytClient.GetNode(ctx, userSlotsPath, &userSlots, nil); err != nil {
+		return ComponentStatusBlocked("Failed to get user_slots for %s: %v", instancePath, err)
+	}
+
+	if userSlots == 0 {
+		return ComponentStatusReady()
+	}
+
+	if err := n.setExecNodeDisableSchedulerJobs(ctx, ytClient, ordinal, true); err != nil {
+		return ComponentStatusBlocked("Failed to set %s for %s: %v", consts.DisableSchedulerJobsAttr, instancePath, err)
+	}
+
+	return ComponentStatusBlocked("Exec node %s still has %d user slots in use", instancePath, userSlots)
+}
+
+// setExecNodeDisableSchedulerJobs sets the disable_scheduler_jobs attribute on the exec node
+// at the given ordinal.
+func (n *ExecNode) setExecNodeDisableSchedulerJobs(ctx context.Context, ytClient yt.Client, ordinal int, value bool) error {
+	return ytClient.SetNode(ctx, n.execNodeInstancePath(ordinal).Attr(consts.DisableSchedulerJobsAttr), value, nil)
 }

@@ -22,9 +22,10 @@ import (
 type baseExecNode struct {
 	serverComponent
 
-	cfgen     *ytconfig.NodeGenerator
-	criConfig *ytconfig.CRIConfigGenerator
-	spec      *ytv1.ExecNodesSpec
+	cfgen          *ytconfig.NodeGenerator
+	criConfig      *ytconfig.CRIConfigGenerator
+	spec           *ytv1.ExecNodesSpec
+	ytsaurusClient internalYtsaurusClient
 
 	sidecarConfig *ConfigMapBuilder
 }
