@@ -41,11 +41,13 @@ type YtsaurusImages struct {
 	Strawberry   string
 	Chyt         string
 	QueryTracker string
+	UI           string
 }
 
 // Images are should be set by TEST_ENV include in Makefile
 var (
 	YtsaurusJobImage    = GetenvOr("YTSAURUS_JOB_IMAGE", "mirror.gcr.io/library/python:3.12-slim")
+	YtsaurusUIImage     = GetenvOr("YTSAURUS_UI_IMAGE", "ghcr.io/ytsaurus/ui:stable")
 	YtsaurusRegistry    = GetenvOr("YTSAURUS_REGISTRY", "ghcr.io/ytsaurus")
 	YtsaurusPastVersion = os.Getenv("TEST_YTSAURUS_PAST_VERSION") // CURR-2
 	YtsaurusPrevVersion = os.Getenv("TEST_YTSAURUS_PREV_VERSION") // CURR-1
@@ -144,6 +146,7 @@ func init() {
 			Strawberry:   choose("STRAWBERRY").Image,
 			Chyt:         choose("CHYT").Image,
 			QueryTracker: queryTracker.Image,
+			UI:           YtsaurusUIImage,
 		}
 	}
 
@@ -724,6 +727,13 @@ func (b *YtsaurusBuilder) CreateOffshoreInstanceSpec(instanceCount int32) ytv1.I
 func (b *YtsaurusBuilder) WithStrawberryController() {
 	b.Ytsaurus.Spec.StrawberryController = &ytv1.StrawberryControllerSpec{
 		Image: ptr.To(b.Images.Strawberry),
+	}
+}
+
+func (b *YtsaurusBuilder) WithUI() {
+	b.Ytsaurus.Spec.UI = &ytv1.UISpec{
+		Image:         ptr.To(b.Images.UI),
+		InstanceCount: 0, // FIXME Add MinReadyInstanceCount
 	}
 }
 

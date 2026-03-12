@@ -1,0 +1,160 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    extra-pod-annotation: "true"
+    ytsaurus.tech/instance-hash: <censored>
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
+  generation: 1
+  labels:
+    app.kubernetes.io/component: yt-ui
+    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
+    app.kubernetes.io/name: yt-ui
+    app.kubernetes.io/part-of: yt-test-ytsaurus
+    yt_component: test-ytsaurus-yt-ui
+    ytsaurus.tech/cluster-name: test-ytsaurus
+  name: ytsaurus-ui-deployment
+  namespace: ytsaurus-components
+  ownerReferences:
+  - apiVersion: cluster.ytsaurus.tech/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Ytsaurus
+    name: test-ytsaurus
+    uid: ""
+  resourceVersion: "1"
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      yt_component: test-ytsaurus-yt-ui
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        extra-pod-annotation: "true"
+        ytsaurus.tech/config-hash: <censored>
+      creationTimestamp: null
+      labels:
+        app.kubernetes.io/component: yt-ui
+        app.kubernetes.io/managed-by: ytsaurus-k8s-operator
+        app.kubernetes.io/name: yt-ui
+        app.kubernetes.io/part-of: yt-test-ytsaurus
+        yt_component: test-ytsaurus-yt-ui
+        ytsaurus.tech/cluster-name: test-ytsaurus
+    spec:
+      containers:
+      - command:
+        - supervisord
+        env:
+        - name: YT_AUTH_CLUSTER_ID
+          value: test-ytsaurus
+        - name: ALLOW_PASSWORD_AUTH
+          value: "1"
+        - name: APP_INSTALLATION
+          value: custom
+        - name: NODE_EXTRA_CA_CERTS
+          value: /etc/ssl/certs/ca-certificates.crt
+        - name: K8S_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: K8S_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: K8S_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: SSL_CERT_FILE
+          value: /etc/ssl/certs/ca-certificates.crt
+        - name: SSL_CERT_DIR
+          value: /etc/ssl/certs
+        - name: REQUESTS_CA_BUNDLE
+          value: /etc/ssl/certs/ca-certificates.crt
+        image: ghcr.io/ytsaurus/ui:stable
+        name: yt-ui
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 80
+        resources: {}
+        volumeMounts:
+        - mountPath: /opt/app/clusters-config.json
+          name: config
+          readOnly: true
+          subPath: clusters-config.json
+        - mountPath: /opt/app/dist/server/configs/custom/common.js
+          name: config
+          readOnly: true
+          subPath: common.js
+        - mountPath: /vault
+          name: vault
+          readOnly: true
+        - mountPath: /opt/app/secrets
+          name: secrets
+        - mountPath: /etc/ssl/certs
+          name: ca-root-bundle
+          readOnly: true
+      imagePullSecrets:
+      - name: global-image-pull-secrets
+      initContainers:
+      - command:
+        - bash
+        - -c
+        - cp /vault/yt-interface-secret.json /opt/app/secrets
+        env:
+        - name: K8S_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: K8S_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: K8S_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: ghcr.io/ytsaurus/ui:stable
+        name: prepare-secret
+        resources: {}
+        volumeMounts:
+        - mountPath: /opt/app/clusters-config.json
+          name: config
+          readOnly: true
+          subPath: clusters-config.json
+        - mountPath: /opt/app/dist/server/configs/custom/common.js
+          name: config
+          readOnly: true
+          subPath: common.js
+        - mountPath: /vault
+          name: vault
+          readOnly: true
+        - mountPath: /opt/app/secrets
+          name: secrets
+      volumes:
+      - configMap:
+          name: yt-ui-config
+        name: config
+      - name: vault
+        secret:
+          secretName: yt-ui-secret
+      - emptyDir:
+          sizeLimit: 1Mi
+        name: secrets
+      - configMap:
+          items:
+          - key: ca-certificates.crt
+            path: ca-certificates.crt
+          - key: ca-certificates.jks
+            path: java/cacerts
+          name: ytsaurus-dev-ca-root-bundle
+        name: ca-root-bundle
+status: {}
