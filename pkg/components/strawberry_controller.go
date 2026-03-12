@@ -86,8 +86,7 @@ func NewStrawberryController(
 		},
 		"strawberry-controller",
 		"strawberry",
-		resource.Spec.StrawberryController.Tolerations,
-		resource.Spec.StrawberryController.NodeSelector,
+		&resource.Spec.StrawberryController.PodSpec,
 	)
 
 	return &StrawberryController{

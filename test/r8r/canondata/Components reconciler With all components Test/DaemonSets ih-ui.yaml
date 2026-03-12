@@ -70,7 +70,11 @@ spec:
       enableServiceLinks: false
       imagePullSecrets:
       - name: global-image-pull-secrets
+      nodeSelector:
+        global-node-selector: "true"
       terminationGracePeriodSeconds: 0
+      tolerations:
+      - key: global-toleration
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 100

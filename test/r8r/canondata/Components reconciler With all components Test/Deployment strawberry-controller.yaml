@@ -34,6 +34,7 @@ spec:
     metadata:
       annotations:
         extra-pod-annotation: "true"
+        global-pod-annotation: "true"
         ytsaurus.tech/config-hash: <censored>
       creationTimestamp: null
       labels:
@@ -41,6 +42,7 @@ spec:
         app.kubernetes.io/managed-by: ytsaurus-k8s-operator
         app.kubernetes.io/name: yt-strawberry-controller
         app.kubernetes.io/part-of: yt-test-ytsaurus
+        global-pod-label: "true"
         yt_component: test-ytsaurus-yt-strawberry-controller
         ytsaurus.tech/cluster-name: test-ytsaurus
     spec:
@@ -97,8 +99,19 @@ spec:
         - mountPath: /tls/bus_secret
           name: bus-secret
           readOnly: true
+      dnsConfig:
+        options:
+        - name: global-dns-option
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
       imagePullSecrets:
       - name: global-image-pull-secrets
+      nodeSelector:
+        global-node-selector: "true"
+      runtimeClassName: global-runtime-class
+      setHostnameAsFQDN: false
+      tolerations:
+      - key: global-toleration
       volumes:
       - configMap:
           name: yt-strawberry-controller-config
