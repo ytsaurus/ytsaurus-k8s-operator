@@ -64,14 +64,9 @@ data:
 
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
     export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"
-    /usr/bin/yt create user --attributes '{name="robot-strawberry-controller"}' --ignore-existing
-    /usr/bin/yt create map_node '//sys/cypress_tokens/edd1d6c8a1c2258d65fa2d9e2cfe28eafe2a2a87da9169d1fb42fa1426f63ce1' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/edd1d6c8a1c2258d65fa2d9e2cfe28eafe2a2a87da9169d1fb42fa1426f63ce1/@user' 'robot-strawberry-controller'
-    /usr/bin/yt add-member robot-strawberry-controller superusers || true
-    if [ $(/usr/bin/yt exists //sys/@ui_config) = 'false' ]; then
-    yt set //sys/@ui_config '{}'
-    fi
-    yt set //sys/@ui_config/chyt_controller_base_url '"http://strawberry:80"'
+    /usr/bin/yt create user --attributes '{name="robot-ui"}' --ignore-existing
+    /usr/bin/yt create map_node '//sys/cypress_tokens/dcd89cc6efae0df4e42a9941000a5d1f4704e17162e02fbbae2e176989421ea4' --ignore-existing
+    /usr/bin/yt set '//sys/cypress_tokens/dcd89cc6efae0df4e42a9941000a5d1f4704e17162e02fbbae2e176989421ea4/@user' 'robot-ui'
 kind: ConfigMap
 metadata:
   annotations:
@@ -81,13 +76,13 @@ metadata:
   creationTimestamp: null
   generation: 1
   labels:
-    app.kubernetes.io/component: yt-strawberry-controller
+    app.kubernetes.io/component: yt-ui
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-strawberry-controller
+    app.kubernetes.io/name: yt-ui
     app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-strawberry-controller
+    yt_component: test-ytsaurus-yt-ui
     ytsaurus.tech/cluster-name: test-ytsaurus
-  name: user-yt-strawberry-controller-init-job-config
+  name: default-yt-ui-init-job-config
   namespace: ytsaurus-components
   ownerReferences:
   - apiVersion: cluster.ytsaurus.tech/v1
