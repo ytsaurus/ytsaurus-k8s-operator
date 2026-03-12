@@ -12,8 +12,6 @@ data:
             };
             rules=[
             ];
-            "flush_period"=0;
-            "enable_anchor_profiling"=%false;
         };
         driver={
             "api_version"=4;
@@ -91,7 +89,7 @@ data:
                 };
             ];
             "flush_period"=3000;
-            "enable_anchor_profiling"=%false;
+            "enable_anchor_profiling"=%true;
         };
         "monitoring_port"=10010;
         "rpc_port"=9010;
