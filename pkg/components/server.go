@@ -311,8 +311,8 @@ func (s *serverImpl) getImageHeaterTarget() *ImageHeaterTarget {
 	return &ImageHeaterTarget{
 		Images:           images,
 		ImagePullSecrets: s.commonSpec.ImagePullSecrets,
-		NodeSelector:     s.instanceSpec.NodeSelector,
-		Tolerations:      s.instanceSpec.Tolerations,
+		NodeSelector:     getNodeSelectorWithDefault(s.instanceSpec.NodeSelector, s.commonPodSpec.NodeSelector),
+		Tolerations:      getTolerationsWithDefault(s.instanceSpec.Tolerations, s.commonPodSpec.Tolerations),
 		NodeAffinity:     ptr.Deref(s.instanceSpec.Affinity, corev1.Affinity{}).NodeAffinity,
 	}
 }
