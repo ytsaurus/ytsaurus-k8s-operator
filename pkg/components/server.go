@@ -123,9 +123,13 @@ func newServerConfigured(
 		transportSpec = commonSpec.NativeTransport
 	}
 
-	clusterFeatures := ptr.Deref(commonSpec.ClusterFeatures, ytv1.ClusterFeatures{})
-	for _, logger := range instanceSpec.Loggers {
-		logger.EnableAnchorProfiling = ptr.To(ptr.Deref(logger.EnableAnchorProfiling, clusterFeatures.EnableAnchorProfilingByDefault))
+	// FIXME(khlebnikov): refactor this someday
+	if ptr.Deref(commonSpec.ClusterFeatures, ytv1.ClusterFeatures{}).EnableAnchorProfilingByDefault {
+		for i := range instanceSpec.Loggers {
+			if instanceSpec.Loggers[i].EnableAnchorProfiling == nil {
+				instanceSpec.Loggers[i].EnableAnchorProfiling = ptr.To(true)
+			}
+		}
 	}
 
 	if transportSpec != nil {

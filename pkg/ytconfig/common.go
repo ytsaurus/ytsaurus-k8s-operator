@@ -3,6 +3,7 @@ package ytconfig
 import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"go.ytsaurus.tech/yt/go/yson"
+	"k8s.io/utils/ptr"
 )
 
 type AddressList struct {
@@ -192,6 +193,10 @@ func createLogging(spec *ytv1.InstanceSpec, componentName string, defaultLoggerS
 	if len(spec.Loggers) > 0 {
 		for _, loggerSpec := range spec.Loggers {
 			loggingBuilder.addLogger(loggerSpec)
+			// FIXME(khlebnikov): wrong level but is not worth fixing for now
+			if ptr.Deref(loggerSpec.EnableAnchorProfiling, false) {
+				loggingBuilder.logging.EnableAnchorProfiling = true
+			}
 		}
 	} else {
 		for _, defaultLoggerSpec := range defaultLoggerSpecs {

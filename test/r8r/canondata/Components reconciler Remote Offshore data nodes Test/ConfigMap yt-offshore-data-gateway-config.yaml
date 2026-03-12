@@ -32,7 +32,6 @@ data:
                 };
             ];
             "flush_period"=3000;
-            "enable_anchor_profiling"=%false;
         };
         "monitoring_port"=10032;
         "rpc_port"=9032;

@@ -408,6 +408,8 @@ func (b *YtsaurusBuilder) WithAllClusterFeatures() {
 		HTTPProxyHaveHTTPSAddress: true,
 		EnableImageHeater:         true,
 		SecureClusterTransports:   false, // Turned off to increase coverage.
+
+		EnableAnchorProfilingByDefault: true,
 	}
 }
 
