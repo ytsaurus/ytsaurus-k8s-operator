@@ -1,5 +1,5 @@
 apiVersion: v1
-kind: Secret
+kind: Service
 metadata:
   annotations:
     extra-pod-annotation: "true"
@@ -7,13 +7,13 @@ metadata:
   creationTimestamp: null
   generation: 1
   labels:
-    app.kubernetes.io/component: yt-strawberry-controller
+    app.kubernetes.io/component: yt-ui
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-strawberry-controller
+    app.kubernetes.io/name: yt-ui
     app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-strawberry-controller
+    yt_component: test-ytsaurus-yt-ui
     ytsaurus.tech/cluster-name: test-ytsaurus
-  name: yt-strawberry-controller-secret
+  name: ytsaurus-ui
   namespace: ytsaurus-components
   ownerReferences:
   - apiVersion: cluster.ytsaurus.tech/v1
@@ -23,6 +23,12 @@ metadata:
     name: test-ytsaurus
     uid: ""
   resourceVersion: "1"
-stringData:
-  YT_TOKEN: iF9pLLYH2gChHBxwceeWotwtwlpbdLLhKXBeJz8F
-type: Opaque
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+  selector:
+    yt_component: test-ytsaurus-yt-ui
+status:
+  loadBalancer: {}
