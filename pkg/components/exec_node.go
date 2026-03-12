@@ -2,7 +2,6 @@ package components
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -111,8 +110,11 @@ func (n *ExecNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) 
 }
 
 func (n *ExecNode) UpdatePreCheck(ctx context.Context) ComponentStatus {
-	if _, status := getYtClient(n.ytsaurusClient); status != nil {
-		return *status
+	if n.ytsaurusClient == nil {
+		return ComponentStatusBlocked("YtsaurusClient component is not available")
+	}
+	if n.ytsaurusClient.GetYtClient() == nil {
+		return ComponentStatusBlocked("YT client is not available")
 	}
 
 	strategy := getComponentUpdateStrategy(n.ytsaurus, n.GetType(), n.GetShortName())
@@ -125,9 +127,9 @@ func (n *ExecNode) UpdatePreCheck(ctx context.Context) ComponentStatus {
 // drainExecNodeForRollingUpdate drains only the exec node pod that is about to be updated
 // and re-enables scheduler jobs on already-updated pods.
 func (n *ExecNode) drainExecNodeForRollingUpdate(ctx context.Context) ComponentStatus {
-	ytClient, status := getYtClient(n.ytsaurusClient)
-	if status != nil {
-		return *status
+	ytClient := n.ytsaurusClient.GetYtClient()
+	if ytClient == nil {
+		return ComponentStatusBlocked("YT client is not available")
 	}
 
 	sts, ok := n.server.getRollingUpdateStatus(ctx)
@@ -155,8 +157,11 @@ func (n *ExecNode) drainExecNodeForRollingUpdate(ctx context.Context) ComponentS
 
 // enableSchedulerJobs called after rolling update completion to clean up the last drained pod.
 func (n *ExecNode) enableSchedulerJobs(ctx context.Context) {
-	ytClient, status := getYtClient(n.ytsaurusClient)
-	if status != nil {
+	if n.ytsaurusClient == nil {
+		return
+	}
+	ytClient := n.ytsaurusClient.GetYtClient()
+	if ytClient == nil {
 		return
 	}
 
@@ -170,7 +175,7 @@ func (n *ExecNode) enableSchedulerJobs(ctx context.Context) {
 
 func (n *ExecNode) execNodeInstancePath(ordinal int) ypath.Path {
 	instanceAddress := n.GetLabeller().GetInstanceAddressPort(ordinal, consts.ExecNodeRPCPort)
-	return ypath.Path(fmt.Sprintf("%s/%s", consts.ComponentCypressPath(consts.ExecNodeType), instanceAddress))
+	return ypath.Path(consts.ComponentCypressPath(consts.ExecNodeType)).Child(instanceAddress)
 }
 
 // drainExecNode disables scheduler jobs on the exec node at the given ordinal
@@ -178,8 +183,9 @@ func (n *ExecNode) execNodeInstancePath(ordinal int) ypath.Path {
 func (n *ExecNode) drainExecNode(ctx context.Context, ytClient yt.Client, ordinal int) ComponentStatus {
 	instancePath := n.execNodeInstancePath(ordinal)
 
+	userSlotsPath := instancePath.Attr("resource_usage").Child("user_slots")
 	var userSlots int
-	if err := ytClient.GetNode(ctx, ypath.Path(fmt.Sprintf("%s/@resource_usage/user_slots", instancePath)), &userSlots, nil); err != nil {
+	if err := ytClient.GetNode(ctx, userSlotsPath, &userSlots, nil); err != nil {
 		return ComponentStatusBlocked("Failed to get user_slots for %s: %v", instancePath, err)
 	}
 

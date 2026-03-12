@@ -94,9 +94,13 @@ type ControllerAgentsWithMaintenance struct {
 }
 
 func (ca *ControllerAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {
-	ytClient, status := getYtClient(ca.ytsaurusClient)
-	if status != nil {
-		return *status
+	if ca.ytsaurusClient == nil {
+		return ComponentStatusBlocked("YtsaurusClient component is not available")
+	}
+
+	ytClient := ca.ytsaurusClient.GetYtClient()
+	if ytClient == nil {
+		return ComponentStatusBlocked("YT client is not available")
 	}
 
 	// Check that the number of instances in YT matches the expected instanceCount

@@ -9,23 +9,13 @@ import (
 	"go.ytsaurus.tech/yt/go/yt"
 )
 
-// getYtClient extracts the yt.Client from an internalYtsaurusClient
-func getYtClient(ytsaurusClient internalYtsaurusClient) (yt.Client, *ComponentStatus) {
-	if ytsaurusClient == nil {
-		s := ComponentStatusBlocked("YtsaurusClient component is not available")
-		return nil, &s
-	}
-	ytClient := ytsaurusClient.GetYtClient()
-	if ytClient == nil {
-		s := ComponentStatusBlocked("YT client is not available")
-		return nil, &s
-	}
-	return ytClient, nil
-}
-
 // IsInstanceCountEqualYTSpec checks if the number of instances registered in YTsaurus
 // matches the expected instanceCount from the spec.
 func IsInstanceCountEqualYTSpec(ctx context.Context, ytClient yt.Client, componentType consts.ComponentType, expectedCount int) error {
+	if ytClient == nil {
+		return fmt.Errorf("YT client is not available")
+	}
+
 	cypressPath := consts.ComponentCypressPath(componentType)
 	var instances []string
 	err := ytClient.ListNode(ctx, ypath.Path(cypressPath), &instances, nil)
