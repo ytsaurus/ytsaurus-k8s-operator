@@ -50,6 +50,16 @@ func ValidateVersionConstraint(constraintStr string) *field.Error {
 
 type UniqueValues[T comparable] map[T]*field.Path
 
+func (u UniqueValues[T]) Count(value ...T) int {
+	count := 0
+	for _, v := range value {
+		if _, found := u[v]; found {
+			count += 1
+		}
+	}
+	return count
+}
+
 func (u UniqueValues[T]) Insert(value T, path *field.Path) field.ErrorList {
 	if dup, found := u[value]; found {
 		err := field.Duplicate(path, value)
