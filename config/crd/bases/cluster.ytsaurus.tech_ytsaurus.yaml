@@ -18253,6 +18253,10 @@ spec:
                         type: object
                     type: object
                   cellTag:
+                    description: Cell tag is an immutable identifier for particular
+                      cell of YTsaurus cluster.
+                    maximum: 61440
+                    minimum: 1
                     type: integer
                   dnsConfig:
                     description: DNSConfig allows customizing the DNS settings.
@@ -27685,6 +27689,10 @@ spec:
                           type: object
                       type: object
                     cellTag:
+                      description: Cell tag is an immutable identifier for particular
+                        cell of YTsaurus cluster.
+                      maximum: 61440
+                      minimum: 1
                       type: integer
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings.

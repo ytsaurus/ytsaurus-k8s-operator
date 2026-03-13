@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func generateCellID(cellTag int16) string {
+func generateCellID(cellTag uint16) string {
 	cellID, err := uuid.NewRandomFromReader(strings.NewReader("ytsaurus-kubernetes-operator"))
 	if err != nil {
 		panic(err)

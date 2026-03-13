@@ -6,7 +6,7 @@ spec:
   discovery:
     resources: {}
   primaryMasters:
-    cellTag: 0
+    cellTag: 1
     instanceCount: 1
     locations:
     - locationType: MasterChangelogs
