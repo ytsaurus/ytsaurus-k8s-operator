@@ -43,6 +43,23 @@ data:
             };
             {
                 op=replace;
+                path="/secondary_masters/0/addresses";
+                value=[
+                    "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/0/peers";
+                value=[
+                    {
+                        address="ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+            };
+            {
+                op=replace;
                 path="/yql_agent/stages/production/channel/addresses";
                 value=[
                     "yqla-0.yql-agents.ytsaurus-components.svc.cluster.local:9019";
@@ -83,6 +100,9 @@ data:
     {
     }
   yt-image-heater-cypress-patch.yson: |-
+    {
+    }
+  yt-master-2-cypress-patch.yson: |-
     {
     }
   yt-master-cache-cypress-patch.yson: |-
@@ -128,6 +148,23 @@ data:
                     "verification_mode"=full;
                     "peer_alternative_host_name"="test-ytsaurus";
                 };
+            };
+            {
+                op=replace;
+                path="/secondary_masters/0/addresses";
+                value=[
+                    "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/0/peers";
+                value=[
+                    {
+                        address="ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
             };
         ];
     }
