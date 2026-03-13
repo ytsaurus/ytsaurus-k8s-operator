@@ -6,6 +6,7 @@ import (
 
 const (
 	YTClusterLabelName = "ytsaurus.tech/cluster-name"
+	YTCellIDLabelName  = "ytsaurus.tech/cell-id"
 
 	YTComponentLabelName = "yt_component"
 	YTMetricsLabelName   = "yt_metrics"

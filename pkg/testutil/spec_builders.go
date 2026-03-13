@@ -299,6 +299,12 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 	}
 }
 
+func (b *YtsaurusBuilder) WithSecondaryMasters() {
+	spec := b.Ytsaurus.Spec.PrimaryMasters
+	spec.CellTag += uint16(len(b.Ytsaurus.Spec.SecondaryMasters)) + 1 //nolint:gosec //no overflow
+	b.Ytsaurus.Spec.SecondaryMasters = append(b.Ytsaurus.Spec.SecondaryMasters, spec)
+}
+
 func (b *YtsaurusBuilder) WithHydraPersistenceUploader() {
 	b.Ytsaurus.Spec.PrimaryMasters.HydraPersistenceUploader = &ytv1.HydraPersistenceUploaderSpec{
 		Image: ptr.To(b.Images.Sidecars),

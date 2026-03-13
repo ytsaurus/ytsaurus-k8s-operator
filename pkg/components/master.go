@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"strings"
 
+	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
@@ -26,6 +28,8 @@ const (
 type Master struct {
 	serverComponent
 
+	mastersSpec *ytv1.MastersSpec
+
 	cfgen *ytconfig.Generator
 
 	initJob          *InitJob
@@ -33,9 +37,11 @@ type Master struct {
 	adminCredentials corev1.Secret
 
 	uploaderSecret *resources.StringSecret
+
+	secondaryMasters []*Master
 }
 
-func buildMasterOptions(resource *ytv1.Ytsaurus) []Option {
+func buildMasterOptions(mastersSpec *ytv1.MastersSpec) []Option {
 	options := []Option{
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
@@ -45,37 +51,40 @@ func buildMasterOptions(resource *ytv1.Ytsaurus) []Option {
 		WithReadinessByContainer(consts.YTServerContainerName),
 	}
 
-	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil && resource.Spec.PrimaryMasters.HydraPersistenceUploader.Image != nil {
+	if mastersSpec.HydraPersistenceUploader != nil && mastersSpec.HydraPersistenceUploader.Image != nil {
 		options = append(options, WithSidecarImage(
 			consts.HydraPersistenceUploaderContainerName,
-			*resource.Spec.PrimaryMasters.HydraPersistenceUploader.Image,
+			*mastersSpec.HydraPersistenceUploader.Image,
 		))
 	}
 
 	checkAndAddTimbertruckToServerOptions(
 		&options,
-		resource.Spec.PrimaryMasters.Timbertruck,
-		resource.Spec.PrimaryMasters.InstanceSpec.StructuredLoggers,
+		mastersSpec.Timbertruck,
+		mastersSpec.InstanceSpec.StructuredLoggers,
 	)
 
 	return options
 }
 
-func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
-	l := cfgen.GetComponentLabeller(consts.MasterType, "")
-
-	resource := ytsaurus.GetResource()
+func NewMaster(
+	cfgen *ytconfig.Generator,
+	ytsaurus *apiproxy.Ytsaurus,
+	mastersSpec *ytv1.MastersSpec,
+	secondaryMasters []*Master,
+) *Master {
+	l := cfgen.GetMasterLabeller(mastersSpec.CellTag)
 
 	srv := newServer(
 		l,
 		ytsaurus,
-		&resource.Spec.PrimaryMasters.InstanceSpec,
+		&mastersSpec.InstanceSpec,
 		"/usr/bin/ytserver-master",
 		[]ConfigGenerator{
 			{
 				"ytserver-master.yson",
 				ConfigFormatYson,
-				func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
+				func() ([]byte, error) { return cfgen.GetMasterConfig(mastersSpec) },
 			},
 			{
 				consts.ClientConfigFileName,
@@ -84,38 +93,44 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 			},
 		},
 		consts.MasterMonitoringPort,
-		buildMasterOptions(resource)...,
+		buildMasterOptions(mastersSpec)...,
 	)
 
-	initJob := NewInitJobForYtsaurus(
-		l,
-		ytsaurus,
-		"default",
-		consts.ClientConfigFileName,
-		cfgen.GetNativeClientConfig,
-		&resource.Spec.PrimaryMasters.InstanceSpec,
-	)
+	var initJob, exitReadOnlyJob *InitJob
 
-	exitReadOnlyJob := NewInitJobForYtsaurus(
-		l,
-		ytsaurus,
-		"exit-read-only",
-		consts.ClientConfigFileName,
-		cfgen.GetNativeClientConfig,
-		&resource.Spec.PrimaryMasters.InstanceSpec,
-	)
+	if l.InstanceGroup == "" {
+		initJob = NewInitJobForYtsaurus(
+			l,
+			ytsaurus,
+			"default",
+			consts.ClientConfigFileName,
+			cfgen.GetNativeClientConfig,
+			&mastersSpec.InstanceSpec,
+		)
+
+		exitReadOnlyJob = NewInitJobForYtsaurus(
+			l,
+			ytsaurus,
+			"exit-read-only",
+			consts.ClientConfigFileName,
+			cfgen.GetNativeClientConfig,
+			&mastersSpec.InstanceSpec,
+		)
+	}
 
 	var uploaderSecret *resources.StringSecret
-	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil {
+	if mastersSpec.HydraPersistenceUploader != nil {
 		uploaderSecret = resources.NewStringSecret(buildUserCredentialsSecretname(consts.HydraPersistenceUploaderUserName), l, ytsaurus)
 	}
 
 	return &Master{
-		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:           cfgen,
-		initJob:         initJob,
-		exitReadOnlyJob: exitReadOnlyJob,
-		uploaderSecret:  uploaderSecret,
+		serverComponent:  newLocalServerComponent(l, ytsaurus, srv),
+		mastersSpec:      mastersSpec,
+		cfgen:            cfgen,
+		initJob:          initJob,
+		exitReadOnlyJob:  exitReadOnlyJob,
+		uploaderSecret:   uploaderSecret,
+		secondaryMasters: secondaryMasters,
 	}
 }
 
@@ -204,7 +219,7 @@ func (m *Master) initUploaderUser() (string, error) {
 		appendPathAclCommand,
 	)
 	return RunIfCondition(
-		fmt.Sprintf("'%v' = 'true'", m.ytsaurus.GetResource().Spec.PrimaryMasters.HydraPersistenceUploader != nil),
+		fmt.Sprintf("'%v' = 'true'", m.mastersSpec.HydraPersistenceUploader != nil),
 		RunIfNonexistent(fmt.Sprintf("//sys/users/%s", login), commands...),
 	), nil
 }
@@ -462,46 +477,55 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 func (m *Master) doServerSync(ctx context.Context) error {
 	statefulSet := m.server.buildStatefulSet()
 	podSpec := &statefulSet.Spec.Template.Spec
+
+	metav1.SetMetaDataLabel(&statefulSet.Spec.Template.ObjectMeta, consts.YTCellIDLabelName, m.cfgen.GetCellID(m.mastersSpec.CellTag))
+
 	podSpec.Containers[0].Env = append(podSpec.Containers[0].Env, getNativeClientConfigEnv()...)
 
-	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
-
-	if primaryMastersSpec.HydraPersistenceUploader != nil && primaryMastersSpec.HydraPersistenceUploader.Image != nil {
+	if m.mastersSpec.HydraPersistenceUploader != nil && m.mastersSpec.HydraPersistenceUploader.Image != nil {
 		addHydraPersistenceUploaderToPodSpec(
-			*primaryMastersSpec.HydraPersistenceUploader.Image,
+			*m.mastersSpec.HydraPersistenceUploader.Image,
 			podSpec,
 			m.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
 			m.uploaderSecret.Name(),
 		)
 	}
-	if err := checkAndAddTimbertruckToPodSpec(primaryMastersSpec.Timbertruck, podSpec, &primaryMastersSpec.InstanceSpec, m.labeller, m.cfgen); err != nil {
+	if err := checkAndAddTimbertruckToPodSpec(m.mastersSpec.Timbertruck, podSpec, &m.mastersSpec.InstanceSpec, m.labeller, m.cfgen); err != nil {
 		return err
 	}
-	if err := AddSidecarsToPodSpec(primaryMastersSpec.Sidecars, podSpec); err != nil {
+	if err := AddSidecarsToPodSpec(m.mastersSpec.Sidecars, podSpec); err != nil {
 		return err
 	}
 
-	if len(primaryMastersSpec.HostAddresses) != 0 {
-		AddAffinity(statefulSet, m.getHostAddressLabel(), primaryMastersSpec.HostAddresses)
+	if len(m.mastersSpec.HostAddresses) != 0 {
+		AddAffinity(statefulSet, m.getHostAddressLabel(), m.mastersSpec.HostAddresses)
 	}
 	return m.server.Sync(ctx)
 }
 
 func (m *Master) GetCypressPatch() ypatch.PatchSet {
-	clusterConnection := m.cfgen.GetClusterConnection()
-	return ypatch.PatchSet{
-		"//sys/@cluster_connection": {
-			ypatch.Replace("/primary_master/addresses", &clusterConnection.PrimaryMaster.Addresses),
-			ypatch.Replace("/primary_master/peers", &clusterConnection.PrimaryMaster.Peers),
-			ypatch.ReplaceOrRemove("/bus_client", clusterConnection.BusClient),
-		},
+	if m.mastersSpec.CellTag != m.ytsaurus.GetResource().Spec.PrimaryMasters.CellTag {
+		return nil
 	}
+	clusterConnection := m.cfgen.GetClusterConnection()
+	patch := ypatch.Patch{
+		ypatch.Replace("/primary_master/addresses", &clusterConnection.PrimaryMaster.Addresses),
+		ypatch.Replace("/primary_master/peers", &clusterConnection.PrimaryMaster.Peers),
+		ypatch.ReplaceOrRemove("/bus_client", clusterConnection.BusClient),
+	}
+	for index, cell := range clusterConnection.SecondaryMasters {
+		path := ypath.Path("/secondary_masters").Child(fmt.Sprintf("%v", index))
+		patch = append(patch,
+			ypatch.Replace(path.Child("addresses"), &cell.Addresses),
+			ypatch.Replace(path.Child("peers"), &cell.Peers),
+		)
+	}
+	return ypatch.PatchSet{"//sys/@cluster_connection": patch}
 }
 
 func (m *Master) getHostAddressLabel() string {
-	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
-	if primaryMastersSpec.HostAddressLabel != "" {
-		return primaryMastersSpec.HostAddressLabel
+	if m.mastersSpec.HostAddressLabel != "" {
+		return m.mastersSpec.HostAddressLabel
 	}
 	return defaultHostAddressLabel
 }
@@ -603,6 +627,9 @@ func (m *Master) runInitPhaseJobs(ctx context.Context, dry bool) (ComponentStatu
 
 // runMasterInitJob launches job only once in an Initialization phase.
 func (m *Master) runMasterInitJob(ctx context.Context, dry bool) (ComponentStatus, error) {
+	if m.initJob == nil {
+		return ComponentStatusReady(), nil
+	}
 	initScript, err := m.createInitScript()
 	if err != nil {
 		return ComponentStatus{}, fmt.Errorf("failed to create init script: %w", err)

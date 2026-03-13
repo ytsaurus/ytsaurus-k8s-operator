@@ -56,6 +56,10 @@ func (l *Labeller) GetClusterDomain() string {
 	return l.ClusterDomain
 }
 
+func (l *Labeller) GetCellName(cellTag uint16) string {
+	return fmt.Sprintf("%d", cellTag)
+}
+
 // getGroupName converts <name> into <name>[-group]
 func (l *Labeller) getGroupName(name string) string {
 	if l.InstanceGroup != "" && l.InstanceGroup != consts.DefaultName {
@@ -145,6 +149,14 @@ func (l *Labeller) GetInstanceAddressPort(index, port int) string {
 		l.GetNamespace(),
 		l.ClusterDomain,
 		port)
+}
+
+func (l *Labeller) GetInstanceAddresses(instanceCount, port int) []string {
+	addr := make([]string, instanceCount)
+	for index := range instanceCount {
+		addr[index] = l.GetInstanceAddressPort(index, port)
+	}
+	return addr
 }
 
 // GetComponentLabel Returns lower case hyphenated component type without name part.

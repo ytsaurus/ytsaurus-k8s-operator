@@ -41,6 +41,7 @@ spec:
         app.kubernetes.io/name: yt-master
         app.kubernetes.io/part-of: yt-test-ytsaurus
         yt_component: test-ytsaurus-yt-master
+        ytsaurus.tech/cell-id: 65726e65-ad6b7562-10259-79747361
         ytsaurus.tech/cluster-name: test-ytsaurus
     spec:
       containers:

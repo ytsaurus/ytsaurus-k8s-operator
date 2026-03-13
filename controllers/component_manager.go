@@ -65,8 +65,18 @@ func NewComponentManager(
 		getHeaterStatus = ih.GetHeaterStatus
 	}
 
-	m := components.NewMaster(cfgen, ytsaurus)
+	var secondaryMasters []*components.Master
+	for i := range resource.Spec.SecondaryMasters {
+		m := components.NewMaster(cfgen, ytsaurus, &resource.Spec.SecondaryMasters[i], nil)
+		secondaryMasters = append(secondaryMasters, m)
+	}
+
+	m := components.NewMaster(cfgen, ytsaurus, &resource.Spec.PrimaryMasters, secondaryMasters)
 	allComponents = append(allComponents, m)
+
+	for _, sm := range secondaryMasters {
+		allComponents = append(allComponents, sm)
+	}
 
 	var hps []components.Component
 	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {

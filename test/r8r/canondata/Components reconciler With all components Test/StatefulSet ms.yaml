@@ -47,6 +47,7 @@ spec:
         global-pod-label: "true"
         instance-pod-label: "true"
         yt_component: test-ytsaurus-yt-master
+        ytsaurus.tech/cell-id: 65726e65-ad6b7562-10259-79747361
         ytsaurus.tech/cluster-name: test-ytsaurus
     spec:
       affinity:
