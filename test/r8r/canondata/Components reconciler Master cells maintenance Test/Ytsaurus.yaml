@@ -78,6 +78,39 @@ spec:
     volumeMounts:
     - mountPath: /yt/master-data
       name: master-data
+  secondaryMasters:
+  - cellTag: 2
+    instanceCount: 1
+    locations:
+    - locationType: MasterChangelogs
+      path: /yt/master-data/master-changelogs
+    - locationType: MasterSnapshots
+      path: /yt/master-data/master-snapshots
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: master-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+    volumeMounts:
+    - mountPath: /yt/master-data
+      name: master-data
   useIpv4: false
   useIpv6: false
   usePorto: false
@@ -96,6 +129,12 @@ status:
     reason: ExceptMasters
     status: "True"
     type: ClusterMaintenance
+  - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: Master-2Ready
   - lastTransitionTime: null
     message: 'Pods are ready: 0 of 0'
     observedGeneration: 1
