@@ -24,6 +24,23 @@ data:
                 op=remove;
                 path="/bus_client";
             };
+            {
+                op=replace;
+                path="/secondary_masters/0/addresses";
+                value=[
+                    "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/0/peers";
+                value=[
+                    {
+                        address="ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+            };
         ];
         "<>//sys/clusters"=[
             {
@@ -49,6 +66,9 @@ data:
   yt-http-proxy-cypress-patch.yson: |-
     {
     }
+  yt-master-2-cypress-patch.yson: |-
+    {
+    }
   yt-master-cypress-patch.yson: |-
     {
         "//sys/@cluster_connection"=[
@@ -72,6 +92,23 @@ data:
             {
                 op=remove;
                 path="/bus_client";
+            };
+            {
+                op=replace;
+                path="/secondary_masters/0/addresses";
+                value=[
+                    "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/0/peers";
+                value=[
+                    {
+                        address="ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
             };
         ];
     }

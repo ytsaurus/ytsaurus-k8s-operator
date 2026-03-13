@@ -158,6 +158,29 @@ func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client)
 	Expect(ytClient.ListNode(specCtx, ypath.Path("/"), &res, nil)).Should(Succeed())
 }
 
+func checkMasterCellChunkServer(ctx context.Context, ytClient yt.Client, cellTag uint16) {
+	filePath := ypath.Path(fmt.Sprintf("//tmp/file-at-cell-%d", cellTag))
+	fileID, err := ytClient.CreateNode(ctx, filePath, yt.NodeFile, &yt.CreateNodeOptions{
+		Attributes: map[string]any{
+			"external":          true,
+			"external_cell_tag": cellTag,
+		},
+	})
+	Expect(err).To(Succeed())
+	log.Info("File", "filePath", filePath, "cellTag", cellTag, "fileID", fileID)
+
+	wc, err := ytClient.WriteFile(ctx, filePath, nil)
+	Expect(err).To(Succeed())
+	Expect(wc.Write([]byte("test"))).To(Equal(4))
+	Expect(wc.Close()).To(Succeed())
+
+	var chunkIds []string
+	Expect(ytClient.GetNode(ctx, filePath.Attr("chunk_ids"), &chunkIds, nil)).To(Succeed())
+	Expect(chunkIds).To(HaveLen(1))
+	log.Info("File", "filePath", filePath, "chunkId", chunkIds[0])
+	Expect(chunkIds[0]).To(MatchRegexp(fmt.Sprintf("^[^-]+-[^-]+-%x[^-]{4}-[^-]+$", cellTag)))
+}
+
 type testRow struct {
 	A string `yson:"a"`
 }
@@ -1923,6 +1946,100 @@ exec "$@"`
 			Entry("YTsaurus next", testutil.YtsaurusNextVersion),
 			Entry("YTsaurus late", testutil.YtsaurusLateVersion),
 		) // integration tls
+
+		DescribeTableSubtree("With secondary cells", Label("multicell"), func(epoch string) {
+			images := testutil.Images[epoch]
+			if epoch == "" || images.Core == "" {
+				return
+			}
+
+			BeforeEach(func() {
+				brokenVersions, err := version.ParseConstraints("~24.2")
+				Expect(err).To(Succeed())
+				if brokenVersions.Check(&images.YtsaurusVersion) {
+					Skip(fmt.Sprintf("YTsaurus version %v does not support multicell", images.YtsaurusVersion.Original()))
+				}
+				ytBuilder.Ytsaurus.Spec.CoreImage = images.Core
+				ytBuilder.WithDataNodes()
+			})
+
+			Context("Create cluster with secondary master", Label("initialization", epoch, images.YtsaurusVersion.String()), func() {
+				BeforeEach(func() {
+					By("Adding secondary master")
+					ytBuilder.WithSecondaryMaster()
+
+					// Both cells with chunk host.
+					ytsaurus.Spec.PrimaryMasters.Roles = ytv1.GetMasterCellRoles(nil, true, false)
+					ytsaurus.Spec.SecondaryMasters[0].Roles = ytv1.GetMasterCellRoles(nil, false, true)
+				})
+
+				It("Verifies master cells", Label(epoch), Label(images.YtsaurusVersion.String()), func(ctx context.Context) {
+					By("Checking primary cell")
+					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.PrimaryMasters.CellTag)
+					By("Checking secondary cell")
+					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.SecondaryMasters[0].CellTag)
+				})
+			})
+
+			Context("Extending cluster with secondary master", Label("maintenance", epoch, images.YtsaurusVersion.String()), func() {
+				It("Verifies master cells", Label(epoch), Label(images.YtsaurusVersion.String()), func(ctx context.Context) {
+					podsBeforeMaintenance := getComponentPods(ctx, namespace)
+
+					By("Starting cluster maintenance")
+					ytsaurus.Spec.ClusterMaintenance = &ytv1.ClusterMaintenance{
+						Shutdown: ytv1.ClusterShutdownExceptMasters,
+					}
+					UpdateObject(ctx, ytsaurus)
+
+					By("Waiting cluster state maintenance")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterState(ytv1.ClusterStateMaintenance))
+					Expect(getComponentPods(ctx, namespace)).To(ConsistOf(
+						HaveField("Labels", HaveKeyWithValue("app.kubernetes.io/name", "yt-image-heater")),
+						HaveField("Labels", HaveKeyWithValue("app.kubernetes.io/component", "yt-master")),
+					))
+
+					By("Keeping primary master default roles")
+					ytsaurus.Spec.PrimaryMasters.Roles = ytv1.GetMasterCellRoles(nil, true, false)
+
+					By("Adding secondary master")
+					ytBuilder.WithSecondaryMaster()
+					UpdateObject(ctx, ytsaurus)
+
+					By("Waiting cluster state maintenance")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(And(HaveObservedGeneration(), HaveClusterState(ytv1.ClusterStateMaintenance)))
+					Expect(getComponentPods(ctx, namespace)).To(ConsistOf(
+						HaveField("Labels", HaveKeyWithValue("app.kubernetes.io/name", "yt-image-heater")),
+						HaveField("Labels", HaveKeyWithValue("app.kubernetes.io/component", "yt-master")),
+						HaveField("Labels", HaveKeyWithValue("app.kubernetes.io/component", "yt-master-2")),
+					))
+
+					By("Ending cluster maintenance")
+					ytsaurus.Spec.ClusterMaintenance = nil
+					UpdateObject(ctx, ytsaurus)
+
+					By("Waiting cluster state running")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+
+					podsAfterMantenance := getComponentPods(ctx, namespace)
+
+					pods := getChangedPods(podsBeforeMaintenance, podsAfterMantenance)
+					Expect(pods.Heated).To(BeEmpty(), "heated")
+					Expect(pods.Created).To(ConsistOf("ms-2-0"), "created")
+					Expect(pods.Deleted).To(BeEmpty(), "deleted")
+					Expect(pods.Updated).To(ConsistOf("ms-0", "hp-0", "dnd-0", "dnd-1", "dnd-2", "ds-0"), "updated")
+
+					By("Checking primary cell")
+					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.PrimaryMasters.CellTag)
+					By("Checking secondary cell")
+					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.SecondaryMasters[0].CellTag)
+				})
+			})
+
+		},
+			Entry("YTsaurus curr", testutil.YtsaurusCurrVersion),
+			Entry("YTsaurus next", testutil.YtsaurusNextVersion),
+			Entry("YTsaurus late", testutil.YtsaurusLateVersion),
+		) // integration multicell
 
 	}) // integration
 

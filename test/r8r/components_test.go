@@ -621,6 +621,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	Context("With all components", func() {
 		BeforeEach(func() {
 			ytBuilder.WithOverrides()
+			ytBuilder.WithSecondaryMaster()
 			ytBuilder.WithMasterCaches()
 			ytBuilder.WithRPCProxies()
 			ytBuilder.WithDataNodes()
@@ -695,6 +696,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytsaurus.Spec.ClusterMaintenance = &ytv1.ClusterMaintenance{
 				Shutdown: ytv1.ClusterShutdownExceptMasters,
 			}
+			ytBuilder.WithSecondaryMaster()
 		})
 		It("Test", func(ctx context.Context) {
 			Expect(ytsaurus).To(HaveField("Status.State", Equal(ytv1.ClusterStateMaintenance)))
