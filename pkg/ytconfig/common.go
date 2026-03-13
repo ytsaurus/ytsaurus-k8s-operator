@@ -85,6 +85,7 @@ type NativeClientConfig struct {
 type ClusterConnection struct {
 	ClusterName         string              `yson:"cluster_name"`
 	PrimaryMaster       MasterCell          `yson:"primary_master"`
+	SecondaryMasters    []MasterCell        `yson:"secondary_masters,omitempty"`
 	DiscoveryConnection DiscoveryConnection `yson:"discovery_connection,omitempty"`
 	BusClient           *Bus                `yson:"bus_client,omitempty"`
 	MasterCache         MasterCache         `yson:"master_cache,omitempty"`

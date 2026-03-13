@@ -476,14 +476,35 @@ func (yc *YtsaurusClient) ReportCondition(conditionType string, ok bool, msg str
 }
 
 func (yc *YtsaurusClient) UpdateMasterQuorumCheck(ctx context.Context) error {
-	ok, msg, err := checks.MasterQuorumHealth(
-		ctx,
-		yc.ytClient,
-		consts.PrimaryMastersPath,
-		yc.master.server.getInstanceCount(),
-		yc.master.server.getMinReadyInstanceCount(0),
-	)
-	return yc.ReportCondition(consts.ConditionMastersQuorumCheck, ok, msg, err)
+	var quorumConditions []string
+	var errs []error
+
+	for _, cell := range append([]*Master{yc.master}, yc.master.secondaryMasters...) {
+		ok, msg, err := checks.MasterQuorumHealth(
+			ctx,
+			yc.ytClient,
+			cell.GetCypressPath(),
+			cell.server.getInstanceCount(),
+			cell.server.getMinReadyInstanceCount(0),
+		)
+		conditionType := cell.labeller.GetCondition(consts.ConditionQuorumCheck)
+		if err = yc.ReportCondition(conditionType, ok, msg, err); err != nil {
+			errs = append(errs, err)
+		}
+		quorumConditions = append(quorumConditions, conditionType)
+	}
+
+	yc.ytsaurus.SetStatusCondition(checks.MergeConditions(
+		metav1.Condition{
+			Type:   consts.ConditionMastersQuorumCheck,
+			Status: metav1.ConditionTrue,
+			Reason: "Update",
+		},
+		yc.ytsaurus.GetStatusCondition,
+		quorumConditions...,
+	))
+
+	return errors.Join(errs...)
 }
 
 func (yc *YtsaurusClient) UpdateCounterHealthCheck(ctx context.Context, counterPath ypath.Path, conditionType string) error {
