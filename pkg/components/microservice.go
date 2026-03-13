@@ -11,6 +11,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
@@ -39,6 +41,7 @@ type microserviceImpl struct {
 	labeller      *labeller.Labeller
 	instanceCount int32
 	ytsaurus      *apiproxy.Ytsaurus
+	podSpec       *ytv1.PodSpec
 
 	deployment *resources.Deployment
 	service    *resources.HTTPService
@@ -58,8 +61,7 @@ func newMicroservice(
 	instanceCount int32,
 	generators map[string]ConfigGenerator,
 	deploymentName, serviceName string,
-	tolerations []corev1.Toleration,
-	nodeSelector map[string]string,
+	podSpec *ytv1.PodSpec,
 ) microservice {
 	configs := NewConfigMapBuilder(
 		labeller,
@@ -72,11 +74,16 @@ func newMicroservice(
 		configs.AddGenerator(fileName, generator.Format, generator.Generator)
 	}
 
+	commonPodSpec := ytsaurus.GetCommonPodSpec()
+	tolerations := getTolerationsWithDefault(podSpec.Tolerations, commonPodSpec.Tolerations)
+	nodeSelector := getNodeSelectorWithDefault(podSpec.NodeSelector, commonPodSpec.NodeSelector)
+
 	return &microserviceImpl{
 		labeller:      labeller,
 		image:         image,
 		instanceCount: instanceCount,
 		ytsaurus:      ytsaurus,
+		podSpec:       podSpec,
 		service: resources.NewHTTPService(
 			serviceName,
 			nil,
@@ -149,6 +156,37 @@ func (m *microserviceImpl) rebuildDeployment() *appsv1.Deployment {
 			Image: m.image,
 		},
 	}
+
+	spec := &m.builtDeployment.Spec
+	templateSpec := &spec.Template.Spec
+	commonPodSpec := m.ytsaurus.GetCommonPodSpec()
+
+	templateSpec.RuntimeClassName = ptrDefault(m.podSpec.RuntimeClassName, commonPodSpec.RuntimeClassName)
+	templateSpec.SetHostnameAsFQDN = ptr.To(ptr.Deref(m.podSpec.SetHostnameAsFQDN, ptr.Deref(commonPodSpec.SetHostnameAsFQDN, true)))
+	templateSpec.DNSConfig = ptrDefault(m.podSpec.DNSConfig, commonPodSpec.DNSConfig)
+	if ptr.Deref(m.podSpec.HostNetwork, ptr.Deref(commonPodSpec.HostNetwork, false)) {
+		templateSpec.HostNetwork = true
+		// https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy
+		templateSpec.DNSPolicy = corev1.DNSClusterFirstWithHostNet
+	}
+	templateSpec.DNSPolicy = ptr.Deref(m.podSpec.DNSPolicy, ptr.Deref(commonPodSpec.DNSPolicy, templateSpec.DNSPolicy))
+
+	for key, value := range commonPodSpec.PodLabels {
+		metav1.SetMetaDataLabel(&spec.Template.ObjectMeta, key, value)
+	}
+
+	for key, value := range m.podSpec.PodLabels {
+		metav1.SetMetaDataLabel(&spec.Template.ObjectMeta, key, value)
+	}
+
+	for key, value := range commonPodSpec.PodAnnotations {
+		metav1.SetMetaDataAnnotation(&spec.Template.ObjectMeta, key, value)
+	}
+
+	for key, value := range m.podSpec.PodAnnotations {
+		metav1.SetMetaDataAnnotation(&spec.Template.ObjectMeta, key, value)
+	}
+
 	return m.builtDeployment
 }
 
