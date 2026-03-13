@@ -442,11 +442,6 @@ type InstanceSpec struct {
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
 }
 
-type MasterConnectionSpec struct {
-	CellTag       int16    `json:"cellTag"`
-	HostAddresses []string `json:"hostAddresses,omitempty"`
-}
-
 type HydraPersistenceUploaderSpec struct {
 	Image *string `json:"image,omitempty"`
 }
@@ -801,7 +796,7 @@ type DeprecatedSpytSpec struct {
 }
 
 type MasterCachesConnectionSpec struct {
-	CellTag       int16    `json:"cellTagMasterCaches"`
+	CellTag       uint16   `json:"cellTagMasterCaches"`
 	HostAddresses []string `json:"hostAddressesMasterCaches,omitempty"`
 }
 
@@ -955,17 +950,18 @@ type YtsaurusSpec struct {
 
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
-	Discovery        DiscoverySpec `json:"discovery,omitempty"`
-	PrimaryMasters   MastersSpec   `json:"primaryMasters,omitempty"`
+	Discovery      DiscoverySpec `json:"discovery,omitempty"`
+	PrimaryMasters MastersSpec   `json:"primaryMasters,omitempty"`
+	//+kubebuilder:validation:MaxItems:=48
 	SecondaryMasters []MastersSpec `json:"secondaryMasters,omitempty"`
 	//+optional
 	MasterCaches *MasterCachesSpec `json:"masterCaches,omitempty"`
-	// +kubebuilder:validation:MinItems:=1
+	//+kubebuilder:validation:MinItems:=1
 	HTTPProxies  []HTTPProxiesSpec  `json:"httpProxies,omitempty"`
 	RPCProxies   []RPCProxiesSpec   `json:"rpcProxies,omitempty"`
 	TCPProxies   []TCPProxiesSpec   `json:"tcpProxies,omitempty"`
 	KafkaProxies []KafkaProxiesSpec `json:"kafkaProxies,omitempty"`
-	// +kubebuilder:validation:MinItems:=1
+	//+kubebuilder:validation:MinItems:=1
 	DataNodes        []DataNodesSpec       `json:"dataNodes,omitempty"`
 	ExecNodes        []ExecNodesSpec       `json:"execNodes,omitempty"`
 	Schedulers       *SchedulersSpec       `json:"schedulers,omitempty"`
