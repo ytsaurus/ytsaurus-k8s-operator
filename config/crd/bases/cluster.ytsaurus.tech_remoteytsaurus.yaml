@@ -721,6 +721,9 @@ spec:
                     type: object
                 type: object
               cellTag:
+                description: Identifies a particular cell of YTsaurus cluster.
+                maximum: 61440
+                minimum: 1
                 type: integer
               cellTagMasterCaches:
                 type: integer
