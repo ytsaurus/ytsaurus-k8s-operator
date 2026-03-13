@@ -722,7 +722,7 @@ func getYtsaurus() *ytv1.Ytsaurus {
 			CommonSpec: *getCommonSpec(),
 
 			PrimaryMasters: ytv1.MastersSpec{
-				MasterConnectionSpec:   getMasterConnectionSpec(),
+				MasterCellSpec:         getMasterCellSpec(),
 				MaxSnapshotCountToKeep: ptr.To(1543),
 				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount: 1,
@@ -813,8 +813,8 @@ func getRemoteYtsaurus() *ytv1.RemoteYtsaurus {
 	return &ytv1.RemoteYtsaurus{
 		ObjectMeta: testObjectMeta,
 		Spec: ytv1.RemoteYtsaurusSpec{
-			MasterConnectionSpec: getMasterConnectionSpecWithFixedMasterHosts(),
-			MasterCachesSpec:     getMasterCachesSpecWithFixedHosts(),
+			MasterCellSpec:   getMasterCellSpecWithFixedMasterHosts(),
+			MasterCachesSpec: getMasterCachesSpecWithFixedHosts(),
 		},
 	}
 }
@@ -1148,14 +1148,14 @@ func getCommonSpec() *ytv1.CommonSpec {
 	}
 }
 
-func getMasterConnectionSpec() ytv1.MasterConnectionSpec {
-	return ytv1.MasterConnectionSpec{
-		CellTag: 0,
+func getMasterCellSpec() ytv1.MasterCellSpec {
+	return ytv1.MasterCellSpec{
+		CellTag: 1,
 	}
 }
 
-func getMasterConnectionSpecWithFixedMasterHosts() ytv1.MasterConnectionSpec {
-	spec := getMasterConnectionSpec()
+func getMasterCellSpecWithFixedMasterHosts() ytv1.MasterCellSpec {
+	spec := getMasterCellSpec()
 	spec.HostAddresses = testMasterExternalHosts
 	spec.CellTag = 1000
 	return spec

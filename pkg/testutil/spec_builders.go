@@ -263,7 +263,7 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 				},
 			},
 			PrimaryMasters: ytv1.MastersSpec{
-				MasterConnectionSpec: ytv1.MasterConnectionSpec{
+				MasterCellSpec: ytv1.MasterCellSpec{
 					CellTag: CellTag,
 				},
 				InstanceSpec: ytv1.InstanceSpec{
@@ -760,7 +760,7 @@ func (b *YtsaurusBuilder) CreateRemoteYtsaurus() *ytv1.RemoteYtsaurus {
 			Namespace: b.Namespace,
 		},
 		Spec: ytv1.RemoteYtsaurusSpec{
-			MasterConnectionSpec: ytv1.MasterConnectionSpec{
+			MasterCellSpec: ytv1.MasterCellSpec{
 				CellTag: CellTag,
 				HostAddresses: []string{
 					fmt.Sprintf("ms-0.masters.%s.svc.cluster.local", b.Namespace),
