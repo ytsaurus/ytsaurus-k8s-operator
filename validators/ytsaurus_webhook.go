@@ -130,17 +130,56 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Yt
 	isMulticell := len(newYtsaurus.Spec.SecondaryMasters) > 0
 	cellRoles := UniqueValues[ytv1.MasterCellRole]{}
 	allErrors = append(allErrors, cellRoles.InsertAll(ytv1.GetMasterCellRoles(mastersSpec.Roles, isPrimary, isMulticell), rolesPath)...)
+	cellRolesChanged := false
 
 	if oldMastersSpec != nil && oldMastersSpec.InstanceCount > 0 {
 		wasMulticell := len(oldYtsaurus.Spec.SecondaryMasters) > 0
 		oldCellRoles := ytv1.GetMasterCellRoles(oldMastersSpec.Roles, isPrimary, wasMulticell)
+		cellRolesChanged = len(cellRoles) != len(oldCellRoles)
 		for _, role := range oldCellRoles {
 			if _, found := cellRoles[role]; !found {
+				cellRolesChanged = true
 				allErrors = append(allErrors, field.Required(rolesPath, fmt.Sprintf("Cell %v role could not be removed: %v", mastersSpec.CellTag, role)))
 			}
 		}
 		if isPrimary && isMulticell && !wasMulticell && mastersSpec.Roles == nil {
 			allErrors = append(allErrors, field.Required(rolesPath, "Upgrade to multicell requires filling roles for primary cell"))
+		}
+	}
+
+	newInstanceCount := mastersSpec.InstanceCount
+	newMinReady := min(newInstanceCount, ptr.Deref(mastersSpec.MinReadyInstanceCount, newInstanceCount))
+	if newInstanceCount > 0 && newMinReady <= newInstanceCount/2 {
+		allErrors = append(allErrors, field.Invalid(path.Child("minReadyInstanceCount"), newMinReady, "Must be bigger than half of instanceCount"))
+	}
+	if newMinReady > newInstanceCount {
+		allErrors = append(allErrors, field.Invalid(path.Child("minReadyInstanceCount"), newMinReady, "Cannot be bigger than instanceCount"))
+	}
+
+	if oldMastersSpec != nil {
+		oldInstanceCount := oldMastersSpec.InstanceCount
+		oldMinReady := min(oldInstanceCount, ptr.Deref(oldMastersSpec.MinReadyInstanceCount, oldInstanceCount))
+		if newInstanceCount < 1 && oldInstanceCount > 0 {
+			allErrors = append(allErrors, field.Invalid(path.Child("instanceCount"), mastersSpec.InstanceCount, "Cannot shrink below 1"))
+		}
+		if newInstanceCount/2 < oldInstanceCount-oldMinReady {
+			allErrors = append(allErrors, field.Invalid(path.Child("instanceCount"), mastersSpec.InstanceCount,
+				"Cannot shrink without possibility of losing quorum, increase minReadyInstanceCount first"))
+		}
+		if newInstanceCount > oldMinReady*2-1 && oldInstanceCount > 1 {
+			allErrors = append(allErrors, field.Invalid(path.Child("instanceCount"), mastersSpec.InstanceCount,
+				fmt.Sprintf("Cannot grow bigger than previous minReadyInstanceCount*2-1 (%d) in one step", oldMinReady*2-1)))
+		}
+
+		oldMaintenance := ptr.Deref(oldYtsaurus.Spec.ClusterMaintenance, ytv1.ClusterMaintenance{}).Shutdown
+		newMaintenance := ptr.Deref(newYtsaurus.Spec.ClusterMaintenance, ytv1.ClusterMaintenance{}).Shutdown
+		if oldMaintenance != ytv1.ClusterShutdownExceptMasters || newMaintenance != ytv1.ClusterShutdownExceptMasters {
+			if oldInstanceCount != newInstanceCount {
+				allErrors = append(allErrors, field.Forbidden(path.Child("instanceCount"), "Could be changed only during master cells maintenance"))
+			}
+			if cellRolesChanged {
+				allErrors = append(allErrors, field.Forbidden(rolesPath, "Could be changed only during master cells maintenance"))
+			}
 		}
 	}
 
@@ -172,6 +211,10 @@ func (r *ytsaurusValidator) validatePrimaryMasters(newYtsaurus, oldYtsaurus *ytv
 	}
 
 	allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, oldYtsaurus, mastersSpec, oldMastersSpec, path)...)
+
+	if mastersSpec.InstanceCount < 1 {
+		allErrors = append(allErrors, field.Invalid(path.Child("instanceCount"), mastersSpec.InstanceCount, "Cannot be below 1"))
+	}
 
 	return allErrors
 }
@@ -205,6 +248,16 @@ func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *y
 	for cellTag, path := range cellTags {
 		if cellTag < consts.MinValidCellTag || cellTag > consts.MaxValidCellTag {
 			allErrors = append(allErrors, field.Invalid(path, cellTag, fmt.Sprintf("Cell tag must be in range %v..%v", consts.MinValidCellTag, consts.MaxValidCellTag)))
+		}
+	}
+
+	if oldYtsaurus != nil {
+		for i := len(newYtsaurus.Spec.SecondaryMasters); i < len(oldYtsaurus.Spec.SecondaryMasters); i++ {
+			oldMastersSpec := &oldYtsaurus.Spec.SecondaryMasters[i]
+			if oldMastersSpec.InstanceCount > 0 {
+				path := field.NewPath("spec").Child("secondaryMasters").Index(i)
+				allErrors = append(allErrors, field.Forbidden(path, "Cannot be removed"))
+			}
 		}
 	}
 
