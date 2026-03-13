@@ -619,6 +619,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	Context("With all components", func() {
 		BeforeEach(func() {
 			ytBuilder.WithOverrides()
+			ytBuilder.WithSecondaryMasters()
 			ytBuilder.WithMasterCaches()
 			ytBuilder.WithRPCProxies()
 			ytBuilder.WithDataNodes()

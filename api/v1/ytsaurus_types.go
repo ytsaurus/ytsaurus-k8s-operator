@@ -438,7 +438,11 @@ type InstanceSpec struct {
 }
 
 type MasterConnectionSpec struct {
-	CellTag       int16    `json:"cellTag"`
+	// Identifies a particular cell of YTsaurus cluster.
+	// Must be unique among connected clusters to prevent object ids from colliding.
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:validation:Maximum=61440
+	CellTag       uint16   `json:"cellTag"`
 	HostAddresses []string `json:"hostAddresses,omitempty"`
 }
 
@@ -796,7 +800,7 @@ type DeprecatedSpytSpec struct {
 }
 
 type MasterCachesConnectionSpec struct {
-	CellTag       int16    `json:"cellTagMasterCaches"`
+	CellTag       uint16   `json:"cellTagMasterCaches"`
 	HostAddresses []string `json:"hostAddressesMasterCaches,omitempty"`
 }
 

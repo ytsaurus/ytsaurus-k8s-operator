@@ -10,13 +10,20 @@ type AddressList struct {
 	Addresses []string `yson:"addresses"`
 }
 
+// NYT::NElection::TCellPeerConfig
 type HydraPeer struct {
 	Address string `yson:"address"`
 	Voting  bool   `yson:"voting"`
 }
 
+// NApi::NNative::TMasterConnectionConfig
+// NYT::NHydra::TPeerConnectionConfig
+// NYT::NRpc::TRetryingChannelConfig
+// NYT::NRpc::TBalancingChannelConfig
+// NYT::NElection::TCellConfig
 type MasterCell struct {
 	AddressList
+
 	Peers  []HydraPeer `yson:"peers"`
 	CellID string      `yson:"cell_id"`
 }
@@ -73,10 +80,12 @@ type NativeClientConfig struct {
 }
 
 // NYT::NApi::NNative::TConnectionStaticConfig
+// NYT::NCellMasterClient::TCellDirectoryConfig
 // NYT::NApi::NNative::TConnectionDynamicConfig
 type ClusterConnection struct {
 	ClusterName         string              `yson:"cluster_name"`
 	PrimaryMaster       MasterCell          `yson:"primary_master"`
+	SecondaryMasters    []MasterCell        `yson:"secondary_masters,omitempty"`
 	DiscoveryConnection DiscoveryConnection `yson:"discovery_connection,omitempty"`
 	BusClient           *Bus                `yson:"bus_client,omitempty"`
 	MasterCache         MasterCache         `yson:"master_cache,omitempty"`

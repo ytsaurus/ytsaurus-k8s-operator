@@ -726,6 +726,9 @@ spec:
                     type: object
                 type: object
               cellTag:
+                description: Identifies a particular cell of YTsaurus cluster.
+                maximum: 61440
+                minimum: 1
                 type: integer
               cellTagMasterCaches:
                 type: integer
@@ -1051,6 +1054,22 @@ spec:
               runtimeClassName:
                 description: Runtime class for instance pods.
                 type: string
+              secondaryMasters:
+                items:
+                  properties:
+                    cellTag:
+                      description: Identifies a particular cell of YTsaurus cluster.
+                      maximum: 61440
+                      minimum: 1
+                      type: integer
+                    hostAddresses:
+                      items:
+                        type: string
+                      type: array
+                  required:
+                  - cellTag
+                  type: object
+                type: array
               setHostnameAsFqdn:
                 default: true
                 description: SetHostnameAsFQDN indicates whether to set the hostname

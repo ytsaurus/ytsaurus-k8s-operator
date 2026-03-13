@@ -777,7 +777,10 @@
           }
         },
         "cellTag": {
-          "type": "integer"
+          "description": "Identifies a particular cell of YTsaurus cluster.",
+          "type": "integer",
+          "maximum": 61440,
+          "minimum": 1
         },
         "cellTagMasterCaches": {
           "type": "integer"
@@ -1228,6 +1231,29 @@
         "runtimeClassName": {
           "description": "Runtime class for instance pods.",
           "type": "string"
+        },
+        "secondaryMasters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "cellTag"
+            ],
+            "properties": {
+              "cellTag": {
+                "description": "Identifies a particular cell of YTsaurus cluster.",
+                "type": "integer",
+                "maximum": 61440,
+                "minimum": 1
+              },
+              "hostAddresses": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
         },
         "setHostnameAsFqdn": {
           "description": "SetHostnameAsFQDN indicates whether to set the hostname as FQDN.",

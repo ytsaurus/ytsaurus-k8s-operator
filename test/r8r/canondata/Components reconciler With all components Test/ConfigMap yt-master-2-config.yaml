@@ -1,11 +1,83 @@
 apiVersion: v1
 data:
-  ytserver-discovery.yson: |-
+  client.yson: |-
     {
         "address_resolver"={
             "enable_ipv4"=%true;
             "enable_ipv6"=%false;
             retries=1000;
+        };
+        logging={
+            writers={
+            };
+            rules=[
+            ];
+        };
+        driver={
+            "api_version"=4;
+            "default_rpc_proxy_address_type"="public_rpc";
+            "cluster_name"="test-ytsaurus";
+            "primary_master"={
+                addresses=[
+                    "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                ];
+                peers=[
+                    {
+                        address="ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+                "cell_id"="65726e65-ad6b7562-10259-79747361";
+            };
+            "secondary_masters"=[
+                {
+                    addresses=[
+                        "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                    ];
+                    peers=[
+                        {
+                            address="ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                            voting=%true;
+                        };
+                    ];
+                    "cell_id"="65726e65-ad6b7562-20259-79747361";
+                };
+            ];
+            "discovery_connection"={
+                addresses=[
+                    "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
+                ];
+            };
+            "bus_client"={
+                "encryption_mode"=required;
+                "cert_chain"={
+                    "file_name"="/tls/bus_client_secret/tls.crt";
+                };
+                "private_key"={
+                    "file_name"="/tls/bus_client_secret/tls.key";
+                };
+                ca={
+                    "file_name"="/tls/ca_bundle/ca.crt";
+                };
+                "verification_mode"=full;
+                "peer_alternative_host_name"="test-ytsaurus";
+            };
+            "master_cache"={
+                addresses=[
+                    "msc-0.master-caches.ytsaurus-components.svc.cluster.local:9018";
+                ];
+                "cell_id"="65726e65-ad6b7562-10259-79747361";
+                "enable_master_cache_discovery"=%false;
+            };
+        };
+    }
+  ytserver-master.yson: |-
+    {
+        "address_resolver"={
+            "enable_ipv4"=%true;
+            "enable_ipv6"=%false;
+            retries=1000;
+            "localhost_name_override"="{K8S_POD_NAME}.masters.ytsaurus-components.svc.cluster.local";
         };
         "solomon_exporter"={
             host="{POD_SHORT_HOSTNAME}";
@@ -34,8 +106,8 @@ data:
             "flush_period"=3000;
             "enable_anchor_profiling"=%true;
         };
-        "monitoring_port"=10020;
-        "rpc_port"=9020;
+        "monitoring_port"=10010;
+        "rpc_port"=9010;
         "bus_server"={
             "encryption_mode"=required;
             "cert_chain"={
@@ -130,8 +202,55 @@ data:
             "verification_mode"=full;
             "peer_alternative_host_name"="test-ytsaurus";
         };
+        snapshots={
+            path="/yt/master-data/master-snapshots";
+        };
+        changelogs={
+            path="/yt/master-data/master-changelogs";
+            "io_engine"={
+                "enable_sync"=%false;
+            };
+        };
+        "use_new_hydra"=%true;
+        "hydra_manager"={
+            "max_changelog_count_to_keep"=10;
+            "max_snapshot_count_to_keep"=10;
+        };
+        "cypress_manager"={
+            "default_table_replication_factor"=3;
+            "default_file_replication_factor"=3;
+            "default_journal_replication_factor"=3;
+            "default_journal_read_quorum"=2;
+            "default_journal_write_quorum"=2;
+        };
+        "primary_master"={
+            addresses=[
+                "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+            ];
+            peers=[
+                {
+                    address="ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                    voting=%true;
+                };
+            ];
+            "cell_id"="65726e65-ad6b7562-10259-79747361";
+        };
+        "secondary_masters"=[
+            {
+                addresses=[
+                    "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                ];
+                peers=[
+                    {
+                        address="ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+                "cell_id"="65726e65-ad6b7562-20259-79747361";
+            };
+        ];
         "discovery_server"={
-            "server_addresses"=[
+            addresses=[
                 "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
             ];
         };
@@ -146,13 +265,13 @@ metadata:
   creationTimestamp: null
   generation: 1
   labels:
-    app.kubernetes.io/component: yt-discovery
+    app.kubernetes.io/component: yt-master-2
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-discovery
+    app.kubernetes.io/name: yt-master
     app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-discovery
+    yt_component: test-ytsaurus-yt-master-2
     ytsaurus.tech/cluster-name: test-ytsaurus
-  name: yt-discovery-config
+  name: yt-master-2-config
   namespace: ytsaurus-components
   ownerReferences:
   - apiVersion: cluster.ytsaurus.tech/v1

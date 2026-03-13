@@ -12,7 +12,7 @@
             environment="";
             description="My first YTsaurus. Handle with care.";
             primaryMaster={
-                cellTag=0;
+                cellTag=0u;
             };
         };
     ];
