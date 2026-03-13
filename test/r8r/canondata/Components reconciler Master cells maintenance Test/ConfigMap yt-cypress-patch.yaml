@@ -4,6 +4,33 @@ data:
     {
         "//sys/@cluster_connection"=[
             {
+                op=test;
+                path="/secondary_masters/0/cell_id";
+                value="65726e65-ad6b7562-20259-79747361";
+            };
+            {
+                op=replace;
+                path="/secondary_masters/0/addresses";
+                value=[
+                    "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/0/peers";
+                value=[
+                    {
+                        address="ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+            };
+            {
+                op=test;
+                path="/primary_master/cell_id";
+                value="65726e65-ad6b7562-10259-79747361";
+            };
+            {
                 op=replace;
                 path="/primary_master/addresses";
                 value=[
@@ -49,9 +76,41 @@ data:
   yt-http-proxy-cypress-patch.yson: |-
     {
     }
+  yt-master-2-cypress-patch.yson: |-
+    {
+        "//sys/@cluster_connection"=[
+            {
+                op=test;
+                path="/secondary_masters/0/cell_id";
+                value="65726e65-ad6b7562-20259-79747361";
+            };
+            {
+                op=replace;
+                path="/secondary_masters/0/addresses";
+                value=[
+                    "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/0/peers";
+                value=[
+                    {
+                        address="ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+            };
+        ];
+    }
   yt-master-cypress-patch.yson: |-
     {
         "//sys/@cluster_connection"=[
+            {
+                op=test;
+                path="/primary_master/cell_id";
+                value="65726e65-ad6b7562-10259-79747361";
+            };
             {
                 op=replace;
                 path="/primary_master/addresses";

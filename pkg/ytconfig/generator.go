@@ -37,6 +37,7 @@ type NodeGenerator struct {
 	commonSpec         *ytv1.CommonSpec
 	clusterFeatures    ytv1.ClusterFeatures
 	primaryMaster      masterCellInfo
+	secondaryMasters   []masterCellInfo
 	masterCache        *masterCacheInfo
 	cypressProxiesSpec *ytv1.CypressProxiesSpec
 
@@ -72,6 +73,14 @@ func NewLocalNodeGenerator(
 		InstanceCount:        ytsaurus.Spec.PrimaryMasters.InstanceCount,
 	}
 
+	secondaryMasters := make([]masterCellInfo, len(ytsaurus.Spec.SecondaryMasters))
+	for i, spec := range ytsaurus.Spec.SecondaryMasters {
+		secondaryMasters[i] = masterCellInfo{
+			MasterConnectionSpec: spec.MasterConnectionSpec,
+			InstanceCount:        spec.InstanceCount,
+		}
+	}
+
 	var masterCache *masterCacheInfo
 	if spec := ytsaurus.Spec.MasterCaches; spec != nil {
 		hostAddresses := spec.HostAddresses
@@ -96,6 +105,7 @@ func NewLocalNodeGenerator(
 		commonSpec:             &ytsaurus.Spec.CommonSpec,
 		clusterFeatures:        ptr.Deref(ytsaurus.Spec.ClusterFeatures, ytv1.ClusterFeatures{}),
 		primaryMaster:          primaryMaster,
+		secondaryMasters:       secondaryMasters,
 		masterCache:            masterCache,
 		discoveryInstanceCount: ytsaurus.Spec.Discovery.InstanceCount,
 		cypressProxiesSpec:     ytsaurus.Spec.CypressProxies,
@@ -118,6 +128,14 @@ func NewRemoteNodeGenerator(
 	}
 	primaryMaster.InstanceCount = int32(len(primaryMaster.HostAddresses)) //nolint:gosec //no overflow
 
+	secondaryMasters := make([]masterCellInfo, len(ytsaurus.Spec.SecondaryMasters))
+	for i, spec := range ytsaurus.Spec.SecondaryMasters {
+		secondaryMasters[i] = masterCellInfo{
+			MasterConnectionSpec: spec,
+			InstanceCount:        int32(len(spec.HostAddresses)), //nolint:gosec //no overflow
+		}
+	}
+
 	var masterCache *masterCacheInfo
 	masterCacheHostAddresses := ptr.Deref(ytsaurus.Spec.MasterCaches, ytv1.MasterCachesConnectionSpec{
 		HostAddresses: ytsaurus.Spec.HostAddressesMasterCaches, //nolint:staticcheck // Deprecated.
@@ -138,11 +156,16 @@ func NewRemoteNodeGenerator(
 			Annotations:   commonSpec.ExtraPodAnnotations,
 			UseShortNames: commonSpec.UseShortNames,
 		},
-		commonSpec:      commonSpec,
-		clusterFeatures: ptr.Deref(commonSpec.ClusterFeatures, ytv1.ClusterFeatures{}),
-		primaryMaster:   primaryMaster,
-		masterCache:     masterCache,
+		commonSpec:       commonSpec,
+		clusterFeatures:  ptr.Deref(commonSpec.ClusterFeatures, ytv1.ClusterFeatures{}),
+		primaryMaster:    primaryMaster,
+		secondaryMasters: secondaryMasters,
+		masterCache:      masterCache,
 	}
+}
+
+func (g *NodeGenerator) GetCellID(cellTag uint16) string {
+	return generateCellID(cellTag)
 }
 
 func (g *NodeGenerator) GetClusterFeatures() ytv1.ClusterFeatures {
@@ -157,6 +180,14 @@ func (g *NodeGenerator) getComponentAddresses(ct consts.ComponentType, instanceC
 	return g.GetComponentLabeller(ct, "").GetInstanceAddresses(instanceCount, port)
 }
 
+func (g *NodeGenerator) GetMasterLabeller(cellTag uint16) *labeller.Labeller {
+	instanceGroup := ""
+	if cellTag != g.primaryMaster.CellTag {
+		instanceGroup = g.baseLabeller.GetCellName(cellTag)
+	}
+	return g.GetComponentLabeller(consts.MasterType, instanceGroup)
+}
+
 func (g *NodeGenerator) getMasterAddresses(masterCell *masterCellInfo) []string {
 	if hosts := masterCell.HostAddresses; len(hosts) != 0 {
 		addresses := make([]string, len(hosts))
@@ -165,7 +196,8 @@ func (g *NodeGenerator) getMasterAddresses(masterCell *masterCellInfo) []string 
 		}
 		return addresses
 	}
-	return g.getComponentAddresses(consts.MasterType, masterCell.InstanceCount, consts.MasterRPCPort)
+	masterLabeller := g.GetMasterLabeller(masterCell.CellTag)
+	return masterLabeller.GetInstanceAddresses(masterCell.InstanceCount, consts.MasterRPCPort)
 }
 
 func (g *NodeGenerator) getMasterCachesAddresses() []string {
@@ -367,6 +399,10 @@ func (g *NodeGenerator) fillMasterCell(c *MasterCell, s *masterCellInfo) {
 
 func (g *NodeGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCTransportSpec, keyring *Keyring) {
 	g.fillMasterCell(&c.PrimaryMaster, &g.primaryMaster)
+	c.SecondaryMasters = make([]MasterCell, len(g.secondaryMasters))
+	for i := range g.secondaryMasters {
+		g.fillMasterCell(&c.SecondaryMasters[i], &g.secondaryMasters[i])
+	}
 	c.ClusterName = g.baseLabeller.GetClusterName()
 	c.DiscoveryConnection.Addresses = g.getDiscoveryAddresses()
 	g.fillClusterConnectionEncryption(c, s, keyring)
@@ -581,6 +617,10 @@ func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, e
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	g.fillMasterCell(&c.PrimaryMaster, &g.primaryMaster)
+	c.SecondaryMasters = make([]MasterCell, len(g.secondaryMasters))
+	for i := range g.secondaryMasters {
+		g.fillMasterCell(&c.SecondaryMasters[i], &g.secondaryMasters[i])
+	}
 	configureMasterServerCypressManager(g.GetMaxReplicationFactor(), &c.CypressManager)
 
 	c.BusClient = c.ClusterConnection.BusClient
@@ -602,7 +642,7 @@ func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, e
 
 		// POD_NAME is set to pod name through downward API env var and substituted during
 		// config postprocessing.
-		l := g.GetComponentLabeller(consts.MasterType, "")
+		l := g.GetMasterLabeller(spec.CellTag)
 		c.AddressResolver.LocalhostNameOverride = ptr.To(
 			fmt.Sprintf("{%s}.%s.%s.svc.%s",
 				consts.ENV_K8S_POD_NAME,
@@ -1323,6 +1363,9 @@ func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string,
 		}
 	case consts.MasterType:
 		names = append(names, "")
+		for _, spec := range g.ytsaurus.Spec.SecondaryMasters {
+			names = append(names, g.baseLabeller.GetCellName(spec.CellTag))
+		}
 	case consts.QueryTrackerType:
 		if g.ytsaurus.Spec.QueryTrackers != nil {
 			names = append(names, "")
@@ -1424,6 +1467,12 @@ func (g *Generator) GetComponentConfig(component consts.ComponentType, name stri
 	case consts.MasterType:
 		if name == "" {
 			return g.GetMasterConfig(&g.ytsaurus.Spec.PrimaryMasters)
+		}
+		for i := range g.ytsaurus.Spec.SecondaryMasters {
+			spec := &g.ytsaurus.Spec.SecondaryMasters[i]
+			if name == g.baseLabeller.GetCellName(spec.CellTag) {
+				return g.GetMasterConfig(spec)
+			}
 		}
 	case consts.QueryTrackerType:
 		if name == "" {

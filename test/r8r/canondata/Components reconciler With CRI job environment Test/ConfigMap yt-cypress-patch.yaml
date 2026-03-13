@@ -4,6 +4,11 @@ data:
     {
         "//sys/@cluster_connection"=[
             {
+                op=test;
+                path="/primary_master/cell_id";
+                value="65726e65-ad6b7562-10259-79747361";
+            };
+            {
                 op=replace;
                 path="/primary_master/addresses";
                 value=[
@@ -55,6 +60,11 @@ data:
   yt-master-cypress-patch.yson: |-
     {
         "//sys/@cluster_connection"=[
+            {
+                op=test;
+                path="/primary_master/cell_id";
+                value="65726e65-ad6b7562-10259-79747361";
+            };
             {
                 op=replace;
                 path="/primary_master/addresses";

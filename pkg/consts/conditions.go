@@ -27,6 +27,7 @@ const (
 const (
 	ConditionReady            = "Ready"
 	ConditionInitJobCompleted = "InitJobCompleted"
+	ConditionQuorumCheck      = "-QuorumCheck"
 )
 
 // Component update phase condition suffixes

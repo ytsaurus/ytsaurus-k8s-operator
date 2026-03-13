@@ -55,6 +55,11 @@ func (l *Labeller) GetClusterDomain() string {
 	return l.ClusterDomain
 }
 
+func (l *Labeller) GetCellName(cellTag uint16) string {
+	// Decimal like in cypress: "//sys/secondary_masters/{cell-tag}/{address}".
+	return fmt.Sprintf("%d", cellTag)
+}
+
 // getGroupName converts <name> into <name>[-group]
 func (l *Labeller) getGroupName(name string) string {
 	if l.InstanceGroup != "" && l.InstanceGroup != consts.DefaultName {
