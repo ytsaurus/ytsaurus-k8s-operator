@@ -71,7 +71,15 @@ func NewComponentManager(
 		getHeaterStatus = ih.GetHeaterStatus
 	}
 
-	m := components.NewMaster(cfgen, ytsaurus, &resource.Spec.PrimaryMasters)
+	var secondaryMasters []*components.Master
+	for i := range resource.Spec.SecondaryMasters {
+		sm := components.NewMaster(cfgen, ytsaurus, &resource.Spec.SecondaryMasters[i], nil)
+		secondaryMasters = append(secondaryMasters, sm)
+		allComponents = append(allComponents, sm)
+	}
+
+	// NOTE: Primary master readiness depends on readiness of secondary masters.
+	m := components.NewMaster(cfgen, ytsaurus, &resource.Spec.PrimaryMasters, secondaryMasters)
 	allComponents = append(allComponents, m)
 
 	var hps []components.Component
