@@ -381,8 +381,8 @@ func (m *Master) createInitScript() (string, error) {
 		initCommands = append(
 			initCommands,
 			RunIfNonexistent(
-				"//sys/@replication_factor",
-				fmt.Sprintf("/usr/bin/yt set //sys/@replication_factor %d", m.cfgen.GetMaxReplicationFactor()),
+				"//@replication_factor",
+				fmt.Sprintf("/usr/bin/yt set //@replication_factor %d", m.cfgen.GetMaxReplicationFactor()),
 			),
 		)
 	}
