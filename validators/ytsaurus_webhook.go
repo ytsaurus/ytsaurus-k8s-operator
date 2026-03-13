@@ -161,6 +161,9 @@ func (r *ytsaurusValidator) validatePrimaryMasters(newYtsaurus, oldYtsaurus *ytv
 func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *ytv1.Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
+	cellTags := UniqueValues[uint16]{}
+	cellTags.Insert(newYtsaurus.Spec.PrimaryMasters.CellTag, field.NewPath("spec").Child("primaryMasters").Child("cellTag"))
+
 	for i := range newYtsaurus.Spec.SecondaryMasters {
 		path := field.NewPath("spec").Child("secondaryMasters").Index(i)
 		mastersSpec := &newYtsaurus.Spec.SecondaryMasters[i]
@@ -169,6 +172,13 @@ func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *y
 			oldMastersSpec = &oldYtsaurus.Spec.SecondaryMasters[i]
 		}
 		allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, mastersSpec, oldMastersSpec, path)...)
+		allErrors = append(allErrors, cellTags.Insert(mastersSpec.CellTag, path.Child("cellTag"))...)
+	}
+
+	for cellTag, path := range cellTags {
+		if cellTag < 1 || cellTag > 0xF000 {
+			allErrors = append(allErrors, field.Invalid(path, cellTag, "Cell tag must be in range 1..0xF000"))
+		}
 	}
 
 	return allErrors

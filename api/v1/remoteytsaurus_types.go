@@ -22,8 +22,8 @@ import (
 
 // RemoteYtsaurusSpec defines the desired state of RemoteYtsaurus
 type RemoteYtsaurusSpec struct {
-	MasterConnectionSpec `json:",inline"`
-	MasterCachesSpec     `json:",inline"`
+	MasterCellSpec   `json:",inline"`
+	MasterCachesSpec `json:",inline"`
 }
 
 // RemoteYtsaurusStatus defines the observed state of RemoteYtsaurus

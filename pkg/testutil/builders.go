@@ -40,7 +40,7 @@ func BuildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
 						},
 					},
 				},
-				MasterConnectionSpec: ytv1.MasterConnectionSpec{
+				MasterCellSpec: ytv1.MasterCellSpec{
 					CellTag: 1,
 				},
 			},

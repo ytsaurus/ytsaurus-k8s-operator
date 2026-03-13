@@ -21264,7 +21264,10 @@
               }
             },
             "cellTag": {
-              "type": "integer"
+              "description": "Cell tag is an immutable identifier for particular cell of YTsaurus cluster.",
+              "type": "integer",
+              "maximum": 61440,
+              "minimum": 1
             },
             "dnsConfig": {
               "description": "DNSConfig allows customizing the DNS settings.",
@@ -32273,7 +32276,10 @@
                 }
               },
               "cellTag": {
-                "type": "integer"
+                "description": "Cell tag is an immutable identifier for particular cell of YTsaurus cluster.",
+                "type": "integer",
+                "maximum": 61440,
+                "minimum": 1
               },
               "dnsConfig": {
                 "description": "DNSConfig allows customizing the DNS settings.",

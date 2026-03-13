@@ -437,11 +437,6 @@ type InstanceSpec struct {
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
 }
 
-type MasterConnectionSpec struct {
-	CellTag       int16    `json:"cellTag"`
-	HostAddresses []string `json:"hostAddresses,omitempty"`
-}
-
 type HydraPersistenceUploaderSpec struct {
 	Image *string `json:"image,omitempty"`
 }
@@ -452,8 +447,8 @@ type TimbertruckSpec struct {
 }
 
 type MastersSpec struct {
-	InstanceSpec         `json:",inline"`
-	MasterConnectionSpec `json:",inline"`
+	InstanceSpec   `json:",inline"`
+	MasterCellSpec `json:",inline"`
 
 	HostAddressLabel string `json:"hostAddressLabel,omitempty"`
 
@@ -796,7 +791,7 @@ type DeprecatedSpytSpec struct {
 }
 
 type MasterCachesConnectionSpec struct {
-	CellTag       int16    `json:"cellTagMasterCaches"`
+	CellTag       uint16   `json:"cellTagMasterCaches"`
 	HostAddresses []string `json:"hostAddressesMasterCaches,omitempty"`
 }
 

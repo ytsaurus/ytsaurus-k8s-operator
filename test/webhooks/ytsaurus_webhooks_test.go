@@ -258,6 +258,15 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
 		})
 
+		It("Should not accept a duplicate cell tag", func() {
+			ytsaurus.Spec.PrimaryMasters.CellTag = 123
+			ytsaurus.Spec.SecondaryMasters = []ytv1.MastersSpec{{MasterCellSpec: ytv1.MasterCellSpec{CellTag: 123}}}
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(And(
+				ContainSubstring("spec.secondaryMasters[0].cellTag"),
+				ContainSubstring("spec.primaryMasters.cellTag"),
+			)))
+		})
+
 		It("Should not accept data nodes without chunk locations", func() {
 			ytsaurus.Spec.DataNodes = []ytv1.DataNodesSpec{
 				{
