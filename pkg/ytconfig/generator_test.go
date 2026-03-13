@@ -1150,7 +1150,7 @@ func getCommonSpec() *ytv1.CommonSpec {
 
 func getMasterConnectionSpec() ytv1.MasterConnectionSpec {
 	return ytv1.MasterConnectionSpec{
-		CellTag: 0,
+		CellTag: 1,
 	}
 }
 

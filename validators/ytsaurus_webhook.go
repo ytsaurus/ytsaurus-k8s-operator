@@ -161,14 +161,28 @@ func (r *ytsaurusValidator) validatePrimaryMasters(newYtsaurus, oldYtsaurus *ytv
 func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *ytv1.Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
+	cellTags := UniqueValues[uint16]{}
+	cellTags.Insert(newYtsaurus.Spec.PrimaryMasters.CellTag, field.NewPath("spec").Child("primaryMasters").Child("cellTag"))
+
+	secondaryMastersPath := field.NewPath("spec").Child("secondaryMasters")
 	for i := range newYtsaurus.Spec.SecondaryMasters {
-		path := field.NewPath("spec").Child("secondaryMasters").Index(i)
+		path := secondaryMastersPath.Index(i)
 		mastersSpec := &newYtsaurus.Spec.SecondaryMasters[i]
 		var oldMastersSpec *ytv1.MastersSpec
 		if oldYtsaurus != nil && len(oldYtsaurus.Spec.SecondaryMasters) > i {
 			oldMastersSpec = &oldYtsaurus.Spec.SecondaryMasters[i]
 		}
 		allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, mastersSpec, oldMastersSpec, path)...)
+		allErrors = append(allErrors, cellTags.Insert(mastersSpec.CellTag, path.Child("cellTag"))...)
+	}
+
+	if cnt := len(cellTags) - 1; cnt > consts.MaxSecondaryMasterCells {
+		allErrors = append(allErrors, field.TooMany(secondaryMastersPath, cnt, consts.MaxSecondaryMasterCells))
+	}
+	for cellTag, path := range cellTags {
+		if cellTag < consts.MinValidCellTag || cellTag > consts.MaxValidCellTag {
+			allErrors = append(allErrors, field.Invalid(path, cellTag, fmt.Sprintf("Cell tag must be in range %v..%v", consts.MinValidCellTag, consts.MaxValidCellTag)))
+		}
 	}
 
 	return allErrors
