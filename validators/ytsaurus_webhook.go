@@ -125,6 +125,10 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus *ytv1.Ytsaurus, maste
 		allErrors = append(allErrors, field.Invalid(path.Child("cellTag"), mastersSpec.CellTag, "Could not be changed"))
 	}
 
+	if oldMastersSpec != nil && oldMastersSpec.InstanceCount > 0 && mastersSpec.InstanceCount < 1 {
+		allErrors = append(allErrors, field.Invalid(path.Child("instanceCount"), mastersSpec.InstanceCount, "Cannot be below 1"))
+	}
+
 	if mastersSpec.InstanceCount > 1 && !newYtsaurus.Spec.EphemeralCluster {
 		affinity := newYtsaurus.Spec.PrimaryMasters.Affinity
 		if affinity == nil || affinity.PodAntiAffinity == nil {
@@ -155,11 +159,19 @@ func (r *ytsaurusValidator) validatePrimaryMasters(newYtsaurus, oldYtsaurus *ytv
 
 	allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, mastersSpec, oldMastersSpec, path)...)
 
+	if mastersSpec.InstanceCount < 1 {
+		allErrors = append(allErrors, field.Invalid(path.Child("instanceCount"), mastersSpec.InstanceCount, "Cannot be below 1"))
+	}
+
 	return allErrors
 }
 
 func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *ytv1.Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
+
+	cells := map[uint16]*ytv1.MastersSpec{
+		newYtsaurus.Spec.PrimaryMasters.CellTag: &newYtsaurus.Spec.PrimaryMasters,
+	}
 
 	for i := range newYtsaurus.Spec.SecondaryMasters {
 		path := field.NewPath("spec").Child("secondaryMasters").Index(i)
@@ -169,6 +181,21 @@ func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *y
 			oldMastersSpec = &oldYtsaurus.Spec.SecondaryMasters[i]
 		}
 		allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, mastersSpec, oldMastersSpec, path)...)
+
+		if _, found := cells[mastersSpec.CellTag]; found {
+			allErrors = append(allErrors, field.Duplicate(path.Child("cellTag"), mastersSpec.CellTag))
+		}
+		cells[mastersSpec.CellTag] = mastersSpec
+	}
+
+	if oldYtsaurus != nil {
+		for i := len(newYtsaurus.Spec.SecondaryMasters); i < len(oldYtsaurus.Spec.SecondaryMasters); i++ {
+			oldMastersSpec := &oldYtsaurus.Spec.SecondaryMasters[i]
+			if oldMastersSpec.InstanceCount > 0 {
+				path := field.NewPath("spec").Child("secondaryMasters").Index(i)
+				allErrors = append(allErrors, field.Forbidden(path, "Cannot be removed"))
+			}
+		}
 	}
 
 	return allErrors
