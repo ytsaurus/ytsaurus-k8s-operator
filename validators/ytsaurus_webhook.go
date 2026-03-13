@@ -140,6 +140,16 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Yt
 		if isPrimary && isMulticell && !wasMulticell && len(mastersSpec.Roles) == 0 {
 			allErrors = append(allErrors, field.Required(rolesPath, "Upgrade to multicell requires filling roles for primary cell"))
 		}
+		if mastersSpec.InstanceCount < 1 && oldMastersSpec.InstanceCount > 0 {
+			allErrors = append(allErrors, field.Invalid(path.Child("instanceCount"), mastersSpec.InstanceCount, "Cannot be below 1"))
+		}
+		if mastersSpec.InstanceCount != oldMastersSpec.InstanceCount {
+			oldMaintenance := ptr.Deref(oldYtsaurus.Spec.ClusterMaintenance, ytv1.ClusterMaintenance{}).Mode
+			newMaintenance := ptr.Deref(newYtsaurus.Spec.ClusterMaintenance, ytv1.ClusterMaintenance{}).Mode
+			if oldMaintenance != ytv1.ClusterMaintenanceMasterCells || newMaintenance != ytv1.ClusterMaintenanceMasterCells {
+				allErrors = append(allErrors, field.Required(path.Child("instanceCount"), "Could be changed only during master cells maintenance"))
+			}
+		}
 	}
 
 	if mastersSpec.InstanceCount > 1 && !newYtsaurus.Spec.EphemeralCluster {
@@ -172,6 +182,10 @@ func (r *ytsaurusValidator) validatePrimaryMasters(newYtsaurus, oldYtsaurus *ytv
 
 	allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, oldYtsaurus, mastersSpec, oldMastersSpec, path)...)
 
+	if mastersSpec.InstanceCount < 1 {
+		allErrors = append(allErrors, field.Invalid(path.Child("instanceCount"), mastersSpec.InstanceCount, "Cannot be below 1"))
+	}
+
 	return allErrors
 }
 
@@ -200,6 +214,16 @@ func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *y
 	for cellTag, path := range cellTags {
 		if cellTag < 1 || cellTag > 0xF000 {
 			allErrors = append(allErrors, field.Invalid(path, cellTag, "Cell tag must be in range 1..0xF000"))
+		}
+	}
+
+	if oldYtsaurus != nil {
+		for i := len(newYtsaurus.Spec.SecondaryMasters); i < len(oldYtsaurus.Spec.SecondaryMasters); i++ {
+			oldMastersSpec := &oldYtsaurus.Spec.SecondaryMasters[i]
+			if oldMastersSpec.InstanceCount > 0 {
+				path := field.NewPath("spec").Child("secondaryMasters").Index(i)
+				allErrors = append(allErrors, field.Forbidden(path, "Cannot be removed"))
+			}
 		}
 	}
 
