@@ -1924,6 +1924,27 @@ exec "$@"`
 			Entry("YTsaurus late", testutil.YtsaurusLateVersion),
 		) // integration tls
 
+		DescribeTableSubtree("With secondary cells", Label("multicell"), func(epoch string) {
+			images := testutil.Images[epoch]
+			if epoch == "" || images.Core == "" {
+				return
+			}
+
+			BeforeEach(func() {
+				By("Adding secondary master")
+				ytBuilder.Ytsaurus.Spec.CoreImage = images.Core
+				ytBuilder.WithSecondaryMaster()
+			})
+
+			It("Verifies secondary cells", Label(epoch), Label(images.YtsaurusVersion.String()), func(ctx context.Context) {
+			})
+
+		},
+			// Entry("YTsaurus curr", testutil.YtsaurusCurrVersion),
+			// Entry("YTsaurus next", testutil.YtsaurusNextVersion),
+			Entry("YTsaurus late", testutil.YtsaurusLateVersion),
+		) // integration multicell
+
 	}) // integration
 
 	// FIXME(khlebnikov): Refactor this - update just one component.
