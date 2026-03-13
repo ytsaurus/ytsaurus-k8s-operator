@@ -512,6 +512,20 @@ func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 		return false, msg, err
 	}
 
+	if len(yc.ytsaurus.GetResource().Spec.SecondaryMasters) > 0 {
+		var secondaryCells []string
+		if err := yc.ytClient.ListNode(ctx, ypath.Path(consts.SecondaryMastersPath), &secondaryCells, nil); err != nil {
+			return false, "", err
+		}
+		for _, cellTag := range secondaryCells {
+			cellPath := ypath.Path(consts.SecondaryMastersPath).Child(cellTag)
+			if msg, err := yc.checkMastersQuorumHealth(ctx, cellPath); err != nil || msg != "" {
+				msg = fmt.Sprintf("Cell %v: %v", cellTag, msg)
+				return false, msg, err
+			}
+		}
+	}
+
 	return true, "Update is possible", nil
 }
 
