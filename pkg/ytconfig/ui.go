@@ -7,7 +7,7 @@ const (
 )
 
 type UIPrimaryMaster struct {
-	CellTag int16 `yson:"cellTag"`
+	CellTag uint16 `yson:"cellTag"`
 }
 
 type UIClusterURLs struct {
