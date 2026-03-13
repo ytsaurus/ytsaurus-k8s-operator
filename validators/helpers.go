@@ -47,3 +47,23 @@ func ValidateVersionConstraint(constraintStr string) *field.Error {
 	details := fmt.Sprintf("current operator version %q does not satisfy the spec version constraint: %v", currentVersion.Original(), errors)
 	return field.Forbidden(path, details)
 }
+
+type UniqueValues[T comparable] map[T]*field.Path
+
+func (u UniqueValues[T]) Insert(value T, path *field.Path) field.ErrorList {
+	if dup, found := u[value]; found {
+		err := field.Duplicate(path, value)
+		err.Detail = "duplicates: " + dup.String()
+		return field.ErrorList{err}
+	}
+	u[value] = path
+	return nil
+}
+
+func (u UniqueValues[T]) InsertAll(slice []T, path *field.Path) field.ErrorList {
+	var errors field.ErrorList
+	for i, value := range slice {
+		errors = append(errors, u.Insert(value, path.Index(i))...)
+	}
+	return errors
+}
