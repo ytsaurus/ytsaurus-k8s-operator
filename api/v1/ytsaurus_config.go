@@ -6,6 +6,7 @@ type MasterConnectionSpec struct {
 	//+kubebuilder:validation:Required
 	//+kubebuilder:validation:Minimum:=1
 	//+kubebuilder:validation:Maximum:=61440
-	CellTag       uint16   `json:"cellTag"`
+	CellTag uint16 `json:"cellTag"`
+	//+listType=set
 	HostAddresses []string `json:"hostAddresses,omitempty"`
 }
