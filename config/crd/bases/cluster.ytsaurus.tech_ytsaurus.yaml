@@ -18375,6 +18375,7 @@ spec:
                     items:
                       type: string
                     type: array
+                    x-kubernetes-list-type: set
                   hostNetwork:
                     description: Use the host's network namespace.
                     type: boolean
@@ -27847,6 +27848,7 @@ spec:
                       items:
                         type: string
                       type: array
+                      x-kubernetes-list-type: set
                     hostNetwork:
                       description: Use the host's network namespace.
                       type: boolean

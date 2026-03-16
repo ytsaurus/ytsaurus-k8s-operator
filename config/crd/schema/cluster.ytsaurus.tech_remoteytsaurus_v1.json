@@ -845,7 +845,8 @@
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "x-kubernetes-list-type": "set"
         },
         "hostAddressesLabel": {
           "type": "string"

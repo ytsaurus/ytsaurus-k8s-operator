@@ -21389,7 +21389,8 @@
               "type": "array",
               "items": {
                 "type": "string"
-              }
+              },
+              "x-kubernetes-list-type": "set"
             },
             "hostNetwork": {
               "description": "Use the host's network namespace.",
@@ -32432,7 +32433,8 @@
                 "type": "array",
                 "items": {
                   "type": "string"
-                }
+                },
+                "x-kubernetes-list-type": "set"
               },
               "hostNetwork": {
                 "description": "Use the host's network namespace.",
