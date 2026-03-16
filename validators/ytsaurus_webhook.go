@@ -181,6 +181,10 @@ func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *y
 	cellTags := UniqueValues[uint16]{}
 	cellTags.Insert(newYtsaurus.Spec.PrimaryMasters.CellTag, field.NewPath("spec").Child("primaryMasters").Child("cellTag"))
 
+	// TODO(khlebnikov): Add option for RPC port to collocate primary and secondary masters in host network.
+	hostAddresses := UniqueValues[string]{}
+	allErrors = append(allErrors, hostAddresses.InsertAll(newYtsaurus.Spec.PrimaryMasters.HostAddresses, field.NewPath("spec").Child("primaryMasters").Child("hostAddresses"))...)
+
 	for i := range newYtsaurus.Spec.SecondaryMasters {
 		path := field.NewPath("spec").Child("secondaryMasters").Index(i)
 		mastersSpec := &newYtsaurus.Spec.SecondaryMasters[i]
@@ -190,6 +194,7 @@ func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *y
 		}
 		allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, oldYtsaurus, mastersSpec, oldMastersSpec, path)...)
 		allErrors = append(allErrors, cellTags.Insert(mastersSpec.CellTag, path.Child("cellTag"))...)
+		allErrors = append(allErrors, hostAddresses.InsertAll(mastersSpec.HostAddresses, path.Child("hostAddresses"))...)
 	}
 
 	for cellTag, path := range cellTags {
