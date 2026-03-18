@@ -1983,6 +1983,10 @@ exec "$@"`
 
 					By("Adding secondary master")
 					ytBuilder.WithSecondaryMaster()
+
+					// Both cells with role chunk host.
+					ytsaurus.Spec.PrimaryMasters.Roles = ptr.To(ytv1.GetMasterCellRoles(nil, true, false))
+					ytsaurus.Spec.SecondaryMasters[0].Roles = ptr.To(ytv1.GetMasterCellRoles(nil, false, true))
 				})
 
 				It("Verifies master cells", Label(epoch), Label(images.YtsaurusVersion.String()), func(ctx context.Context) {
@@ -2015,8 +2019,12 @@ exec "$@"`
 						HaveKeyWithValue("app.kubernetes.io/component", "yt-master"),
 					))))
 
-					By("Adding secondary master")
+					By("Keeping primary master default roles")
+					ytsaurus.Spec.PrimaryMasters.Roles = ptr.To(ytv1.GetMasterCellRoles(nil, true, false))
+					By("Adding secondary master cell with default roles")
 					ytBuilder.WithSecondaryMaster()
+					By("Adding secondary master cell with empty roles")
+					ytBuilder.WithSecondaryMaster().Roles = ptr.To([]ytv1.MasterCellRole{})
 
 					By("Initiating update")
 					UpdateObject(ctx, ytsaurus)
@@ -2027,6 +2035,7 @@ exec "$@"`
 						HaveKeyWithValue("app.kubernetes.io/name", "yt-image-heater"),
 						HaveKeyWithValue("app.kubernetes.io/component", "yt-master"),
 						HaveKeyWithValue("app.kubernetes.io/component", "yt-master-2"),
+						HaveKeyWithValue("app.kubernetes.io/component", "yt-master-3"),
 					))))
 
 					By("Ending cluster maintenance")
@@ -2040,7 +2049,7 @@ exec "$@"`
 
 					pods := getChangedPods(podsBeforeMaintenance, podsAfterMantenance)
 					Expect(pods.Heated).To(BeEmpty(), "heated")
-					Expect(pods.Created).To(ConsistOf("ms-2-0", "ms-2-1", "ms-2-2"), "created")
+					Expect(pods.Created).To(ConsistOf("ms-2-0", "ms-2-1", "ms-2-2", "ms-3-0", "ms-3-1", "ms-3-2"), "created")
 					Expect(pods.Deleted).To(BeEmpty(), "deleted")
 					Expect(pods.Updated).To(ConsistOf("ms-0", "ms-1", "ms-2", "hp-0", "dnd-0", "dnd-1", "dnd-2", "ds-0"), "updated")
 

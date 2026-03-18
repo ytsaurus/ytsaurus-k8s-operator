@@ -15,3 +15,45 @@ type MasterCachesConnectionSpec struct {
 	//+listType=set
 	HostAddresses []string `json:"hostAddresses,omitempty"`
 }
+
+// Other roles are allowed and handled as opaque strings, only naming convention is validated.
+// Link: https://ytsaurus.tech/docs/en/admin-guide/cell-addition
+// +kubebuilder:validation:Pattern:=`^[a-z_]+$`
+type MasterCellRole string
+
+const (
+	// Handling cypress tree or sub-tree (portal). Default role for both primary and secondary cells.
+	MasterCellRoleCypressNodeHost MasterCellRole = "cypress_node_host"
+	// Handling transactions. Default role for primary cell.
+	MasterCellRoleTransactionCoordinator MasterCellRole = "transaction_coordinator"
+	// Handling chunk metadata. Default role for secondary cells and for primary if there is no secondary cells.
+	MasterCellRoleChunkHost MasterCellRole = "chunk_host"
+)
+
+// Returns expected default set of master cell roles when not listed explicitly.
+func GetMasterCellRoles(roles *[]MasterCellRole, isPrimary, isMulticell bool) []MasterCellRole {
+	switch {
+	case roles != nil:
+		return *roles
+	case isPrimary && isMulticell:
+		// NOTE: In multicell primary master have no chunk host role by default.
+		// But it may have this role if cluster were upgraded from non-multicell,
+		// in this case roles of master cell must be listed explicitly.
+		return []MasterCellRole{
+			MasterCellRoleCypressNodeHost,
+			MasterCellRoleTransactionCoordinator,
+		}
+	case isPrimary:
+		return []MasterCellRole{
+			MasterCellRoleCypressNodeHost,
+			MasterCellRoleTransactionCoordinator,
+			MasterCellRoleChunkHost,
+		}
+	default:
+		// NOTE: Default roles for secondary cell are going to be empty.
+		return []MasterCellRole{
+			MasterCellRoleCypressNodeHost,
+			MasterCellRoleChunkHost,
+		}
+	}
+}
