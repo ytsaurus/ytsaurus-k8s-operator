@@ -27,10 +27,6 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
-const (
-	hydraPath = "orchid/monitoring/hydra"
-)
-
 type internalYtsaurusClient interface {
 	Component
 	GetYtClient() yt.Client
@@ -118,11 +114,6 @@ type TabletCellBundleHealth struct {
 	Health string `yson:"health,attr" json:"health"`
 }
 
-type MasterInfo struct {
-	CellID    string   `yson:"cell_id" json:"cellId"`
-	Addresses []string `yson:"addresses" json:"addresses"`
-}
-
 func getReadOnlyGetOptions() *yt.GetNodeOptions {
 	return &yt.GetNodeOptions{
 		TransactionOptions: &yt.TransactionOptions{
@@ -130,38 +121,6 @@ func getReadOnlyGetOptions() *yt.GetNodeOptions {
 			SuppressTransactionCoordinatorSync: true,
 		},
 	}
-}
-
-type MasterState string
-
-const (
-	MasterStateLeading   MasterState = "leading"
-	MasterStateFollowing MasterState = "following"
-)
-
-type MasterHydra struct {
-	ReadOnly             bool        `yson:"read_only"`
-	LastSnapshotReadOnly bool        `yson:"last_snapshot_read_only"`
-	Active               bool        `yson:"active"`
-	State                MasterState `yson:"state"`
-}
-
-func (yc *YtsaurusClient) getAllMasters(ctx context.Context) ([]MasterInfo, error) {
-	var primaryMaster MasterInfo
-	err := yc.ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection/primary_master"), &primaryMaster, getReadOnlyGetOptions())
-	if err != nil {
-		return nil, err
-	}
-
-	var secondaryMasters []MasterInfo
-	if len(yc.ytsaurus.GetResource().Spec.SecondaryMasters) > 0 {
-		err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection/secondary_masters"), &secondaryMasters, getReadOnlyGetOptions())
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return append(secondaryMasters, primaryMaster), nil
 }
 
 // shouldSkipCypressOperations returns true when no alive masters are expected.
@@ -548,13 +507,9 @@ func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, 
 		return false, msg, nil
 	}
 
-	// Check is masters quorum healthy
-	msg, err = yc.checkMastersQuorumHealth(ctx)
-	if err != nil {
-		return false, "", err
-	}
-	if msg != "" {
-		return false, msg, nil
+	// Check is primary masters quorum healthy
+	if msg, err := yc.checkMastersQuorumHealth(ctx, consts.PrimaryMastersPath); err != nil || msg != "" {
+		return false, msg, err
 	}
 
 	return true, "Update is possible", nil
@@ -877,59 +832,94 @@ func (yc *YtsaurusClient) SetBundleControllerDisabled(ctx context.Context, disab
 
 // Master actions.
 
+// NYT::NHydra::EPeerState
+type MasterState string
+
+const (
+	MasterStateLeading   MasterState = "leading"
+	MasterStateFollowing MasterState = "following"
+)
+
+type MasterHydra struct {
+	ReadOnly             bool        `yson:"read_only"`
+	LastSnapshotReadOnly bool        `yson:"last_snapshot_read_only"`
+	Active               bool        `yson:"active"`
+	State                MasterState `yson:"state"`
+}
+
 type MastersWithMaintenance struct {
 	Address     string `yson:",value"`
 	Maintenance bool   `yson:"maintenance,attr"`
 }
 
-func (yc *YtsaurusClient) checkMastersQuorumHealth(ctx context.Context) (string, error) {
-	primaryMastersWithMaintenance := make([]MastersWithMaintenance, 0)
-	cypressPath := consts.ComponentCypressPath(consts.MasterType)
+type MasterInfo struct {
+	CellID    string   `yson:"cell_id" json:"cellId"`
+	Addresses []string `yson:"addresses" json:"addresses"`
+}
 
-	err := yc.ytClient.ListNode(ctx, ypath.Path(cypressPath), &primaryMastersWithMaintenance, &yt.ListNodeOptions{
-		Attributes: []string{"maintenance"}})
+func (yc *YtsaurusClient) checkMastersQuorumHealth(ctx context.Context, cypressPath ypath.Path) (string, error) {
+	mastersWithMaintenance := make([]MastersWithMaintenance, 0)
+
+	err := yc.ytClient.ListNode(ctx, cypressPath, &mastersWithMaintenance, &yt.ListNodeOptions{
+		Attributes: []string{"maintenance"},
+	})
 	if err != nil {
 		return "", err
 	}
 
-	leadingPrimaryMasterCount := 0
-	followingPrimaryMasterCount := 0
+	leadingMasterCount := 0
+	followingMasterCount := 0
 
-	for _, primaryMaster := range primaryMastersWithMaintenance {
+	for _, master := range mastersWithMaintenance {
 		var hydra MasterHydra
-		err = yc.ytClient.GetNode(
-			ctx,
-			ypath.Path(fmt.Sprintf("%v/%v/%v", cypressPath, primaryMaster.Address, hydraPath)),
-			&hydra,
-			nil)
-		if err != nil {
+		hydraPath := cypressPath.Child(master.Address).Child(consts.MasterHydraPath)
+		if err := yc.ytClient.GetNode(ctx, hydraPath, &hydra, nil); err != nil {
 			return "", err
 		}
 
 		if !hydra.Active {
-			msg := fmt.Sprintf("There is a non-active master: %v", primaryMaster.Address)
+			msg := fmt.Sprintf("There is a non-active master: %v", master.Address)
 			return msg, nil
 		}
 
-		if primaryMaster.Maintenance {
-			msg := fmt.Sprintf("There is a master in maintenance: %v", primaryMaster.Address)
+		if master.Maintenance {
+			msg := fmt.Sprintf("There is a master in maintenance: %v", master.Address)
 			return msg, nil
 		}
 
 		switch hydra.State {
 		case MasterStateLeading:
-			leadingPrimaryMasterCount += 1
+			leadingMasterCount += 1
 		case MasterStateFollowing:
-			followingPrimaryMasterCount += 1
+			followingMasterCount += 1
 		}
 	}
 
-	if !(leadingPrimaryMasterCount == 1 && followingPrimaryMasterCount+1 == len(primaryMastersWithMaintenance)) {
+	if leadingMasterCount != 1 || followingMasterCount+1 != len(mastersWithMaintenance) {
 		msg := fmt.Sprintf("Quorum health check failed: leading=%d, following=%d, total=%d",
-			leadingPrimaryMasterCount, followingPrimaryMasterCount, len(primaryMastersWithMaintenance))
+			leadingMasterCount, followingMasterCount, len(mastersWithMaintenance))
 		return msg, nil
 	}
+
 	return "", nil
+}
+
+func (yc *YtsaurusClient) getAllMasters(ctx context.Context) ([]MasterInfo, error) {
+	var primaryMaster MasterInfo
+	err := yc.ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection/primary_master"), &primaryMaster, getReadOnlyGetOptions())
+	if err != nil {
+		return nil, err
+	}
+
+	var secondaryMasters []MasterInfo
+	if len(yc.ytsaurus.GetResource().Spec.SecondaryMasters) > 0 {
+		err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection/secondary_masters"), &secondaryMasters, getReadOnlyGetOptions())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return append(secondaryMasters, primaryMaster), nil
 }
 
 func (yc *YtsaurusClient) GetMasterMonitoringPaths(ctx context.Context) ([]string, error) {
@@ -941,12 +931,14 @@ func (yc *YtsaurusClient) GetMasterMonitoringPaths(ctx context.Context) ([]strin
 
 	for _, masterInfo := range mastersInfo {
 		for _, address := range masterInfo.Addresses {
-			monitoringPath := fmt.Sprintf("//sys/cluster_masters/%s/%v", address, hydraPath)
+			monitoringPath := ypath.Path(consts.ClusterMastersPath).Child(address).Child(consts.MasterHydraPath).String()
 			monitoringPaths = append(monitoringPaths, monitoringPath)
 		}
 	}
+
 	return monitoringPaths, nil
 }
+
 func (yc *YtsaurusClient) BuildMasterSnapshots(ctx context.Context) error {
 	_, err := yc.ytClient.BuildMasterSnapshots(ctx, &yt.BuildMasterSnapshotsOptions{
 		WaitForSnapshotCompletion: ptr.To(true),
@@ -955,6 +947,7 @@ func (yc *YtsaurusClient) BuildMasterSnapshots(ctx context.Context) error {
 
 	return err
 }
+
 func (yc *YtsaurusClient) AreMasterSnapshotsBuilt(ctx context.Context, monitoringPaths []string) (bool, error) {
 	for _, monitoringPath := range monitoringPaths {
 		var masterHydra MasterHydra
@@ -998,6 +991,8 @@ func (yc *YtsaurusClient) ensureRealChunkLocationsEnabled(ctx context.Context) e
 	logger.Info("enable_real_chunk_locations is set to true")
 	return nil
 }
+
+// Data node actions.
 
 type DataNodeMeta struct {
 	Name               string `yson:",value"`
