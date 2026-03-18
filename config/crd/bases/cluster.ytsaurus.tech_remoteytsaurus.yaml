@@ -1002,6 +1002,13 @@ spec:
                     items:
                       type: string
                     type: array
+                  roles:
+                    description: Roles assigned to this master cell.
+                    items:
+                      pattern: ^[a-z_]+$
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: set
                 required:
                 - cellTag
                 type: object
@@ -1082,6 +1089,13 @@ spec:
                       items:
                         type: string
                       type: array
+                    roles:
+                      description: Roles assigned to this master cell.
+                      items:
+                        pattern: ^[a-z_]+$
+                        type: string
+                      type: array
+                      x-kubernetes-list-type: set
                   required:
                   - cellTag
                   type: object

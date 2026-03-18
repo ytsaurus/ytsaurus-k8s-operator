@@ -1516,6 +1516,26 @@ _Appears in:_
 | `hostAddressesLabel` _string_ |  |  |  |
 
 
+#### MasterCellRole
+
+_Underlying type:_ _string_
+
+
+
+_Validation:_
+- Pattern: `^[a-z_]+$`
+
+_Appears in:_
+- [MasterCellSpec](#mastercellspec)
+- [MastersSpec](#mastersspec)
+
+| Field | Description |
+| --- | --- |
+| `cypress_node_host` |  |
+| `transaction_coordinator` |  |
+| `chunk_host` |  |
+
+
 #### MasterCellSpec
 
 
@@ -1532,6 +1552,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `cellTag` _integer_ | Cell tag is an immutable identifier for particular cell of YTsaurus cluster.<br />Must be unique among all connected clusters to prevent object ids from colliding. |  | Maximum: 61440 <br />Minimum: 1 <br />Required: \{\} <br /> |
 | `hostAddresses` _string array_ |  |  |  |
+| `roles` _[MasterCellRole](#mastercellrole) array_ | Roles assigned to this master cell. |  | Pattern: `^[a-z_]+$` <br /> |
 
 
 #### MastersSpec
@@ -1576,6 +1597,7 @@ _Appears in:_
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `cellTag` _integer_ | Cell tag is an immutable identifier for particular cell of YTsaurus cluster.<br />Must be unique among all connected clusters to prevent object ids from colliding. |  | Maximum: 61440 <br />Minimum: 1 <br />Required: \{\} <br /> |
 | `hostAddresses` _string array_ |  |  |  |
+| `roles` _[MasterCellRole](#mastercellrole) array_ | Roles assigned to this master cell. |  | Pattern: `^[a-z_]+$` <br /> |
 | `hostAddressLabel` _string_ |  |  |  |
 | `maxSnapshotCountToKeep` _integer_ |  |  |  |
 | `maxChangelogCountToKeep` _integer_ |  |  |  |

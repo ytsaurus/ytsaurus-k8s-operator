@@ -1161,6 +1161,15 @@
               "items": {
                 "type": "string"
               }
+            },
+            "roles": {
+              "description": "Roles assigned to this master cell.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z_]+$"
+              },
+              "x-kubernetes-list-type": "set"
             }
           }
         },
@@ -1276,6 +1285,15 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "roles": {
+                "description": "Roles assigned to this master cell.",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z_]+$"
+                },
+                "x-kubernetes-list-type": "set"
               }
             }
           }
