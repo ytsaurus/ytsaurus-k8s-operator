@@ -700,7 +700,10 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytsaurus.Spec.ClusterMaintenance = &ytv1.ClusterMaintenance{
 				Shutdown: ytv1.ClusterShutdownExceptMasters,
 			}
-			ytBuilder.WithSecondaryMaster()
+			ytsaurus.Spec.PrimaryMasters.Roles = ptr.To(ytv1.GetMasterCellRoles(nil, true, true))
+			ytBuilder.WithSecondaryMaster().Roles = ptr.To(ytv1.GetMasterCellRoles(nil, false, true))
+			ytBuilder.WithSecondaryMaster().Roles = nil                             // Default
+			ytBuilder.WithSecondaryMaster().Roles = ptr.To([]ytv1.MasterCellRole{}) // Empty
 		})
 		It("Test", func(ctx context.Context) {
 			Expect(ytsaurus).To(HaveField("Status.State", Equal(ytv1.ClusterStateMaintenance)))

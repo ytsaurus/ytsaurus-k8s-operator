@@ -41,6 +41,40 @@ data:
                     };
                 ];
             };
+            {
+                op=replace;
+                path="/secondary_masters/1/addresses";
+                value=[
+                    "ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/1/peers";
+                value=[
+                    {
+                        address="ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/2/addresses";
+                value=[
+                    "ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/2/peers";
+                value=[
+                    {
+                        address="ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+            };
         ];
         "<>//sys/clusters"=[
             {
@@ -67,6 +101,12 @@ data:
     {
     }
   yt-master-2-cypress-patch.yson: |-
+    {
+    }
+  yt-master-3-cypress-patch.yson: |-
+    {
+    }
+  yt-master-4-cypress-patch.yson: |-
     {
     }
   yt-master-cypress-patch.yson: |-
@@ -106,6 +146,40 @@ data:
                 value=[
                     {
                         address="ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/1/addresses";
+                value=[
+                    "ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/1/peers";
+                value=[
+                    {
+                        address="ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/2/addresses";
+                value=[
+                    "ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/2/peers";
+                value=[
+                    {
+                        address="ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
                         voting=%true;
                     };
                 ];
