@@ -18671,6 +18671,15 @@ spec:
                           resources required.
                         type: object
                     type: object
+                  roles:
+                    description: Roles assigned to this master cell.
+                    items:
+                      description: Other roles are allowed and handled as opaque strings,
+                        only naming convention...
+                      pattern: ^[a-z_]+$
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: set
                   runtimeClassName:
                     description: Runtime class for instance pods.
                     type: string
@@ -28144,6 +28153,15 @@ spec:
                             resources required.
                           type: object
                       type: object
+                    roles:
+                      description: Roles assigned to this master cell.
+                      items:
+                        description: Other roles are allowed and handled as opaque
+                          strings, only naming convention...
+                        pattern: ^[a-z_]+$
+                        type: string
+                      type: array
+                      x-kubernetes-list-type: set
                     runtimeClassName:
                       description: Runtime class for instance pods.
                       type: string

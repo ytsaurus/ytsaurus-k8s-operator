@@ -1295,6 +1295,15 @@ func (in *MastersSpec) DeepCopyInto(out *MastersSpec) {
 	*out = *in
 	in.InstanceSpec.DeepCopyInto(&out.InstanceSpec)
 	in.MasterConnectionSpec.DeepCopyInto(&out.MasterConnectionSpec)
+	if in.Roles != nil {
+		in, out := &in.Roles, &out.Roles
+		*out = new([]MasterCellRole)
+		if **in != nil {
+			in, out := *in, *out
+			*out = make([]MasterCellRole, len(*in))
+			copy(*out, *in)
+		}
+	}
 	if in.MaxSnapshotCountToKeep != nil {
 		in, out := &in.MaxSnapshotCountToKeep, &out.MaxSnapshotCountToKeep
 		*out = new(int)
