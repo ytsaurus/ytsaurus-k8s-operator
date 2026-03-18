@@ -455,6 +455,11 @@ type MastersSpec struct {
 	InstanceSpec         `json:",inline"`
 	MasterConnectionSpec `json:",inline"`
 
+	// Roles assigned to this master cell. Explicit enlisting is preferred, because defaults could change.
+	// In general, assigned or default roles cannot be removed later without risk of data loss.
+	//+listType=set
+	Roles *[]MasterCellRole `json:"roles,omitempty"`
+
 	HostAddressLabel string `json:"hostAddressLabel,omitempty"`
 
 	MaxSnapshotCountToKeep  *int `json:"maxSnapshotCountToKeep,omitempty"`

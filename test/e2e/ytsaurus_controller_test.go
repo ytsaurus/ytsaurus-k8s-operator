@@ -2045,9 +2045,15 @@ exec "$@"`
 					By("Adding two secondary master cells")
 					ytBuilder.WithSecondaryMaster()
 					ytBuilder.WithSecondaryMaster()
+
+					// Give role chunk host to all master cells.
+					ytsaurus.Spec.PrimaryMasters.Roles = ptr.To(ytv1.GetMasterCellRoles(nil, true, false))
 				})
 
 				It("Verifies master cells", Label(epoch), Label(images.YtsaurusVersion.String()), func(ctx context.Context) {
+					By("Checking chunk server for primary master cells")
+					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.PrimaryMasters.CellTag)
+
 					By("Checking chunk server for secondary master cells")
 					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.SecondaryMasters[0].CellTag)
 					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.SecondaryMasters[1].CellTag)

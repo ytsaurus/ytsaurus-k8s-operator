@@ -41,6 +41,30 @@ data:
                     ];
                     "cell_id"="65726e65-ad6b7562-20259-79747361";
                 };
+                {
+                    addresses=[
+                        "ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                    ];
+                    peers=[
+                        {
+                            address="ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                            voting=%true;
+                        };
+                    ];
+                    "cell_id"="65726e65-ad6b7562-30259-79747361";
+                };
+                {
+                    addresses=[
+                        "ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                    ];
+                    peers=[
+                        {
+                            address="ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                            voting=%true;
+                        };
+                    ];
+                    "cell_id"="65726e65-ad6b7562-40259-79747361";
+                };
             ];
             "discovery_connection"={
                 addresses=[
@@ -67,10 +91,26 @@ data:
     if [ 'true' = 'true' ]; then
     if [ $(/usr/bin/yt exists //sys/@provision_lock) = 'true' ]; then
     yt set //sys/@config/multicell_manager/cell_descriptors '{
+        "1"={
+            roles=[
+                "cypress_node_host";
+                "transaction_coordinator";
+            ];
+        };
         "2"={
             roles=[
                 "cypress_node_host";
                 "chunk_host";
+            ];
+        };
+        "3"={
+            roles=[
+                "cypress_node_host";
+                "chunk_host";
+            ];
+        };
+        "4"={
+            roles=[
             ];
         };
     }'
@@ -133,6 +173,30 @@ data:
                     };
                 ];
                 "cell_id"="65726e65-ad6b7562-20259-79747361";
+            };
+            {
+                addresses=[
+                    "ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                ];
+                peers=[
+                    {
+                        address="ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+                "cell_id"="65726e65-ad6b7562-30259-79747361";
+            };
+            {
+                addresses=[
+                    "ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                ];
+                peers=[
+                    {
+                        address="ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+                "cell_id"="65726e65-ad6b7562-40259-79747361";
             };
         ];
         "discovery_connection"={

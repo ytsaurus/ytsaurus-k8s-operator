@@ -368,9 +368,26 @@ func (m *Master) initSchemaACLs() (string, error) {
 	return strings.Join(commands, "\n"), nil
 }
 
+func (m *Master) scriptMasterCellDescriptors() ([]string, error) {
+	cellDescriptors := ytconfig.GetMasterCellDescriptors(m.mastersSpec, m.ytsaurus.GetResource().Spec.SecondaryMasters)
+	config, err := yson.MarshalFormat(cellDescriptors, yson.FormatPretty)
+	if err != nil {
+		return nil, err
+	}
+	return []string{
+		fmt.Sprintf("yt set %s '%s'", consts.MasterCellDescriptorsPath, string(config)),
+		`yt set //sys/@config/multicell_manager/remove_secondary_cell_default_roles %true`, // NOTE: This is default since 25.3
+	}, nil
+}
+
 func (m *Master) scriptInitialization() ([]string, error) {
 	clusterConn := m.cfgen.GetClusterConnection()
 	connConfig, err := yson.MarshalFormat(clusterConn, yson.FormatPretty)
+	if err != nil {
+		return nil, err
+	}
+
+	initMasterCells, err := m.scriptMasterCellDescriptors()
 	if err != nil {
 		return nil, err
 	}
@@ -386,6 +403,7 @@ func (m *Master) scriptInitialization() ([]string, error) {
 	}
 
 	initCommands := []string{
+		RunIfExists("//sys/@provision_lock", initMasterCells...),
 		m.initGroups(),
 		RunIfExists("//sys/@provision_lock", initSchemaACLsCommands),
 		"/usr/bin/yt create scheduler_pool_tree --attributes '{name=default; config={nodes_filter=\"\"}}' --ignore-existing",
