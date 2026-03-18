@@ -21787,6 +21787,16 @@
                 }
               }
             },
+            "roles": {
+              "description": "Roles assigned to this master cell.",
+              "type": "array",
+              "items": {
+                "description": "Other roles are allowed and handled as opaque strings, only naming convention...",
+                "type": "string",
+                "pattern": "^[a-z_]+$"
+              },
+              "x-kubernetes-list-type": "set"
+            },
             "runtimeClassName": {
               "description": "Runtime class for instance pods.",
               "type": "string"
@@ -32830,6 +32840,16 @@
                     }
                   }
                 }
+              },
+              "roles": {
+                "description": "Roles assigned to this master cell.",
+                "type": "array",
+                "items": {
+                  "description": "Other roles are allowed and handled as opaque strings, only naming convention...",
+                  "type": "string",
+                  "pattern": "^[a-z_]+$"
+                },
+                "x-kubernetes-list-type": "set"
               },
               "runtimeClassName": {
                 "description": "Runtime class for instance pods.",

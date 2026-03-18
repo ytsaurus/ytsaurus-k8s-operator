@@ -107,7 +107,7 @@ func (r *ytsaurusValidator) validateDiscovery(newYtsaurus *ytv1.Ytsaurus) field.
 	return allErrors
 }
 
-func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus *ytv1.Ytsaurus, mastersSpec, oldMastersSpec *ytv1.MastersSpec, path *field.Path) field.ErrorList {
+func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Ytsaurus, mastersSpec, oldMastersSpec *ytv1.MastersSpec, path *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
 	allErrors = append(allErrors, r.validateInstanceSpec(mastersSpec.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
@@ -123,6 +123,25 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus *ytv1.Ytsaurus, maste
 
 	if oldMastersSpec != nil && oldMastersSpec.CellTag != mastersSpec.CellTag {
 		allErrors = append(allErrors, field.Invalid(path.Child("cellTag"), mastersSpec.CellTag, "Could not be changed"))
+	}
+
+	rolesPath := path.Child("roles")
+	isPrimary := mastersSpec.CellTag == newYtsaurus.Spec.PrimaryMasters.CellTag
+	isMulticell := len(newYtsaurus.Spec.SecondaryMasters) > 0
+	cellRoles := UniqueValues[ytv1.MasterCellRole]{}
+	allErrors = append(allErrors, cellRoles.InsertAll(ytv1.GetMasterCellRoles(mastersSpec.Roles, isPrimary, isMulticell), rolesPath)...)
+
+	if oldMastersSpec != nil && oldMastersSpec.InstanceCount > 0 {
+		wasMulticell := len(oldYtsaurus.Spec.SecondaryMasters) > 0
+		oldCellRoles := ytv1.GetMasterCellRoles(oldMastersSpec.Roles, isPrimary, wasMulticell)
+		for _, role := range oldCellRoles {
+			if _, found := cellRoles[role]; !found {
+				allErrors = append(allErrors, field.Required(rolesPath, fmt.Sprintf("Cell %v role could not be removed: %v", mastersSpec.CellTag, role)))
+			}
+		}
+		if isPrimary && isMulticell && !wasMulticell && len(mastersSpec.Roles) == 0 {
+			allErrors = append(allErrors, field.Required(rolesPath, "Upgrade to multicell requires filling roles for primary cell"))
+		}
 	}
 
 	if mastersSpec.InstanceCount > 1 && !newYtsaurus.Spec.EphemeralCluster {
@@ -153,7 +172,7 @@ func (r *ytsaurusValidator) validatePrimaryMasters(newYtsaurus, oldYtsaurus *ytv
 		oldMastersSpec = &oldYtsaurus.Spec.PrimaryMasters
 	}
 
-	allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, mastersSpec, oldMastersSpec, path)...)
+	allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, oldYtsaurus, mastersSpec, oldMastersSpec, path)...)
 
 	return allErrors
 }
@@ -176,7 +195,7 @@ func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *y
 		if oldYtsaurus != nil && len(oldYtsaurus.Spec.SecondaryMasters) > i {
 			oldMastersSpec = &oldYtsaurus.Spec.SecondaryMasters[i]
 		}
-		allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, mastersSpec, oldMastersSpec, path)...)
+		allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, oldYtsaurus, mastersSpec, oldMastersSpec, path)...)
 		allErrors = append(allErrors, cellTags.Insert(mastersSpec.CellTag, path.Child("cellTag"))...)
 		allErrors = append(allErrors, hostAddresses.InsertAll(mastersSpec.HostAddresses, path.Child("hostAddresses"))...)
 	}
