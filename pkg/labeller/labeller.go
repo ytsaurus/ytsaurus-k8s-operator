@@ -147,6 +147,14 @@ func (l *Labeller) GetInstanceAddressPort(index, port int) string {
 		port)
 }
 
+func (l *Labeller) GetInstanceAddresses(instanceCount int32, port int) []string {
+	addr := make([]string, instanceCount)
+	for index := range instanceCount {
+		addr[index] = l.GetInstanceAddressPort(int(index), port)
+	}
+	return addr
+}
+
 // GetComponentLabel Returns lower case hyphenated component type without name part.
 func (l *Labeller) GetComponentLabel() string {
 	return consts.ComponentLabel(l.ComponentType)
