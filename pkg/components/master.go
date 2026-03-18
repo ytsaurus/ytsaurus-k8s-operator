@@ -7,9 +7,11 @@ import (
 
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
+
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
@@ -25,6 +27,8 @@ const (
 type Master struct {
 	serverComponent
 
+	mastersSpec *ytv1.MastersSpec
+
 	cfgen *ytconfig.Generator
 
 	initJob *InitJob
@@ -34,7 +38,7 @@ type Master struct {
 	uploaderSecret *resources.StringSecret
 }
 
-func buildMasterOptions(resource *ytv1.Ytsaurus) []Option {
+func buildMasterOptions(mastersSpec *ytv1.MastersSpec) []Option {
 	options := []Option{
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
@@ -43,37 +47,39 @@ func buildMasterOptions(resource *ytv1.Ytsaurus) []Option {
 		}),
 	}
 
-	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil && resource.Spec.PrimaryMasters.HydraPersistenceUploader.Image != nil {
+	if mastersSpec.HydraPersistenceUploader != nil && mastersSpec.HydraPersistenceUploader.Image != nil {
 		options = append(options, WithSidecarImage(
 			consts.HydraPersistenceUploaderContainerName,
-			*resource.Spec.PrimaryMasters.HydraPersistenceUploader.Image,
+			*mastersSpec.HydraPersistenceUploader.Image,
 		))
 	}
 
 	checkAndAddTimbertruckToServerOptions(
 		&options,
-		resource.Spec.PrimaryMasters.Timbertruck,
-		resource.Spec.PrimaryMasters.InstanceSpec.StructuredLoggers,
+		mastersSpec.Timbertruck,
+		mastersSpec.InstanceSpec.StructuredLoggers,
 	)
 
 	return options
 }
 
-func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
+func NewMaster(
+	cfgen *ytconfig.Generator,
+	ytsaurus *apiproxy.Ytsaurus,
+	mastersSpec *ytv1.MastersSpec,
+) *Master {
 	l := cfgen.GetComponentLabeller(consts.MasterType, "")
-
-	resource := ytsaurus.GetResource()
 
 	srv := newServer(
 		l,
 		ytsaurus,
-		&resource.Spec.PrimaryMasters.InstanceSpec,
+		&mastersSpec.InstanceSpec,
 		"/usr/bin/ytserver-master",
 		[]ConfigGenerator{
 			{
 				"ytserver-master.yson",
 				ConfigFormatYson,
-				func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
+				func() ([]byte, error) { return cfgen.GetMasterConfig(mastersSpec) },
 			},
 			{
 				consts.ClientConfigFileName,
@@ -82,7 +88,7 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 			},
 		},
 		consts.MasterMonitoringPort,
-		buildMasterOptions(resource)...,
+		buildMasterOptions(mastersSpec)...,
 	)
 
 	initJob := NewInitJobForYtsaurus(
@@ -91,16 +97,17 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		"default",
 		consts.ClientConfigFileName,
 		cfgen.GetNativeClientConfig,
-		&resource.Spec.PrimaryMasters.InstanceSpec,
+		&mastersSpec.InstanceSpec,
 	)
 
 	var uploaderSecret *resources.StringSecret
-	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil {
+	if mastersSpec.HydraPersistenceUploader != nil {
 		uploaderSecret = resources.NewStringSecret(buildUserCredentialsSecretname(consts.HydraPersistenceUploaderUserName), l, ytsaurus)
 	}
 
 	return &Master{
 		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
+		mastersSpec:     mastersSpec,
 		cfgen:           cfgen,
 		initJob:         initJob,
 		uploaderSecret:  uploaderSecret,
@@ -195,7 +202,7 @@ func (m *Master) initUploaderUser() (string, error) {
 		appendPathAclCommand,
 	)
 	return RunIfCondition(
-		fmt.Sprintf("'%v' = 'true'", m.ytsaurus.GetResource().Spec.PrimaryMasters.HydraPersistenceUploader != nil),
+		fmt.Sprintf("'%v' = 'true'", m.mastersSpec.HydraPersistenceUploader != nil),
 		RunIfNonexistent(fmt.Sprintf("//sys/users/%s", login), commands...),
 	), nil
 }
@@ -457,27 +464,26 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 func (m *Master) doServerSync(ctx context.Context) error {
 	statefulSet := m.server.buildStatefulSet()
 	podSpec := &statefulSet.Spec.Template.Spec
+
 	podSpec.Containers[0].Env = append(podSpec.Containers[0].Env, getNativeClientConfigEnv()...)
 
-	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
-
-	if primaryMastersSpec.HydraPersistenceUploader != nil && primaryMastersSpec.HydraPersistenceUploader.Image != nil {
+	if m.mastersSpec.HydraPersistenceUploader != nil && m.mastersSpec.HydraPersistenceUploader.Image != nil {
 		addHydraPersistenceUploaderToPodSpec(
-			*primaryMastersSpec.HydraPersistenceUploader.Image,
+			*m.mastersSpec.HydraPersistenceUploader.Image,
 			podSpec,
 			m.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
 			m.uploaderSecret.Name(),
 		)
 	}
-	if err := checkAndAddTimbertruckToPodSpec(primaryMastersSpec.Timbertruck, podSpec, &primaryMastersSpec.InstanceSpec, m.labeller, m.cfgen); err != nil {
+	if err := checkAndAddTimbertruckToPodSpec(m.mastersSpec.Timbertruck, podSpec, &m.mastersSpec.InstanceSpec, m.labeller, m.cfgen); err != nil {
 		return err
 	}
-	if err := AddSidecarsToPodSpec(primaryMastersSpec.Sidecars, podSpec); err != nil {
+	if err := AddSidecarsToPodSpec(m.mastersSpec.Sidecars, podSpec); err != nil {
 		return err
 	}
 
-	if len(primaryMastersSpec.HostAddresses) != 0 {
-		AddAffinity(statefulSet, m.getHostAddressLabel(), primaryMastersSpec.HostAddresses)
+	if len(m.mastersSpec.HostAddresses) != 0 {
+		AddAffinity(statefulSet, m.getHostAddressLabel(), m.mastersSpec.HostAddresses)
 	}
 	return m.server.Sync(ctx)
 }
@@ -494,9 +500,8 @@ func (m *Master) GetCypressPatch() ypatch.PatchSet {
 }
 
 func (m *Master) getHostAddressLabel() string {
-	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
-	if primaryMastersSpec.HostAddressLabel != "" {
-		return primaryMastersSpec.HostAddressLabel
+	if m.mastersSpec.HostAddressLabel != "" {
+		return m.mastersSpec.HostAddressLabel
 	}
 	return defaultHostAddressLabel
 }
