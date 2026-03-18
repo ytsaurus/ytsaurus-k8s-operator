@@ -741,6 +741,22 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		})
 	})
 
+	Context("Master cell roles", func() {
+		BeforeEach(func() {
+			// Primary master cell with explicit default roles.
+			ytsaurus.Spec.PrimaryMasters.Roles = ptr.To(ytv1.GetMasterCellRoles(nil, true, true))
+			// Secondary master cells with:
+			// - implicit default roles
+			// - explicit default roles
+			// - explicit empty roles
+			ytBuilder.WithSecondaryMaster().Roles = nil
+			ytBuilder.WithSecondaryMaster().Roles = ptr.To(ytv1.GetMasterCellRoles(nil, false, true))
+			ytBuilder.WithSecondaryMaster().Roles = ptr.To([]ytv1.MasterCellRole{})
+		})
+		It("Test", func(ctx context.Context) {
+		})
+	})
+
 	Context("With CRI job environment", func() {
 		BeforeEach(func() {
 			ytBuilder.WithExecNodes()
