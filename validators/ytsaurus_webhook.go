@@ -173,8 +173,7 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Yt
 	}
 
 	if mastersSpec.InstanceCount > 1 && !newYtsaurus.Spec.EphemeralCluster {
-		affinity := newYtsaurus.Spec.PrimaryMasters.Affinity
-		if affinity == nil || affinity.PodAntiAffinity == nil {
+		if affinity := mastersSpec.Affinity; affinity == nil || affinity.PodAntiAffinity == nil {
 			allErrors = append(allErrors, field.Required(path.Child("affinity").Child("podAntiAffinity"),
 				"Masters should be placed on different nodes"))
 		}
@@ -265,8 +264,8 @@ func (r *ytsaurusValidator) validateHostAddresses(newYtsaurus *ytv1.Ytsaurus, ma
 
 	if len(mastersSpec.HostAddresses) != 0 && len(mastersSpec.HostAddresses) != int(mastersSpec.InstanceCount) {
 		instanceCountFieldPath := fieldPath.Child("instanceCount")
-		allErrors = append(allErrors, field.Invalid(hostAddressesFieldPath, newYtsaurus.Spec.PrimaryMasters.HostAddresses,
-			fmt.Sprintf("%s list length shoud be equal to %s", hostAddressesFieldPath.String(), instanceCountFieldPath.String())))
+		allErrors = append(allErrors, field.Invalid(hostAddressesFieldPath, mastersSpec.HostAddresses,
+			fmt.Sprintf("%s list length should be equal to %s", hostAddressesFieldPath.String(), instanceCountFieldPath.String())))
 	}
 
 	return allErrors
