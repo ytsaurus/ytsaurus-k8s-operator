@@ -34,7 +34,7 @@ func buildRemoteYtsaurus(h *testutil.TestHelper, remoteYtsaurusName, remoteYtsau
 	remoteYtsaurus := ytv1.RemoteYtsaurus{
 		ObjectMeta: h.GetObjectMeta(remoteYtsaurusName),
 		Spec: ytv1.RemoteYtsaurusSpec{
-			MasterConnectionSpec: ytv1.MasterConnectionSpec{
+			PrimaryMaster: &ytv1.MasterConnectionSpec{
 				CellTag: 100,
 				HostAddresses: []string{
 					remoteYtsaurusHostname,
