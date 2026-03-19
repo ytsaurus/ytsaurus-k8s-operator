@@ -74,6 +74,13 @@ func NewLocalNodeGenerator(ytsaurus *ytv1.Ytsaurus, resourceName string, cluster
 }
 
 func NewRemoteNodeGenerator(ytsaurus *ytv1.RemoteYtsaurus, resourceName string, clusterDomain string, commonSpec *ytv1.CommonSpec) *NodeGenerator {
+	primaryMaster := ytsaurus.Spec.PrimaryMaster
+	if primaryMaster == nil {
+		primaryMaster = &ytv1.MasterCellSpec{
+			CellTag:       ytsaurus.Spec.CellTag,       //nolint:staticcheck // Deprecated.
+			HostAddresses: ytsaurus.Spec.HostAddresses, //nolint:staticcheck // Deprecated.
+		}
+	}
 	return &NodeGenerator{
 		baseLabeller: &labeller.Labeller{
 			Namespace:     ytsaurus.GetNamespace(),
@@ -85,7 +92,7 @@ func NewRemoteNodeGenerator(ytsaurus *ytv1.RemoteYtsaurus, resourceName string, 
 		},
 		commonSpec:       commonSpec,
 		clusterFeatures:  ptr.Deref(commonSpec.ClusterFeatures, ytv1.ClusterFeatures{}),
-		masterCellSpec:   &ytsaurus.Spec.MasterCellSpec,
+		masterCellSpec:   primaryMaster,
 		masterCachesSpec: &ytsaurus.Spec.MasterCachesSpec,
 	}
 }

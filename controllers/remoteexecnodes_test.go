@@ -95,7 +95,7 @@ var _ = Describe("RemoteExecNodes Controller", func() {
 				Expect(ysonNodeConfig).To(ContainSubstring(remoteYtsaurusHostname))
 
 				hostnameChanged := remoteYtsaurusHostname + "-changed"
-				remoteYtsaurus.Spec.HostAddresses = []string{hostnameChanged}
+				remoteYtsaurus.Spec.PrimaryMaster.HostAddresses = []string{hostnameChanged}
 				testutil.UpdateObject(h, &ytv1.RemoteYtsaurus{}, &remoteYtsaurus)
 				waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
 

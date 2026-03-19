@@ -760,7 +760,7 @@ func (b *YtsaurusBuilder) CreateRemoteYtsaurus() *ytv1.RemoteYtsaurus {
 			Namespace: b.Namespace,
 		},
 		Spec: ytv1.RemoteYtsaurusSpec{
-			MasterCellSpec: ytv1.MasterCellSpec{
+			PrimaryMaster: &ytv1.MasterCellSpec{
 				CellTag: CellTag,
 				HostAddresses: []string{
 					fmt.Sprintf("ms-0.masters.%s.svc.cluster.local", b.Namespace),

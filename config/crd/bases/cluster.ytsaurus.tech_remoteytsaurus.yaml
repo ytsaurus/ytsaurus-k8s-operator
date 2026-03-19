@@ -721,10 +721,7 @@ spec:
                     type: object
                 type: object
               cellTag:
-                description: Cell tag is an immutable identifier for particular cell
-                  of YTsaurus cluster.
-                maximum: 61440
-                minimum: 1
+                description: 'Deprecated: use primaryMaster.cellTag instead.'
                 type: integer
               cellTagMasterCaches:
                 type: integer
@@ -773,6 +770,7 @@ spec:
                   type: string
                 type: array
               hostAddresses:
+                description: 'Deprecated: use primaryMaster.hostAddresses instead.'
                 items:
                   type: string
                 type: array
@@ -992,6 +990,21 @@ spec:
                   type: string
                 description: Labels for instance pods.
                 type: object
+              primaryMaster:
+                properties:
+                  cellTag:
+                    description: Cell tag is an immutable identifier for particular
+                      cell of YTsaurus cluster.
+                    maximum: 61440
+                    minimum: 1
+                    type: integer
+                  hostAddresses:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - cellTag
+                type: object
               readinessProbeParams:
                 properties:
                   failureThreshold:
@@ -1056,6 +1069,24 @@ spec:
               runtimeClassName:
                 description: Runtime class for instance pods.
                 type: string
+              secondaryMasters:
+                items:
+                  properties:
+                    cellTag:
+                      description: Cell tag is an immutable identifier for particular
+                        cell of YTsaurus cluster.
+                      maximum: 61440
+                      minimum: 1
+                      type: integer
+                    hostAddresses:
+                      items:
+                        type: string
+                      type: array
+                  required:
+                  - cellTag
+                  type: object
+                maxItems: 48
+                type: array
               setHostnameAsFqdn:
                 default: true
                 description: SetHostnameAsFQDN indicates whether to set the hostname
@@ -1900,7 +1931,6 @@ spec:
                   type: object
                 type: array
             required:
-            - cellTag
             - cellTagMasterCaches
             type: object
           status:

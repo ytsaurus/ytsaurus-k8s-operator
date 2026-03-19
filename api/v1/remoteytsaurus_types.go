@@ -22,8 +22,17 @@ import (
 
 // RemoteYtsaurusSpec defines the desired state of RemoteYtsaurus
 type RemoteYtsaurusSpec struct {
-	MasterCellSpec   `json:",inline"`
 	MasterCachesSpec `json:",inline"`
+
+	//+optional
+	PrimaryMaster *MasterCellSpec `json:"primaryMaster,omitempty"`
+	//+kubebuilder:validation:MaxItems:=48
+	SecondaryMasters []MasterCellSpec `json:"secondaryMasters,omitempty"`
+
+	// Deprecated: use primaryMaster.cellTag instead.
+	CellTag uint16 `json:"cellTag,omitempty"`
+	// Deprecated: use primaryMaster.hostAddresses instead.
+	HostAddresses []string `json:"hostAddresses,omitempty"`
 }
 
 // RemoteYtsaurusStatus defines the observed state of RemoteYtsaurus

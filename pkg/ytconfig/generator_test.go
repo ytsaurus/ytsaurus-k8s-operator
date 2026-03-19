@@ -813,7 +813,7 @@ func getRemoteYtsaurus() *ytv1.RemoteYtsaurus {
 	return &ytv1.RemoteYtsaurus{
 		ObjectMeta: testObjectMeta,
 		Spec: ytv1.RemoteYtsaurusSpec{
-			MasterCellSpec:   getMasterCellSpecWithFixedMasterHosts(),
+			PrimaryMaster:    getMasterCellSpecWithFixedMasterHosts(),
 			MasterCachesSpec: getMasterCachesSpecWithFixedHosts(),
 		},
 	}
@@ -1154,11 +1154,11 @@ func getMasterCellSpec() ytv1.MasterCellSpec {
 	}
 }
 
-func getMasterCellSpecWithFixedMasterHosts() ytv1.MasterCellSpec {
+func getMasterCellSpecWithFixedMasterHosts() *ytv1.MasterCellSpec {
 	spec := getMasterCellSpec()
 	spec.HostAddresses = testMasterExternalHosts
 	spec.CellTag = 1000
-	return spec
+	return &spec
 }
 
 func getMasterCachesSpec() ytv1.MasterCachesSpec {

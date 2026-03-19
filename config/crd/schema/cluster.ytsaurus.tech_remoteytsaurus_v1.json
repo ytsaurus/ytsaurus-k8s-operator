@@ -17,7 +17,6 @@
       "description": "RemoteYtsaurusSpec defines the desired state of RemoteYtsaurus",
       "type": "object",
       "required": [
-        "cellTag",
         "cellTagMasterCaches"
       ],
       "properties": {
@@ -777,10 +776,8 @@
           }
         },
         "cellTag": {
-          "description": "Cell tag is an immutable identifier for particular cell of YTsaurus cluster.",
-          "type": "integer",
-          "maximum": 61440,
-          "minimum": 1
+          "description": "Deprecated: use primaryMaster.cellTag instead.",
+          "type": "integer"
         },
         "cellTagMasterCaches": {
           "type": "integer"
@@ -842,6 +839,7 @@
           }
         },
         "hostAddresses": {
+          "description": "Deprecated: use primaryMaster.hostAddresses instead.",
           "type": "array",
           "items": {
             "type": "string"
@@ -1146,6 +1144,26 @@
             "type": "string"
           }
         },
+        "primaryMaster": {
+          "type": "object",
+          "required": [
+            "cellTag"
+          ],
+          "properties": {
+            "cellTag": {
+              "description": "Cell tag is an immutable identifier for particular cell of YTsaurus cluster.",
+              "type": "integer",
+              "maximum": 61440,
+              "minimum": 1
+            },
+            "hostAddresses": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
         "readinessProbeParams": {
           "type": "object",
           "properties": {
@@ -1237,6 +1255,30 @@
         "runtimeClassName": {
           "description": "Runtime class for instance pods.",
           "type": "string"
+        },
+        "secondaryMasters": {
+          "type": "array",
+          "maxItems": 48,
+          "items": {
+            "type": "object",
+            "required": [
+              "cellTag"
+            ],
+            "properties": {
+              "cellTag": {
+                "description": "Cell tag is an immutable identifier for particular cell of YTsaurus cluster.",
+                "type": "integer",
+                "maximum": 61440,
+                "minimum": 1
+              },
+              "hostAddresses": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
         },
         "setHostnameAsFqdn": {
           "description": "SetHostnameAsFQDN indicates whether to set the hostname as FQDN.",
