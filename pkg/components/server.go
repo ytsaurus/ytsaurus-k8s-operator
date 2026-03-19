@@ -118,6 +118,27 @@ func newServerConfigured(
 		image = *instanceSpec.Image
 	}
 
+	instanceCount := instanceSpec.InstanceCount
+	if maintenance := commonSpec.ClusterMaintenance; maintenance != nil {
+		switch maintenance.Shutdown {
+		case ytv1.ClusterShutdownCompute:
+			switch l.ComponentType {
+			case ytv1.ExecNodeType, ytv1.YqlAgentType:
+				instanceCount = 0
+			}
+		case ytv1.ClusterShutdownEverything:
+			instanceCount = 0
+		case ytv1.ClusterShutdownExceptMasters:
+			if l.ComponentType != ytv1.MasterType {
+				instanceCount = 0
+			}
+		case ytv1.ClusterShutdownTablets:
+			if l.ComponentType == ytv1.TabletNodeType {
+				instanceCount = 0
+			}
+		}
+	}
+
 	var busServerSecret *resources.TLSSecret
 	var busClientSecret *resources.TLSSecret
 	transportSpec := instanceSpec.NativeTransport
@@ -185,7 +206,7 @@ func newServerConfigured(
 		commonSpec:    commonSpec,
 		commonPodSpec: commonPodSpec,
 		instanceSpec:  instanceSpec,
-		instanceCount: instanceSpec.InstanceCount,
+		instanceCount: instanceCount,
 		binaryPath:    binaryPath,
 		statefulSet: resources.NewStatefulSet(
 			l.GetServerStatefulSetName(),

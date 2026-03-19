@@ -2076,6 +2076,21 @@ spec:
                       for cluster connections.
                     type: boolean
                 type: object
+              clusterMaintenance:
+                description: Controls cluster maintenance.
+                properties:
+                  shutdown:
+                    description: Shutdown defines which components are scaled down
+                      to zero replicas during...
+                    enum:
+                    - Compute
+                    - Everything
+                    - ExceptMasters
+                    - Tablets
+                    type: string
+                required:
+                - shutdown
+                type: object
               configOverrides:
                 description: LocalObjectReference contains enough information to let
                   you locate the...

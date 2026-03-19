@@ -3,6 +3,7 @@ package consts
 // Status conditions
 const (
 	ConditionOperatorVersion            = "OperatorVersion"
+	ConditionClusterMaintenance         = "ClusterMaintenance"
 	ConditionReadyToWork                = "ReadyToWork"
 	ConditionImageHeaterReady           = "ImageHeaterReady"
 	ConditionImageHeaterComplete        = "ImageHeaterComplete"

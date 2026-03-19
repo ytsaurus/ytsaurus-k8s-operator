@@ -40,11 +40,17 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		image = *resource.Spec.UI.Image
 	}
 
+	instanceCount := resource.Spec.UI.InstanceCount
+	switch ytsaurus.GetClusterMaintenance().Shutdown {
+	case ytv1.ClusterShutdownExceptMasters, ytv1.ClusterShutdownEverything:
+		instanceCount = 0
+	}
+
 	microservice := newMicroservice(
 		l,
 		ytsaurus,
 		image,
-		resource.Spec.UI.InstanceCount,
+		instanceCount,
 		map[string]ConfigGenerator{
 			UIClustersConfigFileName: {
 				Generator: cfgen.GetUIClustersConfig,
