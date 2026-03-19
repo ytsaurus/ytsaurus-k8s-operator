@@ -318,6 +318,22 @@ func (s *serverImpl) getImageHeaterTarget() *ImageHeaterTarget {
 }
 
 func (s *serverImpl) getInstanceCount() int32 {
+	if maintenance := s.commonSpec.ClusterMaintenance; maintenance != nil {
+		switch maintenance.Mode {
+		case ytv1.ClusterMaintenanceShutdown:
+			return 0
+		case ytv1.ClusterMaintenanceMasterCells:
+			switch s.labeller.ComponentType {
+			case consts.MasterType:
+				break
+			case consts.HttpProxyType:
+				// TODO: Keep only for default or control roles.
+				break
+			default:
+				return 0
+			}
+		}
+	}
 	return max(s.instanceSpec.InstanceCount, 0)
 }
 

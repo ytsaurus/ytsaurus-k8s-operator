@@ -902,6 +902,22 @@
             }
           }
         },
+        "clusterMaintenance": {
+          "description": "Controls cluster maintenance.",
+          "type": "object",
+          "required": [
+            "mode"
+          ],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "MasterCells",
+                "Shutdown"
+              ]
+            }
+          }
+        },
         "configOverrides": {
           "description": "LocalObjectReference contains enough information to let you locate the...",
           "type": "object",
