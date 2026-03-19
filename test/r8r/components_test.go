@@ -437,7 +437,9 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 			switch kind {
 			case "Ytsaurus":
-				Expect(obj).To(HaveField("Status.State", Equal(ytv1.ClusterStateRunning)))
+				if ytsaurus.Spec.ClusterMaintenance == nil {
+					Expect(obj).To(HaveField("Status.State", Equal(ytv1.ClusterStateRunning)))
+				}
 			case "Chyt":
 				Expect(obj).To(HaveField("Status.ReleaseStatus", Equal(ytv1.ChytReleaseStatusFinished)))
 			case "Spyt":
@@ -715,6 +717,24 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				Expect(podSpec.SetHostnameAsFQDN).To(BeEquivalentTo(options.SetHostnameAsFQDN))
 				Expect(&podSpec.DNSPolicy).To(BeEquivalentTo(options.DNSPolicy))
 				Expect(podSpec.DNSConfig).To(BeEquivalentTo(options.DNSConfig))
+			}
+		})
+	})
+
+	Context("Master cells maintenance", func() {
+		BeforeEach(func() {
+			ytsaurus.Spec.ClusterMaintenance = &ytv1.ClusterMaintenance{
+				Shutdown: ytv1.ClusterShutdownExceptMasters,
+			}
+		})
+		It("Test", func(ctx context.Context) {
+			Expect(ytsaurus).To(HaveField("Status.State", Equal(ytv1.ClusterStateMaintenance)))
+			for _, sts := range statefulSets {
+				replicas := int32(0)
+				if sts.Labels["app.kubernetes.io/name"] == "yt-master" {
+					replicas = 1
+				}
+				Expect(sts.Spec.Replicas).To(HaveValue(Equal(replicas)), "replicas for sts %v", sts.Name)
 			}
 		})
 	})

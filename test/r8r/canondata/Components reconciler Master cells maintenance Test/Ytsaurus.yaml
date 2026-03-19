@@ -1,0 +1,143 @@
+apiVersion: cluster.ytsaurus.tech/v1
+kind: Ytsaurus
+metadata:
+  creationTimestamp: null
+  generation: 1
+  name: test-ytsaurus
+  namespace: ytsaurus-components
+  resourceVersion: "13"
+spec:
+  clusterFeatures: {}
+  clusterMaintenance:
+    shutdown: ExceptMasters
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+  discovery:
+    instanceCount: 1
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
+  ephemeralCluster: true
+  httpProxies:
+  - instanceCount: 1
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
+    serviceType: NodePort
+    transport: {}
+  jobImage: mirror.gcr.io/library/python:3.12-slim
+  primaryMasters:
+    cellTag: 1
+    instanceCount: 1
+    locations:
+    - locationType: MasterChangelogs
+      path: /yt/master-data/master-changelogs
+    - locationType: MasterSnapshots
+      path: /yt/master-data/master-snapshots
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: master-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+    volumeMounts:
+    - mountPath: /yt/master-data
+      name: master-data
+  useIpv4: false
+  useIpv6: false
+  usePorto: false
+  useShortNames: true
+status:
+  conditions:
+  - lastTransitionTime: null
+    message: 0.0.0-devel
+    observedGeneration: 1
+    reason: Observed
+    status: "True"
+    type: OperatorVersion
+  - lastTransitionTime: null
+    message: Cluster is under maintenance, shutdown ExceptMasters
+    observedGeneration: 1
+    reason: ExceptMasters
+    status: "True"
+    type: ClusterMaintenance
+  - lastTransitionTime: null
+    message: 'Pods are ready: 0 of 0'
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: DiscoveryReady
+  - lastTransitionTime: null
+    message: Job yt-master-init-job-default completed in -1ns
+    observedGeneration: 1
+    reason: ClusterInitialization
+    status: "True"
+    type: defaultMasterInitJobCompleted
+  - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: MasterReady
+  - lastTransitionTime: null
+    message: 'Pods are ready: 0 of 0'
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: HttpProxyReady
+  - lastTransitionTime: null
+    message: Job yt-client-init-job-user completed in -1ns
+    observedGeneration: 1
+    reason: InitJob
+    status: "True"
+    type: userYtsaurusClientInitJobCompleted
+  - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: YtsaurusClientReady
+  - lastTransitionTime: null
+    message: Cluster state is Maintenance
+    observedGeneration: 1
+    reason: Maintenance
+    status: "False"
+    type: ReadyToWork
+  observedGeneration: 1
+  state: Maintenance
+  updateStatus: {}
