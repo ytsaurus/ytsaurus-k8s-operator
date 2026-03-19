@@ -405,6 +405,25 @@ func (s *serverImpl) getImageHeaterTarget() *ImageHeaterTarget {
 }
 
 func (s *serverImpl) getInstanceCount() int32 {
+	if maintenance := s.commonSpec.ClusterMaintenance; maintenance != nil {
+		switch maintenance.Shutdown {
+		case ytv1.ClusterShutdownCompute:
+			switch s.labeller.ComponentType {
+			case ytv1.ExecNodeType, ytv1.YqlAgentType:
+				return 0
+			}
+		case ytv1.ClusterShutdownEverything:
+			return 0
+		case ytv1.ClusterShutdownExceptMasters:
+			if s.labeller.ComponentType != ytv1.MasterType {
+				return 0
+			}
+		case ytv1.ClusterShutdownTablets:
+			if s.labeller.ComponentType == ytv1.TabletNodeType {
+				return 0
+			}
+		}
+	}
 	return max(s.instanceSpec.InstanceCount, 0)
 }
 
