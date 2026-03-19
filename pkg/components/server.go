@@ -227,7 +227,7 @@ func (s *serverImpl) needSync(updating bool) bool {
 		}
 	}
 	return !s.Exists() ||
-		s.statefulSet.GetReplicas() != s.instanceSpec.InstanceCount
+		s.statefulSet.GetReplicas() != s.getReplicaCount()
 }
 
 func (s *serverImpl) Sync(ctx context.Context) error {
@@ -302,7 +302,7 @@ func (s *serverImpl) needUpdate() ComponentStatus {
 }
 
 func (s *serverImpl) arePodsReady(ctx context.Context) bool {
-	return s.statefulSet.ArePodsReady(ctx, int(s.instanceSpec.InstanceCount), s.instanceSpec.MinReadyInstanceCount, s.readinessByContainers)
+	return s.statefulSet.ArePodsReady(ctx, int(s.getReplicaCount()), s.instanceSpec.MinReadyInstanceCount, s.readinessByContainers)
 }
 
 func (s *serverImpl) getImageHeaterTarget() *ImageHeaterTarget {
@@ -318,6 +318,16 @@ func (s *serverImpl) getImageHeaterTarget() *ImageHeaterTarget {
 }
 
 func (s *serverImpl) getReplicaCount() int32 {
+	if maintenance := s.commonSpec.ClusterMaintenance; maintenance != nil {
+		switch maintenance.Mode {
+		case ytv1.ClusterMaintenanceShutdown:
+			return 0
+		case ytv1.ClusterMaintenanceMasterCells:
+			if s.labeller.ComponentType != consts.MasterType && s.labeller.ComponentType != consts.HttpProxyType {
+				return 0
+			}
+		}
+	}
 	return s.instanceSpec.InstanceCount
 }
 
@@ -444,7 +454,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, key, value)
 	}
 
-	statefulSet.Spec.Replicas = &s.instanceSpec.InstanceCount
+	statefulSet.Spec.Replicas = ptr.To(s.getReplicaCount())
 	statefulSet.Spec.ServiceName = s.headlessService.Name()
 	statefulSet.Spec.VolumeClaimTemplates = createVolumeClaims(s.instanceSpec.VolumeClaimTemplates)
 
