@@ -7,9 +7,10 @@ metadata:
   namespace: ytsaurus-components
   resourceVersion: "1"
 spec:
-  cellTag: 1
   cellTagMasterCaches: 0
-  hostAddresses:
-  - ms-0.masters.ytsaurus-components.svc.cluster.local
+  primaryMaster:
+    cellTag: 1
+    hostAddresses:
+    - ms-0.masters.ytsaurus-components.svc.cluster.local
   resources: {}
 status: {}
