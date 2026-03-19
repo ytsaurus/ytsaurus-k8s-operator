@@ -73,11 +73,16 @@ func NewStrawberryController(
 	// TODO: strawberry has a different image and can't be nil/fallback on CoreImage.
 	image := ptr.Deref(resource.Spec.StrawberryController.Image, resource.Spec.CoreImage)
 
+	instanceCount := int32(1)
+	if maintenance := resource.Spec.ClusterMaintenance; maintenance != nil && maintenance.Mode != ytv1.ClusterMaintenanceNone {
+		instanceCount = 0
+	}
+
 	microservice := newMicroservice(
 		l,
 		ytsaurus,
 		image,
-		1,
+		instanceCount,
 		map[string]ConfigGenerator{
 			ControllerConfigFileName: {
 				Generator: cfgen.GetStrawberryControllerConfig,

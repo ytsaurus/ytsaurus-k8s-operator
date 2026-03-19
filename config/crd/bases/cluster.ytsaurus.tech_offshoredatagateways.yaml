@@ -830,6 +830,17 @@ spec:
                       for cluster connections.
                     type: boolean
                 type: object
+              clusterMaintenance:
+                description: Activate cluster maintenance modes.
+                properties:
+                  mode:
+                    enum:
+                    - MasterCells
+                    - Shutdown
+                    type: string
+                required:
+                - mode
+                type: object
               configOverrides:
                 description: LocalObjectReference contains enough information to let
                   you locate the...
