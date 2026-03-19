@@ -174,7 +174,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			return ctrl.Result{Requeue: true}, err
 		}
 
-	case ytv1.ClusterStatePreparing, ytv1.ClusterStateRunning, ytv1.ClusterStateUpdateBlocked:
+	case ytv1.ClusterStatePreparing, ytv1.ClusterStateRunning, ytv1.ClusterStateUpdateBlocked, ytv1.ClusterStateMaintenance:
 		// All IsReadyToUpdate cluster states are handled here.
 		// Apply current update plan and choose components to update.
 		cm.applyUpdatePlan(resource.GetUpdatePlan())
@@ -190,6 +190,13 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		}
 
 		switch {
+		case cm.status.allReady && cm.status.clusterMaintenance:
+			logger.Info("Ytsaurus cluster is under maintenance")
+			if ytsaurus.SetClusterState(ytv1.ClusterStateMaintenance) {
+				ytsaurus.RecordNormal("Maintenance", fmt.Sprintf("Ytsaurus cluster is under maintenance, shutdown %v", ytsaurus.GetClusterMaintenance().Shutdown))
+				needStatusUpdate = true
+			}
+
 		case cm.status.allReady:
 			logger.Info("Ytsaurus is running and happy")
 			if ytsaurus.SetClusterState(ytv1.ClusterStateRunning) {

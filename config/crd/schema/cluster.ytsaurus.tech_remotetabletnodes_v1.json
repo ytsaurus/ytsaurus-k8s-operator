@@ -902,6 +902,25 @@
             }
           }
         },
+        "clusterMaintenance": {
+          "description": "Controls cluster maintenance.",
+          "type": "object",
+          "required": [
+            "shutdown"
+          ],
+          "properties": {
+            "shutdown": {
+              "description": "Shutdown defines which components are scaled down to zero replicas during...",
+              "type": "string",
+              "enum": [
+                "Compute",
+                "Everything",
+                "ExceptMasters",
+                "Tablets"
+              ]
+            }
+          }
+        },
         "configOverrides": {
           "description": "LocalObjectReference contains enough information to let you locate the...",
           "type": "object",
