@@ -1940,6 +1940,14 @@ exec "$@"`
 			})
 
 			It("Verifies secondary cells", Label(epoch), Label(images.YtsaurusVersion.String()), func(ctx context.Context) {
+				By("Verifying secondary masters are registered in Cypress")
+				Eventually(func() (int, error) {
+					var cells []string
+					err := ytClient.ListNode(ctx, ypath.Path(consts.SecondaryMastersPath), &cells, nil)
+					return len(cells), err
+				}, reactionTimeout, pollInterval).Should(Equal(len(ytsaurus.Spec.SecondaryMasters)))
+
+				checkClusterHealth(ctx, ytClient)
 			})
 
 		},
@@ -1947,6 +1955,52 @@ exec "$@"`
 			// Entry("YTsaurus next", testutil.YtsaurusNextVersion),
 			Entry("YTsaurus late", testutil.YtsaurusLateVersion),
 		) // integration multicell
+
+		DescribeTableSubtree("Upgrade to secondary cells", Label("multicell", "upgrade"), func(epoch string) {
+			images := testutil.Images[epoch]
+			if epoch == "" || images.Core == "" {
+				return
+			}
+
+			BeforeEach(func() {
+				if images.Core == "" {
+					Skip("Ytsaurus image is not specified")
+				}
+				ytBuilder.Ytsaurus.Spec.CoreImage = images.Core
+			})
+
+			It("Upgrades from single master cell to multicell", Label(epoch), Label(images.YtsaurusVersion.String()), func(ctx context.Context) {
+				By("Verifying initial single-cell cluster has no secondary masters")
+				var secondaryCells []string
+				Expect(ytClient.ListNode(ctx, ypath.Path(consts.SecondaryMastersPath), &secondaryCells, nil)).Should(Succeed())
+				Expect(secondaryCells).Should(BeEmpty())
+
+				checkClusterHealth(ctx, ytClient)
+
+				By("Adding secondary master cell to spec and updating cluster")
+				ytBuilder.WithSecondaryMaster()
+				UpdateObject(ctx, ytsaurus)
+
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+
+				By("Waiting cluster update with secondary master completes")
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+
+				By("Verifying secondary masters are registered in Cypress")
+				Eventually(func() (int, error) {
+					var cells []string
+					err := ytClient.ListNode(ctx, ypath.Path(consts.SecondaryMastersPath), &cells, nil)
+					return len(cells), err
+				}, reactionTimeout, pollInterval).Should(Equal(len(ytsaurus.Spec.SecondaryMasters)))
+
+				checkClusterHealth(ctx, ytClient)
+			})
+
+		},
+			// Entry("YTsaurus curr", testutil.YtsaurusCurrVersion),
+			// Entry("YTsaurus next", testutil.YtsaurusNextVersion),
+			Entry("YTsaurus late", testutil.YtsaurusLateVersion),
+		) // upgrade multicell
 
 	}) // integration
 
