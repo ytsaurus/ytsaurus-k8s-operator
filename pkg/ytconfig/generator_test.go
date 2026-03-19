@@ -813,8 +813,8 @@ func getRemoteYtsaurus() *ytv1.RemoteYtsaurus {
 	return &ytv1.RemoteYtsaurus{
 		ObjectMeta: testObjectMeta,
 		Spec: ytv1.RemoteYtsaurusSpec{
-			MasterConnectionSpec: getMasterConnectionSpecWithFixedMasterHosts(),
-			MasterCachesSpec:     getMasterCachesSpecWithFixedHosts(),
+			PrimaryMaster:    ptr.To(getMasterConnectionSpecWithFixedMasterHosts()),
+			MasterCachesSpec: getMasterCachesSpecWithFixedHosts(),
 		},
 	}
 }
