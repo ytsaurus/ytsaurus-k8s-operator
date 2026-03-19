@@ -3,6 +3,7 @@ package consts
 // Status conditions
 const (
 	ConditionOperatorVersion              = "OperatorVersion"
+	ConditionClusterMaintenance           = "ClusterMaintenance"
 	ConditionMastersQuorumCheck           = "MastersQuorumCheck"
 	ConditionLostVitalChunksCheck         = "LostVitalChunksCheck"
 	ConditionQuorumMissingChunksCheck     = "QuorumMissingChunksCheck"

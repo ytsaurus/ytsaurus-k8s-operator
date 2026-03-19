@@ -39,6 +39,12 @@ type ComponentManagerStatus struct {
 	canUpdate    []ytv1.Component // Components with update allowed
 	cannotUpdate []ytv1.Component // Components with update blocked
 	nowUpdating  []ytv1.Component // Components updating right now
+
+	clusterMaintenance bool
+	mastersMaintenance bool
+	shutdownStorage    bool
+	shutdownTablets    bool
+	shutdownCompute    bool
 }
 
 //nolint:cyclop //shush
@@ -202,6 +208,8 @@ func NewComponentManager(
 func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 	logger := log.FromContext(ctx)
 	resource := cm.ytsaurus.GetResource()
+	maintenance := cm.ytsaurus.GetClusterMaintenance()
+	shutdown := maintenance.Shutdown
 
 	// Fetch component status.
 	var readyComponents []ytv1.Component
@@ -211,6 +219,12 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 		allStarted:  true,
 		allRunning:  true,
 		allReady:    true,
+
+		clusterMaintenance: shutdown != ytv1.ClusterShutdownNone,
+		mastersMaintenance: shutdown == ytv1.ClusterShutdownExceptMasters,
+		shutdownCompute:    shutdown == ytv1.ClusterShutdownExceptMasters || shutdown == ytv1.ClusterShutdownEverything || shutdown == ytv1.ClusterShutdownCompute,
+		shutdownStorage:    shutdown == ytv1.ClusterShutdownExceptMasters || shutdown == ytv1.ClusterShutdownEverything,
+		shutdownTablets:    shutdown == ytv1.ClusterShutdownExceptMasters || shutdown == ytv1.ClusterShutdownEverything || shutdown == ytv1.ClusterShutdownTablets,
 	}
 
 	for _, component := range cm.allComponents {
@@ -291,6 +305,18 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	if cm.ytsaurus.GetImageHeater("") == nil {
 		cm.ytsaurus.RemoveStatusCondition(consts.ConditionImageHeaterReady)
 		cm.ytsaurus.RemoveStatusCondition(consts.ConditionImageHeaterComplete)
+	}
+
+	if cm.status.clusterMaintenance {
+		shutdown := cm.ytsaurus.GetClusterMaintenance().Shutdown
+		cm.ytsaurus.SetStatusCondition(metav1.Condition{
+			Type:    consts.ConditionClusterMaintenance,
+			Status:  metav1.ConditionTrue,
+			Reason:  string(shutdown),
+			Message: fmt.Sprintf("Cluster is under maintenance, shutdown %v", shutdown),
+		})
+	} else {
+		cm.ytsaurus.RemoveStatusCondition(consts.ConditionClusterMaintenance)
 	}
 
 	hasPending := false
