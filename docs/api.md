@@ -2553,6 +2553,7 @@ _Appears in:_
 | `cellTagMasterCaches` _integer_ |  |  |  |
 | `hostAddressesMasterCaches` _string array_ |  |  |  |
 | `hostAddressesLabel` _string_ |  |  |  |
+| `secondaryMasters` _[MasterCellSpec](#mastercellspec) array_ |  |  |  |
 
 
 #### RemoteYtsaurusStatus

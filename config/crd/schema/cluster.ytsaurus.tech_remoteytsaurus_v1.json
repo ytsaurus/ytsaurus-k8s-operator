@@ -1241,6 +1241,38 @@
           "description": "Runtime class for instance pods.",
           "type": "string"
         },
+        "secondaryMasters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "cellTag"
+            ],
+            "properties": {
+              "cellTag": {
+                "description": "Cell tag is an immutable identifier for particular cell of YTsaurus cluster.",
+                "type": "integer",
+                "maximum": 61440,
+                "minimum": 1
+              },
+              "hostAddresses": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "roles": {
+                "description": "Roles assigned to this master cell.",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z_]+$"
+                },
+                "x-kubernetes-list-type": "set"
+              }
+            }
+          }
+        },
         "setHostnameAsFqdn": {
           "description": "SetHostnameAsFQDN indicates whether to set the hostname as FQDN.",
           "type": "boolean",
