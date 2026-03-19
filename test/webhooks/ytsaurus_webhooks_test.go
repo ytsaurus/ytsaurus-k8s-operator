@@ -267,6 +267,155 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			)))
 		})
 
+		It("Should not accept duplicate cell tags among secondary masters", func() {
+			builder.WithSecondaryMaster()
+			builder.WithSecondaryMaster()
+			// Force both secondary masters to have the same cell tag
+			ytsaurus.Spec.SecondaryMasters[1].CellTag = ytsaurus.Spec.SecondaryMasters[0].CellTag
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(And(
+				ContainSubstring("spec.secondaryMasters[0].cellTag"),
+				ContainSubstring("spec.secondaryMasters[1].cellTag"),
+			)))
+		})
+
+		DescribeTable("Should not accept invalid cell tag values",
+			func(cellTag uint16, errMsg string) {
+				// CRD schema enforces Minimum=1 / Maximum=61440 on cellTag.
+				// Values outside this range are rejected by the CRD apiserver validation
+				// before the webhook runs, so we check the CRD error message here.
+				ytsaurus.Spec.PrimaryMasters.CellTag = 1
+				secondarySpec := builder.WithSecondaryMaster()
+				secondarySpec.CellTag = cellTag
+				Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring(errMsg)))
+			},
+			Entry("cell tag 0 is out of range", uint16(0), "should be greater than or equal to 1"),
+			Entry("cell tag 0xF001 is out of range", uint16(0xF001), "should be less than or equal to 61440"),
+		)
+
+		Context("Secondary master updates", func() {
+			BeforeEach(func() {
+				builder.WithSecondaryMaster()
+				// Set full roles for the primary master to satisfy multicell upgrade requirement
+				ytsaurus.Spec.PrimaryMasters.Roles = []ytv1.MasterCellRole{
+					ytv1.MasterCellRoleCypressNodeHost,
+					ytv1.MasterCellRoleTransactionCoordinator,
+					ytv1.MasterCellRoleChunkHost,
+				}
+				Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+				Expect(k8sClient.Get(ctx, types.NamespacedName{
+					Name:      testutil.YtsaurusName,
+					Namespace: namespace,
+				}, ytsaurus)).Should(Succeed())
+			})
+
+			AfterEach(func() {
+				Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
+			})
+
+			It("Should not accept a secondary master cell tag update", func() {
+				ytsaurus.Spec.SecondaryMasters[0].CellTag++
+				Expect(k8sClient.Update(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.secondaryMasters[0].cellTag")))
+			})
+
+			It("Should not accept removal of a secondary master with instanceCount > 0", func() {
+				ytsaurus.Spec.SecondaryMasters = nil
+				Expect(k8sClient.Update(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.secondaryMasters[0]: Forbidden")))
+			})
+
+			It("Should not accept scaling instanceCount without MasterCells maintenance", func() {
+				ytsaurus.Spec.SecondaryMasters[0].InstanceCount++
+				Expect(k8sClient.Update(ctx, ytsaurus)).Should(MatchError(ContainSubstring("Could be changed only during master cells maintenance")))
+			})
+
+			It("Should accept scaling instanceCount during MasterCells maintenance", func() {
+				// First enable maintenance mode (instance count unchanged)
+				ytsaurus.Spec.ClusterMaintenance = &ytv1.ClusterMaintenance{Mode: ytv1.ClusterMaintenanceMasterCells}
+				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+				// Reload and then scale while maintenance is active
+				Expect(k8sClient.Get(ctx, types.NamespacedName{
+					Name:      testutil.YtsaurusName,
+					Namespace: namespace,
+				}, ytsaurus)).Should(Succeed())
+				ytsaurus.Spec.SecondaryMasters[0].InstanceCount++
+				Expect(k8sClient.Update(ctx, ytsaurus)).Should(Succeed())
+			})
+		})
+
+		It("Should not accept primary master instanceCount below 1 on update", func() {
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+			Expect(k8sClient.Get(ctx, types.NamespacedName{
+				Name:      testutil.YtsaurusName,
+				Namespace: namespace,
+			}, ytsaurus)).Should(Succeed())
+
+			ytsaurus.Spec.PrimaryMasters.InstanceCount = 0
+			Expect(k8sClient.Update(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.primaryMasters.instanceCount")))
+			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
+		})
+
+		It("Should not accept scaling primary master instanceCount without MasterCells maintenance", func() {
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+			Expect(k8sClient.Get(ctx, types.NamespacedName{
+				Name:      testutil.YtsaurusName,
+				Namespace: namespace,
+			}, ytsaurus)).Should(Succeed())
+
+			ytsaurus.Spec.PrimaryMasters.InstanceCount++
+			Expect(k8sClient.Update(ctx, ytsaurus)).Should(MatchError(ContainSubstring("Could be changed only during master cells maintenance")))
+			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
+		})
+
+		It("Should not accept secondary master without changelogs and snapshots locations", func() {
+			spec := builder.WithSecondaryMaster()
+			spec.Locations = nil
+			ytsaurus.Spec.PrimaryMasters.Roles = []ytv1.MasterCellRole{
+				ytv1.MasterCellRoleCypressNodeHost,
+				ytv1.MasterCellRoleTransactionCoordinator,
+				ytv1.MasterCellRoleChunkHost,
+			}
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(And(
+				ContainSubstring("spec.secondaryMasters[0].locations"),
+				ContainSubstring(string(ytv1.LocationTypeMasterChangelogs)),
+			)))
+		})
+
+		It("Should require roles when upgrading primary master to multicell", func() {
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+			Expect(k8sClient.Get(ctx, types.NamespacedName{
+				Name:      testutil.YtsaurusName,
+				Namespace: namespace,
+			}, ytsaurus)).Should(Succeed())
+
+			// Add secondary master without setting roles on primary (upgrade requires roles)
+			spec := ytsaurus.Spec.PrimaryMasters
+			spec.CellTag += 1
+			ytsaurus.Spec.SecondaryMasters = []ytv1.MastersSpec{spec}
+			Expect(k8sClient.Update(ctx, ytsaurus)).Should(MatchError(ContainSubstring("Upgrade to multicell requires filling roles for primary cell")))
+			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
+		})
+
+		It("Should not accept removing roles from primary master", func() {
+			ytsaurus.Spec.PrimaryMasters.Roles = []ytv1.MasterCellRole{
+				ytv1.MasterCellRoleCypressNodeHost,
+				ytv1.MasterCellRoleTransactionCoordinator,
+				ytv1.MasterCellRoleChunkHost,
+			}
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+			Expect(k8sClient.Get(ctx, types.NamespacedName{
+				Name:      testutil.YtsaurusName,
+				Namespace: namespace,
+			}, ytsaurus)).Should(Succeed())
+
+			// Remove a role from primary master
+			ytsaurus.Spec.PrimaryMasters.Roles = []ytv1.MasterCellRole{
+				ytv1.MasterCellRoleCypressNodeHost,
+				ytv1.MasterCellRoleTransactionCoordinator,
+				// MasterCellRoleChunkHost removed
+			}
+			Expect(k8sClient.Update(ctx, ytsaurus)).Should(MatchError(ContainSubstring("Cell role could not be removed")))
+			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
+		})
+
 		It("Should not accept data nodes without chunk locations", func() {
 			ytsaurus.Spec.DataNodes = []ytv1.DataNodesSpec{
 				{
@@ -325,8 +474,12 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 				},
 			}
 			ytsaurus.Spec.PrimaryMasters = ytv1.MastersSpec{
+				MasterCellSpec: ytv1.MasterCellSpec{
+					CellTag: testutil.CellTag,
+				},
 				InstanceSpec: ytv1.InstanceSpec{
 					EnableAntiAffinity: &trueEnableAntiAffinity,
+					InstanceCount:      1,
 					VolumeMounts: []corev1.VolumeMount{
 						{
 							Name:      "123",
