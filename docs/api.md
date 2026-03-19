@@ -356,6 +356,45 @@ _Appears in:_
 | `enableAnchorProfilingByDefault` _boolean_ | Enable logging anchor profiling by default for loggers that don't explicitly disable it. |  |  |
 
 
+#### ClusterMaintenance
+
+
+
+
+
+
+
+_Appears in:_
+- [CommonSpec](#commonspec)
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [RemoteDataNodesSpec](#remotedatanodesspec)
+- [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `mode` _[ClusterMaintenanceMode](#clustermaintenancemode)_ |  |  | Enum: [MasterCells Shutdown] <br /> |
+
+
+#### ClusterMaintenanceMode
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [ClusterMaintenance](#clustermaintenance)
+
+| Field | Description |
+| --- | --- |
+| `` |  |
+| `MasterCells` | Prepare for master cells reconfiguration.<br /> |
+| `Shutdown` | Shutdown everything.<br /> |
+
+
 #### ClusterNodesSpec
 
 
@@ -396,6 +435,7 @@ _Appears in:_
 | `Preparing` |  |
 | `Running` |  |
 | `Reconfiguration` |  |
+| `Maintenance` |  |
 | `Updating` |  |
 | `UpdateCanceled` |  |
 | `UpdateBlocked` |  |
@@ -444,6 +484,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
+| `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
@@ -1770,6 +1811,7 @@ _Appears in:_
 | `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
+| `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
@@ -2112,6 +2154,7 @@ _Appears in:_
 | `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
+| `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
@@ -2211,6 +2254,7 @@ _Appears in:_
 | `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
+| `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
@@ -2357,6 +2401,7 @@ _Appears in:_
 | `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
+| `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
@@ -3214,6 +3259,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
+| `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |

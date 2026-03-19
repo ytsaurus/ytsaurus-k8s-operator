@@ -847,6 +847,9 @@ type CommonSpec struct {
 
 	ClusterFeatures *ClusterFeatures `json:"clusterFeatures,omitempty"`
 
+	// Controls cluster maintenance.
+	ClusterMaintenance *ClusterMaintenance `json:"clusterMaintenance,omitempty"`
+
 	// Default docker image for user jobs.
 	//+optional
 	JobImage *string `json:"jobImage,omitempty"`
@@ -981,6 +984,22 @@ type YtsaurusSpec struct {
 	UI *UISpec `json:"ui,omitempty"`
 }
 
+type ClusterMaintenanceMode string
+
+const (
+	ClusterMaintenanceNone ClusterMaintenanceMode = ""
+	// Prepare for master cells reconfiguration.
+	ClusterMaintenanceMasterCells ClusterMaintenanceMode = "MasterCells"
+	// Shutdown everything.
+	ClusterMaintenanceShutdown ClusterMaintenanceMode = "Shutdown"
+	// TODO: Add read-only
+)
+
+type ClusterMaintenance struct {
+	//+kubebuilder:validation:Enum={"MasterCells","Shutdown"}
+	Mode ClusterMaintenanceMode `json:"mode"`
+}
+
 type ClusterState string
 
 const (
@@ -989,6 +1008,7 @@ const (
 	ClusterStatePreparing       ClusterState = "Preparing"
 	ClusterStateRunning         ClusterState = "Running"
 	ClusterStateReconfiguration ClusterState = "Reconfiguration"
+	ClusterStateMaintenance     ClusterState = "Maintenance"
 	ClusterStateUpdating        ClusterState = "Updating"
 	ClusterStateUpdateCanceled  ClusterState = "UpdateCanceled"
 	ClusterStateUpdateBlocked   ClusterState = "UpdateBlocked"
