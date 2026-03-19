@@ -17,7 +17,6 @@
       "description": "RemoteYtsaurusSpec defines the desired state of RemoteYtsaurus",
       "type": "object",
       "required": [
-        "cellTag",
         "cellTagMasterCaches"
       ],
       "properties": {
@@ -777,7 +776,7 @@
           }
         },
         "cellTag": {
-          "description": "Cell tag is an immutable identifier for particular cell of YTsaurus cluster.",
+          "description": "Deprecated: use primaryMaster.cellTag instead.",
           "type": "integer",
           "maximum": 61440,
           "minimum": 1
@@ -842,11 +841,11 @@
           }
         },
         "hostAddresses": {
+          "description": "Deprecated: use primaryMaster.hostAddresses instead.",
           "type": "array",
           "items": {
             "type": "string"
-          },
-          "x-kubernetes-list-type": "set"
+          }
         },
         "hostAddressesLabel": {
           "type": "string"
@@ -1147,6 +1146,27 @@
             "type": "string"
           }
         },
+        "primaryMaster": {
+          "type": "object",
+          "required": [
+            "cellTag"
+          ],
+          "properties": {
+            "cellTag": {
+              "description": "Cell tag is an immutable identifier for particular cell of YTsaurus cluster.",
+              "type": "integer",
+              "maximum": 61440,
+              "minimum": 1
+            },
+            "hostAddresses": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "x-kubernetes-list-type": "set"
+            }
+          }
+        },
         "readinessProbeParams": {
           "type": "object",
           "properties": {
@@ -1238,6 +1258,31 @@
         "runtimeClassName": {
           "description": "Runtime class for instance pods.",
           "type": "string"
+        },
+        "secondaryMasters": {
+          "type": "array",
+          "maxItems": 48,
+          "items": {
+            "type": "object",
+            "required": [
+              "cellTag"
+            ],
+            "properties": {
+              "cellTag": {
+                "description": "Cell tag is an immutable identifier for particular cell of YTsaurus cluster.",
+                "type": "integer",
+                "maximum": 61440,
+                "minimum": 1
+              },
+              "hostAddresses": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "x-kubernetes-list-type": "set"
+              }
+            }
+          }
         },
         "setHostnameAsFqdn": {
           "description": "SetHostnameAsFQDN indicates whether to set the hostname as FQDN.",
@@ -2226,7 +2271,17 @@
             }
           }
         }
-      }
+      },
+      "x-kubernetes-validations": [
+        {
+          "rule": "has(self.cellTag) || (has(self.primaryMaster) \u0026\u0026 has(self.primaryMaster.cellTag))",
+          "message": "either cellTag or primaryMaster.cellTag must be set"
+        },
+        {
+          "rule": "!(has(self.cellTag) \u0026\u0026 has(self.primaryMaster) \u0026\u0026 has(self.primaryMaster.cellTag)) || self.cellTag == self.primaryMaster.cellTag",
+          "message": "cellTag and primaryMaster.cellTag must match when both are set"
+        }
+      ]
     },
     "status": {
       "description": "RemoteYtsaurusStatus defines the observed state of RemoteYtsaurus",

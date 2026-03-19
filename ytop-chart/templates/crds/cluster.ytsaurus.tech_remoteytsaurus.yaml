@@ -726,8 +726,7 @@ spec:
                     type: object
                 type: object
               cellTag:
-                description: Cell tag is an immutable identifier for particular cell
-                  of YTsaurus cluster.
+                description: 'Deprecated: use primaryMaster.cellTag instead.'
                 maximum: 61440
                 minimum: 1
                 type: integer
@@ -778,10 +777,10 @@ spec:
                   type: string
                 type: array
               hostAddresses:
+                description: 'Deprecated: use primaryMaster.hostAddresses instead.'
                 items:
                   type: string
                 type: array
-                x-kubernetes-list-type: set
               hostAddressesLabel:
                 type: string
               hostAddressesMasterCaches:
@@ -999,6 +998,22 @@ spec:
                   type: string
                 description: Labels for instance pods.
                 type: object
+              primaryMaster:
+                properties:
+                  cellTag:
+                    description: Cell tag is an immutable identifier for particular
+                      cell of YTsaurus cluster.
+                    maximum: 61440
+                    minimum: 1
+                    type: integer
+                  hostAddresses:
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: set
+                required:
+                - cellTag
+                type: object
               readinessProbeParams:
                 properties:
                   failureThreshold:
@@ -1063,6 +1078,25 @@ spec:
               runtimeClassName:
                 description: Runtime class for instance pods.
                 type: string
+              secondaryMasters:
+                items:
+                  properties:
+                    cellTag:
+                      description: Cell tag is an immutable identifier for particular
+                        cell of YTsaurus cluster.
+                      maximum: 61440
+                      minimum: 1
+                      type: integer
+                    hostAddresses:
+                      items:
+                        type: string
+                      type: array
+                      x-kubernetes-list-type: set
+                  required:
+                  - cellTag
+                  type: object
+                maxItems: 48
+                type: array
               setHostnameAsFqdn:
                 default: true
                 description: SetHostnameAsFQDN indicates whether to set the hostname
@@ -1907,9 +1941,15 @@ spec:
                   type: object
                 type: array
             required:
-            - cellTag
             - cellTagMasterCaches
             type: object
+            x-kubernetes-validations:
+            - message: either cellTag or primaryMaster.cellTag must be set
+              rule: has(self.cellTag) || (has(self.primaryMaster) && has(self.primaryMaster.cellTag))
+            - message: cellTag and primaryMaster.cellTag must match when both are
+                set
+              rule: '!(has(self.cellTag) && has(self.primaryMaster) && has(self.primaryMaster.cellTag))
+                || self.cellTag == self.primaryMaster.cellTag'
           status:
             description: RemoteYtsaurusStatus defines the observed state of RemoteYtsaurus
             type: object
