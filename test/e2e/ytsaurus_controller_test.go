@@ -1161,6 +1161,110 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 			})
 
+			Context("Cluster maintenance modes", Label("maintenance"), func() {
+
+				// getStatefulSetReplicas returns the current Spec.Replicas for a StatefulSet
+				// (defaulting to 1 if nil), or -1 if the StatefulSet cannot be fetched.
+				getStatefulSetReplicas := func(ctx context.Context, stsName string) int32 {
+					sts := appsv1.StatefulSet{}
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: namespace, Name: stsName}, &sts)
+					if err != nil {
+						return -1
+					}
+					if sts.Spec.Replicas == nil {
+						return 1
+					}
+					return *sts.Spec.Replicas
+				}
+
+				It("Shutdown mode scales all components to zero", Label("shutdown"), func(ctx context.Context) {
+					By("Enabling Shutdown maintenance mode")
+					ytsaurus.Spec.ClusterMaintenance = &ytv1.ClusterMaintenance{
+						Mode: ytv1.ClusterMaintenanceShutdown,
+					}
+					UpdateObject(ctx, ytsaurus)
+
+					By("Waiting for all component StatefulSets to have 0 replicas")
+					// Base components: master (ms), discovery (ds), http-proxy (hp),
+					// master-cache (msc), scheduler (sch), controller-agent (ca),
+					// data-nodes (dnd), tablet-nodes (tnd), exec-nodes (end).
+					allStsNames := []string{
+						consts.GetStatefulSetPrefix(consts.MasterType),
+						consts.GetStatefulSetPrefix(consts.DiscoveryType),
+						consts.GetStatefulSetPrefix(consts.HttpProxyType),
+						consts.GetStatefulSetPrefix(consts.MasterCacheType),
+						consts.GetStatefulSetPrefix(consts.SchedulerType),
+						consts.GetStatefulSetPrefix(consts.ControllerAgentType),
+						consts.GetStatefulSetPrefix(consts.DataNodeType),
+						consts.GetStatefulSetPrefix(consts.TabletNodeType),
+						consts.GetStatefulSetPrefix(consts.ExecNodeType),
+					}
+					Eventually(ctx, func(ctx context.Context) bool {
+						for _, stsName := range allStsNames {
+							if getStatefulSetReplicas(ctx, stsName) != 0 {
+								return false
+							}
+						}
+						return true
+					}, reactionTimeout, pollInterval).Should(BeTrue(),
+						"all StatefulSets should have 0 replicas in Shutdown mode")
+
+					By("Disabling maintenance mode")
+					ytsaurus.Spec.ClusterMaintenance = nil
+					UpdateObject(ctx, ytsaurus)
+
+					By("Waiting for cluster to return to Running state")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+					checkClusterHealth(ctx, ytClient)
+				})
+
+				It("MasterCells mode scales down all non-master/proxy components", Label("mastercells"), func(ctx context.Context) {
+					By("Enabling MasterCells maintenance mode")
+					ytsaurus.Spec.ClusterMaintenance = &ytv1.ClusterMaintenance{
+						Mode: ytv1.ClusterMaintenanceMasterCells,
+					}
+					UpdateObject(ctx, ytsaurus)
+
+					By("Waiting for non-master/proxy StatefulSets to have 0 replicas")
+					// These components should be scaled to 0 in MasterCells mode.
+					scaledDownStsNames := []string{
+						consts.GetStatefulSetPrefix(consts.DiscoveryType),
+						consts.GetStatefulSetPrefix(consts.MasterCacheType),
+						consts.GetStatefulSetPrefix(consts.SchedulerType),
+						consts.GetStatefulSetPrefix(consts.ControllerAgentType),
+						consts.GetStatefulSetPrefix(consts.DataNodeType),
+						consts.GetStatefulSetPrefix(consts.TabletNodeType),
+						consts.GetStatefulSetPrefix(consts.ExecNodeType),
+					}
+					Eventually(ctx, func(ctx context.Context) bool {
+						for _, stsName := range scaledDownStsNames {
+							if getStatefulSetReplicas(ctx, stsName) != 0 {
+								return false
+							}
+						}
+						return true
+					}, reactionTimeout, pollInterval).Should(BeTrue(),
+						"non-master/proxy StatefulSets should have 0 replicas in MasterCells mode")
+
+					By("Verifying master and http-proxy StatefulSets keep their configured replicas")
+					Expect(getStatefulSetReplicas(ctx, consts.GetStatefulSetPrefix(consts.MasterType))).
+						To(Equal(ytsaurus.Spec.PrimaryMasters.InstanceCount),
+							"master StatefulSet should keep its configured replicas")
+					Expect(getStatefulSetReplicas(ctx, consts.GetStatefulSetPrefix(consts.HttpProxyType))).
+						To(Equal(ytsaurus.Spec.HTTPProxies[0].InstanceCount),
+							"http-proxy StatefulSet should keep its configured replicas")
+
+					By("Disabling maintenance mode")
+					ytsaurus.Spec.ClusterMaintenance = nil
+					UpdateObject(ctx, ytsaurus)
+
+					By("Waiting for cluster to return to Running state")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+					checkClusterHealth(ctx, ytClient)
+				})
+
+			}) // cluster maintenance modes
+
 		}) // update misc
 
 		Context("With tablet nodes", Label("tablet"), func() {
