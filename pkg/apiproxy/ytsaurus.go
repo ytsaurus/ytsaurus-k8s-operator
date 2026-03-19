@@ -54,6 +54,10 @@ func (c *Ytsaurus) GetClusterFeatures() ytv1.ClusterFeatures {
 	return ptr.Deref(c.GetCommonSpec().ClusterFeatures, ytv1.ClusterFeatures{})
 }
 
+func (c *Ytsaurus) GetClusterMaintenance() ytv1.ClusterMaintenance {
+	return ptr.Deref(c.GetCommonSpec().ClusterMaintenance, ytv1.ClusterMaintenance{})
+}
+
 func (c *Ytsaurus) GetClusterState() ytv1.ClusterState {
 	return c.ytsaurus.Status.State
 }
@@ -90,7 +94,7 @@ func (c *Ytsaurus) IsReadyToWork() bool {
 
 func (c *Ytsaurus) IsReadyToUpdate() bool {
 	switch c.GetClusterState() {
-	case ytv1.ClusterStatePreparing, ytv1.ClusterStateRunning, ytv1.ClusterStateUpdateBlocked:
+	case ytv1.ClusterStatePreparing, ytv1.ClusterStateRunning, ytv1.ClusterStateUpdateBlocked, ytv1.ClusterStateMaintenance:
 		return true
 	}
 	return false
