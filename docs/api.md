@@ -2500,8 +2500,6 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `cellTag` _integer_ | Cell tag is an immutable identifier for particular cell of YTsaurus cluster.<br />Must be unique among all connected clusters to prevent object ids from colliding. |  | Maximum: 61440 <br />Minimum: 1 <br />Required: \{\} <br /> |
-| `hostAddresses` _string array_ |  |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2532,6 +2530,10 @@ _Appears in:_
 | `cellTagMasterCaches` _integer_ |  |  |  |
 | `hostAddressesMasterCaches` _string array_ |  |  |  |
 | `hostAddressesLabel` _string_ |  |  |  |
+| `primaryMaster` _[MasterConnectionSpec](#masterconnectionspec)_ |  |  |  |
+| `secondaryMasters` _[MasterConnectionSpec](#masterconnectionspec) array_ |  |  | MaxItems: 48 <br /> |
+| `cellTag` _integer_ | Deprecated: use primaryMaster.cellTag instead. |  | Maximum: 61440 <br />Minimum: 1 <br /> |
+| `hostAddresses` _string array_ | Deprecated: use primaryMaster.hostAddresses instead. |  |  |
 
 
 #### RemoteYtsaurusStatus
