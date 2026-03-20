@@ -322,6 +322,8 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	}
 
 	hasPending := false
+	hasStarted := false
+	var syncStatus components.ComponentStatus
 	var syncErr error
 	for _, c := range cm.allComponents {
 		status, err := c.Sync(ctx, true)
@@ -330,23 +332,26 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 		}
 		c.SetStatus(status)
 
-		if status.SyncStatus == components.SyncStatusPending ||
-			status.SyncStatus == components.SyncStatusUpdating {
+		switch status.SyncStatus {
+		case components.SyncStatusPending, components.SyncStatusUpdating:
 			hasPending = true
 			logger.Info("Sync component",
 				"component", c.GetFullName(),
 				"status", status.SyncStatus,
 				"message", status.Message,
 			)
-			if status, err := c.Sync(ctx, false); err != nil {
-				logger.Error(err, "Cannot sync component",
-					"component", c.GetFullName(),
-					"status", status.SyncStatus,
-					"message", status.Message,
-				)
-				syncErr = err
-				break
-			}
+			syncStatus, syncErr = c.Sync(ctx, false)
+		case components.SyncStatusStarted:
+			hasStarted = true
+		}
+
+		if syncErr != nil {
+			logger.Error(syncErr, "Cannot sync component",
+				"component", c.GetFullName(),
+				"status", syncStatus.SyncStatus,
+				"message", syncStatus.Message,
+			)
+			break
 		}
 
 		if cm.ytsaurus.IsInitializing() && c.GetType() == consts.ImageHeaterType {
@@ -364,16 +369,16 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if syncErr != nil {
+	switch {
+	case syncErr != nil:
 		return ctrl.Result{Requeue: true}, syncErr
-	}
-
-	if !hasPending {
-		// All components are blocked.
+	case hasPending:
+		return ctrl.Result{RequeueAfter: time.Second}, nil
+	case hasStarted:
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	default:
+		return ctrl.Result{RequeueAfter: consts.DefaultClusterStatusPollPeriod}, nil
 	}
-
-	return ctrl.Result{RequeueAfter: time.Second}, nil
 }
 
 func (cm *ComponentManager) allUpdatingImagesAreHeated() bool {

@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -148,32 +149,8 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context, dry bool) (Co
 
 	switch yc.ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStatePossibilityCheck:
-		// FIXME(khlebnikov): Remove redundant inverted condition and refactor.
-		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionHasPossibility) &&
-			!yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
-			ok, msg, err := yc.HandlePossibilityCheck(ctx)
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-
-			if !ok {
-				yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-					Type:    consts.ConditionNoPossibility,
-					Status:  metav1.ConditionTrue,
-					Reason:  "Update",
-					Message: msg,
-				})
-				return SimpleStatus(SyncStatusUpdating), nil
-			}
-
-			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionHasPossibility,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Update",
-				Message: msg,
-			})
-			return SimpleStatus(SyncStatusUpdating), nil
-		}
+		err := yc.UpdateClusterHealthChecks(ctx)
+		return SimpleStatus(SyncStatusUpdating), err
 
 	case ytv1.UpdateStateWaitingForSafeModeEnabled:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSafeModeEnabled) {
@@ -382,6 +359,7 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context, dry bool) (Co
 
 func (yc *YtsaurusClient) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
+	logger := log.FromContext(ctx)
 	if hpStatus := yc.httpProxy.GetStatus(); !hpStatus.IsRunning() {
 		return hpStatus.Blocker(), nil
 	}
@@ -439,7 +417,17 @@ func (yc *YtsaurusClient) Sync(ctx context.Context, dry bool) (ComponentStatus, 
 		return status, nil
 	}
 
-	return ComponentStatusReady(), err
+	if !yc.ytsaurus.IsStatusConditionTrue(consts.ConditionUpdateIsPossible) {
+		if dry {
+			return ComponentStatusPending("Cluster health checks"), nil
+		}
+		if err := yc.UpdateClusterHealthChecks(ctx); err != nil {
+			// NOTE: Error is ignored because this is reconciler goal, not requirement.
+			logger.Error(err, "Cannot update cluster health checks")
+		}
+	}
+
+	return ComponentStatusReady(), nil
 }
 
 func (yc *YtsaurusClient) NeedSyncCypressPatch() ComponentStatus {
@@ -477,54 +465,73 @@ func (yc *YtsaurusClient) GetYtClient() yt.Client {
 	return yc.ytClient
 }
 
-func (yc *YtsaurusClient) HandlePossibilityCheck(ctx context.Context) (ok bool, msg string, err error) {
-	// Check tablet cell bundles.
-	notGoodBundles, err := GetNotGoodTabletCellBundles(ctx, yc.ytClient)
-	if err != nil {
-		return false, "", err
-	}
+// Cluster health checks.
 
-	if len(notGoodBundles) > 0 {
-		msg = fmt.Sprintf("Tablet cell bundles (%v) aren't in 'good' health", notGoodBundles)
-		return false, msg, nil
+func (yc *YtsaurusClient) ReportCondition(conditionType string, ok bool, msg string, err error) error {
+	if yc.owner.IsStatusConditionTrue(conditionType) != ok {
+		yc.owner.RecordNormal(conditionType, msg)
 	}
+	yc.owner.SetStatusCondition(checks.MakeCondition(conditionType, ok, msg, err))
+	return err
+}
 
-	// Check LVC.
-	lvcCount := 0
-	err = yc.ytClient.GetNode(ctx, ypath.Path(consts.LostVitalChunksCountPath), &lvcCount, nil)
-	if err != nil {
-		return false, "", err
-	}
-
-	if lvcCount > 0 {
-		msg = fmt.Sprintf("There are lost vital chunks: %v", lvcCount)
-		return false, msg, nil
-	}
-
-	// Check QMC.
-	qmcCount := 0
-	err = yc.ytClient.GetNode(ctx, ypath.Path("//sys/quorum_missing_chunks/@count"), &qmcCount, nil)
-	if err != nil {
-		return false, "", err
-	}
-
-	if qmcCount > 0 {
-		msg = fmt.Sprintf("There are quorum missing chunks: %v", qmcCount)
-		return false, msg, nil
-	}
-
-	ok, msg, err = checks.MasterQuorumHealth(
+func (yc *YtsaurusClient) UpdateMasterQuorumCheck(ctx context.Context) error {
+	ok, msg, err := checks.MasterQuorumHealth(
 		ctx,
 		yc.ytClient,
 		consts.PrimaryMastersPath,
 		yc.master.server.getInstanceCount(),
 		yc.master.server.getMinReadyInstanceCount(0),
 	)
-	if err != nil || !ok {
-		return false, msg, err
-	}
+	return yc.ReportCondition(consts.ConditionMastersQuorumCheck, ok, msg, err)
+}
 
-	return true, "Update is possible", nil
+func (yc *YtsaurusClient) UpdateCounterHealthCheck(ctx context.Context, counterPath ypath.Path, conditionType string) error {
+	var value int64
+	err := yc.ytClient.GetNode(ctx, counterPath, &value, nil)
+	return yc.ReportCondition(conditionType, value == 0, fmt.Sprintf("%v = %v", counterPath, value), err)
+}
+
+func (yc *YtsaurusClient) UpdateTabletCellBundlesHealthCheck(ctx context.Context) error {
+	notGoodBundles, err := GetNotGoodTabletCellBundles(ctx, yc.ytClient)
+	msg := ""
+	if len(notGoodBundles) > 0 {
+		msg = fmt.Sprintf("Tablet cell bundles (%v) aren't in 'good' health", notGoodBundles)
+	}
+	return yc.ReportCondition(consts.ConditionTabletCellBundlesHealthCheck, msg == "", msg, err)
+}
+
+func (yc *YtsaurusClient) UpdateClusterHealthChecks(ctx context.Context) (err error) {
+	var updateIsPossible metav1.Condition
+	if !yc.shouldSkipCypressOperations() {
+		err = errors.Join(
+			yc.UpdateMasterQuorumCheck(ctx),
+			yc.UpdateCounterHealthCheck(ctx, consts.LostVitalChunksCountPath, consts.ConditionLostVitalChunksCheck),
+			yc.UpdateCounterHealthCheck(ctx, consts.QuorumMissingChunksCountPath, consts.ConditionQuorumMissingChunksCheck),
+			yc.UpdateTabletCellBundlesHealthCheck(ctx),
+		)
+		updateIsPossible = checks.MergeConditions(
+			metav1.Condition{
+				Type:   consts.ConditionUpdateIsPossible,
+				Status: metav1.ConditionTrue,
+				Reason: "HealthChecks",
+			},
+			yc.owner.GetStatusCondition,
+			consts.ConditionMastersQuorumCheck,
+			consts.ConditionLostVitalChunksCheck,
+			consts.ConditionQuorumMissingChunksCheck,
+			consts.ConditionTabletCellBundlesHealthCheck,
+		)
+	} else {
+		updateIsPossible = metav1.Condition{
+			Type:    consts.ConditionUpdateIsPossible,
+			Status:  metav1.ConditionTrue,
+			Reason:  "HealthChecks",
+			Message: "Cypress operations skipped",
+		}
+	}
+	yc.ytsaurus.SetStatusCondition(updateIsPossible)
+	return err
 }
 
 // Safe mode actions.

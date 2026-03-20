@@ -506,7 +506,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "12"
+    resourceVersion: "13"
   lastTimestamp: null
   message: Ytsaurus cluster is under maintenance, shutdown ExceptMasters
   metadata:
