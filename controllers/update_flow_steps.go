@@ -244,6 +244,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 
 	updMaster := hasComponent(updatingComponents, consts.MasterType)
 	updTablet := hasComponent(updatingComponents, consts.TabletNodeType)
+	removeAndRecoverTabletCells := updTablet && !componentManager.status.clusterMaintenance
 	updMasterOrTablet := updMaster || updTablet
 	updDataNodes := hasComponent(updatingComponents, consts.DataNodeType)
 	updScheduler := hasComponent(updatingComponents, consts.SchedulerType)
@@ -267,7 +268,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		updMaster,
 		st(ytv1.UpdateStateWaitingForSafeModeEnabled),
 	).chainIf(
-		updTablet,
+		removeAndRecoverTabletCells,
 		st(ytv1.UpdateStateWaitingForTabletCellsSaving),
 		st(ytv1.UpdateStateWaitingForTabletCellsRemovingStart),
 		st(ytv1.UpdateStateWaitingForTabletCellsRemoved),
@@ -290,7 +291,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 	).chain(
 		st(ytv1.UpdateStateWaitingForCypressPatch),
 	).chainIf(
-		updTablet,
+		removeAndRecoverTabletCells,
 		st(ytv1.UpdateStateWaitingForTabletCellsRecovery),
 	).chainIf(
 		updScheduler,
