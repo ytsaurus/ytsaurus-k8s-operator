@@ -266,7 +266,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		updMaster && !componentManager.status.shutdownControl,
 		st(ytv1.UpdateStateWaitingForSafeModeEnabled),
 	).chainIf(
-		updTablet,
+		updTablet && !componentManager.status.shutdownTablets,
 		st(ytv1.UpdateStateWaitingForTabletCellsSaving),
 		st(ytv1.UpdateStateWaitingForTabletCellsRemovingStart),
 		st(ytv1.UpdateStateWaitingForTabletCellsRemoved),
@@ -292,7 +292,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 	).chain(
 		st(ytv1.UpdateStateWaitingForCypressPatch),
 	).chainIf(
-		updTablet,
+		updTablet && !componentManager.status.shutdownTablets,
 		st(ytv1.UpdateStateWaitingForTabletCellsRecovery),
 	).chainIf(
 		updScheduler && !componentManager.status.clusterMaintenance,
