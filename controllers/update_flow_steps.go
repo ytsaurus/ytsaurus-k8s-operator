@@ -184,7 +184,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStatePossibilityCheck: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionHasPossibility) {
 			return stepResultMarkHappy
-		} else if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
+		} else if ytsaurus.IsUpdateStatusConditionFalse(consts.ConditionHasPossibility) {
 			return stepResultMarkUnhappy
 		}
 		return stepResultMarkUnsatisfied
@@ -243,7 +243,6 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 
 	updMaster := hasComponent(updatingComponents, consts.MasterType)
 	updTablet := hasComponent(updatingComponents, consts.TabletNodeType)
-	updMasterOrTablet := updMaster || updTablet
 	updDataNodes := hasComponent(updatingComponents, consts.DataNodeType)
 	updScheduler := hasComponent(updatingComponents, consts.SchedulerType)
 	updQueryTracker := hasComponent(updatingComponents, consts.QueryTrackerType)
@@ -255,7 +254,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		componentManager.getHeaterStatus != nil,
 		st(ytv1.UpdateStateWaitingForImageHeater),
 	).chainIf(
-		updMasterOrTablet,
+		updMaster || updTablet,
 		newConditionalForkStep(
 			ytv1.UpdateStatePossibilityCheck,
 			// This is the unhappy path.
