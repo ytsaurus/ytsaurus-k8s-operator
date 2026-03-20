@@ -174,6 +174,8 @@ func (yc *YtsaurusClient) shouldSkipCypressOperations() bool {
 func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentStatus, error) {
 	var err error
 
+	updateStatus := &yc.ytsaurus.GetResource().Status.UpdateStatus
+
 	switch yc.ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStatePossibilityCheck:
 		// FIXME(khlebnikov): Remove redundant inverted condition and refactor.
@@ -227,16 +229,15 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 				return SimpleStatus(SyncStatusUpdating), err
 			}
 
-			yc.ytsaurus.GetResource().Status.UpdateStatus.BundleController = &ytv1.BundleControllerInfo{
-				Disabled: bundleControllerDisabled,
-			}
-
 			tabletCellBundles, err := yc.GetTabletCells(ctx)
 			if err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
 			}
 
-			yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles = tabletCellBundles
+			updateStatus.BundleController = &ytv1.BundleControllerInfo{
+				Disabled: bundleControllerDisabled,
+			}
+			updateStatus.TabletCellBundles = tabletCellBundles
 
 			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionTabletCellsSaved,
@@ -352,15 +353,15 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 
 	case ytv1.UpdateStateWaitingForTabletCellsRecovery:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRecovered) {
-			err = yc.RecoverTableCells(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles)
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
+			if yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsSaved) {
+				err = yc.RecoverTableCells(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles)
+				if err != nil {
+					return SimpleStatus(SyncStatusUpdating), err
+				}
 			}
 
-			bundleController := yc.ytsaurus.GetResource().Status.UpdateStatus.BundleController
-
-			if bundleController != nil {
-				err := yc.SetBundleControllerDisabled(ctx, bundleController.Disabled)
+			if updateStatus.BundleController != nil {
+				err := yc.SetBundleControllerDisabled(ctx, updateStatus.BundleController.Disabled)
 				if err != nil {
 					return SimpleStatus(SyncStatusUpdating), err
 				}

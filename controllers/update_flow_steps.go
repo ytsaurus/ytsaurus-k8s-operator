@@ -251,6 +251,8 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 	updYqlAgent := hasComponent(updatingComponents, consts.YqlAgentType)
 	updQueueAgent := hasComponent(updatingComponents, consts.QueueAgentType)
 
+	removeTabletCells := updTablet && !componentManager.status.clusterMaintenance
+
 	// TODO: if validation conditions can be not mentioned here or needed
 	tree.chainIf(
 		componentManager.getHeaterStatus != nil,
@@ -267,7 +269,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		updMaster,
 		st(ytv1.UpdateStateWaitingForSafeModeEnabled),
 	).chainIf(
-		updTablet,
+		removeTabletCells,
 		st(ytv1.UpdateStateWaitingForTabletCellsSaving),
 		st(ytv1.UpdateStateWaitingForTabletCellsRemovingStart),
 		st(ytv1.UpdateStateWaitingForTabletCellsRemoved),
@@ -289,8 +291,6 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		st(ytv1.UpdateStateWaitingForSidecarsInitialize),
 	).chain(
 		st(ytv1.UpdateStateWaitingForCypressPatch),
-	).chainIf(
-		updTablet,
 		st(ytv1.UpdateStateWaitingForTabletCellsRecovery),
 	).chainIf(
 		updScheduler,
