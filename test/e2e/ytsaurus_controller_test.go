@@ -144,14 +144,14 @@ func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client)
 	ytsaurus.Spec.CoreImage = testutil.NextImages.Core
 	UpdateObject(specCtx, ytsaurus)
 
-	EventuallyYtsaurus(specCtx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStateImpossibleToStart))
+	EventuallyYtsaurus(specCtx, ytsaurus, reactionTimeout).Should(HaveClusterStateUpdateBlocked())
 
 	By("Set previous core image")
 	ytsaurus.Spec.CoreImage = testutil.CurrImages.Core
 	UpdateObject(specCtx, ytsaurus)
 
-	By("Wait for running")
-	EventuallyYtsaurus(specCtx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+	By("Wait for cluster back to preparing state")
+	EventuallyYtsaurus(specCtx, ytsaurus, upgradeTimeout).Should(HaveClusterStatePreparing())
 
 	By("Check that cluster alive after update")
 	res := make([]string, 0)
@@ -1137,32 +1137,20 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
 				UpdateObject(ctx, ytsaurus)
 
-				// FIXME: Cluster state oscillates.
-				if false {
-					By("Waiting stable version")
-					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveStableResourceVersion(consistencyTimeout))
+				By("Waiting for cluster state UpdateBlocked")
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterStateUpdateBlocked())
+				Expect(ytsaurus).Should(HaveStatusCondition(consts.ConditionUpdateIsPossible, ConditionStatusFalse()))
 
-					By("Waiting for PossibilityCheck")
-					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck))
+				By("Check consistent UpdateIsPossible")
+				ConsistentlyYtsaurus(ctx, ytsaurus, consistencyTimeout).Should(And(
+					HaveClusterStateUpdateBlocked(),
+					HaveStatusCondition(consts.ConditionUpdateIsPossible, ConditionStatusFalse()),
+				))
 
-					By("Waiting for condition NoPossibility")
-					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(WithInvariant(
-						Not(HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusDefined())),
-						HaveClusterUpdateCondition(consts.ConditionNoPossibility, ConditionStatusTrue()),
-					))
-
-					By("Check consistent NoPossibility")
-					ConsistentlyYtsaurus(ctx, ytsaurus, consistencyTimeout).Should(And(
-						HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck),
-						Not(HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusDefined())),
-						HaveClusterUpdateCondition(consts.ConditionNoPossibility, ConditionStatusTrue())),
-					)
-				} else {
-					By("Checking that pods are not changed")
-					Consistently(ctx, func(ctx context.Context) changedObjects {
-						return getChangedPods(podsBeforeUpdate, getComponentPods(ctx, namespace))
-					}, consistencyTimeout, pollInterval).To(HaveField("Changed", BeEmpty()))
-				}
+				By("Checking that pods are not changed")
+				Consistently(ctx, func(ctx context.Context) changedObjects {
+					return getChangedPods(podsBeforeUpdate, getComponentPods(ctx, namespace))
+				}, consistencyTimeout, pollInterval).To(HaveField("Changed", BeEmpty()))
 
 				// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
 				By("Check that master pod was NOT recreated at the PossibilityCheck stage")
