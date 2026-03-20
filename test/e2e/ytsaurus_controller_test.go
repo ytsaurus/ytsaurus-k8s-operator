@@ -1127,16 +1127,13 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck))
 
 					By("Waiting for condition NoPossibility")
-					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(WithInvariant(
-						Not(HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusDefined())),
-						HaveClusterUpdateCondition(consts.ConditionNoPossibility, ConditionStatusTrue()),
-					))
+					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
+						HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusFalse()))
 
 					By("Check consistent NoPossibility")
 					ConsistentlyYtsaurus(ctx, ytsaurus, consistencyTimeout).Should(And(
 						HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck),
-						Not(HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusDefined())),
-						HaveClusterUpdateCondition(consts.ConditionNoPossibility, ConditionStatusTrue())),
+						HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusFalse())),
 					)
 				} else {
 					By("Checking that pods are not changed")
