@@ -281,7 +281,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		updMaster,
 		st(ytv1.UpdateStateWaitingForSafeModeEnabled),
 	).chainIf(
-		updTablet,
+		updTablet && !componentManager.status.shutdownTablets,
 		st(ytv1.UpdateStateWaitingForTabletCellsSaving),
 		st(ytv1.UpdateStateWaitingForTabletCellsRemovingStart),
 		st(ytv1.UpdateStateWaitingForTabletCellsRemoved),
@@ -303,22 +303,22 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 	).chain(
 		st(ytv1.UpdateStateWaitingForCypressPatch),
 	).chainIf(
-		updTablet,
+		updTablet && !componentManager.status.shutdownTablets,
 		st(ytv1.UpdateStateWaitingForTabletCellsRecovery),
 	).chainIf(
-		updScheduler,
+		updScheduler && !componentManager.status.clusterMaintenance,
 		st(ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare),
 		st(ytv1.UpdateStateWaitingForOpArchiveUpdate),
 	).chainIf(
-		updQueryTracker,
+		updQueryTracker && !componentManager.status.clusterMaintenance,
 		st(ytv1.UpdateStateWaitingForQTStateUpdatingPrepare),
 		st(ytv1.UpdateStateWaitingForQTStateUpdate),
 	).chainIf(
-		updYqlAgent,
+		updYqlAgent && !componentManager.status.clusterMaintenance,
 		st(ytv1.UpdateStateWaitingForYqlaUpdatingPrepare),
 		st(ytv1.UpdateStateWaitingForYqlaUpdate),
 	).chainIf(
-		updQueueAgent,
+		updQueueAgent && !componentManager.status.clusterMaintenance,
 		st(ytv1.UpdateStateWaitingForQAStateUpdatingPrepare),
 		st(ytv1.UpdateStateWaitingForQAStateUpdate),
 	).chainIf(
