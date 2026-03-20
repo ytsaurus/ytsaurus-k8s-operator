@@ -239,6 +239,14 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 				needStatusUpdate = true
 			}
 
+		case !ytsaurus.IsStatusConditionTrue(consts.ConditionUpdateIsPossible):
+			logger.Info("Ytsaurus update is not possible",
+				"condition", ytsaurus.GetStatusCondition(consts.ConditionUpdateIsPossible),
+			)
+			if ytsaurus.IsStatusConditionFalse(consts.ConditionUpdateIsPossible) && ytsaurus.SetClusterState(ytv1.ClusterStateUpdateBlocked) {
+				needStatusUpdate = true
+			}
+
 		case len(cm.status.canUpdate) != 0:
 			logger.Info("Ytsaurus components needs update",
 				"canUpdate", cm.status.canUpdate,
