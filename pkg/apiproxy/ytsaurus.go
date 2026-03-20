@@ -125,6 +125,10 @@ func (c *Ytsaurus) IsUpdateStatusConditionTrue(condition string) bool {
 	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
 }
 
+func (c *Ytsaurus) IsUpdateStatusConditionFalse(condition string) bool {
+	return meta.IsStatusConditionFalse(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
+}
+
 func (c *Ytsaurus) GetUpdateStatusCondition(condition string) *metav1.Condition {
 	return meta.FindStatusCondition(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
 }

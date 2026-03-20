@@ -2,11 +2,15 @@ package consts
 
 // Status conditions
 const (
-	ConditionOperatorVersion            = "OperatorVersion"
-	ConditionReadyToWork                = "ReadyToWork"
-	ConditionImageHeaterReady           = "ImageHeaterReady"
-	ConditionImageHeaterComplete        = "ImageHeaterComplete"
-	ConditionTimbertruckUserInitialized = "TimbertruckUserInitialized"
+	ConditionOperatorVersion              = "OperatorVersion"
+	ConditionMastersQuorumCheck           = "MastersQuorumCheck"
+	ConditionLostVitalChunksCheck         = "LostVitalChunksCheck"
+	ConditionQuorumMissingChunksCheck     = "QuorumMissingChunksCheck"
+	ConditionTabletCellBundlesHealthCheck = "TabletCellBundlesHealthCheck"
+	ConditionReadyToWork                  = "ReadyToWork"
+	ConditionImageHeaterReady             = "ImageHeaterReady"
+	ConditionImageHeaterComplete          = "ImageHeaterComplete"
+	ConditionTimbertruckUserInitialized   = "TimbertruckUserInitialized"
 )
 
 // Both status and update conditions
@@ -40,7 +44,6 @@ const (
 // Update conditions
 const (
 	ConditionHasPossibility                  = "HasPossibility"
-	ConditionNoPossibility                   = "NoPossibility"
 	ConditionSafeModeEnabled                 = "SafeModeEnabled"
 	ConditionTabletCellsSaved                = "TabletCellsSaved"
 	ConditionTabletCellsRemovingStarted      = "TabletCellsRemovingStarted"
