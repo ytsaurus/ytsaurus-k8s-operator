@@ -100,39 +100,33 @@ func (s *StatefulSet) ArePodsRemoved(ctx context.Context) bool {
 	return true
 }
 
-func checkReadinessByContainers(pod corev1.Pod, byContainerNames []string) bool {
-	found := 0
-	for _, containerNameToCheck := range byContainerNames {
-		for _, containerStatus := range pod.Status.ContainerStatuses {
-			if containerStatus.Name != containerNameToCheck {
-				continue
+func checkReadinessByContainers(pod corev1.Pod, names []string) bool {
+	ready := 0
+	for _, name := range names {
+		for _, status := range pod.Status.ContainerStatuses {
+			if status.Name == name {
+				if !status.Ready {
+					return false
+				}
+				ready++
 			}
-			if !containerStatus.Ready {
-				return false
-			}
-			found++
 		}
 	}
-	return found == len(byContainerNames)
+	return ready == len(names)
 }
 
-func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minReadyInstanceCount *int, byContainerNames []string) bool {
+func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount, minReadyInstanceCount int32, containerNames []string) bool {
 	logger := log.FromContext(ctx)
 	podList := s.getPods(ctx)
 	if podList == nil {
 		return false
 	}
 
-	effectiveMinReadyInstanceCount := instanceCount
-	if minReadyInstanceCount != nil && *minReadyInstanceCount < instanceCount {
-		effectiveMinReadyInstanceCount = *minReadyInstanceCount
-	}
-
-	readyInstanceCount := 0
+	var readyInstanceCount int32
 	for _, pod := range podList.Items {
 		var ready bool
-		if len(byContainerNames) > 0 {
-			ready = checkReadinessByContainers(pod, byContainerNames)
+		if len(containerNames) > 0 {
+			ready = checkReadinessByContainers(pod, containerNames)
 		} else {
 			ready = pod.Status.Phase == corev1.PodRunning
 		}
@@ -143,12 +137,12 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minRe
 		}
 	}
 
-	if readyInstanceCount < effectiveMinReadyInstanceCount {
+	if readyInstanceCount < minReadyInstanceCount {
 		logger.Info(
 			"not enough pods are running",
 			"component", s.labeller.GetFullComponentName(),
 			"readyInstanceCount", readyInstanceCount,
-			"minReadyInstanceCount", effectiveMinReadyInstanceCount,
+			"minReadyInstanceCount", minReadyInstanceCount,
 			"totalInstanceCount", len(podList.Items))
 		return false
 	}
@@ -156,7 +150,7 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minRe
 		"pods are ready",
 		"component", s.labeller.GetFullComponentName(),
 		"readyInstanceCount", readyInstanceCount,
-		"minReadyInstanceCount", effectiveMinReadyInstanceCount,
+		"minReadyInstanceCount", minReadyInstanceCount,
 		"totalInstanceCount", len(podList.Items))
 	return true
 }

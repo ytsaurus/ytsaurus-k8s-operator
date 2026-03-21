@@ -31,15 +31,18 @@ type server interface {
 	resources.Fetchable
 	resources.Syncable
 	podsManager
+
+	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition, maxUnavailable int32)
+	getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, bool)
+
 	needUpdate() ComponentStatus
 	needSync(updating bool) bool
+
 	getImageHeaterTarget() *ImageHeaterTarget
+
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
-	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition int32, maxUnavailable int)
-	getReplicaCount() int32
-	getMinReadyInstanceCount() *int
-	getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, bool)
+
 	addCARootBundle(c *corev1.Container)
 	addTlsSecretMount(c *corev1.Container)
 	addMonitoringPort(port corev1.ServicePort)
@@ -54,6 +57,7 @@ type serverImpl struct {
 	commonSpec    *ytv1.CommonSpec
 	commonPodSpec *ytv1.PodSpec
 	instanceSpec  *ytv1.InstanceSpec
+	instanceCount int32
 
 	binaryPath string
 
@@ -182,6 +186,7 @@ func newServerConfigured(
 		commonSpec:    commonSpec,
 		commonPodSpec: commonPodSpec,
 		instanceSpec:  instanceSpec,
+		instanceCount: instanceSpec.InstanceCount,
 		binaryPath:    binaryPath,
 		statefulSet: resources.NewStatefulSet(
 			l.GetServerStatefulSetName(),
@@ -227,7 +232,7 @@ func (s *serverImpl) needSync(updating bool) bool {
 		}
 	}
 	return !s.Exists() ||
-		s.statefulSet.GetReplicas() != s.instanceSpec.InstanceCount
+		s.statefulSet.GetReplicas() != s.getInstanceCount()
 }
 
 func (s *serverImpl) Sync(ctx context.Context) error {
@@ -302,7 +307,7 @@ func (s *serverImpl) needUpdate() ComponentStatus {
 }
 
 func (s *serverImpl) arePodsReady(ctx context.Context) bool {
-	return s.statefulSet.ArePodsReady(ctx, int(s.instanceSpec.InstanceCount), s.instanceSpec.MinReadyInstanceCount, s.readinessByContainers)
+	return s.statefulSet.ArePodsReady(ctx, s.getInstanceCount(), s.getMinReadyInstanceCount(0), s.readinessByContainers)
 }
 
 func (s *serverImpl) getImageHeaterTarget() *ImageHeaterTarget {
@@ -317,12 +322,17 @@ func (s *serverImpl) getImageHeaterTarget() *ImageHeaterTarget {
 	}
 }
 
-func (s *serverImpl) getReplicaCount() int32 {
-	return s.instanceSpec.InstanceCount
+func (s *serverImpl) getInstanceCount() int32 {
+	return s.instanceCount
 }
 
-func (s *serverImpl) getMinReadyInstanceCount() *int {
-	return s.instanceSpec.MinReadyInstanceCount
+func (s *serverImpl) setInstanceCount(instanceCount int32) {
+	s.instanceCount = instanceCount
+}
+
+func (s *serverImpl) getMinReadyInstanceCount(margin int32) int32 {
+	bound := max(s.getInstanceCount()-margin, 0)
+	return min(ptr.Deref(s.instanceSpec.MinReadyInstanceCount, bound), bound)
 }
 
 func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
@@ -444,7 +454,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, key, value)
 	}
 
-	statefulSet.Spec.Replicas = &s.instanceSpec.InstanceCount
+	statefulSet.Spec.Replicas = ptr.To(s.getInstanceCount())
 	statefulSet.Spec.ServiceName = s.headlessService.Name()
 	statefulSet.Spec.VolumeClaimTemplates = createVolumeClaims(s.instanceSpec.VolumeClaimTemplates)
 
@@ -593,15 +603,14 @@ func (s *serverImpl) addTlsSecretMount(c *corev1.Container) {
 }
 
 // setUpdateStrategy sets the desired StatefulSet update strategy
-func (s *serverImpl) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition int32, maxUnavailable int) {
+func (s *serverImpl) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition, maxUnavailable int32) {
 	s.updateStrategy = &appsv1.StatefulSetUpdateStrategy{
 		Type: strategy,
 	}
 	if strategy == appsv1.RollingUpdateStatefulSetStrategyType {
-		maxUnavailableValue := intstr.FromInt(maxUnavailable)
 		s.updateStrategy.RollingUpdate = &appsv1.RollingUpdateStatefulSetStrategy{
 			Partition:      ptr.To(partition),
-			MaxUnavailable: &maxUnavailableValue,
+			MaxUnavailable: ptr.To(intstr.FromInt32(maxUnavailable)),
 		}
 	}
 	// Clear the built StatefulSet so it will be rebuilt with the new strategy

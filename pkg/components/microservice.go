@@ -25,10 +25,13 @@ type microservice interface {
 	resources.Fetchable
 	resources.Syncable
 	podsManager
+
 	needSync() bool
 	needUpdate() ComponentStatus
+
 	getImage() string
 	getImageHeaterTarget() *ImageHeaterTarget
+
 	getHttpService() *resources.HTTPService
 	buildDeployment() *appsv1.Deployment
 	buildService() *corev1.Service
@@ -122,11 +125,23 @@ func (m *microserviceImpl) Exists() bool {
 	return resources.Exists(m.deployment, m.configs, m.service)
 }
 
+func (m *microserviceImpl) getInstanceCount() int32 {
+	return m.instanceCount
+}
+
+func (m *microserviceImpl) setInstanceCount(instanceCount int32) {
+	m.instanceCount = instanceCount
+}
+
+func (m *microserviceImpl) getMinReadyInstanceCount(margin int32) int32 {
+	return max(m.getInstanceCount()-margin, 0)
+}
+
 func (m *microserviceImpl) needSync() bool {
 	configStatus, err := m.configs.needReload()
 	return !m.Exists() ||
 		(m.ytsaurus.IsUpdating() && err == nil && configStatus.IsNeedUpdate()) ||
-		m.deployment.GetReplicas() != m.instanceCount
+		m.deployment.GetReplicas() != m.getInstanceCount()
 }
 
 func (m *microserviceImpl) buildDeployment() *appsv1.Deployment {
@@ -143,7 +158,7 @@ func (m *microserviceImpl) getHttpService() *resources.HTTPService {
 
 func (m *microserviceImpl) rebuildDeployment() *appsv1.Deployment {
 	m.builtDeployment = m.deployment.Build()
-	m.builtDeployment.Spec.Replicas = &m.instanceCount
+	m.builtDeployment.Spec.Replicas = ptr.To(m.getInstanceCount())
 	m.builtDeployment.Spec.Template.Spec.Containers = []corev1.Container{
 		{
 			Image: m.image,
