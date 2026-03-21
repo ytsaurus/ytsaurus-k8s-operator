@@ -225,7 +225,6 @@ var _ = Describe("RemoteTabletNodes Controller", func() {
 
 				nodes := buildRemoteTabletNodes(h, remoteYtsaurusName, remoteTabletNodesName)
 				nodes.Spec.InstanceSpec.InstanceCount = 1
-				nodes.Spec.InstanceSpec.MinReadyInstanceCount = ptr.To(1)
 				testutil.DeployObject(h, &nodes)
 				waitRemoteTabletNodesDeployed(h, remoteTabletNodesName)
 

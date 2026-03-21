@@ -104,8 +104,7 @@ func (ca *ControllerAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	}
 
 	// Check that the number of instances in YT matches the expected instanceCount
-	expectedCount := int(ca.ytsaurus.GetResource().Spec.ControllerAgents.InstanceCount)
-	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.ControllerAgentType, expectedCount); err != nil {
+	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.ControllerAgentType, ca.server.getInstanceCount()); err != nil {
 		return ComponentStatusBlocked("Error: %v", err)
 	}
 
