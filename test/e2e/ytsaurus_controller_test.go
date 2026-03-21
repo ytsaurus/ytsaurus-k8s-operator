@@ -2152,7 +2152,7 @@ exec "$@"`
 		)
 
 		DescribeTableSubtree("rolling-update strategy", Label("rollingupdate"),
-			func(componentType consts.ComponentType, stsName string, minReady int) {
+			func(componentType consts.ComponentType, stsName string, minReady int32) {
 				BeforeEach(func() {
 					switch componentType {
 					case consts.HttpProxyType:
@@ -2197,8 +2197,8 @@ exec "$@"`
 
 							// If present, verify it matches controller formula.
 							if rolling.MaxUnavailable != nil {
-								expectedMaxUnavailable := int(*current.Spec.Replicas) - minReady
-								return rolling.MaxUnavailable.IntValue() == expectedMaxUnavailable
+								expectedMaxUnavailable := *current.Spec.Replicas - minReady
+								return rolling.MaxUnavailable.IntVal == expectedMaxUnavailable
 							}
 
 							return true

@@ -416,9 +416,14 @@ type InstanceSpec struct {
 	//+optional
 	ReadinessProbeParams *HealthcheckProbeParams `json:"readinessProbeParams,omitempty"`
 	// Resources dedicated for component. Capacity is defined by requests, or limits for zero requests.
-	Resources             corev1.ResourceRequirements     `json:"resources,omitempty"`
-	InstanceCount         int32                           `json:"instanceCount,omitempty"`
-	MinReadyInstanceCount *int                            `json:"minReadyInstanceCount,omitempty"`
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	// Desired count of replicas. Default: 0.
+	//+kubebuilder:default:=0
+	//+kubebuilder:validation:Minimum:=0
+	InstanceCount int32 `json:"instanceCount,omitempty"`
+	// Required count of replicas. Default: equal to instanceCount.
+	//+kubebuilder:validation:Minimum:=0
+	MinReadyInstanceCount *int32                          `json:"minReadyInstanceCount,omitempty"`
 	Locations             []LocationSpec                  `json:"locations,omitempty"`
 	VolumeClaimTemplates  []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
 	// Deprecated: use Affinity.PodAntiAffinity instead.

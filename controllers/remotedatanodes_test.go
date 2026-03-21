@@ -225,7 +225,6 @@ var _ = Describe("RemoteDataNodes Controller", func() {
 
 				nodes := buildRemoteDataNodes(h, remoteYtsaurusName, remoteDataNodesName)
 				nodes.Spec.InstanceSpec.InstanceCount = 1
-				nodes.Spec.InstanceSpec.MinReadyInstanceCount = ptr.To(1)
 				testutil.DeployObject(h, &nodes)
 				waitRemoteDataNodesDeployed(h, remoteDataNodesName)
 
