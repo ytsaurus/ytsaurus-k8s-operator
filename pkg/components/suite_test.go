@@ -162,16 +162,19 @@ func (fs *FakeServer) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 	return true
 }
 
-func (fs *FakeServer) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition int32, maxUnavailable int) {
-	// No-op for fake server
+func (fs *FakeServer) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition, maxUnavailable int32) {
+	// No-op for fake server:
 }
 
-func (fs *FakeServer) getReplicaCount() int32 {
+func (fs *FakeServer) getInstanceCount() int32 {
 	return 0
 }
 
-func (fs *FakeServer) getMinReadyInstanceCount() *int {
-	return nil
+func (fs *FakeServer) setInstanceCount(int32) {
+}
+
+func (fs *FakeServer) getMinReadyInstanceCount(margin int32) int32 {
+	return 0
 }
 
 func (fs *FakeServer) getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, bool) {

@@ -8,6 +8,10 @@ import (
 
 // TODO: move to Updatable
 type podsManager interface {
+	getInstanceCount() int32
+	setInstanceCount(instanceCount int32)
+	getMinReadyInstanceCount(margin int32) int32
+
 	removePods(ctx context.Context) error
 	arePodsRemoved(ctx context.Context) bool
 	arePodsReady(ctx context.Context) bool
